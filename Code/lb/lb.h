@@ -15,7 +15,6 @@
 #include "reporting/Timers.h"
 #include <typeinfo>
 
-
 namespace hemelb
 {
   /**
@@ -63,7 +62,8 @@ namespace hemelb
         LBM(hemelb::configuration::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
-            SimulationState* simState, reporting::Timer &atimer);
+            SimulationState* simState,
+            reporting::Timer &atimer);
         ~LBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
@@ -77,10 +77,6 @@ namespace hemelb
         void SetTotalFluidSiteCount(site_t);
         int InletCount() const;
 
-        void SetSiteMinima(const site_t * const minima); ///< Used in initialization
-        void SetSiteMaxima(const site_t * const maxima); ///< Used in initialization
-
-
         // TODO -- replace built in type unsigned int with typedef #24
         void UpdateInletVelocities(unsigned long time_step); ///< Update peak and average inlet velocities local to the current subdomain.
 
@@ -88,12 +84,10 @@ namespace hemelb
          * Second constructor.
          *
          */
-        void
-        Initialise(site_t* iFTranslator,
-                   vis::Control* iControl,
-                   boundaries::BoundaryValues* iInletValues,
-                   boundaries::BoundaryValues* iOutletValues,
-                   util::UnitConverter* iUnits);
+        void Initialise(vis::Control* iControl,
+                        boundaries::BoundaryValues* iInletValues,
+                        boundaries::BoundaryValues* iOutletValues,
+                        util::UnitConverter* iUnits);
 
         /**
          * This routine writes the flow field on file, using MPIO to coordinate
@@ -189,11 +183,9 @@ namespace hemelb
         }
 
         double *inlet_normal;
-        site_t total_fluid_sites;
+
         int inlets;
         int outlets;
-
-        site_t siteMins[3], siteMaxes[3];
 
         configuration::SimConfig *mSimConfig;
         net::Net* mNet;
@@ -206,23 +198,12 @@ namespace hemelb
 
         util::UnitConverter* mUnits;
 
-        site_t* receivedFTranslator;
         reporting::Timer &timer;
     }; // Class
 
     inline int LBM::InletCount() const
     {
       return inlets;
-    }
-
-    inline site_t LBM::TotalFluidSiteCount() const
-    {
-      return total_fluid_sites;
-    }
-
-    inline void LBM::SetTotalFluidSiteCount(site_t sites)
-    {
-      total_fluid_sites = sites;
     }
 
   } // Namespace lb

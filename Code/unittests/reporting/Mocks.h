@@ -50,10 +50,6 @@ namespace hemelb
             calls++;
             return 0;
           }
-          size_t FluidSitesOnProcessor(int n)
-          {
-            return n * 1000;
-          }
           proc_t GetProcessorCount()
           {
             return 5;

@@ -1,6 +1,7 @@
 #ifndef HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 
+#include "geometry/LatticeData.h"
 #include "net/PhasedBroadcastRegular.h"
 #include <cfloat>
 
