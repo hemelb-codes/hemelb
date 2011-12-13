@@ -25,9 +25,10 @@
 		"run_prefix_commands":["export set TMP=/tmp"]
 	},
 	"entropy":{
-		"remote":"entropy.ucl.ac.uk",
-		"results_path_template":"/store3/blood/FabricHemeLb/results",
-		"config_path_template":"/store3/blood/FabricHemeLb/config_files"
+		"remote":"entropy.chem.ucl.ac.uk",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"results_path_template":"/store3/blood/$username/FabricHemeLb/results",
+		"config_path_template":"/store3/blood/$username/FabricHemeLb/config_files"
 	},
 	"hector":{
 		"cmake_options":{
