@@ -16,7 +16,7 @@ elseif(HEMELB_STEERING_LIB MATCHES [Nn]one)
 		none/SteeringComponent.cc
 	)
 	add_definitions(-DHEMELB_STEERING_LIB=none)
-else(HEMELB_STEERING_LIB MATCHES [Bb]asic)
+else()
 	message("Unrecognised steering mode, using basic")
 	set(steerers 
 		basic/ClientConnection.cc
@@ -27,7 +27,7 @@ else(HEMELB_STEERING_LIB MATCHES [Bb]asic)
 		basic/SteeringComponent.cc
 	)
 	add_definitions(-DHEMELB_STEERING_LIB=basic)
-endif(HEMELB_STEERING_LIB MATCHES [Bb]asic)
+endif()
 
 add_library(hemelb_steering
 	#common/Steerer.cc # Not used in old nrmake build either -- TODO find out why

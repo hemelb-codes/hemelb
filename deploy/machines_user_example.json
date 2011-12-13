@@ -1,0 +1,15 @@
+// Copy this file as machines_user.json, and fill in your details.
+{
+	"username":"ucgajhe",
+	"local_results":"/store3/blood/Fabric/HemeLB/results", // example for if you are on a CCS machine
+	"local_configs":"/store3/blood/Fabric/HemeLB/config_files",
+	"legion":{
+		"project":"jamespjh_ccs"
+	},
+	"planck":{
+		"username":"jamespjh", // override default user for this machine
+	}
+	"entropy":{
+		"username":"jamespjh",	
+	}
+}
