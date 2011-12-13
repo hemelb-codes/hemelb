@@ -3,6 +3,7 @@
 
 #include <cstdio>
 
+#include "net/net.h"
 #include "parmetis.h"
 #include "D3Q15.h"
 #include "constants.h"
@@ -32,27 +33,16 @@ namespace hemelb
           OUTLET_TYPE = 3U
         };
 
-        LatticeData(const bool reserveSteeringCore,
-                    site_t* totalFluidSites,
-                    site_t siteMins[3],
-                    site_t siteMaxes[3],
-                    site_t* fluidSitePerProc,
-                    lb::LbmParameters* bLbmParams,
-                    configuration::SimConfig* bSimConfig,
-                    reporting::Timers &timings);
+        static LatticeData* Load(const bool reserveSteeringCore,
+                                 std::string& dataFilePath,
+                                 lb::LbmParameters* bLbmParams,
+                                 reporting::Timers &timings);
 
-        void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
-                                       proc_t localRank,
-                                       const unsigned int* iSiteDataForThisRank);
-
-        void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
-
-        void SetSiteCounts(site_t innerSites,
-                           site_t interCollisions[COLLISION_TYPES],
-                           site_t innerCollisions[COLLISION_TYPES],
-                           site_t sharedSites);
+        virtual ~LatticeData();
 
         void SwapOldAndNew();
+        void SendAndReceive(net::Net* net);
+        void CopyReceived();
 
         const double* GetNormalToWall(site_t iSiteIndex) const;
 
@@ -81,7 +71,8 @@ namespace hemelb
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
         bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
-        const proc_t* GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
+        const proc_t
+        * GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
         BlockData* GetBlock(site_t blockNumber) const;
         BlockTraverser GetBlockTraverser() const;
@@ -96,29 +87,26 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         unsigned int GetSiteData(site_t iSiteIndex) const;
         unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
-        const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber, const util::Vector3D<
-            site_t>& localSiteCoords) const;
+        const util::Vector3D<site_t>
+        GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
 
         site_t GetInnerSiteCount() const;
         site_t GetInnerCollisionCount(unsigned int collisionType) const;
         site_t GetInterCollisionCount(unsigned int collisionType) const;
         unsigned int GetCollisionType(unsigned int site_data) const;
+        const site_t* GetFluidSiteCountsOnEachProc() const;
+        site_t GetFluidSiteCountOnProc(proc_t proc) const;
+        site_t GetTotalFluidSites() const;
+        const util::Vector3D<site_t>& GetGlobalSiteMins() const;
+        const util::Vector3D<site_t>& GetGlobalSiteMaxes() const;
 
       protected:
-        /**
-         * The protected default constructor does nothing. It exists to allow derivation from this
-         * class for the purpose of testing.
-         * @return
-         */
-        LatticeData();
-
         class LocalLatticeData
         {
           public:
             LocalLatticeData();
+            LocalLatticeData(site_t iLocalFluidSites);
             ~LocalLatticeData();
-
-            void Initialise(site_t iLocalFluidSites);
 
             site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
             double GetCutDistance(site_t iSiteIndex, int iDirection) const;
@@ -130,8 +118,8 @@ namespace hemelb
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
             void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS
-                - 1]);
+            void SetDistanceToWall(site_t iSiteIndex,
+                                   const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
             void SetSharedSiteCount(site_t iSharedCount);
 
@@ -157,6 +145,11 @@ namespace hemelb
         class GlobalLatticeData
         {
           public:
+            GlobalLatticeData();
+            ~GlobalLatticeData();
+
+            void CollectFluidSiteDistribution();
+
             void SetBasicDetails(site_t iBlocksX,
                                  site_t iBlocksY,
                                  site_t iBlocksZ,
@@ -165,6 +158,8 @@ namespace hemelb
                                  distribn_t iOriginX,
                                  distribn_t iOriginY,
                                  distribn_t iOriginZ);
+
+            void GetThisRankSiteData(unsigned int *& bThisRankSiteData);
 
             site_t GetXSiteCount() const;
             site_t GetYSiteCount() const;
@@ -188,8 +183,6 @@ namespace hemelb
 
             BlockData * Blocks;
 
-            ~GlobalLatticeData();
-
             // Returns the type of collision/streaming update for the fluid site
             // with data "site_data".
             unsigned int GetCollisionType(unsigned int site_data) const;
@@ -204,15 +197,21 @@ namespace hemelb
 
             void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
             site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
-            const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber, const util::Vector3D<
-                site_t>& localSiteCoords) const;
+            const util::Vector3D<site_t>
+            GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
             unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
             void ReadBlock(site_t block, io::writers::xdr::XdrReader* reader);
+            const site_t* GetFluidSiteCountsOnEachProc() const;
+            site_t GetFluidSiteCountOnProc(proc_t proc) const;
 
           public:
             // TODO public temporarily, until all usages are internal to the class.
             unsigned int log2BlockSize;
+            // Array containing numbers of fluid sites on each processor.
+            site_t* fluidSitesOnEachProcessor;
+            // Hold the min and max site coordinates
+            util::Vector3D<site_t> globalSiteMins, globalSiteMaxes;
 
           private:
             site_t mSitesPerBlockVolumeUnit;
@@ -230,10 +229,9 @@ namespace hemelb
             GeometryReader(const bool reserveSteeringCore);
             ~GeometryReader();
 
-            void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
-                                  lb::LbmParameters* bLbmParams,
-                                  configuration::SimConfig* bSimConfig,
-                                  reporting::Timers &timings);
+            GlobalLatticeData* LoadAndDecompose(lb::LbmParameters* bLbmParams,
+                                                std::string& dataFilePath,
+                                                reporting::Timers &timings);
 
           private:
             struct BlockLocation
@@ -398,12 +396,51 @@ namespace hemelb
             bool participateInTopology;
         };
 
+        class NeighbouringProcessor
+        {
+          public:
+            // Rank of the neighbouring processor.
+            proc_t Rank;
+
+            // The number of distributions shared between this neighbour and the current processor.
+            site_t SharedFCount;
+
+            // Index on this processor of the first distribution shared between this
+            // neighbour and the current processor.
+            site_t FirstSharedF;
+        };
+
+        /**
+         * The protected default constructor does nothing. It exists to allow derivation from this
+         * class for the purpose of testing.
+         * @return
+         */
+        LatticeData();
+        LatticeData(LocalLatticeData* localLattice, GlobalLatticeData* globalLattice);
+
         void SetSiteData(site_t siteIndex, unsigned int siteData);
         void SetWallNormal(site_t siteIndex, double normal[3]);
         void SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
+        void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
+                                       proc_t localRank,
+                                       const unsigned int* iSiteDataForThisRank);
+        void CountCollisionTypes(const unsigned int * lThisRankSiteData);
+        void InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc);
+        void Initialise();
 
         LocalLatticeData localLatDat;
         GlobalLatticeData globLatDat;
+
+        site_t totalFluidSites;
+
+        site_t* f_recv_iv;
+        // Number of local distributions shared with neighbouring processors.
+        site_t totalSharedFs;
+        // For each processor in the topology, holds the index into the
+        // neighbouring processor vector.
+        proc_t* neighbourIndexFromProcRank;
+        // The vector of all neighbouring processors.
+        std::vector<NeighbouringProcessor> neighbouringProcs;
     };
   }
 }

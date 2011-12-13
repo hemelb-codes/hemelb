@@ -15,7 +15,7 @@ namespace hemelb
       mWallNormalAtSite = NULL;
     }
 
-    void LatticeData::LocalLatticeData::Initialise(site_t iLocalFluidSites)
+    LatticeData::LocalLatticeData::LocalLatticeData(site_t iLocalFluidSites)
     {
       LocalFluidSites = iLocalFluidSites;
 
@@ -25,6 +25,9 @@ namespace hemelb
       mSiteData = new unsigned int[LocalFluidSites];
       mWallNormalAtSite = new double[LocalFluidSites * 3];
       mDistanceToWall = new double[LocalFluidSites * (D3Q15::NUMVECTORS - 1)];
+
+      FOld = NULL;
+      FNew = NULL;
     }
 
     void LatticeData::LocalLatticeData::SetSharedSiteCount(site_t iSharedCount)
@@ -40,18 +43,12 @@ namespace hemelb
 
     LatticeData::LocalLatticeData::~LocalLatticeData()
     {
-      if (FOld != NULL)
-        delete[] FOld;
-      if (FNew != NULL)
-        delete[] FNew;
-      if (mSiteData != NULL)
-        delete[] mSiteData;
-      if (mFNeighbours != NULL)
-        delete[] mFNeighbours;
-      if (mDistanceToWall != NULL)
-        delete[] mDistanceToWall;
-      if (mWallNormalAtSite != NULL)
-        delete[] mWallNormalAtSite;
+      delete[] FOld;
+      delete[] FNew;
+      delete[] mSiteData;
+      delete[] mFNeighbours;
+      delete[] mDistanceToWall;
+      delete[] mWallNormalAtSite;
     }
 
     site_t LatticeData::LocalLatticeData::GetStreamedIndex(site_t iSiteIndex,

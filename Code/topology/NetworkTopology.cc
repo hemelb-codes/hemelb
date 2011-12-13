@@ -35,8 +35,6 @@ namespace hemelb
         localRank = (proc_t) tempRank;
 
         *oSuccess = InitialiseMachineInfo();
-
-        FluidSitesOnEachProcessor = new site_t[processorCount];
       }
     }
 
@@ -46,8 +44,6 @@ namespace hemelb
       {
         MPI_Finalize();
 
-        delete[] NeighbourIndexFromProcRank;
-        delete[] FluidSitesOnEachProcessor;
         delete[] ProcCountOnEachMachine;
         delete[] MachineIdOfEachProc;
       }

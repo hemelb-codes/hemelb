@@ -86,7 +86,6 @@ namespace hemelb
           const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long firstDescent = base::GetFirstDescending();
-          const unsigned long traversalLength = base::GetTraverseTime();
 
           for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {

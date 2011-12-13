@@ -88,8 +88,7 @@ namespace hemelb
       mOutletWallCollision = new tInletOutletWallCollision(initParams);
     }
 
-    void LBM::Initialise(site_t* iFTranslator,
-                         vis::Control* iControl,
+    void LBM::Initialise(vis::Control* iControl,
                          boundaries::BoundaryValues* iInletValues,
                          boundaries::BoundaryValues* iOutletValues,
                          util::UnitConverter* iUnits)
@@ -99,8 +98,6 @@ namespace hemelb
       mUnits = iUnits;
 
       InitCollisions();
-
-      receivedFTranslator = iFTranslator;
 
       SetInitialConditions();
 
@@ -138,22 +135,7 @@ namespace hemelb
     {
       timer.Start();
 
-      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
-
-      for (std::vector<hemelb::topology::NeighbouringProcessor>::const_iterator it =
-          netTop->NeighbouringProcs.begin(); it != netTop->NeighbouringProcs.end(); it++)
-      {
-        // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
-                                          (int) (*it).SharedFCount,
-                                           (*it).Rank);
-
-        // Request the send from the right bit of FNew.
-        mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
-                                       (int) (*it).SharedFCount,
-                                        (*it).Rank);
-
-      }
+      mLatDat->SendAndReceive(mNet);
 
       timer.Stop();
     }
@@ -218,13 +200,7 @@ namespace hemelb
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
-      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
-
-      for (site_t i = 0; i < netTop->TotalSharedFs; i++)
-      {
-        *mLatDat->GetFNew(receivedFTranslator[i])
-            = *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
-      }
+      mLatDat->CopyReceived();
 
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = 0;
@@ -345,20 +321,6 @@ namespace hemelb
       }
     }
 
-    void LBM::SetSiteMinima(site_t const * const minima) {
-      for (int ii = 0; ii < 3; ++ii)
-      {
-        siteMins[ii] = minima[ii];
-      }
-    }
-
-    void LBM::SetSiteMaxima(site_t const * const maxima) {
-      for (int ii = 0; ii < 3; ++ii)
-      {
-        siteMaxes[ii] = maxima[ii];
-      }
-    }
-
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
@@ -406,9 +368,6 @@ namespace hemelb
 
     LBM::~LBM()
     {
-      // Delete the translator between received location and location in f_new.
-      delete[] receivedFTranslator;
-
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
       delete mWallCollision;
