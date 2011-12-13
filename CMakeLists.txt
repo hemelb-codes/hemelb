@@ -28,7 +28,7 @@ add_subdirectory(dependencies)
 
 ExternalProject_Add(
    hemelb
-	URL ${PROJECT_SOURCE_DIR}/Code	
+	SOURCE_DIR ${PROJECT_SOURCE_DIR}/Code	
 	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
 	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> 
 	-DDEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
