@@ -94,15 +94,7 @@ namespace hemelb
         {
           return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
         }
-        /**
-         * Number of fluid sites assigned to processor.
-         * @param n Processor number to be investigated.
-         * @return Number of fluid sites assigned to that processor.
-         */
-        size_t FluidSitesOnProcessor(int n) const
-        {
-          return instance.FluidSitesOnEachProcessor[n];
-        }
+
         /**
          * Total number of MPI nodes in the communicator.
          * @return Total number of processors, some of which may be shared on a single machine.
