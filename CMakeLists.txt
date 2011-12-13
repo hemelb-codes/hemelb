@@ -25,10 +25,10 @@ set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to 
 add_subdirectory(dependencies)
 	
 # ------ HemeLB ------------------
-
+message("${PROJECT_SOURCE_DIR}/Code")
 ExternalProject_Add(
    hemelb
-	SOURCE_DIR ${PROJECT_SOURCE_DIR}/Code	
+	URL ${PROJECT_SOURCE_DIR}/Code	
 	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
 	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> 
 	-DDEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
@@ -56,4 +56,4 @@ if (HEMELB_BUILD_UNITTESTS)
 	INSTALL(FILES ${install_dir}/bin/unittests_hemelb DESTINATION bin)
 endif()
 
-add_dependencies(hemelb cppunit parmetis tinyxml)
+add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate)
