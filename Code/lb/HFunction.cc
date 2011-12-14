@@ -21,7 +21,7 @@ namespace hemelb
       {
         dH += (f_alpha[ii] < 0.0 ?
           -1.0 :
-          1.0) * (mFEq[ii] - mF[ii]) * (1.0 + log(fabs(f_alpha[ii]) / D3Q15::EQMWEIGHTS[ii]));
+          1.0) * (mFEq[ii] - mF[ii]) * (1.0 + std::log(fabs(f_alpha[ii]) / D3Q15::EQMWEIGHTS[ii]));
       }
     }
 
@@ -66,7 +66,7 @@ namespace hemelb
     {
       // Assumes distributions are unlikely to be 0.0
       // If they go negative stabilityTester catches it anyway
-      return fi * log(fi * wi_1);
+      return fi * std::log(fi * wi_1);
     }
 
   }
