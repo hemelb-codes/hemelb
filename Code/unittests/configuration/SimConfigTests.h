@@ -1,7 +1,7 @@
 #ifndef HEMELB_UNITTESTS_CONFIGURATION_SIMCONFIGTESTS_H
 #define HEMELB_UNITTESTS_CONFIGURATION_SIMCONFIGTESTS_H
 #include "configuration/SimConfig.h"
-#include "unittests/resources/Resource.h"
+#include "resources/Resource.h"
 namespace hemelb
 {
   namespace unittests
