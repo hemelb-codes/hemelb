@@ -1,4 +1,6 @@
 #include "CommandLine.h"
+#include <cstring>
+#include <cstdlib>
 namespace hemelb
 {
   namespace configuration
@@ -36,25 +38,25 @@ namespace hemelb
       {
         const char* const paramName = argv[ii];
         const char* const paramValue = argv[ii + 1];
-        if (strcmp(paramName, "-in") == 0)
+        if (std::strcmp(paramName, "-in") == 0)
         {
           inputFile = std::string(paramValue);
         }
-        else if (strcmp(paramName, "-out") == 0)
+        else if (std::strcmp(paramName, "-out") == 0)
         {
           outputDir = std::string(paramValue);
         }
-        else if (strcmp(paramName, "-s") == 0)
+        else if (std::strcmp(paramName, "-s") == 0)
         {
           char * dummy;
           snapshotsPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
-        else if (strcmp(paramName, "-i") == 0)
+        else if (std::strcmp(paramName, "-i") == 0)
         {
           char *dummy;
           imagesPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
-        else if (strcmp(paramName, "-ss") == 0)
+        else if (std::strcmp(paramName, "-ss") == 0)
         {
           char *dummy;
           steeringSessionId = (unsigned int) (strtoul(paramValue, &dummy, 10));
