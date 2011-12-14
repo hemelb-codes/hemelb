@@ -25,7 +25,7 @@ set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to 
 add_subdirectory(dependencies)
 	
 # ------ HemeLB ------------------
-
+message("${PROJECT_SOURCE_DIR}/Code")
 ExternalProject_Add(
    hemelb
 	URL ${PROJECT_SOURCE_DIR}/Code	
@@ -56,4 +56,4 @@ if (HEMELB_BUILD_UNITTESTS)
 	INSTALL(FILES ${install_dir}/bin/unittests_hemelb DESTINATION bin)
 endif()
 
-add_dependencies(hemelb cppunit parmetis tinyxml)
+add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate)

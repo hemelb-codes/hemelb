@@ -1,6 +1,7 @@
 from templates import *
 from machines import *
 from fabric.contrib.project import *
+import time
 
 @task
 def clone():
@@ -59,6 +60,16 @@ def build_python_tools():
 		run("python setup.py build")
 
 @task
+def stat():
+	run("qstat")
+	
+@task
+def monitor():
+	while True:
+		time.sleep(30)
+		execute(stat)
+
+@task
 def configure():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
@@ -70,6 +81,7 @@ def configure():
 @task
 def build(verbose=False):
 	with cd(env.build_path):
+		run(template("rm -rf hemelb_prefix/build"))
 		with prefix(env.build_prefix):
 			if verbose:
 				run("make VERBOSE=1")
@@ -129,7 +141,7 @@ def with_config(name):
 @task
 def fetch_configs(config=''):
 	with_config(config)
-	local(template("rsync -pthrvz $host:$job_config_path/ $job_config_path_local"))
+	local(template("rsync -pthrvz $username@$remote:$job_config_path/ $job_config_path_local"))
 
 @task
 def put_configs(config=''):
@@ -146,7 +158,7 @@ def put_results(name=''):
 @task
 def fetch_results(name=''):
 	with_job(name)
-	local(template("rsync -pthrvz $host:$job_results/ $job_results_local"))
+	local(template("rsync -pthrvz $username@$remote:$job_results/ $job_results_local"))
 
 @task
 def clear_results(name=''):
@@ -161,7 +173,7 @@ def test():
 def hemelb(**args):
 	options=dict(script='hemelb',
 		name='$config-$build_number-$machine_name-$nodes',
-		nodes=4,images=10, snapshots=10, steering=1111)
+		nodes=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
 	options.update(args)
 	execute(put_configs,args['config'])
 	execute(job,**options)
