@@ -64,7 +64,9 @@ def complete_environment():
 	env.run_prefix_commands.append(template("export PYTHONPATH=$$PYTHONPATH:$tools_build_path"))
 	env.run_prefix=" && ".join(module_commands+env.run_prefix_commands) or 'echo Running...'
 	
-	env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
+	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
+	# check_output is 2.7 python and later only. Revert to oldfashioned popen.
+	env.build_number=os.popen(template("hg id -i -rtip $hg/$repository"))
 	#env.build_number=run("hg id -i -r tip")
 	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
 	
