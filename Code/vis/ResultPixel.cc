@@ -58,7 +58,6 @@ namespace hemelb
       if (normalRayPixel != NULL)
       {
         // store velocity volume rendering colour
-        float dt = normalRayPixel->GetCumulativeLengthInFluid();
         normalRayPixel->GetVelocityColour(rgb_data, visSettings, iDomainStats);
 
         float stress = normalRayPixel->GetNearestStress();

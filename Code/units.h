@@ -12,20 +12,21 @@ namespace hemelb
   typedef int64_t site_t;
   typedef int proc_t;
   typedef double distribn_t;
+  typedef unsigned Direction;
 
   // ------- NEW POLICY -------------
-   // Types should reflect the meaning of a quantity as well as the precision
-   // the type name should reflect the dimensionality and the base of the units
+  // Types should reflect the meaning of a quantity as well as the precision
+  // the type name should reflect the dimensionality and the base of the units
 
-  typedef double PhysicalDensity ;
-  typedef distribn_t LatticeDensity ;
-  typedef float ScreenDensity ;
+  typedef double PhysicalDensity;
+  typedef distribn_t LatticeDensity;
+  typedef float ScreenDensity;
 
   typedef double PhysicalPressure;
   typedef distribn_t LatticePressure;
 
   typedef double PhysicalStress;
   typedef distribn_t LatticeStress;
-  typedef float ScreenStress ;
+  typedef float ScreenStress;
 }
 #endif //HEMELB_UNITS_H
