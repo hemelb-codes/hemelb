@@ -44,6 +44,33 @@ namespace hemelb
           }
         }
 
+        /**
+         * Helper for performing x^n when n is an integer. (And ought to be more efficient than
+         * using pow in cmath).
+         *
+         * Note that this function doesn't check for bad maths like 0^0.
+         *
+         * @param x
+         * @param n
+         * @return
+         */
+        template<typename T>
+        static inline T IntegerPower(T x, long n)
+        {
+          if (n == 0)
+          {
+            return (T) 1;
+          }
+          else if (n > 0)
+          {
+            return x * IntegerPower(x, n - 1);
+          }
+          else
+          {
+            return IntegerPower(x, n + 1) / x;
+          }
+        }
+
         // If number < lowerBound, returns lowerBound. If number >
         // upperBound, returns upperBound If number between bounds, returns
         // number.  Consider the behaviour undefined if lowerBound >
