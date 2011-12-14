@@ -15,7 +15,6 @@ def deploy_cold():
 	execute(clone)
 	execute(clear_build)
 	execute(prepare_paths)
-	execute(send_distributions)
 	execute(configure)
 	execute(build)
 	execute(install)
