@@ -35,6 +35,8 @@ if (NOT USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
 endif()
 
+
+
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${DEPENDENCIES_INSTALL_PATH}/include)
@@ -44,6 +46,20 @@ list(APPEND CMAKE_LIBRARY_PATH ${DEPENDENCIES_INSTALL_PATH}/lib)
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 SET(CMAKE_INSTALL_RPATH "${DEPENDENCIES_PATH}/lib")
+
+#-------Check for platform dependent features ----
+
+include(CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
+CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
+
+if(HAVE_ISNAN)
+  add_definitions(-DHAVE_ISNAN)
+endif()
+
+if( HAVE_STD_ISNAN)
+  add_definitions(-D HAVE_STD_ISNAN)
+endif()
 
 # ------MPI------------------
 # Require MPI for this project:
