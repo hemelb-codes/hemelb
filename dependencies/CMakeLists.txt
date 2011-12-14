@@ -136,6 +136,7 @@ else()
 		INSTALL_COMMAND <SOURCE_DIR>/b2 install
 		CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA}"
 		BUILD_IN_SOURCE 1
+		TIMEOUT 600 #Because the boost tarball can take a long time to extract
 	)
 	ExternalProject_Add_Step(
 		boost mpi
