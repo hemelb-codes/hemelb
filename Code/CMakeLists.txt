@@ -91,6 +91,21 @@ endif()
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
 
+#-------------Resources -----------------------
+
+set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
+file(MAKE_DIRECTORY ${BUILD_RESOURCE_PATH})
+set(INSTALL_RESOURCE_PATH ${CMAKE_INSTALL_PREFIX}/share/hemelb/resources)
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
+  "${PROJECT_BINARY_DIR}/resources/path_parameters.h"
+  )
+ 
+# add the binary tree to the search path for include files
+# so that we will find TutorialConfig.h
+include_directories("${PROJECT_BINARY_DIR}")
+
 # ----------- HemeLB ------------------s
 if (APPLE)
 	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
@@ -121,8 +136,8 @@ foreach(subdir ${package_subdirs})
 	set(lib "hemelb_${subdir}")
 	list(APPEND heme_libraries ${lib})
 	add_subdirectory(${subdir})
-endforeach(subdir)
-
+endforeach()
+add_subdirectory(resources)
 target_link_libraries(hemelb 
 	${heme_libraries}
 	${MPI_LIBRARIES}
@@ -149,5 +164,14 @@ if(HEMELB_BUILD_UNITTESTS)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES})
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-
+	list(APPEND RESOURCES unittests/resources/four_cube.dat unittests/resources/four_cube.xml unittests/resources/config.xml)
 endif()
+
+#-------- Copy and install resources --------------
+
+foreach(resource ${RESOURCES})
+	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
+endforeach()
+
+file(GLOB ${BUILD_RESOURCE_PATH}/* resource_files)
+INSTALL(TARGETS ${resource_files} RESOURCE DESTINATION ${BUILD_RESOURCE_PATH})

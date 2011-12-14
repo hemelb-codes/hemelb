@@ -3,7 +3,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "configuration/CommandLine.h"
-#include "unittests/resources/Resource.h"
+#include "resources/Resource.h"
 #include "unittests/helpers/FolderTestFixture.h"
 
 namespace hemelb
