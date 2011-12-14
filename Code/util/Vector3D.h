@@ -192,6 +192,29 @@ namespace hemelb
           return Vector3D(x * multiplier, y * multiplier, z * multiplier);
         }
 
+        //Scalar division
+        template<class DividerT>
+        Vector3D<T> operator/(const DividerT divider) const
+        {
+          return Vector3D(x / divider, y / divider, z / divider);
+        }
+
+        /**
+         * Pointwise multiplication
+         */
+        Vector3D<T> PointwiseMultiplication(const Vector3D<T>& rightArgument) const
+        {
+          return Vector3D(x * rightArgument.x, y * rightArgument.y, z * rightArgument.z);
+        }
+
+        /**
+         * Pointwise division
+         */
+        Vector3D<T> PointwiseDivision(const Vector3D<T>& rightArgument) const
+        {
+          return Vector3D(x / rightArgument.x, y / rightArgument.y, z / rightArgument.z);
+        }
+
         //Updates the Vector3D in with the smallest of each of the x, y and z
         //co-ordinates independently of both Vector3Ds
         void UpdatePointwiseMin(const Vector3D<T>& iCompareVector)
