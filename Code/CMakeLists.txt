@@ -10,6 +10,7 @@ option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(USE_STREAKLINES "Calculate streakline images" ON)
 option(USE_MPI_COMPILER_WRAPPERS "Use MPI wrappers instead of options from FindMPI" OFF)
+option(USE_BOOST "Use Boost" OFF)
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
@@ -63,13 +64,13 @@ if(TIXML_USE_STL)
 	add_definitions(-DTIXML_USE_STL)
 endif()
 include_directories(${TINYXML_INCLUDE_DIR})
-
-#------BOOST ------------------
-SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
-SET(BOOST_LIBS mpi regex)
-find_package(Boost 1.48 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-
+if(USE_BOOST)
+	#------BOOST ------------------
+	SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
+	SET(BOOST_LIBS mpi regex)
+	find_package(Boost 1.48 REQUIRED)
+	include_directories(${Boost_INCLUDE_DIRS})
+endif()
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})

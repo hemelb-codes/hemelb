@@ -24,10 +24,15 @@ def deploy_cold():
 @task
 def update_build():
 	execute(update)
+	execute(require_recopy)
 	execute(configure)
 	execute(build)
 	execute(install)
 	execute(build_python_tools)
+
+@task 
+def require_recopy():
+	run(template("touch $build_path/hemelb-prefix/src/hemelb-stamp/hemelb-mkdir"))
 
 @task
 def update():
