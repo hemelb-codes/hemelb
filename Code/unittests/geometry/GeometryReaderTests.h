@@ -2,7 +2,7 @@
 #define HEMELB_UNITTESTS_GEOMETRY_GEOMETRYREADERTESTS_H
 #include "geometry/LatticeData.h"
 #include <cppunit/TestFixture.h>
-#include "unittests/resources/Resource.h"
+#include "resources/Resource.h"
 #include "unittests/FourCubeLatticeData.h"
 namespace hemelb
 {
