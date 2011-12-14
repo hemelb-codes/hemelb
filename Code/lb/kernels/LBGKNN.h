@@ -78,7 +78,7 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            std::assert( (index < (site_t) mTau.size() ) );
+            assert( (index < (site_t) mTau.size() ) );
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
@@ -173,8 +173,8 @@ namespace hemelb
                                                                 mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
-            std::assert( (!std::isinf(localTau)) );
-            std::assert( (!std::isnan(localTau)) );
+            assert( (!std::isinf(localTau)) );
+            assert( (!std::isnan(localTau)) );
           }
       };
     }
