@@ -3,7 +3,7 @@
 #include <cppunit/TestFixture.h>
 #include <cmath>
 #include <iomanip>
-#include "unittests/resources/Resource.h"
+#include "resources/Resource.h"
 namespace hemelb
 {
   namespace unittests

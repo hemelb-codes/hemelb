@@ -1,0 +1,6 @@
+namespace hemelb{
+	namespace resources{
+		static const std::string build_resource_path="@BUILD_RESOURCE_PATH@";
+		static const std::string install_resource_path="@INSTALL_RESOURCE_PATH@";
+	}
+}
