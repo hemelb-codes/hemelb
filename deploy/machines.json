@@ -31,6 +31,12 @@
 		"config_path_template":"/store3/blood/$username/FabricHemeLb/config_files"
 	},
 	"hector":{
+		"remote":"login.hector.ac.uk",
+		"remote_path_template":"/home/e10/e10/$username/FabricHemeLb",
+		"results_path_template":"/work/e10/e10/$username/FabricHemeLb/results",
+		"config_path_template":"/work/e10/e10/$username/FabricHemeLb/config_files",
+		"modules":["load CMake/2.8.6"],
+		"tools_build":"TODO",
 		"cmake_options":{
 			"USE_ALL_WARNINGS_GNU":"OFF",
 			"CMAKE_CXX_COMPILER":"CC",

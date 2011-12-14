@@ -112,7 +112,60 @@ else()
 endif()
 
 # ---------BOOST -----------------------
-#ExternalProject_Add(
-#   boost_project
-#	URL http://gitorious.org/boost/cmake/archive-tarball/cmake-1.48.0.tar.gz
-#)
+set(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
+set(BOOST_LIBS mpi regex)
+string(REPLACE ";" "," BOOST_LIBS_COMMA "${BOOST_LIBS}")
+find_package(Boost 1.48 COMPONENTS ${BOOST_LIBS})
+if (BOOST_FOUND)
+	message("Boost 1.48 already installed, no need to download")
+else()
+	message("Bost not installed, will download and build")
+	find_file(BOOST_TARBALL boost_1_48_0.tar.gz
+		DOC "Path to download BOOST (can be url http://)"
+		PATHS ${DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT BOOST_TARBALL)
+		set(BOOST_TARBALL http://sourceforge.net/projects/boost/files/boost/1.48.0/boost_1_48_0.tar.gz
+			CACHE STRING "Path to download BOOST (can be local file://)" FORCE)
+	endif()
+	ExternalProject_Add(
+   	boost
+		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		URL ${BOOST_TARBALL}
+		BUILD_COMMAND <SOURCE_DIR>/b2
+		INSTALL_COMMAND <SOURCE_DIR>/b2 install
+		CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA}"
+		BUILD_IN_SOURCE 1
+		TIMEOUT 600 #Because the boost tarball can take a long time to extract
+	)
+	ExternalProject_Add_Step(
+		boost mpi
+		COMMAND cat ${DEPENDENCIES_PATH}/patches/boost_options.jam >> project-config.jam
+		DEPENDEES configure
+		DEPENDERS build
+		WORKING_DIRECTORY <SOURCE_DIR>
+	)
+endif()
+
+#----------------Google C++ template ----------------
+find_package(CTemplate)
+if (CTEMPLATE_FOUND)
+	message("Ctemplate already installed, no need to download")
+else()
+	message("Ctemplate not installed, will download and build")
+	find_file(CTEMPLATE_TARBALL ctemplate-1.0.tar.gz
+		DOC "Path to download CTemplate (can be url http://)"
+		PATHS ${DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT CTEMPLATE_TARBALL)
+		set(CTEMPLATE_TARBALL http://google-ctemplate.googlecode.com/files/ctemplate-1.0.tar.gz
+			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
+	endif()
+	ExternalProject_Add(
+   	ctemplate
+		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		URL ${CTEMPLATE_TARBALL}
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
+		BUILD_IN_SOURCE 1
+	)
+endif()

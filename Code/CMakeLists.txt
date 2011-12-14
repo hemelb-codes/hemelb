@@ -64,6 +64,16 @@ if(TIXML_USE_STL)
 endif()
 include_directories(${TINYXML_INCLUDE_DIR})
 
+#------BOOST ------------------
+SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
+SET(BOOST_LIBS mpi regex)
+find_package(Boost 1.48 REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+
+#------CTemplate ----------------
+find_package(CTemplate REQUIRED)
+include_directories(${CTEMPLATE_INCLUDE_DIR})
+
 # ----------- HemeLB ------------------s
 if (APPLE)
 	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
@@ -101,6 +111,7 @@ target_link_libraries(hemelb
 	${MPI_LIBRARIES}
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
+	${Boost_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 
@@ -117,7 +128,9 @@ if(HEMELB_BUILD_UNITTESTS)
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}
 		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY})
+		${CPPUNIT_LIBRARY}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES})
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 
 endif()
