@@ -173,8 +173,14 @@ namespace hemelb
                                                                 mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
+#ifdef HAVE_STD_ISNAN
             assert( (!std::isinf(localTau)) );
             assert( (!std::isnan(localTau)) );
+#endif
+#ifdef HAVE_ISNAN
+            assert( (!isinf(localTau)) );
+            assert( (!isnan(localTau)) );
+#endif
           }
       };
     }
