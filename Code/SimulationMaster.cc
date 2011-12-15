@@ -503,6 +503,7 @@ void SimulationMaster::RunSimulation()
   timings.Reduce();
   if (IsCurrentProcTheIOProc())
   {
+    reporter->FillDictionary();
     reporter->Write();
   }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
