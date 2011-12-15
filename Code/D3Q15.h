@@ -21,6 +21,7 @@ namespace hemelb
 
       // The index of the inverse direction of each discrete velocity vector
       static const int INVERSEDIRECTIONS[NUMVECTORS];
+
       /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) kinetic (non-conserved). */
       static const unsigned NUM_KINETIC_MOMENTS = 11;
 
@@ -29,7 +30,6 @@ namespace hemelb
 
       /** Diagonal matrix REDUCED_MOMENT_BASIS * REDUCED_MOMENT_BASIS'. See #61 for the MATLAB code used to compute it (in case REDUCED_MOMENT_BASIS is modified). */
       static const double BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS];
-
 
       /**
        * Projects a velocity distributions vector into the (reduced) MRT moment space.
