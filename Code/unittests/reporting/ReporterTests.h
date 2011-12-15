@@ -7,7 +7,6 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
-#include "ctemplate/unittests/template_test_util.h"
 #include <iomanip>
 namespace hemelb
 {
@@ -25,8 +24,6 @@ namespace hemelb
       {
         CPPUNIT_TEST_SUITE( ReporterTests);
         CPPUNIT_TEST( TestInit);
-        CPPUNIT_TEST( TestImage);
-        CPPUNIT_TEST( TestSnapshot);
         CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
         public:
         void setUp()
@@ -50,7 +47,6 @@ namespace hemelb
                                       *mockTimers,
                                       *state,
                                       *incompChecker);
-          dictionary=new ctemplate::TemplateDictionaryPeer(&reporter->GetDictionary());
         }
 
         void tearDown()
@@ -60,29 +56,11 @@ namespace hemelb
           delete realTimers;
           delete incompChecker;
           delete net;
-          delete dictionary;
         }
 
         void TestInit()
         {
           AssertValue("exampleinputfile","CONFIG");
-        }
-
-        void TestImage()
-        {
-          for (int times = 0; times < 5; times++)
-          {
-            reporter->Image();
-          }
-          AssertTemplate("IM1 IM2 IM3 IM4 IM5 ","{{#IMAGE}}IM{{COUNT}} {{/IMAGE}}");
-        }
-        void TestSnapshot()
-        {
-          for (int times = 0; times < 5; times++)
-          {
-            reporter->Snapshot();
-          }
-          AssertTemplate("SN1 SN2 SN3 SN4 SN5 ","{{#SNAPSHOT}}SN{{COUNT}} {{/SNAPSHOT}}");
         }
 
         void TestMainReport()
@@ -113,7 +91,10 @@ namespace hemelb
             reporter->FillDictionary();
 
             CheckTimingsTable();
+            AssertTemplate("","{{#UNSTABLE}} unstable{{/UNSTABLE}}");
             AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ","{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertValue("3","IMAGES");
+            AssertValue("4","SNAPSHOTS");
             AssertValue("2","CYCLES");
             AssertValue("1000","STEPS");
             AssertValue("10.000","STEPS_PER_SECOND");
@@ -176,7 +157,6 @@ namespace hemelb
         IncompressibilityCheckerMock *incompChecker;
         net::Net *net;
         FourCubeLatticeData *latticeData;
-        ctemplate::TemplateDictionaryPeer *dictionary;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);

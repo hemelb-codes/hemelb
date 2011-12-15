@@ -28,22 +28,19 @@ namespace hemelb
         ClockPolicy,  CommsPolicy, BroadcastPolicy>::Image()
     {
       imageCount++;
-      dictionary.AddSectionDictionary("IMAGE")->SetIntValue("COUNT",imageCount);
-      ////WriterPolicy::Print("Image written: %u\n", imageCount);
     }
 
     template<class ClockPolicy,  class CommsPolicy, class BroadcastPolicy> void ReporterBase<
         ClockPolicy,  CommsPolicy, BroadcastPolicy>::Snapshot()
     {
       snapshotCount++;
-      dictionary.AddSectionDictionary("SNAPSHOT")->SetIntValue("COUNT",snapshotCount);
     }
 
     template<class ClockPolicy,  class CommsPolicy, class BroadcastPolicy> void ReporterBase<
     ClockPolicy,  CommsPolicy, BroadcastPolicy>::Write(const std::string &ctemplate,const std::string &as)
     {
         std::string output;
-        ctemplate::ExpandTemplate(ctemplate, ctemplate::DO_NOT_STRIP, &dictionary, &output);
+        ctemplate::ExpandTemplate(ctemplate, ctemplate::STRIP_BLANK_LINES, &dictionary, &output);
         std::string to=path+"/"+as;
         std::fstream file(to.c_str(),std::ios_base::out);
         file<<output<<std::flush;
@@ -56,6 +53,8 @@ namespace hemelb
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
       unsigned long cycles = state.GetCycleId() - 1;
+      dictionary.SetIntValue("IMAGES",imageCount);
+      dictionary.SetIntValue("SNAPSHOTS",snapshotCount);
       dictionary.SetIntValue("THREADS",CommsPolicy::GetProcessorCount());
       dictionary.SetIntValue("MACHINES",CommsPolicy::GetMachineCount());
       dictionary.SetIntValue("DEPTHS",CommsPolicy::GetDepths());
@@ -86,28 +85,34 @@ namespace hemelb
         proc->SetIntValue("SITES",fluidSitesOnEachProcessor[n]);
       }
 
-      std::vector<double> normalisations;
-      normalisations.push_back(1.0);
-      normalisations.push_back(1.0);
-      normalisations.push_back(1.0);
-      normalisations.push_back(1.0);
-      normalisations.push_back(cycles);
-      normalisations.push_back(imageCount);
-      normalisations.push_back(cycles);
-      normalisations.push_back(cycles);
-      normalisations.push_back(cycles);
-      normalisations.push_back(snapshotCount);
-      normalisations.push_back(1.0);
-      // If this assertion trips, it means you have added a new timer and not defined its normalisation factor above.
-      assert(normalisations.size() == Timers::numberOfTimers);
       for (unsigned int ii = 0; ii < Timers::numberOfTimers; ii++)
       {
+        double normalisation=1.0;
+        std::string normalisationLabel="simulation";
+        switch (ii){
+          case Timers::visualisation :
+            normalisation=imageCount;
+            normalisationLabel="image";
+            break;
+          case Timers::snapshot :
+            normalisation=snapshotCount;
+            normalisationLabel="snapshot";
+            break;
+          case Timers::lb :
+          case Timers::monitoring :
+          case Timers::mpiSend :
+          case Timers::mpiWait :
+            normalisation=cycles;
+            normalisationLabel="cycle";
+            break;
+        }
         ctemplate::TemplateDictionary *timer=dictionary.AddSectionDictionary("TIMER");
         timer->SetValue("NAME",timerNames[ii]);
-        timer->SetFormattedValue("LOCAL","%.3g",timings[ii].Get()/ normalisations[ii] );
-        timer->SetFormattedValue("MIN","%.3g",timings.Mins()[ii] / normalisations[ii] );
-        timer->SetFormattedValue("MEAN","%.3g",timings.Means()[ii]/ normalisations[ii] );
-        timer->SetFormattedValue("MAX","%.3g",timings.Maxes()[ii] / normalisations[ii] );
+        timer->SetValue("NORMALISATION",normalisationLabel);
+        timer->SetFormattedValue("LOCAL","%.3g",timings[ii].Get()/ normalisation );
+        timer->SetFormattedValue("MIN","%.3g",timings.Mins()[ii] / normalisation );
+        timer->SetFormattedValue("MEAN","%.3g",timings.Means()[ii]/ normalisation );
+        timer->SetFormattedValue("MAX","%.3g",timings.Maxes()[ii] / normalisation );
       }
     }
   }
