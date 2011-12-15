@@ -25,6 +25,7 @@ namespace hemelb
                                            1.0 / 72.0 };
 
   const int D3Q15::INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
+
   /*
    *  Kinetic moments defined in d'Humieres 2002. To get the matrix below, columns 8 and 9 are respectively permuted
    *  with columns 14 and 11 to match HemeLB's lattice velocitiy ordering.
