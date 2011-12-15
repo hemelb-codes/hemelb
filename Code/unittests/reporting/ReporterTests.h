@@ -7,7 +7,7 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
-#include <functional>
+#include "ctemplate/unittests/template_test_util.h"
 #include <iomanip>
 namespace hemelb
 {
@@ -18,70 +18,75 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef ReporterBase<ClockMock, WriterMock, MPICommsMock, net::BroadcastMock> ReporterMock;
+      typedef ReporterBase<ClockMock,  MPICommsMock, net::BroadcastMock> ReporterMock;
       typedef lb::IncompressibilityChecker<net::BroadcastMock> IncompressibilityCheckerMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( ReporterTests);
-          CPPUNIT_TEST( TestInit);
-          CPPUNIT_TEST( TestImage);
-          CPPUNIT_TEST( TestSnapshot);
-          CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE( ReporterTests);
+        CPPUNIT_TEST( TestInit);
+        CPPUNIT_TEST( TestImage);
+        CPPUNIT_TEST( TestSnapshot);
+        CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
         public:
-          void setUp()
-          {
-            mockTimers = new TimersMock();
-            realTimers = new reporting::Timers();
-            state = new hemelb::lb::SimulationState(500, 2);
-            net = new net::Net();
-            latticeData = FourCubeLatticeData::Create(5); // The 5 here is to match the topology size in the MPICommsMock
-            lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
-            latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
-            incompChecker = new IncompressibilityCheckerMock(latticeData,
-                                                             net,
-                                                             state,
-                                                             *realTimers,
-                                                             10.0);
-            reporter = new ReporterMock("mock_path",
-                                        "exampleinputfile",
-                                        latticeData->GetFluidSiteCountsOnEachProc(),
-                                        1234,
-                                        *mockTimers,
-                                        *state,
-                                        *incompChecker);
-          }
+        void setUp()
+        {
+          mockTimers = new TimersMock();
+          realTimers = new reporting::Timers();
+          state = new hemelb::lb::SimulationState(500, 2);
+          net = new net::Net();
+          latticeData = FourCubeLatticeData::Create(5); // The 5 here is to match the topology size in the MPICommsMock
+          lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
+          latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
+          incompChecker = new IncompressibilityCheckerMock(latticeData,
+                                                           net,
+                                                           state,
+                                                           *realTimers,
+                                                           10.0);
+          reporter = new ReporterMock("mock_path",
+                                      "exampleinputfile",
+                                      latticeData->GetFluidSiteCountsOnEachProc(),
+                                      1234,
+                                      *mockTimers,
+                                      *state,
+                                      *incompChecker);
+          dictionary=new ctemplate::TemplateDictionaryPeer(&reporter->GetDictionary());
+        }
 
-          void tearDown()
-          {
-            delete reporter;
-            delete mockTimers;
-            delete realTimers;
-            delete incompChecker;
-            delete net;
+        void tearDown()
+        {
+          delete reporter;
+          delete mockTimers;
+          delete realTimers;
+          delete incompChecker;
+          delete net;
+          delete dictionary;
+        }
 
-          }
+        void TestInit()
+        {
+          AssertValue("exampleinputfile","CONFIG");
+        }
 
-          void TestInit()
+        void TestImage()
+        {
+          for (int times = 0; times < 5; times++)
           {
-            std::cerr << reporter->Results().back() << std::endl;
-            CPPUNIT_ASSERT_EQUAL((size_t) 8,
-                                 reporter->Results().back().find("config file:\n exampleinputfile\n"));
+            reporter->Image();
           }
+          AssertTemplate("IM1 IM2 IM3 IM4 IM5 ","{{#IMAGE}}IM{{COUNT}} {{/IMAGE}}");
+        }
+        void TestSnapshot()
+        {
+          for (int times = 0; times < 5; times++)
+          {
+            reporter->Snapshot();
+          }
+          AssertTemplate("SN1 SN2 SN3 SN4 SN5 ","{{#SNAPSHOT}}SN{{COUNT}} {{/SNAPSHOT}}");
+        }
 
-          void TestImage()
-          {
-            CheckRepeatedCallIncrementsCounter(std::mem_fun(&ReporterMock::Image),
-                                               std::string("Image written"));
-          }
-          void TestSnapshot()
-          {
-            CheckRepeatedCallIncrementsCounter(std::mem_fun(&ReporterMock::Snapshot),
-                                               std::string("Snapshot written"));
-          }
-
-          void TestMainReport()
-          {
+        void TestMainReport()
+        {
             // Mock up some timings
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++)
             {
@@ -105,61 +110,40 @@ namespace hemelb
             }
             CPPUNIT_ASSERT_EQUAL(3lu, state->GetCycleId());
             CPPUNIT_ASSERT_EQUAL(1001lu, state->GetTimeStepsPassed());
-            // Ok, we have our fixture -- now execute it.
-            reporter->Write();
-            // now we validate the lines from the report
-            for (int j = Timers::numberOfTimers - 1; j >= 0; j--)
-            {
-              CheckTimingsTable(j);
-            }
-            CheckLastMessageContains("Local \tMin \tMean \tMax");
-            CheckLastMessageContains("Per-proc timing data");
-            for (int j = 4; j >= 0; j--)
-            {
-              std::stringstream expectation;
-              expectation << "rank: " << j << ", fluid sites: "
-                  << latticeData->GetFluidSiteCountsOnEachProc()[j] << std::flush;
-              CheckLastMessageContains(expectation.str());
-            }
-            CheckLastMessageContains("Sub-domains info:");
-            CheckLastMessageContains("total time (s):                            0");
-            reporter->Results().pop_back();
-            reporter->Results().pop_back();
-            reporter->Results().pop_back();
-            CheckLastMessageContains("time steps per cycle: 500");
-            CheckLastMessageContains("time steps per second: 10.000");
-            CheckLastMessageContains("cycles and total time steps: 2, 1000");
-            CheckLastMessageContains("fluid sites: 1234");
-            CheckLastMessageContains("topology depths checked: 3");
-            CheckLastMessageContains("threads: 5, machines checked: 4");
-          }
+            reporter->FillDictionary();
+
+            CheckTimingsTable();
+            AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ","{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertValue("2","CYCLES");
+            AssertValue("1000","STEPS");
+            AssertValue("10.000","STEPS_PER_SECOND");
+            AssertValue("500","STEPS_PER_CYCLE");
+            AssertValue("1234","SITES");
+            AssertValue("3","DEPTHS");
+            AssertValue("4","MACHINES");
+        }
 
         private:
 
-          void CheckRepeatedCallIncrementsCounter(std::mem_fun_t<void, ReporterMock> method,
-                                                  const std::string &message)
-          {
-            for (int times = 0; times < 5; times++)
-            {
-              method(reporter);
-              std::stringstream expectation;
-              expectation << message << ": " << times + 1 << std::endl;
-              CheckLastMessageContains(expectation.str());
-            }
-          }
+        void AssertValue(const std::string & expectation, const std::string &symbol){
+          AssertTemplate(expectation,"{{"+symbol+"}}");
+        }
 
-          void CheckLastMessageContains(const std::string &expectation)
-          {
-            std::string &actual = reporter->Results().back();
-            CPPUNIT_ASSERT_MESSAGE(expectation + " : " + actual,
-                                   std::string::npos != actual.find(expectation));
-            reporter->Results().pop_back();
-          }
+        void AssertTemplate(const std::string &expectation, const std::string &ttemplate){
+          ctemplate::StringToTemplateCache("TestFor"+ttemplate,ttemplate,ctemplate::DO_NOT_STRIP);
+          std::string result;
+          CPPUNIT_ASSERT( ctemplate::ExpandTemplate("TestFor"+ttemplate, ctemplate::DO_NOT_STRIP, &reporter->GetDictionary(), &result) );
+          CPPUNIT_ASSERT_EQUAL(expectation,result);
+        }
 
-          void CheckTimingsTable(unsigned int row)
+
+        void CheckTimingsTable()
+        {
+
+          std::stringstream expectation;
+          expectation << std::setprecision(3);
+          for (unsigned int row = 0; row < Timers::numberOfTimers; row++)
           {
-            std::stringstream expectation;
-            expectation << std::setprecision(3);
             double normalisation = 1.0;
             if (row == Timers::snapshot)
             {
@@ -174,24 +158,25 @@ namespace hemelb
             {
               normalisation = 2.0;
             }
-            expectation << timerNames[row] << "\t\t" << row * 10.0 << "\t" << row * 15.0
-                / normalisation << "\t" << row * 10.0 / normalisation << "\t" << row * 5.0
-                / normalisation << std::flush;
-            CheckLastMessageContains(expectation.str());
+            expectation << "N" << timerNames[row] << "L" << row * 10.0 / normalisation << "MI" << row * 15.0
+                / normalisation << "ME" << row * 10.0 / normalisation << "MA" << row * 5.0
+                / normalisation << " " << std::flush;
           }
+          AssertTemplate(expectation.str(),"{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
+        }
 
         private:
-          ReporterMock *reporter;
+        ReporterMock *reporter;
 
-          // We need two sets of timers because the incompressibility checker is not templated over timing policy.
-          TimersMock *mockTimers;
-          reporting::Timers* realTimers;
+        // We need two sets of timers because the incompressibility checker is not templated over timing policy.
+        TimersMock *mockTimers;
+        reporting::Timers* realTimers;
 
-          lb::SimulationState *state;
-          IncompressibilityCheckerMock *incompChecker;
-          net::Net *net;
-          FourCubeLatticeData *latticeData;
-
+        lb::SimulationState *state;
+        IncompressibilityCheckerMock *incompChecker;
+        net::Net *net;
+        FourCubeLatticeData *latticeData;
+        ctemplate::TemplateDictionaryPeer *dictionary;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);

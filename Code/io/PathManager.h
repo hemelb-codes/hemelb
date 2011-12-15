@@ -53,7 +53,7 @@ namespace hemelb
         const std::string & GetImageDirectory() const;
         /**
          * Path to where a run report file should be created.
-         * @return Referene to path to where a run report file should be created.
+         * @return Reference to path to where a run report file should be created.
          */
         const std::string & GetReportPath() const;
         /**
