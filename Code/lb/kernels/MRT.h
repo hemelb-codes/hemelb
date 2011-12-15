@@ -24,9 +24,23 @@ namespace hemelb
           {
           }
 
+          /** Equilibrium velocity distribution in the momentum space. */
           distribn_t m_neq[D3Q15::NUM_KINETIC_MOMENTS];
       };
 
+      /**
+       * This class implements the Multiple Relaxation Time (MRT) collision operator.
+       *
+       *  \Omega(f) = - M^{-1} * \hat{S} * M (f - f_{eq})
+       *            = - M^T * (M * M^T)^{-1} * \hat{S} * m_{neq}
+       *
+       *  where f is the velocity distribution function, \Omega() is the collision operator,
+       *  M is the momentum space basis, m=Mf is the vector of momentums, \hat{S} is the
+       *  collision matrix, and {m,f}_{eq} and {m,f}_{neq} are the equilibrium and non-equilibrium
+       *  versions of {m,f}.
+       *
+       *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
+       */
       class MRT : public BaseKernel<MRT>
       {
         public:
@@ -96,6 +110,7 @@ namespace hemelb
           }
 
         private:
+          /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
           const std::vector<distribn_t>& collisionMatrix;
 
       };
