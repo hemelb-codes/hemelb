@@ -37,6 +37,15 @@ namespace hemelb
       // The index of the inverse direction of each discrete velocity vector
       static const int INVERSEDIRECTIONS[NUMVECTORS];
 
+      /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) kinetic (non-conserved). */
+      static const unsigned NUM_KINETIC_MOMENTS = 11;
+
+      /** Matrix used to convert from the velocities space to the reduced moment space containing only kinetic moments. */
+      static const double REDUCED_MOMENT_BASIS[NUM_KINETIC_MOMENTS][NUMVECTORS];
+
+      /** Diagonal matrix REDUCED_MOMENT_BASIS * REDUCED_MOMENT_BASIS'. See #61 for the MATLAB code used to compute it (in case REDUCED_MOMENT_BASIS is modified). */
+      static const double BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS];
+
       // Functions to calculate the density and velocity from an array of SharedFCount and to calculate the
       // equilibrium f array from density and velocity.
       static void CalculateDensityAndVelocity(const distribn_t f[],
@@ -84,7 +93,7 @@ namespace hemelb
                                        const double nor[],
                                        distribn_t &stress,
                                        const double &iStressParameter);
-      /*
+      /**
        * Computes the (j,k)-th entry of the strain rate tensor according to the expression
        *
        *    S = (-1 / (2 * tau * rho * Cs2)) * sum_over_i (e_i*e_i*f^(neq)[i])
@@ -104,7 +113,7 @@ namespace hemelb
                                                            const distribn_t &iTau,
                                                            const distribn_t iFNeq[],
                                                            const distribn_t &iDensity);
-      /*
+      /**
        * Computes shear-rate according to the expression
        *
        *    gamma_dot = sqrt( sum_over_i_j( S[i,j]*S[i,j] ) )
@@ -123,6 +132,15 @@ namespace hemelb
       static distribn_t CalculateShearRate(const distribn_t &iTau,
                                            const distribn_t iFNeq[],
                                            const distribn_t &iDensity);
+
+      /**
+       * Projects a velocity distributions vector into the (reduced) MRT moment space.
+       *
+       * @param velDistributions velocity distributions vector
+       * @param moments equivalent vector in the moment space
+       */
+      static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
+                                             distribn_t * const moments);
   };
 }
 #endif /* HEMELB_D3Q15_H */
