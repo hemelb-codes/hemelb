@@ -1,0 +1,62 @@
+default: 
+  # General default values for all machines live in the default dictionary.
+  # Machine-specific overrides replace these.
+  # Mercurial server to find HemeLB
+  hg: "ssh://hg@entropy.chem.ucl.ac.uk"
+  # Repository on the mercurial server to find HemeLB
+  repository: "hemelb"
+  # Default Modules to load or unload on remote, via module 'foo'
+  # e.g. ['load cmake'].
+  modules: []
+  # Commands to execute before attempting a remote build.
+  build_prefix_commands: []
+  # Commands to execute as part of remote run jobs.
+  run_prefix_commands: []
+  # Template to use to find space to checkout and build HemeLB on the remote.
+  # All user- and generally- defined values in these config dictionaries will be interpolated via $foo
+  remote_path_template: "/home/$username/FabricHemeLb"
+  # Default options used in the CMake configure step.
+  cmake_default_options: 
+    CMAKE_BUILD_TYPE: "Release"
+    CMAKE_CXX_FLAGS_RELEASE: "-O4"
+  # Command to use to launch remote jobs
+  # e.g. qsub, empty string to launch interactively.
+  job_dispatch: ''
+  # Path to use to generate remote localtion for config files.
+  # All user-defined values in these config dictionaries will be interpolated via $foo
+  config_path_template: "$remote_path/config_files"
+  # Path to use to generate remote localtion for config files.
+  # All user-defined values in these config dictionaries will be interpolated via $foo
+  results_path_template: "$remote_path/results"
+  # Machine-specific overrides for above options.
+legion: 
+  job_dispatch: "qsub"
+  # The remote host-name to use.
+  remote: "legion.rc.ucl.ac.uk"
+  # The path python disttools use for builds.
+  tools_build: "lib.linux-x86_64-2.6"
+  modules: ["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"]
+  results_path_template: "/home/$username/Scratch/FabricHemeLb/results"
+  config_path_template: "/home/$username/Scratch/FabricHemeLb/config_files"
+planck: 
+  remote: "planck.chem.ucl.ac.uk"
+  tools_build: "lib.linux-x86_64-2.6"
+  results_path_template: "/home/$username/FabricHemeLb/results"
+  run_prefix_commands: ["export set TMP=/tmp"]
+entropy: 
+  remote: "entropy.chem.ucl.ac.uk"
+  tools_build: "lib.linux-x86_64-2.6"
+  results_path_template: "/store4/blood/$username/FabricHemeLb/results"
+  config_path_template: "/store4/blood/$username/FabricHemeLb/config_files"
+hector: 
+  remote: "login.hector.ac.uk"
+  remote_path_template: "/home/e10/e10/$username/FabricHemeLb"
+  results_path_template: "/work/e10/e10/$username/FabricHemeLb/results"
+  config_path_template: "/work/e10/e10/$username/FabricHemeLb/config_files"
+  modules: ["load CMake/2.8.6"]
+  tools_build: "TODO"
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    HEMELB_OPTIMISATION: "-O3"

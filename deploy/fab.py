@@ -6,7 +6,9 @@ Usage:
 	for example:
 		"fab hector deploy_cold"
 	
-	Before use, you MUST copy deploy/machines_user_example.json as deploy/machines_user.json and fill in your personal details.
+	Do fab -l to get a list of available commands.
+	
+	Before use, you MUST copy deploy/machines_user_example.yml as deploy/machines_user.yml and fill in your personal details.
 	For smoothest usage, you should also ensure ssh keys are in place so the target machine can access the mercurial repository
 	of hemelb.
 """
@@ -18,7 +20,7 @@ import time
 
 @task
 def clone():
-	"""Checkout the repository afresh on the remote machine, wiping out any existing checkout."""
+	"""Delete and checkout the repository afresh."""
 	run(template("mkdir -p $remote_path"))
 	with cd(env.remote_path):
 		run(template("rm -rf $repository"))
@@ -26,7 +28,7 @@ def clone():
 
 @task(alias='cold')
 def deploy_cold():
-	"""Completely checkout, build, and install hemelb, from new, on the remote machine."""
+	"""Checkout, build, and install hemelb, from new."""
 	execute(clone)
 	execute(clear_build)
 	execute(prepare_paths)
@@ -37,7 +39,7 @@ def deploy_cold():
 
 @task
 def update_build():
-	"""Update the remote repository and perform an incremnental build and install"""
+	"""Update and do incremental build."""
 	execute(update)
 	execute(require_recopy)
 	execute(configure)
@@ -47,7 +49,7 @@ def update_build():
 
 @task 
 def require_recopy():
-	"""Notify the build system that the HemeLB C++ code has changed."""
+	"""Notify the build system that the code has changed."""
 	run(template("touch $build_path/hemelb-prefix/src/hemelb-stamp/hemelb-mkdir"))
 
 @task
@@ -59,7 +61,7 @@ def update():
 
 @task 
 def prepare_paths():
-	"""Prepare remote locations to store scripts, results, and config files"""
+	"""Create remote locations to store results and configs"""
 	run(template("mkdir -p $scripts_path"))
 	run(template("mkdir -p $results_path"))
 	run(template("mkdir -p $config_path"))
@@ -81,7 +83,7 @@ def clean():
 
 @task(alias='tools')
 def build_python_tools():
-	"""Build and install python scripts used for working with HemeLB"""
+	"""Build and install python scripts."""
 	with cd(env.tools_path):
 		run("python setup.py build")
 
@@ -93,16 +95,17 @@ def stat():
 	
 @task
 def monitor():
-	"""Continuously check and report on the remote queue status, ctrl-C to interrupt"""
+	"""Report on the queue status, ctrl-C to interrupt"""
 	while True:
 		time.sleep(30)
 		execute(stat)
 
 @task
 def configure():
-	"""Execute the CMake configure step for HemeLB and dependencies."""
+	"""CMake configure step for HemeLB and dependencies."""
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
+			run(template("rm -f $build_path/CMakeCache.txt"))
 			run(template(
 			"cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
 			"-DDEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
@@ -110,7 +113,7 @@ def configure():
 
 @task
 def build(verbose=False):
-	"""Execute the CMake build step for HemeLB and dependencies."""
+	"""CMake build step for HemeLB and dependencies."""
 	with cd(env.build_path):
 		run(template("rm -rf hemelb_prefix/build"))
 		with prefix(env.build_prefix):
@@ -121,7 +124,7 @@ def build(verbose=False):
 
 @task
 def install():
-	"""Execute the CMake install step for HemeLB and dependencies."""
+	"""CMake install step for HemeLB and dependencies."""
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("make install")
@@ -138,7 +141,8 @@ def revert(args="--all"):
 	
 @task	
 def send_distributions():
-	"""Transmit dependency tarballs from local dependencies/distributions to remote.
+	"""Transmit dependency tarballs to remote.
+	Files taken from dependencies/distributions.
 	Useful to prepare a build on target machines with CMake before 2.8.4, where
 	HTTP redirects are not followed.
 	"""
@@ -147,7 +151,8 @@ def send_distributions():
 
 @task
 def sync():
-	"""Update the remote repository with all changes from the local repository, via rsync.
+	"""Update the remote repository with local changes.
+	Uses rysnc.
 	Respects the local .hgignore files to avoid sending unnecessary information.
 	"""
 	rsync_project(
@@ -162,7 +167,8 @@ def sync():
 
 @task
 def patch(args=""):
-	"""Update the remote repository with all changes from the local repository, via hg diff.
+	"""Update the remote repository with local changes.
+	Uses hg diff to generate patchfiles.
 	Specify a path relative to the repository root to patch only some files or directories
 	e.g 'fab legion patch Code/main.cc'
 	"""
@@ -213,7 +219,8 @@ def fetch_configs(config=''):
 @task
 def put_configs(config=''):
 	"""
-	Transfer config files to the remote, for use in launching jobs, via rsync.
+	Transfer config files to the remote.
+	For use in launching jobs, via rsync.
 	Specify a config directory, such as 'cylinder' to copy just one configuration.
 	Config files are stored as, e.g. cylinder/config.dat and cylinder/config.xml
 	Local path to find config directories is specified in machines_user.json, and should normally point to a mount on entropy,
@@ -250,23 +257,23 @@ def fetch_results(name=''):
 
 @task
 def clear_results(name=''):
-	"""Completely clear and wipe all result files from the remote."""
+	"""Completely wipe all result files from the remote."""
 	with_job(name)
 	run(template('rm -rf $job_results_contents'))		
 
 @task
 def test():
 	"""Submit a unit-testing job to the remote queue."""
-	execute(job,script='unittests',name='unittests-$build_number-$machine_name',nodes=1)
+	execute(job,script='unittests',name='unittests-$build_number-$machine_name',cores=1)
 		
 @task
 def hemelb(**args):
 	"""Submit a HemeLB job to the remote queue.
-	The job results will be stored with a name pattern of $config-$build_number-$machine_name-$nodes,
+	The job results will be stored with a name pattern of $config-$build_number-$machine_name-$cores,
 	e.g. cylinder-abcd1234-legion-256
 	Keyword arguments:
 		config : config directory to use to define geometry, e.g. config=cylinder
-		nodes : number of compute nodes to request
+		cores : number of compute cores to request
 		images : number of images to take
 		snapshots : number of snapshots to take
 		steering : steering session i.d.
@@ -274,8 +281,8 @@ def hemelb(**args):
 		memory : memory per node
 	"""
 	options=dict(script='hemelb',
-		name='$config-$build_number-$machine_name-$nodes',
-		nodes=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
+		name='$config-$build_number-$machine_name-$cores',
+		cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
 	options.update(args)
 	execute(put_configs,args['config'])
 	execute(job,**options)
@@ -287,8 +294,9 @@ def regression_test():
 
 @task
 def job(**args):
-	"""Internal: Execute a generic job on the remote machine. Use hemelb, regress, or test instead."""
-	env.update(name=args['script'],wall_time='0:1:0',nodes=4,memory='1G') #defaults
+	"""Internal low level job launcher.
+	Execute a generic job on the remote machine. Use hemelb, regress, or test instead."""
+	env.update(name=args['script'],wall_time='0:1:0',cores=4,memory='1G') #defaults
 	env.update(**args)
 	env.update(name=template(env.name))
 	with_job(env.name)
