@@ -1,4 +1,4 @@
-if(USE_HEMELB_DEBUGGER)
+if(HEMELB_USE_DEBUGGER)
 	if(APPLE)
 		set(debugger_implementation OSX/OsxDebugger.cc common/ActiveDebugger.cc)
 	elseif(UNIX)
