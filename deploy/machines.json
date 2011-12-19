@@ -38,10 +38,10 @@
 		"modules":["load CMake/2.8.6"],
 		"tools_build":"TODO",
 		"cmake_options":{
-			"USE_ALL_WARNINGS_GNU":"OFF",
+			"HEMELB_USE_ALL_WARNINGS_GNU":"OFF",
 			"CMAKE_CXX_COMPILER":"CC",
 			"CMAKE_C_COMPILER":"cc",
-			"OPTIMISATION":"-O3"
+			"HEMELB_OPTIMISATION":"-O3"
 		}
 	}
 }
