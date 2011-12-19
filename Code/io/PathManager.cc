@@ -30,9 +30,7 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(snapshotDirectory);
-        std::stringstream reportNameStream;
-        reportNameStream << outputDir << "/timings" << processorCount << ".asc" << std::flush;
-        reportName = reportNameStream.str();
+        reportName = outputDir;
       }
 
       ok = true;

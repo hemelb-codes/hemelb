@@ -15,49 +15,6 @@ namespace hemelb
 {
   namespace reporting
   {
-    /**
-     * Policy defining writing text output to an output file.
-     * Mocked by hemelb::unittests::reporting::WriterMock
-     */
-    class FileWriterPolicy
-    {
-      public:
-        /**
-         * Opens a file at the specified path.
-         * @param path Full or relative path to where the file should be opened.
-         */
-        FileWriterPolicy(const std::string &path):
-          file(path.c_str(), std::ios_base::out)
-        {
-        }
-        /**
-         * Closes the open file.
-         */
-        ~FileWriterPolicy()
-        {
-          file.close();
-        }
-      protected:
-        /**
-         * Wraps printf-style behaviour.
-         * Uses variable argument list and a format string to write to the file.
-         * @param format C printf style format string.
-         */
-        void Print(const char * format, ...)
-        {
-          char buffer[1000];
-          std::va_list arg;
-          va_start(arg, format);
-          vsprintf(buffer, format, arg);
-          va_end(arg);
-          Stream() << std::string(buffer) << std::endl;
-        }
-        std::ostream & Stream(){
-          return file;
-        }
-      private:
-        std::fstream file; //! file used.
-    };
 
     /**
      * Abstraction of interaction with MPI system.
