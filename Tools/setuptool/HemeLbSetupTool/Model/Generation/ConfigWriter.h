@@ -6,8 +6,8 @@
 
 #include "Index.h"
 
-#include "io/XdrWriter.h"
-using hemelb::io::XdrWriter;
+#include "io/writers/xdr/XdrWriter.h"
+using hemelb::io::writers::xdr::XdrWriter;
 
 class BlockWriter;
 
