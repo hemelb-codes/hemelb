@@ -1,22 +1,22 @@
 """
 Module defining how we configure the fabric environment for target machines.
-Environment is loaded from JSON dictionaries machines.json and machines_user.json.
+Environment is loaded from YAML dictionaries machines.yml and machines_user.yml
 """
 from fabric.api import *
 import os
 import subprocess
 import posixpath
-import json
+import yaml
 from templates import *
 
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 #Load and invoke the default non-machine specific config JSON dictionaries.
-config=json.load(open(os.path.join(env.localroot,'deploy','machines.json')))
-env.update(config)
-user_config=json.load(open(os.path.join(env.localroot,'deploy','machines_user.json')))
-env.update(user_config)
+config=yaml.load(open(os.path.join(env.localroot,'deploy','machines.yml')))
+env.update(config['default'])
+user_config=yaml.load(open(os.path.join(env.localroot,'deploy','machines_user.yml')))
+env.update(user_config['default'])
 
 env.cmake_options={}
 env.pather=posixpath
@@ -24,7 +24,7 @@ env.pather=posixpath
 @task
 def machine(name):
 	"""
-	Load the machine-specific configurations from the JSON dictionaries.
+	Load the machine-specific configurations.
 	Completes additional paths and interpolates them, via complete_environment.
 	Usage, e.g. fab machine:hector build
 	"""
@@ -97,7 +97,9 @@ def complete_environment():
 	
 	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	# check_output is 2.7 python and later only. Revert to oldfashioned popen.
-	env.build_number=os.popen(template("hg id -i -rtip $hg/$repository"))
+	cmd=os.popen(template("hg id -i -rtip $hg/$repository"))
+	env.build_number=cmd.read().strip()
+	cmd.close()
 	#env.build_number=run("hg id -i -r tip")
 	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
 	
