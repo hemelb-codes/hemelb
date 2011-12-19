@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
 Project(HemeLBDependencies)
 include(ExternalProject)
-set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
-set(CMAKE_MODULE_PATH "${DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
+set(HEMELB_DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
+set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
 
@@ -19,7 +19,7 @@ else()
 	endif()
 	find_file(TINYXML_TARBALL tinyxml_2_6_2.tar.gz 
 		DOC "Path to download TinyXML (can be url http://)"
-		PATHS ${DEPENDENCIES_PATH}/distributions
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT TINYXML_TARBALL)
 		set(TINYXML_TARBALL http://sourceforge.net/projects/tinyxml/files/tinyxml/2.6.2/tinyxml_2_6_2.tar.gz
@@ -27,14 +27,14 @@ else()
 	endif()
 	ExternalProject_Add(
 	   tinyxml
-		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${TINYXML_TARBALL}
 		CONFIGURE_COMMAND cmake <SOURCE_DIR> 
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DTIXML_USE_STL=${TIXML_USE_STL}
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 		-DCMAKE_CXX_FLAGS_RELEASE=-O4
-		PATCH_COMMAND cp ${DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
+		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
 	)
 endif()
 
@@ -46,7 +46,7 @@ else()
 	message("Parmetis not installed, will download and build")
 	find_file(PARMETIS_TARBALL parmetis-4.0.2.tar.gz 
 		DOC "Path to download Parmetis (can be url http://)"
-		PATHS ${DEPENDENCIES_PATH}/distributions
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT PARMETIS_TARBALL)
 		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
@@ -62,7 +62,7 @@ else()
 	endif()
 	ExternalProject_Add(
 	   parmetis
-		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${PARMETIS_TARBALL}
 	   CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION} && 
 				cd metis && 
@@ -81,7 +81,7 @@ else()
 	message("CPPUnit not installed, will download and build")
 	find_file(CPPUNIT_TARBALL cppunit-1.12.1.tar.gz 
 		DOC "Path to download CPPUNIT (can be url http://)"
-		PATHS ${DEPENDENCIES_PATH}/distributions
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CPPUNIT_TARBALL)
 		set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
@@ -95,7 +95,7 @@ else()
 	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
 	ExternalProject_Add(
 	   cppunit
-		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CPPUNIT_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
 		BUILD_IN_SOURCE 1
@@ -111,7 +111,7 @@ else()
 	endif()
 endif()
 
-if(USE_BOOST)
+if(HEMELB_USE_BOOST)
 	# ---------BOOST -----------------------
 	set(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
 	set(BOOST_LIBS mpi regex)
@@ -123,7 +123,7 @@ if(USE_BOOST)
 		message("Bost not installed, will download and build")
 		find_file(BOOST_TARBALL boost_1_48_0.tar.gz
 			DOC "Path to download BOOST (can be url http://)"
-			PATHS ${DEPENDENCIES_PATH}/distributions
+			PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 		)
 		if(NOT BOOST_TARBALL)
 			set(BOOST_TARBALL http://sourceforge.net/projects/boost/files/boost/1.48.0/boost_1_48_0.tar.gz
@@ -131,7 +131,7 @@ if(USE_BOOST)
 		endif()
 		ExternalProject_Add(
 	   	boost
-			INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+			INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 			URL ${BOOST_TARBALL}
 			BUILD_COMMAND <SOURCE_DIR>/b2
 			INSTALL_COMMAND <SOURCE_DIR>/b2 install
@@ -140,7 +140,7 @@ if(USE_BOOST)
 		)
 		ExternalProject_Add_Step(
 			boost mpi
-			COMMAND cat ${DEPENDENCIES_PATH}/patches/boost_options.jam >> project-config.jam
+			COMMAND cat ${HEMELB_DEPENDENCIES_PATH}/patches/boost_options.jam >> project-config.jam
 			DEPENDEES configure
 			DEPENDERS build
 			WORKING_DIRECTORY <SOURCE_DIR>
@@ -156,7 +156,7 @@ else()
 	message("Ctemplate not installed, will download and build")
 	find_file(CTEMPLATE_TARBALL ctemplate-1.0.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
-		PATHS ${DEPENDENCIES_PATH}/distributions
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		set(CTEMPLATE_TARBALL http://google-ctemplate.googlecode.com/files/ctemplate-1.0.tar.gz
@@ -164,7 +164,7 @@ else()
 	endif()
 	ExternalProject_Add(
    	ctemplate
-		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
 		BUILD_IN_SOURCE 1
