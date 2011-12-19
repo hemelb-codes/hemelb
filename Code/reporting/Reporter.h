@@ -10,6 +10,9 @@
 #include "Timers.h"
 #include "Policies.h"
 #include "lb/IncompressibilityChecker.h"
+#include "ctemplate/template.h"
+#include "resources/Resource.h"
+
 namespace hemelb
 {
   namespace reporting
@@ -24,8 +27,7 @@ namespace hemelb
      * @tparam BroadcastPolicy The way we broadcast information across multiple processes
      * @todo CommsPolicy and BroadcastPolicy should be unified
      */
-    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> class ReporterBase : public WriterPolicy,
-                                                                                                                   public CommsPolicy
+    template<class ClockPolicy, class CommsPolicy, class BroadcastPolicy> class ReporterBase : public CommsPolicy
     {
       public:
         /**
@@ -45,12 +47,19 @@ namespace hemelb
                      const lb::IncompressibilityChecker<BroadcastPolicy>& aChecker);
         void Image(); //! Inform the reporter that an image has been saved.
         void Snapshot(); //! Inform the reporter that a simulation snapshot has been taken.
-        void Write(); //! Write the report to disk, (or wherever the WriterPolicy decides.)
+
+        void WriteXML(){Write(resources::Resource("report.xml.ctp").Path(),"report.xml");}
+        void WriteTxt(){Write(resources::Resource("report.txt.ctp").Path(),"report.txt");}
+        void FillDictionary();
+        void Write(){WriteXML(); WriteTxt();}
+        ctemplate::TemplateDictionary const & GetDictionary() { return dictionary;}
         void Stability(bool astability) //! Tell the reporter the current simulation stability state.
         {
           stability = astability;
         }
       private:
+        const std::string &path;
+        void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
         bool doIo; //! Is this the processor which should write the report.
         unsigned int snapshotCount; //! Number of snapshots taken.
         unsigned int imageCount; //! Number of images written.
@@ -60,12 +69,13 @@ namespace hemelb
         const TimersBase<ClockPolicy, CommsPolicy> &timings; //! Reference to list of timers used to measure performance.
         const lb::SimulationState & state; //! Reference to state of ongoing simulation.
         const lb::IncompressibilityChecker<BroadcastPolicy>& incompressibilityChecker;
+        ctemplate::TemplateDictionary dictionary;
     };
 
     /**
      * Concrete realisation of the reporter with appropriate policies to be used.
      */
-    typedef ReporterBase<HemeLBClockPolicy, FileWriterPolicy, MPICommsPolicy,
+    typedef ReporterBase<HemeLBClockPolicy, MPICommsPolicy,
         net::PhasedBroadcastRegular<> > Reporter;
   }
 }

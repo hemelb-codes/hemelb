@@ -144,9 +144,10 @@ target_link_libraries(hemelb
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
+	${CTEMPLATE_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
-
+list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_UNITTESTS)
 	#------CPPUnit ---------------
