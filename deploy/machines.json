@@ -1,18 +1,40 @@
 {
+	// General default values for all machines live in the root dictionary.
+	// Machine-specific overrides replace these.
+	// Mercurial server to find HemeLB
 	"hg":"ssh://hg@entropy.chem.ucl.ac.uk",
+	// Repository on the mercurial server to find HemeLB
 	"repository":"hemelb",
+	// Default Modules to load or unload on remote, via module 'foo'
+	// e.g. ['load cmake'].
 	"modules":[],
+	// Commands to execute before attempting a remote build.
 	"build_prefix_commands":[],
+	// Commands to execute as part of remote run jobs.
 	"run_prefix_commands":[],
+	// Template to use to find space to checkout and build HemeLB on the remote.
+	// All user- and generally- defined values in these config dictionaries will be interpolated via $foo
 	"remote_path_template":"/home/$username/FabricHemeLb",
+	// Default options used in the CMake configure step.
 	"cmake_default_options":{
 		"CMAKE_BUILD_TYPE":"Release",
 	   "CMAKE_CXX_FLAGS_RELEASE":"-O4"
 	},
+	// Command to use to launch remote jobs
+	// e.g. qsub, empty string to launch interactively.
+	"job_dispatch":'',
+	// Path to use to generate remote localtion for config files.
+	// All user-defined values in these config dictionaries will be interpolated via $foo
 	"config_path_template":"$remote_path/config_files",
+	// Path to use to generate remote localtion for config files.
+	// All user-defined values in these config dictionaries will be interpolated via $foo
+	"results_path_template":"$remote_path/results",
+	// Machine-specific overrides for above options.
 	"legion":{
 		"job_dispatch":"qsub",
+		// The remote host-name to use.
 		"remote":"legion.rc.ucl.ac.uk",
+		// The path python disttools use for builds.
 		"tools_build":"lib.linux-x86_64-2.6",
 		"modules":["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"],
 		"results_path_template":"/home/$username/Scratch/FabricHemeLb/results",
