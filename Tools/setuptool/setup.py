@@ -145,10 +145,10 @@ if __name__ == "__main__":
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
                   for cpp in ['D3Q15.cc',
-                              'io/XdrFileWriter.cc',
-                              'io/XdrMemWriter.cc',
-                              'io/XdrWriter.cc',
-                              'io/Writer.cc']]
+                              'io/writers/xdr/XdrFileWriter.cc',
+                              'io/writers/xdr/XdrMemWriter.cc',
+                              'io/writers/xdr/XdrWriter.cc',
+                              'io/writers/Writer.cc']]
 
     # SWIG wrapper
     swig_cpp = ['HemeLbSetupTool/Model/Generation/Wrap.cpp']
