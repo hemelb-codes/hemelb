@@ -16,7 +16,7 @@
 #$$ -N $name
 
 # 5. Select the OpenMPI parallel environment and 16 processes.
-#$$ -pe openmpi $nodes
+#$$ -pe openmpi $cores
 
 # 6. Select the project that this job will run under.
 # Find <your_project_id> by running the command "groups"
