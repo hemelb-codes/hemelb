@@ -11,7 +11,7 @@ BlockWriter::BlockWriter(ConfigWriter &cfg) :
 			+ 8 * 14) // doubles, cut distances
 			* cfg.BlockSize * cfg.BlockSize * cfg.BlockSize; // number of blocks
 	this->buffer = new char[this->maxBufferSize];
-	this->memWriter = new hemelb::io::XdrMemWriter(this->buffer,
+	this->memWriter = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
 			this->maxBufferSize);
 }
 

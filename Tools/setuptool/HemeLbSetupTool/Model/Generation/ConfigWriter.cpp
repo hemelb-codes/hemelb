@@ -1,7 +1,7 @@
 #include "ConfigWriter.h"
 
-#include "io/XdrFileWriter.h"
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
 #include "BlockWriter.h"
 
 ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
@@ -20,7 +20,7 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
 	}
 
 	{
-		hemelb::io::XdrFileWriter encoder(this->OutputConfigFile);
+		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputConfigFile);
 
 		// Preamble
 		encoder << this->StressType;
@@ -57,7 +57,7 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
 		// Setup the encoder for the header
 		this->headerBufferLength = this->bodyStart - this->headerStart;
 		this->headerBuffer = new char[this->headerBufferLength];
-		this->headerEncoder = new hemelb::io::XdrMemWriter(this->headerBuffer,
+		this->headerEncoder = new hemelb::io::writers::xdr::XdrMemWriter(this->headerBuffer,
 				this->headerBufferLength);
 	}
 	// "encoder" declared in the block above will now have been destructed, thereby closing the file.
