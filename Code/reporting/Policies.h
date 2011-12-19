@@ -8,6 +8,7 @@
  * In file unittests/reporting/Mocks.h, mock versions of these policies are defined to facilitate testing.
  */
 
+#include "mpiInclude.h"
 #include "topology/NetworkTopology.h"
 #include <fstream>
 namespace hemelb
