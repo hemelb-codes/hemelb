@@ -53,7 +53,7 @@ namespace hemelb
           void TestNameInventionLocalConfig()
           {
             ConstructManager();
-            CPPUNIT_ASSERT_EQUAL(std::string("./results/timings5.asc"),
+            CPPUNIT_ASSERT_EQUAL(std::string("./results"),
                                  fileManager->GetReportPath());
           }
 
@@ -68,7 +68,7 @@ namespace hemelb
           void TestNameInventionPathConfig()
           {
             ConstructPathConfigManager();
-            CPPUNIT_ASSERT_EQUAL(GetTempdir() + "/results/timings5.asc",
+            CPPUNIT_ASSERT_EQUAL(GetTempdir() + "/results",
                                  fileManager->GetReportPath());
           }
 
