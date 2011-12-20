@@ -53,6 +53,8 @@ namespace hemelb
 
             simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<
                 lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
+				simpleBounceBack = new lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
+				fInterpolation = new lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
           }
 
           void tearDown()
@@ -66,10 +68,9 @@ namespace hemelb
             delete normalCollision;
 
             delete simpleCollideAndStream;
-            delete fInterpolation;
-            delete regularised;
-            delete guoZhengShi;
+
             delete simpleBounceBack;
+				delete fInterpolation;
           }
 
           void TestSimpleCollideAndStream()
@@ -131,7 +132,7 @@ namespace hemelb
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData(latDat);
-
+				 
             fInterpolation->StreamAndCollide<false> (0,
                                                      latDat->GetLocalFluidSiteCount(),
                                                      lbmParams,
@@ -180,8 +181,10 @@ namespace hemelb
 
                 else
                 {
+                  std::stringstream message;
+                  message << "Site: " << streamedToSite << " Direction " << oppDirection << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary"
-                                           "opposite an unstreamed-to direction",
+                                           "opposite an unstreamed-to direction "+message.str(),
                                          latDat->HasBoundary(streamedToSite, oppDirection));
 
                   // To verify the operation of the f-interpolation boundary condition, we'll need:
@@ -408,12 +411,12 @@ namespace hemelb
 
           lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK> >
               * simpleCollideAndStream;
-          lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >
-              * fInterpolation;
-          lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK> > * regularised;
-          lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK> > * guoZhengShi;
+
           lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >
               * simpleBounceBack;
+
+			lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >
+				* fInterpolation;
 
       };
       CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests );
