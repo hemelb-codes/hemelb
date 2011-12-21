@@ -20,6 +20,7 @@ option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 
 #------- Dependencies -----------
 
@@ -50,6 +51,7 @@ ExternalProject_Add(
 	-DMPI_CXX_NO_INTERROGATE=${MPI_CXX_NO_INTERROGATE}
 	-DHEMELB_USE_ALL_WARNINGS_GNU=${HEMELB_USE_ALL_WARNINGS_GNU}
 	-DHEMELB_USE_BOOST=${HEMELB_USE_BOOST}
+	-DHEMELB_STEERING_HOST=${HEMELB_STEERING_HOST}
 )
 ExternalProject_Get_Property(hemelb install_dir)
 
