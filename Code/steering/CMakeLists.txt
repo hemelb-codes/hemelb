@@ -1,3 +1,8 @@
+set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
+if(HEMELB_STEERING_HOST)
+	add_definitions("-D${HEMELB_STEERING_HOST}")
+endif()
+
 if(HEMELB_STEERING_LIB MATCHES [Bb]asic)
 	set(steerers 
 		basic/ClientConnection.cc
