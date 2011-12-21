@@ -165,6 +165,7 @@ namespace hemelb
 
       // Attempt to connect, but don't try for too long.
       timeval tv;
+      memset(&tv,0,sizeof (tv)); // so valgrind knows the whole struct is initialised.
       tv.tv_sec = 2;
       tv.tv_usec = 0;
 
