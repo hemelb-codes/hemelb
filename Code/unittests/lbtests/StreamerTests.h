@@ -132,7 +132,6 @@ namespace hemelb
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData(latDat);
-				 
             fInterpolation->StreamAndCollide<false> (0,
                                                      latDat->GetLocalFluidSiteCount(),
                                                      lbmParams,
@@ -182,10 +181,12 @@ namespace hemelb
                 else
                 {
                   std::stringstream message;
-                  message << "Site: " << streamedToSite << " Direction " << oppDirection << std::flush;
+                  message << "Site: " << streamedToSite << " Direction " << oppDirection << " Data: " << latDat->GetSiteData(streamedToSite) << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary"
                                            "opposite an unstreamed-to direction "+message.str(),
                                          latDat->HasBoundary(streamedToSite, oppDirection));
+                  CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "+message.str(),
+                                         latDat->GetCutDistance(streamedToSite, oppDirection)!=NO_VALUE);
 
                   // To verify the operation of the f-interpolation boundary condition, we'll need:
                   // - the distance to the wall * 2
