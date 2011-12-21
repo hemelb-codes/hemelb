@@ -16,6 +16,7 @@ namespace hemelb
   namespace steering
   {
     ClientConnection::ClientConnection(int iSteeringSessionId)
+      :mIsBusy()
     {
       sem_init(&mIsBusy, 0, 1);
 

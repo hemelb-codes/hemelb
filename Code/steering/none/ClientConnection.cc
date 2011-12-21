@@ -18,7 +18,8 @@ namespace hemelb
      * @param iSteeringSessionId
      * @return
      */
-    ClientConnection::ClientConnection(int iSteeringSessionId)
+    ClientConnection::ClientConnection(int iSteeringSessionId):
+        mIsBusy()
     {
     }
 
