@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <iostream>
 
 #include "constants.h"
 #include "mpiInclude.h"
