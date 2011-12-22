@@ -12,7 +12,7 @@ find_package(TinyXML QUIET)
 if (TINYXML_FOUND)
 	message("TinyXML already installed, no need to download")
 else()
-	message("TinyXML not installed, will download and build")
+	message("TinyXML not installed, wil build from source")
 	OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
 	if(TIXML_USE_STL)
 		add_definitions(-DTIXML_USE_STL)
@@ -22,6 +22,7 @@ else()
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT TINYXML_TARBALL)
+		message("No tinyxml source found, will download.")
 		set(TINYXML_TARBALL http://sourceforge.net/projects/tinyxml/files/tinyxml/2.6.2/tinyxml_2_6_2.tar.gz
 			CACHE STRING "Path to download TinyXML (can be local file://)" FORCE)
 	endif()
@@ -43,12 +44,13 @@ find_package(Parmetis QUIET)
 if (PARMETIS_FOUND)
 	message("Parmetis already installed, no need to download")
 else()
-	message("Parmetis not installed, will download and build")
+	message("Parmetis not installed, will build from source")
 	find_file(PARMETIS_TARBALL parmetis-4.0.2.tar.gz 
 		DOC "Path to download Parmetis (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT PARMETIS_TARBALL)
+		message("No parmetis source found, will download.")
 		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
 		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
 	endif()
@@ -78,12 +80,13 @@ find_package(CPPUnit QUIET)
 if (CPPUNIT_FOUND)
 	message("CPPUnit already installed, no need to download")
 else()
-	message("CPPUnit not installed, will download and build")
+	message("CPPUnit not installed, will build from source")
 	find_file(CPPUNIT_TARBALL cppunit-1.12.1.tar.gz 
 		DOC "Path to download CPPUNIT (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CPPUNIT_TARBALL)
+		message("No cppunit source found, will download.")
 		set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
 			CACHE STRING "Path to download CPPUNIT (can be local file://)" FORCE)
 	endif()
@@ -120,12 +123,13 @@ if(HEMELB_USE_BOOST)
 	if (BOOST_FOUND)
 		message("Boost 1.48 already installed, no need to download")
 	else()
-		message("Bost not installed, will download and build")
+		message("Boost not installed, will build from source")
 		find_file(BOOST_TARBALL boost_1_48_0.tar.gz
 			DOC "Path to download BOOST (can be url http://)"
 			PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 		)
 		if(NOT BOOST_TARBALL)
+			message("No boost source found, will download.")
 			set(BOOST_TARBALL http://sourceforge.net/projects/boost/files/boost/1.48.0/boost_1_48_0.tar.gz
 				CACHE STRING "Path to download BOOST (can be local file://)" FORCE)
 		endif()
@@ -153,12 +157,13 @@ find_package(CTemplate)
 if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
-	message("Ctemplate not installed, will download and build")
+	message("Ctemplate not installed, will build from source")
 	find_file(CTEMPLATE_TARBALL ctemplate-1.0.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CTEMPLATE_TARBALL)
+		message("No ctemplate source found, will download.")
 		set(CTEMPLATE_TARBALL http://google-ctemplate.googlecode.com/files/ctemplate-1.0.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
