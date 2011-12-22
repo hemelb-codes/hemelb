@@ -6,6 +6,7 @@
 #   CTEMPLATE_LIBRARIES   - List of libraries when using CTEMPLATE.
 #
 
+option(CTEMPLATE_USE_STATIC "Prefer Static CTemplate library" OFF)
 IF( CTEMPLATE_INCLUDE_DIR )
     # Already in cache, be silent
     SET( CTEMPLATE_FIND_QUIETLY TRUE )
