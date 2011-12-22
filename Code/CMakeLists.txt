@@ -10,6 +10,7 @@ option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
+option(CTEMPLATE_USE_STATIC "Prefer Static CTemplate library" OFF)
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
