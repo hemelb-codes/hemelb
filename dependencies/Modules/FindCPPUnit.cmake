@@ -10,7 +10,7 @@
 #  CPPUNIT_LIBRARY     - The CppUnit library to link against.
 
 FIND_PATH(CPPUNIT_INCLUDE_DIR cppunit/Test.h)
-
+option(CPPUNIT_USE_STATIC "Prefer Static CPPUNIT library" OFF)
 if(CPPUNIT_USE_STATIC)
 set(__old_cmake_find_lib_suffixes ${CMAKE_FIND_LIBRARY_SUFFIXES})
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_STATIC_LIBRARY_SUFFIX})
