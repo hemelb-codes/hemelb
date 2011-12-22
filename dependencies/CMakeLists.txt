@@ -150,7 +150,6 @@ endif()
 
 #----------------Google C++ template ----------------
 find_package(CTemplate)
-option(CTEMPLATE_USE_STATIC "Prefer Static CTemplate library" OFF)
 if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
