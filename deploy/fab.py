@@ -22,9 +22,18 @@ import time
 def clone():
 	"""Delete and checkout the repository afresh."""
 	run(template("mkdir -p $remote_path"))
-	with cd(env.remote_path):
-		run(template("rm -rf $repository"))
-		run(template("hg clone $hg/$repository"))
+	if env.no_ssh:
+		with cd(env.remote_path):
+			run(template("rm -rf $repository"))
+		# Some machines do not allow outgoing connections back to the mercurial server
+		# so the data must be sent by a project sync instead.
+		execute(sync)
+		 # On such machines, we cannot rely on an outgoing connection to servers to find dependencies either.
+		execute(send_distributions)
+	else:
+		with cd(env.remote_path):
+			run(template("rm -rf $repository"))
+			run(template("hg clone $hg/$repository"))
 
 @task(alias='cold')
 def deploy_cold():
@@ -146,8 +155,9 @@ def send_distributions():
 	Useful to prepare a build on target machines with CMake before 2.8.4, where
 	HTTP redirects are not followed.
 	"""
-	put(os.path.join(env.localroot,'dependencies','distributions','*.tar.gz'),
-		env.pather.join(env.repository_path,'dependencies','distributions'))
+	run(template("mkdir -p $repository_path/dependencies/distributions"))
+	rsync_project(local_dir=os.path.join(env.localroot,'dependencies','distributions')+'/',
+	remote_dir=env.pather.join(env.repository_path,'dependencies','distributions'))
 
 @task
 def sync():
