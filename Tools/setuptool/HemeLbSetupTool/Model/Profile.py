@@ -42,8 +42,7 @@ class Profile(Observable):
              'VoxelSize': 0.,
              'SeedPoint': Vector(),
              'OutputConfigFile': None,
-             'OutputXmlFile': None,
-             'StressType': 1}
+             'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
     
     def __init__(self, **kwargs):

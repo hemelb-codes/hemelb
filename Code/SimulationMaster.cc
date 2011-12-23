@@ -125,16 +125,12 @@ void SimulationMaster::Initialise()
 
   simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
 
-  // TODO The way we initialise LbmParameters is not great.
-  hemelb::lb::LbmParameters params(1000, 0.1);
-
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
   latticeData
       = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                             simConfig->DataFilePath,
-                                            &params,
                                             timings);
   timings[hemelb::reporting::Timers::netInitialise].Stop();
 
@@ -144,8 +140,6 @@ void SimulationMaster::Initialise()
                                               latticeData,
                                               simulationState,
                                               timings[hemelb::reporting::Timers::lb]);
-
-  latticeBoltzmannModel->GetLbmParams()->StressType = params.StressType;
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())

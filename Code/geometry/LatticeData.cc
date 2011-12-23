@@ -24,14 +24,13 @@ namespace hemelb
 
     LatticeData* LatticeData::Load(const bool reserveSteeringCore,
                                    std::string& dataFilePath,
-                                   lb::LbmParameters* bLbmParams,
                                    reporting::Timers &timings)
     {
       // Use a reader to read in the file.
       GeometryReader reader(reserveSteeringCore);
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
-      GlobalLatticeData* globalLattice = reader.LoadAndDecompose(bLbmParams, dataFilePath, timings);
+      GlobalLatticeData* globalLattice = reader.LoadAndDecompose(dataFilePath, timings);
 
       globalLattice->CollectFluidSiteDistribution();
 
