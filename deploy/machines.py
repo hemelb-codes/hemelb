@@ -92,8 +92,8 @@ def complete_environment():
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'
 	
-	env.run_prefix_commands.append(template("export PYTHONPATH=$$PYTHONPATH:$tools_build_path"))
-	env.run_prefix=" && ".join(module_commands+env.run_prefix_commands) or 'echo Running...'
+	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
+	env.run_prefix=" && ".join(module_commands+map(template,env.run_prefix_commands)) or 'echo Running...'
 	
 	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	# check_output is 2.7 python and later only. Revert to oldfashioned popen.
