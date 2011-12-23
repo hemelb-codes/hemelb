@@ -34,6 +34,6 @@
 
 #load modules
 $run_prefix
-
+export TMP=$job_results
 #and run
 mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $install_path/bin/unittests_hemelb -o 'tests.xml'

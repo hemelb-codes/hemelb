@@ -2,7 +2,7 @@
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/TestRunner.h>
-#include <cppunit/TextTestProgressListener.h>
+#include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
 #include "unittests/lbtests/lbtests.h"
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   controller.addListener(&result);
 
   // Add a listener that print dots to stdout as test run.
-  CppUnit::TextTestProgressListener progress;
+  CppUnit::BriefTestProgressListener progress;
   controller.addListener(&progress);
 
   // Add the top suite to the test runner
