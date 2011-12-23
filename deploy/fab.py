@@ -60,13 +60,17 @@ def update_build():
 def require_recopy():
 	"""Notify the build system that the code has changed."""
 	run(template("touch $build_path/hemelb-prefix/src/hemelb-stamp/hemelb-mkdir"))
+	run(template("rm -rf $build_path/hemelb-prefix"))
 
 @task
 def update():
 	"""Update the remote mercurial repository"""
-	with cd(env.repository_path):
-		run("hg pull")
-		run("hg update")
+	if env.no_ssh:
+		execute(sync)
+	else:
+		with cd(env.repository_path):
+			run("hg pull")
+			run("hg update")
 
 @task 
 def prepare_paths():
