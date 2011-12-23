@@ -165,7 +165,8 @@ if(HEMELB_BUILD_UNITTESTS)
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES})
+		${CTEMPLATE_LIBRARIES}
+		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.dat unittests/resources/four_cube.xml unittests/resources/config.xml)
 endif()
