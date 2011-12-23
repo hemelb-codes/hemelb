@@ -37,7 +37,6 @@ namespace hemelb
           {
             reader = new TestableLatticeData::GeometryReader(false);
             globalLattice = NULL;
-            params = new lb::LbmParameters(1000, 0.1);
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             fourCube = FourCubeLatticeData::CubeGlobalLatticeData::Create();
@@ -48,19 +47,18 @@ namespace hemelb
           {
             delete reader;
             delete globalLattice;
-            delete params;
             delete fourCube;
             delete simConfig;
           }
 
           void TestRead()
           {
-            globalLattice = reader->LoadAndDecompose(params, simConfig->DataFilePath, timings);
+            globalLattice = reader->LoadAndDecompose(simConfig->DataFilePath, timings);
           }
 
           void TestSameAsFourCube()
           {
-            globalLattice = reader->LoadAndDecompose(params, simConfig->DataFilePath, timings);
+            globalLattice = reader->LoadAndDecompose(simConfig->DataFilePath, timings);
             for (site_t i = 0; i < 4; i++)
             {
               for (site_t j = 0; j < 4; j++)
@@ -81,7 +79,6 @@ namespace hemelb
           TestableLatticeData::TestableGlobalLatticeData* globalLattice;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
-          lb::LbmParameters *params;
           FourCubeLatticeData::CubeGlobalLatticeData *fourCube;
 
       };

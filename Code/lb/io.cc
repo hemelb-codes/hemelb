@@ -33,6 +33,8 @@ namespace hemelb
         inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
         inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
+
+      mParams.StressType = mSimConfig->StressType;
     }
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability const stability,
