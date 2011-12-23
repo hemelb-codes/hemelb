@@ -54,13 +54,12 @@ hector:
   remote_path_template: "/home/e10/e10/$username/FabricHemeLb"
   results_path_template: "/work/e10/e10/$username/FabricHemeLb/results"
   config_path_template: "/work/e10/e10/$username/FabricHemeLb/config_files"
-  modules: ["swap PrgEnv-cray PrgEnv-gnu","load CMake/2.8.6"]
+  modules: ["load CMake/2.8.6"]
   tools_build: "TODO"
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
-    HEMELB_OPTIMISATION: "-O3"
-    CTEMPLATE_USE_STATIC: "ON"
+    CMAKE_BUILD_TYPE: "Debug"
+    HEMELB_OPTIMISATION: ""
     CPPUNIT_USE_STATIC: "ON"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
