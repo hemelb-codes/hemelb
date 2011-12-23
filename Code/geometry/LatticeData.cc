@@ -232,17 +232,17 @@ namespace hemelb
                   // This is used in Calculate BC in IO.
                   SetSiteData(site_map, iSiteDataForThisRank[lSiteIndexOnProc]);
 
-                  if (GetCollisionType(GetSiteData(site_map)) & (EDGE|INLET|OUTLET))
+                  if (GetCollisionType(GetSiteData(site_map)) & EDGE)
                   {
                     SetWallNormal(site_map, GetBlock(n)->wall_data[m].wall_nor);
                     SetWallDistance(site_map, GetBlock(n)->wall_data[m].cut_dist);
                   }
                   else
                   {
-                    double lBigDistance[14];
-                    for (unsigned int ii = 0; ii < 14; ii++)
+                    double lBigDistance[3];
+                    for (unsigned int ii = 0; ii < 3; ii++)
                       lBigDistance[ii] = NO_VALUE;
-                    SetWallDistance(site_map, lBigDistance);
+                    //SetWallDistance(site_map, lBigDistance);
                     SetWallNormal(site_map, lBigDistance);
                   }
                   ++lSiteIndexOnProc;
