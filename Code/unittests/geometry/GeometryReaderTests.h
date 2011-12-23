@@ -4,6 +4,7 @@
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "unittests/FourCubeLatticeData.h"
+#include "unittests/helpers/FolderTestFixture.h"
 namespace hemelb
 {
   namespace unittests
@@ -27,7 +28,7 @@ namespace hemelb
 
           typedef LatticeData::GlobalLatticeData TestableGlobalLatticeData;
       };
-      class GeometryReaderTests : public CppUnit::TestFixture
+      class GeometryReaderTests : public FolderTestFixture
       {
           CPPUNIT_TEST_SUITE( GeometryReaderTests);
           CPPUNIT_TEST( TestRead);
@@ -41,11 +42,15 @@ namespace hemelb
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             fourCube = FourCubeLatticeData::CubeGlobalLatticeData::Create();
-            simConfig = configuration::SimConfig::Load(Resource("four_cube.xml").Path().c_str());
+            FolderTestFixture::setUp();
+            CopyResourceToTempdir("four_cube.xml");
+            CopyResourceToTempdir("four_cube.dat");
+            simConfig = configuration::SimConfig::Load("four_cube.xml");
           }
 
           void tearDown()
           {
+            FolderTestFixture::tearDown();
             delete reader;
             delete globalLattice;
             delete params;
