@@ -196,7 +196,7 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         """Loaded the very basic domain information. Give a status
         report.
         """
-        fields = ['StressType', 'BlockSize', 'BlockCounts',
+        fields = ['BlockSize', 'BlockCounts',
                   'VoxelSize', 'Origin']
         template = '\n'.join('%s: {0.%s}' % (f, f) for f in fields)
         self.Info(template.format(self.Domain))

@@ -67,8 +67,7 @@ namespace hemelb
       }
     }
 
-    LatticeData::GlobalLatticeData* LatticeData::GeometryReader::LoadAndDecompose(lb::LbmParameters* lbmParams,
-                                                                                  std::string& dataFilePath,
+    LatticeData::GlobalLatticeData* LatticeData::GeometryReader::LoadAndDecompose(std::string& dataFilePath,
                                                                                   reporting::Timers &timings)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
@@ -116,7 +115,7 @@ namespace hemelb
       LatticeData::GlobalLatticeData* globalLattice = new LatticeData::GlobalLatticeData();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      ReadPreamble(lbmParams, globalLattice);
+      ReadPreamble(globalLattice);
 
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
@@ -226,8 +225,7 @@ namespace hemelb
      * for (int i=0; i<3; ++i)
      *        site0WorldPosition[i] = load_double();
      */
-    void LatticeData::GeometryReader::ReadPreamble(hemelb::lb::LbmParameters * params,
-                                                   GlobalLatticeData* globalLatticeData)
+    void LatticeData::GeometryReader::ReadPreamble(GlobalLatticeData* globalLatticeData)
     {
       // Read in the file preamble into a buffer.
       char preambleBuffer[preambleBytes];
@@ -252,11 +250,10 @@ namespace hemelb
           hemelb::io::writers::xdr::XdrMemReader(preambleBuffer, preambleBytes);
 
       // Variables we'll read.
-      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
+      unsigned int blocksX, blocksY, blocksZ, blockSize;
       double voxelSize, origin[3];
 
       // Read in the values.
-      preambleReader.readUnsignedInt(stressType);
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
       preambleReader.readUnsignedInt(blocksZ);
@@ -266,9 +263,6 @@ namespace hemelb
       {
         preambleReader.readDouble(origin[i]);
       }
-
-      // Pass the read in variables to the objects that need them.
-      params->StressType = (lb::StressTypes) stressType;
 
       globalLatticeData->SetBasicDetails(blocksX,
                                          blocksY,

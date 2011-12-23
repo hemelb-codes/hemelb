@@ -13,7 +13,7 @@ class BlockWriter;
 
 class ConfigWriter {
 public:
-	ConfigWriter(const std::string& OutputConfigFile, int StressType,
+	ConfigWriter(const std::string& OutputConfigFile,
 			int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin);
 
 	~ConfigWriter();
@@ -23,7 +23,6 @@ public:
 
 protected:
 	std::string OutputConfigFile;
-	int StressType;
 	int BlockSize;
 	Index BlockCounts;
 	double VoxelSize;

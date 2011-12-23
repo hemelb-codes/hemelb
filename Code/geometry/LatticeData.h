@@ -11,9 +11,6 @@
 #include "mpiInclude.h"
 #include "geometry/BlockTraverser.h"
 #include "io/writers/xdr/XdrReader.h"
-// TODO Remove the stress type from the data file, so we can remove the dependence
-// on LbmParams here.
-#include "lb/LbmParameters.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 
@@ -35,7 +32,6 @@ namespace hemelb
 
         static LatticeData* Load(const bool reserveSteeringCore,
                                  std::string& dataFilePath,
-                                 lb::LbmParameters* bLbmParams,
                                  reporting::Timers &timings);
 
         virtual ~LatticeData();
@@ -229,8 +225,7 @@ namespace hemelb
             GeometryReader(const bool reserveSteeringCore);
             ~GeometryReader();
 
-            GlobalLatticeData* LoadAndDecompose(lb::LbmParameters* bLbmParams,
-                                                std::string& dataFilePath,
+            GlobalLatticeData* LoadAndDecompose(std::string& dataFilePath,
                                                 reporting::Timers &timings);
 
           private:
@@ -239,7 +234,7 @@ namespace hemelb
                 site_t i, j, k;
             };
 
-            void ReadPreamble(lb::LbmParameters* bParams, GlobalLatticeData* bGlobalLatticeData);
+            void ReadPreamble(GlobalLatticeData* bGlobalLatticeData);
 
             void ReadHeader(site_t iBlockCount,
                             site_t* sitesInEachBlock,
@@ -375,12 +370,11 @@ namespace hemelb
                                     const unsigned int* bytesPerBlock) const;
 
             // The config file starts with:
-            // * 1 unsigned int for stress type
             // * 3 unsigned ints for the number of blocks in the x, y, z directions
             // * 1 unsigned int for the block size (number of sites along one edge of a block)
             // * 1 double for the voxel size
             // * 3 doubles for the world-position of site 0
-            static const int preambleBytes = 5 * 4 + 4 * 8;
+            static const int preambleBytes = 4 * 4 + 4 * 8;
             static const proc_t HEADER_READING_RANK = 0;
             static const proc_t READING_GROUP_SIZE = 5;
 

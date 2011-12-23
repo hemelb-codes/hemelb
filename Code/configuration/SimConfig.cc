@@ -60,6 +60,9 @@ namespace hemelb
       TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation", iIsLoading);
       DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
       DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
+      long dummyStress = -1;
+      DoIO(lSimulationElement, "stresstype", iIsLoading, dummyStress);
+      StressType = (lb::StressTypes) dummyStress;
 
       TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
 

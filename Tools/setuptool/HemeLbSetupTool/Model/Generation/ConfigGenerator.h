@@ -42,20 +42,6 @@ public:
 		this->OutputConfigFile = val;
 	}
 
-	//	inline std::string GetOutputXmlFile(void) {
-	//		return this->OutputXmlFile;
-	//	}
-	//	inline void SetOutputXmlFile(std::string val) {
-	//		this->OutputXmlFile = val;
-	//	}
-
-	inline int GetStressType(void) {
-		return this->StressType;
-	}
-	inline void SetStressType(int val) {
-		this->StressType = val;
-	}
-
 	inline std::vector<Iolet*>& GetIolets() {
 		return this->Iolets;
 	}
@@ -96,7 +82,6 @@ protected:
 	// Members set from outside to initialise
 	double VoxelSize;
 	std::string OutputConfigFile;
-	int StressType;
 	std::vector<Iolet*> Iolets;
 	double SeedPoint[3];
 	vtkPolyData* ClippedSurface;
