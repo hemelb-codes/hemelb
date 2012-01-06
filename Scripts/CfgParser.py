@@ -59,8 +59,8 @@ class ErrorCollection(Error):
         else:
             self.errString = 'Errors'
             pass
-        
-        errLines = ['{errString} in {item}:'.format(**self.__dict__)]
+
+        errLines = [] 
         for iErr in self.itemErrors:
             errLines.append(self.Indent(iErr.Format()))
             continue
@@ -124,13 +124,14 @@ class SiteError(Error):
         return
     pass
 
-class D3Q15Lattice(object):
+class D3Q27Lattice(object):
     """Represent needed properties of the LB lattice. Velocities must
     be ordered in the same way as the rest of HemeLB.
     """
     
     # Neighbour deltas are the vectors which when added to a fluid
     # site position vector give the location of a putative neighbour.
+
     velocities = np.array([[ 0,  0,  0],
                            [ 1,  0,  0],
                            [-1,  0,  0],
@@ -138,6 +139,18 @@ class D3Q15Lattice(object):
                            [ 0, -1,  0],
                            [ 0,  0,  1],
                            [ 0,  0, -1],
+                           [ 1,  1,  0],
+                           [-1, -1,  0],
+                           [ 1, -1,  0],
+                           [-1,  1,  0],
+                           [ 1,  0,  1],
+                           [-1,  0, -1],
+                           [ 1,  0, -1],
+                           [-1,  0,  1],
+                           [ 0,  1,  1],
+                           [ 0, -1, -1],
+                           [ 0,  1, -1],
+                           [ 0, -1,  1],
                            [ 1,  1,  1],
                            [-1, -1, -1],
                            [ 1,  1, -1],
@@ -146,6 +159,7 @@ class D3Q15Lattice(object):
                            [-1,  1, -1],
                            [ 1, -1, -1],
                            [-1,  1,  1]])
+
     norms = np.sqrt(np.sum(velocities**2, axis=-1))
     minNorm = norms.min()
     maxNorm = norms.max()
@@ -157,7 +171,7 @@ class D3Q15Lattice(object):
     neighs = velocities[1:]
     pass
 
-Lattice = D3Q15Lattice
+Lattice = D3Q27Lattice
 
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
@@ -337,7 +351,7 @@ class BlockChecker(object):
         self.block = block
         blockErrors = BlockErrorCollection(block)
         self.numFluid = 0
-        
+
         dom = block.GetDomain()
         
         if isinstance(block, AllSolidBlock):
@@ -350,6 +364,7 @@ class BlockChecker(object):
             lsInd = np.array(lsInd)
             
             site = block.GetLocalSite(lsInd)
+
             # Quick helper function to add an error to this site's
             # error list
             addSiteError = lambda msg: blockErrors.AddSiteError(site, msg)
@@ -398,7 +413,7 @@ class BlockChecker(object):
                 pass
 
             if not isTypeKnown:
-                addSiteError('Site doesn\'t appear to have any fitting type for config = 0b{:032b}'.format(site.Config))
+                addSiteError('Site doesn\'t appear to have any fitting type for config: 0b{:064b}'.format(site.Config))
                 pass
             pass
         return
@@ -428,7 +443,7 @@ class BlockChecker(object):
         for iNeigh, delta in enumerate(Lattice.neighs):
             neigh = site.GetBlock().GetSite(site.Index + delta)
 
-            if isinstance(neigh, OutOfDomainSite):
+            if isinstance(neigh, OutOfDomainSite) and site.Type == cfg.FLUID_TYPE and not site.IsEdge:
                 addSiteError('Fluid site has out-of-domain neighbour {}'.format(neigh))
                 pass
             
@@ -446,7 +461,7 @@ class BlockChecker(object):
                     site.CutDistances[iNeigh] >= 1.):
                     
                     addSiteError('Link to solid {neigh} has invalid '
-                                 'CutDistance = {cd}'.format(neigh=neigh,
+                                 'CutDistance: {cd}'.format(neigh=neigh,
                                                              cd=site.CutDistances[iNeigh]))
                     pass
                 
@@ -456,7 +471,7 @@ class BlockChecker(object):
                     site.CutDistances[iNeigh] != np.inf):
                     
                     addSiteError('Link to fluid {neigh} has non-infinite '
-                                 'CutDistance = {cd}'.format(neigh=neigh,
+                                 'CutDistance: {cd}'.format(neigh=neigh,
                                                              cd=site.CutDistances[iNeigh]))
                     pass
                 

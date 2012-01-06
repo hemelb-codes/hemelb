@@ -58,7 +58,7 @@ void ConfigGenerator::Execute() {
 			this->ClassifySite(site);
 			// cache the type cos it's probably slow to compute
 			unsigned int type = site.GetType();
-			unsigned int cfg = site.GetConfig();
+			uint64_t cfg = site.GetConfig();
 			blockWriter << cfg;
 
 			if (type == hemelb::SOLID_TYPE) {

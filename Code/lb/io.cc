@@ -161,7 +161,7 @@ namespace hemelb
 
                   site_t my_site_id = mLatDat->GetBlock(n)->site_data[m];
 
-                  /* No idea what this does */
+                  /* Don't write out for solid sites */
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 

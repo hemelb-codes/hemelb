@@ -4,8 +4,8 @@ void Neighbours::Init() {
 	// This assumes that the hemelb lattice descriptor class has a zero vector at the first entry.
 	unsigned int iLater = 0;
 	for (unsigned int i = 0; i < Neighbours::n; ++i) {
-		Neighbours::vectors[i] = Index(hemelb::D3Q15::CX[i + 1],
-				hemelb::D3Q15::CY[i + 1], hemelb::D3Q15::CZ[i + 1]);
+		Neighbours::vectors[i] = Index(hemelb::lb::lattices::D3Q27::CX[i + 1],
+				hemelb::lb::lattices::D3Q27::CY[i + 1], hemelb::lb::lattices::D3Q27::CZ[i + 1]);
 		Neighbours::norms[i] = Neighbours::vectors[i].Magnitude<double>();
 
 		// Figure out if this takes us to a later site
@@ -34,7 +34,7 @@ void Neighbours::Init() {
 		} else {
 			// No
 		}
-		Neighbours::inverses[i] = hemelb::D3Q15::INVERSEDIRECTIONS[i + 1] - 1;
+		Neighbours::inverses[i] = hemelb::lb::lattices::D3Q27::INVERSEDIRECTIONS[i + 1] - 1;
 	}
 }
 

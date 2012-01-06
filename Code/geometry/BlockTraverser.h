@@ -1,7 +1,7 @@
 #ifndef HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 #define HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 
-#include "D3Q15.h"
+#include "lb/lattices/D3Q27.h"
 #include "geometry/VolumeTraverser.h"
 #include "geometry/SiteTraverser.h"
 
@@ -19,7 +19,7 @@ namespace hemelb
         // cut distances along the 14 non-zero lattice vectors;
         // each one is between 0 and 1 if the surface cuts the corresponding
         // vector or is equal to "NO_VALUE" otherwise
-        double cut_dist[D3Q15::NUMVECTORS - 1];
+        double cut_dist[lb::lattices::D3Q27::NUMVECTORS - 1];
     };
 
     // Data about each global block in the lattice,
@@ -59,7 +59,7 @@ namespace hemelb
         // each site.
         WallData *wall_data;
         // The "site data" for each site.
-        unsigned int *site_data;
+        sitedata_t* site_data;
     };
 
     /**

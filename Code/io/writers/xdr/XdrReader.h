@@ -25,6 +25,7 @@ namespace hemelb
             bool readFloat(float& outDouble);
             bool readInt(int& outInt);
             bool readUnsignedInt(unsigned int& outUInt);
+            bool readUnsignedLong(uint64_t& outULong);
 
             // Get the position in the stream.
             unsigned int GetPosition();

@@ -38,6 +38,14 @@ namespace hemelb
           return xdr_u_int(&mXdr, &outUInt);
         }
 
+        bool XdrReader::readUnsignedLong(uint64_t& outULong)
+        {
+          u_quad_t temporary;
+          bool ret = xdr_uint64_t(&mXdr, &temporary);
+          outULong = temporary;
+          return ret;
+        }
+
         unsigned int XdrReader::GetPosition()
         {
           return xdr_getpos(&mXdr);
