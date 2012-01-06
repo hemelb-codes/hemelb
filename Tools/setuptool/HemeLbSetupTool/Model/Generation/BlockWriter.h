@@ -25,9 +25,10 @@ public:
 		return *this;
 	}
 
+	hemelb::io::writers::xdr::XdrMemWriter* memWriter;
+
 protected:
 	ConfigWriter* configWriter;
-	hemelb::io::writers::xdr::XdrMemWriter* memWriter;
 	unsigned int nFluidSites;
 	size_t maxBufferSize;
 	char *buffer;

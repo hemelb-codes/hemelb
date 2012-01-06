@@ -5,14 +5,10 @@
 #include <vector>
 
 // VTK bits we need
-//#include "vtkSmartPointer.h"
 class vtkPolyData;
 class vtkOBBTree;
 class vtkPoints;
 class vtkIdList;
-
-//typedef vtkSmartPointer<vtkPolyDataAlgorithm> vtkPolyDataAlgorithmPtr;
-//typedef vtkSmartPointer<vtkOBBTree> vtkOBBTreePtr;
 
 #include "GetSet.h"
 #include "Iolet.h"
@@ -70,13 +66,6 @@ public:
 	inline void SetClippedSurface(vtkPolyData* val) {
 		this->ClippedSurface = val;
 	}
-
-//	inline vtkOBBTree* GetLocator(void) {
-//		return this->Locator;
-//	}
-//	inline void SetLocator(vtkOBBTree* val) {
-//		this->Locator = val;
-//	}
 
 protected:
 	// Members set from outside to initialise

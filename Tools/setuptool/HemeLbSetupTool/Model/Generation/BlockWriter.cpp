@@ -2,13 +2,14 @@
 
 #include "BlockWriter.h"
 #include "ConfigWriter.h"
+#include "Neighbours.h"
 
 BlockWriter::BlockWriter(ConfigWriter &cfg) :
 	configWriter(&cfg), nFluidSites(0) {
-	this->maxBufferSize = (4 * 1 // unsigned int, site config
+	this->maxBufferSize = (8 * 1 // unsigned long, site config
 			+ 8 * 4 // doubles, boundary
 			+ 8 * 4 // doubles, wall
-			+ 8 * 14) // doubles, cut distances
+			+ 8 * Neighbours::n) // doubles, cut distances
 			* cfg.BlockSize * cfg.BlockSize * cfg.BlockSize; // number of blocks
 	this->buffer = new char[this->maxBufferSize];
 	this->memWriter = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,

@@ -5,7 +5,6 @@
 #include "Domain.h"
 
 #include "Iolet.h"
-#include "config.h"
 
 #include "Neighbours.h"
 
@@ -55,9 +54,9 @@ unsigned int Site::GetType() const {
 }
 
 // Compute the full config unsigned int
-unsigned int Site::GetConfig() {
+uint64_t Site::GetConfig() {
 	unsigned int type = this->GetType();
-	unsigned int cfg = type;
+	uint64_t cfg = type;
 	// If solid, we're done
 	if (!this->IsFluid)
 		return cfg;
@@ -82,7 +81,7 @@ unsigned int Site::GetConfig() {
 		}
 		// Shift the boundary bit field to the appropriate
 		// place and set these bits in the type
-		cfg |= boundary << hemelb::BOUNDARY_CONFIG_SHIFT;
+		cfg |= (uint64_t) boundary << hemelb::BOUNDARY_CONFIG_SHIFT;
 
 		if (boundary)
 			// Set this bit if we've hit any solid sites
@@ -93,7 +92,7 @@ unsigned int Site::GetConfig() {
 	if (type != hemelb::FLUID_TYPE) {
 		// It must be an inlet or outlet
 		// Shift the index left and set the bits
-		cfg |= this->BoundaryId << hemelb::BOUNDARY_ID_SHIFT;
+		cfg |= (uint64_t) this->BoundaryId << hemelb::BOUNDARY_ID_SHIFT;
 	}
 
 	return cfg;

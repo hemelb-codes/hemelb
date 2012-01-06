@@ -43,7 +43,7 @@ namespace hemelb
             return VectorSet[index];
           }
 
-          const unsigned GetInverseIndex(unsigned index) const
+          unsigned GetInverseIndex(unsigned index) const
           {
             return InverseVectorIndices[index];
           }
