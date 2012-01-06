@@ -8,7 +8,7 @@ namespace hemelb
   namespace geometry
   {
     BlockTraverser::BlockTraverser(const geometry::LatticeData& iLatDat) :
-      VolumeTraverser(), mLatticeData(iLatDat)
+        VolumeTraverser(), mLatticeData(iLatDat)
     {
     }
 

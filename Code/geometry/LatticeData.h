@@ -8,7 +8,6 @@
 #include "D3Q15.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
-#include "mpiInclude.h"
 #include "geometry/BlockTraverser.h"
 #include "io/writers/xdr/XdrReader.h"
 #include "reporting/Timers.h"
@@ -81,7 +80,7 @@ namespace hemelb
         site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
         bool HasBoundary(const site_t iSiteIndex, const int iDirection) const;
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
-        unsigned int GetSiteData(site_t iSiteIndex) const;
+        sitedata_t GetSiteData(site_t iSiteIndex) const;
         unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
         const util::Vector3D<site_t>
         GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
@@ -129,7 +128,7 @@ namespace hemelb
 
             // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
             // SiteType || FluidSite and SiteType && FluidSite have different significances...
-            unsigned int *mSiteData;
+            sitedata_t* mSiteData;
 
           private:
             site_t LocalFluidSites;
@@ -155,7 +154,7 @@ namespace hemelb
                                  distribn_t iOriginY,
                                  distribn_t iOriginZ);
 
-            void GetThisRankSiteData(unsigned int *& bThisRankSiteData);
+            void GetThisRankSiteData(sitedata_t *& bThisRankSiteData);
 
             site_t GetXSiteCount() const;
             site_t GetYSiteCount() const;
@@ -181,7 +180,7 @@ namespace hemelb
 
             // Returns the type of collision/streaming update for the fluid site
             // with data "site_data".
-            unsigned int GetCollisionType(unsigned int site_data) const;
+            unsigned int GetCollisionType(sitedata_t site_data) const;
 
             // Function that finds the pointer to the rank on which a particular site
             // resides. If the site is in an empty block, return NULL.
@@ -194,8 +193,9 @@ namespace hemelb
             void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
             site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
             const util::Vector3D<site_t>
-            GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
-            unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+            GetGlobalCoords(site_t blockNumber,
+                            const util::Vector3D<site_t>& localSiteCoords) const;
+            sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
             void ReadBlock(site_t block, io::writers::xdr::XdrReader* reader);
             const site_t* GetFluidSiteCountsOnEachProc() const;
@@ -412,13 +412,13 @@ namespace hemelb
         LatticeData();
         LatticeData(LocalLatticeData* localLattice, GlobalLatticeData* globalLattice);
 
-        void SetSiteData(site_t siteIndex, unsigned int siteData);
+        void SetSiteData(site_t siteIndex, sitedata_t siteData);
         void SetWallNormal(site_t siteIndex, double normal[3]);
         void SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
         void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
                                        proc_t localRank,
-                                       const unsigned int* iSiteDataForThisRank);
-        void CountCollisionTypes(const unsigned int * lThisRankSiteData);
+                                       const sitedata_t* iSiteDataForThisRank);
+        void CountCollisionTypes(const sitedata_t* lThisRankSiteData);
         void InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc);
         void Initialise();
 

@@ -1,6 +1,7 @@
 #include <map>
 #include <limits>
 
+#include "mpiInclude.h"
 #include "log/Logger.h"
 #include "topology/NetworkTopology.h"
 #include "geometry/LatticeData.h"
@@ -93,7 +94,7 @@ namespace hemelb
       LatticeData* lattice = new LatticeData(localLattice, globalLattice);
 
       lattice->totalFluidSites = 0;
-      for (proc_t ii = 0; ii < (proc_t) size; ++ii)
+      for (proc_t ii = 0; ii < size; ++ii)
       {
         lattice->totalFluidSites += globalLattice->fluidSitesOnEachProcessor[ii];
       }
@@ -109,7 +110,7 @@ namespace hemelb
 
     void LatticeData::InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
                                                 proc_t localRank,
-                                                const unsigned int* iSiteDataForThisRank)
+                                                const sitedata_t* iSiteDataForThisRank)
     {
       site_t n = -1;
       site_t lSiteIndexOnProc = 0;
@@ -149,7 +150,7 @@ namespace hemelb
                   }
 
                   // Get site data, which is the number of the fluid site on this proc..
-                  unsigned int site_map = map_block_p->site_data[m];
+                  sitedata_t site_map = map_block_p->site_data[m];
 
                   // Set neighbour location for the distribution component at the centre of
                   // this site.
@@ -386,7 +387,7 @@ namespace hemelb
       return localLatDat.GetCutDistance(iSiteIndex, iDirection);
     }
 
-    unsigned int LatticeData::GetSiteData(site_t iSiteIndex) const
+    sitedata_t LatticeData::GetSiteData(site_t iSiteIndex) const
     {
       return localLatDat.mSiteData[iSiteIndex];
     }
@@ -402,7 +403,7 @@ namespace hemelb
       return globLatDat.GetGlobalCoords(blockNumber, localSiteCoords);
     }
 
-    void LatticeData::SetSiteData(site_t siteIndex, unsigned int siteData)
+    void LatticeData::SetSiteData(site_t siteIndex, sitedata_t siteData)
     {
       localLatDat.mSiteData[siteIndex] = siteData;
     }
@@ -433,7 +434,7 @@ namespace hemelb
       return globLatDat.GetCollisionType(site_data);
     }
 
-    void LatticeData::CountCollisionTypes(const unsigned int * lThisRankSiteData)
+    void LatticeData::CountCollisionTypes(const sitedata_t* lThisRankSiteData)
     {
       site_t innerSites = 0;
 
@@ -657,7 +658,7 @@ namespace hemelb
                 {
                   m++;
 
-                  unsigned int *site_data_p = &map_block_p->site_data[m];
+                  sitedata_t* site_data_p = &map_block_p->site_data[m];
 
                   // If the site is solid, continue.
                   if (*site_data_p & BIG_NUMBER3)
@@ -730,13 +731,13 @@ namespace hemelb
                   {
                     if (l != 0)
                     {
-                      *site_data_p = (unsigned int) (collision_offset[0][l] + innerColsPassed[l]);
+                      *site_data_p = (sitedata_t) (collision_offset[0][l] + innerColsPassed[l]);
                       ++innerColsPassed[l];
                     }
                   }
                   else
                   {
-                    *site_data_p = (unsigned int) (collision_offset[1][l] + interColsPassed[l]);
+                    *site_data_p = (sitedata_t) (collision_offset[1][l] + interColsPassed[l]);
                     ++interColsPassed[l];
                   }
                 }
@@ -805,8 +806,8 @@ namespace hemelb
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
       // This rank's site data.
-      unsigned int *lThisRankSiteData =
-          new unsigned int[globLatDat.fluidSitesOnEachProcessor[netTop->GetLocalRank()]];
+      sitedata_t* lThisRankSiteData =
+          new sitedata_t[globLatDat.fluidSitesOnEachProcessor[netTop->GetLocalRank()]];
 
       globLatDat.GetThisRankSiteData(lThisRankSiteData);
 
