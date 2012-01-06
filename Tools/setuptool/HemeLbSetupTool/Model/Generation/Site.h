@@ -2,6 +2,7 @@
 #define HEMELBSETUPTOOL_SITE_H
 
 #include <vector>
+#include "config.h"
 
 #include "Index.h"
 class Iolet;
@@ -17,7 +18,7 @@ public:
 	Site(Block& block, Index& index);
 	Site(Block& block, unsigned int i, unsigned int j, unsigned int k);
 	unsigned int GetType() const;
-	unsigned int GetConfig();
+	uint64_t GetConfig();
 	bool IsFluidKnown;
 	bool IsFluid;
 	bool IsEdge;

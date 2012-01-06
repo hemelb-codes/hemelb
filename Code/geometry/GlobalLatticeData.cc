@@ -1,4 +1,5 @@
 #include "geometry/LatticeData.h"
+#include "lb/lattices/D3Q27.h"
 #include "log/Logger.h"
 #include "topology/NetworkTopology.h"
 
@@ -37,16 +38,16 @@ namespace hemelb
         }
       }
 
-      fluidSitesOnEachProcessor
-          = new site_t[topology::NetworkTopology::Instance()->GetProcessorCount()];
+      fluidSitesOnEachProcessor =
+          new site_t[topology::NetworkTopology::Instance()->GetProcessorCount()];
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     fluidSitesOnEachProcessor,
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     MPI_COMM_WORLD);
     }
 
@@ -161,9 +162,9 @@ namespace hemelb
 
     // Returns the type of collision/streaming update for the fluid site
     // with data "site_data".
-    unsigned int LatticeData::GlobalLatticeData::GetCollisionType(unsigned int site_data) const
+    unsigned int LatticeData::GlobalLatticeData::GetCollisionType(sitedata_t site_data) const
     {
-      unsigned int boundary_type;
+      sitedata_t boundary_type;
 
       if (site_data == LatticeData::FLUID_TYPE)
       {
@@ -175,6 +176,7 @@ namespace hemelb
       {
         return EDGE;
       }
+
       if (! (site_data & PRESSURE_EDGE_MASK))
       {
         if (boundary_type == LatticeData::INLET_TYPE)
@@ -271,7 +273,7 @@ namespace hemelb
                                     GetSiteCoord(blockK, localSiteCoords.z));
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetSiteData(site_t siteI,
+    sitedata_t LatticeData::GlobalLatticeData::GetSiteData(site_t siteI,
                                                              site_t siteJ,
                                                              site_t siteK) const
     {
@@ -298,7 +300,7 @@ namespace hemelb
     {
       if (Blocks[block].site_data == NULL)
       {
-        Blocks[block].site_data = new unsigned int[GetSitesPerBlockVolumeUnit()];
+        Blocks[block].site_data = new sitedata_t[GetSitesPerBlockVolumeUnit()];
       }
       if (Blocks[block].ProcessorRankForEachBlockSite == NULL)
       {
@@ -318,21 +320,59 @@ namespace hemelb
           {
             ++localSiteIndex;
 
-            unsigned int *site_type = &Blocks[block].site_data[localSiteIndex];
-            if (!reader->readUnsignedInt(*site_type))
+            sitedata_t siteData;
+
+            if (!reader->readUnsignedLong(siteData))
             {
               std::cout << "Error reading site type\n";
+              exit(0);
             }
 
-            if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
+            if ( (siteData & SITE_TYPE_MASK) == SOLID_TYPE)
             {
               Blocks[block].ProcessorRankForEachBlockSite[localSiteIndex] = BIG_NUMBER2;
+              Blocks[block].site_data[localSiteIndex] = siteData;
               continue;
             }
 
+            // We need to correct the lattice intrinsically used for the boundary config bits in the
+            // site data.
+            sitedata_t oldBoundaryBits = (siteData & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
+            sitedata_t newBoundaryBits = 0;
+
+            for (Direction readDirection = 1; readDirection < lb::lattices::D3Q27::NUMVECTORS;
+                readDirection++)
+            {
+              for (Direction usedLatticeDirection = 1; usedLatticeDirection < D3Q15::NUMVECTORS;
+                  usedLatticeDirection++)
+              {
+                if (D3Q15::CX[usedLatticeDirection] == lb::lattices::D3Q27::CX[readDirection]
+                    && D3Q15::CY[usedLatticeDirection] == lb::lattices::D3Q27::CY[readDirection]
+                    && D3Q15::CZ[usedLatticeDirection] == lb::lattices::D3Q27::CZ[readDirection])
+                {
+                  // If we are meant to have a boundary in this direction in the read lattice,
+                  // encode that information for the lattice in use.
+                  if((oldBoundaryBits & (1 << (readDirection - 1))) != 0)
+                  {
+                    newBoundaryBits |= (1 << (usedLatticeDirection - 1));
+                  }
+
+                  break;
+                }
+              }
+            }
+
+            // Now apply this change to the sitedata itself.
+            // First clear the old boundary config bits.
+            // Then insert the new ones.
+            siteData &= ~BOUNDARY_CONFIG_MASK;
+            siteData |= (newBoundaryBits << BOUNDARY_CONFIG_SHIFT);
+
+            Blocks[block].site_data[localSiteIndex] = siteData;
+
             Blocks[block].ProcessorRankForEachBlockSite[localSiteIndex] = -1;
 
-            if (GetCollisionType(*site_type) != FLUID)
+            if (GetCollisionType(siteData) != FLUID)
             {
               // Neither solid nor simple fluid
               if (Blocks[block].wall_data == NULL)
@@ -340,20 +380,23 @@ namespace hemelb
                 Blocks[block].wall_data = new WallData[GetSitesPerBlockVolumeUnit()];
 
                 // Initialise all the WallData objects to indicate a lack of walls / cuts.
-                for (unsigned int localSiteCount = 0; localSiteCount < GetSitesPerBlockVolumeUnit(); ++localSiteCount)
+                for (unsigned int localSiteCount = 0; localSiteCount < GetSitesPerBlockVolumeUnit();
+                    ++localSiteCount)
                 {
-                  for (unsigned int cutDirection = 0; cutDirection < D3Q15::NUMVECTORS - 1; ++cutDirection)
+                  for (unsigned int cutDirection = 0;
+                      cutDirection < lb::lattices::D3Q27::NUMVECTORS - 1; ++cutDirection)
                   {
                     Blocks[block].wall_data[localSiteCount].cut_dist[cutDirection] = -1.0F;
                   }
-                  for (unsigned int wallNormalDimension = 0; wallNormalDimension < 3; ++wallNormalDimension)
+                  for (unsigned int wallNormalDimension = 0; wallNormalDimension < 3;
+                      ++wallNormalDimension)
                   {
                     Blocks[block].wall_data[localSiteCount].wall_nor[wallNormalDimension] = -1.0F;
                   }
                 }
               }
 
-              if (GetCollisionType(*site_type) & INLET || GetCollisionType(*site_type) & OUTLET)
+              if ((GetCollisionType(siteData) & INLET) || (GetCollisionType(siteData) & OUTLET))
               {
                 double temp;
                 // INLET or OUTLET or both.
@@ -372,7 +415,7 @@ namespace hemelb
                 }
               }
 
-              if (GetCollisionType(*site_type) & EDGE)
+              if (GetCollisionType(siteData) & EDGE)
               {
                 // EDGE bit set
                 for (int dimension = 0; dimension < 3; dimension++)
@@ -390,11 +433,26 @@ namespace hemelb
                 }
               }
 
-              for (unsigned int direction = 0; direction < (D3Q15::NUMVECTORS - 1); direction++)
+              for (Direction readDirection = 1; readDirection < lb::lattices::D3Q27::NUMVECTORS;
+                  readDirection++)
               {
-                if (!reader->readDouble(Blocks[block].wall_data[localSiteIndex].cut_dist[direction]))
+                double cutDistance;
+                if (!reader->readDouble(cutDistance))
                 {
                   std::cout << "Error reading cut distances\n";
+                }
+
+                for (Direction usedLatticeDirection = 1; usedLatticeDirection < D3Q15::NUMVECTORS;
+                    usedLatticeDirection++)
+                {
+                  if (D3Q15::CX[usedLatticeDirection] == lb::lattices::D3Q27::CX[readDirection]
+                      && D3Q15::CY[usedLatticeDirection] == lb::lattices::D3Q27::CY[readDirection]
+                      && D3Q15::CZ[usedLatticeDirection] == lb::lattices::D3Q27::CZ[readDirection])
+                  {
+                    Blocks[block].wall_data[localSiteIndex].cut_dist[usedLatticeDirection - 1] =
+                        cutDistance;
+                    break;
+                  }
                 }
               }
             }
@@ -403,7 +461,7 @@ namespace hemelb
       } // ii
     }
 
-    void LatticeData::GlobalLatticeData::GetThisRankSiteData(unsigned int*& bThisRankSiteData)
+    void LatticeData::GlobalLatticeData::GetThisRankSiteData(sitedata_t*& bThisRankSiteData)
     {
       // Array of booleans to store whether any sites on a block are fluid
       // sites residing on this rank.
@@ -428,7 +486,8 @@ namespace hemelb
 
         // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
         // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-        for (site_t lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < GetSitesPerBlockVolumeUnit(); lSiteIndexWithinBlock++)
+        for (site_t lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < GetSitesPerBlockVolumeUnit();
+            lSiteIndexWithinBlock++)
         {
           if (topology::NetworkTopology::Instance()->GetLocalRank()
               == lCurrentDataBlock->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
@@ -440,8 +499,8 @@ namespace hemelb
             if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
                 != geometry::LatticeData::SOLID_TYPE)
             {
-              bThisRankSiteData[lSiteIndexOnProc]
-                  = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+              bThisRankSiteData[lSiteIndexOnProc] =
+                  lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
               lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
               ++lSiteIndexOnProc;
             }

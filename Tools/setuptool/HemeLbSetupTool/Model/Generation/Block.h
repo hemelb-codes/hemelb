@@ -4,9 +4,8 @@
 #include <vector>
 
 #include "Index.h"
-//#include "Site.h"
 class Site;
-//class Domain;
+
 #include "Domain.h"
 
 typedef std::vector<Site*> SiteVec;

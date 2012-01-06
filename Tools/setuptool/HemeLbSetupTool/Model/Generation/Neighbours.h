@@ -3,14 +3,14 @@
 
 #include <vector>
 
-#include "D3Q15.h"
+#include "lb/lattices/D3Q27.h"
 #include "Index.h"
 
 struct Neighbours {
 	// This assumes that the hemelb lattice descriptor class has a zero vector.
 
 	enum {
-		n = hemelb::D3Q15::NUMVECTORS - 1
+		n = hemelb::lb::lattices::D3Q27::NUMVECTORS - 1
 	};
 	enum {
 		nLater = n / 2

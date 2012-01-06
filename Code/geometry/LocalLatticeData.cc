@@ -22,7 +22,7 @@ namespace hemelb
       // f_id is allocated so we know which sites to get information from.
       mFNeighbours = new site_t[LocalFluidSites * D3Q15::NUMVECTORS];
 
-      mSiteData = new unsigned int[LocalFluidSites];
+      mSiteData = new sitedata_t[LocalFluidSites];
       mWallNormalAtSite = new double[LocalFluidSites * 3];
       mDistanceToWall = new double[LocalFluidSites * (D3Q15::NUMVECTORS - 1)];
 
@@ -70,9 +70,9 @@ namespace hemelb
        */
       if (direction > 0)
       {
-        const unsigned int directionMask = 1U << (direction - 1);
-        const unsigned int boundaryBits = (mSiteData[siteIndex] & BOUNDARY_CONFIG_MASK);
-        const unsigned int shiftedBoundaryBits = boundaryBits >> BOUNDARY_CONFIG_SHIFT;
+        const sitedata_t directionMask = 1U << (direction - 1);
+        const sitedata_t boundaryBits = (mSiteData[siteIndex] & BOUNDARY_CONFIG_MASK);
+        const sitedata_t shiftedBoundaryBits = boundaryBits >> BOUNDARY_CONFIG_SHIFT;
         return (shiftedBoundaryBits & directionMask) != 0;
       }
       else

@@ -5,6 +5,7 @@
 #include "debug/Debugger.h"
 #include "io/writers/xdr/XdrMemReader.h"
 #include "geometry/LatticeData.h"
+#include "lb/lattices/D3Q27.h"
 #include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "log/Logger.h"
@@ -374,8 +375,8 @@ namespace hemelb
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank, globLatDat);
 
-      const site_t maxBytesPerBlock = (globLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
-          + D3Q15::NUMVECTORS - 1));
+      const site_t maxBytesPerBlock = (globLatDat->GetSitesPerBlockVolumeUnit()) * (8 * 1 + 8 * (4 + 4
+          + lb::lattices::D3Q27::NUMVECTORS - 1));
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
@@ -521,22 +522,20 @@ namespace hemelb
 
         proc_t* procForSiteRecv = new proc_t[globLatDat->GetSitesPerBlockVolumeUnit()];
         proc_t * dummyProcForSite = new proc_t[globLatDat->GetSitesPerBlockVolumeUnit()];
-        unsigned
-        int* dummySiteData = new unsigned int[globLatDat->GetSitesPerBlockVolumeUnit()];
-        unsigned
-        int* siteDataRecv = new unsigned int[globLatDat->GetSitesPerBlockVolumeUnit()];
+        sitedata_t* dummySiteData = new sitedata_t[globLatDat->GetSitesPerBlockVolumeUnit()];
+        sitedata_t* siteDataRecv = new sitedata_t[globLatDat->GetSitesPerBlockVolumeUnit()];
 
         for (site_t localSite = 0; localSite < globLatDat->GetSitesPerBlockVolumeUnit(); ++localSite)
         {
           dummyProcForSite[localSite] = BIG_NUMBER2;
-          dummySiteData[localSite] = std::numeric_limits<unsigned int>::max();
+          dummySiteData[localSite] = std::numeric_limits<sitedata_t>::max();
         }
 
         for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
         {
           // We also validate that each processor has the same beliefs about each site.
           proc_t* myProcForSite = globLatDat->Blocks[block].ProcessorRankForEachBlockSite;
-          unsigned int* mySiteData = globLatDat->Blocks[block].site_data;
+          sitedata_t* mySiteData = globLatDat->Blocks[block].site_data;
 
           if (myProcForSite == NULL)
           {

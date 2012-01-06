@@ -9,7 +9,7 @@ class FakeUnpacker(object):
     solid. Just returns zeros.
     """
     
-    def unpack_uint(self):
+    def unpack_uhyper(self):
         return cfg.SOLID_TYPE
     pass
 
@@ -139,7 +139,7 @@ class ConfigLoader(object):
         
         s = Site(block, sgIdx)
         
-        s.Config = loader.unpack_uint()
+        s.Config = loader.unpack_hyper()
         # Solid and simple fluid, we are done loading
         if not (s.Config == cfg.SOLID_TYPE or s.Config == cfg.FLUID_TYPE):
             
@@ -151,7 +151,7 @@ class ConfigLoader(object):
                 s.WallNormal = np.array([loader.unpack_double() for i in xrange(3)], dtype=np.double)
                 s.WallDistance = loader.unpack_double()
                                         
-            s.CutDistances = np.array([loader.unpack_double() for i in xrange(14)], dtype=np.double)
+            s.CutDistances = np.array([loader.unpack_double() for i in xrange(26)], dtype=np.double)
             pass
         
         self.OnEndSite(block, s)

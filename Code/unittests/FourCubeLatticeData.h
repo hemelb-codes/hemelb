@@ -41,7 +41,7 @@ namespace hemelb
 
               block->ProcessorRankForEachBlockSite
                   = new proc_t[globalLattice->GetSitesPerBlockVolumeUnit()];
-              block ->site_data = new unsigned int[globalLattice->GetSitesPerBlockVolumeUnit()];
+              block ->site_data = new sitedata_t[globalLattice->GetSitesPerBlockVolumeUnit()];
               block->wall_data
                   = new geometry::WallData[globalLattice->GetSitesPerBlockVolumeUnit()];
 
@@ -69,7 +69,6 @@ namespace hemelb
                     if (zMin)
                     {
                       block->site_data[index] |= INLET_TYPE;
-                      block->site_data[index] |= 0 << BOUNDARY_ID_SHIFT;
 
                       // Also near wall
                       if (nearWall)
@@ -82,7 +81,7 @@ namespace hemelb
                     else if (zMax)
                     {
                       block->site_data[index] |= OUTLET_TYPE;
-                      block->site_data[index] |= 1 << BOUNDARY_ID_SHIFT;
+                      block->site_data[index] |= (sitedata_t) 1 << BOUNDARY_ID_SHIFT;
 
                       if (nearWall)
                       {
@@ -108,7 +107,7 @@ namespace hemelb
                                                              j + D3Q15::CY[ll],
                                                              k + D3Q15::CZ[ll]))
                       {
-                        block->site_data[index] |= 1U << (BOUNDARY_CONFIG_SHIFT + ll - 1);
+                        block->site_data[index] |= (sitedata_t) 1 << (BOUNDARY_CONFIG_SHIFT + ll - 1);
                         block->wall_data[index].cut_dist[ll - 1] = double(std::rand() % 10000)
                             / 10000.0;
                       }

@@ -49,7 +49,5 @@ Site& Block::GetLocalSite(const Index& ind) {
 	 * Get the site, creating it if it didn't exist.
 	 */
 	unsigned int ijk = this->TranslateIndex(ind);
-	//	if (this->sites[ijk] == NULL)
-	//		this->sites[ijk] = new Site(*this);
 	return *this->sites[ijk];
 }
