@@ -31,7 +31,7 @@ namespace hemelb
                                        const util::Vector3D<float>& iRayDirection,
                                        const float iRayLengthInVoxel,
                                        const VisSettings& iVisSettings,
-                                       const double* iWallNormal);
+                                       const util::Vector3D<double>* iWallNormal);
 
           // Carries out the merging of the ray data in this
           // inherited type, for different segments of the same ray

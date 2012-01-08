@@ -12,42 +12,27 @@ namespace hemelb
     {
       using namespace hemelb::geometry;
       using namespace resources;
-      // open the protected classes for testing
-      class TestableLatticeData : public LatticeData
-      {
-        public:
-          class GeometryReader : public LatticeData::GeometryReader
-          {
-            public:
-              GeometryReader(const bool reserveSteeringCore) :
-                LatticeData::GeometryReader(reserveSteeringCore)
-              {
-              }
-          };
 
-          typedef LatticeData::GlobalLatticeData TestableGlobalLatticeData;
-      };
       class GeometryReaderTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE( GeometryReaderTests);
           CPPUNIT_TEST( TestRead);
           CPPUNIT_TEST( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+
         public:
           void setUp()
           {
-            reader = new TestableLatticeData::GeometryReader(false);
-            globalLattice = NULL;
+            reader = new hemelb::geometry::GeometryReader(false, readResult);
             params = new lb::LbmParameters(1000, 0.1);
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
-            fourCube = FourCubeLatticeData::CubeGlobalLatticeData::Create();
+            fourCube = FourCubeLatticeData::Create();
             simConfig = configuration::SimConfig::Load(Resource("four_cube.xml").Path().c_str());
           }
 
           void tearDown()
           {
             delete reader;
-            delete globalLattice;
             delete params;
             delete fourCube;
             delete simConfig;
@@ -55,12 +40,13 @@ namespace hemelb
 
           void TestRead()
           {
-            globalLattice = reader->LoadAndDecompose(params, simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath, params, timings);
           }
 
           void TestSameAsFourCube()
           {
-            globalLattice = reader->LoadAndDecompose(params, simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath, params, timings);
+            site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)
             {
               for (site_t j = 0; j < 4; j++)
@@ -68,8 +54,10 @@ namespace hemelb
                 for (site_t k = 0; k < 4; k++)
                 {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(i, j, k),
-                                       globalLattice->GetSiteData(i, j, k));
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(siteIndex).GetRawValue(),
+                                       readResult.Blocks[0].Sites[siteIndex].siteData.GetRawValue());
+
+                  siteIndex++;
                 }
               }
             }
@@ -77,12 +65,12 @@ namespace hemelb
           }
 
         private:
-          TestableLatticeData::GeometryReader *reader;
-          TestableLatticeData::TestableGlobalLatticeData* globalLattice;
+          GeometryReader *reader;
+          GeometryReadResult readResult;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
           lb::LbmParameters *params;
-          FourCubeLatticeData::CubeGlobalLatticeData *fourCube;
+          hemelb::geometry::LatticeData *fourCube;
 
       };
 

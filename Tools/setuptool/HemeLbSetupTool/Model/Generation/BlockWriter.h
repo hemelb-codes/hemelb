@@ -3,7 +3,8 @@
 
 #include <stddef.h>
 #include "ConfigWriter.h"
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
+
 /*
  * Extension of a hemelb::io::XdrWriter that notes how many fluid sites, in how
  * much space, have been written. It then pushes this to the ConfigWriter's
@@ -27,7 +28,7 @@ public:
 
 protected:
 	ConfigWriter* configWriter;
-	hemelb::io::XdrMemWriter* memWriter;
+	hemelb::io::writers::xdr::XdrMemWriter* memWriter;
 	unsigned int nFluidSites;
 	size_t maxBufferSize;
 	char *buffer;

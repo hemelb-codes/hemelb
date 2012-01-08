@@ -57,7 +57,7 @@ namespace hemelb
                                                   const util::Vector3D<float>& iRayDirection,
                                                   const float iRayLengthInVoxel,
                                                   const VisSettings& iVisSettings,
-                                                  const double* iWallNormal)
+                                                  const util::Vector3D<double>* iWallNormal)
       {
         DoUpdateDataForNormalFluidSite(iSiteData, iRayDirection, iRayLengthInVoxel, iVisSettings);
       }
