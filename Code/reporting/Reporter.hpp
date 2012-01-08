@@ -9,7 +9,7 @@ namespace hemelb
     template<class ClockPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<
         ClockPolicy,  CommsPolicy, BroadcastPolicy>::ReporterBase(const std::string &apath,
                                                                                const std::string &inputFile,
-                                                                               const site_t* fluidSitesOnEachProcessor,
+                                                                               const std::vector<site_t>& fluidSitesOnEachProcessor,
                                                                                const long int aSiteCount,
                                                                                const TimersBase<
                                                                                    ClockPolicy,

@@ -22,14 +22,14 @@ namespace hemelb
 
           void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
 
-          const double* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 
-          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const double* const iData);
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData);
 
           static bool DoNeedsWallNormals();
 
         private:
-          std::vector<std::vector<const double*> > WallNormals;
+          std::vector<std::vector<const util::Vector3D<double>*> > WallNormals;
       };
 
     }

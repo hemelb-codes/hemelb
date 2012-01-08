@@ -188,19 +188,17 @@ void SimulationMaster::Initialise()
                                                   simulationState,
                                                   latticeData->GetVoxelSize());
 
-  inletValues
-      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
-                                                   latticeData,
-                                                   simConfig->Inlets,
-                                                   simulationState,
-                                                   unitConvertor);
+  inletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::INLET_TYPE,
+                                                           latticeData,
+                                                           simConfig->Inlets,
+                                                           simulationState,
+                                                           unitConvertor);
 
-  outletValues
-      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
-                                                   latticeData,
-                                                   simConfig->Outlets,
-                                                   simulationState,
-                                                   unitConvertor);
+  outletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
+                                                            latticeData,
+                                                            simConfig->Outlets,
+                                                            simulationState,
+                                                            unitConvertor);
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConvertor);
 
@@ -495,7 +493,7 @@ void SimulationMaster::RunSimulation()
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           simulationState->GetCycleId());
 
-      fflush(NULL);
+      fflush( NULL);
     }
   }
   timings[hemelb::reporting::Timers::simulation].Stop();
