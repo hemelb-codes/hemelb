@@ -1,3 +1,4 @@
+#include "mpiInclude.h"
 #include "Particle.h"
 
 namespace hemelb

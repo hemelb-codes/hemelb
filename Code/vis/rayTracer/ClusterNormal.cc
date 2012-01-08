@@ -22,14 +22,14 @@ namespace hemelb
       {
       }
 
-      const double* ClusterNormal::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
+      const util::Vector3D<double>* ClusterNormal::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
       {
         return NULL;
       }
 
       void ClusterNormal::DoSetWallData(site_t iBlockNumber,
                                         site_t iSiteNumber,
-                                        const double* const iData)
+                                        const util::Vector3D<double>& iData)
       {
       }
 

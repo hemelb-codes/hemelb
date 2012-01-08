@@ -63,12 +63,14 @@ namespace hemelb
             return SiteData[iBlockNumber][iSiteNumber];
           }
 
-          const double* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
+          const util::Vector3D<double>* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
           {
             return ((const Derived*) (this))->DoGetWallData(iBlockNumber, iSiteNumber);
           }
 
-          void SetWallData(site_t iBlockNumber, site_t iSiteNumber, const double* const iData)
+          void SetWallData(site_t iBlockNumber,
+                           site_t iSiteNumber,
+                           const util::Vector3D<double>& iData)
           {
             return ((Derived*) (this))->DoSetWallData(iBlockNumber, iSiteNumber, iData);
           }

@@ -29,6 +29,7 @@ namespace hemelb
         CPPUNIT_TEST( TestFInterpolation );
         CPPUNIT_TEST( TestSimpleBounceBack );
         CPPUNIT_TEST_SUITE_END();
+
         public:
 
           void setUp()
@@ -38,7 +39,7 @@ namespace hemelb
             bool success;
             topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
-            latDat = FourCubeLatticeData::Create();
+            latDat = FourCubeLatticeData::CreateFromReadData();
             simConfig = new OneInOneOutSimConfig();
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
             lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s
