@@ -12,7 +12,7 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
+      BoundaryValues::BoundaryValues(geometry::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
                                      std::vector<iolets::InOutLet*> &iiolets,
                                      SimulationState* iSimState,
@@ -85,7 +85,7 @@ namespace hemelb
         }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType IOtype,
                                              geometry::LatticeData* iLatDat,
                                              int iBoundaryId)
       {

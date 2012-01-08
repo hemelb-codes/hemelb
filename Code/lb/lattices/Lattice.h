@@ -146,7 +146,7 @@ namespace hemelb
           // wall.
           static void CalculateShearStress(const distribn_t &density,
                                            const distribn_t f[],
-                                           const double nor[],
+                                           const util::Vector3D<double> nor,
                                            distribn_t &stress,
                                            const double &iStressParameter)
           {
