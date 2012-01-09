@@ -18,7 +18,7 @@
 #include "vtkDataSet.h"
 
 ConfigGenerator::ConfigGenerator() :
-	ClippedSurface(NULL), IsFirstSite(true) {
+		ClippedSurface(NULL), IsFirstSite(true) {
 	Neighbours::Init();
 	this->Locator = vtkOBBTree::New();
 	this->Locator->SetTolerance(1e-9);
@@ -39,11 +39,11 @@ void ConfigGenerator::Execute() {
 
 	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds());
 
-	ConfigWriter writer(this->OutputConfigFile, this->StressType,
-			domain.GetBlockSize(), domain.GetBlockCounts(),
-			domain.GetVoxelSize(), domain.GetOrigin());
+	ConfigWriter writer(this->OutputConfigFile, domain.GetBlockSize(),
+			domain.GetBlockCounts(), domain.GetVoxelSize(), domain.GetOrigin());
 
-	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
+	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
+			++blockIt) {
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		// case where there are no fluid sites).
@@ -52,7 +52,8 @@ void ConfigGenerator::Execute() {
 		BlockWriter& blockWriter = *blockWriterPtr;
 		Block& block = *blockIt;
 
-		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
+		for (SiteIterator siteIt = block.begin(); siteIt != block.end();
+				++siteIt) {
 			Site& site = **siteIt;
 			this->ClassifySite(site);
 			// cache the type cos it's probably slow to compute
@@ -74,20 +75,20 @@ void ConfigGenerator::Execute() {
 			// It must be INLET/OUTLET/EDGE
 
 			if (type == hemelb::INLET_TYPE || type == hemelb::OUTLET_TYPE) {
-				for (Vector::iterator bn = site.BoundaryNormal.begin(); bn
-						!= site.BoundaryNormal.end(); ++bn)
+				for (Vector::iterator bn = site.BoundaryNormal.begin();
+						bn != site.BoundaryNormal.end(); ++bn)
 					blockWriter << *bn;
 				blockWriter << site.BoundaryDistance;
 			}
 
 			if (site.IsEdge) {
-				for (Vector::iterator wn = site.WallNormal.begin(); wn
-						!= site.WallNormal.end(); ++wn)
+				for (Vector::iterator wn = site.WallNormal.begin();
+						wn != site.WallNormal.end(); ++wn)
 					blockWriter << *wn;
 				blockWriter << site.WallDistance;
 			}
-			for (std::vector<double>::iterator it = site.CutDistances.begin(); it
-					!= site.CutDistances.end(); ++it)
+			for (std::vector<double>::iterator it = site.CutDistances.begin();
+					it != site.CutDistances.end(); ++it)
 				blockWriter << *it;
 
 		}
@@ -126,7 +127,8 @@ void ConfigGenerator::ClassifySite(Site& site) {
 		return;
 	}
 
-	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall(); ++neighIt) {
+	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall();
+			++neighIt) {
 		Site& neigh = *neighIt;
 		if (!this->GetIsFluid(neigh)) {
 			// Link to a solid site
@@ -144,7 +146,7 @@ void ConfigGenerator::ClassifySite(Site& site) {
 			 */
 			this->hitPoints->GetPoint(0, &hitPoint[0]);
 			site.CutDistances[iNeigh] = (hitPoint - site.Position).Magnitude<
-					double> ();
+					double>();
 			site.CutCellIds[iNeigh] = this->hitCellIds->GetId(0);
 
 		}
@@ -162,8 +164,8 @@ void ConfigGenerator::ClassifySite(Site& site) {
 	 * scale by the VoxelSize for now and scale to vector fractions
 	 * once we're done.
 	 */
-	for (std::vector<double>::iterator it = site.CutDistances.begin(); it
-			!= site.CutDistances.end(); ++it)
+	for (std::vector<double>::iterator it = site.CutDistances.begin();
+			it != site.CutDistances.end(); ++it)
 		*it /= this->VoxelSize;
 
 	/*
@@ -173,7 +175,7 @@ void ConfigGenerator::ClassifySite(Site& site) {
 	 */
 	vtkCellData* celldata = this->ClippedSurface->GetCellData();
 	vtkDataArray* normals = celldata->GetNormals();
-	vtkIntArray* ioletIds = static_cast<vtkIntArray*> (celldata->GetScalars());
+	vtkIntArray* ioletIds = static_cast<vtkIntArray*>(celldata->GetScalars());
 
 	// Set this to false for now, if it's adjacent to a wall will reset later
 	site.IsEdge = false;
