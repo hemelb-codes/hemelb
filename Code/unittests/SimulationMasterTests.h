@@ -35,7 +35,6 @@ namespace hemelb
           CopyResourceToTempdir("four_cube.xml");
           CopyResourceToTempdir("four_cube.dat");
           options = new hemelb::configuration::CommandLine(argc, argv);
-
           master = new SimulationMaster(*options);
         }
 

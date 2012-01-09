@@ -23,7 +23,8 @@ namespace hemelb
     {
       public:
         SiteReadResult() :
-            targetProcessor(-1), siteData(BIG_NUMBER3), ioletNormal(-1.), ioletDistance(-1.), wallNormal(NO_VALUE), wallDistance(-1.)
+          targetProcessor(-1), siteData(BIG_NUMBER3), ioletNormal(-1.), ioletDistance(-1.),
+              wallNormal(NO_VALUE), wallDistance(-1.)
         {
           for (Direction direction = 0; direction < D3Q15::NUMVECTORS - 1; direction++)
           {
@@ -61,7 +62,6 @@ namespace hemelb
     struct GeometryReadResult
     {
       public:
-        unsigned int stressType;
         util::Vector3D<site_t> blocks;
         site_t blockSize;
         double voxelSize;
@@ -102,9 +102,7 @@ namespace hemelb
         GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult);
         ~GeometryReader();
 
-        void LoadAndDecompose(std::string& dataFilePath,
-                              lb::LbmParameters* bLbmParams,
-                              reporting::Timers &timings);
+        void LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings);
 
       private:
         struct BlockLocation
@@ -112,7 +110,7 @@ namespace hemelb
             site_t i, j, k;
         };
 
-        void ReadPreamble(lb::LbmParameters* bParams);
+        void ReadPreamble();
 
         void ReadHeader(site_t* sitesInEachBlock, unsigned int* bytesUsedByBlockInDataFile);
 
@@ -233,12 +231,11 @@ namespace hemelb
                                 const unsigned int* bytesPerBlock) const;
 
         // The config file starts with:
-        // * 1 unsigned int for stress type
         // * 3 unsigned ints for the number of blocks in the x, y, z directions
         // * 1 unsigned int for the block size (number of sites along one edge of a block)
         // * 1 double for the voxel size
         // * 3 doubles for the world-position of site 0
-        static const int preambleBytes = 5 * 4 + 4 * 8;
+        static const int preambleBytes = 4 * 4 + 4 * 8;
         static const proc_t HEADER_READING_RANK = 0;
         static const proc_t READING_GROUP_SIZE = 5;
 

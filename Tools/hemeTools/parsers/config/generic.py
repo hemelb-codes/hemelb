@@ -59,7 +59,6 @@ class Domain(object):
 
     Public attributes:
 
-    - StressType
     - BlockCounts
     - BlockSize
     - VoxelSize
@@ -75,7 +74,6 @@ class Domain(object):
     
     """
     def __init__(self):
-        self.StressType = None
         self._BlockCounts = None
         self._BlockSize = None
         

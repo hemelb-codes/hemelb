@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <hemelbsettings>
-  <simulation cycles="1" cyclesteps="10" />
+  <simulation cycles="1" cyclesteps="10" stresstype="1" />
   <geometry>
     <datafile path="./four_cube.dat" />
   </geometry>
