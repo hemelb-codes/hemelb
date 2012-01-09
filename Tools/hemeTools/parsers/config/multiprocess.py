@@ -38,7 +38,6 @@ class SubDomain(Domain):
         """Constructor; requires the domain it's mimicking and the 3D
         index of the block at the centre.
         """
-        self.StressType = parent.StressType
         self._BlockCounts = parent._BlockCounts
         self._BlockSize = parent._BlockSize
         

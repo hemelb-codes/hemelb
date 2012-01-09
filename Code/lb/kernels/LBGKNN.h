@@ -145,19 +145,6 @@ namespace hemelb
            */
           void UpdateLocalTau(distribn_t& localTau, HydroVars<LBGKNN>& hydroVars) const
           {
-
-            /*
-             *  TODO optimise, at this point hydroVars.f_neq has not been computed yet, so we
-             *  need to do it here for the shear-rate calculator. However, the streamer will do
-             *  it again before DoCollide is called.
-             *
-             *  Modify *all* the kernels to take care of this operation.
-             */
-            for (unsigned f_index = 0; f_index < D3Q15::NUMVECTORS; f_index++)
-            {
-              hydroVars.f_neq.f[f_index] = hydroVars.f[f_index] - hydroVars.f_eq.f[f_index];
-            }
-
             /*
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}

@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <hemelbsettings>
-  <simulation cycles="3" cyclesteps="1000" />
+  <simulation cycles="3" cyclesteps="1000" stresstype="1"/>
   <geometry>
     <datafile path="./config.dat" />
   </geometry>

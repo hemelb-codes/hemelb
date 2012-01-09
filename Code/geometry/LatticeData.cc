@@ -21,7 +21,6 @@ namespace hemelb
 
     LatticeData* LatticeData::Load(const bool reserveSteeringCore,
                                    std::string& dataFilePath,
-                                   lb::LbmParameters* bLbmParams,
                                    reporting::Timers &timings)
     {
       // Use a reader to read in the file.
@@ -29,7 +28,7 @@ namespace hemelb
 
       GeometryReadResult readGeometryData;
       GeometryReader reader(reserveSteeringCore, readGeometryData);
-      reader.LoadAndDecompose(dataFilePath, bLbmParams, timings);
+      reader.LoadAndDecompose(dataFilePath, timings);
 
       // Create a new lattice based on that info and return it.
       return new LatticeData(readGeometryData);
