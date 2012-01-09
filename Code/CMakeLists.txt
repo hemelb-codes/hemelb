@@ -10,6 +10,8 @@ option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
+option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
+
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
@@ -42,9 +44,10 @@ list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 
 #--- Set up runtime search path for DLLs -----
-
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_PATH}/lib")
+if(HEMELB_DEPENDENCIES_SET_RPATH)
+	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_PATH}/lib")
+endif()
 
 #-------Check for platform dependent features ----
 
@@ -162,7 +165,8 @@ if(HEMELB_BUILD_UNITTESTS)
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES})
+		${CTEMPLATE_LIBRARIES}
+		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.dat unittests/resources/four_cube.xml unittests/resources/config.xml)
 endif()

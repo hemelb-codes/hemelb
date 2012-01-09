@@ -4,13 +4,11 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "BlockWriter.h"
 
-ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
+ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 		int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin) :
 	OutputConfigFile(OutputConfigFile) {
 
 	// Copy in key data
-	//this->OutputConfigFile = OutputConfigFile;
-	this->StressType = StressType;
 	this->BlockSize = BlockSize;
 	this->VoxelSize = VoxelSize;
 
@@ -23,8 +21,6 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
 		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputConfigFile);
 
 		// Preamble
-		encoder << this->StressType;
-
 		// Blocks in each dimension
 		for (unsigned int i = 0; i < 3; ++i)
 			encoder << this->BlockCounts[i];

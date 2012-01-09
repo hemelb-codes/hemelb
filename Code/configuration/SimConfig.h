@@ -34,6 +34,7 @@ namespace hemelb
         float MaxStress;
         unsigned long NumCycles;
         long StepsPerCycle;
+        lb::StressTypes StressType;
 
         void DoIO(TiXmlElement *iXmlNode,
                   bool iIsLoading,

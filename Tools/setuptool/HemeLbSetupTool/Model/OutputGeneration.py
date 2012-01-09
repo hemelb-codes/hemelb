@@ -31,7 +31,6 @@ class ConfigGenerator(object):
         self.generator = Generation.ConfigGenerator()
         self.generator.SetVoxelSize(profile.VoxelSize)
         self.generator.SetOutputConfigFile(str(profile.OutputConfigFile))
-        self.generator.SetStressType(profile.StressType)
 
         # Construct the Iolet structs
         nIn = 0
@@ -395,6 +394,7 @@ class XmlWriter(object):
         sim = SubElement(self.root, 'simulation')
         sim.set('cycles', str(3))
         sim.set('cyclesteps', str(1000))
+        sim.set('stresstype', str(1))
         return
 
     def DoGeometry(self):

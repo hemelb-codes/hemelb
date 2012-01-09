@@ -12,9 +12,6 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/SiteData.h"
-// TODO Remove the stress type from the data file, so we can remove the dependence
-// on LbmParams here.
-#include "lb/LbmParameters.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 
@@ -41,7 +38,6 @@ namespace hemelb
       public:
         static LatticeData* Load(const bool reserveSteeringCore,
                                  std::string& dataFilePath,
-                                 lb::LbmParameters* bLbmParams,
                                  reporting::Timers &timings);
 
         virtual ~LatticeData();

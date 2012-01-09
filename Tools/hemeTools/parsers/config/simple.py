@@ -41,10 +41,8 @@ class ConfigLoader(object):
         """
         self.OnBeginPreamble()
         
-        self.PreambleBytes = 5*4 + 4*8
+        self.PreambleBytes = 4*4 + 4*8
         preambleLoader = xdrlib.Unpacker(self.File.read(self.PreambleBytes))
-        
-        self.Domain.StressType = preambleLoader.unpack_uint()
         
         self.Domain.BlockCounts = np.array([preambleLoader.unpack_uint() for i in xrange(3)], dtype=np.uint)
         self.Domain.BlockSize = preambleLoader.unpack_uint()

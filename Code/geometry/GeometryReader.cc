@@ -19,7 +19,7 @@ namespace hemelb
     // TODO This file is generally ugly. Integrate with the functions in Net which initialise the LatDat.
     // Once the interface to this object is nice and clean, we can tidy up the code here.
     GeometryReader::GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult) :
-        readingResult(readResult)
+      readingResult(readResult)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -69,9 +69,7 @@ namespace hemelb
       }
     }
 
-    void GeometryReader::LoadAndDecompose(std::string& dataFilePath,
-                                          lb::LbmParameters* lbmParams,
-                                          reporting::Timers &timings)
+    void GeometryReader::LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -106,17 +104,16 @@ namespace hemelb
       }
       else
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
-                                                      dataFilePath.c_str());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
-      fflush(NULL);
+      fflush( NULL);
 
       // Set the view to the file.
       std::string mode = "native";
       MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, &mode[0], fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      ReadPreamble(lbmParams);
+      ReadPreamble();
 
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
@@ -216,7 +213,7 @@ namespace hemelb
      * for (int i=0; i<3; ++i)
      *        site0WorldPosition[i] = load_double();
      */
-    void GeometryReader::ReadPreamble(hemelb::lb::LbmParameters * params)
+    void GeometryReader::ReadPreamble()
     {
       // Read in the file preamble into a buffer.
       char preambleBuffer[preambleBytes];
@@ -232,7 +229,7 @@ namespace hemelb
 
       MPI_Bcast(preambleBuffer,
                 preambleBytes,
-                MpiDataType<char>(),
+                MpiDataType<char> (),
                 HEADER_READING_RANK,
                 currentComm);
 
@@ -246,7 +243,6 @@ namespace hemelb
       unsigned int blocksX, blocksY, blocksZ, blockSize;
 
       // Read in the values.
-      preambleReader.readUnsignedInt(readingResult.stressType);
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
       preambleReader.readUnsignedInt(blocksZ);
@@ -262,9 +258,6 @@ namespace hemelb
       readingResult.blocks.z = blocksZ;
 
       readingResult.blockSize = blockSize;
-
-      // Pass the read in variables to the objects that need them.
-      params->StressType = (lb::StressTypes) readingResult.stressType;
 
       // Ensure the reading result container has enough space to contain all the blocks.
       readingResult.Blocks.resize(readingResult.GetBlockCount());
@@ -304,7 +297,7 @@ namespace hemelb
 
       MPI_Bcast(headerBuffer,
                 (int) headerByteCount,
-                MpiDataType<char>(),
+                MpiDataType<char> (),
                 HEADER_READING_RANK,
                 currentComm);
 
@@ -368,8 +361,8 @@ namespace hemelb
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
-      const site_t maxBytesPerBlock = (readingResult.GetSitesPerBlock())
-          * (4 * 1 + 8 * (4 + D3Q15::NUMVECTORS - 1));
+      const site_t maxBytesPerBlock = (readingResult.GetSitesPerBlock()) * (4 * 1 + 8 * (4
+          + D3Q15::NUMVECTORS - 1));
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
@@ -393,8 +386,7 @@ namespace hemelb
       MPI_Offset offset = preambleBytes + GetHeaderLength(readingResult.GetBlockCount());
 
       // Track the next block we should look at.
-      for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount();
-          ++nextBlockToRead)
+      for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
         ReadInBlock(offset,
                     buffer,
@@ -432,10 +424,10 @@ namespace hemelb
 
       MPI_Gather(&neededHere,
                  1,
-                 MpiDataType<int>(),
+                 MpiDataType<int> (),
                  procsWantingThisBlockBuffer,
                  1,
-                 MpiDataType<int>(),
+                 MpiDataType<int> (),
                  readingCore,
                  currentComm);
 
@@ -504,8 +496,7 @@ namespace hemelb
     {
       readingResult.Blocks[block].Sites.clear();
 
-      for (site_t localSiteIndex = 0; localSiteIndex < readingResult.GetSitesPerBlock();
-          ++localSiteIndex)
+      for (site_t localSiteIndex = 0; localSiteIndex < readingResult.GetSitesPerBlock(); ++localSiteIndex)
       {
         readingResult.Blocks[block].Sites.push_back(ParseSite(reader));
       }
@@ -612,10 +603,10 @@ namespace hemelb
           {
             for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
             {
-              myProcForSite[localSite] =
-                  readingResult.Blocks[block].Sites[localSite].targetProcessor;
-              mySiteData[localSite] =
-                  readingResult.Blocks[block].Sites[localSite].siteData.GetRawValue();
+              myProcForSite[localSite]
+                  = readingResult.Blocks[block].Sites[localSite].targetProcessor;
+              mySiteData[localSite]
+                  = readingResult.Blocks[block].Sites[localSite].siteData.GetRawValue();
             }
           }
 
@@ -644,8 +635,8 @@ namespace hemelb
                                                             site,
                                                             block);
             }
-            else if (myProcForSite[site] != BIG_NUMBER2
-                && procForSiteRecv[site] != myProcForSite[site])
+            else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site]
+                != myProcForSite[site])
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                             myProcForSite[site],
@@ -713,14 +704,14 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
-                (neighI <= (blockI + 1)) && (neighI < readingResult.blocks.x); ++neighI)
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI
+                <= (blockI + 1)) && (neighI < readingResult.blocks.x); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
-                  (neighJ <= (blockJ + 1)) && (neighJ < readingResult.blocks.y); ++neighJ)
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ
+                  <= (blockJ + 1)) && (neighJ < readingResult.blocks.y); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
-                    (neighK <= (blockK + 1)) && (neighK < readingResult.blocks.z); ++neighK)
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK
+                    <= (blockK + 1)) && (neighK < readingResult.blocks.z); ++neighK)
                 {
                   site_t lNeighId = readingResult.GetBlockIdFromBlockCoordinates(neighI,
                                                                                  neighJ,
@@ -794,7 +785,7 @@ namespace hemelb
         MPI_Allreduce(procForEachBlock,
                       procForEachBlockRecv,
                       (int) readingResult.GetBlockCount(),
-                      MpiDataType<proc_t>(),
+                      MpiDataType<proc_t> (),
                       MPI_MAX,
                       topologyComm);
 
@@ -934,8 +925,8 @@ namespace hemelb
               ++currentUnit;
 
               unassignedBlocks -= blocksOnCurrentProc;
-              blocksPerUnit = (site_t) ceil((double) unassignedBlocks
-                  / (double) (unitCount - currentUnit));
+              blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (unitCount
+                  - currentUnit));
 
               blocksOnCurrentProc = 0;
             }
@@ -977,8 +968,8 @@ namespace hemelb
       bool regionExpanded = false;
 
       // For sites on the edge of the domain (sites_a), deal with the neighbours.
-      for (unsigned int index_a = 0;
-          index_a < edgeBlocks->size() && blocksOnCurrentUnit < blocksPerUnit; index_a++)
+      for (unsigned int index_a = 0; index_a < edgeBlocks->size() && blocksOnCurrentUnit
+          < blocksPerUnit; index_a++)
       {
         BlockLocation* lNew = &edgeBlocks->operator [](index_a);
 
@@ -1221,8 +1212,8 @@ namespace hemelb
 
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
-          if (firstSiteIndexPerBlock[block] >= 0
-              && firstSiteIndexPerBlock[block] != firstSiteIndexPerBlockRecv[block])
+          if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block]
+              != firstSiteIndexPerBlockRecv[block])
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
                                                           block,
@@ -1292,10 +1283,10 @@ namespace hemelb
                     site_t neighbourK = blockK * readingResult.blockSize + localSiteK
                         + D3Q15::CZ[l];
 
-                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
-                        || neighbourI >= (readingResult.blockSize * readingResult.blocks.x)
-                        || neighbourJ >= (readingResult.blockSize * readingResult.blocks.y)
-                        || neighbourK >= (readingResult.blockSize * readingResult.blocks.z))
+                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0 || neighbourI
+                        >= (readingResult.blockSize * readingResult.blocks.x) || neighbourJ
+                        >= (readingResult.blockSize * readingResult.blocks.y) || neighbourK
+                        >= (readingResult.blockSize * readingResult.blocks.z))
                     {
                       continue;
                     }
@@ -1330,8 +1321,7 @@ namespace hemelb
                     // Calculate the site's id over the whole geometry,
                     site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighbourBlockId];
 
-                    for (site_t neighSite = 0; neighSite < readingResult.GetSitesPerBlock();
-                        ++neighSite)
+                    for (site_t neighSite = 0; neighSite < readingResult.GetSitesPerBlock(); ++neighSite)
                     {
                       if (neighSite == neighbourSiteId)
                       {
@@ -1479,8 +1469,8 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::multimap < idx_t, idx_t > *adjByNeighProc =
-            new std::multimap<idx_t, idx_t>[topologySize];
+        std::multimap < idx_t, idx_t > *adjByNeighProc
+            = new std::multimap<idx_t, idx_t>[topologySize];
         for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
         {
           adjByNeighProc[proc] = std::multimap<idx_t, idx_t>();
@@ -1492,9 +1482,8 @@ namespace hemelb
           idx_t vertex = vtxDistribn[topologyRank] + index;
 
           // Iterate over each adjacency (of each vertex).
-          for (idx_t adjNumber = 0;
-              adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
-              ++adjNumber)
+          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1]
+              - adjacenciesPerVertex[index]); ++adjNumber)
           {
             idx_t adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
             proc_t adjacentProc = -1;
@@ -1555,8 +1544,8 @@ namespace hemelb
 
             unsigned int adjacencyIndex = 0;
 
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
-                it != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1567,7 +1556,7 @@ namespace hemelb
             // Send the data to the neighbour.
             MPI_Isend(data[neigh],
                       (int) counts[neigh],
-                      MpiDataType<idx_t>(),
+                      MpiDataType<idx_t> (),
                       neigh,
                       43,
                       topologyComm,
@@ -1594,7 +1583,7 @@ namespace hemelb
 
             MPI_Irecv(data[neigh],
                       (int) counts[neigh],
-                      MpiDataType<idx_t>(),
+                      MpiDataType<idx_t> (),
                       neigh,
                       43,
                       topologyComm,
@@ -1611,8 +1600,8 @@ namespace hemelb
             data[neigh] = new idx_t[counts[neigh]];
 
             int adjacencyIndex = 0;
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
-                it != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1630,8 +1619,7 @@ namespace hemelb
             // Go through each neighbour we know about on this proc, and check whether it
             // matches the current received neighbour-data.
             for (std::multimap<idx_t, idx_t>::iterator it =
-                adjByNeighProc[neigh].find(data[neigh][ii + 1]); it != adjByNeighProc[neigh].end();
-                ++it)
+                adjByNeighProc[neigh].find(data[neigh][ii + 1]); it != adjByNeighProc[neigh].end(); ++it)
             {
               idx_t recvAdj = it->first;
               idx_t recvAdj2 = it->second;
@@ -1729,10 +1717,9 @@ namespace hemelb
           // with firstIdOnBlock <= localFluidSiteId < (firstIdOnBlock + sitesOnBlock)...
           idx_t fluidSiteBlock = 0;
 
-          while ( (procForEachBlock[fluidSiteBlock] < 0)
-              || (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
-              || ( (firstSiteIndexPerBlock[fluidSiteBlock] + sitesPerBlock[fluidSiteBlock])
-                  <= localFluidSiteId))
+          while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock]
+              > localFluidSiteId) || ( (firstSiteIndexPerBlock[fluidSiteBlock]
+              + sitesPerBlock[fluidSiteBlock]) <= localFluidSiteId))
           {
             fluidSiteBlock++;
           }
@@ -1763,8 +1750,8 @@ namespace hemelb
           {
             // If we've ended up on an impossible block, or one that doesn't live on this rank,
             // inform the user.
-            if (fluidSiteBlock >= readingResult.GetBlockCount()
-                || procForEachBlock[fluidSiteBlock] != topologyRank)
+            if (fluidSiteBlock >= readingResult.GetBlockCount() || procForEachBlock[fluidSiteBlock]
+                != topologyRank)
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
                                                             ii,
@@ -1785,9 +1772,9 @@ namespace hemelb
                                                             sitesPerBlock[fluidSiteBlock],
                                                             fluidSiteBlock,
                                                             readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                == BIG_NUMBER2 ?
-                                                              " and site is solid" :
-                                                              "");
+                                                                == BIG_NUMBER2
+                                                              ? " and site is solid"
+                                                              : "");
             }
           }
 
@@ -1819,7 +1806,7 @@ namespace hemelb
 
       // Now share all the lists of moves - create a MPI type...
       MPI_Datatype moveType;
-      MPI_Type_contiguous(3, MpiDataType<idx_t>(), &moveType);
+      MPI_Type_contiguous(3, MpiDataType<idx_t> (), &moveType);
       MPI_Type_commit(&moveType);
 
       // ... create a destination array...
@@ -1926,8 +1913,8 @@ namespace hemelb
             if (readingResult.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
             {
               // ... set its rank to be the rank it had before optimisation.
-              readingResult.Blocks[block].Sites[siteIndex].targetProcessor =
-                  ConvertTopologyRankToGlobalRank(originalProc);
+              readingResult.Blocks[block].Sites[siteIndex].targetProcessor
+                  = ConvertTopologyRankToGlobalRank(originalProc);
             }
           }
         }
@@ -1966,8 +1953,8 @@ namespace hemelb
             }
 
             // Implement the move.
-            readingResult.Blocks[block].Sites[site].targetProcessor =
-                ConvertTopologyRankToGlobalRank((proc_t) toProc);
+            readingResult.Blocks[block].Sites[site].targetProcessor
+                = ConvertTopologyRankToGlobalRank((proc_t) toProc);
           }
 
           ++moveIndex;
@@ -1979,9 +1966,9 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank) ?
-        topologyRankIn :
-        (topologyRankIn + 1);
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank)
+        ? topologyRankIn
+        : (topologyRankIn + 1);
     }
 
     void GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
