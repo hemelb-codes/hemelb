@@ -57,7 +57,7 @@ namespace hemelb
       if (mAmAttached)
         return;
 
-      int amWaiting = 1;
+      volatile int amWaiting = 1;
       int rank;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       int nProcs;

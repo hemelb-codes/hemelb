@@ -24,11 +24,11 @@ namespace hemelb
        */
       class StreamerTests : public CppUnit::TestFixture
       {
-        CPPUNIT_TEST_SUITE( StreamerTests );
-        CPPUNIT_TEST( TestSimpleCollideAndStream );
-        CPPUNIT_TEST( TestFInterpolation );
-        CPPUNIT_TEST( TestSimpleBounceBack );
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( StreamerTests);
+          CPPUNIT_TEST( TestSimpleCollideAndStream);
+          CPPUNIT_TEST( TestFInterpolation);
+          CPPUNIT_TEST( TestSimpleBounceBack);CPPUNIT_TEST_SUITE_END();
+
         public:
 
           void setUp()
@@ -53,8 +53,10 @@ namespace hemelb
 
             simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<
                 lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
-				simpleBounceBack = new lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
-				fInterpolation = new lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
+            simpleBounceBack = new lb::streamers::SimpleBounceBack<lb::collisions::Normal<
+                lb::kernels::LBGK> >(initParams);
+            fInterpolation = new lb::streamers::FInterpolation<lb::collisions::Normal<
+                lb::kernels::LBGK> >(initParams);
           }
 
           void tearDown()
@@ -70,7 +72,7 @@ namespace hemelb
             delete simpleCollideAndStream;
 
             delete simpleBounceBack;
-				delete fInterpolation;
+            delete fInterpolation;
           }
 
           void TestSimpleCollideAndStream()
@@ -181,9 +183,10 @@ namespace hemelb
                 else
                 {
                   std::stringstream message;
-                  message << "Site: " << streamedToSite << " Direction " << oppDirection << " Data: " << latDat->GetSiteData(streamedToSite) << std::flush;
+                  message << "Site: " << streamedToSite << " Direction " << oppDirection
+                      << " Data: " << latDat->GetSiteData(streamedToSite).GetRawValue() << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary"
-                                           "opposite an unstreamed-to direction "+message.str(),
+                                           "opposite an unstreamed-to direction " + message.str(),
                                          latDat->HasBoundary(streamedToSite, oppDirection));
                   // Test disabled due to RegressionTests issue, see discussion in #87
                   //CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "+message.str(),
@@ -417,11 +420,11 @@ namespace hemelb
           lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >
               * simpleBounceBack;
 
-			lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >
-				* fInterpolation;
+          lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >
+              * fInterpolation;
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests );
+      CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests);
     }
   }
 }

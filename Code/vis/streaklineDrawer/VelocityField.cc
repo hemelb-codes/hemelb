@@ -25,9 +25,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
 
-          if (block->site_data == NULL)
+          if (block->localContiguousIndex.size() == 0)
           {
             continue;
           }
@@ -37,7 +37,7 @@ namespace hemelb
           {
             // Only interested if the site lives on this rank.
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
             {
               continue;
             }
@@ -131,7 +131,7 @@ namespace hemelb
             continue;
           }
 
-          if (latDat.GetBlock(block)->site_data == NULL)
+          if (latDat.GetBlock(block)->localContiguousIndex.size() == 0)
           {
             continue;
           }
@@ -140,7 +140,7 @@ namespace hemelb
           for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit(); localSiteId++)
           {
             velocityField[block][localSiteId].site_id
-                = latDat.GetBlock(block)->site_data[localSiteId];
+                = latDat.GetBlock(block)->localContiguousIndex[localSiteId];
           }
         }
       }
