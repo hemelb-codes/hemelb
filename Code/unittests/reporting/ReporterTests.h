@@ -32,7 +32,7 @@ namespace hemelb
           realTimers = new reporting::Timers();
           state = new hemelb::lb::SimulationState(500, 2);
           net = new net::Net();
-          latticeData = FourCubeLatticeData::Create(5); // The 5 here is to match the topology size in the MPICommsMock
+          latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
           lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
           latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
           incompChecker = new IncompressibilityCheckerMock(latticeData,
@@ -156,7 +156,7 @@ namespace hemelb
         lb::SimulationState *state;
         IncompressibilityCheckerMock *incompChecker;
         net::Net *net;
-        FourCubeLatticeData *latticeData;
+        hemelb::geometry::LatticeData *latticeData;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);
