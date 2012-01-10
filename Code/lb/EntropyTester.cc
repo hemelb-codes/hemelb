@@ -16,8 +16,8 @@ namespace hemelb
                                  const geometry::LatticeData * iLatDat,
                                  net::Net* net,
                                  SimulationState* simState) :
-        net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
-        mLatDat(iLatDat)
+      net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
+          mLatDat(iLatDat)
     {
       for (unsigned int i = 0; i < COLLISION_TYPES; i++)
       {
@@ -118,7 +118,7 @@ namespace hemelb
 
     void EntropyTester::ProgressFromChildren(unsigned long splayNumber)
     {
-      ReceiveFromChildren<int>(mChildrensValues, 1);
+      ReceiveFromChildren<int> (mChildrensValues, 1);
     }
 
     void EntropyTester::ProgressToParent(unsigned long splayNumber)
@@ -154,7 +154,7 @@ namespace hemelb
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
 
-      SendToParent<int>(&mUpwardsValue, 1);
+      SendToParent<int> (&mUpwardsValue, 1);
     }
 
     void EntropyTester::TopNodeAction()
