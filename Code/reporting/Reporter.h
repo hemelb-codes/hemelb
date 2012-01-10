@@ -40,7 +40,7 @@ namespace hemelb
          */
         ReporterBase(const std::string &path,
                      const std::string &inputFile,
-                     const site_t* fluidSitesOnEachProcessor,
+                     const std::vector<site_t>& fluidSitesOnEachProcessor,
                      const long int aSiteCount,
                      const TimersBase<ClockPolicy, CommsPolicy>& timers,
                      const lb::SimulationState & aState,
@@ -63,7 +63,7 @@ namespace hemelb
         bool doIo; //! Is this the processor which should write the report.
         unsigned int snapshotCount; //! Number of snapshots taken.
         unsigned int imageCount; //! Number of images written.
-        const site_t* fluidSitesOnEachProcessor; //! Number of fluid sites on each processor in the network.
+        const std::vector<site_t>& fluidSitesOnEachProcessor; //! Number of fluid sites on each processor in the network.
         long int siteCount; //! Total number of sites.
         bool stability; //! Stability of the simulation.
         const TimersBase<ClockPolicy, CommsPolicy> &timings; //! Reference to list of timers used to measure performance.

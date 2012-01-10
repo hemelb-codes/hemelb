@@ -63,8 +63,8 @@ namespace hemelb
           {
             n++;
 
-            geometry::BlockData * lBlock = mLatDat->GetBlock(n);
-            if (lBlock->ProcessorRankForEachBlockSite == NULL)
+            const geometry::BlockData* lBlock = mLatDat->GetBlock(n);
+            if (lBlock->processorRankForEachBlockSite.size() == 0)
             {
               continue;
             }

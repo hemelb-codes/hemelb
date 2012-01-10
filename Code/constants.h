@@ -40,38 +40,6 @@ namespace hemelb
   const unsigned int WALL_BOUNDARY = 2U;
   // const unsigned int CHARACTERISTIC_BOUNDARY = 3U;
 
-  const unsigned int SITE_TYPE_BITS = 2U;
-  const unsigned int BOUNDARY_CONFIG_BITS = 14U;
-  const unsigned int BOUNDARY_DIR_BITS = 4U;
-  const unsigned int BOUNDARY_ID_BITS = 10U;
-
-  const unsigned int BOUNDARY_CONFIG_SHIFT = 2U; // SITE_TYPE_BITS;
-  const unsigned int BOUNDARY_DIR_SHIFT = 16U; // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-  const unsigned int BOUNDARY_ID_SHIFT = 20U; // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
-
-  // Comments show the bit patterns.
-  const unsigned int SITE_TYPE_MASK = ( (1 << SITE_TYPE_BITS) - 1);
-  // 0000 0000  0000 0000  0000 0000  0000 0011
-  // These give the *_TYPE in geometry/LatticeData.h
-
-  const unsigned int BOUNDARY_CONFIG_MASK = ( (1 << BOUNDARY_CONFIG_BITS) - 1)
-      << BOUNDARY_CONFIG_SHIFT;
-  // 0000 0000  0000 0000  1111 1111  1111 1100
-  // These bits are set if the lattice vector they correspond to takes one to a solid site
-  // The following hex digits give the index into LatticeSite.neighbours
-  // ---- ----  ---- ----  DCBA 9876  5432 10--
-
-  const unsigned int BOUNDARY_DIR_MASK = ( (1 << BOUNDARY_DIR_BITS) - 1) << BOUNDARY_DIR_SHIFT;
-  // 0000 0000  0000 1111  0000 0000  0000 0000
-  // No idea what these represent. As far as I can tell, they're unused.
-
-  const unsigned int BOUNDARY_ID_MASK = ( (1 << BOUNDARY_ID_BITS) - 1) << BOUNDARY_ID_SHIFT;
-  // 0011 1111  1111 0000  0000 0000  0000 0000
-  // These bits together give the index of the inlet/outlet/wall in the output XML file
-
-  const unsigned int PRESSURE_EDGE_MASK = 1U << 31U;
-  // 1000 0000  0000 0000  0000 0000  0000 0000
-
   const unsigned int FLUID = 1U;
   const unsigned int INLET = 2U;
   const unsigned int OUTLET = 4U;

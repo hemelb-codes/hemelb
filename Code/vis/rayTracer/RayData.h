@@ -67,7 +67,7 @@ namespace hemelb
                                      const float iAbsoluteDistanceFromViewpoint,
                                      const DomainStats& iDomainStats,
                                      const VisSettings& iVisSettings,
-                                     const double* iWallNormal)
+                                     const util::Vector3D<double>* iWallNormal)
           {
             UpdateRayDataCommon(iSiteData,
                                 iRayDirection,
