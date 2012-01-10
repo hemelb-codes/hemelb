@@ -17,6 +17,7 @@ config=yaml.load(open(os.path.join(env.localroot,'deploy','machines.yml')))
 env.update(config['default'])
 user_config=yaml.load(open(os.path.join(env.localroot,'deploy','machines_user.yml')))
 env.update(user_config['default'])
+env.verbose=False
 
 env.cmake_options={}
 env.pather=posixpath
@@ -52,6 +53,11 @@ def entropy():
 def hector():
 	"""Alias for machine:hector"""
 	execute(machine,'hector')
+	
+@task 
+def hector_login():
+	"""Alias for machine:hector_login"""
+	execute(machine,'hector_login')	
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
@@ -82,6 +88,7 @@ def complete_environment():
 	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
 	env.tools_build_path=env.pather.join(env.tools_path,'build',env.tools_build)
 	env.build_path=env.pather.join(env.remote_path,'build')
+	env.code_build_path=env.pather.join(env.remote_path,'code_build')
 	env.install_path=env.pather.join(env.remote_path,'install')
 	env.scripts_path=env.pather.join(env.remote_path,'scripts')
 	
