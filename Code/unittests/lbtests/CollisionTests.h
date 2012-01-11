@@ -28,11 +28,11 @@ namespace hemelb
        */
       class CollisionTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( CollisionTests);
-          CPPUNIT_TEST( TestNonZeroVelocityEquilibriumFixedDensity);
-          CPPUNIT_TEST( TestZeroVelocityEquilibriumFixedDensity);
-          CPPUNIT_TEST( TestZeroVelocityEquilibrium);
-          CPPUNIT_TEST( TestNormal);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE(CollisionTests);
+          CPPUNIT_TEST(TestNonZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST(TestZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST(TestZeroVelocityEquilibrium);
+          CPPUNIT_TEST(TestNormal);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -143,13 +143,13 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
+            nonZeroVFixedDensityILet->Collide(lbmParams, hydroVars);
+
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Non-0 velocity eqm fixed density, collide",
                                                    expectedFeq[ii],
-                                                   nonZeroVFixedDensityILet->Collide(lbmParams,
-                                                                                     ii,
-                                                                                     hydroVars),
+                                                   hydroVars.GetFPostCollision()[ii],
                                                    allowedError);
             }
           }
@@ -192,13 +192,13 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
+            zeroVFixedDensityOLet->Collide(lbmParams, hydroVars);
+
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("0 velocity eqm fixed density, collide",
                                                    expectedFeq[ii],
-                                                   zeroVFixedDensityOLet->Collide(lbmParams,
-                                                                                  ii,
-                                                                                  hydroVars),
+                                                   hydroVars.GetFPostCollision()[ii],
                                                    allowedError);
             }
           }
@@ -246,11 +246,13 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
+            zeroVEqm->Collide(lbmParams, hydroVars);
+
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("0 velocity eqm, collide",
                                                    expectedFeq[ii],
-                                                   zeroVEqm->Collide(lbmParams, ii, hydroVars),
+                                                   hydroVars.GetFPostCollision()[ii],
                                                    allowedError);
             }
           }
@@ -295,11 +297,17 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
+            // Make a copy for the second collision to compare against.
+            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVarsCopy(hydroVars);
+
+            lbgk->Collide(lbmParams, hydroVars);
+            normal->Collide(lbmParams, hydroVarsCopy);
+
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Normal, collide",
-                                                   lbgk->Collide(lbmParams, hydroVars, ii),
-                                                   normal->Collide(lbmParams, ii, hydroVars),
+                                                   hydroVars.GetFPostCollision()[ii],
+                                                   hydroVarsCopy.GetFPostCollision()[ii],
                                                    allowedError);
             }
           }
@@ -316,14 +324,12 @@ namespace hemelb
 
           lb::kernels::LBGK* lbgk;
 
-          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK>
-              * nonZeroVFixedDensityILet;
-          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK>
-              * zeroVFixedDensityOLet;
+          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK> * nonZeroVFixedDensityILet;
+          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK> * zeroVFixedDensityOLet;
           lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>* zeroVEqm;
           lb::collisions::Normal<lb::kernels::LBGK>* normal;
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION(CollisionTests);
     }
   }
 }
