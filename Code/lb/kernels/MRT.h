@@ -45,12 +45,12 @@ namespace hemelb
       {
         public:
 
-          MRT(InitParams& initParams):
-            collisionMatrix(initParams.lbmParams->GetMrtRelaxationParameters())
+          MRT(InitParams& initParams) :
+              collisionMatrix(initParams.lbmParams->GetMrtRelaxationParameters())
           {
           }
 
-          void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
             D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
                                                hydroVars.density,
@@ -68,7 +68,7 @@ namespace hemelb
             D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
-          void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
             D3Q15::CalculateFeq(hydroVars.density,
                                 hydroVars.v_x,
@@ -85,27 +85,28 @@ namespace hemelb
             D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
-          distribn_t DoCollide(const LbmParameters* const lbmParams,
-                               HydroVars<MRT>& hydroVars,
-                               unsigned int direction)
+          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<MRT>& hydroVars)
           {
-            /** @todo #61 many optimisations possible (and necessary!).
-             *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
-             *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
-             */
-            distribn_t collision = 0.;
-            for (unsigned momentIndex = 0; momentIndex < D3Q15::NUM_KINETIC_MOMENTS; momentIndex++)
+            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
             {
-              collision += (collisionMatrix[momentIndex]
-                  / D3Q15::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
-                  * D3Q15::REDUCED_MOMENT_BASIS[momentIndex][direction]
-                  * hydroVars.m_neq[momentIndex];
+              /** @todo #61 many optimisations possible (and necessary!).
+               *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
+               *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
+               */
+              distribn_t collision = 0.;
+              for (unsigned momentIndex = 0; momentIndex < D3Q15::NUM_KINETIC_MOMENTS;
+                  momentIndex++)
+              {
+                collision += (collisionMatrix[momentIndex]
+                    / D3Q15::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
+                    * D3Q15::REDUCED_MOMENT_BASIS[momentIndex][direction]
+                    * hydroVars.m_neq[momentIndex];
+              }
+              hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction] - collision;
             }
-
-            return hydroVars.f[direction] - collision;
           }
 
-          void DoReset(InitParams* initParams)
+          inline void DoReset(InitParams* initParams)
           {
           }
 
