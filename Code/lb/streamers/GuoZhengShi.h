@@ -17,17 +17,17 @@ namespace hemelb
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-            collider(initParams)
+              collider(initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t iFirstIndex,
+                                         const site_t iSiteCount,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
+                                         hemelb::vis::Control *iControl)
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
@@ -37,10 +37,13 @@ namespace hemelb
 
               collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
 
+              collider.Collide(iLbmParams, hydroVars);
+
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii)))
-                    = collider.Collide(iLbmParams, ii, hydroVars);
+                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) =
+                    hydroVars.GetFPostCollision()[ii];
+
               }
 
               // Now fill in the un-streamed-to distributions (those that point away from boundaries).
@@ -81,13 +84,14 @@ namespace hemelb
 
                       for (int a = 0; a < 3; a++)
                       {
-                        uWall[a] = delta * uWall[a] - (1. - delta) * (1. - delta) * nextNodeV[a]
-                            / (1. + delta);
+                        uWall[a] = delta * uWall[a]
+                            - (1. - delta) * (1. - delta) * nextNodeV[a] / (1. + delta);
                       }
 
-                      fNeqAwayFromWall = delta * fNeqAwayFromWall + (1. - delta)
-                          * (*bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS + lAwayFromWallIndex)
-                              - nextNodeFEq[lAwayFromWallIndex]);
+                      fNeqAwayFromWall = delta * fNeqAwayFromWall
+                          + (1. - delta)
+                              * (*bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS
+                                  + lAwayFromWallIndex) - nextNodeFEq[lAwayFromWallIndex]);
                     }
                     // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
                     else
@@ -107,9 +111,9 @@ namespace hemelb
                   D3Q15::CalculateFeq(hydroVars.density, uWall[0], uWall[1], uWall[2], fEqTemp);
 
                   // Collide and stream!
-                  * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex))
-                      = fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams->GetOmega())
-                          * fNeqAwayFromWall;
+                  * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex)) =
+                      fEqTemp[lAwayFromWallIndex]
+                          + (1.0 + iLbmParams->GetOmega()) * fNeqAwayFromWall;
                 }
               }
 
@@ -126,11 +130,11 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 hemelb::vis::Control *iControl)
           {
 
           }
