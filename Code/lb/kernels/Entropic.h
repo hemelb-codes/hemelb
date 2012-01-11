@@ -23,12 +23,11 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
+              HydroVarsBase(f)
           {
 
           }
 
-          distribn_t alpha;
           site_t index;
       };
 
@@ -51,7 +50,7 @@ namespace hemelb
             delete[] oldAlpha;
           }
 
-          void DoCalculateDensityVelocityFeq(HydroVars<Entropic>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<Entropic>& hydroVars, site_t index)
           {
             hydroVars.index = index;
             D3Q15::CalculateEntropicDensityVelocityFEq(hydroVars.f,
@@ -67,7 +66,7 @@ namespace hemelb
             }
           }
 
-          void DoCalculateFeq(HydroVars<Entropic>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<Entropic>& hydroVars, site_t index)
           {
             hydroVars.index = index;
             D3Q15::CalculateEntropicFeq(hydroVars.density,
@@ -82,21 +81,22 @@ namespace hemelb
             }
           }
 
-          distribn_t DoCollide(const LbmParameters* const lbmParams,
-                               HydroVars<Entropic>& hydroVars,
-                               unsigned int direction)
+          inline void DoCollide(const LbmParameters* const lbmParams,
+                                HydroVars<Entropic>& hydroVars)
           {
-            // TODO this calculation is being done in the wrong place and hence happens 15* too often.
-            hydroVars.alpha = CalculateAlpha(lbmParams->GetTau(),
-                                             hydroVars,
-                                             oldAlpha[hydroVars.index]);
-            oldAlpha[hydroVars.index] = hydroVars.alpha;
+            distribn_t alpha = CalculateAlpha(lbmParams->GetTau(),
+                                              hydroVars,
+                                              oldAlpha[hydroVars.index]);
+            oldAlpha[hydroVars.index] = alpha;
 
-            return hydroVars.f[direction] + (hydroVars.alpha * lbmParams->GetBeta())
-                * hydroVars.f_neq.f[direction];
+            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            {
+              hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
+                  + (alpha * lbmParams->GetBeta()) * hydroVars.f_neq.f[direction];
+            }
           }
 
-          void Reset(InitParams* init)
+          inline void Reset(InitParams* init)
           {
             for (site_t i = 0; i < init->siteCount; i++)
             {
@@ -119,9 +119,9 @@ namespace hemelb
               // Papers suggest f_eq - f < 0.001 or (f_eq - f)/f < 0.01 for the point to have approx alpha = 2
               // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
               // the more of the simulation is in the LBGK limit.
-              deviation
-                  = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i])
-                      / hydroVars.f[i]), deviation);
+              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i])
+                                                            / hydroVars.f[i]),
+                                                        deviation);
               if (deviation > 1.0E-2)
               {
                 big = true;
@@ -135,9 +135,9 @@ namespace hemelb
               HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
-              prevAlpha = (prevAlpha < 2.0 * tau
-                ? 2.0
-                : prevAlpha);
+              prevAlpha = (prevAlpha < 2.0 * tau ?
+                2.0 :
+                prevAlpha);
 
               return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
             }
