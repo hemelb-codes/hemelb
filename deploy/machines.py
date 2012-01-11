@@ -29,8 +29,14 @@ def machine(name):
 	Completes additional paths and interpolates them, via complete_environment.
 	Usage, e.g. fab machine:hector build
 	"""
+	if "import" in config[name]:
+		# Config for this machine is based on another
+		env.update(config[config[name]["import"]])
+		if config[name]["import"] in user_config:
+			env.update(user_config[config[name]["import"]])
 	env.update(config[name])
-	env.update(user_config[name])
+	if name in user_config:
+		env.update(user_config[name]) 
 	env.machine_name=name
 	complete_environment()
 

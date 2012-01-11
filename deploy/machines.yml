@@ -49,11 +49,11 @@ entropy:
   tools_build: "lib.linux-x86_64-2.6"
   runtime_path_template: "/store4/blood/$username"
 hector:
-  job_dispatch: "checkScript"
+  job_dispatch: "qsub"
   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
   remote: "login.hector.ac.uk"
-  home_path_template: "/home/e10/e10/$username"
-  runtime_path_template: "/work/e10/e10/$username"
+  home_path_template: "/home/$project/$project/$username"
+  runtime_path_template: "/work/$project/$project/$username"
   modules: ["load CMake/2.8.6"]
   build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
   tools_build: "TODO"
@@ -67,18 +67,7 @@ hector:
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
 hector_login: #Hector, compiling for login nodes and serial queues
-   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
-   remote: "login.hector.ac.uk"
-   home_path_template: "/home/$project/$project/$username"
-   runtime_path_template: "/work/$project/$project/$username"
+   import: "hector"
    fabric_dir: "FabricHemeLbLogin"
    modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
-   build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
-   tools_build: "TODO"
-   cmake_options: 
-      HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-      CMAKE_CXX_COMPILER: "CC"
-      CMAKE_C_COMPILER: "cc"
-      CMAKE_CXX_FLAGS_RELEASE: ""
-      HEMELB_OPTIMISATION: "-O3"
-      HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+   job_dispatch: ""
