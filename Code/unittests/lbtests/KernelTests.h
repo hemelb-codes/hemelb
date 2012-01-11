@@ -27,8 +27,7 @@ namespace hemelb
           CPPUNIT_TEST(TestEntropicCalculationsAndCollision);
           CPPUNIT_TEST(TestLBGKCalculationsAndCollision);
           CPPUNIT_TEST(TestLBGKNNCalculationsAndCollision);
-          CPPUNIT_TEST(TestMRTConstantRelaxationTimeEqualsLBGK);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestMRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -145,14 +144,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            distribn_t postCollision0[D3Q15::NUMVECTORS];
-            distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              postCollision0[ii] = entropic->DoCollide(lbmParams, hydroVars0, ii);
-              postCollision1[ii] = entropic->DoCollide(lbmParams, hydroVars1, ii);
-            }
+            entropic->DoCollide(lbmParams, hydroVars0);
+            entropic->DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -177,12 +170,12 @@ namespace hemelb
               message << ii;
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision0[ii],
+                                                   hydroVars0.GetFPostCollision()[ii],
                                                    expectedPostCollision0[ii],
                                                    allowedError);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision1[ii],
+                                                   hydroVars1.GetFPostCollision()[ii],
                                                    expectedPostCollision1[ii],
                                                    allowedError);
             }
@@ -257,14 +250,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            distribn_t postCollision0[D3Q15::NUMVECTORS];
-            distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              postCollision0[ii] = lbgk->DoCollide(lbmParams, hydroVars0, ii);
-              postCollision1[ii] = lbgk->DoCollide(lbmParams, hydroVars1, ii);
-            }
+            lbgk->DoCollide(lbmParams, hydroVars0);
+            lbgk->DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -287,12 +274,12 @@ namespace hemelb
               message << ii;
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision0[ii],
+                                                   hydroVars0.GetFPostCollision()[ii],
                                                    expectedPostCollision0[ii],
                                                    allowedError);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision1[ii],
+                                                   hydroVars1.GetFPostCollision()[ii],
                                                    expectedPostCollision1[ii],
                                                    allowedError);
             }
@@ -456,14 +443,8 @@ namespace hemelb
                * Test part 3: Collision depends on the local relaxation time
                */
               // Do the collision and test the result.
-              distribn_t postCollision0[D3Q15::NUMVECTORS];
-              distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-              {
-                postCollision0[ii] = lbgknn0->DoCollide(lbmParams, *hydroVars0, ii);
-                postCollision1[ii] = lbgknn1->DoCollide(lbmParams, *hydroVars1, ii);
-              }
+              lbgknn0->DoCollide(lbmParams, *hydroVars0);
+              lbgknn1->DoCollide(lbmParams, *hydroVars1);
 
               // Get the expected post-collision densities.
               distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -489,12 +470,12 @@ namespace hemelb
                 message << "Post-collision: site " << site_index << " direction " << ii;
 
                 CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                     postCollision0[ii],
+                                                     hydroVars0->GetFPostCollision()[ii],
                                                      expectedPostCollision0[ii],
                                                      numTolerance);
 
                 CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                     postCollision1[ii],
+                                                     hydroVars1->GetFPostCollision()[ii],
                                                      expectedPostCollision1[ii],
                                                      numTolerance);
               }
@@ -528,7 +509,9 @@ namespace hemelb
             distribn_t expectedDensity0;
             distribn_t expectedVelocity0[3];
             distribn_t expectedFEq0[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateRhoVelocity<D3Q15>(hydroVars0.f, expectedDensity0, expectedVelocity0);
+            LbTestsHelper::CalculateRhoVelocity<D3Q15>(hydroVars0.f,
+                                                       expectedDensity0,
+                                                       expectedVelocity0);
             LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedDensity0,
                                                     expectedVelocity0[0],
                                                     expectedVelocity0[1],
@@ -547,11 +530,7 @@ namespace hemelb
                                          allowedError);
 
             // Do the MRT collision.
-            distribn_t postCollision0[D3Q15::NUMVECTORS];
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              postCollision0[ii] = mrtLbgkEquivalentKernel->DoCollide(lbmParams, hydroVars0, ii);
-            }
+            mrtLbgkEquivalentKernel->DoCollide(lbmParams, hydroVars0);
 
             // Get the expected post-collision velocity distributions with LBGK.
             distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -567,7 +546,7 @@ namespace hemelb
               message << "Post-collision " << ii;
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision0[ii],
+                                                   hydroVars0.GetFPostCollision()[ii],
                                                    expectedPostCollision0[ii],
                                                    allowedError);
             }
@@ -582,7 +561,8 @@ namespace hemelb
               *lbgknn1;
           lb::kernels::MRT* mrtLbgkEquivalentKernel;
           site_t numSites;
-      };
+      }
+      ;
       CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
     }
   }
