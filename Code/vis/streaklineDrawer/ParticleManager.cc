@@ -84,7 +84,7 @@ namespace hemelb
         net::Net net;
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           (*proc).second.ExchangeParticleCounts(net);
         }
@@ -94,7 +94,7 @@ namespace hemelb
         net.Wait();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           (*proc).second.ExchangeParticles(net);
         }
@@ -104,7 +104,7 @@ namespace hemelb
         net.Wait();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           NeighbouringProcessor& neighbourProc = (*proc).second;
           neighbourProc.ClearParticleSendingList();

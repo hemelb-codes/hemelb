@@ -80,7 +80,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
 
             /*
              * Case 0: use the function that calculates density, velocity and
@@ -193,7 +193,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
 
             /*
              * Case 0: test the kernel function for calculating density, velocity
@@ -518,7 +518,7 @@ namespace hemelb
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
-            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
             lb::kernels::HydroVars<lb::kernels::MRT> hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
