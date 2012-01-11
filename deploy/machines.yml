@@ -49,7 +49,7 @@ entropy:
   tools_build: "lib.linux-x86_64-2.6"
   runtime_path_template: "/store4/blood/$username"
 hector:
-  job_dispatch: "qsub"
+  job_dispatch: "checkScript"
   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
   remote: "login.hector.ac.uk"
   home_path_template: "/home/$project/$project/$username"
