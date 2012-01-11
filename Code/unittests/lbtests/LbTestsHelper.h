@@ -83,8 +83,8 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
-                  * (float) Lattice::CZ[ii];
+              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
+                  + v_z * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
               distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
@@ -191,6 +191,95 @@ namespace hemelb
               distribution[direction] = ((distribn_t) (direction + 1)) / 10.0
                   + ((distribn_t) (site)) / 100.0;
             }
+          }
+
+          template<class Kernel>
+          static void CalculateRegularisedCollision(geometry::LatticeData* latDat,
+                                                    lb::LbmParameters* lbmParams,
+                                                    site_t siteIndex,
+                                                    lb::kernels::HydroVars<Kernel>& hydroVars,
+                                                    distribn_t* const fPostCollision)
+          {
+            const distribn_t *const fPreCollision = hydroVars.f;
+
+            // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
+            // (fi = fiEq + fopp(i) - fopp(i)Eq)
+            distribn_t fTemp[D3Q15::NUMVECTORS];
+
+            for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+            {
+              //! @todo I thought the components that need updating are those that satisfy bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]), i.e. not having a node streaming on them.
+              if (latDat->HasBoundary(siteIndex, l))
+              {
+                //! @todo please document how fi = fiEq + fopp(i) - fopp(i)Eq becomes the expression below
+                fTemp[l] = fPreCollision[D3Q15::INVERSEDIRECTIONS[l]]
+                    + 3.0 * D3Q15::EQMWEIGHTS[l]
+                        * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
+                            + hydroVars.v_z * D3Q15::CZ[l]);
+              }
+              else
+              {
+                fTemp[l] = fPreCollision[l];
+              }
+            }
+
+            distribn_t f_neq[D3Q15::NUMVECTORS];
+            for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+            {
+              f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
+            }
+
+            // Pi = sum_i e_i e_i f_i
+            // zeta = Pi / 2 (Cs^4)
+            Order2Tensor zeta = D3Q15::CalculatePiTensor(f_neq);
+
+            for (int m = 0; m < 3; m++)
+            {
+              for (int n = 0; n < 3; n++)
+              {
+                zeta[m][n] /= (2.0 * Cs2 * Cs2);
+              }
+            }
+
+            // chi = Cs^2 I : zeta
+            const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
+
+            const int *Cs[3] = { D3Q15::CX, D3Q15::CY, D3Q15::CZ };
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              // According to Latt & Chopard (Physical Review E77, 2008),
+              // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
+              //            Q_i : Pi(n_eq)
+              // Where Q_i = c_i c_i - Cs^2 I
+              // and Pi(n_eq) = Sum{i} (c_i c_i f_i)
+              //
+              // We pre-compute zeta = Pi(neq) / (2 Cs^4)
+              //             and chi =  Cs^2 I : zeta
+              // Hence we can compute f_neq[i] = LatticeWeight[i] * ((c_i c_i) : zeta - chi)
+              f_neq[ii] = -chi;
+
+              for (int aa = 0; aa < 3; ++aa)
+              {
+                for (int bb = 0; bb < 3; ++bb)
+                {
+                  f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                }
+              }
+
+              f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
+
+              /*
+               * Newly constructed distribution function:
+               *    g_i = f^{eq}_i + f^{neq}_i
+               *
+               * Collision step:
+               *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
+               *            = f^{eq}_i + (1+w) f^{neq}_i
+               */
+              fPostCollision[ii] = hydroVars.GetFEq().f[ii] + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
+            }
+
           }
       };
     }
