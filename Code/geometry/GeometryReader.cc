@@ -4,11 +4,12 @@
 
 #include "debug/Debugger.h"
 #include "io/writers/xdr/XdrMemReader.h"
-#include "geometry/LatticeData.h"
+#include "geometry/GeometryReader.h"
 #include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
+#include "constants.h"
 
 namespace hemelb
 {
@@ -17,7 +18,8 @@ namespace hemelb
 
     // TODO This file is generally ugly. Integrate with the functions in Net which initialise the LatDat.
     // Once the interface to this object is nice and clean, we can tidy up the code here.
-    LatticeData::GeometryReader::GeometryReader(const bool reserveSteeringCore)
+    GeometryReader::GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult) :
+      readingResult(readResult)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -56,7 +58,7 @@ namespace hemelb
       }
     }
 
-    LatticeData::GeometryReader::~GeometryReader()
+    GeometryReader::~GeometryReader()
     {
       MPI_Group_free(&topologyGroup);
 
@@ -67,8 +69,7 @@ namespace hemelb
       }
     }
 
-    LatticeData::GlobalLatticeData* LatticeData::GeometryReader::LoadAndDecompose(std::string& dataFilePath,
-                                                                                  reporting::Timers &timings)
+    void GeometryReader::LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -111,41 +112,34 @@ namespace hemelb
       std::string mode = "native";
       MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, &mode[0], fileInfo);
 
-      // Read the file preamble.
-      LatticeData::GlobalLatticeData* globalLattice = new LatticeData::GlobalLatticeData();
-
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      ReadPreamble(globalLattice);
+      ReadPreamble();
 
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
 
-      site_t* sitesPerBlock = new site_t[globalLattice->GetBlockCount()];
-      unsigned
-      int* bytesPerBlock = new unsigned int[globalLattice->GetBlockCount()];
+      site_t* sitesPerBlock = new site_t[readingResult.GetBlockCount()];
+      unsigned int* bytesPerBlock = new unsigned int[readingResult.GetBlockCount()];
 
-      ReadHeader(globalLattice->GetBlockCount(), sitesPerBlock, bytesPerBlock);
+      ReadHeader(sitesPerBlock, bytesPerBlock);
 
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
 
-      proc_t* procForEachBlock = new proc_t[globalLattice->GetBlockCount()];
+      proc_t* procForEachBlock = new proc_t[readingResult.GetBlockCount()];
 
       if (!participateInTopology)
       {
-        for (site_t block = 0; block < globalLattice->GetBlockCount(); ++block)
+        for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           procForEachBlock[block] = -1;
         }
       }
       else
       {
-        BlockDecomposition(globalLattice->GetBlockCount(),
-                           globalLattice,
-                           sitesPerBlock,
-                           procForEachBlock);
+        BlockDecomposition(sitesPerBlock, procForEachBlock);
 
-        ValidateProcForEachBlock(procForEachBlock, globalLattice->GetBlockCount());
+        ValidateProcForEachBlock(procForEachBlock);
       }
 
       // Perform the initial read-in.
@@ -164,15 +158,11 @@ namespace hemelb
         currentCommSize = topologySize;
         currentComm = topologyComm;
 
-        ReadInLocalBlocks(globalLattice,
-                          sitesPerBlock,
-                          bytesPerBlock,
-                          procForEachBlock,
-                          topologyRank);
+        ReadInLocalBlocks(sitesPerBlock, bytesPerBlock, procForEachBlock, topologyRank);
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          ValidateGlobLatDat(globalLattice);
+          ValidateAllReadData();
         }
       }
 
@@ -184,12 +174,12 @@ namespace hemelb
       if (participateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock, globalLattice);
+        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          ValidateGlobLatDat(globalLattice);
+          ValidateAllReadData();
         }
 
         MPI_File_close(&file);
@@ -203,8 +193,6 @@ namespace hemelb
       delete[] sitesPerBlock;
       delete[] bytesPerBlock;
       delete[] procForEachBlock;
-
-      return globalLattice;
     }
 
     /**
@@ -225,7 +213,7 @@ namespace hemelb
      * for (int i=0; i<3; ++i)
      *        site0WorldPosition[i] = load_double();
      */
-    void LatticeData::GeometryReader::ReadPreamble(GlobalLatticeData* globalLatticeData)
+    void GeometryReader::ReadPreamble()
     {
       // Read in the file preamble into a buffer.
       char preambleBuffer[preambleBytes];
@@ -250,28 +238,29 @@ namespace hemelb
           hemelb::io::writers::xdr::XdrMemReader(preambleBuffer, preambleBytes);
 
       // Variables we'll read.
+      // We use temporary vars here, as they must be the same size as the type in the file
+      // regardless of the internal type used.
       unsigned int blocksX, blocksY, blocksZ, blockSize;
-      double voxelSize, origin[3];
 
       // Read in the values.
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
       preambleReader.readUnsignedInt(blocksZ);
       preambleReader.readUnsignedInt(blockSize);
-      preambleReader.readDouble(voxelSize);
+      preambleReader.readDouble(readingResult.voxelSize);
       for (unsigned int i = 0; i < 3; ++i)
       {
-        preambleReader.readDouble(origin[i]);
+        preambleReader.readDouble(readingResult.origin[i]);
       }
 
-      globalLatticeData->SetBasicDetails(blocksX,
-                                         blocksY,
-                                         blocksZ,
-                                         blockSize,
-                                         voxelSize,
-                                         origin[0],
-                                         origin[1],
-                                         origin[2]);
+      readingResult.blocks.x = blocksX;
+      readingResult.blocks.y = blocksY;
+      readingResult.blocks.z = blocksZ;
+
+      readingResult.blockSize = blockSize;
+
+      // Ensure the reading result container has enough space to contain all the blocks.
+      readingResult.Blocks.resize(readingResult.GetBlockCount());
     }
 
     /**
@@ -290,11 +279,10 @@ namespace hemelb
      *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
      * }
      */
-    void LatticeData::GeometryReader::ReadHeader(site_t blockCount,
-                                                 site_t* sitesInEachBlock,
-                                                 unsigned int* bytesUsedByBlockInDataFile)
+    void GeometryReader::ReadHeader(site_t* sitesInEachBlock,
+                                    unsigned int* bytesUsedByBlockInDataFile)
     {
-      site_t headerByteCount = GetHeaderLength(blockCount);
+      site_t headerByteCount = GetHeaderLength(readingResult.GetBlockCount());
       // Allocate a buffer to read into, then do the reading.
       char* headerBuffer = new char[headerByteCount];
 
@@ -318,7 +306,7 @@ namespace hemelb
           hemelb::io::writers::xdr::XdrMemReader(headerBuffer, (unsigned int) headerByteCount);
 
       // Read in all the data.
-      for (site_t block = 0; block < blockCount; block++)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); block++)
       {
         unsigned int sites, bytes;
         preambleReader.readUnsignedInt(sites);
@@ -363,23 +351,22 @@ namespace hemelb
      *   }
      * }
      */
-    void LatticeData::GeometryReader::ReadInLocalBlocks(GlobalLatticeData* globLatDat,
-                                                        const site_t* sitesPerBlock,
-                                                        const unsigned int* bytesPerBlock,
-                                                        const proc_t* unitForEachBlock,
-                                                        const proc_t localRank)
+    void GeometryReader::ReadInLocalBlocks(const site_t* sitesPerBlock,
+                                           const unsigned int* bytesPerBlock,
+                                           const proc_t* unitForEachBlock,
+                                           const proc_t localRank)
     {
       // Create a list of which blocks to read in.
-      bool* readBlock = new bool[globLatDat->GetBlockCount()];
+      bool* readBlock = new bool[readingResult.GetBlockCount()];
 
-      DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank, globLatDat);
+      DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
-      const site_t maxBytesPerBlock = (globLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
+      const site_t maxBytesPerBlock = (readingResult.GetSitesPerBlock()) * (4 * 1 + 8 * (4
           + D3Q15::NUMVECTORS - 1));
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
-        for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
+        for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           if (bytesPerBlock[block] > maxBytesPerBlock)
           {
@@ -396,13 +383,12 @@ namespace hemelb
       int* procsWantingThisBlock = new int[currentCommSize];
 
       // Set the view and read in.
-      MPI_Offset offset = preambleBytes + GetHeaderLength(globLatDat->GetBlockCount());
+      MPI_Offset offset = preambleBytes + GetHeaderLength(readingResult.GetBlockCount());
 
       // Track the next block we should look at.
-      for (site_t nextBlockToRead = 0; nextBlockToRead < globLatDat->GetBlockCount(); ++nextBlockToRead)
+      for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
-        ReadInBlock(globLatDat,
-                    offset,
+        ReadInBlock(offset,
                     buffer,
                     procsWantingThisBlock,
                     nextBlockToRead,
@@ -418,14 +404,13 @@ namespace hemelb
       delete[] readBlock;
     }
 
-    void LatticeData::GeometryReader::ReadInBlock(GlobalLatticeData* globLatDat,
-                                                  MPI_Offset offsetSoFar,
-                                                  char* buffer,
-                                                  int* procsWantingThisBlockBuffer,
-                                                  const site_t blockNumber,
-                                                  const site_t sites,
-                                                  const unsigned int bytes,
-                                                  const int neededOnThisRank)
+    void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar,
+                                     char* buffer,
+                                     int* procsWantingThisBlockBuffer,
+                                     const site_t blockNumber,
+                                     const site_t sites,
+                                     const unsigned int bytes,
+                                     const int neededOnThisRank)
     {
       // Easy case if there are no sites on the block.
       if (sites <= 0)
@@ -480,16 +465,16 @@ namespace hemelb
         // Create an Xdr interpreter.
         io::writers::xdr::XdrMemReader lReader(buffer, bytes);
 
-        globLatDat->ReadBlock(blockNumber, &lReader);
+        ParseBlock(blockNumber, lReader);
 
         // If debug-level logging, check that we've read in as many sites as anticipated.
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
           // Count the sites read,
           site_t numSitesRead = 0;
-          for (site_t site = 0; site < globLatDat->GetSitesPerBlockVolumeUnit(); ++site)
+          for (site_t site = 0; site < readingResult.GetSitesPerBlock(); ++site)
           {
-            if (globLatDat->Blocks[blockNumber].ProcessorRankForEachBlockSite[site] != BIG_NUMBER2)
+            if (readingResult.Blocks[blockNumber].Sites[site].targetProcessor != BIG_NUMBER2)
             {
               ++numSitesRead;
             }
@@ -507,63 +492,141 @@ namespace hemelb
       }
     }
 
-    proc_t LatticeData::GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
+    void GeometryReader::ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader)
+    {
+      readingResult.Blocks[block].Sites.clear();
+
+      for (site_t localSiteIndex = 0; localSiteIndex < readingResult.GetSitesPerBlock(); ++localSiteIndex)
+      {
+        readingResult.Blocks[block].Sites.push_back(ParseSite(reader));
+      }
+    }
+
+    SiteReadResult GeometryReader::ParseSite(io::writers::xdr::XdrReader& reader)
+    {
+      unsigned int readValue;
+      if (!reader.readUnsignedInt(readValue))
+      {
+        log::Logger::Log<log::Info, log::OnePerCore>("Error reading site type");
+      }
+
+      SiteReadResult readInSite;
+      readInSite.siteData = SiteData(readValue);
+
+      if (readInSite.siteData.IsSolid())
+      {
+        readInSite.targetProcessor = BIG_NUMBER2;
+        return readInSite;
+      }
+
+      readInSite.targetProcessor = -1;
+
+      if (readInSite.siteData.GetCollisionType() != FLUID)
+      {
+        if (readInSite.siteData.GetCollisionType() & INLET
+            || readInSite.siteData.GetCollisionType() & OUTLET)
+        {
+          // INLET or OUTLET or both.
+          // These values are the boundary normal and the boundary distance.
+          for (int dimension = 0; dimension < 3; dimension++)
+          {
+            if (!reader.readDouble(readInSite.ioletNormal[dimension]))
+            {
+              std::cout << "Error reading iolet normal\n";
+            }
+          }
+
+          if (!reader.readDouble(readInSite.ioletDistance))
+          {
+            std::cout << "Error reading iolet distance\n";
+          }
+        }
+
+        if (readInSite.siteData.GetCollisionType() & EDGE)
+        {
+          // EDGE bit set
+          for (int dimension = 0; dimension < 3; dimension++)
+          {
+            if (!reader.readDouble(readInSite.wallNormal[dimension]))
+            {
+              std::cout << "Error reading edge normal\n";
+            }
+          }
+
+          if (!reader.readDouble(readInSite.wallDistance))
+          {
+            std::cout << "Error reading edge distance\n";
+          }
+        }
+
+        for (unsigned int direction = 0; direction < (D3Q15::NUMVECTORS - 1); direction++)
+        {
+          if (!reader.readDouble(readInSite.cutDistance[direction]))
+          {
+            std::cout << "Error reading cut distances\n";
+          }
+        }
+      }
+
+      return readInSite;
+    }
+
+    proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
       return proc_t(blockNumber
           % util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize));
     }
 
-    void LatticeData::GeometryReader::ValidateGlobLatDat(GlobalLatticeData* globLatDat)
+    void GeometryReader::ValidateAllReadData()
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
 
-        proc_t* procForSiteRecv = new proc_t[globLatDat->GetSitesPerBlockVolumeUnit()];
-        proc_t * dummyProcForSite = new proc_t[globLatDat->GetSitesPerBlockVolumeUnit()];
-        unsigned
-        int* dummySiteData = new unsigned int[globLatDat->GetSitesPerBlockVolumeUnit()];
-        unsigned
-        int* siteDataRecv = new unsigned int[globLatDat->GetSitesPerBlockVolumeUnit()];
+        proc_t* procForSiteRecv = new proc_t[readingResult.GetSitesPerBlock()];
+        proc_t * myProcForSite = new proc_t[readingResult.GetSitesPerBlock()];
+        unsigned* mySiteData = new unsigned[readingResult.GetSitesPerBlock()];
+        unsigned* siteDataRecv = new unsigned[readingResult.GetSitesPerBlock()];
 
-        for (site_t localSite = 0; localSite < globLatDat->GetSitesPerBlockVolumeUnit(); ++localSite)
+        // We also validate that each processor has the same beliefs about each site.
+        for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
-          dummyProcForSite[localSite] = BIG_NUMBER2;
-          dummySiteData[localSite] = std::numeric_limits<unsigned int>::max();
-        }
-
-        for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
-        {
-          // We also validate that each processor has the same beliefs about each site.
-          proc_t* myProcForSite = globLatDat->Blocks[block].ProcessorRankForEachBlockSite;
-          unsigned int* mySiteData = globLatDat->Blocks[block].site_data;
-
-          if (myProcForSite == NULL)
+          if (readingResult.Blocks[block].Sites.size() == 0)
           {
-            myProcForSite = dummyProcForSite;
+            for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
+            {
+              myProcForSite[localSite] = BIG_NUMBER2;
+              mySiteData[localSite] = std::numeric_limits<unsigned int>::max();
+            }
           }
-          if (mySiteData == NULL)
+          else
           {
-            mySiteData = dummySiteData;
+            for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
+            {
+              myProcForSite[localSite]
+                  = readingResult.Blocks[block].Sites[localSite].targetProcessor;
+              mySiteData[localSite]
+                  = readingResult.Blocks[block].Sites[localSite].siteData.GetRawValue();
+            }
           }
 
           // Reduce using a minimum to find the actual processor for each site (ignoring the
           // BIG_NUMBER2 entries).
           MPI_Allreduce(myProcForSite,
                         procForSiteRecv,
-                        (int) globLatDat->GetSitesPerBlockVolumeUnit(),
+                        (int) readingResult.GetSitesPerBlock(),
                         MpiDataType(procForSiteRecv[0]),
                         MPI_MIN,
                         topologyComm);
 
           MPI_Allreduce(mySiteData,
                         siteDataRecv,
-                        (int) globLatDat->GetSitesPerBlockVolumeUnit(),
+                        (int) readingResult.GetSitesPerBlock(),
                         MpiDataType(mySiteData[0]),
                         MPI_MIN,
                         topologyComm);
 
-          for (site_t site = 0; site < globLatDat->GetSitesPerBlockVolumeUnit(); ++site)
+          for (site_t site = 0; site < readingResult.GetSitesPerBlock(); ++site)
           {
             if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank)
                 && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyRank)))
@@ -582,7 +645,7 @@ namespace hemelb
                                                             block);
             }
 
-            if (globLatDat->Blocks[block].site_data != NULL)
+            if (readingResult.Blocks[block].Sites.size() > 0)
             {
               if (mySiteData[site] != siteDataRecv[site])
               {
@@ -597,8 +660,8 @@ namespace hemelb
         }
 
         delete[] procForSiteRecv;
-        delete[] dummyProcForSite;
-        delete[] dummySiteData;
+        delete[] myProcForSite;
+        delete[] mySiteData;
         delete[] siteDataRecv;
       }
     }
@@ -615,26 +678,25 @@ namespace hemelb
      * @param localRank
      * @param iGlobLatDat
      */
-    void LatticeData::GeometryReader::DecideWhichBlocksToRead(bool* readBlock,
-                                                              const proc_t* unitForEachBlock,
-                                                              const proc_t localRank,
-                                                              const GlobalLatticeData* globLatDat)
+    void GeometryReader::DecideWhichBlocksToRead(bool* readBlock,
+                                                 const proc_t* unitForEachBlock,
+                                                 const proc_t localRank)
     {
       // Initialise each block to not being read.
-      for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         readBlock[block] = false;
       }
 
       // Read a block in if it has fluid sites and is to live on the current processor. Also read
       // in any neighbours with fluid sites.
-      for (site_t blockI = 0; blockI < globLatDat->GetXBlockCount(); ++blockI)
+      for (site_t blockI = 0; blockI < readingResult.blocks.x; ++blockI)
       {
-        for (site_t blockJ = 0; blockJ < globLatDat->GetYBlockCount(); ++blockJ)
+        for (site_t blockJ = 0; blockJ < readingResult.blocks.y; ++blockJ)
         {
-          for (site_t blockK = 0; blockK < globLatDat->GetZBlockCount(); ++blockK)
+          for (site_t blockK = 0; blockK < readingResult.blocks.z; ++blockK)
           {
-            site_t lBlockId = globLatDat->GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
+            site_t lBlockId = readingResult.GetBlockIdFromBlockCoordinates(blockI, blockJ, blockK);
 
             if (unitForEachBlock[lBlockId] != localRank)
             {
@@ -643,15 +705,17 @@ namespace hemelb
 
             // Read in all neighbouring blocks.
             for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI
-                <= (blockI + 1)) && (neighI < globLatDat->GetXBlockCount()); ++neighI)
+                <= (blockI + 1)) && (neighI < readingResult.blocks.x); ++neighI)
             {
               for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ
-                  <= (blockJ + 1)) && (neighJ < globLatDat->GetYBlockCount()); ++neighJ)
+                  <= (blockJ + 1)) && (neighJ < readingResult.blocks.y); ++neighJ)
               {
                 for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK
-                    <= (blockK + 1)) && (neighK < globLatDat->GetZBlockCount()); ++neighK)
+                    <= (blockK + 1)) && (neighK < readingResult.blocks.z); ++neighK)
                 {
-                  site_t lNeighId = globLatDat->GetBlockIdFromBlockCoords(neighI, neighJ, neighK);
+                  site_t lNeighId = readingResult.GetBlockIdFromBlockCoordinates(neighI,
+                                                                                 neighJ,
+                                                                                 neighK);
 
                   readBlock[lNeighId] = true;
                 }
@@ -679,16 +743,14 @@ namespace hemelb
      * @param blockCountPerProc Array of length topology size, into which the number of blocks
      * allocated to each processor will be written.
      */
-    void LatticeData::GeometryReader::BlockDecomposition(const site_t blockCount,
-                                                         const GlobalLatticeData* globLatDat,
-                                                         const site_t* fluidSitePerBlock,
-                                                         proc_t* initialProcForEachBlock)
+    void GeometryReader::BlockDecomposition(const site_t* fluidSitePerBlock,
+                                            proc_t* initialProcForEachBlock)
     {
       site_t* blockCountPerProc = new site_t[topologySize];
 
       // Count of block sites.
       site_t unvisitedFluidBlockCount = 0;
-      for (site_t block = 0; block < blockCount; ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         if (fluidSitePerBlock[block] != 0)
         {
@@ -704,33 +766,30 @@ namespace hemelb
 
       // Divide blocks between the processors.
       DivideBlocks(unvisitedFluidBlockCount,
-                   blockCount,
                    topologySize,
                    blockCountPerProc,
                    initialProcForEachBlock,
-                   fluidSitePerBlock,
-                   globLatDat);
+                   fluidSitePerBlock);
 
       delete[] blockCountPerProc;
     }
 
-    void LatticeData::GeometryReader::ValidateProcForEachBlock(proc_t* procForEachBlock,
-                                                               site_t blockCount)
+    void GeometryReader::ValidateProcForEachBlock(proc_t* procForEachBlock)
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
-        proc_t* procForEachBlockRecv = new proc_t[blockCount];
+        proc_t* procForEachBlockRecv = new proc_t[readingResult.GetBlockCount()];
 
         MPI_Allreduce(procForEachBlock,
                       procForEachBlockRecv,
-                      (int) blockCount,
+                      (int) readingResult.GetBlockCount(),
                       MpiDataType<proc_t> (),
                       MPI_MAX,
                       topologyComm);
 
-        for (site_t block = 0; block < blockCount; ++block)
+        for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           if (procForEachBlock[block] != procForEachBlockRecv[block])
           {
@@ -760,13 +819,11 @@ namespace hemelb
      * @param fluidSitesPerBlock
      * @param iGlobLatDat
      */
-    void LatticeData::GeometryReader::DivideBlocks(site_t unassignedBlocks,
-                                                   site_t blockCount,
-                                                   proc_t unitCount,
-                                                   site_t* blocksOnEachUnit,
-                                                   proc_t* unitForEachBlock,
-                                                   const site_t* fluidSitesPerBlock,
-                                                   const GlobalLatticeData* globLatDat)
+    void GeometryReader::DivideBlocks(site_t unassignedBlocks,
+                                      const proc_t unitCount,
+                                      site_t* blocksOnEachUnit,
+                                      proc_t* unitForEachBlock,
+                                      const site_t* fluidSitesPerBlock)
     {
       // Initialise the unit being assigned to, and the approximate number of blocks
       // required on each unit.
@@ -775,9 +832,9 @@ namespace hemelb
       site_t blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (topologySize));
 
       // Create an array to monitor whether each block has been assigned yet.
-      bool *blockAssigned = new bool[blockCount];
+      bool *blockAssigned = new bool[readingResult.GetBlockCount()];
 
-      for (site_t block = 0; block < blockCount; ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         blockAssigned[block] = false;
       }
@@ -799,11 +856,11 @@ namespace hemelb
       site_t blocksOnCurrentProc = 0;
 
       // Iterate over all blocks.
-      for (site_t blockCoordI = 0; blockCoordI < globLatDat->GetXBlockCount(); blockCoordI++)
+      for (site_t blockCoordI = 0; blockCoordI < readingResult.blocks.x; blockCoordI++)
       {
-        for (site_t blockCoordJ = 0; blockCoordJ < globLatDat->GetYBlockCount(); blockCoordJ++)
+        for (site_t blockCoordJ = 0; blockCoordJ < readingResult.blocks.y; blockCoordJ++)
         {
-          for (site_t blockCoordK = 0; blockCoordK < globLatDat->GetZBlockCount(); blockCoordK++)
+          for (site_t blockCoordK = 0; blockCoordK < readingResult.blocks.z; blockCoordK++)
           {
             // Block number is the number of the block we're currently on.
             blockNumber++;
@@ -846,7 +903,6 @@ namespace hemelb
               // Sites added to the edge of the mClusters during the iteration.
               isRegionGrowing = Expand(currentEdge,
                                        expandedEdge,
-                                       globLatDat,
                                        fluidSitesPerBlock,
                                        blockAssigned,
                                        currentUnit,
@@ -900,15 +956,14 @@ namespace hemelb
      * @param blocksPerUnit
      * @return
      */
-    bool LatticeData::GeometryReader::Expand(std::vector<BlockLocation>* edgeBlocks,
-                                             std::vector<BlockLocation>* expansionBlocks,
-                                             const GlobalLatticeData* globLatDat,
-                                             const site_t* fluidSitesPerBlock,
-                                             bool* blockAssigned,
-                                             proc_t currentUnit,
-                                             proc_t* unitForEachBlock,
-                                             site_t &blocksOnCurrentUnit,
-                                             site_t blocksPerUnit)
+    bool GeometryReader::Expand(std::vector<BlockLocation>* edgeBlocks,
+                                std::vector<BlockLocation>* expansionBlocks,
+                                const site_t* fluidSitesPerBlock,
+                                bool* blockAssigned,
+                                const proc_t currentUnit,
+                                proc_t* unitForEachBlock,
+                                site_t &blocksOnCurrentUnit,
+                                const site_t blocksPerUnit)
     {
       bool regionExpanded = false;
 
@@ -926,11 +981,11 @@ namespace hemelb
           site_t neighbourK = lNew->k + D3Q15::CZ[l];
 
           // Move on if neighbour is outside the bounding box.
-          if (neighbourI == -1 || neighbourI == globLatDat->GetXBlockCount())
+          if (neighbourI == -1 || neighbourI == readingResult.blocks.x)
             continue;
-          if (neighbourJ == -1 || neighbourJ == globLatDat->GetYBlockCount())
+          if (neighbourJ == -1 || neighbourJ == readingResult.blocks.y)
             continue;
-          if (neighbourK == -1 || neighbourK == globLatDat->GetZBlockCount())
+          if (neighbourK == -1 || neighbourK == readingResult.blocks.z)
             continue;
 
           // Move on if the neighbour is in a block of solids (in which case
@@ -938,9 +993,9 @@ namespace hemelb
           // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
           // was initialized in lbmReadConfig in io.cc.
 
-          site_t neighBlockId = globLatDat->GetBlockIdFromBlockCoords(neighbourI,
-                                                                      neighbourJ,
-                                                                      neighbourK);
+          site_t neighBlockId = readingResult.GetBlockIdFromBlockCoordinates(neighbourI,
+                                                                             neighbourJ,
+                                                                             neighbourK);
 
           // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
           if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
@@ -968,23 +1023,18 @@ namespace hemelb
       return regionExpanded;
     }
 
-    void LatticeData::GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,
-                                                                  const unsigned int* bytesPerBlock,
-                                                                  const proc_t* procForEachBlock,
-                                                                  GlobalLatticeData* globLatDat)
+    void GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,
+                                                     const unsigned int* bytesPerBlock,
+                                                     const proc_t* procForEachBlock)
     {
       // Get some arrays that ParMetis needs.
       idx_t* vtxDistribn = new idx_t[topologySize + 1];
 
-      GetSiteDistributionArray(vtxDistribn,
-                               globLatDat->GetBlockCount(),
-                               procForEachBlock,
-                               sitesPerBlock);
+      GetSiteDistributionArray(vtxDistribn, procForEachBlock, sitesPerBlock);
 
-      idx_t* firstSiteIndexPerBlock = new idx_t[globLatDat->GetBlockCount()];
+      idx_t* firstSiteIndexPerBlock = new idx_t[readingResult.GetBlockCount()];
 
       GetFirstSiteIndexOnEachBlock(firstSiteIndexPerBlock,
-                                   globLatDat->GetBlockCount(),
                                    vtxDistribn,
                                    procForEachBlock,
                                    sitesPerBlock);
@@ -998,8 +1048,7 @@ namespace hemelb
                        localAdjacencies,
                        localVertexCount,
                        procForEachBlock,
-                       firstSiteIndexPerBlock,
-                       globLatDat);
+                       firstSiteIndexPerBlock);
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
@@ -1026,18 +1075,17 @@ namespace hemelb
                                       procForEachBlock,
                                       sitesPerBlock,
                                       vtxDistribn,
-                                      partitionVector,
-                                      globLatDat);
+                                      partitionVector);
 
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
 
       // Reread the blocks based on the ParMetis decomposition.
-      RereadBlocks(globLatDat, allMoves, movesList, sitesPerBlock, bytesPerBlock, procForEachBlock);
+      RereadBlocks(allMoves, movesList, sitesPerBlock, bytesPerBlock, procForEachBlock);
 
       // Implement the decomposition now that we have read the necessary data.
-      ImplementMoves(globLatDat, procForEachBlock, allMoves, movesList);
+      ImplementMoves(procForEachBlock, allMoves, movesList);
 
       delete[] movesList;
       delete[] allMoves;
@@ -1046,7 +1094,7 @@ namespace hemelb
     // The header section of the config file contains two adjacent unsigned ints for each block.
     // The first is the number of sites in that block, the second is the number of bytes used by
     // the block in the data file.
-    site_t LatticeData::GeometryReader::GetHeaderLength(site_t blockCount) const
+    site_t GeometryReader::GetHeaderLength(site_t blockCount) const
     {
       return 2 * 4 * blockCount;
     }
@@ -1059,10 +1107,9 @@ namespace hemelb
      * @param procForEachBlock
      * @param sitesPerBlock
      */
-    void LatticeData::GeometryReader::GetSiteDistributionArray(idx_t* vertexDistribn,
-                                                               const site_t blockCount,
-                                                               const proc_t* procForEachBlock,
-                                                               const site_t* sitesPerBlock) const
+    void GeometryReader::GetSiteDistributionArray(idx_t* vertexDistribn,
+                                                  const proc_t* procForEachBlock,
+                                                  const site_t* sitesPerBlock) const
     {
       // Firstly, count the sites per processor.
       for (unsigned int rank = 0; rank < (topologySize + 1); ++rank)
@@ -1070,7 +1117,7 @@ namespace hemelb
         vertexDistribn[rank] = 0;
       }
 
-      for (site_t block = 0; block < blockCount; ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         if (procForEachBlock[block] >= 0)
         {
@@ -1114,11 +1161,10 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
-                                                                   const site_t blockCount,
-                                                                   const idx_t* vertexDistribution,
-                                                                   const proc_t* procForEachBlock,
-                                                                   const site_t* sitesPerBlock) const
+    void GeometryReader::GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
+                                                      const idx_t* vertexDistribution,
+                                                      const proc_t* procForEachBlock,
+                                                      const site_t* sitesPerBlock) const
     {
       // First calculate the lowest site index on each proc - relatively easy.
       site_t* firstSiteOnProc = new site_t[topologySize];
@@ -1130,7 +1176,7 @@ namespace hemelb
       // Now for each block (in ascending order), the smallest site index is the smallest site
       // index on its processor, incremented by the number of sites observed from that processor
       // so far.
-      for (site_t block = 0; block < blockCount; ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         proc_t proc = procForEachBlock[block];
         if (proc < 0)
@@ -1152,19 +1198,19 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
 
-        idx_t* firstSiteIndexPerBlockRecv = new idx_t[blockCount];
+        idx_t* firstSiteIndexPerBlockRecv = new idx_t[readingResult.GetBlockCount()];
 
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
         MPI_Allreduce(firstSiteIndexPerBlock,
                       firstSiteIndexPerBlockRecv,
-                      (int) blockCount,
+                      (int) readingResult.GetBlockCount(),
                       MpiDataType(firstSiteIndexPerBlock[0]),
                       MPI_MAX,
                       topologyComm);
 
-        for (site_t block = 0; block < blockCount; ++block)
+        for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block]
               != firstSiteIndexPerBlockRecv[block])
@@ -1178,28 +1224,28 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::GetAdjacencyData(idx_t* adjacenciesPerVertex,
-                                                       idx_t* &localAdjacencies,
-                                                       const idx_t localVertexCount,
-                                                       const proc_t* procForEachBlock,
-                                                       const idx_t* firstSiteIndexPerBlock,
-                                                       const GlobalLatticeData* globLatDat) const
+    void GeometryReader::GetAdjacencyData(idx_t* adjacenciesPerVertex,
+                                          idx_t* &localAdjacencies,
+                                          const idx_t localVertexCount,
+                                          const proc_t* procForEachBlock,
+                                          const idx_t* firstSiteIndexPerBlock) const
     {
-      std::vector<idx_t> adj;
+      std::vector < idx_t > adj;
 
       idx_t totalAdjacencies = 0;
       adjacenciesPerVertex[0] = 0;
       idx_t fluidVertex = 0;
-      site_t blockNumber = -1;
 
       // For each block (counting up by lowest site id)...
-      for (site_t i = 0; i < globLatDat->GetXSiteCount(); i += globLatDat->GetBlockSize())
+      for (site_t blockI = 0; blockI < readingResult.blocks.x; blockI++)
       {
-        for (site_t j = 0; j < globLatDat->GetYSiteCount(); j += globLatDat->GetBlockSize())
+        for (site_t blockJ = 0; blockJ < readingResult.blocks.y; blockJ++)
         {
-          for (site_t k = 0; k < globLatDat->GetZSiteCount(); k += globLatDat->GetBlockSize())
+          for (site_t blockK = 0; blockK < readingResult.blocks.z; blockK++)
           {
-            ++blockNumber;
+            const site_t blockNumber = readingResult.GetBlockIdFromBlockCoordinates(blockI,
+                                                                                    blockJ,
+                                                                                    blockK);
 
             // ... considering only the ones which live on this proc...
             if (procForEachBlock[blockNumber] != topologyRank)
@@ -1207,21 +1253,21 @@ namespace hemelb
               continue;
             }
 
-            BlockData *map_block_p = &globLatDat->Blocks[blockNumber];
+            BlockReadResult& blockReadResult = readingResult.Blocks[blockNumber];
 
             site_t m = -1;
 
             // ... iterate over sites within the block...
-            for (site_t site_i = i; site_i < i + globLatDat->GetBlockSize(); site_i++)
+            for (site_t localSiteI = 0; localSiteI < readingResult.blockSize; localSiteI++)
             {
-              for (site_t site_j = j; site_j < j + globLatDat->GetBlockSize(); site_j++)
+              for (site_t localSiteJ = 0; localSiteJ < readingResult.blockSize; localSiteJ++)
               {
-                for (site_t site_k = k; site_k < k + globLatDat->GetBlockSize(); site_k++)
+                for (site_t localSiteK = 0; localSiteK < readingResult.blockSize; localSiteK++)
                 {
                   ++m;
 
                   // ... only looking at non-solid sites...
-                  if (map_block_p->ProcessorRankForEachBlockSite[m] == BIG_NUMBER2)
+                  if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
                   {
                     continue;
                   }
@@ -1230,56 +1276,58 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // ... which leads to a valid neighbouring site...
-                    site_t neighbourI = site_i + D3Q15::CX[l];
-                    site_t neighbourJ = site_j + D3Q15::CY[l];
-                    site_t neighbourK = site_k + D3Q15::CZ[l];
+                    site_t neighbourI = blockI * readingResult.blockSize + localSiteI
+                        + D3Q15::CX[l];
+                    site_t neighbourJ = blockJ * readingResult.blockSize + localSiteJ
+                        + D3Q15::CY[l];
+                    site_t neighbourK = blockK * readingResult.blockSize + localSiteK
+                        + D3Q15::CZ[l];
 
-                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
-                        || !globLatDat->IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
+                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0 || neighbourI
+                        >= (readingResult.blockSize * readingResult.blocks.x) || neighbourJ
+                        >= (readingResult.blockSize * readingResult.blocks.y) || neighbourK
+                        >= (readingResult.blockSize * readingResult.blocks.z))
                     {
                       continue;
                     }
 
                     // ... (that is actually being simulated and not a solid)...
-                    const proc_t* proc_id_p = globLatDat->GetProcIdFromGlobalCoords(util::Vector3D<
-                        site_t>(neighbourI, neighbourJ, neighbourK));
+                    site_t neighbourBlockI = neighbourI / readingResult.blockSize;
+                    site_t neighbourBlockJ = neighbourJ / readingResult.blockSize;
+                    site_t neighbourBlockK = neighbourK / readingResult.blockSize;
 
-                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    site_t neighbourSiteI = neighbourI % readingResult.blockSize;
+                    site_t neighbourSiteJ = neighbourJ % readingResult.blockSize;
+                    site_t neighbourSiteK = neighbourK % readingResult.blockSize;
+
+                    site_t neighbourBlockId =
+                        readingResult.GetBlockIdFromBlockCoordinates(neighbourBlockI,
+                                                                     neighbourBlockJ,
+                                                                     neighbourBlockK);
+
+                    BlockReadResult& neighbourBlock = readingResult.Blocks[neighbourBlockId];
+
+                    site_t neighbourSiteId =
+                        readingResult.GetSiteIdFromSiteCoordinates(neighbourSiteI,
+                                                                   neighbourSiteJ,
+                                                                   neighbourSiteK);
+
+                    if (neighbourBlock.Sites.size() == 0
+                        || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
                     {
                       continue;
                     }
 
-                    // ... get some info about the position of the neighbouring site.
-                    site_t neighBlockI = neighbourI >> globLatDat->log2BlockSize;
-                    site_t neighBlockJ = neighbourJ >> globLatDat->log2BlockSize;
-                    site_t neighBlockK = neighbourK >> globLatDat->log2BlockSize;
+                    // Calculate the site's id over the whole geometry,
+                    site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighbourBlockId];
 
-                    site_t neighLocalSiteI = neighbourI
-                        - (neighBlockI << globLatDat->log2BlockSize);
-                    site_t neighLocalSiteJ = neighbourJ
-                        - (neighBlockJ << globLatDat->log2BlockSize);
-                    site_t neighLocalSiteK = neighbourK
-                        - (neighBlockK << globLatDat->log2BlockSize);
-
-                    site_t neighBlockId = globLatDat->GetBlockIdFromBlockCoords(neighBlockI,
-                                                                                neighBlockJ,
-                                                                                neighBlockK);
-
-                    // Now get the local id of the neighbour on its block,
-                    site_t localSiteId = ( ( (neighLocalSiteI << globLatDat->log2BlockSize)
-                        + neighLocalSiteJ) << globLatDat->log2BlockSize) + neighLocalSiteK;
-
-                    // calculate the site's id over the whole geometry,
-                    site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
-
-                    for (site_t neighSite = 0; neighSite < globLatDat->GetSitesPerBlockVolumeUnit(); ++neighSite)
+                    for (site_t neighSite = 0; neighSite < readingResult.GetSitesPerBlock(); ++neighSite)
                     {
-                      if (neighSite == localSiteId)
+                      if (neighSite == neighbourSiteId)
                       {
                         break;
                       }
-                      else if (globLatDat->Blocks[neighBlockId].ProcessorRankForEachBlockSite[neighSite]
-                          != BIG_NUMBER2)
+                      else if (neighbourBlock.Sites[neighSite].targetProcessor != BIG_NUMBER2)
                       {
                         ++neighGlobalSiteId;
                       }
@@ -1319,11 +1367,11 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::CallParmetis(idx_t* partitionVector,
-                                                   idx_t localVertexCount,
-                                                   idx_t* vtxDistribn,
-                                                   idx_t* adjacenciesPerVertex,
-                                                   idx_t* adjacencies)
+    void GeometryReader::CallParmetis(idx_t* partitionVector,
+                                      idx_t localVertexCount,
+                                      idx_t* vtxDistribn,
+                                      idx_t* adjacenciesPerVertex,
+                                      idx_t* adjacencies)
     {
       // From the ParMETIS documentation:
       // --------------------------------
@@ -1366,7 +1414,7 @@ namespace hemelb
       real_t* domainWeights = new real_t[desiredPartitionSize];
       for (idx_t rank = 0; rank < desiredPartitionSize; ++rank)
       {
-        domainWeights[rank] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
+        domainWeights[rank] = (real_t)(1.0) / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
@@ -1408,10 +1456,10 @@ namespace hemelb
       delete[] vertexWeight;
     }
 
-    void LatticeData::GeometryReader::ValidateGraphData(idx_t* vtxDistribn,
-                                                        idx_t localVertexCount,
-                                                        idx_t* adjacenciesPerVertex,
-                                                        idx_t* adjacencies)
+    void GeometryReader::ValidateGraphData(idx_t* vtxDistribn,
+                                           idx_t localVertexCount,
+                                           idx_t* adjacenciesPerVertex,
+                                           idx_t* adjacencies)
     {
       // If we're using debugging logs, check that the arguments are consistent across all cores.
       // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
@@ -1421,7 +1469,8 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::multimap<idx_t, idx_t>* adjByNeighProc = new std::multimap<idx_t, idx_t>[topologySize];
+        std::multimap < idx_t, idx_t > *adjByNeighProc
+            = new std::multimap<idx_t, idx_t>[topologySize];
         for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
         {
           adjByNeighProc[proc] = std::multimap<idx_t, idx_t>();
@@ -1641,17 +1690,16 @@ namespace hemelb
      * @param partitionVector
      * @return
      */
-    idx_t* LatticeData::GeometryReader::GetMovesList(idx_t* movesFromEachProc,
-                                                     const idx_t* firstSiteIndexPerBlock,
-                                                     const proc_t* procForEachBlock,
-                                                     const site_t* sitesPerBlock,
-                                                     const idx_t* vtxDistribn,
-                                                     const idx_t* partitionVector,
-                                                     const GlobalLatticeData* globLatDat)
+    idx_t* GeometryReader::GetMovesList(idx_t* movesFromEachProc,
+                                        const idx_t* firstSiteIndexPerBlock,
+                                        const proc_t* procForEachBlock,
+                                        const site_t* sitesPerBlock,
+                                        const idx_t* vtxDistribn,
+                                        const idx_t* partitionVector)
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
-      std::vector<idx_t> moveData;
+      std::vector < idx_t > moveData;
 
       const idx_t myLowest = vtxDistribn[topologyRank];
       const idx_t myHighest = vtxDistribn[topologyRank + 1] - 1;
@@ -1685,7 +1733,7 @@ namespace hemelb
           {
             // ... then keep going through the sites on the block until we've passed as many fluid
             // sites as we need to.
-            if (globLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[siteIndex]
+            if (readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
                 != BIG_NUMBER2)
             {
               fluidSitesToPass--;
@@ -1702,20 +1750,20 @@ namespace hemelb
           {
             // If we've ended up on an impossible block, or one that doesn't live on this rank,
             // inform the user.
-            if (fluidSiteBlock >= globLatDat->GetBlockCount() || procForEachBlock[fluidSiteBlock]
+            if (fluidSiteBlock >= readingResult.GetBlockCount() || procForEachBlock[fluidSiteBlock]
                 != topologyRank)
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
                                                             ii,
                                                             fluidSiteBlock,
-                                                            globLatDat->GetBlockCount(),
+                                                            readingResult.GetBlockCount(),
                                                             procForEachBlock[fluidSiteBlock]);
             }
 
             // Similarly, if we've ended up with an impossible site index, or a solid site,
             // print an error message.
-            if (siteIndex >= globLatDat->GetSitesPerBlockVolumeUnit()
-                || globLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[siteIndex]
+            if (siteIndex >= readingResult.GetSitesPerBlock()
+                || readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
                     == BIG_NUMBER2)
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
@@ -1723,7 +1771,7 @@ namespace hemelb
                                                             siteIndex,
                                                             sitesPerBlock[fluidSiteBlock],
                                                             fluidSiteBlock,
-                                                            globLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[siteIndex]
+                                                            readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
                                                                 == BIG_NUMBER2
                                                               ? " and site is solid"
                                                               : "");
@@ -1803,17 +1851,16 @@ namespace hemelb
       return movesList;
     }
 
-    void LatticeData::GeometryReader::RereadBlocks(GlobalLatticeData* globLatDat,
-                                                   const idx_t* movesPerProc,
-                                                   const idx_t* movesList,
-                                                   const site_t* sitesPerBlock,
-                                                   const unsigned int* bytesPerBlock,
-                                                   const int* procForEachBlock)
+    void GeometryReader::RereadBlocks(const idx_t* movesPerProc,
+                                      const idx_t* movesList,
+                                      const site_t* sitesPerBlock,
+                                      const unsigned int* bytesPerBlock,
+                                      const int* procForEachBlock)
     {
       // Initialise the array (of which proc each block belongs to) to what it was before.
-      int* newProcForEachBlock = new int[globLatDat->GetBlockCount()];
+      int* newProcForEachBlock = new int[readingResult.GetBlockCount()];
 
-      for (site_t blockNumber = 0; blockNumber < globLatDat->GetBlockCount(); ++blockNumber)
+      for (site_t blockNumber = 0; blockNumber < readingResult.GetBlockCount(); ++blockNumber)
       {
         newProcForEachBlock[blockNumber] = procForEachBlock[blockNumber];
       }
@@ -1838,36 +1885,35 @@ namespace hemelb
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInLocalBlocks(globLatDat, sitesPerBlock, bytesPerBlock, newProcForEachBlock, topologyRank);
+      ReadInLocalBlocks(sitesPerBlock, bytesPerBlock, newProcForEachBlock, topologyRank);
 
       // Clean up.
       delete[] newProcForEachBlock;
     }
 
-    void LatticeData::GeometryReader::ImplementMoves(GlobalLatticeData* globLatDat,
-                                                     const proc_t* procForEachBlock,
-                                                     const idx_t* movesFromEachProc,
-                                                     const idx_t* movesList) const
+    void GeometryReader::ImplementMoves(const proc_t* procForEachBlock,
+                                        const idx_t* movesFromEachProc,
+                                        const idx_t* movesList) const
     {
       // First all, set the proc rank for each site to what it originally was before
       // domain decomposition optimisation. Go through each block...
-      for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
         // If this proc has owned a fluid site on this block either before or after optimisation,
         // the following will be non-null.
-        if (globLatDat->Blocks[block].ProcessorRankForEachBlockSite != NULL)
+        if (readingResult.Blocks[block].Sites.size() > 0)
         {
           // Get the original proc for that block.
           proc_t originalProc = procForEachBlock[block];
 
           // For each site on that block...
-          for (site_t siteIndex = 0; siteIndex < globLatDat->GetSitesPerBlockVolumeUnit(); ++siteIndex)
+          for (site_t siteIndex = 0; siteIndex < readingResult.GetSitesPerBlock(); ++siteIndex)
           {
             // ... if the site is non-solid...
-            if (globLatDat->Blocks[block].ProcessorRankForEachBlockSite[siteIndex] != BIG_NUMBER2)
+            if (readingResult.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
             {
               // ... set its rank to be the rank it had before optimisation.
-              globLatDat->Blocks[block].ProcessorRankForEachBlockSite[siteIndex]
+              readingResult.Blocks[block].Sites[siteIndex].targetProcessor
                   = ConvertTopologyRankToGlobalRank(originalProc);
             }
           }
@@ -1888,26 +1934,26 @@ namespace hemelb
           idx_t toProc = movesList[3 * moveIndex + 2];
 
           // Only implement the move if we have read that block's data.
-          if (globLatDat->Blocks[block].ProcessorRankForEachBlockSite != NULL)
+          if (readingResult.Blocks[block].Sites.size() > 0)
           {
             // Some logging code - the unmodified rank for each move's site should equal
             // lFromProc.
             if (log::Logger::ShouldDisplay<log::Debug>())
             {
-              if (globLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
+              if (readingResult.Blocks[block].Sites[site].targetProcessor
                   != ConvertTopologyRankToGlobalRank((proc_t) fromProc))
               {
                 log::Logger::Log<log::Debug, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
                                                               block,
                                                               site,
                                                               moveIndex,
-                                                              globLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
+                                                              readingResult.Blocks[block].Sites[site].targetProcessor,
                                                               fromProc);
               }
             }
 
             // Implement the move.
-            globLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
+            readingResult.Blocks[block].Sites[site].targetProcessor
                 = ConvertTopologyRankToGlobalRank((proc_t) toProc);
           }
 
@@ -1916,47 +1962,13 @@ namespace hemelb
       }
     }
 
-    proc_t LatticeData::GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRankIn) const
+    proc_t GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRankIn) const
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
       return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank)
         ? topologyRankIn
         : (topologyRankIn + 1);
-    }
-
-    void LatticeData::GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
-                                                         const site_t blockCount,
-                                                         const bool* readBlock,
-                                                         const unsigned int* bytesPerBlock) const
-    {
-      // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
-      std::vector < MPI_Datatype > baseTypes;
-      std::vector < MPI_Aint > displacements;
-      std::vector<int> counts;
-
-      int currentDisplacement = 0;
-
-      // For each block, record the type (byte), number of bytes, and distance from the start
-      // of the file.
-      for (site_t block = 0; block < blockCount; ++block)
-      {
-        if (readBlock[block])
-        {
-          baseTypes.push_back(MPI_CHAR);
-          counts.push_back(bytesPerBlock[block]);
-          displacements.push_back(currentDisplacement);
-        }
-
-        currentDisplacement += bytesPerBlock[block];
-      }
-
-      // Create the type.
-      MPI_Type_create_struct((int) baseTypes.size(),
-                             &counts[0],
-                             &displacements[0],
-                             &baseTypes[0],
-                             dataType);
     }
 
   }

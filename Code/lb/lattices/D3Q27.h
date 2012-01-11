@@ -9,11 +9,11 @@ namespace hemelb
   {
     namespace lattices
     {
-      class D3Q27 : Lattice<D3Q27>
+      class D3Q27 : public Lattice<D3Q27>
       {
         public:
           // The number of discrete velocity vectors
-          static const unsigned int NUMVECTORS = 27;
+          static const Direction NUMVECTORS = 27;
 
           // The x, y and z components of each of the discrete velocity vectors
           static const int CX[NUMVECTORS];
@@ -24,7 +24,7 @@ namespace hemelb
           static const double EQMWEIGHTS[NUMVECTORS];
 
           // The index of the inverse direction of each discrete velocity vector
-          static const int INVERSEDIRECTIONS[NUMVECTORS];
+          static const Direction INVERSEDIRECTIONS[NUMVECTORS];
       };
     }
   }

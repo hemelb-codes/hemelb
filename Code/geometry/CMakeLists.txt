@@ -1,5 +1,4 @@
 add_library(
 	hemelb_geometry BlockTraverser.cc BlockTraverserWithVisitedBlockTracker.cc 
-	GeometryReader.cc GlobalLatticeData.cc LatticeData.cc LocalLatticeData.cc SiteTraverser.cc
-	VolumeTraverser.cc
+	GeometryReader.cc LatticeData.cc SiteData.cc SiteTraverser.cc VolumeTraverser.cc
 	)
