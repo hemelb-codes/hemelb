@@ -20,7 +20,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
+              HydroVarsBase(f)
           {
 
           }
@@ -42,7 +42,7 @@ namespace hemelb
             InitState(initParams);
           }
 
-          void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
             D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
                                                hydroVars.density,
@@ -57,14 +57,14 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size()) );
+            assert( (index < (site_t) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
             UpdateLocalTau(mTau[index], hydroVars);
           }
 
-          void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
             D3Q15::CalculateFeq(hydroVars.density,
                                 hydroVars.v_x,
@@ -78,22 +78,25 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size() ) );
+            assert( (index < (site_t) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
             UpdateLocalTau(mTau[index], hydroVars);
           }
 
-          distribn_t DoCollide(const LbmParameters* const lbmParams,
-                               HydroVars<LBGKNN>& hydroVars,
-                               unsigned int direction)
+          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGKNN>& hydroVars)
           {
             double omega = -1.0 / hydroVars.tau;
-            return hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega;
+
+            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            {
+              hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
+                  + hydroVars.GetFNeq().f[direction] * omega;
+            }
           }
 
-          void DoReset(InitParams* initParams)
+          inline void DoReset(InitParams* initParams)
           {
             InitState(*initParams);
           }
