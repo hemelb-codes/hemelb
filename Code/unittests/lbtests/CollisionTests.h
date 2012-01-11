@@ -111,7 +111,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -161,7 +161,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -210,7 +210,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -262,7 +262,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
