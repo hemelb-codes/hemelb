@@ -7,13 +7,14 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      Particle::Particle()
+      Particle::Particle() :
+          position(NO_VALUE), velocity(NO_VALUE), vel(NO_VALUE), inletID(-1)
       {
 
       }
 
       Particle::Particle(float iX, float iY, float iZ, unsigned int iInletId) :
-        position(iX, iY, iZ), velocity(0), vel(0), inletID(iInletId)
+          position(iX, iY, iZ), velocity(0), vel(0), inletID(iInletId)
       {
       }
     }
@@ -26,7 +27,7 @@ namespace hemelb
     int elementBlockLengths[elementCount] = { 1, 1, 1, 1, 1 };
 
     MPI_Datatype elementTypes[elementCount] = { MPI_LB,
-                                                MpiDataType<util::Vector3D<float> > (),
+                                                MpiDataType<util::Vector3D<float> >(),
                                                 MPI_FLOAT,
                                                 MPI_UNSIGNED,
                                                 MPI_UB };
