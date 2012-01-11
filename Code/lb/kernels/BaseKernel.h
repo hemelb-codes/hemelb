@@ -25,6 +25,16 @@ namespace hemelb
       {
         public:
           distribn_t f[D3Q15::NUMVECTORS];
+
+          inline distribn_t& operator[](unsigned index)
+          {
+            return f[index];
+          }
+
+          inline const distribn_t& operator[](unsigned index) const
+          {
+            return f[index];
+          }
       };
 
       struct HydroVarsBase
@@ -36,7 +46,7 @@ namespace hemelb
 
         protected:
           HydroVarsBase(const distribn_t* const f) :
-            f(f)
+              f(f)
           {
           }
 
@@ -44,18 +54,23 @@ namespace hemelb
           distribn_t density, v_x, v_y, v_z;
           const distribn_t* const f;
 
-          const FVector& GetFEq()
+          inline const FVector& GetFEq()
           {
             return f_eq;
           }
 
-          const FVector& GetFNeq()
+          inline const FVector& GetFNeq()
           {
             return f_neq;
           }
 
+          inline FVector& GetFPostCollision()
+          {
+            return fPostCollision;
+          }
+
         protected:
-          FVector f_eq, f_neq;
+          FVector f_eq, f_neq, fPostCollision;
       };
 
       template<typename KernelImpl>
@@ -63,7 +78,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
+              HydroVarsBase(f)
           {
 
           }
@@ -122,26 +137,24 @@ namespace hemelb
         public:
           typedef HydroVars<KernelImpl> KHydroVars;
 
-          void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateDensityVelocityFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateDensityVelocityFeq(hydroVars, index);
           }
 
-          void CalculateFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
           }
 
-          distribn_t Collide(const LbmParameters* lbmParams,
-                             KHydroVars& hydroVars,
-                             unsigned int directionIndex)
+          inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
           {
-            return static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars, directionIndex);
+            static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          void Reset(InitParams* init)
+          inline void Reset(InitParams* init)
           {
-            static_cast<KernelImpl*> (this)->DoReset(init);
+            static_cast<KernelImpl*>(this)->DoReset(init);
           }
       };
 

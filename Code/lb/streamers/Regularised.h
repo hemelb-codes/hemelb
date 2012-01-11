@@ -24,11 +24,11 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t iFirstIndex,
+                                         const site_t iSiteCount,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
+                                         hemelb::vis::Control *iControl)
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
@@ -140,11 +140,11 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 hemelb::vis::Control *iControl)
           {
 
           }

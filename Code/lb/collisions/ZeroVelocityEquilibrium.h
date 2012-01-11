@@ -27,8 +27,8 @@ namespace hemelb
 
           }
 
-          void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                       const site_t index)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+                                              const site_t index)
           {
             hydroVars.density = 0.0;
 
@@ -44,14 +44,16 @@ namespace hemelb
             kernel.CalculateFeq(hydroVars, index);
           }
 
-          distribn_t DoCollide(const LbmParameters* lbmParams,
-                               unsigned int directionIndex,
-                               kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams,
+                                kernels::HydroVars<KernelType>& iHydroVars)
           {
-            return iHydroVars.GetFEq().f[directionIndex];
+            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            {
+              iHydroVars.GetFPostCollision()[direction] = iHydroVars.GetFEq()[direction];
+            }
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             kernel.Reset(init);
           }
