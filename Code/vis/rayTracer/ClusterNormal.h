@@ -20,9 +20,9 @@ namespace hemelb
                         const util::Vector3D<float>& maximalSite,
                         const util::Vector3D<float>& minimalSiteOnMinimalBlock);
 
-          const double* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 
-          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const double* const iData);
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData);
       };
 
     }
