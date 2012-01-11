@@ -28,12 +28,11 @@ namespace hemelb
        */
       class CollisionTests : public CppUnit::TestFixture
       {
-        CPPUNIT_TEST_SUITE( CollisionTests );
-        CPPUNIT_TEST( TestNonZeroVelocityEquilibriumFixedDensity );
-        CPPUNIT_TEST( TestZeroVelocityEquilibriumFixedDensity );
-        CPPUNIT_TEST( TestZeroVelocityEquilibrium );
-        CPPUNIT_TEST( TestNormal );
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( CollisionTests);
+          CPPUNIT_TEST( TestNonZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST( TestZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST( TestZeroVelocityEquilibrium);
+          CPPUNIT_TEST( TestNormal);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -50,16 +49,17 @@ namespace hemelb
             // use these to initialise the simulations state, LBM parameters and a unit converter.
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
             lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s
-                / (distribn_t) simState->GetTimeStepsPerCycle(), latDat->GetVoxelSize());
+                                                  / (distribn_t) simState->GetTimeStepsPerCycle(),
+                                              latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
 
             // Create the inlet and outlet boundary objects.
-            inletBoundary = new lb::boundaries::BoundaryValues(geometry::LatticeData::INLET_TYPE,
+            inletBoundary = new lb::boundaries::BoundaryValues(geometry::INLET_TYPE,
                                                                latDat,
                                                                simConfig->Inlets,
                                                                simState,
                                                                unitConverter);
-            outletBoundary = new lb::boundaries::BoundaryValues(geometry::LatticeData::OUTLET_TYPE,
+            outletBoundary = new lb::boundaries::BoundaryValues(geometry::OUTLET_TYPE,
                                                                 latDat,
                                                                 simConfig->Outlets,
                                                                 simState,
@@ -111,7 +111,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -161,7 +161,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -210,7 +210,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -262,7 +262,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -323,7 +323,7 @@ namespace hemelb
           lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>* zeroVEqm;
           lb::collisions::Normal<lb::kernels::LBGK>* normal;
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests );
+      CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests);
     }
   }
 }

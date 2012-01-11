@@ -28,16 +28,17 @@ namespace hemelb
         WallNormals[iBlockNumber].resize(iSize, NULL);
       }
 
-      const double* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
+      const util::Vector3D<double>* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber,
+                                                                          site_t iSiteNumber) const
       {
         return WallNormals[iBlockNumber][iSiteNumber];
       }
 
       void ClusterWithWallNormals::DoSetWallData(site_t iBlockNumber,
                                                  site_t iSiteNumber,
-                                                 const double* const iData)
+                                                 const util::Vector3D<double>& iData)
       {
-        WallNormals[iBlockNumber][iSiteNumber] = iData;
+        WallNormals[iBlockNumber][iSiteNumber] = &iData;
       }
 
       bool ClusterWithWallNormals::DoNeedsWallNormals()

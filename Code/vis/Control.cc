@@ -63,8 +63,8 @@ namespace hemelb
           {
             n++;
 
-            geometry::BlockData * lBlock = mLatDat->GetBlock(n);
-            if (lBlock->ProcessorRankForEachBlockSite == NULL)
+            const geometry::BlockData* lBlock = mLatDat->GetBlock(n);
+            if (lBlock->processorRankForEachBlockSite.size() == 0)
             {
               continue;
             }
@@ -631,7 +631,7 @@ namespace hemelb
 
       const std::vector<ResultPixel>& screenPix = result->GetPixels();
 
-      for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); it++)
+      for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); ++it)
       {
         if ( (*it).GetRayPixel() != NULL && (*it).GetI() == mVisSettings.mouse_x && (*it).GetJ()
             == mVisSettings.mouse_y)
