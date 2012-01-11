@@ -902,7 +902,7 @@ namespace hemelb
     void LatticeData::SendAndReceive(hemelb::net::Net *net)
     {
       for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin(); it
-          != neighbouringProcs.end(); it++)
+          != neighbouringProcs.end(); ++it)
       {
         // Request the receive into the appropriate bit of FOld.
         net->RequestReceive<distribn_t> (GetFOld( (*it).FirstSharedF),

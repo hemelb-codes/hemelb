@@ -1971,38 +1971,5 @@ namespace hemelb
         : (topologyRankIn + 1);
     }
 
-    void GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
-                                            const bool* readBlock,
-                                            const unsigned int* bytesPerBlock) const
-    {
-      // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
-      std::vector < MPI_Datatype > baseTypes;
-      std::vector < MPI_Aint > displacements;
-      std::vector<int> counts;
-
-      int currentDisplacement = 0;
-
-      // For each block, record the type (byte), number of bytes, and distance from the start
-      // of the file.
-      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
-      {
-        if (readBlock[block])
-        {
-          baseTypes.push_back(MPI_CHAR);
-          counts.push_back(bytesPerBlock[block]);
-          displacements.push_back(currentDisplacement);
-        }
-
-        currentDisplacement += bytesPerBlock[block];
-      }
-
-      // Create the type.
-      MPI_Type_create_struct((int) baseTypes.size(),
-                             &counts[0],
-                             &displacements[0],
-                             &baseTypes[0],
-                             dataType);
-    }
-
   }
 }
