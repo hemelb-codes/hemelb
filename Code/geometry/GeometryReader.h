@@ -226,10 +226,6 @@ namespace hemelb
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
-        void CreateFileReadType(MPI_Datatype* dataType,
-                                const bool* readBlock,
-                                const unsigned int* bytesPerBlock) const;
-
         // The config file starts with:
         // * 3 unsigned ints for the number of blocks in the x, y, z directions
         // * 1 unsigned int for the block size (number of sites along one edge of a block)

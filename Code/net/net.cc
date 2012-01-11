@@ -90,14 +90,14 @@ namespace hemelb
       sendReceivePrepped = false;
 
       for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-          != mReceiveProcessorComms.end(); it++)
+          != mReceiveProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
       mReceiveProcessorComms.clear();
 
       for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-          != mSendProcessorComms.end(); it++)
+          != mSendProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
@@ -134,13 +134,13 @@ namespace hemelb
       }
 
       for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-          != mSendProcessorComms.end(); it++)
+          != mSendProcessorComms.end(); ++it)
       {
         CreateMPIType(& (*it).second);
       }
 
       for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-          != mReceiveProcessorComms.end(); it++)
+          != mReceiveProcessorComms.end(); ++it)
       {
         CreateMPIType(& (*it).second);
       }
@@ -160,7 +160,7 @@ namespace hemelb
       int lLocation = 0;
 
       for (std::vector<void*>::const_iterator it = iMetaData->PointerList.begin(); it
-          != iMetaData->PointerList.end(); it++)
+          != iMetaData->PointerList.end(); ++it)
       {
         MPI_Get_address(*it, &displacements[lLocation]);
         ++lLocation;
@@ -207,13 +207,13 @@ namespace hemelb
       if (sendReceivePrepped)
       {
         for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-            != mSendProcessorComms.end(); it++)
+            != mSendProcessorComms.end(); ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
 
         for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-            != mReceiveProcessorComms.end(); it++)
+            != mReceiveProcessorComms.end(); ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
