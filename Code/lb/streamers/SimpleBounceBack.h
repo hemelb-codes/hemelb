@@ -24,11 +24,11 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t iFirstIndex,
+                                         const site_t iSiteCount,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
+                                         hemelb::vis::Control *iControl)
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
@@ -38,17 +38,19 @@ namespace hemelb
 
               collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
 
+              collider.Collide(iLbmParams, hydroVars);
+
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
                 site_t lStreamTo = (bLatDat->HasBoundary(lIndex, ii)) ?
-                  (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii]:
+                  (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii] :
                   bLatDat->GetStreamedIndex(lIndex, ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
-                * (bLatDat->GetFNew(lStreamTo)) = collider.Collide(iLbmParams, ii, hydroVars);
+                * (bLatDat->GetFNew(lStreamTo)) = hydroVars.GetFPostCollision()[ii];
               }
 
               //TODO: Necessary to specify sub-class?
@@ -65,16 +67,16 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 hemelb::vis::Control *iControl)
           {
 
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             collider.Reset(init);
           }
