@@ -18,17 +18,17 @@ namespace hemelb
 
         public:
           Regularised(kernels::InitParams& initParams) :
-            collider(initParams)
+              collider(initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t iFirstIndex,
+                                         const site_t iSiteCount,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
+                                         hemelb::vis::Control *iControl)
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
@@ -49,9 +49,10 @@ namespace hemelb
               {
                 if (bLatDat->HasBoundary(lIndex, l))
                 {
-                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]] + 3.0 * D3Q15::EQMWEIGHTS[l]
-                      * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
-                          + hydroVars.v_z * D3Q15::CZ[l]);
+                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]]
+                      + 3.0 * D3Q15::EQMWEIGHTS[l]
+                          * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
+                              + hydroVars.v_z * D3Q15::CZ[l]);
                 }
                 else
                 {
@@ -104,8 +105,8 @@ namespace hemelb
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
               {
                 // Calculate the dot-product of the velocity with the direction vector.
-                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii] + hydroVars.v_y
-                    * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
+                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii]
+                    + hydroVars.v_y * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
 
                 // Calculate the squared magnitude of the velocity.
                 distribn_t v2Sum = hydroVars.v_x * hydroVars.v_x + hydroVars.v_y * hydroVars.v_y
@@ -138,14 +139,14 @@ namespace hemelb
                 {
                   for (int bb = 0; bb < 3; ++bb)
                   {
-                    f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                    f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
                   }
                 }
 
                 f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
 
-                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed + (1.0 + iLbmParams->GetOmega())
-                    * f_neq[ii];
+                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed
+                    + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
               }
 
               BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
@@ -161,11 +162,11 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 hemelb::vis::Control *iControl)
           {
 
           }
