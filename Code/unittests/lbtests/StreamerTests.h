@@ -57,7 +57,6 @@ namespace hemelb
                 lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
             regularised =
                 new lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
-
             fInterpolation = new lb::streamers::FInterpolation<
                 lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
           }
@@ -121,12 +120,12 @@ namespace hemelb
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
 
+                  normalCollision->Collide(lbmParams, streamerHydroVars);
+
                   // F_new should be equal to the value that was streamed from this other site
                   // in the same direction as we're streaming from.
                   CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SimpleCollideAndStream, StreamAndCollide",
-                                                       normalCollision->Collide(lbmParams,
-                                                                                streamedDirection,
-                                                                                streamerHydroVars),
+                                                       streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                        streamedToFNew[streamedDirection],
                                                        allowedError);
                 }
@@ -178,12 +177,12 @@ namespace hemelb
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
 
+                  normalCollision->Collide(lbmParams, streamerHydroVars);
+
                   // F_new should be equal to the value that was streamed from this other site
                   // in the same direction as we're streaming from.
                   CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SimpleCollideAndStream, StreamAndCollide",
-                                                       normalCollision->Collide(lbmParams,
-                                                                                streamedDirection,
-                                                                                streamerHydroVars),
+                                                       streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                        streamedToFNew[streamedDirection],
                                                        allowedError);
                 }
@@ -192,9 +191,10 @@ namespace hemelb
                 {
                   std::stringstream message;
                   message << "Site: " << streamedToSite << " Direction " << oppDirection
-                      << " Data: " << latDat->GetSiteData(streamedToSite).GetRawValue() << std::flush;
+                      << " Data: " << latDat->GetSiteData(streamedToSite).GetRawValue()
+                      << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary"
-                                           "opposite an unstreamed-to direction " + message.str(),
+                      "opposite an unstreamed-to direction " + message.str(),
                                          latDat->HasBoundary(streamedToSite, oppDirection));
                   // Test disabled due to RegressionTests issue, see discussion in #87
                   //CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "+message.str(),
@@ -205,25 +205,22 @@ namespace hemelb
                   distribn_t twoQ = 2.0 * latDat->GetCutDistance(streamedToSite, oppDirection);
 
                   // - the post-collision distribution at the current site.
-                  distribn_t streamedToSitePostColl[D3Q15::NUMVECTORS];
+                  distribn_t streamedToSiteFOld[D3Q15::NUMVECTORS];
 
                   // (initialise it to f_old).
                   LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite,
-                                                               streamedToSitePostColl);
+                                                                      streamedToSiteFOld);
 
-                  lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamedToSitePostColl);
+                  lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamedToSiteFOld);
 
                   normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
 
                   // (find post-collision values using the collision operator).
-                  for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
-                  {
-                    streamedToSitePostColl[kk] = normalCollision->Collide(lbmParams, kk, hydroVars);
-                  }
+                  normalCollision->Collide(lbmParams, hydroVars);
 
                   // - finally, the post-collision distribution at the site which is one further
                   // away from the wall in this direction.
-                  distribn_t awayFromWallPostColl[D3Q15::NUMVECTORS];
+                  distribn_t awayFromWallFOld[D3Q15::NUMVECTORS];
 
                   site_t awayFromWallIndex = latDat->GetStreamedIndex(streamedToSite,
                                                                       streamedDirection)
@@ -236,26 +233,21 @@ namespace hemelb
 
                     // (initialise it to f_old).
                     LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(awayFromWallIndex,
-                                                                 awayFromWallPostColl);
+                                                                        awayFromWallFOld);
 
-                    lb::kernels::HydroVars<lb::kernels::LBGK> awayFromWallsHydroVars(awayFromWallPostColl);
+                    lb::kernels::HydroVars<lb::kernels::LBGK> awayFromWallsHydroVars(awayFromWallFOld);
 
                     normalCollision->CalculatePreCollision(awayFromWallsHydroVars,
                                                            awayFromWallIndex);
 
                     // (find post-collision values using the collision operator).
-                    for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
-                    {
-                      awayFromWallPostColl[kk] = normalCollision->Collide(lbmParams,
-                                                                          kk,
-                                                                          awayFromWallsHydroVars);
-                    }
+                    normalCollision->Collide(lbmParams, awayFromWallsHydroVars);
 
-                    distribn_t toWallOld = streamedToSitePostColl[oppDirection];
+                    distribn_t toWallOld = hydroVars.GetFPostCollision()[oppDirection];
 
-                    distribn_t toWallNew = awayFromWallPostColl[oppDirection];
+                    distribn_t toWallNew = awayFromWallsHydroVars.GetFPostCollision()[oppDirection];
 
-                    distribn_t oppWallOld = streamedToSitePostColl[streamedDirection];
+                    distribn_t oppWallOld = hydroVars.GetFPostCollision()[streamedDirection];
 
                     // The streamed value should be as given below.
                     distribn_t streamed = (twoQ < 1.0) ?
@@ -283,7 +275,7 @@ namespace hemelb
                         << " direction " << streamedDirection;
 
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
-                                                         streamedToSitePostColl[oppDirection],
+                                                         hydroVars.GetFPostCollision()[oppDirection],
                                                          * (latDat->GetFNew(streamedToSite
                                                              * D3Q15::NUMVECTORS
                                                              + streamedDirection)),
@@ -373,12 +365,12 @@ namespace hemelb
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
 
+                  normalCollision->Collide(lbmParams, streamerHydroVars);
+
                   // F_new should be equal to the value that was streamed from this other site
                   // in the same direction as we're streaming from.
                   CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SimpleCollideAndStream, StreamAndCollide",
-                                                       normalCollision->Collide(lbmParams,
-                                                                                streamedDirection,
-                                                                                streamerHydroVars),
+                                                       streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                        streamedToFNew[streamedDirection],
                                                        allowedError);
                 }
@@ -389,16 +381,13 @@ namespace hemelb
 
                   // Initialise streamedToSiteFOld with the original data
                   distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite, streamerToSiteFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite,
+                                                                      streamerToSiteFOld);
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
                   normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
 
                   // Simulate post-collision using the collision operator.
-                  distribn_t streamedToSitePostColl[D3Q15::NUMVECTORS];
-                  for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
-                  {
-                    streamedToSitePostColl[kk] = normalCollision->Collide(lbmParams, kk, hydroVars);
-                  }
+                  normalCollision->Collide(lbmParams, hydroVars);
 
                   // After streaming FNew in a given direction must be f post-collision in the opposite direction
                   // following collision
@@ -407,7 +396,7 @@ namespace hemelb
                       << streamedDirection;
                   CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
                                                        streamedToFNew[streamedDirection],
-                                                       streamedToSitePostColl[oppDirection],
+                                                       hydroVars.GetFPostCollision()[oppDirection],
                                                        allowedError);
                 }
               }
@@ -491,6 +480,7 @@ namespace hemelb
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
+                  normalCollision->Collide(lbmParams, streamerHydroVars);
 
                   // If the streamer is a mid-fluid site, normal stream and collide has happened. Otherwise, regularised-type stream and collide
                   if (latDat->GetSiteData(streamerSiteId).GetCollisionType() == FLUID)
@@ -498,9 +488,7 @@ namespace hemelb
                     // F_new should be equal to the value that was streamed from this other site
                     // in the same direction as we're streaming from.
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Regularised",
-                                                         normalCollision->Collide(lbmParams,
-                                                                                  streamedDirection,
-                                                                                  streamerHydroVars),
+                                                         streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                          streamedToFNew[streamedDirection],
                                                          allowedError);
                   }
@@ -526,7 +514,8 @@ namespace hemelb
 
                   // Initialise streamedToSiteFOld with the original data
                   distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite, streamerToSiteFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite,
+                                                                      streamerToSiteFOld);
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
                   normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
 
