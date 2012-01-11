@@ -24,11 +24,11 @@ namespace hemelb
        */
       class StreamerTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( StreamerTests);
-          CPPUNIT_TEST( TestSimpleCollideAndStream);
-          CPPUNIT_TEST( TestFInterpolation);
-          CPPUNIT_TEST( TestSimpleBounceBack);CPPUNIT_TEST_SUITE_END();
-
+          CPPUNIT_TEST_SUITE(StreamerTests);
+          CPPUNIT_TEST(TestSimpleCollideAndStream);
+          CPPUNIT_TEST(TestFInterpolation);
+          CPPUNIT_TEST(TestSimpleBounceBack);
+          CPPUNIT_TEST(TestRegularised);CPPUNIT_TEST_SUITE_END();
         public:
 
           void setUp()
@@ -53,10 +53,13 @@ namespace hemelb
 
             simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<
                 lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
-            simpleBounceBack = new lb::streamers::SimpleBounceBack<lb::collisions::Normal<
-                lb::kernels::LBGK> >(initParams);
-            fInterpolation = new lb::streamers::FInterpolation<lb::collisions::Normal<
-                lb::kernels::LBGK> >(initParams);
+            simpleBounceBack = new lb::streamers::SimpleBounceBack<
+                lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
+            regularised =
+                new lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
+
+            fInterpolation = new lb::streamers::FInterpolation<
+                lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
           }
 
           void tearDown()
@@ -72,6 +75,7 @@ namespace hemelb
             delete simpleCollideAndStream;
 
             delete simpleBounceBack;
+            delete regularised;
             delete fInterpolation;
           }
 
@@ -80,21 +84,23 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
 
             // Use the streaming operator on the entire lattice.
-            simpleCollideAndStream->StreamAndCollide<false> (0,
-                                                             latDat->GetLocalFluidSiteCount(),
-                                                             lbmParams,
-                                                             latDat,
-                                                             NULL);
+            simpleCollideAndStream->StreamAndCollide<false>(0,
+                                                            latDat->GetLocalFluidSiteCount(),
+                                                            lbmParams,
+                                                            latDat,
+                                                            NULL);
 
             // Now, go over each lattice site and check each value in f_new is correct.
-            for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
+            for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount();
+                ++streamedToSite)
             {
               distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
 
-              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS; ++streamedDirection)
+              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS;
+                  ++streamedDirection)
               {
 
                 site_t streamerIndex =
@@ -102,14 +108,14 @@ namespace hemelb
                                              D3Q15::INVERSEDIRECTIONS[streamedDirection]);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
-                if (streamerIndex >= 0 && streamerIndex < (D3Q15::NUMVECTORS
-                    * latDat->GetLocalFluidSiteCount()))
+                if (streamerIndex >= 0
+                    && streamerIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
                 {
                   site_t streamerSiteId = streamerIndex / D3Q15::NUMVECTORS;
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -133,38 +139,40 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
-            fInterpolation->StreamAndCollide<false> (0,
-                                                     latDat->GetLocalFluidSiteCount(),
-                                                     lbmParams,
-                                                     latDat,
-                                                     NULL);
-            fInterpolation->PostStep<false> (0,
-                                             latDat->GetLocalFluidSiteCount(),
-                                             lbmParams,
-                                             latDat,
-                                             NULL);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
+            fInterpolation->StreamAndCollide<false>(0,
+                                                    latDat->GetLocalFluidSiteCount(),
+                                                    lbmParams,
+                                                    latDat,
+                                                    NULL);
+            fInterpolation->PostStep<false>(0,
+                                            latDat->GetLocalFluidSiteCount(),
+                                            lbmParams,
+                                            latDat,
+                                            NULL);
 
             // Now, go over each lattice site and check each value in f_new is correct.
-            for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
+            for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount();
+                ++streamedToSite)
             {
               distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
 
-              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS; ++streamedDirection)
+              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS;
+                  ++streamedDirection)
               {
                 unsigned int oppDirection = D3Q15::INVERSEDIRECTIONS[streamedDirection];
 
                 site_t streamerIndex = latDat->GetStreamedIndex(streamedToSite, oppDirection);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
-                if (streamerIndex >= 0 && streamerIndex < (D3Q15::NUMVECTORS
-                    * latDat->GetLocalFluidSiteCount()))
+                if (streamerIndex >= 0
+                    && streamerIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
                 {
                   site_t streamerSiteId = streamerIndex / D3Q15::NUMVECTORS;
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -200,7 +208,7 @@ namespace hemelb
                   distribn_t streamedToSitePostColl[D3Q15::NUMVECTORS];
 
                   // (initialise it to f_old).
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamedToSite,
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite,
                                                                streamedToSitePostColl);
 
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamedToSitePostColl);
@@ -222,16 +230,15 @@ namespace hemelb
                       / D3Q15::NUMVECTORS;
 
                   // If there's a valid index in that direction, use f-interpolation
-                  if (awayFromWallIndex >= 0 && awayFromWallIndex
-                      < latDat->GetLocalFluidSiteCount())
+                  if (awayFromWallIndex >= 0
+                      && awayFromWallIndex < latDat->GetLocalFluidSiteCount())
                   {
 
                     // (initialise it to f_old).
-                    LbTestsHelper::InitialiseAnisotropicTestData(awayFromWallIndex,
+                    LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(awayFromWallIndex,
                                                                  awayFromWallPostColl);
 
-                    lb::kernels::HydroVars<lb::kernels::LBGK>
-                        awayFromWallsHydroVars(awayFromWallPostColl);
+                    lb::kernels::HydroVars<lb::kernels::LBGK> awayFromWallsHydroVars(awayFromWallPostColl);
 
                     normalCollision->CalculatePreCollision(awayFromWallsHydroVars,
                                                            awayFromWallIndex);
@@ -251,9 +258,9 @@ namespace hemelb
                     distribn_t oppWallOld = streamedToSitePostColl[streamedDirection];
 
                     // The streamed value should be as given below.
-                    distribn_t streamed = (twoQ < 1.0)
-                      ? (toWallNew + twoQ * (toWallOld - toWallNew))
-                      : (oppWallOld + (1. / twoQ) * (toWallOld - oppWallOld));
+                    distribn_t streamed = (twoQ < 1.0) ?
+                      (toWallNew + twoQ * (toWallOld - toWallNew)) :
+                      (oppWallOld + (1. / twoQ) * (toWallOld - oppWallOld));
 
                     std::stringstream msg(std::stringstream::in);
                     msg << "FInterpolation, PostStep: site " << streamedToSite << " direction "
@@ -272,8 +279,8 @@ namespace hemelb
                   else
                   {
                     std::stringstream msg(std::stringstream::in);
-                    msg << "FInterpolation, PostStep by simple bounce-back: site "
-                        << streamedToSite << " direction " << streamedDirection;
+                    msg << "FInterpolation, PostStep by simple bounce-back: site " << streamedToSite
+                        << " direction " << streamedDirection;
 
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
                                                          streamedToSitePostColl[oppDirection],
@@ -292,7 +299,7 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
 
             site_t firstWallSite = latDat->GetInnerCollisionCount(0);
             site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
@@ -303,28 +310,28 @@ namespace hemelb
             site_t offset = 0;
 
             // Mid-Fluid sites use simple collide and stream
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetInnerCollisionCount(0),
-                                                             lbmParams,
-                                                             latDat,
-                                                             NULL);
+            simpleCollideAndStream->StreamAndCollide<false>(offset,
+                                                            latDat->GetInnerCollisionCount(0),
+                                                            lbmParams,
+                                                            latDat,
+                                                            NULL);
             offset += latDat->GetInnerCollisionCount(0);
 
             // Wall sites use simple bounce back
-            simpleBounceBack->StreamAndCollide<false> (offset,
-                                                       latDat->GetInnerCollisionCount(1),
-                                                       lbmParams,
-                                                       latDat,
-                                                       NULL);
+            simpleBounceBack->StreamAndCollide<false>(offset,
+                                                      latDat->GetInnerCollisionCount(1),
+                                                      lbmParams,
+                                                      latDat,
+                                                      NULL);
             offset += latDat->GetInnerCollisionCount(1);
 
             // Consider inlet/outlets and their walls as mid-fluid sites
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetLocalFluidSiteCount()
-                                                                 - offset,
-                                                             lbmParams,
-                                                             latDat,
-                                                             NULL);
+            simpleCollideAndStream->StreamAndCollide<false>(offset,
+                                                            latDat->GetLocalFluidSiteCount()
+                                                                - offset,
+                                                            lbmParams,
+                                                            latDat,
+                                                            NULL);
             offset += latDat->GetLocalFluidSiteCount() - offset;
 
             // Sanity check
@@ -337,12 +344,14 @@ namespace hemelb
              *  depending on where they sit relative to the wall. We ignore mid-Fluid sites since
              *  StreamAndCollide was tested before.
              */
-            for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
+            for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount;
+                wallSiteLocalIndex++)
             {
               site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
               distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
 
-              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS; ++streamedDirection)
+              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS;
+                  ++streamedDirection)
               {
                 unsigned oppDirection = D3Q15::INVERSEDIRECTIONS[streamedDirection];
 
@@ -350,15 +359,15 @@ namespace hemelb
                 site_t streamerIndex = latDat->GetStreamedIndex(streamedToSite, oppDirection);
 
                 // Is streamerIndex a valid index?
-                if (streamerIndex >= 0 && streamerIndex < (D3Q15::NUMVECTORS
-                    * latDat->GetLocalFluidSiteCount()))
+                if (streamerIndex >= 0
+                    && streamerIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
                 {
                   // The streamer index is a valid index in the domain, therefore stream and collide has happened
                   site_t streamerSiteId = streamerIndex / D3Q15::NUMVECTORS;
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -380,7 +389,7 @@ namespace hemelb
 
                   // Initialise streamedToSiteFOld with the original data
                   distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamedToSite, streamerToSiteFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite, streamerToSiteFOld);
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
                   normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
 
@@ -405,6 +414,139 @@ namespace hemelb
             }
           }
 
+          void TestRegularised()
+          {
+            // Initialise fOld in the lattice data. We choose values so that each site has
+            // an anisotropic distribution function, and that each site's function is
+            // distinguishable.
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
+
+            site_t firstWallSite = latDat->GetInnerCollisionCount(0);
+            site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
+
+            // Check that the lattice has sites labeled as wall (otherwise this test is void)
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, (site_t) 16);
+
+            site_t offset = 0;
+
+            // Mid-Fluid sites use simple collide and stream
+            simpleCollideAndStream->StreamAndCollide<false>(offset,
+                                                            latDat->GetInnerCollisionCount(0),
+                                                            lbmParams,
+                                                            latDat,
+                                                            NULL);
+            offset += latDat->GetInnerCollisionCount(0);
+
+            // Wall sites use regularised BC
+            regularised->StreamAndCollide<false>(offset,
+                                                 latDat->GetInnerCollisionCount(1),
+                                                 lbmParams,
+                                                 latDat,
+                                                 NULL);
+            offset += latDat->GetInnerCollisionCount(1);
+
+            // Inlet/outlets and their walls use regularised BC
+            regularised->StreamAndCollide<false>(offset,
+                                                 latDat->GetLocalFluidSiteCount() - offset,
+                                                 lbmParams,
+                                                 latDat,
+                                                 NULL);
+            offset += latDat->GetLocalFluidSiteCount() - offset;
+
+            // Sanity check
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Total number of sites",
+                                         offset,
+                                         latDat->GetLocalFluidSiteCount());
+
+            /*
+             *  Loop over the wall sites and check whether they got properly streamed on or bounced back
+             *  depending on where they sit relative to the wall. We ignore mid-Fluid sites since
+             *  StreamAndCollide was tested before.
+             */
+            for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount;
+                wallSiteLocalIndex++)
+            {
+              site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
+              distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
+
+              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS;
+                  ++streamedDirection)
+              {
+                unsigned oppDirection = D3Q15::INVERSEDIRECTIONS[streamedDirection];
+
+                // Index of the site streaming to streamedToSite via direction streamedDirection
+                site_t streamerIndex = latDat->GetStreamedIndex(streamedToSite, oppDirection);
+
+                // Is streamerIndex a valid index?
+                if (streamerIndex >= 0
+                    && streamerIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
+                {
+                  // The streamer index is a valid index in the domain, therefore stream and collide has happened
+                  site_t streamerSiteId = streamerIndex / D3Q15::NUMVECTORS;
+
+                  // Calculate streamerFOld at this site.
+                  distribn_t streamerFOld[D3Q15::NUMVECTORS];
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
+
+                  // Calculate what the value streamed to site streamedToSite should be.
+                  lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
+                  normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
+
+                  // If the streamer is a mid-fluid site, normal stream and collide has happened. Otherwise, regularised-type stream and collide
+                  if (latDat->GetSiteData(streamerSiteId).GetCollisionType() == FLUID)
+                  {
+                    // F_new should be equal to the value that was streamed from this other site
+                    // in the same direction as we're streaming from.
+                    CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Regularised",
+                                                         normalCollision->Collide(lbmParams,
+                                                                                  streamedDirection,
+                                                                                  streamerHydroVars),
+                                                         streamedToFNew[streamedDirection],
+                                                         allowedError);
+                  }
+                  else
+                  {
+                    distribn_t streamerFPostColl[D3Q15::NUMVECTORS];
+                    LbTestsHelper::CalculateRegularisedCollision(latDat,
+                                                                 lbmParams,
+                                                                 streamerSiteId,
+                                                                 streamerHydroVars,
+                                                                 streamerFPostColl);
+                    CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Regularised",
+                                                         streamerFPostColl[streamedDirection],
+                                                         streamedToFNew[streamedDirection],
+                                                         allowedError);
+                  }
+                }
+                else
+                {
+                  // The streamer index shows that no one has streamed to streamedToSite along direction
+                  // streamedDirection, therefore regularised-type bounce back has happened in that site
+                  // for that direction
+
+                  // Initialise streamedToSiteFOld with the original data
+                  distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite, streamerToSiteFOld);
+                  lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
+                  normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
+
+                  // Compute the post-collision step at the streamer node
+                  distribn_t streamerFPostColl[D3Q15::NUMVECTORS];
+                  LbTestsHelper::CalculateRegularisedCollision(latDat,
+                                                               lbmParams,
+                                                               streamedToSite,
+                                                               hydroVars,
+                                                               streamerFPostColl);
+                  // After streaming FNew in a given direction must be f post-collision in the opposite direction
+                  CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Regularised",
+                                                       streamerFPostColl[oppDirection],
+                                                       streamedToFNew[streamedDirection],
+                                                       allowedError);
+                }
+              }
+            }
+          }
+
         private:
           geometry::LatticeData* latDat;
           configuration::SimConfig* simConfig;
@@ -414,17 +556,16 @@ namespace hemelb
 
           lb::collisions::Normal<lb::kernels::LBGK>* normalCollision;
 
-          lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK> >
-              * simpleCollideAndStream;
+          lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK> > * simpleCollideAndStream;
 
-          lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >
-              * simpleBounceBack;
+          lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> > * simpleBounceBack;
 
-          lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> >
-              * fInterpolation;
+          lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK> > * regularised;
+
+          lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK> > * fInterpolation;
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION(StreamerTests);
     }
   }
 }
