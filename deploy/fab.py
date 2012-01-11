@@ -315,12 +315,12 @@ def clear_results(name=''):
 @task
 def test():
 	"""Submit a unit-testing job to the remote queue."""
-	execute(job,script='unittests',name='unittests-$build_number-$machine_name',cores=1)
+	execute(job,script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
 		
 @task
 def hemelb(**args):
 	"""Submit a HemeLB job to the remote queue.
-	The job results will be stored with a name pattern of $config-$build_number-$machine_name-$cores,
+	The job results will be stored with a name pattern of $config_${build_number}_${machine_name}_$cores,
 	e.g. cylinder-abcd1234-legion-256
 	Keyword arguments:
 		config : config directory to use to define geometry, e.g. config=cylinder
@@ -332,7 +332,7 @@ def hemelb(**args):
 		memory : memory per node
 	"""
 	options=dict(script='hemelb',
-		name='$config-$build_number-$machine_name-$cores',
+		name='$config_${build_number}_${machine_name}_$cores',
 		cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
 	options.update(args)
 	execute(put_configs,args['config'])
@@ -341,7 +341,7 @@ def hemelb(**args):
 @task(alias='regress')
 def regression_test():
 	"""Submit a regression-testing job to the remote queue."""
-	execute(job,script='regression',name='regression-$build_number-$machine_name')
+	execute(job,script='regression',name='regression_${build_number}_${machine_name}')
 
 @task
 def job(**args):
