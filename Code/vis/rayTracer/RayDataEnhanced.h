@@ -141,7 +141,7 @@ namespace hemelb
                                        const util::Vector3D<float>& iRayDirection,
                                        const float iRayLengthInVoxel,
                                        const VisSettings& iVisSettings,
-                                       const double* iWallNormal)
+                                       const util::Vector3D<double>* iWallNormal)
           {
             //Do everything that would be done for a normal fluid site
             DoUpdateDataForNormalFluidSite(iSiteData,
@@ -149,13 +149,7 @@ namespace hemelb
                                            iRayLengthInVoxel,
                                            iVisSettings);
 
-            //Calculate the absolute dot product of the wall
-            //vector normal and the ray direction
-            util::Vector3D<float> lWallNormal = util::Vector3D<float>((float) (iWallNormal[0]),
-                                                                      (float) (iWallNormal[1]),
-                                                                      (float) (iWallNormal[2]));
-
-            float lDotProduct = iRayDirection.DotProduct(lWallNormal);
+            double lDotProduct = iRayDirection.DotProduct(*iWallNormal);
 
             // Scale the surface normal lightness between mParallelSurfaceAttenuation
             // and 1.0F

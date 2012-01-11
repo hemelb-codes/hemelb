@@ -13,10 +13,9 @@ namespace hemelb
       class VelocitySiteData
       {
         public:
-          VelocitySiteData()
+          VelocitySiteData() :
+              counter(-1), proc_id(-1), site_id(-1), velocity(NO_VALUE)
           {
-            proc_id = -1;
-            counter = -1;
           }
 
           /**

@@ -175,18 +175,20 @@ namespace hemelb
             }
           }
 
+          template<typename LatticeType>
           static void InitialiseAnisotropicTestData(hemelb::geometry::LatticeData* latticeData)
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
               distribn_t* fOld = latticeData->GetFOld(site * D3Q15::NUMVECTORS);
-              InitialiseAnisotropicTestData(site, fOld);
+              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
             }
           }
 
+          template<typename LatticeType>
           static void InitialiseAnisotropicTestData(site_t site, distribn_t* distribution)
           {
-            for (unsigned int direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               distribution[direction] = ((distribn_t) (direction + 1)) / 10.0
                   + ((distribn_t) (site)) / 100.0;

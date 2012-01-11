@@ -122,7 +122,7 @@ namespace hemelb
         }
 
         //Equality
-        bool operator==(const Vector3D<T> right)
+        bool operator==(const Vector3D<T> right) const
         {
           if (x != right.x)
           {
