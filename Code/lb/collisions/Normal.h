@@ -24,20 +24,19 @@ namespace hemelb
           {
           }
 
-          void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                       const site_t index)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+                                              const site_t index)
           {
             kernel.CalculateDensityVelocityFeq(hydroVars, index);
           }
 
-          distribn_t DoCollide(const LbmParameters* lbmParams,
-                               unsigned int directionIndex,
-                               kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams,
+                                kernels::HydroVars<KernelType>& iHydroVars)
           {
-            return kernel.Collide(lbmParams, iHydroVars, directionIndex);
+            kernel.Collide(lbmParams, iHydroVars);
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             kernel.Reset(init);
           }
