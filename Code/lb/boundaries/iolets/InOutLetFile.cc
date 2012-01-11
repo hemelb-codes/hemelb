@@ -61,7 +61,7 @@ namespace hemelb
             tvPair.value = valueTemp;
 
             // Don't enter repeat values
-            if (TimeValuePair.size() == 0)
+            if (TimeValuePair.empty())
             {
               TimeValuePair.push_back(tvPair);
             }

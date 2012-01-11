@@ -64,10 +64,12 @@ namespace hemelb
               const distribn_t velocityComponentInThisDirection = DmQn::CX[direction] * v_x
                   + DmQn::CY[direction] * v_y + DmQn::CZ[direction] * v_z;
 
-              f_eq[direction] = DmQn::EQMWEIGHTS[direction] * (density - (3. / 2.)
-                  * velocityMagnitudeSquared * density_1 + (9. / 2.) * density_1
-                  * velocityComponentInThisDirection * velocityComponentInThisDirection + 3.
-                  * velocityComponentInThisDirection);
+              f_eq[direction] =
+                  DmQn::EQMWEIGHTS[direction]
+                      * (density - (3. / 2.) * velocityMagnitudeSquared * density_1
+                          + (9. / 2.) * density_1 * velocityComponentInThisDirection
+                              * velocityComponentInThisDirection
+                          + 3. * velocityComponentInThisDirection);
             }
           }
 
@@ -123,20 +125,23 @@ namespace hemelb
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
-              sigma_xx_yy += f[direction] * (DmQn::CX[direction] * DmQn::CX[direction]
-                  - DmQn::CY[direction] * DmQn::CY[direction]);
-              sigma_yy_zz += f[direction] * (DmQn::CY[direction] * DmQn::CY[direction]
-                  - DmQn::CZ[direction] * DmQn::CZ[direction]);
-              sigma_xx_zz += f[direction] * (DmQn::CX[direction] * DmQn::CX[direction]
-                  - DmQn::CZ[direction] * DmQn::CZ[direction]);
+              sigma_xx_yy += f[direction]
+                  * (DmQn::CX[direction] * DmQn::CX[direction]
+                      - DmQn::CY[direction] * DmQn::CY[direction]);
+              sigma_yy_zz += f[direction]
+                  * (DmQn::CY[direction] * DmQn::CY[direction]
+                      - DmQn::CZ[direction] * DmQn::CZ[direction]);
+              sigma_xx_zz += f[direction]
+                  * (DmQn::CX[direction] * DmQn::CX[direction]
+                      - DmQn::CZ[direction] * DmQn::CZ[direction]);
 
               sigma_xy += f[direction] * DmQn::CX[direction] * DmQn::CY[direction];
               sigma_xz += f[direction] * DmQn::CX[direction] * DmQn::CZ[direction];
               sigma_yz += f[direction] * DmQn::CY[direction] * DmQn::CZ[direction];
             }
 
-            distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz + sigma_xx_zz
-                * sigma_xx_zz;
+            distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz
+                + sigma_xx_zz * sigma_xx_zz;
             distribn_t b = sigma_xy * sigma_xy + sigma_xz * sigma_xz + sigma_yz * sigma_yz;
 
             stress = iStressParameter * sqrt(a + 6.0 * b);
@@ -249,14 +254,17 @@ namespace hemelb
 
             // Combining some terms for use in evaluating the next few terms
             // B_i = sqrt(1 + 3 * u_i^2)
-            util::Vector3D<distribn_t> B = util::Vector3D<distribn_t>(sqrt(1.0 + 3.0 * velocity.x
-                                                                          * velocity.x),
-                                                                      sqrt(1.0 + 3.0 * velocity.y
-                                                                          * velocity.y),
-                                                                      sqrt(1.0 + 3.0 * velocity.z
-                                                                          * velocity.z));
+            util::Vector3D<distribn_t> B = util::Vector3D<distribn_t>(sqrt(1.0
+                                                                          + 3.0 * velocity.x
+                                                                              * velocity.x),
+                                                                      sqrt(1.0
+                                                                          + 3.0 * velocity.y
+                                                                              * velocity.y),
+                                                                      sqrt(1.0
+                                                                          + 3.0 * velocity.z
+                                                                              * velocity.z));
 
-            // The formula has contains the product term1_i*(term2_i)^e_ia
+            // The formula contains the product term1_i*(term2_i)^e_ia
             // term1_i is 2 - B_i
             util::Vector3D<distribn_t> term1 = util::Vector3D<distribn_t>(2.0) - B;
 
@@ -279,7 +287,7 @@ namespace hemelb
             if (singletonInfo == NULL)
             {
               util::Vector3D<int> vectors[DmQn::NUMVECTORS];
-              int inverseVectorIndices[DmQn::NUMVECTORS];
+              Direction inverseVectorIndices[DmQn::NUMVECTORS];
 
               for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
               {
@@ -304,7 +312,7 @@ namespace hemelb
           {
             distribn_t strain_rate_tensor_i_j = 0.0;
 
-            for (unsigned vec_index = 0; vec_index < DmQn::NUMVECTORS; vec_index++)
+            for (Direction vec_index = 0; vec_index < DmQn::NUMVECTORS; vec_index++)
             {
               strain_rate_tensor_i_j += iFNeq[vec_index]
                   * (DmQn::discreteVelocityVectors[iRow][vec_index]
