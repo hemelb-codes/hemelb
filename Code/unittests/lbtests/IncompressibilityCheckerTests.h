@@ -50,7 +50,7 @@ namespace hemelb
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
 
             hemelb::geometry::LatticeData* latticeData = FourCubeLatticeData::Create();
-            LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             hemelb::reporting::Timers timings;
 
