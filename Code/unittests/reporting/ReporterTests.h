@@ -33,7 +33,7 @@ namespace hemelb
           state = new hemelb::lb::SimulationState(500, 2);
           net = new net::Net();
           latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
-          lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
+          lbtests::LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
           latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
           incompChecker = new IncompressibilityCheckerMock(latticeData,
                                                            net,

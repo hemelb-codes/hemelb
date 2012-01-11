@@ -14,7 +14,7 @@ namespace hemelb
         public:
           LatticeInfo(unsigned numberOfVectors,
                       const util::Vector3D<int>* vectors,
-                      const unsigned* inverseVectorIndices) :
+                      const Direction* inverseVectorIndices) :
             NumVectors(numberOfVectors)
           {
             VectorSet = new util::Vector3D<int>[numberOfVectors];
@@ -51,7 +51,7 @@ namespace hemelb
         private:
           const unsigned NumVectors;
           util::Vector3D<int>* VectorSet;
-          unsigned* InverseVectorIndices;
+          Direction* InverseVectorIndices;
       };
     }
   }

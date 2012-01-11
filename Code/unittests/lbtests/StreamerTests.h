@@ -80,7 +80,7 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
 
             // Use the streaming operator on the entire lattice.
             simpleCollideAndStream->StreamAndCollide<false> (0,
@@ -109,7 +109,7 @@ namespace hemelb
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -133,7 +133,7 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
             fInterpolation->StreamAndCollide<false> (0,
                                                      latDat->GetLocalFluidSiteCount(),
                                                      lbmParams,
@@ -164,7 +164,7 @@ namespace hemelb
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -200,7 +200,7 @@ namespace hemelb
                   distribn_t streamedToSitePostColl[D3Q15::NUMVECTORS];
 
                   // (initialise it to f_old).
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamedToSite,
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite,
                                                                streamedToSitePostColl);
 
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamedToSitePostColl);
@@ -227,7 +227,7 @@ namespace hemelb
                   {
 
                     // (initialise it to f_old).
-                    LbTestsHelper::InitialiseAnisotropicTestData(awayFromWallIndex,
+                    LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(awayFromWallIndex,
                                                                  awayFromWallPostColl);
 
                     lb::kernels::HydroVars<lb::kernels::LBGK>
@@ -292,7 +292,7 @@ namespace hemelb
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
-            LbTestsHelper::InitialiseAnisotropicTestData(latDat);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latDat);
 
             site_t firstWallSite = latDat->GetInnerCollisionCount(0);
             site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
@@ -358,7 +358,7 @@ namespace hemelb
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamerSiteId, streamerFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamerSiteId, streamerFOld);
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
@@ -380,7 +380,7 @@ namespace hemelb
 
                   // Initialise streamedToSiteFOld with the original data
                   distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData(streamedToSite, streamerToSiteFOld);
+                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(streamedToSite, streamerToSiteFOld);
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
                   normalCollision->CalculatePreCollision(hydroVars, streamedToSite);
 
