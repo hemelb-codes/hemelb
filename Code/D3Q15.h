@@ -9,7 +9,7 @@ namespace hemelb
   {
     public:
       // The number of discrete velocity vectors
-      static const unsigned int NUMVECTORS = 15;
+      static const Direction NUMVECTORS = 15;
 
       // The x, y and z components of each of the discrete velocity vectors
       static const int CX[NUMVECTORS];
@@ -20,7 +20,7 @@ namespace hemelb
       static const double EQMWEIGHTS[NUMVECTORS];
 
       // The index of the inverse direction of each discrete velocity vector
-      static const int INVERSEDIRECTIONS[NUMVECTORS];
+      static const Direction INVERSEDIRECTIONS[NUMVECTORS];
 
       /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) kinetic (non-conserved). */
       static const unsigned NUM_KINETIC_MOMENTS = 11;
