@@ -80,17 +80,22 @@ def complete_environment():
 	build_cache: CMakeCache.txt file on remote, used to capture build flags.
 	"""
 	env.hosts=['%s@%s'%(env.username,env.remote)]
-	env.results_path=template(env.results_path_template)
+	env.home_path=template(env.home_path_template)
+	env.runtime_path=template(env.runtime_path_template)
+	env.work_path=template(env.work_path_template)
 	env.remote_path=template(env.remote_path_template)
-	env.config_path=template(env.config_path_template)
+		
+	env.results_path=env.pather.join(env.work_path,"results")
+	env.config_path=env.pather.join(env.work_path,"config_files")
+	env.scripts_path=env.pather.join(env.work_path,"scripts")
+	env.build_path=env.pather.join(env.remote_path,'build')
+	env.install_path=env.pather.join(env.remote_path,'install')
+	env.code_build_path=env.pather.join(env.remote_path,'code_build')
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
+	
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
 	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
 	env.tools_build_path=env.pather.join(env.tools_path,'build',env.tools_build)
-	env.build_path=env.pather.join(env.remote_path,'build')
-	env.code_build_path=env.pather.join(env.remote_path,'code_build')
-	env.install_path=env.pather.join(env.remote_path,'install')
-	env.scripts_path=env.pather.join(env.remote_path,'scripts')
 	
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
