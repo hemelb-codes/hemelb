@@ -180,7 +180,7 @@ namespace hemelb
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetFOld(site * D3Q15::NUMVECTORS);
+              distribn_t* fOld = latticeData->GetFOld(site * LatticeType::NUMVECTORS);
               InitialiseAnisotropicTestData<LatticeType>(site, fOld);
             }
           }
