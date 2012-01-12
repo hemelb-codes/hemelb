@@ -6,7 +6,7 @@
 
 #$$ -l mem=$memory
 
-#$$ -N $name
+#$$ -N $job_name
 
 #$$ -pe openmpi $cores
 
