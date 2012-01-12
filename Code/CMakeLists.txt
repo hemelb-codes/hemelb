@@ -175,7 +175,5 @@ endif()
 
 foreach(resource ${RESOURCES})
 	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
+	INSTALL(TARGETS ${BUILD_RESOURCE_PATH}/${resource} RESOURCE DESTINATION shared)
 endforeach()
-
-file(GLOB ${BUILD_RESOURCE_PATH}/* resource_files)
-INSTALL(TARGETS ${resource_files} RESOURCE DESTINATION ${BUILD_RESOURCE_PATH})
