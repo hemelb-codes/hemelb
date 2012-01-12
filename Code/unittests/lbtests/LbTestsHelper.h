@@ -210,14 +210,9 @@ namespace hemelb
 
             for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
             {
-              //! @todo I thought the components that need updating are those that satisfy bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]), i.e. not having a node streaming on them.
-              if (latDat->HasBoundary(siteIndex, l))
+              if (latDat->HasBoundary(siteIndex, D3Q15::INVERSEDIRECTIONS[l]))
               {
-                //! @todo please document how fi = fiEq + fopp(i) - fopp(i)Eq becomes the expression below
-                fTemp[l] = fPreCollision[D3Q15::INVERSEDIRECTIONS[l]]
-                    + 3.0 * D3Q15::EQMWEIGHTS[l]
-                        * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
-                            + hydroVars.v_z * D3Q15::CZ[l]);
+                fTemp[l] = hydroVars.GetFEq().f[l] + fPreCollision[D3Q15::INVERSEDIRECTIONS[l]] - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
               }
               else
               {
