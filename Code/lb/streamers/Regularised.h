@@ -42,7 +42,6 @@ namespace hemelb
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
               distribn_t fTemp[D3Q15::NUMVECTORS];
-
               for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
                 if (bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]))
