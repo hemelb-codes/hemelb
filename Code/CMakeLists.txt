@@ -175,5 +175,6 @@ endif()
 
 foreach(resource ${RESOURCES})
 	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
-	INSTALL(TARGETS ${BUILD_RESOURCE_PATH}/${resource} RESOURCE DESTINATION shared)
+	get_filename_component(resource_leaf ${resource} NAME)
+	INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
 endforeach()
