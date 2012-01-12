@@ -123,7 +123,7 @@ namespace hemelb
          *  non-equilibrium distribution functions.
          */
         void CalculateBC(distribn_t f[],
-                         hemelb::geometry::LatticeData::SiteType const iSiteType,
+                         hemelb::geometry::SiteType const iSiteType,
                          unsigned int const iBoundaryId,
                          distribn_t *density,
                          distribn_t *vx,
