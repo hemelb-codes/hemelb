@@ -38,51 +38,51 @@ namespace hemelb
       {
         public:
           template<bool tDoRayTracing>
-          void StreamAndCollide(const site_t iFirstIndex,
-                                const site_t iSiteCount,
-                                const LbmParameters* iLbmParams,
-                                geometry::LatticeData* bLatDat,
-                                hemelb::vis::Control *iControl)
+          inline void StreamAndCollide(const site_t iFirstIndex,
+                                       const site_t iSiteCount,
+                                       const LbmParameters* iLbmParams,
+                                       geometry::LatticeData* bLatDat,
+                                       hemelb::vis::Control *iControl)
           {
-            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (iFirstIndex,
-                                                                                           iSiteCount,
-                                                                                           iLbmParams,
-                                                                                           bLatDat,
-                                                                                           iControl);
+            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(iFirstIndex,
+                                                                                         iSiteCount,
+                                                                                         iLbmParams,
+                                                                                         bLatDat,
+                                                                                         iControl);
           }
 
           template<bool tDoRayTracing>
-          void PostStep(const site_t iFirstIndex,
-                        const site_t iSiteCount,
-                        const LbmParameters* iLbmParams,
-                        geometry::LatticeData* bLatDat,
-                        hemelb::vis::Control *iControl)
+          inline void PostStep(const site_t iFirstIndex,
+                               const site_t iSiteCount,
+                               const LbmParameters* iLbmParams,
+                               geometry::LatticeData* bLatDat,
+                               hemelb::vis::Control *iControl)
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (iFirstIndex,
-                                                                                   iSiteCount,
-                                                                                   iLbmParams,
-                                                                                   bLatDat,
-                                                                                   iControl);
+            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(iFirstIndex,
+                                                                                 iSiteCount,
+                                                                                 iLbmParams,
+                                                                                 bLatDat,
+                                                                                 iControl);
           }
 
-          void Reset(kernels::InitParams* init)
+          inline void Reset(kernels::InitParams* init)
           {
-            static_cast<StreamerImpl*> (this)->DoReset(init);
+            static_cast<StreamerImpl*>(this)->DoReset(init);
           }
 
         protected:
           template<bool tDoRayTracing>
-          static void UpdateMinsAndMaxes(distribn_t iVx,
-                                         distribn_t iVy,
-                                         distribn_t iVz,
-                                         const site_t iSiteIndex,
-                                         const distribn_t* f_neq,
-                                         const distribn_t iDensity,
-                                         const geometry::LatticeData* iLatDat,
-                                         const LbmParameters* iLbmParams,
-                                         hemelb::vis::Control *iControl)
+          inline static void UpdateMinsAndMaxes(distribn_t iVx,
+                                                distribn_t iVy,
+                                                distribn_t iVz,
+                                                const site_t iSiteIndex,
+                                                const distribn_t* f_neq,
+                                                const distribn_t iDensity,
+                                                const geometry::LatticeData* iLatDat,
+                                                const LbmParameters* iLbmParams,
+                                                hemelb::vis::Control *iControl)
           {
             if (tDoRayTracing)
             {

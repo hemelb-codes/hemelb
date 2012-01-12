@@ -1,7 +1,6 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
-#include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
 {
@@ -26,12 +25,12 @@ namespace hemelb
       return GetCurrentLocation() * mLatticeData.GetBlockSize();
     }
 
-    geometry::BlockData* BlockTraverser::GetCurrentBlockData()
+    const geometry::BlockData* BlockTraverser::GetCurrentBlockData()
     {
       return mLatticeData.GetBlock(GetCurrentIndex());
     }
 
-    geometry::BlockData* BlockTraverser::GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation)
+    const geometry::BlockData* BlockTraverser::GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation)
     {
       return mLatticeData.GetBlock(GetIndexFromLocation(iLocation));
     }

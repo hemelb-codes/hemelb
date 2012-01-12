@@ -22,7 +22,7 @@ namespace hemelb
             // Implement the constructor and destructor to deal with the FILE
             // and XDR objects.
           public:
-            XdrFileWriter(const std::string fileName, const std::string mode = "w");
+            XdrFileWriter(const std::string& fileName, const std::string& mode = "w");
             ~XdrFileWriter();
 
           private:

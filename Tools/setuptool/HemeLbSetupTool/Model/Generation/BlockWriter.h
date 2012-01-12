@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include "ConfigWriter.h"
 #include "io/writers/xdr/XdrMemWriter.h"
+
 /*
  * Extension of a hemelb::io::XdrWriter that notes how many fluid sites, in how
  * much space, have been written. It then pushes this to the ConfigWriter's
