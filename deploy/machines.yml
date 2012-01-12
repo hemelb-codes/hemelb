@@ -44,7 +44,8 @@ legion:
   tools_build: "lib.linux-x86_64-2.6"
   modules: ["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"]
   runtime_path_template: "$home_path/Scratch"
-planck: 
+planck:
+  needs_tarballs: true
   remote: "planck.chem.ucl.ac.uk"
   tools_build: "lib.linux-x86_64-2.6"
   run_prefix_commands: ["export set TMP=/tmp"]
