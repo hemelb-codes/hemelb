@@ -21,9 +21,13 @@ namespace hemelb
           CPPUNIT_TEST(TestD3Q27);CPPUNIT_TEST_SUITE_END();
 
         public:
+
+          LatticeTests():epsilon(1e-10){}
+            // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
+            // wasn't compiling under cray compilers)
+
           void setUp()
           {
-
           }
 
           void tearDown()
@@ -242,7 +246,7 @@ namespace hemelb
              */
           }
 
-          static const double epsilon = 1e-10;
+          const double epsilon;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(LatticeTests);
