@@ -16,27 +16,26 @@ namespace hemelb
 {
   namespace util
   {
-    namespace
+
+    // Returns true if the file with the given name exists for reading,
+    // false otherwise.
+    //bool file_exists(const char * filename);
+
+    // Function to select directory contents that are not "." or ".."
+    // int selectOnlyContents (direct_t *entry);
+
+    // Return true if file exists for reading, false if not.
+    bool file_exists(const char * filename)
     {
-      // Returns true if the file with the given name exists for reading,
-      // false otherwise.
-      //bool file_exists(const char * filename);
 
-      // Function to select directory contents that are not "." or ".."
-      // int selectOnlyContents (direct_t *entry);
-
-      // Return true if file exists for reading, false if not.
-      bool file_exists(const char * filename)
+      if (access(filename, R_OK) == -1)
       {
-
-        if (access(filename, R_OK) == -1)
-        {
-          return false;
-        }
-        return true;
+        return false;
       }
-
+      return true;
     }
+
+
 
     // Check the existence of a critical file - exit if it's not there
     void check_file(const char * filename)
