@@ -59,7 +59,7 @@ hector:
   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
   remote: "login.hector.ac.uk"
   # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
-  install_path_template: "$runtime_path/install"
+  install_path_template: "$work_path/install"
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   modules: ["load CMake/2.8.6"]
