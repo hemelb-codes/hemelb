@@ -20,15 +20,15 @@ namespace hemelb
         }
         std::string Path() const
         {
-          if (util::DoesDirectoryExist(BuildPath().c_str()))
+          if (util::file_exists(BuildPath().c_str()))
           {
             return BuildPath();
           }
-          if (util::DoesDirectoryExist(InstallPath().c_str()))
+          if (util::file_exists(InstallPath().c_str()))
           {
             return InstallPath();
           }
-          std::cerr << "Resource not found: " << build_resource_path << resourceName << std::endl;
+          std::cerr << "Resource " << resourceName  << " not found either at: " << BuildPath() << " or: " << InstallPath() << std::endl;
           return "";
         }
         std::string BuildPath() const
