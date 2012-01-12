@@ -1,0 +1,11 @@
+#!/bin/bash --login
+#PBS -N $job_name
+#PBS -l mppwidth=$cores
+#PBS -l mppnppn=$corespernode
+#PBS -l walltime=$wall_time
+#PBS -A $budget
+#PBS -q $queue
+#PBS -m abe
+cd $job_results
+$run_prefix
+aprun -n $cores -N $corespernode $install_path/bin/unittests_hemelb -o 'tests.xml'

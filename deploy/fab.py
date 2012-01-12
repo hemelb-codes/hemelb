@@ -104,14 +104,14 @@ def build_python_tools():
 def stat():
 	"""Check the remote message queue status"""
 	#TODO: Respect varying remote machine queue systems.
-	run("qstat")
+	run(template("qstat -u $username"))
 	
 @task
 def monitor():
 	"""Report on the queue status, ctrl-C to interrupt"""
 	while True:
-		time.sleep(30)
 		execute(stat)
+		time.sleep(30)
 
 @task
 def configure():
@@ -177,7 +177,7 @@ def install():
 	"""CMake install step for HemeLB and dependencies."""
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("make install")
+			#run("make install") // Doesn't have a separate install step, as HemeLB gets installed by the sub-project to the final install dir.
 			run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
 		
 @task
@@ -350,6 +350,10 @@ def job(**args):
 	env.update(name=args['script'],wall_time='0:1:0',cores=4,memory='1G') #defaults
 	env.update(**args)
 	env.update(name=template(env.name))
+	# If we request less than one node's worth of cores, need to keep N<=n
+	if env.corespernode>env.cores:
+		env.corespernode=env.cores
+	env['job_name']=env.name[0:env.max_job_name_chars]
 	with_job(env.name)
 	
 	script_name=template("$machine_name-$script")
@@ -361,5 +365,6 @@ def job(**args):
 	run(template("cp $dest_name $job_results"))
 	run(template("cp $build_cache $job_results"))
 	run(template("chmod u+x $dest_name"))
-	run(template("$job_dispatch $dest_name"))
+	with cd(env.job_results):
+		run(template("$job_dispatch $dest_name"))
 	

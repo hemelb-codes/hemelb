@@ -40,30 +40,15 @@ def machine(name):
 	env.machine_name=name
 	complete_environment()
 
-@task 
-def planck():
-	"""Alias for machine:planck"""
-	execute(machine,'planck')
-
-@task 
-def legion():
-	"""Alias for machine:legion"""
-	execute(machine,'legion')
-	
-@task 
-def entropy():
-	"""Alias for machine:entropy"""
-	execute(machine,'entropy')
-
-@task 
-def hector():
-	"""Alias for machine:hector"""
-	execute(machine,'hector')
-	
-@task 
-def hector_login():
-	"""Alias for machine:hector_login"""
-	execute(machine,'hector_login')	
+#Metaprogram the machine wrappers
+for machine_name in set(config.keys())-set(['default']):
+	#Use default parameter trick to avoid closing to a reference
+	def _machine(machine_name=machine_name):
+		execute(machine,machine_name)
+	#Fabric task decorator creates task based on wrapped function's name
+	_machine.func_name=machine_name
+	#Invoke @task decorator as a function, and store to globals.
+	globals()[machine_name]=task(_machine)
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
@@ -90,12 +75,12 @@ def complete_environment():
 	env.runtime_path=template(env.runtime_path_template)
 	env.work_path=template(env.work_path_template)
 	env.remote_path=template(env.remote_path_template)
+	env.install_path=template(env.install_path_template)
 		
 	env.results_path=env.pather.join(env.work_path,"results")
 	env.config_path=env.pather.join(env.work_path,"config_files")
 	env.scripts_path=env.pather.join(env.work_path,"scripts")
 	env.build_path=env.pather.join(env.remote_path,'build')
-	env.install_path=env.pather.join(env.remote_path,'install')
 	env.code_build_path=env.pather.join(env.remote_path,'code_build')
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
 	
