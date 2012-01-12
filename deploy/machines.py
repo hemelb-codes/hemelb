@@ -18,7 +18,7 @@ env.update(config['default'])
 user_config=yaml.load(open(os.path.join(env.localroot,'deploy','machines_user.yml')))
 env.update(user_config['default'])
 env.verbose=False
-
+env.needs_tarballs=False
 env.cmake_options={}
 env.pather=posixpath
 
