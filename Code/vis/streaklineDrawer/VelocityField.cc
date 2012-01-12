@@ -2,6 +2,7 @@
 #include <vector>
 #include <cassert>
 
+#include "debug/Debugger.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "vis/streaklineDrawer/VelocityField.h"
@@ -13,7 +14,7 @@ namespace hemelb
     namespace streaklinedrawer
     {
       VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn) :
-        counter(0), neighbouringProcessors(neighbouringProcessorsIn)
+          counter(0), neighbouringProcessors(neighbouringProcessorsIn)
       {
       }
 
@@ -25,9 +26,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
 
-          if (block->site_data == NULL)
+          if (block->localContiguousIndex.size() == 0)
           {
             continue;
           }
@@ -37,7 +38,7 @@ namespace hemelb
           {
             // Only interested if the site lives on this rank.
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
             {
               continue;
             }
@@ -131,16 +132,17 @@ namespace hemelb
             continue;
           }
 
-          if (latDat.GetBlock(block)->site_data == NULL)
+          if (latDat.GetBlock(block)->localContiguousIndex.size() == 0)
           {
             continue;
           }
 
           // Update the site id on each velocity field unit as required.
-          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit(); localSiteId++)
+          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit();
+              localSiteId++)
           {
-            velocityField[block][localSiteId].site_id
-                = latDat.GetBlock(block)->site_data[localSiteId];
+            velocityField[block][localSiteId].site_id =
+                latDat.GetBlock(block)->localContiguousIndex[localSiteId];
           }
         }
       }
@@ -172,7 +174,7 @@ namespace hemelb
 
         site_t block_id = latDat.GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
 
-        if (!BlockContainsData(static_cast<size_t> (block_id)))
+        if (!BlockContainsData(static_cast<size_t>(block_id)))
         {
           return NULL;
         }
@@ -201,8 +203,11 @@ namespace hemelb
 
         if (!BlockContainsData(blockId))
         {
-          velocityField[blockId]
-              = std::vector<VelocitySiteData>(latDat.GetSitesPerBlockVolumeUnit());
+          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit();
+              ++localSiteId)
+          {
+            velocityField[blockId].push_back(VelocitySiteData());
+          }
         }
 
         site_t localSiteI = location.x - (blockI << latDat.GetLog2BlockSize());
@@ -299,7 +304,8 @@ namespace hemelb
               != localVelocitySiteData->proc_id)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Got a request for velocity data "
-              "that actually seems to be on rank %i", localVelocitySiteData->proc_id);
+                                                          "that actually seems to be on rank %i",
+                                                          localVelocitySiteData->proc_id);
           }
         }
 

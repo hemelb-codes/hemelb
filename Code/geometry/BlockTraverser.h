@@ -10,18 +10,6 @@ namespace hemelb
   namespace geometry
   {
 
-    //TODO Ideally we'd hide implementation details like this.
-    // Data about an element of the domain wall
-    struct WallData
-    {
-        // estimated wall normal (if the site is close to the wall);
-        double wall_nor[3];
-        // cut distances along the 14 non-zero lattice vectors;
-        // each one is between 0 and 1 if the surface cuts the corresponding
-        // vector or is equal to "NO_VALUE" otherwise
-        double cut_dist[lb::lattices::D3Q27::NUMVECTORS - 1];
-    };
-
     // Data about each global block in the lattice,
     // site_data[] is an array containing individual lattice site data
     // within a global block.
@@ -29,37 +17,23 @@ namespace hemelb
     {
         BlockData()
         {
-          ProcessorRankForEachBlockSite = NULL;
-          wall_data = NULL;
-          site_data = NULL;
+        }
+
+        BlockData(site_t sitesPerBlock)
+        {
+          processorRankForEachBlockSite.resize(sitesPerBlock, BIG_NUMBER3);
+          localContiguousIndex.resize(sitesPerBlock, BIG_NUMBER3);
         }
 
         ~BlockData()
         {
-          if (ProcessorRankForEachBlockSite != NULL)
-          {
-            delete[] ProcessorRankForEachBlockSite;
-            ProcessorRankForEachBlockSite = NULL;
-          }
-          if (wall_data != NULL)
-          {
-            delete[] wall_data;
-            wall_data = NULL;
-          }
-          if (site_data != NULL)
-          {
-            delete[] site_data;
-            site_data = NULL;
-          }
         }
 
         // An array of the ranks on which each lattice site within the block resides.
-        proc_t* ProcessorRankForEachBlockSite;
-        // Information about wall / inlet / outlet position and orientation for
-        // each site.
-        WallData *wall_data;
-        // The "site data" for each site.
-        sitedata_t* site_data;
+        std::vector<proc_t> processorRankForEachBlockSite;
+
+        // The local index for each site on the block in the LocalLatticeData.
+        std::vector<site_t> localContiguousIndex;
     };
 
     /**
@@ -75,9 +49,9 @@ namespace hemelb
 
         util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
-        BlockData* GetCurrentBlockData();
+        const BlockData* GetCurrentBlockData();
 
-        BlockData* GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
+        const BlockData* GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
 
         site_t GetBlockSize();
 

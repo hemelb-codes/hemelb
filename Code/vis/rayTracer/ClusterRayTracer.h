@@ -315,10 +315,10 @@ namespace hemelb
 
               if (lSiteData.GetDensity() >= 0.0F) // Ensure fluid site
               {
-                const double* lWallData = iCluster.GetWallData(blockNumberOnCluster,
+                const util::Vector3D<double>* lWallData = iCluster.GetWallData(blockNumberOnCluster,
                                                                siteTraverser.GetCurrentIndex());
 
-                if (lWallData == NULL || lWallData[0] == NO_VALUE)
+                if (lWallData == NULL || lWallData->x == NO_VALUE)
                 {
                   ioRay.UpdateDataForNormalFluidSite(lSiteData,
                                                      manhattanRayLengthThroughVoxel

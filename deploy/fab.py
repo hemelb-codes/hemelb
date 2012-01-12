@@ -121,8 +121,45 @@ def configure():
 			run(template("rm -f $build_path/CMakeCache.txt"))
 			run(template(
 			"cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
-			"-DDEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
+			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
 			))
+
+@task
+def code_only():
+	"""Configure, build, and install for the /Code C++ code only, do not attempt to install and build dependencies."""
+	execute(configure_code_only)
+	execute(build_code_only)
+	execute(install_code_only)
+
+@task
+def configure_code_only():
+	"""CMake configure step for HemeLB code only."""
+	run(template("rm -rf $code_build_path"))
+	run(template("mkdir -p $code_build_path"))
+	with cd(env.code_build_path):
+		with prefix(env.build_prefix):		
+			run(template(
+			"cmake $repository_path/Code -DCMAKE_INSTALL_PREFIX=$install_path "+
+			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
+			))
+			
+@task
+def build_code_only(verbose=False):
+	"""CMake build step for HemeLB code only."""
+	with cd(env.code_build_path):
+		with prefix(env.build_prefix):		
+			if verbose or env.verbose:
+				run("make VERBOSE=1")
+			else:
+				run("make")
+
+@task
+def install_code_only():
+	"""CMake install step for HemeLB code only."""
+	with cd(env.code_build_path):
+		with prefix(env.build_prefix):
+			run("make install")
+			run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
 
 @task
 def build(verbose=False):
@@ -130,7 +167,7 @@ def build(verbose=False):
 	with cd(env.build_path):
 		run(template("rm -rf hemelb_prefix/build"))
 		with prefix(env.build_prefix):
-			if verbose:
+			if verbose or env.verbose:
 				run("make VERBOSE=1")
 			else:
 				run("make")

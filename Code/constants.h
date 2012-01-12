@@ -21,9 +21,6 @@ namespace hemelb
   const double BLOOD_VISCOSITY_Pa_s = 0.004;
   const double PULSATILE_PERIOD_s = 60.0 / 70.0;
 
-  // These constants are used to pack a lot of stuff into a 32 bit int.
-  // They are used in the setup tool and must be consistent.
-
   /* This is the number of boundary types. It was 4, but the
    * "CHARACTERISTIC_BOUNDARY" type is never used and I don't know what it is
    * meant to be. It is also not used in the setup tool, so we will drop it,
@@ -34,40 +31,6 @@ namespace hemelb
   const sitedata_t OUTLET_BOUNDARY = 1U;
   const sitedata_t WALL_BOUNDARY = 2U;
   // const unsigned int CHARACTERISTIC_BOUNDARY = 3U;
-
-  const sitedata_t SITE_TYPE_BITS = 2U;
-  const sitedata_t BOUNDARY_CONFIG_BITS = 26U;
-  const sitedata_t BOUNDARY_DIR_BITS = 4U;
-  const sitedata_t BOUNDARY_ID_BITS = 10U;
-
-  const sitedata_t BOUNDARY_CONFIG_SHIFT = SITE_TYPE_BITS;
-  const sitedata_t BOUNDARY_DIR_SHIFT = BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-  const sitedata_t BOUNDARY_ID_SHIFT = BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
-
-  // Comments show the bit patterns.
-  const sitedata_t SITE_TYPE_MASK = ( (1 << SITE_TYPE_BITS) - 1);
-  // 0000 0000  0000 0000  0000 0000  0000 0011
-  // These give the *_TYPE in geometry/LatticeData.h
-
-  const sitedata_t BOUNDARY_CONFIG_MASK = ( (1 << BOUNDARY_CONFIG_BITS) - 1)
-      << BOUNDARY_CONFIG_SHIFT;
-  // 0000 0000  0000 0000  1111 1111  1111 1100
-  // These bits are set if the lattice vector they correspond to takes one to a solid site
-  // The following hex digits give the index into LatticeSite.neighbours
-  // ---- ----  ---- ----  DCBA 9876  5432 10--
-
-  const sitedata_t BOUNDARY_DIR_MASK = ( (1 << BOUNDARY_DIR_BITS) - 1) << BOUNDARY_DIR_SHIFT;
-  // 0000 0000  0000 1111  0000 0000  0000 0000
-  // No idea what these represent. As far as I can tell, they're unused.
-
-  const sitedata_t BOUNDARY_ID_MASK = ( ((sitedata_t) 1 << BOUNDARY_ID_BITS) - 1)
-      << BOUNDARY_ID_SHIFT;
-  // 0011 1111  1111 0000  0000 0000  0000 0000
-  // These bits together give the index of the inlet/outlet/wall in the output XML file
-
-  const sitedata_t PRESSURE_EDGE_MASK = (sitedata_t) 1
-      << (BOUNDARY_ID_BITS + BOUNDARY_ID_SHIFT + 1);
-  // 1000 0000  0000 0000  0000 0000  0000 0000
 
   const unsigned int FLUID = 1U;
   const unsigned int INLET = 2U;

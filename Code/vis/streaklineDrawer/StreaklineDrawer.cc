@@ -127,9 +127,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
 
-          if (block->site_data == NULL)
+          if (block->localContiguousIndex.size() == 0)
           {
             continue;
           }
@@ -138,15 +138,15 @@ namespace hemelb
           do
           {
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
             {
               continue;
             }
 
-            site_t siteIndex = block->site_data[siteTraverser.GetCurrentIndex()];
+            site_t siteIndex = block->localContiguousIndex[siteTraverser.GetCurrentIndex()];
 
             // if the lattice site is not an inlet
-            if (latDat.GetSiteType(siteIndex) != geometry::LatticeData::INLET_TYPE)
+            if (latDat.GetSiteType(siteIndex) != geometry::INLET_TYPE)
             {
               continue;
             }
@@ -265,7 +265,7 @@ namespace hemelb
       void StreaklineDrawer::UpdateVelocityFieldForCommunicatedSites()
       {
         for (std::map<proc_t, NeighbouringProcessor>::const_iterator neighProc =
-            neighbouringProcessors.begin(); neighProc != neighbouringProcessors.end(); neighProc++)
+            neighbouringProcessors.begin(); neighProc != neighbouringProcessors.end(); ++neighProc)
         {
           const NeighbouringProcessor& proc = (*neighProc).second;
 
@@ -286,7 +286,7 @@ namespace hemelb
         net::Net net;
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           (*proc).second.ExchangeSiteIdCounts(net);
         }
@@ -312,17 +312,17 @@ namespace hemelb
         net::Net net;
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           (*proc).second.ExchangeVelocitiesForRequestedSites(net);
         }
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           NeighbouringProcessor& neighbourProc = (*proc).second;
 
-          for (site_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByNeighbour(); n++)
+          for (site_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByNeighbour(); ++n)
           {
             const util::Vector3D<site_t> siteCoords =
                 neighbourProc.GetSiteCoordsBeingRequestedByNeighbour(n);
@@ -339,7 +339,7 @@ namespace hemelb
         net.Wait();
 
         for (std::map<proc_t, NeighbouringProcessor>::const_iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           const NeighbouringProcessor& neighbourProc = (*proc).second;
 
@@ -352,7 +352,7 @@ namespace hemelb
         }
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
           (*proc).second.ClearListOfRequestedSites();
         }

@@ -3,6 +3,9 @@
 
 namespace hemelb
 {
+  template<>
+  lb::lattices::LatticeInfo* lb::lattices::Lattice<D3Q15>::singletonInfo = NULL;
+
   const int D3Q15::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
   const int D3Q15::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
   const int D3Q15::CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
@@ -24,7 +27,7 @@ namespace hemelb
                                            1.0 / 72.0,
                                            1.0 / 72.0 };
 
-  const int D3Q15::INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
+  const Direction D3Q15::INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
 
   /*
    *  Kinetic moments defined in d'Humieres 2002. To get the matrix below, columns 8 and 9 are respectively permuted
@@ -55,7 +58,7 @@ namespace hemelb
     for (unsigned momentIndex = 0; momentIndex < NUM_KINETIC_MOMENTS; momentIndex++)
     {
       moments[momentIndex] = 0.;
-      for (unsigned velocityIndex = 0; velocityIndex < NUMVECTORS; velocityIndex++)
+      for (Direction velocityIndex = 0; velocityIndex < NUMVECTORS; velocityIndex++)
       {
         moments[momentIndex] += REDUCED_MOMENT_BASIS[momentIndex][velocityIndex]
             * velDistributions[velocityIndex];

@@ -61,6 +61,22 @@ hector:
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
-    CMAKE_CXX_FLAGS_RELEASE: "-O3"
+    CMAKE_CXX_FLAGS_RELEASE: ""
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+hector_login: #Hector, compiling for login nodes and serial queues
+   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
+   remote: "login.hector.ac.uk"
+   remote_path_template: "/home/e10/e10/$username/FabricHemeLbLogin"
+   results_path_template: "/work/e10/e10/$username/FabricHemeLbLogin/results"
+   config_path_template: "/work/e10/e10/$username/FabricHemeLbLogin/config_files"
+   modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
+   build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
+   tools_build: "TODO"
+   cmake_options: 
+      HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+      CMAKE_CXX_COMPILER: "CC"
+      CMAKE_C_COMPILER: "cc"
+      CMAKE_CXX_FLAGS_RELEASE: ""
+      HEMELB_OPTIMISATION: "-O3"
+      HEMELB_DEPENDENCIES_SET_RPATH: "OFF"

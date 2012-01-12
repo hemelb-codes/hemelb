@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "mpiInclude.h"
 #include "util/utilityFunctions.h"
 #include "mpiInclude.h"
 #include "log/Logger.h"

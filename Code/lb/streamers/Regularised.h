@@ -18,17 +18,17 @@ namespace hemelb
 
         public:
           Regularised(kernels::InitParams& initParams) :
-            collider(initParams)
+              collider(initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t iFirstIndex,
+                                         const site_t iSiteCount,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
+                                         hemelb::vis::Control *iControl)
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
@@ -37,21 +37,25 @@ namespace hemelb
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
               // First calculate the density and macro-velocity
+              //! @todo does the following comment make sense anymore?
               // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED
               // OUT IN A SUBSEQUENT FOR LOOP.
               collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
 
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
-              distribn_t fTemp[15];
+              distribn_t fTemp[D3Q15::NUMVECTORS];
 
-              for (int l = 0; l < 15; ++l)
+              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
+                //! @todo I thought the components that need updating are those that satisfy bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]), i.e. not having a node streaming on them.
                 if (bLatDat->HasBoundary(lIndex, l))
                 {
-                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]] + 3.0 * D3Q15::EQMWEIGHTS[l]
-                      * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
-                          + hydroVars.v_z * D3Q15::CZ[l]);
+                  //! @todo please document how fi = fiEq + fopp(i) - fopp(i)Eq becomes the expression below
+                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]]
+                      + 3.0 * D3Q15::EQMWEIGHTS[l]
+                          * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
+                              + hydroVars.v_z * D3Q15::CZ[l]);
                 }
                 else
                 {
@@ -60,15 +64,10 @@ namespace hemelb
               }
 
               distribn_t f_neq[D3Q15::NUMVECTORS];
-              for (int l = 0; l < 15; ++l)
+              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
                 f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
               }
-
-              distribn_t density_1 = 1. / hydroVars.density;
-              distribn_t v_xx = hydroVars.v_x * hydroVars.v_x;
-              distribn_t v_yy = hydroVars.v_y * hydroVars.v_y;
-              distribn_t v_zz = hydroVars.v_z * hydroVars.v_z;
 
               // Pi = sum_i e_i e_i f_i
               // zeta = Pi / 2 (Cs^4)
@@ -85,13 +84,13 @@ namespace hemelb
               // chi = Cs^2 I : zeta
               const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
 
-              // Now apply bounce-back to the components that require it, from fTemp
-              site_t lStreamTo[15];
-              for (int l = 0; l < 15; l++)
+              // Now apply bounce-back to the components that require it
+              site_t lStreamTo[D3Q15::NUMVECTORS];
+              for (unsigned l = 0; l < D3Q15::NUMVECTORS; l++)
               {
                 if (bLatDat->HasBoundary(lIndex, l))
                 {
-                  lStreamTo[l] = lIndex * 15 + D3Q15::INVERSEDIRECTIONS[l];
+                  lStreamTo[l] = lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
                 }
                 else
                 {
@@ -104,8 +103,8 @@ namespace hemelb
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
               {
                 // Calculate the dot-product of the velocity with the direction vector.
-                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii] + hydroVars.v_y
-                    * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
+                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii]
+                    + hydroVars.v_y * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
 
                 // Calculate the squared magnitude of the velocity.
                 distribn_t v2Sum = hydroVars.v_x * hydroVars.v_x + hydroVars.v_y * hydroVars.v_y
@@ -123,6 +122,8 @@ namespace hemelb
                 // Multiply by eqm weight.
                 streamed *= D3Q15::EQMWEIGHTS[ii];
 
+                //! @todo: I think "streamed" is already known as hydroVars.GetFEq().f[ii]
+
                 // According to Latt & Chopard (Physical Review E77, 2008),
                 // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
                 //            Q_i : Pi(n_eq)
@@ -138,14 +139,22 @@ namespace hemelb
                 {
                   for (int bb = 0; bb < 3; ++bb)
                   {
-                    f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                    f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
                   }
                 }
 
                 f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
 
-                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed + (1.0 + iLbmParams->GetOmega())
-                    * f_neq[ii];
+                /*
+                 * Newly constructed distribution function:
+                 *    g_i = f^{eq}_i + f^{neq}_i
+                 *
+                 * Collision step:
+                 *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
+                 *            = f^{eq}_i + (1+w) f^{neq}_i
+                 */
+                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed
+                    + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
               }
 
               BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
@@ -161,15 +170,19 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 hemelb::vis::Control *iControl)
           {
 
           }
 
+          void DoReset(kernels::InitParams* init)
+          {
+            collider.Reset(init);
+          }
       };
     }
   }
