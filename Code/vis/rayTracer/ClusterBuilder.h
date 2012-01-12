@@ -135,7 +135,7 @@ namespace hemelb
                 do
                 {
                   //If the site is not a solid
-                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->site_data[siteTraverser.GetCurrentIndex()]
+                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->localContiguousIndex[siteTraverser.GetCurrentIndex()]
                       != BIG_NUMBER3)
                   {
                     clusterSiteMin.UpdatePointwiseMin(siteTraverser.GetCurrentLocation()
@@ -184,9 +184,9 @@ namespace hemelb
 
           //Returns true if there are sites in the given block associated with the
           //local processor rank
-          bool AreSitesAssignedToLocalProcessorRankInBlock(geometry::BlockData * block)
+          bool AreSitesAssignedToLocalProcessorRankInBlock(const geometry::BlockData * block)
           {
-            if (block->ProcessorRankForEachBlockSite == NULL)
+            if (block->processorRankForEachBlockSite.size() == 0)
             {
               return false;
             }
@@ -194,7 +194,7 @@ namespace hemelb
             for (unsigned int siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit(); siteId++)
             {
               if (topology::NetworkTopology::Instance()->GetLocalRank()
-                  == block->ProcessorRankForEachBlockSite[siteId])
+                  == block->processorRankForEachBlockSite[siteId])
               {
                 return true;
               }
@@ -277,8 +277,8 @@ namespace hemelb
                                             ClusterType& cluster,
                                             site_t siteIdOnBlock)
           {
-            geometry::BlockData * block = mLatticeData->GetBlock(blockId);
-            unsigned int clusterVoxelSiteId = block->site_data[siteIdOnBlock];
+            const geometry::BlockData * block = mLatticeData->GetBlock(blockId);
+            site_t clusterVoxelSiteId = block->localContiguousIndex[siteIdOnBlock];
 
             //If site not a solid and on the current processor [net.cc]
             if (clusterVoxelSiteId != BIG_NUMBER3)
@@ -303,15 +303,18 @@ namespace hemelb
                                                                                  siteIdOnBlock);
           }
 
-          void UpdateWallNormalAtSite(geometry::BlockData * block,
+          void UpdateWallNormalAtSite(const geometry::BlockData * block,
                                       site_t blockNum,
                                       ClusterType& cluster,
                                       site_t siteIdOnBlock)
           {
 
-            if (block->wall_data != NULL && block->wall_data[siteIdOnBlock].wall_nor[0] != -1.0F)
+            const util::Vector3D<double>& wallNormal =
+                mLatticeData->GetNormalToWall(block->localContiguousIndex[siteIdOnBlock]);
+
+            if (wallNormal[0] != -1.0F)
             {
-              cluster.SetWallData(blockNum, siteIdOnBlock, block->wall_data[siteIdOnBlock].wall_nor);
+              cluster.SetWallData(blockNum, siteIdOnBlock, wallNormal);
             }
           }
 

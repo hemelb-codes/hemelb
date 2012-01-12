@@ -57,7 +57,7 @@ namespace hemelb
                                      const float iRayUnitsInCluster,
                                      const DomainStats& iDomainStats,
                                      const VisSettings& iVisSettings,
-                                     const double* iWallNormal)
+                                     const util::Vector3D<double>* iWallNormal)
           {
             //Have we just entered the wall?
             if (!mInWall)

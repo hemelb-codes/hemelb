@@ -26,9 +26,9 @@ namespace hemelb
             ++n;
 
             // Get the block data for this block - if it has no site data, move on.
-            geometry::BlockData * map_block_p = mLatDat->GetBlock(n);
+            const geometry::BlockData * map_block_p = mLatDat->GetBlock(n);
 
-            if (map_block_p->site_data == NULL)
+            if (map_block_p->localContiguousIndex.size() == 0)
             {
               continue;
             }
@@ -42,7 +42,7 @@ namespace hemelb
                 << mLatDat->GetLog2BlockSize()) + site_k;
 
             // ... (only if there's fluid there).
-            if (map_block_p->site_data[siteIdOnBlock] & BIG_NUMBER3)
+            if (map_block_p->localContiguousIndex[siteIdOnBlock] & BIG_NUMBER3)
             {
               continue;
             }
@@ -54,7 +54,8 @@ namespace hemelb
             lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
             lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
 
-            lGlyph.f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
+            lGlyph.f = mLatDat->GetFOld(map_block_p->localContiguousIndex[siteIdOnBlock]
+                * D3Q15::NUMVECTORS);
 
             mGlyphs.push_back(lGlyph);
           } // for k

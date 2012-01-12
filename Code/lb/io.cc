@@ -79,7 +79,7 @@ namespace hemelb
         lWriter << (unsigned int) io::formats::snapshot::HeaderLength;
         lWriter << stability;
         lWriter << mLatDat->GetVoxelSize();
-        lWriter << mLatDat->GetXOrigin() << mLatDat->GetYOrigin() << mLatDat->GetZOrigin();
+        lWriter << mLatDat->GetOrigin().x << mLatDat->GetOrigin().x << mLatDat->GetOrigin().z;
         lWriter << (int) mLatDat->GetGlobalSiteMins().x << (int) mLatDat->GetGlobalSiteMins().y
             << (int) mLatDat->GetGlobalSiteMins().z;
         lWriter << (int) mLatDat->GetGlobalSiteMaxes().x << (int) mLatDat->GetGlobalSiteMaxes().y
@@ -139,7 +139,7 @@ namespace hemelb
 
             ++n;
 
-            if (mLatDat->GetBlock(n)->ProcessorRankForEachBlockSite == NULL)
+            if (mLatDat->GetBlock(n)->processorRankForEachBlockSite.size() == 0)
             {
               continue;
             }
@@ -154,24 +154,23 @@ namespace hemelb
 
                   m++;
                   if (netTop->GetLocalRank()
-                      != mLatDat->GetBlock(n)->ProcessorRankForEachBlockSite[m])
+                      != mLatDat->GetBlock(n)->processorRankForEachBlockSite[m])
                   {
                     continue;
                   }
 
-                  site_t my_site_id = mLatDat->GetBlock(n)->site_data[m];
+                  site_t my_site_id = mLatDat->GetBlock(n)->localContiguousIndex[m];
 
-                  /* Don't write out for solid sites */
+                  /* Skip over solid sites. */
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 
                   distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
                       f_neq[D3Q15::NUMVECTORS], stress, pressure;
 
-                  // TODO Utter filth. The cases where the whole site data is exactly equal
-                  // to "FLUID_TYPE" and where just the type-component of the whole site data
-                  // is equal to "FLUID_TYPE" are handled differently.
-                  if (mLatDat->GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
+                  geometry::SiteData siteData = mLatDat->GetSiteData(my_site_id);
+
+                  if (siteData.GetSiteType() == geometry::FLUID_TYPE && !siteData.IsEdge())
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
                                                            * D3Q15::NUMVECTORS),
@@ -209,7 +208,7 @@ namespace hemelb
                     {
                       D3Q15::CalculateShearStress(density,
                                                   f_neq,
-                                                  &mLatDat->GetNormalToWall(my_site_id)[0],
+                                                  mLatDat->GetNormalToWall(my_site_id),
                                                   stress,
                                                   mParams.GetStressParameter());
                     }
@@ -260,7 +259,7 @@ namespace hemelb
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(distribn_t f[],
-                          hemelb::geometry::LatticeData::SiteType const iSiteType,
+                          hemelb::geometry::SiteType const iSiteType,
                           unsigned int const iBoundaryId,
                           distribn_t *density,
                           distribn_t *vx,
@@ -275,13 +274,13 @@ namespace hemelb
         f_neq[l] = f[l];
       }
 
-      if (iSiteType == hemelb::geometry::LatticeData::FLUID_TYPE)
+      if (iSiteType == hemelb::geometry::FLUID_TYPE)
       {
         D3Q15::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
       }
       else
       {
-        if (iSiteType == hemelb::geometry::LatticeData::INLET_TYPE)
+        if (iSiteType == hemelb::geometry::INLET_TYPE)
         {
           *density = mInletValues->GetBoundaryDensity(iBoundaryId);
         }
