@@ -32,7 +32,7 @@ ExternalProject_Add(
    hemelb
 	URL ${PROJECT_SOURCE_DIR}/Code	
 	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
-	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> 
+	-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
 	-DHEMELB_DEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
 	-DHEMELB_DEPENDENCIES_INSTALL_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
 	-DTIXML_USE_STL=${TIXML_USE_STL}
@@ -56,11 +56,5 @@ ExternalProject_Add(
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}
 	-DHEMELB_DEPENDENCIES_SET_RPATH=${HEMELB_DEPENDENCIES_SET_RPATH}
 )
-ExternalProject_Get_Property(hemelb install_dir)
-
-INSTALL(FILES ${install_dir}/bin/hemelb DESTINATION bin)
-if (HEMELB_BUILD_UNITTESTS)
-	INSTALL(FILES ${install_dir}/bin/unittests_hemelb DESTINATION bin)
-endif()
 
 add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate)
