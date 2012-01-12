@@ -29,6 +29,7 @@ def clone():
 		# so the data must be sent by a project sync instead.
 		execute(sync)
 		 # On such machines, we cannot rely on an outgoing connection to servers to find dependencies either.
+	if env.no_ssh or env.needs_tarballs:
 		execute(send_distributions)
 	else:
 		with cd(env.remote_path):
