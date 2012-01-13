@@ -60,9 +60,7 @@ namespace hemelb
       TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation", iIsLoading);
       DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
       DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
-      long dummyStress = -1;
-      DoIO(lSimulationElement, "stresstype", iIsLoading, dummyStress);
-      StressType = (lb::StressTypes) dummyStress;
+      DoIO(lSimulationElement, "stresstype", iIsLoading, StressType);
 
       TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
 
@@ -218,6 +216,31 @@ namespace hemelb
         sprintf(lStringValue, "%ld", bValue);
 
         iParent->SetAttribute(iAttributeName, lStringValue);
+      }
+    }
+
+    void SimConfig::DoIO(TiXmlElement* iXmlNode,
+                         std::string iAttributeName,
+                         bool iIsLoading,
+                         lb::StressTypes &value)
+    {
+      if (iIsLoading)
+      {
+        char *dummy;
+        // Read in, in base 10.
+        value = (lb::StressTypes) std::strtol(iXmlNode->Attribute(iAttributeName)->c_str(),
+                                              &dummy,
+                                              10);
+      }
+      else
+      {
+        // This should be ample.
+        char lStringValue[20];
+
+        // %ld specifies long integer style.
+        sprintf(lStringValue, "%i", (int) value);
+
+        iXmlNode->SetAttribute(iAttributeName, lStringValue);
       }
     }
 
