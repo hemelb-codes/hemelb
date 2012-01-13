@@ -13,7 +13,7 @@
 #$$ -l mem=$memory
 
 # 4. Set the name of the job.
-#$$ -N $name
+#$$ -N $job_name
 
 # 5. Select the OpenMPI parallel environment and 16 processes.
 #$$ -pe openmpi $cores
