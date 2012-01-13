@@ -4,19 +4,10 @@
 default:
   local_results: "~/devel/ccs/fabric/hemelb/results"
   local_configs: "~/devel/ccs/fabric/hemelb/config_files"
+  username: "jamespjh"
 legion:
   username: "ucgajhe"
   project: "jamespjh_ccs"
-planck:
-  username: "jamespjh"
-  project: "jamespjh_ccs"
-  results_path: "/home/jamespjh/FabricHemeLb/results"
-  remote_path: "/home/jamespjh/FabricHemeLb"
-entropy:
-  username: "jamespjh"  
 hector:
-  username: "jamespjh"
   project: "e10"
   budget: "e10-jamespjh"
-julian:
-  username: "jamespjh"
