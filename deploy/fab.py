@@ -22,7 +22,7 @@ import time
 def clone():
 	"""Delete and checkout the repository afresh."""
 	run(template("mkdir -p $remote_path"))
-	if env.no_ssh:
+	if env.no_ssh or env.no_hg:
 		with cd(env.remote_path):
 			run(template("rm -rf $repository"))
 		# Some machines do not allow outgoing connections back to the mercurial server
@@ -359,6 +359,7 @@ def job(**args):
 	
 	script_name=template("$machine_name-$script")
 	env.job_script=script_template(script_name)
+	
 	env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
 	put(env.job_script,env.dest_name)
 	
