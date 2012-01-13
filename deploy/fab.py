@@ -122,7 +122,8 @@ def configure():
 			run(template("rm -f $build_path/CMakeCache.txt"))
 			run(template(
 			"cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
-			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
+			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags "+
+			"-DHEMELB_SUBPROJECT_MAKE_JOBS=$make_jobs"
 			))
 
 @task
@@ -150,9 +151,9 @@ def build_code_only(verbose=False):
 	with cd(env.code_build_path):
 		with prefix(env.build_prefix):		
 			if verbose or env.verbose:
-				run("make VERBOSE=1")
+				run(template("make -j$make_jobs VERBOSE=1"))
 			else:
-				run("make")
+				run(template("make -j$make_jobs"))
 
 @task
 def install_code_only():
