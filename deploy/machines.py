@@ -86,8 +86,9 @@ def complete_environment():
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
 	
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
-	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
-	env.tools_build_path=env.pather.join(env.tools_path,'build',env.tools_build)
+	env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
+	env.regression_test_path=template(env.regression_test_path_template)
+	env.tools_build_path=env.pather.join(env.install_path,'lib',env.python_build,'site_packages')
 	
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
