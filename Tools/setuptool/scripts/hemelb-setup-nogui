@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+import pdb
+from argparse import ArgumentParser
+
+# Parse command line arguments
+parser = ArgumentParser(description='Generate the config file '
+                        'described by a profile file')
+
+parser.add_argument('profile', nargs=1, help='The profile to '
+                    'use. Other options given override those in the '
+                    'profile file.')
+
+parser.add_argument('--stl', default=None, dest='StlFile',
+                    help='The STL file to use as input')
+parser.add_argument('--config', default=None, dest='OutputConfigFile',
+                    help='Config output file')
+parser.add_argument('--xml', default=None, dest='OutputXmlFile',
+                    help='XML output file')
+parser.add_argument('--voxel', default=None, type=float,
+                    help='The voxel size in metres')
+
+# Parse
+args = parser.parse_args()
+# Separate the profile argument (argparse puts it in a list)
+profile = args.profile[0]
+del args.profile
+
+# Import our module late to give erroneous args a chance to be caught
+# quickly
+from HemeLbSetupTool.Model.Profile import Profile
+p = Profile()
+p.LoadFromFile(profile)
+# override any keys that have been set on cmdline.
+for k, val in vars(args).iteritems():
+    if val is not None:
+        setattr(p, k, val)
+        pass
+    continue
+p.Generate()
