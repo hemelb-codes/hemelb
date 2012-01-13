@@ -90,7 +90,7 @@ namespace hemelb
 
               if (iLbmParams->StressType == ShearStress)
               {
-                if (iLatDat->GetNormalToWall(iSiteIndex)[0] == NO_VALUE)
+                if ((iLatDat->GetSiteData(iSiteIndex) & PRESSURE_EDGE_MASK) == 0)
                 {
                   rtStress = NO_VALUE;
                 }
