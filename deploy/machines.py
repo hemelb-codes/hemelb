@@ -12,6 +12,7 @@ from templates import *
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env.no_ssh=False
+env.no_hg=False
 #Load and invoke the default non-machine specific config JSON dictionaries.
 config=yaml.load(open(os.path.join(env.localroot,'deploy','machines.yml')))
 env.update(config['default'])
