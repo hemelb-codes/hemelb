@@ -62,7 +62,7 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_Datatype viewType = MpiDataType<char> ();
+      MPI_Datatype viewType = MpiDataType<char>();
       MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -119,9 +119,9 @@ namespace hemelb
       site_t lLocalWriteLength = io::formats::snapshot::VoxelRecordLength
           * mLatDat->GetFluidSiteCountOnProc(netTop->GetLocalRank());
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
-      hemelb::io::writers::xdr::XdrMemWriter
-          lWriter = hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
-                                                           (unsigned int) lLocalWriteLength);
+      hemelb::io::writers::xdr::XdrMemWriter lWriter =
+          hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
+                                                 (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
        * the block is non-empty, it scans the sites within that block. If the
@@ -165,8 +165,8 @@ namespace hemelb
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 
-                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
-                      f_neq[D3Q15::NUMVECTORS], stress, pressure;
+                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
+                      stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
@@ -203,7 +203,7 @@ namespace hemelb
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (mLatDat->GetNormalToWall(my_site_id)[0] >= NO_VALUE)
+                    if (!mLatDat->GetSiteData(my_site_id).IsEdge())
                     {
                       stress = -1.0;
                     }
@@ -305,8 +305,8 @@ namespace hemelb
 
     void LBM::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits<distribn_t>::max();
-      distribn_t density_max = std::numeric_limits<distribn_t>::min();
+      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
+      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
