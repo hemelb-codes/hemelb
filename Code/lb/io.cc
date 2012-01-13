@@ -201,7 +201,7 @@ namespace hemelb
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (mLatDat->GetNormalToWall(my_site_id)[0] >= NO_VALUE)
+                    if ((mLatDat->GetSiteData(my_site_id) & PRESSURE_EDGE_MASK) == 0)
                     {
                       stress = -1.0;
                     }
