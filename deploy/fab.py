@@ -35,6 +35,7 @@ def clone():
 			run(template("hg clone $hg/$repository"))
 	if env.no_ssh or env.needs_tarballs:
 		execute(send_distributions)
+	execute(copy_regression_tests)
 
 @task(alias='cold')
 def deploy_cold():
@@ -99,7 +100,8 @@ def clean():
 def build_python_tools():
 	"""Build and install python scripts."""
 	with cd(env.tools_path):
-		run("python setup.py build")
+		with prefix(env.build_prefix):
+			run(template("python setup.py install --prefix $install_path"))
 
 @task
 def stat():
@@ -201,6 +203,11 @@ def send_distributions():
 	run(template("mkdir -p $repository_path/dependencies/distributions"))
 	rsync_project(local_dir=os.path.join(env.localroot,'dependencies','distributions')+'/',
 	remote_dir=env.pather.join(env.repository_path,'dependencies','distributions'))
+
+@task
+def copy_regression_tests():
+	if env.regression_test_source_path != env.regression_test_path:
+		run(template("cp -r $regression_test_source_path $regression_test_path"))
 
 @task
 def sync():
@@ -343,7 +350,8 @@ def hemelb(**args):
 @task(alias='regress')
 def regression_test():
 	"""Submit a regression-testing job to the remote queue."""
-	execute(job,script='regression',name='regression_${build_number}_${machine_name}')
+	execute(copy_regression_tests)
+	execute(job,script='regression',name='regression_${build_number}_${machine_name}',cores=3,wall_time='0:20:0')
 
 @task
 def job(**args):
