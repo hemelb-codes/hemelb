@@ -12,13 +12,14 @@ from templates import *
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env.no_ssh=False
+env.no_hg=False
 #Load and invoke the default non-machine specific config JSON dictionaries.
 config=yaml.load(open(os.path.join(env.localroot,'deploy','machines.yml')))
 env.update(config['default'])
 user_config=yaml.load(open(os.path.join(env.localroot,'deploy','machines_user.yml')))
 env.update(user_config['default'])
 env.verbose=False
-
+env.needs_tarballs=False
 env.cmake_options={}
 env.pather=posixpath
 
@@ -29,35 +30,26 @@ def machine(name):
 	Completes additional paths and interpolates them, via complete_environment.
 	Usage, e.g. fab machine:hector build
 	"""
+	if "import" in config[name]:
+		# Config for this machine is based on another
+		env.update(config[config[name]["import"]])
+		if config[name]["import"] in user_config:
+			env.update(user_config[config[name]["import"]])
 	env.update(config[name])
-	env.update(user_config[name])
+	if name in user_config:
+		env.update(user_config[name]) 
 	env.machine_name=name
 	complete_environment()
 
-@task 
-def planck():
-	"""Alias for machine:planck"""
-	execute(machine,'planck')
-
-@task 
-def legion():
-	"""Alias for machine:legion"""
-	execute(machine,'legion')
-	
-@task 
-def entropy():
-	"""Alias for machine:entropy"""
-	execute(machine,'entropy')
-
-@task 
-def hector():
-	"""Alias for machine:hector"""
-	execute(machine,'hector')
-	
-@task 
-def hector_login():
-	"""Alias for machine:hector_login"""
-	execute(machine,'hector_login')	
+#Metaprogram the machine wrappers
+for machine_name in set(config.keys())-set(['default']):
+	#Use default parameter trick to avoid closing to a reference
+	def _machine(machine_name=machine_name):
+		execute(machine,machine_name)
+	#Fabric task decorator creates task based on wrapped function's name
+	_machine.func_name=machine_name
+	#Invoke @task decorator as a function, and store to globals.
+	globals()[machine_name]=task(_machine)
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
@@ -80,17 +72,23 @@ def complete_environment():
 	build_cache: CMakeCache.txt file on remote, used to capture build flags.
 	"""
 	env.hosts=['%s@%s'%(env.username,env.remote)]
-	env.results_path=template(env.results_path_template)
+	env.home_path=template(env.home_path_template)
+	env.runtime_path=template(env.runtime_path_template)
+	env.work_path=template(env.work_path_template)
 	env.remote_path=template(env.remote_path_template)
-	env.config_path=template(env.config_path_template)
-	env.repository_path=env.pather.join(env.remote_path,env.repository)
-	env.tools_path=env.pather.join(env.repository_path,"Tools")
-	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
-	env.tools_build_path=env.pather.join(env.tools_path,'build',env.tools_build)
+	env.install_path=template(env.install_path_template)
+		
+	env.results_path=env.pather.join(env.work_path,"results")
+	env.config_path=env.pather.join(env.work_path,"config_files")
+	env.scripts_path=env.pather.join(env.work_path,"scripts")
 	env.build_path=env.pather.join(env.remote_path,'build')
 	env.code_build_path=env.pather.join(env.remote_path,'code_build')
-	env.install_path=env.pather.join(env.remote_path,'install')
-	env.scripts_path=env.pather.join(env.remote_path,'scripts')
+	env.repository_path=env.pather.join(env.remote_path,env.repository)
+	
+	env.tools_path=env.pather.join(env.repository_path,"Tools")
+	env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
+	env.regression_test_path=template(env.regression_test_path_template)
+	env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
 	
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
@@ -101,7 +99,7 @@ def complete_environment():
 	
 	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
 	env.run_prefix=" && ".join(module_commands+map(template,env.run_prefix_commands)) or 'echo Running...'
-	
+	env.template_key = env.template_key or env.machine_name
 	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	# check_output is 2.7 python and later only. Revert to oldfashioned popen.
 	cmd=os.popen(template("hg id -i -rtip $hg/$repository"))
