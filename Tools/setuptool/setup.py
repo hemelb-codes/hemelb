@@ -74,19 +74,33 @@ def LinuxGrep(results):
     raise ValueError("Can't figure out the VTK include dir")
 
 def LibToInclude(vtkLibDir):
-    osName = platform.system()
-
-    if osName == 'Linux':
-        return '/usr/include/vtk-5.8/'
-
     libDir, vtk = os.path.split(vtkLibDir)
-    prefix, lib = os.path.split(libDir)
+    if vtk.startswith('vtk'):
+        prefix, lib = os.path.split(libDir)
+    elif vtk == 'lib':
+        prefix = libDir
+        libDir = vtkLibDir
+    else:
+        raise ValueError("Can't deduce path to VTK include dir from library dir '%s'" % vtkLibDir)
+
     includeDir = os.path.join(prefix, 'include')
-    vtkIncludeDir = os.path.join(includeDir, vtk)
+    vtkIncludeDir = os.path.join(includeDir, 'vtk-%d.%d' % GetVtkVersion())
     return vtkIncludeDir
 
 def GetVtkLibDir():
-    return '/usr/lib/'
+    aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
+    osName = platform.system()
+    if osName == 'Darwin':
+        sharedLibCmd = 'otool -L %s'
+        grep = DarwinGrep
+    elif osName == 'Linux':
+        sharedLibCmd = 'ldd %s'
+        grep = LinuxGrep
+    else:
+        raise ValueError("Don't know how to determing VTK path on OS '%s'" % osName)
+
+    results = os.popen(sharedLibCmd % aVtkSharedLibrary).read()
+    return grep(results)
 
 def GetVtkCompileFlags(vtkLibDir):
     # SET(VTK_REQUIRED_CXX_FLAGS " -Wno-deprecated -no-cpp-precomp")
