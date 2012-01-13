@@ -1,3 +1,0 @@
-cd $job_results
-$run_prefix
-$install_path/bin/unittests_hemelb -o 'tests.xml'
