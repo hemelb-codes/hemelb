@@ -240,7 +240,7 @@ namespace hemelb
                   }
                   else
                   {
-                    double lBigDistance[3];
+                    double lBigDistance[14];
                     for (unsigned int ii = 0; ii < 14; ii++)
                       lBigDistance[ii] = NO_VALUE;
                     SetWallDistance(site_map, lBigDistance);
