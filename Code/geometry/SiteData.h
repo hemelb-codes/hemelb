@@ -1,6 +1,8 @@
 #ifndef HEMELB_GEOMETRY_SITEDATA_H
 #define HEMELB_GEOMETRY_SITEDATA_H
 
+#include "units.h"
+
 namespace hemelb
 {
   namespace geometry

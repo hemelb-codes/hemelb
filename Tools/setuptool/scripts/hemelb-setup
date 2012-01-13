@@ -9,15 +9,13 @@ parser = ArgumentParser(description='Process an input STL file into'
 parser.add_argument('--profile', default=None, help='Load the profile'
                     'to use from an existing file. Other options given'
                     'override those inthe profile file.')
-
 parser.add_argument('--stl', default=None, dest='StlFile',
-                    help='The STL file to useas input')
-
+                    help='The STL file to use as input')
 parser.add_argument('--config', default=None, dest='OutputConfigFile',
                     help='Config output file')
-
 parser.add_argument('--xml', default=None, dest='OutputXmlFile',
                     help='XML output file')
+
 # Parse
 args = parser.parse_args()
 # Separate the profile argument.
