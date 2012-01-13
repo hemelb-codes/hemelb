@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os.path
-import pickle
+import cPickle
 from copy import copy
 import numpy as np
 
@@ -12,7 +12,6 @@ from HemeLbSetupTool.Model.Vector import Vector
 from HemeLbSetupTool.Model.OutputGeneration import ConfigGenerator
 
 #import pdb
-import cProfile
 
 class LengthUnit(Observable):
     def __init__(self, sizeInMetres, name, abbrv):
@@ -171,20 +170,40 @@ class Profile(Observable):
         return self._UnitChoices[self.StlFileUnitId]
     
     def LoadFromFile(self, filename):
-        restored = pickle.Unpickler(file(filename)).load()
+        restored = cPickle.Unpickler(file(filename)).load()
+        # Now adjust the paths of filenames relative to the Profile file.
+        # Note that this will work if an absolute path has been pickled as
+        # os.path.join will discard previous path elements when it gets an
+        # absolute path. (Of course, this will only work if that path is
+        # correct!)
+        basePath = os.path.dirname(os.path.abspath(filename))
+        restored.StlFile = os.path.abspath(
+            os.path.join(basePath, restored.StlFile)
+        )
+        restored.OutputConfigFile = os.path.abspath(
+            os.path.join(basePath, restored.OutputConfigFile)
+        )
+        restored.OutputXmlFile = os.path.abspath(
+            os.path.join(basePath, restored.OutputXmlFile)
+        )
+        
         self.CloneFrom(restored)
         return
     
     def Save(self, filename):
         outfile = file(filename, 'w')
-        pickler = pickle.Pickler(outfile)
-        pickler.dump(self)
+        self.BasePath = os.path.dirname(filename)
+        try:
+            pickler = cPickle.Pickler(outfile, protocol=2)
+            pickler.dump(self)
+        finally:
+            del self.BasePath
+            
         return
     
     def Generate(self):
         generator = ConfigGenerator(self)
         generator.Execute()
-#        cProfile.runctx('generator.Execute()', globals(), locals(), 'generate.prof')
         return
     
     def ResetVoxelSize(self, ignored=None):
@@ -192,6 +211,15 @@ class Profile(Observable):
         """
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
         return
+    
+    def __getstate__(self):
+        # First, use the superclass's getstate        
+        state = Observable.__getstate__(self)
+        # Now we need to make the paths relative to the directory of the pickle file
+        state['StlFile'] = os.path.relpath(self.StlFile, self.BasePath)
+        state['OutputXmlFile'] = os.path.relpath(self.OutputXmlFile, self.BasePath)
+        state['OutputConfigFile'] = os.path.relpath(self.OutputConfigFile, self.BasePath)
+        return state
     
     pass
     
