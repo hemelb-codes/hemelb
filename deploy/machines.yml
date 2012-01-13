@@ -19,6 +19,7 @@ default:
   fabric_dir: "FabricHemeLb"
   # Path to runtime accessible filesystem (default is same as build time)
   runtime_path_template: "$home_path"
+  make_jobs: 1
   corespernode: 1
   # Default options used in the CMake configure step.
   cmake_default_options: 
@@ -85,4 +86,6 @@ julian:
    remote: "julian.chem.ucl.ac.uk"
 oppenheimer:
    remote: "oppenheimer.chem.ucl.ac.uk"
+   build_prefix_commands: ["export set PATH=$PATH:/home/jamespjh/install/bin"]
    no_hg: true
+   make_jobs: 4
