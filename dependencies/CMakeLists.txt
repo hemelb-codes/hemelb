@@ -3,6 +3,7 @@ Project(HemeLBDependencies)
 include(ExternalProject)
 set(HEMELB_DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
+set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
 set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
@@ -30,12 +31,13 @@ else()
 	   tinyxml
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${TINYXML_TARBALL}
-		CONFIGURE_COMMAND cmake <SOURCE_DIR> 
+		CONFIGURE_COMMAND cmake <SOURCE_DIR>
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DTIXML_USE_STL=${TIXML_USE_STL}
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 		-DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
 		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
 endif()
 
@@ -70,7 +72,7 @@ else()
 				cd metis && 
 				make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION}
 		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
 		INSTALL_COMMAND make install MAKEFLAGS= && cd metis && make install MAKEFLAGS=
 	)
 endif()
@@ -102,6 +104,7 @@ else()
 		URL ${CPPUNIT_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
 		BUILD_IN_SOURCE 1
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
 	if (RECONFIGURE_CPPUNIT)
 		ExternalProject_Add_Step(
@@ -172,6 +175,7 @@ else()
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
 endif()

@@ -37,25 +37,16 @@ namespace hemelb
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
               // First calculate the density and macro-velocity
-              //! @todo does the following comment make sense anymore?
-              // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED
-              // OUT IN A SUBSEQUENT FOR LOOP.
               collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
 
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
               distribn_t fTemp[D3Q15::NUMVECTORS];
-
               for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
-                //! @todo I thought the components that need updating are those that satisfy bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]), i.e. not having a node streaming on them.
-                if (bLatDat->HasBoundary(lIndex, l))
+                if (bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]))
                 {
-                  //! @todo please document how fi = fiEq + fopp(i) - fopp(i)Eq becomes the expression below
-                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]]
-                      + 3.0 * D3Q15::EQMWEIGHTS[l]
-                          * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
-                              + hydroVars.v_z * D3Q15::CZ[l]);
+                  fTemp[l] = hydroVars.GetFEq().f[l] + f[D3Q15::INVERSEDIRECTIONS[l]] - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
                 }
                 else
                 {
@@ -102,28 +93,6 @@ namespace hemelb
 
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
               {
-                // Calculate the dot-product of the velocity with the direction vector.
-                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii]
-                    + hydroVars.v_y * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
-
-                // Calculate the squared magnitude of the velocity.
-                distribn_t v2Sum = hydroVars.v_x * hydroVars.v_x + hydroVars.v_y * hydroVars.v_y
-                    + hydroVars.v_z * hydroVars.v_z;
-
-                // F eqm = density proportional component...
-                distribn_t streamed = hydroVars.density;
-
-                // ... - v^2 component...
-                streamed -= ( (3.0 / 2.0) * v2Sum / hydroVars.density);
-
-                // ... + v^1 component
-                streamed += 3.0 * vSum + (9.0 / 2.0) * vSum * vSum / hydroVars.density;
-
-                // Multiply by eqm weight.
-                streamed *= D3Q15::EQMWEIGHTS[ii];
-
-                //! @todo: I think "streamed" is already known as hydroVars.GetFEq().f[ii]
-
                 // According to Latt & Chopard (Physical Review E77, 2008),
                 // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
                 //            Q_i : Pi(n_eq)
@@ -153,7 +122,7 @@ namespace hemelb
                  *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                  *            = f^{eq}_i + (1+w) f^{neq}_i
                  */
-                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed
+                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq().f[ii]
                     + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
               }
 
