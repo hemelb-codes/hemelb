@@ -366,7 +366,7 @@ def job(**args):
 	env['job_name']=env.name[0:env.max_job_name_chars]
 	with_job(env.name)
 	
-	script_name=template("$machine_name-$script")
+	script_name=template("$template_key-$script")
 	env.job_script=script_template(script_name)
 	
 	env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
