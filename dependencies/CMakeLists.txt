@@ -37,7 +37,7 @@ else()
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 		-DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
 		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
-		BUILD_COMMAND make -j${HEMELB_SUBPPROJECT_MAKE_JOBS}
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
 endif()
 
@@ -72,7 +72,7 @@ else()
 				cd metis && 
 				make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION}
 		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make -j${HEMELB_SUBPPROJECT_MAKE_JOBS} MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
 		INSTALL_COMMAND make install MAKEFLAGS= && cd metis && make install MAKEFLAGS=
 	)
 endif()
@@ -104,7 +104,7 @@ else()
 		URL ${CPPUNIT_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
 		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make -j${HEMELB_SUBPPROJECT_MAKE_JOBS}
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
 	if (RECONFIGURE_CPPUNIT)
 		ExternalProject_Add_Step(
@@ -175,7 +175,7 @@ else()
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
-		BUILD_COMMAND make -j${HEMELB_SUBPPROJECT_MAKE_JOBS}
+		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
 endif()
