@@ -88,7 +88,7 @@ def complete_environment():
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
 	env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
 	env.regression_test_path=template(env.regression_test_path_template)
-	env.tools_build_path=env.pather.join(env.install_path,'lib',env.python_build,'site_packages')
+	env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
 	
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
@@ -99,7 +99,7 @@ def complete_environment():
 	
 	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
 	env.run_prefix=" && ".join(module_commands+map(template,env.run_prefix_commands)) or 'echo Running...'
-	
+	env.template_key = env.template_key or env.machine_name
 	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	# check_output is 2.7 python and later only. Revert to oldfashioned popen.
 	cmd=os.popen(template("hg id -i -rtip $hg/$repository"))
