@@ -197,8 +197,8 @@ namespace hemelb
                       "opposite an unstreamed-to direction " + message.str(),
                                          latDat->HasBoundary(streamedToSite, oppDirection));
                   // Test disabled due to RegressionTests issue, see discussion in #87
-                  //CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "+message.str(),
-                  //                       latDat->GetCutDistance(streamedToSite, oppDirection)!=NO_VALUE);
+                  CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "+message.str(),
+                                         latDat->GetCutDistance(streamedToSite, oppDirection)!=-1.0);
 
                   // To verify the operation of the f-interpolation boundary condition, we'll need:
                   // - the distance to the wall * 2

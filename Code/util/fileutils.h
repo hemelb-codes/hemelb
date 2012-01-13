@@ -20,6 +20,8 @@ namespace hemelb
     // path.
     bool FileCopy(const char* iOriginalPath, const char* iNewPath);
 
+    // Return true if file exists for reading, false if not.
+    bool file_exists(const char * filename);
     // Exits if the named file doesn't exist or can't be opened for
     // reading.
     void check_file(const char * filename);

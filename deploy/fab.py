@@ -22,18 +22,20 @@ import time
 def clone():
 	"""Delete and checkout the repository afresh."""
 	run(template("mkdir -p $remote_path"))
-	if env.no_ssh:
+	if env.no_ssh or env.no_hg:
 		with cd(env.remote_path):
 			run(template("rm -rf $repository"))
 		# Some machines do not allow outgoing connections back to the mercurial server
 		# so the data must be sent by a project sync instead.
 		execute(sync)
 		 # On such machines, we cannot rely on an outgoing connection to servers to find dependencies either.
-		execute(send_distributions)
 	else:
 		with cd(env.remote_path):
 			run(template("rm -rf $repository"))
 			run(template("hg clone $hg/$repository"))
+	if env.no_ssh or env.needs_tarballs:
+		execute(send_distributions)
+	execute(copy_regression_tests)
 
 @task(alias='cold')
 def deploy_cold():
@@ -98,20 +100,21 @@ def clean():
 def build_python_tools():
 	"""Build and install python scripts."""
 	with cd(env.tools_path):
-		run("python setup.py build")
+		with prefix(env.build_prefix):
+			run(template("python setup.py install --prefix $install_path"))
 
 @task
 def stat():
 	"""Check the remote message queue status"""
 	#TODO: Respect varying remote machine queue systems.
-	run("qstat")
+	run(template("qstat -u $username"))
 	
 @task
 def monitor():
 	"""Report on the queue status, ctrl-C to interrupt"""
 	while True:
-		time.sleep(30)
 		execute(stat)
+		time.sleep(30)
 
 @task
 def configure():
@@ -121,7 +124,8 @@ def configure():
 			run(template("rm -f $build_path/CMakeCache.txt"))
 			run(template(
 			"cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
-			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
+			"-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags "+
+			"-DHEMELB_SUBPROJECT_MAKE_JOBS=$make_jobs"
 			))
 
 @task
@@ -149,9 +153,9 @@ def build_code_only(verbose=False):
 	with cd(env.code_build_path):
 		with prefix(env.build_prefix):		
 			if verbose or env.verbose:
-				run("make VERBOSE=1")
+				run(template("make -j$make_jobs VERBOSE=1"))
 			else:
-				run("make")
+				run(template("make -j$make_jobs"))
 
 @task
 def install_code_only():
@@ -177,7 +181,7 @@ def install():
 	"""CMake install step for HemeLB and dependencies."""
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("make install")
+			#run("make install") // Doesn't have a separate install step, as HemeLB gets installed by the sub-project to the final install dir.
 			run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
 		
 @task
@@ -199,6 +203,11 @@ def send_distributions():
 	run(template("mkdir -p $repository_path/dependencies/distributions"))
 	rsync_project(local_dir=os.path.join(env.localroot,'dependencies','distributions')+'/',
 	remote_dir=env.pather.join(env.repository_path,'dependencies','distributions'))
+
+@task
+def copy_regression_tests():
+	if env.regression_test_source_path != env.regression_test_path:
+		run(template("cp -r $regression_test_source_path $regression_test_path"))
 
 @task
 def sync():
@@ -315,12 +324,12 @@ def clear_results(name=''):
 @task
 def test():
 	"""Submit a unit-testing job to the remote queue."""
-	execute(job,script='unittests',name='unittests-$build_number-$machine_name',cores=1)
+	execute(job,script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
 		
 @task
 def hemelb(**args):
 	"""Submit a HemeLB job to the remote queue.
-	The job results will be stored with a name pattern of $config-$build_number-$machine_name-$cores,
+	The job results will be stored with a name pattern of $config_${build_number}_${machine_name}_$cores,
 	e.g. cylinder-abcd1234-legion-256
 	Keyword arguments:
 		config : config directory to use to define geometry, e.g. config=cylinder
@@ -332,7 +341,7 @@ def hemelb(**args):
 		memory : memory per node
 	"""
 	options=dict(script='hemelb',
-		name='$config-$build_number-$machine_name-$cores',
+		name='$config_${build_number}_${machine_name}_$cores',
 		cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
 	options.update(args)
 	execute(put_configs,args['config'])
@@ -341,7 +350,8 @@ def hemelb(**args):
 @task(alias='regress')
 def regression_test():
 	"""Submit a regression-testing job to the remote queue."""
-	execute(job,script='regression',name='regression-$build_number-$machine_name')
+	execute(copy_regression_tests)
+	execute(job,script='regression',name='regression_${build_number}_${machine_name}',cores=3,wall_time='0:20:0')
 
 @task
 def job(**args):
@@ -350,10 +360,15 @@ def job(**args):
 	env.update(name=args['script'],wall_time='0:1:0',cores=4,memory='1G') #defaults
 	env.update(**args)
 	env.update(name=template(env.name))
+	# If we request less than one node's worth of cores, need to keep N<=n
+	if env.corespernode>env.cores:
+		env.corespernode=env.cores
+	env['job_name']=env.name[0:env.max_job_name_chars]
 	with_job(env.name)
 	
-	script_name=template("$machine_name-$script")
+	script_name=template("$template_key-$script")
 	env.job_script=script_template(script_name)
+	
 	env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
 	put(env.job_script,env.dest_name)
 	
@@ -361,5 +376,6 @@ def job(**args):
 	run(template("cp $dest_name $job_results"))
 	run(template("cp $build_cache $job_results"))
 	run(template("chmod u+x $dest_name"))
-	run(template("$job_dispatch $dest_name"))
+	with cd(env.job_results):
+		run(template("$job_dispatch $dest_name"))
 	

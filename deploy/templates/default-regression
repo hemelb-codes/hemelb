@@ -1,0 +1,6 @@
+cd $job_results
+$run_prefix
+rm -rf results
+mpirun -n 3 $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results/results -i 1 -s 1 -ss 1111
+$regression_test_path/ImageComparison $regression_test_path/CleanImages results/Images
+$regression_test_path/NumericalComparison $regression_test_path/CleanSnapshots results/Snapshots
