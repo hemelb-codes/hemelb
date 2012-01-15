@@ -249,7 +249,7 @@ namespace hemelb
                   GetVelocitySiteData(latDat,
                                       util::Vector3D<site_t>(neighbourI, neighbourJ, neighbourK));
 
-              if (vel_site_data_p->proc_id == -1)
+              if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
               {
                 // it is a solid site and the velocity is
                 // assumed to be zero
@@ -281,7 +281,7 @@ namespace hemelb
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
+        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
             || vel_site_data_p->counter == counter)
         {
           return false;
