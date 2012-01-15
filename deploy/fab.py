@@ -40,8 +40,8 @@ def clone():
 @task(alias='cold')
 def deploy_cold():
 	"""Checkout, build, and install hemelb, from new."""
-	execute(clone)
 	execute(clear_build)
+	execute(clone)
 	execute(prepare_paths)
 	execute(configure)
 	execute(build)
