@@ -19,10 +19,10 @@ namespace hemelb
         {
         }
 
-        BlockData(site_t sitesPerBlock)
+        BlockData(site_t sitesPerBlock) :
+          processorRankForEachBlockSite(sitesPerBlock, BIG_NUMBER2),
+              localContiguousIndex(sitesPerBlock, BIG_NUMBER3)
         {
-          processorRankForEachBlockSite.resize(sitesPerBlock, BIG_NUMBER3);
-          localContiguousIndex.resize(sitesPerBlock, BIG_NUMBER3);
         }
 
         ~BlockData()
