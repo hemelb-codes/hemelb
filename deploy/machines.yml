@@ -103,7 +103,6 @@ oppenheimer:
    job_dispatch: "qsub"
    python_build: "lib/python2.6"
    runtime_path_template: "/scr/$username"
-   project: "hemelb"
    make_jobs: 4
 localhost:
    remote: "localhost"
