@@ -25,9 +25,9 @@ namespace hemelb
           }
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              const site_t index)
+                                              const geometry::Site& site)
           {
-            kernel.CalculateDensityVelocityFeq(hydroVars, index);
+            kernel.CalculateDensityVelocityFeq(hydroVars, site.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,

@@ -105,7 +105,7 @@ namespace hemelb
             //of sequential blocks 
             //We keep a stack of all the sites that must be processed 
             //and sequentially add neighbours to it
-            std::stack < util::Vector3D<site_t> > blocksToProcess;
+            std::stack<util::Vector3D<site_t> > blocksToProcess;
 
             //Set up the initial condition
             blocksToProcess.push(mBlockTraverser.GetCurrentLocation());
@@ -311,11 +311,11 @@ namespace hemelb
           {
             site_t localIndex = block->localContiguousIndex[siteIdOnBlock];
 
-            if (mLatticeData->GetSiteData(localIndex).IsEdge())
-            {
-              const util::Vector3D<double>& wallNormal = mLatticeData->GetNormalToWall(localIndex);
+            geometry::ConstSite site = mLatticeData->GetSite(localIndex);
 
-              cluster.SetWallData(blockNum, siteIdOnBlock, wallNormal);
+            if (site.IsEdge())
+            {
+              cluster.SetWallData(blockNum, siteIdOnBlock, site.GetWallNormal());
             }
           }
 

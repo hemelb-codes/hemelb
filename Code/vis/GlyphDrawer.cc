@@ -11,8 +11,7 @@ namespace hemelb
                              DomainStats* iDomainStats,
                              Viewpoint* iViewpoint,
                              VisSettings* iVisSettings) :
-      mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
-          mVisSettings(iVisSettings)
+        mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
       int n = -1;
 
@@ -54,8 +53,7 @@ namespace hemelb
             lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
             lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
 
-            lGlyph.f = mLatDat->GetFOld(map_block_p->localContiguousIndex[siteIdOnBlock]
-                * D3Q15::NUMVECTORS);
+            lGlyph.f = mLatDat->GetSite(map_block_p->localContiguousIndex[siteIdOnBlock]).GetFOld();
 
             mGlyphs.push_back(lGlyph);
           } // for k
@@ -119,11 +117,11 @@ namespace hemelb
 
       if (dx > dy)
       {
-        RenderLineHelper<true> (x, y, dy, dy - dx, x2, visSettings, pixelSet);
+        RenderLineHelper<true>(x, y, dy, dy - dx, x2, visSettings, pixelSet);
       }
       else
       {
-        RenderLineHelper<false> (x, y, dx, dx - dy, y2, visSettings, pixelSet);
+        RenderLineHelper<false>(x, y, dx, dx - dy, y2, visSettings, pixelSet);
       }
     }
 
@@ -205,16 +203,15 @@ namespace hemelb
 
         // ... calculate the two ends of the line we're going to draw...
         util::Vector3D<float> p1 = util::Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
-        util::Vector3D<float> p2 = p1 + util::Vector3D<float>(float(vx * temp),
-                                                              float(vy * temp),
-                                                              float(vz * temp));
+        util::Vector3D<float> p2 = p1
+            + util::Vector3D<float>(float(vx * temp), float(vy * temp), float(vz * temp));
 
         // ... transform to the location on the screen, and render.
         XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);
         XYCoordinates<float> p4 = mViewpoint->FlatProject(p2);
 
-        p3 = mScreen->TransformScreenToPixelCoordinates<float> (p3);
-        p4 = mScreen->TransformScreenToPixelCoordinates<float> (p4);
+        p3 = mScreen->TransformScreenToPixelCoordinates<float>(p3);
+        p4 = mScreen->TransformScreenToPixelCoordinates<float>(p4);
 
         RenderLine(p3, p4, mVisSettings, pixelSet);
       }
