@@ -102,7 +102,6 @@ def complete_environment():
 	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
 	env.run_prefix_commands.append(template("export TMP=$temp_path"))
 	env.run_prefix_commands.append(template("export TMPDIR=$temp_path"))
-	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
 	env.run_prefix=" && ".join(module_commands+map(template,env.run_prefix_commands)) or 'echo Running...'
 	env.template_key = env.template_key or env.machine_name
 	#env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
