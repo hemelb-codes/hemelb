@@ -248,7 +248,7 @@ namespace hemelb
         }
       }
 
-      if (topology::NetworkTopology::Instance()->GetProcessorCount()==1)
+      if (netTop->GetProcessorCount()==1)
       {
         // On hector, romio doesn't like to write_all to a single-machine communicator.
         // So we do a simple write.
