@@ -88,6 +88,7 @@ def clear_build():
 	run(template("rm -rf $install_path"))
 	run(template("mkdir -p $build_path"))
 	run(template("mkdir -p $install_path"))
+	run(template("mkdir -p $temp_path"))
 	
 
 @task
