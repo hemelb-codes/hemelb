@@ -68,7 +68,7 @@ namespace hemelb
                                                 util::Vector3D<site_t>(particles[n].position));
 
           // TODO can we get rid of the first test?
-          if (siteVelocityData->proc_id == -1)
+          if (siteVelocityData == NULL || siteVelocityData->proc_id == -1)
           {
             continue;
           }
