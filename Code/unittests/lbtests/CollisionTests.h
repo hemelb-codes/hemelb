@@ -117,7 +117,8 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            nonZeroVFixedDensityILet->CalculatePreCollision(hydroVars, 0);
+            geometry::Site dummySite(0, *latDat);
+            nonZeroVFixedDensityILet->CalculatePreCollision(hydroVars, dummySite);
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = inletBoundary->GetBoundaryDensity(0);
@@ -167,7 +168,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            zeroVFixedDensityOLet->CalculatePreCollision(hydroVars, 0);
+            zeroVFixedDensityOLet->CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = outletBoundary->GetBoundaryDensity(0);
@@ -216,7 +217,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            zeroVEqm->CalculatePreCollision(hydroVars, 0);
+            zeroVEqm->CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = 0.0;
@@ -270,7 +271,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            normal->CalculatePreCollision(hydroVars, 0);
+            normal->CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho;
