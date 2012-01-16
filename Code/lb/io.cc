@@ -166,7 +166,7 @@ namespace hemelb
                     continue;
 
                   distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
-                      stress, pressure;
+                  stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
@@ -176,12 +176,12 @@ namespace hemelb
                   if (siteData.GetSiteType() == geometry::FLUID_TYPE && !siteData.IsEdge())
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                                                           * D3Q15::NUMVECTORS),
-                                                       density,
-                                                       vx,
-                                                       vy,
-                                                       vz,
-                                                       f_eq);
+                                                                        * D3Q15::NUMVECTORS),
+                                                                        density,
+                                                                        vx,
+                                                                        vy,
+                                                                        vz,
+                                                                        f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
@@ -237,23 +237,34 @@ namespace hemelb
                   const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
 
                   lWriter << (int) (site_i - siteMins.x) << (int) (site_j - siteMins.y)
-                      << (int) (site_k - siteMins.z);
+                              << (int) (site_k - siteMins.z);
 
                   lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
+                              << float(stress);
                 }
               }
             }
           }
         }
       }
-      // Hand the buffers over to MPIO to write to the file.
-      MPI_File_write_all(lOutputFile,
-                         lFluidSiteBuffer,
-                         (int) lLocalWriteLength,
-                         MpiDataType(lFluidSiteBuffer[0]),
-                         &lStatus);
 
+      if (topology::NetworkTopology::Instance()->GetProcessorCount()==1)
+      {
+        // On hector, romio doesn't like to write_all to a single-machine communicator.
+        // So we do a simple write.
+        MPI_File_write(lOutputFile,
+                       lFluidSiteBuffer,
+                       (int) lLocalWriteLength,
+                       MpiDataType(lFluidSiteBuffer[0]),
+                       &lStatus);
+      } else {
+        // Hand the buffers over to MPIO to write to the file.
+        MPI_File_write_all(lOutputFile,
+                           lFluidSiteBuffer,
+                           (int) lLocalWriteLength,
+                           MpiDataType(lFluidSiteBuffer[0]),
+                           &lStatus);
+      }
       MPI_File_close(&lOutputFile);
 
       delete[] lFluidSiteBuffer;
