@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <cstdlib>
 
@@ -105,13 +106,15 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
+
+        output.precision(6);
 
         // %g uses the shorter of decimal / mantissa-exponent notations.
         // 6 significant figures will be written.
-        sprintf(lStringValue, "%.6g", value);
+        output << value;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -137,13 +140,15 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
+
+        output.precision(6);
 
         // %g uses the shorter of decimal / mantissa-exponent notations.
         // 6 significant figures will be written.
-        sprintf(lStringValue, "%.6g", value);
+        output << value;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -187,12 +192,11 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
 
-        // %ld specifies long integer style.
-        sprintf(lStringValue, "%ld", bValue);
+        output << bValue;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -210,12 +214,11 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
 
-        // %ld specifies long integer style.
-        sprintf(lStringValue, "%ld", bValue);
+        output << bValue;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -234,13 +237,11 @@ namespace hemelb
       }
       else
       {
-        // This should be ample.
-        char lStringValue[20];
+        std::stringstream output(std::stringstream::out);
 
-        // %ld specifies long integer style.
-        sprintf(lStringValue, "%i", (int) value);
+        output << (int) value;
 
-        iXmlNode->SetAttribute(iAttributeName, lStringValue);
+        iXmlNode->SetAttribute(iAttributeName, output.str());
       }
     }
 
