@@ -97,15 +97,16 @@ julian:
    template_key: default
 oppenheimer:
    remote: "oppenheimer.chem.ucl.ac.uk"
-   build_prefix_commands: ["export set PATH=$PATH:/home/jamespjh/install/bin"]
+   build_prefix_commands: ["export set PATH=$PATH:/home/jamespjh/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/jamespjh/install/lib/python2.6/site-packages"]
    no_hg: true
    python_build: "lib/python2.6"
    make_jobs: 4
-   template_key: default
+   template_key: legion
 localhost:
    remote: "localhost"
    python_build: "lib/python2.7"
    template_key: default
+   make_jobs: 4
    cmake_options:
       HEMELB_STEERING_LIB: none
       CMAKE_BUILD_TYPE: "Debug"
