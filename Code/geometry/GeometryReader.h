@@ -19,12 +19,16 @@ namespace hemelb
 {
   namespace geometry
   {
+    /***
+     * Model of the data for a site, as contained within a geometry file.
+     * this data will be broken up and placed in various arrays in hemelb::Geometry::LatticeData
+     */
     struct SiteReadResult
     {
       public:
         SiteReadResult() :
           targetProcessor(-1), siteData(BIG_NUMBER3), ioletNormal(-1.), ioletDistance(-1.),
-              wallNormal(NO_VALUE), wallDistance(-1.)
+          wallNormal(NO_VALUE), wallDistance(-1.)
         {
           for (Direction direction = 0; direction < D3Q15::NUMVECTORS - 1; direction++)
           {
@@ -32,43 +36,55 @@ namespace hemelb
           }
         }
 
-        // Processor on which to perform lattice-Boltzmann for the site.
+        //! Processor on which to perform lattice-Boltzmann for the site.
         proc_t targetProcessor;
 
-        // Sitedata.
+        //! The SiteData itself, which is a compact bitwise representation of the site geometry,
+        //! see hemelb::geometry::Sitedata.
         SiteData siteData;
 
-        // Estimated normal and distance to an inlet or outlet.
+        //! Estimated normal and distance to an inlet or outlet.
         util::Vector3D<double> ioletNormal;
         double ioletDistance;
 
-        // Estimated wall normal (if the site is close to the wall)
-        // and distance to wall.
+        //! Estimated wall normal (if the site is close to the wall)
+        //! and distance to wall.
         util::Vector3D<double> wallNormal;
         double wallDistance;
 
-        // cut distances along the non-zero lattice vectors;
-        // each one is between 0 and 1 if the surface cuts the corresponding
-        // vector or is equal to "NO_VALUE" otherwise
+        //! cut distances along the non-zero lattice vectors;
+        //! each one is between 0 and 1 if the surface cuts the corresponding
+        //! vector or is equal to "NO_VALUE" otherwise
         double cutDistance[D3Q15::NUMVECTORS - 1];
     };
 
+    /***
+     * Model of the information stored for a block in a geometry file.
+     * Just gives the array of sites
+     */
     struct BlockReadResult
     {
       public:
         std::vector<SiteReadResult> Sites;
     };
 
+    /***
+     * Model of the information in a geometry file
+     */
     struct GeometryReadResult
     {
       public:
-        util::Vector3D<site_t> blocks;
-        site_t blockSize;
-        double voxelSize;
+        util::Vector3D<site_t> blocks; //! The count of blocks in each direction
+        site_t blockSize; //! Size of a block, in sites.
+        double voxelSize; //! Size of a block, in real-world units.
         util::Vector3D<double> origin;
 
-        std::vector<BlockReadResult> Blocks;
+        std::vector<BlockReadResult> Blocks; //! Array of Block models
 
+        /***
+         * Total count of blocks in the site.
+         * @return count of blocks in the site.
+         */
         site_t GetBlockCount() const
         {
           return blocks.x * blocks.y * blocks.z;
@@ -79,16 +95,17 @@ namespace hemelb
           return util::NumericalFunctions::IntegerPower(blockSize, 3);
         }
 
-        /*
-         * This needs to commonised with comparable code in the GlobalLatticeData object.
+        /***
+         * Get the i.d. of a block, i.e. the one-d coordinate, from the three-d coordinate.
+         * @todo Use this to replace LatticeData::GetBlockIdFromBlockCoords
          */
         site_t GetBlockIdFromBlockCoordinates(site_t blockI, site_t blockJ, site_t blockK) const
         {
           return (blockI * blocks.y + blockJ) * blocks.z + blockK;
         }
 
-        /*
-         * TODO: This needs to commonised with comparable code in the GlobalLatticeData object.
+        /***
+         * Get the i.d. of a site, i.e. the one-d coordinate, from the three-d coordinate.
          */
         site_t GetSiteIdFromSiteCoordinates(site_t siteI, site_t siteJ, site_t siteK) const
         {
@@ -107,7 +124,7 @@ namespace hemelb
       private:
         struct BlockLocation
         {
-            site_t i, j, k;
+          site_t i, j, k;
         };
 
         void ReadPreamble();
