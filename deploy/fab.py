@@ -323,9 +323,11 @@ def clear_results(name=''):
 	run(template('rm -rf $job_results_contents'))		
 
 @task
-def test():
+def test(**args):
 	"""Submit a unit-testing job to the remote queue."""
-	execute(job,script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
+	options=dict(script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
+	options.update(args)
+	execute(job,**options)
 		
 @task
 def hemelb(**args):
@@ -349,10 +351,13 @@ def hemelb(**args):
 	execute(job,**options)
 
 @task(alias='regress')
-def regression_test():
+def regression_test(**args):
 	"""Submit a regression-testing job to the remote queue."""
 	execute(copy_regression_tests)
-	execute(job,script='regression',name='regression_${build_number}_${machine_name}',cores=3,wall_time='0:20:0')
+	options=dict(name='regression_${build_number}_${machine_name}',cores=3,
+		wall_time='0:20:0', images=1, snapshots=1, steering=1111,script='regression')
+	options.update(args)
+	execute(job,**options)
 
 @task
 def job(**args):
