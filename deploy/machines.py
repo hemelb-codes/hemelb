@@ -85,6 +85,8 @@ def complete_environment():
 	env.code_build_path=env.pather.join(env.remote_path,'code_build')
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
 	
+	env.temp_path=template(env.temp_path_template)
+	
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
 	env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
 	env.regression_test_path=template(env.regression_test_path_template)
@@ -97,6 +99,9 @@ def complete_environment():
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'
 	
+	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
+	env.run_prefix_commands.append(template("export TMP=$temp_path"))
+	env.run_prefix_commands.append(template("export TMPDIR=$temp_path"))
 	env.run_prefix_commands.append("export PYTHONPATH=$$PYTHONPATH:$tools_build_path")
 	env.run_prefix=" && ".join(module_commands+map(template,env.run_prefix_commands)) or 'echo Running...'
 	env.template_key = env.template_key or env.machine_name
