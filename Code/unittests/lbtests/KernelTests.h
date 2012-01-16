@@ -561,8 +561,7 @@ namespace hemelb
               *lbgknn1;
           lb::kernels::MRT* mrtLbgkEquivalentKernel;
           site_t numSites;
-      }
-      ;
+      };
       CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
     }
   }
