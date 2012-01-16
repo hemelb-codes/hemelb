@@ -166,34 +166,28 @@ namespace hemelb
                     continue;
 
                   distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
-                  stress, pressure;
+                      stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  geometry::SiteData siteData = mLatDat->GetSiteData(my_site_id);
+                  geometry::Site site = mLatDat->GetSite(my_site_id);
 
-                  if (siteData.GetSiteType() == geometry::FLUID_TYPE && !siteData.IsEdge())
+                  if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
                   {
-                    D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                                                                        * D3Q15::NUMVECTORS),
-                                                                        density,
-                                                                        vx,
-                                                                        vy,
-                                                                        vz,
-                                                                        f_eq);
+                    D3Q15::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
-                      f_neq[l] = *mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS + l) - f_eq[l];
+                      f_neq[l] = site.GetFOld()[l] - f_eq[l];
                     }
 
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
-                                mLatDat->GetSiteType(my_site_id),
-                                mLatDat->GetBoundaryId(my_site_id),
+                    CalculateBC(site.GetFOld(),
+                                site.GetSiteType(),
+                                site.GetBoundaryId(),
                                 &density,
                                 &vx,
                                 &vy,
@@ -203,7 +197,7 @@ namespace hemelb
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (!mLatDat->GetSiteData(my_site_id).IsEdge())
+                    if (!site.IsEdge())
                     {
                       stress = -1.0;
                     }
@@ -211,7 +205,7 @@ namespace hemelb
                     {
                       D3Q15::CalculateShearStress(density,
                                                   f_neq,
-                                                  mLatDat->GetNormalToWall(my_site_id),
+                                                  site.GetWallNormal(),
                                                   stress,
                                                   mParams.GetStressParameter());
                     }
@@ -237,10 +231,10 @@ namespace hemelb
                   const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
 
                   lWriter << (int) (site_i - siteMins.x) << (int) (site_j - siteMins.y)
-                              << (int) (site_k - siteMins.z);
+                      << (int) (site_k - siteMins.z);
 
                   lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                              << float(stress);
+                      << float(stress);
                 }
               }
             }
@@ -248,7 +242,7 @@ namespace hemelb
         }
       }
 
-      if (netTop->GetProcessorCount()==1)
+      if (netTop->GetProcessorCount() == 1)
       {
         // On hector, romio doesn't like to write_all to a single-machine communicator.
         // So we do a simple write.
@@ -257,7 +251,9 @@ namespace hemelb
                        (int) lLocalWriteLength,
                        MpiDataType(lFluidSiteBuffer[0]),
                        &lStatus);
-      } else {
+      }
+      else
+      {
         // Hand the buffers over to MPIO to write to the file.
         MPI_File_write_all(lOutputFile,
                            lFluidSiteBuffer,
@@ -316,8 +312,8 @@ namespace hemelb
 
     void LBM::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
-      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
+      distribn_t density_min = std::numeric_limits<distribn_t>::max();
+      distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);

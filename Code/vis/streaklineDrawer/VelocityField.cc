@@ -281,8 +281,8 @@ namespace hemelb
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
-            || vel_site_data_p->counter == counter)
+        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1
+            || vel_site_data_p->proc_id == thisRank || vel_site_data_p->counter == counter)
         {
           return false;
         }
@@ -320,8 +320,7 @@ namespace hemelb
         localVelocitySiteData->counter = counter;
         distribn_t density, vx, vy, vz;
 
-        D3Q15::CalculateDensityAndVelocity(latDat.GetFOld(localVelocitySiteData->site_id
-                                               * D3Q15::NUMVECTORS),
+        D3Q15::CalculateDensityAndVelocity(latDat.GetSite(localVelocitySiteData->site_id).GetFOld(),
                                            density,
                                            vx,
                                            vy,

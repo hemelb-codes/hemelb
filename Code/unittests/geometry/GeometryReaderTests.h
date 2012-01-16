@@ -22,16 +22,16 @@ namespace hemelb
             public:
               GeometryReader(const bool reserveSteeringCore,
                              hemelb::geometry::GeometryReadResult& readResult) :
-                hemelb::geometry::GeometryReader(reserveSteeringCore, readResult)
+                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult)
               {
               }
           };
       };
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE( GeometryReaderTests);
-          CPPUNIT_TEST( TestRead);
-          CPPUNIT_TEST( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE(GeometryReaderTests);
+          CPPUNIT_TEST(TestRead);
+          CPPUNIT_TEST(TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -75,7 +75,7 @@ namespace hemelb
                 for (site_t k = 0; k < 4; k++)
                 {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(fourCube->GetContiguousSiteId(i, j, k)).GetRawValue(),
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(i, j, k)).GetSiteData().GetRawValue(),
                                        readResult->Blocks[0].Sites[siteIndex].siteData.GetRawValue());
 
                   siteIndex++;
@@ -95,7 +95,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION(GeometryReaderTests);
     }
   }
 }

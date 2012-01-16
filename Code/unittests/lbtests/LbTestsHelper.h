@@ -180,7 +180,7 @@ namespace hemelb
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetFOld(site * LatticeType::NUMVECTORS);
+              distribn_t* fOld = latticeData->GetSite(site).GetFOld();
               InitialiseAnisotropicTestData<LatticeType>(site, fOld);
             }
           }
@@ -202,7 +202,7 @@ namespace hemelb
                                                     lb::kernels::HydroVars<Kernel>& hydroVars,
                                                     distribn_t* const fPostCollision)
           {
-            const distribn_t *const fPreCollision = hydroVars.f;
+            const distribn_t * const fPreCollision = hydroVars.f;
 
             // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
             // (fi = fiEq + fopp(i) - fopp(i)Eq)
@@ -210,9 +210,10 @@ namespace hemelb
 
             for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
             {
-              if (latDat->HasBoundary(siteIndex, D3Q15::INVERSEDIRECTIONS[l]))
+              if (latDat->GetSite(siteIndex).HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
               {
-                fTemp[l] = hydroVars.GetFEq().f[l] + fPreCollision[D3Q15::INVERSEDIRECTIONS[l]] - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
+                fTemp[l] = hydroVars.GetFEq().f[l] + fPreCollision[D3Q15::INVERSEDIRECTIONS[l]]
+                    - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
               }
               else
               {
@@ -274,7 +275,8 @@ namespace hemelb
                *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                *            = f^{eq}_i + (1+w) f^{neq}_i
                */
-              fPostCollision[ii] = hydroVars.GetFEq().f[ii] + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
+              fPostCollision[ii] = hydroVars.GetFEq().f[ii]
+                  + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
             }
 
           }
