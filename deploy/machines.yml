@@ -41,6 +41,7 @@ default:
   regression_test_path_template: "$regression_test_source_path"
   python_build: "TODO"
   template_key: false
+  temp_path_template: "/tmp"
 legion: 
   job_dispatch: "qsub"
   # The remote host-name to use.
@@ -53,7 +54,6 @@ planck:
   needs_tarballs: true
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
-  run_prefix_commands: ["export set TMP=/tmp"]
   template_key: default
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
@@ -72,8 +72,8 @@ hector:
   runtime_path_template: "/work/$project/$project/$username"
   modules: ["load CMake/2.8.6"]
   build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
-  run_prefix_commands: ["export set TMPDIR=$work_path/tmp","mkdir -p $$TMPDIR"]
-  regression_test_path_template: "$work_path/tmp/regression"
+  temp_path_template: "$work_path/tmp"
+  regression_test_path_template: "$work_path/regression"
   queue: "parallel"
   python_build: "lib64/python2.6"
   corespernode: 32
