@@ -367,7 +367,7 @@ def job(**args):
 	env.update(**args)
 	env.update(name=template(env.name))
 	# If we request less than one node's worth of cores, need to keep N<=n
-	if env.corespernode>env.cores:
+	if int(env.corespernode)>int(env.cores):
 		env.corespernode=env.cores
 	env['job_name']=env.name[0:env.max_job_name_chars]
 	with_job(env.name)
