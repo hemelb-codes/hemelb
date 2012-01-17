@@ -4,6 +4,7 @@
 #include "units.h"
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
+#include "util/ConstSelector.h"
 
 namespace hemelb
 {
@@ -12,29 +13,12 @@ namespace hemelb
     // Forward definition of LatticeData; makes things easier.
     class LatticeData;
 
-    template<bool IsConst, class NonConst, class Const>
-    struct constSelector
-    {
-    };
-
-    template<class NonConst, class Const>
-    struct constSelector<true, NonConst, Const>
-    {
-        typedef Const type;
-    };
-
-    template<class NonConst, class Const>
-    struct constSelector<false, NonConst, Const>
-    {
-        typedef NonConst type;
-    };
-
     template<bool isConst>
     class InnerSite
     {
       public:
         InnerSite(site_t localContiguousIndex,
-                  typename constSelector<isConst, geometry::LatticeData&,
+                  typename util::constSelector<isConst, geometry::LatticeData&,
                       const geometry::LatticeData&>::type latticeData) :
             index(localContiguousIndex), latticeData(latticeData)
         {
@@ -90,7 +74,7 @@ namespace hemelb
           return latticeData.GetStreamedIndex(index, direction);
         }
 
-        inline typename constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
+        inline typename util::constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
         {
           return latticeData.GetFOld(index * D3Q15::NUMVECTORS);
         }
@@ -102,7 +86,7 @@ namespace hemelb
 
       private:
         site_t index;
-        typename constSelector<isConst, LatticeData&, const LatticeData&>::type latticeData;
+        typename util::constSelector<isConst, LatticeData&, const LatticeData&>::type latticeData;
     };
 
     typedef InnerSite<false> Site;

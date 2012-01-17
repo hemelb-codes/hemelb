@@ -75,7 +75,9 @@ namespace hemelb
                 for (site_t k = 0; k < 4; k++)
                 {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(i, j, k)).GetSiteData().GetRawValue(),
+                  util::Vector3D<site_t> location(i, j, k);
+
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetRawValue(),
                                        readResult->Blocks[0].Sites[siteIndex].siteData.GetRawValue());
 
                   siteIndex++;
