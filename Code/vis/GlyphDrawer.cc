@@ -13,53 +13,43 @@ namespace hemelb
                              VisSettings* iVisSettings) :
         mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
-      int n = -1;
-
-      // Iterate over the first site in each block.
-      for (site_t i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
+      for (geometry::BlockTraverser blockTrav(*mLatDat); blockTrav.CurrentLocationValid();
+          blockTrav.TraverseOne())
       {
-        for (site_t j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
+        // Get the block data for this block - if it has no site data, move on.
+        const geometry::Block& block = blockTrav.GetCurrentBlockData();
+
+        if (block.IsEmpty())
         {
-          for (site_t k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
-          {
-            ++n;
+          continue;
+        }
 
-            // Get the block data for this block - if it has no site data, move on.
-            const geometry::BlockData * map_block_p = mLatDat->GetBlock(n);
+        // We put the glyph at the site at the centre of the block...
+        const util::Vector3D<site_t> midBlockSite = util::Vector3D<site_t>(mLatDat->GetBlockSize())
+            / 2;
 
-            if (map_block_p->localContiguousIndex.size() == 0)
-            {
-              continue;
-            }
+        const site_t siteIdOnBlock = mLatDat->GetLocalSiteIdFromLocalSiteCoords(midBlockSite);
 
-            // We put the glyph at the site at the centre of the block...
-            const site_t site_i = (mLatDat->GetBlockSize() >> 1);
-            const site_t site_j = (mLatDat->GetBlockSize() >> 1);
-            const site_t site_k = (mLatDat->GetBlockSize() >> 1);
+        // ... (only if there's fluid there).
+        if (block.GetLocalContiguousIndexForSite(siteIdOnBlock) == BIG_NUMBER3)
+        {
+          continue;
+        }
 
-            const site_t siteIdOnBlock = ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
-                << mLatDat->GetLog2BlockSize()) + site_k;
+        // Create a glyph at the desired location
+        Glyph lGlyph;
 
-            // ... (only if there's fluid there).
-            if (map_block_p->localContiguousIndex[siteIdOnBlock] & BIG_NUMBER3)
-            {
-              continue;
-            }
+        util::Vector3D<site_t> globalSiteCoords =
+            mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(), midBlockSite);
 
-            // Create a glyph at the desired location
-            Glyph lGlyph;
+        lGlyph.x = float(globalSiteCoords.x) - 0.5F * float(mLatDat->GetXSiteCount());
+        lGlyph.y = float(globalSiteCoords.y) - 0.5F * float(mLatDat->GetYSiteCount());
+        lGlyph.z = float(globalSiteCoords.z) - 0.5F * float(mLatDat->GetZSiteCount());
 
-            lGlyph.x = float(i + site_i) - 0.5F * float(mLatDat->GetXSiteCount());
-            lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
-            lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
+        lGlyph.f = mLatDat->GetSite(block.GetLocalContiguousIndexForSite(siteIdOnBlock)).GetFOld();
 
-            lGlyph.f = mLatDat->GetSite(map_block_p->localContiguousIndex[siteIdOnBlock]).GetFOld();
-
-            mGlyphs.push_back(lGlyph);
-          } // for k
-        } // for j
-      } // for i
-
+        mGlyphs.push_back(lGlyph);
+      }
     }
 
     /**
