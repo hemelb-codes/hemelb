@@ -151,7 +151,8 @@ if __name__ == "__main__":
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
-                  for cpp in ['lb/lattices/D3Q27.cc',
+                  for cpp in ['geometry/SiteData.cc',
+                              'lb/lattices/D3Q27.cc',
                               'io/writers/xdr/XdrFileWriter.cc',
                               'io/writers/xdr/XdrMemWriter.cc',
                               'io/writers/xdr/XdrWriter.cc',
