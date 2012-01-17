@@ -5,9 +5,12 @@
 #include "Site.h"
 #include "Block.h"
 #include "Domain.h"
-#include "config.h"
 
 #include "Debug.h"
+
+
+#include "geometry/SiteData.h"
+
 
 #include "vtkPolyDataAlgorithm.h"
 #include "vtkOBBTree.h"
@@ -61,20 +64,20 @@ void ConfigGenerator::Execute() {
 			uint64_t cfg = site.GetConfig();
 			blockWriter << cfg;
 
-			if (type == hemelb::SOLID_TYPE) {
+			if (type == hemelb::geometry::SOLID_TYPE) {
 				//Solid sites, we don't do anything
 				continue;
 			}
 			// Increase count of fluid sites
 			blockWriter.IncrementFluidSitesCount();
 
-			if (cfg == hemelb::FLUID_TYPE) {
+			if (cfg == hemelb::geometry::FLUID_TYPE) {
 				// Pure fluid sites don't need any more data
 				continue;
 			}
 			// It must be INLET/OUTLET/EDGE
 
-			if (type == hemelb::INLET_TYPE || type == hemelb::OUTLET_TYPE) {
+			if (type == hemelb::geometry::INLET_TYPE || type == hemelb::geometry::OUTLET_TYPE) {
 				for (Vector::iterator bn = site.BoundaryNormal.begin();
 						bn != site.BoundaryNormal.end(); ++bn)
 					blockWriter << *bn;

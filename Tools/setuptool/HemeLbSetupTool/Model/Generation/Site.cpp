@@ -42,14 +42,14 @@ unsigned int Site::GetType() const {
 	if (this->IsFluid) {
 		if (this->AdjacentIolet) {
 			if (this->AdjacentIolet->IsInlet)
-				return hemelb::INLET_TYPE;
+				return hemelb::geometry::INLET_TYPE;
 			else
-				return hemelb::OUTLET_TYPE;
+				return hemelb::geometry::OUTLET_TYPE;
 		} else {
-			return hemelb::FLUID_TYPE;
+			return hemelb::geometry::FLUID_TYPE;
 		}
 	} else {
-		return hemelb::SOLID_TYPE;
+		return hemelb::geometry::SOLID_TYPE;
 	}
 }
 
@@ -62,7 +62,7 @@ uint64_t Site::GetConfig() {
 		return cfg;
 
 	// Fluid sites now
-	if (type == hemelb::FLUID_TYPE && !this->IsEdge)
+	if (type == hemelb::geometry::FLUID_TYPE && !this->IsEdge)
 		// Simple fluid sites
 		return cfg;
 
@@ -81,18 +81,18 @@ uint64_t Site::GetConfig() {
 		}
 		// Shift the boundary bit field to the appropriate
 		// place and set these bits in the type
-		cfg |= (uint64_t) boundary << hemelb::BOUNDARY_CONFIG_SHIFT;
+		cfg |= (uint64_t) boundary << hemelb::geometry::SiteData::BOUNDARY_CONFIG_SHIFT;
 
 		if (boundary)
 			// Set this bit if we've hit any solid sites
-			cfg |= hemelb::PRESSURE_EDGE_MASK;
+			cfg |= hemelb::geometry::SiteData::PRESSURE_EDGE_MASK;
 
 	}
 
-	if (type != hemelb::FLUID_TYPE) {
+	if (type != hemelb::geometry::FLUID_TYPE) {
 		// It must be an inlet or outlet
 		// Shift the index left and set the bits
-		cfg |= (uint64_t) this->BoundaryId << hemelb::BOUNDARY_ID_SHIFT;
+		cfg |= (uint64_t) this->BoundaryId << hemelb::geometry::SiteData::BOUNDARY_ID_SHIFT;
 	}
 
 	return cfg;
