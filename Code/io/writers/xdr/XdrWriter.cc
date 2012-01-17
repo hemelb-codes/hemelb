@@ -1,6 +1,4 @@
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-
+#include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrWriter.h"
 
 namespace hemelb
@@ -19,16 +17,6 @@ namespace hemelb
     {
       namespace xdr
       {
-        /* The XDR implementation on BSD based machines uses
-            * xdr_u_int??_t() to pack/unpack these types, while Linux
-            * based machines have xdr_uint??_t(). Use the config macro to
-            * create aliases on BSD.
-            */
-#ifdef HEMELB_CFG_ON_BSD
-#define xdr_uint16_t xdr_u_int16_t
-#define xdr_uint32_t xdr_u_int32_t
-#define xdr_uint64_t xdr_u_int64_t
-#endif //  HEMELB_CFG_ON_BSD
         void XdrWriter::_write(int16_t const& shortToWrite)
         {
           xdr_int16_t(&mXdr, const_cast<int16_t *>(&shortToWrite));
