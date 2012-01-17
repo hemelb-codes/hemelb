@@ -192,11 +192,22 @@ namespace hemelb
           return Vector3D(x * multiplier, y * multiplier, z * multiplier);
         }
 
-        //Scalar division
+        /*
+         * Scalar division
+         */
         template<class DividerT>
         Vector3D<T> operator/(const DividerT divider) const
         {
           return Vector3D(x / divider, y / divider, z / divider);
+        }
+
+        /*
+         * Scalar modulus
+         */
+        template<class ModuloT>
+        Vector3D<ModuloT> operator%(const ModuloT divider) const
+        {
+          return Vector3D(x % divider, y % divider, z % divider);
         }
 
         /**
