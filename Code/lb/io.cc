@@ -128,117 +128,100 @@ namespace hemelb
        * site is fluid and present on the current task, it calculates the
        * flow field and encodes it to the local buffer.
        */
-
-      site_t n = -1;
-      for (site_t i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
+      for (geometry::BlockTraverser blockTrav(*mLatDat); blockTrav.CurrentLocationValid();
+          blockTrav.TraverseOne())
       {
-        for (site_t j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
+        const geometry::Block& block = blockTrav.GetCurrentBlockData();
+
+        if (block.IsEmpty())
         {
-          for (site_t k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
+          continue;
+        }
+
+        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser();
+            siteTrav.CurrentLocationValid(); siteTrav.TraverseOne())
+        {
+          if (netTop->GetLocalRank() != block.GetProcessorRankForSite(siteTrav.GetCurrentIndex()))
           {
+            continue;
+          }
 
-            ++n;
+          site_t my_site_id = block.GetLocalContiguousIndexForSite(siteTrav.GetCurrentIndex());
 
-            if (mLatDat->GetBlock(n)->processorRankForEachBlockSite.size() == 0)
+          /* Skip over solid sites. */
+          if (my_site_id & BIG_NUMBER3)
+            continue;
+
+          distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS], stress,
+              pressure;
+
+          geometry::Site site = mLatDat->GetSite(my_site_id);
+
+          if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
+          {
+            D3Q15::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
+
+            for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
             {
-              continue;
+              f_neq[l] = site.GetFOld()[l] - f_eq[l];
             }
-            site_t m = -1;
 
-            for (site_t site_i = i; site_i < i + mLatDat->GetBlockSize(); site_i++)
+          }
+          else
+          { // not FLUID_TYPE
+            CalculateBC(site.GetFOld(),
+                        site.GetSiteType(),
+                        site.GetBoundaryId(),
+                        &density,
+                        &vx,
+                        &vy,
+                        &vz,
+                        f_neq);
+          }
+
+          if (mParams.StressType == hemelb::lb::ShearStress)
+          {
+            if (!site.IsEdge())
             {
-              for (site_t site_j = j; site_j < j + mLatDat->GetBlockSize(); site_j++)
-              {
-                for (site_t site_k = k; site_k < k + mLatDat->GetBlockSize(); site_k++)
-                {
-
-                  m++;
-                  if (netTop->GetLocalRank()
-                      != mLatDat->GetBlock(n)->processorRankForEachBlockSite[m])
-                  {
-                    continue;
-                  }
-
-                  site_t my_site_id = mLatDat->GetBlock(n)->localContiguousIndex[m];
-
-                  /* Skip over solid sites. */
-                  if (my_site_id & BIG_NUMBER3)
-                    continue;
-
-                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
-                      stress, pressure;
-
-                  // TODO Utter filth. The cases where the whole site data is exactly equal
-                  // to "FLUID_TYPE" and where just the type-component of the whole site data
-                  // is equal to "FLUID_TYPE" are handled differently.
-                  geometry::Site site = mLatDat->GetSite(my_site_id);
-
-                  if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
-                  {
-                    D3Q15::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
-
-                    for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-                    {
-                      f_neq[l] = site.GetFOld()[l] - f_eq[l];
-                    }
-
-                  }
-                  else
-                  { // not FLUID_TYPE
-                    CalculateBC(site.GetFOld(),
-                                site.GetSiteType(),
-                                site.GetBoundaryId(),
-                                &density,
-                                &vx,
-                                &vy,
-                                &vz,
-                                f_neq);
-                  }
-
-                  if (mParams.StressType == hemelb::lb::ShearStress)
-                  {
-                    if (!site.IsEdge())
-                    {
-                      stress = -1.0;
-                    }
-                    else
-                    {
-                      D3Q15::CalculateShearStress(density,
-                                                  f_neq,
-                                                  site.GetWallNormal(),
-                                                  stress,
-                                                  mParams.GetStressParameter());
-                    }
-                  }
-                  else
-                  {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
-                  }
-
-                  vx /= density;
-                  vy /= density;
-                  vz /= density;
-
-                  // conversion from lattice to physical units
-                  pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
-
-                  vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
-                  vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
-                  vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
-
-                  stress = mUnits->ConvertStressToPhysicalUnits(stress);
-
-                  const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
-
-                  lWriter << (int) (site_i - siteMins.x) << (int) (site_j - siteMins.y)
-                      << (int) (site_k - siteMins.z);
-
-                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
-                }
-              }
+              stress = -1.0;
+            }
+            else
+            {
+              D3Q15::CalculateShearStress(density,
+                                          f_neq,
+                                          site.GetWallNormal(),
+                                          stress,
+                                          mParams.GetStressParameter());
             }
           }
+          else
+          {
+            D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
+          }
+
+          vx /= density;
+          vy /= density;
+          vz /= density;
+
+          // conversion from lattice to physical units
+          pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
+
+          vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
+          vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
+          vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
+
+          stress = mUnits->ConvertStressToPhysicalUnits(stress);
+
+          const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
+
+          const util::Vector3D<site_t> relativeSiteCoords =
+              mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(),
+                                       siteTrav.GetCurrentLocation()) - siteMins;
+
+          lWriter << (int) relativeSiteCoords.x << (int) relativeSiteCoords.y
+              << (int) relativeSiteCoords.z;
+
+          lWriter << float(pressure) << float(vx) << float(vy) << float(vz) << float(stress);
         }
       }
 

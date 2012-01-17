@@ -124,9 +124,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::Block& block = blockTraverser.GetCurrentBlockData();
 
-          if (block->localContiguousIndex.size() == 0)
+          if (block.IsEmpty())
           {
             continue;
           }
@@ -135,13 +135,13 @@ namespace hemelb
           do
           {
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;
             }
 
             const geometry::ConstSite site =
-                latDat.GetSite(block->localContiguousIndex[siteTraverser.GetCurrentIndex()]);
+                latDat.GetSite(block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex()));
 
             // if the lattice site is not an inlet
             if (site.GetSiteType() != geometry::INLET_TYPE)
