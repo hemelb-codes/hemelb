@@ -24,8 +24,8 @@ set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or 
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wclobbered -Wsign-compare -Wtype-limits")
-	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wclobbered -Wsign-compare -Wtype-limits")
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif()
 if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
