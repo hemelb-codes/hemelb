@@ -8,6 +8,7 @@ import subprocess
 import posixpath
 import yaml
 from templates import *
+from functools import *
 
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,15 +42,10 @@ def machine(name):
 	env.machine_name=name
 	complete_environment()
 
-def make_machine_alias(machine_name):
-	@task(alias=machine_name)
-	def _machine():
-		execute(machine,machine_name)
-	globals()[machine_name]=_machine
-
 #Metaprogram the machine wrappers
 for machine_name in set(config.keys())-set(['default']):
-	make_machine_alias(machine_name)
+	globals()[machine_name]=task(alias=machine_name)(partial(machine,machine_name))
+
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
