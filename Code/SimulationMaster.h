@@ -1,7 +1,7 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
-#include "lb/lb.h"
+#include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
@@ -58,7 +58,8 @@ class SimulationMaster
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
 
-    hemelb::lb::LBM* latticeBoltzmannModel;
+    typedef hemelb::D3Q15 latticeType;
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     hemelb::net::Net communicationNet;
