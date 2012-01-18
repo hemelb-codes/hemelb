@@ -2,11 +2,11 @@
 #define HEMELB_STEERING_IMAGESENDCOMPONENT_H
 
 #include "constants.h"
-#include "lb/lb.h"
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
 #include "steering/Network.h"
 #include "steering/basic/SimulationParameters.h"
+#include "vis/Control.h"
 
 namespace hemelb
 {
@@ -15,11 +15,11 @@ namespace hemelb
     class ImageSendComponent
     {
       public:
-        ImageSendComponent(lb::LBM* lbm,
-                           lb::SimulationState* iSimState,
+        ImageSendComponent(lb::SimulationState* iSimState,
                            vis::Control* iControl,
                            const lb::LbmParameters* iLbmParams,
-                           Network* iNetwork);
+                           Network* iNetwork,
+                           unsigned inletCount);
         ~ImageSendComponent();
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
@@ -31,10 +31,10 @@ namespace hemelb
 
       private:
         Network* mNetwork;
-        lb::LBM* mLbm;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
         const lb::LbmParameters* mLbmParams;
+        const unsigned inletCount;
 
         char* xdrSendBuffer;
         double lastRender;
@@ -51,8 +51,7 @@ namespace hemelb
         // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
         static const unsigned int XdrIntLength = 4;
         static const unsigned int maxSendSize = 2 * XdrIntLength + 1 * XdrIntLength
-            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data
-            + SimulationParameters::paramsSizeB;
+            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
     };
   }
 }
