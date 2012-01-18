@@ -44,12 +44,7 @@ def machine(name):
 #Metaprogram the machine wrappers
 for machine_name in set(config.keys())-set(['default']):
 	#Use default parameter trick to avoid closing to a reference
-	def _machine(machine_name=machine_name):
-		execute(machine,machine_name)
-	#Fabric task decorator creates task based on wrapped function's name
-	_machine.func_name=machine_name
-	#Invoke @task decorator as a function, and store to globals.
-	globals()[machine_name]=task(_machine)
+	globals()[machine_name]=task(alias=machine_name)(lambda machine_name=machine_name: execute(machine,machine_name))
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
