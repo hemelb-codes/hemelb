@@ -10,9 +10,12 @@ namespace hemelb
     namespace streamers
     {
       // TODO REFACTOR this class to be just a collision, using the BounceBack streamer.
-      template<typename CollisionType>
-      class Regularised : public BaseStreamer<Regularised<CollisionType> >
+      template<typename CollisionImpl>
+      class Regularised : public BaseStreamer<Regularised<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -43,13 +46,13 @@ namespace hemelb
 
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
-              distribn_t fTemp[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+              distribn_t fTemp[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (unsigned l = 0; l < CollisionType::CKernel::LatticeType::NUMVECTORS; ++l)
               {
-                if (site.HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
+                if (site.HasBoundary(CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l]))
                 {
-                  fTemp[l] = hydroVars.GetFEq().f[l] + f[D3Q15::INVERSEDIRECTIONS[l]]
-                      - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
+                  fTemp[l] = hydroVars.GetFEq().f[l] + f[CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l]]
+                      - hydroVars.GetFEq().f[CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l]];
                 }
                 else
                 {
@@ -57,15 +60,15 @@ namespace hemelb
                 }
               }
 
-              distribn_t f_neq[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+              distribn_t f_neq[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (unsigned l = 0; l < CollisionType::CKernel::LatticeType::NUMVECTORS; ++l)
               {
                 f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
               }
 
               // Pi = sum_i e_i e_i f_i
               // zeta = Pi / 2 (Cs^4)
-              Order2Tensor zeta = D3Q15::CalculatePiTensor(f_neq);
+              Order2Tensor zeta = CollisionType::CKernel::LatticeType::CalculatePiTensor(f_neq);
 
               for (int m = 0; m < 3; m++)
               {
@@ -79,12 +82,13 @@ namespace hemelb
               const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
 
               // Now apply bounce-back to the components that require it
-              site_t lStreamTo[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; l++)
+              site_t lStreamTo[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (unsigned l = 0; l < CollisionType::CKernel::LatticeType::NUMVECTORS; l++)
               {
                 if (site.HasBoundary(l))
                 {
-                  lStreamTo[l] = lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+                  lStreamTo[l] = lIndex * CollisionType::CKernel::LatticeType::NUMVECTORS
+                      + CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l];
                 }
                 else
                 {
@@ -92,9 +96,10 @@ namespace hemelb
                 }
               }
 
-              const int *Cs[3] = { D3Q15::CX, D3Q15::CY, D3Q15::CZ };
+              const int *Cs[3] = { CollisionType::CKernel::LatticeType::CX, CollisionType::CKernel::LatticeType::CY,
+                                   CollisionType::CKernel::LatticeType::CZ };
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ++ii)
               {
                 // According to Latt & Chopard (Physical Review E77, 2008),
                 // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
@@ -115,7 +120,7 @@ namespace hemelb
                   }
                 }
 
-                f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
+                f_neq[ii] *= CollisionType::CKernel::LatticeType::EQMWEIGHTS[ii];
 
                 /*
                  * Newly constructed distribution function:

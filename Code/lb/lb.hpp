@@ -111,16 +111,16 @@ namespace hemelb
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
-        distribn_t f_eq[D3Q15::NUMVECTORS];
+        distribn_t f_eq[LatticeType::NUMVECTORS];
 
-        D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
+        LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
         geometry::Site site = mLatDat->GetSite(i);
 
         distribn_t* f_old_p = site.GetFOld();
-        distribn_t* f_new_p = mLatDat->GetFNew(i * D3Q15::NUMVECTORS);
+        distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
 
-        for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+        for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
         {
           f_new_p[l] = f_old_p[l] = f_eq[l];
         }
@@ -430,15 +430,16 @@ namespace hemelb
           if (my_site_id & BIG_NUMBER3)
             continue;
 
-          distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS], stress, pressure;
+          distribn_t density, vx, vy, vz, f_eq[LatticeType::NUMVECTORS], f_neq[LatticeType::NUMVECTORS], stress,
+              pressure;
 
           geometry::Site site = mLatDat->GetSite(my_site_id);
 
           if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
           {
-            D3Q15::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
+            LatticeType::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
 
-            for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+            for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
             {
               f_neq[l] = site.GetFOld()[l] - f_eq[l];
             }
@@ -457,12 +458,16 @@ namespace hemelb
             }
             else
             {
-              D3Q15::CalculateShearStress(density, f_neq, site.GetWallNormal(), stress, mParams.GetStressParameter());
+              LatticeType::CalculateShearStress(density,
+                                                f_neq,
+                                                site.GetWallNormal(),
+                                                stress,
+                                                mParams.GetStressParameter());
             }
           }
           else
           {
-            D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
+            LatticeType::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
           }
 
           vx /= density;
@@ -528,7 +533,7 @@ namespace hemelb
     {
       distribn_t dummy_density;
 
-      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
       {
         f_neq[l] = f[l];
       }
@@ -538,7 +543,7 @@ namespace hemelb
       // UGH.
       if (iSiteType == hemelb::geometry::FLUID_TYPE)
       {
-        D3Q15::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
+        LatticeType::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
       }
       else
       {
@@ -551,11 +556,11 @@ namespace hemelb
           *density = mOutletValues->GetBoundaryDensity(iBoundaryId);
         }
 
-        D3Q15::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
-        D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
+        LatticeType::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
+        LatticeType::CalculateFeq(*density, *vx, *vy, *vz, f);
 
       }
-      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
       {
         f_neq[l] -= f[l];
       }

@@ -92,8 +92,7 @@ namespace hemelb
        *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
        *  fill it in completely unless the logarithm base SPREADFACTOR of the number of processes is an integer.
        */
-      for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE;
-          index++)
+      for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE; index++)
       {
         childrenDensitiesSerialised[index] = REFERENCE_DENSITY;
       }
@@ -140,8 +139,7 @@ namespace hemelb
 
       for (int childIndex = 0; childIndex < (int) SPREADFACTOR; childIndex++)
       {
-        DensityTracker childDensities(&childrenDensitiesSerialised[childIndex
-            * DensityTracker::DENSITY_TRACKER_SIZE]);
+        DensityTracker childDensities(&childrenDensitiesSerialised[childIndex * DensityTracker::DENSITY_TRACKER_SIZE]);
 
         upwardsDensityTracker.UpdateDensityTracker(childDensities);
       }
@@ -158,15 +156,13 @@ namespace hemelb
     template<class BroadcastPolicy>
     void IncompressibilityChecker<BroadcastPolicy>::ProgressFromParent(unsigned long splayNumber)
     {
-      this->ReceiveFromParent(downwardsDensityTracker.GetDensitiesArray(),
-                              DensityTracker::DENSITY_TRACKER_SIZE);
+      this->ReceiveFromParent(downwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
     template<class BroadcastPolicy>
     void IncompressibilityChecker<BroadcastPolicy>::ProgressToChildren(unsigned long splayNumber)
     {
-      this->SendToChildren(downwardsDensityTracker.GetDensitiesArray(),
-                           DensityTracker::DENSITY_TRACKER_SIZE);
+      this->SendToChildren(downwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
     template<class BroadcastPolicy>
@@ -179,9 +175,9 @@ namespace hemelb
       {
         //! @todo #23 Refactor into a method in the lattice class that computes *just* the density
         localDensity = 0.0;
-        for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+        for (unsigned int l = 0; l < mLatDat->GetLatticeInfo().GetNumVectors(); l++)
         {
-          localDensity += *mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l);
+          localDensity += *mLatDat->GetFNew(i * mLatDat->GetLatticeInfo().GetNumVectors() + l);
         }
         // End of refactor
 
@@ -189,8 +185,7 @@ namespace hemelb
       }
       timings[hemelb::reporting::Timers::monitoring].Stop();
 
-      this->SendToParent(upwardsDensityTracker.GetDensitiesArray(),
-                         DensityTracker::DENSITY_TRACKER_SIZE);
+      this->SendToParent(upwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
     template<class BroadcastPolicy>
