@@ -11,14 +11,13 @@ namespace hemelb
   {
     SteeringComponent::SteeringComponent(Network* iNetwork,
                                          vis::Control* iVisControl,
-                                         lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
                                          util::UnitConverter* iUnits) :
-      net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl),
-          mUnits(iUnits)
+        net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl),
+        mUnits(iUnits)
     {
       Reset(iSimConfig);
       AssignValues();
@@ -26,12 +25,12 @@ namespace hemelb
 
     void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
     {
-      ReceiveFromParent<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
+      ReceiveFromParent<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
     void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
     {
-      SendToChildren<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
+      SendToChildren<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()
