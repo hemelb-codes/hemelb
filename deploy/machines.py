@@ -41,10 +41,15 @@ def machine(name):
 	env.machine_name=name
 	complete_environment()
 
+def make_machine_alias(machine_name):
+	@task(alias=machine_name)
+	def _machine():
+		execute(machine,machine_name)
+	globals()[machine_name]=_machine
+
 #Metaprogram the machine wrappers
 for machine_name in set(config.keys())-set(['default']):
-	#Use default parameter trick to avoid closing to a reference
-	globals()[machine_name]=task(alias=machine_name)(lambda machine_name=machine_name: execute(machine,machine_name))
+	make_machine_alias(machine_name)
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
