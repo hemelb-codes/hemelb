@@ -62,7 +62,7 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_Datatype viewType = MpiDataType<char> ();
+      MPI_Datatype viewType = MpiDataType<char>();
       MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -119,138 +119,131 @@ namespace hemelb
       site_t lLocalWriteLength = io::formats::snapshot::VoxelRecordLength
           * mLatDat->GetFluidSiteCountOnProc(netTop->GetLocalRank());
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
-      hemelb::io::writers::xdr::XdrMemWriter
-          lWriter = hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
-                                                           (unsigned int) lLocalWriteLength);
+      hemelb::io::writers::xdr::XdrMemWriter lWriter =
+          hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
+                                                 (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
        * the block is non-empty, it scans the sites within that block. If the
        * site is fluid and present on the current task, it calculates the
        * flow field and encodes it to the local buffer.
        */
-
-      site_t n = -1;
-      for (site_t i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
+      for (geometry::BlockTraverser blockTrav(*mLatDat); blockTrav.CurrentLocationValid();
+          blockTrav.TraverseOne())
       {
-        for (site_t j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
+        const geometry::Block& block = blockTrav.GetCurrentBlockData();
+
+        if (block.IsEmpty())
         {
-          for (site_t k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
+          continue;
+        }
+
+        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser();
+            siteTrav.CurrentLocationValid(); siteTrav.TraverseOne())
+        {
+          if (netTop->GetLocalRank() != block.GetProcessorRankForSite(siteTrav.GetCurrentIndex()))
           {
+            continue;
+          }
 
-            ++n;
+          site_t my_site_id = block.GetLocalContiguousIndexForSite(siteTrav.GetCurrentIndex());
 
-            if (mLatDat->GetBlock(n)->processorRankForEachBlockSite.size() == 0)
+          /* Skip over solid sites. */
+          if (my_site_id & BIG_NUMBER3)
+            continue;
+
+          distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS], stress,
+              pressure;
+
+          geometry::Site site = mLatDat->GetSite(my_site_id);
+
+          if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
+          {
+            D3Q15::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
+
+            for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
             {
-              continue;
+              f_neq[l] = site.GetFOld()[l] - f_eq[l];
             }
-            site_t m = -1;
 
-            for (site_t site_i = i; site_i < i + mLatDat->GetBlockSize(); site_i++)
+          }
+          else
+          { // not FLUID_TYPE
+            CalculateBC(site.GetFOld(),
+                        site.GetSiteType(),
+                        site.GetBoundaryId(),
+                        &density,
+                        &vx,
+                        &vy,
+                        &vz,
+                        f_neq);
+          }
+
+          if (mParams.StressType == hemelb::lb::ShearStress)
+          {
+            if (!site.IsEdge())
             {
-              for (site_t site_j = j; site_j < j + mLatDat->GetBlockSize(); site_j++)
-              {
-                for (site_t site_k = k; site_k < k + mLatDat->GetBlockSize(); site_k++)
-                {
-
-                  m++;
-                  if (netTop->GetLocalRank()
-                      != mLatDat->GetBlock(n)->processorRankForEachBlockSite[m])
-                  {
-                    continue;
-                  }
-
-                  site_t my_site_id = mLatDat->GetBlock(n)->localContiguousIndex[m];
-
-                  /* Skip over solid sites. */
-                  if (my_site_id & BIG_NUMBER3)
-                    continue;
-
-                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
-                      f_neq[D3Q15::NUMVECTORS], stress, pressure;
-
-                  geometry::SiteData siteData = mLatDat->GetSiteData(my_site_id);
-
-                  if (siteData.GetSiteType() == geometry::FLUID_TYPE && !siteData.IsEdge())
-                  {
-                    D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                                                           * D3Q15::NUMVECTORS),
-                                                       density,
-                                                       vx,
-                                                       vy,
-                                                       vz,
-                                                       f_eq);
-
-                    for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-                    {
-                      f_neq[l] = *mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS + l) - f_eq[l];
-                    }
-
-                  }
-                  else
-                  { // not FLUID_TYPE
-                    CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
-                                mLatDat->GetSiteType(my_site_id),
-                                mLatDat->GetBoundaryId(my_site_id),
-                                &density,
-                                &vx,
-                                &vy,
-                                &vz,
-                                f_neq);
-                  }
-
-                  if (mParams.StressType == hemelb::lb::ShearStress)
-                  {
-                    if (mLatDat->GetNormalToWall(my_site_id)[0] >= NO_VALUE)
-                    {
-                      stress = -1.0;
-                    }
-                    else
-                    {
-                      D3Q15::CalculateShearStress(density,
-                                                  f_neq,
-                                                  mLatDat->GetNormalToWall(my_site_id),
-                                                  stress,
-                                                  mParams.GetStressParameter());
-                    }
-                  }
-                  else
-                  {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
-                  }
-
-                  vx /= density;
-                  vy /= density;
-                  vz /= density;
-
-                  // conversion from lattice to physical units
-                  pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
-
-                  vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
-                  vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
-                  vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
-
-                  stress = mUnits->ConvertStressToPhysicalUnits(stress);
-
-                  const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
-
-                  lWriter << (int) (site_i - siteMins.x) << (int) (site_j - siteMins.y)
-                      << (int) (site_k - siteMins.z);
-
-                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
-                }
-              }
+              stress = -1.0;
+            }
+            else
+            {
+              D3Q15::CalculateShearStress(density,
+                                          f_neq,
+                                          site.GetWallNormal(),
+                                          stress,
+                                          mParams.GetStressParameter());
             }
           }
+          else
+          {
+            D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
+          }
+
+          vx /= density;
+          vy /= density;
+          vz /= density;
+
+          // conversion from lattice to physical units
+          pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
+
+          vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
+          vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
+          vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
+
+          stress = mUnits->ConvertStressToPhysicalUnits(stress);
+
+          const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
+
+          const util::Vector3D<site_t> relativeSiteCoords =
+              mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(),
+                                       siteTrav.GetCurrentLocation()) - siteMins;
+
+          lWriter << (int) relativeSiteCoords.x << (int) relativeSiteCoords.y
+              << (int) relativeSiteCoords.z;
+
+          lWriter << float(pressure) << float(vx) << float(vy) << float(vz) << float(stress);
         }
       }
-      // Hand the buffers over to MPIO to write to the file.
-      MPI_File_write_all(lOutputFile,
-                         lFluidSiteBuffer,
-                         (int) lLocalWriteLength,
-                         MpiDataType(lFluidSiteBuffer[0]),
-                         &lStatus);
 
+      if (netTop->GetProcessorCount() == 1)
+      {
+        // On hector, romio doesn't like to write_all to a single-machine communicator.
+        // So we do a simple write.
+        MPI_File_write(lOutputFile,
+                       lFluidSiteBuffer,
+                       (int) lLocalWriteLength,
+                       MpiDataType(lFluidSiteBuffer[0]),
+                       &lStatus);
+      }
+      else
+      {
+        // Hand the buffers over to MPIO to write to the file.
+        MPI_File_write_all(lOutputFile,
+                           lFluidSiteBuffer,
+                           (int) lLocalWriteLength,
+                           MpiDataType(lFluidSiteBuffer[0]),
+                           &lStatus);
+      }
       MPI_File_close(&lOutputFile);
 
       delete[] lFluidSiteBuffer;

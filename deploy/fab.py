@@ -40,8 +40,8 @@ def clone():
 @task(alias='cold')
 def deploy_cold():
 	"""Checkout, build, and install hemelb, from new."""
-	execute(clone)
 	execute(clear_build)
+	execute(clone)
 	execute(prepare_paths)
 	execute(configure)
 	execute(build)
@@ -88,6 +88,7 @@ def clear_build():
 	run(template("rm -rf $install_path"))
 	run(template("mkdir -p $build_path"))
 	run(template("mkdir -p $install_path"))
+	run(template("mkdir -p $temp_path"))
 	
 
 @task
@@ -322,9 +323,11 @@ def clear_results(name=''):
 	run(template('rm -rf $job_results_contents'))		
 
 @task
-def test():
+def test(**args):
 	"""Submit a unit-testing job to the remote queue."""
-	execute(job,script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
+	options=dict(script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
+	options.update(args)
+	execute(job,**options)
 		
 @task
 def hemelb(**args):
@@ -348,10 +351,13 @@ def hemelb(**args):
 	execute(job,**options)
 
 @task(alias='regress')
-def regression_test():
+def regression_test(**args):
 	"""Submit a regression-testing job to the remote queue."""
 	execute(copy_regression_tests)
-	execute(job,script='regression',name='regression_${build_number}_${machine_name}',cores=3,wall_time='0:20:0')
+	options=dict(name='regression_${build_number}_${machine_name}',cores=3,
+		wall_time='0:20:0', images=1, snapshots=1, steering=1111,script='regression')
+	options.update(args)
+	execute(job,**options)
 
 @task
 def job(**args):
@@ -361,7 +367,7 @@ def job(**args):
 	env.update(**args)
 	env.update(name=template(env.name))
 	# If we request less than one node's worth of cores, need to keep N<=n
-	if env.corespernode>env.cores:
+	if int(env.corespernode)>int(env.cores):
 		env.corespernode=env.cores
 	env['job_name']=env.name[0:env.max_job_name_chars]
 	with_job(env.name)

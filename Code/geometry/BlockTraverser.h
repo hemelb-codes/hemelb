@@ -2,6 +2,7 @@
 #define HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 
 #include "lb/lattices/D3Q27.h"
+#include "geometry/Block.h"
 #include "geometry/VolumeTraverser.h"
 #include "geometry/SiteTraverser.h"
 
@@ -9,33 +10,6 @@ namespace hemelb
 {
   namespace geometry
   {
-
-    // Data about each global block in the lattice,
-    // site_data[] is an array containing individual lattice site data
-    // within a global block.
-    struct BlockData
-    {
-        BlockData()
-        {
-        }
-
-        BlockData(site_t sitesPerBlock)
-        {
-          processorRankForEachBlockSite.resize(sitesPerBlock, BIG_NUMBER3);
-          localContiguousIndex.resize(sitesPerBlock, BIG_NUMBER3);
-        }
-
-        ~BlockData()
-        {
-        }
-
-        // An array of the ranks on which each lattice site within the block resides.
-        std::vector<proc_t> processorRankForEachBlockSite;
-
-        // The local index for each site on the block in the LocalLatticeData.
-        std::vector<site_t> localContiguousIndex;
-    };
-
     /**
      *BlockTraverser is used to traverse the blocks in a lattice sequentially.
      */
@@ -49,9 +23,9 @@ namespace hemelb
 
         util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
-        const BlockData* GetCurrentBlockData();
+        const Block& GetCurrentBlockData();
 
-        const BlockData* GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
+        const Block& GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
 
         site_t GetBlockSize();
 

@@ -16,8 +16,8 @@ namespace hemelb
                                  const geometry::LatticeData * iLatDat,
                                  net::Net* net,
                                  SimulationState* simState) :
-      net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
-          mLatDat(iLatDat)
+        net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
+        mLatDat(iLatDat)
     {
       for (unsigned int i = 0; i < COLLISION_TYPES; i++)
       {
@@ -66,7 +66,9 @@ namespace hemelb
         {
           for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
           {
-            HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+            geometry::ConstSite site = mLatDat->GetSite(i);
+
+            HFunction HFunc(site.GetFOld(), NULL);
             dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
           }
         }
@@ -80,7 +82,9 @@ namespace hemelb
         {
           for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
           {
-            HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+            geometry::ConstSite site = mLatDat->GetSite(i);
+
+            HFunction HFunc(site.GetFOld(), NULL);
             dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
           }
         }
@@ -118,7 +122,7 @@ namespace hemelb
 
     void EntropyTester::ProgressFromChildren(unsigned long splayNumber)
     {
-      ReceiveFromChildren<int> (mChildrensValues, 1);
+      ReceiveFromChildren<int>(mChildrensValues, 1);
     }
 
     void EntropyTester::ProgressToParent(unsigned long splayNumber)
@@ -132,7 +136,8 @@ namespace hemelb
         {
           for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
           {
-            HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+            geometry::ConstSite site = mLatDat->GetSite(i);
+            HFunction HFunc(site.GetFOld(), NULL);
             mHPreCollision[i] = HFunc.eval();
           }
         }
@@ -146,7 +151,8 @@ namespace hemelb
         {
           for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
           {
-            HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+            geometry::ConstSite site = mLatDat->GetSite(i);
+            HFunction HFunc(site.GetFOld(), NULL);
             mHPreCollision[i] = HFunc.eval();
           }
         }
@@ -154,7 +160,7 @@ namespace hemelb
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
 
-      SendToParent<int> (&mUpwardsValue, 1);
+      SendToParent<int>(&mUpwardsValue, 1);
     }
 
     void EntropyTester::TopNodeAction()
