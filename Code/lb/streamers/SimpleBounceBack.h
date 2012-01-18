@@ -32,11 +32,13 @@ namespace hemelb
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
-              distribn_t *fOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+              const geometry::Site site = bLatDat->GetSite(lIndex);
+
+              distribn_t *fOld = site.GetFOld();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
 
-              collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
               collider.Collide(iLbmParams, hydroVars);
 
@@ -44,9 +46,9 @@ namespace hemelb
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t lStreamTo = (bLatDat->HasBoundary(lIndex, ii)) ?
+                site_t lStreamTo = site.HasBoundary(ii) ?
                   (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii] :
-                  bLatDat->GetStreamedIndex(lIndex, ii);
+                  site.GetStreamedIndex(ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
@@ -57,10 +59,9 @@ namespace hemelb
               BaseStreamer<SimpleBounceBack>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                          hydroVars.v_y,
                                                                                          hydroVars.v_z,
-                                                                                         lIndex,
+                                                                                         site,
                                                                                          hydroVars.GetFNeq().f,
                                                                                          hydroVars.density,
-                                                                                         bLatDat,
                                                                                          iLbmParams,
                                                                                          iControl);
             }

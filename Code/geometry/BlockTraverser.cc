@@ -25,12 +25,12 @@ namespace hemelb
       return GetCurrentLocation() * mLatticeData.GetBlockSize();
     }
 
-    const geometry::BlockData* BlockTraverser::GetCurrentBlockData()
+    const Block& BlockTraverser::GetCurrentBlockData()
     {
       return mLatticeData.GetBlock(GetCurrentIndex());
     }
 
-    const geometry::BlockData* BlockTraverser::GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation)
+    const Block& BlockTraverser::GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation)
     {
       return mLatticeData.GetBlock(GetIndexFromLocation(iLocation));
     }
