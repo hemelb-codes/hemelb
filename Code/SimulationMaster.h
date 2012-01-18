@@ -55,7 +55,7 @@ class SimulationMaster
 
     hemelb::lb::SimulationState* simulationState;
     hemelb::lb::StabilityTester* stabilityTester;
-    hemelb::lb::EntropyTester* entropyTester;
+    hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;

@@ -108,7 +108,7 @@ namespace hemelb
                                                  distribn_t beta,
                                                  distribn_t f_collided[Lattice::NUMVECTORS])
           {
-            lb::HFunction HFunc(f, f_eq);
+            lb::HFunction<Lattice> HFunc(f, f_eq);
 
             distribn_t alpha = hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, 2.0, 1.0E-100);
 
