@@ -21,8 +21,7 @@ namespace hemelb
                                          const Screen& iScreen,
                                          const Viewpoint& iViewpoint, //
                                          const VisSettings& iVisSettings) :
-        latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings),
-            particleManager(neighbouringProcessors), velocityField(neighbouringProcessors)
+          latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings), particleManager(neighbouringProcessors), velocityField(neighbouringProcessors)
       {
         velocityField.BuildVelocityField(iLatDat);
         ChooseSeedParticles();
@@ -45,19 +44,17 @@ namespace hemelb
       {
         // Set the particle creation period to be every time step, unless there are >=10000
         // timesteps per cycle
-        unsigned int
-            particle_creation_period =
-                util::NumericalFunctions::max<unsigned int>(1,
-                                                            (unsigned int) (time_steps_per_cycle
-                                                                / 5000));
+        unsigned int particle_creation_period =
+            util::NumericalFunctions::max<unsigned int>(1,
+                                                        (unsigned int) (time_steps_per_cycle / 5000));
 
-        int timestepsBetweenStreaklinesRounded = (int) (0.5F + (float) time_steps_per_cycle
-            / visSettings.streaklines_per_pulsatile_period);
+        int timestepsBetweenStreaklinesRounded = (int) (0.5F
+            + (float) time_steps_per_cycle / visSettings.streaklines_per_pulsatile_period);
 
         if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
-            <= (visSettings.streakline_length / 100.0F) * ((float) time_steps_per_cycle
-                / visSettings.streaklines_per_pulsatile_period) && time_steps
-            % particle_creation_period == 0)
+            <= (visSettings.streakline_length / 100.0F)
+                * ((float) time_steps_per_cycle / visSettings.streaklines_per_pulsatile_period)
+            && time_steps % particle_creation_period == 0)
         {
           CreateParticlesFromSeeds();
         }
@@ -108,7 +105,7 @@ namespace hemelb
           util::Vector3D<float> p2 = viewpoint.Project(p1);
 
           XYCoordinates<int> x =
-              screen.TransformScreenToPixelCoordinates<int> (XYCoordinates<float> (p2.x, p2.y));
+              screen.TransformScreenToPixelCoordinates<int>(XYCoordinates<float>(p2.x, p2.y));
 
           if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
           {
@@ -127,9 +124,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::Block& block = blockTraverser.GetCurrentBlockData();
 
-          if (block->localContiguousIndex.size() == 0)
+          if (block.IsEmpty())
           {
             continue;
           }
@@ -138,15 +135,16 @@ namespace hemelb
           do
           {
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;
             }
 
-            site_t siteIndex = block->localContiguousIndex[siteTraverser.GetCurrentIndex()];
+            const geometry::ConstSite site =
+                latDat.GetSite(block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex()));
 
             // if the lattice site is not an inlet
-            if (latDat.GetSiteType(siteIndex) != geometry::INLET_TYPE)
+            if (site.GetSiteType() != geometry::INLET_TYPE)
             {
               continue;
             }
@@ -158,16 +156,16 @@ namespace hemelb
               continue;
             }
 
-            particleSeeds.push_back(Particle(static_cast<float> (blockTraverser.GetX()
+            particleSeeds.push_back(Particle(static_cast<float>(blockTraverser.GetX()
                                                  * blockTraverser.GetBlockSize()
                                                  + siteTraverser.GetX()),
-                                             static_cast<float> (blockTraverser.GetY()
+                                             static_cast<float>(blockTraverser.GetY()
                                                  * blockTraverser.GetBlockSize()
                                                  + siteTraverser.GetY()),
-                                             static_cast<float> (blockTraverser.GetZ()
+                                             static_cast<float>(blockTraverser.GetZ()
                                                  * blockTraverser.GetBlockSize()
                                                  + siteTraverser.GetZ()),
-                                             latDat.GetBoundaryId(siteIndex)));
+                                             site.GetBoundaryId()));
 
           }
           while (siteTraverser.TraverseOne());
@@ -269,8 +267,9 @@ namespace hemelb
         {
           const NeighbouringProcessor& proc = (*neighProc).second;
 
-          for (site_t sendingVelocityIndex = 0; sendingVelocityIndex
-              < proc.GetNumberOfSitesRequestedByNeighbour(); sendingVelocityIndex++)
+          for (site_t sendingVelocityIndex = 0;
+              sendingVelocityIndex < proc.GetNumberOfSitesRequestedByNeighbour();
+              sendingVelocityIndex++)
           {
             const util::Vector3D<site_t>& siteCoords =
                 proc.GetSiteCoordsBeingRequestedByNeighbour(sendingVelocityIndex);
@@ -346,8 +345,8 @@ namespace hemelb
           for (site_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByThisCore(); n++)
           {
             const util::Vector3D<site_t> &coords = neighbourProc.GetSendingSiteCoorinates(n);
-            velocityField.GetVelocitySiteData(latDat, coords)->velocity
-                = neighbourProc.GetReceivedVelocityField(n);
+            velocityField.GetVelocitySiteData(latDat, coords)->velocity =
+                neighbourProc.GetReceivedVelocityField(n);
           }
         }
 

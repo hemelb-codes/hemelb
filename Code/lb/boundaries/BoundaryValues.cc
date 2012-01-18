@@ -17,7 +17,7 @@ namespace hemelb
                                      std::vector<iolets::InOutLet*> &iiolets,
                                      SimulationState* iSimState,
                                      util::UnitConverter* units) :
-        net::IteratedAction(), mState(iSimState), mUnits(units)
+          net::IteratedAction(), mState(iSimState), mUnits(units)
       {
         nTotIOlets = (int) iiolets.size();
 
@@ -91,7 +91,9 @@ namespace hemelb
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
         {
-          if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
+          const geometry::Site site = iLatDat->GetSite(i);
+
+          if (site.GetSiteType() == IOtype && site.GetBoundaryId() == iBoundaryId)
           {
             return true;
           }
@@ -229,7 +231,7 @@ namespace hemelb
           }
         }
 
-        for(int i = 0; i < nTotIOlets; ++i)
+        for (int i = 0; i < nTotIOlets; ++i)
         {
           iolets[i]->ResetValues();
         }

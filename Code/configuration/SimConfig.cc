@@ -2,6 +2,7 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <cstdlib>
 
@@ -60,9 +61,7 @@ namespace hemelb
       TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation", iIsLoading);
       DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
       DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
-      long dummyStress = -1;
-      DoIO(lSimulationElement, "stresstype", iIsLoading, dummyStress);
-      StressType = (lb::StressTypes) dummyStress;
+      DoIO(lSimulationElement, "stresstype", iIsLoading, StressType);
 
       TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
 
@@ -107,13 +106,15 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
+
+        output.precision(6);
 
         // %g uses the shorter of decimal / mantissa-exponent notations.
         // 6 significant figures will be written.
-        sprintf(lStringValue, "%.6g", value);
+        output << value;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -139,13 +140,15 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
+
+        output.precision(6);
 
         // %g uses the shorter of decimal / mantissa-exponent notations.
         // 6 significant figures will be written.
-        sprintf(lStringValue, "%.6g", value);
+        output << value;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -189,12 +192,11 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
 
-        // %ld specifies long integer style.
-        sprintf(lStringValue, "%ld", bValue);
+        output << bValue;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
       }
     }
 
@@ -212,12 +214,34 @@ namespace hemelb
       else
       {
         // This should be ample.
-        char lStringValue[20];
+        std::stringstream output (std::stringstream::out);
 
-        // %ld specifies long integer style.
-        sprintf(lStringValue, "%ld", bValue);
+        output << bValue;
 
-        iParent->SetAttribute(iAttributeName, lStringValue);
+        iParent->SetAttribute(iAttributeName, output.str());
+      }
+    }
+
+    void SimConfig::DoIO(TiXmlElement* iXmlNode,
+                         std::string iAttributeName,
+                         bool iIsLoading,
+                         lb::StressTypes &value)
+    {
+      if (iIsLoading)
+      {
+        char *dummy;
+        // Read in, in base 10.
+        value = (lb::StressTypes) std::strtol(iXmlNode->Attribute(iAttributeName)->c_str(),
+                                              &dummy,
+                                              10);
+      }
+      else
+      {
+        std::stringstream output(std::stringstream::out);
+
+        output << (int) value;
+
+        iXmlNode->SetAttribute(iAttributeName, output.str());
       }
     }
 
