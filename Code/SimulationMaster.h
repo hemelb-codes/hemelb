@@ -30,6 +30,8 @@ class SimulationMaster
     void RunSimulation();
 
   private:
+    typedef hemelb::D3Q15 latticeType;
+
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -58,7 +60,6 @@ class SimulationMaster
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
 
-    typedef hemelb::D3Q15 latticeType;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;

@@ -15,9 +15,7 @@ namespace hemelb
       {
         public:
           template<typename Lattice>
-          static void CalculateRhoVelocity(const distribn_t f[Lattice::NUMVECTORS],
-                                           distribn_t& rho,
-                                           distribn_t v[3])
+          static void CalculateRhoVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
           {
             rho = 0.0;
 
@@ -143,24 +141,12 @@ namespace hemelb
                                     distribn_t allowedError)
           {
             // Compare density
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id,
-                                                 expectedDensity,
-                                                 hydroVars.density,
-                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
             // Compare velocity
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id,
-                                                 expectedVx,
-                                                 hydroVars.v_x,
-                                                 allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id,
-                                                 expectedVy,
-                                                 hydroVars.v_y,
-                                                 allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id,
-                                                 expectedVz,
-                                                 hydroVars.v_z,
-                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id, expectedVx, hydroVars.v_x, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id, expectedVy, hydroVars.v_y, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.v_z, allowedError);
 
             // Compare equilibrium f
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
@@ -190,8 +176,7 @@ namespace hemelb
           {
             for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              distribution[direction] = ((distribn_t) (direction + 1)) / 10.0
-                  + ((distribn_t) (site)) / 100.0;
+              distribution[direction] = ((distribn_t) (direction + 1)) / 10.0 + ((distribn_t) (site)) / 100.0;
             }
           }
 
@@ -275,8 +260,7 @@ namespace hemelb
                *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                *            = f^{eq}_i + (1+w) f^{neq}_i
                */
-              fPostCollision[ii] = hydroVars.GetFEq().f[ii]
-                  + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
+              fPostCollision[ii] = hydroVars.GetFEq().f[ii] + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
             }
 
           }
