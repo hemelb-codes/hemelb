@@ -129,7 +129,7 @@ namespace hemelb
 
             if (big)
             {
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
+              HFunction<LatticeType> HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
               prevAlpha = (prevAlpha < 2.0 * tau ?
@@ -148,7 +148,7 @@ namespace hemelb
                 return 2.0;
               }
 
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
+              HFunction<LatticeType> HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // The bracket is very large, but it should guarantee that a root is enclosed
               double alphaLower = 2.0 * (tau), HLower;

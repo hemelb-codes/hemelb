@@ -116,8 +116,7 @@ namespace hemelb
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
-          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit
-              * sitesPerBlockUnit;
+          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit * sitesPerBlockUnit;
           for (proc_t rank = 1; rank < rankCount; ++rank)
           {
             returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
@@ -128,13 +127,13 @@ namespace hemelb
 
       protected:
         FourCubeLatticeData(hemelb::geometry::GeometryReadResult& readResult) :
-            hemelb::geometry::LatticeData(readResult)
+            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo(), readResult)
         {
 
         }
 
         FourCubeLatticeData() :
-            hemelb::geometry::LatticeData()
+            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo())
         {
 
         }

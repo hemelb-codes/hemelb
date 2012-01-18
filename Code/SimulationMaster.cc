@@ -129,6 +129,7 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
   latticeData = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                                                    latticeType::GetLatticeInfo(),
                                                     simConfig->DataFilePath,
                                                     timings);
   timings[hemelb::reporting::Timers::netInitialise].Stop();
