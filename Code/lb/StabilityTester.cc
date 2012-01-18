@@ -74,9 +74,9 @@ namespace hemelb
       {
         for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
         {
-          for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+          for (unsigned int l = 0; l < mLatDat->GetLatticeInfo().GetNumVectors(); l++)
           {
-            distribn_t value = *mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l);
+            distribn_t value = *mLatDat->GetFNew(i * mLatDat->GetLatticeInfo().GetNumVectors() + l);
 
             // Note that by testing for value > 0.0, we also catch stray NaNs.
             if (! (value > 0.0))

@@ -10,9 +10,12 @@ namespace hemelb
   {
     namespace streamers
     {
-      template<typename CollisionType>
-      class SimpleBounceBack : public BaseStreamer<SimpleBounceBack<CollisionType> >
+      template<typename CollisionImpl>
+      class SimpleBounceBack : public BaseStreamer<SimpleBounceBack<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -42,13 +45,15 @@ namespace hemelb
 
               collider.Collide(iLbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t lStreamTo = site.HasBoundary(ii) ?
-                  (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii] :
-                  site.GetStreamedIndex(ii);
+                site_t lStreamTo =
+                    site.HasBoundary(ii) ?
+                      (lIndex * CollisionType::CKernel::LatticeType::NUMVECTORS)
+                          + CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[ii] :
+                      site.GetStreamedIndex(ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
