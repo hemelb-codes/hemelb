@@ -46,7 +46,7 @@ namespace hemelb
         //typedef kernels::MRT LB_KERNEL;
 
         // Standard LBGK collision operator
-        typedef kernels::LBGK LB_KERNEL;
+        typedef kernels::LBGK<LatticeType> LB_KERNEL;
 
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
         typedef streamers::SimpleBounceBack<collisions::Normal<LB_KERNEL> > tWallCollision;
