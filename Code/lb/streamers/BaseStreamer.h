@@ -77,10 +77,9 @@ namespace hemelb
           inline static void UpdateMinsAndMaxes(distribn_t iVx,
                                                 distribn_t iVy,
                                                 distribn_t iVz,
-                                                const site_t iSiteIndex,
+                                                const geometry::Site& site,
                                                 const distribn_t* f_neq,
                                                 const distribn_t iDensity,
-                                                const geometry::LatticeData* iLatDat,
                                                 const LbmParameters* iLbmParams,
                                                 hemelb::vis::Control *iControl)
           {
@@ -90,7 +89,7 @@ namespace hemelb
 
               if (iLbmParams->StressType == ShearStress)
               {
-                if (!iLatDat->GetSiteData(iSiteIndex).IsEdge())
+                if (!site.IsEdge())
                 {
                   rtStress = NO_VALUE;
                 }
@@ -98,7 +97,7 @@ namespace hemelb
                 {
                   D3Q15::CalculateShearStress(iDensity,
                                               f_neq,
-                                              iLatDat->GetNormalToWall(iSiteIndex),
+                                              site.GetWallNormal(),
                                               rtStress,
                                               iLbmParams->GetStressParameter());
                 }
@@ -110,7 +109,7 @@ namespace hemelb
 
               // TODO: It'd be nice if the /iDensity were unnecessary.
               distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
-              iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
+              iControl->RegisterSite(site.GetIndex(), iDensity, lVelocity, rtStress);
             }
           }
 
