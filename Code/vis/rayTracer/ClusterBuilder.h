@@ -105,7 +105,7 @@ namespace hemelb
             //of sequential blocks 
             //We keep a stack of all the sites that must be processed 
             //and sequentially add neighbours to it
-            std::stack < util::Vector3D<site_t> > blocksToProcess;
+            std::stack<util::Vector3D<site_t> > blocksToProcess;
 
             //Set up the initial condition
             blocksToProcess.push(mBlockTraverser.GetCurrentLocation());
@@ -135,7 +135,7 @@ namespace hemelb
                 do
                 {
                   //If the site is not a solid
-                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->localContiguousIndex[siteTraverser.GetCurrentIndex()]
+                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation).GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex())
                       != BIG_NUMBER3)
                   {
                     clusterSiteMin.UpdatePointwiseMin(siteTraverser.GetCurrentLocation()
@@ -184,18 +184,17 @@ namespace hemelb
 
           //Returns true if there are sites in the given block associated with the
           //local processor rank
-          bool AreSitesAssignedToLocalProcessorRankInBlock(const geometry::BlockData * block)
+          bool AreSitesAssignedToLocalProcessorRankInBlock(const geometry::Block& block)
           {
-            if (block->processorRankForEachBlockSite.size() == 0)
+            if (block.IsEmpty())
             {
               return false;
             }
 
-            for (unsigned int siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit();
-                siteId++)
+            for (site_t siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit(); siteId++)
             {
               if (topology::NetworkTopology::Instance()->GetLocalRank()
-                  == block->processorRankForEachBlockSite[siteId])
+                  == block.GetProcessorRankForSite(siteId))
               {
                 return true;
               }
@@ -246,9 +245,7 @@ namespace hemelb
               util::Vector3D<site_t> blockCoordinates = clusterTraverser.GetCurrentLocation()
                   + mClusterBlockMins[clusterId];
 
-              site_t blockId = mLatticeData->GetBlockIdFromBlockCoords(blockCoordinates.x,
-                                                                       blockCoordinates.y,
-                                                                       blockCoordinates.z);
+              site_t blockId = mLatticeData->GetBlockIdFromBlockCoords(blockCoordinates);
 
               if (mClusterIdOfBlock[blockId] == (short) clusterId)
               {
@@ -278,8 +275,8 @@ namespace hemelb
                                             ClusterType& cluster,
                                             site_t siteIdOnBlock)
           {
-            const geometry::BlockData * block = mLatticeData->GetBlock(blockId);
-            site_t clusterVoxelSiteId = block->localContiguousIndex[siteIdOnBlock];
+            const geometry::Block& block = mLatticeData->GetBlock(blockId);
+            site_t clusterVoxelSiteId = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 
             //If site not a solid and on the current processor [net.cc]
             if (clusterVoxelSiteId != BIG_NUMBER3)
@@ -304,18 +301,18 @@ namespace hemelb
                                                                                  siteIdOnBlock);
           }
 
-          void UpdateWallNormalAtSite(const geometry::BlockData * block,
+          void UpdateWallNormalAtSite(const geometry::Block& block,
                                       site_t blockNum,
                                       ClusterType& cluster,
                                       site_t siteIdOnBlock)
           {
-            site_t localIndex = block->localContiguousIndex[siteIdOnBlock];
+            site_t localIndex = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 
-            if (mLatticeData->GetSiteData(localIndex).IsEdge())
+            geometry::ConstSite site = mLatticeData->GetSite(localIndex);
+
+            if (site.IsEdge())
             {
-              const util::Vector3D<double>& wallNormal = mLatticeData->GetNormalToWall(localIndex);
-
-              cluster.SetWallData(blockNum, siteIdOnBlock, wallNormal);
+              cluster.SetWallData(blockNum, siteIdOnBlock, site.GetWallNormal());
             }
           }
 
@@ -341,7 +338,8 @@ namespace hemelb
           static const short int NOTASSIGNEDTOCLUSTER = -1;
 
           static const util::Vector3D<site_t> mNeighbours[26];
-      };
+      }
+      ;
 
       template<typename ClusterType>
       const util::Vector3D<site_t> ClusterBuilder<ClusterType>::mNeighbours[26] = { util::Vector3D<
