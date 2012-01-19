@@ -80,6 +80,7 @@ def prepare_paths():
 	run(template("mkdir -p $scripts_path"))
 	run(template("mkdir -p $results_path"))
 	run(template("mkdir -p $config_path"))
+	run(template("mkdir -p $profiles_path"))
 	
 @task
 def clear_build():
@@ -261,6 +262,16 @@ def with_config(name):
 	env.job_config_contents=env.pather.join(env.job_config_path,'*')
 	env.job_config_contents_local=os.path.join(env.job_config_path_local,'*')
 	
+def with_profile(name):
+	"""Internal: augment the fabric environment with information regarding a particular profile name.
+	Definitions created:
+	job_profile_path: the remote location where the profile should be stored
+	job_profile_path_local: the local location where the profile files may be found
+	"""
+	env.job_profile_path=env.pather.join(env.profiles_path,name)
+	env.job_profile_path_local=os.path.join(env.local_profiles,name)
+	env.job_profile_contents=env.pather.join(env.job_profile_path,'*')
+	env.job_profile_contents_local=os.path.join(env.job_profile_path_local,'*')
 
 @task
 def fetch_configs(config=''):
@@ -303,7 +314,7 @@ def put_results(name=''):
 	with_job(name)
 	run(template("mkdir -p $job_results"))
 	rsync_project(local_dir=env.job_results_local+'/',remote_dir=env.job_results)
-	
+
 @task
 def fetch_results(name=''):
 	"""
@@ -321,6 +332,30 @@ def clear_results(name=''):
 	"""Completely wipe all result files from the remote."""
 	with_job(name)
 	run(template('rm -rf $job_results_contents'))		
+
+@task
+def fetch_profiles(name=''):
+	"""
+	Fetch results of remote jobs to local result store.
+	Specify a job name to transfer just one job.
+	Local path to store results is specified in machines_user.json, and should normally point to a mount on entropy,
+	i.e. /store4/blood/username/results.
+	If you can't mount entropy, 'put results' can be useful,  via 'fab legion fetch_results; fab entropy put_results'
+	"""
+	with_profile(name)
+	local(template("rsync -pthrvz $username@$remote:$job_profile_path/ $job_profile_path_local"))
+
+@task
+def put_profiles(name=''):
+	"""
+	Transfer result files to a remote.
+	Local path to find result directories is specified in machines_user.json.
+	This method is not intended for normal use, but is useful when the local machine cannot have an entropy mount,
+	so that results from a local machine can be sent to entropy, via 'fab legion fetch_results; fab entropy put_results'
+	"""
+	with_profile(name)
+	run(template("mkdir -p $job_profile_path"))
+	rsync_project(local_dir=env.job_profile_path_local+'/',remote_dir=env.job_profile_path)
 
 @task(alias='test')
 def unit_test(**args):
@@ -384,4 +419,23 @@ def job(**args):
 	run(template("chmod u+x $dest_name"))
 	with cd(env.job_results):
 		run(template("$job_dispatch $dest_name"))
+
+@task
+def create_config(**args):
+	"""Create a config file
+	Create a config file (geometry and xml) based on a configuration profile.
+	"""
+	with_profile(args['profile'])
+	with_config(args['config'])
+	from HemeLbSetupTool.Model.Profile import Profile
+	p = Profile()
+	p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,args['profile'])+'.stl')
+	p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,args['profile'])+'.pro'))
 	
+	p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
+	p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
+	#p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,args['profile'])+'.stl')
+	for k, val in args.iteritems():
+	    if val is not None:
+	        setattr(p, k, val)
+	p.Generate()
