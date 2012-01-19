@@ -322,8 +322,8 @@ def clear_results(name=''):
 	with_job(name)
 	run(template('rm -rf $job_results_contents'))		
 
-@task
-def test(**args):
+@task(alias='test')
+def unit_test(**args):
 	"""Submit a unit-testing job to the remote queue."""
 	options=dict(script='unittests',name='unittests_${build_number}_${machine_name}',cores=1)
 	options.update(args)

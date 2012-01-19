@@ -1,0 +1,12 @@
+default:
+  local_results: "~/devel/ccs/fabric/hemelb/results"
+  local_configs: "~/devel/ccs/fabric/hemelb/config_files"
+  username: "test_user"
+legion:
+  username: "test_user_legion"
+  project: "testproject"
+hector:
+  project: "testproject"
+  budget: "testbudget"
+localhost:
+  home_path_template: "/Users/$username/devel/fabric/hemelb/local" 
