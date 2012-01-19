@@ -48,8 +48,7 @@ namespace hemelb
 
             // use these to initialise the simulations state, LBM parameters and a unit converter.
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
-            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s
-                                                  / (distribn_t) simState->GetTimeStepsPerCycle(),
+            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
                                               latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
 
@@ -70,19 +69,19 @@ namespace hemelb
 
             initParams.latDat = latDat;
 
-            lbgk = new lb::kernels::LBGK(initParams);
+            lbgk = new lb::kernels::LBGK<D3Q15>(initParams);
 
             // Initialise all 4 types of conditions, using boundary objects for the collision types
             // that will need them.
             initParams.boundaryObject = inletBoundary;
             nonZeroVFixedDensityILet = new lb::collisions::NonZeroVelocityEquilibriumFixedDensity<
-                lb::kernels::LBGK>(initParams);
+                lb::kernels::LBGK<D3Q15> >(initParams);
 
             initParams.boundaryObject = outletBoundary;
-            zeroVFixedDensityOLet = new lb::collisions::ZeroVelocityEquilibriumFixedDensity<
-                lb::kernels::LBGK>(initParams);
-            zeroVEqm = new lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>(initParams);
-            normal = new lb::collisions::Normal<lb::kernels::LBGK>(initParams);
+            zeroVFixedDensityOLet =
+                new lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<D3Q15> >(initParams);
+            zeroVEqm = new lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<D3Q15> >(initParams);
+            normal = new lb::collisions::Normal<lb::kernels::LBGK<D3Q15> >(initParams);
           }
 
           void tearDown()
@@ -113,7 +112,7 @@ namespace hemelb
 
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars(fOld);
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
@@ -126,11 +125,7 @@ namespace hemelb
 
             LbTestsHelper::CalculateVelocity<D3Q15>(fOld, expectedV);
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
-                                                    expectedV[0],
-                                                    expectedV[1],
-                                                    expectedV[2],
-                                                    expectedFeq);
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho, expectedV[0], expectedV[1], expectedV[2], expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
@@ -164,7 +159,7 @@ namespace hemelb
 
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars(fOld);
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
@@ -175,11 +170,7 @@ namespace hemelb
             distribn_t expectedV[3] = { 0., 0., 0. };
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
-                                                    expectedV[0],
-                                                    expectedV[1],
-                                                    expectedV[2],
-                                                    expectedFeq);
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho, expectedV[0], expectedV[1], expectedV[2], expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
@@ -213,7 +204,7 @@ namespace hemelb
 
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars(fOld);
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
@@ -229,11 +220,7 @@ namespace hemelb
             }
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
-                                                    expectedV[0],
-                                                    expectedV[1],
-                                                    expectedV[2],
-                                                    expectedFeq);
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho, expectedV[0], expectedV[1], expectedV[2], expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
@@ -267,7 +254,7 @@ namespace hemelb
 
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, fOld);
 
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars(fOld);
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
@@ -280,11 +267,7 @@ namespace hemelb
             LbTestsHelper::CalculateRhoVelocity<D3Q15>(fOld, expectedRho, expectedV);
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
-                                                    expectedV[0],
-                                                    expectedV[1],
-                                                    expectedV[2],
-                                                    expectedFeq);
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho, expectedV[0], expectedV[1], expectedV[2], expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
@@ -299,7 +282,7 @@ namespace hemelb
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
             // Make a copy for the second collision to compare against.
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVarsCopy(hydroVars);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVarsCopy(hydroVars);
 
             lbgk->Collide(lbmParams, hydroVars);
             normal->Collide(lbmParams, hydroVarsCopy);
@@ -323,12 +306,12 @@ namespace hemelb
           lb::boundaries::BoundaryValues* inletBoundary;
           lb::boundaries::BoundaryValues* outletBoundary;
 
-          lb::kernels::LBGK* lbgk;
+          lb::kernels::LBGK<D3Q15>* lbgk;
 
-          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK> * nonZeroVFixedDensityILet;
-          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK> * zeroVFixedDensityOLet;
-          lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>* zeroVEqm;
-          lb::collisions::Normal<lb::kernels::LBGK>* normal;
+          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<D3Q15> > * nonZeroVFixedDensityILet;
+          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<D3Q15> > * zeroVFixedDensityOLet;
+          lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<D3Q15> >* zeroVEqm;
+          lb::collisions::Normal<lb::kernels::LBGK<D3Q15> >* normal;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION(CollisionTests);
     }

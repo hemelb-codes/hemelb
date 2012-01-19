@@ -12,9 +12,12 @@ namespace hemelb
     namespace streamers
     {
 
-      template<typename CollisionType>
-      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionType> >
+      template<typename CollisionImpl>
+      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -44,10 +47,9 @@ namespace hemelb
 
               collider.Collide(iLbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] =
-                    hydroVars.GetFPostCollision()[ii];
+                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] = hydroVars.GetFPostCollision()[ii];
 
               }
 

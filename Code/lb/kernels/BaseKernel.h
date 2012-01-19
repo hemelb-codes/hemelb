@@ -21,10 +21,11 @@ namespace hemelb
        * (Google for 'CRTP traits'). Each kernel implementation can also specialise this template.
        */
 
+      template<class LatticeType>
       struct FVector
       {
         public:
-          distribn_t f[D3Q15::NUMVECTORS];
+          distribn_t f[LatticeType::NUMVECTORS];
 
           inline distribn_t& operator[](unsigned index)
           {
@@ -37,12 +38,13 @@ namespace hemelb
           }
       };
 
+      template<class LatticeType>
       struct HydroVarsBase
       {
-          friend class Entropic;
-          friend class LBGK;
-          template<class rheologyModel> friend class LBGKNN;
-          friend class MRT;
+          template<class LatticeImpl> friend class Entropic;
+          template<class LatticeImpl> friend class LBGK;
+          template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
+          template<class LatticeImpl> friend class MRT;
 
         protected:
           HydroVarsBase(const distribn_t* const f) :
@@ -54,31 +56,31 @@ namespace hemelb
           distribn_t density, v_x, v_y, v_z;
           const distribn_t* const f;
 
-          inline const FVector& GetFEq()
+          inline const FVector<LatticeType>& GetFEq()
           {
             return f_eq;
           }
 
-          inline const FVector& GetFNeq()
+          inline const FVector<LatticeType>& GetFNeq()
           {
             return f_neq;
           }
 
-          inline FVector& GetFPostCollision()
+          inline FVector<LatticeType>& GetFPostCollision()
           {
             return fPostCollision;
           }
 
         protected:
-          FVector f_eq, f_neq, fPostCollision;
+          FVector<LatticeType> f_eq, f_neq, fPostCollision;
       };
 
       template<typename KernelImpl>
-      struct HydroVars : HydroVarsBase
+      struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+              HydroVarsBase<typename KernelImpl::LatticeType>(f)
           {
 
           }
@@ -119,6 +121,7 @@ namespace hemelb
        * complete interface usable by collision operators:
        *  - Constructor(InitParams&)
        *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
+       *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
        *  - CalculateDensityVelocityFeq(KHydroVars&, site_t) for calculating
        *      the density, velocity and equilibrium distribution
        *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
@@ -131,11 +134,12 @@ namespace hemelb
        *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
        *  - DoReset(InitParams*)
        */
-      template<typename KernelImpl>
+      template<typename KernelImpl, typename LatticeImpl>
       class BaseKernel
       {
         public:
           typedef HydroVars<KernelImpl> KHydroVars;
+          typedef LatticeImpl LatticeType;
 
           inline void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
           {

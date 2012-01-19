@@ -42,23 +42,22 @@ namespace hemelb
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
             distribn_t voxelSize = initParams.latDat->GetVoxelSize();
             unsigned timeStepsPerCycle = 1000;
-            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) timeStepsPerCycle,
-                                              voxelSize);
+            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) timeStepsPerCycle, voxelSize);
             initParams.lbmParams = lbmParams;
 
-            entropic = new lb::kernels::Entropic(initParams);
-            lbgk = new lb::kernels::LBGK(initParams);
+            entropic = new lb::kernels::Entropic<D3Q15>(initParams);
+            lbgk = new lb::kernels::LBGK<D3Q15>(initParams);
 
             /*
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
              *  values of tau consistent). One to be used with CalculateDensityVelocityFeq and another with CalculateFeq.
              */
-            lbgknn0 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
-            lbgknn1 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+            lbgknn0 =
+                new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
+            lbgknn1 =
+                new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
 
-            mrtLbgkEquivalentKernel = new lb::kernels::MRT(initParams);
+            mrtLbgkEquivalentKernel = new lb::kernels::MRT<D3Q15>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -87,8 +86,8 @@ namespace hemelb
              * Case 1: use the function that leaves density and velocity and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             entropic->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -194,8 +193,8 @@ namespace hemelb
              * Case 1: test the function that uses a given density and velocity, and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             lbgk->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -303,7 +302,7 @@ namespace hemelb
               f_setB[ii] = ((float) (D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> LB_KERNEL;
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15> LB_KERNEL;
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -408,9 +407,7 @@ namespace hemelb
               lbgknn1->CalculateFeq(*hydroVars1, site_index);
 
               distribn_t computedTau0 = hydroVars0->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
-                                           numSites,
-                                           (site_t) lbgknn0->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0->GetTauValues().size());
 
               distribn_t expectedTau0 = site_index % 2 ?
                 0.50009134451 :
@@ -418,15 +415,10 @@ namespace hemelb
 
               std::stringstream message;
               message << "Tau array [" << site_index << "] for dataset 0";
-              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   expectedTau0,
-                                                   computedTau0,
-                                                   numTolerance);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), expectedTau0, computedTau0, numTolerance);
 
               distribn_t computedTau1 = hydroVars1->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
-                                           numSites,
-                                           (site_t) lbgknn1->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1->GetTauValues().size());
 
               distribn_t expectedTau1 = site_index % 2 ?
                 0.50009013551 :
@@ -434,10 +426,7 @@ namespace hemelb
 
               message.str("");
               message << "Tau array [" << site_index << "] for dataset 1";
-              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   expectedTau1,
-                                                   computedTau1,
-                                                   numTolerance);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), expectedTau1, computedTau1, numTolerance);
 
               /*
                * Test part 3: Collision depends on the local relaxation time
@@ -500,7 +489,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT> hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<D3Q15> > hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -509,9 +498,7 @@ namespace hemelb
             distribn_t expectedDensity0;
             distribn_t expectedVelocity0[3];
             distribn_t expectedFEq0[D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateRhoVelocity<D3Q15>(hydroVars0.f,
-                                                       expectedDensity0,
-                                                       expectedVelocity0);
+            LbTestsHelper::CalculateRhoVelocity<D3Q15>(hydroVars0.f, expectedDensity0, expectedVelocity0);
             LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedDensity0,
                                                     expectedVelocity0[0],
                                                     expectedVelocity0[1],
@@ -555,11 +542,10 @@ namespace hemelb
         private:
           geometry::LatticeData* latDat;
           lb::LbmParameters* lbmParams;
-          lb::kernels::Entropic* entropic;
-          lb::kernels::LBGK* lbgk;
-          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
-              *lbgknn1;
-          lb::kernels::MRT* mrtLbgkEquivalentKernel;
+          lb::kernels::Entropic<D3Q15>* entropic;
+          lb::kernels::LBGK<D3Q15>* lbgk;
+          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15> *lbgknn0, *lbgknn1;
+          lb::kernels::MRT<D3Q15>* mrtLbgkEquivalentKernel;
           site_t numSites;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);

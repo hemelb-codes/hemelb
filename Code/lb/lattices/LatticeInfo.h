@@ -12,15 +12,32 @@ namespace hemelb
       class LatticeInfo
       {
         public:
-          LatticeInfo(unsigned numberOfVectors,
-                      const util::Vector3D<int>* vectors,
-                      const Direction* inverseVectorIndicesIn);
+          inline LatticeInfo(unsigned numberOfVectors,
+                             const util::Vector3D<int>* vectors,
+                             const Direction* inverseVectorIndicesIn) :
+              numVectors(numberOfVectors), vectorSet(), inverseVectorIndices()
+          {
+            for (Direction direction = 0; direction < numberOfVectors; ++direction)
+            {
+              vectorSet.push_back(util::Vector3D<int>(vectors[direction]));
+              inverseVectorIndices.push_back(inverseVectorIndicesIn[direction]);
+            }
+          }
 
-          unsigned GetNumVectors() const;
+          inline unsigned GetNumVectors() const
+          {
+            return numVectors;
+          }
 
-          const util::Vector3D<int>& GetVector(unsigned index) const;
+          inline const util::Vector3D<int>& GetVector(unsigned index) const
+          {
+            return vectorSet[index];
+          }
 
-          unsigned GetInverseIndex(unsigned index) const;
+          inline unsigned GetInverseIndex(unsigned index) const
+          {
+            return inverseVectorIndices[index];
+          }
 
         private:
           const unsigned numVectors;
