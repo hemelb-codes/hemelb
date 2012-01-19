@@ -12,6 +12,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
+#include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 
@@ -33,7 +34,7 @@ namespace hemelb
         site_t FirstSharedF;
     };
 
-    class LatticeData
+    class LatticeData : public reporting::Reportable
     {
       public:
         friend class InnerSite<true> ;
@@ -104,11 +105,12 @@ namespace hemelb
         site_t GetInnerCollisionCount(unsigned int collisionType) const;
         site_t GetInterCollisionCount(unsigned int collisionType) const;
 
-        const std::vector<site_t>& GetFluidSiteCountsOnEachProc() const;
         site_t GetFluidSiteCountOnProc(proc_t proc) const;
         site_t GetTotalFluidSites() const;
         const util::Vector3D<site_t>& GetGlobalSiteMins() const;
         const util::Vector3D<site_t>& GetGlobalSiteMaxes() const;
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
 
       protected:
         /**

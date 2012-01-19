@@ -54,11 +54,11 @@ class SimulationMaster
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState* simulationState;
-    hemelb::lb::StabilityTester* stabilityTester;
+    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
     hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
