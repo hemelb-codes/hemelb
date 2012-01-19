@@ -54,13 +54,11 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   Initialise();
   if (IsCurrentProcTheIOProc())
   {
-    reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(),
-                                               fileManager->GetInputFile(),
-                                               latticeData->GetFluidSiteCountsOnEachProc(),
-                                               latticeData->GetTotalFluidSites(),
-                                               timings,
-                                               *simulationState,
-                                               *incompressibilityChecker);
+    reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile());
+    reporter->AddReportable(incompressibilityChecker);
+    reporter->AddReportable(&timings);
+    reporter->AddReportable(latticeData);
+    reporter->AddReportable(simulationState);
   }
 }
 
@@ -151,12 +149,16 @@ void SimulationMaster::Initialise()
     network = NULL;
   }
 
-  stabilityTester = new hemelb::lb::StabilityTester(latticeData, &communicationNet, simulationState, timings);
+  stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
+                                                                 &communicationNet,
+                                                                 simulationState,
+                                                                 timings);
   entropyTester = NULL;
-  incompressibilityChecker = new hemelb::lb::IncompressibilityChecker<>(latticeData,
-                                                                        &communicationNet,
-                                                                        simulationState,
-                                                                        timings);
+  incompressibilityChecker =
+      new hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>(latticeData,
+                                                                                                   &communicationNet,
+                                                                                                   simulationState,
+                                                                                                   timings);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,

@@ -5,6 +5,6 @@ namespace hemelb
   namespace lb
   {
     // Explicit instantiation
-    template class IncompressibilityChecker<net::PhasedBroadcastRegular<> > ;
+    template class IncompressibilityChecker<net::PhasedBroadcastRegular<>, D3Q15> ;
   }
 }
