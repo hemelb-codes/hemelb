@@ -26,6 +26,7 @@ namespace hemelb
        *
        * The following must be implemented by concrete streamers (which derive from this class
        * using the CRTP).
+       *  - typedef for CollisionType, the type of the collider operation.
        *  - Constructor(InitParams&)
        *  - <bool tDoRayTracing> DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
        *      geometry::LatticeData*, hemelb::vis::Control*)
@@ -95,16 +96,18 @@ namespace hemelb
                 }
                 else
                 {
-                  D3Q15::CalculateShearStress(iDensity,
-                                              f_neq,
-                                              site.GetWallNormal(),
-                                              rtStress,
-                                              iLbmParams->GetStressParameter());
+                  StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(iDensity,
+                                                                                          f_neq,
+                                                                                          site.GetWallNormal(),
+                                                                                          rtStress,
+                                                                                          iLbmParams->GetStressParameter());
                 }
               }
               else
               {
-                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->GetStressParameter());
+                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
+                                                                                           rtStress,
+                                                                                           iLbmParams->GetStressParameter());
               }
 
               // TODO: It'd be nice if the /iDensity were unnecessary.

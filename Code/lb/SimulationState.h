@@ -1,13 +1,12 @@
 #ifndef HEMELB_LB_SIMULATIONSTATE_H
 #define HEMELB_LB_SIMULATIONSTATE_H
 
-#include <semaphore.h>
+#include "reporting/Reportable.h"
 
 namespace hemelb
 {
   namespace lb
   {
-
     enum Stability
     {
       Unstable = 0,
@@ -15,7 +14,7 @@ namespace hemelb
       StableAndConverged = 2
     };
 
-    struct SimulationState
+    class SimulationState : public reporting::Reportable
     {
       public:
         SimulationState(unsigned long StepsPerCycle, unsigned long numCycles);
@@ -39,6 +38,8 @@ namespace hemelb
         Stability GetStability() const;
 
         void DoubleTimeResolution();
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
         unsigned long CycleId;

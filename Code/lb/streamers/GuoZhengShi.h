@@ -9,9 +9,12 @@ namespace hemelb
   {
     namespace streamers
     {
-      template<typename CollisionType>
-      class GuoZhengShi : public BaseStreamer<GuoZhengShi<CollisionType> >
+      template<typename CollisionImpl>
+      class GuoZhengShi : public BaseStreamer<GuoZhengShi<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -41,17 +44,17 @@ namespace hemelb
 
               collider.Collide(iLbmParams, hydroVars);
 
-              for (Direction ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              for (Direction ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
                 * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = hydroVars.GetFPostCollision()[ii];
               }
 
               // Now fill in the un-streamed-to distributions (those that point away from boundaries).
-              for (Direction l = 1; l < D3Q15::NUMVECTORS; l++)
+              for (Direction l = 1; l < CollisionType::CKernel::LatticeType::NUMVECTORS; l++)
               {
                 if (site.HasBoundary(l))
                 {
-                  Direction lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
+                  Direction lAwayFromWallIndex = CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l];
 
                   double delta = site.GetWallDistance(l);
 
@@ -71,28 +74,28 @@ namespace hemelb
                     {
                       // Need some info about the next node away from the wall in this direction...
                       site_t nextIOut = site.GetStreamedIndex(lAwayFromWallIndex)
-                          / D3Q15::NUMVECTORS;
-                      distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
+                          / CollisionType::CKernel::LatticeType::NUMVECTORS;
+                      distribn_t nextNodeDensity, nextNodeV[3],
+                          nextNodeFEq[CollisionType::CKernel::LatticeType::NUMVECTORS];
 
                       geometry::Site nextSiteOut = bLatDat->GetSite(nextIOut);
 
-                      D3Q15::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
-                                                         nextNodeDensity,
-                                                         nextNodeV[0],
-                                                         nextNodeV[1],
-                                                         nextNodeV[2],
-                                                         nextNodeFEq);
+                      CollisionType::CKernel::LatticeType::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
+                                                                                       nextNodeDensity,
+                                                                                       nextNodeV[0],
+                                                                                       nextNodeV[1],
+                                                                                       nextNodeV[2],
+                                                                                       nextNodeFEq);
 
                       for (int a = 0; a < 3; a++)
                       {
-                        uWall[a] = delta * uWall[a]
-                            - (1. - delta) * (1. - delta) * nextNodeV[a] / (1. + delta);
+                        uWall[a] = delta * uWall[a] - (1. - delta) * (1. - delta) * nextNodeV[a] / (1. + delta);
                       }
 
-                      fNeqAwayFromWall = delta * fNeqAwayFromWall
-                          + (1. - delta)
-                              * (nextSiteOut.GetFOld()[lAwayFromWallIndex]
-                                  - nextNodeFEq[lAwayFromWallIndex]);
+                      fNeqAwayFromWall =
+                          delta * fNeqAwayFromWall
+                              + (1. - delta)
+                                  * (nextSiteOut.GetFOld()[lAwayFromWallIndex] - nextNodeFEq[lAwayFromWallIndex]);
                     }
                     // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
                     else
@@ -108,13 +111,16 @@ namespace hemelb
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
-                  distribn_t fEqTemp[D3Q15::NUMVECTORS];
-                  D3Q15::CalculateFeq(hydroVars.density, uWall[0], uWall[1], uWall[2], fEqTemp);
+                  distribn_t fEqTemp[CollisionType::CKernel::LatticeType::NUMVECTORS];
+                  CollisionType::CKernel::LatticeType::CalculateFeq(hydroVars.density,
+                                                                    uWall[0],
+                                                                    uWall[1],
+                                                                    uWall[2],
+                                                                    fEqTemp);
 
                   // Collide and stream!
-                  * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex)) =
-                      fEqTemp[lAwayFromWallIndex]
-                          + (1.0 + iLbmParams->GetOmega()) * fNeqAwayFromWall;
+                  * (bLatDat->GetFNew(lIndex * CollisionType::CKernel::LatticeType::NUMVECTORS + lAwayFromWallIndex)) =
+                      fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams->GetOmega()) * fNeqAwayFromWall;
                 }
               }
 
