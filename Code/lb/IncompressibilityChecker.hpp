@@ -7,8 +7,8 @@ namespace hemelb
 {
   namespace lb
   {
-    template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::DensityTracker::DensityTracker() :
+    template<class BroadcastPolicy, class Lattice>
+    IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::DensityTracker() :
         allocatedHere(true)
     {
       densitiesArray = new distribn_t[DENSITY_TRACKER_SIZE];
@@ -18,14 +18,14 @@ namespace hemelb
       densitiesArray[MAX_DENSITY] = -DBL_MAX;
     }
 
-    template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::DensityTracker::DensityTracker(distribn_t* const densityValues) :
+    template<class BroadcastPolicy, class Lattice>
+    IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::DensityTracker(distribn_t* const densityValues) :
         densitiesArray(densityValues), allocatedHere(false)
     {
     }
 
-    template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::DensityTracker::~DensityTracker()
+    template<class BroadcastPolicy, class Lattice>
+    IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::~DensityTracker()
     {
       if (allocatedHere)
       {
@@ -33,8 +33,8 @@ namespace hemelb
       }
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::DensityTracker::operator=(const DensityTracker& newValues)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::operator=(const DensityTracker& newValues)
     {
       for (unsigned trackerEntry = 0; trackerEntry < DENSITY_TRACKER_SIZE; trackerEntry++)
       {
@@ -42,20 +42,20 @@ namespace hemelb
       }
     }
 
-    template<class BroadcastPolicy>
-    distribn_t& IncompressibilityChecker<BroadcastPolicy>::DensityTracker::operator[](DensityTrackerIndices densityIndex) const
+    template<class BroadcastPolicy, class Lattice>
+    distribn_t& IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::operator[](DensityTrackerIndices densityIndex) const
     {
       return densitiesArray[densityIndex];
     }
 
-    template<class BroadcastPolicy>
-    distribn_t* IncompressibilityChecker<BroadcastPolicy>::DensityTracker::GetDensitiesArray() const
+    template<class BroadcastPolicy, class Lattice>
+    distribn_t* IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::GetDensitiesArray() const
     {
       return densitiesArray;
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::DensityTracker::UpdateDensityTracker(const DensityTracker& newValues)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::UpdateDensityTracker(const DensityTracker& newValues)
     {
       if (newValues[MIN_DENSITY] < densitiesArray[MIN_DENSITY])
       {
@@ -67,8 +67,8 @@ namespace hemelb
       }
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::DensityTracker::UpdateDensityTracker(distribn_t newValue)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::DensityTracker::UpdateDensityTracker(distribn_t newValue)
     {
       if (newValue < densitiesArray[MIN_DENSITY])
       {
@@ -80,12 +80,12 @@ namespace hemelb
       }
     }
 
-    template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::IncompressibilityChecker(const geometry::LatticeData * latticeData,
-                                                                        net::Net* net,
-                                                                        SimulationState* simState,
-                                                                        reporting::Timers& timings,
-                                                                        distribn_t maximumRelativeDensityDifferenceAllowed) :
+    template<class BroadcastPolicy, class Lattice>
+    IncompressibilityChecker<BroadcastPolicy, Lattice>::IncompressibilityChecker(const geometry::LatticeData * latticeData,
+                                                                                 net::Net* net,
+                                                                                 SimulationState* simState,
+                                                                                 reporting::Timers& timings,
+                                                                                 distribn_t maximumRelativeDensityDifferenceAllowed) :
         BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), mSimState(simState), timings(timings), maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed), globalDensityTracker(NULL)
     {
       /*
@@ -99,41 +99,41 @@ namespace hemelb
 
     }
 
-    template<class BroadcastPolicy>
-    IncompressibilityChecker<BroadcastPolicy>::~IncompressibilityChecker()
+    template<class BroadcastPolicy, class Lattice>
+    IncompressibilityChecker<BroadcastPolicy, Lattice>::~IncompressibilityChecker()
     {
     }
 
-    template<class BroadcastPolicy>
-    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity() const
+    template<class BroadcastPolicy, class Lattice>
+    distribn_t IncompressibilityChecker<BroadcastPolicy, Lattice>::GetGlobalSmallestDensity() const
     {
       assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MIN_DENSITY];
     }
 
-    template<class BroadcastPolicy>
-    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestDensity() const
+    template<class BroadcastPolicy, class Lattice>
+    distribn_t IncompressibilityChecker<BroadcastPolicy, Lattice>::GetGlobalLargestDensity() const
     {
       assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MAX_DENSITY];
     }
 
-    template<class BroadcastPolicy>
-    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifference() const
+    template<class BroadcastPolicy, class Lattice>
+    double IncompressibilityChecker<BroadcastPolicy, Lattice>::GetMaxRelativeDensityDifference() const
     {
       distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
       assert(maxDensityDiff >= 0.0);
       return maxDensityDiff / REFERENCE_DENSITY;
     }
 
-    template<class BroadcastPolicy>
-    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifferenceAllowed() const
+    template<class BroadcastPolicy, class Lattice>
+    double IncompressibilityChecker<BroadcastPolicy, Lattice>::GetMaxRelativeDensityDifferenceAllowed() const
     {
       return maximumRelativeDensityDifferenceAllowed;
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::PostReceiveFromChildren(unsigned long splayNumber)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::PostReceiveFromChildren(unsigned long splayNumber)
     {
       timings[hemelb::reporting::Timers::monitoring].Start();
 
@@ -147,26 +147,26 @@ namespace hemelb
       timings[hemelb::reporting::Timers::monitoring].Stop();
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::ProgressFromChildren(unsigned long splayNumber)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::ProgressFromChildren(unsigned long splayNumber)
     {
       this->ReceiveFromChildren(childrenDensitiesSerialised, DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::ProgressFromParent(unsigned long splayNumber)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::ProgressFromParent(unsigned long splayNumber)
     {
       this->ReceiveFromParent(downwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::ProgressToChildren(unsigned long splayNumber)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::ProgressToChildren(unsigned long splayNumber)
     {
       this->SendToChildren(downwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::ProgressToParent(unsigned long splayNumber)
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::ProgressToParent(unsigned long splayNumber)
     {
       timings[hemelb::reporting::Timers::monitoring].Start();
 
@@ -175,9 +175,9 @@ namespace hemelb
       {
         //! @todo #23 Refactor into a method in the lattice class that computes *just* the density
         localDensity = 0.0;
-        for (unsigned int l = 0; l < mLatDat->GetLatticeInfo().GetNumVectors(); l++)
+        for (unsigned int l = 0; l < Lattice::NUMVECTORS; l++)
         {
-          localDensity += *mLatDat->GetFNew(i * mLatDat->GetLatticeInfo().GetNumVectors() + l);
+          localDensity += *mLatDat->GetFNew(i * Lattice::NUMVECTORS + l);
         }
         // End of refactor
 
@@ -188,28 +188,39 @@ namespace hemelb
       this->SendToParent(upwardsDensityTracker.GetDensitiesArray(), DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::TopNodeAction()
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::TopNodeAction()
     {
       downwardsDensityTracker = upwardsDensityTracker;
     }
 
-    template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::Effect()
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::Effect()
     {
       globalDensityTracker = &downwardsDensityTracker;
     }
 
-    template<class BroadcastPolicy>
-    bool IncompressibilityChecker<BroadcastPolicy>::AreDensitiesAvailable() const
+    template<class BroadcastPolicy, class Lattice>
+    bool IncompressibilityChecker<BroadcastPolicy, Lattice>::AreDensitiesAvailable() const
     {
       return (globalDensityTracker != NULL);
     }
 
-    template<class BroadcastPolicy>
-    bool IncompressibilityChecker<BroadcastPolicy>::IsDensityDiffWithinRange() const
+    template<class BroadcastPolicy, class Lattice>
+    bool IncompressibilityChecker<BroadcastPolicy, Lattice>::IsDensityDiffWithinRange() const
     {
       return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);
+    }
+
+    template<class BroadcastPolicy, class Lattice>
+    void IncompressibilityChecker<BroadcastPolicy, Lattice>::Report(ctemplate::TemplateDictionary& dictionary)
+    {
+      if (AreDensitiesAvailable() && !IsDensityDiffWithinRange())
+      {
+        ctemplate::TemplateDictionary *incomp = dictionary.AddSectionDictionary("DENSITIES");
+        incomp->SetFormattedValue("ALLOWED", "%.1f%%", GetMaxRelativeDensityDifferenceAllowed() * 100);
+        incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
+      }
     }
   }
 }

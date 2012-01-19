@@ -17,7 +17,6 @@
 		<steps>
 			<total>{{STEPS}}</total>
 			<per_cycle>{{STEPS_PER_CYCLE}}</per_cycle>
-			<per_second>{{STEPS_PER_SECOND}}</per_second>
 		</steps>
 	</results>
 	<checks>
@@ -39,7 +38,6 @@
 			<min>{{MIN}}</min>
 			<mean>{{MEAN}}</mean>
 			<max>{{MAX}}</max>
-			<normalisation>{{NORMALISATION}}</normalisation>
 		</timer>
 		{{/TIMER}}
 	<timings>
