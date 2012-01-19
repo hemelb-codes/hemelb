@@ -24,6 +24,7 @@ class FourCube(LatticeFixture):
             links=[]
             for direction in self.lattice_directions:
                 link_type = Link.no_boundary
+                # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered wall because of the ordering of the if statements below
                 if z_index==z_min and direction[2]==-1:
                     link_type = Link.inlet
                 if z_index==z_max and direction[2]==1:
