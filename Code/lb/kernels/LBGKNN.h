@@ -13,14 +13,14 @@ namespace hemelb
     namespace kernels
     {
       // Forward declaration needed by the struct
-      template<class tRheologyModel> class LBGKNN;
+      template<class tRheologyModel, class LatticeType> class LBGKNN;
 
-      template<class tRheologyModel>
-      struct HydroVars<LBGKNN<tRheologyModel> > : public HydroVarsBase
+      template<class tRheologyModel, class LatticeType>
+      struct HydroVars<LBGKNN<tRheologyModel, LatticeType> > : public HydroVarsBase<LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+              HydroVarsBase<LatticeType>(f)
           {
 
           }
@@ -32,8 +32,8 @@ namespace hemelb
        * Class extending the original BGK collision operator to support non-Newtonian
        * fluids. Implements support for relaxation time not constant across the domain.
        */
-      template<class tRheologyModel>
-      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel> >
+      template<class tRheologyModel, class LatticeType>
+      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType> , LatticeType>
       {
         public:
 
@@ -44,14 +44,14 @@ namespace hemelb
 
           inline void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
-                                               hydroVars.f_eq.f);
+            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+                                                     hydroVars.density,
+                                                     hydroVars.v_x,
+                                                     hydroVars.v_y,
+                                                     hydroVars.v_z,
+                                                     hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -66,13 +66,9 @@ namespace hemelb
 
           inline void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            D3Q15::CalculateFeq(hydroVars.density,
-                                hydroVars.v_x,
-                                hydroVars.v_y,
-                                hydroVars.v_z,
-                                hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -89,7 +85,7 @@ namespace hemelb
           {
             double omega = -1.0 / hydroVars.tau;
 
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
                   + hydroVars.GetFNeq().f[direction] * omega;
@@ -152,15 +148,11 @@ namespace hemelb
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}
              */
-            double shear_rate = D3Q15::CalculateShearRate(localTau,
-                                                          hydroVars.f_neq.f,
-                                                          hydroVars.density) / mTimeStep;
+            double shear_rate = LatticeType::CalculateShearRate(localTau, hydroVars.f_neq.f, hydroVars.density)
+                / mTimeStep;
 
             // Update tau
-            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
-                                                                hydroVars.density,
-                                                                mSpaceStep,
-                                                                mTimeStep);
+            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate, hydroVars.density, mSpaceStep, mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
 #ifdef HAVE_STD_ISNAN

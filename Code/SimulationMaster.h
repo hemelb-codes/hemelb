@@ -1,7 +1,7 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
-#include "lb/lb.h"
+#include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
@@ -30,6 +30,8 @@ class SimulationMaster
     void RunSimulation();
 
   private:
+    typedef hemelb::D3Q15 latticeType;
+
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -52,13 +54,13 @@ class SimulationMaster
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState* simulationState;
-    hemelb::lb::StabilityTester* stabilityTester;
-    hemelb::lb::EntropyTester* entropyTester;
+    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
+    hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
-    hemelb::lb::LBM* latticeBoltzmannModel;
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     hemelb::net::Net communicationNet;

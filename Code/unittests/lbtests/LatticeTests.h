@@ -22,9 +22,12 @@ namespace hemelb
 
         public:
 
-          LatticeTests():epsilon(1e-10){}
-            // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
-            // wasn't compiling under cray compilers)
+          LatticeTests() :
+              epsilon(1e-10)
+          {
+          }
+          // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
+          // wasn't compiling under cray compilers)
 
           void setUp()
           {
@@ -74,15 +77,16 @@ namespace hemelb
               CPPUNIT_ASSERT(LatticeType::CY[direction] <= 1);
               CPPUNIT_ASSERT(LatticeType::CZ[direction] <= 1);
 
-              for (Direction otherDirection = 0; otherDirection < LatticeType::NUMVECTORS;
-                  ++otherDirection)
-                  {
+              for (Direction otherDirection = 0; otherDirection < LatticeType::NUMVECTORS; ++otherDirection)
+              {
                 if (otherDirection == direction)
                 {
                   continue;
                 }
 
-                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection] || LatticeType::CY[direction] != LatticeType::CY[otherDirection] || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
+                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
+                    || LatticeType::CY[direction] != LatticeType::CY[otherDirection]
+                    || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
               }
             }
 
@@ -112,15 +116,9 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
 
             distribn_t density, velocity[3], expectedDensity, expectedVelocity[3];
-            LatticeType::CalculateDensityAndVelocity(f_data,
-                                                     density,
-                                                     velocity[0],
-                                                     velocity[1],
-                                                     velocity[2]);
+            LatticeType::CalculateDensityAndVelocity(f_data, density, velocity[0], velocity[1], velocity[2]);
 
-            LbTestsHelper::CalculateRhoVelocity<LatticeType>(f_data,
-                                                             expectedDensity,
-                                                             expectedVelocity);
+            LbTestsHelper::CalculateRhoVelocity<LatticeType>(f_data, expectedDensity, expectedVelocity);
 
             CPPUNIT_ASSERT(density == expectedDensity);
 
@@ -141,24 +139,14 @@ namespace hemelb
              const distribn_t &v_z,
              distribn_t f_eq[]);
              */
-            distribn_t equilibriumF[LatticeType::NUMVECTORS],
-                expectedEquilibriumF[LatticeType::NUMVECTORS],
-                equilibriumEntropicF[LatticeType::NUMVECTORS],
-                expectedEquilibriumEntropicF[LatticeType::NUMVECTORS];
+            distribn_t equilibriumF[LatticeType::NUMVECTORS], expectedEquilibriumF[LatticeType::NUMVECTORS],
+                equilibriumEntropicF[LatticeType::NUMVECTORS], expectedEquilibriumEntropicF[LatticeType::NUMVECTORS];
 
             // These values chosen as they're pairwise coprime. Probably doesn't matter.
             distribn_t targetDensity = 7.0, targetH[3] = { 4.0, 3.0, 11.0 };
 
-            LatticeType::CalculateFeq(targetDensity,
-                                      targetH[0],
-                                      targetH[1],
-                                      targetH[2],
-                                      equilibriumF);
-            LatticeType::CalculateEntropicFeq(targetDensity,
-                                              targetH[0],
-                                              targetH[1],
-                                              targetH[2],
-                                              equilibriumEntropicF);
+            LatticeType::CalculateFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumF);
+            LatticeType::CalculateEntropicFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumEntropicF);
 
             LbTestsHelper::CalculateLBGKEqmF<LatticeType>(targetDensity,
                                                           targetH[0],
@@ -174,9 +162,7 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction],
-                                           equilibriumF[direction],
-                                           allowedError);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction], equilibriumF[direction], allowedError);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumEntropicF[direction],
                                            equilibriumEntropicF[direction],
                                            allowedError);
@@ -205,9 +191,7 @@ namespace hemelb
 
             for (Direction direction = 0; direction < 3; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction],
-                                           targetH[direction],
-                                           allowedError);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction], targetH[direction], allowedError);
 // Turns out that this only passes for D3Q27              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocity[direction],
 //                                           targetH[direction],
 //                                           allowedError);
@@ -218,15 +202,15 @@ namespace hemelb
              *
              * This must have the same values as the corresponding properties on the main lattice object.
              */
-            lb::lattices::LatticeInfo* latticeInfo = LatticeType::GetLatticeInfo();
+            lb::lattices::LatticeInfo& latticeInfo = LatticeType::GetLatticeInfo();
 
-            CPPUNIT_ASSERT(latticeInfo->GetNumVectors() == LatticeType::NUMVECTORS);
+            CPPUNIT_ASSERT(latticeInfo.GetNumVectors() == LatticeType::NUMVECTORS);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
-              CPPUNIT_ASSERT(latticeInfo->GetInverseIndex(direction) == LatticeType::INVERSEDIRECTIONS[direction]);
+              CPPUNIT_ASSERT(latticeInfo.GetInverseIndex(direction) == LatticeType::INVERSEDIRECTIONS[direction]);
 
-              const util::Vector3D<int>& velocityVector = latticeInfo->GetVector(direction);
+              const util::Vector3D<int>& velocityVector = latticeInfo.GetVector(direction);
 
               for (Direction index = 0; index < 3; index++)
               {
