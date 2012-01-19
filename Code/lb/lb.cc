@@ -21,13 +21,11 @@ namespace hemelb
     LBM::LBM(configuration::SimConfig *iSimulationConfig,
              net::Net* net,
              geometry::LatticeData* latDat,
-             SimulationState* simState, reporting::Timer &atimer) :
-          mSimConfig(iSimulationConfig),
-          mNet(net),
-          mLatDat(latDat),
-          mState(simState),
-          mParams(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
-                  latDat->GetVoxelSize()), timer(atimer)
+             SimulationState* simState,
+             reporting::Timer &atimer) :
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(PULSATILE_PERIOD_s
+                                                                                                 / (distribn_t) simState->GetTimeStepsPerCycle(),
+                                                                                             latDat->GetVoxelSize()), timer(atimer)
     {
       ReadParameters();
     }
@@ -38,8 +36,7 @@ namespace hemelb
                                       const LatticeDensity density_threshold_minmax_inv,
                                       const LatticeStress stress_threshold_max_inv,
                                       PhysicalPressure &mouse_pressure,
-                                      PhysicalStress &mouse_stress
-                                      )
+                                      PhysicalStress &mouse_stress)
     {
       LatticeDensity density = density_threshold_min + densityIn / density_threshold_minmax_inv;
       LatticeStress stress = stressIn / stress_threshold_max_inv;
@@ -121,7 +118,9 @@ namespace hemelb
       {
         D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        f_old_p = mLatDat->GetFOld(i * D3Q15::NUMVECTORS);
+        geometry::Site site = mLatDat->GetSite(i);
+
+        f_old_p = site.GetFOld();
         f_new_p = mLatDat->GetFNew(i * D3Q15::NUMVECTORS);
 
         for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
@@ -267,13 +266,11 @@ namespace hemelb
 
       for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(2); i++)
       {
-        D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
-                                           density,
-                                           vx,
-                                           vy,
-                                           vz);
+        geometry::Site site = mLatDat->GetSite(i);
 
-        inlet_id = mLatDat->GetBoundaryId(i);
+        D3Q15::CalculateDensityAndVelocity(site.GetFOld(), density, vx, vy, vz);
+
+        inlet_id = site.GetBoundaryId();
 
         vx *= inlet_normal[3 * inlet_id + 0];
         vy *= inlet_normal[3 * inlet_id + 1];
@@ -296,13 +293,11 @@ namespace hemelb
 
       for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(2); i++)
       {
-        D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
-                                           density,
-                                           vx,
-                                           vy,
-                                           vz);
+        geometry::Site site = mLatDat->GetSite(i);
 
-        inlet_id = mLatDat->GetBoundaryId(i);
+        D3Q15::CalculateDensityAndVelocity(site.GetFOld(), density, vx, vy, vz);
+
+        inlet_id = site.GetBoundaryId();
 
         vx *= inlet_normal[3 * inlet_id + 0];
         vy *= inlet_normal[3 * inlet_id + 1];

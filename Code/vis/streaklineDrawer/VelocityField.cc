@@ -26,9 +26,9 @@ namespace hemelb
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          const geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+          const geometry::Block& block = blockTraverser.GetCurrentBlockData();
 
-          if (block->localContiguousIndex.size() == 0)
+          if (block.IsEmpty())
           {
             continue;
           }
@@ -38,7 +38,7 @@ namespace hemelb
           {
             // Only interested if the site lives on this rank.
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != block->processorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+                != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;
             }
@@ -88,12 +88,12 @@ namespace hemelb
                 for (site_t neighbourK = startK; neighbourK <= endK; neighbourK++)
                 {
                   // Get the rank that the neighbour lives on.
-                  const proc_t* neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<
+                  const proc_t neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<
                       site_t>(neighbourI, neighbourJ, neighbourK));
 
                   // If we have data for it, we should initialise a block in the velocity field
                   // for the neighbour site.
-                  if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
+                  if (neigh_proc_id == BIG_NUMBER2)
                   {
                     continue;
                   }
@@ -102,18 +102,18 @@ namespace hemelb
                                                util::Vector3D<site_t>(neighbourI,
                                                                       neighbourJ,
                                                                       neighbourK),
-                                               *neigh_proc_id);
+                                               neigh_proc_id);
 
                   // If the neighbour is on this rank, ignore it.
-                  if (topology::NetworkTopology::Instance()->GetLocalRank() == *neigh_proc_id)
+                  if (topology::NetworkTopology::Instance()->GetLocalRank() == neigh_proc_id)
                   {
                     continue;
                   }
 
-                  if (neighbouringProcessors.count(*neigh_proc_id) == 0)
+                  if (neighbouringProcessors.count(neigh_proc_id) == 0)
                   {
-                    NeighbouringProcessor newProc(*neigh_proc_id);
-                    neighbouringProcessors[*neigh_proc_id] = newProc;
+                    NeighbouringProcessor newProc(neigh_proc_id);
+                    neighbouringProcessors[neigh_proc_id] = newProc;
                   }
                 }
               }
@@ -132,7 +132,7 @@ namespace hemelb
             continue;
           }
 
-          if (latDat.GetBlock(block)->localContiguousIndex.size() == 0)
+          if (latDat.GetBlock(block).IsEmpty())
           {
             continue;
           }
@@ -142,7 +142,7 @@ namespace hemelb
               localSiteId++)
           {
             velocityField[block][localSiteId].site_id =
-                latDat.GetBlock(block)->localContiguousIndex[localSiteId];
+                latDat.GetBlock(block).GetLocalContiguousIndexForSite(localSiteId);
           }
         }
       }
@@ -162,29 +162,22 @@ namespace hemelb
       VelocitySiteData* VelocityField::GetVelocitySiteData(const geometry::LatticeData& latDat,
                                                            const util::Vector3D<site_t>& location)
       {
-        if (!latDat.IsValidLatticeSite(location.x, location.y, location.z))
+        if (!latDat.IsValidLatticeSite(location))
         {
           return NULL;
         }
 
-        // TODO this stuff should be encapsulated in the LatticeData
-        site_t blockI = location.x >> latDat.GetLog2BlockSize();
-        site_t blockJ = location.y >> latDat.GetLog2BlockSize();
-        site_t blockK = location.z >> latDat.GetLog2BlockSize();
+        util::Vector3D<site_t> blockCoords, siteCoords;
+        latDat.GetBlockAndLocalSiteCoords(location, blockCoords, siteCoords);
 
-        site_t block_id = latDat.GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
+        site_t block_id = latDat.GetBlockIdFromBlockCoords(blockCoords);
 
         if (!BlockContainsData(static_cast<size_t>(block_id)))
         {
           return NULL;
         }
 
-        site_t localSiteI = location.x - (blockI << latDat.GetLog2BlockSize());
-        site_t localSiteJ = location.y - (blockJ << latDat.GetLog2BlockSize());
-        site_t localSiteK = location.z - (blockK << latDat.GetLog2BlockSize());
-
-        site_t site_id = ( ( (localSiteI << latDat.GetLog2BlockSize()) + localSiteJ)
-            << latDat.GetLog2BlockSize()) + localSiteK;
+        site_t site_id = latDat.GetLocalSiteIdFromLocalSiteCoords(siteCoords);
 
         return &GetSiteData(block_id, site_id);
       }
@@ -194,12 +187,10 @@ namespace hemelb
                                                        const util::Vector3D<site_t> location,
                                                        const proc_t proc_id)
       {
-        // TODO this stuff should be encapsulated in the LatticeData
-        site_t blockI = location.x >> latDat.GetLog2BlockSize();
-        site_t blockJ = location.y >> latDat.GetLog2BlockSize();
-        site_t blockK = location.z >> latDat.GetLog2BlockSize();
+        util::Vector3D<site_t> blockCoords, siteCoords;
+        latDat.GetBlockAndLocalSiteCoords(location, blockCoords, siteCoords);
 
-        site_t blockId = latDat.GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
+        site_t blockId = latDat.GetBlockIdFromBlockCoords(blockCoords);
 
         if (!BlockContainsData(blockId))
         {
@@ -210,12 +201,7 @@ namespace hemelb
           }
         }
 
-        site_t localSiteI = location.x - (blockI << latDat.GetLog2BlockSize());
-        site_t localSiteJ = location.y - (blockJ << latDat.GetLog2BlockSize());
-        site_t localSiteK = location.z - (blockK << latDat.GetLog2BlockSize());
-
-        site_t localSiteId = ( ( (localSiteI << latDat.GetLog2BlockSize()) + localSiteJ)
-            << latDat.GetLog2BlockSize()) + localSiteK;
+        site_t localSiteId = latDat.GetLocalSiteIdFromLocalSiteCoords(siteCoords);
         velocityField[blockId][localSiteId].proc_id = proc_id;
       }
 
@@ -237,7 +223,9 @@ namespace hemelb
             {
               site_t neighbourK = location.z + unitGridK;
 
-              if (!latDat.IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
+              util::Vector3D<site_t> neighbour(neighbourI, neighbourJ, neighbourK);
+
+              if (!latDat.IsValidLatticeSite(neighbour))
               {
                 // it is a solid site and the velocity is
                 // assumed to be zero
@@ -274,15 +262,15 @@ namespace hemelb
       {
         const proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-        if (!latDat.IsValidLatticeSite(location.x, location.y, location.z))
+        if (!latDat.IsValidLatticeSite(location))
         {
           return false;
         }
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
-            || vel_site_data_p->counter == counter)
+        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1
+            || vel_site_data_p->proc_id == thisRank || vel_site_data_p->counter == counter)
         {
           return false;
         }
@@ -320,8 +308,7 @@ namespace hemelb
         localVelocitySiteData->counter = counter;
         distribn_t density, vx, vy, vz;
 
-        D3Q15::CalculateDensityAndVelocity(latDat.GetFOld(localVelocitySiteData->site_id
-                                               * D3Q15::NUMVECTORS),
+        D3Q15::CalculateDensityAndVelocity(latDat.GetSite(localVelocitySiteData->site_id).GetFOld(),
                                            density,
                                            vx,
                                            vy,

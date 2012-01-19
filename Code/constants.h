@@ -2,7 +2,6 @@
 #define HEMELB_CONSTANTS_H
 
 #include <limits>
-#include <stdint.h>
 #include "units.h"
 //#include "mpiInclude.h"
 

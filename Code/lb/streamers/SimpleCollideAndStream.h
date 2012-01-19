@@ -34,17 +34,19 @@ namespace hemelb
           {
             for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
             {
-              distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
+              const geometry::Site site = bLatDat->GetSite(iIndex);
+
+              distribn_t* lFOld = site.GetFOld();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
 
-              collider.CalculatePreCollision(hydroVars, iIndex - iFirstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
               collider.Collide(iLbmParams, hydroVars);
 
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii] =
+                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] =
                     hydroVars.GetFPostCollision()[ii];
 
               }
@@ -52,10 +54,9 @@ namespace hemelb
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                                hydroVars.v_y,
                                                                                                hydroVars.v_z,
-                                                                                               iIndex,
+                                                                                               site,
                                                                                                hydroVars.GetFNeq().f,
                                                                                                hydroVars.density,
-                                                                                               bLatDat,
                                                                                                iLbmParams,
                                                                                                iControl);
             }

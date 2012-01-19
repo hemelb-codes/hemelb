@@ -22,20 +22,20 @@ namespace hemelb
           typedef KernelType CKernel;
 
           ZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
-              BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>(), kernel(initParams), boundaryObject(initParams.boundaryObject), latDat(initParams.latDat)
+              BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>(), kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
           }
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              const site_t index)
+                                              const geometry::Site& site)
           {
-            hydroVars.density = boundaryObject->GetBoundaryDensity(latDat->GetBoundaryId(index));
+            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
 
             hydroVars.v_x = 0.0;
             hydroVars.v_y = 0.0;
             hydroVars.v_z = 0.0;
 
-            kernel.CalculateFeq(hydroVars, index);
+            kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
@@ -55,7 +55,6 @@ namespace hemelb
         private:
           KernelType kernel;
           boundaries::BoundaryValues* boundaryObject;
-          const geometry::LatticeData* latDat;
 
       };
 
