@@ -37,8 +37,7 @@ namespace hemelb
        * @param velDistributions velocity distributions vector
        * @param moments equivalent vector in the moment space
        */
-      static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
-                                             distribn_t * const moments);
+      static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions, distribn_t * const moments);
   };
 }
 #endif /* HEMELB_D3Q15_H */

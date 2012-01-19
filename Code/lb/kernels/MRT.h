@@ -13,19 +13,19 @@ namespace hemelb
     namespace kernels
     {
       // Forward declaration needed by the struct
-      class MRT;
+      template<class LatticeType> class MRT;
 
-      template<>
-      struct HydroVars<MRT> : public HydroVarsBase
+      template<class LatticeType>
+      struct HydroVars<MRT<LatticeType> > : public HydroVarsBase<LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+              HydroVarsBase<LatticeType>(f)
           {
           }
 
           /** Equilibrium velocity distribution in the momentum space. */
-          distribn_t m_neq[D3Q15::NUM_KINETIC_MOMENTS];
+          distribn_t m_neq[LatticeType::NUM_KINETIC_MOMENTS];
       };
 
       /**
@@ -41,7 +41,8 @@ namespace hemelb
        *
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
-      class MRT : public BaseKernel<MRT>
+      template<class LatticeType>
+      class MRT : public BaseKernel<MRT<LatticeType>, LatticeType>
       {
         public:
 
@@ -52,55 +53,48 @@ namespace hemelb
 
           inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
-                                               hydroVars.f_eq.f);
+            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+                                                     hydroVars.density,
+                                                     hydroVars.v_x,
+                                                     hydroVars.v_y,
+                                                     hydroVars.v_z,
+                                                     hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            LatticeType::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            D3Q15::CalculateFeq(hydroVars.density,
-                                hydroVars.v_x,
-                                hydroVars.v_y,
-                                hydroVars.v_z,
-                                hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            LatticeType::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<MRT>& hydroVars)
           {
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               /** @todo #61 many optimisations possible (and necessary!).
                *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
-              for (unsigned momentIndex = 0; momentIndex < D3Q15::NUM_KINETIC_MOMENTS;
-                  momentIndex++)
+              for (unsigned momentIndex = 0; momentIndex < LatticeType::NUM_KINETIC_MOMENTS; momentIndex++)
               {
-                collision += (collisionMatrix[momentIndex]
-                    / D3Q15::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
-                    * D3Q15::REDUCED_MOMENT_BASIS[momentIndex][direction]
-                    * hydroVars.m_neq[momentIndex];
+                collision += (collisionMatrix[momentIndex] / LatticeType::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
+                    * LatticeType::REDUCED_MOMENT_BASIS[momentIndex][direction] * hydroVars.m_neq[momentIndex];
               }
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction] - collision;
             }

@@ -3,6 +3,7 @@
 
 #include "geometry/LatticeData.h"
 #include "net/PhasedBroadcastRegular.h"
+#include "reporting/Reportable.h"
 #include <cfloat>
 
 namespace hemelb
@@ -16,8 +17,9 @@ namespace hemelb
      */
     static const distribn_t REFERENCE_DENSITY = 1.0;
 
-    template<class BroadcastPolicy = net::PhasedBroadcastRegular<> >
-    class IncompressibilityChecker : public BroadcastPolicy
+    template<class BroadcastPolicy, class Lattice>
+    class IncompressibilityChecker : public BroadcastPolicy,
+                                     public reporting::Reportable
     {
         /**
          * This class uses the phased broadcast infrastructure to keep track of the maximum density difference across the domain.
@@ -121,6 +123,8 @@ namespace hemelb
          * Destructor
          */
         virtual ~IncompressibilityChecker();
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
 
         /**
          * Returns smallest density in the domain as agreed by all the processes.

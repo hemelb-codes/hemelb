@@ -12,6 +12,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
+#include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 
@@ -33,7 +34,7 @@ namespace hemelb
         site_t FirstSharedF;
     };
 
-    class LatticeData
+    class LatticeData : public reporting::Reportable
     {
       public:
         friend class InnerSite<true> ;
@@ -41,6 +42,7 @@ namespace hemelb
         friend class BlockTraverser;
 
         static LatticeData* Load(const bool reserveSteeringCore,
+                                 const lb::lattices::LatticeInfo& latticeInfo,
                                  std::string& dataFilePath,
                                  reporting::Timers &timings);
 
@@ -49,6 +51,8 @@ namespace hemelb
         void SwapOldAndNew();
         void SendAndReceive(net::Net* net);
         void CopyReceived();
+
+        const lb::lattices::LatticeInfo& GetLatticeInfo() const;
 
         Site GetSite(site_t localIndex);
         ConstSite GetSite(site_t localIndex) const;
@@ -101,11 +105,12 @@ namespace hemelb
         site_t GetInnerCollisionCount(unsigned int collisionType) const;
         site_t GetInterCollisionCount(unsigned int collisionType) const;
 
-        const std::vector<site_t>& GetFluidSiteCountsOnEachProc() const;
         site_t GetFluidSiteCountOnProc(proc_t proc) const;
         site_t GetTotalFluidSites() const;
         const util::Vector3D<site_t>& GetGlobalSiteMins() const;
         const util::Vector3D<site_t>& GetGlobalSiteMaxes() const;
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
 
       protected:
         /**
@@ -113,8 +118,8 @@ namespace hemelb
          * class for the purpose of testing.
          * @return
          */
-        LatticeData();
-        LatticeData(const GeometryReadResult& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks,
                              site_t blockSize,
@@ -144,7 +149,7 @@ namespace hemelb
         void InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
-            sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+        sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
         void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
         void GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const;
@@ -169,6 +174,7 @@ namespace hemelb
         /**
          * Basic lattice variables.
          */
+        const lb::lattices::LatticeInfo& latticeInfo;
         util::Vector3D<site_t> blockCounts;
         site_t blockSize;
         distribn_t voxelSize;
