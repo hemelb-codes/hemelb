@@ -31,7 +31,8 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE(GeometryReaderTests);
           CPPUNIT_TEST(TestRead);
-          CPPUNIT_TEST(TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestSameAsFourCube);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()

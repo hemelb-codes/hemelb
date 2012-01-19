@@ -2,6 +2,7 @@
 #define HEMELB_REPORTING_TIMERS_H
 
 #include <vector>
+#include "reporting/Reportable.h"
 #include "util/utilityFunctions.h"
 #include "Policies.h"
 namespace hemelb
@@ -63,7 +64,8 @@ namespace hemelb
      * @tparam ClockPolicy How to get the current time
      * @tparam CommsPolicy How to share information between processes
      */
-    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy
+    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy,
+                                                                      public Reportable
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -72,7 +74,7 @@ namespace hemelb
          */
         enum TimerName
         {
-          total=0, //!< Total time
+          total = 0, //!< Total time
           domainDecomposition, //!< Time spent in domain decomposition
           fileRead, //!< Time spent in reading the geometry description file
           netInitialise, //!< Time spent initialising the network topology
@@ -83,9 +85,16 @@ namespace hemelb
           mpiWait, //!< Time spent waiting for MPI
           snapshot, //!< Time spent producing snapshots
           simulation, //!< Total time for running the simulation
-          last //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
+          last
+        //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
         static const unsigned int numberOfTimers = last;
+
+        /**
+         * String message label for each timer for reporting
+         */
+        static const std::string timerNames[numberOfTimers];
+
         TimersBase() :
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
@@ -157,6 +166,9 @@ namespace hemelb
          * Share timing information across timers
          */
         void Reduce();
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
+
       private:
         std::vector<Timer> timers; //! The set of timers
         std::vector<double> maxes; //! Max across processes
@@ -165,23 +177,13 @@ namespace hemelb
     };
     typedef TimerBase<HemeLBClockPolicy> Timer;
     typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
+
+    template<class ClockPolicy, class CommsPolicy>
+    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
+        { "Total", "Domain Decomposition", "File Read", "Net initialisation", "Lattice Boltzmann", "Visualisation",
+          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total" };
   }
 
-  /**
-   * String message label for each timer for reporting
-   */
-  static const std::string timerNames[hemelb::reporting::Timers::numberOfTimers] =
-      { "Total",
-        "Domain Decomposition",
-        "File Read",
-        "Net initialisation",
-        "Lattice Boltzmann",
-        "Visualisation",
-        "Monitoring",
-        "MPI Send",
-        "MPI Wait",
-        "Snapshots",
-        "Simulation total" };
 }
 
 #endif //HEMELB_REPORTING_TIMERS_H

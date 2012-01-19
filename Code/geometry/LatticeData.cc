@@ -871,19 +871,14 @@ namespace hemelb
       return ConstSite(localIndex, *this);
     }
 
-    const std::vector<site_t>& LatticeData::GetFluidSiteCountsOnEachProc() const
+    site_t LatticeData::GetTotalFluidSites() const
     {
-      return fluidSitesOnEachProcessor;
+      return totalFluidSites;
     }
 
     site_t LatticeData::GetFluidSiteCountOnProc(proc_t proc) const
     {
       return fluidSitesOnEachProcessor[proc];
-    }
-
-    site_t LatticeData::GetTotalFluidSites() const
-    {
-      return totalFluidSites;
     }
 
     const util::Vector3D<site_t>& LatticeData::GetGlobalSiteMins() const
@@ -894,6 +889,18 @@ namespace hemelb
     const util::Vector3D<site_t>& LatticeData::GetGlobalSiteMaxes() const
     {
       return globalSiteMaxes;
+    }
+
+    void LatticeData::Report(ctemplate::TemplateDictionary& dictionary)
+    {
+      dictionary.SetIntValue("SITES", GetTotalFluidSites());
+
+      for (size_t n = 0; n < fluidSitesOnEachProcessor.size(); n++)
+      {
+        ctemplate::TemplateDictionary *proc = dictionary.AddSectionDictionary("PROCESSOR");
+        proc->SetIntValue("RANK", n);
+        proc->SetIntValue("SITES", fluidSitesOnEachProcessor[n]);
+      }
     }
   }
 }
