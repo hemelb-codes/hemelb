@@ -1,5 +1,8 @@
 #ifndef HEMELB_UNITS_H
 #define HEMELB_UNITS_H
+
+#include <stdint.h>
+
 namespace hemelb
 {
   // Basic types for use in HemeLB.

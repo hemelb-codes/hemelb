@@ -31,29 +31,29 @@ namespace hemelb
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
+              geometry::Site site = bLatDat->GetSite(lIndex);
+
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+              distribn_t* f = site.GetFOld();
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
-              collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
               collider.Collide(iLbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              for (Direction ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) =
-                    hydroVars.GetFPostCollision()[ii];
-
+                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = hydroVars.GetFPostCollision()[ii];
               }
 
               // Now fill in the un-streamed-to distributions (those that point away from boundaries).
-              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+              for (Direction l = 1; l < D3Q15::NUMVECTORS; l++)
               {
-                if (bLatDat->HasBoundary(lIndex, l))
+                if (site.HasBoundary(l))
                 {
-                  int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
+                  Direction lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
-                  double delta = bLatDat->GetCutDistance(lIndex, l);
+                  double delta = site.GetWallDistance(l);
 
                   // Work out uw1 (noting that ub is 0 until we implement moving walls)
                   double uWall[3];
@@ -67,15 +67,16 @@ namespace hemelb
                   {
                     // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
                     // in the direction of awayFromWallIndex
-                    if (!bLatDat->HasBoundary(lIndex, lAwayFromWallIndex))
+                    if (!site.HasBoundary(lAwayFromWallIndex))
                     {
                       // Need some info about the next node away from the wall in this direction...
-                      site_t nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
+                      site_t nextIOut = site.GetStreamedIndex(lAwayFromWallIndex)
                           / D3Q15::NUMVECTORS;
                       distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
 
-                      D3Q15::CalculateDensityVelocityFEq(bLatDat->GetFOld(nextIOut
-                                                             * D3Q15::NUMVECTORS),
+                      geometry::Site nextSiteOut = bLatDat->GetSite(nextIOut);
+
+                      D3Q15::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
                                                          nextNodeDensity,
                                                          nextNodeV[0],
                                                          nextNodeV[1],
@@ -90,8 +91,8 @@ namespace hemelb
 
                       fNeqAwayFromWall = delta * fNeqAwayFromWall
                           + (1. - delta)
-                              * (*bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS
-                                  + lAwayFromWallIndex) - nextNodeFEq[lAwayFromWallIndex]);
+                              * (nextSiteOut.GetFOld()[lAwayFromWallIndex]
+                                  - nextNodeFEq[lAwayFromWallIndex]);
                     }
                     // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
                     else
@@ -120,10 +121,9 @@ namespace hemelb
               BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                     hydroVars.v_y,
                                                                                     hydroVars.v_z,
-                                                                                    lIndex,
+                                                                                    site,
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
-                                                                                    bLatDat,
                                                                                     iLbmParams,
                                                                                     iControl);
             }

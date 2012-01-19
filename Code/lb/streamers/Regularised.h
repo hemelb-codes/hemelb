@@ -32,21 +32,24 @@ namespace hemelb
           {
             for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
-              distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+              const geometry::Site site = bLatDat->GetSite(lIndex);
+
+              distribn_t* f = site.GetFOld();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
               // First calculate the density and macro-velocity
-              collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
               distribn_t fTemp[D3Q15::NUMVECTORS];
               for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
-                if (bLatDat->HasBoundary(lIndex, D3Q15::INVERSEDIRECTIONS[l]))
+                if (site.HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
                 {
-                  fTemp[l] = hydroVars.GetFEq().f[l] + f[D3Q15::INVERSEDIRECTIONS[l]] - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
+                  fTemp[l] = hydroVars.GetFEq().f[l] + f[D3Q15::INVERSEDIRECTIONS[l]]
+                      - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
                 }
                 else
                 {
@@ -79,13 +82,13 @@ namespace hemelb
               site_t lStreamTo[D3Q15::NUMVECTORS];
               for (unsigned l = 0; l < D3Q15::NUMVECTORS; l++)
               {
-                if (bLatDat->HasBoundary(lIndex, l))
+                if (site.HasBoundary(l))
                 {
                   lStreamTo[l] = lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
                 }
                 else
                 {
-                  lStreamTo[l] = bLatDat->GetStreamedIndex(lIndex, l);
+                  lStreamTo[l] = site.GetStreamedIndex(l);
                 }
               }
 
@@ -129,10 +132,9 @@ namespace hemelb
               BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                     hydroVars.v_y,
                                                                                     hydroVars.v_z,
-                                                                                    lIndex,
+                                                                                    site,
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
-                                                                                    bLatDat,
                                                                                     iLbmParams,
                                                                                     iControl);
             }

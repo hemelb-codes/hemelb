@@ -32,13 +32,15 @@ namespace hemelb
           {
             for (site_t index = firstIndex; index < (firstIndex + siteCount); index++)
             {
-              distribn_t* distribution = latticeData->GetFOld(index * D3Q15::NUMVECTORS);
+              const geometry::Site site = latticeData->GetSite(index);
+
+              distribn_t* distribution = site.GetFOld();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
 
               // In the first step, we stream and collide as we would for the SimpleCollideAndStream
               // streamer.
-              collider.CalculatePreCollision(hydroVars, index - firstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
               collider.Collide(iLbmParams, hydroVars);
 
@@ -48,17 +50,16 @@ namespace hemelb
                 // value being written over f_old.
                 distribution[direction] = hydroVars.GetFPostCollision()[direction];
 
-                * (latticeData->GetFNew(latticeData->GetStreamedIndex(index, direction))) =
+                * (latticeData->GetFNew(site.GetStreamedIndex(direction))) =
                     distribution[direction];
               }
 
               BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                        hydroVars.v_y,
                                                                                        hydroVars.v_z,
-                                                                                       index,
+                                                                                       site,
                                                                                        hydroVars.GetFNeq().f,
                                                                                        hydroVars.density,
-                                                                                       latticeData,
                                                                                        iLbmParams,
                                                                                        visControl);
             }
@@ -73,26 +74,26 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
+              geometry::Site site = latticeData->GetSite(siteIndex);
+
               // Iterate over the direction indices.
               for (unsigned int direction = 1; direction < D3Q15::NUMVECTORS; direction++)
               {
                 // If there's a boundary in that direction and none in the other direction, do the
                 // f-interpolation.
-                if (latticeData->HasBoundary(siteIndex, direction))
+                if (site.HasBoundary(direction))
                 {
                   int inverseDirection = D3Q15::INVERSEDIRECTIONS[direction];
 
-                  if (!latticeData->HasBoundary(siteIndex, inverseDirection))
+                  if (!site.HasBoundary(inverseDirection))
                   {
                     // Calculate 2 x the distance to the boundary.
-                    distribn_t twoQ = 2.0 * latticeData->GetCutDistance(siteIndex, direction);
+                    distribn_t twoQ = 2.0 * site.GetWallDistance(direction);
 
                     distribn_t thisDirectionNew = *latticeData->GetFNew(siteIndex
                         * D3Q15::NUMVECTORS + direction);
-                    distribn_t thisDirectionOld = *latticeData->GetFOld(siteIndex
-                        * D3Q15::NUMVECTORS + direction);
-                    distribn_t oppDirectionOld = *latticeData->GetFOld(siteIndex * D3Q15::NUMVECTORS
-                        + inverseDirection);
+                    distribn_t thisDirectionOld = site.GetFOld()[direction];
+                    distribn_t oppDirectionOld = site.GetFOld()[inverseDirection];
 
                     // Interpolate between the values of the f direction to work out a new streamed value.
                     distribn_t streamed = (twoQ < 1.0) ?
@@ -109,7 +110,7 @@ namespace hemelb
                   else
                   {
                     * (latticeData->GetFNew(siteIndex * D3Q15::NUMVECTORS + inverseDirection)) =
-                        *latticeData->GetFOld(siteIndex * D3Q15::NUMVECTORS + direction);
+                        site.GetFOld()[direction];
                   }
                 }
               }

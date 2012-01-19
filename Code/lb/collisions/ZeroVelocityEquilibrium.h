@@ -28,7 +28,7 @@ namespace hemelb
           }
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              const site_t index)
+                                              const geometry::Site& site)
           {
             hydroVars.density = 0.0;
 
@@ -41,7 +41,7 @@ namespace hemelb
             hydroVars.v_y = 0.0;
             hydroVars.v_z = 0.0;
 
-            kernel.CalculateFeq(hydroVars, index);
+            kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
           inline void DoCollide(const LbmParameters* lbmParams,
