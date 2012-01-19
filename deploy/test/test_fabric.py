@@ -11,9 +11,7 @@ import sys
 
 from ..fab import *
 
-
-
-class TestMachineEnvironment(unittest.TestCase):
+class TestFabric(unittest.TestCase):
 	def setUp(self):
 		#Update the user config with testing example
 		user_config=yaml.load(open(os.path.join(env.localroot,'deploy','test','machines_user.yml')))
@@ -32,5 +30,4 @@ class TestMachineEnvironment(unittest.TestCase):
 	def test_clean(self):
 		execute(clean)
 		self.assertLastCommand('make clean')
-		
 		
