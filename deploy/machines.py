@@ -23,6 +23,8 @@ env.verbose=False
 env.needs_tarballs=False
 env.cmake_options={}
 env.pather=posixpath
+env.remote=None
+env.machine_name=None
 
 @task
 def machine(name):
@@ -45,7 +47,6 @@ def machine(name):
 #Metaprogram the machine wrappers
 for machine_name in set(config.keys())-set(['default']):
 	globals()[machine_name]=task(alias=machine_name)(partial(machine,machine_name))
-
 
 def complete_environment():
 	"""Add paths to the environment based on information in the JSON configs.
@@ -76,6 +77,7 @@ def complete_environment():
 		
 	env.results_path=env.pather.join(env.work_path,"results")
 	env.config_path=env.pather.join(env.work_path,"config_files")
+	env.profiles_path=env.pather.join(env.work_path,"profiles")
 	env.scripts_path=env.pather.join(env.work_path,"scripts")
 	env.build_path=env.pather.join(env.remote_path,'build')
 	env.code_build_path=env.pather.join(env.remote_path,'code_build')
@@ -107,4 +109,7 @@ def complete_environment():
 	cmd.close()
 	#env.build_number=run("hg id -i -r tip")
 	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
+	
+
+complete_environment()
 	
