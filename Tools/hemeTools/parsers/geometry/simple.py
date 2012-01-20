@@ -1,17 +1,18 @@
 import numpy as np
 import xdrlib
 
-from . import cfg
 from .generic import Domain, Block, AllSolidBlock, Site
+from .. import *
 
 class FakeUnpacker(object):
     """Fake xdrlib.Unpacker, for use when all the Sites in a Block are
     solid. Just returns zeros.
     """
-    
-    def unpack_uhyper(self):
-        return cfg.SOLID_TYPE
+    def unpack_uint(self):
+        return Site.SOLID
     pass
+
+PADDING_BYTE = 0
 
 class ConfigLoader(object):
     """Loads a HemeLB config file.
@@ -38,18 +39,40 @@ class ConfigLoader(object):
         """Deal with the preamble (contains global stuff about the
         lattice: size, shape etc). Triggers OnBeginPreamble and
         OnEndPreamble events.
+        1 uint for HemeLB magic number (0x686c6221)
+        1 uint for geometry magic number (0x676d7904)
+        1 uints for version number
+        3 uints for domain size in blocks
+        1 uint for number of sites along one side of a block
+        1 double for lattice unit size
+        3 double for coordinates of zero lattice site
+        1 uint of value 0 to pad to 72 bytes
         """
         self.OnBeginPreamble()
         
-        self.PreambleBytes = 4*4 + 4*8
+        self.PreambleBytes = 64
         preambleLoader = xdrlib.Unpacker(self.File.read(self.PreambleBytes))
-        
+
+        hlbNumber = preambleLoader.unpack_uint()
+        if hlbNumber != HemeLbMagicNumber:
+            raise IOError(r"This doesn't appear to be a HemeLB file. Instead of the HemeLB magic number (%d), I found %d" % (HemeLbMagicNumber, hlbNumber))
+
+        gmyNumber = preambleLoader.unpack_uint()
+        if gmyNumber != GeometryMagicNumber:
+            raise IOError(r"This doesn't appear to be a geometry file. Instead of the geometry magic number (%d), I found %d" % (GeometryMagicNumber, gmyNumber))
+
+        self.Domain.Version = preambleLoader.unpack_uint()
+
         self.Domain.BlockCounts = np.array([preambleLoader.unpack_uint() for i in xrange(3)], dtype=np.uint)
         self.Domain.BlockSize = preambleLoader.unpack_uint()
         
         self.Domain.VoxelSize = preambleLoader.unpack_double()
         self.Domain.Origin = np.array([preambleLoader.unpack_double() for i in xrange(3)], dtype=np.double)
-        
+
+        padding = preambleLoader.unpack_uint()
+        if padding != PADDING_BYTE:
+            raise IOError(r"The preamble to this file is padded with the wrong value. Instead of %d, I found %d" % (PADDING_BYTE, padding))
+
         self.OnEndPreamble()
         return
 
@@ -139,20 +162,19 @@ class ConfigLoader(object):
         
         s = Site(block, sgIdx)
         
-        s.Config = loader.unpack_hyper()
+        s.IsFluid = loader.unpack_uint()
         # Solid and simple fluid, we are done loading
-        if not (s.Config == cfg.SOLID_TYPE or s.Config == cfg.FLUID_TYPE):
-            
-            if s.Type == cfg.INLET_TYPE or s.Type == cfg.OUTLET_TYPE:
-                s.BoundaryNormal = np.array([loader.unpack_double() for i in xrange(3)], dtype=np.double)
-                s.BoundaryDistance = loader.unpack_double()
-                            
-            if s.IsEdge:
-                s.WallNormal = np.array([loader.unpack_double() for i in xrange(3)], dtype=np.double)
-                s.WallDistance = loader.unpack_double()
-                                        
-            s.CutDistances = np.array([loader.unpack_double() for i in xrange(26)], dtype=np.double)
-            pass
+        if s.IsFluid == Site.FLUID:
+            s.IntersectionType = np.array([Site.NO_INTERSECTION for i in xrange(Site.DIRECTIONS)], dtype=np.uint)
+            s.IntersectionDistance = np.array([0 for i in xrange(Site.DIRECTIONS)], dtype=np.float)
+            s.IOletIndex = np.array([Site.NO_IOLET for i in xrange(Site.DIRECTIONS)], dtype=np.int)
+           
+            for i in range(26):
+                s.IntersectionType[i] = loader.unpack_uint()
+                if s.IntersectionType[i] in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
+                    s.IOletIndex[i] = loader.unpack_uint()
+                if s.IntersectionType[i] != Site.NO_INTERSECTION:
+                    s.IntersectionDistance[i] = loader.unpack_float()
         
         self.OnEndSite(block, s)
         return s
