@@ -10,3 +10,4 @@ that number being terminated by the EOF character (0x04).
 """
 
 HemeLbMagicNumber = 0x686c6221
+GeometryMagicNumber = 0x676d7904
