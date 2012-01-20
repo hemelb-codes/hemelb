@@ -1,7 +1,6 @@
 import itertools
 import numpy as np
 import weakref
-from . import cfg
 
 class NdIndexConverter(object):
     """Help for converting between 1d and Nd indices into arrays and
@@ -59,6 +58,9 @@ class Domain(object):
 
     Public attributes:
 
+    - HemeLB magic number
+    - Geometry magic number
+    - Version number
     - BlockCounts
     - BlockSize
     - VoxelSize
@@ -74,6 +76,7 @@ class Domain(object):
     
     """
     def __init__(self):
+        self._Version = None
         self._BlockCounts = None
         self._BlockSize = None
         
@@ -81,7 +84,7 @@ class Domain(object):
         self.Origin = None
         
         return
-    
+
     @property
     def SiteCounts(self):
         return self.BlockCounts * self.BlockSize
@@ -202,22 +205,30 @@ class NotYetLoadedBlock(Block):
         raise ValueError('Cannot get sites from NotYetLoadedBlock')
     pass
 
-
 class Site(object):
+    DIRECTIONS = 26
+
+    SOLID = 0
+    FLUID = 1
+
+    NO_IOLET = -1
+
+    NO_INTERSECTION = 0
+    WALL_INTERSECTION = 1
+    INLET_INTERSECTION = 2
+    OUTLET_INTERSECTION = 3
+
     def __init__(self, block, sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         
-        self.Config = None
+        self.IsFluid = True
+        self.IntersectionType = None
+        self.IntersectionDistance = None
+        self.IOletIndex = None
+
         dom = block.GetDomain()
         self.Position = dom.Origin + dom.VoxelSize * sgIdx
-        
-        self.BoundaryNormal = None
-        self.BoundaryDistance = None
-        self.WallNormal = None
-        self.WallDistance = None
-
-        self.CutDistances = None
         
         return
     
@@ -234,24 +245,14 @@ class Site(object):
         self.__dict__.update(picdic)
         return
     
-    @property
-    def Type(self):
-        return cfg.GetType(self.Config)
-    @property
-    def BoundaryConfig(self):
-        return cfg.GetType(self.Config)
-    @property
-    def BoundaryId(self):
-        return cfg.GetBoundaryId(self.Config)
+
     @property
     def IsEdge(self):
-        return bool(cfg.GetPressureEdge(self.Config))
+        return bool(self.IsFluid and np.any(self.IntersectionType == WALL_INTERSECTION))
+
     @property
     def IsSolid(self):
-        return (self.Type == cfg.SOLID_TYPE)
-    @property
-    def IsFluid(self):
-        return not self.IsSolid
+        return self.IsFluid == False
     
     _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
@@ -274,7 +275,7 @@ class OutOfDomainBlock(Block):
 
 class OutOfDomainSite(Site):
     def __init__(self, block, sgIdx):
-        self.Config = cfg.SOLID_TYPE
+        self.IsFluid = False
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         return
@@ -282,18 +283,16 @@ class OutOfDomainSite(Site):
 
 
 class AllSolidBlock(Block):
-
     def GetLocalSite(self, slIndx):
         assert np.all(slIndx >= 0) and np.all(slIndx < self.GetDomain().BlockSize)
         return AllSolidSite(self, slIndx)
-
     pass
 
 class AllSolidSite(Site):
     def __init__(self, block, sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
-        self.Config = cfg.SOLID_TYPE
+        self.IsFluid = False
         return
     pass
 
