@@ -4,6 +4,8 @@ import re
 # [hooks]
 # pretxncommit = python:/path_to_hemelb/Scripts/enforce-commit-message.py:checkCommitMessage
 
+MAX_LINE_LENGTH = 80
+
 def checkCommitMessage(ui, repo, **kwargs):
     """
     Checks a single commit message for adherence to commit message rules.  
@@ -15,21 +17,18 @@ def checkCommitMessage(ui, repo, **kwargs):
     pretxncommit = python:path/to/script/enforce-message.py:checkCommitMessage
     """
 
-    hg_commit_message = repo['tip'].description()
+    message = repo['tip'].description()
+    error = False
 
-    if(checkMessage(hg_commit_message) == True):
-        ui.warn('This is not a valid commit message: ' + hg_commit_message + '\n')
-        printUsage(ui)
-        return True
-    else:
-        return False
-        
-def checkMessage(message):
-    if not re.match('\A\W*merge\W*\Z', message, re.IGNORECASE) == None:
-        return False
-    if not re.match('\A.*\#\d+.*\Z', message) == None:
-        return False
-    return True
+    lines = message.split('\n')
+    for i, line in enumerate(lines):
+      if len(line) > MAX_LINE_LENGTH:
+        ui.warn('Invalid commit message: line %d had %d characters (limit is %d)\n' % (i+1, len(line), MAX_LINE_LENGTH))
+        error = True
 
-def printUsage(ui):
-    ui.warn('Commit message must be the single word \'Merge\' or contain \'#<ticket_id>\'\n')
+    if not re.match('\Amerge\W', lines[0], re.IGNORECASE) and not re.search('\#\d+', lines[0]):
+      ui.warn('Your first line must either begin with the word "merge" or have a ticket id in it (e.g. "#345")\n')
+      error = True
+ 
+    return error
+
