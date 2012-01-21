@@ -5,12 +5,13 @@ import threading
 import Queue
 import collections
 
-from hemeTools.parsers.config.generic import OutOfDomainSite, AllSolidBlock
-from hemeTools.parsers.config.cfg import *
-from hemeTools.parsers.config import cfg
-from hemeTools.parsers.config.multiprocess import AsyncBlockProcessingLoader
+from hemeTools.parsers.geometry.generic import OutOfDomainSite, AllSolidBlock, Site, Block
+from hemeTools.parsers.geometry.multiprocess import AsyncBlockProcessingLoader
+from hemeTools.parsers import D3Q27Directions
 
 import pdb
+
+REALISTIC_IOLET_COUNT = 100
 
 class EmptyErrorCollectionFormatError(Exception):
     pass
@@ -124,55 +125,6 @@ class SiteError(Error):
         return
     pass
 
-class D3Q27Lattice(object):
-    """Represent needed properties of the LB lattice. Velocities must
-    be ordered in the same way as the rest of HemeLB.
-    """
-    
-    # Neighbour deltas are the vectors which when added to a fluid
-    # site position vector give the location of a putative neighbour.
-
-    velocities = np.array([[ 0,  0,  0],
-                           [ 1,  0,  0],
-                           [-1,  0,  0],
-                           [ 0,  1,  0],
-                           [ 0, -1,  0],
-                           [ 0,  0,  1],
-                           [ 0,  0, -1],
-                           [ 1,  1,  0],
-                           [-1, -1,  0],
-                           [ 1, -1,  0],
-                           [-1,  1,  0],
-                           [ 1,  0,  1],
-                           [-1,  0, -1],
-                           [ 1,  0, -1],
-                           [-1,  0,  1],
-                           [ 0,  1,  1],
-                           [ 0, -1, -1],
-                           [ 0,  1, -1],
-                           [ 0, -1,  1],
-                           [ 1,  1,  1],
-                           [-1, -1, -1],
-                           [ 1,  1, -1],
-                           [-1, -1,  1],
-                           [ 1, -1,  1],
-                           [-1,  1, -1],
-                           [ 1, -1, -1],
-                           [-1,  1,  1]])
-
-    norms = np.sqrt(np.sum(velocities**2, axis=-1))
-    minNorm = norms.min()
-    maxNorm = norms.max()
-    
-    @classmethod
-    def IsInNormRange(cls, x):
-        return x >= cls.minNorm and x <= cls.maxNorm
-    
-    neighs = velocities[1:]
-    pass
-
-Lattice = D3Q27Lattice
-
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
     
@@ -210,7 +162,7 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         """Loaded the very basic domain information. Give a status
         report.
         """
-        fields = ['BlockSize', 'BlockCounts',
+        fields = ['Version', 'BlockSize', 'BlockCounts',
                   'VoxelSize', 'Origin']
         template = '\n'.join('%s: {0.%s}' % (f, f) for f in fields)
         self.Info(template.format(self.Domain))
@@ -369,9 +321,9 @@ class BlockChecker(object):
             # error list
             addSiteError = lambda msg: blockErrors.AddSiteError(site, msg)
             
-            self.CheckBasicConfigConsistency(site, addSiteError)
+            self.CheckBasicFluidProperty(site, addSiteError)
             
-            if site.Type == cfg.SOLID_TYPE:
+            if not site.IsFluid:
                 # Solid sites we don't check in detail since they have
                 # no more data
                 continue
@@ -379,9 +331,9 @@ class BlockChecker(object):
             self.numFluid += 1
            
             self.CheckFluidSiteLinks(site, addSiteError)
-            self.CheckSiteBoundaryData(site, addSiteError)
-            self.CheckSiteWallData(site, addSiteError)
-            
+            self.CheckIntersectionConsistency(site, addSiteError)
+            self.CheckIOletConsistency(site, addSiteError)
+
             continue
         
         self.CheckFluidSiteCount(blockErrors.AddBlockError)
@@ -396,26 +348,12 @@ class BlockChecker(object):
             pass
         return
     
-    def CheckBasicConfigConsistency(self, site, addSiteError):
-        """Some basic sanity checking on the value of the 'cfg'
-        uint32.
+    def CheckBasicFluidProperty(self, site, addSiteError):
+        """Some basic sanity checking on the value of the 'isFluid' uint.
         """
-        if not (site.Config == cfg.SOLID_TYPE or
-                site.Config == cfg.FLUID_TYPE):
-            isTypeKnown = False
-            if (site.Type == cfg.INLET_TYPE or
-                site.Type == cfg.OUTLET_TYPE):
-                isTypeKnown = True
-                pass
-
-            if site.IsEdge:
-                isTypeKnown = True
-                pass
-
-            if not isTypeKnown:
-                addSiteError('Site doesn\'t appear to have any fitting type for config: 0b{:064b}'.format(site.Config))
-                pass
-            pass
+        if not (site.IsFluid == Site.SOLID or
+                site.IsFluid == Site.FLUID):
+            addSiteError('Site doesn\'t appear to have an appropriate value for \'IsFluid\': %d'.format(site.IsFluid))
         return
 
     def CheckFluidSiteLinks(self, site, addSiteError):
@@ -423,104 +361,41 @@ class BlockChecker(object):
         whether the type (fluid only or fluid and edge) is consistent
         with the neighbours' types.  More concretely:
 
-        - fluid sites must have no out-of-domain neighbours;
+        - links to solid sites must have the intersection type set appropriately
 
-        - non-edge fluid sites must have no solid neighbours;
-
-        - inlet/outlet/edge fluid sites must have a cut distance array;
-
-        - links to solid sites must have a cut distance in [0,1] (it
-          is a fraction of the lattice vector);
-
-        - links to fluid sites must either have no cut distance array
-          or have an infinite cut distance, and
-
-        - inlet/outlet/edge fluid sites must have at least one solid
-          neighbour.
-
+        - links to fluid sites must have a NO_INTERSECTION, and vice versa
         """
-        nSolidNeighs = 0
-        for iNeigh, delta in enumerate(Lattice.neighs):
+        for iNeigh, delta in enumerate(D3Q27Directions):
             neigh = site.GetBlock().GetSite(site.Index + delta)
 
-            if isinstance(neigh, OutOfDomainSite) and site.Type == cfg.FLUID_TYPE and not site.IsEdge:
-                addSiteError('Fluid site has out-of-domain neighbour {}'.format(neigh))
+            if isinstance(neigh, OutOfDomainSite) or neigh.IsSolid:
+                if site.IntersectionType[iNeigh] == Site.NO_INTERSECTION:
+                    addSiteError('Fluid site has no intersection but neighbour is solid')
                 pass
-            
-            if neigh.IsSolid:
-                nSolidNeighs += 1
-
-                if site.Type == cfg.FLUID_TYPE and not site.IsEdge:
-                    addSiteError('Simple-fluid site has solid neighbour {}'.format(neigh))
-                    pass
-
-                if site.CutDistances is None:
-                    addSiteError('No CutDistance array for fluid site with solid neighbour {}'.format(neigh))
-                    
-                elif (site.CutDistances[iNeigh] < 0. or
-                    site.CutDistances[iNeigh] >= 1.):
-                    
-                    addSiteError('Link to solid {neigh} has invalid '
-                                 'CutDistance: {cd}'.format(neigh=neigh,
-                                                             cd=site.CutDistances[iNeigh]))
-                    pass
+            else: # neigh is fluid
+                if site.IntersectionType[iNeigh] != Site.NO_INTERSECTION:
+                    addSiteError('Link to fluid site has the wrong kind of intersection (%d)'.format(site.IntersectionType[iNeigh]))
                 
-            else:                       # neigh is fluid
-
-                if (site.CutDistances is not None and 
-                    site.CutDistances[iNeigh] != np.inf):
-                    
-                    addSiteError('Link to fluid {neigh} has non-infinite '
-                                 'CutDistance: {cd}'.format(neigh=neigh,
-                                                             cd=site.CutDistances[iNeigh]))
-                    pass
-                
-                pass 
-
-            continue                    # for loop over neighbours
-        
-        
-        if ((site.Type == cfg.INLET_TYPE or
-             site.Type == cfg.OUTLET_TYPE or
-             site.IsEdge) and
-            nSolidNeighs == 0):
-            addSiteError('Non--simple-fluid site has all valid fluid neighbours.')
-            pass
-        
         return
 
-    def CheckSiteBoundaryData(self, site, addSiteError):
-        """Boundaries are inlets and outlets. Check some properties:
-        
-        - that the magnitude of the normal is very close to 1, and
-
+    def CheckIntersectionConsistency(self, site, addSiteError):
+        """Check that all links have a valid intersection type and 
+        - that all links that aren't to other fluid sites have an intersection distance
         - that the distance (in lattice units) is in the range allowed
-          for the lattice
-        """
-        
-        if not (site.Type == cfg.INLET_TYPE or
-                site.Type == cfg.OUTLET_TYPE):
-            return
-        
-        normMag = np.sum(site.BoundaryNormal ** 2) ** 0.5
-        
-        if abs(normMag - 1) >= 0.001:
-            addSiteError('Boundary normal {} has non-unity magnitude'.format(site.BoundaryNormal))
-            pass
-        
-        if not Lattice.IsInNormRange(site.BoundaryDistance):
-            addSiteError(
-                'Boundary distance ({}) not in [{}, {}]'.format(
-                    site.BoundaryDistance,
-                    Lattice.minNorm,
-                    Lattice.maxNorm
-                    )
-                )
-            pass
-        
+        """        
+        for i in range(len(D3Q27Directions)):
+            if site.IntersectionType[i] not in [Site.NO_INTERSECTION, Site.WALL_INTERSECTION, Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
+                addSiteError('Site had an invalid intersection type: %d'.format(site.IntersectionType[i]))
+            if site.IntersectionType[i] != Site.NO_INTERSECTION:
+                if site.IntersectionDistance[i] == None:
+                    addSiteError('Site had a null intersection distance when it did have an intersection.')
+                distance = np.sum(site.IntersectionDistance[i] ** 2) ** 0.5
+                maxDistance = np.sum(D3Q27Directions[i] ** 2) ** 0.5
+                if distance == 0 or distance >= maxDistance:
+                    addSiteError('Site had an intersection distance (%f) outside the allowed range (0,%f)' % (distance, maxDistance))
         return
     
-    def CheckSiteWallData(self, site, addSiteError):
+    def CheckIOletConsistency(self, site, addSiteError):
         """Walls are the solid boundaries of the simulation. Check
         some properties:
         
@@ -529,25 +404,12 @@ class BlockChecker(object):
         - that the distance (in lattice units) is in the range allowed
           for the lattice
         """
-        if not site.IsEdge:
-            return
-        
-        normMag = np.sum(site.WallNormal ** 2) ** 0.5
-        
-        if abs(normMag - 1) >= 0.001:
-            addSiteError('Wall normal {} has non-unity magnitude'.format(site.WallNormal))
-            pass
-        
-        if not Lattice.IsInNormRange(site.WallDistance):
-            addSiteError(
-                'Wall distance ({}) not in [{}, {}]'.format(
-                    site.WallDistance,
-                    Lattice.minNorm,
-                    Lattice.maxNorm
-                    )
-                )
-            pass
-        
+        for i in range(len(D3Q27Directions)):
+            if site.IntersectionType[i] in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
+                if site.IOletIndex[i] < 0 or site.IOletIndex[i] > REALISTIC_IOLET_COUNT:
+                    addSiteError('IOlet index for an iolet link (%d) was outside expected range.'.format(site.IOletIndex[i]))
+            elif site.IOletIndex[i] != Site.NO_IOLET:
+                addSiteError('Site had no link to an iolet site but DID have an iolet index set (%d).'.format(site.IOletIndex[i]))
         return
     pass
     
