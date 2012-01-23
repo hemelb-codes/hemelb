@@ -128,17 +128,16 @@ namespace hemelb
 
         void ProcessReadSites(const GeometryReadResult& readResult);
 
-        void
-        PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
-                             const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
-                             const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
-                             const std::vector<util::Vector3D<double> > intraWallNormals[COLLISION_TYPES],
-                             const std::vector<double> intraWallDistance[COLLISION_TYPES],
-                             const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
-                             const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
-                             const std::vector<SiteData> interSiteData[COLLISION_TYPES],
-                             const std::vector<util::Vector3D<double> > interWallNormals[COLLISION_TYPES],
-                             const std::vector<double> interWallDistance[COLLISION_TYPES]);
+        void PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > intraWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> intraWallDistance[COLLISION_TYPES],
+                                  const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> interSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > interWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> interWallDistance[COLLISION_TYPES]);
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
