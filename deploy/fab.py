@@ -209,6 +209,15 @@ def send_distributions():
     remote_dir=env.pather.join(env.repository_path,'dependencies','distributions'))
 
 @task
+def fetch_distributions():
+    """Fetch dependency tarballs tfrom remote.
+    Files taken from dependencies/distributions.
+    Useful to prepare a build on target machines with CMake before 2.8.4, where
+    HTTP redirects are not followed.
+    """
+    local(template("rsync -pthrvz $username@$remote:$repository_path/dependencies/distributions/ $localroot/dependencies/distributions"))
+
+@task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
         run(template("cp -r $regression_test_source_path $regression_test_path"))
@@ -428,7 +437,6 @@ def input_to_range(arg,default):
     gen_regexp="\[([\d\.]+):([\d\.]+):([\d\.]+)\]" #regexp for a array generator like [1.2:3:0.2]
     if not arg:
         return [default]
-    print arg
     match=re.match(gen_regexp,arg)
     if match:
         vals=list(map(ttype,match.groups()))
@@ -450,22 +458,51 @@ def create_config(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cy
     p = Profile()
     p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.pro'))
     p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.stl')
+    env.VoxelSize=str(VoxelSize).replace(".","_")
+    env.Steps=Steps
+    env.Cycles=Cycles
+    config=template(config_template)
+    with_config(config)
+    local(template("mkdir -p $job_config_path_local"))
+    p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
+    p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
+    p.VoxelSize=VoxelSize
+    p.Steps=Steps
+    p.Cycles=Cycles
+    if not p.IsReadyToGenerate:
+        raise "Not ready to generate"
+    p.Generate()
 
+@task
+def create_configs(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cycles}",VoxelSize=None,Steps=None,Cycles=None):
+    """Create many config files, by looping over multiple voxel sizes, step counts, or cycles
+    """
+    with_profile(profile)
+    from HemeLbSetupTool.Model.Profile import Profile
+    p = Profile()
+    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.pro'))
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
-                env.VoxelSize=str(currentVoxelSize).replace(".","_")
-                env.Steps=currentSteps
-                env.Cycles=currentCycles
-                config=template(config_template)
-                with_config(config)
-                local(template("mkdir -p $job_config_path_local"))
-                p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
-                p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
-                p.VoxelSize=currentVoxelSize
-                p.Steps=currentSteps
-                p.Cycles=currentCycles
-                if not p.IsReadyToGenerate:
-                    raise "Not ready to generate"
-                print p.VoxelSize,p.Steps,p.Cycles
-                p.Generate()
+                execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
+                
+@task 
+def hemelb_profile(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cycles}",VoxelSize=None,Steps=None,Cycles=None,**args):
+    """Submit HemeLB job(s) to the remote queue.
+    The HemeLB config file(s) will be prepared according to the profile and profile arguments given.
+    This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
+    """
+    with_profile(profile)
+    from HemeLbSetupTool.Model.Profile import Profile
+    p = Profile()
+    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.pro'))
+    for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
+        for currentSteps in input_to_range(Steps,1000):
+            for currentCycles in input_to_range(Cycles,3):
+                for currentCores in input_to_range(args['cores'],4):
+                    execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
+                    hemeconfig={}
+                    hemeconfig.update(args)
+                    hemeconfig['config']=template(config_template)
+                    hemeconfig['cores']=currentCores
+                    execute(hemelb,hemeconfig)
