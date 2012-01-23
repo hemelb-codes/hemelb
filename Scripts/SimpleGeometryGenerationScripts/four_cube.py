@@ -24,11 +24,17 @@ class FourCube(LatticeFixture):
             links=[]
             for direction in self.lattice_directions:
                 link_type = Link.no_boundary
+
+                # Assign an iolet id for the inlet (the first iolet in the config xml file)
+                iolet_index=0
                 # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered wall because of the ordering of the if statements below
                 if z_index==z_min and direction[2]==-1:
                     link_type = Link.inlet
                 if z_index==z_max and direction[2]==1:
+                    # Note that in HemeLB as it stands, inlets and outlets share a 0-indexed list.
+                    # I.e. if the first inlet index is 0 then the first outlet index must be >= 1
                     link_type = Link.outlet
+                    iolet_index=1
                 if x_index==x_min and direction[0]==-1:
                     link_type = Link.wall
                 if x_index==x_max and direction[0]==1:
@@ -38,8 +44,6 @@ class FourCube(LatticeFixture):
                 if y_index==y_max and direction[1]==1:
                     link_type = Link.wall
 
-                # Assign the first inlet/outlet in the XML configuration file
-                iolet_index=0
                 # Assume walls are half a lattice away
                 wall_distance=0.5
 
