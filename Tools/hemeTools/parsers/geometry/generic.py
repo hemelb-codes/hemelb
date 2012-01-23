@@ -217,7 +217,10 @@ class Site(object):
     WALL_INTERSECTION = 1
     INLET_INTERSECTION = 2
     OUTLET_INTERSECTION = 3
-
+    INTERSECTION_TYPES = (NO_INTERSECTION,
+                          WALL_INTERSECTION,
+                          INLET_INTERSECTION,
+                          OUTLET_INTERSECTION)
     def __init__(self, block, sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
@@ -248,7 +251,8 @@ class Site(object):
 
     @property
     def IsEdge(self):
-        return bool(self.IsFluid and np.any(self.IntersectionType == WALL_INTERSECTION))
+        return bool(self.IsFluid and 
+                    np.any(self.IntersectionType == self.WALL_INTERSECTION))
 
     @property
     def IsSolid(self):
