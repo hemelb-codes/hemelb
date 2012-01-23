@@ -93,7 +93,7 @@ namespace hemelb
         /**
          * String message label for each timer for reporting
          */
-        static const std::string timerNames[numberOfTimers];
+        static const std::string timerNames[TimersBase::numberOfTimers];
 
         TimersBase() :
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
