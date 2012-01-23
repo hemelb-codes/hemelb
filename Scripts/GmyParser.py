@@ -5,9 +5,9 @@ import threading
 import Queue
 import collections
 
+from hemeTools.parsers.geometry import MooreNeighbourhoodDirections
 from hemeTools.parsers.geometry.generic import OutOfDomainSite, AllSolidBlock, Site, Block
 from hemeTools.parsers.geometry.multiprocess import AsyncBlockProcessingLoader
-from hemeTools.parsers import D3Q27Directions
 
 import pdb
 
@@ -331,9 +331,7 @@ class BlockChecker(object):
             self.numFluid += 1
            
             self.CheckFluidSiteLinks(site, addSiteError)
-            self.CheckIntersectionConsistency(site, addSiteError)
-            self.CheckIOletConsistency(site, addSiteError)
-
+            
             continue
         
         self.CheckFluidSiteCount(blockErrors.AddBlockError)
@@ -357,62 +355,68 @@ class BlockChecker(object):
         return
 
     def CheckFluidSiteLinks(self, site, addSiteError):
-        """Loop over the LB velocity set, checking link properties and
-        whether the type (fluid only or fluid and edge) is consistent
-        with the neighbours' types.  More concretely:
+        """Loop over the Moore neighbourhood, checking link properties
+        and whether the type is consistent with the neighbours' types.
+        More concretely:
+        
+        - links must have a valid intersection type;
+        
+        - links to solid sites must have the intersection type set to
+          not NO_INTERSECTION
 
-        - links to solid sites must have the intersection type set appropriately
+        - links to fluid sites must have intersection type
+          NO_INTERSECTION;
+        
+        - links with an intersection must have a cut distance in (0,1);
 
-        - links to fluid sites must have a NO_INTERSECTION, and vice versa
+        - links with type INLET/OUTLET must have a valid IOlet index; and
+
+        - links with non-IOlet type must not have a valid IOlet index.
         """
-        for iNeigh, delta in enumerate(D3Q27Directions):
+        for iNeigh, delta in enumerate(MooreNeighbourhoodDirections):
             neigh = site.GetBlock().GetSite(site.Index + delta)
-
+            linkType = site.IntersectionType[iNeigh]
+            # Check link type is one we know about
+            if linkType not in Site.INTERSECTION_TYPES:
+                addSiteError('Site had an invalid intersection type: %d'.format(linkType))
+            
+            # Check site type consistency with neighbour
             if isinstance(neigh, OutOfDomainSite) or neigh.IsSolid:
-                if site.IntersectionType[iNeigh] == Site.NO_INTERSECTION:
-                    addSiteError('Fluid site has no intersection but neighbour is solid')
+                # neigh is solid
+                if linkType == Site.NO_INTERSECTION:
+                    addSiteError('Site has no intersection on link to solid neighbour')
                 pass
-            else: # neigh is fluid
-                if site.IntersectionType[iNeigh] != Site.NO_INTERSECTION:
-                    addSiteError('Link to fluid site has the wrong kind of intersection (%d)'.format(site.IntersectionType[iNeigh]))
-                
-        return
+            else:
+                # neigh is fluid
+                if linkType != Site.NO_INTERSECTION:
+                    addSiteError('Site has intersection (type %d) on link to fluid'.format(linkType))
+                    pass
+                pass
 
-    def CheckIntersectionConsistency(self, site, addSiteError):
-        """Check that all links have a valid intersection type and 
-        - that all links that aren't to other fluid sites have an intersection distance
-        - that the distance (in lattice units) is in the range allowed
-        """        
-        for i in range(len(D3Q27Directions)):
-            if site.IntersectionType[i] not in [Site.NO_INTERSECTION, Site.WALL_INTERSECTION, Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
-                addSiteError('Site had an invalid intersection type: %d'.format(site.IntersectionType[i]))
-            if site.IntersectionType[i] != Site.NO_INTERSECTION:
-                if site.IntersectionDistance[i] == None:
-                    addSiteError('Site had a null intersection distance when it did have an intersection.')
-                distance = np.sum(site.IntersectionDistance[i] ** 2) ** 0.5
-                maxDistance = np.sum(D3Q27Directions[i] ** 2) ** 0.5
-                if distance == 0 or distance >= maxDistance:
-                    addSiteError('Site had an intersection distance (%f) outside the allowed range (0,%f)' % (distance, maxDistance))
-        return
-    
-    def CheckIOletConsistency(self, site, addSiteError):
-        """Walls are the solid boundaries of the simulation. Check
-        some properties:
-        
-        - that the magnitude of the normal is very close to 1, and
-        
-        - that the distance (in lattice units) is in the range allowed
-          for the lattice
-        """
-        for i in range(len(D3Q27Directions)):
-            if site.IntersectionType[i] in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
-                if site.IOletIndex[i] < 0 or site.IOletIndex[i] > REALISTIC_IOLET_COUNT:
-                    addSiteError('IOlet index for an iolet link (%d) was outside expected range.'.format(site.IOletIndex[i]))
-            elif site.IOletIndex[i] != Site.NO_IOLET:
-                addSiteError('Site had no link to an iolet site but DID have an iolet index set (%d).'.format(site.IOletIndex[i]))
+            # If intersection, check distance in (0,1)
+            if linkType != Site.NO_INTERSECTION:
+                distance = site.IntersectionDistance[iNeigh]
+                if distance < 0. or distance >= 1.:
+                    addSiteError('Site had an intersection distance (%f) outside the allowed range (0,1)' % distance)
+                    pass
+                pass
+            
+            # If IOlet, check the index
+            ioletIndex = site.IOletIndex[iNeigh]
+            if linkType in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
+                if (ioletIndex < 0 or
+                    ioletIndex > REALISTIC_IOLET_COUNT):
+                    addSiteError('IOlet index for an iolet link (%d) was outside '
+                                 'expected range.'.format(ioletIndex))
+                    pass
+            elif ioletIndex != Site.NO_IOLET:
+                addSiteError('Site had no link crossing an iolet but DID have '
+                             'an iolet index set (%d).'.format(ioletIndex))
+                pass
+            continue
         return
     pass
-    
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(

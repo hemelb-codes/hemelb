@@ -2,7 +2,13 @@ import numpy as np
 import xdrlib
 
 from .generic import Domain, Block, AllSolidBlock, Site
-from .. import *
+from .. import HemeLbMagicNumber
+from . import GeometryMagicNumber
+
+class GeometryParsingError(Exception):
+    """Indicate an error while parsing a geometry file.
+    """
+    pass
 
 class FakeUnpacker(object):
     """Fake xdrlib.Unpacker, for use when all the Sites in a Block are
@@ -20,11 +26,14 @@ class ConfigLoader(object):
     Offers a large number of hooks, in a manner similar to an
     event-driver XML parser for examining data on the fly.
     """
+    VERSION = 2
+    MIN_VERSION = 2
+    MAX_VERSION = 2
     
     def __init__(self, filename):
         self.FileName = filename
         self.File = file(filename)
-        self.Domain = d = Domain()
+        self.Domain = Domain()
         return
     
     def Load(self):
@@ -55,14 +64,19 @@ class ConfigLoader(object):
 
         hlbNumber = preambleLoader.unpack_uint()
         if hlbNumber != HemeLbMagicNumber:
-            raise IOError(r"This doesn't appear to be a HemeLB file. Instead of the HemeLB magic number (%d), I found %d" % (HemeLbMagicNumber, hlbNumber))
+            raise GeometryParsingError("This doesn't appear to be a HemeLB file. Instead of the HemeLB magic number (%d), I found %d" % (HemeLbMagicNumber, hlbNumber))
 
         gmyNumber = preambleLoader.unpack_uint()
         if gmyNumber != GeometryMagicNumber:
-            raise IOError(r"This doesn't appear to be a geometry file. Instead of the geometry magic number (%d), I found %d" % (GeometryMagicNumber, gmyNumber))
+            raise GeometryParsingError("This doesn't appear to be a geometry file. Instead of the geometry magic number (%d), I found %d" % (GeometryMagicNumber, gmyNumber))
 
         self.Domain.Version = preambleLoader.unpack_uint()
-
+        if self.Domain.Version < self.MIN_VERSION:
+            raise GeometryParsingError("This geometry file is of an older version (v%d) than this parser (v%d) can process" % (self.Domain.Version, self.VERSION))
+        elif self.Domain.Version > self.MAX_VERSION:
+            raise GeometryParsingError("This geometry file is of an newer version (v%d) than this parser (v%d) can process" % (self.Domain.Version, self.VERSION))
+            pass
+        
         self.Domain.BlockCounts = np.array([preambleLoader.unpack_uint() for i in xrange(3)], dtype=np.uint)
         self.Domain.BlockSize = preambleLoader.unpack_uint()
         
@@ -71,7 +85,7 @@ class ConfigLoader(object):
 
         padding = preambleLoader.unpack_uint()
         if padding != PADDING_BYTE:
-            raise IOError(r"The preamble to this file is padded with the wrong value. Instead of %d, I found %d" % (PADDING_BYTE, padding))
+            raise GeometryParsingError(r"The preamble to this file is padded with the wrong value. Instead of %d, I found %d" % (PADDING_BYTE, padding))
 
         self.OnEndPreamble()
         return
@@ -165,11 +179,14 @@ class ConfigLoader(object):
         s.IsFluid = loader.unpack_uint()
         # Solid and simple fluid, we are done loading
         if s.IsFluid == Site.FLUID:
-            s.IntersectionType = np.array([Site.NO_INTERSECTION for i in xrange(Site.DIRECTIONS)], dtype=np.uint)
-            s.IntersectionDistance = np.array([0 for i in xrange(Site.DIRECTIONS)], dtype=np.float)
-            s.IOletIndex = np.array([Site.NO_IOLET for i in xrange(Site.DIRECTIONS)], dtype=np.int)
+            # Initialise arrays
+            s.IntersectionType = np.empty(Site.DIRECTIONS, dtype=np.uint)
+            s.IntersectionType[:] = Site.NO_INTERSECTION
+            s.IntersectionDistance = np.zeros(Site.DIRECTIONS)
+            s.IOletIndex = np.empty(Site.DIRECTIONS, dtype=np.int)
+            s.IOletIndex[:] = Site.NO_IOLET
            
-            for i in range(26):
+            for i in xrange(Site.DIRECTIONS):
                 s.IntersectionType[i] = loader.unpack_uint()
                 if s.IntersectionType[i] in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
                     s.IOletIndex[i] = loader.unpack_uint()
