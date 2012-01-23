@@ -5,25 +5,76 @@ namespace hemelb
 {
   namespace geometry
   {
-    SiteData::SiteData(sitedata_t value) :
-      value(value)
+    /**
+     * Constructor for a SiteData object
+     *
+     * NOTE: that this assumes a single fluid site will be next to at most one inlet or outlet.
+     * This is a safe assumption in simple geometries but may not always be the case.
+     *
+     * @param readResult
+     */
+    SiteData::SiteData(const SiteReadResult& readResult)
     {
+      if (!readResult.isFluid)
+      {
+        data = SOLID_TYPE;
+        boundaryIntersection = 0;
+      }
+      else
+      {
+        int ioletId = 0;
+        boundaryIntersection = 0;
+        bool hadInlet = false;
+        bool hadOutlet = false;
 
+        // Iterate over each direction
+        for (Direction direction = 1; direction <= readResult.links.size(); ++direction)
+        {
+          // Get the link
+          const LinkReadResult& link = readResult.links[direction - 1];
+
+          // If it's a wall link, set the bit for this direction
+          if (link.type != LinkReadResult::NO_INTERSECTION)
+          {
+            boundaryIntersection |= 1 << (direction - 1);
+          }
+
+          // If it's an inlet, take the IOlet id
+          if (link.type == LinkReadResult::INLET_INTERSECTION)
+          {
+            ioletId = link.ioletId;
+            hadInlet = true;
+          }
+          // Ditto if it's an outlet.
+          else if (link.type == LinkReadResult::OUTLET_INTERSECTION)
+          {
+            ioletId = link.ioletId;
+            hadOutlet = true;
+          }
+        }
+
+        SiteType type = hadInlet ?
+                          INLET_TYPE :
+                        hadOutlet ?
+                          OUTLET_TYPE :
+                          FLUID_TYPE;
+
+        data = (ioletId << BOUNDARY_ID_SHIFT) + type;
+      }
     }
 
     SiteData::SiteData(const SiteData& other) :
-      value(other.value)
+        boundaryIntersection(other.boundaryIntersection), data(other.data)
     {
     }
 
     SiteData::~SiteData()
     {
-
     }
 
     bool SiteData::IsEdge() const
     {
-      return (value & PRESSURE_EDGE_MASK) != 0;
+      return boundaryIntersection != 0;
     }
 
     bool SiteData::IsSolid() const
@@ -33,7 +84,7 @@ namespace hemelb
 
     unsigned SiteData::GetCollisionType() const
     {
-      if (value == FLUID_TYPE)
+      if (data == FLUID_TYPE && boundaryIntersection == 0)
       {
         return FLUID;
       }
@@ -44,7 +95,7 @@ namespace hemelb
       {
         return EDGE;
       }
-      if (! (value & PRESSURE_EDGE_MASK))
+      if (boundaryIntersection == 0)
       {
         if (boundary_type == INLET_TYPE)
         {
@@ -70,24 +121,29 @@ namespace hemelb
 
     SiteType SiteData::GetSiteType() const
     {
-      return (SiteType) (value & SITE_TYPE_MASK);
+      return (SiteType) (data & SITE_TYPE_MASK);
     }
 
     int SiteData::GetBoundaryId() const
     {
-      return (value & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      return (data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
     }
 
     bool SiteData::HasBoundary(Direction direction) const
     {
       unsigned mask = 1U << (direction - 1);
-      unsigned shiftedMask = mask << BOUNDARY_CONFIG_SHIFT;
-      return (value & shiftedMask) != 0;
+      return (boundaryIntersection & mask) != 0;
     }
 
-    sitedata_t SiteData::GetRawValue() const
+    uint32_t SiteData::GetIntersectionData() const
     {
-      return value;
+      return boundaryIntersection;
     }
+
+    uint32_t SiteData::GetOtherRawData() const
+    {
+      return data;
+    }
+
   }
 }

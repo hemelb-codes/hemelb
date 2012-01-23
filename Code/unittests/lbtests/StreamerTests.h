@@ -180,7 +180,7 @@ namespace hemelb
                 {
                   std::stringstream message;
                   message << "Site: " << streamedToSite << " Direction " << oppDirection << " Data: "
-                      << streamedSite.GetSiteData().GetRawValue() << std::flush;
+                      << streamedSite.GetSiteData().GetIntersectionData() << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary"
                       "opposite an unstreamed-to direction " + message.str(),
                                          streamedSite.HasBoundary(oppDirection));

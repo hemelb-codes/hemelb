@@ -77,10 +77,10 @@ namespace hemelb
       std::vector<site_t> intraBlockNumber[COLLISION_TYPES];
       std::vector<site_t> interSiteNumber[COLLISION_TYPES];
       std::vector<site_t> intraSiteNumber[COLLISION_TYPES];
-      std::vector<util::Vector3D<double> > interWallNormals[COLLISION_TYPES];
-      std::vector<util::Vector3D<double> > intraWallNormals[COLLISION_TYPES];
-      std::vector<double> interWallDistance[COLLISION_TYPES];
-      std::vector<double> intraWallDistance[COLLISION_TYPES];
+      std::vector<util::Vector3D<float> > interWallNormals[COLLISION_TYPES];
+      std::vector<util::Vector3D<float> > intraWallNormals[COLLISION_TYPES];
+      std::vector<float> interWallDistance[COLLISION_TYPES];
+      std::vector<float> intraWallDistance[COLLISION_TYPES];
 
       proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
       // Iterate over all blocks in site units
@@ -189,8 +189,10 @@ namespace hemelb
 
           // Set the collision type data. map_block site data is renumbered according to
           // fluid site numbers within a particular collision type.
+          SiteData siteData(blockReadIn.Sites[localSiteId]);
+
           int l = -1;
-          switch (blockReadIn.Sites[localSiteId].siteData.GetCollisionType())
+          switch (siteData.GetCollisionType())
           {
             case FLUID:
               l = 0;
@@ -212,26 +214,49 @@ namespace hemelb
               break;
           }
 
+          // We approximate the wall normal at a point by iterating through each wall intersection
+          // link and seeing which one is closest.
+          util::Vector3D<float> normal(NO_VALUE);
+          // NB. initialised to absurdly large distance (normal scale is (0, root(3)))
+          float shortestDistance = 100.0;
+
+          for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+          {
+            if (blockReadIn.Sites[localSiteId].links[direction - 1].type == LinkReadResult::WALL_INTERSECTION)
+            {
+              util::Vector3D<float> distance = util::Vector3D<int>(D3Q15::CX[direction],
+                                                                   D3Q15::CY[direction],
+                                                                   D3Q15::CZ[direction])
+                  * blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection;
+
+              if (distance.GetMagnitude() < shortestDistance)
+              {
+                shortestDistance = distance.GetMagnitude();
+                normal = distance.Normalise();
+              }
+            }
+          }
+
           if (lIsInnerSite)
           {
             intraBlockNumber[l].push_back(blockId);
             intraSiteNumber[l].push_back(localSiteId);
-            intraSiteData[l].push_back(blockReadIn.Sites[localSiteId].siteData);
-            intraWallNormals[l].push_back(blockReadIn.Sites[localSiteId].wallNormal);
+            intraSiteData[l].push_back(siteData);
+            intraWallNormals[l].push_back(normal);
             for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
             {
-              intraWallDistance[l].push_back(blockReadIn.Sites[localSiteId].cutDistance[direction - 1]);
+              intraWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
             }
           }
           else
           {
             interBlockNumber[l].push_back(blockId);
             interSiteNumber[l].push_back(localSiteId);
-            interSiteData[l].push_back(blockReadIn.Sites[localSiteId].siteData);
-            interWallNormals[l].push_back(blockReadIn.Sites[localSiteId].wallNormal);
+            interSiteData[l].push_back(siteData);
+            interWallNormals[l].push_back(normal);
             for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
             {
-              interWallDistance[l].push_back(blockReadIn.Sites[localSiteId].cutDistance[direction - 1]);
+              interWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
             }
           }
         }
@@ -252,13 +277,13 @@ namespace hemelb
     void LatticeData::PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
                                            const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
                                            const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
-                                           const std::vector<util::Vector3D<double> > intraWallNormals[COLLISION_TYPES],
-                                           const std::vector<double> intraWallDistance[COLLISION_TYPES],
+                                           const std::vector<util::Vector3D<float> > intraWallNormals[COLLISION_TYPES],
+                                           const std::vector<float> intraWallDistance[COLLISION_TYPES],
                                            const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
                                            const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
                                            const std::vector<SiteData> interSiteData[COLLISION_TYPES],
-                                           const std::vector<util::Vector3D<double> > interWallNormals[COLLISION_TYPES],
-                                           const std::vector<double> interWallDistance[COLLISION_TYPES])
+                                           const std::vector<util::Vector3D<float> > interWallNormals[COLLISION_TYPES],
+                                           const std::vector<float> interWallDistance[COLLISION_TYPES])
     {
       // Populate the collision count arrays.
       for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)

@@ -33,7 +33,7 @@ namespace hemelb
           argv[8] = "1111";
           FolderTestFixture::setUp();
           CopyResourceToTempdir("four_cube.xml");
-          CopyResourceToTempdir("four_cube.dat");
+          CopyResourceToTempdir("four_cube.gmy");
           options = new hemelb::configuration::CommandLine(argc, argv);
           master = new SimulationMaster(*options);
         }

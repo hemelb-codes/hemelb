@@ -5,7 +5,6 @@
 #include <string>
 
 #include "D3Q15.h"
-#include "geometry/SiteData.h"
 #include "io/writers/xdr/XdrReader.h"
 #include "lb/LbmParameters.h"
 #include "mpiInclude.h"
@@ -19,6 +18,35 @@ namespace hemelb
 {
   namespace geometry
   {
+    //! Model of the data read in about a link from one site in one direction.
+    struct LinkReadResult
+    {
+      public:
+        //! Enumeration of the different intersections the link might make between the current
+        //! site and the next lattice point in this direction: no intersection,
+        //! intersection with a vessel wall and intersection with an inlet or outlet.
+        enum IntersectionType
+        {
+          NO_INTERSECTION = 0,
+          WALL_INTERSECTION = 1,
+          INLET_INTERSECTION = 2,
+          OUTLET_INTERSECTION = 3
+        } type;
+
+        //! Default constructor. Has no intersection, nonsense values for intersection distance
+        //! and iolet id.
+        LinkReadResult() :
+            type(NO_INTERSECTION), distanceToIntersection(-1.0), ioletId(-1)
+        {
+        }
+
+        //! The proportion of the lattice vector traversed before an intersection is hit.
+        float distanceToIntersection;
+
+        //! The identifier of the inlet or outlet hit along the lattice vector (if one is hit).
+        int ioletId;
+    };
+
     /***
      * Model of the data for a site, as contained within a geometry file.
      * this data will be broken up and placed in various arrays in hemelb::Geometry::LatticeData
@@ -26,36 +54,30 @@ namespace hemelb
     struct SiteReadResult
     {
       public:
-        SiteReadResult() :
-          targetProcessor(-1), siteData(BIG_NUMBER3), ioletNormal(-1.), ioletDistance(-1.),
-          wallNormal(NO_VALUE), wallDistance(-1.)
+        //! Basic constructor for solid and fluid sites.
+        SiteReadResult(bool siteIsFluid) :
+            targetProcessor(siteIsFluid ?
+              -1 :
+              BIG_NUMBER2), isFluid(siteIsFluid)
         {
-          for (Direction direction = 0; direction < D3Q15::NUMVECTORS - 1; direction++)
-          {
-            cutDistance[direction] = -1.0;
-          }
+        }
+
+        SiteReadResult(const SiteReadResult& other) :
+            targetProcessor(other.targetProcessor), isFluid(other.isFluid), links(other.links)
+        {
+
         }
 
         //! Processor on which to perform lattice-Boltzmann for the site.
         proc_t targetProcessor;
 
-        //! The SiteData itself, which is a compact bitwise representation of the site geometry,
-        //! see hemelb::geometry::Sitedata.
-        SiteData siteData;
+        //! True iff the site is fluid, i.e. it is within the geometry and we will be doing
+        //! lattice-Boltzmann with it.
+        bool isFluid;
 
-        //! Estimated normal and distance to an inlet or outlet.
-        util::Vector3D<double> ioletNormal;
-        double ioletDistance;
-
-        //! Estimated wall normal (if the site is close to the wall)
-        //! and distance to wall.
-        util::Vector3D<double> wallNormal;
-        double wallDistance;
-
-        //! cut distances along the non-zero lattice vectors;
-        //! each one is between 0 and 1 if the surface cuts the corresponding
-        //! vector or is equal to "NO_VALUE" otherwise
-        double cutDistance[D3Q15::NUMVECTORS - 1];
+        //! A vector of the link data for each direction in the lattice currently being used
+        //! (NOT necessarily the same as the lattice used by the geometry file).
+        std::vector<LinkReadResult> links;
     };
 
     /***
@@ -122,11 +144,6 @@ namespace hemelb
         void LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings);
 
       private:
-        struct BlockLocation
-        {
-          site_t i, j, k;
-        };
-
         void ReadPreamble();
 
         void ReadHeader(site_t* sitesInEachBlock, unsigned int* bytesUsedByBlockInDataFile);
@@ -144,9 +161,7 @@ namespace hemelb
                                const proc_t* unitForEachBlock,
                                const proc_t localRank);
 
-        void DecideWhichBlocksToRead(bool* readBlock,
-                                     const proc_t* unitForEachBlock,
-                                     const proc_t localRank);
+        void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
@@ -179,8 +194,8 @@ namespace hemelb
          */
         proc_t GetReadingCoreForBlock(site_t blockNumber);
 
-        bool Expand(std::vector<BlockLocation>* edgeBlocks,
-                    std::vector<BlockLocation>* expansionBlocks,
+        bool Expand(std::vector<util::Vector3D<site_t> >& edgeBlocks,
+                    std::vector<util::Vector3D<site_t> >& expansionBlocks,
                     const site_t* fluidSitesPerBlock,
                     bool* blockAssigned,
                     const proc_t currentUnit,
@@ -243,12 +258,6 @@ namespace hemelb
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
-        // The config file starts with:
-        // * 3 unsigned ints for the number of blocks in the x, y, z directions
-        // * 1 unsigned int for the block size (number of sites along one edge of a block)
-        // * 1 double for the voxel size
-        // * 3 doubles for the world-position of site 0
-        static const int preambleBytes = 4 * 4 + 4 * 8;
         static const proc_t HEADER_READING_RANK = 0;
         static const proc_t READING_GROUP_SIZE = 5;
 

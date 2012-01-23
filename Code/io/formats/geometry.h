@@ -33,7 +33,7 @@ namespace hemelb
           }
 
           /**
-           * Magic number to tdentify snapshot files.
+           * Magic number to identify snapshot files.
            * ASCII for 'gmy', then EOF
            * Combined magic number is:
            * hex    68 6c 62 21 67 6d 79 04
@@ -51,6 +51,21 @@ namespace hemelb
           {
             VersionNumber = 2//!< VersionNumber
           };
+
+          /**
+           * The length of the preamble for the geometry file:
+           *  * 1 uint for the HemeLB magic number
+           *  * 1 uint for the geometry magic number
+           *  * 1 uint for the version
+           *  * 3 uints for the problem dimensions in blocks
+           *  * 1 uint for the number of sites along one block side
+           *  * 1 double for the voxel size
+           *  * 3 doubles for the coords of the origin
+           *  * 1 uint, value 0 to pad to 64 bytes
+           *
+           *  * 8 uints, 4 doubles = 8 * 4 + 4 * 8 = 64
+           */
+          static const unsigned PreambleLength = 64;
 
           /**
            * Give the displacement to a neighbouring lattice point.
