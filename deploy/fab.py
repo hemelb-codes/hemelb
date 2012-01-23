@@ -391,7 +391,7 @@ def hemelb(**args):
             memory : memory per node
     """
     options=dict(script='hemelb',
-            name='$config_${build_number}_${machine_name}_$cores',
+            name='${config}_${build_number}_${machine_name}_$cores',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
     options.update(args)
     execute(put_configs,args['config'])
@@ -499,10 +499,10 @@ def hemelb_profile(profile,config_template="${profile}_${VoxelSize}_${Steps}_${C
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
-                for currentCores in input_to_range(args['cores'],4):
-                    execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
+                execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
+                for currentCores in input_to_range(args['cores'],4):   
                     hemeconfig={}
                     hemeconfig.update(args)
                     hemeconfig['config']=template(config_template)
                     hemeconfig['cores']=currentCores
-                    execute(hemelb,hemeconfig)
+                    execute(hemelb,**hemeconfig)
