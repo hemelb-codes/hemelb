@@ -392,8 +392,8 @@ class XmlWriter(object):
 
     def DoSimulation(self):
         sim = SubElement(self.root, 'simulation')
-        sim.set('cycles', str(3))
-        sim.set('cyclesteps', str(1000))
+        sim.set('cycles', str(self.profile.Cycles))
+        sim.set('cyclesteps', str(self.profile.Steps))
         sim.set('stresstype', str(1))
         return
 
