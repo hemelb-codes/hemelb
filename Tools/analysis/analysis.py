@@ -20,11 +20,12 @@ class Analysis(object):
         self.reports_path=config['reports_path']
         self.graph_configuration=config['graphs']
         self.report_configuration=config['reports']
+        self.result_configuration=config['results']
         self.graphs={label:Graph(data) for label,data in self.graph_configuration.iteritems()}
         self.reports={label:Report(data,self.graphs) for label,data in self.report_configuration.iteritems()}
     
     def load_data():
-        self.results=ResultsCollection(self.results_path)
+        self.results=ResultsCollection(self.results_path,self.result_configuration)
         
     def prepare():
         for report in self.reports:
