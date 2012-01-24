@@ -8,11 +8,15 @@ Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 """
 
 import copy
+import itertools
 
 class Graph(object):
     def __init__(self,config):
+        self.select={}
         for prop in ['name','select','curves','dependent','independent']:
-            setattr(self,prop,config[prop])
+            if prop in config:
+                setattr(self,prop,config[prop])
+            
     def specialise(self,*specialisations):
         """Return a copy of this graph, with the configuration modified by some additional dicts of dicts.
         """
@@ -26,3 +30,13 @@ class Graph(object):
                 if prop in specialisation:
                     getattr(result,prop).append(specialisation[prop])
         return result
+    def prepare(self,results):
+        def filtration(result):
+            return all([getattr(result,prop)==value for prop,value in self.select.iteritems()])
+        self.filtered_results=filter(filtration,results)
+        def curve_key(result):
+            return tuple([getattr(result,prop) for prop in self.curves])
+        self.curve_results={key:list(group) for key,group in itertools.groupby(sorted(self.filtered_results,key=curve_key),curve_key)}
+        # for now, support only a single dependent and a single independent variable on each curve
+        self.curve_data={curve:[ (getattr(result,self.dependent[0]),getattr(result,self.independent[0])) for result in results ] for curve,results in self.curve_results.iteritems()}
+            
