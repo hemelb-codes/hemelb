@@ -29,7 +29,7 @@ class Analysis(object):
         
     def prepare():
         for report in self.reports:
-            report.prepare(results)
+            report.prepare(results.results)
             
     def write():
         for report in self.reports:
