@@ -12,8 +12,6 @@ import unittest
 import fixtures
 from ..results_collection import ResultsCollection
 
-
-
 class TestResultsCollection(unittest.TestCase):
 	def setUp(self):
 	    self.rc=ResultsCollection(fixtures.Results('cylinders').path,fixtures.ResultsConfig('example'))

@@ -11,3 +11,5 @@ example:
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
     name_properties:
         machine: '_([^_]*)_\d$'
+    fixed_properties:
+        type: 'hemelb'
