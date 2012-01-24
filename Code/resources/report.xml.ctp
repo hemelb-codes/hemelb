@@ -47,5 +47,5 @@
 			<normalisation>{{NORMALISATION}}</normalisation>
 		</timer>
 		{{/TIMER}}
-	<timings>
+	</timings>
 </report>
