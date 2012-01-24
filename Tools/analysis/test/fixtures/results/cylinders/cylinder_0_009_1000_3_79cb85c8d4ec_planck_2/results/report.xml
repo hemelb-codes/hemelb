@@ -106,5 +106,5 @@
 			<max>0.999</max>
 			<normalisation>simulation</normalisation>
 		</timer>
-	<timings>
+	</timings>
 </report>
