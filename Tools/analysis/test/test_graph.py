@@ -15,11 +15,22 @@ from ..graph import Graph
 import fixtures
 
 class TestGraph(unittest.TestCase):
-	def setUp(self):
-	    pass
-	def test_construct(self):
-		g=Graph(fixtures.GraphConfig('performance_versus_cores'))
-		self.assertEqual({'type':'hemelb'},g.select)
-		self.assertEqual(['cores'],g.curves)
-		self.assertEqual(['total'],g.dependent)
-		self.assertEqual(['steps'],g.independent)
+    def setUp(self):
+        self.g=Graph(fixtures.GraphConfig('performance_versus_cores'))
+    def test_construct(self):
+        self.assertEqual({'type':'hemelb'},self.g.select)
+        self.assertEqual(['cores'],self.g.curves)
+        self.assertEqual(['total'],self.g.dependent)
+        self.assertEqual(['steps'],self.g.independent)
+    def test_specialise(self):
+        g2=self.g.specialise({'select':{'machine':'planck'}},{'independent':'banana'})
+        # Original is unchanged
+        self.assertEqual({'type':'hemelb'},self.g.select)
+        self.assertEqual(['cores'],self.g.curves)
+        self.assertEqual(['total'],self.g.dependent)
+        self.assertEqual(['steps'],self.g.independent)
+        # New one is modified
+        self.assertEqual({'type':'hemelb','machine':'planck'},g2.select)
+        self.assertEqual(['cores'],g2.curves)
+        self.assertEqual(['total'],g2.dependent)
+        self.assertEqual(['steps','banana'],g2.independent)

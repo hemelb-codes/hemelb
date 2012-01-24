@@ -20,7 +20,8 @@ class Graph(object):
         for specialisation in specialisations:
             if not specialisation:
                 continue
-            result.select.update(specialisation['select'])
+            if 'select' in specialisation:
+                result.select.update(specialisation['select'])
             for prop in ['curves','dependent','independent']:
                 if prop in specialisation:
                     getattr(result,prop).append(specialisation[prop])
