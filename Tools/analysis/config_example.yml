@@ -1,0 +1,3 @@
+# Copy this file as config.yml, and specify your configuration details
+results_path: "~/devel/ccs/fabric/hemelb/results"
+reports_path: "~/devel/ccs/fabric/hemelb/reports"
