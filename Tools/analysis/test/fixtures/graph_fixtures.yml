@@ -1,0 +1,10 @@
+performance_versus_cores:
+    name: "Performance on ${machine} versus core count"
+    select:
+        type: hemelb
+    curves:
+        - cores
+    dependent:
+        - total
+    independent:
+        - cycles
