@@ -9,6 +9,7 @@ Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 
 import os
 import re
+from xml.etree import ElementTree
 
 class Result(object):
     """Model of a result"""
@@ -28,4 +29,17 @@ class Result(object):
             slurp=open(os.path.join(self.path,path)).read()
             for prop,pattern in data.iteritems():
                 setattr(self,prop,re.search(pattern,slurp).groups()[0])
+        for path,data in self.xml_files.iteritems():
+            tree=ElementTree.parse(os.path.join(self.path,path))
+            for prop,pattern in data.iteritems():
+                attribute=None
+                if type(pattern)==list:
+                    # we have a two-tuple in the yaml, the second argument is an attribute name for the element
+                    pattern,attribute=pattern
+                element=tree.find(pattern)
+                if attribute:
+                    value=element.get(attribute)
+                else:
+                    value=element.text
+                setattr(self,prop,value)
         

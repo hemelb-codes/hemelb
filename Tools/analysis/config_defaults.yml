@@ -1,9 +1,9 @@
 results:
     xml_files:
         'results/report.xml':
-            total: 'report/timings/timer[name="Total"]/mean'
+            total: 'timings/timer[name="Total"]/mean'
         'config.xml':
-            steps: 'hemelbsettings/simulation/@cyclesteps'
+            steps: ['simulation','cyclesteps']
     text_files:
         'results/report.txt':
             cores: 'Ran with ([\d]+) threads'
