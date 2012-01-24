@@ -1,20 +1,16 @@
 results:
     xml_files:
-        report:
-            path: 'results/report.xml'
+        'results/report.xml':
             total: 'report/timings/timer[name="Total"]/mean'
-        config:
-            path: 'config.xml'
+        'config.xml':
             steps: 'hemelbsettings/simulation/@cyclesteps'
     text_files:
-        report:
-            path: 'results/report.txt'
+        'results/report.txt':
             cores: 'Ran with ([\d]+) threads'
-        cmake_cache:
-            path: 'CMakeCache.txt'
+        'CMakeCache.txt':
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
-    name:
-        machine: '_(.*)_\d$'
+    name_properties:
+        machine: '_([^_]*)_\d$'
 
 graphs:
     performance_versus_core:
