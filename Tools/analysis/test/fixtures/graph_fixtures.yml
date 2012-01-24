@@ -7,4 +7,4 @@ performance_versus_cores:
     dependent:
         - total
     independent:
-        - cycles
+        - steps
