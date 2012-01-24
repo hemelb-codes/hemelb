@@ -22,7 +22,7 @@ class Result(object):
         self.xml_files=config['xml_files']
         self.text_files=config['text_files']
         self.name_properties=config['name_properties']
-        print self.name
+        self.fixed_properties=config['fixed_properties']
         for prop,pattern in self.name_properties.iteritems():
             setattr(self,prop,re.search(pattern,self.name).groups()[0])
         for path,data in self.text_files.iteritems():
@@ -42,4 +42,5 @@ class Result(object):
                 else:
                     value=element.text
                 setattr(self,prop,value)
-        
+        for prop,value in self.fixed_properties.iteritems():
+            setattr(self,prop,value)
