@@ -16,3 +16,7 @@ class GraphConfig(dict):
 class ReportConfig(dict):
     def __init__(self,label):
         self.update(yaml.load(open(os.path.join(fixtures_path,'report_fixtures.yml')))[label])
+        
+class ResultsConfig(dict):
+    def __init__(self,label):
+        self.update(yaml.load(open(os.path.join(fixtures_path,'result_config_fixtures.yml')))[label])
