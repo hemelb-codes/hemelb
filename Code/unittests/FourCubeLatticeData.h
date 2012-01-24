@@ -69,7 +69,7 @@ namespace hemelb
                   // The outlet is by the maximal z value.
                   else if (neighK >= sitesPerBlockUnit)
                   {
-                    link.ioletId = 1;
+                    link.ioletId = 0;
                     link.type = geometry::LinkReadResult::OUTLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
