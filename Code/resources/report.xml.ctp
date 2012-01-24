@@ -3,13 +3,18 @@
 	<configuration>
 		<file>{{CONFIG}}</file>
 	</configuration>
+	<nodes>
+		<threads>{{THREADS}}</threads>
+		<machines>{{MACHINES}}</machines>
+		<depths>{{DEPTHS}}</depths>
+	</nodes>
 	<geometry>
 		<sites>{{SITES}}</sites>
-		{{#DOMAIN}}
+		{{#PROCESSOR}}
 		<domain>
 			<rank>{{RANK}}</rank><sites>{{SITES}}</sites>
 		</domain>
-		{{/DOMAIN}}
+		{{/PROCESSOR}}
 	</geometry>
 	<results>
 		<images>{{IMAGES}}</images>
