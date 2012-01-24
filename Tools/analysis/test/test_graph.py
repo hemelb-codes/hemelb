@@ -9,6 +9,8 @@ Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 
 import os
 import unittest
+import StringIO
+import re
 
 from ..graph import Graph
 from ..results_collection import ResultsCollection
@@ -39,7 +41,12 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(['steps','banana'],g3.independent)
     def test_prepare(self):
         self.g2.prepare(self.results.results)
-        print self.g2.curve_data
         self.assertEqual(27,len(self.g2.filtered_results))
         self.assertEqual(3,len(self.g2.curve_data))
         self.assertEqual(9,len(self.g2.curve_data.values()[0]))
+    def test_write(self):
+        self.g2.prepare(self.results.results)
+        buff=StringIO.StringIO()
+        self.g2.write_data(buff)
+        print buff.getvalue()
+        self.assertEqual(buff.getvalue(),"foo")
