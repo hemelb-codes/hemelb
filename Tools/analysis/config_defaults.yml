@@ -8,7 +8,7 @@ graphs:
         dependent:
             - total
         independent:
-            - cycles
+            - steps
             
 reports:
     performance_on_planck:
