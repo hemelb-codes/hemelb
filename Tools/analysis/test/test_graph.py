@@ -18,4 +18,8 @@ class TestGraph(unittest.TestCase):
 	def setUp(self):
 	    pass
 	def test_construct(self):
-		a=Graph(fixtures.GraphConfig('performance_versus_cores'))
+		g=Graph(fixtures.GraphConfig('performance_versus_cores'))
+		self.assertEqual({'type':'hemelb'},g.select)
+		self.assertEqual(['cores'],g.curves)
+		self.assertEqual(['total'],g.dependent)
+		self.assertEqual(['steps'],g.independent)
