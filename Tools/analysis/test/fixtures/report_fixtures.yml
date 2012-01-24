@@ -1,0 +1,7 @@
+planck_performance:
+    name: Performance on planck
+    graphs:
+        performance_versus_cores:
+    defaults:
+        select:
+            machine: planck
