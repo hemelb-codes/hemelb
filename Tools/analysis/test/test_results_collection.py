@@ -16,7 +16,7 @@ from ..results_collection import ResultsCollection
 
 class TestResultsCollection(unittest.TestCase):
 	def setUp(self):
-	    self.rc=ResultsCollection(fixtures.Results('cylinders').path)
+	    self.rc=ResultsCollection(fixtures.Results('cylinders').path,fixtures.ResultsConfig('example'))
 	def test_construct(self):
 		self.assertEqual(3*9,len(self.rc.results))
 		

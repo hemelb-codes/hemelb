@@ -20,7 +20,8 @@ class TestAnalysis(unittest.TestCase):
 	        'graphs': {'performance_versus_cores':fixtures.GraphConfig('performance_versus_cores')},
 	        'reports': {'planck_performance':fixtures.ReportConfig('planck_performance')},
 	        'results_path': fixtures.Results('cylinders').path,
-	        'reports_path': tempfile.mkdtemp()
+	        'reports_path': tempfile.mkdtemp(),
+	        'results': fixtures.ResultsConfig('example')
 	    }
 	def test_construct(self):
 		a=Analysis(self.config)
