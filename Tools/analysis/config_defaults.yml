@@ -1,0 +1,20 @@
+graphs:
+    performance_versus_core:
+        name: "Performance on ${machine} versus core count"
+        select:
+            type: hemelb
+        curves:
+            - cores
+        dependent:
+            - total
+        independent:
+            - cycles
+            
+reports:
+    performance_on_planck:
+        name: Performance on planck
+        graphs:
+            performance_versus_core:
+        defaults:
+            select:
+                machine: planck
