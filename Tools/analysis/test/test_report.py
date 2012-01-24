@@ -18,4 +18,7 @@ class TestReport(unittest.TestCase):
 	def setUp(self):
 	    self.graphs={'performance_versus_cores': Graph(fixtures.GraphConfig('performance_versus_cores'))}
 	def test_construct(self):
-		a=Report(fixtures.ReportConfig('planck_performance'),self.graphs)
+		r=Report(fixtures.ReportConfig('planck_performance'),self.graphs)
+		self.assertEqual('Performance on planck',r.name)
+		
+		
