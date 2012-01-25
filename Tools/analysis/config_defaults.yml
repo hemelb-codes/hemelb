@@ -4,6 +4,7 @@ results:
             total: 'timings/timer[name="Total"]/mean'
         'config.xml':
             steps: ['simulation','cyclesteps']
+            sites: 'geometry/sites'
     text_files:
         'results/report.txt':
             cores: 'Ran with ([\d]+) threads'
@@ -18,7 +19,7 @@ results:
 
 graphs:
     performance_versus_core:
-        name: "Performance on ${machine} versus core count"
+        name: "Performance on ${machine} versus number of sites"
         select:
             type: hemelb
         curves:
@@ -26,7 +27,7 @@ graphs:
         dependent:
             - total
         independent:
-            - steps
+            - sites
             
 reports:
     performance_on_planck:
