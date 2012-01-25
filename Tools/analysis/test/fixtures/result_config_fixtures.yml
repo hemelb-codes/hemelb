@@ -2,6 +2,7 @@ example:
     xml_files:
         'results/report.xml':
             total: 'timings/timer[name="Total"]/mean'
+            sites: 'geometry/sites'
         'config.xml':
             steps: ['simulation','cyclesteps']
     text_files:

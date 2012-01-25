@@ -27,7 +27,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual({'type':'hemelb','machine':'planck'},r.graphs['performance_versus_cores'].select)
         self.assertEqual(['cores'],r.graphs['performance_versus_cores'].curves)
         self.assertEqual(['total'],r.graphs['performance_versus_cores'].dependent)
-        self.assertEqual(['steps'],r.graphs['performance_versus_cores'].independent)
+        self.assertEqual(['sites'],r.graphs['performance_versus_cores'].independent)
     def test_prepare(self):
         self.r.prepare(self.results.results)
     def test_write(self):
