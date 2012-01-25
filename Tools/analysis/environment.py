@@ -8,9 +8,14 @@ Copyright (c) 2012 University College London. All rights reserved.
 """
 import yaml
 import os
+import logging
+import logging.config
+
 
 localroot=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #Load and invoke the default non-machine specific config JSON dictionaries.
 config=yaml.load(open(os.path.join(localroot,'Tools','analysis','config_defaults.yml')))
 config.update(yaml.load(open(os.path.join(localroot,'Tools','analysis','config.yml'))))
 
+dc=yaml.load(open(os.path.join(localroot,'Tools','analysis','logging.yml')))
+logging.config.dictConfig(dc)
