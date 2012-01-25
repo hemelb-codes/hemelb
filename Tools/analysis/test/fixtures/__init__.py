@@ -25,5 +25,5 @@ class ResultsConfig(dict):
 class ReportOutput(object):
     def __init__(self,label):
         self.path=os.path.join(fixtures_path,'reports','output',label)
-        shutil.rmtree(self.path)
+        shutil.rmtree(self.path,ignore_errors=True)
         os.makedirs(self.path)
