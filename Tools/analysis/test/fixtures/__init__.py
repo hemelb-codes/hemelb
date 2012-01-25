@@ -1,4 +1,5 @@
 import os
+import shutil
 import yaml
 fixtures_path=os.path.dirname(os.path.abspath(__file__))
 
@@ -20,3 +21,9 @@ class ReportConfig(dict):
 class ResultsConfig(dict):
     def __init__(self,label):
         self.update(yaml.load(open(os.path.join(fixtures_path,'result_config_fixtures.yml')))[label])
+        
+class ReportOutput(object):
+    def __init__(self,label):
+        self.path=os.path.join(fixtures_path,'reports','output',label)
+        shutil.rmtree(self.path)
+        os.makedirs(self.path)
