@@ -1,0 +1,21 @@
+Configured by file config.xml with a  0 site geometry.
+Recorded 30 images and 30 snapshots.
+Ran with 2 threads on 1 machines with 1 deep topology.
+Ran for 3000 steps over 3 cycles.
+With 2788.791 time steps per second and 1000 per cycle.
+Sub-domains info:
+rank: 0, fluid sites: 0
+rank: 1, fluid sites: 0
+Timing data:
+Name Local Min Mean Max Per
+Total 1.2 1.2 1.2 1.2 simulation
+Domain Decomposition 6.29e-05 5.6e-05 5.95e-05 6.29e-05 simulation
+File Read 0.0291 0.0291 0.0291 0.0291 simulation
+Net initialisation 0.0292 0.0292 0.0763 0.123 simulation
+Lattice Boltzmann 0.00362 0.00362 0.00366 0.00371 cycle
+Visualisation 0.000133 0.000131 0.000132 0.000133 image
+Monitoring 0.00063 0.000614 0.000622 0.00063 cycle
+MPI Send 0.000738 0.000738 0.000796 0.000854 cycle
+MPI Wait 0.00148 0.00148 0.106 0.211 cycle
+Snapshots 0.0128 0.0128 0.013 0.0132 snapshot
+Simulation total 1.08 1.08 1.08 1.08 simulation
