@@ -44,7 +44,7 @@ class Graph(object):
         writer=csv.writer(csv_file)
         fieldnames=[self.dependent[0],self.independent[0]]
         csv_file.write("#CSV File produced by hemelb reporter\n")
-        csv_file.write("#Groups are separated by "+str(self.curves)+"\n#")
+        csv_file.write("#Groups are separated by "+str(tuple(self.curves))+"\n#")
         writer.writerow(fieldnames)
         for curve,results in sorted(self.curve_data.iteritems()):
             writer.writerow([])
