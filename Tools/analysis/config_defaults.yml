@@ -2,9 +2,9 @@ results:
     xml_files:
         'results/report.xml':
             total: 'timings/timer[name="Total"]/mean'
+            sites: 'geometry/sites'
         'config.xml':
             steps: ['simulation','cyclesteps']
-            sites: 'geometry/sites'
     text_files:
         'results/report.txt':
             cores: 'Ran with ([\d]+) threads'
