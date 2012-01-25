@@ -23,5 +23,5 @@ class TestResultsCollection(unittest.TestCase):
 	    self.assertEqual('1',self.rc.cores)
 	    self.assertEqual('Release',self.rc.build_type)
 	def test_xml_property(self):
-	    self.assertEqual('2.02',self.rc.total)
+	    self.assertEqual('2.19',self.rc.total)
 	    self.assertEqual('1000',self.rc.steps)
