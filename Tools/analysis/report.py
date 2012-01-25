@@ -20,7 +20,10 @@ class Report(object):
     
     def write_datafiles(self):
         data_files_path=os.path.join(self.path,'data_files')
-        os.makedirs(data_files_path)
+        try:
+            os.makedirs(data_files_path)
+        except OSError:
+            pass
         for label,graph in self.graphs.iteritems():
             graph.write_data(open(os.path.join(data_files_path,label)+'.csv','w'))
     
