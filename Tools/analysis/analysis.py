@@ -7,7 +7,7 @@ Created by James Hetherington on 2012-01-23.
 Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 """
 
-import functools
+import os
 
 import environment
 from results_collection import ResultsCollection
@@ -24,16 +24,17 @@ class Analysis(object):
         self.graphs={label:Graph(data) for label,data in self.graph_configuration.iteritems()}
         self.reports={label:Report(data,self.graphs) for label,data in self.report_configuration.iteritems()}
     
-    def load_data():
+    def load_data(self):
         self.results=ResultsCollection(self.results_path,self.result_configuration)
         
-    def prepare():
-        for report in self.reports:
-            report.prepare(results.results)
+    def prepare(self):
+        for report in self.reports.itervalues():
+            report.prepare(self.results.results)
             
-    def write():
-        for report in self.reports:
-            report.write(self.reports_path)
+    def write(self):
+        for label,report in self.reports.iteritems():
+            report.write(os.path.join(self.reports_path,label))
+            print "Report %s written to %s" % (report.name,report.path)
 
 def main():
     analysis=Analysis(environment.config)

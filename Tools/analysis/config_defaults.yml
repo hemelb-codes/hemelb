@@ -10,7 +10,11 @@ results:
         'CMakeCache.txt':
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
     name_properties:
-        machine: '_([^_]*)_\d$'
+        machine_by_name: '_([^_]*)_\d$'
+    yaml_files:
+        'env.yml':
+            type: script
+            machine: machine_name
 
 graphs:
     performance_versus_core:
