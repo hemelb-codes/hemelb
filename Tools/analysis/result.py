@@ -55,8 +55,13 @@ class Result(object):
     def define_file_properties(self,config,loader,parser):
         if not config: return
         for path,data in config.iteritems():
-            content=loader(os.path.join(self.path,path))
-            self.define_properties(content,data,parser)
+            fullpath=os.path.join(self.path,path)
+            try:
+                content=loader(fullpath)
+                self.define_properties(content,data,parser)
+            except IOError:
+                # If the file didn't exist, set the property to None.
+                self.define_properties(None,data,lambda content,pattern : None)
     def define_properties(self,content,data,parser):
         if not data: return
         for prop,pattern in data.iteritems():
