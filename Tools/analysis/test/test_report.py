@@ -32,5 +32,5 @@ class TestReport(unittest.TestCase):
         self.r.prepare(self.results.results)
     def test_write(self):
         self.r.prepare(self.results.results)
-        self.r.write(tempfile.mkdtemp())
+        self.r.write(fixtures.ReportOutput('planck_performance').path)
         

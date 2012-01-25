@@ -18,6 +18,12 @@ class Report(object):
         for graph in self.graphs.values():
             graph.prepare(results)
     
-    def write(self,report_path):
+    def write_datafiles(self,report_path):
+        data_files_path=os.path.join(report_path,'data_files')
+        os.makedirs(data_files_path)
         for label,graph in self.graphs.iteritems():
-            graph.write_data(open(os.path.join(report_path,label),'w'))
+            graph.write_data(open(os.path.join(data_files_path,label)+'.csv','w'))
+    
+    def write(self,report_path):
+        self.write_datafiles(report_path)
+        
