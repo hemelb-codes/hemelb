@@ -51,5 +51,4 @@ class Graph(object):
             writer.writerow([])
             csv_file.write("#"+str(curve)+"\n")
             writer.writerows(results)
-        
             

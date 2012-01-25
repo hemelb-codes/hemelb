@@ -9,6 +9,7 @@ Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 
 import os
 import re
+import yaml
 from xml.etree import ElementTree
 
 class Result(object):
@@ -19,28 +20,44 @@ class Result(object):
         """
         self.path=path
         self.name=os.path.basename(self.path)
-        self.xml_files=config['xml_files']
-        self.text_files=config['text_files']
-        self.name_properties=config['name_properties']
-        self.fixed_properties=config['fixed_properties']
-        for prop,pattern in self.name_properties.iteritems():
-            setattr(self,prop,re.search(pattern,self.name).groups()[0])
-        for path,data in self.text_files.iteritems():
-            slurp=open(os.path.join(self.path,path)).read()
-            for prop,pattern in data.iteritems():
-                setattr(self,prop,re.search(pattern,slurp).groups()[0])
-        for path,data in self.xml_files.iteritems():
-            tree=ElementTree.parse(os.path.join(self.path,path))
-            for prop,pattern in data.iteritems():
-                attribute=None
-                if type(pattern)==list:
-                    # we have a two-tuple in the yaml, the second argument is an attribute name for the element
-                    pattern,attribute=pattern
-                element=tree.find(pattern)
-                if attribute:
-                    value=element.get(attribute)
-                else:
-                    value=element.text
-                setattr(self,prop,value)
-        for prop,value in self.fixed_properties.iteritems():
-            setattr(self,prop,value)
+        
+        def index_parser(content,pattern):
+            return content[pattern]
+        def regex_parser(content,pattern):
+            return re.search(pattern,content).groups()[0]
+        def element_parser(content,pattern):
+            attribute=None
+            if type(pattern)==list:
+                # we have a two-tuple in the yaml, the second argument is an attribute name for the element
+                pattern,attribute=pattern
+            element=content.find(pattern)
+            if attribute:
+                return element.get(attribute)
+            else:
+                return element.text
+        def identity_parser(content,pattern):
+            return pattern
+            
+        def yaml_loader(path):
+             return yaml.load(open(path))
+        def text_loader(path):
+            return open(path).read()
+        def xml_loader(path):
+            return ElementTree.parse(path)
+            
+        self.define_file_properties(config.get('yaml_files'),yaml_loader,index_parser)
+        self.define_file_properties(config.get('text_files'),text_loader,regex_parser)
+        self.define_file_properties(config.get('xml_files'),xml_loader,element_parser)
+        self.define_properties(self.name,config.get('name_properties'),regex_parser)
+        self.define_properties(None,config.get('fixed_properties'),identity_parser)
+
+    
+    def define_file_properties(self,config,loader,parser):
+        if not config: return
+        for path,data in config.iteritems():
+            content=loader(os.path.join(self.path,path))
+            self.define_properties(content,data,parser)
+    def define_properties(self,content,data,parser):
+        if not data: return
+        for prop,pattern in data.iteritems():
+            setattr(self,prop,parser(content,pattern))
