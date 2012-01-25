@@ -1,5 +1,5 @@
 performance_versus_cores:
-    name: "Performance on ${machine} versus core count"
+    name: "Performance on ${machine} versus number of sites"
     select:
         type: hemelb
     curves:
@@ -7,4 +7,4 @@ performance_versus_cores:
     dependent:
         - total
     independent:
-        - steps
+        - sites

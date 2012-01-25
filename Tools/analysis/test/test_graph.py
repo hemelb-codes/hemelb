@@ -26,19 +26,19 @@ class TestGraph(unittest.TestCase):
         self.assertEqual({'type':'hemelb'},self.g.select)
         self.assertEqual(['cores'],self.g.curves)
         self.assertEqual(['total'],self.g.dependent)
-        self.assertEqual(['steps'],self.g.independent)
+        self.assertEqual(['sites'],self.g.independent)
     def test_specialise(self):
         g3=self.g.specialise({'select':{'machine':'planck'}},{'independent':'banana'})
         # Original is unchanged
         self.assertEqual({'type':'hemelb'},self.g.select)
         self.assertEqual(['cores'],self.g.curves)
         self.assertEqual(['total'],self.g.dependent)
-        self.assertEqual(['steps'],self.g.independent)
+        self.assertEqual(['sites'],self.g.independent)
         # New one is modified
         self.assertEqual({'type':'hemelb','machine':'planck'},g3.select)
         self.assertEqual(['cores'],g3.curves)
         self.assertEqual(['total'],g3.dependent)
-        self.assertEqual(['steps','banana'],g3.independent)
+        self.assertEqual(['sites','banana'],g3.independent)
     def test_prepare(self):
         self.g2.prepare(self.results.results)
         self.assertEqual(27,len(self.g2.filtered_results))
