@@ -14,6 +14,6 @@ class ResultsCollection(object):
     def __init__(self,source_path,config):
         self.source_path=source_path
         # Glob over the source path results collection
-        results=os.listdir(source_path)
+        results=os.listdir(os.path.expanduser(source_path))
         self.results=[Result(os.path.join(source_path,result),config) for result in results]
         
