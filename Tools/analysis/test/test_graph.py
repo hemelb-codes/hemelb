@@ -48,5 +48,4 @@ class TestGraph(unittest.TestCase):
         self.g2.prepare(self.results.results)
         buff=StringIO.StringIO()
         self.g2.write_data(buff)
-        print buff.getvalue()
-        self.assertEqual(buff.getvalue(),"foo")
+        self.assertEqual(re.search("Groups are separated by \('(.*?)',\)",buff.getvalue()).groups()[0],'cores')
