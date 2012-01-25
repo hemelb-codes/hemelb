@@ -33,7 +33,7 @@ class Analysis(object):
             
     def write(self):
         for label,report in self.reports.iteritems():
-            report.write(os.path.join(self.reports_path,label))
+            report.write(os.path.expanduser(os.path.join(self.reports_path,label)))
             print "Report %s written to %s" % (report.name,report.path)
 
 def main():
