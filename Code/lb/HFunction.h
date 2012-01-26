@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_HFUNCTION_H
 #define HEMELB_LB_HFUNCTION_H
 
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 #include "constants.h"
@@ -37,7 +37,7 @@ namespace hemelb
           {
             dH += (f_alpha[ii] < 0.0 ?
               -1.0 :
-              1.0) * (mFEq[ii] - mF[ii]) * (1.0 + std::log(fabs(f_alpha[ii]) / LatticeType::EQMWEIGHTS[ii]));
+              1.0) * (mFEq[ii] - mF[ii]) * (1.0 + std::log(std::fabs(f_alpha[ii]) / LatticeType::EQMWEIGHTS[ii]));
           }
         }
 
@@ -75,7 +75,7 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
           {
-            H += h(fabs(fAlpha[ii]), 1.0 / LatticeType::EQMWEIGHTS[ii]) - h(mF[ii], 1.0 / LatticeType::EQMWEIGHTS[ii]);
+            H += h(std::fabs(fAlpha[ii]), 1.0 / LatticeType::EQMWEIGHTS[ii]) - h(mF[ii], 1.0 / LatticeType::EQMWEIGHTS[ii]);
           }
         }
 

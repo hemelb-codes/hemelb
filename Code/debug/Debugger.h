@@ -1,7 +1,6 @@
 #ifndef HEMELB_DEBUG_DEBUGGER_H
 #define HEMELB_DEBUG_DEBUGGER_H
 
-#include <stdarg.h>
 #include <string>
 
 namespace hemelb

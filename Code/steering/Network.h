@@ -1,7 +1,7 @@
 #ifndef HEMELB_STEERING_NETWORK_H
 #define HEMELB_STEERING_NETWORK_H
 
-#include <string.h>
+#include <string>
 
 #include "steering/ClientConnection.h"
 #include "net/IteratedAction.h"
