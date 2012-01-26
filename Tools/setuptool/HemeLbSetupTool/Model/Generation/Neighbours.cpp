@@ -1,11 +1,15 @@
 #include "Neighbours.h"
 
+#include "io/formats/geometry.h"
+// shortcut to geometry class
+using hemelb::io::formats::geometry;
+
 void Neighbours::Init() {
-	// This assumes that the hemelb lattice descriptor class has a zero vector at the first entry.
-	unsigned int iLater = 0;
-	for (unsigned int i = 0; i < Neighbours::n; ++i) {
-		Neighbours::vectors[i] = Index(hemelb::lb::lattices::D3Q27::CX[i + 1],
-				hemelb::lb::lattices::D3Q27::CY[i + 1], hemelb::lb::lattices::D3Q27::CZ[i + 1]);
+	// copy in the vectors of the neighbourhood
+	Neighbours::vectors = geometry::GetNeighbourhood();
+
+	//unsigned int iLater = 0;
+	for (unsigned int i = 0, iLater = 0; i < Neighbours::n; ++i) {
 		Neighbours::norms[i] = Neighbours::vectors[i].GetMagnitude();
 
 		// Figure out if this takes us to a later site
@@ -34,7 +38,15 @@ void Neighbours::Init() {
 		} else {
 			// No
 		}
-		Neighbours::inverses[i] = hemelb::lb::lattices::D3Q27::INVERSEDIRECTIONS[i + 1] - 1;
+
+		// Complete the table of inverse indices.
+		for (unsigned int j = i; j < Neighbours::n; ++j) {
+			if (Neighbours::vectors[i] == Neighbours::vectors[j]) {
+				Neighbours::inverses[i] = j;
+				Neighbours::inverses[j] = i;
+				break;
+			}
+		}
 	}
 }
 
