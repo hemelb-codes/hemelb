@@ -488,8 +488,8 @@ def create_config(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cy
     p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.pro'))
     p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.stl')
     env.VoxelSize=str(VoxelSize).replace(".","_")
-    env.Steps=Steps or p.Steps
-    env.Cycles=Cycles or p.Cycles
+    env.Steps=Steps or p.Steps or 1000
+    env.Cycles=Cycles or p.Cycles or 3
     config=template(config_template)
     with_config(config)
     local(template("mkdir -p $job_config_path_local"))
