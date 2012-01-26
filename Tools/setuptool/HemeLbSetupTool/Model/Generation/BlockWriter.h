@@ -33,8 +33,6 @@ protected:
 	unsigned int nFluidSites;
 	size_t maxBufferSize;
 	char *buffer;
-	size_t usedBufferSize;
-
 };
 
 #endif // HEMELBSETUPTOOL_BLOCKWRITER_H
