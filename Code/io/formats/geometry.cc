@@ -6,7 +6,7 @@ namespace hemelb
   {
     namespace formats
     {
-      geometry::geometry() : displacements(26) {
+      geometry::geometry() : displacements(geometry::NumberOfDisplacements) {
         displacements[ 0] = Displacement(-1,-1,-1);
         displacements[ 1] = Displacement(-1,-1, 0);
         displacements[ 2] = Displacement(-1,-1,+1);
