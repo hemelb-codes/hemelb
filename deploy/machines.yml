@@ -47,7 +47,7 @@ legion:
   # The remote host-name to use.
   remote: "legion.rc.ucl.ac.uk"
   # The path python disttools use for builds.
-  python_buildd: "python2.6"
+  python_build: "python2.6"
   modules: ["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake", "load python/gcc/2.6.6"]
   runtime_path_template: "$home_path/Scratch"
 planck:
