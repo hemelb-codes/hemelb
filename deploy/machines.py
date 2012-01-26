@@ -109,7 +109,7 @@ def complete_environment():
 	cmd.close()
 	#env.build_number=run("hg id -i -r tip")
 	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
-	
+	env.code_build_cache=env.pather.join(env.code_build_path,"CMakeCache.txt")
 
 complete_environment()
 	
