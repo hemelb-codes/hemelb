@@ -3,7 +3,6 @@
 
 #include <limits>
 #include "units.h"
-//#include "mpiInclude.h"
 
 namespace hemelb
 {

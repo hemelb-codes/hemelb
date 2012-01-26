@@ -1,3 +1,4 @@
+#include "constants.h"
 #include "geometry/VolumeTraverser.h"
 
 namespace hemelb
