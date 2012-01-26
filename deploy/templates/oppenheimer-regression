@@ -3,19 +3,11 @@
 #$$ -q all.q
 #$$ -pe openmpi $cores
 #$$ -N $job_name
-#$$ -e $job_results/${job_name}.error
-#$$ -o $job_results/${job_name}.output
+#$$ -e $job_results/${name}.error
+#$$ -o $job_results/${name}.output
 $run_prefix
-# This check-scratch-creation code comes from Joerg's example script.
-# where are the jobs running:
-cat $$PE_HOSTFILE | cut -f 1 -d .  > $job_name.nodes
-
-echo $$JOB_ID > $job_name.jobid
-
-# make sure the local scratch exists
-for i in $$(cat $job_name.nodes ); do ssh $$i mkdir -p $job_results ; done
 #and run
 rm -rf results
-mpirun -np $cores $install_path/bin/hemelb $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results -i 1 -s 1 -ss 1111
+/opt/openmpi/gfortran/1.4.3/bin/mpirun -np $cores $install_path/bin/hemelb $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results -i 1 -s 1 -ss 1111
 $regression_test_path/ImageComparison $regression_test_path/CleanImages results/Images
 $regression_test_path/NumericalComparison $regression_test_path/CleanSnapshots results/Snapshots
