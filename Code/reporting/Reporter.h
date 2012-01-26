@@ -8,7 +8,7 @@
 #include "configuration/CommandLine.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
-#include "Policies.h"
+#include "reporting/Policies.h"
 #include "ctemplate/template.h"
 #include "reporting/Reportable.h"
 #include "resources/Resource.h"

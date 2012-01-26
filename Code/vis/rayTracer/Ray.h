@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_RAY_H
-#define HEMELB_VIS_RAY_H
+#ifndef HEMELB_VIS_RAYTRACER_RAY_H
+#define HEMELB_VIS_RAYTRACER_RAY_H
 
 #include <iostream>
 #include <limits>
@@ -156,4 +156,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_RAY_H
+#endif // HEMELB_VIS_RAYTRACER_RAY_H
