@@ -1,4 +1,5 @@
-#include "Reporter.h"
+#include "reporting/Reporter.h"
+
 namespace hemelb
 {
   namespace reporting
