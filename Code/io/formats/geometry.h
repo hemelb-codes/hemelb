@@ -33,7 +33,7 @@ namespace hemelb
           }
 
           /**
-           * Magic number to identify snapshot files.
+           * Magic number to identify geometry files.
            * ASCII for 'gmy', then EOF
            * Combined magic number is:
            * hex    68 6c 62 21 67 6d 79 04
@@ -49,7 +49,38 @@ namespace hemelb
            */
           enum
           {
-            VersionNumber = 2//!< VersionNumber
+            VersionNumber = 2
+          //!< VersionNumber
+          };
+
+          /**
+           * Type codes permitted for sites
+           */
+          enum SiteType
+          {
+            SOLID = 0,//!< SOLID
+            FLUID = 1
+          //!< FLUID
+          };
+
+          /**
+           * Type codes for the sort of boundarys intersected by a link.
+           */
+          enum CutType
+          {
+            CUT_NONE = 0, //!< No intersection
+            CUT_WALL = 1, //!< Intersect a wall
+            CUT_INLET = 2,//!< Intersect an inlet
+            CUT_OUTLET = 3
+          //!< Intersect an outlet
+          };
+
+          /**
+           * Number of displacements in the neighbourhood
+           */
+          enum
+          {
+            NumberOfDisplacements = 26
           };
 
           /**
@@ -65,7 +96,45 @@ namespace hemelb
            *
            *  * 8 uints, 4 doubles = 8 * 4 + 4 * 8 = 64
            */
-          static const unsigned PreambleLength = 64;
+          enum
+          {
+            PreambleLength = 64
+          };
+
+          /**
+           * The length of a single header record (i.e. you have one of these
+           * per block):
+           *  * 1 uint for number of fluid sites
+           *  * 1 uint for number of bytes occupied
+           */
+          enum
+          {
+            HeaderRecordLength = 8
+          };
+
+          /**
+           * The maximum possible length of a single site's data.
+           *  * 1 uint for the type
+           *  * then NumberOfDisplacements:
+           *    * 1 uint for the cut type
+           *    * 1 uint for the inlet/outlet ID
+           *    * 1 float for the cut distance
+           */
+          enum
+          {
+            MaxSiteRecordLength = 4 + geometry::NumberOfDisplacements * (4 + 4 + 4)
+          };
+
+          /**
+           * Compute the maximum possible length of a single block's data.
+           * @param blockSideLength
+           * @return maximum block record lenght in bytes
+           */
+          static inline unsigned int GetMaximumBlockRecordLength(unsigned int blockSideLength)
+          {
+            return blockSideLength * blockSideLength * blockSideLength *
+                geometry::MaxSiteRecordLength;
+          }
 
           /**
            * Give the displacement to a neighbouring lattice point.
