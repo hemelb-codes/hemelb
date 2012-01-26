@@ -1,6 +1,7 @@
 #ifndef HEMELB_LB_LATTICES_LATTICEINFO_H
 #define HEMELB_LB_LATTICES_LATTICEINFO_H
 
+#include <vector>
 #include "util/Vector3D.h"
 #include "units.h"
 
