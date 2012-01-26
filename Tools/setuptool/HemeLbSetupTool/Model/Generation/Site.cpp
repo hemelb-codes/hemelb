@@ -10,92 +10,16 @@
 
 // C'tor
 Site::Site(Block& block, Index& index) :
-	IsFluidKnown(false), IsFluid(false), IsEdge(false),
+	IsFluidKnown(false), IsFluid(false),
 			Position(block.GetDomain().CalcPositionFromIndex(index)),
 			block(block), index(index) {
-	this->Init();
 }
 
 // C'tor with index constructed in-place
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
-	IsFluidKnown(false), IsFluid(false), IsEdge(false), block(block),
-			index(i, j, k) {
+	IsFluidKnown(false), IsFluid(false),
+			block(block), index(i, j, k) {
 	this->Position = this->block.GetDomain().CalcPositionFromIndex(this->index);
-	this->Init();
-}
-
-// private helper for common parts of c'tors
-void Site::Init() {
-	// Make sure this is false
-	this->AdjacentIolet = NULL;
-	// We need to find the closest.
-	this->BoundaryDistance = std::numeric_limits<double>::infinity();
-	this->WallDistance = std::numeric_limits<double>::infinity();
-
-	this->CutDistances.resize(Neighbours::n,
-			std::numeric_limits<double>::infinity());
-	this->CutCellIds.resize(Neighbours::n, -1);
-}
-
-// Compute the type of the site from it's properties
-unsigned int Site::GetType() const {
-	if (this->IsFluid) {
-		if (this->AdjacentIolet) {
-			if (this->AdjacentIolet->IsInlet)
-				return hemelb::geometry::INLET_TYPE;
-			else
-				return hemelb::geometry::OUTLET_TYPE;
-		} else {
-			return hemelb::geometry::FLUID_TYPE;
-		}
-	} else {
-		return hemelb::geometry::SOLID_TYPE;
-	}
-}
-
-// Compute the full config unsigned int
-uint64_t Site::GetConfig() {
-	unsigned int type = this->GetType();
-	uint64_t cfg = type;
-	// If solid, we're done
-	if (!this->IsFluid)
-		return cfg;
-
-	// Fluid sites now
-	if (type == hemelb::geometry::FLUID_TYPE && !this->IsEdge)
-		// Simple fluid sites
-		return cfg;
-
-	// A complex one
-
-	if (this->IsEdge) {
-		// Bit fiddle the boundary config. See comment below
-		// by BOUNDARY_CONFIG_MASK for definition.
-		unsigned int boundary = 0;
-		for (NeighbourIterator neighIt = this->beginall(); neighIt
-				!= this->endall(); ++neighIt) {
-			if (!neighIt->IsFluid) {
-				// If the lattice vector is cut, set the flag
-				boundary |= 1 << neighIt.GetNeighbourIndex();
-			}
-		}
-		// Shift the boundary bit field to the appropriate
-		// place and set these bits in the type
-		cfg |= (uint64_t) boundary << hemelb::geometry::SiteData::BOUNDARY_CONFIG_SHIFT;
-
-		if (boundary)
-			// Set this bit if we've hit any solid sites
-			cfg |= hemelb::geometry::SiteData::PRESSURE_EDGE_MASK;
-
-	}
-
-	if (type != hemelb::geometry::FLUID_TYPE) {
-		// It must be an inlet or outlet
-		// Shift the index left and set the bits
-		cfg |= (uint64_t) this->BoundaryId << hemelb::geometry::SiteData::BOUNDARY_ID_SHIFT;
-	}
-
-	return cfg;
 }
 
 const Index Site::GetDomainBlockCount() {
