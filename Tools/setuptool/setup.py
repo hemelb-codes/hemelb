@@ -148,10 +148,12 @@ if __name__ == "__main__":
                                   'ConfigWriter.cpp',
                                   'Domain.cpp',
                                   'Site.cpp',
+                                  'Index.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
-                  for cpp in ['geometry/SiteData.cc',
+                  for cpp in ['util/Vector3D.cc',
+                              'geometry/SiteData.cc',
                               'lb/lattices/D3Q27.cc',
                               'io/writers/xdr/XdrFileWriter.cc',
                               'io/writers/xdr/XdrMemWriter.cc',

@@ -148,8 +148,7 @@ void ConfigGenerator::ClassifySite(Site& site) {
 			 * intersected (CutCellId).
 			 */
 			this->hitPoints->GetPoint(0, &hitPoint[0]);
-			site.CutDistances[iNeigh] = (hitPoint - site.Position).Magnitude<
-					double>();
+			site.CutDistances[iNeigh] = (hitPoint - site.Position).GetMagnitude();
 			site.CutCellIds[iNeigh] = this->hitCellIds->GetId(0);
 
 		}
