@@ -55,6 +55,8 @@ planck:
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   template_key: default
+  cmake_options:
+      HEMELB_STEERING_LIB: "none"
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
@@ -102,7 +104,6 @@ oppenheimer:
    no_hg: true
    job_dispatch: "qsub"
    python_build: "lib/python2.6"
-   runtime_path_template: "/scr/$username"
    make_jobs: 4
 localhost:
    remote: "localhost"
