@@ -252,7 +252,7 @@ namespace hemelb
 
             // term2_i is (2*u_i + B)/(1 - u_i)
             util::Vector3D<distribn_t> term2 =
-                (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Unity() - velocity);
+                (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones() - velocity);
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
