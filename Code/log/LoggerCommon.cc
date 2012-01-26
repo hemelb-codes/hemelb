@@ -1,6 +1,6 @@
-#include <cstdlib>
 #include <iostream>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdarg>
 
 #include "mpiInclude.h"
 #include "util/utilityFunctions.h"
@@ -15,7 +15,7 @@ namespace hemelb
     double Logger::startTime = -1.0;
 
     template<>
-    void Logger::LogInternal<OnePerCore>(std::string format, va_list args)
+    void Logger::LogInternal<OnePerCore>(std::string format, std::va_list args)
     {
       if (thisRank < 0)
       {
@@ -24,16 +24,16 @@ namespace hemelb
       }
 
       char lead[40];
-      sprintf(lead, "[Rank %.6i, %.1fs]: ", thisRank, util::myClock() - startTime);
+      std::sprintf(lead, "[Rank %.6i, %.1fs]: ", thisRank, util::myClock() - startTime);
 
       std::string overFormat(lead);
       overFormat.append(format).append("\n");
 
-      vprintf(overFormat.c_str(), args);
+      std::vprintf(overFormat.c_str(), args);
     }
 
     template<>
-    void Logger::LogInternal<Singleton>(std::string format, va_list args)
+    void Logger::LogInternal<Singleton>(std::string format, std::va_list args)
     {
       if (thisRank < 0)
       {
@@ -44,10 +44,10 @@ namespace hemelb
       if (thisRank == 0)
       {
         char lead[20];
-        sprintf(lead, "![%.1fs]", util::myClock() - startTime);
+        std::sprintf(lead, "![%.1fs]", util::myClock() - startTime);
 
         std::string newFormat = std::string(lead);
-        vprintf(newFormat.append(format).append("\n").c_str(), args);
+        std::vprintf(newFormat.append(format).append("\n").c_str(), args);
       }
     }
   }

@@ -1,7 +1,6 @@
 #ifndef HEMELB_CONFIGURATION_SIMCONFIG_H
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
-#include <string.h>
 #include <vector>
 #include "tinyxml.h"
 #include "util/Vector3D.h"

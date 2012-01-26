@@ -1,18 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-
-#include "constants.h"
-#include "util/fileutils.h"
-#include "util/utilityFunctions.h"
-#include "lb/lb.h"
-#include "log/Logger.h"
-
+#include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
-
-#include "debug/Debugger.h"
-
-
 
 int main(int argc, char *argv[])
 {
@@ -27,4 +14,3 @@ int main(int argc, char *argv[])
 
   return (0);
 }
-

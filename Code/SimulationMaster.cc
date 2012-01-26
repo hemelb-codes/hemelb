@@ -13,7 +13,7 @@
 
 #include <map>
 #include <limits>
-#include <stdlib.h>
+#include <cstdlib>
 
 /**
  * Constructor for the SimulationMaster class
