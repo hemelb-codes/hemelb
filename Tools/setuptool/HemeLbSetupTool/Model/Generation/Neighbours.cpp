@@ -6,7 +6,7 @@ void Neighbours::Init() {
 	for (unsigned int i = 0; i < Neighbours::n; ++i) {
 		Neighbours::vectors[i] = Index(hemelb::lb::lattices::D3Q27::CX[i + 1],
 				hemelb::lb::lattices::D3Q27::CY[i + 1], hemelb::lb::lattices::D3Q27::CZ[i + 1]);
-		Neighbours::norms[i] = Neighbours::vectors[i].Magnitude<double>();
+		Neighbours::norms[i] = Neighbours::vectors[i].GetMagnitude();
 
 		// Figure out if this takes us to a later site
 		if (Neighbours::vectors[i][0] > 0) {
