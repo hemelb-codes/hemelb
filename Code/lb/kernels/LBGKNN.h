@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STREAMERS_LBGKNN_H
-#define HEMELB_LB_STREAMERS_LBGKNN_H
+#ifndef HEMELB_LB_KERNELS_LBGKNN_H
+#define HEMELB_LB_KERNELS_LBGKNN_H
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/SimulationState.h"

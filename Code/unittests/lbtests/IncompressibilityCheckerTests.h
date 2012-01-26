@@ -1,11 +1,11 @@
-#ifndef HEMELB_UNITTESTS_LBTESTS_IMCOMPRESSIBILITYCHECKERTESTS_H
-#define HEMELB_UNITTESTS_LBTESTS_IMCOMPRESSIBILITYCHECKERTESTS_H
+#ifndef HEMELB_UNITTESTS_LBTESTS_INCOMPRESSIBILITYCHECKERTESTS_H
+#define HEMELB_UNITTESTS_LBTESTS_INCOMPRESSIBILITYCHECKERTESTS_H
 
 #include <cppunit/TestFixture.h>
 
 #include "lb/IncompressibilityChecker.hpp"
 #include "unittests/FourCubeLatticeData.h"
-#include "BroadcastMock.h"
+#include "unittests/lbtests/BroadcastMock.h"
 #include "unittests/reporting/Mocks.h"
 
 namespace hemelb
