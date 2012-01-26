@@ -1,4 +1,4 @@
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 #include <string>
 #include <iostream>

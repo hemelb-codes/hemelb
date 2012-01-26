@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_RAYTRACER_H
-#define HEMELB_VIS_RAYTRACER_H
+#ifndef HEMELB_VIS_RAYTRACER_RAYTRACER_H
+#define HEMELB_VIS_RAYTRACER_RAYTRACER_H
 
 #include <map>
 #include <stack>
@@ -102,4 +102,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_RAYTRACER_H
+#endif // HEMELB_VIS_RAYTRACER_RAYTRACER_H

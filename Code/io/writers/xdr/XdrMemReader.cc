@@ -5,7 +5,7 @@
  *      Author: rupert
  */
 
-#include "XdrMemReader.h"
+#include "io/writers/xdr/XdrMemReader.h"
 
 namespace hemelb
 {

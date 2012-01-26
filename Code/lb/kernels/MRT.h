@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STREAMERS_MRT_H
-#define HEMELB_LB_STREAMERS_MRT_H
+#ifndef HEMELB_LB_KERNELS_MRT_H
+#define HEMELB_LB_KERNELS_MRT_H
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/SimulationState.h"

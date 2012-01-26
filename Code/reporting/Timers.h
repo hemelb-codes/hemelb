@@ -4,7 +4,7 @@
 #include <vector>
 #include "reporting/Reportable.h"
 #include "util/utilityFunctions.h"
-#include "Policies.h"
+#include "reporting/Policies.h"
 namespace hemelb
 {
   namespace reporting

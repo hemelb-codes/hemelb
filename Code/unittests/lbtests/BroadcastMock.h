@@ -1,5 +1,5 @@
-#ifndef HEMELB_NET_BROADCASTMOCK_H
-#define HEMELB_NET_BROADCASTMOCK_H
+#ifndef HEMELB_UNITTESTS_LBTESTS_BROADCASTMOCK_H
+#define HEMELB_UNITTESTS_LBTESTS_BROADCASTMOCK_H
 
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/SimulationState.h"
@@ -131,5 +131,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_NET_BROADCASTMOCK_H */
-
+#endif /* HEMELB_UNITTESTS_LBTESTS_BROADCASTMOCK_H */

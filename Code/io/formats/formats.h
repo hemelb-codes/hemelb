@@ -1,5 +1,5 @@
-#ifndef HEMELB_IO_FORMATS_H
-#define HEMELB_IO_FORMATS_H
+#ifndef HEMELB_IO_FORMATS_FORMATS_H
+#define HEMELB_IO_FORMATS_FORMATS_H
 
 namespace hemelb
 {

@@ -9,7 +9,7 @@
 #include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/ClientConnection.h"
-#include "HttpPost.h"
+#include "steering/basic/HttpPost.h"
 
 namespace hemelb
 {

@@ -1,4 +1,4 @@
-#include "CommandLine.h"
+#include "configuration/CommandLine.h"
 #include <cstring>
 #include <cstdlib>
 namespace hemelb
