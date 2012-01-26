@@ -2,7 +2,6 @@
 #define HEMELBSETUPTOOL_SITE_H
 
 #include <vector>
-#include "geometry/SiteData.h"
 
 #include "Index.h"
 class Iolet;

@@ -1,8 +1,11 @@
 #include "ConfigWriter.h"
+#include "BlockWriter.h"
 
+#include "io/formats/formats.h"
+#include "io/formats/geometry.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "BlockWriter.h"
+
 
 ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 		int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin) :
@@ -20,7 +23,15 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 	{
 		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputConfigFile);
 
-		// Preamble
+		// Write the preamble
+
+		// General magic
+		encoder << static_cast<unsigned int>(hemelb::io::formats::HemeLbMagicNumber);
+		// Geometry magic
+		encoder << static_cast<unsigned int>(hemelb::io::formats::geometry::MagicNumber);
+		// Geometry file format version number
+		encoder << static_cast<unsigned int>(hemelb::io::formats::geometry::VersionNumber);
+
 		// Blocks in each dimension
 		for (unsigned int i = 0; i < 3; ++i)
 			encoder << this->BlockCounts[i];
@@ -35,6 +46,10 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 		// metres in the STL file's coordinate system
 		for (unsigned int i = 0; i < 3; ++i)
 			encoder << this->Origin[i];
+
+		// padding
+		encoder << 0U;
+		// TODO: Check that buffer length is 64 bytes
 
 		// (Dummy) Header
 
