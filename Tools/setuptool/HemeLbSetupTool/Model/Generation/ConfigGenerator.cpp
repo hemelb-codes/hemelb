@@ -8,9 +8,7 @@
 
 #include "Debug.h"
 
-
-#include "geometry/SiteData.h"
-
+#include "io/formats/geometry.h"
 
 #include "vtkPolyDataAlgorithm.h"
 #include "vtkOBBTree.h"
@@ -20,8 +18,10 @@
 #include "vtkCellData.h"
 #include "vtkDataSet.h"
 
+using namespace hemelb::io::formats;
+
 ConfigGenerator::ConfigGenerator() :
-		ClippedSurface(NULL), IsFirstSite(true) {
+	ClippedSurface(NULL), IsFirstSite(true) {
 	Neighbours::Init();
 	this->Locator = vtkOBBTree::New();
 	this->Locator->SetTolerance(1e-9);
@@ -40,65 +40,76 @@ void ConfigGenerator::Execute() {
 	this->Locator->SetDataSet(this->ClippedSurface);
 	this->Locator->BuildLocator();
 
+	/*
+	 * Get the scalars associated with the surface polygons. The scalars hold
+	 * the index of the Iolet which they represent, -1 meaning they aren't an
+	 * Iolet.
+	 */
+	this->IoletIdArray = vtkIntArray::SafeDownCast(this->ClippedSurface->GetCellData()->GetScalars());
+	if (this->IoletIdArray == NULL) {
+		// TODO: raise an exception
+		std::cout << "Error getting Iolet ID array from clipped surface" << std::endl;
+	}
+
 	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds());
 
 	ConfigWriter writer(this->OutputConfigFile, domain.GetBlockSize(),
 			domain.GetBlockCounts(), domain.GetVoxelSize(), domain.GetOrigin());
 
-	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
-			++blockIt) {
+	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		// case where there are no fluid sites).
 		BlockWriter* blockWriterPtr = writer.StartNextBlock();
-		// Get references to make the syntax nicer below!
-		BlockWriter& blockWriter = *blockWriterPtr;
 		Block& block = *blockIt;
 
-		for (SiteIterator siteIt = block.begin(); siteIt != block.end();
-				++siteIt) {
+		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
 			Site& site = **siteIt;
 			this->ClassifySite(site);
-			// cache the type cos it's probably slow to compute
-			unsigned int type = site.GetType();
-			uint64_t cfg = site.GetConfig();
-			blockWriter << cfg;
 
-			if (type == hemelb::geometry::SOLID_TYPE) {
-				//Solid sites, we don't do anything
-				continue;
+			if (site.IsFluid) {
+				blockWriterPtr->IncrementFluidSitesCount();
+				WriteFluidSite(*blockWriterPtr, site);
+			} else {
+				WriteSolidSite(*blockWriterPtr, site);
 			}
-			// Increase count of fluid sites
-			blockWriter.IncrementFluidSitesCount();
-
-			if (cfg == hemelb::geometry::FLUID_TYPE) {
-				// Pure fluid sites don't need any more data
-				continue;
-			}
-			// It must be INLET/OUTLET/EDGE
-
-			if (type == hemelb::geometry::INLET_TYPE || type == hemelb::geometry::OUTLET_TYPE) {
-				for (Vector::iterator bn = site.BoundaryNormal.begin();
-						bn != site.BoundaryNormal.end(); ++bn)
-					blockWriter << *bn;
-				blockWriter << site.BoundaryDistance;
-			}
-
-			if (site.IsEdge) {
-				for (Vector::iterator wn = site.WallNormal.begin();
-						wn != site.WallNormal.end(); ++wn)
-					blockWriter << *wn;
-				blockWriter << site.WallDistance;
-			}
-			for (std::vector<double>::iterator it = site.CutDistances.begin();
-					it != site.CutDistances.end(); ++it)
-				blockWriter << *it;
-
 		}
-		blockWriter.Finish();
+		blockWriterPtr->Finish();
 		delete blockWriterPtr;
 	}
 	writer.Close();
+}
+
+void ConfigGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
+	blockWriter << static_cast<unsigned int> (geometry::SOLID);
+	// That's all in this case.
+}
+
+void ConfigGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
+	blockWriter << static_cast<unsigned int> (geometry::FLUID);
+
+	// Iterate over the displacements of the neighbourhood
+	for (unsigned int i = 0; i < Neighbours::n; ++i) {
+		unsigned int cutType = site.Links[i].Type;
+
+		if (cutType == geometry::CUT_NONE) {
+			blockWriter << static_cast<unsigned int> (geometry::CUT_NONE);
+		} else if (cutType == geometry::CUT_WALL ||
+				   cutType == geometry::CUT_INLET ||
+				   cutType == geometry::CUT_OUTLET) {
+				blockWriter << static_cast<unsigned int> (cutType);
+				if (cutType == geometry::CUT_INLET ||
+			        cutType == geometry::CUT_OUTLET) {
+				    blockWriter << static_cast<unsigned int> (site.Links[i].IoletId);
+				}
+				blockWriter << static_cast<float> (site.Links[i].Distance);
+		} else {
+			// TODO: throw some exception
+			std::cout << "Unknown cut type " <<
+				static_cast<unsigned int> (cutType) << " for site " <<
+				site.GetIndex() << std::endl;
+		}
+	}
 }
 
 bool ConfigGenerator::GetIsFluid(Site& site) {
@@ -130,99 +141,52 @@ void ConfigGenerator::ClassifySite(Site& site) {
 		return;
 	}
 
-	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall();
-			++neighIt) {
-		Site& neigh = *neighIt;
-		if (!this->GetIsFluid(neigh)) {
-			// Link to a solid site
-			site.IsEdge = true;
-			unsigned int iNeigh = neighIt.GetNeighbourIndex();
+	// It is fluid, hence we need the vector of links
+	site.CreateLinksVector();
 
+	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall(); ++neighIt) {
+		Site& neigh = *neighIt;
+		unsigned int iNeigh = neighIt.GetNeighbourIndex();
+		LinkData& link = site.Links[iNeigh];
+
+		if (this->GetIsFluid(neigh)) {
+			// Link from fluid to fluid
+			link.Type = geometry::CUT_NONE;
+		} else {
+			// Link to a solid site
 			this->Locator->IntersectWithLine(&site.Position[0],
 					&neigh.Position[0], this->hitPoints, this->hitCellIds);
 			Vector hitPoint;
-			/*
-			 * First hit, assign the distance (in STL units for
-			 * now) to first intersection (i.e. CutDistance)
-			 * and the ID of the vtkPolygon which we
-			 * intersected (CutCellId).
-			 */
+
+			// First hit.
 			this->hitPoints->GetPoint(0, &hitPoint[0]);
-			site.CutDistances[iNeigh] = (hitPoint - site.Position).GetMagnitude();
-			site.CutCellIds[iNeigh] = this->hitCellIds->GetId(0);
 
-		}
-	}
+			// This is set in any solid case
+			link.Distance = (hitPoint - site.Position).GetMagnitude();
+			// The distance is in world units; must be output as a fraction of
+			// the lattice vector. Scale it.
+			link.Distance /= this->VoxelSize * Neighbours::norms[iNeigh];
 
-	if (!site.IsEdge)
-		// Nothing more to do for simple fluid sites
-		return;
+			// The index of the cell in the vtkPolyData that was hit
+			int hitCellId = this->hitCellIds->GetId(0);
+			// The value associated with that cell, which identifies what was hit.
+			int ioletId = this->IoletIdArray->GetValue(hitCellId);
 
-	/*
-	 * The CutDistances need to be fractions of the corresponding
-	 * lattice vector, rather than distances in lattice units or
-	 * physical units. HOWEVER, we need to know the distances to
-	 * the walls and Iolets in plain lattice units below, so only
-	 * scale by the VoxelSize for now and scale to vector fractions
-	 * once we're done.
-	 */
-	for (std::vector<double>::iterator it = site.CutDistances.begin();
-			it != site.CutDistances.end(); ++it)
-		*it /= this->VoxelSize;
-
-	/*
-	 * Get the normals and scalars associated with the surface
-	 * polygons. The scalars hold the index of the Iolet which they
-	 * represent, -1 meaning they aren't an Iolet.
-	 */
-	vtkCellData* celldata = this->ClippedSurface->GetCellData();
-	vtkDataArray* normals = celldata->GetNormals();
-	vtkIntArray* ioletIds = static_cast<vtkIntArray*>(celldata->GetScalars());
-
-	// Set this to false for now, if it's adjacent to a wall will reset later
-	site.IsEdge = false;
-
-	int hitCellId, ioletId;
-
-	for (unsigned int iNeigh = 0; iNeigh < Neighbours::n; ++iNeigh) {
-		hitCellId = site.CutCellIds[iNeigh];
-		/* The site.CutCellsIds array is initialised to -1 and then
-		 * updated with the index of the first vtkPolygon they
-		 * intersect.
-		 */
-		if (hitCellId == -1) {
-			// We didn't hit in this direction.
-			continue;
-		}
-
-		ioletId = ioletIds->GetValue(hitCellId);
-		if (ioletId >= 0) {
-			// It's an iolet
-			if (site.CutDistances[iNeigh] < site.BoundaryDistance) {
-				// It is the closest yet
-				site.AdjacentIolet = this->Iolets[ioletId];
-				// TODO: confirm this should be in lattice units
-				site.BoundaryDistance = site.CutDistances[iNeigh];
-				site.BoundaryNormal = site.AdjacentIolet->Normal;
-				site.BoundaryId = site.AdjacentIolet->Id;
-			}
-
-		} else {
-			// It's wall
-			site.IsEdge = true;
-			if (site.CutDistances[iNeigh] < site.WallDistance) {
-				// If it's the closest point yet, store it
-				site.WallDistance = site.CutDistances[iNeigh];
-				normals->GetTuple(hitCellId, &site.WallNormal[0]);
+			if (ioletId < 0) {
+				// -1 => we hit a wall
+				link.Type = geometry::CUT_WALL;
+			} else {
+				// We hit an inlet or outlet
+				Iolet* iolet = this->Iolets[ioletId];
+				if (iolet->IsInlet) {
+					link.Type = geometry::CUT_INLET;
+				} else {
+					link.Type = geometry::CUT_OUTLET;
+				}
+				// Set the Id
+				link.IoletId = iolet->Id;
 			}
 		}
-
 	}
-	/*
-	 * Scale to be fractions of lattice vectors instead of
-	 * distances in lattice units; see above for more.
-	 */
-	for (unsigned int i = 0; i < Neighbours::n; ++i)
-		site.CutDistances[i] /= Neighbours::norms[i];
 }
 

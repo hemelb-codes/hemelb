@@ -9,19 +9,20 @@ class vtkPolyData;
 class vtkOBBTree;
 class vtkPoints;
 class vtkIdList;
+class vtkIntArray;
 
 #include "GetSet.h"
 #include "Iolet.h"
 
 class ConfigWriter;
 class Site;
+class BlockWriter;
 
 class ConfigGenerator {
 public:
 	ConfigGenerator();
 	~ConfigGenerator();
 	void Execute();
-	void ClassifySite(Site& site);
 	bool GetIsFluid(Site& site);
 
 	inline double GetVoxelSize(void) {
@@ -67,7 +68,11 @@ public:
 		this->ClippedSurface = val;
 	}
 
-protected:
+private:
+	void ClassifySite(Site& site);
+	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
+	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
+
 	// Members set from outside to initialise
 	double VoxelSize;
 	std::string OutputConfigFile;
@@ -80,6 +85,7 @@ protected:
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
 	bool IsFirstSite;
+	vtkIntArray* IoletIdArray;
 };
 
 #endif // HEMELBSETUPTOOL_CONFIGGENERATOR_H
