@@ -3,10 +3,10 @@
 #include "Site.h"
 #include "Block.h"
 #include "Domain.h"
-
 #include "Iolet.h"
-
 #include "Neighbours.h"
+
+#include "geometry/SiteData.h"
 
 // C'tor
 Site::Site(Block& block, Index& index) :
