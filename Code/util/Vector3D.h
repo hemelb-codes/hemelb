@@ -1,8 +1,9 @@
 #ifndef HEMELB_UTIL_VECTOR3D_H
 #define HEMELB_UTIL_VECTOR3D_H
 
-#include <cassert>
-#include "log/Logger.h"
+#include <cmath>
+#include <iterator>
+#include <ostream>
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -11,37 +12,141 @@ namespace hemelb
   {
     namespace Direction
     {
+      /**
+       * The Cartesian directions.
+       */
       enum Direction
       {
-        X,
-        Y,
+        X,//!< X
+        Y,//!< Y
         Z
+      //!< Z
       };
     }
 
-    //Vector3D is essentially a 3D vector, storing the 
-    //x, y and z co-ordinate in the templated numeric type
-    //Other methods are defined for convenience
-    template<class T>
-    class Vector3D
+    /**
+     * Base class for Vector3D that handles IndexError.
+     *
+     * Note that we DO NOT initialise the static member variable
+     * HandlerFunction* handler in Vector3D.cc, as you might expect!
+     * The reason is that we want to use different handlers within HemeLB
+     * and the setup tool. For HemeLB proper, this initialisation is done in
+     * Vector3DHemeLb.cc
+     */
+    class Vector3DBase
     {
       public:
+        /**
+         * Typedef for the error handler function.
+         */
+        typedef void ( HandlerFunction)(int direction);
+
+        /**
+         * Set the function used to handle errors, overriding the default.
+         *
+         * @param A pointer to the function to use to deal with an index
+         * error. Must raise an exception or terminate the simulation or
+         * similar.
+         */
+        static void SetIndexErrorHandler(HandlerFunction* func);
+      protected:
+        /**
+         * Called by subclasses to handle an index error. Wraps the real
+         * function used.
+         *
+         * @param The (out of range) index supplied
+         */
+        static HandlerFunction HandleIndexError;
+      private:
+        /**
+         * The pointer to the real handler function to use.
+         */
+        static HandlerFunction* handler;
+    };
+
+    // Forward definition of template class fully defined below.
+    template<typename T> class Vector3DIterator;
+
+    /**
+     * Three dimensional vector class template.
+     *
+     * It exposes its members publicly for use and overloads arithmetic
+     * operators as well as providing a number of useful methods. Other
+     * methods are defined for convenience
+     */
+    template<class T>
+    class Vector3D : public Vector3DBase
+    {
+      public:
+        /**
+         * The type of the element
+         */
+        typedef T value_type;
+
+        /**
+         * An iterator over elements of this Vector3D
+         */
+        typedef Vector3DIterator<T> iterator;
+
+        /**
+         * Iterator pointing to first element of the Vector3D.
+         * @return
+         */
+        iterator begin()
+        {
+          return iterator(*this, 0U);
+        }
+
+        /**
+         * Iterator pointing just past the last element of the Vector3D.
+         * @return
+         */
+        iterator end()
+        {
+          return iterator(*this, 3U);
+        }
+
+        // Be friends with all other Vec3 instantiations.
+        // template<class > friend class Vector3D;
+
+        /**
+         * x, y and z components.
+         */
         T x, y, z;
 
-        Vector3D()
+        /**
+         * Default constructor, instantiates with zeros.
+         */
+        Vector3D() :
+          x(0), y(0), z(0)
         {
         }
 
+        /**
+         * Constructor accepting elements
+         * @param x-component
+         * @param y-component
+         * @param z-component
+         */
         Vector3D(const T iX, const T iY, const T iZ) :
           x(iX), y(iY), z(iZ)
         {
         }
 
+        /**
+         * Constructor filling in each component with the supplied argument.
+         * @param used for all components
+         */
         Vector3D(const T iX) :
           x(iX), y(iX), z(iX)
         {
         }
 
+        /**
+         * Get a component by Direction
+         * @param lDirection
+         * @return The component
+         */
         T GetByDirection(Direction::Direction lDirection)
         {
           switch (lDirection)
@@ -59,12 +164,18 @@ namespace hemelb
               break;
 
             default:
-              // TODO need to find a way of handling this case better.
-              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
-              assert(false);
+              HandleIndexError(lDirection);
+              // HandleIndexError will either throw or bring the simulation
+              // down. We include this return statement to suppress warnings!
+              return x;
           }
         }
 
+        /**
+         * Get a component by index (x = 0, y = 1, z = 2).
+         * @param index
+         * @return component
+         */
         T& operator[](int index)
         {
           switch (index)
@@ -82,12 +193,18 @@ namespace hemelb
               break;
 
             default:
-              // TODO need to find a way of handling this case better.
-              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
-              assert(false);
+              HandleIndexError(index);
+              // HandleIndexError will either throw or bring the simulation
+              // down. We include this return statement to suppress warnings!
+              return x;
           }
         }
 
+        /**
+         * Get a component by index (x = 0, y = 1, z = 2).
+         * @param index
+         * @return component
+         */
         const T& operator[](int index) const
         {
           switch (index)
@@ -105,13 +222,17 @@ namespace hemelb
               break;
 
             default:
-              // TODO need to find a way of handling this case better.
-              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
-              assert(false);
+              HandleIndexError(index);
+              // HandleIndexError will either throw or bring the simulation
+              // down. We include this return statement to suppress warnings!
+              return x;
           }
         }
 
-        //Copy constructor - can be used to perform type conversion
+        /**
+         * Copy constructor. Can perform type conversion.
+         * @param source
+         */
         template<class OldTypeT>
         Vector3D<T> (const Vector3D<OldTypeT> & iOldVector3D)
         {
@@ -120,7 +241,9 @@ namespace hemelb
           z = (T) (iOldVector3D.z);
         }
 
-        //Equality
+        /**
+         * Equality
+         */
         bool operator==(const Vector3D<T> right) const
         {
           if (x != right.x)
@@ -139,13 +262,79 @@ namespace hemelb
           return true;
         }
 
-        //Vector addition
-        Vector3D<T> operator+(const Vector3D<T> right) const
+        /**
+         * In-place normalisation (i.e. this will be a unit vector).
+         * @return reference to this
+         */
+        Vector3D& Normalise()
+        {
+          (*this) /= GetMagnitude();
+          return *this;
+        }
+
+        /**
+         * Compute the unit vector that points in this direction.
+         * @return the unit vector
+         */
+        Vector3D GetNormalised() const
+        {
+          Vector3D normed(*this);
+          normed.Normalise();
+          return normed;
+        }
+
+        /**
+         * Dot product between this vector and another
+         * @param other
+         * @return
+         */
+        T Dot(const Vector3D& otherVector) const
+        {
+          return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
+        }
+        /**
+         * Dot product between two Vector3Ds.
+         * @param V1
+         * @param V2
+         * @return
+         */
+        static T Dot(const Vector3D &V1, const Vector3D &V2)
+        {
+          return V1.Dot(V2);
+        }
+        /**
+         * Compute the magnitude squared of the vector
+         * @return magnitude**2
+         */
+        T GetMagnitudeSquared() const
+        {
+          return this->Dot(*this);
+        }
+
+        /**
+         * Compute the magnitude of the vector
+         * @return magnitude
+         */
+        T GetMagnitude() const
+        {
+          return std::sqrt(GetMagnitudeSquared());
+        }
+
+        /**
+         * Vector addition
+         * @param right
+         * @return this + right
+         */
+        Vector3D operator+(const Vector3D<T> right) const
         {
           return Vector3D(x + right.x, y + right.y, z + right.z);
         }
 
-        //Vector addition
+        /**
+         * In-place vector addition
+         * @param right
+         * @return the updated vector
+         */
         Vector3D& operator+=(const Vector3D<T> right)
         {
           x += right.x;
@@ -155,79 +344,134 @@ namespace hemelb
           return *this;
         }
 
-        //Normalisation
-        Vector3D<T>& Normalise()
+        /**
+         * Vector unary negation
+         * @return -this
+         */
+        Vector3D operator-() const
         {
-          T lInverseMagnitude = 1.0F / GetMagnitude();
-
-          x *= lInverseMagnitude;
-          y *= lInverseMagnitude;
-          z *= lInverseMagnitude;
-
-          return *this;
+          return Vector3D(-x, -y, -z);
         }
 
-        T GetMagnitude() const
-        {
-          return sqrtf(x * x + y * y + z * z);
-        }
-
-        //Dot product
-        T DotProduct(const Vector3D<T>& otherVector) const
-        {
-          return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
-        }
-
-        //Vector subraction
-        Vector3D<T> operator-(const Vector3D<T> right) const
+        /**
+         * Vector subtraction
+         * @param right
+         * @return this - right
+         */
+        Vector3D operator-(const Vector3D right) const
         {
           return Vector3D(x - right.x, y - right.y, z - right.z);
         }
 
-        //Scalar multiplication
+        /**
+         * In-place vector subtraction
+         * @param right
+         * @return this - right
+         */
+        Vector3D& operator-=(const Vector3D right)
+        {
+          x -= right.x;
+          y -= right.y;
+          z -= right.z;
+          return *this;
+        }
+
+        /**
+         * Multiplication by a scalar
+         * @param multiplier
+         * @return
+         */
         template<class MultiplierT>
-        Vector3D<T> operator*(const MultiplierT multiplier) const
+        Vector3D operator*(const MultiplierT multiplier) const
         {
           return Vector3D(x * multiplier, y * multiplier, z * multiplier);
         }
 
-        /*
-         * Scalar division
+        /**
+         * In-place multiplication by a scalar
+         * @param multiplier
+         * @return
          */
-        template<class DividerT>
-        Vector3D<T> operator/(const DividerT divider) const
+        template<class MultiplierT>
+        Vector3D& operator*=(const MultiplierT multiplier)
         {
-          return Vector3D(x / divider, y / divider, z / divider);
-        }
-
-        /*
-         * Scalar modulus
-         */
-        template<class ModuloT>
-        Vector3D<ModuloT> operator%(const ModuloT divider) const
-        {
-          return Vector3D(x % divider, y % divider, z % divider);
+          x *= multiplier;
+          y *= multiplier;
+          z *= multiplier;
+          return *this;
         }
 
         /**
-         * Pointwise multiplication
+         * Division by a scalar
+         * @param divisor
+         * @return
          */
-        Vector3D<T> PointwiseMultiplication(const Vector3D<T>& rightArgument) const
+        template<class DivisorT>
+        Vector3D operator/(const DivisorT divisor) const
+        {
+          return Vector3D(x / divisor, y / divisor, z / divisor);
+        }
+
+        /**
+         * In-place divison by a scalar
+         * @param divisor
+         * @return
+         */
+        template<class DivisorT>
+        Vector3D& operator/=(const DivisorT divisor)
+        {
+          x /= divisor;
+          y /= divisor;
+          z /= divisor;
+          return *this;
+        }
+
+        /**
+         * Scalar modulus
+         * @param divisor
+         */
+        template<class ModuloT>
+        Vector3D operator%(const ModuloT divisor) const
+        {
+          return Vector3D(x % divisor, y % divisor, z % divisor);
+        }
+
+        /**
+         * In-place scalar modulus
+         * @param divisor
+         */
+        template<class ModuloT>
+        Vector3D& operator%=(const ModuloT divisor)
+        {
+          x %= divisor;
+          y %= divisor;
+          z %= divisor;
+          return *this;
+        }
+
+        /**
+         * Point-wise multiplication
+         */
+        Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
         {
           return Vector3D(x * rightArgument.x, y * rightArgument.y, z * rightArgument.z);
         }
 
         /**
-         * Pointwise division
+         * Point-wise division
          */
-        Vector3D<T> PointwiseDivision(const Vector3D<T>& rightArgument) const
+        Vector3D PointwiseDivision(const Vector3D& rightArgument) const
         {
           return Vector3D(x / rightArgument.x, y / rightArgument.y, z / rightArgument.z);
         }
 
-        //Updates the Vector3D in with the smallest of each of the x, y and z
-        //co-ordinates independently of both Vector3Ds
-        void UpdatePointwiseMin(const Vector3D<T>& iCompareVector)
+        /**
+         * Updates the each component of this Vector3D with the smaller of the
+         * corresponding component in this and the other Vector3D.
+         *
+         * @param vector to compare against
+         */
+        void UpdatePointwiseMin(const Vector3D& iCompareVector)
         {
           x = util::NumericalFunctions::min(x, iCompareVector.x);
 
@@ -236,9 +480,13 @@ namespace hemelb
           z = util::NumericalFunctions::min(z, iCompareVector.z);
         }
 
-        //Updates the Vector3D with the largest of each of the x, y and z
-        //co-ordinates independently of both Vector3Ds
-        void UpdatePointwiseMax(const Vector3D<T>& iCompareVector)
+        /**
+         * Updates the each component of this Vector3D with the larger of the
+         * corresponding component in this and the other Vector3D.
+         *
+         * @param vector to compare against
+         */
+        void UpdatePointwiseMax(const Vector3D& iCompareVector)
         {
           x = util::NumericalFunctions::max(x, iCompareVector.x);
 
@@ -247,26 +495,158 @@ namespace hemelb
           z = util::NumericalFunctions::max(z, iCompareVector.z);
         }
 
-        static Vector3D<T> MaxLimit()
+        /**
+         * Vector filled with the maximum value for the element type.
+         * @return
+         */
+        static Vector3D MaxLimit()
         {
           return Vector3D(std::numeric_limits<T>::max());
         }
 
-        static Vector3D<T> MinLimit()
+        /**
+         * Vector filled with the minimum value for the element type.
+         * @return
+         */
+        static Vector3D MinLimit()
         {
           return Vector3D(std::numeric_limits<T>::min());
         }
 
-        static Vector3D<T> Unity()
+        /**
+         * Factory for Vector3Ds of ones.
+         * @return
+         */
+        static Vector3D Ones()
         {
-          return Vector3D<T> (1);
+          return Vector3D(1);
         }
 
-        static Vector3D<T> Zero()
+        /**
+         * Factory for Vector3Ds of zeros.
+         * @return
+         */
+        static Vector3D Zero()
         {
-          return Vector3D<T> (0);
+          return Vector3D(0);
         }
     };
+
+    /**
+     * Template class for iterators over the elements of a Vector3D instantiation.
+     */
+    template<typename T>
+    class Vector3DIterator : public std::iterator<std::forward_iterator_tag, T>
+    {
+      public:
+        /**
+         * The type of vector over which we will iterate.
+         */
+        typedef Vector3D<T> vector;
+      protected:
+        vector* vec; //!< The Vector3D
+        unsigned int i; //!< Current position in the vector
+
+      public:
+        /**
+         * Default constructor
+         */
+        Vector3DIterator() :
+          vec(NULL), i(0)
+        {
+        }
+
+        /**
+         * Construct an iterator over the given vector, starting at the given
+         * element
+         * @param vector
+         * @param element index
+         */
+        Vector3DIterator(vector& vec, unsigned int i = 0) :
+          vec(&vec), i(i)
+        {
+        }
+
+        /**
+         * Copy constructor.
+         * @param other
+         */
+        Vector3DIterator(const Vector3DIterator& other) :
+          vec(other.vec), i(other.i)
+        {
+        }
+
+        /**
+         * Assignment
+         * @param other
+         * @return
+         */
+        Vector3DIterator& operator=(const Vector3DIterator& other)
+        {
+          if (this == &other)
+          {
+            return (*this);
+          }
+          this->vec = other.vec;
+          this->i = other.i;
+
+          return (*this);
+        }
+
+        /**
+         * Advance to next element.
+         * @return the iterator advanced to the next position.
+         */
+        Vector3DIterator& operator++()
+        {
+          this->i++;
+          return *this;
+        }
+
+        /**
+         * Test for equality.
+         * @param other
+         * @return
+         */
+        bool operator==(const Vector3DIterator& other) const
+        {
+          return (this->vec == other.vec) && (this->i == other.i);
+        }
+
+        /**
+         * Test for inequality.
+         * @param other
+         * @return
+         */
+        bool operator!=(const Vector3DIterator& other) const
+        {
+          return ! (*this == other);
+        }
+
+        /**
+         * Dereference
+         * @return element at the current position.
+         */
+        T& operator*()
+        {
+          return (*this->vec)[this->i];
+        }
+
+        /**
+         * Deference
+         * @return pointer to element at the current position.
+         */
+        T* operator->()
+        {
+          return & (* (*this));
+        }
+    };
+
+    template<typename T>
+    std::ostream& operator<<(std::ostream& o, Vector3D<T> const& v3)
+    {
+      return o << "x: " << v3.x << "; y: " << v3.y << "; z: " << v3.z;
+    }
   }
 }
 

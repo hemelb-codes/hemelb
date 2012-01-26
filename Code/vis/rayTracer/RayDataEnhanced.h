@@ -149,7 +149,7 @@ namespace hemelb
                                            iRayLengthInVoxel,
                                            iVisSettings);
 
-            double lDotProduct = iRayDirection.DotProduct(*iWallNormal);
+            double lDotProduct = iRayDirection.Dot(*iWallNormal);
 
             // Scale the surface normal lightness between mParallelSurfaceAttenuation
             // and 1.0F
