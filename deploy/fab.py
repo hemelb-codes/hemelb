@@ -19,6 +19,8 @@ from fabric.contrib.project import *
 import time
 import re
 import numpy as np
+import yaml
+import tempfile
 
 @task
 def clone():
@@ -73,8 +75,9 @@ def update():
         execute(sync)
     else:
         with cd(env.repository_path):
-            run("hg pull")
-            run("hg update")
+            with prefix(env.build_prefix):
+                run("hg pull")
+                run("hg update")
 
 @task
 def prepare_paths():
@@ -168,6 +171,7 @@ def install_code_only():
         with prefix(env.build_prefix):
             run("make install")
             run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
+            run(template("cp $code_build_cache $build_cache")) # So that the stored cmake cache matches the active build
 
 @task
 def build(verbose=False):
@@ -377,12 +381,12 @@ def unit_test(**args):
     execute(job,**options)
 
 @task
-def hemelb(**args):
+def hemelb(config,**args):
     """Submit a HemeLB job to the remote queue.
     The job results will be stored with a name pattern of $config_${build_number}_${machine_name}_$cores,
     e.g. cylinder-abcd1234-legion-256
+    config : config directory to use to define geometry, e.g. config=cylinder
     Keyword arguments:
-            config : config directory to use to define geometry, e.g. config=cylinder
             cores : number of compute cores to request
             images : number of images to take
             snapshots : number of snapshots to take
@@ -390,12 +394,33 @@ def hemelb(**args):
             wall_time : wall-time job limit
             memory : memory per node
     """
-    options=dict(script='hemelb',
+    options=dict(config=config,script='hemelb',
             name='${config}_${build_number}_${machine_name}_$cores',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G')
     options.update(args)
-    execute(put_configs,args['config'])
+    execute(put_configs,config)
     execute(job,**options)
+    
+@task
+def hemelbs(config,**args):
+    """Submit multiple HemeLB jobs to the remote queue.
+    This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
+    The job results will be stored with a name pattern of $config_${build_number}_${machine_name}_$cores,
+    e.g. cylinder-abcd1234-legion-256
+    config : config directory to use to define geometry, e.g. config=cylinder
+    Keyword arguments:
+            cores : number of compute cores to request
+            images : number of images to take
+            snapshots : number of snapshots to take
+            steering : steering session i.d.
+            wall_time : wall-time job limit
+            memory : memory per node
+    """
+    for currentCores in input_to_range(args['cores'],4):   
+        hemeconfig={}
+        hemeconfig.update(args)
+        hemeconfig['cores']=currentCores
+        execute(hemelb,config,**hemeconfig)
 
 @task(alias='regress')
 def regression_test(**args):
@@ -428,6 +453,10 @@ def job(**args):
     run(template("mkdir -p $job_results"))
     run(template("cp $dest_name $job_results"))
     run(template("cp $build_cache $job_results"))
+    with tempfile.NamedTemporaryFile() as tempf:
+        tempf.write(yaml.dump(dict(env)))
+        tempf.flush() #Flush the file before we copy it.
+        put(tempf.name,env.pather.join(env.job_results,'env.yml'))
     run(template("chmod u+x $dest_name"))
     with cd(env.job_results):
         run(template("$job_dispatch $dest_name"))
@@ -459,14 +488,14 @@ def create_config(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cy
     p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.pro'))
     p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,profile)+'.stl')
     env.VoxelSize=str(VoxelSize).replace(".","_")
-    env.Steps=Steps
-    env.Cycles=Cycles
+    env.Steps=Steps or p.Steps
+    env.Cycles=Cycles or p.Cycles
     config=template(config_template)
     with_config(config)
     local(template("mkdir -p $job_config_path_local"))
     p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
     p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
-    p.VoxelSize=VoxelSize
+    p.VoxelSize=type(p.VoxelSize)(VoxelSize)
     p.Steps=Steps
     p.Cycles=Cycles
     if not p.IsReadyToGenerate:
@@ -487,9 +516,9 @@ def create_configs(profile,config_template="${profile}_${VoxelSize}_${Steps}_${C
                 execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
                 
 @task 
-def hemelb_profile(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cycles}",VoxelSize=None,Steps=None,Cycles=None,**args):
+def hemelb_profile(profile,config_template="${profile}_${VoxelSize}_${Steps}_${Cycles}",VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
     """Submit HemeLB job(s) to the remote queue.
-    The HemeLB config file(s) will be prepared according to the profile and profile arguments given.
+    The HemeLB config file(s) will optionally be prepared according to the profile and profile arguments given.
     This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
     """
     with_profile(profile)
@@ -499,10 +528,11 @@ def hemelb_profile(profile,config_template="${profile}_${VoxelSize}_${Steps}_${C
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
-                execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
-                for currentCores in input_to_range(args['cores'],4):   
-                    hemeconfig={}
-                    hemeconfig.update(args)
-                    hemeconfig['config']=template(config_template)
-                    hemeconfig['cores']=currentCores
-                    execute(hemelb,**hemeconfig)
+                env.VoxelSize=str(currentVoxelSize).replace(".","_")
+                env.Steps=currentSteps
+                env.Cycles=currentCycles
+                config=template(config_template)
+                with_config(config)
+                if create_configs in [True,"true","True"]:
+                    execute(create_config,profile,config_template,currentVoxelSize,currentSteps,currentCycles)
+                execute(hemelbs,config,**args)
