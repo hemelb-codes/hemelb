@@ -4,7 +4,8 @@
 #include <cmath>
 #include <iterator>
 #include <ostream>
-#include "util/utilityFunctions.h"
+#include <algorithm>
+#include <limits>
 
 namespace hemelb
 {
@@ -234,7 +235,7 @@ namespace hemelb
          * @param source
          */
         template<class OldTypeT>
-        Vector3D<T> (const Vector3D<OldTypeT> & iOldVector3D)
+        Vector3D(const Vector3D<OldTypeT> & iOldVector3D)
         {
           x = (T) (iOldVector3D.x);
           y = (T) (iOldVector3D.y);
@@ -317,7 +318,20 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          return std::sqrt(GetMagnitudeSquared());
+          if (std::numeric_limits<T>::is_integer)
+          {
+            // It is an error to use this method on an integer type.
+            // This should fail to compile as there is no return statement
+            // here.
+
+            // Ideally we would have:
+            // static_assert(!std::numeric_limits<T>::is_integer)
+            // here. But no Boost yet.
+          }
+          else
+          {
+            return std::sqrt(GetMagnitudeSquared());
+          }
         }
 
         /**
@@ -473,11 +487,11 @@ namespace hemelb
          */
         void UpdatePointwiseMin(const Vector3D& iCompareVector)
         {
-          x = util::NumericalFunctions::min(x, iCompareVector.x);
+          x = std::min(x, iCompareVector.x);
 
-          y = util::NumericalFunctions::min(y, iCompareVector.y);
+          y = std::min(y, iCompareVector.y);
 
-          z = util::NumericalFunctions::min(z, iCompareVector.z);
+          z = std::min(z, iCompareVector.z);
         }
 
         /**
@@ -488,11 +502,11 @@ namespace hemelb
          */
         void UpdatePointwiseMax(const Vector3D& iCompareVector)
         {
-          x = util::NumericalFunctions::max(x, iCompareVector.x);
+          x = std::max(x, iCompareVector.x);
 
-          y = util::NumericalFunctions::max(y, iCompareVector.y);
+          y = std::max(y, iCompareVector.y);
 
-          z = util::NumericalFunctions::max(z, iCompareVector.z);
+          z = std::max(z, iCompareVector.z);
         }
 
         /**
