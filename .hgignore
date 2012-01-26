@@ -40,8 +40,8 @@ Tests/diffTest/checkpoint.tmp
 Tests/diffTest/results*
 Tests/diffTest/CleanImages/temp_file.txt
 Tests/diffTest/env_details.asc
-Tools/setuptool/HemeLbSetupTool/Model/*.cpp
-Tools/setuptool/HemeLbSetupTool/Model/*.so
+Tools/setuptool/*.gdb
+Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
 Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
 Tools/visclients/hs_err*.log
