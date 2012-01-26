@@ -1,6 +1,0 @@
-rm -r ~/.local/lib/python2.7/site-packages/HemeLbSetup*
-rm -r ./build
-rm HemeLbSetupTool/Model/_Generation.so
-python setup.py clean
-python setup.py build_ext --inplace
-python setup.py install --user
