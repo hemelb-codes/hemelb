@@ -7,4 +7,4 @@
 #$$ -o $job_results/${job_name}.output
 $run_prefix
 #and run
-mpirun -np $cores $install_path/bin/unittests_hemelb -o 'tests.xml'
+/opt/openmpi/gfortran/1.4.3/bin/mpirun -np $cores $install_path/bin/unittests_hemelb -o 'tests.xml'
