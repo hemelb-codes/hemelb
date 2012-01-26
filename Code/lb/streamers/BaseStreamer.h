@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_STREAMERS_BASESTREAMER_H
 #define HEMELB_LB_STREAMERS_BASESTREAMER_H
 
-#include <math.h>
+#include <cmath>
 
 #include "geometry/LatticeData.h"
 #include "vis/Control.h"
@@ -111,7 +111,7 @@ namespace hemelb
               }
 
               // TODO: It'd be nice if the /iDensity were unnecessary.
-              distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
+              distribn_t lVelocity = std::sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
               iControl->RegisterSite(site.GetIndex(), iDensity, lVelocity, rtStress);
             }
           }

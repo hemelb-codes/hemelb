@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrReader.h"
 

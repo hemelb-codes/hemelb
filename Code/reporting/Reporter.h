@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <stdarg.h>
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "log/Logger.h"

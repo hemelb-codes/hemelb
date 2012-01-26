@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <cstdio>
 #include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 
@@ -15,7 +15,7 @@ namespace hemelb
         // object to write to it.
         XdrFileWriter::XdrFileWriter(const std::string& fileName, const std::string& mode)
         {
-          myFile = fopen(fileName.c_str(), mode.c_str());
+          myFile = std::fopen(fileName.c_str(), mode.c_str());
           xdrstdio_create(&mXdr, myFile, XDR_ENCODE);
         }
 
@@ -25,7 +25,7 @@ namespace hemelb
         XdrFileWriter::~XdrFileWriter()
         {
           xdr_destroy(&mXdr);
-          fclose(myFile);
+          std::fclose(myFile);
         }
 
       } // namespace xdr

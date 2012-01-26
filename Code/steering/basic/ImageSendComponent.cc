@@ -1,5 +1,5 @@
-#include <errno.h>
-#include <signal.h>
+#include <cerrno>
+#include <csignal>
 
 #include "log/Logger.h"
 #include "steering/ImageSendComponent.h"

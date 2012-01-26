@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 
 #include "log/Logger.h"
 #include "util/Vector3D.h"

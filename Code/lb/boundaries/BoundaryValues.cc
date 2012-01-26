@@ -3,7 +3,6 @@
 #include "util/fileutils.h"
 #include <algorithm>
 #include <fstream>
-#include <math.h>
 
 namespace hemelb
 {
