@@ -241,7 +241,7 @@ namespace hemelb
           util::Vector3D<float> interp_v =
               velocityField.InterpolateVelocityForPoint(particles[n].position, localVelocityField);
 
-          float vel = interp_v.DotProduct(interp_v);
+          float vel = interp_v.Dot(interp_v);
 
           if (vel > 1.0F)
           {

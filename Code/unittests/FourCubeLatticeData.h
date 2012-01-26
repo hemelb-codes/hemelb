@@ -28,7 +28,7 @@ namespace hemelb
           readResult.voxelSize = 0.01;
           readResult.origin = util::Vector3D<distribn_t>::Zero();
           readResult.blockSize = sitesPerBlockUnit;
-          readResult.blocks = util::Vector3D<site_t>::Unity();
+          readResult.blocks = util::Vector3D<site_t>::Ones();
 
           readResult.Blocks = std::vector < hemelb::geometry::BlockReadResult > (1);
 

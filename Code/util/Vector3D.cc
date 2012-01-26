@@ -1,36 +1,30 @@
+#include <cstdlib>
+#include <iostream>
 #include "util/Vector3D.h"
-#include "mpiInclude.h"
-#include "units.h"
 
 namespace hemelb
 {
-  template<typename vectorType>
-  MPI_Datatype GenerateTypeForVector()
+  namespace util
   {
-    const int typeCount = 1;
-    int blocklengths[typeCount] = { 3 };
 
-    MPI_Datatype types[typeCount] = { MpiDataType<vectorType> () };
+    void Vector3DBase::SetIndexErrorHandler(Vector3DBase::HandlerFunction* func)
+    {
+      Vector3DBase::handler = func;
+    }
 
-    MPI_Aint displacements[typeCount] = { 0 };
+    void Vector3DBase::HandleIndexError(int direction)
+    {
+      if (Vector3DBase::handler == NULL)
+      {
+        std::cout << "Vector3D index error handler not set when index error "
+          "occurred" << std::endl;
+        std::exit(1);
+      }
+      else
+      {
+        Vector3DBase::handler(direction);
+      }
+    }
 
-    MPI_Datatype ret;
-
-    MPI_Type_struct(typeCount, blocklengths, displacements, types, &ret);
-
-    MPI_Type_commit(&ret);
-    return ret;
-  }
-
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
-  {
-    return GenerateTypeForVector<float> ();
-  }
-
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
-  {
-    return GenerateTypeForVector<site_t> ();
   }
 }
