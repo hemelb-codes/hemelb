@@ -2,7 +2,6 @@
 #define HEMELB_UTIL_VECTOR3D_H
 
 #include <cassert>
-#include "constants.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 

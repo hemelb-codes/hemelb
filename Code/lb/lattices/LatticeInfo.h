@@ -2,6 +2,7 @@
 #define HEMELB_LB_LATTICES_LATTICEINFO_H
 
 #include "util/Vector3D.h"
+#include "units.h"
 
 namespace hemelb
 {
