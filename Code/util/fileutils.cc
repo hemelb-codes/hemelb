@@ -1,10 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <unistd.h>
 #include <dirent.h>
-#include <cstdlib>
 #include <sys/dir.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,14 +42,14 @@ namespace hemelb
       if (!file_exists(filename))
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
-        exit(0);
+        std::exit(0);
       }
     }
 
     // Function to select directory contents that are not "." or ".."
     int selectOnlyContents(direct_t *entry)
     {
-      if ( (strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
+      if ( (std::strcmp(entry->d_name, ".") == 0) || (std::strcmp(entry->d_name, "..") == 0))
       {
         return 0;
 
@@ -112,7 +111,7 @@ namespace hemelb
 
       for (int i = 0; i < file_count; i++)
       {
-        snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
+        std::snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
         unlink(filename);
       }
       return 0;

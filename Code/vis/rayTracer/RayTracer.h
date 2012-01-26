@@ -4,8 +4,8 @@
 #include <map>
 #include <stack>
 #include <vector>
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <limits>
 
 #include "constants.h"

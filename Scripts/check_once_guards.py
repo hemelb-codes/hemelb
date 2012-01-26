@@ -13,21 +13,25 @@ def WorkingDirectory(dst_dir):
     finally:
         os.chdir(current_dir)
 
-includeFinder = re.compile(r'\A#include\s+"(.+?)"')
-def FileNonSystemIncludedFileGenerator(filename):
+# Want to match: start of line; '#include'; one or more space;
+# double quote; anything (but non-greedily); double quote.
+nonSystemIncludeFinder = re.compile(r'\A#include\s+"(.+?)"')
+# As above, but with <...> 
+systemIncludeFinder = re.compile(r'\A#include\s+<(.+?)>')
+
+def IncludedFileGenerator(filename, includeFinder):
     """Given a filename, return a generator that will yield the line
-    numbers and paths included by non-system include statements in the
+    numbers and paths included by include statements in the
     file.
-    """
-    # Want to match: start of line; '#include'; one or more space;
-    # double quote; anything (but non-greedily); double quote.
-    
+    """    
     codefile = file(filename)
     for iLine, line in enumerate(codefile):
         match = includeFinder.match(line)
         if match:
             yield (iLine + 1), match.group(1)
 
+FileNonSystemIncludedFileGenerator = lambda filename: IncludedFileGenerator(filename, nonSystemIncludeFinder)
+FileSystemIncludedFileGenerator = lambda filename: IncludedFileGenerator(filename, systemIncludeFinder)
 
 extensions = set(('.cc', '.hpp', '.h'))
 def Walk(codeDir):
@@ -52,6 +56,39 @@ def CheckIncludePaths(sourceFile):
                 '{file}:{line} Bad include path "{dodgy}"\n'.format(file=sourceFile,
                                                                     line=lineNumber,
                                                                     dodgy=include)
+                )
+            errors = True
+    return errors
+
+cLibraryHeaders = set((
+    'assert.h',
+    'ctype.h',
+    'errno.h',
+    'float.h',
+    'iso646.h',
+    'limits.h',
+    'locale.h',
+    'math.h',
+    'setjmp.h',
+    'signal.h',
+    'stdarg.h',
+    'stddef.h',
+    'stdio.h',
+    'stdlib.h',
+    'string.h',
+    'time.h',
+    ))
+
+def CheckSystemIncludePaths(sourceFile):
+    errors = False
+    for lineNumber, include in FileSystemIncludedFileGenerator(sourceFile):
+        if include in cLibraryHeaders:
+            sys.stderr.write(
+                '{file}:{line} Use of deprecated C library header <{include}>\n'.format(
+                    file=sourceFile,
+                    line=lineNumber,
+                    include=include
+                    )
                 )
             errors = True
     return errors
@@ -118,14 +155,15 @@ if __name__ == '__main__':
         
         for sourceFile in Walk('.'):
             includeErrors = CheckIncludePaths(sourceFile)
+            sysIncludeErrors = CheckSystemIncludePaths(sourceFile)
             
             base, ext = os.path.splitext(sourceFile)
             if ext == '.h' or ext == '.hpp' or ext == '.in':
                 guardErrors = CheckGuardErrors(sourceFile)
             else:
                 guardErrors = False
-            errors = errors or (includeErrors or guardErrors)
-            
+            errors = errors or (includeErrors or sysIncludeErrors or guardErrors)
+
     if errors:
         raise SystemExit(1)
     

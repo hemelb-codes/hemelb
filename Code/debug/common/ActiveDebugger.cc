@@ -8,7 +8,7 @@
 #include <cerrno>
 #include <cstdio>
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -43,9 +43,9 @@ namespace hemelb
 
     void ActiveDebugger::Print(const char* iFormat, ...)
     {
-      va_list args;
+      std::va_list args;
       va_start(args, iFormat);
-      vprintf(iFormat, args);
+      std::vprintf(iFormat, args);
       va_end(args);
     }
 

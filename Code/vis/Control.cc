@@ -1,5 +1,5 @@
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <limits>
 
 #include "log/Logger.h"
