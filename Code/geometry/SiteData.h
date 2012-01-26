@@ -2,7 +2,7 @@
 #define HEMELB_GEOMETRY_SITEDATA_H
 
 #include "units.h"
-#include "geometry/GeometryReader.h"
+#include "geometry/ReadResult.h"
 
 namespace hemelb
 {
