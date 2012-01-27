@@ -33,9 +33,6 @@ default:
   remote_path_template: "$home_path/$fabric_dir"
   # Path to run filesystem folder
   work_path_template: "$runtime_path/$fabric_dir"
-  # Maximum number of characters permitted in the name of a job in the queue system
-  # -1 for unlimited
-  max_job_name_chars: -1
   install_path_template: "$remote_path/install"
   # Normally, the regression test can be run directly out of diffTest, but sometimes needs to be copied to a runtime file area.
   regression_test_path_template: "$regression_test_source_path"
