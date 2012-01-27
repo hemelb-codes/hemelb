@@ -25,7 +25,7 @@ class Result(object):
         self.name=os.path.basename(self.path)
         
         def index_parser(content,pattern):
-            return content[pattern]
+            return content.get(pattern)
         def regex_parser(content,pattern):
             match=re.search(pattern,content)
             if not match: return None
@@ -76,6 +76,9 @@ class Result(object):
             self.logger=logging.LoggerAdapter(logger,dict(file=fullpath))
             try:
                 content=loader(fullpath)
+                if not content:
+                    self.logger.error("Empty content.")
+                    raise IOError
                 self.define_properties(content,data,parser)
                 self.logger.debug("Parsed OK")
             except IOError:
@@ -85,4 +88,10 @@ class Result(object):
     def define_properties(self,content,data,parser):
         if not data: return
         for prop,pattern in data.iteritems():
-            setattr(self,prop,parser(content,pattern))
+            value=string_value=parser(content,pattern)
+            try:                   
+                value=float(string_value)
+                value=int(string_value)
+            except (TypeError,ValueError):
+                pass
+            setattr(self,prop,value)
