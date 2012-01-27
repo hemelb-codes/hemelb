@@ -5,6 +5,9 @@ results:
             sites: 'geometry/sites'
         'config.xml':
             steps: ['simulation','cyclesteps']
+        'tests.xml':
+            total_tests: 'Statistics/Tests'
+            failing_tests: 'Statistics/FailuresTotal'
     text_files:
         'results/report.txt':
             cores: 'Ran with ([\d]+) threads'
@@ -14,6 +17,7 @@ results:
             acceptance: 'Accepted: (.*)'
     name_properties:
         machine_by_name: '_([^_]*)_\d$'
+        name: '(.*)'
     yaml_files:
         'env.yml':
             type: script
