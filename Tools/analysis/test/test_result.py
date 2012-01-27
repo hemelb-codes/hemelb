@@ -20,8 +20,8 @@ class TestResultsCollection(unittest.TestCase):
 	def test_name_property(self):
 	    self.assertEqual('planck',self.rc.machine)
 	def test_text_property(self):
-	    self.assertEqual('1',self.rc.cores)
+	    self.assertEqual(1,self.rc.cores)
 	    self.assertEqual('Release',self.rc.build_type)
 	def test_xml_property(self):
-	    self.assertEqual('2.19',self.rc.total)
-	    self.assertEqual('1000',self.rc.steps)
+	    self.assertEqual(2.19,self.rc.total)
+	    self.assertEqual(1000,self.rc.steps)
