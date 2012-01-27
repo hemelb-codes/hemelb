@@ -1,6 +1,14 @@
-#Fri Dec 02 14:45:42 GMT 2011
+#Fri Jan 27 10:39:56 GMT 2012
 eclipse.preferences.version=1
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428=
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/HEMELB_MACHINE/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/HEMELB_MACHINE/operation=replace
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/HEMELB_MACHINE/value=OSX
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/PATH/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/PATH/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/PATH/value=/usr/bin/
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428.770148502/appendContributed=false
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/delimiter=\:
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/operation=append
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/value=CCS
