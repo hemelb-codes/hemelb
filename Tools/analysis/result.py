@@ -21,8 +21,9 @@ class Result(object):
         """path: the path to the result folder
            config: a dictionary specifying what aspects of the result folder to make into properties of the result
         """
-        self.path=path
+        self.path=os.path.expanduser(path)
         self.name=os.path.basename(self.path)
+        self.properties=[]
         
         def index_parser(content,pattern):
             return content.get(pattern)
@@ -94,4 +95,9 @@ class Result(object):
                 value=int(string_value)
             except (TypeError,ValueError):
                 pass
+            self.properties.append(prop)
             setattr(self,prop,value)
+    
+    def __str__(self):
+        propstring=', '.join(["%s : %s"%(prop,getattr(self,prop)) for prop in self.properties])
+        return "Result %s: [%s]"%(self.name,propstring)

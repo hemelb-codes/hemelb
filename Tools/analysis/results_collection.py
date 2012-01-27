@@ -16,4 +16,8 @@ class ResultsCollection(object):
         # Glob over the source path results collection
         results=os.listdir(os.path.expanduser(source_path))
         self.results=[Result(os.path.join(source_path,result),config) for result in results]
-        
+    def filter(self,selection,invert=False):
+        def filtration(result):
+            ok=all([getattr(result,prop)==value for prop,value in selection.iteritems()])
+            return ok if not invert else not ok
+        return filter(filtration,self.results)

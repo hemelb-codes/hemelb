@@ -18,4 +18,5 @@ config=yaml.load(open(os.path.join(localroot,'Tools','analysis','config_defaults
 config.update(yaml.load(open(os.path.join(localroot,'Tools','analysis','config.yml'))))
 
 dc=yaml.load(open(os.path.join(localroot,'Tools','analysis','logging.yml')))
+dc['handlers']['parsing']['filename']=os.path.expanduser(os.path.join(config['reports_path'],'parsing.log'))
 logging.config.dictConfig(dc)

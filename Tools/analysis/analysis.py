@@ -29,7 +29,7 @@ class Analysis(object):
         
     def prepare(self):
         for report in self.reports.itervalues():
-            report.prepare(self.results.results)
+            report.prepare(self.results)
             
     def write(self):
         for label,report in self.reports.iteritems():
