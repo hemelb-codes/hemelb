@@ -29,7 +29,9 @@ class Graph(object):
                 result.select.update(specialisation['select'])
             for prop in ['curves','dependent','independent']:
                 if prop in specialisation:
-                    getattr(result,prop).append(specialisation[prop])
+                    if not hasattr(result,prop):
+                        setattr(result,prop,[])
+                    getattr(result,prop).extend(specialisation[prop])
         return result
     def prepare(self,results):
         def filtration(result):
@@ -37,11 +39,17 @@ class Graph(object):
         self.filtered_results=filter(filtration,results)
         def curve_key(result):
             return tuple([getattr(result,prop) for prop in self.curves])
+        def sort_key(result):
+            return tuple([getattr(result,prop) for prop in self.independent])
         self.curve_results={key:list(group) for key,group in itertools.groupby(sorted(self.filtered_results,key=curve_key),curve_key)}
         # for now, support only a single dependent and a single independent variable on each curve
-        self.curve_data={curve:[ (getattr(result,self.independent[0]),getattr(result,self.dependent[0]))+curve for result in results ] for curve,results in self.curve_results.iteritems()}
+        self.curve_data={
+            curve:[ 
+                (getattr(result,self.independent[0]),getattr(result,self.dependent[0]))+curve
+                    for result in sorted(results,key=sort_key)
+                        ] for curve,results in self.curve_results.iteritems()}
     def write_data(self,csv_file):
-        writer=csv.writer(csv_file)
+        writer=csv.writer(csv_file,lineterminator="\n",quoting=csv.QUOTE_NONNUMERIC)
         fieldnames=[self.independent[0],self.dependent[0]]+self.curves
         csv_file.write("#CSV File produced by hemelb reporter\n")
         csv_file.write("#Groups are separated by "+str(tuple(self.curves))+"\n#")
