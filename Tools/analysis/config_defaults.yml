@@ -10,6 +10,8 @@ results:
             cores: 'Ran with ([\d]+) threads'
         'CMakeCache.txt':
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
+        'acceptance.txt':
+            acceptance: 'Accepted: (.*)'
     name_properties:
         machine_by_name: '_([^_]*)_\d$'
     yaml_files:

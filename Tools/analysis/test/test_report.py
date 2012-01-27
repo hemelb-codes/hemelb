@@ -29,8 +29,8 @@ class TestReport(unittest.TestCase):
         self.assertEqual(['total'],r.graphs['performance_versus_cores'].dependent)
         self.assertEqual(['sites'],r.graphs['performance_versus_cores'].independent)
     def test_prepare(self):
-        self.r.prepare(self.results.results)
+        self.r.prepare(self.results)
     def test_write(self):
-        self.r.prepare(self.results.results)
+        self.r.prepare(self.results)
         self.r.write(fixtures.ReportOutput('planck_performance').path)
         

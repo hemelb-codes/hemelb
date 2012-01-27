@@ -34,9 +34,7 @@ class Graph(object):
                     getattr(result,prop).extend(specialisation[prop])
         return result
     def prepare(self,results):
-        def filtration(result):
-            return all([getattr(result,prop)==value for prop,value in self.select.iteritems()])
-        self.filtered_results=filter(filtration,results)
+        self.filtered_results=results.filter(self.select)
         def curve_key(result):
             return tuple([getattr(result,prop) for prop in self.curves])
         def sort_key(result):
