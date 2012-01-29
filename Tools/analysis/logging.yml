@@ -11,10 +11,12 @@ handlers:
     formatter: simple
     stream: ext://sys.stdout
   parsing:
-    class: logging.StreamHandler
-    level: DEBUG
+    class: logging.handlers.RotatingFileHandler
+    filename: 'parsing.log'
+    level: WARN
     formatter: parsing
-    stream: ext://sys.stdout
+    backupCount: 2
+    maxBytes: 65536
 loggers:
   parsing:
     level: DEBUG
