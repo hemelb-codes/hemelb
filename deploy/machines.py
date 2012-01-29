@@ -25,6 +25,9 @@ env.cmake_options={}
 env.pather=posixpath
 env.remote=None
 env.machine_name=None
+# Maximum number of characters permitted in the name of a job in the queue system
+# -1 for unlimited
+env.max_job_name_chars=None
 
 @task
 def machine(name):

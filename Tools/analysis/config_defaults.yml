@@ -10,30 +10,60 @@ results:
             cores: 'Ran with ([\d]+) threads'
         'CMakeCache.txt':
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
+        'acceptance.txt':
+            acceptance: 'Accepted: (.*)'
     name_properties:
         machine_by_name: '_([^_]*)_\d$'
     yaml_files:
         'env.yml':
             type: script
             machine: machine_name
+            build_number: build_number
 
 graphs:
-    performance_versus_core:
+    performance_versus_size:
         name: "Performance on ${machine} versus number of sites"
         select:
             type: hemelb
-        curves:
-            - cores
         dependent:
             - total
         independent:
             - sites
+    performance_versus_cores:
+        name: "Performance on ${machine} versus number of sites"
+        select:
+            type: hemelb
+        dependent:
+            - total
+        independent:
+            - cores
             
 reports:
-    performance_on_planck:
-        name: Performance on planck
-        graphs:
-            performance_versus_core:
-        defaults:
-            select:
-                machine: planck
+  performance_on_planck:
+    name: "Performance report for Planck"
+    defaults:
+      select:
+        machine: planck
+      curves:
+        - build_number
+    graphs:
+      performance_versus_cores:
+        curves:
+          - sites
+      performance_versus_size:
+        curves:
+          - cores
+  performance_on_oppenheimer:
+    name: "Performance report for Oppenheimer"
+    defaults:
+      select:
+        machine: oppenheimer
+      curves:
+        - build_number
+    graphs:
+      performance_versus_cores:
+        curves:
+          - sites
+      performance_versus_size:
+        curves:
+          - cores
