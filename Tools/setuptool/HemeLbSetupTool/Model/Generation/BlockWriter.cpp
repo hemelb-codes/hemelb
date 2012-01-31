@@ -1,11 +1,11 @@
 #include <cstdio>
 
 #include "BlockWriter.h"
-#include "ConfigWriter.h"
+#include "GeometryWriter.h"
 #include "Neighbours.h"
 
-BlockWriter::BlockWriter(ConfigWriter &cfg) :
-	configWriter(&cfg), nFluidSites(0) {
+BlockWriter::BlockWriter(GeometryWriter &cfg) :
+	geometryWriter(&cfg), nFluidSites(0) {
 	this->maxBufferSize = geometry::GetMaximumBlockRecordLength(cfg.BlockSize);
 	this->buffer = new char[this->maxBufferSize];
 	this->memWriter = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
@@ -28,10 +28,10 @@ void BlockWriter::Finish() {
 		blockLength = this->memWriter->getCurrentStreamPosition();
 
 		// Write the buffer contents to the file.
-		std::fwrite(this->buffer, 1, blockLength, this->configWriter->bodyFile);
+		std::fwrite(this->buffer, 1, blockLength, this->geometryWriter->bodyFile);
 	}
 
 	// If there are no fluid sites, write nothing except two zeros to the header.
 	// If there are fluid sites, blockLength was set above.
-	(*this->configWriter->headerEncoder) << this->nFluidSites << blockLength;
+	(*this->geometryWriter->headerEncoder) << this->nFluidSites << blockLength;
 }

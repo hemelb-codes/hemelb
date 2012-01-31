@@ -9,7 +9,7 @@ from vtk import vtkSTLReader, vtkTransform, vtkTransformFilter
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-from HemeLbSetupTool.Model.OutputGeneration import ConfigGenerator
+from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
 
 #import pdb
 
@@ -40,7 +40,7 @@ class Profile(Observable):
              'Iolets': ObservableList(),
              'VoxelSize': 0.,
              'SeedPoint': Vector(),
-             'OutputConfigFile': None,
+             'OutputGeometryFile': None,
              'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
     
@@ -74,13 +74,13 @@ class Profile(Observable):
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
-        self.AddDependency('HaveValidOutputConfigFile', 'OutputConfigFile')
+        self.AddDependency('HaveValidOutputGeometryFile', 'OutputGeometryFile')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.x')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.y')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.z')
         self.AddDependency('IsReadyToGenerate', 'HaveValidStlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
-        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputConfigFile')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputGeometryFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
         
@@ -147,8 +147,8 @@ class Profile(Observable):
     def HaveValidOutputXmlFile(self):
         return IsFileValid(self.OutputXmlFile, ext='.xml')
     @property
-    def HaveValidOutputConfigFile(self):
-        return IsFileValid(self.OutputConfigFile, ext='.dat')
+    def HaveValidOutputGeometryFile(self):
+        return IsFileValid(self.OutputGeometryFile, ext='.gmy')
     
     @property
     def IsReadyToGenerate(self):
@@ -159,7 +159,7 @@ class Profile(Observable):
             return False
         if not self.HaveValidOutputXmlFile:
             return False
-        if not self.HaveValidOutputConfigFile:
+        if not self.HaveValidOutputGeometryFile:
             return False
         if not self.HaveValidStlFile:
             return False
@@ -180,8 +180,8 @@ class Profile(Observable):
         restored.StlFile = os.path.abspath(
             os.path.join(basePath, restored.StlFile)
         )
-        restored.OutputConfigFile = os.path.abspath(
-            os.path.join(basePath, restored.OutputConfigFile)
+        restored.OutputGeometryFile = os.path.abspath(
+            os.path.join(basePath, restored.OutputGeometryFile)
         )
         restored.OutputXmlFile = os.path.abspath(
             os.path.join(basePath, restored.OutputXmlFile)
@@ -202,7 +202,7 @@ class Profile(Observable):
         return
     
     def Generate(self):
-        generator = ConfigGenerator(self)
+        generator = GeometryGenerator(self)
         generator.Execute()
         return
     
@@ -218,7 +218,7 @@ class Profile(Observable):
         # Now we need to make the paths relative to the directory of the pickle file
         state['StlFile'] = os.path.relpath(self.StlFile, self.BasePath)
         state['OutputXmlFile'] = os.path.relpath(self.OutputXmlFile, self.BasePath)
-        state['OutputConfigFile'] = os.path.relpath(self.OutputConfigFile, self.BasePath)
+        state['OutputGeometryFile'] = os.path.relpath(self.OutputGeometryFile, self.BasePath)
         return state
     
     pass

@@ -362,22 +362,22 @@ class OutputPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        configLabel = wx.StaticText(self, label='Output config')
-        self.configField = wx.TextCtrl(self)
-        controller.BindValue('OutputConfigFile',
+        geometryLabel = wx.StaticText(self, label='Output geometry')
+        self.geometryField = wx.TextCtrl(self)
+        controller.BindValue('OutputGeometryFile',
                              WxWidgetMapper(
-                                 self.configField, 'Value', wx.EVT_TEXT,
+                                 self.geometryField, 'Value', wx.EVT_TEXT,
                                  translator=NoneToValueTranslator('')
                                  )
                              )
-        controller.BindValue('HaveValidOutputConfigFile',
-                             NonObservingWxWidgetMapper(self.configField, 'BackgroundColour',
+        controller.BindValue('HaveValidOutputGeometryFile',
+                             NonObservingWxWidgetMapper(self.geometryField, 'BackgroundColour',
                                                         translator=controller.validColourer)
                              )
 
-        self.configChooseButton = wx.Button(self, label='Choose')
-        controller.BindAction('ChooseOutputConfigFile',
-                              WxActionBinding(self.configChooseButton, wx.EVT_BUTTON))
+        self.geometryChooseButton = wx.Button(self, label='Choose')
+        controller.BindAction('ChooseOutputGeometryFile',
+                              WxActionBinding(self.geometryChooseButton, wx.EVT_BUTTON))
 
         xmlLabel = wx.StaticText(self, label='Output xml')
         self.xmlField = wx.TextCtrl(self)
@@ -401,9 +401,9 @@ class OutputPanel(wx.Panel):
             (H((V((self.xmlField, 0, wx.EXPAND)), 1, wx.EXPAND),
                  self.xmlChooseButton
                  ), 0, wx.EXPAND),
-            configLabel,
-            (H((V((self.configField, 0, wx.EXPAND)), 1, wx.EXPAND),
-                 self.configChooseButton
+            geometryLabel,
+            (H((V((self.geometryField, 0, wx.EXPAND)), 1, wx.EXPAND),
+                 self.geometryChooseButton
                  ), 0, wx.EXPAND),
             )
 

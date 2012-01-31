@@ -1,4 +1,4 @@
-#include "ConfigWriter.h"
+#include "GeometryWriter.h"
 #include "BlockWriter.h"
 
 #include "io/formats/formats.h"
@@ -7,9 +7,9 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 
 
-ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
+GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin) :
-	OutputConfigFile(OutputConfigFile) {
+	OutputGeometryFile(OutputGeometryFile) {
 
 	// Copy in key data
 	this->BlockSize = BlockSize;
@@ -21,7 +21,7 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 	}
 
 	{
-		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputConfigFile);
+		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputGeometryFile);
 
 		// Write the preamble
 
@@ -73,10 +73,10 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile,
 	}
 	// "encoder" declared in the block above will now have been destructed, thereby closing the file.
 	// Reopen it for writing the blocks we're about to generate.
-	this->bodyFile = std::fopen(this->OutputConfigFile.c_str(), "a");
+	this->bodyFile = std::fopen(this->OutputGeometryFile.c_str(), "a");
 }
 
-ConfigWriter::~ConfigWriter() {
+GeometryWriter::~GeometryWriter() {
 	delete this->headerEncoder;
 	delete[] this->headerBuffer;
 	// Check this is still here as Close() will delete this
@@ -84,20 +84,20 @@ ConfigWriter::~ConfigWriter() {
 		std::fclose(this->bodyFile);
 }
 
-void ConfigWriter::Close() {
-	// Close the config
+void GeometryWriter::Close() {
+	// Close the geometry file
 	std::fclose(this->bodyFile);
 	this->bodyFile= NULL;
 
 	// Reopen it, write the header buffer, close it.
-	std::FILE* cfg = std::fopen(this->OutputConfigFile.c_str(), "r+");
+	std::FILE* cfg = std::fopen(this->OutputGeometryFile.c_str(), "r+");
 	std::fseek(cfg, this->headerStart, SEEK_SET);
 	std::fwrite(this->headerBuffer, 1, this->headerBufferLength, cfg);
 	std::fclose(cfg);
 
 }
 
-BlockWriter* ConfigWriter::StartNextBlock() {
+BlockWriter* GeometryWriter::StartNextBlock() {
 	return new BlockWriter(*this);
 }
 
