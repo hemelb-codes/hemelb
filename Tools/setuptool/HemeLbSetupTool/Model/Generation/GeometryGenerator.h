@@ -1,5 +1,5 @@
-#ifndef HEMELBSETUPTOOL_CONFIGGENERATOR_H
-#define HEMELBSETUPTOOL_CONFIGGENERATOR_H
+#ifndef HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
+#define HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
 
 #include <string>
 #include <vector>
@@ -14,14 +14,14 @@ class vtkIntArray;
 #include "GetSet.h"
 #include "Iolet.h"
 
-class ConfigWriter;
+class GeometryWriter;
 class Site;
 class BlockWriter;
 
-class ConfigGenerator {
+class GeometryGenerator {
 public:
-	ConfigGenerator();
-	~ConfigGenerator();
+	GeometryGenerator();
+	~GeometryGenerator();
 	void Execute();
 	bool GetIsFluid(Site& site);
 
@@ -32,11 +32,11 @@ public:
 		this->VoxelSize = val;
 	}
 
-	inline std::string GetOutputConfigFile(void) {
-		return this->OutputConfigFile;
+	inline std::string GetOutputGeometryFile(void) {
+		return this->OutputGeometryFile;
 	}
-	inline void SetOutputConfigFile(std::string val) {
-		this->OutputConfigFile = val;
+	inline void SetOutputGeometryFile(std::string val) {
+		this->OutputGeometryFile = val;
 	}
 
 	inline std::vector<Iolet*>& GetIolets() {
@@ -75,7 +75,7 @@ private:
 
 	// Members set from outside to initialise
 	double VoxelSize;
-	std::string OutputConfigFile;
+	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
 	double SeedPoint[3];
 	vtkPolyData* ClippedSurface;
@@ -88,4 +88,4 @@ private:
 	vtkIntArray* IoletIdArray;
 };
 
-#endif // HEMELBSETUPTOOL_CONFIGGENERATOR_H
+#endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H

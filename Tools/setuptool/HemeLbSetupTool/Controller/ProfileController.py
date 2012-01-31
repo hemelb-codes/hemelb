@@ -43,13 +43,13 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         dialog.Destroy()
         return
     
-    def ChooseOutputConfigFile(self, ignored=None):
+    def ChooseOutputGeometryFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT,
-                               wildcard='*.dat')
+                               wildcard='*.gmy')
 
         if dialog.ShowModal() == wx.ID_OK:
-            self.delegate.OutputConfigFile = dialog.GetPath()
+            self.delegate.OutputGeometryFile = dialog.GetPath()
             pass
         
         dialog.Destroy()

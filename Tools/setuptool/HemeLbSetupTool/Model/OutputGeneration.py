@@ -21,16 +21,16 @@ def DVfromV(v):
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
 
-class ConfigGenerator(object):
+class GeometryGenerator(object):
     def __init__(self, profile):
         """Clip the STL and set attributes on the SWIG-proxied C++ 
-        ConfigGenerator object.
+        GeometryGenerator object.
         """
         self.profile = profile
 
-        self.generator = Generation.ConfigGenerator()
+        self.generator = Generation.GeometryGenerator()
         self.generator.SetVoxelSize(profile.VoxelSize)
-        self.generator.SetOutputConfigFile(str(profile.OutputConfigFile))
+        self.generator.SetOutputGeometryFile(str(profile.OutputGeometryFile))
 
         # Construct the Iolet structs
         nIn = 0
@@ -401,7 +401,7 @@ class XmlWriter(object):
         geom = SubElement(self.root, 'geometry')
 
         data = SubElement(geom, 'datafile')
-        data.set('path', os.path.relpath(self.profile.OutputConfigFile,
+        data.set('path', os.path.relpath(self.profile.OutputGeometryFile,
                                          os.path.split(self.profile.OutputXmlFile)[0]))
         return
 

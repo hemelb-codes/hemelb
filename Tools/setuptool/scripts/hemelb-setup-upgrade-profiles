@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+
+import argparse
+p = argparse.ArgumentParser(description='Upgrade an saved profile from "config" to "geometry"')
+p.add_argument('input')
+p.add_argument('output')
+args = p.parse_args()
+
+from HemeLbSetupTool.Util.ProfileUpdateTools import Upgrade
+Upgrade(args.input, args.output)
