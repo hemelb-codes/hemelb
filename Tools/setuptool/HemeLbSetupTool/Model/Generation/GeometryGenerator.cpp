@@ -1,5 +1,5 @@
-#include "ConfigGenerator.h"
-#include "ConfigWriter.h"
+#include "GeometryGenerator.h"
+#include "GeometryWriter.h"
 
 #include "Neighbours.h"
 #include "Site.h"
@@ -20,7 +20,7 @@
 
 using namespace hemelb::io::formats;
 
-ConfigGenerator::ConfigGenerator() :
+GeometryGenerator::GeometryGenerator() :
 	ClippedSurface(NULL), IsFirstSite(true) {
 	Neighbours::Init();
 	this->Locator = vtkOBBTree::New();
@@ -29,13 +29,13 @@ ConfigGenerator::ConfigGenerator() :
 	this->hitCellIds = vtkIdList::New();
 }
 
-ConfigGenerator::~ConfigGenerator() {
+GeometryGenerator::~GeometryGenerator() {
 	this->Locator->Delete();
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
 }
 
-void ConfigGenerator::Execute() {
+void GeometryGenerator::Execute() {
 	// Build our locator.
 	this->Locator->SetDataSet(this->ClippedSurface);
 	this->Locator->BuildLocator();
@@ -53,7 +53,7 @@ void ConfigGenerator::Execute() {
 
 	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds());
 
-	ConfigWriter writer(this->OutputConfigFile, domain.GetBlockSize(),
+	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
 			domain.GetBlockCounts(), domain.GetVoxelSize(), domain.GetOrigin());
 
 	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
@@ -80,12 +80,12 @@ void ConfigGenerator::Execute() {
 	writer.Close();
 }
 
-void ConfigGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
+void GeometryGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int> (geometry::SOLID);
 	// That's all in this case.
 }
 
-void ConfigGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
+void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int> (geometry::FLUID);
 
 	// Iterate over the displacements of the neighbourhood
@@ -112,7 +112,7 @@ void ConfigGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	}
 }
 
-bool ConfigGenerator::GetIsFluid(Site& site) {
+bool GeometryGenerator::GetIsFluid(Site& site) {
 	if (!site.IsFluidKnown) {
 		if (this->Locator->InsideOrOutside(&site.Position[0]) < 0) {
 			// -1 => inside surface
@@ -134,7 +134,7 @@ bool ConfigGenerator::GetIsFluid(Site& site) {
  * with the CutDistances array (at appropriate indices),
  * WallDistance/Normal and BoundaryDistance/Normal.
  */
-void ConfigGenerator::ClassifySite(Site& site) {
+void GeometryGenerator::ClassifySite(Site& site) {
 
 	if (!this->GetIsFluid(site)) {
 		// Nothing to do for solid sites

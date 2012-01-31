@@ -18,7 +18,7 @@ namespace std {
 
 %{
 #include "Index.h"
-#include "ConfigGenerator.h"
+#include "GeometryGenerator.h"
 #include "vtkPolyData.h"
 #include "vtkOBBTree.h"
 #include <sstream>
@@ -91,8 +91,8 @@ namespace std {
   }
  }
 
-%ignore ConfigGenerator::ClassifySite(Site&);
-%include ConfigGenerator.h
+%ignore GeometryGenerator::ClassifySite(Site&);
+%include GeometryGenerator.h
 %include Iolet.h
 
 // Raise a python IndexError when we get a C++ IndexError

@@ -1,5 +1,5 @@
-#ifndef HEMELBSETUPTOOL_CONFIGWRITER_H
-#define HEMELBSETUPTOOL_CONFIGWRITER_H
+#ifndef HEMELBSETUPTOOL_GEOMETRYWRITER_H
+#define HEMELBSETUPTOOL_GEOMETRYWRITER_H
 
 #include <string>
 #include <cstdio>
@@ -11,18 +11,18 @@ using hemelb::io::writers::xdr::XdrWriter;
 
 class BlockWriter;
 
-class ConfigWriter {
+class GeometryWriter {
 public:
-	ConfigWriter(const std::string& OutputConfigFile,
+	GeometryWriter(const std::string& OutputGeometryFile,
 			int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin);
 
-	~ConfigWriter();
+	~GeometryWriter();
 
 	void Close();
 	BlockWriter* StartNextBlock();
 
 protected:
-	std::string OutputConfigFile;
+	std::string OutputGeometryFile;
 	int BlockSize;
 	Index BlockCounts;
 	double VoxelSize;
@@ -38,4 +38,4 @@ protected:
 	friend class BlockWriter;
 };
 
-#endif // HEMELBSETUPTOOL_CONFIGWRITER_H
+#endif // HEMELBSETUPTOOL_GEOMETRYWRITER_H
