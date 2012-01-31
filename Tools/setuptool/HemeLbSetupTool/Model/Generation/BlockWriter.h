@@ -2,18 +2,18 @@
 #define HEMELBSETUPTOOL_BLOCKWRITER_H
 
 #include <stddef.h>
-#include "ConfigWriter.h"
+#include "GeometryWriter.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 
 /*
  * Extension of a hemelb::io::XdrWriter that notes how many fluid sites, in how
- * much space, have been written. It then pushes this to the ConfigWriter's
- * headerEncoder and writes to the ConfigWriter's body
+ * much space, have been written. It then pushes this to the GeometryWriter's
+ * headerEncoder and writes to the GeometryWriter's body
  */
 
 class BlockWriter {
 public:
-	BlockWriter(ConfigWriter &cfg);
+	BlockWriter(GeometryWriter &cfg);
 	~BlockWriter();
 
 	void IncrementFluidSitesCount();
@@ -29,7 +29,7 @@ public:
 	hemelb::io::writers::xdr::XdrMemWriter* memWriter;
 
 protected:
-	ConfigWriter* configWriter;
+	GeometryWriter* geometryWriter;
 	unsigned int nFluidSites;
 	size_t maxBufferSize;
 	char *buffer;
