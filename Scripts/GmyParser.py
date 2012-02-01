@@ -51,7 +51,7 @@ class ErrorCollection(Error):
     def TotalErrors(self):
         return len(self.itemErrors) + len(self.subItemErrors)
     
-    def Format(self, indent=0):
+    def Format(self):
         nErr = self.TotalErrors
         if nErr == 0:
             return []
@@ -61,7 +61,7 @@ class ErrorCollection(Error):
             self.errString = 'Errors'
             pass
 
-        errLines = [] 
+        errLines = ['{errString} in {item}:'.format(**self.__dict__)]
         for iErr in self.itemErrors:
             errLines.append(self.Indent(iErr.Format()))
             continue
@@ -109,6 +109,8 @@ class SiteErrorCollection(ErrorCollection):
 class BlockError(Error):
     """An error attached a block's data.
     """
+    _template = '{block}: {message}'
+    
     def __init__(self, block, message):
         Error.__init__(self, message)
         self.block = block
@@ -118,6 +120,8 @@ class BlockError(Error):
 class SiteError(Error):
     """An error in a site's data.
     """
+    _template = '{site}: {message}'
+    
     def __init__(self, site, message):
         Error.__init__(self, message)
         self.site = site
