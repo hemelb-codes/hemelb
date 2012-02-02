@@ -94,5 +94,17 @@ class TestFabric(unittest.TestCase):
         self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",9)
         self.assertCommandRegexp(".*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",10)
         self.assertCommandCount(2*10 + 9*10*5)
-        
+    def test_hemelb_profile_no_config_generation(self):
+        execute(hemelb_profile,'cylinder',VoxelSize='[0.001:0.011:0.001]',cores='[1:6:1]',create_configs="False")
+        self.assertEqual(env.name,"cylinder_0_01_1000_3_abcd1234_planck_5")
+        self.assertCommandRegexp('mkdir -p .*config_files/cylinder',0)
+        self.assertCommandRegexp('rsync .*config_files/cylinder',1)
+        self.assertCommandRegexp("put .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",2)
+        self.assertCommandRegexp("mkdir -p .*results/cylinder_0_001_1000_3_abcd1234_planck_1",3)
+        self.assertCommandRegexp("cp .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh .*results/cylinder_0_001_1000_3_abcd1234_planck_1",4)
+        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_0_001_1000_3_abcd1234_planck_1",5)
+        self.assertCommandRegexp("put .*env.yml",6)
+        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",7)
+        self.assertCommandRegexp(".*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",8)
+        self.assertCommandCount(9*10*5)
         

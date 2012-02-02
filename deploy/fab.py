@@ -557,6 +557,6 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
             for currentCycles in input_to_range(Cycles,3):
                 profile_environment(profile,currentVoxelSize,currentSteps,currentCycles)
                 with_template_config()
-                if create_configs in [True,"true","True"]:
+                if not str(create_configs).lower()[0]=='f':
                     create_config_impl(p)
                 execute(hemelbs,env.config,**args)
