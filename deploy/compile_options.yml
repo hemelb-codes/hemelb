@@ -1,0 +1,13 @@
+default: 
+  CMAKE_BUILD_TYPE: "Release"
+  CMAKE_CXX_FLAGS_RELEASE: "-O4"
+no_steering:
+  HEMELB_STEERING_LIB: "none"
+basic_steering:
+  HEMELB_STEERING_LIB: "basic"
+debug:
+  CMAKE_BUILD_TYPE: "Debug"
+  HEMELB_LOG_LEVEL: "debug"
+  HEMELB_OPTIMISATION: ""
+no_streaklines:
+  HEMELB_USE_STREAKLINES: "OFF"
