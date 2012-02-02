@@ -39,6 +39,8 @@ default:
   python_build: "TODO"
   template_key: false
   temp_path_template: "/tmp"
+  job_name_template: '${config}_${build_number}_${machine_name}_$cores'
+  config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
 legion: 
   job_dispatch: "qsub"
   # The remote host-name to use.
