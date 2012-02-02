@@ -19,9 +19,9 @@ config=yaml.load(open(os.path.join(env.localroot,'deploy','machines.yml')))
 env.update(config['default'])
 user_config=yaml.load(open(os.path.join(env.localroot,'deploy','machines_user.yml')))
 env.update(user_config['default'])
+cmake_options=yaml.load(open(os.path.join(env.localroot,'deploy','compile_options.yml')))
 env.verbose=False
 env.needs_tarballs=False
-env.cmake_options={}
 env.pather=posixpath
 env.remote=None
 env.machine_name=None
@@ -43,7 +43,7 @@ def machine(name):
 			env.update(user_config[config[name]["import"]])
 	env.update(config[name])
 	if name in user_config:
-		env.update(user_config[name]) 
+		env.update(user_config[name])
 	env.machine_name=name
 	complete_environment()
 
@@ -92,10 +92,6 @@ def complete_environment():
 	env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
 	env.regression_test_path=template(env.regression_test_path_template)
 	env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
-	
-	env.cmake_total_options=env.cmake_default_options.copy()
-	env.cmake_total_options.update(env.cmake_options)
-	env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.cmake_total_options.iteritems()])
 	
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'

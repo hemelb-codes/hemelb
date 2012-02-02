@@ -107,4 +107,27 @@ class TestFabric(unittest.TestCase):
         self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",7)
         self.assertCommandRegexp(".*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",8)
         self.assertCommandCount(9*10*5)
-        
+    def test_configure_default(self):
+        execute(configure)
+        target={
+            'CMAKE_BUILD_TYPE': "Release",
+            'CMAKE_CXX_FLAGS_RELEASE': "-O4",
+            'CMAKE_INSTALL_PREFIX': env.install_path,
+            "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
+            "HEMELB_SUBPROJECT_MAKE_JOBS": 1
+        }
+        self.assertEqual(env.total_cmake_options,target)
+        #Can't just assert on a string here, as the order of the dict is not defined
+        for key,value in target.iteritems():
+            self.assertRegexpMatches(env.cmake_flags,"-D%s=%s"%(key,value))
+    def test_configure_debug(self):
+        execute(configure,'debug')
+        self.assertEqual(env.total_cmake_options,
+        {
+            'CMAKE_BUILD_TYPE': "Debug",
+            'HEMELB_OPTIMISATION': "",
+            'HEMELB_LOG_LEVEL': "debug",
+            'CMAKE_INSTALL_PREFIX': env.install_path,
+            "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
+            "HEMELB_SUBPROJECT_MAKE_JOBS": 1
+        })

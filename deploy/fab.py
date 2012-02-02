@@ -123,36 +123,47 @@ def monitor():
         execute(stat)
         time.sleep(30)
 
+def configure_cmake(configurations,extras):
+    #Read additional configurations from the available options
+    if not configurations:
+        configurations=['default']
+    options={}
+    for configuration in configurations:
+        options.update(cmake_options[configuration])
+    options.update(extras)
+    options.update(env.cmake_options)
+    options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
+        "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
+        "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
+    env.total_cmake_options=options	
+    env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.total_cmake_options.iteritems()])
+
 @task
-def configure():
+def configure(*configurations,**extras):
     """CMake configure step for HemeLB and dependencies."""
+    configure_cmake(configurations,extras)
+
     with cd(env.build_path):
         with prefix(env.build_prefix):
             run(template("rm -f $build_path/CMakeCache.txt"))
-            run(template(
-            "cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
-            "-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags "+
-            "-DHEMELB_SUBPROJECT_MAKE_JOBS=$make_jobs"
-            ))
+            run(template("cmake $repository_path $cmake_flags"))
 
 @task
-def code_only():
+def code_only(*configurations,**extras):
     """Configure, build, and install for the /Code C++ code only, do not attempt to install and build dependencies."""
-    execute(configure_code_only)
+    execute(configure_code_only,*configurations,**extras)
     execute(build_code_only)
     execute(install_code_only)
 
 @task
-def configure_code_only():
+def configure_code_only(*configurations,**extras):
     """CMake configure step for HemeLB code only."""
+    configure_cmake(configurations,extras)
     run(template("rm -rf $code_build_path"))
     run(template("mkdir -p $code_build_path"))
     with cd(env.code_build_path):
         with prefix(env.build_prefix):
-            run(template(
-            "cmake $repository_path/Code -DCMAKE_INSTALL_PREFIX=$install_path "+
-            "-DHEMELB_DEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
-            ))
+            run(template("cmake $repository_path/Code $cmake_flags"))
 
 @task
 def build_code_only(verbose=False):
