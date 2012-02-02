@@ -22,9 +22,6 @@ default:
   make_jobs: 1
   corespernode: 1
   # Default options used in the CMake configure step.
-  cmake_default_options: 
-    CMAKE_BUILD_TYPE: "Release"
-    CMAKE_CXX_FLAGS_RELEASE: "-O4"
   # Command to use to launch remote jobs
   # e.g. qsub, empty string to launch interactively.
   job_dispatch: ''
@@ -39,6 +36,7 @@ default:
   python_build: "TODO"
   template_key: false
   temp_path_template: "/tmp"
+  cmake_options: {}
   job_name_template: '${config}_${build_number}_${machine_name}_$cores'
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
 legion: 
@@ -54,8 +52,6 @@ planck:
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   template_key: default
-  cmake_options:
-      HEMELB_STEERING_LIB: "none"
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
@@ -82,10 +78,8 @@ hector:
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
-    CMAKE_BUILD_TYPE: "Release"
     CMAKE_CXX_FLAGS_RELEASE: ""
     HEMELB_OPTIMISATION: "-O3"
-    HEMELB_STEERING_LIB: "none"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
 hector_login: #Hector, compiling for login nodes and serial queues
    import: "hector"
@@ -109,9 +103,4 @@ localhost:
    python_build: "lib/python2.7"
    template_key: default
    make_jobs: 4
-   cmake_options:
-      HEMELB_STEERING_LIB: none
-      CMAKE_BUILD_TYPE: "Debug"
-      HEMELB_LOG_LEVEL: "debug"
-      HEMELB_OPTIMISATION: ""
    
