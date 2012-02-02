@@ -13,6 +13,7 @@ import argparse
 import shutil
 
 from results_collection import ResultsCollection
+from result import Result
 import environment
 
 class Curation(ResultsCollection):
@@ -20,8 +21,11 @@ class Curation(ResultsCollection):
     def __init__(self,source_path,results_config,clargs,stream=sys.stdout):
         super(Curation,self).__init__(source_path,results_config)
         parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+        class ParseAction(argparse.Action):
+            def __call__(self, parser, namespace, values, option_string=None):
+                setattr(namespace, self.dest, Result.parse_value(values))
         for prop in self.results[0].properties:
-            parser.add_argument("--"+prop)
+            parser.add_argument("--"+prop,action=ParseAction)
         parser.add_argument("--invert",action='store_true',default=False)
         options,action=parser.parse_known_args(clargs)
         filtration=vars(options)

@@ -86,15 +86,23 @@ class Result(object):
                 self.logger.warning("Problem parsing file")
                 # If the file didn't exist, or could not be parsed set the property to None.
                 self.define_properties(None,data,lambda content,pattern : None)
+    
+    @staticmethod
+    def parse_value(value):
+        if value in ['None','none',None]:
+            return None
+        try:                   
+            val = float(value)
+            return int(value)
+            return val
+        except (TypeError,ValueError):
+            return value
+            
     def define_properties(self,content,data,parser):
         if not data: return
         for prop,pattern in data.iteritems():
             value=string_value=parser(content,pattern)
-            try:                   
-                value=float(string_value)
-                value=int(string_value)
-            except (TypeError,ValueError):
-                pass
+            value=self.parse_value(value)
             self.properties.append(prop)
             setattr(self,prop,value)
     
