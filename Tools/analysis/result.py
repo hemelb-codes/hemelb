@@ -87,16 +87,31 @@ class Result(object):
                 # If the file didn't exist, or could not be parsed set the property to None.
                 self.define_properties(None,data,lambda content,pattern : None)
     
+    def datum(self,property):
+        if property[0]=='(':
+            # We have an expression to evaluate.
+            # Do it in the binding of the current object
+            try:
+                return eval(property,{},vars(self))
+            except:
+                self.logger.warning("Problem handling expression %s"%property)
+                return None
+        return getattr(self,property)
+    
     @staticmethod
     def parse_value(value):
         if value in ['None','none',None]:
             return None
         try:                   
-            val = float(value)
             return int(value)
-            return val
         except (TypeError,ValueError):
-            return value
+            try:
+                return float(value)
+            except (TypeError,ValueError):
+                try:
+                    return float(value.replace("_","."))
+                except (TypeError,ValueError):
+                    return value
             
     def define_properties(self,content,data,parser):
         if not data: return
@@ -107,5 +122,5 @@ class Result(object):
             setattr(self,prop,value)
     
     def __str__(self):
-        propstring=', '.join(["%s : %s"%(prop,getattr(self,prop)) for prop in self.properties])
+        propstring=', '.join(["%s : %s"%(prop,self.datum(prop)) for prop in self.properties])
         return "Result %s: [%s]"%(self.name,propstring)
