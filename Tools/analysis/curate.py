@@ -19,19 +19,30 @@ import environment
 class Curation(ResultsCollection):
     """Gather a group of results, and manipulate them in some way"""
     def __init__(self,source_path,results_config,clargs,stream=sys.stdout):
+        # Prepare to parse the arguments
         super(Curation,self).__init__(source_path,results_config)
+        # By default, an unsupplied argument does not create a result property
         parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+        
+        # The parser uses Result.parse_value to generate float or int values.
         class ParseAction(argparse.Action):
             def __call__(self, parser, namespace, values, option_string=None):
                 setattr(namespace, self.dest, Result.parse_value(values))
+                
+        # Every property of a result is a potential command line argument argument
         for prop in self.results[0].properties:
             parser.add_argument("--"+prop,action=ParseAction)
+            
+        # Additional possible argument, to invert the selection
         parser.add_argument("--invert",action='store_true',default=False)
         options,action=parser.parse_known_args(clargs)
+        
+        # Ok, we have the results of argument parsing, get a dictionary of them and use it to filter the results
         filtration=vars(options)
         invert=filtration.pop('invert',False)
         self.filtered_results=self.filter(filtration,invert)
         self.action=Action(action,stream)
+        
     def act(self):
         for result in self.filtered_results:
             self.action(result)
@@ -58,9 +69,7 @@ class Action(object):
         shutil.rmtree(result.path,ignore_errors=True)
 
 def main():
-    
-	Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
+    Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
 
 if __name__ == '__main__':
-	main()
-
+    main()
