@@ -3,8 +3,21 @@ results:
         'results/report.xml':
             total: 'timings/timer[name="Total"]/mean'
             sites: 'geometry/sites'
+            images_count: 'results/images'
+            snapshots_count: results/snapshots
+            domain_decomposition: 'timings/timer[name="Domain Decomposition"]/mean'
+            file_read: 'timings/timer[name="File Read"]/mean'
+            net: 'timings/timer[name="Net initialisation"]/mean'
+            lb: 'timings/timer[name="Lattice Boltzmann"]/mean'
+            visualisation: 'timings/timer[name="Visualisation"]/mean'
+            monitoring: 'timings/timer[name="Monitoring"]/mean'
+            send: 'timings/timer[name="MPI Send"]/mean'
+            wait: 'timings/timer[name="MPI Wait"]/mean'
+            snapshots: 'timings/timer[name="Snapshots"]/mean'
+            simulation: 'timings/timer[name="Simulation total"]/mean'
         'config.xml':
             steps: ['simulation','cyclesteps']
+            cycles: ['simulation','cycles']
         'tests.xml':
             total_tests: 'Statistics/Tests'
             failing_tests: 'Statistics/FailuresTotal'
@@ -13,6 +26,7 @@ results:
             cores: 'Ran with ([\d]+) threads'
         'CMakeCache.txt':
             build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
+            streaklines: 'HEMELB_USE_STREAKLINES:BOOL=(.*)'
         'acceptance.txt':
             acceptance: 'Accepted: (.*)'
     name_properties:
@@ -23,6 +37,8 @@ results:
             type: script
             machine: machine_name
             build_number: build_number
+            size: VoxelSize
+            profile: profile
 
 graphs:
     performance_versus_size:
@@ -30,17 +46,27 @@ graphs:
         select:
             type: hemelb
         dependent:
-            - total
+          - (simulation- snapshots * snapshots_count - visualisation * images_count)
         independent:
             - sites
     performance_versus_cores:
-        name: "Performance on ${machine} versus number of sites"
+        name: "Performance on ${machine} versus count of cores"
         select:
             type: hemelb
         dependent:
-            - total
+            - (simulation-snapshots * snapshots_count - visualisation * images_count)
         independent:
             - cores
+    sites_versus_voxel_size:
+      name: "Number of sites versus voxel size"
+      select:
+          type: hemelb
+      curves:
+          - profile
+      dependent:
+          - sites
+      independent:
+          - size
             
 reports:
   performance_on_planck:
@@ -48,6 +74,7 @@ reports:
     defaults:
       select:
         machine: planck
+        acceptance: OK
       curves:
         - build_number
     graphs:
@@ -62,6 +89,7 @@ reports:
     defaults:
       select:
         machine: oppenheimer
+        acceptance: OK
       curves:
         - build_number
     graphs:
@@ -69,5 +97,8 @@ reports:
         curves:
           - sites
       performance_versus_size:
+        curves:
+          - cores
+      sites_versus_voxel_size:
         curves:
           - cores
