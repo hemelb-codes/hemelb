@@ -48,8 +48,8 @@ namespace hemelb
               {
                 if (site.HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
                 {
-                  fTemp[l] = hydroVars.GetFEq().f[l] + f[D3Q15::INVERSEDIRECTIONS[l]]
-                      - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
+                  fTemp[l] = hydroVars.GetFEq()[l] + f[D3Q15::INVERSEDIRECTIONS[l]]
+                      - hydroVars.GetFEq()[D3Q15::INVERSEDIRECTIONS[l]];
                 }
                 else
                 {
@@ -60,7 +60,7 @@ namespace hemelb
               distribn_t f_neq[D3Q15::NUMVECTORS];
               for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
               {
-                f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
+                f_neq[l] = fTemp[l] - hydroVars.GetFEq()[l];
               }
 
               // Pi = sum_i e_i e_i f_i
@@ -125,7 +125,7 @@ namespace hemelb
                  *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                  *            = f^{eq}_i + (1+w) f^{neq}_i
                  */
-                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq().f[ii]
+                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq()[ii]
                     + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
               }
 
