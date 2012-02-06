@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
 #include <cstdlib>
+#include "units.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -20,7 +21,7 @@ namespace hemelb
          *
          * @return
          */
-        static LatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
           hemelb::geometry::GeometryReadResult readResult;
 
@@ -124,6 +125,19 @@ namespace hemelb
           }
 
           return returnable;
+        }
+
+        void SetHasBoundary(site_t site, Direction direction)
+        {
+          geometry::SiteData current = siteData[site];
+          unsigned newValue = current.GetRawValue();
+          newValue |= 1U << (geometry::SiteData::BOUNDARY_CONFIG_SHIFT + direction - 1);
+          siteData[site] = geometry::SiteData(newValue);
+        }
+
+        void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
+        {
+          distanceToWall[ (D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
         }
 
       protected:
