@@ -158,6 +158,13 @@ namespace hemelb
         distribn_t* GetFOld(site_t siteNumber);
         const distribn_t* GetFOld(site_t siteNumber) const;
 
+        /*
+         * This returns the index of the distribution to stream to.
+         *
+         * NOTE: If streaming would take the distribution out of the geometry, we instead stream
+         * to the 'rubbish site', an extra position in the array that doesn't correspond to any
+         * site in the geometry.
+         */
         site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         SiteData GetSiteData(site_t iSiteIndex) const;
