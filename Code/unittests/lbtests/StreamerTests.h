@@ -578,6 +578,8 @@ namespace hemelb
               latDat->SetHasBoundary(chosenSite, chosenDoubleWallDirection1);
               latDat->SetHasBoundary(chosenSite, chosenDoubleWallDirection2);
               latDat->SetBoundaryDistance(chosenSite, chosenWallDirection, assignedWallDistance);
+              latDat->SetBoundaryDistance(chosenSite, chosenDoubleWallDirection1, assignedWallDistance);
+              latDat->SetBoundaryDistance(chosenSite, chosenDoubleWallDirection2, assignedWallDistance);
 
               // Perform the collision and streaming.
               guoZhengShi->StreamAndCollide<false>(chosenSite, 1, lbmParams, latDat, NULL);
@@ -612,33 +614,13 @@ namespace hemelb
                                                allowedError);
                 }
 
-                // Next, consider the case of directions with walls in the direction and in the
-                // opposite direction.
-                if (streamedDirection == chosenDoubleWallDirection1
-                    || streamedDirection == chosenDoubleWallDirection2)
-                {
-                  // In this case, the streamed value should be f_eq with velocity = 0 and density
-                  // equal to that at the chosen site.
-                  distribn_t streamerFOld[D3Q15::NUMVECTORS];
-                  LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(chosenSite, streamerFOld);
-
-                  distribn_t density, vx, vy, vz;
-                  D3Q15::CalculateDensityAndVelocity(streamerFOld, density, vx, vy, vz);
-
-                  // Calculate F_eq and store it in streamerFOld.
-                  D3Q15::CalculateFeq(density, 0, 0, 0, streamerFOld);
-
-                  // Find f_new for this direction.
-                  distribn_t fNew =
-                      latDat->GetFNew(D3Q15::NUMVECTORS * chosenSite)[streamedDirection];
-
-                  CPPUNIT_ASSERT_DOUBLES_EQUAL(fNew, streamerFOld[streamedDirection], allowedError);
-                }
+                bool isDoubleWallDirection = ( (streamedDirection == chosenDoubleWallDirection1)
+                    || (streamedDirection == chosenDoubleWallDirection2));
 
                 // Next, handle the case where this is the direction where we're checking for
                 // behaviour with a wall. I.e. are we correctly filling distributions that aren't
                 // streamed-to by simple streaming?
-                if (streamedDirection == chosenUnstreamedDirection)
+                if (streamedDirection == chosenUnstreamedDirection || isDoubleWallDirection)
                 {
                   // Get f old at the two sites that may be relevant, and calculate their hydrodynamic
                   // vars.
@@ -657,7 +639,7 @@ namespace hemelb
                   util::Vector3D<distribn_t> velocityWall;
                   distribn_t fNeqWall;
 
-                  if (assignedWallDistance < 0.75)
+                  if (assignedWallDistance < 0.75 && !isDoubleWallDirection)
                   {
                     // This is the first means of estimating from the source paper: only
                     // use the nearest fluid site.
