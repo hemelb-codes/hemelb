@@ -27,7 +27,15 @@ class FileModel(object):
         self.logger(result).debug("Loaded")
         return result.files[self.path]
     def logger(self,result):
-        return logging.LoggerAdapter(logger,dict(file=self.fullpath(result)))
+        return logging.LoggerAdapter(logger,dict(context=self.fullpath(result)))
+
+class ResultContent(object):
+    def __init__(self,filter):
+        self.filter=filter
+    def model(self,result):
+        return self.filter(result)
+    def logger(self,result):
+        return logging.LoggerAdapter(logger,dict(context=result.path))
 
 class ResultProperty(object):
     def __init__(self,label,memoized_file_model,parser,pattern):
@@ -91,6 +99,14 @@ def element_parser(content,pattern):
         return element.text
 def identity_parser(content,pattern):
     return pattern
+def eval_parser(content,pattern):
+    try:
+        # Since the properties are dynamic, they aren't in vars(self), so we have to build the binding.
+        # Bind only the expressions in the pattern
+        # The "content" supplied must respond to () to produce the binding
+        return eval(pattern,{},content(pattern))
+    except Exception as err:
+        raise ParseError("Problem handling expression %s: %s"%(pattern,err))
 
 def yaml_loader(path):
     return yaml.load(open(path))
@@ -101,10 +117,19 @@ def xml_loader(path):
         return ElementTree.parse(path)
     except ElementTree.ParseError:
         raise ParseError("Could not parse file.")
-def nul_loader(path):
+
+def nul_filter(result):
     return None
-def identity_loader(path):
-    return path
+def name_filter(result):
+    return result.path
+def binding_filter(result):
+    # Return a binding suitable for use in eval, from the result
+    # The object so returned must respond to () to generate the binding for an expression to be evaluated
+    def binder(expression):
+        bindings_needed=filter(lambda prop: re.search(prop,expression),result.proplist)
+        binding={key: getattr(result,key) for key in bindings_needed}
+        return binding
+    return binder
 
 def result_model(config):
     class Result(object):
@@ -131,20 +156,13 @@ def result_model(config):
             self.name=os.path.basename(self.path)
             self.properties={key:None for key in self.proplist}
             self.files={}
+            self.logger=logging.LoggerAdapter(logger,dict(file=None))
 
         def datum(self,property):
-            if property[0]=='(':
-                # We have an expression to evaluate.
-                # Do it in the binding of the current object
-                try:
-                    # Since the properties are dynamic, they aren't in vars(self), so we have to manually build the binding.
-                    bindings_needed=filter(lambda prop: re.search(prop,property),self.proplist)
-                    binding={key: getattr(self,key) for key in bindings_needed}
-                    return eval(property,{},binding)
-                except Exception as err:
-                    logging.LoggerAdapter(logger,dict(file=None)).warning("Problem handling expression %s: %s"%(property,err))
-                    return None
-            return getattr(self,property)
+            """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
+            if property in self.proplist:
+                return getattr(self,property)
+            return ResultProperty(None,ResultContent(binding_filter),eval_parser,property).__get__(self,self)
 
         def __str__(self):
             propstring=', '.join(["%s : %s"%(prop,self.datum(prop)) for prop in self.properties])
@@ -154,6 +172,7 @@ def result_model(config):
     Result.define_file_properties(config.get('yaml_files'),yaml_loader,index_parser)
     Result.define_file_properties(config.get('text_files'),text_loader,regex_parser)
     Result.define_file_properties(config.get('xml_files'),xml_loader,element_parser)
-    Result.define_properties(FileModel('name',identity_loader),config.get('name_properties'),regex_parser)
-    Result.define_properties(FileModel('fixed',nul_loader),config.get('fixed_properties'),identity_parser)
+    Result.define_properties(ResultContent(name_filter),config.get('name_properties'),regex_parser)
+    Result.define_properties(ResultContent(nul_filter),config.get('fixed_properties'),identity_parser)
+    Result.define_properties(ResultContent(binding_filter),config.get('compound_properties'),eval_parser)
     return Result

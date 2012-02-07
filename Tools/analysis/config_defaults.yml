@@ -32,6 +32,10 @@ results:
     name_properties:
         machine_by_name: '_([^_]*)_\d$'
         name: '(.*)'
+    compound_properties:
+        velocity: (sites/(cores*(simulation- snapshots * snapshots_count - visualisation * images_count)))
+        non_io_total: (simulation- snapshots * snapshots_count - visualisation * images_count)
+        sites_per_core: (sites/cores)
     yaml_files:
         'env.yml':
             type: script
@@ -46,7 +50,7 @@ graphs:
         select:
             type: hemelb
         dependent:
-          - (simulation- snapshots * snapshots_count - visualisation * images_count)
+          - non_io_total
         independent:
             - sites
     performance_versus_cores:
@@ -54,7 +58,7 @@ graphs:
         select:
             type: hemelb
         dependent:
-            - (simulation-snapshots * snapshots_count - visualisation * images_count)
+            - non_io_total
         independent:
             - cores
     sites_versus_voxel_size:
