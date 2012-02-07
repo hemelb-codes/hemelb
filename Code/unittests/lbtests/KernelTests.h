@@ -6,6 +6,7 @@
 
 #include "lb/kernels/Kernels.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
@@ -58,7 +59,7 @@ namespace hemelb
             lbgknn1 = new lb::kernels::LBGKNN<
                 lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
 
-            mrtLbgkEquivalentKernel = new lb::kernels::MRT(initParams);
+            mrtLbgkEquivalentKernel = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -491,7 +492,7 @@ namespace hemelb
              */
             std::vector<distribn_t> relaxationParameters;
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
-            for (unsigned index = 0; index < D3Q15::NUM_KINETIC_MOMENTS; index++)
+            for (unsigned index = 0; index < lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS; index++)
             {
               relaxationParameters.push_back(oneOverTau);
             }
@@ -500,7 +501,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT> hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -559,7 +560,7 @@ namespace hemelb
           lb::kernels::LBGK* lbgk;
           lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
               *lbgknn1;
-          lb::kernels::MRT* mrtLbgkEquivalentKernel;
+          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
           site_t numSites;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
