@@ -1,6 +1,7 @@
 import os
 import shutil
 import yaml
+
 fixtures_path=os.path.dirname(os.path.abspath(__file__))
 
 class Results(object):
