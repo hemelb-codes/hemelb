@@ -57,17 +57,19 @@ class ResultProperty(object):
                     return float(value.replace("_","."))
                 except (TypeError,ValueError):
                     return value
-    # This defines how, when an instance of this class is a property in a parent object, a value is obtained for it.
-    def __get__(self,instance,owner):
+    def get(self,result):
         try:
-            model=self.file.model(instance)
+            model=self.file.model(result)
             if not model:
                 raise ParseError("Bad file.")
-            instance.properties[self.label]=instance.properties.get(self.label) or self.parse_value(self.parser(model,self.pattern))
-            return instance.properties.get(self.label)
+            result.properties[self.label]=result.properties.get(self.label) or self.parse_value(self.parser(model,self.pattern))
+            return result.properties.get(self.label)
         except (IOError,ParseError):
-            self.file.logger(instance).warning("Problem parsing value")
+            self.file.logger(result).warning("Problem parsing value")
             return None
+    # This defines how, when an instance of this class is a property in a parent object, a value is obtained for it.
+    def __get__(self,instance,owner):
+        return self.get(instance)
 
 class ParseError(Exception):
     def __init__(self, value):
@@ -162,7 +164,7 @@ def result_model(config):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
             if property in self.proplist:
                 return getattr(self,property)
-            return ResultProperty(None,ResultContent(binding_filter),eval_parser,property).__get__(self,self)
+            return ResultProperty(None,ResultContent(binding_filter),eval_parser,property).get(self)
 
         def __str__(self):
             propstring=', '.join(["%s : %s"%(prop,self.datum(prop)) for prop in self.properties])
