@@ -13,10 +13,10 @@ namespace hemelb
     namespace kernels
     {
       // Forward declaration needed by the struct
-      class MRT;
+      template<class MomentBasis> class MRT;
 
-      template<>
-      struct HydroVars<MRT> : public HydroVarsBase
+      template<class MomentBasis>
+      struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase
       {
         public:
           HydroVars(const distribn_t* const f) :
@@ -25,7 +25,7 @@ namespace hemelb
           }
 
           /** Equilibrium velocity distribution in the momentum space. */
-          distribn_t m_neq[D3Q15::NUM_KINETIC_MOMENTS];
+          distribn_t m_neq[MomentBasis::NUM_KINETIC_MOMENTS];
       };
 
       /**
@@ -41,7 +41,8 @@ namespace hemelb
        *
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
-      class MRT : public BaseKernel<MRT>
+      template<class MomentBasis>
+      class MRT : public BaseKernel<MRT<MomentBasis> >
       {
         public:
 
@@ -65,7 +66,7 @@ namespace hemelb
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
@@ -82,7 +83,7 @@ namespace hemelb
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            D3Q15::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<MRT>& hydroVars)
@@ -94,12 +95,12 @@ namespace hemelb
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
-              for (unsigned momentIndex = 0; momentIndex < D3Q15::NUM_KINETIC_MOMENTS;
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
                   momentIndex++)
               {
                 collision += (collisionMatrix[momentIndex]
-                    / D3Q15::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
-                    * D3Q15::REDUCED_MOMENT_BASIS[momentIndex][direction]
+                    / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
+                    * MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
                     * hydroVars.m_neq[momentIndex];
               }
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction] - collision;

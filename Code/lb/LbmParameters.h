@@ -50,7 +50,7 @@ namespace hemelb
           mrtRelaxationParameters.push_back(1.0 / tau); // p_yz (s11 = s9)
           mrtRelaxationParameters.push_back(1.0 / tau); // p_zx (s11 = s9)
           mrtRelaxationParameters.push_back(1.2); // m_xyz (s14)
-          assert(mrtRelaxationParameters.size() == D3Q15::NUM_KINETIC_MOMENTS);
+//          assert(mrtRelaxationParameters.size() == D3Q15::NUM_KINETIC_MOMENTS);
         }
 
         distribn_t GetTimeStep() const
