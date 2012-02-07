@@ -23,8 +23,8 @@ class FileModel(object):
         return os.path.expanduser(os.path.join(result.path,self.path))
     def model(self,result):
         if result.files.get(self.path): return result.files.get(self.path)
-        self.logger(result).debug("Loaded")
         result.files[self.path]=result.files.get(self.path) or self.loader(self.fullpath(result))
+        self.logger(result).debug("Loaded")
         return result.files[self.path]
     def logger(self,result):
         return logging.LoggerAdapter(logger,dict(file=self.fullpath(result)))
@@ -137,9 +137,12 @@ def result_model(config):
                 # We have an expression to evaluate.
                 # Do it in the binding of the current object
                 try:
-                    return eval(property,{},vars(self))
-                except:
-                    self.logger.warning("Problem handling expression %s"%property)
+                    # Since the properties are dynamic, they aren't in vars(self), so we have to manually build the binding.
+                    bindings_needed=filter(lambda prop: re.search(prop,property),self.proplist)
+                    binding={key: getattr(self,key) for key in bindings_needed}
+                    return eval(property,{},binding)
+                except Exception as err:
+                    logging.LoggerAdapter(logger,dict(file=None)).warning("Problem handling expression %s: %s"%(property,err))
                     return None
             return getattr(self,property)
 
