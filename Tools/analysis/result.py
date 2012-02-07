@@ -158,7 +158,6 @@ def result_model(config):
             self.name=os.path.basename(self.path)
             self.properties={key:None for key in self.proplist}
             self.files={}
-            self.logger=logging.LoggerAdapter(logger,dict(file=None))
 
         def datum(self,property):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
