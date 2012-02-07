@@ -57,6 +57,8 @@ class Action(object):
         getattr(self,self.action)(result,*self.arguments)
     def report(self,result):
         print(result,file=self.stream)
+    def display(self,result,*cols):
+        print([result.datum(col) for col in cols],file=self.stream)
     def name(self,result):
         print(result.name,file=self.stream)
     def accept(self,result):
