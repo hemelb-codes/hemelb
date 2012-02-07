@@ -13,7 +13,7 @@ import argparse
 import shutil
 
 from results_collection import ResultsCollection
-from result import Result
+from result import ResultProperty
 import environment
 
 class Curation(ResultsCollection):
@@ -27,7 +27,7 @@ class Curation(ResultsCollection):
         # The parser uses Result.parse_value to generate float or int values.
         class ParseAction(argparse.Action):
             def __call__(self, parser, namespace, values, option_string=None):
-                setattr(namespace, self.dest, Result.parse_value(values))
+                setattr(namespace, self.dest, ResultProperty.parse_value(values))
                 
         # Every property of a result is a potential command line argument argument
         for prop in self.results[0].properties:
