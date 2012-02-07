@@ -69,6 +69,14 @@ namespace hemelb
           return index;
         }
 
+        /**
+         * This returns the index of the distribution to stream to. If streaming would take the
+         * distribution out of the geometry, we instead stream to the 'rubbish site', an extra
+         * position in the array that doesn't correspond to any site in the geometry.
+         *
+         * @param direction
+         * @return
+         */
         inline const site_t GetStreamedIndex(Direction direction) const
         {
           return latticeData.GetStreamedIndex(index, direction);

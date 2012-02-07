@@ -22,7 +22,7 @@ namespace hemelb
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-            collider(initParams)
+              collider(initParams)
           {
 
           }
@@ -47,14 +47,15 @@ namespace hemelb
               // Perform the streaming of the post-collision distribution.
               for (Direction direction = 0; direction < D3Q15::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex(direction)))
-                    = hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex(direction))) =
+                    hydroVars.GetFPostCollision()[direction];
               }
 
               // Now fill in the distributions that won't be streamed to
               // (those that point away from boundaries).
               // It's more convenient to iterate over the opposite direction.
-              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS; oppositeDirection++)
+              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS;
+                  oppositeDirection++)
               {
                 // If there's a boundary in the opposite direction, we need to fill in the distribution.
                 if (site.HasBoundary(oppositeDirection))
@@ -72,8 +73,8 @@ namespace hemelb
                   // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
                   util::Vector3D<double> velocityWall = util::Vector3D<double>(hydroVars.v_x,
                                                                                hydroVars.v_y,
-                                                                               hydroVars.v_z) * (1.
-                      - 1. / wallDistance);
+                                                                               hydroVars.v_z)
+                      * (1. - 1. / wallDistance);
 
                   // Find the non-equilibrium distribution in the unstreamed direction.
                   distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq().f[unstreamedDirection];
@@ -96,6 +97,20 @@ namespace hemelb
                       // Need some info about the next node away from the wall in this direction...
                       site_t nextSiteOutId = site.GetStreamedIndex(unstreamedDirection)
                           / D3Q15::NUMVECTORS;
+
+                      if (log::Logger::ShouldDisplay<hemelb::log::Debug>())
+                      {
+                        if (nextSiteOutId < 0 || nextSiteOutId >= latDat->GetLocalFluidSiteCount())
+                        {
+                          log::Logger::Log<log::Debug, log::OnePerCore>("GZS "
+                                                                        "boundary condition can't yet handle when the second fluid site away from "
+                                                                        "a wall resides on a different core. The wall site was number %i on this core, "
+                                                                        "the absent fluid site was in direction %i",
+                                                                        siteIndex,
+                                                                        unstreamedDirection);
+                        }
+                      }
+
                       geometry::Site nextSiteOut = latDat->GetSite(nextSiteOutId);
 
                       // Next, calculate its density, velocity and eqm distribution.
@@ -120,14 +135,15 @@ namespace hemelb
                       // Extrapolate to obtain the velocity at the wall site.
                       for (int dimension = 0; dimension < 3; dimension++)
                       {
-                        velocityWall[dimension] = wallDistance * velocityWall[dimension] + (1. - wallDistance)
-                            * velocityWallSecondEstimate[dimension];
+                        velocityWall[dimension] = wallDistance * velocityWall[dimension]
+                            + (1. - wallDistance) * velocityWallSecondEstimate[dimension];
                       }
 
                       // Interpolate in the same way to get f_neq.
-                      fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection + (1.
-                          - wallDistance) * (nextSiteOut.GetFOld()[unstreamedDirection]
-                          - nextNodeFEq[unstreamedDirection]);
+                      fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
+                          + (1. - wallDistance)
+                              * (nextSiteOut.GetFOld()[unstreamedDirection]
+                                  - nextNodeFEq[unstreamedDirection]);
                     }
                     // This isn't covered in the paper, but if there's a boundary on either side of the site,
                     // we take the wall velocity and non-equilibrium f distribution to be 0. A better scheme could
@@ -155,9 +171,9 @@ namespace hemelb
                   // Collide and stream!
                   // TODO: It's not clear whether we should defer to the template collision type here
                   // or do a standard LBGK (implemented).
-                  * (latDat->GetFNew(siteIndex * D3Q15::NUMVECTORS + unstreamedDirection))
-                      = fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega())
-                          * fNeqInUnstreamedDirection;
+                  * (latDat->GetFNew(siteIndex * D3Q15::NUMVECTORS + unstreamedDirection)) =
+                      fEqTemp[unstreamedDirection]
+                          + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
