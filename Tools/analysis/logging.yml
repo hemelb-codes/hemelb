@@ -13,7 +13,7 @@ handlers:
   parsing:
     class: logging.handlers.RotatingFileHandler
     filename: 'parsing.log'
-    level: WARN
+    level: DEBUG
     formatter: parsing
     backupCount: 2
     maxBytes: 65536
