@@ -10,10 +10,10 @@ namespace hemelb
       {
 
         /*
-         *  Kinetic moments defined in d'Humieres 2002. To get the matrix below, columns 8 and 9 are respectively permuted
-         *  with columns 14 and 11 to match HemeLB's lattice velocitiy ordering.
+         *  Kinetic moments defined in d'Humieres et al. 2002. To get the matrix below, columns 8 and 9 are respectively permuted
+         *  with columns 14 and 11 to match HemeLB's lattice velocity ordering.
          *
-         *  See publication for  meaning of e, epsilon, etc. Other moments definitions are possible.
+         *  See publication for  meaning of e, epsilon, etc.
          */
         const distribn_t DHumieresD3Q15MRTBasis::REDUCED_MOMENT_BASIS[DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS][D3Q15::NUMVECTORS] =
             { { -2, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1 }, // e
