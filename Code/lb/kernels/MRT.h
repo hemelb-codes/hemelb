@@ -46,9 +46,9 @@ namespace hemelb
       {
         public:
 
-          MRT(InitParams& initParams) :
-              collisionMatrix(initParams.lbmParams->GetMrtRelaxationParameters())
+          MRT(InitParams& initParams)
           {
+            InitState(initParams);
           }
 
           inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
@@ -109,11 +109,32 @@ namespace hemelb
 
           inline void DoReset(InitParams* initParams)
           {
+            InitState(initParams);
+          }
+
+          /**
+           *  This method is used in unit testing in order to make an MRT kernel behave as LBGK, regardless of the
+           *  moment basis, by setting all the relaxation parameters to be the same.
+           */
+          void SetMrtRelaxationParameters(std::vector<distribn_t>& newRelaxationParameters)
+          {
+            assert(newRelaxationParameters.size() == MomentBasis::NUM_KINETIC_MOMENTS);
+            collisionMatrix = newRelaxationParameters;
           }
 
         private:
           /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
-          const std::vector<distribn_t>& collisionMatrix;
+          std::vector<distribn_t> collisionMatrix;
+
+          /**
+           *  Helper method to set/update member variables. Called from the constructor and Reset()
+           *
+           *  @param initParams struct used to store variables required for initialisation of various operators
+           */
+          void InitState(const InitParams& initParams)
+          {
+            MomentBasis::SetUpCollisionMatrix(collisionMatrix, initParams.lbmParams->GetTau());
+          }
 
       };
     }

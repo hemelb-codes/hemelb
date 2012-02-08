@@ -487,16 +487,15 @@ namespace hemelb
           {
             /*
              *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
-             *  The kernel keeps a reference to lbmParams, so the change below will be seen from inside
-             *  the kernel.
              */
             std::vector<distribn_t> relaxationParameters;
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
-            for (unsigned index = 0; index < lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS; index++)
-            {
-              relaxationParameters.push_back(oneOverTau);
-            }
-            lbmParams->SetMrtRelaxationParameters(relaxationParameters);
+            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS, oneOverTau);
+//            for (unsigned index = 0; index < lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS; index++)
+//            {
+//              relaxationParameters.push_back(oneOverTau);
+//            }
+            mrtLbgkEquivalentKernel->SetMrtRelaxationParameters(relaxationParameters);
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];

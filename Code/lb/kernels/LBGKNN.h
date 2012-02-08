@@ -28,7 +28,7 @@ namespace hemelb
           distribn_t tau;
       };
 
-      /*
+      /**
        * Class extending the original BGK collision operator to support non-Newtonian
        * fluids. Implements support for relaxation time not constant across the domain.
        */
@@ -111,20 +111,20 @@ namespace hemelb
           }
 
         private:
-          /*
+          /**
            * Vector containing the current relaxation time for each site in the domain. It will be initialised
            * with the relaxation time corresponding to HemeLB's default Newtonian viscosity and each time step
            * will be updated based on the local hydrodynamic configuration
            */
           std::vector<distribn_t> mTau;
 
-          /* Current time step */
+          /** Current time step */
           distribn_t mTimeStep;
 
-          /* Current space step */
+          /** Current space step */
           distribn_t mSpaceStep;
 
-          /*
+          /**
            *  Helper method to set/update member variables. Called from the constructor and Reset()
            *
            *  @param initParams struct used to store variables required for initialisation of various operators
@@ -137,7 +137,7 @@ namespace hemelb
             mSpaceStep = initParams.latDat->GetVoxelSize();
           }
 
-          /*
+          /**
            *  Helper method to update the value of local relaxation time (tau) from a given hydrodynamic
            *  configuration. It requires values of f_neq and density at the current time step and it will
            *  compute the value of tau to be used in the next time step.
