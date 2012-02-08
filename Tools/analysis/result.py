@@ -149,7 +149,7 @@ def result_model(config):
             for prop,pattern in data.iteritems():
                 klass.proplist.append(prop)
                 setattr(klass,prop,ResultProperty(prop,file_model,parser,pattern))
-                
+
         def __init__(self,path):
             """path: the path to the result folder
                config: a dictionary specifying what aspects of the result folder to make into properties of the result
@@ -163,7 +163,7 @@ def result_model(config):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
             if property in self.proplist:
                 return getattr(self,property)
-            return ResultProperty(None,ResultContent(binding_filter),eval_parser,property).get(self)
+            return ResultProperty(property,ResultContent(binding_filter),eval_parser,property).get(self)
 
         def __str__(self):
             propstring=', '.join(["%s : %s"%(prop,self.datum(prop)) for prop in self.properties])
