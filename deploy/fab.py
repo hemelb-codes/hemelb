@@ -269,7 +269,10 @@ def with_template_job():
     """
     Determine a generated job name from environment parameters, and then define additional environment parameters based on it.
     """
-    with_job(template(env.job_name_template))
+    name=template(env.job_name_template)
+    if env.get('label'):
+        name='_'.join((env['label'],name))
+    with_job(name)
 
 def with_job(name):
     """Augment the fabric environment with information regarding a particular job name.
@@ -441,7 +444,7 @@ def hemelbs(config,**args):
             wall_time : wall-time job limit
             memory : memory per node
     """
-    for currentCores in input_to_range(args['cores'],4):   
+    for currentCores in input_to_range(args.get('cores'),4):   
         hemeconfig={}
         hemeconfig.update(args)
         hemeconfig['cores']=currentCores
@@ -513,13 +516,13 @@ def modify_profile(p):
     env.Cycles=p.Cycles
     env.VoxelSize=p.VoxelSize
 
-def profile_environment(profile,VoxelSize,Steps,Cycles):
+def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     env.profile=profile
     env.VoxelSize=VoxelSize or env.get('VoxelSize')
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
     env.Cycles=Cycles or env.get('Cycles')
-    
+    env.update(extra_env)
 
 def generate(profile):
     if not profile.IsReadyToGenerate:
@@ -535,25 +538,35 @@ def create_config_impl(p):
     generate(p)
 
 @task
-def create_config(profile,VoxelSize=None,Steps=None,Cycles=None):
+def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     """Create a config file
     Create a config file (geometry and xml) based on a configuration profile.
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles)
+    profile_environment(profile,VoxelSize,Steps,Cycles,args)
     p=load_profile()
     create_config_impl(p)
 
 @task
-def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None):
+def copy_config(profile,VoxelSize,newSteps,newCycles,oldSteps,oldCycles):
+    profile_environment(profile,VoxelSize,oldSteps,oldCycles)
+    with_template_config()
+    env.old_config_path=env.job_config_path
+    profile_environment(profile,VoxelSize,newSteps,newCycles)
+    with_template_config()
+    local(template("cp -r $old_config_path $job_config_path"))
+
+@task
+def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     """Create many config files, by looping over multiple voxel sizes, step counts, or cycles
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles)
+    profile_environment(profile,VoxelSize,Steps,Cycles,args)
     p=load_profile()
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
+        profile_environment(profile,currentVoxelSize,1000,3)
+        create_config_impl(p)
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
-                profile_environment(profile,currentVoxelSize,currentSteps,currentCycles)
-                create_config_impl(p)
+                copy_config(currentSteps,currentCycles,1000,3)
                 
 @task 
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
@@ -561,13 +574,17 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
     The HemeLB config file(s) will optionally be prepared according to the profile and profile arguments given.
     This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles)
+    profile_environment(profile,VoxelSize,Steps,Cycles,args)
     p=load_profile()
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
+        #Steps and cycles don't effect the geometry, so we can create these configs by copy-and-edit
+        profile_environment(profile,currentVoxelSize,1000,3)
+        if not str(create_configs).lower()[0]=='f':
+            create_config_impl(p)
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
-                profile_environment(profile,currentVoxelSize,currentSteps,currentCycles)
                 with_template_config()
+                profile_environment(profile,currentVoxelSize,1000,3)
                 if not str(create_configs).lower()[0]=='f':
-                    create_config_impl(p)
+                    copy_config(currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
