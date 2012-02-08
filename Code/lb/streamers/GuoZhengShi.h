@@ -9,6 +9,11 @@ namespace hemelb
   {
     namespace streamers
     {
+      /**
+       * This class implements the boundary condition described by Guo, Zheng and Shi
+       * in 'An Extrapolation Method for Boundary Conditions in Lattice-Boltzmann method'
+       * Physics of Fluids, 14/6, June 2002, pp 2007-2010.
+       */
       template<typename CollisionType>
       class GuoZhengShi : public BaseStreamer<GuoZhengShi<CollisionType> >
       {
@@ -23,98 +28,138 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t firstIndex,
+                                         const site_t siteCount,
+                                         const LbmParameters* lbmParams,
+                                         geometry::LatticeData* latDat,
+                                         hemelb::vis::Control *visControl)
           {
-            for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site site = bLatDat->GetSite(lIndex);
+              geometry::Site site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              distribn_t* f = site.GetFOld();
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld());
 
               collider.CalculatePreCollision(hydroVars, site);
+              collider.Collide(lbmParams, hydroVars);
 
-              collider.Collide(iLbmParams, hydroVars);
-
-              for (Direction ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              // Perform the streaming of the post-collision distribution.
+              for (Direction direction = 0; direction < D3Q15::NUMVECTORS; direction++)
               {
-                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = hydroVars.GetFPostCollision()[ii];
+                * (latDat->GetFNew(site.GetStreamedIndex(direction))) =
+                    hydroVars.GetFPostCollision()[direction];
               }
 
-              // Now fill in the un-streamed-to distributions (those that point away from boundaries).
-              for (Direction l = 1; l < D3Q15::NUMVECTORS; l++)
+              // Now fill in the distributions that won't be streamed to
+              // (those that point away from boundaries).
+              // It's more convenient to iterate over the opposite direction.
+              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS;
+                  oppositeDirection++)
               {
-                if (site.HasBoundary(l))
+                // If there's a boundary in the opposite direction, we need to fill in the distribution.
+                if (site.HasBoundary(oppositeDirection))
                 {
-                  Direction lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
+                  Direction unstreamedDirection = D3Q15::INVERSEDIRECTIONS[oppositeDirection];
 
-                  double delta = site.GetWallDistance(l);
+                  // Get the distance to the boundary.
+                  double wallDistance = site.GetWallDistance(oppositeDirection);
 
-                  // Work out uw1 (noting that ub is 0 until we implement moving walls)
-                  double uWall[3];
-                  uWall[0] = (1 - 1. / delta) * hydroVars.v_x;
-                  uWall[1] = (1 - 1. / delta) * hydroVars.v_y;
-                  uWall[2] = (1 - 1. / delta) * hydroVars.v_z;
-                  distribn_t fNeqAwayFromWall = hydroVars.GetFNeq().f[lAwayFromWallIndex];
+                  // Now we work out the hypothetical velocity of the solid site on the other side
+                  // of the wall.
+                  // Assume that the wall velocity (0) is linearly interpolated along the line
+                  // between the nearest fluid site and the solid site inside the wall.
+                  // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
+                  // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
+                  util::Vector3D<double> velocityWall = util::Vector3D<double>(hydroVars.v_x,
+                                                                               hydroVars.v_y,
+                                                                               hydroVars.v_z)
+                      * (1. - 1. / wallDistance);
 
-                  // Interpolate with uw2 if delta < 0.75
-                  if (delta < 0.75)
+                  // Find the non-equilibrium distribution in the unstreamed direction.
+                  distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq()[unstreamedDirection];
+
+                  // The authors suggest simply using the wall velocity when there's a large distance
+                  // between the fluid site and wall (> 0.75 lattice vector).
+                  // When there's a smaller distance, they recommend looking at the next fluid site out
+                  // and extrapolating from that to obtain another estimate. The wallDistance is then used
+                  // as an interpolation variable between the two estimates.
+                  // A similar thing is done with the non-equilibrium distribution estimate. It is either
+                  // the value in that direction at the nearest site, or an interpolation between the values
+                  // at the nearest site and the next site away.
+                  if (wallDistance < 0.75 && !site.HasBoundary(unstreamedDirection))
                   {
-                    // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
-                    // in the direction of awayFromWallIndex
-                    if (!site.HasBoundary(lAwayFromWallIndex))
+                    // We can only do this if there's gonna be a point there to interpolate from, i.e. there's no boundary
+                    // in the direction of awayFromWallIndex.
+                    // TODO I think we'll fail here if the next site out resides on a different core.
+
+                    // Need some info about the next node away from the wall in this direction...
+                    site_t nextSiteOutId = site.GetStreamedIndex(unstreamedDirection)
+                        / D3Q15::NUMVECTORS;
+
+                    if (log::Logger::ShouldDisplay<hemelb::log::Debug>())
                     {
-                      // Need some info about the next node away from the wall in this direction...
-                      site_t nextIOut = site.GetStreamedIndex(lAwayFromWallIndex)
-                          / D3Q15::NUMVECTORS;
-                      distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
-
-                      geometry::Site nextSiteOut = bLatDat->GetSite(nextIOut);
-
-                      D3Q15::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
-                                                         nextNodeDensity,
-                                                         nextNodeV[0],
-                                                         nextNodeV[1],
-                                                         nextNodeV[2],
-                                                         nextNodeFEq);
-
-                      for (int a = 0; a < 3; a++)
+                      if (nextSiteOutId < 0 || nextSiteOutId >= latDat->GetLocalFluidSiteCount())
                       {
-                        uWall[a] = delta * uWall[a]
-                            - (1. - delta) * (1. - delta) * nextNodeV[a] / (1. + delta);
+                        log::Logger::Log<log::Debug, log::OnePerCore>("GZS "
+                                                                      "boundary condition can't yet handle when the second fluid site away from "
+                                                                      "a wall resides on a different core. The wall site was number %i on this core, "
+                                                                      "the absent fluid site was in direction %i",
+                                                                      siteIndex,
+                                                                      unstreamedDirection);
                       }
-
-                      fNeqAwayFromWall = delta * fNeqAwayFromWall
-                          + (1. - delta)
-                              * (nextSiteOut.GetFOld()[lAwayFromWallIndex]
-                                  - nextNodeFEq[lAwayFromWallIndex]);
                     }
-                    // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
-                    else
+
+                    geometry::Site nextSiteOut = latDat->GetSite(nextSiteOutId);
+
+                    // Next, calculate its density, velocity and eqm distribution.
+                    distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
+                    D3Q15::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
+                                                       nextNodeDensity,
+                                                       nextNodeV[0],
+                                                       nextNodeV[1],
+                                                       nextNodeV[2],
+                                                       nextNodeFEq);
+
+                    // Obtain a second estimate, this time ignoring the fluid site closest to
+                    // the wall. Interpolating the next site away and the site within the wall
+                    // to the point on the wall itself (velocity 0):
+                    // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
+                    // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
+                    util::Vector3D<double> velocityWallSecondEstimate =
+                        util::Vector3D<double>(nextNodeV[0], nextNodeV[1], nextNodeV[2])
+                            * (wallDistance - 1) / (wallDistance + 1);
+
+                    // Next, we interpolate between the first and second estimates to improve the estimate.
+                    // Extrapolate to obtain the velocity at the wall site.
+                    for (int dimension = 0; dimension < 3; dimension++)
                     {
-                      for (int a = 0; a < 3; a++)
-                      {
-                        uWall[a] = 0.0; //delta * uWall[a];
-                      }
-
-                      fNeqAwayFromWall = 0.0; //delta * fNeq;
+                      velocityWall[dimension] = wallDistance * velocityWall[dimension]
+                          + (1. - wallDistance) * velocityWallSecondEstimate[dimension];
                     }
+
+                    // Interpolate in the same way to get f_neq.
+                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
+                        + (1. - wallDistance)
+                            * (nextSiteOut.GetFOld()[unstreamedDirection]
+                                - nextNodeFEq[unstreamedDirection]);
                   }
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
                   distribn_t fEqTemp[D3Q15::NUMVECTORS];
-                  D3Q15::CalculateFeq(hydroVars.density, uWall[0], uWall[1], uWall[2], fEqTemp);
+                  D3Q15::CalculateFeq(hydroVars.density,
+                                      velocityWall[0],
+                                      velocityWall[1],
+                                      velocityWall[2],
+                                      fEqTemp);
 
                   // Collide and stream!
-                  * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex)) =
-                      fEqTemp[lAwayFromWallIndex]
-                          + (1.0 + iLbmParams->GetOmega()) * fNeqAwayFromWall;
+                  // TODO: It's not clear whether we should defer to the template collision type here
+                  // or do a standard LBGK (implemented).
+                  * (latDat->GetFNew(siteIndex * D3Q15::NUMVECTORS + unstreamedDirection)) =
+                      fEqTemp[unstreamedDirection]
+                          + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
@@ -124,8 +169,8 @@ namespace hemelb
                                                                                     site,
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
-                                                                                    iLbmParams,
-                                                                                    iControl);
+                                                                                    lbmParams,
+                                                                                    visControl);
             }
           }
 
