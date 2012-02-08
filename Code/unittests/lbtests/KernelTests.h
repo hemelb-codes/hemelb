@@ -486,7 +486,7 @@ namespace hemelb
           void TestMRTConstantRelaxationTimeEqualsLBGK()
           {
             /*
-             *  Simulate LBGK by relaxing all the MRT modes to equilibirum with the same time constant.
+             *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
              *  The kernel keeps a reference to lbmParams, so the change below will be seen from inside
              *  the kernel.
              */
