@@ -36,6 +36,8 @@ namespace hemelb
             static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
                                                    distribn_t * const moments);
 
+            static void SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
+                                             distribn_t tau);
         };
       }
     }
