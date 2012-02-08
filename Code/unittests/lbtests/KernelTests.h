@@ -6,6 +6,7 @@
 
 #include "lb/kernels/Kernels.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
@@ -58,7 +59,7 @@ namespace hemelb
             lbgknn1 = new lb::kernels::LBGKNN<
                 lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
 
-            mrtLbgkEquivalentKernel = new lb::kernels::MRT(initParams);
+            mrtLbgkEquivalentKernel = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -485,22 +486,17 @@ namespace hemelb
           void TestMRTConstantRelaxationTimeEqualsLBGK()
           {
             /*
-             *  Simulate LBGK by relaxing all the MRT modes to equilibirum with the same time constant.
-             *  The kernel keeps a reference to lbmParams, so the change below will be seen from inside
-             *  the kernel.
+             *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
              */
             std::vector<distribn_t> relaxationParameters;
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
-            for (unsigned index = 0; index < D3Q15::NUM_KINETIC_MOMENTS; index++)
-            {
-              relaxationParameters.push_back(oneOverTau);
-            }
-            lbmParams->SetMrtRelaxationParameters(relaxationParameters);
+            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS, oneOverTau);
+            mrtLbgkEquivalentKernel->SetMrtRelaxationParameters(relaxationParameters);
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT> hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -559,7 +555,7 @@ namespace hemelb
           lb::kernels::LBGK* lbgk;
           lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
               *lbgknn1;
-          lb::kernels::MRT* mrtLbgkEquivalentKernel;
+          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
           site_t numSites;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
