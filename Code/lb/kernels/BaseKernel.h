@@ -42,7 +42,7 @@ namespace hemelb
           friend class Entropic;
           friend class LBGK;
           template<class rheologyModel> friend class LBGKNN;
-          friend class MRT;
+          template<class MomentBasis>friend class MRT;
 
         protected:
           HydroVarsBase(const distribn_t* const f) :
