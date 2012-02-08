@@ -18,7 +18,7 @@ namespace hemelb
         class DHumieresD3Q15MRTBasis
         {
           public:
-            /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) kinetic (non-conserved). */
+            /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) ghost (non-conserved). */
             static const unsigned NUM_KINETIC_MOMENTS = 11;
 
             /** Matrix used to convert from the velocities space to the reduced moment space containing only kinetic moments. */
