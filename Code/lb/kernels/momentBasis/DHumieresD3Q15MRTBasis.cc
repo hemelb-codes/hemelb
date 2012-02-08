@@ -45,6 +45,26 @@ namespace hemelb
             }
           }
         }
+
+        void DHumieresD3Q15MRTBasis::SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
+                                                          distribn_t tau)
+        {
+          // Relaxation values taken from d'Humieres 2002, except for the kinematic viscosity where the usual tau formula is used.
+          collisionMatrix.clear();
+          collisionMatrix.push_back(1.6); // e (s1)
+          collisionMatrix.push_back(1.2); // epsilon (s2)
+          collisionMatrix.push_back(1.6); // q_x (s4)
+          collisionMatrix.push_back(1.6); // q_y (s4)
+          collisionMatrix.push_back(1.6); // q_z (s4)
+          collisionMatrix.push_back(1.0 / tau); // 3p_xx (s9)
+          collisionMatrix.push_back(1.0 / tau); // p_ww (s9)
+          collisionMatrix.push_back(1.0 / tau); // p_xy (s11 = s9)
+          collisionMatrix.push_back(1.0 / tau); // p_yz (s11 = s9)
+          collisionMatrix.push_back(1.0 / tau); // p_zx (s11 = s9)
+          collisionMatrix.push_back(1.2); // m_xyz (s14)
+          assert(collisionMatrix.size() == DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS);
+        }
+
       }
     }
   }
