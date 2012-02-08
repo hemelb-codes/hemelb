@@ -42,7 +42,7 @@ namespace hemelb
         //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
 
         // Multiple relaxation time collision operator
-        //typedef kernels::MRT LB_KERNEL;
+        //typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> LB_KERNEL;
 
         // Standard LBGK collision operator
         typedef kernels::LBGK LB_KERNEL;
