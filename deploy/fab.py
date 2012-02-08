@@ -16,6 +16,7 @@ Usage:
 from templates import *
 from machines import *
 from fabric.contrib.project import *
+from xml.etree import ElementTree
 import time
 import re
 import numpy as np
@@ -135,7 +136,7 @@ def configure_cmake(configurations,extras):
     options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
         "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
         "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
-    env.total_cmake_options=options	
+    env.total_cmake_options=options
     env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.total_cmake_options.iteritems()])
 
 @task
@@ -428,7 +429,7 @@ def hemelb(config,**args):
     execute(put_configs,config)
     job(dict(script='hemelb',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
-    
+
 @task
 def hemelbs(config,**args):
     """Submit multiple HemeLB jobs to the remote queue.
@@ -444,7 +445,7 @@ def hemelbs(config,**args):
             wall_time : wall-time job limit
             memory : memory per node
     """
-    for currentCores in input_to_range(args.get('cores'),4):   
+    for currentCores in input_to_range(args.get('cores'),4):
         hemeconfig={}
         hemeconfig.update(args)
         hemeconfig['cores']=currentCores
@@ -490,7 +491,7 @@ def input_to_range(arg,default):
     gen_regexp="\[([\d\.]+):([\d\.]+):([\d\.]+)\]" #regexp for a array generator like [1.2:3:0.2]
     if not arg:
         return [default]
-    match=re.match(gen_regexp,arg)
+    match=re.match(gen_regexp,str(arg))
     if match:
         vals=list(map(ttype,match.groups()))
         if ttype==int:
@@ -507,7 +508,7 @@ def load_profile():
     p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,env.profile)+'.pro'))
     p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,env.profile)+'.stl')
     return p
-    
+
 def modify_profile(p):
     p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
     p.Steps=env.Steps or p.Steps
@@ -547,13 +548,24 @@ def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     create_config_impl(p)
 
 @task
-def copy_config(profile,VoxelSize,newSteps,newCycles,oldSteps,oldCycles):
+def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
+    """Create a new config by copying an old one, and modifying the steps and cycles"""
     profile_environment(profile,VoxelSize,oldSteps,oldCycles)
     with_template_config()
-    env.old_config_path=env.job_config_path
-    profile_environment(profile,VoxelSize,newSteps,newCycles)
-    with_template_config()
-    local(template("cp -r $old_config_path $job_config_path"))
+    env.old_config_path=env.job_config_path_local
+    config_path=os.path.join(env.job_config_path_local,'config.xml')
+    config=ElementTree.parse(config_path)
+    simnode=config.find('simulation')
+    for currentSteps in input_to_range(Steps,1000):
+        for currentCycles in input_to_range(Cycles,3):
+            profile_environment(profile,VoxelSize,currentSteps,currentCycles)
+            with_template_config()
+            if env.old_config_path==env.job_config_path_local: continue
+            local(template("cp -r $old_config_path $job_config_path_local"))
+            new_config_path=os.path.join(env.job_config_path_local,'config.xml')
+            simnode.set('cyclesteps',str(currentSteps))
+            simnode.set('cycles',str(currentCycles))
+            config.write(new_config_path)
 
 @task
 def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
@@ -564,11 +576,9 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        for currentSteps in input_to_range(Steps,1000):
-            for currentCycles in input_to_range(Cycles,3):
-                copy_config(currentSteps,currentCycles,1000,3)
-                
-@task 
+        modify_config(Steps,Cycles,1000,3)
+
+@task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
     """Submit HemeLB job(s) to the remote queue.
     The HemeLB config file(s) will optionally be prepared according to the profile and profile arguments given.
@@ -580,11 +590,11 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
         #Steps and cycles don't effect the geometry, so we can create these configs by copy-and-edit
         profile_environment(profile,currentVoxelSize,1000,3)
         if not str(create_configs).lower()[0]=='f':
-            create_config_impl(p)
+            create_config_impl(p)   
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
                 with_template_config()
                 profile_environment(profile,currentVoxelSize,1000,3)
                 if not str(create_configs).lower()[0]=='f':
-                    copy_config(currentSteps,currentCycles,1000,3)
+                    modify_config(currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
