@@ -12,6 +12,10 @@ namespace hemelb
     {
       namespace momentBasis
       {
+        /**
+         *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
+         *  "Multiple–relaxation–time lattice Boltzmann models in three dimensions" for the D3Q15 lattice
+         */
         class DHumieresD3Q15MRTBasis
         {
           public:

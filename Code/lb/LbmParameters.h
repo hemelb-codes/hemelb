@@ -6,6 +6,7 @@
 #include <vector>
 #include <cassert>
 #include "D3Q15.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 
 namespace hemelb
 {
@@ -50,7 +51,7 @@ namespace hemelb
           mrtRelaxationParameters.push_back(1.0 / tau); // p_yz (s11 = s9)
           mrtRelaxationParameters.push_back(1.0 / tau); // p_zx (s11 = s9)
           mrtRelaxationParameters.push_back(1.2); // m_xyz (s14)
-//          assert(mrtRelaxationParameters.size() == D3Q15::NUM_KINETIC_MOMENTS);
+          assert(mrtRelaxationParameters.size() == kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS);
         }
 
         distribn_t GetTimeStep() const
