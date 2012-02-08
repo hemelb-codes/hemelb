@@ -44,6 +44,7 @@ class Curation(ResultsCollection):
         self.action=Action(action,stream)
         
     def act(self):
+        self.action.start()
         for result in self.filtered_results:
             self.action(result)
 
@@ -53,12 +54,16 @@ class Action(object):
         self.action=config.pop(0)
         self.arguments=config
         self.stream=stream
+    def start(self):
+        if self.action=='display':
+            print("#",end='')
+            print(*self.arguments,file=self.stream)
     def __call__(self,result):
         getattr(self,self.action)(result,*self.arguments)
     def report(self,result):
         print(result,file=self.stream)
     def display(self,result,*cols):
-        print([result.datum(col) for col in cols],file=self.stream)
+        print(*[result.datum(col) for col in cols],file=self.stream)
     def name(self,result):
         print(result.name,file=self.stream)
     def accept(self,result):
