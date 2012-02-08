@@ -1,7 +1,6 @@
 #ifndef HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
 #define HEMELB_LB_KERNELS_MOMENTBASIS_DHUMIERESD3Q15MRTBASIS_H
 
-#include "lb/lattices/Lattice.h"
 #include "D3Q15.h"
 
 namespace hemelb
