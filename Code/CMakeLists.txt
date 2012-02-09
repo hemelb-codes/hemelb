@@ -11,6 +11,7 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
+option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
@@ -36,6 +37,9 @@ if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
 endif()
 
+if (NOT HEMELB_STATIC_ASSERT)
+	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
+endif()
 
 
 #------Dependencies --------------------------
