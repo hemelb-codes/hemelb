@@ -6,7 +6,7 @@
 #include <ostream>
 #include <algorithm>
 #include <limits>
-
+#include "util/static_assert.h"
 namespace hemelb
 {
   namespace util
@@ -318,20 +318,9 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          if (std::numeric_limits<T>::is_integer)
-          {
-            // It is an error to use this method on an integer type.
-            // This should fail to compile as there is no return statement
-            // here.
-
-            // Ideally we would have:
-            // static_assert(!std::numeric_limits<T>::is_integer)
-            // here. But no Boost yet.
-          }
-          else
-          {
-            return std::sqrt(GetMagnitudeSquared());
-          }
+          HEMELB_STATIC_ASSERT(std::numeric_limits<T>::is_specialized);
+          HEMELB_STATIC_ASSERT(!std::numeric_limits<T>::is_integer);
+          return std::sqrt(GetMagnitudeSquared());
         }
 
         /**
