@@ -4,7 +4,7 @@ import cPickle
 from copy import copy
 import numpy as np
 
-from vtk import vtkSTLReader, vtkTransform, vtkTransformFilter
+from vtk import vtkSTLReader
 
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
@@ -59,17 +59,10 @@ class Profile(Observable):
 
         # We need a reader to get the polydata
         self.StlReader = vtkSTLReader()
-        # Something to scale it to metres
-        scale = self.StlFileUnit.SizeInMetres
-        trans = vtkTransform()
-        trans.Scale(scale, scale, scale)
-        self.SurfaceSource = vtkTransformFilter()
-        self.SurfaceSource.SetTransform(trans)
-        self.SurfaceSource.SetInputConnection(self.StlReader.GetOutputPort())
         
         # And a way to estimate the voxel size
         self.SideLengthCalculator = AverageSideLengthCalculator()
-        self.SideLengthCalculator.SetInputConnection(self.SurfaceSource.GetOutputPort())
+        self.SideLengthCalculator.SetInputConnection(self.StlReader.GetOutputPort())
 
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
@@ -87,50 +80,13 @@ class Profile(Observable):
         # When the STL changes, we should reset the voxel size and
         # update the vtkSTLReader.
         self.AddObserver('StlFile', self.OnStlFileChanged)
-        
-        # And when the units are changed update the transform
-        self.AddObserver('StlFileUnitId', self.OnStlFileUnitIdChanged)
         return
     
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
         return
-    
-    def OnStlFileUnitIdChanged(self, change):
-        """When we change what we think the units are in the file, this is triggered.
-        The scaling of the read-in geometry is updated and the seed point and IOlet positions are suitably scaled.
-        """
-        # Get new length of '1' in the STL file
-        scale = self.StlFileUnit.SizeInMetres
-        # Get the old scaling
-        oldScale = self.SurfaceSource.GetTransform().GetMatrix().GetElement(0,0)
-        # Create a suitable, new Transformation
-        trans = vtkTransform()
-        trans.Scale(scale, scale, scale)
         
-        # Scale the SeedPoint
-        factor = scale/oldScale
-        self.SeedPoint.x *= factor
-        self.SeedPoint.y *= factor
-        self.SeedPoint.z *= factor
-        
-        # The voxel size
-        self.VoxelSize *= factor
-        
-        # Now any IOlet planes
-        for io in self.Iolets:
-            io.Centre.x *= factor
-            io.Centre.y *= factor
-            io.Centre.z *= factor
-            io.Radius *= factor
-            continue
-        
-        # We do this last to make sure the view reset is sensible
-        # (as Modifying the SurfaceSource triggers this)
-        self.SurfaceSource.SetTransform(trans)
-        return
-    
     @property
     def HaveValidStlFile(self):
         """Read only property indicating if our STL file is valid.

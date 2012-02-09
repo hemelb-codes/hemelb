@@ -16,7 +16,6 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         self.DefineVectorKey("SeedPoint")
         self.DefineIoletListKey("Iolets")
         self.DefineVtkObjectKey("StlReader")
-        self.DefineVtkObjectKey("SurfaceSource")
         self.DefineVtkObjectKey('SideLengthCalculator')
         
         def trans(state):
