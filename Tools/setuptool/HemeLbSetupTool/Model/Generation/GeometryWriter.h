@@ -14,7 +14,7 @@ class BlockWriter;
 class GeometryWriter {
 public:
 	GeometryWriter(const std::string& OutputGeometryFile,
-			int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin);
+			int BlockSize, Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres);
 
 	~GeometryWriter();
 
@@ -25,8 +25,8 @@ protected:
 	std::string OutputGeometryFile;
 	int BlockSize;
 	Index BlockCounts;
-	double VoxelSize;
-	Vector Origin;
+	double VoxelSizeMetres;
+	Vector OriginMetres;
 
 	int headerStart;
 	XdrWriter* headerEncoder;

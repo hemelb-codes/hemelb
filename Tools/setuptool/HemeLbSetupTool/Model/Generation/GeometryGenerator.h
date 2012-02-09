@@ -25,11 +25,15 @@ public:
 	void Execute();
 	bool GetIsFluid(Site& site);
 
-	inline double GetVoxelSize(void) {
-		return this->VoxelSize;
+	inline double GetVoxelSizeMetres(void) {
+		return this->VoxelSizeMetres;
 	}
-	inline void SetVoxelSize(double val) {
-		this->VoxelSize = val;
+	inline void SetVoxelSizeMetres(double val) {
+		this->VoxelSizeMetres = val;
+	}
+
+	inline double GetVoxelSizeWorking(void) {
+		return 1;
 	}
 
 	inline std::string GetOutputGeometryFile(void) {
@@ -46,19 +50,19 @@ public:
 		this->Iolets = std::vector<Iolet*>(iv);
 	}
 
-	inline void GetSeedPoint(double out[3]) {
+	inline void GetSeedPointWorking(double out[3]) {
 		for (unsigned int i = 0; i < 3; ++i)
-			out[i] = this->SeedPoint[i];
+			out[i] = this->SeedPointWorking[i];
 		return;
 	}
-	inline void SetSeedPoint(double out[3]) {
+	inline void SetSeedPointWorking(double out[3]) {
 		for (unsigned int i = 0; i < 3; ++i)
-			this->SeedPoint[i] = out[i];
+			this->SeedPointWorking[i] = out[i];
 	}
-	inline void SetSeedPoint(double x, double y, double z) {
-		this->SeedPoint[0] = x;
-		this->SeedPoint[1] = y;
-		this->SeedPoint[2] = z;
+	inline void SetSeedPointWorking(double x, double y, double z) {
+		this->SeedPointWorking[0] = x;
+		this->SeedPointWorking[1] = y;
+		this->SeedPointWorking[2] = z;
 	}
 
 	inline vtkPolyData* GetClippedSurface(void) {
@@ -72,12 +76,13 @@ private:
 	void ClassifySite(Site& site);
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
+	bool IsInsideSurface(const Vector& point);
 
 	// Members set from outside to initialise
-	double VoxelSize;
+	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
-	double SeedPoint[3];
+	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
 	vtkOBBTree* Locator;
 

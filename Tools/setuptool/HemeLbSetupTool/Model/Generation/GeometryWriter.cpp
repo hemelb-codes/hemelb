@@ -8,16 +8,16 @@
 
 
 GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
-		int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin) :
+		int BlockSize, Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres) :
 	OutputGeometryFile(OutputGeometryFile) {
 
 	// Copy in key data
 	this->BlockSize = BlockSize;
-	this->VoxelSize = VoxelSize;
+	this->VoxelSizeMetres = VoxelSizeMetres;
 
 	for (unsigned int i = 0; i < 3; ++i) {
 		this->BlockCounts[i] = BlockCounts[i];
-		this->Origin[i] = Origin[i];
+		this->OriginMetres[i] = OriginMetres[i];
 	}
 
 	{
@@ -40,12 +40,12 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		encoder << this->BlockSize;
 
 		// Voxel Size, in metres
-		encoder << this->VoxelSize;
+		encoder << this->VoxelSizeMetres;
 
 		// Position of site index (0,0,0) in block index (0,0,0), in
 		// metres in the STL file's coordinate system
 		for (unsigned int i = 0; i < 3; ++i)
-			encoder << this->Origin[i];
+			encoder << this->OriginMetres[i];
 
 		// padding
 		encoder << 0U;
