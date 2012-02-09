@@ -124,6 +124,24 @@ namespace std {
     def __str__(self):
         return "Vector3D(%s, %s, %s)" % (self[0], self[1], self[2])
   %}
+
+  // Multiplication by a scalar
+  hemelb::util::Vector3D __mul__(hemelb::util::Vector3D::value_type divisor) {
+    return (*$self) * divisor;
+  }
+  hemelb::util::Vector3D& __imul__(hemelb::util::Vector3D::value_type divisor) {
+  	(*$self) *= divisor;
+    return (*$self);
+  }
+  
+  // Division by a scalar
+  hemelb::util::Vector3D __div__(hemelb::util::Vector3D::value_type divisor) {
+    return (*$self) / divisor;
+  }
+  hemelb::util::Vector3D& __idiv__(hemelb::util::Vector3D::value_type divisor) {
+  	(*$self) /= divisor;
+    return (*$self);
+  }
 };
 
 %feature("shadow") hemelb::util::Vector3D::__getitem__ %{

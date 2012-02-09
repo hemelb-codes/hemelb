@@ -51,10 +51,10 @@ void GeometryGenerator::Execute() {
 		std::cout << "Error getting Iolet ID array from clipped surface" << std::endl;
 	}
 
-	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds());
+	Domain domain(this->VoxelSizeMetres, this->ClippedSurface->GetBounds());
 
 	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
-			domain.GetBlockCounts(), domain.GetVoxelSize(), domain.GetOrigin());
+			domain.GetBlockCounts(), domain.GetVoxelSizeMetres(), domain.GetOriginMetres());
 
 	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
 		// Open the BlockStarted context of the writer; this will
@@ -112,14 +112,18 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	}
 }
 
+bool GeometryGenerator::IsInsideSurface(const Vector& point) {
+	if (this->Locator->InsideOrOutside(&point[0]) < 0) {
+		// -1 => inside surface
+		return true;
+	} else {
+		return false;
+	}
+}
+
 bool GeometryGenerator::GetIsFluid(Site& site) {
 	if (!site.IsFluidKnown) {
-		if (this->Locator->InsideOrOutside(&site.Position[0]) < 0) {
-			// -1 => inside surface
-			site.IsFluid = true;
-		} else {
-			site.IsFluid = false;
-		}
+		site.IsFluid = this->IsInsideSurface(site.Position);
 		site.IsFluidKnown = true;
 	}
 	return site.IsFluid;
@@ -163,9 +167,9 @@ void GeometryGenerator::ClassifySite(Site& site) {
 
 			// This is set in any solid case
 			link.Distance = (hitPoint - site.Position).GetMagnitude();
-			// The distance is in world units; must be output as a fraction of
+			// The distance is in voxels but must be output as a fraction of
 			// the lattice vector. Scale it.
-			link.Distance /= this->VoxelSize * Neighbours::norms[iNeigh];
+			link.Distance /= Neighbours::norms[iNeigh];
 
 			// The index of the cell in the vtkPolyData that was hit
 			int hitCellId = this->hitCellIds->GetId(0);
