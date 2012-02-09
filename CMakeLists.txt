@@ -19,6 +19,7 @@ option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
+option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
@@ -56,6 +57,7 @@ ExternalProject_Add(
 	-DCTEMPLATE_USE_STATIC=${CTEMPLATE_USE_STATIC}
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}
 	-DHEMELB_DEPENDENCIES_SET_RPATH=${HEMELB_DEPENDENCIES_SET_RPATH}
+	-DHEMELB_STATIC_ASSERT=${HEMELB_STATIC_ASSERT}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
