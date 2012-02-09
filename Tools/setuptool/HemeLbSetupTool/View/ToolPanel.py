@@ -9,7 +9,7 @@ from ..Bindings.WxMappers import WxWidgetMapper, \
      WxWidgetEnabledMapper, NonObservingWxWidgetMapper, \
      WxListCtrlMapper, WxListCtrlSelectionMapper
 from ..Bindings.Translators import NoneToValueTranslator, \
-     FloatTranslator, QuickTranslator
+     FloatTranslator, QuickTranslator, Translator
 from ..Bindings.Bindings import WxActionBinding
 
 from ..Model.Profile import Profile
@@ -133,7 +133,31 @@ class InputPanel(wx.Panel):
 selectionToTrueTranslator = QuickTranslator(lambda x: x is not None,
                                             lambda x: None)
 
+class LabelUnitTranslator(Translator):
+    def __init__(self, template, inner=None):
+        Translator.__init__(self, inner)
+        self.template = template
+        return
+    
+    def TranslateStage(self, val):
+        return self.template % val.Abbrv
+    
+    def UntranslateState(self, val):
+        return self.template % val.Abbrv
+    
+    pass
+
+def MakeAndBindLengthUnitLabel(panel, controller, name):
+    lbl = wx.StaticText(panel)
+    controller.BindValue(
+        'StlFileUnit',
+        NonObservingWxWidgetMapper(lbl, 'Label',
+                                   translator=LabelUnitTranslator(name + ' / %s'))
+    )
+    return lbl
+
 class IoletsDetailPanel(wx.Panel):
+    
     def __init__(self, controller, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
@@ -147,7 +171,8 @@ class IoletsDetailPanel(wx.Panel):
                            translator=NoneToValueTranslator(''))
             )
         
-        centreLabel = wx.StaticText(self, label='Centre / m')
+        self.centreLabel = MakeAndBindLengthUnitLabel(self, controller, 'Centre')
+        
         self.centreVector = VectorCtrl(self)
         # TODO: make these text fields (Centre, Normal, Radius) 
         # editable. At the moment I can't get the binding to VTK
@@ -158,7 +183,7 @@ class IoletsDetailPanel(wx.Panel):
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
             )
         
-        radiusLabel = wx.StaticText(self, label='Radius / m')
+        self.radiusLabel = MakeAndBindLengthUnitLabel(self, controller, 'Radius')
         self.radiusField = wx.TextCtrl(self)
 #        self.radiusField.SetEditable(False)
         
@@ -205,11 +230,11 @@ class IoletsDetailPanel(wx.Panel):
             
             (self.placeButton, 0, wx.CENTRE),
             
-            (V(radiusLabel,
+            (V(self.radiusLabel,
               (self.radiusField, 1, wx.EXPAND)),
              0, wx.EXPAND),
             
-            (V(centreLabel,
+            (V(self.centreLabel,
                (self.centreVector, 1, wx.EXPAND)),
              0, wx.EXPAND),
             
@@ -292,7 +317,7 @@ class VoxelPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        voxelLabel = wx.StaticText(self, label='Voxel size / m')
+        self.voxelLabel = MakeAndBindLengthUnitLabel(self, controller, 'Voxel size')
 #        controller.BindValue('StlFileUnitId',
 #                              WxWidgetMapper(voxelLabel,
 #                                             'Label', wx.EVT_TEXT,
@@ -307,7 +332,7 @@ class VoxelPanel(wx.Panel):
         self.controller.BindAction('ResetVoxelSize', WxActionBinding(self.voxelResetButton, wx.EVT_BUTTON))
         
         layout = V(
-            voxelLabel,
+            self.voxelLabel,
             (H((V((self.voxelSizeField, 0, wx.EXPAND)), 1, wx.EXPAND),
                self.voxelResetButton), 1, wx.EXPAND)
             )
@@ -328,7 +353,7 @@ class SeedPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        seedLabel = wx.StaticText(self, label='Seed Position / m')
+        self.seedLabel = MakeAndBindLengthUnitLabel(self, controller, 'Seed position')
         self.seedVector = VectorCtrl(self)
 
         controller.BindValue('SeedPoint',
@@ -347,7 +372,7 @@ class SeedPanel(wx.Panel):
         controller.BindAction('Pipeline.SeedPlaceClicked',
                               WxActionBinding(self.seedPlaceButton, wx.EVT_BUTTON))
         
-        layout = V(seedLabel,
+        layout = V(self.seedLabel,
                    (H((self.seedVector, 1, wx.EXPAND),
                      self.seedPlaceButton), 1, wx.EXPAND)
                    )
