@@ -10,7 +10,7 @@ void Neighbours::Init() {
 
 	//unsigned int iLater = 0;
 	for (unsigned int i = 0, iLater = 0; i < Neighbours::n; ++i) {
-		Neighbours::norms[i] = Neighbours::vectors[i].GetMagnitude();
+		Neighbours::norms[i] = std::sqrt(Neighbours::vectors[i].GetMagnitudeSquared());
 
 		// Figure out if this takes us to a later site
 		if (Neighbours::vectors[i][0] > 0) {
