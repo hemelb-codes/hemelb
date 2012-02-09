@@ -11,7 +11,7 @@
 // C'tor
 Site::Site(Block& block, Index& index) :
 	IsFluidKnown(false), IsFluid(false),
-			Position(block.GetDomain().CalcPositionFromIndex(index)),
+			Position(block.GetDomain().CalcPositionWorkingFromIndex(index)),
 			block(block), index(index) {
 }
 
@@ -19,7 +19,7 @@ Site::Site(Block& block, Index& index) :
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
 	IsFluidKnown(false), IsFluid(false),
 			block(block), index(i, j, k) {
-	this->Position = this->block.GetDomain().CalcPositionFromIndex(this->index);
+	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(this->index);
 }
 
 const Index Site::GetDomainBlockCount() {
