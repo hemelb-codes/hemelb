@@ -1,3 +1,4 @@
+import zlib
 import xdrlib
 from functools import reduce
 from Site import Site
@@ -15,74 +16,99 @@ class LatticeFixture(object):
         self.origin=(0.0,)*3
         self.pack=xdrlib.Packer()
 
-    def pack_all(self):
-        self.pack_preamble()
-        self.pack_header()
-        self.pack_blocks()
-        
-    def pack_preamble(self):
+    def write_preamble(self):
+        preamble_encoder = xdrlib.Packer()
         # Magic numbers and versioning
-        self.pack.pack_uint(self.hemelb_magic_number) 
-        self.pack.pack_uint(self.geometry_magic_number)
-        self.pack.pack_uint(self.hemelb_geometry_file_format_version_number)
+        preamble_encoder.pack_uint(self.hemelb_magic_number) 
+        preamble_encoder.pack_uint(self.geometry_magic_number)
+        preamble_encoder.pack_uint(self.hemelb_geometry_file_format_version_number)
 
         # Domain size in blocks
         for blocks_across_dimension in self.size_in_blocks:
-            self.pack.pack_uint(blocks_across_dimension)
+            preamble_encoder.pack_uint(blocks_across_dimension)
 
         # Number of lattice sites along the side of a block
-        self.pack.pack_uint(self.sites_along_block)
+        preamble_encoder.pack_uint(self.sites_along_block)
 
         # Grid space step
-        self.pack.pack_double(self.space_step)
+        preamble_encoder.pack_double(self.space_step)
 
         # Origin of coordinates
         for origin_coordinate in self.origin:
-            self.pack.pack_double(origin_coordinate)
+            preamble_encoder.pack_double(origin_coordinate)
 
         # Pad the length of the preamble to 64 bytes
-        self.pack.pack_uint(0)
-
-    def pack_header(self):
+        preamble_encoder.pack_uint(0)
+        self.outfile.write(preamble_encoder.get_buffer())
+        
+    def write_dummy_header(self):
+        header_encoder = xdrlib.Packer()
         for block in self.blocks:
-            self.pack_block_header(block)
-
-    def pack_block_header(self,block):
-        self.pack.pack_uint(len(block.sites))
-        self.pack.pack_uint(block.bytes)
-
-    def pack_blocks(self):
-        # Requirement: TODO Data is compressed with $COMPRESSION_ALGORITHM on a per-block basis.
+            header_encoder.pack_uint(0)
+            header_encoder.pack_uint(0)
+            continue
+        
+        self._header_start = self.outfile.tell()
+        self.outfile.write(header_encoder.get_buffer())
+        self._header_end = self.outfile.tell()
+        return
+    
+    def rewrite_header(self):
+        header_encoder = xdrlib.Packer()
         for block in self.blocks:
-            start_position = len(self.pack.get_buffer())
-            # Requirement: Only if a block contains at least one fluid site is data given for the block
+            header_encoder.pack_uint(block.get_number_of_fluid_sites())
+            header_encoder.pack_uint(block.compressed_bytes)
+            continue
+        
+        self.outfile.seek(self._header_start)
+        self.outfile.write(header_encoder.get_buffer())
+        assert self.outfile.tell() == self._header_end
+        return
+    
+    def write_blocks(self):
+        for block in self.blocks:
+            if block.get_number_of_fluid_sites() == 0:
+                block.compressed_bytes = 0
+                continue
+            
+            block_encoder = xdrlib.Packer()
             for site in block.sites:
-                self.pack_site(site)
-            end_position = len(self.pack.get_buffer())
-            assert end_position-start_position == block.bytes, "Inconsistent block size evaluation"
-
-    def pack_site(self,site):
-        self.pack.pack_uint(site.site_type)
+                self.pack_site(site, block_encoder)
+                continue
+            
+            compressed = zlib.compress(block_encoder.get_buffer())
+            block.compressed_bytes = len(compressed)
+            
+            self.outfile.write(compressed)
+            continue
+        return
+    
+    def pack_site(self,site, block_encoder):
+        block_encoder.pack_uint(site.site_type)
         # If the site is solid, nothing else is packed. Otherwise, pack information about the links
         if site.site_type == Site.fluid_site:
             for link in site.links:
-                self.pack_link(link)
+                self.pack_link(link, block_encoder)
 
-    def pack_link(self,link):
+    def pack_link(self,link, block_encoder):
         # Pack the link type and depending on it, extra information
-        self.pack.pack_uint(link.link_type)
+        block_encoder.pack_uint(link.link_type)
         if link.link_type in [Link.inlet,Link.outlet]:
             # An unsigned integer giving the an index to the inlet array specified in the XML Config File
-            self.pack.pack_uint(link.iolet_index)
+            block_encoder.pack_uint(link.iolet_index)
         if link.link_type != Link.no_boundary:
             # A single precision floating point number giving the distance to the boundary, as a fraction of the lattice vector
-            self.pack.pack_float(link.wall_distance)
+            block_encoder.pack_float(link.wall_distance)
 
     def write(self,filename):
-        self.pack_all()
-        file_handle = file(filename,'wb')
-        file_handle.write(self.pack.get_buffer())
-
+        self.outfile = file(filename, 'wb')
+        self.write_preamble()
+        self.write_dummy_header()
+        self.write_blocks()
+        self.rewrite_header()
+        self.outfile.close()
+        return
+    
     lattice_directions=(
         (-1,-1,-1),
         (-1,-1, 0),
