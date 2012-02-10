@@ -1,5 +1,6 @@
 import numpy as np
 import xdrlib
+import zlib
 
 from .generic import Domain, Block, AllSolidBlock, Site
 from .. import HemeLbMagicNumber
@@ -153,8 +154,10 @@ class ConfigLoader(object):
         
             b.nFluidSites = domain.BlockFluidSiteCounts[bIjk]
             b.Sites = np.zeros(domain.BlockSize**3, dtype=object)
-        
-            blockLoader = xdrlib.Unpacker(self.File.read(self.BlockDataLength[bIjk]))
+            
+            compressed = self.File.read(self.BlockDataLength[bIjk])
+            uncompressed = zlib.decompress(compressed)
+            blockLoader = xdrlib.Unpacker(uncompressed)
             
             # sl = site local
             for slIjk, slIdx in domain.BlockSiteIndexer.IterBoth():
