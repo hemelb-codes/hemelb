@@ -73,13 +73,12 @@ class GeometryGenerator(object):
         transformer.SetInputConnection(clipper.ClippedSurfaceSource.GetOutputPort())
         
         # Uncomment this an insert the output path to debug pipeline construction
-        write = StageWriter('/Users/rupert/tmp/difftestupdate').WriteOutput
+        # write = StageWriter('/path/to/stage/output/directory').WriteOutput
         # for alg in getpipeline(transformer):
         #    write(alg)
 
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
-        write(self.ClippedSurface)
         self.generator.SetClippedSurface(self.ClippedSurface)
         
         self.generator.SetVoxelSizeMetres(profile.VoxelSize * profile.StlFileUnit.SizeInMetres)
