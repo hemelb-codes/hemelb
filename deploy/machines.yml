@@ -47,6 +47,22 @@ legion:
   python_build: "python2.6"
   modules: ["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake", "load python/gcc/2.6.6"]
   runtime_path_template: "$home_path/Scratch"
+  node_type_restriction_template: '#$$ -ac allow="${node_type}"'
+  node_type: "X"
+  corespernode: 12
+  temp_path_template: false #Legion sets its own tmpdir
+legion_intel:
+  fabric_dir: "IntelHemeLB"
+  import: legion
+  modules: ["remove ofed/qlogic/intel/64/1.2.7","add ofed/openmpi/intel/64/1.4.1","load cmake", "load python/gcc/2.6.6"]
+  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the hector compilers are
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "icpc"
+    CMAKE_C_COMPILER: "icc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
 planck:
   needs_tarballs: true
   remote: "planck.chem.ucl.ac.uk"
