@@ -464,11 +464,17 @@ def job(*option_dictionaries):
     Execute a generic job on the remote machine. Use hemelb, regress, or test instead."""
     update_environment(*option_dictionaries)
     with_template_job()
-    # If we request less than one node's worth of cores, need to keep N<=n
-    if int(env.corespernode)>int(env.cores):
-        env.corespernode=env.cores
+    # Use this to request more cores than we use, to measure performance without sharing impact
+    if env.cores_reserved=='WholeNode' and env.corespernode:
+        env.cores_reserved=(1+(int(env.cores)-1)/int(env.corespernode))*env.corespernode
+    env.cores_reserved=env.cores_reserved or env.cores
+    # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
+    env.coresusedpernode=env.corespernode
+    if int(env.coresusedpernode)>int(env.cores):
+        env.coresusedpernode=env.cores
+    if env.node_type:
+        env.node_type_restriction=template(env.node_type_restriction_template)
     env['job_name']=env.name[0:env.max_job_name_chars]
-
     script_name=template("$template_key-$script")
     env.job_script=script_template(script_name)
 
@@ -550,7 +556,7 @@ def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
 @task
 def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
     """Create a new config by copying an old one, and modifying the steps and cycles"""
-    profile_environment(profile,VoxelSize,oldSteps,oldCycles)
+    profile_environment(profile,VoxelSize,oldSteps,oldCycles)           
     with_template_config()
     env.old_config_path=env.job_config_path_local
     config_path=os.path.join(env.job_config_path_local,'config.xml')
@@ -576,7 +582,7 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        modify_config(Steps,Cycles,1000,3)
+        modify_config(profile,Steps,Cycles,1000,3)
 
 @task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
@@ -590,11 +596,12 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
         #Steps and cycles don't effect the geometry, so we can create these configs by copy-and-edit
         profile_environment(profile,currentVoxelSize,1000,3)
         if not str(create_configs).lower()[0]=='f':
-            create_config_impl(p)   
+            pass
+            create_config_impl(p)
         for currentSteps in input_to_range(Steps,1000):
             for currentCycles in input_to_range(Cycles,3):
                 with_template_config()
-                profile_environment(profile,currentVoxelSize,1000,3)
+                profile_environment(profile,currentVoxelSize,currentSteps,currentCycles)
                 if not str(create_configs).lower()[0]=='f':
-                    modify_config(currentVoxelSize,currentSteps,currentCycles,1000,3)
+                    modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
