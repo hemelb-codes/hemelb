@@ -1,5 +1,7 @@
 #include <cstdio>
 
+#include <zlib.h>
+
 #include "BlockWriter.h"
 #include "GeometryWriter.h"
 #include "Neighbours.h"
@@ -22,16 +24,53 @@ void BlockWriter::IncrementFluidSitesCount() {
 }
 
 void BlockWriter::Finish() {
-	unsigned int blockLength = 0;
+	unsigned int compressedBlockLength = 0;
 	if (this->nFluidSites > 0) {
-		// Work out how much space we've written to the buffer.
-		blockLength = this->memWriter->getCurrentStreamPosition();
+		int ret; // zlib return code
+
+		// How much data to compress?
+		int uncompressedBlockLength = this->memWriter->getCurrentStreamPosition();
+
+		// Set up our compressor
+		z_stream stream;
+		stream.zalloc = Z_NULL;
+		stream.zfree = Z_NULL;
+		stream.opaque = Z_NULL;
+	    // Max compression
+		ret = deflateInit(&stream, 9);
+		// assert ret == Z_OK
+
+		// Compute upper bound for how much space we'll need.
+		int maxDeflatedLength = deflateBound(&stream, uncompressedBlockLength);
+		unsigned char* compressedBuffer = new unsigned char[maxDeflatedLength];
+
+		// Set input. The XDR buffer has to be char but zlib only works with
+		// unsigned char. Just cast for now...
+		stream.next_in = reinterpret_cast<unsigned char*>(this->buffer);
+		stream.avail_in = uncompressedBlockLength;
+		// Set output
+		stream.next_out = compressedBuffer;
+		stream.avail_out = maxDeflatedLength;
+
+		// Deflate. This should be it, if not their was an error.
+		ret = deflate(&stream, Z_FINISH);
+		// assert ret == Z_STREAM_END
+
+		// How much space did we actually use?
+		compressedBlockLength = stream.next_out - compressedBuffer;
+
+		// Tell zlib to clean up.
+		ret = deflateEnd(&stream);
+		// assert ret == Z_OK
 
 		// Write the buffer contents to the file.
-		std::fwrite(this->buffer, 1, blockLength, this->geometryWriter->bodyFile);
+		std::fwrite(compressedBuffer, 1, compressedBlockLength,
+				this->geometryWriter->bodyFile);
+		delete[] compressedBuffer;
 	}
 
 	// If there are no fluid sites, write nothing except two zeros to the header.
 	// If there are fluid sites, blockLength was set above.
-	(*this->geometryWriter->headerEncoder) << this->nFluidSites << blockLength;
+	(*this->geometryWriter->headerEncoder) << this->nFluidSites
+			<< compressedBlockLength;
 }
