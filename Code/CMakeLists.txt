@@ -97,6 +97,10 @@ endif()
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
 
+#------zlib ----------------
+find_package(zlib REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIR})
+
 #-------------Resources -----------------------
 
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
@@ -151,6 +155,7 @@ target_link_libraries(hemelb
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
+	${ZLIB_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -170,6 +175,7 @@ if(HEMELB_BUILD_UNITTESTS)
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
+		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/config.xml)
