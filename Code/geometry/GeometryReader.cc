@@ -1,6 +1,7 @@
 #include <cmath>
 #include <list>
 #include <map>
+#include <zlib.h>
 
 #include "debug/Debugger.h"
 #include "io/formats/geometry.h"
@@ -395,8 +396,6 @@ namespace hemelb
         }
       }
 
-      // Allocate a buffer to read into.
-      char* buffer = new char[maxBytesPerBlock];
       int* procsWantingThisBlock = new int[currentCommSize];
 
       // Set the view and read in.
@@ -406,7 +405,6 @@ namespace hemelb
       for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
         ReadInBlock(offset,
-                    buffer,
                     procsWantingThisBlock,
                     nextBlockToRead,
                     sitesPerBlock[nextBlockToRead],
@@ -416,13 +414,11 @@ namespace hemelb
         offset += bytesPerBlock[nextBlockToRead];
       }
 
-      delete[] buffer;
       delete[] procsWantingThisBlock;
       delete[] readBlock;
     }
 
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar,
-                                     char* buffer,
                                      int* procsWantingThisBlockBuffer,
                                      const site_t blockNumber,
                                      const site_t sites,
@@ -434,7 +430,7 @@ namespace hemelb
       {
         return;
       }
-
+      std::vector<char> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
       int neededHere = neededOnThisRank;
@@ -453,20 +449,22 @@ namespace hemelb
       if (readingCore == currentCommRank)
       {
         // Read the data.
-        MPI_File_read_at(file, offsetSoFar, buffer, bytes, MPI_CHAR, MPI_STATUS_IGNORE);
+        compressedBlockData.resize(bytes);
+        MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), bytes, MPI_CHAR, MPI_STATUS_IGNORE);
 
         // Spread it.
         for (proc_t receiver = 0; receiver < currentCommSize; receiver++)
         {
           if (receiver != currentCommRank && procsWantingThisBlockBuffer[receiver])
           {
-            net.RequestSend(buffer, bytes, receiver);
+            net.RequestSend(&compressedBlockData.front(), bytes, receiver);
           }
         }
       }
       else if (neededOnThisRank)
       {
-        net.RequestReceive(buffer, bytes, readingCore);
+        compressedBlockData.resize(bytes);
+        net.RequestReceive(&compressedBlockData.front(), bytes, readingCore);
       }
       else
       {
@@ -480,7 +478,8 @@ namespace hemelb
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        io::writers::xdr::XdrMemReader lReader(buffer, bytes);
+        std::vector<char> blockData = DecompressBlockData(compressedBlockData, sites);
+        io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
 
         ParseBlock(blockNumber, lReader);
 
@@ -507,6 +506,47 @@ namespace hemelb
           }
         }
       }
+    }
+
+    std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
+                                                          const site_t sites) {
+      // For zlib return codes.
+      int ret;
+
+      // Set up the buffer for decompressed data. This should be long enough
+      // to cope with any data.
+      std::vector<char> uncompressed(io::formats::geometry::MaxSiteRecordLength * sites);
+
+      // Set up the inflator
+      z_stream stream;
+      stream.zalloc = Z_NULL;
+      stream.zfree = Z_NULL;
+      stream.opaque = Z_NULL;
+      stream.avail_in = compressed.size();
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
+
+      ret = inflateInit(&stream);
+      if (ret != Z_OK) {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
+      stream.avail_out = uncompressed.size();
+      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
+
+      ret = inflate(&stream, Z_FINISH);
+      if (ret != Z_STREAM_END) {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
+
+      uncompressed.resize(uncompressed.size() - stream.avail_out);
+      ret = inflateEnd(&stream);
+      if (ret != Z_OK) {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
+
+      return uncompressed;
     }
 
     void GeometryReader::ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader)

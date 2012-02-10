@@ -59,12 +59,21 @@ namespace hemelb
          * @param neededOnThisRank
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
-                         char* buffer,
                          int* procsWantingThisBlockBuffer,
                          const site_t blockNumber,
                          const site_t sites,
                          const unsigned int bytes,
                          const int neededOnThisRank);
+
+        /**
+         * Decompress the block data. Uses the known number of sites to get an
+         * upper bound on the uncompressed data to simplify the code and avoid
+         * reallocation.
+         * @param compressed
+         * @param sites
+         * @return
+         */
+        std::vector<char> DecompressBlockData(const std::vector<char>& compressed, const site_t sites);
 
         void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
 
