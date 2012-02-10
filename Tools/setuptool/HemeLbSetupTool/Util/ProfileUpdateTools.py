@@ -85,7 +85,7 @@ def UpdateProfileAttributes(profile):
         try:
             unusedAttrs.remove(attr)
         except ValueError:
-            print 'Warning: using default for missing attribute "' + attr + '"'
+            print 'Warning: using default (' + str(Profile._Args[attr]) + ') for missing attribute "' + attr + '"'
             pass
         continue
     
