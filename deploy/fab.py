@@ -409,7 +409,7 @@ def update_environment(*dicts):
 @task(alias='test')
 def unit_test(**args):
     """Submit a unit-testing job to the remote queue."""
-    job(dict(script='unittests',job_name_template='unittests_${build_number}_${machine_name}',cores=1),args)
+    job(dict(script='unittests',job_name_template='unittests_${build_number}_${machine_name}',cores=1,wall_time='0:1:0',memory='2G'),args)
 
 @task
 def hemelb(config,**args):
@@ -456,7 +456,7 @@ def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
     execute(copy_regression_tests)
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
-            wall_time='0:20:0', images=1, snapshots=1, steering=1111,script='regression'),args)
+            wall_time='0:20:0',memory='2G',images=1, snapshots=1, steering=1111,script='regression'),args)
 
 def job(*option_dictionaries):
     """Internal low level job launcher.
@@ -465,9 +465,9 @@ def job(*option_dictionaries):
     update_environment(*option_dictionaries)
     with_template_job()
     # Use this to request more cores than we use, to measure performance without sharing impact
-    if env.cores_reserved=='WholeNode' and env.corespernode:
+    if env.get('cores_reserved')=='WholeNode' and env.get('corespernode'):
         env.cores_reserved=(1+(int(env.cores)-1)/int(env.corespernode))*env.corespernode
-    env.cores_reserved=env.cores_reserved or env.cores
+    env.cores_reserved=env.get('cores_reserved') or env.cores
     # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
     env.coresusedpernode=env.corespernode
     if int(env.coresusedpernode)>int(env.cores):
@@ -525,7 +525,7 @@ def modify_profile(p):
 
 def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     env.profile=profile
-    env.VoxelSize=VoxelSize or env.get('VoxelSize')
+    env.VoxelSize=float(VoxelSize) or env.get('VoxelSize')
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
     env.Cycles=Cycles or env.get('Cycles')
