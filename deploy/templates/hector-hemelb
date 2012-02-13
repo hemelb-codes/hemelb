@@ -1,6 +1,6 @@
 #!/bin/bash --login
 #PBS -N $job_name
-#PBS -l mppwidth=$cores
+#PBS -l mppwidth=$cores_reserved
 #PBS -l mppnppn=$corespernode
 #PBS -l walltime=$wall_time
 #PBS -A $budget
@@ -10,4 +10,4 @@ cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-aprun -n $cores -N $corespernode $install_path/bin/hemelb -in config.xml -i $images -s $snapshots -ss $steering
+aprun -n $cores -N $coresusedpernode $install_path/bin/hemelb -in config.xml -i $images -s $snapshots -ss $steering
