@@ -8,7 +8,7 @@
 
 #$$ -N $job_name
 
-#$$ -pe openmpi $cores
+#$$ -pe openmpi $cores_reserved
 
 #$$ -P $project
 
