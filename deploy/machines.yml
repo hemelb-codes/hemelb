@@ -51,6 +51,7 @@ legion:
   node_type: "X"
   corespernode: 12
   temp_path_template: false #Legion sets its own tmpdir
+  template_key: legion
 legion_intel:
   fabric_dir: "IntelHemeLB"
   import: legion
