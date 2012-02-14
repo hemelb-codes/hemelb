@@ -120,7 +120,7 @@ class BlockError(Error):
 class SiteError(Error):
     """An error in a site's data.
     """
-    _template = '{site}: {message}'
+    _template = '{message}'
     
     def __init__(self, site, message):
         Error.__init__(self, message)
@@ -382,18 +382,18 @@ class BlockChecker(object):
             linkType = site.IntersectionType[iNeigh]
             # Check link type is one we know about
             if linkType not in Site.INTERSECTION_TYPES:
-                addSiteError('Site had an invalid intersection type: %d'.format(linkType))
+                addSiteError('Site had an invalid intersection type: {0}'.format(linkType))
             
             # Check site type consistency with neighbour
             if isinstance(neigh, OutOfDomainSite) or neigh.IsSolid:
                 # neigh is solid
                 if linkType == Site.NO_INTERSECTION:
-                    addSiteError('Site has no intersection on link to solid neighbour')
+                    addSiteError('Site has no intersection on link to solid neighbour {0}'.format(neigh))
                 pass
             else:
                 # neigh is fluid
                 if linkType != Site.NO_INTERSECTION:
-                    addSiteError('Site has intersection (type %d) on link to fluid'.format(linkType))
+                    addSiteError('Site has intersection (type {0}) on link to fluid'.format(linkType))
                     pass
                 pass
 
