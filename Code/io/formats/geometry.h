@@ -122,18 +122,39 @@ namespace hemelb
            */
           enum
           {
-            MaxSiteRecordLength = 4 + geometry::NumberOfDisplacements * (4 + 4 + 4)
+            MaxFluidSiteRecordLength = 4 + geometry::NumberOfDisplacements * (4 + 4 + 4)
+          };
+          /**
+           * Maximum length of a solid site's data. (In fact, this is THE
+           * length of a solid site's data.)
+           */
+          enum
+          {
+            MaxSolidSiteRecordLength = 4
+          //!< MaxSolidSiteRecordLength
           };
 
           /**
            * Compute the maximum possible length of a single block's data.
            * @param blockSideLength
-           * @return maximum block record lenght in bytes
+           * @return maximum block record length in bytes
            */
-          static inline unsigned int GetMaximumBlockRecordLength(unsigned int blockSideLength)
+          static inline unsigned int GetMaxBlockRecordLength(unsigned int blockSideLength)
           {
-            return blockSideLength * blockSideLength * blockSideLength *
-                geometry::MaxSiteRecordLength;
+            return blockSideLength * blockSideLength * blockSideLength * geometry::MaxFluidSiteRecordLength;
+          }
+
+          /**
+           * Compute the maximum length of a block's data, given the number of
+           * fluid sites contained within it.
+           * @param blockSideLength
+           * @param nFluidSites
+           * @return max length in bytes
+           */
+          static inline unsigned int GetMaxBlockRecordLength(unsigned int blockSideLength, unsigned int nFluidSites)
+          {
+            unsigned int nSolidSites = blockSideLength * blockSideLength * blockSideLength - nFluidSites;
+            return (nFluidSites * geometry::MaxFluidSiteRecordLength + nSolidSites * geometry::MaxSolidSiteRecordLength);
           }
 
           /**
