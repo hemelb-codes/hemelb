@@ -32,7 +32,7 @@ namespace hemelb
 
         void ReadHeader();
 
-        void BlockDecomposition(const site_t* fluidSitesPerBlock, proc_t* initialProcForEachBlock);
+        void BlockDecomposition();
 
         void DivideBlocks(site_t unassignedBlocks,
                           const proc_t unitCount,
@@ -104,7 +104,7 @@ namespace hemelb
 
         void ValidateAllReadData();
 
-        void ValidateProcForEachBlock(proc_t* procForEachBlock);
+        void ValidateProcForEachBlock();
 
         site_t GetHeaderLength(site_t blockCount) const;
 
@@ -163,6 +163,7 @@ namespace hemelb
         site_t* fluidSitesPerBlock;
         unsigned int* bytesPerCompressedBlock;
         unsigned int* bytesPerUncompressedBlock;
+        proc_t* procForEachBlock;
     };
   }
 }

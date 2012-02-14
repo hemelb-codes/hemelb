@@ -120,13 +120,12 @@ namespace hemelb
       fluidSitesPerBlock = new site_t[readingResult.GetBlockCount()];
       bytesPerCompressedBlock = new unsigned int[readingResult.GetBlockCount()];
       bytesPerUncompressedBlock = new unsigned int[readingResult.GetBlockCount()];
+      procForEachBlock = new proc_t[readingResult.GetBlockCount()];
 
       ReadHeader();
 
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
-
-      proc_t* procForEachBlock = new proc_t[readingResult.GetBlockCount()];
 
       if (!participateInTopology)
       {
@@ -137,9 +136,9 @@ namespace hemelb
       }
       else
       {
-        BlockDecomposition(fluidSitesPerBlock, procForEachBlock);
+        BlockDecomposition();
 
-        ValidateProcForEachBlock(procForEachBlock);
+        ValidateProcForEachBlock();
       }
 
       // Perform the initial read-in.
@@ -198,21 +197,6 @@ namespace hemelb
 
     /**
      * Read in the section at the beginning of the config file.
-     *
-     * // PREAMBLE
-     * uint stress_type = load_uint();
-     * uint blocks[3]; // blocks in x,y,z
-     * for (int i=0; i<3; ++i)
-     *        blocks[i] = load_uint();
-     * // number of sites along 1 edge of a block
-     * uint block_size = load_uint();
-     *
-     * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
-     *
-     * double voxel_size = load_double();
-     *
-     * for (int i=0; i<3; ++i)
-     *        site0WorldPosition[i] = load_double();
      */
     void GeometryReader::ReadPreamble()
     {
@@ -291,18 +275,8 @@ namespace hemelb
     /**
      * Read the header section, with minimal information about each block.
      *
-     * Note that the output is placed into the arrays sitesInEachBlock and
-     * bytesUsedByBlockInDataFile, each of which must have iBlockCount
-     * elements allocated.
-     *
-     * // HEADER
-     * uint nSites[nBlocks];
-     * uint nBytes[nBlocks];
-     *
-     * for (int i = 0; i < nBlocks; ++i) {
-     *        nSites[i] = load_uint(); // sites in block
-     *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
-     * }
+     * Results are placed in the member arrays fluidSitesPerBlock,
+     * bytesPerCompressedBlock and bytesPerUncompressedBlock.
      */
     void GeometryReader::ReadHeader()
     {
@@ -339,35 +313,7 @@ namespace hemelb
 
     /**
      * Read in the necessary blocks from the file.
-     *
-     * BODY:
-     * Block *block = new Block[nBlocks];
-     * sitesPerBlock = block_size*block_size*block_size;
-     *
-     * for (int i = 0; i < blocks[0] * blocks[1] * blocks[2]; ++i) {
-     *   if (nSites[i] == 0)
-     *     // nothing
-     *     continue;
-     *
-     *   block[i]->sites = new Site[sitesPerBlock];
-     *   for (int j = 0; j < sitesPerBlock; ++j) {
-     *     block[i]->sites[j]->config = load_uint();
-     *     if (block[i]->sites[j]->IsAdjacentInletOrOutlet()) {
-     *       for (k=0; k<3; ++k)
-     *         block[i]->sites[j]->boundaryNormal[k] = load_double();
-     *       block[i]->sites[j]->boundaryDistance = load_double();
-     *     }
-     *
-     *     if (block[i]->sites[j]->IsAdjacentToWall()) {
-     *       for (k=0; k<3; ++k)
-     *         block[i]->sites[j]->wallNormal[k] = load_double();
-     *       block[i]->sites[j]->wallDistance = load_double();
-     *     }
-     *
-     *     for (k=0; k<14; ++k)
-     *       block[i]->sites[j]->cutDistance[k] = load_double();
-     *   }
-     * }
+     * TODO: explain what this method does
      */
     void GeometryReader::ReadInLocalBlocks(const proc_t* unitForEachBlock,
                                            const proc_t localRank)
@@ -377,23 +323,19 @@ namespace hemelb
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
-      // Each site may have one unsigned to indicate whether it's fluid or not
-      // and, for each of the 26 link directions, one unsigned int for the link
-      // type, a float for the distance to intersection and an unsigned for an
-      // IOlet id.
-      const site_t maxBytesPerBlock = (readingResult.GetSitesPerBlock())
-          * (4 + (lb::lattices::D3Q27::NUMVECTORS - 1) * (4 + 4 + 4));
-
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
-          if (bytesPerCompressedBlock[block] > maxBytesPerBlock)
+          if (bytesPerUncompressedBlock[block] >
+              io::formats::geometry::GetMaxBlockRecordLength(readingResult.GetBlockSize(),
+                                                             fluidSitesPerBlock[block]))
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes: ",
+            log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                           block,
-                                                          bytesPerCompressedBlock[block],
-                                                          maxBytesPerBlock);
+                                                          bytesPerUncompressedBlock[block],
+                                                          io::formats::geometry::GetMaxBlockRecordLength(readingResult.GetBlockSize(),
+                                                                                                         fluidSitesPerBlock[block]));
           }
         }
       }
@@ -827,7 +769,7 @@ namespace hemelb
      * @param blockCountPerProc Array of length topology size, into which the number of blocks
      * allocated to each processor will be written.
      */
-    void GeometryReader::BlockDecomposition(const site_t* fluidSitePerBlock, proc_t* initialProcForEachBlock)
+    void GeometryReader::BlockDecomposition()
     {
       site_t* blockCountPerProc = new site_t[topologySize];
 
@@ -835,7 +777,7 @@ namespace hemelb
       site_t unvisitedFluidBlockCount = 0;
       for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
-        if (fluidSitePerBlock[block] != 0)
+        if (fluidSitesPerBlock[block] != 0)
         {
           ++unvisitedFluidBlockCount;
         }
@@ -851,13 +793,13 @@ namespace hemelb
       DivideBlocks(unvisitedFluidBlockCount,
                    topologySize,
                    blockCountPerProc,
-                   initialProcForEachBlock,
-                   fluidSitePerBlock);
+                   procForEachBlock,
+                   fluidSitesPerBlock);
 
       delete[] blockCountPerProc;
     }
 
-    void GeometryReader::ValidateProcForEachBlock(proc_t* procForEachBlock)
+    void GeometryReader::ValidateProcForEachBlock()
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
