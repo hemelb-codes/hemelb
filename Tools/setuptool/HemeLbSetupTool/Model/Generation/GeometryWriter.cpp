@@ -58,9 +58,14 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		unsigned int nBlocks = this->BlockCounts[0] * this->BlockCounts[1]
 				* this->BlockCounts[2];
 
+		// The XDR writer interface doesn't let us at the file underneath.
+		// We need to write HeaderRecordLength * nBlocks worth of junk bytes.
+		// The smallest unit XDR will write is 32 bits, so divide by 4 and
+		// write that many zeros
+		unsigned int headerLengthInXdrWords = hemelb::io::formats::geometry::HeaderRecordLength * nBlocks / 4;
 		// Write a dummy header
-		for (unsigned int i = 0; i < nBlocks; ++i) {
-			encoder << 0 << 0;
+		for (unsigned int i = 0; i < headerLengthInXdrWords; ++i) {
+			encoder << 0;
 		}
 
 		this->bodyStart = encoder.getCurrentStreamPosition();

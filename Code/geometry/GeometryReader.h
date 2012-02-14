@@ -30,7 +30,7 @@ namespace hemelb
       private:
         void ReadPreamble();
 
-        void ReadHeader(site_t* sitesInEachBlock, unsigned int* bytesUsedByBlockInDataFile);
+        void ReadHeader();
 
         void BlockDecomposition(const site_t* fluidSitesPerBlock, proc_t* initialProcForEachBlock);
 
@@ -40,9 +40,7 @@ namespace hemelb
                           proc_t* unitForEachBlock,
                           const site_t* fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(const site_t* sitesPerBlock,
-                               const unsigned int* bytesPerBlock,
-                               const proc_t* unitForEachBlock,
+        void ReadInLocalBlocks(const proc_t* unitForEachBlock,
                                const proc_t localRank);
 
         void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
@@ -62,7 +60,8 @@ namespace hemelb
                          int* procsWantingThisBlockBuffer,
                          const site_t blockNumber,
                          const site_t sites,
-                         const unsigned int bytes,
+                         const unsigned int compressedBytes,
+                         const unsigned int uncompressedBytes,
                          const int neededOnThisRank);
 
         /**
@@ -73,7 +72,7 @@ namespace hemelb
          * @param sites
          * @return
          */
-        std::vector<char> DecompressBlockData(const std::vector<char>& compressed, const site_t sites);
+        std::vector<char> DecompressBlockData(const std::vector<char>& compressed, const unsigned int uncompressedBytes);
 
         void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
 
@@ -96,9 +95,7 @@ namespace hemelb
                     site_t &blocksOnCurrentUnit,
                     const site_t blocksPerUnit);
 
-        void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
-                                         const unsigned int* bytesPerBlock,
-                                         const proc_t* procForEachBlock);
+        void OptimiseDomainDecomposition(const proc_t* procForEachBlock);
 
         void ValidateGraphData(idx_t* vtxDistribn,
                                idx_t localVertexCount,
@@ -113,12 +110,12 @@ namespace hemelb
 
         void GetSiteDistributionArray(idx_t* vertexDistribn,
                                       const proc_t* procForEachBlock,
-                                      const site_t* sitesPerBlock) const;
+                                      const site_t* fluidSitesPerBlock) const;
 
         void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
                                           const idx_t* vertexDistribution,
                                           const proc_t* procForEachBlock,
-                                          const site_t* sitesPerBlock) const;
+                                          const site_t* fluidSitesPerBlock) const;
 
         void GetAdjacencyData(idx_t* adjacenciesPerVertex,
                               idx_t* &localAdjacencies,
@@ -135,14 +132,12 @@ namespace hemelb
         idx_t* GetMovesList(idx_t* movesFromEachProc,
                             const idx_t* firstSiteIndexPerBlock,
                             const proc_t* procForEachBlock,
-                            const site_t* sitesPerBlock,
+                            const site_t* fluidSitesPerBlock,
                             const idx_t* vtxDistribn,
                             const idx_t* partitionVector);
 
         void RereadBlocks(const idx_t* movesPerProc,
                           const idx_t* movesList,
-                          const site_t* sitesPerBlock,
-                          const unsigned int* bytesPerBlock,
                           const int* procForEachBlock);
 
         void ImplementMoves(const proc_t* procForEachBlock,
@@ -165,6 +160,9 @@ namespace hemelb
         int currentCommRank;
         int currentCommSize;
         bool participateInTopology;
+        site_t* fluidSitesPerBlock;
+        unsigned int* bytesPerCompressedBlock;
+        unsigned int* bytesPerUncompressedBlock;
     };
   }
 }

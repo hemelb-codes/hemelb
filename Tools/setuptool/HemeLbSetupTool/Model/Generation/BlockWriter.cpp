@@ -25,11 +25,12 @@ void BlockWriter::IncrementFluidSitesCount() {
 
 void BlockWriter::Finish() {
 	unsigned int compressedBlockLength = 0;
+	unsigned int uncompressedBlockLength = 0;
 	if (this->nFluidSites > 0) {
 		int ret; // zlib return code
 
 		// How much data to compress?
-		int uncompressedBlockLength = this->memWriter->getCurrentStreamPosition();
+		uncompressedBlockLength = this->memWriter->getCurrentStreamPosition();
 
 		// Set up our compressor
 		z_stream stream;
@@ -72,5 +73,5 @@ void BlockWriter::Finish() {
 	// If there are no fluid sites, write nothing except two zeros to the header.
 	// If there are fluid sites, blockLength was set above.
 	(*this->geometryWriter->headerEncoder) << this->nFluidSites
-			<< compressedBlockLength;
+			<< compressedBlockLength << uncompressedBlockLength;
 }
