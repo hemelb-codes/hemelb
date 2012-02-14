@@ -8,7 +8,7 @@
 
 BlockWriter::BlockWriter(GeometryWriter &cfg) :
 	geometryWriter(&cfg), nFluidSites(0) {
-	this->maxBufferSize = geometry::GetMaximumBlockRecordLength(cfg.BlockSize);
+	this->maxBufferSize = geometry::GetMaxBlockRecordLength(cfg.BlockSize);
 	this->buffer = new char[this->maxBufferSize];
 	this->memWriter = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
 			this->maxBufferSize);
