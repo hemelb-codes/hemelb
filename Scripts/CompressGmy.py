@@ -24,8 +24,7 @@ class Compressor(ConfigLoader):
     def OnEndHeader(self):
         # Write dummy values
         nBlocks = self.Domain.TotalBlocks
-        self.OutFile.write((4*2*nBlocks)*'\0')
-        self.CompressedBlockLengths = np.zeros(nBlocks, dtype=np.uint)
+        self.OutFile.write((4*3*nBlocks)*'\0')
         return
 
     def _LoadBlock(self, domain, bIdx, bIjk):
@@ -33,7 +32,8 @@ class Compressor(ConfigLoader):
             return
         uncompressed = self.File.read(self.BlockDataLength[bIjk])
         compressed = zlib.compress(uncompressed)
-        self.CompressedBlockLengths[bIjk] = len(compressed)
+        self.BlockUncompressedDataLength[bIjk] = len(uncompressed)
+        self.BlockDataLength[bIjk] = len(compressed)
         self.OutFile.write(compressed)
         return
 
@@ -42,7 +42,8 @@ class Compressor(ConfigLoader):
         packer = xdrlib.Packer()
         for i in xrange(self.Domain.TotalBlocks):
             packer.pack_uint(self.Domain.BlockFluidSiteCounts[i])
-            packer.pack_uint(self.CompressedBlockLengths[i])
+            packer.pack_uint(self.BlockDataLength[i])
+            packer.pack_uint(self.BlockUncompressedDataLength[i])
             
         self.OutFile.seek(self.PreambleBytes)
         self.OutFile.write(packer.get_buffer())

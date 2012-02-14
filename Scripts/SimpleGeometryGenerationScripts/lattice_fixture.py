@@ -46,6 +46,7 @@ class LatticeFixture(object):
         for block in self.blocks:
             header_encoder.pack_uint(0)
             header_encoder.pack_uint(0)
+            header_encoder.pack_uint(0)
             continue
         
         self._header_start = self.outfile.tell()
@@ -58,6 +59,7 @@ class LatticeFixture(object):
         for block in self.blocks:
             header_encoder.pack_uint(block.get_number_of_fluid_sites())
             header_encoder.pack_uint(block.compressed_bytes)
+            header_encoder.pack_uint(block.uncompressed_bytes)
             continue
         
         self.outfile.seek(self._header_start)
@@ -69,6 +71,7 @@ class LatticeFixture(object):
         for block in self.blocks:
             if block.get_number_of_fluid_sites() == 0:
                 block.compressed_bytes = 0
+                block.uncompressed_bytes = 0
                 continue
             
             block_encoder = xdrlib.Packer()
@@ -78,6 +81,7 @@ class LatticeFixture(object):
             
             compressed = zlib.compress(block_encoder.get_buffer())
             block.compressed_bytes = len(compressed)
+            block.uncompressed_bytes = len(block_encoder.get_buffer())
             
             self.outfile.write(compressed)
             continue

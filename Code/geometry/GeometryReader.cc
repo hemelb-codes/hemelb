@@ -117,10 +117,11 @@ namespace hemelb
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
 
-      site_t* sitesPerBlock = new site_t[readingResult.GetBlockCount()];
-      unsigned int* bytesPerBlock = new unsigned int[readingResult.GetBlockCount()];
+      fluidSitesPerBlock = new site_t[readingResult.GetBlockCount()];
+      bytesPerCompressedBlock = new unsigned int[readingResult.GetBlockCount()];
+      bytesPerUncompressedBlock = new unsigned int[readingResult.GetBlockCount()];
 
-      ReadHeader(sitesPerBlock, bytesPerBlock);
+      ReadHeader();
 
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
@@ -136,7 +137,7 @@ namespace hemelb
       }
       else
       {
-        BlockDecomposition(sitesPerBlock, procForEachBlock);
+        BlockDecomposition(fluidSitesPerBlock, procForEachBlock);
 
         ValidateProcForEachBlock(procForEachBlock);
       }
@@ -157,7 +158,7 @@ namespace hemelb
         currentCommSize = topologySize;
         currentComm = topologyComm;
 
-        ReadInLocalBlocks(sitesPerBlock, bytesPerBlock, procForEachBlock, topologyRank);
+        ReadInLocalBlocks(procForEachBlock, topologyRank);
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
@@ -173,7 +174,7 @@ namespace hemelb
       if (participateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock);
+        OptimiseDomainDecomposition(procForEachBlock);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
 
         if (log::Logger::ShouldDisplay<log::Debug>())
@@ -189,8 +190,9 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::domainDecomposition].Stop();
 
-      delete[] sitesPerBlock;
-      delete[] bytesPerBlock;
+      delete[] fluidSitesPerBlock;
+      delete[] bytesPerCompressedBlock;
+      delete[] bytesPerUncompressedBlock;
       delete[] procForEachBlock;
     }
 
@@ -302,7 +304,7 @@ namespace hemelb
      *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
      * }
      */
-    void GeometryReader::ReadHeader(site_t* sitesInEachBlock, unsigned int* bytesUsedByBlockInDataFile)
+    void GeometryReader::ReadHeader()
     {
       site_t headerByteCount = GetHeaderLength(readingResult.GetBlockCount());
       // Allocate a buffer to read into, then do the reading.
@@ -322,12 +324,14 @@ namespace hemelb
       // Read in all the data.
       for (site_t block = 0; block < readingResult.GetBlockCount(); block++)
       {
-        unsigned int sites, bytes;
+        unsigned int sites, bytes, uncompressedBytes;
         preambleReader.readUnsignedInt(sites);
         preambleReader.readUnsignedInt(bytes);
+        preambleReader.readUnsignedInt(uncompressedBytes);
 
-        sitesInEachBlock[block] = sites;
-        bytesUsedByBlockInDataFile[block] = bytes;
+        fluidSitesPerBlock[block] = sites;
+        bytesPerCompressedBlock[block] = bytes;
+        bytesPerUncompressedBlock[block] = uncompressedBytes;
       }
 
       delete[] headerBuffer;
@@ -365,9 +369,7 @@ namespace hemelb
      *   }
      * }
      */
-    void GeometryReader::ReadInLocalBlocks(const site_t* sitesPerBlock,
-                                           const unsigned int* bytesPerBlock,
-                                           const proc_t* unitForEachBlock,
+    void GeometryReader::ReadInLocalBlocks(const proc_t* unitForEachBlock,
                                            const proc_t localRank)
     {
       // Create a list of which blocks to read in.
@@ -386,11 +388,11 @@ namespace hemelb
       {
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
-          if (bytesPerBlock[block] > maxBytesPerBlock)
+          if (bytesPerCompressedBlock[block] > maxBytesPerBlock)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes: ",
                                                           block,
-                                                          bytesPerBlock[block],
+                                                          bytesPerCompressedBlock[block],
                                                           maxBytesPerBlock);
           }
         }
@@ -407,11 +409,12 @@ namespace hemelb
         ReadInBlock(offset,
                     procsWantingThisBlock,
                     nextBlockToRead,
-                    sitesPerBlock[nextBlockToRead],
-                    bytesPerBlock[nextBlockToRead],
+                    fluidSitesPerBlock[nextBlockToRead],
+                    bytesPerCompressedBlock[nextBlockToRead],
+                    bytesPerUncompressedBlock[nextBlockToRead],
                     readBlock[nextBlockToRead]);
 
-        offset += bytesPerBlock[nextBlockToRead];
+        offset += bytesPerCompressedBlock[nextBlockToRead];
       }
 
       delete[] procsWantingThisBlock;
@@ -422,7 +425,8 @@ namespace hemelb
                                      int* procsWantingThisBlockBuffer,
                                      const site_t blockNumber,
                                      const site_t sites,
-                                     const unsigned int bytes,
+                                     const unsigned int compressedBytes,
+                                     const unsigned int uncompressedBytes,
                                      const int neededOnThisRank)
     {
       // Easy case if there are no sites on the block.
@@ -449,22 +453,22 @@ namespace hemelb
       if (readingCore == currentCommRank)
       {
         // Read the data.
-        compressedBlockData.resize(bytes);
-        MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), bytes, MPI_CHAR, MPI_STATUS_IGNORE);
+        compressedBlockData.resize(compressedBytes);
+        MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
 
         // Spread it.
         for (proc_t receiver = 0; receiver < currentCommSize; receiver++)
         {
           if (receiver != currentCommRank && procsWantingThisBlockBuffer[receiver])
           {
-            net.RequestSend(&compressedBlockData.front(), bytes, receiver);
+            net.RequestSend(&compressedBlockData.front(), compressedBytes, receiver);
           }
         }
       }
       else if (neededOnThisRank)
       {
-        compressedBlockData.resize(bytes);
-        net.RequestReceive(&compressedBlockData.front(), bytes, readingCore);
+        compressedBlockData.resize(compressedBytes);
+        net.RequestReceive(&compressedBlockData.front(), compressedBytes, readingCore);
       }
       else
       {
@@ -478,7 +482,7 @@ namespace hemelb
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        std::vector<char> blockData = DecompressBlockData(compressedBlockData, sites);
+        std::vector<char> blockData = DecompressBlockData(compressedBlockData, uncompressedBytes);
         io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
 
         ParseBlock(blockNumber, lReader);
@@ -509,13 +513,12 @@ namespace hemelb
     }
 
     std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
-                                                          const site_t sites) {
+                                                          const unsigned int uncompressedBytes) {
       // For zlib return codes.
       int ret;
 
-      // Set up the buffer for decompressed data. This should be long enough
-      // to cope with any data.
-      std::vector<char> uncompressed(io::formats::geometry::MaxSiteRecordLength * sites);
+      // Set up the buffer for decompressed data. We know how long the the data is
+      std::vector<char> uncompressed(uncompressedBytes);
 
       // Set up the inflator
       z_stream stream;
@@ -1091,18 +1094,16 @@ namespace hemelb
       return regionExpanded;
     }
 
-    void GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,
-                                                     const unsigned int* bytesPerBlock,
-                                                     const proc_t* procForEachBlock)
+    void GeometryReader::OptimiseDomainDecomposition(const proc_t* procForEachBlock)
     {
       // Get some arrays that ParMetis needs.
       idx_t* vtxDistribn = new idx_t[topologySize + 1];
 
-      GetSiteDistributionArray(vtxDistribn, procForEachBlock, sitesPerBlock);
+      GetSiteDistributionArray(vtxDistribn, procForEachBlock, fluidSitesPerBlock);
 
       idx_t* firstSiteIndexPerBlock = new idx_t[readingResult.GetBlockCount()];
 
-      GetFirstSiteIndexOnEachBlock(firstSiteIndexPerBlock, vtxDistribn, procForEachBlock, sitesPerBlock);
+      GetFirstSiteIndexOnEachBlock(firstSiteIndexPerBlock, vtxDistribn, procForEachBlock, fluidSitesPerBlock);
 
       idx_t localVertexCount = vtxDistribn[topologyRank + 1] - vtxDistribn[topologyRank];
 
@@ -1134,7 +1135,7 @@ namespace hemelb
       idx_t* movesList = GetMovesList(allMoves,
                                       firstSiteIndexPerBlock,
                                       procForEachBlock,
-                                      sitesPerBlock,
+                                      fluidSitesPerBlock,
                                       vtxDistribn,
                                       partitionVector);
 
@@ -1143,7 +1144,7 @@ namespace hemelb
       delete[] partitionVector;
 
       // Reread the blocks based on the ParMetis decomposition.
-      RereadBlocks(allMoves, movesList, sitesPerBlock, bytesPerBlock, procForEachBlock);
+      RereadBlocks(allMoves, movesList, procForEachBlock);
 
       // Implement the decomposition now that we have read the necessary data.
       ImplementMoves(procForEachBlock, allMoves, movesList);
@@ -1152,12 +1153,10 @@ namespace hemelb
       delete[] allMoves;
     }
 
-    // The header section of the config file contains two adjacent unsigned ints for each block.
-    // The first is the number of sites in that block, the second is the number of bytes used by
-    // the block in the data file.
+    // The header section of the config file contains a number of records.
     site_t GeometryReader::GetHeaderLength(site_t blockCount) const
     {
-      return 2 * 4 * blockCount;
+      return io::formats::geometry::HeaderRecordLength * blockCount;
     }
 
     /**
@@ -1166,11 +1165,11 @@ namespace hemelb
      * @param vertexDistribn
      * @param blockCount
      * @param procForEachBlock
-     * @param sitesPerBlock
+     * @param fluidSitesPerBlock
      */
     void GeometryReader::GetSiteDistributionArray(idx_t* vertexDistribn,
                                                   const proc_t* procForEachBlock,
-                                                  const site_t* sitesPerBlock) const
+                                                  const site_t* fluidSitesPerBlock) const
     {
       // Firstly, count the sites per processor.
       for (unsigned int rank = 0; rank < (topologySize + 1); ++rank)
@@ -1182,7 +1181,7 @@ namespace hemelb
       {
         if (procForEachBlock[block] >= 0)
         {
-          vertexDistribn[1 + procForEachBlock[block]] += (idx_t) sitesPerBlock[block];
+          vertexDistribn[1 + procForEachBlock[block]] += (idx_t) fluidSitesPerBlock[block];
         }
       }
 
@@ -1225,7 +1224,7 @@ namespace hemelb
     void GeometryReader::GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
                                                       const idx_t* vertexDistribution,
                                                       const proc_t* procForEachBlock,
-                                                      const site_t* sitesPerBlock) const
+                                                      const site_t* fluidSitesPerBlock) const
     {
       // First calculate the lowest site index on each proc - relatively easy.
       site_t* firstSiteOnProc = new site_t[topologySize];
@@ -1247,7 +1246,7 @@ namespace hemelb
         else
         {
           firstSiteIndexPerBlock[block] = (idx_t) firstSiteOnProc[proc];
-          firstSiteOnProc[proc] += sitesPerBlock[block];
+          firstSiteOnProc[proc] += fluidSitesPerBlock[block];
         }
       }
 
@@ -1733,7 +1732,7 @@ namespace hemelb
     idx_t* GeometryReader::GetMovesList(idx_t* movesFromEachProc,
                                         const idx_t* firstSiteIndexPerBlock,
                                         const proc_t* procForEachBlock,
-                                        const site_t* sitesPerBlock,
+                                        const site_t* fluidSitesPerBlock,
                                         const idx_t* vtxDistribn,
                                         const idx_t* partitionVector)
     {
@@ -1758,7 +1757,7 @@ namespace hemelb
           idx_t fluidSiteBlock = 0;
 
           while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
-              || ( (firstSiteIndexPerBlock[fluidSiteBlock] + sitesPerBlock[fluidSiteBlock]) <= localFluidSiteId))
+              || ( (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock]) <= localFluidSiteId))
           {
             fluidSiteBlock++;
           }
@@ -1805,7 +1804,7 @@ namespace hemelb
               log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
                                                             ii,
                                                             siteIndex,
-                                                            sitesPerBlock[fluidSiteBlock],
+                                                            fluidSitesPerBlock[fluidSiteBlock],
                                                             fluidSiteBlock,
                                                             readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
                                                                 == BIG_NUMBER2 ?
@@ -1882,8 +1881,6 @@ namespace hemelb
 
     void GeometryReader::RereadBlocks(const idx_t* movesPerProc,
                                       const idx_t* movesList,
-                                      const site_t* sitesPerBlock,
-                                      const unsigned int* bytesPerBlock,
                                       const int* procForEachBlock)
     {
       // Initialise the array (of which proc each block belongs to) to what it was before.
@@ -1914,7 +1911,7 @@ namespace hemelb
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInLocalBlocks(sitesPerBlock, bytesPerBlock, newProcForEachBlock, topologyRank);
+      ReadInLocalBlocks(newProcForEachBlock, topologyRank);
 
       // Clean up.
       delete[] newProcForEachBlock;
