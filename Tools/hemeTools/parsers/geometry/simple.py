@@ -97,7 +97,7 @@ class ConfigLoader(object):
         OnEndHeader events.
         """
         self.OnBeginHeader()
-        self.HeaderBytes = self.Domain.TotalBlocks * 2 * 4
+        self.HeaderBytes = self.Domain.TotalBlocks * 3 * 4
 
         headerLoader = xdrlib.Unpacker(self.File.read(self.HeaderBytes))
         
@@ -106,6 +106,7 @@ class ConfigLoader(object):
         
         BlockFluidSiteCounts = np.zeros(nBlocks, dtype=np.uint)
         BlockDataLength = np.zeros(nBlocks, dtype=np.uint)
+        BlockUncompressedDataLength = np.zeros(nBlocks, dtype=np.uint)
         BlockStarts = np.zeros(nBlocks, dtype=np.uint)
         BlockEnds = np.zeros(nBlocks, dtype=np.uint)
         
@@ -113,12 +114,14 @@ class ConfigLoader(object):
         for bIjk in self.Domain.BlockIndexer.IterOne():
             BlockFluidSiteCounts[bIjk] = headerLoader.unpack_uint()
             BlockDataLength[bIjk] = headerLoader.unpack_uint()
+            BlockUncompressedDataLength[bIjk] = headerLoader.unpack_uint()
             BlockStarts[bIjk] = BlockEnds[bIjk-1]
             BlockEnds[bIjk] = BlockStarts[bIjk] + BlockDataLength[bIjk]
             continue
         
         self.Domain.BlockFluidSiteCounts = BlockFluidSiteCounts
         self.BlockDataLength = BlockDataLength
+        self.BlockUncompressedDataLength = BlockUncompressedDataLength
         self.BlockStarts = BlockStarts
         self.BlockEnds = BlockEnds
 
