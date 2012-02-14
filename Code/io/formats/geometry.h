@@ -109,7 +109,7 @@ namespace hemelb
            */
           enum
           {
-            HeaderRecordLength = 8
+            HeaderRecordLength = 12
           };
 
           /**
