@@ -328,13 +328,13 @@ namespace hemelb
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           if (bytesPerUncompressedBlock[block] >
-              io::formats::geometry::GetMaxBlockRecordLength(readingResult.GetBlockSize(),
+              io::formats::geometry::GetMaxBlockRecordLength(readingResult.blockSize,
                                                              fluidSitesPerBlock[block]))
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                           block,
                                                           bytesPerUncompressedBlock[block],
-                                                          io::formats::geometry::GetMaxBlockRecordLength(readingResult.GetBlockSize(),
+                                                          io::formats::geometry::GetMaxBlockRecordLength(readingResult.blockSize,
                                                                                                          fluidSitesPerBlock[block]));
           }
         }
