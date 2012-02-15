@@ -61,4 +61,4 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate)
+add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib)
