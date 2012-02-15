@@ -467,30 +467,32 @@ def job(*option_dictionaries):
     # Use this to request more cores than we use, to measure performance without sharing impact
     if env.get('cores_reserved')=='WholeNode' and env.get('corespernode'):
         env.cores_reserved=(1+(int(env.cores)-1)/int(env.corespernode))*env.corespernode
-    env.cores_reserved=env.get('cores_reserved') or env.cores
+    # If cores_reserved is not specified, temporarily set it based on the same as the number of cores
+    # Needs to be temporary if there's another job with a different number of cores which should also be defaulted to.
+    with settings(cores_reserved=env.get('cores_reserved') or env.cores):
     # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
-    env.coresusedpernode=env.corespernode
-    if int(env.coresusedpernode)>int(env.cores):
-        env.coresusedpernode=env.cores
-    if env.node_type:
-        env.node_type_restriction=template(env.node_type_restriction_template)
-    env['job_name']=env.name[0:env.max_job_name_chars]
-    script_name=template("$template_key-$script")
-    env.job_script=script_template(script_name)
+        env.coresusedpernode=env.corespernode
+        if int(env.coresusedpernode)>int(env.cores):
+            env.coresusedpernode=env.cores
+        if env.node_type:
+            env.node_type_restriction=template(env.node_type_restriction_template)
+        env['job_name']=env.name[0:env.max_job_name_chars]
+        script_name=template("$template_key-$script")
+        env.job_script=script_template(script_name)
 
-    env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
-    put(env.job_script,env.dest_name)
+        env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
+        put(env.job_script,env.dest_name)
 
-    run(template("mkdir -p $job_results"))
-    run(template("cp $dest_name $job_results"))
-    run(template("cp $build_cache $job_results"))
-    with tempfile.NamedTemporaryFile() as tempf:
-        tempf.write(yaml.dump(dict(env)))
-        tempf.flush() #Flush the file before we copy it.
-        put(tempf.name,env.pather.join(env.job_results,'env.yml'))
-    run(template("chmod u+x $dest_name"))
-    with cd(env.job_results):
-        run(template("$job_dispatch $dest_name"))
+        run(template("mkdir -p $job_results"))
+        run(template("cp $dest_name $job_results"))
+        run(template("cp $build_cache $job_results"))
+        with tempfile.NamedTemporaryFile() as tempf:
+            tempf.write(yaml.dump(dict(env)))
+            tempf.flush() #Flush the file before we copy it.
+            put(tempf.name,env.pather.join(env.job_results,'env.yml'))
+        run(template("chmod u+x $dest_name"))
+        with cd(env.job_results):
+            run(template("$job_dispatch $dest_name"))
 
 def input_to_range(arg,default):
     ttype=type(default)
