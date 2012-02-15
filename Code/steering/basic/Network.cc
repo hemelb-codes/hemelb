@@ -8,6 +8,7 @@
 #include <csignal>
 #include <sys/stat.h>
 #include <cstdio>
+#include <cstring>
 
 #include "debug/Debugger.h"
 #include "log/Logger.h"
