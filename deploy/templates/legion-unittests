@@ -16,7 +16,7 @@
 #$$ -N $job_name
 
 # 5. Select the OpenMPI parallel environment and 16 processes.
-#$$ -pe openmpi $cores
+#$$ -pe openmpi $cores_reserved
 
 # 6. Select the project that this job will run under.
 # Find <your_project_id> by running the command "groups"
@@ -36,4 +36,4 @@
 $run_prefix
 export TMP=$job_results
 #and run
-mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $install_path/bin/unittests_hemelb -o 'tests.xml'
+mpirun -np $cores $install_path/bin/unittests_hemelb -o 'tests.xml'
