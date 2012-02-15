@@ -4,6 +4,7 @@
 default:
   local_results: "~/devel/ccs/fabric/hemelb/results"
   local_configs: "~/devel/ccs/fabric/hemelb/config_files"
+  local_profiles: "~/devel/ccs/fabric/hemelb/config_profiles"
   username: "jamespjh"
 legion:
   username: "ucgajhe"

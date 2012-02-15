@@ -8,14 +8,14 @@
 
 #$$ -N $job_name
 
-#$$ -pe openmpi $cores
+#$$ -pe openmpi $cores_reserved
 
 #$$ -P $project
 
 #$$ -wd $job_results
-
+$node_type_restriction
 cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-mpirun -np $cores $install_path/bin/hemelb -in config.xml -i $images -s $snapshots -ss $steering
+mpirun -np $cores -machinefile $$TMPDIR/machines $install_path/bin/hemelb -in config.xml -out $job_results/results -i $images -s $snapshots -ss $steering
