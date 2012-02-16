@@ -28,10 +28,10 @@ public:
 		return this->sites.end();
 	}
 
-	inline Domain& GetDomain() {
+	inline Domain& GetDomain() const {
 		return this->domain;
 	}
-	inline const Index& GetIndex() {
+	inline const Index& GetIndex() const {
 		return this->index;
 	}
 

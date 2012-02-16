@@ -39,8 +39,11 @@ public:
 	LaterNeighbourIterator end();
 	NeighbourIterator beginall();
 	NeighbourIterator endall();
-	inline const Index& GetIndex() {
+	inline const Index& GetIndex() const {
 		return this->index;
+	}
+	inline const Block& GetBlock() const {
+			return this->block;
 	}
 	const Index GetDomainBlockCount();
 	const int GetDomainBlockSize();
