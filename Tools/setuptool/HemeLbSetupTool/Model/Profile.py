@@ -76,6 +76,8 @@ class Profile(Observable):
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputGeometryFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
+        self.AddDependency('VoxelSizeMetres', 'VoxelSize')
+        self.AddDependency('VoxelSizeMetres', 'StlFileUnit.SizeInMetres')
         
         # When the STL changes, we should reset the voxel size and
         # update the vtkSTLReader.
@@ -124,6 +126,14 @@ class Profile(Observable):
     @property
     def StlFileUnit(self):
         return self._UnitChoices[self.StlFileUnitId]
+    
+    @property
+    def VoxelSizeMetres(self):
+        return self.VoxelSize * self.StlFileUnit.SizeInMetres
+    @VoxelSizeMetres.setter
+    def VoxelSizeMetres(self, value):
+        self.VoxelSize = value / self.StlFileUnit.SizeInMetres
+        return
     
     def LoadFromFile(self, filename):
         restored = cPickle.Unpickler(file(filename)).load()
