@@ -13,17 +13,25 @@ class vtkIntArray;
 
 #include "GetSet.h"
 #include "Iolet.h"
+#include "GenerationError.h"
 
 class GeometryWriter;
 class Site;
 class BlockWriter;
 
+struct InconsistentFluidnessError: public GenerationError {
+	InconsistentFluidnessError(const Site& s1, const Site& s2, const int nHits);
+	virtual const char* what() const throw ();
+	const Site& s1;
+	const Site& s2;
+	const int nHits;
+};
+
 class GeometryGenerator {
 public:
 	GeometryGenerator();
 	~GeometryGenerator();
-	void Execute();
-	bool GetIsFluid(Site& site);
+	void Execute() throw (GenerationError);
 
 	inline double GetVoxelSizeMetres(void) {
 		return this->VoxelSizeMetres;
@@ -76,8 +84,7 @@ private:
 	void ClassifySite(Site& site);
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
-	bool IsInsideSurface(const Vector& point);
-
+	int ComputeIntersections(Site& from, Site& to);
 	// Members set from outside to initialise
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
@@ -89,7 +96,6 @@ private:
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
-	bool IsFirstSite;
 	vtkIntArray* IoletIdArray;
 };
 
