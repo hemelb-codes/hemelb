@@ -72,7 +72,13 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
                                wildcard='*.pro')
         
         if dialog.ShowModal() == wx.ID_OK:
-            self.delegate.Save(dialog.GetPath())
+            try:
+                self.delegate.Save(dialog.GetPath())
+            except IOError as err:
+                errDiag = wx.MessageDialog(None,
+                                           'Cannot write profile file.\nMessage: ' + str(err),
+                                           style=wx.OK | wx.ICON_ERROR)
+                errDiag.ShowModal()
             pass
         
         dialog.Destroy()
