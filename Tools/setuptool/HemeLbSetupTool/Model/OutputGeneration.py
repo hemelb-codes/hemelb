@@ -81,7 +81,7 @@ class GeometryGenerator(object):
         self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
         
-        self.generator.SetVoxelSizeMetres(profile.VoxelSize * profile.StlFileUnit.SizeInMetres)
+        self.generator.SetVoxelSizeMetres(profile.VoxelSizeMetres)
 
         return
 
