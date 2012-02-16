@@ -193,7 +193,9 @@ class Block(object):
     
     def __format__(self, format_spec):
         bc = self.GetDomain().BlockCounts
-        widths = np.ceil(np.log10(bc)).astype(int)
+        # Add something less than one, to ensure integer powers of ten are 
+        # rounded up.
+        widths = np.ceil(np.log10(bc + 0.1)).astype(int)
         
         return self._template.format(self.Index, bc, widths)
     
