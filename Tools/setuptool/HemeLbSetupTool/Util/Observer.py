@@ -319,8 +319,9 @@ class Observable(object):
             elif isinstance(val, Observable):
                 val.CloneFrom(getattr(other, attr))
             else:
-                setattr(self, attr,
-                        getattr(other, attr))
+                if(hasattr(other,attr)):
+                    setattr(self, attr,
+                            getattr(other, attr))
                 pass
             continue
         return

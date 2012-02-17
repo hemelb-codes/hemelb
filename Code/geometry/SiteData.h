@@ -48,7 +48,7 @@ namespace hemelb
         static const sitedata_t BOUNDARY_ID_MASK = ( (1 << (SITE_TYPE_BITS + BOUNDARY_ID_BITS)) - 1) - SITE_TYPE_MASK;
         static const sitedata_t BOUNDARY_ID_SHIFT = SITE_TYPE_BITS;
 
-      private:
+      protected:
         /**
          * This is a bit mask for whether a wall is hit by links in each direction.
          */
