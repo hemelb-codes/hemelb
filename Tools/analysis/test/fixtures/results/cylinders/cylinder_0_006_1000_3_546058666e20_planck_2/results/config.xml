@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<hemelbsettings>
+    <simulation cycles="3" cyclesteps="1000" stresstype="1" />
+    <geometry>
+        <datafile path="./config.dat" />
+    </geometry>
+    <inlets>
+        <inlet>
+            <position x="0" y="0" z="-0.039" />
+            <normal x="0" y="0" z="1" />
+            <pressure mean="80" amplitude="0" phase="0" />
+        </inlet>
+    </inlets>
+    <outlets>
+        <outlet>
+            <position x="0.000106962" y="0.00014022" z="0.04" />
+            <normal x="0" y="0" z="-1" />
+            <pressure mean="80" amplitude="0" phase="0" />
+        </outlet>
+    </outlets>
+    <visualisation>
+        <centre x="0" y="0" z="0" />
+        <orientation longitude="45" latitude="45" />
+        <display zoom="1" brightness="0.03" />
+        <range maxvelocity="0.1" maxstress="0.1" />
+    </visualisation>
+</hemelbsettings>

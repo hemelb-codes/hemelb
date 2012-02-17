@@ -1,0 +1,18 @@
+example:
+    xml_files:
+        'results/report.xml':
+            total: 'timings/timer[name="Total"]/mean'
+            sites: 'geometry/sites'
+        'config.xml':
+            steps: ['simulation','cyclesteps']
+    text_files:
+        'results/report.txt':
+            cores: 'Ran with ([\d]+) threads'
+        'CMakeCache.txt':
+            build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
+    name_properties:
+        machine_by_name: '_([^_]*)_\d$'
+    yaml_files:
+        'env.yml':
+            type: script
+            machine: machine_name
