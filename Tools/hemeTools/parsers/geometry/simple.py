@@ -182,7 +182,7 @@ class ConfigLoader(object):
         
         s = Site(block, sgIdx)
         
-        s.IsFluid = loader.unpack_uint()
+        s.Type = loader.unpack_uint()
         # Solid and simple fluid, we are done loading
         if s.IsFluid == Site.FLUID:
             # Initialise arrays
