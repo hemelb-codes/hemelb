@@ -41,7 +41,7 @@ void Neighbours::Init() {
 
 		// Complete the table of inverse indices.
 		for (unsigned int j = i; j < Neighbours::n; ++j) {
-			if (Neighbours::vectors[i] == Neighbours::vectors[j]) {
+			if (Neighbours::vectors[i] == -Neighbours::vectors[j]) {
 				Neighbours::inverses[i] = j;
 				Neighbours::inverses[j] = i;
 				break;

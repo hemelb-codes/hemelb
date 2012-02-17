@@ -90,7 +90,11 @@ namespace std {
     SWIG_exception_fail(SWIG_ArgError(SWIG_ERROR), "in method '" "$symname" "', argument " "$argnum" " of type '" "$1_type""'");
   }
  }
-
+ 
+%typemap(throws) GenerationError %{
+  PyErr_SetString(PyExc_RuntimeError, $1.what());
+  SWIG_fail;
+%}
 %ignore GeometryGenerator::ClassifySite(Site&);
 %include GeometryGenerator.h
 %include Iolet.h
