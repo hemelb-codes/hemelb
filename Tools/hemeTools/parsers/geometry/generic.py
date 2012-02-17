@@ -226,8 +226,8 @@ class Site(object):
     def __init__(self, block, sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
+        self.Type = Site.SOLID
         
-        self.IsFluid = True
         self.IntersectionType = None
         self.IntersectionDistance = None
         self.IOletIndex = None
@@ -257,8 +257,12 @@ class Site(object):
                     np.any(self.IntersectionType == self.WALL_INTERSECTION))
 
     @property
+    def IsFluid(self):
+        return self.Type == Site.FLUID
+    
+    @property
     def IsSolid(self):
-        return self.IsFluid == False
+        return self.Type == Site.SOLID
     
     _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
