@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
 #include <cstdlib>
+#include "units.h"
 #include "geometry/LatticeData.h"
 #include "io/formats/geometry.h"
 
@@ -9,6 +10,23 @@ namespace hemelb
 {
   namespace unittests
   {
+    class TestSiteData : public geometry::SiteData
+    {
+      public:
+        TestSiteData(geometry::SiteData& siteData) :
+            geometry::SiteData(siteData)
+        {
+
+        }
+
+        void SetHasBoundary(Direction direction)
+        {
+          unsigned newValue = geometry::SiteData::GetIntersectionData();
+          newValue |= 1U << (direction - 1);
+          boundaryIntersection = newValue;
+        }
+    };
+
     class FourCubeLatticeData : public geometry::LatticeData
     {
       public:
@@ -21,7 +39,7 @@ namespace hemelb
          *
          * @return
          */
-        static LatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
           hemelb::geometry::GeometryReadResult readResult;
 
@@ -30,7 +48,7 @@ namespace hemelb
           readResult.blockSize = sitesPerBlockUnit;
           readResult.blocks = util::Vector3D<site_t>::Ones();
 
-          readResult.Blocks = std::vector < hemelb::geometry::BlockReadResult > (1);
+          readResult.Blocks = std::vector<hemelb::geometry::BlockReadResult>(1);
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
           block.Sites.resize(readResult.GetSitesPerBlock(), geometry::SiteReadResult(false));
@@ -74,7 +92,8 @@ namespace hemelb
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
-                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit || neighJ >= sitesPerBlockUnit)
+                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit
+                      || neighJ >= sitesPerBlockUnit)
                   {
                     link.type = geometry::LinkReadResult::WALL_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
@@ -90,13 +109,26 @@ namespace hemelb
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
-          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit * sitesPerBlockUnit;
+          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit
+              * sitesPerBlockUnit;
           for (proc_t rank = 1; rank < rankCount; ++rank)
           {
             returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
           }
 
           return returnable;
+        }
+
+        void SetHasBoundary(site_t site, Direction direction)
+        {
+          TestSiteData mutableSiteData(siteData[site]);
+          mutableSiteData.SetHasBoundary(direction);
+          siteData[site] = geometry::SiteData(mutableSiteData);
+        }
+
+        void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
+        {
+          distanceToWall[ (D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
         }
 
       protected:

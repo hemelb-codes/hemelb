@@ -1,0 +1,108 @@
+results:
+    xml_files:
+        'results/report.xml':
+            total: 'timings/timer[name="Total"]/mean'
+            sites: 'geometry/sites'
+            images_count: 'results/images'
+            snapshots_count: results/snapshots
+            domain_decomposition: 'timings/timer[name="Domain Decomposition"]/mean'
+            file_read: 'timings/timer[name="File Read"]/mean'
+            net: 'timings/timer[name="Net initialisation"]/mean'
+            lb: 'timings/timer[name="Lattice Boltzmann"]/mean'
+            visualisation: 'timings/timer[name="Visualisation"]/mean'
+            monitoring: 'timings/timer[name="Monitoring"]/mean'
+            send: 'timings/timer[name="MPI Send"]/mean'
+            wait: 'timings/timer[name="MPI Wait"]/mean'
+            snapshots: 'timings/timer[name="Snapshots"]/mean'
+            simulation: 'timings/timer[name="Simulation total"]/mean'
+        'config.xml':
+            steps: ['simulation','cyclesteps']
+            cycles: ['simulation','cycles']
+        'tests.xml':
+            total_tests: 'Statistics/Tests'
+            failing_tests: 'Statistics/FailuresTotal'
+    text_files:
+        'results/report.txt':
+            cores: 'Ran with ([\d]+) threads'
+        'CMakeCache.txt':
+            build_type: 'CMAKE_BUILD_TYPE:STRING=(.*)'
+            streaklines: 'HEMELB_USE_STREAKLINES:BOOL=(.*)'
+        'acceptance.txt':
+            acceptance: 'Accepted: (.*)'
+    name_properties:
+        machine_by_name: '_([^_]*)_\d$'
+        name: '(.*)'
+    compound_properties:
+        velocity: (sites/(cores*(simulation- snapshots * snapshots_count - visualisation * images_count)))
+        non_io_total: (simulation- snapshots * snapshots_count - visualisation * images_count)
+        sites_per_core: (sites/cores)
+    yaml_files:
+        'env.yml':
+            type: script
+            machine: machine_name
+            build_number: build_number
+            size: VoxelSize
+            profile: profile
+
+graphs:
+    performance_versus_size:
+        name: "Performance on ${machine} versus number of sites"
+        select:
+            type: hemelb
+        dependent:
+          - non_io_total
+        independent:
+            - sites
+    performance_versus_cores:
+        name: "Performance on ${machine} versus count of cores"
+        select:
+            type: hemelb
+        dependent:
+            - non_io_total
+        independent:
+            - cores
+    sites_versus_voxel_size:
+      name: "Number of sites versus voxel size"
+      select:
+          type: hemelb
+      curves:
+          - profile
+      dependent:
+          - sites
+      independent:
+          - size
+            
+reports:
+  performance_on_planck:
+    name: "Performance report for Planck"
+    defaults:
+      select:
+        machine: planck
+        acceptance: OK
+      curves:
+        - build_number
+    graphs:
+      performance_versus_cores:
+        curves:
+          - sites
+      performance_versus_size:
+        curves:
+          - cores
+  performance_on_oppenheimer:
+    name: "Performance report for Oppenheimer"
+    defaults:
+      select:
+        machine: oppenheimer
+        acceptance: OK
+      curves:
+        - build_number
+    graphs:
+      performance_versus_cores:
+        curves:
+          - sites
+      performance_versus_size:
+        curves:
+          - cores
+      sites_versus_voxel_size:
+        curves:
+          - cores
