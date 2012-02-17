@@ -12,7 +12,6 @@ Usage:
         For smoothest usage, you should also ensure ssh keys are in place so the target machine can access the mercurial repository
         of hemelb.
 """
-
 from templates import *
 from machines import *
 from fabric.contrib.project import *
@@ -72,7 +71,7 @@ def require_recopy():
 @task
 def update():
     """Update the remote mercurial repository"""
-    if env.no_ssh:
+    if env.no_ssh or env.no_hg:
         execute(sync)
     else:
         with cd(env.repository_path):
@@ -518,16 +517,17 @@ def load_profile():
     return p
 
 def modify_profile(p):
-    p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
-    p.Steps=env.Steps or p.Steps
-    p.Cycles=env.Cycles or p.Cycles
-    env.Steps=p.Steps
-    env.Cycles=p.Cycles
-    env.VoxelSize=p.VoxelSize
+    #Profiles always get created with 1000 steps and 3 cycles.
+    #Can't change it here.
+    p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+    env.VoxelSize=p.VoxelSizeMetres
+    env.Steps=env.Steps or 1000
+    env.Cycles=env.Cycles or 3
 
 def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     env.profile=profile
-    env.VoxelSize=float(VoxelSize) or env.get('VoxelSize')
+    env.VoxelSize=VoxelSize or env.get('VoxelSize')
+    env.VoxelSize=float(env.VoxelSize)
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
     env.Cycles=Cycles or env.get('Cycles')
@@ -541,7 +541,7 @@ def generate(profile):
 def create_config_impl(p):
     modify_profile(p)
     with_template_config()
-    p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
+    p.OutputGeometryFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.gmy'))
     p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
     local(template("mkdir -p $job_config_path_local"))
     generate(p)
@@ -554,6 +554,8 @@ def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     profile_environment(profile,VoxelSize,Steps,Cycles,args)
     p=load_profile()
     create_config_impl(p)
+    # Now modify it to have the specified steps and cycles
+    modify_config(profile,Steps,Cycles,Steps,Cycles)
 
 @task
 def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
@@ -568,8 +570,8 @@ def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=
         for currentCycles in input_to_range(Cycles,3):
             profile_environment(profile,VoxelSize,currentSteps,currentCycles)
             with_template_config()
-            if env.old_config_path==env.job_config_path_local: continue
-            local(template("cp -r $old_config_path $job_config_path_local"))
+            if not env.old_config_path==env.job_config_path_local:
+                local(template("cp -r $old_config_path $job_config_path_local"))
             new_config_path=os.path.join(env.job_config_path_local,'config.xml')
             simnode.set('cyclesteps',str(currentSteps))
             simnode.set('cycles',str(currentCycles))
