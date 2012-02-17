@@ -182,7 +182,7 @@ endif()
 
 #-----------------ZLIB --------------------------------
 #http://sourceforge.net/projects/libpng/files/zlib/1.2.6/zlib-1.2.6.tar.gz
-find_package(zlib)
+find_package(ZLIB)
 if (ZLIB_FOUND)
 	message("ZLIB already installed, no need to download")
 else()
