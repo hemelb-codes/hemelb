@@ -33,6 +33,8 @@ public:
 
 	GETTER(BlockCounts, Index);SETTER(BlockCounts, Index);
 
+	GETTER(SiteCounts, Index);
+
 	GETTER(OriginWorking, Vector);
 
 	GETTER(VoxelSizeMetres, double);SETTER(VoxelSizeMetres, double);
