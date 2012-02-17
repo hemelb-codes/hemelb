@@ -444,7 +444,7 @@ if __name__ == "__main__":
     
     ldr = CheckingLoader(args.input[0],
                          verbose=(not args.quiet))
-    dom = ldr.Load()
+    ldr.Load()
     
     if ldr.HadErrors:
         raise SystemExit(1)
