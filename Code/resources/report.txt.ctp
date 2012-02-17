@@ -11,9 +11,9 @@ With {{STEPS_PER_CYCLE}} per cycle.
 {{/UNSTABLE}}
 
 Sub-domains info:
-{{#DOMAIN}}
+{{#PROCESSOR}}
 rank: {{RANK}}, fluid sites: {{SITES}}
-{{/DOMAIN}}
+{{/PROCESSOR}}
 
 Timing data:
 Name Local Min Mean Max

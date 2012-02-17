@@ -130,7 +130,7 @@ namespace hemelb
                  *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                  *            = f^{eq}_i + (1+w) f^{neq}_i
                  */
-                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq().f[ii]
+                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq()[ii]
                     + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
               }
 

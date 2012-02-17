@@ -13,19 +13,19 @@ namespace hemelb
     namespace kernels
     {
       // Forward declaration needed by the struct
-      template<class LatticeType> class MRT;
+      template<class MomentBasis> class MRT;
 
-      template<class LatticeType>
-      struct HydroVars<MRT<LatticeType> > : public HydroVarsBase<LatticeType>
+      template<class MomentBasis>
+      struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase<typename MomentBasis::Lattice>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase<LatticeType>(f)
+              HydroVarsBase<typename MomentBasis::Lattice>(f)
           {
           }
 
           /** Equilibrium velocity distribution in the momentum space. */
-          distribn_t m_neq[LatticeType::NUM_KINETIC_MOMENTS];
+          distribn_t m_neq[MomentBasis::NUM_KINETIC_MOMENTS];
       };
 
       /**
@@ -41,60 +41,67 @@ namespace hemelb
        *
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
-      template<class LatticeType>
-      class MRT : public BaseKernel<MRT<LatticeType>, LatticeType>
+      template<class MomentBasis>
+      class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
       {
         public:
 
-          MRT(InitParams& initParams) :
-              collisionMatrix(initParams.lbmParams->GetMrtRelaxationParameters())
+          MRT(InitParams& initParams)
           {
+            InitState(initParams);
           }
 
           inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
-                                                     hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z,
-                                                     hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateDensityVelocityFEq(hydroVars.f,
+                                                              hydroVars.density,
+                                                              hydroVars.v_x,
+                                                              hydroVars.v_y,
+                                                              hydroVars.v_z,
+                                                              hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            LatticeType::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateFeq(hydroVars.density,
+                                               hydroVars.v_x,
+                                               hydroVars.v_y,
+                                               hydroVars.v_z,
+                                               hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
-            LatticeType::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
+            MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<MRT>& hydroVars)
           {
-            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
             {
               /** @todo #61 many optimisations possible (and necessary!).
                *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
-              for (unsigned momentIndex = 0; momentIndex < LatticeType::NUM_KINETIC_MOMENTS; momentIndex++)
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS;
+                  momentIndex++)
               {
-                collision += (collisionMatrix[momentIndex] / LatticeType::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
-                    * LatticeType::REDUCED_MOMENT_BASIS[momentIndex][direction] * hydroVars.m_neq[momentIndex];
+                collision += (collisionMatrix[momentIndex]
+                    / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
+                    * MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
+                    * hydroVars.m_neq[momentIndex];
               }
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction] - collision;
             }
@@ -102,11 +109,32 @@ namespace hemelb
 
           inline void DoReset(InitParams* initParams)
           {
+            InitState(initParams);
+          }
+
+          /**
+           *  This method is used in unit testing in order to make an MRT kernel behave as LBGK, regardless of the
+           *  moment basis, by setting all the relaxation parameters to be the same.
+           */
+          void SetMrtRelaxationParameters(std::vector<distribn_t>& newRelaxationParameters)
+          {
+            assert(newRelaxationParameters.size() == MomentBasis::NUM_KINETIC_MOMENTS);
+            collisionMatrix = newRelaxationParameters;
           }
 
         private:
           /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
-          const std::vector<distribn_t>& collisionMatrix;
+          std::vector<distribn_t> collisionMatrix;
+
+          /**
+           *  Helper method to set/update member variables. Called from the constructor and Reset()
+           *
+           *  @param initParams struct used to store variables required for initialisation of various operators
+           */
+          void InitState(const InitParams& initParams)
+          {
+            MomentBasis::SetUpCollisionMatrix(collisionMatrix, initParams.lbmParams->GetTau());
+          }
 
       };
     }
