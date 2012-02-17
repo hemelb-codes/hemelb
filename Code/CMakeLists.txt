@@ -98,7 +98,7 @@ find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
 
 #------zlib ----------------
-find_package(zlib REQUIRED)
+find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIR})
 
 #-------------Resources -----------------------
