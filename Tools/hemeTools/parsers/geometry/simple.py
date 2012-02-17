@@ -38,12 +38,12 @@ class ConfigLoader(object):
         return
     
     def Load(self):
-        """Load and return the Domain encoded by the config file.
+        """Load the Domain encoded by the config file.
         """
         self._LoadPreamble()
         self._LoadHeader()
         self._LoadBody()
-        return self.Domain
+        return
     
     def _LoadPreamble(self):
         """Deal with the preamble (contains global stuff about the
