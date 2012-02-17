@@ -103,6 +103,6 @@ void GeometryWriter::Close() {
 }
 
 BlockWriter* GeometryWriter::StartNextBlock() {
-	return new BlockWriter(*this);
+	return new BlockWriter(this->BlockSize);
 }
 
