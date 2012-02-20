@@ -27,15 +27,15 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t firstIndex,
+                                         const site_t siteCount,
+                                         const LbmParameters* lbmParams,
+                                         geometry::LatticeData* latDat,
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
-            for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              const geometry::Site site = bLatDat->GetSite(lIndex);
+              const geometry::Site site = latDat->GetSite(siteIndex);
 
               distribn_t *fOld = site.GetFOld();
 
@@ -43,21 +43,21 @@ namespace hemelb
 
               collider.CalculatePreCollision(hydroVars, site);
 
-              collider.Collide(iLbmParams, hydroVars);
+              collider.Collide(lbmParams, hydroVars);
 
               for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t lStreamTo =
+                site_t streamingDestination =
                     site.HasBoundary(ii) ?
-                      (lIndex * CollisionType::CKernel::LatticeType::NUMVECTORS)
+                      (siteIndex * CollisionType::CKernel::LatticeType::NUMVECTORS)
                           + CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[ii] :
                       site.GetStreamedIndex(ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
-                * (bLatDat->GetFNew(lStreamTo)) = hydroVars.GetFPostCollision()[ii];
+                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[ii];
               }
 
               //TODO: Necessary to specify sub-class?
@@ -67,8 +67,8 @@ namespace hemelb
                                                                                          site,
                                                                                          hydroVars.GetFNeq().f,
                                                                                          hydroVars.density,
-                                                                                         iLbmParams,
-                                                                                         iControl);
+                                                                                         lbmParams,
+                                                                                         propertyCache);
             }
           }
 
@@ -77,7 +77,7 @@ namespace hemelb
                                  const site_t iSiteCount,
                                  const LbmParameters* iLbmParams,
                                  geometry::LatticeData* bLatDat,
-                                 hemelb::vis::Control *iControl)
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
 
           }

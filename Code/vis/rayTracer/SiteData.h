@@ -11,45 +11,9 @@ namespace hemelb
       struct SiteData_t
       {
         public:
-          SiteData_t(float iValue) :
-              mDensity(iValue), mVelocity(iValue), mStress(iValue)
-          {
-          }
-
-          float GetDensity() const
-          {
-            return mDensity;
-          }
-
-          void SetDensity(float iDensity)
-          {
-            mDensity = iDensity;
-          }
-
-          float GetVelocity() const
-          {
-            return mVelocity;
-          }
-
-          void SetVelocity(float iVelocity)
-          {
-            mVelocity = iVelocity;
-          }
-
-          float GetStress() const
-          {
-            return mStress;
-          }
-
-          void SetStress(float iStress)
-          {
-            mStress = iStress;
-          }
-
-        private:
-          float mDensity;
-          float mVelocity;
-          float mStress;
+          float density;
+          float velocity;
+          float stress;
       };
     }
   }

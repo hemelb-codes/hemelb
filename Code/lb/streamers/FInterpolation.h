@@ -29,9 +29,9 @@ namespace hemelb
           template<bool tDoRayTracing>
           inline void DoStreamAndCollide(const site_t firstIndex,
                                          const site_t siteCount,
-                                         const LbmParameters* const iLbmParams,
+                                         const LbmParameters* const lbmParams,
                                          geometry::LatticeData* const latticeData,
-                                         hemelb::vis::Control *visControl)
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t index = firstIndex; index < (firstIndex + siteCount); index++)
             {
@@ -45,7 +45,7 @@ namespace hemelb
               // streamer.
               collider.CalculatePreCollision(hydroVars, site);
 
-              collider.Collide(iLbmParams, hydroVars);
+              collider.Collide(lbmParams, hydroVars);
 
               for (unsigned int direction = 0; direction < CollisionType::CKernel::LatticeType::NUMVECTORS; direction++)
               {
@@ -62,8 +62,8 @@ namespace hemelb
                                                                                        site,
                                                                                        hydroVars.GetFNeq().f,
                                                                                        hydroVars.density,
-                                                                                       iLbmParams,
-                                                                                       visControl);
+                                                                                       lbmParams,
+                                                                                       propertyCache);
             }
           }
 
@@ -72,7 +72,7 @@ namespace hemelb
                                  const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::LatticeData* latticeData,
-                                 hemelb::vis::Control *visControl)
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {

@@ -35,7 +35,7 @@ namespace hemelb
                                          const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
-                                         hemelb::vis::Control *visControl)
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
@@ -50,15 +50,13 @@ namespace hemelb
               // Perform the streaming of the post-collision distribution.
               for (Direction direction = 0; direction < D3Q15::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex(direction))) =
-                    hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex(direction))) = hydroVars.GetFPostCollision()[direction];
               }
 
               // Now fill in the distributions that won't be streamed to
               // (those that point away from boundaries).
               // It's more convenient to iterate over the opposite direction.
-              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS;
-                  oppositeDirection++)
+              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS; oppositeDirection++)
               {
                 // If there's a boundary in the opposite direction, we need to fill in the distribution.
                 if (site.HasBoundary(oppositeDirection))
@@ -98,8 +96,7 @@ namespace hemelb
                     // TODO I think we'll fail here if the next site out resides on a different core.
 
                     // Need some info about the next node away from the wall in this direction...
-                    site_t nextSiteOutId = site.GetStreamedIndex(unstreamedDirection)
-                        / D3Q15::NUMVECTORS;
+                    site_t nextSiteOutId = site.GetStreamedIndex(unstreamedDirection) / D3Q15::NUMVECTORS;
 
                     if (log::Logger::ShouldDisplay<hemelb::log::Debug>())
                     {
@@ -130,9 +127,10 @@ namespace hemelb
                     // to the point on the wall itself (velocity 0):
                     // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
                     // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-                    util::Vector3D<double> velocityWallSecondEstimate =
-                        util::Vector3D<double>(nextNodeV[0], nextNodeV[1], nextNodeV[2])
-                            * (wallDistance - 1) / (wallDistance + 1);
+                    util::Vector3D<double> velocityWallSecondEstimate = util::Vector3D<double>(nextNodeV[0],
+                                                                                               nextNodeV[1],
+                                                                                               nextNodeV[2])
+                        * (wallDistance - 1) / (wallDistance + 1);
 
                     // Next, we interpolate between the first and second estimates to improve the estimate.
                     // Extrapolate to obtain the velocity at the wall site.
@@ -145,25 +143,19 @@ namespace hemelb
                     // Interpolate in the same way to get f_neq.
                     fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
                         + (1. - wallDistance)
-                            * (nextSiteOut.GetFOld()[unstreamedDirection]
-                                - nextNodeFEq[unstreamedDirection]);
+                            * (nextSiteOut.GetFOld()[unstreamedDirection] - nextNodeFEq[unstreamedDirection]);
                   }
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
                   distribn_t fEqTemp[D3Q15::NUMVECTORS];
-                  D3Q15::CalculateFeq(hydroVars.density,
-                                      velocityWall[0],
-                                      velocityWall[1],
-                                      velocityWall[2],
-                                      fEqTemp);
+                  D3Q15::CalculateFeq(hydroVars.density, velocityWall[0], velocityWall[1], velocityWall[2], fEqTemp);
 
                   // Collide and stream!
                   // TODO: It's not clear whether we should defer to the template collision type here
                   // or do a standard LBGK (implemented).
                   * (latDat->GetFNew(siteIndex * D3Q15::NUMVECTORS + unstreamedDirection)) =
-                      fEqTemp[unstreamedDirection]
-                          + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
+                      fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
@@ -174,7 +166,7 @@ namespace hemelb
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
                                                                                     lbmParams,
-                                                                                    visControl);
+                                                                                    propertyCache);
             }
           }
 
