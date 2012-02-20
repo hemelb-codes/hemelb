@@ -369,7 +369,7 @@ namespace hemelb
         lWriter << (unsigned int) io::formats::snapshot::HeaderLength;
         lWriter << stability;
         lWriter << mLatDat->GetVoxelSize();
-        lWriter << mLatDat->GetOrigin().x << mLatDat->GetOrigin().x << mLatDat->GetOrigin().z;
+        lWriter << mLatDat->GetOrigin().x << mLatDat->GetOrigin().y << mLatDat->GetOrigin().z;
         lWriter << (int) mLatDat->GetGlobalSiteMins().x << (int) mLatDat->GetGlobalSiteMins().y
             << (int) mLatDat->GetGlobalSiteMins().z;
         lWriter << (int) mLatDat->GetGlobalSiteMaxes().x << (int) mLatDat->GetGlobalSiteMaxes().y
