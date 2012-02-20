@@ -12,13 +12,15 @@ namespace hemelb
                                    unsigned short zBlockCount,
                                    const util::Vector3D<float>& minimalSite,
                                    const util::Vector3D<float>& maximalSite,
-                                   const util::Vector3D<float>& minimalSiteOnMinimalBlock) :
-            Cluster<ClusterNormal> (xBlockCount,
-                                    yBlockCount,
-                                    zBlockCount,
-                                    minimalSite,
-                                    maximalSite,
-                                    minimalSiteOnMinimalBlock)
+                                   const util::Vector3D<float>& minimalSiteOnMinimalBlock,
+                                   const util::Vector3D<site_t>& minimalBlock) :
+          Cluster<ClusterNormal>(xBlockCount,
+                                 yBlockCount,
+                                 zBlockCount,
+                                 minimalSite,
+                                 maximalSite,
+                                 minimalSiteOnMinimalBlock,
+                                 minimalBlock)
       {
       }
 
@@ -27,9 +29,7 @@ namespace hemelb
         return NULL;
       }
 
-      void ClusterNormal::DoSetWallData(site_t iBlockNumber,
-                                        site_t iSiteNumber,
-                                        const util::Vector3D<double>& iData)
+      void ClusterNormal::DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData)
       {
       }
 
