@@ -12,7 +12,7 @@ namespace hemelb
     {
 
       RayDataNormal::RayDataNormal(int i, int j) :
-        RayData<RayDataNormal> (i, j)
+          RayData<RayDataNormal>(i, j)
       {
         mVelR = 0.0F;
         mVelG = 0.0F;
@@ -36,16 +36,14 @@ namespace hemelb
         float lPalette[3];
 
         // update the volume rendering of the velocity flow field
-        PickColour(iSiteData.GetVelocity() * (float) mDomainStats->velocity_threshold_max_inv,
-                   lPalette);
+        PickColour(iSiteData.velocity * (float) mDomainStats->velocity_threshold_max_inv, lPalette);
 
         UpdateVelocityColour(iRayLengthInVoxel, lPalette);
 
         if (iVisSettings.mStressType != lb::ShearStress)
         {
           // update the volume rendering of the von Mises stress flow field
-          float lScaledStress = iSiteData.GetStress()
-              * (float) mDomainStats->stress_threshold_max_inv;
+          float lScaledStress = iSiteData.stress * (float) mDomainStats->stress_threshold_max_inv;
 
           PickColour(lScaledStress, lPalette);
 
@@ -82,11 +80,10 @@ namespace hemelb
 
       void RayDataNormal::MakeColourComponent(float value, unsigned char& colour) const
       {
-        colour
-            = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
-                                                                         / GetCumulativeLengthInFluid()),
-                                                                     0,
-                                                                     255);
+        colour = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
+                                                                            / GetCumulativeLengthInFluid()),
+                                                                        0,
+                                                                        255);
       }
 
       void RayDataNormal::DoCombine(const RayDataNormal& iOtherRayData)

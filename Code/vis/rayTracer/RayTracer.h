@@ -56,20 +56,8 @@ namespace hemelb
           {
           }
 
-          // Method to update the voxel corresponding to site i with its
-          // newly calculated density, velocity and stress.
-          void UpdateClusterVoxel(site_t i,
-                                  distribn_t density,
-                                  distribn_t velocity,
-                                  distribn_t stress)
-          {
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity((float) (density));
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity((float) (velocity));
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress((float) (stress));
-          }
-
           // Render the current state into an image.
-          PixelSet<RayDataType>* Render()
+          PixelSet<RayDataType>* Render(const lb::MacroscopicPropertyCache& propertyCache)
           {
             PixelSet<RayDataType>* pixels =
                 PixelSetStore<PixelSet<RayDataType> >::GetUnusedPixelSet();
@@ -79,7 +67,8 @@ namespace hemelb
                                                                          *mScreen,
                                                                          *mDomainStats,
                                                                          *mVisSettings,
-                                                                         *mLatDat);
+                                                                         *mLatDat,
+                                                                         propertyCache);
 
             for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
             {

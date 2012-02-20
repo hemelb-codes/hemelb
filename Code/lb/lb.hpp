@@ -17,6 +17,12 @@ namespace hemelb
     }
 
     template<class LatticeType>
+    const lb::MacroscopicPropertyCache& LBM<LatticeType>::GetPropertyCache() const
+    {
+      return propertyCache;
+    }
+
+    template<class LatticeType>
     LBM<LatticeType>::LBM(configuration::SimConfig *iSimulationConfig,
                           net::Net* net,
                           geometry::LatticeData* latDat,
@@ -24,7 +30,8 @@ namespace hemelb
                           reporting::Timer &atimer) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(PULSATILE_PERIOD_s
                                                                                                  / (distribn_t) simState->GetTimeStepsPerCycle(),
-                                                                                             latDat->GetVoxelSize()), timer(atimer)
+                                                                                             latDat->GetVoxelSize()), timer(atimer), propertyCache(*simState,
+                                                                                                                                                   *latDat)
     {
       ReadParameters();
     }
@@ -570,8 +577,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
-      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
+      distribn_t density_min = std::numeric_limits<distribn_t>::max();
+      distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
