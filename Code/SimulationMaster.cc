@@ -164,6 +164,7 @@ void SimulationMaster::Initialise()
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
                                                   &communicationNet,
                                                   simulationState,
+                                                  latticeBoltzmannModel->GetPropertyCache(),
                                                   latticeData,
                                                   timings[hemelb::reporting::Timers::visualisation]);
 

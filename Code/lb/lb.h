@@ -10,6 +10,7 @@
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
@@ -104,6 +105,7 @@ namespace hemelb
                                      PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
+        const lb::MacroscopicPropertyCache& GetPropertyCache() const;
 
       private:
         void SetInitialConditions();
@@ -140,11 +142,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, mVisControl);
+            collision->template StreamAndCollide<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, mVisControl);
+            collision->template StreamAndCollide<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -153,11 +155,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, mVisControl);
+            collision->template DoPostStep<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, mVisControl);
+            collision->template DoPostStep<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -178,8 +180,9 @@ namespace hemelb
         util::UnitConverter* mUnits;
 
         reporting::Timer &timer;
+
+        MacroscopicPropertyCache propertyCache;
     };
-    // Class
 
     template<class LatticeType>
     inline int LBM<LatticeType>::InletCount() const

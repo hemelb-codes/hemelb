@@ -28,12 +28,10 @@ namespace hemelb
                   unsigned short zBlockCount,
                   const util::Vector3D<float>& minimalSite,
                   const util::Vector3D<float>& maximalSite,
-                  const util::Vector3D<float>& minimalSiteOnMinimalBlock) :
-            blocksX(xBlockCount), blocksY(yBlockCount), blocksZ(zBlockCount), minSite(minimalSite),
-                maxSite(maximalSite), leastSiteOnLeastBlockInImage(minimalSiteOnMinimalBlock)
-
+                  const util::Vector3D<float>& minimalSiteOnMinimalBlock,
+                  const util::Vector3D<site_t>& minimalBlock) :
+              blocksX(xBlockCount), blocksY(yBlockCount), blocksZ(zBlockCount), minSite(minimalSite), maxSite(maximalSite), leastSiteOnLeastBlockInImage(minimalSiteOnMinimalBlock), minBlock(minimalBlock)
           {
-            SiteData.resize(blocksX * blocksY * blocksZ);
           }
 
           unsigned int GetBlockIdFrom3DBlockLocation(const util::Vector3D<unsigned int>& iLocation) const
@@ -41,36 +39,12 @@ namespace hemelb
             return iLocation.x * blocksY * blocksZ + iLocation.y * blocksZ + iLocation.z;
           }
 
-          void ResizeVectorsForBlock(site_t iBlockNumber, site_t numberOfSites)
-          {
-            SiteData[iBlockNumber].resize(numberOfSites, SiteData_t(-1.0F));
-            ((Derived*) (this))->DoResizeVectorsForBlock(iBlockNumber, numberOfSites);
-          }
-
-          //Returns true if there is site data for a given block
-          bool BlockContainsSites(site_t iBlockNumber) const
-          {
-            return !SiteData[iBlockNumber].empty();
-          }
-
-          const SiteData_t& GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
-          {
-            return SiteData[iBlockNumber][iSiteNumber];
-          }
-
-          SiteData_t& GetSiteData(site_t iBlockNumber, site_t iSiteNumber)
-          {
-            return SiteData[iBlockNumber][iSiteNumber];
-          }
-
           const util::Vector3D<double>* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
           {
             return ((const Derived*) (this))->DoGetWallData(iBlockNumber, iSiteNumber);
           }
 
-          void SetWallData(site_t iBlockNumber,
-                           site_t iSiteNumber,
-                           const util::Vector3D<double>& iData)
+          void SetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData)
           {
             return ((Derived*) (this))->DoSetWallData(iBlockNumber, iSiteNumber, iData);
           }
@@ -144,6 +118,11 @@ namespace hemelb
             return leastSiteOnLeastBlockInImage;
           }
 
+          const util::Vector3D<site_t>& GetMinBlockLocation() const
+          {
+            return minBlock;
+          }
+
         private:
           /**
            * Default version of this function doesn't need to do anything extra
@@ -170,8 +149,7 @@ namespace hemelb
           //in terms of site units relative to the centre location
           util::Vector3D<float> leastSiteOnLeastBlockInImage;
 
-          //    public:
-          std::vector<std::vector<SiteData_t> > SiteData;
+          util::Vector3D<site_t> minBlock;
       };
     }
   }
