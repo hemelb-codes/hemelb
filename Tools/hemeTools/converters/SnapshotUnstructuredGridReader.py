@@ -8,6 +8,8 @@ script with no arguments.
 
 import vtk
 from hemeTools.parsers.snapshot import HemeLbSnapshot
+import numpy as np
+import pdb
 
 class SnapshotUnstructuredGridReader(vtk.vtkProgrammableFilter):
     """VTK-style filter for reading HemeLB snapshot files as VTK data into the
@@ -87,13 +89,15 @@ class SnapshotUnstructuredGridReader(vtk.vtkProgrammableFilter):
         stress.SetNumberOfTuples(nCells)
         stress.SetName('stress')
         
+        c = centers.GetOutput().GetPoints()
         # The hard work bit.
         for pt in snap:
             # Get cell in geometry corresponding to the point
             cellId = locator.FindClosestPoint(pt.position)
             if cellId == -1:
                 raise ValueError("Can't find cell for point at " + str(pt.position))
-            
+            if np.sum((pt.position - c.GetPoint(cellId))**2) > (0.33*snap.voxel_size**2):
+                pdb.set_trace()
             # Copy the data into the VTK structure
             velocity.SetTuple3(cellId, *pt.velocity)
             pressure.SetTuple1(cellId, pt.pressure)
