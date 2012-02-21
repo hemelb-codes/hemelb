@@ -13,8 +13,9 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn) :
-          counter(0), neighbouringProcessors(neighbouringProcessorsIn)
+      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn
+                                   , const lb::MacroscopicPropertyCache& propertyCache) :
+          counter(0), neighbouringProcessors(neighbouringProcessorsIn), propertyCache(propertyCache)
       {
       }
 
@@ -44,41 +45,35 @@ namespace hemelb
             }
 
             // Calculate the bounds of the unit cube around the current site (within the lattice)
-            const site_t startI =
-                util::NumericalFunctions::max<site_t>(0,
-                                                      blockTraverser.GetX()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetX() - 1);
+            const site_t startI = util::NumericalFunctions::max<site_t>(0,
+                                                                        blockTraverser.GetX()
+                                                                            * blockTraverser.GetBlockSize()
+                                                                            + siteTraverser.GetX() - 1);
 
-            const site_t startJ =
-                util::NumericalFunctions::max<site_t>(0,
-                                                      blockTraverser.GetY()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetY() - 1);
+            const site_t startJ = util::NumericalFunctions::max<site_t>(0,
+                                                                        blockTraverser.GetY()
+                                                                            * blockTraverser.GetBlockSize()
+                                                                            + siteTraverser.GetY() - 1);
 
-            const site_t startK =
-                util::NumericalFunctions::max<site_t>(0,
-                                                      blockTraverser.GetZ()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetZ() - 1);
+            const site_t startK = util::NumericalFunctions::max<site_t>(0,
+                                                                        blockTraverser.GetZ()
+                                                                            * blockTraverser.GetBlockSize()
+                                                                            + siteTraverser.GetZ() - 1);
 
-            const site_t endI =
-                util::NumericalFunctions::min<site_t>(latDat.GetXSiteCount() - 1,
-                                                      blockTraverser.GetX()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetX() + 1);
+            const site_t endI = util::NumericalFunctions::min<site_t>(latDat.GetXSiteCount() - 1,
+                                                                      blockTraverser.GetX()
+                                                                          * blockTraverser.GetBlockSize()
+                                                                          + siteTraverser.GetX() + 1);
 
-            const site_t endJ =
-                util::NumericalFunctions::min<site_t>(latDat.GetYSiteCount() - 1,
-                                                      blockTraverser.GetY()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetY() + 1);
+            const site_t endJ = util::NumericalFunctions::min<site_t>(latDat.GetYSiteCount() - 1,
+                                                                      blockTraverser.GetY()
+                                                                          * blockTraverser.GetBlockSize()
+                                                                          + siteTraverser.GetY() + 1);
 
-            const site_t endK =
-                util::NumericalFunctions::min<site_t>(latDat.GetZSiteCount() - 1,
-                                                      blockTraverser.GetZ()
-                                                          * blockTraverser.GetBlockSize()
-                                                          + siteTraverser.GetZ() + 1);
+            const site_t endK = util::NumericalFunctions::min<site_t>(latDat.GetZSiteCount() - 1,
+                                                                      blockTraverser.GetZ()
+                                                                          * blockTraverser.GetBlockSize()
+                                                                          + siteTraverser.GetZ() + 1);
 
             // Iterate over the sites in the unit cube.
             for (site_t neighbourI = startI; neighbourI <= endI; neighbourI++)
@@ -88,8 +83,9 @@ namespace hemelb
                 for (site_t neighbourK = startK; neighbourK <= endK; neighbourK++)
                 {
                   // Get the rank that the neighbour lives on.
-                  const proc_t neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<
-                      site_t>(neighbourI, neighbourJ, neighbourK));
+                  const proc_t neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<site_t>(neighbourI,
+                                                                                                       neighbourJ,
+                                                                                                       neighbourK));
 
                   // If we have data for it, we should initialise a block in the velocity field
                   // for the neighbour site.
@@ -99,9 +95,7 @@ namespace hemelb
                   }
 
                   InitializeVelocityFieldBlock(latDat,
-                                               util::Vector3D<site_t>(neighbourI,
-                                                                      neighbourJ,
-                                                                      neighbourK),
+                                               util::Vector3D<site_t>(neighbourI, neighbourJ, neighbourK),
                                                neigh_proc_id);
 
                   // If the neighbour is on this rank, ignore it.
@@ -138,8 +132,7 @@ namespace hemelb
           }
 
           // Update the site id on each velocity field unit as required.
-          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit();
-              localSiteId++)
+          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit(); localSiteId++)
           {
             velocityField[block][localSiteId].site_id =
                 latDat.GetBlock(block).GetLocalContiguousIndexForSite(localSiteId);
@@ -194,8 +187,7 @@ namespace hemelb
 
         if (!BlockContainsData(blockId))
         {
-          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit();
-              ++localSiteId)
+          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit(); ++localSiteId)
           {
             velocityField[blockId].push_back(VelocitySiteData());
           }
@@ -233,9 +225,10 @@ namespace hemelb
                 continue;
               }
 
-              VelocitySiteData *vel_site_data_p =
-                  GetVelocitySiteData(latDat,
-                                      util::Vector3D<site_t>(neighbourI, neighbourJ, neighbourK));
+              VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat,
+                                                                      util::Vector3D<site_t>(neighbourI,
+                                                                                             neighbourJ,
+                                                                                             neighbourK));
 
               if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
               {
@@ -269,8 +262,8 @@ namespace hemelb
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1
-            || vel_site_data_p->proc_id == thisRank || vel_site_data_p->counter == counter)
+        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
+            || vel_site_data_p->counter == counter)
         {
           return false;
         }
@@ -281,15 +274,13 @@ namespace hemelb
         return true;
       }
 
-      void VelocityField::UpdateLocalField(const util::Vector3D<site_t>& position,
-                                           const geometry::LatticeData& latDat)
+      void VelocityField::UpdateLocalField(const util::Vector3D<site_t>& position, const geometry::LatticeData& latDat)
       {
         VelocitySiteData *localVelocitySiteData = GetVelocitySiteData(latDat, position);
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          if (topology::NetworkTopology::Instance()->GetLocalRank()
-              != localVelocitySiteData->proc_id)
+          if (topology::NetworkTopology::Instance()->GetLocalRank() != localVelocitySiteData->proc_id)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Got a request for velocity data "
                                                           "that actually seems to be on rank %i",
@@ -300,23 +291,16 @@ namespace hemelb
         UpdateLocalField(localVelocitySiteData, latDat);
       }
 
-      void VelocityField::UpdateLocalField(VelocitySiteData* localVelocitySiteData,
-                                           const geometry::LatticeData& latDat)
+      void VelocityField::UpdateLocalField(VelocitySiteData* localVelocitySiteData, const geometry::LatticeData& latDat)
       {
         // the local counter is set equal to the global one
         // and the local velocity is calculated
         localVelocitySiteData->counter = counter;
-        distribn_t density, vx, vy, vz;
 
-        D3Q15::CalculateDensityAndVelocity(latDat.GetSite(localVelocitySiteData->site_id).GetFOld(),
-                                           density,
-                                           vx,
-                                           vy,
-                                           vz);
-
-        localVelocitySiteData->velocity.x = (float) (vx / density);
-        localVelocitySiteData->velocity.y = (float) (vy / density);
-        localVelocitySiteData->velocity.z = (float) (vz / density);
+        const util::Vector3D<distribn_t>& velocity = propertyCache.GetVelocity(localVelocitySiteData->site_id);
+        localVelocitySiteData->velocity.x = (float) velocity.x;
+        localVelocitySiteData->velocity.y = (float) velocity.y;
+        localVelocitySiteData->velocity.z = (float) velocity.z;
       }
 
       // Interpolates a velocity field to get the velocity at the position of a particle.

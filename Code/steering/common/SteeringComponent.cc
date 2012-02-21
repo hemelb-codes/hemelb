@@ -6,30 +6,30 @@ namespace hemelb
   {
     void SteeringComponent::AssignValues()
     {
-      mVisControl->mVisSettings.ctr_x += privateSteeringParams[SceneCentreX];
-      mVisControl->mVisSettings.ctr_y += privateSteeringParams[SceneCentreY];
-      mVisControl->mVisSettings.ctr_z += privateSteeringParams[SceneCentreZ];
+      mVisControl->visSettings.ctr_x += privateSteeringParams[SceneCentreX];
+      mVisControl->visSettings.ctr_y += privateSteeringParams[SceneCentreY];
+      mVisControl->visSettings.ctr_z += privateSteeringParams[SceneCentreZ];
 
       float longitude = privateSteeringParams[Longitude];
       float latitude = privateSteeringParams[Latitude];
 
       float zoom = privateSteeringParams[Zoom];
 
-      mVisControl->mVisSettings.brightness = privateSteeringParams[Brightness];
+      mVisControl->visSettings.brightness = privateSteeringParams[Brightness];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->mDomainStats.physical_velocity_threshold_max
+      mVisControl->domainStats.physical_velocity_threshold_max
           = privateSteeringParams[PhysicalVelocityThresholdMax];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->mDomainStats.physical_stress_threshold_max
+      mVisControl->domainStats.physical_stress_threshold_max
           = privateSteeringParams[PhysicalStressThrehsholdMaximum];
 
-      mVisControl->mDomainStats.physical_pressure_threshold_min
+      mVisControl->domainStats.physical_pressure_threshold_min
           = privateSteeringParams[PhysicalPressureThresholdMinimum];
-      mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
+      mVisControl->domainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
-      mVisControl->mVisSettings.glyphLength = privateSteeringParams[GlyphLength];
+      mVisControl->visSettings.glyphLength = privateSteeringParams[GlyphLength];
 
       float pixels_x = privateSteeringParams[PixelsX];
       float pixels_y = privateSteeringParams[PixelsY];
@@ -37,12 +37,12 @@ namespace hemelb
       int newMouseX = int (privateSteeringParams[NewMouseX]);
       int newMouseY = int (privateSteeringParams[NewMouseY]);
 
-      if (newMouseX != mVisControl->mVisSettings.mouse_x || newMouseY
-          != mVisControl->mVisSettings.mouse_y)
+      if (newMouseX != mVisControl->visSettings.mouse_x || newMouseY
+          != mVisControl->visSettings.mouse_y)
       {
         updatedMouseCoords = true;
-        mVisControl->mVisSettings.mouse_x = newMouseX;
-        mVisControl->mVisSettings.mouse_y = newMouseY;
+        mVisControl->visSettings.mouse_x = newMouseX;
+        mVisControl->visSettings.mouse_y = newMouseY;
       }
 
       mSimState->SetIsTerminating(1 == (int) privateSteeringParams[SetIsTerminal]);
@@ -51,12 +51,12 @@ namespace hemelb
       // 0 - Only display the isosurfaces (wall pressure and stress)
       // 1 - Isosurface and glyphs
       // 2 - Wall pattern streak lines
-      mVisControl->mVisSettings.mode
+      mVisControl->visSettings.mode
           = (vis::VisSettings::Mode) (privateSteeringParams[Mode]);
 
-      mVisControl->mVisSettings.streaklines_per_pulsatile_period
+      mVisControl->visSettings.streaklines_per_pulsatile_period
           = privateSteeringParams[StreaklinePerPulsatilePeriod];
-      mVisControl->mVisSettings.streakline_length
+      mVisControl->visSettings.streakline_length
           = privateSteeringParams[StreallineLength];
 
       mSimState->SetDoRendering(1 == (int) privateSteeringParams[SetDoRendering]);
@@ -64,33 +64,33 @@ namespace hemelb
       mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 
       distribn_t lattice_density_min =
-          mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
+          mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_min)
                   / Cs2;
       distribn_t
           lattice_density_max =
-              mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_max)
+              mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_max)
                   / Cs2;
       distribn_t
           lattice_velocity_max =
-              mUnits->ConvertVelocityToLatticeUnits(mVisControl->mDomainStats.physical_velocity_threshold_max);
+              mUnits->ConvertVelocityToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
       distribn_t
           lattice_stress_max =
-              mUnits->ConvertStressToLatticeUnits(mVisControl->mDomainStats.physical_stress_threshold_max);
+              mUnits->ConvertStressToLatticeUnits(mVisControl->domainStats.physical_stress_threshold_max);
 
       mVisControl->SetProjection((int) pixels_x,
                                  (int) pixels_y,
-                                 mVisControl->mVisSettings.ctr_x,
-                                 mVisControl->mVisSettings.ctr_y,
-                                 mVisControl->mVisSettings.ctr_z,
+                                 mVisControl->visSettings.ctr_x,
+                                 mVisControl->visSettings.ctr_y,
+                                 mVisControl->visSettings.ctr_z,
                                  longitude,
                                  latitude,
                                  zoom);
 
-      mVisControl->mDomainStats.density_threshold_min = lattice_density_min;
-      mVisControl->mDomainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max
+      mVisControl->domainStats.density_threshold_min = lattice_density_min;
+      mVisControl->domainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max
           - lattice_density_min);
-      mVisControl->mDomainStats.velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
-      mVisControl->mDomainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
+      mVisControl->domainStats.velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
+      mVisControl->domainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
     void SteeringComponent::Reset(configuration::SimConfig* iSimConfig)

@@ -92,9 +92,9 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        Viewpoint mViewpoint;
-        DomainStats mDomainStats;
-        VisSettings mVisSettings;
+        Viewpoint viewpoint;
+        DomainStats domainStats;
+        VisSettings visSettings;
 
       protected:
         void InitialAction(unsigned long startIteration);
@@ -129,8 +129,8 @@ namespace hemelb
         net::Net* net;
         const lb::MacroscopicPropertyCache& propertyCache;
 
-        geometry::LatticeData* mLatDat;
-        Screen mScreen;
+        geometry::LatticeData* latticeData;
+        Screen screen;
         Vis* vis;
         raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>
             *normalRayTracer;
