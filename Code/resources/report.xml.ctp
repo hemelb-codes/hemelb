@@ -3,6 +3,11 @@
 	<configuration>
 		<file>{{CONFIG}}</file>
 	</configuration>
+	{{#BUILD}}
+	<build>
+		<revision>{{REVISION}}</revision>
+	</build>
+	{{/BUILD}}
 	<nodes>
 		<threads>{{THREADS}}</threads>
 		<machines>{{MACHINES}}</machines>
