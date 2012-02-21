@@ -299,36 +299,43 @@ namespace hemelb
               // Find out how far the ray can move
               const float manhattanRayLengthThroughVoxel = rayUnitsUntilNextSite.GetByDirection(directionOfLeastTravel);
 
-              const site_t blockId = latticeData.GetBlockIdFromBlockCoords(blockLocation);
-              const site_t localContiguousId =
-                  latticeData.GetBlock(blockId).GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
+              const geometry::Block& block = latticeData.GetBlock(latticeData.GetBlockIdFromBlockCoords(blockLocation));
 
-              if (localContiguousId != BIG_NUMBER3) // Ensure fluid site
+              if (!block.IsEmpty()) // Ensure fluid site
               {
-                SiteData_t siteData;
-                siteData.density = propertyCache.GetDensity(localContiguousId);
-                siteData.velocity = propertyCache.GetVelocity(localContiguousId).GetMagnitude();
-                siteData.stress = propertyCache.GetStress(localContiguousId);
+                const site_t localContiguousId = block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
 
-                const util::Vector3D<double>* lWallData = iCluster.GetWallData(blockNumberOnCluster,
-                                                                               siteTraverser.GetCurrentIndex());
-
-                if (lWallData == NULL || lWallData->x == NO_VALUE)
+                if (localContiguousId != BIG_NUMBER3)
                 {
-                  ioRay.UpdateDataForNormalFluidSite(siteData, manhattanRayLengthThroughVoxel
-                      - euclideanClusterLengthTraversedByRay, // Manhattan Ray-length through the voxel
-                                                     euclideanClusterLengthTraversedByRay, // euclidean ray units spent in cluster
-                                                     domainStats,
-                                                     visSettings);
+                  SiteData_t siteData;
+                  siteData.density = propertyCache.GetDensity(localContiguousId);
+                  siteData.velocity = propertyCache.GetVelocity(localContiguousId).GetMagnitude();
+                  siteData.stress = propertyCache.GetStress(localContiguousId);
+
+                  const util::Vector3D<double>* lWallData = iCluster.GetWallData(blockNumberOnCluster,
+                                                                                 siteTraverser.GetCurrentIndex());
+
+                  if (lWallData == NULL || lWallData->x == NO_VALUE)
+                  {
+                    ioRay.UpdateDataForNormalFluidSite(siteData, manhattanRayLengthThroughVoxel
+                        - euclideanClusterLengthTraversedByRay, // Manhattan Ray-length through the voxel
+                                                       euclideanClusterLengthTraversedByRay, // euclidean ray units spent in cluster
+                                                       domainStats,
+                                                       visSettings);
+                  }
+                  else
+                  {
+                    ioRay.UpdateDataForWallSite(siteData,
+                                                manhattanRayLengthThroughVoxel - euclideanClusterLengthTraversedByRay,
+                                                euclideanClusterLengthTraversedByRay,
+                                                domainStats,
+                                                visSettings,
+                                                lWallData);
+                  }
                 }
                 else
                 {
-                  ioRay.UpdateDataForWallSite(siteData,
-                                              manhattanRayLengthThroughVoxel - euclideanClusterLengthTraversedByRay,
-                                              euclideanClusterLengthTraversedByRay,
-                                              domainStats,
-                                              visSettings,
-                                              lWallData);
+                  ioRay.ProcessSolidSite();
                 }
               }
               else
