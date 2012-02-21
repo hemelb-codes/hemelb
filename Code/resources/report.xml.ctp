@@ -7,7 +7,7 @@
 	<build>
 		<revision>{{REVISION}}</revision>
 	</build>
-	{{/#BUILD}}
+	{{/BUILD}}
 	<nodes>
 		<threads>{{THREADS}}</threads>
 		<machines>{{MACHINES}}</machines>

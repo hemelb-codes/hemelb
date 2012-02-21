@@ -23,4 +23,4 @@ Name Local Min Mean Max
 
 {{#BUILD}}
 Revision number:{{REVISION}}
-{{/#BUILD}}
+{{/BUILD}}
