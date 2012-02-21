@@ -714,6 +714,9 @@ namespace hemelb
           const DomainStats& domainStats;
           const VisSettings& visSettings;
           const hemelb::geometry::LatticeData& latticeData;
+          /**
+           * The cache of macroscopic fluid properties at each local fluid site.
+           */
           const lb::MacroscopicPropertyCache& propertyCache;
 
           util::Vector3D<float> fromCameraToBottomLeftPixelOfSubImage;

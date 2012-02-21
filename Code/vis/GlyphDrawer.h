@@ -38,7 +38,13 @@ namespace hemelb
         // A struct to represent a single glyph.
         struct Glyph
         {
+          /**
+           * The 3D coordinates of the glyph.
+           */
             float x, y, z;
+            /**
+             * The local contiguous site id near there.
+             */
             site_t siteId;
         };
 

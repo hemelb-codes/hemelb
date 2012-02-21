@@ -118,6 +118,12 @@ namespace hemelb
             return leastSiteOnLeastBlockInImage;
           }
 
+          /**
+           * Returns the block coordinates of the block with minimal x, y and z
+           * coordinates in the cluster.
+           *
+           * @return The minimal block coordinates
+           */
           const util::Vector3D<site_t>& GetMinBlockLocation() const
           {
             return minBlock;
@@ -135,20 +141,29 @@ namespace hemelb
 
           }
 
-          //Stores the size of the cluster in terms of the number of blocks
+          /**
+           * The size of the cluster in terms of the number of blocks
+           */
           unsigned short blocksX;
           unsigned short blocksY;
           unsigned short blocksZ;
 
-          //The min and maximum site location, in site units
-          //relative to the centre of the lattice
+          /**
+           * The min and maximum site location, in site units
+           * relative to the centre of the lattice
+           */
           util::Vector3D<float> minSite;
           util::Vector3D<float> maxSite;
 
-          //Stores the lowest x, y and z block location of the ClusterShared
-          //in terms of site units relative to the centre location
+          /**
+           * The lowest x, y and z block location of the ClusterShared
+           * in terms of site units relative to the centre location
+           */
           util::Vector3D<float> leastSiteOnLeastBlockInImage;
 
+          /**
+           * The coordinates of the block with minimal x, y and z components.
+           */
           util::Vector3D<site_t> minBlock;
       };
     }
