@@ -39,7 +39,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   steeringCpt = NULL;
   visualisationControl = NULL;
   simulationState = NULL;
-
+  build_info=new hemelb::reporting::BuildInfo();
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
   steeringSessionId = options.GetSteeringSessionId();
@@ -55,6 +55,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   if (IsCurrentProcTheIOProc())
   {
     reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile());
+    reporter->AddReportable(build_info);
     reporter->AddReportable(incompressibilityChecker);
     reporter->AddReportable(&timings);
     reporter->AddReportable(latticeData);
@@ -86,6 +87,7 @@ SimulationMaster::~SimulationMaster()
   delete simulationState;
   delete unitConvertor;
   delete incompressibilityChecker;
+  delete build_info;
 
   delete simConfig;
   delete fileManager;

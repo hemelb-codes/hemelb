@@ -13,6 +13,7 @@
 #include "io/PathManager.h"
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
+#include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
 
 class SimulationMaster
@@ -44,6 +45,7 @@ class SimulationMaster
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
+    hemelb::reporting::BuildInfo* build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
     MapType snapshotsCompleted;
