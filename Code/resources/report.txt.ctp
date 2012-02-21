@@ -13,10 +13,14 @@ With {{STEPS_PER_CYCLE}} per cycle.
 Sub-domains info:
 {{#PROCESSOR}}
 rank: {{RANK}}, fluid sites: {{SITES}}
-{{/PROCESSOR}}
+{{/PROCESSOR}}hg did
 
 Timing data:
 Name Local Min Mean Max
 {{#TIMER}}
 {{NAME}} {{LOCAL}} {{MIN}} {{MEAN}} {{MAX}}
 {{/TIMER}}
+
+{{#BUILD}}
+Revision number:{{REVISION}}
+{{/BUILD}}
