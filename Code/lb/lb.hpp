@@ -443,12 +443,19 @@ namespace hemelb
 
           geometry::Site site = mLatDat->GetSite(my_site_id);
 
+          /// @todo #111 It should possible to compute shear stress in the whole domain, not only at the boundary
           if (mParams.StressType == hemelb::lb::ShearStress && !site.IsEdge())
           {
+            /**
+             *  @todo #111 This is a pretty meaningless way of saying that you cannot compute stress for this site.
+             *  The -1 value will be later on translated to physical units and will end up being different values
+             *  for different runs depending on grid and simulation parameters.
+             */
             stress = -1.0;
           }
           else
           {
+            /// @todo #138, wall normals don't seem to be initialised properly, they appear to be [nan,nan,nan]
             stress = propertyCache.GetStress(my_site_id);
           }
 
@@ -502,8 +509,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
-      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
+      distribn_t density_min = std::numeric_limits<distribn_t>::max();
+      distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
