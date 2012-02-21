@@ -288,8 +288,8 @@ void SimulationMaster::WriteLocalImages()
 
       visualisationControl->WriteImage(writer,
                                        *result,
-                                       visualisationControl->mDomainStats,
-                                       visualisationControl->mVisSettings);
+                                       visualisationControl->domainStats,
+                                       visualisationControl->visSettings);
 
       delete writer;
     }
@@ -320,9 +320,9 @@ void SimulationMaster::GenerateNetworkImages()
                                                          stress,
                                                          mousePressure,
                                                          mouseStress,
-                                                         visualisationControl->mDomainStats.density_threshold_min,
-                                                         visualisationControl->mDomainStats.density_threshold_minmax_inv,
-                                                         visualisationControl->mDomainStats.stress_threshold_max_inv);
+                                                         visualisationControl->domainStats.density_threshold_min,
+                                                         visualisationControl->domainStats.density_threshold_minmax_inv,
+                                                         visualisationControl->domainStats.stress_threshold_max_inv);
 
           visualisationControl->SetMouseParams(mousePressure, mouseStress);
         }

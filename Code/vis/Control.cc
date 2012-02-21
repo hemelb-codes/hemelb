@@ -22,10 +22,10 @@ namespace hemelb
                      geometry::LatticeData* iLatDat,
                      reporting::Timer &atimer) :
         net::PhasedBroadcastIrregular<true, 2, 0, false, true>(netIn, simState, SPREADFACTOR),
-        net(netIn), propertyCache(propertyCache), mLatDat(iLatDat), timer(atimer)
+        net(netIn), propertyCache(propertyCache), latticeData(iLatDat), timer(atimer)
     {
 
-      mVisSettings.mStressType = iStressType;
+      visSettings.mStressType = iStressType;
 
       this->vis = new Vis;
 
@@ -36,8 +36,8 @@ namespace hemelb
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
-      mVisSettings.mouse_x = -1;
-      mVisSettings.mouse_y = -1;
+      visSettings.mouse_x = -1;
+      visSettings.mouse_y = -1;
 
       initLayers();
     }
@@ -47,14 +47,14 @@ namespace hemelb
       // We don't have all the minima / maxima on one core, so we have to gather them.
       // NOTE this only happens once, during initialisation, otherwise it would be
       // totally unforgivable.
-      site_t block_min_x = std::numeric_limits<site_t>::max();
-      site_t block_min_y = std::numeric_limits<site_t>::max();
-      site_t block_min_z = std::numeric_limits<site_t>::max();
-      site_t block_max_x = std::numeric_limits<site_t>::min();
-      site_t block_max_y = std::numeric_limits<site_t>::min();
-      site_t block_max_z = std::numeric_limits<site_t>::min();
+      site_t block_min_x = std::numeric_limits < site_t > ::max();
+      site_t block_min_y = std::numeric_limits < site_t > ::max();
+      site_t block_min_z = std::numeric_limits < site_t > ::max();
+      site_t block_max_x = std::numeric_limits < site_t > ::min();
+      site_t block_max_y = std::numeric_limits < site_t > ::min();
+      site_t block_max_z = std::numeric_limits < site_t > ::min();
 
-      for (geometry::BlockTraverser blockIt(*mLatDat); blockIt.CurrentLocationValid(); blockIt.TraverseOne())
+      for (geometry::BlockTraverser blockIt(*latticeData); blockIt.CurrentLocationValid(); blockIt.TraverseOne())
       {
         if (blockIt.GetCurrentBlockData().IsEmpty())
         {
@@ -83,29 +83,29 @@ namespace hemelb
       MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
       MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
-      mVisSettings.ctr_x = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[0] + maxes[0]));
-      mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
-      mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
+      visSettings.ctr_x = 0.5F * (float) (latticeData->GetBlockSize() * (mins[0] + maxes[0]));
+      visSettings.ctr_y = 0.5F * (float) (latticeData->GetBlockSize() * (mins[1] + maxes[1]));
+      visSettings.ctr_z = 0.5F * (float) (latticeData->GetBlockSize() * (mins[2] + maxes[2]));
 
       normalRayTracer =
-          new raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>(mLatDat,
-                                                                                                &mDomainStats,
-                                                                                                &mScreen,
-                                                                                                &mViewpoint,
-                                                                                                &mVisSettings);
+          new raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>(latticeData,
+                                                                                                &domainStats,
+                                                                                                &screen,
+                                                                                                &viewpoint,
+                                                                                                &visSettings);
 
-      myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
+      myGlypher = new GlyphDrawer(latticeData, &screen, &domainStats, &viewpoint, &visSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new streaklinedrawer::StreaklineDrawer(*mLatDat, mScreen, mViewpoint, mVisSettings);
+      myStreaker = new streaklinedrawer::StreaklineDrawer(*latticeData, screen, viewpoint, visSettings, propertyCache);
 #else
       myStreaker = NULL;
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
-      mVisSettings.ctr_x -= vis->half_dim[0];
-      mVisSettings.ctr_y -= vis->half_dim[1];
-      mVisSettings.ctr_z -= vis->half_dim[2];
+      visSettings.ctr_x -= vis->half_dim[0];
+      visSettings.ctr_y -= vis->half_dim[1];
+      visSettings.ctr_z -= vis->half_dim[2];
     }
 
     void Control::SetProjection(const int &iPixels_x,
@@ -121,22 +121,22 @@ namespace hemelb
       float dist = 0.5F * rad;
 
       //For now set the maximum draw distance to twice the radius;
-      mVisSettings.maximumDrawDistance = 2.0F * rad;
+      visSettings.maximumDrawDistance = 2.0F * rad;
 
       util::Vector3D<float> centre = util::Vector3D<float>(iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
-                                      iLatitude * (float) DEG_TO_RAD,
-                                      centre,
-                                      rad,
-                                      dist);
+      viewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                     iLatitude * (float) DEG_TO_RAD,
+                                     centre,
+                                     rad,
+                                     dist);
 
-      mScreen.Set( (0.5F * vis->system_size) / iZoom,
-                  (0.5F * vis->system_size) / iZoom,
-                  iPixels_x,
-                  iPixels_y,
-                  rad,
-                  &mViewpoint);
+      screen.Set( (0.5F * vis->system_size) / iZoom,
+                 (0.5F * vis->system_size) / iZoom,
+                 iPixels_x,
+                 iPixels_y,
+                 rad,
+                 &viewpoint);
     }
 
     void Control::SetSomeParams(const float iBrightness,
@@ -145,17 +145,17 @@ namespace hemelb
                                 const distribn_t iVelocityThresholdMaxInv,
                                 const distribn_t iStressThresholdMaxInv)
     {
-      mVisSettings.brightness = iBrightness;
-      mDomainStats.density_threshold_min = iDensityThresholdMin;
+      visSettings.brightness = iBrightness;
+      domainStats.density_threshold_min = iDensityThresholdMin;
 
-      mDomainStats.density_threshold_minmax_inv = iDensityThresholdMinMaxInv;
-      mDomainStats.velocity_threshold_max_inv = iVelocityThresholdMaxInv;
-      mDomainStats.stress_threshold_max_inv = iStressThresholdMaxInv;
+      domainStats.density_threshold_minmax_inv = iDensityThresholdMinMaxInv;
+      domainStats.velocity_threshold_max_inv = iVelocityThresholdMaxInv;
+      domainStats.stress_threshold_max_inv = iStressThresholdMaxInv;
     }
 
     void Control::UpdateImageSize(int pixels_x, int pixels_y)
     {
-      mScreen.Resize(pixels_x, pixels_y);
+      screen.Resize(pixels_x, pixels_y);
     }
 
     void Control::Render(unsigned long startIteration)
@@ -166,7 +166,7 @@ namespace hemelb
 
       PixelSet<BasicPixel> *glyph = NULL;
 
-      if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
+      if (visSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
         glyph = myGlypher->Render(propertyCache);
       }
@@ -179,7 +179,7 @@ namespace hemelb
       PixelSet<streaklinedrawer::StreakPixel> *streak = NULL;
 
       if (myStreaker != NULL
-          && (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode == VisSettings::WALLANDSTREAKLINES))
+          && (visSettings.mStressType == lb::ShearStress || visSettings.mode == VisSettings::WALLANDSTREAKLINES))
       {
         streak = myStreaker->Render();
       }
@@ -208,8 +208,8 @@ namespace hemelb
       *writer << domainStats.physical_pressure_threshold_min << domainStats.physical_pressure_threshold_max
           << domainStats.physical_velocity_threshold_max << domainStats.physical_stress_threshold_max;
 
-      *writer << mScreen.GetPixelsX();
-      *writer << mScreen.GetPixelsY();
+      *writer << screen.GetPixelsX();
+      *writer << screen.GetPixelsY();
       *writer << (int) imagePixels.GetPixelCount();
 
       WritePixels(writer, imagePixels, domainStats, visSettings);
@@ -217,12 +217,12 @@ namespace hemelb
 
     int Control::GetPixelsX() const
     {
-      return mScreen.GetPixelsX();
+      return screen.GetPixelsX();
     }
 
     int Control::GetPixelsY() const
     {
-      return mScreen.GetPixelsY();
+      return screen.GetPixelsY();
     }
 
     void Control::WritePixels(io::writers::Writer* writer,
@@ -337,8 +337,8 @@ namespace hemelb
       }
       if (splayNumber == 1)
       {
-        std::pair<std::multimap<unsigned long, Rendering>::iterator , std::multimap<unsigned long, Rendering>::iterator> its =
-            childrenResultsByStartIt.equal_range(startIteration);
+        std::pair < std::multimap<unsigned long, Rendering>::iterator , std::multimap<unsigned long, Rendering>::iterator
+            > its = childrenResultsByStartIt.equal_range(startIteration);
 
         Rendering local = (*localResultsByStartIt.find(startIteration)).second;
 
@@ -588,13 +588,13 @@ namespace hemelb
 
     void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
     {
-      mVisSettings.mouse_pressure = iPhysicalPressure;
-      mVisSettings.mouse_stress = iPhysicalStress;
+      visSettings.mouse_pressure = iPhysicalPressure;
+      visSettings.mouse_stress = iPhysicalStress;
     }
 
     bool Control::MouseIsOverPixel(const PixelSet<ResultPixel>* result, float* density, float* stress)
     {
-      if (mVisSettings.mouse_x < 0 || mVisSettings.mouse_y < 0)
+      if (visSettings.mouse_x < 0 || visSettings.mouse_y < 0)
       {
         return false;
       }
@@ -603,8 +603,7 @@ namespace hemelb
 
       for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); ++it)
       {
-        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == mVisSettings.mouse_x
-            && (*it).GetJ() == mVisSettings.mouse_y)
+        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == visSettings.mouse_x && (*it).GetJ() == visSettings.mouse_y)
         {
           *density = (*it).GetRayPixel()->GetNearestDensity();
           *stress = (*it).GetRayPixel()->GetNearestStress();
