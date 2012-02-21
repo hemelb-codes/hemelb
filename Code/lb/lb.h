@@ -114,19 +114,6 @@ namespace hemelb
 
         void ReadParameters();
 
-        /***
-         *  Calculate the BCs for each boundary site type and the
-         *  non-equilibrium distribution functions.
-         */
-        void CalculateBC(distribn_t f[],
-                         hemelb::geometry::SiteType const iSiteType,
-                         unsigned int const iBoundaryId,
-                         distribn_t *density,
-                         distribn_t *vx,
-                         distribn_t *vy,
-                         distribn_t *vz,
-                         distribn_t f_neq[]) const;
-
         void handleIOError(int iError);
 
         // Collision objects
