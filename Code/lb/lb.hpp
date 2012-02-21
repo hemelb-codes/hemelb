@@ -442,29 +442,48 @@ namespace hemelb
 
           geometry::Site site = mLatDat->GetSite(my_site_id);
 
-          if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
+          if (typeid(LB_KERNEL) == typeid(lb::kernels::Entropic<LatticeType>))
           {
-            LatticeType::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
-
-            for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-            {
-              f_neq[l] = site.GetFOld()[l] - f_eq[l];
-            }
-
+            LatticeType::CalculateEntropicDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
           }
           else
-          { // not FLUID_TYPE
-            CalculateBC(site.GetFOld(), site.GetSiteType(), site.GetBoundaryId(), &density, &vx, &vy, &vz, f_neq);
+          {
+            LatticeType::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
+          }
+
+          for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+          {
+            f_neq[l] = site.GetFOld()[l] - f_eq[l];
           }
 
           if (mParams.StressType == hemelb::lb::ShearStress)
           {
+            /// @todo #111 It should possible to compute shear stress in the whole domain, not only at the boundary
             if (!site.IsEdge())
             {
+              /**
+               *  @todo #111 This is a pretty meaningless way of saying that you cannot compute stress for this site.
+               *  The -1 value will be later on translated to physical units and will end up being different values
+               *  for different runs depending on grid and simulation parameters.
+               */
               stress = -1.0;
             }
             else
             {
+              /// @todo #138, wall normals don't seem to be initialised properly, they appear to be [nan,nan,nan]
+#ifdef HAVE_STD_ISNAN
+              if (std::isnan(site.GetWallNormal()[0]) || std::isnan(site.GetWallNormal()[1]) || std::isnan(site.GetWallNormal()[2]))
+              {
+                log::Logger::Log<log::Info, log::OnePerCore>("Wall normals not initialised properly, shear stress estimates are rubbish!");
+              }
+#endif
+#ifdef HAVE_ISNAN
+              if (isnan(site.GetWallNormal()[0]) || isnan(site.GetWallNormal()[1]) || isnan(site.GetWallNormal()[2]))
+              {
+                log::Logger::Log<log::Info, log::OnePerCore>("Wall normals not initialised properly, shear stress estimates are rubbish!");
+              }
+#endif
+
               LatticeType::CalculateShearStress(density,
                                                 f_neq,
                                                 site.GetWallNormal(),
@@ -524,54 +543,6 @@ namespace hemelb
       MPI_File_close(&lOutputFile);
 
       delete[] lFluidSiteBuffer;
-    }
-
-    // Calculate the BCs for each boundary site type and the
-    // non-equilibrium distribution functions.
-    template<class LatticeType>
-    void LBM<LatticeType>::CalculateBC(distribn_t f[],
-                                       hemelb::geometry::SiteType const iSiteType,
-                                       unsigned int const iBoundaryId,
-                                       distribn_t *density,
-                                       distribn_t *vx,
-                                       distribn_t *vy,
-                                       distribn_t *vz,
-                                       distribn_t f_neq[]) const
-    {
-      distribn_t dummy_density;
-
-      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-      {
-        f_neq[l] = f[l];
-      }
-
-      // If you look at where this function is called from, having siteType == fluid type actually
-      // means it also  must be an edge (pure fluid case is caught before this function is called).
-      // UGH.
-      if (iSiteType == hemelb::geometry::FLUID_TYPE)
-      {
-        LatticeType::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
-      }
-      else
-      {
-        if (iSiteType == hemelb::geometry::INLET_TYPE)
-        {
-          *density = mInletValues->GetBoundaryDensity(iBoundaryId);
-        }
-        else
-        {
-          *density = mOutletValues->GetBoundaryDensity(iBoundaryId);
-        }
-
-        LatticeType::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
-        LatticeType::CalculateFeq(*density, *vx, *vy, *vz, f);
-
-      }
-      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-      {
-        f_neq[l] -= f[l];
-      }
-
     }
 
     template<class LatticeType>
