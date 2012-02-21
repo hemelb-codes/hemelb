@@ -435,58 +435,31 @@ namespace hemelb
 
           /* Skip over solid sites. */
           if (my_site_id & BIG_NUMBER3)
+          {
             continue;
+          }
 
-          distribn_t density, vx, vy, vz, f_eq[LatticeType::NUMVECTORS], f_neq[LatticeType::NUMVECTORS], stress,
-              pressure;
+          distribn_t stress;
 
           geometry::Site site = mLatDat->GetSite(my_site_id);
 
-          if (site.GetSiteType() == geometry::FLUID_TYPE && !site.IsEdge())
+          if (mParams.StressType == hemelb::lb::ShearStress && !site.IsEdge())
           {
-            LatticeType::CalculateDensityVelocityFEq(site.GetFOld(), density, vx, vy, vz, f_eq);
-
-            for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-            {
-              f_neq[l] = site.GetFOld()[l] - f_eq[l];
-            }
-
-          }
-          else
-          { // not FLUID_TYPE
-            CalculateBC(site.GetFOld(), site.GetSiteType(), site.GetBoundaryId(), &density, &vx, &vy, &vz, f_neq);
-          }
-
-          if (mParams.StressType == hemelb::lb::ShearStress)
-          {
-            if (!site.IsEdge())
-            {
-              stress = -1.0;
-            }
-            else
-            {
-              LatticeType::CalculateShearStress(density,
-                                                f_neq,
-                                                site.GetWallNormal(),
-                                                stress,
-                                                mParams.GetStressParameter());
-            }
+            stress = -1.0;
           }
           else
           {
-            LatticeType::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
+            stress = propertyCache.GetStress(my_site_id);
           }
-
-          vx /= density;
-          vy /= density;
-          vz /= density;
 
           // conversion from lattice to physical units
-          pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
+          distribn_t pressure = mUnits->ConvertPressureToPhysicalUnits(propertyCache.GetDensity(my_site_id) * Cs2);
 
-          vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
-          vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
-          vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
+          const util::Vector3D<distribn_t>& velocity = propertyCache.GetVelocity(my_site_id);
+
+          distribn_t vx = mUnits->ConvertVelocityToPhysicalUnits(velocity.x);
+          distribn_t vy = mUnits->ConvertVelocityToPhysicalUnits(velocity.y);
+          distribn_t vz = mUnits->ConvertVelocityToPhysicalUnits(velocity.z);
 
           stress = mUnits->ConvertStressToPhysicalUnits(stress);
 
@@ -526,59 +499,11 @@ namespace hemelb
       delete[] lFluidSiteBuffer;
     }
 
-    // Calculate the BCs for each boundary site type and the
-    // non-equilibrium distribution functions.
-    template<class LatticeType>
-    void LBM<LatticeType>::CalculateBC(distribn_t f[],
-                                       hemelb::geometry::SiteType const iSiteType,
-                                       unsigned int const iBoundaryId,
-                                       distribn_t *density,
-                                       distribn_t *vx,
-                                       distribn_t *vy,
-                                       distribn_t *vz,
-                                       distribn_t f_neq[]) const
-    {
-      distribn_t dummy_density;
-
-      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-      {
-        f_neq[l] = f[l];
-      }
-
-      // If you look at where this function is called from, having siteType == fluid type actually
-      // means it also  must be an edge (pure fluid case is caught before this function is called).
-      // UGH.
-      if (iSiteType == hemelb::geometry::FLUID_TYPE)
-      {
-        LatticeType::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
-      }
-      else
-      {
-        if (iSiteType == hemelb::geometry::INLET_TYPE)
-        {
-          *density = mInletValues->GetBoundaryDensity(iBoundaryId);
-        }
-        else
-        {
-          *density = mOutletValues->GetBoundaryDensity(iBoundaryId);
-        }
-
-        LatticeType::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
-        LatticeType::CalculateFeq(*density, *vx, *vy, *vz, f);
-
-      }
-      for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
-      {
-        f_neq[l] -= f[l];
-      }
-
-    }
-
     template<class LatticeType>
     void LBM<LatticeType>::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits<distribn_t>::max();
-      distribn_t density_max = std::numeric_limits<distribn_t>::min();
+      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
+      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
