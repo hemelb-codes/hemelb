@@ -555,7 +555,7 @@ def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     p=load_profile()
     create_config_impl(p)
     # Now modify it to have the specified steps and cycles
-    modify_config(profile,Steps,Cycles,Steps,Cycles)
+    modify_config(profile,VoxelSize,Steps,Cycles,Steps,Cycles)
 
 @task
 def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
@@ -563,7 +563,7 @@ def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=
     profile_environment(profile,VoxelSize,oldSteps,oldCycles)           
     with_template_config()
     env.old_config_path=env.job_config_path_local
-    config_path=os.path.join(env.job_config_path_local,'config.xml')
+    config_path=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
     config=ElementTree.parse(config_path)
     simnode=config.find('simulation')
     for currentSteps in input_to_range(Steps,1000):
@@ -586,7 +586,7 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        modify_config(profile,Steps,Cycles,1000,3)
+        modify_config(profile,VoxelSize,Steps,Cycles,1000,3)
 
 @task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
