@@ -21,8 +21,6 @@ namespace hemelb
                                  const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                                  const util::Vector3D<site_t>& minimalBlock);
 
-          void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
-
           const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 
           void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData);
