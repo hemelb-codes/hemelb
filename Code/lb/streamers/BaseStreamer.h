@@ -90,34 +90,31 @@ namespace hemelb
             propertyCache.SetDensity(site.GetIndex(), density);
             propertyCache.SetVelocity(site.GetIndex(), velocity);
 
-            if (tDoRayTracing)
-            {
-              distribn_t rtStress;
+            distribn_t stress;
 
-              if (lbmParams->StressType == ShearStress)
+            if (lbmParams->StressType == ShearStress)
+            {
+              if (!site.IsEdge())
               {
-                if (!site.IsEdge())
-                {
-                  rtStress = NO_VALUE;
-                }
-                else
-                {
-                  StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(density,
-                                                                                          f_neq,
-                                                                                          site.GetWallNormal(),
-                                                                                          rtStress,
-                                                                                          lbmParams->GetStressParameter());
-                }
+                stress = NO_VALUE;
               }
               else
               {
-                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
-                                                                                           rtStress,
-                                                                                           lbmParams->GetStressParameter());
+                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(density,
+                                                                                        f_neq,
+                                                                                        site.GetWallNormal(),
+                                                                                        stress,
+                                                                                        lbmParams->GetStressParameter());
               }
-
-              propertyCache.SetStress(site.GetIndex(), rtStress);
             }
+            else
+            {
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
+                                                                                         stress,
+                                                                                         lbmParams->GetStressParameter());
+            }
+
+            propertyCache.SetStress(site.GetIndex(), stress);
           }
 
       };

@@ -55,7 +55,7 @@ namespace hemelb
       imageWriter << (int) (pix->GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->WritePixels(&imageWriter, *pix, mVisControl->mDomainStats, mVisControl->mVisSettings);
+      mVisControl->WritePixels(&imageWriter, *pix, mVisControl->domainStats, mVisControl->visSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
@@ -66,11 +66,11 @@ namespace hemelb
         sim.cycle = (int) mSimState->GetCycleId();
         sim.nInlets = inletCount;
 
-        sim.mousePressure = mVisControl->mVisSettings.mouse_pressure;
-        sim.mouseStress = mVisControl->mVisSettings.mouse_stress;
+        sim.mousePressure = mVisControl->visSettings.mouse_pressure;
+        sim.mouseStress = mVisControl->visSettings.mouse_stress;
 
-        mVisControl->mVisSettings.mouse_pressure = -1.0;
-        mVisControl->mVisSettings.mouse_stress = -1.0;
+        mVisControl->visSettings.mouse_pressure = -1.0;
+        mVisControl->visSettings.mouse_stress = -1.0;
 
         sim.pack(&imageWriter);
       }
