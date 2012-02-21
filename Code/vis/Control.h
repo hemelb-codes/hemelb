@@ -127,6 +127,9 @@ namespace hemelb
         std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
         net::Net* net;
+        /**
+         * Cache of all the macroscopic fluid properties of each lattice site on this core.
+         */
         const lb::MacroscopicPropertyCache& propertyCache;
 
         geometry::LatticeData* latticeData;
