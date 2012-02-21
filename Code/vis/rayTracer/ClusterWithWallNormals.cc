@@ -14,20 +14,15 @@ namespace hemelb
                                                      const util::Vector3D<float>& maximalSite,
                                                      const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                                                      const util::Vector3D<site_t>& minimalBlock) :
-          Cluster<ClusterWithWallNormals>(xBlockCount,
-                                          yBlockCount,
-                                          zBlockCount,
-                                          minimalSite,
-                                          maximalSite,
-                                          minimalSiteOnMinimalBlock,
-                                          minimalBlock)
+        Cluster<ClusterWithWallNormals> (xBlockCount,
+                                         yBlockCount,
+                                         zBlockCount,
+                                         minimalSite,
+                                         maximalSite,
+                                         minimalSiteOnMinimalBlock,
+                                         minimalBlock)
       {
         WallNormals.resize(GetBlocksX() * GetBlocksY() * GetBlocksZ());
-      }
-
-      void ClusterWithWallNormals::DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
-      {
-        WallNormals[iBlockNumber].resize(iSize, NULL);
       }
 
       const util::Vector3D<double>* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
@@ -35,11 +30,16 @@ namespace hemelb
         return WallNormals[iBlockNumber][iSiteNumber];
       }
 
-      void ClusterWithWallNormals::DoSetWallData(site_t iBlockNumber,
-                                                 site_t iSiteNumber,
-                                                 const util::Vector3D<double>& iData)
+      void ClusterWithWallNormals::DoSetWallData(site_t blockNumber,
+                                                 site_t siteNumber,
+                                                 const util::Vector3D<double>& data)
       {
-        WallNormals[iBlockNumber][iSiteNumber] = &iData;
+        if (WallNormals[blockNumber].size() <= siteNumber)
+        {
+          WallNormals[blockNumber].resize(siteNumber + 1, NULL);
+        }
+
+        WallNormals[blockNumber][siteNumber] = &data;
       }
 
       bool ClusterWithWallNormals::DoNeedsWallNormals()
