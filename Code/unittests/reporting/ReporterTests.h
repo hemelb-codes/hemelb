@@ -6,6 +6,7 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
+#include "reporting/BuildInfo.h"
 #include <iomanip>
 namespace hemelb
 {
@@ -87,6 +88,7 @@ namespace hemelb
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
             AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
                            "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
             AssertValue("4", "SNAPSHOTS");
             AssertValue("2", "CYCLES");
