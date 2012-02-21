@@ -1,0 +1,17 @@
+#ifndef HEMELB_REPORTING_BUILD_INFO_H_IN
+#define HEMELB_REPORTING_BUILD_INFO_H_IN
+#include "reporting/Reportable.h"
+namespace hemelb
+{
+  namespace reporting
+  {
+    static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
+    class BuildInfo : public Reportable {
+      void Report(ctemplate::TemplateDictionary& dictionary){
+        ctemplate::TemplateDictionary *build = dictionary.AddSectionDictionary("BUILD");
+        build->SetValue("REVISION", mercurial_revision_number);
+      }
+    };
+  }
+}
+#endif // HEMELB_REPORTING_BUILD_INFO_H_IN
