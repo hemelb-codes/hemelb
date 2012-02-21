@@ -131,17 +131,6 @@ namespace hemelb
 
         private:
           /**
-           * Default version of this function doesn't need to do anything extra
-           *
-           * @param iBlockNumber
-           * @param iSize
-           */
-          void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
-          {
-
-          }
-
-          /**
            * The size of the cluster in terms of the number of blocks
            */
           unsigned short blocksX;
