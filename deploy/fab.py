@@ -37,6 +37,9 @@ def clone():
         with cd(env.remote_path):
             run(template("rm -rf $repository"))
             run(template("hg clone $hg/$repository"))
+        with cd(env.repository_path):
+            with prefix(env.build_prefix):
+                run("hg id -q -i > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
     execute(copy_regression_tests)
@@ -78,6 +81,9 @@ def update():
             with prefix(env.build_prefix):
                 run("hg pull")
                 run("hg update")
+        with cd(env.repository_path):
+            with prefix(env.build_prefix):
+                run("hg id -q -i > revision_info.txt")
 
 @task
 def prepare_paths():
@@ -252,6 +258,12 @@ def sync():
             list(open(os.path.join(env.localroot,'RegressionTests','.hgignore')))
             )
     )
+    # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
+    # We will therefore assume the id for the current repository, and store that in a separate file along with the code.
+    revision_info_path=os.path.join(env.localroot,'revision_info.txt')
+    with open(revision_info_path,'w') as revision_info:
+        revision_info.write(env.build_number)
+    put(revision_info_path,env.repository_path)
 
 @task
 def patch(args=""):
@@ -519,15 +531,23 @@ def load_profile():
 def modify_profile(p):
     #Profiles always get created with 1000 steps and 3 cycles.
     #Can't change it here.
-    p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
-    env.VoxelSize=p.VoxelSizeMetres
+    try:
+        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+        env.VoxelSize=p.VoxelSizeMetres
+    except AttributeError:
+        # Remain compatible with old setuptool
+        p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
+        env.VoxelSize=p.VoxelSize
     env.Steps=env.Steps or 1000
     env.Cycles=env.Cycles or 3
 
 def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     env.profile=profile
     env.VoxelSize=VoxelSize or env.get('VoxelSize')
-    env.VoxelSize=float(env.VoxelSize)
+    try:
+        env.VoxelSize=float(env.VoxelSize)
+    except ValueError:
+        pass
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
     env.Cycles=Cycles or env.get('Cycles')
