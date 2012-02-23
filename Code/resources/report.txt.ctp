@@ -13,7 +13,7 @@ With {{STEPS_PER_CYCLE}} per cycle.
 Sub-domains info:
 {{#PROCESSOR}}
 rank: {{RANK}}, fluid sites: {{SITES}}
-{{/PROCESSOR}}hg did
+{{/PROCESSOR}}
 
 Timing data:
 Name Local Min Mean Max
@@ -23,4 +23,10 @@ Name Local Min Mean Max
 
 {{#BUILD}}
 Revision number:{{REVISION}}
+Steering mode: {{STEERING}}
+Streaklines: {{STREAKLINES}}
+Multimachine: {{MULTIMACHINE}}
+Build type: {{TYPE}}
+Optimisation level: {{OPTIMISATION}}
+Built at: {{TIME}}
 {{/BUILD}}

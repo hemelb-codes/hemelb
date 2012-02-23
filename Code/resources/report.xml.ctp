@@ -6,6 +6,12 @@
 	{{#BUILD}}
 	<build>
 		<revision>{{REVISION}}</revision>
+		<steering>{{STEERING}}</steering>
+		<streaklines>{{STREAKLINES}}</streaklines>
+		<multimachine>{{MULTIMACHINE}}</multimachine>
+		<type>{{TYPE}}</type>
+		<optimisation>{{OPTIMISATION}}</optimisation>
+		<date>{{TIME}}</date>
 	</build>
 	{{/BUILD}}
 	<nodes>
