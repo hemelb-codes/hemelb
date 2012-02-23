@@ -22,10 +22,10 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult);
+        GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult, reporting::Timers &timings);
         ~GeometryReader();
 
-        void LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings);
+        void LoadAndDecompose(std::string& dataFilePath);
 
       private:
         void ReadPreamble();
@@ -164,6 +164,7 @@ namespace hemelb
         unsigned int* bytesPerCompressedBlock;
         unsigned int* bytesPerUncompressedBlock;
         proc_t* procForEachBlock;
+        hemelb::reporting::Timers &timings;
     };
   }
 }
