@@ -45,18 +45,25 @@ legion:
   remote: "legion.rc.ucl.ac.uk"
   # The path python disttools use for builds.
   python_build: "python2.6"
-  modules: ["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake", "load python/gcc/2.6.6"]
+  modules: ["remove mpi/qlogic/1.2.7/intel","remove compilers/intel/11.1/072","add compilers/gnu/4.1.2", "add mpi/openmpi/1.4.1/gnu", "add cmake/2.8.3", "add python/2.6.6/gnu"]
   runtime_path_template: "$home_path/Scratch"
   node_type_restriction_template: '#$$ -ac allow="${node_type}"'
   node_type: "X"
   corespernode: 12
   temp_path_template: false #Legion sets its own tmpdir
   template_key: legion
+legion_vampir:
+  fabric_dir: "VampirHemeLB"
+  import: legion
+  build_prefix_commands: ["export CXX=mpicxx-vt","export CC=mpicc-vt", "export LD=mpicc-vt"] #Tell autoconf for dependencies where the compilers are
+  cmake_options: 
+    CMAKE_CXX_COMPILER: "mpicxx-vt"
+    CMAKE_C_COMPILER: "mpicc-vt"
 legion_intel:
   fabric_dir: "IntelHemeLB"
   import: legion
-  modules: ["remove ofed/qlogic/intel/64/1.2.7","add ofed/openmpi/intel/64/1.4.1","load cmake", "load python/gcc/2.6.6"]
-  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the hector compilers are
+  modules: ["remove mpi/qlogic/1.2.7/intel","add mpi/openmpi/1.4.1/intel","add cmake/2.8.3", "add python/2.6.6/gnu"]
+  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the compilers are
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "icpc"
