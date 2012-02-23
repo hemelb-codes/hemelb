@@ -41,7 +41,7 @@ namespace hemelb
         //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
 
         // LGBK operator with support for non-Newtonian flow
-        //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
+        //typedef kernels::LBGKNN<RHEO_MODEL, LatticeType> LB_KERNEL;
 
         // Multiple relaxation time collision operator
         //typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> LB_KERNEL;
