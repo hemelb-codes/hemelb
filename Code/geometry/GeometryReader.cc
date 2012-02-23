@@ -19,8 +19,8 @@ namespace hemelb
   namespace geometry
   {
 
-    GeometryReader::GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult) :
-        readingResult(readResult)
+    GeometryReader::GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult, reporting::Timers &atimings) :
+        readingResult(readResult), timings(atimings)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -69,7 +69,7 @@ namespace hemelb
       }
     }
 
-    void GeometryReader::LoadAndDecompose(std::string& dataFilePath, reporting::Timers &timings)
+    void GeometryReader::LoadAndDecompose(std::string& dataFilePath)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -123,7 +123,7 @@ namespace hemelb
       procForEachBlock = new proc_t[readingResult.GetBlockCount()];
 
       ReadHeader();
-
+      timings[hemelb::reporting::Timers::initialDecomposition].Start();
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
 
@@ -140,7 +140,7 @@ namespace hemelb
 
         ValidateProcForEachBlock();
       }
-
+      timings[hemelb::reporting::Timers::initialDecomposition].Stop();
       // Perform the initial read-in.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
 
@@ -319,6 +319,7 @@ namespace hemelb
                                            const proc_t localRank)
     {
       // Create a list of which blocks to read in.
+      timings[hemelb::reporting::Timers::readBlocksPrelim].Start();
       bool* readBlock = new bool[readingResult.GetBlockCount()];
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
@@ -341,7 +342,8 @@ namespace hemelb
       }
 
       int* procsWantingThisBlock = new int[currentCommSize];
-
+      timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
+      timings[hemelb::reporting::Timers::readBlocksAll].Start();
       // Set the view and read in.
       MPI_Offset offset = io::formats::geometry::PreambleLength + GetHeaderLength(readingResult.GetBlockCount());
 
@@ -361,6 +363,7 @@ namespace hemelb
 
       delete[] procsWantingThisBlock;
       delete[] readBlock;
+      timings[hemelb::reporting::Timers::readBlocksAll].Stop();
     }
 
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar,
@@ -380,7 +383,8 @@ namespace hemelb
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
       int neededHere = neededOnThisRank;
-
+      timings[hemelb::reporting::Timers::readNet].Start();
+      
       MPI_Gather(&neededHere,
                  1,
                  MpiDataType<int>(),
@@ -389,11 +393,12 @@ namespace hemelb
                  MpiDataType<int>(),
                  readingCore,
                  currentComm);
-
+      timings[hemelb::reporting::Timers::readNet].Stop();
       net::Net net = net::Net(currentComm);
-
+      
       if (readingCore == currentCommRank)
       {
+        timings[hemelb::reporting::Timers::readBlock].Start();
         // Read the data.
         compressedBlockData.resize(compressedBytes);
         MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
@@ -406,6 +411,7 @@ namespace hemelb
             net.RequestSend(&compressedBlockData.front(), compressedBytes, receiver);
           }
         }
+        timings[hemelb::reporting::Timers::readBlock].Stop();
       }
       else if (neededOnThisRank)
       {
@@ -416,11 +422,12 @@ namespace hemelb
       {
         return;
       }
-
+      timings[hemelb::reporting::Timers::readNet].Start();
       net.Send();
       net.Receive();
       net.Wait();
-
+      timings[hemelb::reporting::Timers::readNet].Stop();
+      timings[hemelb::reporting::Timers::readParse].Start();
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
@@ -452,10 +459,12 @@ namespace hemelb
           }
         }
       }
+      timings[hemelb::reporting::Timers::readParse].Stop();
     }
 
     std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
                                                           const unsigned int uncompressedBytes) {
+      timings[hemelb::reporting::Timers::unzip].Start();                        
       // For zlib return codes.
       int ret;
 
@@ -490,7 +499,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
-
+      timings[hemelb::reporting::Timers::unzip].Stop();        
       return uncompressed;
     }
 
@@ -1065,32 +1074,34 @@ namespace hemelb
 
       // Call parmetis.
       idx_t* partitionVector = new idx_t[localVertexCount];
-
+      timings[hemelb::reporting::Timers::parmetis].Start();
       CallParmetis(partitionVector, localVertexCount, vtxDistribn, adjacenciesPerVertex, localAdjacencies);
-
+      timings[hemelb::reporting::Timers::parmetis].Stop();
       delete[] localAdjacencies;
       delete[] adjacenciesPerVertex;
-
+      
       // Convert the ParMetis results into a nice format.
       idx_t* allMoves = new idx_t[topologySize];
-
+      
       idx_t* movesList = GetMovesList(allMoves,
                                       firstSiteIndexPerBlock,
                                       procForEachBlock,
                                       fluidSitesPerBlock,
                                       vtxDistribn,
                                       partitionVector);
-
+      
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
-
+      timings[hemelb::reporting::Timers::reRead].Start();
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(allMoves, movesList, procForEachBlock);
-
+      timings[hemelb::reporting::Timers::reRead].Stop();
+      
+      timings[hemelb::reporting::Timers::moves].Start();
       // Implement the decomposition now that we have read the necessary data.
       ImplementMoves(procForEachBlock, allMoves, movesList);
-
+      timings[hemelb::reporting::Timers::moves].Stop();
       delete[] movesList;
       delete[] allMoves;
     }
