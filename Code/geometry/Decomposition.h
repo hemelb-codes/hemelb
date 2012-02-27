@@ -14,18 +14,23 @@ namespace hemelb
     /*
     JH Note: Class created to make the new decomposition communication strategy in #142 testable.
     Will not initially contain all decomposition-related code, will gradually add this.
+    Eventually, will do the decomposition, and have clean interfaces to provide each site's owned and needed blocks during geometry reading.
+    Site ownership during simulation will not be managed by this class, but by the lattice data as currently.
     */
-    class Decomposition
+    template<class Net, class Topology> class DecompositionBase
     {
     public:
-      Decomposition(const site_t BlockCount, bool *readBlock, const proc_t readingGroupSize, 
-        const topology::NetworkTopology &atopology=*topology::NetworkTopology::Instance() ); // Temporarily during the refactor, constructed just to abstract the block sharing bit
-      std::vector<proc_t> ProcessorsNeedingBlock(const site_t &block){return procsWantingBlocksBuffer[block];}
+      DecompositionBase(const site_t BlockCount, bool *readBlock, const proc_t readingGroupSize, Net &anet,
+        const Topology &atopology=*Topology::Instance()); // Temporarily during the refactor, constructed just to abstract the block sharing bit
+      std::vector<proc_t> ProcessorsNeedingBlock(const site_t &block){
+        return procsWantingBlocksBuffer[block];
+      }
     private:
       std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
-      net::Net net;
-      const topology::NetworkTopology &topology;
+      Net &net;
+      const Topology &topology;
     };
+    typedef DecompositionBase<net::Net,topology::NetworkTopology> Decomposition;
   }
 }
 #endif // HEMELB_GEOMETRY_DECOMPOSITION_H

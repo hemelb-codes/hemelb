@@ -5,8 +5,9 @@ namespace hemelb
 {
   namespace geometry
   {
-    Decomposition::Decomposition(const site_t blockCount, bool *readBlock, const proc_t readingGroupSize, const topology::NetworkTopology & atopology):
-      procsWantingBlocksBuffer(blockCount),net(net::Net(MPI_COMM_WORLD)),topology(atopology)
+    template<class Net, class Topology> DecompositionBase<Net,Topology>::DecompositionBase
+      (const site_t blockCount, bool *readBlock, const proc_t readingGroupSize, Net & anet,  const Topology & atopology):
+      procsWantingBlocksBuffer(blockCount),net(anet),topology(atopology)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<site_t> blocks_needed_here;
@@ -17,11 +18,15 @@ namespace hemelb
       }
       for (proc_t reading_core=0 ; reading_core < readingGroupSize ; reading_core++){
         unsigned int blocks_needed_size=blocks_needed_here.size();
+        if (reading_core==topology.GetLocalRank()) continue;
         net.RequestSend(&blocks_needed_size, 1, reading_core);
       }
+      
       std::vector<unsigned int>  blocks_needed_sizes(topology.GetProcessorCount());
+      
       if (topology.GetLocalRank() < readingGroupSize){
         for (proc_t sending_core=0; sending_core< topology.GetProcessorCount();sending_core++){
+          if (sending_core==topology.GetLocalRank()) continue;
           net.RequestReceive(&blocks_needed_sizes[sending_core], 1, sending_core);
         }
       }
@@ -31,13 +36,17 @@ namespace hemelb
 
       // Communicate the needed blocks
       for (proc_t reading_core=0; reading_core<readingGroupSize;reading_core++){
+        if (reading_core==topology.GetLocalRank()) continue;
         net.RequestSend(&blocks_needed_here.front(), blocks_needed_here.size(), reading_core);
       }
+      
       std::vector<std::vector< site_t> >  blocks_needed_on(topology.GetProcessorCount());
+      
       if (topology.GetLocalRank() < readingGroupSize){
         for (proc_t sending_core=0; sending_core< topology.GetProcessorCount();sending_core++){
           blocks_needed_on[sending_core].resize(blocks_needed_sizes[sending_core]);
-          net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_here.size(), sending_core);
+          if (sending_core==topology.GetLocalRank()) continue;
+          net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_on[sending_core].size(), sending_core);
         }
       }
       net.Send();
