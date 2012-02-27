@@ -33,7 +33,8 @@ namespace hemelb
          * @param siteId A contiguous site id on this core.
          * @param value The velocity there.
          */
-        void SetVelocity(site_t siteId, distribn_t value);
+        void SetVelocity(site_t siteId, const util::Vector3D<distribn_t>& value);
+        void SetVelocity(site_t siteId, const distribn_t& v_x, const distribn_t& v_y, const distribn_t& v_z);
 
         /**
          * Set the cached value for stress at a given site.

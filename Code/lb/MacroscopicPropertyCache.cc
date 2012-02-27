@@ -20,9 +20,17 @@ namespace hemelb
       lastCacheUpdate[DensityCache][siteId] = simulationState.GetTimeStep();
     }
 
-    void MacroscopicPropertyCache::SetVelocity(site_t siteId, distribn_t value)
+    void MacroscopicPropertyCache::SetVelocity(site_t siteId, const util::Vector3D<distribn_t>& value)
     {
       velocityCache[siteId] = value;
+      lastCacheUpdate[VelocityCache][siteId] = simulationState.GetTimeStep();
+    }
+
+    void MacroscopicPropertyCache::SetVelocity(site_t siteId, const distribn_t& v_x, const distribn_t& v_y, const distribn_t& v_z)
+    {
+      velocityCache[siteId].x = v_x;
+      velocityCache[siteId].y = v_y;
+      velocityCache[siteId].z = v_z;
       lastCacheUpdate[VelocityCache][siteId] = simulationState.GetTimeStep();
     }
 
