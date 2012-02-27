@@ -341,7 +341,8 @@ namespace hemelb
         }
       }
 
-      Decomposition *decomposition=new Decomposition(readingResult.GetBlockCount(),readBlock,READING_GROUP_SIZE);
+      net::Net net = net::Net(currentComm);
+      Decomposition *decomposition=new Decomposition(readingResult.GetBlockCount(),readBlock,READING_GROUP_SIZE,net);
 
       
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
