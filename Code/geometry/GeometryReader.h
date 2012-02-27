@@ -44,20 +44,19 @@ namespace hemelb
                                const proc_t localRank);
 
         void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
-
+        void DetermineProcessorsNeedingBlocks(std::vector<std::vector<proc_t> > & procsWantingBlocksBuffer,bool *readBlock);
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
-         * @param iGlobLatDat
          * @param offsetSoFar
-         * @param buffer
-         * @param procsWantingThisBlockBuffer
+         * @param procsWantingThisBlock
          * @param blockNumber
          * @param sites
-         * @param bytes
+         * @param compressedBytes
+         * @param uncompressedBytes
          * @param neededOnThisRank
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
-                         int* procsWantingThisBlockBuffer,
+                         const std::vector<proc_t>& procsWantingThisBlock,
                          const site_t blockNumber,
                          const site_t sites,
                          const unsigned int compressedBytes,
