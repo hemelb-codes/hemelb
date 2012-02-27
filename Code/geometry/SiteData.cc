@@ -34,7 +34,7 @@ namespace hemelb
           const LinkReadResult& link = readResult.links[direction - 1];
 
           // If it's a wall link, set the bit for this direction
-          if (link.type != LinkReadResult::NO_INTERSECTION)
+          if (link.type == LinkReadResult::WALL_INTERSECTION)
           {
             boundaryIntersection |= 1 << (direction - 1);
           }
