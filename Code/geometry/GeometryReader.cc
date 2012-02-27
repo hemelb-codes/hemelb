@@ -341,9 +341,8 @@ namespace hemelb
         }
       }
 
-      std::vector<std::vector<proc_t> >* procsWantingBlocksBuffer = new std::vector<std::vector<proc_t> >;
+      Decomposition *decomposition=new Decomposition(readingResult.GetBlockCount(),readBlock,READING_GROUP_SIZE);
 
-      DetermineProcessorsNeedingBlocks(*procsWantingBlocksBuffer,readBlock);
       
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
       timings[hemelb::reporting::Timers::readBlocksAll].Start();
@@ -354,7 +353,7 @@ namespace hemelb
       for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
         ReadInBlock(offset,
-                    (*procsWantingBlocksBuffer)[nextBlockToRead],
+                    decomposition->ProcessorsNeedingBlock(nextBlockToRead),
                     nextBlockToRead,
                     fluidSitesPerBlock[nextBlockToRead],
                     bytesPerCompressedBlock[nextBlockToRead],
@@ -364,63 +363,9 @@ namespace hemelb
         offset += bytesPerCompressedBlock[nextBlockToRead];
       }
 
-      delete procsWantingBlocksBuffer;
+      delete decomposition;
       delete[] readBlock;
       timings[hemelb::reporting::Timers::readBlocksAll].Stop();
-    }
-
-    void GeometryReader::DetermineProcessorsNeedingBlocks(std::vector<std::vector<proc_t> > & procsWantingBlocksBuffer,bool *readBlock){
-      // Compile the blocks needed here into an array of indices, instead of an array of bools
-      std::vector<site_t> blocks_needed_here;
-      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block){
-        if (readBlock[block]){
-          blocks_needed_here.push_back(block);
-        }
-      }
-      
-      // Communicate the lengths of the arrays of needed blocks
-      net::Net net = net::Net(currentComm);
-      for (proc_t reading_core=0; reading_core<READING_GROUP_SIZE;reading_core++){
-        unsigned int blocks_needed_size=blocks_needed_here.size();
-        net.RequestSend(&blocks_needed_size, 1, reading_core);
-      }
-      std::vector<unsigned int>  blocks_needed_sizes(currentCommSize);
-      if (currentCommRank < READING_GROUP_SIZE){
-        for (proc_t sending_core=0; sending_core< currentCommSize;sending_core++){
-          net.RequestReceive(&blocks_needed_sizes[sending_core], 1, sending_core);
-        }
-      }
-      net.Send();
-      net.Receive();
-      net.Wait();
-      
-      // Communicate the needed blocks
-      for (proc_t reading_core=0; reading_core<READING_GROUP_SIZE;reading_core++){
-        net.RequestSend(&blocks_needed_here.front(), blocks_needed_here.size(), reading_core);
-      }
-      std::vector<std::vector< site_t> >  blocks_needed_on(currentCommSize);
-      if (currentCommRank < READING_GROUP_SIZE){
-        for (proc_t sending_core=0; sending_core< currentCommSize;sending_core++){
-          blocks_needed_on[sending_core].resize(blocks_needed_sizes[sending_core]);
-          net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_here.size(), sending_core);
-        }
-      }
-      net.Send();
-      net.Receive();
-      net.Wait();
-      
-      if (currentCommRank < READING_GROUP_SIZE){
-        // Transpose the blocks needed on cores matrix
-        for (proc_t sending_core=0; sending_core< currentCommSize;sending_core++){
-          for (std::vector<site_t>::iterator need=blocks_needed_on[sending_core].begin();need!=blocks_needed_on[sending_core].end();need++){
-            for (site_t block = 0; block < readingResult.GetBlockCount(); ++block){
-              if (*need==block){
-                procsWantingBlocksBuffer[block].push_back(sending_core);
-              }
-            }
-          }
-        }
-      }
     }
 
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar,

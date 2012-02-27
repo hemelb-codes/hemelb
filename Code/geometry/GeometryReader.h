@@ -13,6 +13,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "geometry/ReadResult.h"
+#include "geometry/Decomposition.h"
 
 namespace hemelb
 {
@@ -44,7 +45,7 @@ namespace hemelb
                                const proc_t localRank);
 
         void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
-        void DetermineProcessorsNeedingBlocks(std::vector<std::vector<proc_t> > & procsWantingBlocksBuffer,bool *readBlock);
+        
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
          * @param offsetSoFar
