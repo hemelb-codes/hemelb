@@ -20,17 +20,20 @@ namespace hemelb
     template<class Net> class DecompositionBase
     {
     public:
-      DecompositionBase(const site_t BlockCount, bool *readBlock, const proc_t readingGroupSize, Net &anet, MPI_Comm comm,
+      DecompositionBase(const site_t BlockCount, bool *readBlock, const proc_t areadingGroupSize, Net &anet, MPI_Comm comm,
         const proc_t rank, const proc_t size); // Temporarily during the refactor, constructed just to abstract the block sharing bit
       std::vector<proc_t> ProcessorsNeedingBlock(const site_t &block){
         return procsWantingBlocksBuffer[block];
       }
+      
+      proc_t GetReadingCoreForBlock(site_t blockNumber);
     private:
       std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
       Net &net;
       MPI_Comm decompositionCommunicator;
       const proc_t decompositionCommunicatorRank;
       const proc_t decompositionCommunicatorSize;
+      const proc_t readingGroupSize;
     };
     typedef DecompositionBase<net::Net> Decomposition;
   }
