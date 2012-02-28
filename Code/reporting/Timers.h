@@ -75,8 +75,13 @@ namespace hemelb
         enum TimerName
         {
           total = 0, //!< Total time
-          domainDecomposition, //!< Time spent in domain decomposition
+          initialDecomposition, //!< Initial seed decomposition
+          domainDecomposition, //!< Time spent in parmetis domain decomposition
           fileRead, //!< Time spent in reading the geometry description file
+          reRead, //!< Time spend in re-reading the geometry after second decomposition
+          unzip, //!< Time spend in un-zipping
+          moves, //!< Time spent moving things around post-parmetis
+          parmetis, //!< Time spent in Parmetis
           netInitialise, //!< Time spent initialising the network topology
           lb, //!< Time spent doing the core lattice boltzman simulation
           visualisation, //!< Time spent on visualisation
@@ -84,7 +89,12 @@ namespace hemelb
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
           snapshot, //!< Time spent producing snapshots
-          simulation, //!< Total time for running the simulation
+          simulation, //!< Total time for running the simulation,
+          readNet,
+          readParse,
+          readBlock,
+          readBlocksPrelim,
+          readBlocksAll,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -180,8 +190,8 @@ namespace hemelb
 
     template<class ClockPolicy, class CommsPolicy>
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
-        { "Total", "Domain Decomposition", "File Read", "Net initialisation", "Lattice Boltzmann", "Visualisation",
-          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total" };
+        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Net initialisation", "Lattice Boltzmann", "Visualisation",
+          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all" };
   }
 
 }

@@ -20,8 +20,8 @@ namespace hemelb
           class GeometryReader : public hemelb::geometry::GeometryReader
           {
             public:
-              GeometryReader(const bool reserveSteeringCore, hemelb::geometry::GeometryReadResult& readResult) :
-                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult)
+              GeometryReader(const bool reserveSteeringCore, hemelb::geometry::GeometryReadResult& readResult, reporting::Timers &timings) :
+                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult, timings)
               {
               }
           };
@@ -33,10 +33,13 @@ namespace hemelb
           CPPUNIT_TEST(TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
+          
+          GeometryReaderTests():timings(){}
+          
           void setUp()
           {
             readResult = new GeometryReadResult();
-            reader = new TestableLatticeData::GeometryReader(false, *readResult);
+            reader = new TestableLatticeData::GeometryReader(false, *readResult, timings);
             lattice = NULL;
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
@@ -59,12 +62,12 @@ namespace hemelb
 
           void TestRead()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath);
           }
 
           void TestSameAsFourCube()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath);
 
             site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)
