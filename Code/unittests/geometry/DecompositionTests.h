@@ -178,7 +178,7 @@ namespace hemelb
           }
 
           void ShareMockNeeds(){
-            mockedDecomposition=new MockedDecomposition(blockCount,inputNeededBlocks,readingCores,*netMock,MPI_COMM_WORLD,rank,size);
+            mockedDecomposition=new MockedDecomposition(blockCount,inputNeededBlocks,readingCores,*netMock,NULL,rank,size);
           }
 
         private:
