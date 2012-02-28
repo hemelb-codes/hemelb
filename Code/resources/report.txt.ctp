@@ -29,4 +29,5 @@ Multimachine: {{MULTIMACHINE}}
 Build type: {{TYPE}}
 Optimisation level: {{OPTIMISATION}}
 Built at: {{TIME}}
+Reading group size: {{READING_GROUP_SIZE}}
 {{/BUILD}}
