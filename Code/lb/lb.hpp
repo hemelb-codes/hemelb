@@ -374,9 +374,10 @@ namespace hemelb
         lWriter << (unsigned int) io::formats::HemeLbMagicNumber << (unsigned int) io::formats::snapshot::MagicNumber
             << (unsigned int) io::formats::snapshot::VersionNumber;
         lWriter << (unsigned int) io::formats::snapshot::HeaderLength;
-        lWriter << stability;
-        lWriter << mLatDat->GetVoxelSize();
-        lWriter << mLatDat->GetOrigin().x << mLatDat->GetOrigin().y << mLatDat->GetOrigin().z;
+        lWriter << (int) stability;
+        lWriter << (double) mLatDat->GetVoxelSize();
+        lWriter << (double) mLatDat->GetOrigin().x << (double) mLatDat->GetOrigin().y
+            << (double) mLatDat->GetOrigin().z;
         lWriter << (int) mLatDat->GetGlobalSiteMins().x << (int) mLatDat->GetGlobalSiteMins().y
             << (int) mLatDat->GetGlobalSiteMins().z;
         lWriter << (int) mLatDat->GetGlobalSiteMaxes().x << (int) mLatDat->GetGlobalSiteMaxes().y
@@ -509,8 +510,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits<distribn_t>::max();
-      distribn_t density_max = std::numeric_limits<distribn_t>::min();
+      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
+      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
