@@ -9,5 +9,7 @@ debug:
   CMAKE_BUILD_TYPE: "Debug"
   HEMELB_LOG_LEVEL: "debug"
   HEMELB_OPTIMISATION: ""
+gdb:
+  HEMELB_USE_DEBUGGER: "ON"
 no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
