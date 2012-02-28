@@ -12,7 +12,6 @@ namespace hemelb
     {
       namespace xdr
       {
-
         // Class to read an Xdr-style file from disk.
         class XdrReader
         {
