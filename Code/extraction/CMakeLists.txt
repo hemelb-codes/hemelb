@@ -1,0 +1,2 @@
+add_library(hemelb_extraction GeometrySelector.cc LineGeometrySelector.cc 
+PlaneGeometrySelector.cc SnapshotParser.cc WholeGeometrySelector.cc)
