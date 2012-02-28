@@ -19,7 +19,12 @@ namespace hemelb
     {
       if (thisRank < 0)
       {
-        MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        // need to be able to log, even if MPI not initialised (for testability)
+        int initialized;
+        MPI_Initialized(&initialized);
+        if (initialized) {
+          MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        }
         startTime = util::myClock();
       }
 
@@ -37,7 +42,11 @@ namespace hemelb
     {
       if (thisRank < 0)
       {
-        MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        int initialized;
+        MPI_Initialized(&initialized);
+        if (initialized) {
+          MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        }
         startTime = util::myClock();
       }
 
