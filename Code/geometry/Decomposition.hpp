@@ -21,7 +21,7 @@ namespace hemelb
       }
       for (proc_t reading_core=0 ; reading_core < readingGroupSize ; reading_core++){
         unsigned int blocks_needed_size=blocks_needed_here.size();
-        //if (reading_core==decompositionCommunicatorRank) continue;
+        if (reading_core==decompositionCommunicatorRank) continue;
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i",blocks_needed_size,reading_core);
         net.RequestSend(&blocks_needed_size, 1, reading_core);
       }
@@ -30,7 +30,7 @@ namespace hemelb
 
       if (decompositionCommunicatorRank < readingGroupSize){
         for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
-          //if (sending_core==decompositionCommunicatorRank) continue;
+          if (sending_core==decompositionCommunicatorRank) continue;
           log::Logger::Log<log::Debug, log::OnePerCore>("Receiving count of needed blocks from core %i",sending_core);
           net.RequestReceive(&blocks_needed_sizes[sending_core], 1, sending_core);
         }
@@ -41,7 +41,7 @@ namespace hemelb
 
       // Communicate the needed blocks
       for (proc_t reading_core=0; reading_core<readingGroupSize;reading_core++){
-        //if (reading_core==decompositionCommunicatorRank) continue;
+        if (reading_core==decompositionCommunicatorRank) continue;
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i needed blocks to core %i",blocks_needed_here.size(),reading_core);
         net.RequestSend(&blocks_needed_here.front(), blocks_needed_here.size(), reading_core);
       }
@@ -51,7 +51,7 @@ namespace hemelb
       if (decompositionCommunicatorRank < readingGroupSize){
         for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
           blocks_needed_on[sending_core].resize(blocks_needed_sizes[sending_core]);
-          //if (sending_core==decompositionCommunicatorRank) continue;
+          if (sending_core==decompositionCommunicatorRank) continue;
           log::Logger::Log<log::Debug, log::OnePerCore>("Receiving %i needed blocks from core %i",blocks_needed_on[sending_core].size(),sending_core);
           net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_on[sending_core].size(), sending_core);
         }
@@ -75,7 +75,7 @@ namespace hemelb
 
 
       // If in debug mode, also reduce the old-fashioned way, and check these are the same.
-      if (log::Logger::ShouldDisplay<log::Debug>())
+      if (log::Logger::ShouldDisplay<log::Debug>()&&decompositionCommunicator!=NULL)
       {
         
         int* procsWantingThisBlockBuffer = new int[decompositionCommunicatorSize];
