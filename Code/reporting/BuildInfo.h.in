@@ -12,6 +12,7 @@ namespace hemelb
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
     static const std::string build_time="@HEMELB_BUILD_TIME@";
+    static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
     
     class BuildInfo : public Reportable {
       void Report(ctemplate::TemplateDictionary& dictionary){
@@ -23,6 +24,7 @@ namespace hemelb
         build->SetValue("TYPE", build_type);
         build->SetValue("OPTIMISATION", optimisation);
         build->SetValue("TIME", build_time);
+        build->SetValue("READING_GROUP_SIZE", reading_group_size);
       }
     };
   }
