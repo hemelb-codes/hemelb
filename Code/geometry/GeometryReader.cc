@@ -519,9 +519,6 @@ namespace hemelb
 
       SiteReadResult readInSite(isFluid != 0);
 
-      // Prepare the links array to have enough space.
-      readInSite.links.resize(D3Q15::NUMVECTORS - 1);
-
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
       {
@@ -529,8 +526,8 @@ namespace hemelb
       }
 
       const io::formats::geometry::DisplacementVector& neighbourhood = io::formats::geometry::Get().GetNeighbourhood();
-
-
+      // Prepare the links array to have enough space.
+      readInSite.links.resize(D3Q15::NUMVECTORS - 1);
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -621,11 +618,18 @@ namespace hemelb
             {
               myProcForSite[localSite] = readingResult.Blocks[block].Sites[localSite].targetProcessor;
               dummySiteData[localSite * D3Q15::NUMVECTORS] = readingResult.Blocks[block].Sites[localSite].isFluid;
+            
               for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
               {
-                
-                dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
-                    readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                if (readingResult.Blocks[block].Sites[localSite].isFluid) 
+                {
+                  dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
+                      readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                } 
+                else 
+                {
+                   dummySiteData[localSite * D3Q15::NUMVECTORS + direction] = std::numeric_limits<unsigned>::max();
+                }
               }
             }
           }
