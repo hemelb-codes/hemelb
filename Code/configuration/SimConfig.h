@@ -5,6 +5,10 @@
 #include "tinyxml.h"
 #include "util/Vector3D.h"
 #include "lb/boundaries/iolets/InOutLets.h"
+#include "extraction/PropertyOutputFile.h"
+#include "extraction/LineGeometrySelector.h"
+#include "extraction/PlaneGeometrySelector.h"
+#include "extraction/WholeGeometrySelector.h"
 
 namespace hemelb
 {
@@ -34,41 +38,39 @@ namespace hemelb
         unsigned long NumCycles;
         long StepsPerCycle;
         lb::StressTypes StressType;
+        std::vector<extraction::PropertyOutputFile> propertyOutputs;
 
-        void DoIO(TiXmlElement *iXmlNode,
-                  bool iIsLoading,
-                  lb::boundaries::iolets::InOutLetCosine* value);
-        void DoIO(TiXmlElement *iXmlNode,
-                  bool iIsLoading,
-                  lb::boundaries::iolets::InOutLetFile* value);
+        void DoIOForCosineInOutlet(TiXmlElement *iXmlNode,
+                                   bool iIsLoading,
+                                   lb::boundaries::iolets::InOutLetCosine* value);
+        void DoIOForFileInOutlet(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::iolets::InOutLetFile* value);
       protected:
         SimConfig();
 
       private:
         void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
-        void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
-        void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, lb::StressTypes &value);
-        void DoIO(TiXmlElement* iXmlNode,
-                  std::string iAttributeName,
-                  bool iIsLoading,
-                  unsigned long &value);
-        void DoIO(TiXmlElement* iXmlNode,
-                  std::string iAttributeName,
-                  bool iIsLoading,
-                  float &value);
-        void DoIO(TiXmlElement* iXmlNode,
-                  std::string iAttributeName,
-                  bool iIsLoading,
-                  double &value);
-        void DoIO(TiXmlElement* iXmlNode,
-                  std::string iAttributeName,
-                  bool iIsLoading,
-                  std::string &iValue);
-        void DoIO(TiXmlElement *iXmlNode,
-                  bool iIsLoading,
-                  std::vector<lb::boundaries::iolets::InOutLet*> &value,
-                  std::string iChildNodeName);
-        void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
+        void DoIOForLong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
+        void DoIOForStressType(TiXmlElement* iXmlNode,
+                               std::string iAttributeName,
+                               bool iIsLoading,
+                               lb::StressTypes &value);
+        void DoIOForULong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, unsigned long &value);
+        void DoIOForFloat(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, float &value);
+        void DoIOForDouble(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
+        void DoIOForString(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, std::string &iValue);
+        void DoIOForInOutlets(TiXmlElement *iXmlNode,
+                              bool iIsLoading,
+                              std::vector<lb::boundaries::iolets::InOutLet*> &value,
+                              std::string iChildNodeName);
+        void DoIOForProperties(TiXmlElement *iXmlNode, bool iIsLoading);
+        void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
+        void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
+        void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile& file);
+        void DoIOForPropertyOutput(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutput& field);
+        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector* line);
+        void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector* plane);
+
+        void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
         TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
     };
   }
