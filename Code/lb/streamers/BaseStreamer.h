@@ -85,10 +85,8 @@ namespace hemelb
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)
           {
-            distribn_t velocity = std::sqrt(velocity_x * velocity_x + velocity_y * velocity_y + velocity_z * velocity_z)
-                / density;
             propertyCache.SetDensity(site.GetIndex(), density);
-            propertyCache.SetVelocity(site.GetIndex(), velocity);
+            propertyCache.SetVelocity(site.GetIndex(), velocity_x, velocity_y, velocity_z);
 
             distribn_t stress;
 

@@ -41,7 +41,16 @@ if (NOT HEMELB_STATIC_ASSERT)
 	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
 endif()
 
+#------Capture build environment -------------
 
+execute_process(COMMAND hg id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (NOT rev_ok EQUAL 0)
+  message("Could not get revision number from mercurial, looking for revision_info.txt")
+  execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+message("Revision number: ${HEMELB_REVISION_NUMBER}")
+
+execute_process(COMMAND date OUTPUT_VARIABLE HEMELB_BUILD_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)

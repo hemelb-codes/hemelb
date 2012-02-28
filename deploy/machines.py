@@ -2,13 +2,33 @@
 Module defining how we configure the fabric environment for target machines.
 Environment is loaded from YAML dictionaries machines.yml and machines_user.yml
 """
+# If we're running in an activated virtualenv, use that.
+import site
+from os import environ
+from os.path import join
+from sys import version_info
+import sys
+if 'VIRTUAL_ENV' in environ:
+    virtual_env = join(environ.get('VIRTUAL_ENV'),
+                       'lib',
+                       'python%d.%d' % version_info[:2],
+                       'site-packages')
+    site.addsitedir(virtual_env)
+    print 'Using Virtualenv =>', virtual_env
+del site, environ, join, version_info
+
 from fabric.api import *
 import os
+import sys
 import subprocess
 import posixpath
 import yaml
 from templates import *
 from functools import *
+from pprint import PrettyPrinter
+pp=PrettyPrinter()
+
+
 
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +51,13 @@ env.node_type_restriction_template=""
 # Maximum number of characters permitted in the name of a job in the queue system
 # -1 for unlimited
 env.max_job_name_chars=None
+
+@task
+def diagnostics():
+    pp.pprint(env)
+    pp.pprint(sys.path)
+    import HemeLbSetupTool
+    print HemeLbSetupTool.__path__
 
 @task
 def machine(name):
@@ -105,12 +132,12 @@ def complete_environment():
 
     env.run_prefix=" && ".join(module_commands+map(template,run_prefix_commands)) or 'echo Running...'
     env.template_key = env.template_key or env.machine_name
-    #env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
+    #env.build_number=subprocess.check_output(['hg','id','-q'.'-i']).strip()
     # check_output is 2.7 python and later only. Revert to oldfashioned popen.
-    cmd=os.popen(template("hg id -q -i -rtip $hg/$repository"))
+    cmd=os.popen(template("hg id -q -i"))
     env.build_number=cmd.read().strip()
     cmd.close()
-    #env.build_number=run("hg id -i -r tip")
+    #env.build_number=run("hg id -q -i")
     env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
     env.code_build_cache=env.pather.join(env.code_build_path,"CMakeCache.txt")
 
