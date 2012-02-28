@@ -11,14 +11,14 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-            InOutLetCycle<1, false>()
+          InOutLetCycle<1, false> ()
         {
 
         }
 
         void InOutLetCosine::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
         {
-          iSimConfig->DoIO(iParent, iIsLoading, this);
+          iSimConfig->DoIOForCosineInOutlet(iParent, iIsLoading, this);
         }
 
         InOutLet* InOutLetCosine::Clone()
@@ -33,16 +33,14 @@ namespace hemelb
 
         }
 
-        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle,
-                                            const SimulationState *iState)
+        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
         {
           double w = 2.0 * PI / (double) iState->GetTimeStepsPerCycle();
 
           for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
-            densityCycle[time_step] = DensityMeanLattice
-                + DensityAmpLattice
-                    * cos(w * (double) (time_step + iState->Get0IndexedTimeStep()) + Phase);
+            densityCycle[time_step] = DensityMeanLattice + DensityAmpLattice * cos(w * (double) (time_step
+                + iState->Get0IndexedTimeStep()) + Phase);
           }
         }
 

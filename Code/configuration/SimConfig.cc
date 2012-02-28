@@ -56,47 +56,43 @@ namespace hemelb
       lConfigFile.SaveFile(iPath);
     }
 
-    void SimConfig::DoIO(TiXmlElement *iTopNode, bool iIsLoading)
+    void SimConfig::DoIO(TiXmlElement *topNode, bool isLoading)
     {
-      TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation", iIsLoading);
-      DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
-      DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
-      DoIO(lSimulationElement, "stresstype", iIsLoading, StressType);
+      TiXmlElement* simulationElement = GetChild(topNode, "simulation", isLoading);
+      DoIOForULong(simulationElement, "cycles", isLoading, NumCycles);
+      DoIOForLong(simulationElement, "cyclesteps", isLoading, StepsPerCycle);
+      DoIOForStressType(simulationElement, "stresstype", isLoading, StressType);
 
-      TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
-
-      if (lGeometryElement != NULL)
+      TiXmlElement* geometryElement = GetChild(topNode, "geometry", isLoading);
+      if (geometryElement != NULL)
       {
-        DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path", iIsLoading, DataFilePath);
+        DoIOForString(GetChild(geometryElement, "datafile", isLoading), "path", isLoading, DataFilePath);
       }
 
-      DoIO(GetChild(iTopNode, "inlets", iIsLoading), iIsLoading, Inlets, "inlet");
+      DoIOForInOutlets(GetChild(topNode, "inlets", isLoading), isLoading, Inlets, "inlet");
+      DoIOForInOutlets(GetChild(topNode, "outlets", isLoading), isLoading, Outlets, "outlet");
 
-      DoIO(GetChild(iTopNode, "outlets", iIsLoading), iIsLoading, Outlets, "outlet");
+      TiXmlElement* visualisationElement = GetChild(topNode, "visualisation", isLoading);
+      DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading), isLoading, VisCentre);
+      TiXmlElement *lOrientationElement = GetChild(visualisationElement, "orientation", isLoading);
+      DoIOForFloat(lOrientationElement, "longitude", isLoading, VisLongitude);
+      DoIOForFloat(lOrientationElement, "latitude", isLoading, VisLatitude);
 
-      TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation", iIsLoading);
-      DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading, VisCentre);
-      TiXmlElement *lOrientationElement = GetChild(lVisualisationElement,
-                                                   "orientation",
-                                                   iIsLoading);
-      DoIO(lOrientationElement, "longitude", iIsLoading, VisLongitude);
-      DoIO(lOrientationElement, "latitude", iIsLoading, VisLatitude);
+      TiXmlElement *displayElement = GetChild(visualisationElement, "display", isLoading);
 
-      TiXmlElement *lDisplayElement = GetChild(lVisualisationElement, "display", iIsLoading);
+      DoIOForFloat(displayElement, "zoom", isLoading, VisZoom);
+      DoIOForFloat(displayElement, "brightness", isLoading, VisBrightness);
 
-      DoIO(lDisplayElement, "zoom", iIsLoading, VisZoom);
-      DoIO(lDisplayElement, "brightness", iIsLoading, VisBrightness);
+      TiXmlElement *rangeElement = GetChild(visualisationElement, "range", isLoading);
 
-      TiXmlElement *lRangeElement = GetChild(lVisualisationElement, "range", iIsLoading);
+      DoIOForFloat(rangeElement, "maxvelocity", isLoading, MaxVelocity);
+      DoIOForFloat(rangeElement, "maxstress", isLoading, MaxStress);
 
-      DoIO(lRangeElement, "maxvelocity", iIsLoading, MaxVelocity);
-      DoIO(lRangeElement, "maxstress", iIsLoading, MaxStress);
+      TiXmlElement* propertyExtractionElement = GetChild(topNode, "properties", isLoading);
+      DoIOForProperties(propertyExtractionElement, isLoading);
     }
 
-    void SimConfig::DoIO(TiXmlElement* iParent,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         float &value)
+    void SimConfig::DoIOForFloat(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, float &value)
     {
       if (iIsLoading)
       {
@@ -106,7 +102,7 @@ namespace hemelb
       else
       {
         // This should be ample.
-        std::stringstream output (std::stringstream::out);
+        std::stringstream output(std::stringstream::out);
 
         output.precision(6);
 
@@ -118,10 +114,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement* iParent,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         double &value)
+    void SimConfig::DoIOForDouble(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, double &value)
     {
       if (iIsLoading)
       {
@@ -140,7 +133,7 @@ namespace hemelb
       else
       {
         // This should be ample.
-        std::stringstream output (std::stringstream::out);
+        std::stringstream output(std::stringstream::out);
 
         output.precision(6);
 
@@ -152,10 +145,10 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement* iParent,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         std::string &iValue)
+    void SimConfig::DoIOForString(TiXmlElement* iParent,
+                                  std::string iAttributeName,
+                                  bool iIsLoading,
+                                  std::string &iValue)
     {
       if (iIsLoading)
       {
@@ -178,10 +171,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement* iParent,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         long &bValue)
+    void SimConfig::DoIOForLong(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, long &bValue)
     {
       if (iIsLoading)
       {
@@ -192,7 +182,7 @@ namespace hemelb
       else
       {
         // This should be ample.
-        std::stringstream output (std::stringstream::out);
+        std::stringstream output(std::stringstream::out);
 
         output << bValue;
 
@@ -200,10 +190,10 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement* iParent,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         unsigned long &bValue)
+    void SimConfig::DoIOForULong(TiXmlElement* iParent,
+                                 std::string iAttributeName,
+                                 bool iIsLoading,
+                                 unsigned long &bValue)
     {
       if (iIsLoading)
       {
@@ -214,7 +204,7 @@ namespace hemelb
       else
       {
         // This should be ample.
-        std::stringstream output (std::stringstream::out);
+        std::stringstream output(std::stringstream::out);
 
         output << bValue;
 
@@ -222,18 +212,16 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement* iXmlNode,
-                         std::string iAttributeName,
-                         bool iIsLoading,
-                         lb::StressTypes &value)
+    void SimConfig::DoIOForStressType(TiXmlElement* iXmlNode,
+                                      std::string iAttributeName,
+                                      bool iIsLoading,
+                                      lb::StressTypes &value)
     {
       if (iIsLoading)
       {
         char *dummy;
         // Read in, in base 10.
-        value = (lb::StressTypes) std::strtol(iXmlNode->Attribute(iAttributeName)->c_str(),
-                                              &dummy,
-                                              10);
+        value = (lb::StressTypes) std::strtol(iXmlNode->Attribute(iAttributeName)->c_str(), &dummy, 10);
       }
       else
       {
@@ -245,10 +233,8 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent,
-                         bool iIsLoading,
-                         std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
-                         std::string iChildNodeName)
+    void SimConfig::DoIOForInOutlets(TiXmlElement *iParent, bool iIsLoading, std::vector<
+        lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
     {
       if (iIsLoading)
       {
@@ -259,10 +245,10 @@ namespace hemelb
           // Determine which InOutlet to create
           // This is done by checking if a path is specified
           std::string PFilePath;
-          DoIO(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
-               "path",
-               iIsLoading,
-               PFilePath);
+          DoIOForString(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
+                        "path",
+                        iIsLoading,
+                        PFilePath);
           lb::boundaries::iolets::InOutLet *lNew;
           if (PFilePath == "")
           {
@@ -290,48 +276,234 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent,
-                         bool iIsLoading,
-                         lb::boundaries::iolets::InOutLetCosine* const value)
+    void SimConfig::DoIOForProperties(TiXmlElement *iXmlNode, bool iIsLoading)
+    {
+      if (iIsLoading && iXmlNode == NULL)
+      {
+        return;
+      }
+
+      TiXmlElement *lCurrentLet = iXmlNode->FirstChildElement();
+
+      while (lCurrentLet != NULL)
+      {
+        extraction::PropertyOutputFile output;
+
+        DoIOForPropertyOutputFile(lCurrentLet, iIsLoading, output);
+        propertyOutputs.push_back(output);
+
+        lCurrentLet = lCurrentLet->NextSiblingElement();
+      }
+    }
+
+    void SimConfig::DoIOForPropertyOutputFile(TiXmlElement *iXmlNode,
+                                              bool iIsLoading,
+                                              extraction::PropertyOutputFile& file)
+    {
+      if (iIsLoading)
+      {
+        DoIOForString(iXmlNode, "filename", iIsLoading, file.filename);
+
+        TiXmlElement *lCurrentLet = iXmlNode->FirstChildElement();
+
+        while (lCurrentLet != NULL)
+        {
+          extraction::PropertyOutput output;
+
+          DoIOForPropertyOutput(lCurrentLet, iIsLoading, output);
+          file.propertyOutput.push_back(output);
+
+          lCurrentLet = lCurrentLet->NextSiblingElement();
+        }
+      }
+    }
+
+    void SimConfig::DoIOForPropertyOutput(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutput& field)
+    {
+      if (iIsLoading)
+      {
+        if (iXmlNode->ValueStr().compare("planegeometry") == 0)
+        {
+          extraction::PlaneGeometrySelector* plane;
+          DoIOForPlaneGeometry(iXmlNode, iIsLoading, plane);
+          field.geometry = plane;
+        }
+        else if (iXmlNode->ValueStr().compare("linegeometry") == 0)
+        {
+          extraction::LineGeometrySelector* line;
+          DoIOForLineGeometry(iXmlNode, iIsLoading, line);
+          field.geometry = line;
+        }
+        else if (iXmlNode->ValueStr().compare("wholegeometry") == 0)
+        {
+          extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
+          field.geometry = whole;
+        }
+        else
+        {
+          log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", iXmlNode->Value());
+          exit(1);
+        }
+
+        char* dummy;
+        field.frequency = strtoul(iXmlNode->Attribute("frequency"), &dummy, 10);
+
+        TiXmlElement *lCurrentLet = iXmlNode->FirstChildElement("field");
+
+        while (lCurrentLet != NULL)
+        {
+          extraction::OutputField outputField;
+
+          DoIOForPropertyField(lCurrentLet, iIsLoading, outputField);
+          field.fields.push_back(outputField);
+
+          lCurrentLet = lCurrentLet->NextSiblingElement("field");
+        }
+      }
+    }
+
+    void SimConfig::DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector* line)
+    {
+      TiXmlElement* point1 = GetChild(iXmlNode, "point", iIsLoading);
+      TiXmlElement* point2 = iIsLoading
+        ? point1->NextSiblingElement("point")
+        : GetChild(iXmlNode, "point", iIsLoading);
+
+      util::Vector3D<float> mutableVector;
+      util::Vector3D<float> mutableVector2;
+
+      if (iIsLoading)
+      {
+        DoIOForFloatVector(point1, iIsLoading, mutableVector);
+        DoIOForFloatVector(point2, iIsLoading, mutableVector2);
+
+        line = new extraction::LineGeometrySelector(mutableVector, mutableVector2);
+      }
+      else
+      {
+        mutableVector = line->GetEndpoint1();
+        mutableVector2 = line->GetEndpoint2();
+
+        DoIOForFloatVector(point1, iIsLoading, mutableVector);
+        DoIOForFloatVector(point2, iIsLoading, mutableVector2);
+      }
+    }
+
+    void SimConfig::DoIOForPlaneGeometry(TiXmlElement *iXmlNode,
+                                         bool iIsLoading,
+                                         extraction::PlaneGeometrySelector* plane)
+    {
+      TiXmlElement* point1 = GetChild(iXmlNode, "point", iIsLoading);
+      TiXmlElement* normal = GetChild(iXmlNode, "normal", iIsLoading);
+
+      util::Vector3D<float> mutableVector;
+      util::Vector3D<float> mutableVector2;
+
+      if (iIsLoading)
+      {
+        DoIOForFloatVector(point1, iIsLoading, mutableVector);
+        DoIOForFloatVector(normal, iIsLoading, mutableVector2);
+
+        const char* radiusAttribute = iXmlNode->Attribute("radius");
+
+        if (radiusAttribute == NULL)
+        {
+          plane = new extraction::PlaneGeometrySelector(mutableVector, mutableVector2);
+        }
+        else
+        {
+          char* dummy;
+          float radius = (float) std::strtod(radiusAttribute, &dummy);
+          plane = new extraction::PlaneGeometrySelector(mutableVector, mutableVector2, radius);
+        }
+      }
+      else
+      {
+        mutableVector = plane->GetPoint();
+        mutableVector = plane->GetNormal();
+        float radius = plane->GetRadius();
+
+        DoIOForFloatVector(point1, iIsLoading, mutableVector);
+        DoIOForFloatVector(normal, iIsLoading, mutableVector2);
+        iXmlNode->SetAttribute("radius", radius);
+      }
+    }
+
+    void SimConfig::DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field)
+    {
+      std::string type;
+      DoIOForString(iXmlNode, "type", iIsLoading, type);
+      DoIOForString(iXmlNode, "name", iIsLoading, field.name);
+
+      // Default name is identical to type.
+      if (iIsLoading && field.name.length() == 0)
+      {
+        field.name = type;
+      }
+
+      if (type.compare("pressure") == 0)
+      {
+        field.type = extraction::OutputField::Pressure;
+      }
+      else if (type.compare("velocity") == 0)
+      {
+        field.type = extraction::OutputField::Velocity;
+      }
+      else if (type.compare("vonmisesstress") == 0)
+      {
+        field.type = extraction::OutputField::VonMisesStress;
+      }
+      else if (type.compare("shearstress") == 0)
+      {
+        field.type = extraction::OutputField::ShearStress;
+      }
+      else
+      {
+        log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
+        exit(1);
+      }
+    }
+
+    void SimConfig::DoIOForCosineInOutlet(TiXmlElement *iParent,
+                                          bool iIsLoading,
+                                          lb::boundaries::iolets::InOutLetCosine* const value)
     {
       TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
       TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
       TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
-      DoIO(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
-      DoIO(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
-      DoIO(lPressureElement, "phase", iIsLoading, value->Phase);
+      DoIOForDouble(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
+      DoIOForDouble(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
+      DoIOForDouble(lPressureElement, "phase", iIsLoading, value->Phase);
       value->PressureMinPhysical = value->PressureMeanPhysical - value->PressureAmpPhysical;
       value->PressureMaxPhysical = value->PressureMeanPhysical + value->PressureAmpPhysical;
 
-      DoIO(lPositionElement, iIsLoading, value->Position);
-      DoIO(lNormalElement, iIsLoading, value->Normal);
+      DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
+      DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent,
-                         bool iIsLoading,
-                         lb::boundaries::iolets::InOutLetFile* const value)
+    void SimConfig::DoIOForFileInOutlet(TiXmlElement *iParent,
+                                        bool iIsLoading,
+                                        lb::boundaries::iolets::InOutLetFile* const value)
     {
       TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
       TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
       TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
-      DoIO(lPressureElement, "path", iIsLoading, value->PressureFilePath);
+      DoIOForString(lPressureElement, "path", iIsLoading, value->PressureFilePath);
 
-      DoIO(lPositionElement, iIsLoading, value->Position);
-      DoIO(lNormalElement, iIsLoading, value->Normal);
+      DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
+      DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D<float> &iValue)
+    void SimConfig::DoIOForFloatVector(TiXmlElement *iParent, bool iIsLoading, util::Vector3D<float> &iValue)
     {
-      DoIO(iParent, "x", iIsLoading, iValue.x);
-      DoIO(iParent, "y", iIsLoading, iValue.y);
-      DoIO(iParent, "z", iIsLoading, iValue.z);
+      DoIOForFloat(iParent, "x", iIsLoading, iValue.x);
+      DoIOForFloat(iParent, "y", iIsLoading, iValue.y);
+      DoIOForFloat(iParent, "z", iIsLoading, iValue.z);
     }
 
-    TiXmlElement *SimConfig::GetChild(TiXmlElement *iParent,
-                                      std::string iChildNodeName,
-                                      bool iIsLoading)
+    TiXmlElement *SimConfig::GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading)
     {
       if (iIsLoading)
       {

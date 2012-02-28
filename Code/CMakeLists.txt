@@ -139,6 +139,7 @@ add_executable(hemelb main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
 	configuration
+	extraction
 	reporting
 	steering
 	vis
