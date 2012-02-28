@@ -100,7 +100,7 @@ namespace hemelb
                   needing_proc_old
                   );
               }
-              if ((!found)&&procsWantingThisBlockBuffer[needing_proc_old])
+              if ((!found)&&procsWantingThisBlockBuffer[needing_proc_old]&&(!needing_proc_old==readingCore))
               {
                 log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
                   block,
