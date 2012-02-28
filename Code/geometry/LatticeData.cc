@@ -30,8 +30,8 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
       GeometryReadResult readGeometryData;
-      GeometryReader reader(reserveSteeringCore, readGeometryData);
-      reader.LoadAndDecompose(dataFilePath, timings);
+      GeometryReader reader(reserveSteeringCore, readGeometryData,timings);
+      reader.LoadAndDecompose(dataFilePath);
 
       // Create a new lattice based on that info and return it.
       return new LatticeData(latticeInfo, readGeometryData);

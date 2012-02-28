@@ -20,3 +20,13 @@ Name Local Min Mean Max
 {{#TIMER}}
 {{NAME}} {{LOCAL}} {{MIN}} {{MEAN}} {{MAX}}
 {{/TIMER}}
+
+{{#BUILD}}
+Revision number:{{REVISION}}
+Steering mode: {{STEERING}}
+Streaklines: {{STREAKLINES}}
+Multimachine: {{MULTIMACHINE}}
+Build type: {{TYPE}}
+Optimisation level: {{OPTIMISATION}}
+Built at: {{TIME}}
+{{/BUILD}}

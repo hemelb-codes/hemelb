@@ -302,7 +302,7 @@ class AllSolidSite(Site):
     def __init__(self, block, sgIdx):
         self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
-        self.IsFluid = False
+        self.Type = Site.SOLID
         return
     pass
 

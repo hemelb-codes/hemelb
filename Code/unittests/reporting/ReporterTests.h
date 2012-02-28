@@ -6,6 +6,7 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
+#include "reporting/BuildInfo.h"
 #include <iomanip>
 namespace hemelb
 {
@@ -29,6 +30,7 @@ namespace hemelb
             communicator = new MPICommsMock();
             mockTimers = new TimersMock();
             realTimers = new reporting::Timers();
+            buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(500, 2);
             net = new net::Net();
             latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
@@ -40,6 +42,7 @@ namespace hemelb
             reporter->AddReportable(mockTimers);
             reporter->AddReportable(state);
             reporter->AddReportable(latticeData);
+            reporter->AddReportable(buildInfo);
           }
 
           void tearDown()
@@ -49,6 +52,7 @@ namespace hemelb
             delete realTimers;
             delete incompChecker;
             delete net;
+            delete buildInfo;
           }
 
           void TestInit()
@@ -87,6 +91,8 @@ namespace hemelb
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
             AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
                            "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
+            AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
             AssertValue("4", "SNAPSHOTS");
             AssertValue("2", "CYCLES");
@@ -140,6 +146,7 @@ namespace hemelb
           IncompressibilityCheckerMock *incompChecker;
           net::Net *net;
           hemelb::geometry::LatticeData *latticeData;
+          reporting::BuildInfo *buildInfo;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(ReporterTests);
