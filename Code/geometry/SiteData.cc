@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "geometry/SiteData.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -42,12 +43,14 @@ namespace hemelb
           // If it's an inlet, take the IOlet id
           if (link.type == LinkReadResult::INLET_INTERSECTION)
           {
+            debug::Debugger::Init("unittests_hemelb")->BreakHere();
             ioletId = link.ioletId;
             hadInlet = true;
           }
           // Ditto if it's an outlet.
           else if (link.type == LinkReadResult::OUTLET_INTERSECTION)
           {
+            debug::Debugger::Init("unittests_hemelb")->BreakHere();
             ioletId = link.ioletId;
             hadOutlet = true;
           }
