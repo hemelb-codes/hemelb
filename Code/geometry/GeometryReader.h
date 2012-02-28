@@ -147,7 +147,7 @@ namespace hemelb
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
         static const proc_t HEADER_READING_RANK = 0;
-        static const proc_t READING_GROUP_SIZE = 5;
+        static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         GeometryReadResult& readingResult;
         MPI_File file;
