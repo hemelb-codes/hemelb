@@ -6,6 +6,7 @@ syntax: glob
 .metadata/*
 build/*
 Code/build/*
+Code/build_clang/*
 results/*
 dependencies/build/*
 deploy/.jobscripts

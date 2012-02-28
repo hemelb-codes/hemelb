@@ -4,6 +4,6 @@ namespace hemelb
 {
   namespace geometry
   {
-    template class DecompositionBase<net::Net, topology::NetworkTopology>; // explicit instantiate
+    template class DecompositionBase<net::Net>; // explicit instantiate
   }
 }

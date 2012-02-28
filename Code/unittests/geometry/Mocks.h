@@ -14,17 +14,6 @@ namespace hemelb
   {
     namespace geometry
     {
-      class TopologyMock
-      {
-        public:
-          TopologyMock(const proc_t asize,const proc_t arank):
-            size(asize),rank(arank){}
-          const proc_t & GetLocalRank() const {return rank;}
-          const proc_t & GetProcessorCount() const {return size;}
-        private:
-          proc_t size;
-          proc_t rank;
-      };
       
       class NetMock{
         public:

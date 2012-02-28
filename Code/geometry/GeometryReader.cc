@@ -321,11 +321,12 @@ namespace hemelb
       // Create a list of which blocks to read in.
       timings[hemelb::reporting::Timers::readBlocksPrelim].Start();
       bool* readBlock = new bool[readingResult.GetBlockCount()];
-
+      log::Logger::Log<log::Debug, log::OnePerCore>("Determining blocks to read");
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating block sizes");
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
           if (bytesPerUncompressedBlock[block] >
@@ -341,12 +342,14 @@ namespace hemelb
         }
       }
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("Informing reading cores of block needs");
       net::Net net = net::Net(currentComm);
       Decomposition *decomposition=new Decomposition(readingResult.GetBlockCount(),
-        readBlock,util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize),net);
+        readBlock,util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize),net,currentComm,currentCommRank,currentCommSize);
 
       
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading blocks");
       timings[hemelb::reporting::Timers::readBlocksAll].Start();
       
        // Set the view and read in.
@@ -440,7 +443,6 @@ namespace hemelb
               ++numSitesRead;
             }
           }
-
           // Compare with the sites we expected to read.
           if (numSitesRead != sites)
           {
@@ -517,6 +519,9 @@ namespace hemelb
 
       SiteReadResult readInSite(isFluid != 0);
 
+      // Prepare the links array to have enough space.
+      readInSite.links.resize(D3Q15::NUMVECTORS - 1);
+
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
       {
@@ -525,8 +530,7 @@ namespace hemelb
 
       const io::formats::geometry::DisplacementVector& neighbourhood = io::formats::geometry::Get().GetNeighbourhood();
 
-      // Prepare the links array to have enough space.
-      readInSite.links.resize(D3Q15::NUMVECTORS - 1);
+
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -619,6 +623,7 @@ namespace hemelb
               dummySiteData[localSite * D3Q15::NUMVECTORS] = readingResult.Blocks[block].Sites[localSite].isFluid;
               for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
               {
+                
                 dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
                     readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
               }
