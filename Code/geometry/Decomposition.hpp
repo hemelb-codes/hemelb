@@ -9,21 +9,24 @@ namespace hemelb
   namespace geometry
   {
     template<class Net> DecompositionBase<Net>::DecompositionBase
-    (const site_t blockCount, bool *readBlock, const proc_t readingGroupSize, Net & anet,MPI_Comm comm, const proc_t rank, const proc_t size):
-    procsWantingBlocksBuffer(blockCount),net(anet),decompositionCommunicator(comm),decompositionCommunicatorRank(rank),decompositionCommunicatorSize(size)
+    (const site_t blockCount, bool *readBlock, const proc_t areadingGroupSize, Net & anet,MPI_Comm comm, const proc_t rank, const proc_t size):
+    procsWantingBlocksBuffer(blockCount),net(anet),decompositionCommunicator(comm),
+    decompositionCommunicatorRank(rank),decompositionCommunicatorSize(size),readingGroupSize(areadingGroupSize)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
-      std::vector<site_t> blocks_needed_here;
+      std::vector<std::vector<site_t> > blocks_needed_here(readingGroupSize);
       for (site_t block = 0; block < blockCount; ++block){
         if (readBlock[block]){
-          blocks_needed_here.push_back(block);
+          blocks_needed_here[GetReadingCoreForBlock(block)].push_back(block);
         }
       }
+      unsigned int blocks_needed_size[readingGroupSize];
       for (proc_t reading_core=0 ; reading_core < readingGroupSize ; reading_core++){
-        unsigned int blocks_needed_size=blocks_needed_here.size();
+        blocks_needed_size[reading_core]=blocks_needed_here[reading_core].size();
         if (reading_core==decompositionCommunicatorRank) continue;
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i",blocks_needed_size,reading_core);
-        net.RequestSend(&blocks_needed_size, 1, reading_core);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
+          blocks_needed_size[reading_core],reading_core,decompositionCommunicatorRank);
+        net.RequestSend(&blocks_needed_size[reading_core], 1, reading_core);
       }
 
       std::vector<unsigned int>  blocks_needed_sizes(decompositionCommunicatorSize);
@@ -31,7 +34,8 @@ namespace hemelb
       if (decompositionCommunicatorRank < readingGroupSize){
         for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
           if (sending_core==decompositionCommunicatorRank) continue;
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving count of needed blocks from core %i",sending_core);
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving count of needed blocks to core %i from core %i",
+            decompositionCommunicatorRank, sending_core);
           net.RequestReceive(&blocks_needed_sizes[sending_core], 1, sending_core);
         }
       }
@@ -42,8 +46,9 @@ namespace hemelb
       // Communicate the needed blocks
       for (proc_t reading_core=0; reading_core<readingGroupSize;reading_core++){
         if (reading_core==decompositionCommunicatorRank) continue;
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i needed blocks to core %i",blocks_needed_here.size(),reading_core);
-        net.RequestSend(&blocks_needed_here.front(), blocks_needed_here.size(), reading_core);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
+          blocks_needed_here[reading_core].size(),reading_core,decompositionCommunicatorRank);
+        net.RequestSend(&blocks_needed_here[reading_core].front(), blocks_needed_here[reading_core].size(), reading_core);
       }
 
       std::vector<std::vector< site_t> >  blocks_needed_on(decompositionCommunicatorSize);
@@ -52,7 +57,8 @@ namespace hemelb
         for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
           blocks_needed_on[sending_core].resize(blocks_needed_sizes[sending_core]);
           if (sending_core==decompositionCommunicatorRank) continue;
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving %i needed blocks from core %i",blocks_needed_on[sending_core].size(),sending_core);
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving list of %i needed blocks to core %i from core %i",
+            blocks_needed_sizes[sending_core], decompositionCommunicatorRank,sending_core);
           net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_on[sending_core].size(), sending_core);
         }
       }
@@ -82,7 +88,7 @@ namespace hemelb
         for (site_t block = 0; block < blockCount; ++block)
         {
           int neededHere=readBlock[block];
-          proc_t readingCore = proc_t(block % util::NumericalFunctions::min(readingGroupSize, decompositionCommunicatorSize));
+          proc_t readingCore = GetReadingCoreForBlock(block);
           MPI_Gather(&neededHere,1,MpiDataType<int>(),procsWantingThisBlockBuffer,1,MpiDataType<int>(),readingCore,decompositionCommunicator); 
           if (decompositionCommunicatorRank==readingCore)
           {
@@ -113,6 +119,11 @@ namespace hemelb
         delete[] procsWantingThisBlockBuffer;
       } // if debug mode
     }//constructor
+    
+    template<class Net> proc_t DecompositionBase<Net>::GetReadingCoreForBlock(site_t blockNumber)
+    {
+      return proc_t(blockNumber % readingGroupSize);
+    }
   }//namespace
 }//namespace
 #endif //HEMELB_GEOMETRY_DECOMPOSITION_HPP

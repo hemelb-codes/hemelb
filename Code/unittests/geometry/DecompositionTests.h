@@ -62,13 +62,14 @@ namespace hemelb
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // Then, I would expect to send to the other reading core, my count of needed cores
-            unsigned int core_0_requires_count=2;
-            unsigned int core_1_requires_count=3;
-            unsigned int core_2_requires_count=3;
-            unsigned int core_3_requires_count=3;
-            unsigned int core_4_requires_count=3;
+            unsigned int core_0_requires_count=1;
+            unsigned int core_1_requires_count=2;
+            unsigned int core_2_requires_count=1;
+            unsigned int core_3_requires_count=2;
+            unsigned int core_4_requires_count=1;
             netMock->RequireSend(&core_0_requires_count,1,1,"Count");
-            // And I would expect the reading core to post a receive from each of the other cores, asking for its count of needed blocks
+            // And I would expect the reading core to post a receive from each of the other cores, 
+            // asking for its count of needed blocks from this reading core
             netMock->RequireReceive(&core_1_requires_count,1,1,"Count");
             netMock->RequireReceive(&core_2_requires_count,1,2,"Count");
             netMock->RequireReceive(&core_3_requires_count,1,3,"Count");
@@ -76,63 +77,59 @@ namespace hemelb
 
             // Then, I would expect to send to the other reading core, my needs
             std::vector<site_t> core_0_requires;
-            core_0_requires.push_back(0);
             core_0_requires.push_back(1);
-            netMock->RequireSend(&core_0_requires[0],2,1,"Needs");
+            netMock->RequireSend(&core_0_requires[0],1,1,"Needs");
              
             // Then, I would expect to receive the lists of needed blocks themselves.
             // From core 1, the other reading core, I expect it to need blocks 0,1,2
             std::vector<site_t> core_1_requires;
             core_1_requires.push_back(0);
-            core_1_requires.push_back(1);
+     
             core_1_requires.push_back(2);
-            netMock->RequireReceive(&core_1_requires[0],3,1,"Needs");
+            netMock->RequireReceive(&core_1_requires[0],2,1,"Needs");
             // From core 2, I expect it to need blocks 1,2,3
             std::vector<site_t> core_2_requires;
-            core_2_requires.push_back(1);
+           
             core_2_requires.push_back(2);
-            core_2_requires.push_back(3);
-            netMock->RequireReceive(&core_2_requires[0],3,2,"Needs");
+            
+            netMock->RequireReceive(&core_2_requires[0],1,2,"Needs");
             // Then, I would expect to receive the lists of needed blocks themselves.
             // From core 3,  I expect it to need blocks 2,3,4
             std::vector<site_t> core_3_requires;
             core_3_requires.push_back(2);
-            core_3_requires.push_back(3);
+            
             core_3_requires.push_back(4);
-            netMock->RequireReceive(&core_3_requires[0],3,3,"Needs");
+            netMock->RequireReceive(&core_3_requires[0],2,3,"Needs");
             // Then, I would expect to receive the lists of needed blocks themselves.
             // From core 4, I expect it to need blocks 3,4,5
             std::vector<site_t> core_4_requires;
-            core_4_requires.push_back(3);
+            
             core_4_requires.push_back(4);
-            core_4_requires.push_back(5);
-            netMock->RequireReceive(&core_4_requires[0],3,4,"Needs");
+            
+            netMock->RequireReceive(&core_4_requires[0],1,4,"Needs");
             ShareMockNeeds();
             // Finally, I would expect the resulting array of needs on core one to be as planned:
             std::vector<proc_t> needing_block_0;
             needing_block_0.push_back(1);
             std::vector<proc_t> needing_block_1;
-            needing_block_1.push_back(1);
-            needing_block_1.push_back(2);
+            
             std::vector<proc_t> needing_block_2;
             needing_block_2.push_back(1);
             needing_block_2.push_back(2);
             needing_block_2.push_back(3);
             std::vector<proc_t> needing_block_3;
-            needing_block_3.push_back(2);
-            needing_block_3.push_back(3);
-            needing_block_3.push_back(4);
+            
             std::vector<proc_t> needing_block_4;
             needing_block_4.push_back(3);
             needing_block_4.push_back(4);
             std::vector<proc_t> needing_block_5;
-            needing_block_5.push_back(4);
-            /*CPPUNIT_ASSERT_EQUAL(needing_block_0,mockedDecomposition->ProcessorsNeedingBlock(0));
+            
+            CPPUNIT_ASSERT_EQUAL(needing_block_0,mockedDecomposition->ProcessorsNeedingBlock(0));
             CPPUNIT_ASSERT_EQUAL(needing_block_1,mockedDecomposition->ProcessorsNeedingBlock(1));
             CPPUNIT_ASSERT_EQUAL(needing_block_2,mockedDecomposition->ProcessorsNeedingBlock(2));
             CPPUNIT_ASSERT_EQUAL(needing_block_3,mockedDecomposition->ProcessorsNeedingBlock(3));
             CPPUNIT_ASSERT_EQUAL(needing_block_4,mockedDecomposition->ProcessorsNeedingBlock(4));
-            CPPUNIT_ASSERT_EQUAL(needing_block_5,mockedDecomposition->ProcessorsNeedingBlock(5));*/
+            CPPUNIT_ASSERT_EQUAL(needing_block_5,mockedDecomposition->ProcessorsNeedingBlock(5));
           }
 
           void TestNonReading()
@@ -141,28 +138,30 @@ namespace hemelb
             // Start to record the expected communications calls.
              // First will come, sending to the reading cores, each of the lengths.
              // So I would expect the non-reading core to post a send to each of the reading cores, its count of needed blocks
-             unsigned int core_2_requires_count=3;
-             netMock->RequireSend(&core_2_requires_count,1,0);
-             netMock->RequireSend(&core_2_requires_count,1,1);
+             unsigned int core_2_requires_from_0_count=1;
+             unsigned int core_2_requires_from_1_count=2;
+             netMock->RequireSend(&core_2_requires_from_0_count,1,0);
+             netMock->RequireSend(&core_2_requires_from_1_count,1,1);
              // Then, I would expect to send my list of needed blocks
              // From core 2, the other reading core, I expect it to need blocks 1,2,3
-             std::vector<site_t> core_2_requires;
-             core_2_requires.push_back(1);
-             core_2_requires.push_back(2);
-             core_2_requires.push_back(3);
-             netMock->RequireSend(&core_2_requires[0],3,0);
-             netMock->RequireSend(&core_2_requires[0],3,1);
+             std::vector<site_t> core_2_requires_from_0;
+             std::vector<site_t> core_2_requires_from_1;
+             core_2_requires_from_1.push_back(1);
+             core_2_requires_from_0.push_back(2);
+             core_2_requires_from_1.push_back(3);
+             netMock->RequireSend(&core_2_requires_from_0[0],1,0);
+             netMock->RequireSend(&core_2_requires_from_1[0],2,1);
             
              ShareMockNeeds();
              // Finally, I would expect the resulting array of needs to be empty
-             /*std::vector<proc_t> empty_needs_array;
+             std::vector<proc_t> empty_needs_array;
              
              CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(0));
              CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(1));
              CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(2));
              CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(3));
              CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(4));
-             CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(5));*/
+             CPPUNIT_ASSERT_EQUAL(empty_needs_array,mockedDecomposition->ProcessorsNeedingBlock(5));
           }
 
           void SetupMocks(const site_t block_count, const proc_t reading_cores, const proc_t core_count, const proc_t current_core){
