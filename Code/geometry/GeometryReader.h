@@ -41,11 +41,10 @@ namespace hemelb
                           proc_t* unitForEachBlock,
                           const site_t* fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(const proc_t* unitForEachBlock,
-                               const proc_t localRank);
+        void ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank);
 
         void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
-        
+
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
          * @param offsetSoFar
@@ -72,7 +71,8 @@ namespace hemelb
          * @param sites
          * @return
          */
-        std::vector<char> DecompressBlockData(const std::vector<char>& compressed, const unsigned int uncompressedBytes);
+        std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
+                                              const unsigned int uncompressedBytes);
 
         void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
 
@@ -136,9 +136,7 @@ namespace hemelb
                             const idx_t* vtxDistribn,
                             const idx_t* partitionVector);
 
-        void RereadBlocks(const idx_t* movesPerProc,
-                          const idx_t* movesList,
-                          const int* procForEachBlock);
+        void RereadBlocks(const idx_t* movesPerProc, const idx_t* movesList, const int* procForEachBlock);
 
         void ImplementMoves(const proc_t* procForEachBlock,
                             const idx_t* movesFromEachProc,
