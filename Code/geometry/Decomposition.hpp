@@ -30,12 +30,16 @@ namespace hemelb
           blocksNeededHere[GetReadingCoreForBlock(block)].push_back(block);
         }
       }
+
+      // Share the counts of needed blocks
       unsigned int blocksNeededSize[readingGroupSize];
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
         if (readingCore == decompositionCommunicatorRank)
+        {
           continue;
+        }
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
                                                       blocksNeededSize[readingCore],
                                                       readingCore,
@@ -59,15 +63,18 @@ namespace hemelb
           net.RequestReceive(&blocksNeededSizes[sendingCore], 1, sendingCore);
         }
       }
+
       net.Send();
       net.Receive();
       net.Wait();
 
-      // Communicate the needed blocks
+      // Communicate the arrays of needed blocks
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         if (readingCore == decompositionCommunicatorRank)
+        {
           continue;
+        }
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
                                                       blocksNeededHere[readingCore].size(),
                                                       readingCore,
@@ -83,7 +90,9 @@ namespace hemelb
         {
           blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
           if (sendingCore == decompositionCommunicatorRank)
+          {
             continue;
+          }
           log::Logger::Log<log::Debug, log::OnePerCore>("Receiving list of %i needed blocks to core %i from core %i",
                                                         blocksNeededSizes[sendingCore],
                                                         decompositionCommunicatorRank,
@@ -125,6 +134,7 @@ namespace hemelb
                      MpiDataType<int>(),
                      readingCore,
                      decompositionCommunicator);
+
           if (decompositionCommunicatorRank == readingCore)
           {
 
@@ -135,7 +145,9 @@ namespace hemelb
                   needingProc != procsWantingBlocksBuffer[block].end(); needingProc++)
               {
                 if (*needingProc == needingProcOld)
+                {
                   found = true;
+                }
               }
               if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
               {
