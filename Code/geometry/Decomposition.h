@@ -22,11 +22,11 @@ namespace hemelb
     public:
       DecompositionBase(const site_t BlockCount, bool *readBlock, const proc_t areadingGroupSize, Net &anet, MPI_Comm comm,
         const proc_t rank, const proc_t size); // Temporarily during the refactor, constructed just to abstract the block sharing bit
-      std::vector<proc_t> ProcessorsNeedingBlock(const site_t &block){
+      const std::vector<proc_t> & ProcessorsNeedingBlock(const site_t &block) const {
         return procsWantingBlocksBuffer[block];
       }
       
-      proc_t GetReadingCoreForBlock(site_t blockNumber);
+      proc_t GetReadingCoreForBlock(const site_t blockNumber) const;
     private:
       std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
       Net &net;

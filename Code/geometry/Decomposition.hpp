@@ -14,29 +14,29 @@ namespace hemelb
     decompositionCommunicatorRank(rank),decompositionCommunicatorSize(size),readingGroupSize(areadingGroupSize)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
-      std::vector<std::vector<site_t> > blocks_needed_here(readingGroupSize);
+      std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
       for (site_t block = 0; block < blockCount; ++block){
         if (readBlock[block]){
-          blocks_needed_here[GetReadingCoreForBlock(block)].push_back(block);
+          blocksNeededHere[GetReadingCoreForBlock(block)].push_back(block);
         }
       }
-      unsigned int blocks_needed_size[readingGroupSize];
-      for (proc_t reading_core=0 ; reading_core < readingGroupSize ; reading_core++){
-        blocks_needed_size[reading_core]=blocks_needed_here[reading_core].size();
-        if (reading_core==decompositionCommunicatorRank) continue;
+      unsigned int blocksNeededSize[readingGroupSize];
+      for (proc_t readingCore=0 ; readingCore < readingGroupSize ; readingCore++){
+        blocksNeededSize[readingCore]=blocksNeededHere[readingCore].size();
+        if (readingCore==decompositionCommunicatorRank) continue;
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
-          blocks_needed_size[reading_core],reading_core,decompositionCommunicatorRank);
-        net.RequestSend(&blocks_needed_size[reading_core], 1, reading_core);
+          blocksNeededSize[readingCore],readingCore,decompositionCommunicatorRank);
+        net.RequestSend(&blocksNeededSize[readingCore], 1, readingCore);
       }
 
-      std::vector<unsigned int>  blocks_needed_sizes(decompositionCommunicatorSize);
+      std::vector<unsigned int>  blocksNeededSizes(decompositionCommunicatorSize);
 
       if (decompositionCommunicatorRank < readingGroupSize){
-        for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
-          if (sending_core==decompositionCommunicatorRank) continue;
+        for (proc_t sendingCore=0; sendingCore< decompositionCommunicatorSize;sendingCore++){
+          if (sendingCore==decompositionCommunicatorRank) continue;
           log::Logger::Log<log::Debug, log::OnePerCore>("Receiving count of needed blocks to core %i from core %i",
-            decompositionCommunicatorRank, sending_core);
-          net.RequestReceive(&blocks_needed_sizes[sending_core], 1, sending_core);
+            decompositionCommunicatorRank, sendingCore);
+          net.RequestReceive(&blocksNeededSizes[sendingCore], 1, sendingCore);
         }
       }
       net.Send();
@@ -44,22 +44,22 @@ namespace hemelb
       net.Wait();
 
       // Communicate the needed blocks
-      for (proc_t reading_core=0; reading_core<readingGroupSize;reading_core++){
-        if (reading_core==decompositionCommunicatorRank) continue;
+      for (proc_t readingCore=0; readingCore<readingGroupSize;readingCore++){
+        if (readingCore==decompositionCommunicatorRank) continue;
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
-          blocks_needed_here[reading_core].size(),reading_core,decompositionCommunicatorRank);
-        net.RequestSend(&blocks_needed_here[reading_core].front(), blocks_needed_here[reading_core].size(), reading_core);
+          blocksNeededHere[readingCore].size(),readingCore,decompositionCommunicatorRank);
+        net.RequestSend(&blocksNeededHere[readingCore].front(), blocksNeededHere[readingCore].size(), readingCore);
       }
 
-      std::vector<std::vector< site_t> >  blocks_needed_on(decompositionCommunicatorSize);
+      std::vector<std::vector< site_t> >  blocksNeededOn(decompositionCommunicatorSize);
 
       if (decompositionCommunicatorRank < readingGroupSize){
-        for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
-          blocks_needed_on[sending_core].resize(blocks_needed_sizes[sending_core]);
-          if (sending_core==decompositionCommunicatorRank) continue;
+        for (proc_t sendingCore=0; sendingCore< decompositionCommunicatorSize;sendingCore++){
+          blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
+          if (sendingCore==decompositionCommunicatorRank) continue;
           log::Logger::Log<log::Debug, log::OnePerCore>("Receiving list of %i needed blocks to core %i from core %i",
-            blocks_needed_sizes[sending_core], decompositionCommunicatorRank,sending_core);
-          net.RequestReceive(&blocks_needed_on[sending_core].front(), blocks_needed_on[sending_core].size(), sending_core);
+            blocksNeededSizes[sendingCore], decompositionCommunicatorRank,sendingCore);
+          net.RequestReceive(&blocksNeededOn[sendingCore].front(), blocksNeededOn[sendingCore].size(), sendingCore);
         }
       }
       net.Send();
@@ -68,15 +68,11 @@ namespace hemelb
 
       if (decompositionCommunicatorRank < readingGroupSize){
         // Transpose the blocks needed on cores matrix
-        for (proc_t sending_core=0; sending_core< decompositionCommunicatorSize;sending_core++){
-          for (std::vector<site_t>::iterator need=blocks_needed_on[sending_core].begin();need!=blocks_needed_on[sending_core].end();need++){
-            for (site_t block = 0; block < blockCount; ++block){
-              if (*need==block){
-                procsWantingBlocksBuffer[block].push_back(sending_core);
-              } //if need the block
-            }//for block
+        for (proc_t sendingCore=0; sendingCore< decompositionCommunicatorSize;sendingCore++){
+          for (std::vector<site_t>::iterator need=blocksNeededOn[sendingCore].begin();need!=blocksNeededOn[sendingCore].end();need++){
+                procsWantingBlocksBuffer[*need].push_back(sendingCore);
           }//for need
-        }//for sending_core
+        }//for sendingCore
       } //if a reading core
 
 
@@ -93,24 +89,24 @@ namespace hemelb
           if (decompositionCommunicatorRank==readingCore)
           {
            
-            for (proc_t needing_proc_old=0;needing_proc_old<decompositionCommunicatorSize;needing_proc_old++)
+            for (proc_t needingProcOld=0;needingProcOld<decompositionCommunicatorSize;needingProcOld++)
             {
               bool found=false;
-              for (std::vector<proc_t>::iterator needing_proc = procsWantingBlocksBuffer[block].begin();
-                needing_proc!=procsWantingBlocksBuffer[block].end(); needing_proc++) {
-                if (*needing_proc==needing_proc_old) found=true;
+              for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
+                needingProc!=procsWantingBlocksBuffer[block].end(); needingProc++) {
+                if (*needingProc==needingProcOld) found=true;
               }
-              if (found&&(!procsWantingThisBlockBuffer[needing_proc_old])){
+              if (found&&(!procsWantingThisBlockBuffer[needingProcOld])){
                 log::Logger::Log<log::Debug, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
                   block,
-                  needing_proc_old
+                  needingProcOld
                   );
               }
-              if ((!found)&&procsWantingThisBlockBuffer[needing_proc_old]&&(!needing_proc_old==readingCore))
+              if ((!found)&&procsWantingThisBlockBuffer[needingProcOld]&&(needingProcOld!=readingCore))
               {
                 log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
                   block,
-                  needing_proc_old
+                  needingProcOld
                   );
               } //if problem
             } // for old proc
@@ -120,7 +116,7 @@ namespace hemelb
       } // if debug mode
     }//constructor
     
-    template<class Net> proc_t DecompositionBase<Net>::GetReadingCoreForBlock(site_t blockNumber)
+    template<class Net> proc_t DecompositionBase<Net>::GetReadingCoreForBlock(const site_t blockNumber) const
     {
       return proc_t(blockNumber % readingGroupSize);
     }
