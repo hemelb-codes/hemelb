@@ -43,7 +43,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE_END();
           
         public:
-          DecompositionTests():mockedDecomposition(NULL){}
+          DecompositionTests():inputNeededBlocks(NULL),mockedDecomposition(NULL),netMock(NULL){}
           
           void setUp()
           {
