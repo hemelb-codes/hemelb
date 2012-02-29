@@ -80,6 +80,7 @@ namespace hemelb
 
         /**
          * Calculates the number of the rank used to read in a given block.
+         * Intent is to move this into Decomposition class, which will also handle knowledge of which procs to use for reading, and own the decomposition topology.
          *
          * @param blockNumber
          * @return
