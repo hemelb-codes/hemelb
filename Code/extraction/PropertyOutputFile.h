@@ -2,7 +2,9 @@
 #define HEMELB_EXTRACTION_PROPERTYOUTPUTFILE_H
 
 #include <string>
-#include "extraction/PropertyOutput.h"
+#include <vector>
+#include "extraction/GeometrySelector.h"
+#include "extraction/OutputField.h"
 
 namespace hemelb
 {
@@ -10,8 +12,16 @@ namespace hemelb
   {
     struct PropertyOutputFile
     {
+        ~PropertyOutputFile()
+        {
+          delete geometry;
+        }
+
         std::string filename;
-        std::vector<PropertyOutput> propertyOutput;
+        unsigned long frequency;
+        GeometrySelector* geometry;
+        std::vector<OutputField> fields;
+
     };
   }
 }

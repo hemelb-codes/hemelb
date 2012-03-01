@@ -12,49 +12,54 @@ namespace hemelb
      * change the values but doesn't specify in the headers.
      */
 
-
     namespace writers
     {
       namespace xdr
       {
         void XdrWriter::_write(int16_t const& shortToWrite)
         {
-          xdr_int16_t(&mXdr, const_cast<int16_t *>(&shortToWrite));
+          xdr_int16_t(&mXdr, const_cast<int16_t *> (&shortToWrite));
         }
 
         void XdrWriter::_write(uint16_t const& shortToWrite)
         {
-          xdr_uint16_t(&mXdr, const_cast<uint16_t *>(&shortToWrite));
+          xdr_uint16_t(&mXdr, const_cast<uint16_t *> (&shortToWrite));
         }
 
         void XdrWriter::_write(int32_t const& value)
         {
-          xdr_int(&mXdr, const_cast<int32_t *>(&value));
+          xdr_int(&mXdr, const_cast<int32_t *> (&value));
         }
 
         void XdrWriter::_write(uint32_t const& uIntToWrite)
         {
-          xdr_uint32_t(&mXdr, const_cast<uint32_t *>(&uIntToWrite));
+          xdr_uint32_t(&mXdr, const_cast<uint32_t *> (&uIntToWrite));
         }
 
         void XdrWriter::_write(int64_t const& longToWrite)
         {
-          xdr_int64_t(&mXdr, const_cast<int64_t*>(&longToWrite));
+          xdr_int64_t(&mXdr, const_cast<int64_t*> (&longToWrite));
         }
 
         void XdrWriter::_write(uint64_t const& longToWrite)
         {
-          xdr_uint64_t(&mXdr, const_cast<uint64_t*>(&longToWrite));
+          xdr_uint64_t(&mXdr, const_cast<uint64_t*> (&longToWrite));
         }
 
         void XdrWriter::_write(float const& floatToWrite)
         {
-          xdr_float(&mXdr, const_cast<float *>(&floatToWrite));
+          xdr_float(&mXdr, const_cast<float *> (&floatToWrite));
         }
 
         void XdrWriter::_write(double const& doubleToWrite)
         {
-          xdr_double(&mXdr, const_cast<double *>(&doubleToWrite));
+          xdr_double(&mXdr, const_cast<double *> (&doubleToWrite));
+        }
+
+        void XdrWriter::_write(const std::string& stringToWrite)
+        {
+          const char* chars = stringToWrite.c_str();
+          xdr_string(&mXdr, const_cast<char**> (&chars), stringToWrite.length());
         }
 
         // Method to get the current position in the stream.

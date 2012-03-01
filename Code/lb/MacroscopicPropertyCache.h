@@ -67,6 +67,12 @@ namespace hemelb
          */
         distribn_t GetStress(site_t siteId) const;
 
+        /**
+         * Returns the number of sites cached.
+         * @return
+         */
+        site_t GetSiteCount() const;
+
       private:
         /**
          * Enumerates each of the different caches we have. This is primarily for accessing
@@ -102,6 +108,11 @@ namespace hemelb
          * The timesteps at which each of the caches was updated on each local fluid site.
          */
         std::vector<std::vector<unsigned long> > lastCacheUpdate;
+
+        /**
+         * The number of sites.
+         */
+        site_t siteCount;
     };
   }
 }
