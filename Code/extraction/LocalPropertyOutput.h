@@ -54,17 +54,17 @@ namespace hemelb
         /**
          * Where to begin writing into the file.
          */
-        unsigned localDataOffsetIntoFile;
+        uint64_t localDataOffsetIntoFile;
 
         /**
          * The length, in bytes, of the local write.
          */
-        unsigned writeLength;
+        uint64_t writeLength;
 
         /**
          * The length, in bytes, of the total write length;
          */
-        unsigned allCoresWriteLength;
+        uint64_t allCoresWriteLength;
 
         /**
          * Buffer to write into before writing to disk.
