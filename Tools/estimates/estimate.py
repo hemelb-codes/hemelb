@@ -38,9 +38,9 @@ class Estimator:
         'mca':44.0*cm/s
     }
     props=['name','resolution','lengths','cycles','rate','mach','speed',
-    'voxel_size','sites','duration','min_speed_sound','step','steps','model_speed','model_time','cores']
-    def __init__(self,name=None,diameter=None,resolution=20.0,lengths=1000.0,cycles=3.0,rate=70.0/min, 
-                mach=0.05, speed=None, model_speed=10**6/s, model_time=1*min):
+    'voxel_size','sites','duration','min_speed_sound','step','steps','cyclesteps','model_speed','model_time','cores']
+    def __init__(self,name=None,diameter=None,resolution=30.0,lengths=1000.0,cycles=3.0,rate=70.0/min, 
+                mach=0.1, speed=None, model_speed=10**6/s, model_time=1*min):
         self.resolution=resolution
         self.diameter=diameter
         self.lengths=lengths
@@ -65,6 +65,7 @@ class Estimator:
         # speed_sound=self.VoxelSize/(time_step*sqrt(3))
         self.step=(self.voxel_size/(self.min_speed_sound*(3**(1.0/2)))).asUnit(us)
         self.steps=(self.duration/self.step)
+        self.cyclesteps=(self.steps/self.cycles)
         self.cores=self.steps*self.sites/(self.model_speed*self.model_time)
         self.sites=str(self.sites/10**6)+" M"
         self.steps=str(self.steps/10**6)+" M"
