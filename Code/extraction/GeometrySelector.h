@@ -32,8 +32,8 @@ namespace hemelb
         bool Include(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
 
       protected:
-        virtual bool IsWithinGeometry(const extraction::IterableDataSource& data,
-                                      const util::Vector3D<site_t>& location) = 0;
+        virtual bool
+            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<float>& location) = 0;
     };
   }
 }

@@ -304,60 +304,47 @@ namespace hemelb
       {
         DoIOForString(iXmlNode, "filename", iIsLoading, file.filename);
 
-        TiXmlElement *lCurrentLet = iXmlNode->FirstChildElement();
-
-        while (lCurrentLet != NULL)
-        {
-          extraction::PropertyOutput output;
-
-          DoIOForPropertyOutput(lCurrentLet, iIsLoading, output);
-          file.propertyOutput.push_back(output);
-
-          lCurrentLet = lCurrentLet->NextSiblingElement();
-        }
-      }
-    }
-
-    void SimConfig::DoIOForPropertyOutput(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutput& field)
-    {
-      if (iIsLoading)
-      {
-        if (iXmlNode->ValueStr().compare("planegeometry") == 0)
-        {
-          extraction::PlaneGeometrySelector* plane;
-          DoIOForPlaneGeometry(iXmlNode, iIsLoading, plane);
-          field.geometry = plane;
-        }
-        else if (iXmlNode->ValueStr().compare("linegeometry") == 0)
-        {
-          extraction::LineGeometrySelector* line;
-          DoIOForLineGeometry(iXmlNode, iIsLoading, line);
-          field.geometry = line;
-        }
-        else if (iXmlNode->ValueStr().compare("wholegeometry") == 0)
-        {
-          extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
-          field.geometry = whole;
-        }
-        else
-        {
-          log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", iXmlNode->Value());
-          exit(1);
-        }
-
         char* dummy;
-        field.frequency = strtoul(iXmlNode->Attribute("frequency"), &dummy, 10);
+        file.frequency = strtoul(iXmlNode->Attribute("frequency"), &dummy, 10);
 
-        TiXmlElement *lCurrentLet = iXmlNode->FirstChildElement("field");
+        TiXmlElement* propertyElement = iXmlNode->FirstChildElement();
 
-        while (lCurrentLet != NULL)
+        if (iIsLoading)
         {
-          extraction::OutputField outputField;
+          if (propertyElement->ValueStr().compare("planegeometry") == 0)
+          {
+            extraction::PlaneGeometrySelector* plane = NULL;
+            DoIOForPlaneGeometry(propertyElement, iIsLoading, plane);
+            file.geometry = plane;
+          }
+          else if (propertyElement->ValueStr().compare("linegeometry") == 0)
+          {
+            extraction::LineGeometrySelector* line = NULL;
+            DoIOForLineGeometry(propertyElement, iIsLoading, line);
+            file.geometry = line;
+          }
+          else if (propertyElement->ValueStr().compare("wholegeometry") == 0)
+          {
+            extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
+            file.geometry = whole;
+          }
+          else
+          {
+            log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", iXmlNode->Value());
+            exit(1);
+          }
 
-          DoIOForPropertyField(lCurrentLet, iIsLoading, outputField);
-          field.fields.push_back(outputField);
+          TiXmlElement *lCurrentLet = propertyElement->FirstChildElement("field");
 
-          lCurrentLet = lCurrentLet->NextSiblingElement("field");
+          while (lCurrentLet != NULL)
+          {
+            extraction::OutputField outputField;
+
+            DoIOForPropertyField(lCurrentLet, iIsLoading, outputField);
+            file.fields.push_back(outputField);
+
+            lCurrentLet = lCurrentLet->NextSiblingElement("field");
+          }
         }
       }
     }

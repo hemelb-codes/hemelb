@@ -6,10 +6,10 @@ namespace hemelb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
-        simulationState(simState), densityCache(latticeData.GetLocalFluidSiteCount()), velocityCache(latticeData.GetLocalFluidSiteCount()), stressCache(latticeData.GetLocalFluidSiteCount()), lastCacheUpdate(CacheCount,
-                                                                                                                                                                                                               std::vector<
-                                                                                                                                                                                                                   unsigned long>(latticeData.GetLocalFluidSiteCount(),
-                                                                                                                                                                                                                                  0))
+      simulationState(simState), densityCache(latticeData.GetLocalFluidSiteCount()),
+          velocityCache(latticeData.GetLocalFluidSiteCount()), stressCache(latticeData.GetLocalFluidSiteCount()),
+          lastCacheUpdate(CacheCount, std::vector<unsigned long>(latticeData.GetLocalFluidSiteCount(), 0)),
+          siteCount(latticeData.GetLocalFluidSiteCount())
     {
 
     }
@@ -26,7 +26,10 @@ namespace hemelb
       lastCacheUpdate[VelocityCache][siteId] = simulationState.GetTimeStep();
     }
 
-    void MacroscopicPropertyCache::SetVelocity(site_t siteId, const distribn_t& v_x, const distribn_t& v_y, const distribn_t& v_z)
+    void MacroscopicPropertyCache::SetVelocity(site_t siteId,
+                                               const distribn_t& v_x,
+                                               const distribn_t& v_y,
+                                               const distribn_t& v_z)
     {
       velocityCache[siteId].x = v_x;
       velocityCache[siteId].y = v_y;
@@ -83,6 +86,11 @@ namespace hemelb
       }
 
       return stressCache[siteId];
+    }
+
+    site_t MacroscopicPropertyCache::GetSiteCount() const
+    {
+      return siteCount;
     }
   }
 }
