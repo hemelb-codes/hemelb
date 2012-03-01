@@ -19,7 +19,9 @@ namespace hemelb
   namespace geometry
   {
 
-    GeometryReader::GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult, reporting::Timers &atimings) :
+    GeometryReader::GeometryReader(const bool reserveSteeringCore,
+                                   GeometryReadResult& readResult,
+                                   reporting::Timers &atimings) :
         readingResult(readResult), timings(atimings)
     {
       // Get the group of all procs.
@@ -315,22 +317,21 @@ namespace hemelb
      * Read in the necessary blocks from the file.
      * TODO: explain what this method does
      */
-    void GeometryReader::ReadInLocalBlocks(const proc_t* unitForEachBlock,
-                                           const proc_t localRank)
+    void GeometryReader::ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank)
     {
       // Create a list of which blocks to read in.
       timings[hemelb::reporting::Timers::readBlocksPrelim].Start();
       bool* readBlock = new bool[readingResult.GetBlockCount()];
-
+      log::Logger::Log<log::Debug, log::OnePerCore>("Determining blocks to read");
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating block sizes");
         for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
         {
-          if (bytesPerUncompressedBlock[block] >
-              io::formats::geometry::GetMaxBlockRecordLength(readingResult.blockSize,
-                                                             fluidSitesPerBlock[block]))
+          if (bytesPerUncompressedBlock[block]
+              > io::formats::geometry::GetMaxBlockRecordLength(readingResult.blockSize, fluidSitesPerBlock[block]))
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                           block,
@@ -341,17 +342,28 @@ namespace hemelb
         }
       }
 
-      int* procsWantingThisBlock = new int[currentCommSize];
+      log::Logger::Log<log::Debug, log::OnePerCore>("Informing reading cores of block needs");
+      net::Net net = net::Net(currentComm);
+      Decomposition *decomposition = new Decomposition(readingResult.GetBlockCount(),
+                                                       readBlock,
+                                                       util::NumericalFunctions::min(READING_GROUP_SIZE,
+                                                                                     currentCommSize),
+                                                       net,
+                                                       currentComm,
+                                                       currentCommRank,
+                                                       currentCommSize);
+
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading blocks");
       timings[hemelb::reporting::Timers::readBlocksAll].Start();
+
       // Set the view and read in.
       MPI_Offset offset = io::formats::geometry::PreambleLength + GetHeaderLength(readingResult.GetBlockCount());
-
       // Track the next block we should look at.
       for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
         ReadInBlock(offset,
-                    procsWantingThisBlock,
+                    decomposition->ProcessorsNeedingBlock(nextBlockToRead),
                     nextBlockToRead,
                     fluidSitesPerBlock[nextBlockToRead],
                     bytesPerCompressedBlock[nextBlockToRead],
@@ -361,13 +373,13 @@ namespace hemelb
         offset += bytesPerCompressedBlock[nextBlockToRead];
       }
 
-      delete[] procsWantingThisBlock;
+      delete decomposition;
       delete[] readBlock;
       timings[hemelb::reporting::Timers::readBlocksAll].Stop();
     }
 
     void GeometryReader::ReadInBlock(MPI_Offset offsetSoFar,
-                                     int* procsWantingThisBlockBuffer,
+                                     const std::vector<proc_t>& procsWantingThisBlock,
                                      const site_t blockNumber,
                                      const site_t sites,
                                      const unsigned int compressedBytes,
@@ -382,20 +394,8 @@ namespace hemelb
       std::vector<char> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
-      int neededHere = neededOnThisRank;
-      timings[hemelb::reporting::Timers::readNet].Start();
-      
-      MPI_Gather(&neededHere,
-                 1,
-                 MpiDataType<int>(),
-                 procsWantingThisBlockBuffer,
-                 1,
-                 MpiDataType<int>(),
-                 readingCore,
-                 currentComm);
-      timings[hemelb::reporting::Timers::readNet].Stop();
       net::Net net = net::Net(currentComm);
-      
+
       if (readingCore == currentCommRank)
       {
         timings[hemelb::reporting::Timers::readBlock].Start();
@@ -404,11 +404,12 @@ namespace hemelb
         MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
 
         // Spread it.
-        for (proc_t receiver = 0; receiver < currentCommSize; receiver++)
+        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
+            receiver != procsWantingThisBlock.end(); receiver++)
         {
-          if (receiver != currentCommRank && procsWantingThisBlockBuffer[receiver])
+          if (*receiver != currentCommRank)
           {
-            net.RequestSend(&compressedBlockData.front(), compressedBytes, receiver);
+            net.RequestSend(&compressedBlockData.front(), compressedBytes, *receiver);
           }
         }
         timings[hemelb::reporting::Timers::readBlock].Stop();
@@ -448,7 +449,6 @@ namespace hemelb
               ++numSitesRead;
             }
           }
-
           // Compare with the sites we expected to read.
           if (numSitesRead != sites)
           {
@@ -463,8 +463,9 @@ namespace hemelb
     }
 
     std::vector<char> GeometryReader::DecompressBlockData(const std::vector<char>& compressed,
-                                                          const unsigned int uncompressedBytes) {
-      timings[hemelb::reporting::Timers::unzip].Start();                        
+                                                          const unsigned int uncompressedBytes)
+    {
+      timings[hemelb::reporting::Timers::unzip].Start();
       // For zlib return codes.
       int ret;
 
@@ -480,7 +481,8 @@ namespace hemelb
       stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
 
       ret = inflateInit(&stream);
-      if (ret != Z_OK) {
+      if (ret != Z_OK)
+      {
         log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
@@ -488,18 +490,20 @@ namespace hemelb
       stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
-      if (ret != Z_STREAM_END) {
+      if (ret != Z_STREAM_END)
+      {
         log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
 
       uncompressed.resize(uncompressed.size() - stream.avail_out);
       ret = inflateEnd(&stream);
-      if (ret != Z_OK) {
+      if (ret != Z_OK)
+      {
         log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
-      timings[hemelb::reporting::Timers::unzip].Stop();        
+      timings[hemelb::reporting::Timers::unzip].Stop();
       return uncompressed;
     }
 
@@ -532,7 +536,6 @@ namespace hemelb
       }
 
       const io::formats::geometry::DisplacementVector& neighbourhood = io::formats::geometry::Get().GetNeighbourhood();
-
       // Prepare the links array to have enough space.
       readInSite.links.resize(D3Q15::NUMVECTORS - 1);
 
@@ -625,10 +628,18 @@ namespace hemelb
             {
               myProcForSite[localSite] = readingResult.Blocks[block].Sites[localSite].targetProcessor;
               dummySiteData[localSite * D3Q15::NUMVECTORS] = readingResult.Blocks[block].Sites[localSite].isFluid;
+
               for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
               {
-                dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
-                    readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                if (readingResult.Blocks[block].Sites[localSite].isFluid)
+                {
+                  dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
+                      readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                }
+                else
+                {
+                  dummySiteData[localSite * D3Q15::NUMVECTORS + direction] = std::numeric_limits<unsigned>::max();
+                }
               }
             }
           }
@@ -799,11 +810,7 @@ namespace hemelb
       }
 
       // Divide blocks between the processors.
-      DivideBlocks(unvisitedFluidBlockCount,
-                   topologySize,
-                   blockCountPerProc,
-                   procForEachBlock,
-                   fluidSitesPerBlock);
+      DivideBlocks(unvisitedFluidBlockCount, topologySize, blockCountPerProc, procForEachBlock, fluidSitesPerBlock);
 
       delete[] blockCountPerProc;
     }
@@ -873,8 +880,8 @@ namespace hemelb
         blockAssigned[block] = false;
       }
 
-      std::vector < util::Vector3D<site_t> > currentEdge;
-      std::vector < util::Vector3D<site_t> > expandedEdge;
+      std::vector<util::Vector3D<site_t> > currentEdge;
+      std::vector<util::Vector3D<site_t> > expandedEdge;
 
       site_t blockNumber = -1;
 
@@ -1079,17 +1086,17 @@ namespace hemelb
       timings[hemelb::reporting::Timers::parmetis].Stop();
       delete[] localAdjacencies;
       delete[] adjacenciesPerVertex;
-      
+
       // Convert the ParMetis results into a nice format.
       idx_t* allMoves = new idx_t[topologySize];
-      
+
       idx_t* movesList = GetMovesList(allMoves,
                                       firstSiteIndexPerBlock,
                                       procForEachBlock,
                                       fluidSitesPerBlock,
                                       vtxDistribn,
                                       partitionVector);
-      
+
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
@@ -1097,7 +1104,7 @@ namespace hemelb
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(allMoves, movesList, procForEachBlock);
       timings[hemelb::reporting::Timers::reRead].Stop();
-      
+
       timings[hemelb::reporting::Timers::moves].Start();
       // Implement the decomposition now that we have read the necessary data.
       ImplementMoves(procForEachBlock, allMoves, movesList);
@@ -1242,7 +1249,7 @@ namespace hemelb
                                           const proc_t* procForEachBlock,
                                           const idx_t* firstSiteIndexPerBlock) const
     {
-      std::vector < idx_t > adj;
+      std::vector<idx_t> adj;
 
       idx_t totalAdjacencies = 0;
       adjacenciesPerVertex[0] = 0;
@@ -1419,7 +1426,7 @@ namespace hemelb
       real_t* domainWeights = new real_t[desiredPartitionSize];
       for (idx_t rank = 0; rank < desiredPartitionSize; ++rank)
       {
-        domainWeights[rank] = (real_t)(1.0) / ((real_t) desiredPartitionSize);
+        domainWeights[rank] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
@@ -1474,7 +1481,7 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::multimap < idx_t, idx_t > *adjByNeighProc = new std::multimap<idx_t, idx_t>[topologySize];
+        std::multimap<idx_t, idx_t> *adjByNeighProc = new std::multimap<idx_t, idx_t>[topologySize];
         for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
         {
           adjByNeighProc[proc] = std::multimap<idx_t, idx_t>();
@@ -1691,7 +1698,7 @@ namespace hemelb
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
-      std::vector < idx_t > moveData;
+      std::vector<idx_t> moveData;
 
       const idx_t myLowest = vtxDistribn[topologyRank];
       const idx_t myHighest = vtxDistribn[topologyRank + 1] - 1;
@@ -1832,9 +1839,7 @@ namespace hemelb
       return movesList;
     }
 
-    void GeometryReader::RereadBlocks(const idx_t* movesPerProc,
-                                      const idx_t* movesList,
-                                      const int* procForEachBlock)
+    void GeometryReader::RereadBlocks(const idx_t* movesPerProc, const idx_t* movesList, const int* procForEachBlock)
     {
       // Initialise the array (of which proc each block belongs to) to what it was before.
       int* newProcForEachBlock = new int[readingResult.GetBlockCount()];
