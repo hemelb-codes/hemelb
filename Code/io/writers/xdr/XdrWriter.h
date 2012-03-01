@@ -38,6 +38,7 @@ namespace hemelb
             void _write(double const& doubleToWrite);
             void _write(float const& floatToWrite);
 
+            void _write(const std::string& floatToWrite);
         };
 
       } // namespace xdr

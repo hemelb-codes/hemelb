@@ -91,11 +91,12 @@ namespace hemelb
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
 
-        const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords,
-                                                     const util::Vector3D<site_t>& localSiteCoords) const;
+        const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords, const util::Vector3D<
+            site_t>& localSiteCoords) const;
 
-        const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber,
-                                                     const util::Vector3D<site_t>& localSiteCoords) const;
+        const util::Vector3D<site_t>
+        GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
+        util::Vector3D<site_t> GetSiteCoordsFromSiteId(site_t siteId) const;
 
         void GetBlockAndLocalSiteCoords(const util::Vector3D<site_t>& location,
                                         util::Vector3D<site_t>& blockCoords,
@@ -121,10 +122,8 @@ namespace hemelb
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult);
 
-        void SetBasicDetails(util::Vector3D<site_t> blocks,
-                             site_t blockSize,
-                             distribn_t voxelSize,
-                             util::Vector3D<distribn_t> originIn);
+        void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize, distribn_t voxelSize, util::Vector3D<
+            distribn_t> originIn);
 
         void ProcessReadSites(const GeometryReadResult& readResult);
 
@@ -173,6 +172,13 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         SiteData GetSiteData(site_t iSiteIndex) const;
 
+        /**
+         * Get the global site coordinates from a contiguous site id.
+         * @param siteIndex
+         * @return
+         */
+        const util::Vector3D<site_t>& GetGlobalSiteCoords(site_t siteIndex) const;
+
         // Variables are listed here in approximate order of initialisation.
         // Note that all data is ordered in increasing order of collision type, by intra-proc then
         // inter-proc.
@@ -214,6 +220,10 @@ namespace hemelb
         std::vector<Block> Blocks;
 
         std::vector<distribn_t> distanceToWall;
+        /**
+         * Hold the global site coordinates for each contiguous site.
+         */
+        std::vector<util::Vector3D<site_t> > globalSiteCoords;
         std::vector<util::Vector3D<distribn_t> > wallNormalAtSite;
         std::vector<SiteData> siteData;
 

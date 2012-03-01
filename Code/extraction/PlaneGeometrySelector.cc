@@ -41,12 +41,10 @@ namespace hemelb
       return radius;
     }
 
-    bool PlaneGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<
-        site_t>& location)
+    bool PlaneGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
+                                                 const util::Vector3D<float>& location)
     {
-      const util::Vector3D<distribn_t> position = location * data.GetVoxelSize();
-
-      const float perpendicularDistance = (position - planePoint).Dot(normal);
+      const float perpendicularDistance = (location - planePoint).Dot(normal);
 
       if (std::abs(perpendicularDistance) > (0.5 * data.GetVoxelSize()))
       {
@@ -60,7 +58,7 @@ namespace hemelb
       }
 
       const float radiusOfPointSquared =
-          ( (position - normal * perpendicularDistance) - planePoint).GetMagnitudeSquared();
+          ( (location - normal * perpendicularDistance) - planePoint).GetMagnitudeSquared();
 
       return radiusOfPointSquared <= radius * radius;
     }

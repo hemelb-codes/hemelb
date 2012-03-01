@@ -1,6 +1,7 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
+#include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
@@ -70,6 +71,8 @@ class SimulationMaster
     hemelb::util::UnitConverter* unitConvertor;
 
     hemelb::vis::Control* visualisationControl;
+    hemelb::extraction::IterableDataSource* propertyDataSource;
+    hemelb::extraction::PropertyActor* propertyExtractor;
 
     std::vector<hemelb::net::IteratedAction*> actors;
 

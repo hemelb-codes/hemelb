@@ -56,7 +56,8 @@
 					<path value=""/>
 				</doc-comment-owner>
 			</storageModule>
-		</cconfiguration>
+		<storageModule moduleId="scannerConfiguration"/>
+</cconfiguration>
 		<cconfiguration id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428" moduleId="org.eclipse.cdt.core.settings" name="MPI">
 <macros>
@@ -81,19 +82,19 @@
 </extensions>
 </storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="Code" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428" name="MPI" parent="org.eclipse.cdt.build.core.emptycfg">
-					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428." name="/" resourcePath="">
-						<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1898802002" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
-							<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.1898802002.1863835895" name=""/>
-							<builder arguments="" autoBuildTarget="" buildPath="${workspace_loc:/Code/build}" command="make" enableAutoBuild="true" id="org.eclipse.cdt.build.core.settings.default.builder.188899889" incrementalBuildTarget="" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
-							<tool id="org.eclipse.cdt.build.core.settings.holder.libs.220869820" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
-						</toolChain>
-					</folderInfo>
-					<sourceEntries>
-						<entry excluding="parmetis/Programs" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-					</sourceEntries>
-				</configuration>
-			</storageModule>
+<configuration artifactName="Code" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428" name="MPI" parent="org.eclipse.cdt.build.core.emptycfg">
+<folderInfo id="cdt.managedbuild.toolchain.gnu.base.825880950.1300491428." name="/" resourcePath="">
+<toolChain id="org.eclipse.cdt.build.core.prefbase.toolchain.1898802002" name="No ToolChain" resourceTypeBasedDiscovery="false" superClass="org.eclipse.cdt.build.core.prefbase.toolchain">
+<targetPlatform id="org.eclipse.cdt.build.core.prefbase.toolchain.1898802002.1863835895" name=""/>
+<builder arguments="" autoBuildTarget="" buildPath="${workspace_loc:/Code/build}" command="make" enableAutoBuild="true" id="org.eclipse.cdt.build.core.settings.default.builder.188899889" incrementalBuildTarget="" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="org.eclipse.cdt.build.core.settings.default.builder"/>
+<tool id="org.eclipse.cdt.build.core.settings.holder.libs.220869820" name="holder for library settings" superClass="org.eclipse.cdt.build.core.settings.holder.libs"/>
+</toolChain>
+</folderInfo>
+<sourceEntries>
+<entry excluding="parmetis/Programs" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+</sourceEntries>
+</configuration>
+</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings">
@@ -147,11 +148,12 @@
 					<path value=""/>
 				</doc-comment-owner>
 			</storageModule>
-		</cconfiguration>
+		<storageModule moduleId="scannerConfiguration"/>
+</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="Code.null.680748055" name="Code"/>
-	</storageModule>
+<project id="Code.null.680748055" name="Code"/>
+</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="1">
 		<resource resourceType="PROJECT" workspacePath="/Code"/>
 	</storageModule>

@@ -12,9 +12,16 @@ namespace hemelb
     {
       public:
         /**
+         * Virtual destructor. We could declare this as pure virtual but that will cause a fail at
+         * link-time (at least with GCC). GCC needs an object file to put the vtable in; by defining
+         * this function in IterableDataSource.cc, we give it one.
+         * @return
+         */
+        virtual ~IterableDataSource();
+
+        /**
          * Reads the next fluid site from the data source, obtaining its position,
-         * pressure, velocity and stress. Returns true while there are still values
-         * left in the data source.
+         * pressure, velocity and stress. Returns true if values could be obtained.
          *
          * @param position
          * @param pressure
@@ -22,10 +29,15 @@ namespace hemelb
          * @param stress
          * @return
          */
-        virtual bool ReadNext(util::Vector3D<float>& position,
+        virtual bool ReadNext(util::Vector3D<site_t>& position,
                               float& pressure,
                               util::Vector3D<float>& velocity,
                               float& stress) = 0;
+
+        /**
+         * Resets the iterator to the beginning again.
+         */
+        virtual void Reset() = 0;
 
         /**
          * Returns true iff the passed location is within the lattice.
@@ -46,7 +58,7 @@ namespace hemelb
          * Returns the real-world size of a single lattice unit.
          * @return
          */
-        virtual distribn_t GetVoxelSize() const;
+        virtual distribn_t GetVoxelSize() const = 0;
     };
   }
 }

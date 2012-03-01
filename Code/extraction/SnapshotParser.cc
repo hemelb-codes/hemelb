@@ -48,6 +48,11 @@ namespace hemelb
                                   util::Vector3D<float>& velocity,
                                   float& stress)
     {
+      if (sitesRead >= fluidSiteCount)
+      {
+        return false;
+      }
+
       sitesRead++;
 
       util::Vector3D<int> coords;
@@ -64,7 +69,7 @@ namespace hemelb
 
       reader.readFloat(stress);
 
-      return sitesRead < fluidSiteCount;
+      return true;
     }
   }
 }

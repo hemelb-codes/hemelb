@@ -24,7 +24,8 @@ namespace hemelb
 
         /**
          * Reads the next bit of data from the file, returning the position of the site,
-         * and the pressure, velocity and stress there. Returns true if more can be read.
+         * and the pressure, velocity and stress there. Returns true if the site was read
+         * successfully.
          * @param position
          * @param pressure
          * @param velocity
