@@ -11,7 +11,7 @@ namespace hemelb
         return false;
       }
 
-      return IsWithinGeometry(data, location);
+      return IsWithinGeometry(data, location * data.GetVoxelSize());
     }
   }
 }

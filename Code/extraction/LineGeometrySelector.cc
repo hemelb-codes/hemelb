@@ -22,11 +22,9 @@ namespace hemelb
     }
 
     bool LineGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
-                                                const util::Vector3D<site_t>& location)
+                                                const util::Vector3D<float>& location)
     {
-      const util::Vector3D<distribn_t> position = location * data.GetVoxelSize();
-
-      const float lengthAlongLine = (lineVector.Dot(position - endpoint1)) / lineLength;
+      const float lengthAlongLine = (lineVector.Dot(location - endpoint1)) / lineLength;
 
       if (lengthAlongLine < 0. || lengthAlongLine > lineLength)
       {
@@ -35,7 +33,7 @@ namespace hemelb
 
       // Use magnitude squared as it saves a sqrt operation.
       const float perpendicularDistanceSquared =
-          ( (endpoint1 + lineVector * lengthAlongLine) - position).GetMagnitudeSquared();
+          ( (endpoint1 + lineVector * lengthAlongLine) - location).GetMagnitudeSquared();
 
       return perpendicularDistanceSquared <= (0.5 * 0.5 * data.GetVoxelSize() * data.GetVoxelSize());
     }

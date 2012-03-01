@@ -13,7 +13,7 @@ namespace hemelb
   namespace geometry
   {
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-        latticeInfo(latticeInfo)
+      latticeInfo(latticeInfo)
     {
     }
 
@@ -30,7 +30,7 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
       GeometryReadResult readGeometryData;
-      GeometryReader reader(reserveSteeringCore, readGeometryData,timings);
+      GeometryReader reader(reserveSteeringCore, readGeometryData, timings);
       reader.LoadAndDecompose(dataFilePath);
 
       // Create a new lattice based on that info and return it.
@@ -38,7 +38,7 @@ namespace hemelb
     }
 
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult) :
-        latticeInfo(latticeInfo)
+      latticeInfo(latticeInfo)
     {
       SetBasicDetails(readResult.blocks, readResult.blockSize, readResult.voxelSize, readResult.origin);
 
@@ -95,8 +95,7 @@ namespace hemelb
         }
 
         // Iterate over all sites within the current block.
-        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid();
-            siteTraverser.TraverseOne())
+        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
         {
           site_t localSiteId = siteTraverser.GetCurrentIndex();
 
@@ -121,9 +120,9 @@ namespace hemelb
                 + siteTraverser.GetCurrentLocation() + util::Vector3D<site_t>(D3Q15::CX[l], D3Q15::CY[l], D3Q15::CZ[l]);
 
             if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0 || neighbourGlobalCoords.z < 0
-                || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize
-                || neighbourGlobalCoords.y >= readResult.blocks.y * readResult.blockSize
-                || neighbourGlobalCoords.z >= readResult.blocks.z * readResult.blockSize)
+                || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize || neighbourGlobalCoords.y
+                >= readResult.blocks.y * readResult.blockSize || neighbourGlobalCoords.z >= readResult.blocks.z
+                * readResult.blockSize)
             {
               continue;
             }
@@ -312,6 +311,8 @@ namespace hemelb
           site_t siteId = intraSiteNumbers[collisionType][indexInType];
 
           Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+          globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
+
           localFluidSites++;
         }
       }
@@ -332,6 +333,8 @@ namespace hemelb
           site_t siteId = interSiteNumbers[collisionType][indexInType];
 
           Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+          globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
+
           localFluidSites++;
         }
       }
@@ -347,10 +350,10 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
-                    MpiDataType<site_t>(),
+                    MpiDataType<site_t> (),
                     &fluidSitesOnEachProcessor[0],
                     1,
-                    MpiDataType<site_t>(),
+                    MpiDataType<site_t> (),
                     MPI_COMM_WORLD);
 
       totalFluidSites = 0;
@@ -364,9 +367,9 @@ namespace hemelb
     {
       site_t localMins[3];
       site_t localMaxes[3];
-      localMins[0] = std::numeric_limits < site_t > ::max();
-      localMins[1] = std::numeric_limits < site_t > ::max();
-      localMins[2] = std::numeric_limits < site_t > ::max();
+      localMins[0] = std::numeric_limits<site_t>::max();
+      localMins[1] = std::numeric_limits<site_t>::max();
+      localMins[2] = std::numeric_limits<site_t>::max();
       localMaxes[0] = 0;
       localMaxes[1] = 0;
       localMaxes[2] = 0;
@@ -380,8 +383,7 @@ namespace hemelb
           continue;
         }
 
-        for (geometry::SiteTraverser siteSet = blockSet.GetSiteTraverser(); siteSet.CurrentLocationValid();
-            siteSet.TraverseOne())
+        for (geometry::SiteTraverser siteSet = blockSet.GetSiteTraverser(); siteSet.CurrentLocationValid(); siteSet.TraverseOne())
         {
           if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex())
               == topology::NetworkTopology::Instance()->GetLocalRank())
@@ -400,8 +402,8 @@ namespace hemelb
       }
 
       site_t siteMins[3], siteMaxes[3];
-      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
       for (unsigned ii = 0; ii < 3; ++ii)
       {
         globalSiteMins[ii] = siteMins[ii];
@@ -449,8 +451,8 @@ namespace hemelb
     {
       // Allocate the index in which to put the distribution functions received from the other
       // process.
-      std::vector < std::vector<site_t> > sharedFLocationForEachProc = std::vector < std::vector<site_t>
-          > (topology::NetworkTopology::Instance()->GetProcessorCount());
+      std::vector<std::vector<site_t> > sharedFLocationForEachProc =
+          std::vector<std::vector<site_t> >(topology::NetworkTopology::Instance()->GetProcessorCount());
 
       site_t totalSharedFsSoFar = 0;
 
@@ -484,8 +486,7 @@ namespace hemelb
           continue;
         }
 
-        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid();
-            siteTraverser.TraverseOne())
+        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
         {
           if (localRank != map_block_p.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
           {
@@ -503,8 +504,9 @@ namespace hemelb
                 + siteTraverser.GetCurrentLocation();
 
             // Work out positions of neighbours.
-            util::Vector3D<site_t> neighbourCoords = currentLocationCoords
-                + util::Vector3D<site_t>(D3Q15::CX[l], D3Q15::CY[l], D3Q15::CZ[l]);
+            util::Vector3D<site_t> neighbourCoords = currentLocationCoords + util::Vector3D<site_t>(D3Q15::CX[l],
+                                                                                                    D3Q15::CY[l],
+                                                                                                    D3Q15::CZ[l]);
 
             if (!IsValidLatticeSite(neighbourCoords))
             {
@@ -738,8 +740,8 @@ namespace hemelb
 
     bool LatticeData::IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const
     {
-      return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 && siteCoords.x < sites.x
-          && siteCoords.y < sites.y && siteCoords.z < sites.z;
+      return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 && siteCoords.x < sites.x && siteCoords.y
+          < sites.y && siteCoords.z < sites.z;
     }
 
     const Block& LatticeData::GetBlock(site_t blockNumber) const
@@ -787,6 +789,11 @@ namespace hemelb
       return siteData[iSiteIndex];
     }
 
+    const util::Vector3D<site_t>& LatticeData::GetGlobalSiteCoords(site_t siteIndex) const
+    {
+      return globalSiteCoords[siteIndex];
+    }
+
     site_t LatticeData::GetContiguousSiteId(util::Vector3D<site_t> location) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
@@ -814,6 +821,18 @@ namespace hemelb
       GetBlockIJK(blockNumber, blockCoords);
 
       return GetGlobalCoords(blockCoords, localSiteCoords);
+    }
+
+    util::Vector3D<site_t> LatticeData::GetSiteCoordsFromSiteId(site_t siteId) const
+    {
+      util::Vector3D<site_t> siteCoords;
+
+      siteCoords.z = siteId % blockSize;
+      site_t siteIJData = siteId / blockSize;
+      siteCoords.y = siteIJData % blockSize;
+      siteCoords.x = siteIJData / blockSize;
+
+      return siteCoords;
     }
 
     void LatticeData::GetBlockAndLocalSiteCoords(const util::Vector3D<site_t>& location,
@@ -860,13 +879,13 @@ namespace hemelb
 
     void LatticeData::SendAndReceive(hemelb::net::Net *net)
     {
-      for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin();
-          it != neighbouringProcs.end(); ++it)
+      for (std::vector<NeighbouringProcessor>::const_iterator it = neighbouringProcs.begin(); it
+          != neighbouringProcs.end(); ++it)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedF), (int) ( (*it).SharedFCount), (*it).Rank);
+        net->RequestReceive<distribn_t> (GetFOld( (*it).FirstSharedF), (int) ( (*it).SharedFCount), (*it).Rank);
         // Request the send from the right bit of FNew.
-        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedF), (int) ( (*it).SharedFCount), (*it).Rank);
+        net->RequestSend<distribn_t> (GetFNew( (*it).FirstSharedF), (int) ( (*it).SharedFCount), (*it).Rank);
 
       }
     }

@@ -66,7 +66,6 @@ namespace hemelb
         void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
         void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
         void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile& file);
-        void DoIOForPropertyOutput(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutput& field);
         void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector* line);
         void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector* plane);
 

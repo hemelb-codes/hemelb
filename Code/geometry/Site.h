@@ -17,10 +17,9 @@ namespace hemelb
     class InnerSite
     {
       public:
-        InnerSite(site_t localContiguousIndex,
-                  typename util::constSelector<isConst, geometry::LatticeData&,
-                      const geometry::LatticeData&>::type latticeData) :
-            index(localContiguousIndex), latticeData(latticeData)
+        InnerSite(site_t localContiguousIndex, typename util::constSelector<isConst, geometry::LatticeData&,
+            const geometry::LatticeData&>::type latticeData) :
+          index(localContiguousIndex), latticeData(latticeData)
         {
         }
 
@@ -90,6 +89,11 @@ namespace hemelb
         inline const SiteData GetSiteData() const
         {
           return latticeData.GetSiteData(index);
+        }
+
+        inline const util::Vector3D<site_t>& GetGlobalSiteCoords() const
+        {
+          return latticeData.GetGlobalSiteCoords(index);
         }
 
       private:
