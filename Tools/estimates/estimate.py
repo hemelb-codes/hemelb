@@ -37,10 +37,13 @@ class Estimator:
         'capillary':0.79*mm/s,
         'mca':44.0*cm/s
     }
-    props=['name','resolution','lengths','cycles','rate','mach','speed',
-    'voxel_size','sites','duration','min_speed_sound','step','steps','cyclesteps','model_speed','model_time','cores']
+    string_props=['name']
+    unit_props=['rate','model_time','diameter','model_speed']
+    out_props=['voxel_size','duration','min_speed_sound','step','cyclesteps','steps','sites','cores']
+    float_props=['resolution','lengths','cycles','mach','speed']
+    props=string_props+float_props+unit_props+out_props
     def __init__(self,name=None,diameter=None,resolution=30.0,lengths=1000.0,cycles=3.0,rate=70.0/min, 
-                mach=0.1, speed=None, model_speed=10**6/s, model_time=1*min):
+                mach=0.1, speed=None, model_speed=10**6/s, model_time=1.0*min):
         self.resolution=resolution
         self.diameter=diameter
         self.lengths=lengths
@@ -77,7 +80,14 @@ class Estimator:
     
 def main():
     parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-    for prop in Estimator.props:
+    class EvalAction(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, eval(values))
+    for prop in Estimator.unit_props:
+        parser.add_argument("--"+prop,action=EvalAction)
+    for prop in Estimator.float_props:
+        parser.add_argument("--"+prop,type=float)
+    for prop in Estimator.string_props:
         parser.add_argument("--"+prop)
     est=Estimator(**vars(parser.parse_args()))
     est.Display()
