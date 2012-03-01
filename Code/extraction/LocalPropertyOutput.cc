@@ -7,12 +7,15 @@ namespace hemelb
   namespace extraction
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec) :
-      dataSource(dataSource), outputSpec(outputSpec)
+        dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      MPI_File_open(MPI_COMM_WORLD, const_cast<char*> (outputSpec.filename.c_str()), MPI_MODE_WRONLY | MPI_MODE_CREATE
-          | MPI_MODE_EXCL, MPI_INFO_NULL, &outputFile);
+      MPI_File_open(MPI_COMM_WORLD,
+                    const_cast<char*>(outputSpec.filename.c_str()),
+                    MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
+                    MPI_INFO_NULL,
+                    &outputFile);
 
       buffer = new char[writeLength];
 
@@ -60,10 +63,10 @@ namespace hemelb
         writeLength += 8;
       }
 
-      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<unsigned> (), MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<unsigned>(), MPI_SUM, MPI_COMM_WORLD);
 
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t>(), MPI_SUM, 0, MPI_COMM_WORLD);
 
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
@@ -80,7 +83,7 @@ namespace hemelb
         char* headerBuffer = new char[headerSize];
         io::writers::xdr::XdrMemWriter writer(headerBuffer, headerSize);
 
-        writer << outputSpec.fields.size();
+        writer << (uint64_t) outputSpec.fields.size();
         for (unsigned outputNumber = 0; outputNumber < outputSpec.fields.size(); ++outputNumber)
         {
           writer << outputSpec.fields[outputNumber].name;
@@ -94,14 +97,14 @@ namespace hemelb
         localDataOffsetIntoFile = headerSize;
 
         localDataOffsetIntoFile += writeLength;
-        MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<MPI_Offset> (), 1, 1, MPI_COMM_WORLD);
+        MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t>(), 1, 1, MPI_COMM_WORLD);
         localDataOffsetIntoFile -= writeLength;
       }
       else
       {
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
-                 MpiDataType<MPI_Offset> (),
+                 MpiDataType<uint64_t>(),
                  topology::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
@@ -113,7 +116,7 @@ namespace hemelb
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
-                   MpiDataType<MPI_Offset> (),
+                   MpiDataType<uint64_t>(),
                    topology::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
