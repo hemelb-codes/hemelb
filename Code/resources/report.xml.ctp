@@ -12,6 +12,7 @@
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
 		<date>{{TIME}}</date>
+		<reading_group>{{READING_GROUP_SIZE}}</reading_group>
 	</build>
 	{{/BUILD}}
 	<nodes>
