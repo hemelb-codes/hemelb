@@ -13,6 +13,8 @@ option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 
+set(HEMELB_READING_GROUP_SIZE 5
+  CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
@@ -32,6 +34,8 @@ if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS_RELEASE ${HEMELB_OPTIMISATION})
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
+
+add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)

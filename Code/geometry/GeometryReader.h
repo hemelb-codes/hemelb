@@ -13,6 +13,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "geometry/ReadResult.h"
+#include "geometry/Decomposition.h"
 
 namespace hemelb
 {
@@ -40,24 +41,22 @@ namespace hemelb
                           proc_t* unitForEachBlock,
                           const site_t* fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(const proc_t* unitForEachBlock,
-                               const proc_t localRank);
+        void ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank);
 
         void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
-         * @param iGlobLatDat
          * @param offsetSoFar
-         * @param buffer
-         * @param procsWantingThisBlockBuffer
+         * @param procsWantingThisBlock
          * @param blockNumber
          * @param sites
-         * @param bytes
+         * @param compressedBytes
+         * @param uncompressedBytes
          * @param neededOnThisRank
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
-                         int* procsWantingThisBlockBuffer,
+                         const std::vector<proc_t>& procsWantingThisBlock,
                          const site_t blockNumber,
                          const site_t sites,
                          const unsigned int compressedBytes,
@@ -72,7 +71,8 @@ namespace hemelb
          * @param sites
          * @return
          */
-        std::vector<char> DecompressBlockData(const std::vector<char>& compressed, const unsigned int uncompressedBytes);
+        std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
+                                              const unsigned int uncompressedBytes);
 
         void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
 
@@ -80,6 +80,7 @@ namespace hemelb
 
         /**
          * Calculates the number of the rank used to read in a given block.
+         * Intent is to move this into Decomposition class, which will also handle knowledge of which procs to use for reading, and own the decomposition topology.
          *
          * @param blockNumber
          * @return
@@ -136,9 +137,7 @@ namespace hemelb
                             const idx_t* vtxDistribn,
                             const idx_t* partitionVector);
 
-        void RereadBlocks(const idx_t* movesPerProc,
-                          const idx_t* movesList,
-                          const int* procForEachBlock);
+        void RereadBlocks(const idx_t* movesPerProc, const idx_t* movesList, const int* procForEachBlock);
 
         void ImplementMoves(const proc_t* procForEachBlock,
                             const idx_t* movesFromEachProc,
@@ -147,7 +146,7 @@ namespace hemelb
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
         static const proc_t HEADER_READING_RANK = 0;
-        static const proc_t READING_GROUP_SIZE = 5;
+        static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         GeometryReadResult& readingResult;
         MPI_File file;
