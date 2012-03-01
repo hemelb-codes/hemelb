@@ -13,7 +13,7 @@ from __future__ import print_function
 # Speed: Flow speed in the vessel: default: diameter / 0.006s
 # Based on: 
 # Capilliary 5um : 0.79 mm/s doi 10.1016/0026-2862(81)90084-4, 
-# Cerebral artery 3mm: 44 cm/s 
+# Cerebral artery 3mm: 44 cm/s Aneths analg 1995 81; 84-9 and Stroke. 2000 Jul;31(7):1672-8
 # Max mach: maximum mach number allowed, default 0.05
 # Heart rate: Default 70 bpm
 # Cycles: Number of heartbeats modelled: default 3
