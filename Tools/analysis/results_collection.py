@@ -23,5 +23,5 @@ class ResultsCollection(object):
             return ok if not invert else not ok
         results=filter(filtration,self.results)
         if latest:
-            results=sorted(results,key=lambda result: result.report_created_timestamp)[-1*latest-1:-1]
+            results=sorted(results,key=lambda result: result.report_created_timestamp)[-1*latest:]
         return results

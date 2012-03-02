@@ -64,7 +64,7 @@ class Action(object):
         self.pp=PrettyPrinter(stream=self.stream)
     def start(self):
         if self.action=='display':
-            print("#",end='')
+            print("#",end='',file=self.stream)
             print(*self.arguments,file=self.stream)
     def __call__(self,result):
         getattr(self,self.action)(result,*self.arguments)
@@ -73,7 +73,7 @@ class Action(object):
     def inspect(self,result):
         self.pp.pprint(result.hash())
     def display(self,result,*cols):
-        self.writer.writerow([result.datum(col) for col in cols])
+        self.writer.writerow(map(lambda x: x if not x==None else 'None',[result.datum(col) for col in cols]))
     def name(self,result):
         print(result.name,file=self.stream)
     def accept(self,result):
@@ -84,9 +84,14 @@ class Action(object):
         acceptance.write("Accepted: NO")
     def delete(self,result):
         shutil.rmtree(result.path,ignore_errors=True)
+    def cat(self,result,*files):
+        for afile in files:
+            content=open(os.path.join(result.path,afile)).read()
+            print(content,file=self.stream)
 
 def main():
     Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
 
 if __name__ == '__main__':
-    cProfile.run(main(),curate.prof)
+    main()
+    #cProfile.run('main()','curate.prof')
