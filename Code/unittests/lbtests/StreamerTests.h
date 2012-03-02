@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "lb/streamers/Streamers.h"
+#include "geometry/SiteData.h"
 
 namespace hemelb
 {
@@ -178,7 +179,12 @@ namespace hemelb
                                                        streamedToFNew[streamedDirection],
                                                        allowedError);
                 }
-
+                else if (streamedSite.GetSiteType() == geometry::INLET_TYPE ||
+                    streamedSite.GetSiteType() == geometry::OUTLET_TYPE)
+                {
+                  // No reason to further test an inlet/outlet site.
+                  // Pass.
+                }
                 else
                 {
                   std::stringstream message;
