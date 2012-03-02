@@ -46,7 +46,7 @@ class SimulationMaster
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
-    hemelb::reporting::BuildInfo* build_info;
+    hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
     MapType snapshotsCompleted;
