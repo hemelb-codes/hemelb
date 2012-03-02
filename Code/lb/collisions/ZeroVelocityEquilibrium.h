@@ -46,7 +46,7 @@ namespace hemelb
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {
-              iHydroVars.GetFPostCollision()[direction] = iHydroVars.GetFEq()[direction];
+              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
             }
           }
 
