@@ -22,12 +22,12 @@ namespace hemelb
         return false;
       }
 
-      ++position;
-
       location = data.GetSite(position).GetGlobalSiteCoords();
       pressure = converter.ConvertPressureToPhysicalUnits(propertyCache.GetDensity(position) * Cs2);
       velocity = converter.ConvertVelocityToPhysicalUnits(propertyCache.GetVelocity(position));
       stress = converter.ConvertStressToPhysicalUnits(propertyCache.GetStress(position));
+
+      ++position;
 
       return true;
     }
