@@ -33,9 +33,14 @@ namespace hemelb
 
       // Use magnitude squared as it saves a sqrt operation.
       const float perpendicularDistanceSquared =
-          ( (endpoint1 + lineVector * lengthAlongLine) - location).GetMagnitudeSquared();
+          ( (endpoint1 + lineVector * lengthAlongLine / lineLength) - location).GetMagnitudeSquared();
 
-      return perpendicularDistanceSquared <= (0.5 * 0.5 * data.GetVoxelSize() * data.GetVoxelSize());
+      // This is chosen so that a line as far as possible from all lattice points will
+      // still gather some data.
+      // The worst case is when the line is lattice-aligned and is passing through the centre
+      // of voxels. The perpendicular distance from the line here is the distance from the corner
+      // of a voxel-sized square to its centre.
+      return perpendicularDistanceSquared <= (2.0 * 0.5 * 0.5 * data.GetVoxelSize() * data.GetVoxelSize());
     }
   }
 }

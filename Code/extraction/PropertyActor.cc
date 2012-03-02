@@ -5,16 +5,21 @@ namespace hemelb
   namespace extraction
   {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
-                                 const std::vector<PropertyOutputFile>& propertyOutputs,
+                                 const std::vector<PropertyOutputFile*>& propertyOutputs,
                                  IterableDataSource& dataSource) :
-      simulationState(simulationState), propertyWriter(dataSource, propertyOutputs)
+        simulationState(simulationState)
     {
+      propertyWriter = new PropertyWriter(dataSource, propertyOutputs);
+    }
 
+    PropertyActor::~PropertyActor()
+    {
+      delete propertyWriter;
     }
 
     void PropertyActor::EndIteration()
     {
-      propertyWriter.Write(simulationState.GetTimeStep());
+      propertyWriter->Write(simulationState.GetTimeStep());
     }
 
   }

@@ -2,6 +2,7 @@
 #define HEMELB_EXTRACTION_PROPERTYACTOR_H
 
 #include "extraction/PropertyWriter.h"
+#include "io/PathManager.h"
 #include "lb/SimulationState.h"
 #include "net/IteratedAction.h"
 
@@ -20,8 +21,10 @@ namespace hemelb
          * @return
          */
         PropertyActor(const lb::SimulationState& simulationState,
-                      const std::vector<PropertyOutputFile>& propertyOutputs,
+                      const std::vector<PropertyOutputFile*>& propertyOutputs,
                       IterableDataSource& dataSource);
+
+        ~PropertyActor();
 
         /**
          * Override the iterated actor end of iteration method to perform writing.
@@ -30,7 +33,7 @@ namespace hemelb
 
       private:
         const lb::SimulationState& simulationState;
-        PropertyWriter propertyWriter;
+        PropertyWriter* propertyWriter;
     };
   }
 }

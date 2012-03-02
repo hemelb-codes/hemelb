@@ -17,6 +17,7 @@ namespace hemelb
 
       imageDirectory = outputDir + "/Images/";
       snapshotDirectory = outputDir + "/Snapshots/";
+      dataPath = outputDir + "/Extracted/";
 
       if (doIo)
       {
@@ -30,6 +31,7 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(snapshotDirectory);
+        hemelb::util::MakeDirAllRXW(dataPath);
         reportName = outputDir;
       }
 
@@ -71,6 +73,11 @@ namespace hemelb
       char snapshotFilename[255];
       snprintf(snapshotFilename, 255, "snapshot_%06li.dat", time);
       return (snapshotDirectory + std::string(snapshotFilename)); // by copy
+    }
+
+    const std::string& PathManager::GetDataExtractionPath() const
+    {
+      return dataPath;
     }
 
     void PathManager::SaveConfiguration(configuration::SimConfig * const simConfig) const
