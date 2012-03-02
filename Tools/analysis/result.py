@@ -52,6 +52,10 @@ class ResultProperty(object):
     def parse_value(value):
         if value in ['None','none',None]:
             return None
+        if value in ['True','true',True]:
+            return True
+        if value in ['False','false',False]:
+            return False
         try:
             return int(value)
         except (TypeError,ValueError):
@@ -137,7 +141,7 @@ def stat_loader(path):
     return os.stat(path)
 
 
-def nul_filter(result):
+def null_filter(result):
     return None
 def name_filter(result):
     return result.name
@@ -154,8 +158,15 @@ def shell_filter(result):
     return functools.partial(subprocess.check_output,cwd=os.path.expanduser(result.path))
 def mercurial_filter(result):
     def generator(template):
-        if not result.build_number: raise ParseError("No mercurial revision specified.")
-        return subprocess.check_output(["hg","log","-r",result.build_number,"--template",template],cwd=environment.localroot)
+        if not result.changeset: raise ParseError("No mercurial revision specified.")
+        if result.changeset[-1]=='+':
+            changeset=result.changeset[:-1]
+        else:
+            changeset=result.changeset
+        try:
+            return subprocess.check_output(["hg","log","-r",changeset,"--template",template],cwd=environment.localroot)
+        except subprocess.CalledProcessError as err:
+            raise ParseError("Problem calling mercurial: %s"%err)
     return generator
 
 def result_model(config):
@@ -214,7 +225,7 @@ def result_model(config):
     Result.define_file_properties(config.get('text_files'),text_loader,regex_parser)
     Result.define_file_properties(config.get('xml_files'),xml_loader,element_parser)
     Result.define_properties(ResultContent(name_filter),config.get('name_properties'),regex_parser)
-    Result.define_properties(ResultContent(nul_filter),config.get('fixed_properties'),identity_parser)
+    Result.define_properties(ResultContent(null_filter),config.get('fixed_properties'),identity_parser)
     Result.define_properties(ResultContent(binding_filter),config.get('compound_properties'),eval_parser)
     Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
