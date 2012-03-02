@@ -47,19 +47,20 @@ namespace hemelb
                                               voxelSize);
             initParams.lbmParams = lbmParams;
 
-            entropic = new lb::kernels::Entropic(initParams);
-            lbgk = new lb::kernels::LBGK(initParams);
+            entropic = new lb::kernels::Entropic<D3Q15>(initParams);
+            lbgk = new lb::kernels::LBGK<D3Q15>(initParams);
 
             /*
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
              *  values of tau consistent). One to be used with CalculateDensityVelocityFeq and another with CalculateFeq.
              */
             lbgknn0 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
             lbgknn1 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
 
-            mrtLbgkEquivalentKernel = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
+            mrtLbgkEquivalentKernel = new lb::kernels::MRT<
+                lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -88,8 +89,8 @@ namespace hemelb
              * Case 1: use the function that leaves density and velocity and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             entropic->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -195,8 +196,8 @@ namespace hemelb
              * Case 1: test the function that uses a given density and velocity, and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             lbgk->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -304,7 +305,8 @@ namespace hemelb
               f_setB[ii] = ((float) (D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> LB_KERNEL;
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
+                D3Q15> LB_KERNEL;
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -490,13 +492,15 @@ namespace hemelb
              */
             std::vector<distribn_t> relaxationParameters;
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
-            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS, oneOverTau);
+            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS,
+                                        oneOverTau);
             mrtLbgkEquivalentKernel->SetMrtRelaxationParameters(relaxationParameters);
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
+            lb::kernels::HydroVars<
+                lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -551,9 +555,9 @@ namespace hemelb
         private:
           geometry::LatticeData* latDat;
           lb::LbmParameters* lbmParams;
-          lb::kernels::Entropic* entropic;
-          lb::kernels::LBGK* lbgk;
-          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
+          lb::kernels::Entropic<D3Q15>* entropic;
+          lb::kernels::LBGK<D3Q15>* lbgk;
+          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15> *lbgknn0,
               *lbgknn1;
           lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
           site_t numSites;

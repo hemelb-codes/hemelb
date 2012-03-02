@@ -2,21 +2,24 @@
 #define HEMELBSETUPTOOL_NEIGHBOURS_H
 
 #include <vector>
-
-#include "D3Q15.h"
 #include "Index.h"
+
+#include "io/formats/geometry.h"
+// shortcut to geometry class
+using hemelb::io::formats::geometry;
 
 struct Neighbours {
 	// This assumes that the hemelb lattice descriptor class has a zero vector.
 
 	enum {
-		n = hemelb::D3Q15::NUMVECTORS - 1
+		n = geometry::NumberOfDisplacements
 	};
 	enum {
 		nLater = n / 2
 	};
+
 	static std::vector<unsigned int> laterNeighbourIndices;
-	static std::vector<Index> vectors;
+	static geometry::DisplacementVector vectors;
 	static std::vector<double> norms;
 	static std::vector<unsigned int> inverses;
 

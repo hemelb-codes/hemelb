@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STREAMERS_MRT_H
-#define HEMELB_LB_STREAMERS_MRT_H
+#ifndef HEMELB_LB_KERNELS_MRT_H
+#define HEMELB_LB_KERNELS_MRT_H
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/SimulationState.h"
@@ -16,11 +16,11 @@ namespace hemelb
       template<class MomentBasis> class MRT;
 
       template<class MomentBasis>
-      struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase
+      struct HydroVars<MRT<MomentBasis> > : public HydroVarsBase<typename MomentBasis::Lattice>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+              HydroVarsBase<typename MomentBasis::Lattice>(f)
           {
           }
 
@@ -42,7 +42,7 @@ namespace hemelb
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
       template<class MomentBasis>
-      class MRT : public BaseKernel<MRT<MomentBasis> >
+      class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
       {
         public:
 
@@ -53,14 +53,14 @@ namespace hemelb
 
           inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
-                                               hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateDensityVelocityFEq(hydroVars.f,
+                                                              hydroVars.density,
+                                                              hydroVars.v_x,
+                                                              hydroVars.v_y,
+                                                              hydroVars.v_z,
+                                                              hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -71,13 +71,13 @@ namespace hemelb
 
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            D3Q15::CalculateFeq(hydroVars.density,
-                                hydroVars.v_x,
-                                hydroVars.v_y,
-                                hydroVars.v_z,
-                                hydroVars.f_eq.f);
+            MomentBasis::Lattice::CalculateFeq(hydroVars.density,
+                                               hydroVars.v_x,
+                                               hydroVars.v_y,
+                                               hydroVars.v_z,
+                                               hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -88,7 +88,7 @@ namespace hemelb
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<MRT>& hydroVars)
           {
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
             {
               /** @todo #61 many optimisations possible (and necessary!).
                *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS

@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-
+#include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrReader.h"
 
 namespace hemelb
@@ -36,6 +33,14 @@ namespace hemelb
         bool XdrReader::readUnsignedInt(unsigned int& outUInt)
         {
           return xdr_u_int(&mXdr, &outUInt);
+        }
+
+        bool XdrReader::readUnsignedLong(uint64_t& outULong)
+        {
+          u_quad_t temporary;
+          bool ret = xdr_uint64_t(&mXdr, &temporary);
+          outULong = temporary;
+          return ret;
         }
 
         unsigned int XdrReader::GetPosition()

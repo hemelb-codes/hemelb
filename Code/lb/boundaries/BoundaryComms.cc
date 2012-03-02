@@ -2,7 +2,6 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
-#include <math.h>
 
 namespace hemelb
 {

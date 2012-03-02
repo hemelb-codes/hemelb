@@ -8,16 +8,21 @@ parser = ArgumentParser(description='Generate the config file '
 
 parser.add_argument('profile', nargs=1, help='The profile to '
                     'use. Other options given override those in the '
-                    'profile file.')
+                    'profile file.',
+                    metavar='PATH')
 
 parser.add_argument('--stl', default=None, dest='StlFile',
-                    help='The STL file to use as input')
-parser.add_argument('--config', default=None, dest='OutputConfigFile',
-                    help='Config output file')
+                    help='The STL file to use as input',
+                    metavar='PATH')
+parser.add_argument('--geometry', default=None, dest='OutputGeometryFile',
+                    help='Config output file',
+                    metavar='PATH')
 parser.add_argument('--xml', default=None, dest='OutputXmlFile',
-                    help='XML output file')
-parser.add_argument('--voxel', default=None, type=float,
-                    help='The voxel size in metres')
+                    help='XML output file',
+                    metavar='PATH')
+parser.add_argument('--voxel', default=None, type=float, dest='VoxelSizeMetres',
+                    help='The voxel size in metres',
+                    metavar='FLOAT')
 
 # Parse
 args = parser.parse_args()

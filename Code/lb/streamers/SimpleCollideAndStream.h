@@ -12,9 +12,12 @@ namespace hemelb
     namespace streamers
     {
 
-      template<typename CollisionType>
-      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionType> >
+      template<typename CollisionImpl>
+      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -26,15 +29,15 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t firstIndex,
+                                         const site_t siteCount,
+                                         const LbmParameters* lbmParams,
+                                         geometry::LatticeData* latDat,
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
-            for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              const geometry::Site site = bLatDat->GetSite(iIndex);
+              const geometry::Site site = latDat->GetSite(siteIndex);
 
               distribn_t* lFOld = site.GetFOld();
 
@@ -42,12 +45,11 @@ namespace hemelb
 
               collider.CalculatePreCollision(hydroVars, site);
 
-              collider.Collide(iLbmParams, hydroVars);
+              collider.Collide(lbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] =
-                    hydroVars.GetFPostCollision()[ii];
+                * (latDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] = hydroVars.GetFPostCollision()[ii];
 
               }
 
@@ -57,8 +59,8 @@ namespace hemelb
                                                                                                site,
                                                                                                hydroVars.GetFNeq().f,
                                                                                                hydroVars.density,
-                                                                                               iLbmParams,
-                                                                                               iControl);
+                                                                                               lbmParams,
+                                                                                               propertyCache);
             }
           }
 
@@ -67,7 +69,7 @@ namespace hemelb
                                  const site_t iSiteCount,
                                  const LbmParameters* iLbmParams,
                                  geometry::LatticeData* bLatDat,
-                                 hemelb::vis::Control *iControl)
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
 
           }

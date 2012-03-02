@@ -1,8 +1,8 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRREADER_H
+#include <stdint.h>
 
-#include <rpc/types.h>
-#include <rpc/xdr.h>
+#include <io/writers/xdr/xdr.h>
 
 namespace hemelb
 {
@@ -12,7 +12,6 @@ namespace hemelb
     {
       namespace xdr
       {
-
         // Class to read an Xdr-style file from disk.
         class XdrReader
         {
@@ -25,6 +24,7 @@ namespace hemelb
             bool readFloat(float& outDouble);
             bool readInt(int& outInt);
             bool readUnsignedInt(unsigned int& outUInt);
+            bool readUnsignedLong(uint64_t& outULong);
 
             // Get the position in the stream.
             unsigned int GetPosition();

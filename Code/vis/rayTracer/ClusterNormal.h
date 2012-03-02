@@ -18,7 +18,8 @@ namespace hemelb
                         unsigned short zBlockCount,
                         const util::Vector3D<float>& minimalSite,
                         const util::Vector3D<float>& maximalSite,
-                        const util::Vector3D<float>& minimalSiteOnMinimalBlock);
+                        const util::Vector3D<float>& minimalSiteOnMinimalBlock,
+                        const util::Vector3D<site_t>& minimalBlock);
 
           const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 

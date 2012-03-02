@@ -1,11 +1,12 @@
 #ifndef HEMELB_LB_STREAMERS_BASESTREAMER_H
 #define HEMELB_LB_STREAMERS_BASESTREAMER_H
 
-#include <math.h>
+#include <cmath>
 
 #include "geometry/LatticeData.h"
 #include "vis/Control.h"
 #include "lb/LbmParameters.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
@@ -26,6 +27,7 @@ namespace hemelb
        *
        * The following must be implemented by concrete streamers (which derive from this class
        * using the CRTP).
+       *  - typedef for CollisionType, the type of the collider operation.
        *  - Constructor(InitParams&)
        *  - <bool tDoRayTracing> DoStreamAndCollide(const site_t, const site_t, const LbmParameters*,
        *      geometry::LatticeData*, hemelb::vis::Control*)
@@ -38,33 +40,33 @@ namespace hemelb
       {
         public:
           template<bool tDoRayTracing>
-          inline void StreamAndCollide(const site_t iFirstIndex,
-                                       const site_t iSiteCount,
-                                       const LbmParameters* iLbmParams,
-                                       geometry::LatticeData* bLatDat,
-                                       hemelb::vis::Control *iControl)
+          inline void StreamAndCollide(const site_t firstIndex,
+                                       const site_t siteCount,
+                                       const LbmParameters* lbmParams,
+                                       geometry::LatticeData* latDat,
+                                       lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(iFirstIndex,
-                                                                                         iSiteCount,
-                                                                                         iLbmParams,
-                                                                                         bLatDat,
-                                                                                         iControl);
+            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(firstIndex,
+                                                                                         siteCount,
+                                                                                         lbmParams,
+                                                                                         latDat,
+                                                                                         propertyCache);
           }
 
           template<bool tDoRayTracing>
-          inline void PostStep(const site_t iFirstIndex,
-                               const site_t iSiteCount,
-                               const LbmParameters* iLbmParams,
-                               geometry::LatticeData* bLatDat,
-                               hemelb::vis::Control *iControl)
+          inline void PostStep(const site_t firstIndex,
+                               const site_t siteCount,
+                               const LbmParameters* lbmParams,
+                               geometry::LatticeData* latDat,
+                               lb::MacroscopicPropertyCache& propertyCache)
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(iFirstIndex,
-                                                                                 iSiteCount,
-                                                                                 iLbmParams,
-                                                                                 bLatDat,
-                                                                                 iControl);
+            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(firstIndex,
+                                                                                 siteCount,
+                                                                                 lbmParams,
+                                                                                 latDat,
+                                                                                 propertyCache);
           }
 
           inline void Reset(kernels::InitParams* init)
@@ -74,43 +76,43 @@ namespace hemelb
 
         protected:
           template<bool tDoRayTracing>
-          inline static void UpdateMinsAndMaxes(distribn_t iVx,
-                                                distribn_t iVy,
-                                                distribn_t iVz,
+          inline static void UpdateMinsAndMaxes(distribn_t velocity_x,
+                                                distribn_t velocity_y,
+                                                distribn_t velocity_z,
                                                 const geometry::Site& site,
                                                 const distribn_t* f_neq,
-                                                const distribn_t iDensity,
-                                                const LbmParameters* iLbmParams,
-                                                hemelb::vis::Control *iControl)
+                                                const distribn_t density,
+                                                const LbmParameters* lbmParams,
+                                                lb::MacroscopicPropertyCache& propertyCache)
           {
-            if (tDoRayTracing)
-            {
-              distribn_t rtStress;
+            propertyCache.SetDensity(site.GetIndex(), density);
+            propertyCache.SetVelocity(site.GetIndex(), velocity_x, velocity_y, velocity_z);
 
-              if (iLbmParams->StressType == ShearStress)
+            distribn_t stress;
+
+            if (lbmParams->StressType == ShearStress)
+            {
+              if (!site.IsEdge())
               {
-                if (!site.IsEdge())
-                {
-                  rtStress = NO_VALUE;
-                }
-                else
-                {
-                  D3Q15::CalculateShearStress(iDensity,
-                                              f_neq,
-                                              site.GetWallNormal(),
-                                              rtStress,
-                                              iLbmParams->GetStressParameter());
-                }
+                stress = NO_VALUE;
               }
               else
               {
-                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->GetStressParameter());
+                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(density,
+                                                                                        f_neq,
+                                                                                        site.GetWallNormal(),
+                                                                                        stress,
+                                                                                        lbmParams->GetStressParameter());
               }
-
-              // TODO: It'd be nice if the /iDensity were unnecessary.
-              distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
-              iControl->RegisterSite(site.GetIndex(), iDensity, lVelocity, rtStress);
             }
+            else
+            {
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
+                                                                                         stress,
+                                                                                         lbmParams->GetStressParameter());
+            }
+
+            propertyCache.SetStress(site.GetIndex(), stress);
           }
 
       };

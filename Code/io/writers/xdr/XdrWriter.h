@@ -1,8 +1,7 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRWRITER_H
 #define HEMELB_IO_WRITERS_XDR_XDRWRITER_H
 
-#include <rpc/types.h>
-#include <rpc/xdr.h>
+#include "io/writers/xdr/xdr.h"
 
 #include "io/writers/Writer.h"
 
@@ -39,6 +38,7 @@ namespace hemelb
             void _write(double const& doubleToWrite);
             void _write(float const& floatToWrite);
 
+            void _write(const std::string& floatToWrite);
         };
 
       } // namespace xdr

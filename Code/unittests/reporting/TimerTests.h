@@ -4,7 +4,7 @@
 #include <cppunit/TestFixture.h>
 #include "reporting/Timers.h"
 #include "reporting/Timers.hpp"
-#include "Mocks.h"
+#include "unittests/reporting/Mocks.h"
 
 namespace hemelb
 {

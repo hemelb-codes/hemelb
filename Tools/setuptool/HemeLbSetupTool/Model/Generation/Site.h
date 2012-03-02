@@ -2,8 +2,11 @@
 #define HEMELBSETUPTOOL_SITE_H
 
 #include <vector>
-
 #include "Index.h"
+#include "io/formats/geometry.h"
+// shortcut to geometry class
+using hemelb::io::formats::geometry;
+
 class Iolet;
 class Block;
 class Domain;
@@ -11,38 +14,41 @@ class Domain;
 class LaterNeighbourIterator;
 class NeighbourIterator;
 
+struct LinkData {
+	geometry::CutType Type;
+	float Distance;
+	unsigned int IoletId;
+	inline LinkData() : Type(geometry::CUT_NONE), Distance(0.) {};
+};
+
 // A single lattice site
 class Site {
 public:
 	Site(Block& block, Index& index);
 	Site(Block& block, unsigned int i, unsigned int j, unsigned int k);
-	unsigned int GetType() const;
-	unsigned int GetConfig();
 	bool IsFluidKnown;
 	bool IsFluid;
-	bool IsEdge;
-	Vector BoundaryNormal;
-	double BoundaryDistance;
-	Vector WallNormal;
-	double WallDistance;
-	std::vector<double> CutDistances;
-	std::vector<int> CutCellIds;
-	Iolet* AdjacentIolet;
-	unsigned int BoundaryId;
+	std::vector<LinkData> Links;
 	Vector Position;
+
+	inline void CreateLinksVector() {
+		Links.resize(geometry::NumberOfDisplacements);
+	}
 
 	LaterNeighbourIterator begin();
 	LaterNeighbourIterator end();
 	NeighbourIterator beginall();
 	NeighbourIterator endall();
-	inline const Index& GetIndex() {
+	inline const Index& GetIndex() const {
 		return this->index;
+	}
+	inline const Block& GetBlock() const {
+			return this->block;
 	}
 	const Index GetDomainBlockCount();
 	const int GetDomainBlockSize();
 
 protected:
-	void Init();
 	Block& block;
 	Index index;
 	friend class NeighbourIteratorBase;

@@ -20,9 +20,8 @@ namespace hemelb
           class GeometryReader : public hemelb::geometry::GeometryReader
           {
             public:
-              GeometryReader(const bool reserveSteeringCore,
-                             hemelb::geometry::GeometryReadResult& readResult) :
-                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult)
+              GeometryReader(const bool reserveSteeringCore, hemelb::geometry::GeometryReadResult& readResult, reporting::Timers &timings) :
+                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult, timings)
               {
               }
           };
@@ -34,17 +33,20 @@ namespace hemelb
           CPPUNIT_TEST(TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
+          
+          GeometryReaderTests():timings(){}
+          
           void setUp()
           {
             readResult = new GeometryReadResult();
-            reader = new TestableLatticeData::GeometryReader(false, *readResult);
+            reader = new TestableLatticeData::GeometryReader(false, *readResult, timings);
             lattice = NULL;
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             fourCube = FourCubeLatticeData::Create();
             FolderTestFixture::setUp();
             CopyResourceToTempdir("four_cube.xml");
-            CopyResourceToTempdir("four_cube.dat");
+            CopyResourceToTempdir("four_cube.gmy");
             simConfig = configuration::SimConfig::Load("four_cube.xml");
           }
 
@@ -60,12 +62,12 @@ namespace hemelb
 
           void TestRead()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath);
           }
 
           void TestSameAsFourCube()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath, timings);
+            reader->LoadAndDecompose(simConfig->DataFilePath);
 
             site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)
@@ -77,8 +79,13 @@ namespace hemelb
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
                   util::Vector3D<site_t> location(i, j, k);
 
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetRawValue(),
-                                       readResult->Blocks[0].Sites[siteIndex].siteData.GetRawValue());
+                  hemelb::geometry::SiteData siteData(readResult->Blocks[0].Sites[siteIndex]);
+
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetOtherRawData(),
+                                       siteData.GetOtherRawData());
+
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetIntersectionData(),
+                                       siteData.GetIntersectionData());
 
                   siteIndex++;
                 }

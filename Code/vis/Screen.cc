@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include "vis/Screen.h"
