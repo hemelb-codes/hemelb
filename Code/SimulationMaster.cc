@@ -23,7 +23,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options) :
-    timings()
+  timings(),build_info()
 {
   if (options.HasProblems())
   {
@@ -42,7 +42,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   visualisationControl = NULL;
   propertyExtractor = NULL;
   simulationState = NULL;
-  build_info = new hemelb::reporting::BuildInfo();
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
   steeringSessionId = options.GetSteeringSessionId();
@@ -58,7 +57,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   if (IsCurrentProcTheIOProc())
   {
     reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile());
-    reporter->AddReportable(build_info);
+    reporter->AddReportable(&build_info);
     reporter->AddReportable(incompressibilityChecker);
     reporter->AddReportable(&timings);
     reporter->AddReportable(latticeData);
@@ -92,7 +91,6 @@ SimulationMaster::~SimulationMaster()
   delete simulationState;
   delete unitConvertor;
   delete incompressibilityChecker;
-  delete build_info;
 
   delete simConfig;
   delete fileManager;
@@ -133,10 +131,11 @@ void SimulationMaster::Initialise()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
-  latticeData = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                                    latticeType::GetLatticeInfo(),
-                                                    simConfig->DataFilePath,
-                                                    timings);
+  latticeData
+      = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                                            latticeType::GetLatticeInfo(),
+                                            simConfig->DataFilePath,
+                                            timings);
   timings[hemelb::reporting::Timers::netInitialise].Stop();
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
@@ -161,11 +160,8 @@ void SimulationMaster::Initialise()
                                                                  simulationState,
                                                                  timings);
   entropyTester = NULL;
-  incompressibilityChecker =
-      new hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>(latticeData,
-                                                                                                   &communicationNet,
-                                                                                                   simulationState,
-                                                                                                   timings);
+  incompressibilityChecker = new hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>,
+      latticeType>(latticeData, &communicationNet, simulationState, timings);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
@@ -225,9 +221,9 @@ void SimulationMaster::Initialise()
           + simConfig->propertyOutputs[outputNumber]->filename;
     }
 
-//    propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
-//                                                              simConfig->propertyOutputs,
-//                                                              *propertyDataSource);
+    propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
+                                                              simConfig->propertyOutputs,
+                                                              *propertyDataSource);
   }
 }
 
