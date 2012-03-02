@@ -22,11 +22,6 @@
 
 using namespace hemelb::io::formats;
 
-InconsistentFluidnessError::InconsistentFluidnessError(const Site& s1,
-		const Site& s2, const int nHits) :
-	s1(s1), s2(s2), nHits(nHits) {
-}
-
 void FormatSite(std::ostringstream& msg, const Site& site) {
 	msg << "site index " << site.GetIndex() << ", position " << site.Position
 			<< ", which is ";
@@ -36,14 +31,21 @@ void FormatSite(std::ostringstream& msg, const Site& site) {
 		msg << "solid";
 }
 
+InconsistentFluidnessError::InconsistentFluidnessError(const Site& s1,
+		const Site& s2, const int nHits) :
+	s1(s1), s2(s2), nHits(nHits) {
+	std::ostringstream msgStream;
+	msgStream << "Inconsistent fluidness detected between ";
+	FormatSite(msgStream, s1);
+	msgStream << " and ";
+	FormatSite(msgStream, s2);
+	msgStream << " but found " << nHits << " intersections with the surface.";
+	this->msg = msgStream.str();
+}
+
+
 const char* InconsistentFluidnessError::what() const throw () {
-	std::ostringstream msg;
-	msg << "Inconsistent fluidness detected between ";
-	FormatSite(msg, s1);
-	msg << " and ";
-	FormatSite(msg, s2);
-	msg << " but found " << nHits << " intersections with the surface.";
-	return msg.str().c_str();
+	return this->msg.c_str();
 }
 
 GeometryGenerator::GeometryGenerator() :

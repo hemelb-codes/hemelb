@@ -17,8 +17,11 @@ class ResultsCollection(object):
         results=os.listdir(os.path.expanduser(source_path))
         Result=result.result_model(config)
         self.results=[Result(os.path.join(source_path,res)) for res in results]
-    def filter(self,selection,invert=False):
+    def filter(self,selection,invert=False,latest=False):
         def filtration(result):
-            ok=all([result.datum(prop)==value for prop,value in selection.iteritems()])
+            ok=all([result.query(prop,value) for prop,value in selection.iteritems()])
             return ok if not invert else not ok
-        return filter(filtration,self.results)
+        results=filter(filtration,self.results)
+        if latest:
+            results=sorted(results,key=lambda result: result.report_created_timestamp)[-1*latest:]
+        return results
