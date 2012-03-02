@@ -89,8 +89,9 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
-                  + (alpha * lbmParams->GetBeta()) * hydroVars.f_neq.f[direction];
+              hydroVars.SetFPostCollision(direction,
+                                          hydroVars.f[direction]
+                                              + (alpha * lbmParams->GetBeta()) * hydroVars.f_neq.f[direction]);
             }
           }
 
