@@ -5,7 +5,7 @@ namespace hemelb
   namespace extraction
   {
     PropertyWriter::PropertyWriter(IterableDataSource& dataSource,
-                                   const std::vector<PropertyOutputFile>& propertyOutputs)
+                                   const std::vector<PropertyOutputFile*>& propertyOutputs)
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {
