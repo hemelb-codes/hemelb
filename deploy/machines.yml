@@ -63,7 +63,7 @@ legion_intel:
   fabric_dir: "IntelHemeLB"
   import: legion
   modules: ["remove mpi/qlogic/1.2.7/intel","add mpi/openmpi/1.4.1/intel","add cmake/2.8.3", "add python/2.6.6/gnu"]
-  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the compilers are
+  build_prefix_commands: ["export CXX=icpc","export CC=icc", "export LD=icc"] #Tell autoconf for dependencies where the hector compilers are
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
     CMAKE_CXX_COMPILER: "icpc"
