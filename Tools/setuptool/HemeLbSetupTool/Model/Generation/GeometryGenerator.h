@@ -21,10 +21,14 @@ class BlockWriter;
 
 struct InconsistentFluidnessError: public GenerationError {
 	InconsistentFluidnessError(const Site& s1, const Site& s2, const int nHits);
+	~InconsistentFluidnessError() throw () {
+	}
 	virtual const char* what() const throw ();
 	const Site& s1;
 	const Site& s2;
 	const int nHits;
+private:
+	std::string msg;
 };
 
 class GeometryGenerator {

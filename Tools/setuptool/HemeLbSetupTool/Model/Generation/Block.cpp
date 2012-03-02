@@ -23,7 +23,7 @@ bool BlockHasEdges(const Block& block) {
 	if (_CheckMin(ind))
 		return true;
 
-	if (_CheckMax(ind, block.GetDomain().GetBlockCounts()))
+	if (_CheckMax(ind, block.GetDomain().GetBlockCounts() - 1))
 		return true;
 	return false;
 }
@@ -32,7 +32,7 @@ bool SiteIsEdge(const Site& site) {
 	if (_CheckMin(ind))
 		return true;
 
-	if (_CheckMax(ind, site.GetBlock().GetDomain().GetSiteCounts()))
+	if (_CheckMax(ind, site.GetBlock().GetDomain().GetSiteCounts() - 1))
 		return true;
 	return false;
 }
@@ -43,21 +43,20 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	this->sites.resize(size * size * size);
 	unsigned int ijk = 0;
 	const bool blockHasEdge = BlockHasEdges(*this);
-	Site* site = NULL;
 
 	for (unsigned int i = ind[0] * size; i < (ind[0] + 1) * size; ++i) {
 		for (unsigned int j = ind[1] * size; j < (ind[1] + 1) * size; ++j) {
 			for (unsigned int k = ind[2] * size; k < (ind[2] + 1) * size; ++k) {
-				this->sites[ijk] = site = new Site(*this, i, j, k);
+				this->sites[ijk] = new Site(*this, i, j, k);
 
 				/*
 				 * If the site is on the edge of the domain, we known that it
 				 * must be solid. Set this here in order to bootstrap the
 				 * classification process.
 				 */
-				if (blockHasEdge && SiteIsEdge(*site)) {
-					site->IsFluidKnown = true;
-					site->IsFluid = false;
+				if (blockHasEdge && SiteIsEdge(*this->sites[ijk])) {
+					this->sites[ijk]->IsFluidKnown = true;
+					this->sites[ijk]->IsFluid = false;
 				}
 
 				++ijk;
