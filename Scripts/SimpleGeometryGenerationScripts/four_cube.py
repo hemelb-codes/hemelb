@@ -28,11 +28,7 @@ class FourCube(LatticeFixture):
                 # Assign an iolet id (the first iolet in the config xml file)
                 iolet_index=0
 
-                # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered wall because of the ordering of the if statements below
-                if z_index==z_min and direction[2]==-1:
-                    link_type = Link.inlet
-                if z_index==z_max and direction[2]==1:
-                    link_type = Link.outlet
+                # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered non-wall because of the ordering of the if statements below        
                 if x_index==x_min and direction[0]==-1:
                     link_type = Link.wall
                 if x_index==x_max and direction[0]==1:
@@ -41,6 +37,10 @@ class FourCube(LatticeFixture):
                     link_type = Link.wall
                 if y_index==y_max and direction[1]==1:
                     link_type = Link.wall
+                if z_index==z_min and direction[2]==-1:
+                    link_type = Link.inlet
+                if z_index==z_max and direction[2]==1:
+                    link_type = Link.outlet
 
                 # Assume walls are half a lattice away
                 wall_distance=0.5

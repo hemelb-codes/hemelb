@@ -119,13 +119,19 @@ namespace hemelb
           return returnable;
         }
 
+        /***
+        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+        **/
         void SetHasBoundary(site_t site, Direction direction)
         {
           TestSiteData mutableSiteData(siteData[site]);
           mutableSiteData.SetHasBoundary(direction);
           siteData[site] = geometry::SiteData(mutableSiteData);
         }
-
+        
+        /***
+        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+        **/
         void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
         {
           distanceToWall[ (D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
