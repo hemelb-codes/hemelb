@@ -4,4 +4,5 @@ add_library(hemelb_io PathManager.cc
 	writers/xdr/XdrMemReader.cc writers/xdr/XdrMemWriter.cc
 	writers/xdr/XdrReader.cc writers/xdr/XdrWriter.cc
 	writers/Writer.cc
+	formats/geometry.cc
 	 )

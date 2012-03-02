@@ -1,7 +1,7 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
 #define HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
 
 #include "io/writers/xdr/XdrWriter.h"
@@ -26,7 +26,7 @@ namespace hemelb
             ~XdrFileWriter();
 
           private:
-            FILE *myFile;
+            std::FILE *myFile;
 
         };
 

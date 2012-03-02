@@ -1,7 +1,7 @@
 #ifndef HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 #define HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 
-#include "D3Q15.h"
+#include "lb/lattices/D3Q27.h"
 #include "geometry/Block.h"
 #include "geometry/VolumeTraverser.h"
 #include "geometry/SiteTraverser.h"

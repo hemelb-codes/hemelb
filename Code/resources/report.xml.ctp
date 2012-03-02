@@ -3,6 +3,18 @@
 	<configuration>
 		<file>{{CONFIG}}</file>
 	</configuration>
+	{{#BUILD}}
+	<build>
+		<revision>{{REVISION}}</revision>
+		<steering>{{STEERING}}</steering>
+		<streaklines>{{STREAKLINES}}</streaklines>
+		<multimachine>{{MULTIMACHINE}}</multimachine>
+		<type>{{TYPE}}</type>
+		<optimisation>{{OPTIMISATION}}</optimisation>
+		<date>{{TIME}}</date>
+		<reading_group>{{READING_GROUP_SIZE}}</reading_group>
+	</build>
+	{{/BUILD}}
 	<nodes>
 		<threads>{{THREADS}}</threads>
 		<machines>{{MACHINES}}</machines>
@@ -22,7 +34,6 @@
 		<steps>
 			<total>{{STEPS}}</total>
 			<per_cycle>{{STEPS_PER_CYCLE}}</per_cycle>
-			<per_second>{{STEPS_PER_SECOND}}</per_second>
 		</steps>
 	</results>
 	<checks>
@@ -44,7 +55,6 @@
 			<min>{{MIN}}</min>
 			<mean>{{MEAN}}</mean>
 			<max>{{MAX}}</max>
-			<normalisation>{{NORMALISATION}}</normalisation>
 		</timer>
 		{{/TIMER}}
 	</timings>

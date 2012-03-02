@@ -2,6 +2,7 @@
 #define HEMELB_GEOMETRY_SITEDATA_H
 
 #include "units.h"
+#include "geometry/ReadResult.h"
 
 namespace hemelb
 {
@@ -19,7 +20,7 @@ namespace hemelb
     class SiteData
     {
       public:
-        SiteData(unsigned);
+        SiteData(const SiteReadResult& siteReadResult);
         SiteData(const SiteData& other);
         virtual ~SiteData();
 
@@ -31,46 +32,34 @@ namespace hemelb
         bool HasBoundary(Direction direction) const;
 
         /**
-         * This function should only be used for debugging.
+         * These functions return internal representations and should only be used for debugging.
          */
-        unsigned GetRawValue() const;
+        uint32_t GetIntersectionData() const;
+        uint32_t GetOtherRawData() const;
 
-        static const unsigned int SITE_TYPE_BITS = 2U;
-        static const unsigned int BOUNDARY_CONFIG_BITS = 14U;
-        static const unsigned int BOUNDARY_DIR_BITS = 4U;
-        static const unsigned int BOUNDARY_ID_BITS = 10U;
+        static const uint32_t SITE_TYPE_BITS = 2U;
+        /**
+         * Arbitrarily set this to 20 bits.
+         */
+        static const uint32_t BOUNDARY_ID_BITS = 20U;
 
-        static const unsigned int BOUNDARY_CONFIG_SHIFT = 2U; // SITE_TYPE_BITS;
-        static const unsigned int BOUNDARY_DIR_SHIFT = 16U; // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-        static const unsigned int BOUNDARY_ID_SHIFT = 20U; // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
+        static const uint32_t SITE_TYPE_MASK = (1 << SITE_TYPE_BITS) - 1;
 
-        // Comments show the bit patterns.
-        static const unsigned int SITE_TYPE_MASK = ( (1 << SITE_TYPE_BITS) - 1);
-        // 0000 0000  0000 0000  0000 0000  0000 0011
-        // These give the *_TYPE in geometry/LatticeData.h
+        static const sitedata_t BOUNDARY_ID_MASK = ( (1 << (SITE_TYPE_BITS + BOUNDARY_ID_BITS)) - 1) - SITE_TYPE_MASK;
+        static const sitedata_t BOUNDARY_ID_SHIFT = SITE_TYPE_BITS;
 
-        static const unsigned int BOUNDARY_CONFIG_MASK = ( (1 << BOUNDARY_CONFIG_BITS) - 1)
-            << BOUNDARY_CONFIG_SHIFT;
-        // 0000 0000  0000 0000  1111 1111  1111 1100
-        // These bits are set if the lattice vector they correspond to takes one to a solid site
-        // The following hex digits give the index into LatticeSite.neighbours
-        // ---- ----  ---- ----  DCBA 9876  5432 10--
+      protected:
+        /**
+         * This is a bit mask for whether a wall is hit by links in each direction.
+         */
+        uint32_t boundaryIntersection;
 
-        static const unsigned int BOUNDARY_DIR_MASK = ( (1 << BOUNDARY_DIR_BITS) - 1)
-            << BOUNDARY_DIR_SHIFT;
-        // 0000 0000  0000 1111  0000 0000  0000 0000
-        // No idea what these represent. As far as I can tell, they're unused.
-
-        static const unsigned int BOUNDARY_ID_MASK = ( (1 << BOUNDARY_ID_BITS) - 1)
-            << BOUNDARY_ID_SHIFT;
-        // 0011 1111  1111 0000  0000 0000  0000 0000
-        // These bits together give the index of the inlet/outlet/wall in the output XML file
-
-        static const unsigned int PRESSURE_EDGE_MASK = 1U << 31U;
-        // 1000 0000  0000 0000  0000 0000  0000 0000
-
-      private:
-        unsigned value;
+        /**
+         * This is a bit field that stores all other data associated with the site:
+         * 2 bits for the site type.
+         * The remaining 30 bits are for specifying the id of the boundary.
+         */
+        uint32_t data;
     };
   }
 }

@@ -1,3 +1,4 @@
+#include <cassert>
 #include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 
 namespace hemelb

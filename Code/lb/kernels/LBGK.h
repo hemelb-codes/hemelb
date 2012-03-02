@@ -15,23 +15,24 @@ namespace hemelb
       /**
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
-      class LBGK : public BaseKernel<LBGK>
+      template<class LatticeType>
+      class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
       {
         public:
           LBGK(InitParams& initParams)
           {
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGK>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
           {
-            D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
-                                               hydroVars.f_eq.f);
+            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+                                                     hydroVars.density,
+                                                     hydroVars.v_x,
+                                                     hydroVars.v_y,
+                                                     hydroVars.v_z,
+                                                     hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -39,13 +40,9 @@ namespace hemelb
 
           inline void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
           {
-            D3Q15::CalculateFeq(hydroVars.density,
-                                hydroVars.v_x,
-                                hydroVars.v_y,
-                                hydroVars.v_z,
-                                hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
@@ -53,7 +50,7 @@ namespace hemelb
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
           {
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
                   + hydroVars.f_neq.f[direction] * lbmParams->GetOmega();

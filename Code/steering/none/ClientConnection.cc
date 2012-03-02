@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <netinet/in.h>
 
 #include "steering/ClientConnection.h"

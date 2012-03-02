@@ -16,14 +16,14 @@ namespace hemelb
       // We have to declare this up here in order for it to be used as a template parameter in the
       // following declaration. Moving the template specialisation to the bottom of the file would
       // prevent it from being used as the HydroVars for this kernel.
-      class Entropic;
+      template<class LatticeType> class Entropic;
 
-      template<>
-      struct HydroVars<Entropic> : public HydroVarsBase
+      template<class LatticeType>
+      struct HydroVars<Entropic<LatticeType> > : public HydroVarsBase<LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+              HydroVarsBase<LatticeType>(f)
           {
 
           }
@@ -35,7 +35,8 @@ namespace hemelb
        * Entropic: This class implements the entropic kernel, a modification to the standard
        * LBGK kernel which ensures the increase of entropy.
        */
-      class Entropic : public BaseKernel<Entropic>
+      template<class LatticeType>
+      class Entropic : public BaseKernel<Entropic<LatticeType>, LatticeType>
       {
         public:
           Entropic(InitParams& initParams)
@@ -50,46 +51,43 @@ namespace hemelb
             delete[] oldAlpha;
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<Entropic>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<Entropic<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
-            D3Q15::CalculateEntropicDensityVelocityFEq(hydroVars.f,
-                                                       hydroVars.density,
-                                                       hydroVars.v_x,
-                                                       hydroVars.v_y,
-                                                       hydroVars.v_z,
-                                                       hydroVars.f_eq.f);
+            LatticeType::CalculateEntropicDensityVelocityFEq(hydroVars.f,
+                                                             hydroVars.density,
+                                                             hydroVars.v_x,
+                                                             hydroVars.v_y,
+                                                             hydroVars.v_z,
+                                                             hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<Entropic>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<Entropic<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
-            D3Q15::CalculateEntropicFeq(hydroVars.density,
-                                        hydroVars.v_x,
-                                        hydroVars.v_y,
-                                        hydroVars.v_z,
-                                        hydroVars.f_eq.f);
+            LatticeType::CalculateEntropicFeq(hydroVars.density,
+                                              hydroVars.v_x,
+                                              hydroVars.v_y,
+                                              hydroVars.v_z,
+                                              hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
           }
 
-          inline void DoCollide(const LbmParameters* const lbmParams,
-                                HydroVars<Entropic>& hydroVars)
+          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<Entropic<LatticeType> >& hydroVars)
           {
-            distribn_t alpha = CalculateAlpha(lbmParams->GetTau(),
-                                              hydroVars,
-                                              oldAlpha[hydroVars.index]);
+            distribn_t alpha = CalculateAlpha(lbmParams->GetTau(), hydroVars, oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = alpha;
 
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.GetFPostCollision()[direction] = hydroVars.f[direction]
                   + (alpha * lbmParams->GetBeta()) * hydroVars.f_neq.f[direction];
@@ -108,19 +106,18 @@ namespace hemelb
           distribn_t* oldAlpha;
 
           double CalculateAlpha(const distribn_t tau,
-                                const HydroVars<Entropic>& hydroVars,
+                                const HydroVars<Entropic<LatticeType> >& hydroVars,
                                 double prevAlpha)
           {
             bool big = false;
             double deviation = 0.0;
 
-            for (unsigned int i = 0; i < D3Q15::NUMVECTORS; i++)
+            for (unsigned int i = 0; i < LatticeType::NUMVECTORS; i++)
             {
               // Papers suggest f_eq - f < 0.001 or (f_eq - f)/f < 0.01 for the point to have approx alpha = 2
               // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
               // the more of the simulation is in the LBGK limit.
-              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i])
-                                                            / hydroVars.f[i]),
+              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i]) / hydroVars.f[i]),
                                                         deviation);
               if (deviation > 1.0E-2)
               {
@@ -132,7 +129,7 @@ namespace hemelb
 
             if (big)
             {
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
+              HFunction<LatticeType> HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
               prevAlpha = (prevAlpha < 2.0 * tau ?
@@ -151,7 +148,7 @@ namespace hemelb
                 return 2.0;
               }
 
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
+              HFunction<LatticeType> HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // The bracket is very large, but it should guarantee that a root is enclosed
               double alphaLower = 2.0 * (tau), HLower;

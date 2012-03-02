@@ -3,100 +3,23 @@
 #include "Site.h"
 #include "Block.h"
 #include "Domain.h"
-
 #include "Iolet.h"
-#include "config.h"
-
 #include "Neighbours.h"
+
+#include "geometry/SiteData.h"
 
 // C'tor
 Site::Site(Block& block, Index& index) :
-	IsFluidKnown(false), IsFluid(false), IsEdge(false),
-			Position(block.GetDomain().CalcPositionFromIndex(index)),
+	IsFluidKnown(false), IsFluid(false),
+			Position(block.GetDomain().CalcPositionWorkingFromIndex(index)),
 			block(block), index(index) {
-	this->Init();
 }
 
 // C'tor with index constructed in-place
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
-	IsFluidKnown(false), IsFluid(false), IsEdge(false), block(block),
-			index(i, j, k) {
-	this->Position = this->block.GetDomain().CalcPositionFromIndex(this->index);
-	this->Init();
-}
-
-// private helper for common parts of c'tors
-void Site::Init() {
-	// Make sure this is false
-	this->AdjacentIolet = NULL;
-	// We need to find the closest.
-	this->BoundaryDistance = std::numeric_limits<double>::infinity();
-	this->WallDistance = std::numeric_limits<double>::infinity();
-
-	this->CutDistances.resize(Neighbours::n,
-			std::numeric_limits<double>::infinity());
-	this->CutCellIds.resize(Neighbours::n, -1);
-}
-
-// Compute the type of the site from it's properties
-unsigned int Site::GetType() const {
-	if (this->IsFluid) {
-		if (this->AdjacentIolet) {
-			if (this->AdjacentIolet->IsInlet)
-				return hemelb::INLET_TYPE;
-			else
-				return hemelb::OUTLET_TYPE;
-		} else {
-			return hemelb::FLUID_TYPE;
-		}
-	} else {
-		return hemelb::SOLID_TYPE;
-	}
-}
-
-// Compute the full config unsigned int
-unsigned int Site::GetConfig() {
-	unsigned int type = this->GetType();
-	unsigned int cfg = type;
-	// If solid, we're done
-	if (!this->IsFluid)
-		return cfg;
-
-	// Fluid sites now
-	if (type == hemelb::FLUID_TYPE && !this->IsEdge)
-		// Simple fluid sites
-		return cfg;
-
-	// A complex one
-
-	if (this->IsEdge) {
-		// Bit fiddle the boundary config. See comment below
-		// by BOUNDARY_CONFIG_MASK for definition.
-		unsigned int boundary = 0;
-		for (NeighbourIterator neighIt = this->beginall(); neighIt
-				!= this->endall(); ++neighIt) {
-			if (!neighIt->IsFluid) {
-				// If the lattice vector is cut, set the flag
-				boundary |= 1 << neighIt.GetNeighbourIndex();
-			}
-		}
-		// Shift the boundary bit field to the appropriate
-		// place and set these bits in the type
-		cfg |= boundary << hemelb::BOUNDARY_CONFIG_SHIFT;
-
-		if (boundary)
-			// Set this bit if we've hit any solid sites
-			cfg |= hemelb::PRESSURE_EDGE_MASK;
-
-	}
-
-	if (type != hemelb::FLUID_TYPE) {
-		// It must be an inlet or outlet
-		// Shift the index left and set the bits
-		cfg |= this->BoundaryId << hemelb::BOUNDARY_ID_SHIFT;
-	}
-
-	return cfg;
+	IsFluidKnown(false), IsFluid(false),
+			block(block), index(i, j, k) {
+	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(this->index);
 }
 
 const Index Site::GetDomainBlockCount() {

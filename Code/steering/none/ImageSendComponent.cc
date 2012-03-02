@@ -4,11 +4,11 @@ namespace hemelb
 {
   namespace steering
   {
-    ImageSendComponent::ImageSendComponent(lb::LBM* lbm,
-                                           lb::SimulationState* iSimState,
+    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState,
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
-                                           Network* iNetwork)
+                                           Network* iNetwork,
+                                           int inletCount)
     {
 
     }

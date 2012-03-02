@@ -5,7 +5,6 @@
 
 #include "Index.h"
 #include "GetSet.h"
-//#include "Site.h"
 #include "BlockWriter.h"
 class Block;
 class Site;
@@ -16,15 +15,15 @@ public:
 	typedef BlockIterator iterator;
 	/*
 	 * C'tor
-	 * VoxelSize - voxel size, in metres
+	 * VoxelSizeMetres - voxel size, in metres
 	 * SurfaceBounds - bounds of the surface, in standard VTK order
 	 * (x_min, x_max, y_min, y_max, z_min, z_max), in metres.
 	 * BlockSize - number of sites along one dimension.
 	 */
-	Domain(double VoxelSize, double SurfaceBounds[6],
+	Domain(double VoxelSizeMetres, double SurfaceBoundsWorking[6],
 			unsigned int BlockSize = 8);
 
-	Vector CalcPositionFromIndex(const Index& index) const;
+	Vector CalcPositionWorkingFromIndex(const Index& index) const;
 	Block& GetBlock(const Index& index);
 	Site& GetSite(const Index& index);
 	BlockIterator begin();
@@ -34,9 +33,19 @@ public:
 
 	GETTER(BlockCounts, Index);SETTER(BlockCounts, Index);
 
-	GETTER(Origin, Vector);SETTER(Origin, Vector);
+	GETTER(SiteCounts, Index);
 
-	GETTER(VoxelSize, double);SETTER(VoxelSize, double);
+	GETTER(OriginWorking, Vector);
+
+	GETTER(VoxelSizeMetres, double);SETTER(VoxelSizeMetres, double);
+
+	inline double GetVoxelSizeWorking(void) const {
+		return 1;
+	}
+
+	inline Vector GetOriginMetres(void) {
+		return this->GetOriginWorking() * this->GetVoxelSizeMetres();
+	}
 
 	/*
 	 * These TranslateIndex member functions translate between 3d and 1a
@@ -78,11 +87,11 @@ public:
 	}
 
 protected:
-	Vector Origin;
+	Vector OriginWorking;
 	Index BlockCounts;
 	Index SiteCounts;
 	unsigned int BlockSize;
-	double VoxelSize;
+	double VoxelSizeMetres;
 
 	std::vector<Block*> blocks;
 

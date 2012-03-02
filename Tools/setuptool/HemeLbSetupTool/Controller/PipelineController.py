@@ -85,7 +85,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
                                     SimpleObservingMapper(self.PlacedIolets, 'SelectedIndex'))
         
         self.GetValueForKey('SurfaceMapper.SetInputConnection')(
-            profileController.GetValueForKey('SurfaceSource.GetOutputPort')()
+            profileController.GetValueForKey('StlReader.GetOutputPort')()
             )
         
         # self.PlacedSeed = PlacedSeed(self)
@@ -98,11 +98,8 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
                                     SeedCoordMapper(2, self.GetValueForKey('PlacedSeed')))
 
         
-        profileController.AddObserver('SurfaceSource.Modified', self.HandleSurfaceSourceModified)
-#        pdb.set_trace()
-#        vtkSider = profileController.delegate.SideLengthCalculator
-#        vtkSider.AddObserver('ModifiedEvent', self.HandleSurfaceSourceModified)
-#        profileController.AddObserver('StlFileUnitId', self.OnStlFileUnitIdChanged)
+        profileController.AddObserver('StlReader.Modified', self.HandleSurfaceSourceModified)
+        
         self.AddDependency('SeedPlaceButtonEnabled', 'mode')
         self.AddDependency('SeedPlaceButtonLabel', 'mode')
         self.AddDependency('IoletPlaceButtonEnabled', 'mode')
@@ -176,7 +173,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         
     def HandleSurfaceSourceModified(self, change):
         # THis gets the Controller, so get the model object underneath
-        source = change.obj.GetValueForKey('SurfaceSource').delegate
+        source = change.obj.GetValueForKey('StlReader').delegate
         source.Update()
         surf = source.GetOutput()
         surf.ComputeBounds()

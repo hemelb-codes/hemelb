@@ -6,13 +6,13 @@
 #include <cstring>
 #include <cstdio>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-#include <signal.h>
+#include <csignal>
 #include <netdb.h>
 #include <sys/utsname.h>
 
@@ -37,19 +37,19 @@ namespace hemelb
       // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
 #ifdef NGS2Leeds
       gethostname(hostname, 256);
-      sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
+      std::sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
 #elif NGS2Manchester
       gethostname(hostname, 256);
-      sprintf(rank_0_host_details, "%s.vidar.ngs.manchester.ac.uk:%i", hostname, MYPORT);
+      std::sprintf(rank_0_host_details, "%s.vidar.ngs.manchester.ac.uk:%i", hostname, MYPORT);
 #elif CCS
       gethostname(hostname, 256);
       std::sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
 #elif LONI
       gethostname(hostname, 256);
-      sprintf(rank_0_host_details, "%s:%i", hostname, MYPORT);
+      std::sprintf(rank_0_host_details, "%s:%i", hostname, MYPORT);
 #elif NCSA
       gethostname(hostname, 256);
-      sprintf(rank_0_host_details, "%s.ncsa.teragrid.org:%i", hostname, MYPORT);
+      std::sprintf(rank_0_host_details, "%s.ncsa.teragrid.org:%i", hostname, MYPORT);
 #else
 
       // If not on a specific known machine, need to do something more clever.
@@ -57,7 +57,7 @@ namespace hemelb
 
       if (uname(&name) < 0)
       {
-        fprintf(stderr, "STEER: Get_fully_qualified_hostname: uname failed\n");
+        std::fprintf(stderr, "STEER: Get_fully_qualified_hostname: uname failed\n");
         exit(0x0);
       }
 
@@ -71,35 +71,35 @@ namespace hemelb
         if (host->h_addr_list[address_id] == NULL)
           break;
 
-        printf("checking Address ID %i...\n", address_id);
+        std::printf("checking Address ID %i...\n", address_id);
 
         // If IP4, print details.
         if (host->h_length != 4)
         {
-          printf("address is not IP4..\n");
+          std::printf("address is not IP4..\n");
           continue;
         }
 
-        sprintf(ip_addr,
+        std::sprintf(ip_addr,
                 "%d.%d.%d.%d",
                 (unsigned char) (host->h_addr_list[address_id][0]),
                 (unsigned char) (host->h_addr_list[address_id][1]),
                 (unsigned char) (host->h_addr_list[address_id][2]),
                 (unsigned char) (host->h_addr_list[address_id][3]));
 
-        printf("NAME %s IP %s\n", host->h_name, ip_addr);
+        std::printf("NAME %s IP %s\n", host->h_name, ip_addr);
 
         // Private addresses (see RFC-1918).
         if ((unsigned char) (host->h_addr_list[address_id][0]) == 10)
         {
-          printf("IP %s is not public..\n", ip_addr);
+          std::printf("IP %s is not public..\n", ip_addr);
           continue;
         }
 
         // Loopback addresses.
         if ((unsigned char) (host->h_addr_list[address_id][0]) == 127)
         {
-          printf("IP %s is not public..\n", ip_addr);
+          std::printf("IP %s is not public..\n", ip_addr);
           continue;
         }
 
@@ -108,7 +108,7 @@ namespace hemelb
             && (unsigned char) (host->h_addr_list[address_id][1]) >= 16
             && (unsigned char) (host->h_addr_list[address_id][1]) < 32)
         {
-          printf("IP %s is not public..\n", ip_addr);
+          std::printf("IP %s is not public..\n", ip_addr);
           continue;
         }
 
@@ -116,12 +116,12 @@ namespace hemelb
         if ((unsigned char) (host->h_addr_list[address_id][0]) == 192
             && (unsigned char) (host->h_addr_list[address_id][1]) == 168)
         {
-          printf("IP %s is not public..\n", ip_addr);
+          std::printf("IP %s is not public..\n", ip_addr);
           continue;
         }
       }
 
-      sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
+      std::sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
 #endif
 
       log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s",
@@ -186,7 +186,7 @@ namespace hemelb
       Send_Request(sock, "User-Agent: Mozilla/4.0\r\n");
 
       char content_header[100];
-      sprintf(content_header, "Content-Length: %d\r\n", int (strlen(host_name)));
+      std::sprintf(content_header, "Content-Length: %d\r\n", int (std::strlen(host_name)));
 
       Send_Request(sock, content_header);
       Send_Request(sock, "Accept-Language: en-us\r\n");

@@ -10,6 +10,7 @@
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
@@ -26,6 +27,7 @@ namespace hemelb
      * Class providing core Lattice Boltzmann functionality.
      * Implements the IteratedAction interface.
      */
+    template<class LatticeType>
     class LBM : public net::IteratedAction
     {
       private:
@@ -39,21 +41,18 @@ namespace hemelb
         //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
 
         // LGBK operator with support for non-Newtonian flow
-        //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
+        //typedef kernels::LBGKNN<RHEO_MODEL, LatticeType> LB_KERNEL;
 
         // Multiple relaxation time collision operator
         //typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> LB_KERNEL;
 
         // Standard LBGK collision operator
-        typedef kernels::LBGK LB_KERNEL;
+        typedef kernels::LBGK<LatticeType> LB_KERNEL;
 
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
-            tMidFluidCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
         typedef streamers::SimpleBounceBack<collisions::Normal<LB_KERNEL> > tWallCollision;
-        typedef streamers::SimpleCollideAndStream<
-            collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
-            LB_KERNEL> > tInletOutletWallCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletWallCollision;
 
       public:
         /**
@@ -80,9 +79,6 @@ namespace hemelb
         void SetTotalFluidSiteCount(site_t);
         int InletCount() const;
 
-        // TODO -- replace built in type unsigned int with typedef #24
-        void UpdateInletVelocities(unsigned long time_step); ///< Update peak and average inlet velocities local to the current subdomain.
-
         /**
          * Second constructor.
          *
@@ -97,8 +93,7 @@ namespace hemelb
          * the writing. The format is detailed in io/formats/snapshot.h
          */
         // TODO filename argument should be const, but cannot be due to MPI constness issue #30
-        void WriteConfigParallel(hemelb::lb::Stability const stability,
-                                 std::string output_file_name) const;
+        void WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const;
         void ReadVisParameters();
 
         void CalculateMouseFlowField(const ScreenDensity densityIn,
@@ -110,6 +105,7 @@ namespace hemelb
                                      PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
+        const lb::MacroscopicPropertyCache& GetPropertyCache() const;
 
       private:
         void SetInitialConditions();
@@ -117,19 +113,6 @@ namespace hemelb
         void InitCollisions();
 
         void ReadParameters();
-
-        /***
-         *  Calculate the BCs for each boundary site type and the
-         *  non-equilibrium distribution functions.
-         */
-        void CalculateBC(distribn_t f[],
-                         hemelb::geometry::SiteType const iSiteType,
-                         unsigned int const iBoundaryId,
-                         distribn_t *density,
-                         distribn_t *vx,
-                         distribn_t *vy,
-                         distribn_t *vz,
-                         distribn_t f_neq[]) const;
 
         void handleIOError(int iError);
 
@@ -142,25 +125,15 @@ namespace hemelb
         tInletOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision,
-                              const site_t iFirstIndex,
-                              const site_t iSiteCount)
+        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex,
-                                                        iSiteCount,
-                                                        &mParams,
-                                                        mLatDat,
-                                                        mVisControl);
+            collision->template StreamAndCollide<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex,
-                                                         iSiteCount,
-                                                         &mParams,
-                                                         mLatDat,
-                                                         mVisControl);
+            collision->template StreamAndCollide<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -169,19 +142,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true> (iFirstIndex,
-                                                  iSiteCount,
-                                                  &mParams,
-                                                  mLatDat,
-                                                  mVisControl);
+            collision->template DoPostStep<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false> (iFirstIndex,
-                                                   iSiteCount,
-                                                   &mParams,
-                                                   mLatDat,
-                                                   mVisControl);
+            collision->template DoPostStep<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -202,9 +167,12 @@ namespace hemelb
         util::UnitConverter* mUnits;
 
         reporting::Timer &timer;
-    }; // Class
 
-    inline int LBM::InletCount() const
+        MacroscopicPropertyCache propertyCache;
+    };
+
+    template<class LatticeType>
+    inline int LBM<LatticeType>::InletCount() const
     {
       return inlets;
     }

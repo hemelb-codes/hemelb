@@ -1,6 +1,7 @@
 #ifndef HEMELB_IO_WRITERS_WRITER_H
 #define HEMELB_IO_WRITERS_WRITER_H
 #include <stdint.h>
+#include <string>
 
 namespace hemelb
 {
@@ -53,6 +54,7 @@ namespace hemelb
           virtual void _write(double const& doubleToWrite) = 0;
           virtual void _write(float const& floatToWrite) = 0;
 
+          virtual void _write(const std::string& floatToWrite) = 0;
       };
 
     /*template <>

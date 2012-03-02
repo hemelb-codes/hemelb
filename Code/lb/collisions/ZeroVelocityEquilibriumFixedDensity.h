@@ -15,8 +15,8 @@ namespace hemelb
        * fully to equilibrium.
        */
       template<typename KernelType>
-      class ZeroVelocityEquilibriumFixedDensity : public BaseCollision<
-          ZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
+      class ZeroVelocityEquilibriumFixedDensity : public BaseCollision<ZeroVelocityEquilibriumFixedDensity<KernelType>,
+          KernelType>
       {
         public:
           typedef KernelType CKernel;
@@ -26,8 +26,7 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                              const geometry::Site& site)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
           {
             hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
 
@@ -38,10 +37,9 @@ namespace hemelb
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          inline void DoCollide(const LbmParameters* lbmParams,
-                                kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
           {
-            for (Direction direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {
               iHydroVars.GetFPostCollision()[direction] = iHydroVars.GetFEq()[direction];
             }

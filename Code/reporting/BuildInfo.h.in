@@ -1,0 +1,32 @@
+#ifndef HEMELB_REPORTING_BUILD_INFO_H_IN
+#define HEMELB_REPORTING_BUILD_INFO_H_IN
+#include "reporting/Reportable.h"
+namespace hemelb
+{
+  namespace reporting
+  {
+    static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
+    static const std::string steering_lib="@HEMELB_STEERING_LIB@";
+    static const std::string streaklines_on="@HEMELB_USE_STREAKLINES@";
+    static const std::string multimachine_on="@HEMELB_USE_MULTIMACHINE@";
+    static const std::string build_type="@CMAKE_BUILD_TYPE@";
+    static const std::string optimisation="@HEMELB_OPTIMISATION@";
+    static const std::string build_time="@HEMELB_BUILD_TIME@";
+    static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
+    
+    class BuildInfo : public Reportable {
+      void Report(ctemplate::TemplateDictionary& dictionary){
+        ctemplate::TemplateDictionary *build = dictionary.AddSectionDictionary("BUILD");
+        build->SetValue("REVISION", mercurial_revision_number);
+        build->SetValue("STEERING", steering_lib);
+        build->SetValue("STREAKLINES", streaklines_on);
+        build->SetValue("MULTIMACHINE", multimachine_on);
+        build->SetValue("TYPE", build_type);
+        build->SetValue("OPTIMISATION", optimisation);
+        build->SetValue("TIME", build_time);
+        build->SetValue("READING_GROUP_SIZE", reading_group_size);
+      }
+    };
+  }
+}
+#endif // HEMELB_REPORTING_BUILD_INFO_H_IN

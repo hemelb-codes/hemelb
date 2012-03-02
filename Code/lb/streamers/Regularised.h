@@ -10,9 +10,12 @@ namespace hemelb
     namespace streamers
     {
       // TODO REFACTOR this class to be just a collision, using the BounceBack streamer.
-      template<typename CollisionType>
-      class Regularised : public BaseStreamer<Regularised<CollisionType> >
+      template<typename CollisionImpl>
+      class Regularised : public BaseStreamer<Regularised<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
@@ -24,15 +27,15 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t firstIndex,
+                                         const site_t siteCount,
+                                         const LbmParameters* lbmParams,
+                                         geometry::LatticeData* latDat,
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
-            for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              const geometry::Site site = bLatDat->GetSite(lIndex);
+              const geometry::Site site = latDat->GetSite(siteIndex);
 
               distribn_t* f = site.GetFOld();
 
@@ -43,29 +46,30 @@ namespace hemelb
 
               // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
               // (fi = fiEq + fopp(i) - fopp(i)Eq)
-              distribn_t fTemp[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+              distribn_t fTemp[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (Direction direction = 0; direction < CollisionType::CKernel::LatticeType::NUMVECTORS; ++direction)
               {
-                if (site.HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
+                if (site.HasBoundary(CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[direction]))
                 {
-                  fTemp[l] = hydroVars.GetFEq()[l] + f[D3Q15::INVERSEDIRECTIONS[l]]
-                      - hydroVars.GetFEq()[D3Q15::INVERSEDIRECTIONS[l]];
+                  fTemp[direction] = hydroVars.GetFEq().f[direction]
+                      + f[CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[direction]]
+                      - hydroVars.GetFEq().f[CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[direction]];
                 }
                 else
                 {
-                  fTemp[l] = f[l];
+                  fTemp[direction] = f[direction];
                 }
               }
 
-              distribn_t f_neq[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+              distribn_t f_neq[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (Direction direction = 0; direction < CollisionType::CKernel::LatticeType::NUMVECTORS; ++direction)
               {
-                f_neq[l] = fTemp[l] - hydroVars.GetFEq()[l];
+                f_neq[direction] = fTemp[direction] - hydroVars.GetFEq().f[direction];
               }
 
               // Pi = sum_i e_i e_i f_i
               // zeta = Pi / 2 (Cs^4)
-              Order2Tensor zeta = D3Q15::CalculatePiTensor(f_neq);
+              Order2Tensor zeta = CollisionType::CKernel::LatticeType::CalculatePiTensor(f_neq);
 
               for (int m = 0; m < 3; m++)
               {
@@ -79,22 +83,24 @@ namespace hemelb
               const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
 
               // Now apply bounce-back to the components that require it
-              site_t lStreamTo[D3Q15::NUMVECTORS];
-              for (unsigned l = 0; l < D3Q15::NUMVECTORS; l++)
+              site_t streamingDestination[CollisionType::CKernel::LatticeType::NUMVECTORS];
+              for (unsigned l = 0; l < CollisionType::CKernel::LatticeType::NUMVECTORS; l++)
               {
                 if (site.HasBoundary(l))
                 {
-                  lStreamTo[l] = lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+                  streamingDestination[l] = siteIndex * CollisionType::CKernel::LatticeType::NUMVECTORS
+                      + CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[l];
                 }
                 else
                 {
-                  lStreamTo[l] = site.GetStreamedIndex(l);
+                  streamingDestination[l] = site.GetStreamedIndex(l);
                 }
               }
 
-              const int *Cs[3] = { D3Q15::CX, D3Q15::CY, D3Q15::CZ };
+              const int *Cs[3] = { CollisionType::CKernel::LatticeType::CX, CollisionType::CKernel::LatticeType::CY,
+                                   CollisionType::CKernel::LatticeType::CZ };
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ++ii)
               {
                 // According to Latt & Chopard (Physical Review E77, 2008),
                 // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
@@ -115,7 +121,7 @@ namespace hemelb
                   }
                 }
 
-                f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
+                f_neq[ii] *= CollisionType::CKernel::LatticeType::EQMWEIGHTS[ii];
 
                 /*
                  * Newly constructed distribution function:
@@ -125,8 +131,8 @@ namespace hemelb
                  *    f^{+}_i = g_i + w (g_i - f^{eq}_i)
                  *            = f^{eq}_i + (1+w) f^{neq}_i
                  */
-                * (bLatDat->GetFNew(lStreamTo[ii])) = hydroVars.GetFEq()[ii]
-                    + (1.0 + iLbmParams->GetOmega()) * f_neq[ii];
+                * (latDat->GetFNew(streamingDestination[ii])) = hydroVars.GetFEq()[ii]
+                    + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
               }
 
               BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
@@ -135,8 +141,8 @@ namespace hemelb
                                                                                     site,
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
-                                                                                    iLbmParams,
-                                                                                    iControl);
+                                                                                    lbmParams,
+                                                                                    propertyCache);
             }
           }
 
@@ -145,7 +151,7 @@ namespace hemelb
                                  const site_t iSiteCount,
                                  const LbmParameters* iLbmParams,
                                  geometry::LatticeData* bLatDat,
-                                 hemelb::vis::Control *iControl)
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
 
           }

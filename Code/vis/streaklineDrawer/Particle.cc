@@ -1,5 +1,6 @@
 #include "mpiInclude.h"
-#include "Particle.h"
+#include "vis/streaklineDrawer/Particle.h"
+#include "constants.h"
 
 namespace hemelb
 {
