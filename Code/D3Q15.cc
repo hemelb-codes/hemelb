@@ -1,5 +1,4 @@
 #include "D3Q15.h"
-#include <cmath>
 
 namespace hemelb
 {

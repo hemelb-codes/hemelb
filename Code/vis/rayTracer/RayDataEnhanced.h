@@ -32,15 +32,14 @@ namespace hemelb
             //Obtain the lightness value for the ray, based on
             //the lightness obtained through surface normals
             //and optional depth cuing
-            static float GetLightnessValue(const float normalisedDistance,
-                                           const float surfaceNormalLightness)
+            static float GetLightnessValue(const float normalisedDistance, const float surfaceNormalLightness)
             {
               //Set the smallest lightness value to between
               //the mimimum lightness and 1.0F based on the normalised distance between
               //the viewpoint and the first cluster hit
               //Add onto this the surface normal lightness
-              float lightnessValue = LowestLightness + (1.0F - LowestLightness)
-                  * normalisedDistance + surfaceNormalLightness * SurfaceNormalLightnessRange;
+              float lightnessValue = LowestLightness + (1.0F - LowestLightness) * normalisedDistance
+                  + surfaceNormalLightness * SurfaceNormalLightnessRange;
 
               if (lightnessValue > 1.0F)
               {
@@ -62,8 +61,7 @@ namespace hemelb
             static const float StressSaturationRange;
             static const float StressSaturationMin;
 
-            static float GetLightnessValue(const float normalisedDistance,
-                                           const float surfaceNormalLightness)
+            static float GetLightnessValue(const float normalisedDistance, const float surfaceNormalLightness)
             {
               return LowestLightness + surfaceNormalLightness * SurfaceNormalLightnessRange;
             }
@@ -81,14 +79,13 @@ namespace hemelb
             static const float StressSaturationRange;
             static const float StressSaturationMin;
 
-            static float GetLightnessValue(const float normalisedDistance,
-                                           const float surfaceNormalLightness)
+            static float GetLightnessValue(const float normalisedDistance, const float surfaceNormalLightness)
             {
               //Set the maximum lightness to be between 0.8F and mLowestLighness
               //based on the normalised distance and take off the surface normal
               //lightness
-              float lightnessValue = 0.8F * (1.0F - normalisedDistance) + (surfaceNormalLightness
-                  - 1.0F) * SurfaceNormalLightnessRange;
+              float lightnessValue = 0.8F * (1.0F - normalisedDistance)
+                  + (surfaceNormalLightness - 1.0F) * SurfaceNormalLightnessRange;
 
               if (lightnessValue < LowestLightness)
               {
@@ -109,8 +106,7 @@ namespace hemelb
       {
         public:
           RayDataEnhanced(int i, int j) :
-            RayData<RayDataEnhanced> (i, j), mSurfaceNormalLightness(1.0F), mVelocitySum(0.0F),
-                mStressSum(0.0F)
+              RayData<RayDataEnhanced>(i, j), mSurfaceNormalLightness(1.0F), mVelocitySum(0.0F), mStressSum(0.0F)
           {
           }
 
@@ -126,12 +122,12 @@ namespace hemelb
                                               const VisSettings& iVisSettings)
           {
             //Add the velocity multiplied by the ray length in each voxel,
-            mVelocitySum += iSiteData.GetVelocity() * iRayLengthInVoxel;
+            mVelocitySum += iSiteData.velocity * iRayLengthInVoxel;
 
             if (iVisSettings.mStressType == lb::VonMises)
             {
               //Update the volume rendering of the von Mises stress flow field
-              mStressSum = iSiteData.GetStress() * iRayLengthInVoxel;
+              mStressSum = iSiteData.stress * iRayLengthInVoxel;
             }
           }
 
@@ -144,18 +140,15 @@ namespace hemelb
                                        const util::Vector3D<double>* iWallNormal)
           {
             //Do everything that would be done for a normal fluid site
-            DoUpdateDataForNormalFluidSite(iSiteData,
-                                           iRayDirection,
-                                           iRayLengthInVoxel,
-                                           iVisSettings);
+            DoUpdateDataForNormalFluidSite(iSiteData, iRayDirection, iRayLengthInVoxel, iVisSettings);
 
-            double lDotProduct = iRayDirection.DotProduct(*iWallNormal);
+            double lDotProduct = iRayDirection.Dot(*iWallNormal);
 
             // Scale the surface normal lightness between mParallelSurfaceAttenuation
             // and 1.0F
             // Keep a copy for the special case
-            mLastSurfaceNormalLightnessMultiplier = (depthCuing::ParallelSurfaceAttenuation + (1.0F
-                - depthCuing::ParallelSurfaceAttenuation) * fabs(lDotProduct));
+            mLastSurfaceNormalLightnessMultiplier = (depthCuing::ParallelSurfaceAttenuation
+                + (1.0F - depthCuing::ParallelSurfaceAttenuation) * fabs(lDotProduct));
 
             mSurfaceNormalLightness *= mLastSurfaceNormalLightnessMultiplier;
           }
@@ -193,14 +186,13 @@ namespace hemelb
                                  const float iNormalisedDistanceToFirstCluster,
                                  const DomainStats& iDomainStats) const
           {
-            float
-                lStressSaturation =
-                    util::NumericalFunctions::enforceBounds<float>(depthCuing::StressSaturationMin
-                                                                       + depthCuing::StressSaturationRange
-                                                                           * GetAverageStress()
-                                                                           * (float) (iDomainStats.stress_threshold_max_inv),
-                                                                   0.0F,
-                                                                   1.0F);
+            float lStressSaturation =
+                util::NumericalFunctions::enforceBounds<float>(depthCuing::StressSaturationMin
+                                                                   + depthCuing::StressSaturationRange
+                                                                       * GetAverageStress()
+                                                                       * (float) (iDomainStats.stress_threshold_max_inv),
+                                                               0.0F,
+                                                               1.0F);
 
             HSLToRGBConverter::Convert(depthCuing::StressHue,
                                        lStressSaturation,
@@ -248,28 +240,12 @@ namespace hemelb
           static MPI_Datatype GetMpiType()
           {
             const int rayDataEnhancedCount = 11;
-            int rayDataEnhancedBlocklengths[rayDataEnhancedCount] = { 1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1 };
-            MPI_Datatype rayDataEnhancedTypes[rayDataEnhancedCount] = { MPI_LB,
-                                                                        MpiDataType<int> (),
-                                                                        MpiDataType<int> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MpiDataType<float> (),
-                                                                        MPI_UB };
+            int rayDataEnhancedBlocklengths[rayDataEnhancedCount] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+            MPI_Datatype rayDataEnhancedTypes[rayDataEnhancedCount] = { MPI_LB, MpiDataType<int>(), MpiDataType<int>(),
+                                                                        MpiDataType<float>(), MpiDataType<float>(),
+                                                                        MpiDataType<float>(), MpiDataType<float>(),
+                                                                        MpiDataType<float>(), MpiDataType<float>(),
+                                                                        MpiDataType<float>(), MPI_UB };
 
             MPI_Aint rayDataEnhancedDisps[rayDataEnhancedCount];
 

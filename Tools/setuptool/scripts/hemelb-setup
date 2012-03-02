@@ -6,15 +6,16 @@ from argparse import ArgumentParser
 parser = ArgumentParser(description='Process an input STL file into'
                         'suitable input for HemeLB.')
 
-parser.add_argument('--profile', default=None, help='Load the profile'
+parser.add_argument('--profile', default=None, help='Load the profile '
                     'to use from an existing file. Other options given'
-                    'override those inthe profile file.')
+                    'override those inthe profile file.',
+                    metavar='PATH')
 parser.add_argument('--stl', default=None, dest='StlFile',
-                    help='The STL file to use as input')
-parser.add_argument('--config', default=None, dest='OutputConfigFile',
-                    help='Config output file')
+                    help='The STL file to use as input', metavar='PATH')
+parser.add_argument('--geometry', default=None, dest='OutputGeometryFile',
+                    help='Config output file', metavar='PATH')
 parser.add_argument('--xml', default=None, dest='OutputXmlFile',
-                    help='XML output file')
+                    help='XML output file', metavar='PATH')
 
 # Parse
 args = parser.parse_args()

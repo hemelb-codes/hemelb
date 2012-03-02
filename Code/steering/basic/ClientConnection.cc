@@ -2,14 +2,14 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <fcntl.h>
 #include <netinet/in.h>
 
 #include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/ClientConnection.h"
-#include "HttpPost.h"
+#include "steering/basic/HttpPost.h"
 
 namespace hemelb
 {
@@ -25,9 +25,9 @@ namespace hemelb
       {
         char thisMachineName[255];
         gethostname(thisMachineName, 255);
-        FILE *f = fopen("env_details.asc", "w");
-        fprintf(f, "%s\n", thisMachineName);
-        fclose(f);
+        std::FILE *f = std::fopen("env_details.asc", "w");
+        std::fprintf(f, "%s\n", thisMachineName);
+        std::fclose(f);
       }
 
       // Send the steering session id we're using to the rendezvous resource.

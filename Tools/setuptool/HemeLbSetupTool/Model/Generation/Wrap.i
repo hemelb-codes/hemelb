@@ -18,7 +18,7 @@ namespace std {
 
 %{
 #include "Index.h"
-#include "ConfigGenerator.h"
+#include "GeometryGenerator.h"
 #include "vtkPolyData.h"
 #include "vtkOBBTree.h"
 #include <sstream>
@@ -90,45 +90,80 @@ namespace std {
     SWIG_exception_fail(SWIG_ArgError(SWIG_ERROR), "in method '" "$symname" "', argument " "$argnum" " of type '" "$1_type""'");
   }
  }
-
-%ignore ConfigGenerator::ClassifySite(Site&);
-%include ConfigGenerator.h
+ 
+%typemap(throws) GenerationError %{
+  PyErr_SetString(PyExc_RuntimeError, $1.what());
+  SWIG_fail;
+%}
+%ignore GeometryGenerator::ClassifySite(Site&);
+%include GeometryGenerator.h
 %include Iolet.h
 
-%ignore Iterator;
-%ignore Vec3::operator%;
-%ignore Vec3::operator[];
+// Raise a python IndexError when we get a C++ IndexError
+%typemap(throws) IndexError %{
+  PyErr_SetNone(PyExc_IndexError);
+  SWIG_fail;
+%}
+// Mark these as catching IndexError
+%catches(IndexError) hemelb::util::Vector3D::__getitem__;
+%catches(IndexError) hemelb::util::Vector3D::__setitem__;
 
-%extend Vec3 {
+%ignore IndexError;
+%ignore hemelb::util::Vector3DIterator;
+%ignore hemelb::util::Vector3DBase;
+%ignore hemelb::util::Vector3D::operator%;
+%ignore hemelb::util::Vector3D::operator[];
+
+%extend hemelb::util::Vector3D {
   // Python specific wrapping of operator[]
-  Vec3::value_type __getitem__(int i) {
-    // $self is a pointer to Vec3
+  hemelb::util::Vector3D::value_type __getitem__(int i) {
+    // $self is a pointer to Vector3D
     return (*$self)[i];
   }
-  void __setitem__(int i, Vec3::value_type val) {
-    // $self is a pointer to Vec3
+  void __setitem__(int i, hemelb::util::Vector3D::value_type val) {
+    // $self is a pointer to Vector3D
     (*$self)[i] = val;
   }
   %pythoncode %{
     def __str__(self):
-        return "Vec3(%s, %s, %s)" % (self[0], self[1], self[2])
+        return "Vector3D(%s, %s, %s)" % (self[0], self[1], self[2])
   %}
+
+  // Multiplication by a scalar
+  hemelb::util::Vector3D __mul__(hemelb::util::Vector3D::value_type divisor) {
+    return (*$self) * divisor;
+  }
+  hemelb::util::Vector3D& __imul__(hemelb::util::Vector3D::value_type divisor) {
+  	(*$self) *= divisor;
+    return (*$self);
+  }
+  
+  // Division by a scalar
+  hemelb::util::Vector3D __div__(hemelb::util::Vector3D::value_type divisor) {
+    return (*$self) / divisor;
+  }
+  hemelb::util::Vector3D& __idiv__(hemelb::util::Vector3D::value_type divisor) {
+  	(*$self) /= divisor;
+    return (*$self);
+  }
 };
 
-%feature("shadow") Vec3::__getitem__ %{
+%feature("shadow") hemelb::util::Vector3D::__getitem__ %{
 def __getitem__(self, i):
     if i < 0 or i > 2:
-        raise IndexError("Vec3 index out of range")
+        raise IndexError("Vector3D index out of range")
     return $action(self, i)
 %}
 
-%feature("shadow") Vec3::__setitem__ %{
+%feature("shadow") hemelb::util::Vector3D::__setitem__ %{
 def __setitem__(self, i, val):
     if i < 0 or i > 2:
-        raise IndexError("Vec3 index out of range")
+        raise IndexError("Vector3D index out of range")
     return $action(self, i, val)
 %}
 
-%ignore Vec3::Magnitude;
+%ignore hemelb::util::Vector3D::GetMagnitude;
+// Swig doesn't follow #includes, so we must manuall %include Vector3D.h
+%include util/Vector3D.h
 %include Index.h
-%template (DoubleVector) Vec3<double>;
+%template (DoubleVector) hemelb::util::Vector3D<double>;

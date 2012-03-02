@@ -1,0 +1,4 @@
+add_library(hemelb_extraction GeometrySelector.cc 
+LineGeometrySelector.cc LocalPropertyOutput.cc IterableDataSource.cc
+PlaneGeometrySelector.cc PropertyActor.cc PropertyWriter.cc SnapshotParser.cc 
+WholeGeometrySelector.cc LbDataSourceIterator.cc)

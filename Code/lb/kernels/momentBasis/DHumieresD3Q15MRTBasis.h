@@ -13,11 +13,16 @@ namespace hemelb
       {
         /**
          *  Class implementing the Multiple Relaxation Time (MRT) moment basis presented in in d'Humieres et al. (2002)
-         *  "MultipleÐrelaxationÐtime lattice Boltzmann models in three dimensions" for the D3Q15 lattice
+         *  "Multipleï¿½relaxationï¿½time lattice Boltzmann models in three dimensions" for the D3Q15 lattice
          */
         class DHumieresD3Q15MRTBasis
         {
           public:
+            /**
+             * The lattice that suits this basis.
+             */
+            typedef D3Q15 Lattice;
+
             /** Moments can be separated into two groups: a) hydrodynamic (conserved) and b) ghost (non-conserved). */
             static const unsigned NUM_KINETIC_MOMENTS = 11;
 

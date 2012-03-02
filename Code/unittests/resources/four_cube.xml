@@ -2,7 +2,7 @@
 <hemelbsettings>
   <simulation cycles="1" cyclesteps="10" stresstype="1" />
   <geometry>
-    <datafile path="./four_cube.dat" />
+    <datafile path="./four_cube.gmy" />
   </geometry>
   <inlets>
     <inlet>

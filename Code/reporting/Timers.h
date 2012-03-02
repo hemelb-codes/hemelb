@@ -2,8 +2,9 @@
 #define HEMELB_REPORTING_TIMERS_H
 
 #include <vector>
+#include "reporting/Reportable.h"
 #include "util/utilityFunctions.h"
-#include "Policies.h"
+#include "reporting/Policies.h"
 namespace hemelb
 {
   namespace reporting
@@ -63,7 +64,8 @@ namespace hemelb
      * @tparam ClockPolicy How to get the current time
      * @tparam CommsPolicy How to share information between processes
      */
-    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy
+    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy,
+                                                                      public Reportable
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -72,9 +74,14 @@ namespace hemelb
          */
         enum TimerName
         {
-          total=0, //!< Total time
-          domainDecomposition, //!< Time spent in domain decomposition
+          total = 0, //!< Total time
+          initialDecomposition, //!< Initial seed decomposition
+          domainDecomposition, //!< Time spent in parmetis domain decomposition
           fileRead, //!< Time spent in reading the geometry description file
+          reRead, //!< Time spend in re-reading the geometry after second decomposition
+          unzip, //!< Time spend in un-zipping
+          moves, //!< Time spent moving things around post-parmetis
+          parmetis, //!< Time spent in Parmetis
           netInitialise, //!< Time spent initialising the network topology
           lb, //!< Time spent doing the core lattice boltzman simulation
           visualisation, //!< Time spent on visualisation
@@ -82,10 +89,22 @@ namespace hemelb
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
           snapshot, //!< Time spent producing snapshots
-          simulation, //!< Total time for running the simulation
-          last //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
+          simulation, //!< Total time for running the simulation,
+          readNet,
+          readParse,
+          readBlock,
+          readBlocksPrelim,
+          readBlocksAll,
+          last
+        //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
         static const unsigned int numberOfTimers = last;
+
+        /**
+         * String message label for each timer for reporting
+         */
+        static const std::string timerNames[TimersBase::numberOfTimers];
+
         TimersBase() :
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
@@ -157,6 +176,9 @@ namespace hemelb
          * Share timing information across timers
          */
         void Reduce();
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
+
       private:
         std::vector<Timer> timers; //! The set of timers
         std::vector<double> maxes; //! Max across processes
@@ -165,23 +187,13 @@ namespace hemelb
     };
     typedef TimerBase<HemeLBClockPolicy> Timer;
     typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
+
+    template<class ClockPolicy, class CommsPolicy>
+    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
+        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Net initialisation", "Lattice Boltzmann", "Visualisation",
+          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all" };
   }
 
-  /**
-   * String message label for each timer for reporting
-   */
-  static const std::string timerNames[hemelb::reporting::Timers::numberOfTimers] =
-      { "Total",
-        "Domain Decomposition",
-        "File Read",
-        "Net initialisation",
-        "Lattice Boltzmann",
-        "Visualisation",
-        "Monitoring",
-        "MPI Send",
-        "MPI Wait",
-        "Snapshots",
-        "Simulation total" };
 }
 
 #endif //HEMELB_REPORTING_TIMERS_H

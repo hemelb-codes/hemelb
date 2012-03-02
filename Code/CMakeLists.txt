@@ -11,7 +11,10 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
+option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 
+set(HEMELB_READING_GROUP_SIZE 5
+  CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
@@ -32,12 +35,26 @@ if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
+add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
+
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
 endif()
 
+if (NOT HEMELB_STATIC_ASSERT)
+	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
+endif()
 
+#------Capture build environment -------------
 
+execute_process(COMMAND hg id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (NOT rev_ok EQUAL 0)
+  message("Could not get revision number from mercurial, looking for revision_info.txt")
+  execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+message("Revision number: ${HEMELB_REVISION_NUMBER}")
+
+execute_process(COMMAND date OUTPUT_VARIABLE HEMELB_BUILD_TIME OUTPUT_STRIP_TRAILING_WHITESPACE)
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${HEMELB_DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include)
@@ -93,6 +110,10 @@ endif()
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
 
+#------zlib ----------------
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIR})
+
 #-------------Resources -----------------------
 
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
@@ -122,15 +143,16 @@ add_executable(hemelb main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
 	configuration
+	extraction
 	reporting
 	steering
 	vis
+	geometry
 	lb
 	net
 	debug
 	topology
 	util
-	geometry
 	io
 	log
 	)
@@ -147,6 +169,7 @@ target_link_libraries(hemelb
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
+	${ZLIB_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -166,9 +189,10 @@ if(HEMELB_BUILD_UNITTESTS)
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
+		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES unittests/resources/four_cube.dat unittests/resources/four_cube.xml unittests/resources/config.xml)
+	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/config.xml)
 endif()
 
 #-------- Copy and install resources --------------

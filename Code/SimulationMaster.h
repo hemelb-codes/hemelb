@@ -1,7 +1,8 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
-#include "lb/lb.h"
+#include "extraction/PropertyActor.h"
+#include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
@@ -13,6 +14,7 @@
 #include "io/PathManager.h"
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
+#include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
 
 class SimulationMaster
@@ -30,6 +32,8 @@ class SimulationMaster
     void RunSimulation();
 
   private:
+    typedef hemelb::D3Q15 latticeType;
+
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -42,6 +46,7 @@ class SimulationMaster
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
+    hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
     MapType snapshotsCompleted;
@@ -52,13 +57,13 @@ class SimulationMaster
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState* simulationState;
-    hemelb::lb::StabilityTester* stabilityTester;
-    hemelb::lb::EntropyTester* entropyTester;
+    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
+    hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
-    hemelb::lb::LBM* latticeBoltzmannModel;
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     hemelb::net::Net communicationNet;
@@ -66,6 +71,8 @@ class SimulationMaster
     hemelb::util::UnitConverter* unitConvertor;
 
     hemelb::vis::Control* visualisationControl;
+    hemelb::extraction::IterableDataSource* propertyDataSource;
+    hemelb::extraction::PropertyActor* propertyExtractor;
 
     std::vector<hemelb::net::IteratedAction*> actors;
 

@@ -8,11 +8,11 @@
 #include "D3Q15.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
-#include "mpiInclude.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
+#include "reporting/Reportable.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 
@@ -34,7 +34,7 @@ namespace hemelb
         site_t FirstSharedF;
     };
 
-    class LatticeData
+    class LatticeData : public reporting::Reportable
     {
       public:
         friend class InnerSite<true> ;
@@ -42,6 +42,7 @@ namespace hemelb
         friend class BlockTraverser;
 
         static LatticeData* Load(const bool reserveSteeringCore,
+                                 const lb::lattices::LatticeInfo& latticeInfo,
                                  std::string& dataFilePath,
                                  reporting::Timers &timings);
 
@@ -50,6 +51,8 @@ namespace hemelb
         void SwapOldAndNew();
         void SendAndReceive(net::Net* net);
         void CopyReceived();
+
+        const lb::lattices::LatticeInfo& GetLatticeInfo() const;
 
         Site GetSite(site_t localIndex);
         ConstSite GetSite(site_t localIndex) const;
@@ -88,11 +91,12 @@ namespace hemelb
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
 
-        const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords,
-                                                     const util::Vector3D<site_t>& localSiteCoords) const;
+        const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords, const util::Vector3D<
+            site_t>& localSiteCoords) const;
 
-        const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber,
-                                                     const util::Vector3D<site_t>& localSiteCoords) const;
+        const util::Vector3D<site_t>
+        GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
+        util::Vector3D<site_t> GetSiteCoordsFromSiteId(site_t siteId) const;
 
         void GetBlockAndLocalSiteCoords(const util::Vector3D<site_t>& location,
                                         util::Vector3D<site_t>& blockCoords,
@@ -102,11 +106,12 @@ namespace hemelb
         site_t GetInnerCollisionCount(unsigned int collisionType) const;
         site_t GetInterCollisionCount(unsigned int collisionType) const;
 
-        const std::vector<site_t>& GetFluidSiteCountsOnEachProc() const;
         site_t GetFluidSiteCountOnProc(proc_t proc) const;
         site_t GetTotalFluidSites() const;
         const util::Vector3D<site_t>& GetGlobalSiteMins() const;
         const util::Vector3D<site_t>& GetGlobalSiteMaxes() const;
+
+        void Report(ctemplate::TemplateDictionary& dictionary);
 
       protected:
         /**
@@ -114,27 +119,24 @@ namespace hemelb
          * class for the purpose of testing.
          * @return
          */
-        LatticeData();
-        LatticeData(const GeometryReadResult& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult);
 
-        void SetBasicDetails(util::Vector3D<site_t> blocks,
-                             site_t blockSize,
-                             distribn_t voxelSize,
-                             util::Vector3D<distribn_t> originIn);
+        void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize, distribn_t voxelSize, util::Vector3D<
+            distribn_t> originIn);
 
         void ProcessReadSites(const GeometryReadResult& readResult);
 
-        void
-        PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
-                             const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
-                             const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
-                             const std::vector<util::Vector3D<double> > intraWallNormals[COLLISION_TYPES],
-                             const std::vector<double> intraWallDistance[COLLISION_TYPES],
-                             const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
-                             const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
-                             const std::vector<SiteData> interSiteData[COLLISION_TYPES],
-                             const std::vector<util::Vector3D<double> > interWallNormals[COLLISION_TYPES],
-                             const std::vector<double> interWallDistance[COLLISION_TYPES]);
+        void PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > intraWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> intraWallDistance[COLLISION_TYPES],
+                                  const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> interSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > interWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> interWallDistance[COLLISION_TYPES]);
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
@@ -145,6 +147,7 @@ namespace hemelb
         void InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+        sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
         void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
         void GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const;
@@ -169,6 +172,13 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         SiteData GetSiteData(site_t iSiteIndex) const;
 
+        /**
+         * Get the global site coordinates from a contiguous site id.
+         * @param siteIndex
+         * @return
+         */
+        const util::Vector3D<site_t>& GetGlobalSiteCoords(site_t siteIndex) const;
+
         // Variables are listed here in approximate order of initialisation.
         // Note that all data is ordered in increasing order of collision type, by intra-proc then
         // inter-proc.
@@ -176,6 +186,7 @@ namespace hemelb
         /**
          * Basic lattice variables.
          */
+        const lb::lattices::LatticeInfo& latticeInfo;
         util::Vector3D<site_t> blockCounts;
         site_t blockSize;
         distribn_t voxelSize;
@@ -209,6 +220,10 @@ namespace hemelb
         std::vector<Block> Blocks;
 
         std::vector<distribn_t> distanceToWall;
+        /**
+         * Hold the global site coordinates for each contiguous site.
+         */
+        std::vector<util::Vector3D<site_t> > globalSiteCoords;
         std::vector<util::Vector3D<distribn_t> > wallNormalAtSite;
         std::vector<SiteData> siteData;
 

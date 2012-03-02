@@ -144,14 +144,18 @@ if __name__ == "__main__":
                       for cpp in ['Neighbours.cpp',
                                   'Block.cpp',
                                   'BlockWriter.cpp',
-                                  'ConfigGenerator.cpp',
-                                  'ConfigWriter.cpp',
+                                  'GeometryGenerator.cpp',
+                                  'GeometryWriter.cpp',
                                   'Domain.cpp',
                                   'Site.cpp',
+                                  'Index.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
-                  for cpp in ['D3Q15.cc',
+                  for cpp in ['util/Vector3D.cc',
+                              'geometry/SiteData.cc',
+                              'lb/lattices/D3Q27.cc',
+                              'io/formats/geometry.cc',
                               'io/writers/xdr/XdrFileWriter.cc',
                               'io/writers/xdr/XdrMemWriter.cc',
                               'io/writers/xdr/XdrWriter.cc',
@@ -161,7 +165,7 @@ if __name__ == "__main__":
     swig_cpp = ['HemeLbSetupTool/Model/Generation/Wrap.cpp']
     # Do we need to swig it?
     if not os.path.exists(swig_cpp[0]) or os.path.getmtime(swig_cpp[0]) < os.path.getmtime('HemeLbSetupTool/Model/Generation/Wrap.i'):
-        cmd = 'swig -c++ -python -o HemeLbSetupTool/Model/Generation/Wrap.cpp -outdir HemeLbSetupTool/Model HemeLbSetupTool/Model/Generation/Wrap.i'
+        cmd = 'swig -I%s -c++ -python -o HemeLbSetupTool/Model/Generation/Wrap.cpp -outdir HemeLbSetupTool/Model HemeLbSetupTool/Model/Generation/Wrap.i' % HemeLbDir
         print cmd
         os.system(cmd)
     
