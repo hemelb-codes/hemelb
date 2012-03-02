@@ -9,14 +9,28 @@ results:
             file_read: 'timings/timer[name="File Read"]/mean'
             net: 'timings/timer[name="Net initialisation"]/mean'
             lb: 'timings/timer[name="Lattice Boltzmann"]/mean'
-            visualisation: 'timings/timer[name="Visualisation"]/mean'
+            visualisation_raw: 'timings/timer[name="Visualisation"]/mean'
             monitoring: 'timings/timer[name="Monitoring"]/mean'
             send: 'timings/timer[name="MPI Send"]/mean'
             wait: 'timings/timer[name="MPI Wait"]/mean'
-            snapshots: 'timings/timer[name="Snapshots"]/mean'
+            snapshots_raw: 'timings/timer[name="Snapshots"]/mean'
             simulation: 'timings/timer[name="Simulation total"]/mean'
+            steps: results/steps/total
+            snapshot_normalisation: 'timings/timer[name="Snapshots"]/normalisation'
+            changeset: build/revision
+            reading_group: build/reading_group
+            seed_decomposition: 'timings/timer[name="Seed Decomposition"]/mean'
+            re_read: 'timings/timer[name="Re Read"]/mean'
+            unzip: 'timings/timer[name="Unzip"]/mean'
+            moves: 'timings/timer[name="Moves"]/mean'
+            parmetis: 'timings/timer[name="Parmetis"]/mean'
+            reading_preliminaries: 'timings/timer[name="Read Blocks prelim"]/mean'
+            reading_blocks: 'timings/timer[name="Read blocks all"]/mean'
+            reading_communications: 'timings/timer[name="Reading communications"]/mean'
+            parsing: 'timings/timer[name="Parsing"]/mean'
+            read_io: 'timings/timer[name="Read IO"]/mean'
         'config.xml':
-            steps: ['simulation','cyclesteps']
+            cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
         'tests.xml':
             total_tests: 'Statistics/Tests'
@@ -30,19 +44,44 @@ results:
         'acceptance.txt':
             acceptance: 'Accepted: (.*)'
     name_properties:
-        machine_by_name: '_([^_]*)_\d$'
+        machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
+        type_by_name: '(regression|unittests)'
         name: '(.*)'
+    stat_properties:
+      'results/report.txt':
+        report_created_timestamp: st_mtime
+    mercurial_properties: #Properties based on the mercurial build number
+        revision: '{rev}'
+        revision_date: '{date|isodate}'
+        branch: '{branch}'
+        
     compound_properties:
-        velocity: (sites/(cores*(simulation- snapshots * snapshots_count - visualisation * images_count)))
-        non_io_total: (simulation- snapshots * snapshots_count - visualisation * images_count)
-        sites_per_core: (sites/cores)
+        snapshots_norm: (snapshots_count if normalised else 1.0)
+        images_norm: (images_count if normalised else 1.0)
+        snapshots: (snapshots_raw * snapshots_norm)
+        visualisation: (visualisation_raw * images_norm)
+        velocity: (sites*steps*1.0/(cores*non_io))
+        setup_velocity: (sites*1.0/(cores*setup))
+        decomposition_velocity: (sites*1.0/(cores*domain_decomposition))
+        read_velocity: (sites*1.0/(cores*file_read))
+        snapshot_velocity: (sites*snapshots_count*1.0/(cores*snapshots))
+        visualisation_velocity: (sites*images_count*1.0/(cores*visualisation))
+        non_io: (simulation- snapshots - visualisation)
+        setup: total-simulation
+        sites_per_core: (sites*1.0/cores)
+        core_hours: (total*cores*1.0/(60*60))
+        kau: (total*cores*125*1.0/(20000*60*60)) #20000 core hours is 125 kAU
+        cost: (5.78*kau)
+        report_created: (datetime.datetime.fromtimestamp(report_created_timestamp))
+        normalised: (True if snapshot_normalisation else False)
+
     yaml_files:
         'env.yml':
             type: script
             machine: machine_name
-            build_number: build_number
             size: VoxelSize
             profile: profile
+            node_type: node_type
 
 graphs:
     performance_versus_size:

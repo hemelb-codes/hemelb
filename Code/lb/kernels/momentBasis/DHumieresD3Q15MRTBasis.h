@@ -41,6 +41,12 @@ namespace hemelb
             static void ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
                                                    distribn_t * const moments);
 
+            /**
+             * Sets up the MRT collision matrix \hat{S}
+             *
+             * @param collisionMatrix MRT collision matrix, diagonal
+             * @param tau LB relaxation time used to relax some of the moments
+             */
             static void SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
                                              distribn_t tau);
         };
