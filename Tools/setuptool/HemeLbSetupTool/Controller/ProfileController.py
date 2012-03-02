@@ -16,7 +16,6 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         self.DefineVectorKey("SeedPoint")
         self.DefineIoletListKey("Iolets")
         self.DefineVtkObjectKey("StlReader")
-        self.DefineVtkObjectKey("SurfaceSource")
         self.DefineVtkObjectKey('SideLengthCalculator')
         
         def trans(state):
@@ -43,13 +42,13 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         dialog.Destroy()
         return
     
-    def ChooseOutputConfigFile(self, ignored=None):
+    def ChooseOutputGeometryFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT,
-                               wildcard='*.dat')
+                               wildcard='*.gmy')
 
         if dialog.ShowModal() == wx.ID_OK:
-            self.delegate.OutputConfigFile = dialog.GetPath()
+            self.delegate.OutputGeometryFile = dialog.GetPath()
             pass
         
         dialog.Destroy()
@@ -73,7 +72,13 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
                                wildcard='*.pro')
         
         if dialog.ShowModal() == wx.ID_OK:
-            self.delegate.Save(dialog.GetPath())
+            try:
+                self.delegate.Save(dialog.GetPath())
+            except IOError as err:
+                errDiag = wx.MessageDialog(None,
+                                           'Cannot write profile file.\nMessage: ' + str(err),
+                                           style=wx.OK | wx.ICON_ERROR)
+                errDiag.ShowModal()
             pass
         
         dialog.Destroy()

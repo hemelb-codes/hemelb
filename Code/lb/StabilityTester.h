@@ -20,44 +20,123 @@ namespace hemelb
      * the tree to compose the local stability for all nodes to discover whether the simulation as
      * a whole is stable.
      */
+    template<class LatticeType>
     class StabilityTester : public net::PhasedBroadcastRegular<>
     {
       public:
         StabilityTester(const geometry::LatticeData * iLatDat,
                         net::Net* net,
                         SimulationState* simState,
-                        reporting::Timers& timings);
+                        reporting::Timers& timings) :
+            net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat), mSimState(simState), timings(timings)
+        {
+          Reset();
+        }
 
         /**
          * Override the reset method in the base class, to reset the stability variables.
          */
-        void Reset();
+        void Reset()
+        {
+          // Re-initialise all values to be Stable.
+          mUpwardsStability = Stable;
+          mDownwardsStability = Stable;
+
+          mSimState->SetStability(Stable);
+
+          for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
+          {
+            mChildrensStability[ii] = Stable;
+          }
+        }
 
       protected:
         /**
          * Override the methods from the base class to propagate data from the root, and
          * to send data about this node and its childrens' stabilities up towards the root.
          */
-        void ProgressFromChildren(unsigned long splayNumber);
-        void ProgressFromParent(unsigned long splayNumber);
-        void ProgressToChildren(unsigned long splayNumber);
-        void ProgressToParent(unsigned long splayNumber);
+        void ProgressFromChildren(unsigned long splayNumber)
+        {
+          ReceiveFromChildren<int>(mChildrensStability, 1);
+        }
+
+        void ProgressFromParent(unsigned long splayNumber)
+        {
+          ReceiveFromParent<int>(&mDownwardsStability, 1);
+        }
+
+        void ProgressToChildren(unsigned long splayNumber)
+        {
+          SendToChildren<int>(&mDownwardsStability, 1);
+        }
+
+        void ProgressToParent(unsigned long splayNumber)
+        {
+          timings[hemelb::reporting::Timers::monitoring].Start();
+
+          // No need to bother testing out local lattice points if we're going to be
+          // sending up a 'Unstable' value anyway.
+          if (mUpwardsStability != Unstable)
+          {
+            for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+            {
+              for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+              {
+                distribn_t value = *mLatDat->GetFNew(i * LatticeType::NUMVECTORS + l);
+
+                // Note that by testing for value > 0.0, we also catch stray NaNs.
+                if (! (value > 0.0))
+                {
+                  mUpwardsStability = Unstable;
+                }
+              }
+            }
+
+            timings[hemelb::reporting::Timers::monitoring].Stop();
+          }
+
+          SendToParent<int>(&mUpwardsStability, 1);
+        }
 
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
          * if any child node is unstable) and start passing it back down the tree.
          */
-        void TopNodeAction();
+        void TopNodeAction()
+        {
+          mDownwardsStability = mUpwardsStability;
+        }
 
         /**
          * Override the method from the base class to use the data from child nodes.
          */
-        void PostReceiveFromChildren(unsigned long splayNumber);
+        void PostReceiveFromChildren(unsigned long splayNumber)
+        {
+          timings[hemelb::reporting::Timers::monitoring].Start();
+
+          // No need to test children's stability if this node is already unstable.
+          if (mUpwardsStability == Stable)
+          {
+            for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
+            {
+              if (mChildrensStability[ii] == Unstable)
+              {
+                mUpwardsStability = Unstable;
+                break;
+              }
+            }
+          }
+
+          timings[hemelb::reporting::Timers::monitoring].Stop();
+        }
 
         /**
          * Apply the stability value sent by the root node to the simulation logic.
          */
-        void Effect();
+        void Effect()
+        {
+          mSimState->SetStability((Stability) mDownwardsStability);
+        }
 
       private:
         /**

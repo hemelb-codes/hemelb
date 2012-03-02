@@ -9,4 +9,6 @@ followed by another 4 bytes identifying the particular type/version,
 that number being terminated by the EOF character (0x04).
 """
 
+import numpy as np
+
 HemeLbMagicNumber = 0x686c6221

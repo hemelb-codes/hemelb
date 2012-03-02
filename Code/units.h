@@ -16,6 +16,7 @@ namespace hemelb
   typedef int proc_t;
   typedef double distribn_t;
   typedef unsigned Direction;
+  typedef uint64_t sitedata_t;
 
   // ------- NEW POLICY -------------
   // Types should reflect the meaning of a quantity as well as the precision

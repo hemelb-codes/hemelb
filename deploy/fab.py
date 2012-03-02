@@ -12,7 +12,6 @@ Usage:
         For smoothest usage, you should also ensure ssh keys are in place so the target machine can access the mercurial repository
         of hemelb.
 """
-
 from templates import *
 from machines import *
 from fabric.contrib.project import *
@@ -38,6 +37,9 @@ def clone():
         with cd(env.remote_path):
             run(template("rm -rf $repository"))
             run(template("hg clone $hg/$repository"))
+        with cd(env.repository_path):
+            with prefix(env.build_prefix):
+                run("hg id -q -i > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
     execute(copy_regression_tests)
@@ -72,13 +74,16 @@ def require_recopy():
 @task
 def update():
     """Update the remote mercurial repository"""
-    if env.no_ssh:
+    if env.no_ssh or env.no_hg:
         execute(sync)
     else:
         with cd(env.repository_path):
             with prefix(env.build_prefix):
                 run("hg pull")
                 run("hg update")
+        with cd(env.repository_path):
+            with prefix(env.build_prefix):
+                run("hg id -q -i > revision_info.txt")
 
 @task
 def prepare_paths():
@@ -253,6 +258,12 @@ def sync():
             list(open(os.path.join(env.localroot,'RegressionTests','.hgignore')))
             )
     )
+    # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
+    # We will therefore assume the id for the current repository, and store that in a separate file along with the code.
+    revision_info_path=os.path.join(env.localroot,'revision_info.txt')
+    with open(revision_info_path,'w') as revision_info:
+        revision_info.write(env.build_number)
+    put(revision_info_path,env.repository_path)
 
 @task
 def patch(args=""):
@@ -518,16 +529,25 @@ def load_profile():
     return p
 
 def modify_profile(p):
-    p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
-    p.Steps=env.Steps or p.Steps
-    p.Cycles=env.Cycles or p.Cycles
-    env.Steps=p.Steps
-    env.Cycles=p.Cycles
-    env.VoxelSize=p.VoxelSize
+    #Profiles always get created with 1000 steps and 3 cycles.
+    #Can't change it here.
+    try:
+        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+        env.VoxelSize=p.VoxelSizeMetres
+    except AttributeError:
+        # Remain compatible with old setuptool
+        p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
+        env.VoxelSize=p.VoxelSize
+    env.Steps=env.Steps or 1000
+    env.Cycles=env.Cycles or 3
 
 def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     env.profile=profile
-    env.VoxelSize=float(VoxelSize) or env.get('VoxelSize')
+    env.VoxelSize=VoxelSize or env.get('VoxelSize')
+    try:
+        env.VoxelSize=float(env.VoxelSize)
+    except ValueError:
+        pass
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
     env.Cycles=Cycles or env.get('Cycles')
@@ -541,7 +561,7 @@ def generate(profile):
 def create_config_impl(p):
     modify_profile(p)
     with_template_config()
-    p.OutputConfigFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.dat'))
+    p.OutputGeometryFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.gmy'))
     p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
     local(template("mkdir -p $job_config_path_local"))
     generate(p)
@@ -554,6 +574,8 @@ def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     profile_environment(profile,VoxelSize,Steps,Cycles,args)
     p=load_profile()
     create_config_impl(p)
+    # Now modify it to have the specified steps and cycles
+    modify_config(profile,VoxelSize,Steps,Cycles,Steps,Cycles)
 
 @task
 def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
@@ -561,15 +583,15 @@ def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=
     profile_environment(profile,VoxelSize,oldSteps,oldCycles)           
     with_template_config()
     env.old_config_path=env.job_config_path_local
-    config_path=os.path.join(env.job_config_path_local,'config.xml')
+    config_path=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
     config=ElementTree.parse(config_path)
     simnode=config.find('simulation')
     for currentSteps in input_to_range(Steps,1000):
         for currentCycles in input_to_range(Cycles,3):
             profile_environment(profile,VoxelSize,currentSteps,currentCycles)
             with_template_config()
-            if env.old_config_path==env.job_config_path_local: continue
-            local(template("cp -r $old_config_path $job_config_path_local"))
+            if not env.old_config_path==env.job_config_path_local:
+                local(template("cp -r $old_config_path $job_config_path_local"))
             new_config_path=os.path.join(env.job_config_path_local,'config.xml')
             simnode.set('cyclesteps',str(currentSteps))
             simnode.set('cycles',str(currentCycles))
@@ -584,7 +606,7 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        modify_config(profile,Steps,Cycles,1000,3)
+        modify_config(profile,VoxelSize,Steps,Cycles,1000,3)
 
 @task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):

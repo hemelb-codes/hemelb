@@ -4,9 +4,8 @@
 #include <vector>
 
 #include "Index.h"
-//#include "Site.h"
 class Site;
-//class Domain;
+
 #include "Domain.h"
 
 typedef std::vector<Site*> SiteVec;
@@ -29,10 +28,10 @@ public:
 		return this->sites.end();
 	}
 
-	inline Domain& GetDomain() {
+	inline Domain& GetDomain() const {
 		return this->domain;
 	}
-	inline const Index& GetIndex() {
+	inline const Index& GetIndex() const {
 		return this->index;
 	}
 

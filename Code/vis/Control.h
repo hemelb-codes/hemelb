@@ -48,6 +48,7 @@ namespace hemelb
         Control(lb::StressTypes iStressType,
                 net::Net* net,
                 lb::SimulationState* simState,
+                const lb::MacroscopicPropertyCache& propertyCache,
                 geometry::LatticeData* iLatDat,
                 reporting::Timer &atimer);
         ~Control();
@@ -74,7 +75,6 @@ namespace hemelb
 
         void UpdateImageSize(int pixels_x, int pixels_y);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
         const PixelSet<ResultPixel>* GetResult(unsigned long startIteration);
 
@@ -92,9 +92,9 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        Viewpoint mViewpoint;
-        DomainStats mDomainStats;
-        VisSettings mVisSettings;
+        Viewpoint viewpoint;
+        DomainStats domainStats;
+        VisSettings visSettings;
 
       protected:
         void InitialAction(unsigned long startIteration);
@@ -127,9 +127,13 @@ namespace hemelb
         std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
         net::Net* net;
+        /**
+         * Cache of all the macroscopic fluid properties of each lattice site on this core.
+         */
+        const lb::MacroscopicPropertyCache& propertyCache;
 
-        geometry::LatticeData* mLatDat;
-        Screen mScreen;
+        geometry::LatticeData* latticeData;
+        Screen screen;
         Vis* vis;
         raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>
             *normalRayTracer;

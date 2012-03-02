@@ -8,6 +8,7 @@
 #include "mpiInclude.h"
 
 #include "geometry/LatticeData.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "topology/NetworkTopology.h"
 
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
@@ -22,7 +23,8 @@ namespace hemelb
       class VelocityField
       {
         public:
-          VelocityField(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors);
+          VelocityField(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors
+                        , const lb::MacroscopicPropertyCache& propertyCache);
 
           void BuildVelocityField(const geometry::LatticeData& latDat);
 
@@ -41,16 +43,14 @@ namespace hemelb
 
           void InvalidateAllCalculatedVelocities();
 
-          void UpdateLocalField(const util::Vector3D<site_t>& position,
-                                const geometry::LatticeData& latDat);
+          void UpdateLocalField(const util::Vector3D<site_t>& position, const geometry::LatticeData& latDat);
 
           bool NeededFromNeighbour(const util::Vector3D<site_t> location,
                                    const geometry::LatticeData& latDat,
                                    proc_t* sourceProcessor);
 
         private:
-          void UpdateLocalField(VelocitySiteData* localVelocitySiteData,
-                                const geometry::LatticeData& latDat);
+          void UpdateLocalField(VelocitySiteData* localVelocitySiteData, const geometry::LatticeData& latDat);
 
           // Counter to make sure the velocity field blocks are correct for the current iteration.
           site_t counter;
@@ -64,7 +64,7 @@ namespace hemelb
           // Vector containing VelocityFields
           std::vector<std::vector<VelocitySiteData> > velocityField;
           std::map<proc_t, NeighbouringProcessor>& neighbouringProcessors;
-
+          const lb::MacroscopicPropertyCache& propertyCache;
       };
     }
   }
