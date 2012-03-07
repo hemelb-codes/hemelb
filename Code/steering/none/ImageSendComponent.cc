@@ -8,7 +8,7 @@ namespace hemelb
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork,
-                                           int inletCount)
+                                           unsigned int inletCountIn): inletCount(inletCountIn)
     {
 
     }
