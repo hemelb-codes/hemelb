@@ -48,8 +48,8 @@ results:
         type_by_name: '(regression|unittests)'
         name: '(.*)'
     stat_properties:
-      'results/report.txt':
-        report_created_timestamp: st_mtime
+        'results/report.txt':
+            report_created_timestamp: st_mtime
     mercurial_properties: #Properties based on the mercurial build number
         revision: '{rev}'
         revision_date: '{date|isodate}'
