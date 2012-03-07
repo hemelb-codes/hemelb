@@ -12,6 +12,11 @@ namespace hemelb
   {
     struct PropertyOutputFile
     {
+        PropertyOutputFile()
+        {
+          geometry = NULL;
+        }
+
         ~PropertyOutputFile()
         {
           delete geometry;
@@ -21,7 +26,6 @@ namespace hemelb
         unsigned long frequency;
         GeometrySelector* geometry;
         std::vector<OutputField> fields;
-
     };
   }
 }

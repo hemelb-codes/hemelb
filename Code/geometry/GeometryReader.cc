@@ -28,7 +28,8 @@ namespace hemelb
       MPI_Group worldGroup;
       MPI_Comm_group(MPI_COMM_WORLD, &worldGroup);
 
-      participateInTopology = !reserveSteeringCore || topology::NetworkTopology::Instance()->GetLocalRank() != 0;
+      participateInTopology = !reserveSteeringCore || topology::NetworkTopology::Instance()->GetLocalRank() != 0
+          || topology::NetworkTopology::Instance()->GetProcessorCount() == 1;
 
       // Create our own group, without the root node.
       if (reserveSteeringCore && topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
@@ -1426,7 +1427,7 @@ namespace hemelb
       real_t* domainWeights = new real_t[desiredPartitionSize];
       for (idx_t rank = 0; rank < desiredPartitionSize; ++rank)
       {
-        domainWeights[rank] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
+        domainWeights[rank] = (real_t)(1.0) / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.

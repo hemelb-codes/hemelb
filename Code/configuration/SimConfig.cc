@@ -25,6 +25,10 @@ namespace hemelb
 
     SimConfig::~SimConfig()
     {
+      for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
+      {
+        delete propertyOutputs[outputNumber];
+      }
     }
 
     SimConfig *SimConfig::Load(const char *iPath)
@@ -233,8 +237,10 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForInOutlets(TiXmlElement *iParent, bool iIsLoading, std::vector<
-        lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
+    void SimConfig::DoIOForInOutlets(TiXmlElement *iParent,
+                                     bool iIsLoading,
+                                     std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
+                                     std::string iChildNodeName)
     {
       if (iIsLoading)
       {
@@ -287,7 +293,7 @@ namespace hemelb
 
       while (lCurrentLet != NULL)
       {
-        extraction::PropertyOutputFile output;
+        extraction::PropertyOutputFile* output = new extraction::PropertyOutputFile();
 
         DoIOForPropertyOutputFile(lCurrentLet, iIsLoading, output);
         propertyOutputs.push_back(output);
@@ -298,14 +304,14 @@ namespace hemelb
 
     void SimConfig::DoIOForPropertyOutputFile(TiXmlElement *iXmlNode,
                                               bool iIsLoading,
-                                              extraction::PropertyOutputFile& file)
+                                              extraction::PropertyOutputFile* file)
     {
       if (iIsLoading)
       {
-        DoIOForString(iXmlNode, "filename", iIsLoading, file.filename);
+        DoIOForString(iXmlNode, "file", iIsLoading, file->filename);
 
         char* dummy;
-        file.frequency = strtoul(iXmlNode->Attribute("frequency"), &dummy, 10);
+        file->frequency = strtoul(iXmlNode->Attribute("frequency"), &dummy, 10);
 
         TiXmlElement* propertyElement = iXmlNode->FirstChildElement();
 
@@ -315,18 +321,18 @@ namespace hemelb
           {
             extraction::PlaneGeometrySelector* plane = NULL;
             DoIOForPlaneGeometry(propertyElement, iIsLoading, plane);
-            file.geometry = plane;
+            file->geometry = plane;
           }
           else if (propertyElement->ValueStr().compare("linegeometry") == 0)
           {
             extraction::LineGeometrySelector* line = NULL;
             DoIOForLineGeometry(propertyElement, iIsLoading, line);
-            file.geometry = line;
+            file->geometry = line;
           }
           else if (propertyElement->ValueStr().compare("wholegeometry") == 0)
           {
             extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
-            file.geometry = whole;
+            file->geometry = whole;
           }
           else
           {
@@ -341,7 +347,7 @@ namespace hemelb
             extraction::OutputField outputField;
 
             DoIOForPropertyField(lCurrentLet, iIsLoading, outputField);
-            file.fields.push_back(outputField);
+            file->fields.push_back(outputField);
 
             lCurrentLet = lCurrentLet->NextSiblingElement("field");
           }
@@ -349,12 +355,14 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector* line)
+    void SimConfig::DoIOForLineGeometry(TiXmlElement *iXmlNode,
+                                        bool iIsLoading,
+                                        extraction::LineGeometrySelector*& line)
     {
       TiXmlElement* point1 = GetChild(iXmlNode, "point", iIsLoading);
-      TiXmlElement* point2 = iIsLoading
-        ? point1->NextSiblingElement("point")
-        : GetChild(iXmlNode, "point", iIsLoading);
+      TiXmlElement* point2 = iIsLoading ?
+        point1->NextSiblingElement("point") :
+        GetChild(iXmlNode, "point", iIsLoading);
 
       util::Vector3D<float> mutableVector;
       util::Vector3D<float> mutableVector2;
@@ -378,7 +386,7 @@ namespace hemelb
 
     void SimConfig::DoIOForPlaneGeometry(TiXmlElement *iXmlNode,
                                          bool iIsLoading,
-                                         extraction::PlaneGeometrySelector* plane)
+                                         extraction::PlaneGeometrySelector*& plane)
     {
       TiXmlElement* point1 = GetChild(iXmlNode, "point", iIsLoading);
       TiXmlElement* normal = GetChild(iXmlNode, "normal", iIsLoading);
