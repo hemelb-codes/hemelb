@@ -79,6 +79,12 @@ namespace hemelb
          * @return The string path to use for writing a snapshot file, returned by copy.
          */
         const std::string SnapshotPath(unsigned long time) const;
+
+        /**
+         * Return the path that property extraction output should go to.
+         * @return
+         */
+        const std::string& GetDataExtractionPath() const;
       private:
         void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         std::string outputDir;
@@ -87,6 +93,7 @@ namespace hemelb
         std::string imageDirectory;
         std::string configLeafName;
         std::string reportName;
+        std::string dataPath;
         const configuration::CommandLine &options;
         bool ok;
         bool doIo; //! Am I the input/output node?

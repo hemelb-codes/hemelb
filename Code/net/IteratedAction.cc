@@ -4,6 +4,11 @@ namespace hemelb
 {
   namespace net
   {
+    IteratedAction::~IteratedAction()
+    {
+
+    }
+
     void IteratedAction::RequestComms()
     {
 

@@ -38,7 +38,7 @@ namespace hemelb
         unsigned long NumCycles;
         long StepsPerCycle;
         lb::StressTypes StressType;
-        std::vector<extraction::PropertyOutputFile> propertyOutputs;
+        std::vector<extraction::PropertyOutputFile*> propertyOutputs;
 
         void DoIOForCosineInOutlet(TiXmlElement *iXmlNode,
                                    bool iIsLoading,
@@ -65,9 +65,9 @@ namespace hemelb
         void DoIOForProperties(TiXmlElement *iXmlNode, bool iIsLoading);
         void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
         void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
-        void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile& file);
-        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector* line);
-        void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector* plane);
+        void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile* file);
+        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector*& line);
+        void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
         TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);

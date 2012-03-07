@@ -66,7 +66,14 @@ namespace hemelb
             return f_neq;
           }
 
-          inline FVector<LatticeType>& GetFPostCollision()
+          // This is necessary as some of the streamers need the post-collision distribution.
+          // It is calculated by collisions and kernels.
+          inline void SetFPostCollision(Direction direction, distribn_t value)
+          {
+            fPostCollision[direction] = value;
+          }
+
+          inline const FVector<LatticeType>& GetFPostCollision()
           {
             return fPostCollision;
           }
