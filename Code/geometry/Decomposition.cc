@@ -1,4 +1,4 @@
-#include "Decomposition.hpp"
+#include "geometry/Decomposition.hpp"
 
 namespace hemelb
 {

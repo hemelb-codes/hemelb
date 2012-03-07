@@ -1,5 +1,5 @@
-#ifndef HEMELB_REPORTING_BUILD_INFO_H_IN
-#define HEMELB_REPORTING_BUILD_INFO_H_IN
+#ifndef HEMELB_REPORTING_BUILDINFO_H_IN
+#define HEMELB_REPORTING_BUILDINFO_H_IN
 #include "reporting/Reportable.h"
 namespace hemelb
 {
@@ -29,4 +29,4 @@ namespace hemelb
     };
   }
 }
-#endif // HEMELB_REPORTING_BUILD_INFO_H_IN
+#endif // HEMELB_REPORTING_BUILDINFO_H_IN
