@@ -1,5 +1,5 @@
-#ifndef HEMELB_EXTRACTION_LBDATASOURCE_H
-#define HEMELB_EXTRACTION_LBDATASOURCE_H
+#ifndef HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H
+#define HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H
 
 #include "extraction/IterableDataSource.h"
 #include "geometry/LatticeData.h"
@@ -71,4 +71,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_EXTRACTION_LBDATASOURCE_H */
+#endif /* HEMELB_EXTRACTION_LBDATASOURCEITERATOR_H */
