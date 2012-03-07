@@ -21,7 +21,7 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile& outputSpec);
+        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).
@@ -49,7 +49,7 @@ namespace hemelb
         /**
          * PropertyOutputFile spec.
          */
-        const PropertyOutputFile& outputSpec;
+        const PropertyOutputFile* outputSpec;
 
         /**
          * Where to begin writing into the file.
