@@ -50,6 +50,8 @@ namespace hemelb
           master->RunSimulation();
           AssertPresent("results/report.txt");
           AssertPresent("results/report.xml");
+          AssertPresent("results/Extracted/wholegeometryvelocityandstress.dat");
+          AssertPresent("results/Extracted/centrelinepressure.dat");
         }
 
       private:
