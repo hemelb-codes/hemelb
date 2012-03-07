@@ -1,6 +1,6 @@
 #ifndef HEMELB_GEOMETRY_DECOMPOSITION_HPP
 #define HEMELB_GEOMETRY_DECOMPOSITION_HPP
-#include "Decomposition.h"
+#include "geometry/Decomposition.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 
