@@ -467,7 +467,7 @@ def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
     execute(copy_regression_tests)
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
-            wall_time='0:20:0',memory='2G',images=1, snapshots=1, steering=1111,script='regression'),args)
+            wall_time='0:20:0',memory='2G',images=0, snapshots=1, steering=1111,script='regression'),args)
 
 def job(*option_dictionaries):
     """Internal low level job launcher.
