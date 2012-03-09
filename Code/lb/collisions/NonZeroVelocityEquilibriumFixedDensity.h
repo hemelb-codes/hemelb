@@ -18,34 +18,34 @@ namespace hemelb
           typedef KernelType CKernel;
 
           NonZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
-              kernel(initParams), boundaryObject(initParams.boundaryObject), latDat(initParams.latDat)
+              kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
 
           }
 
-          void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                       const site_t index)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
           {
-            D3Q15::CalculateDensityAndVelocity(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z);
+            CKernel::LatticeType::CalculateDensityAndVelocity(hydroVars.f,
+                                                              hydroVars.density,
+                                                              hydroVars.v_x,
+                                                              hydroVars.v_y,
+                                                              hydroVars.v_z);
 
             // Externally impose a density.
-            hydroVars.density = boundaryObject->GetBoundaryDensity(latDat->GetBoundaryId(index));
+            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
 
-            kernel.CalculateFeq(hydroVars, index);
+            kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          distribn_t DoCollide(const LbmParameters* lbmParams,
-                               unsigned int directionIndex,
-                               kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
           {
-            return iHydroVars.GetFEq().f[directionIndex];
+            for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
+            {
+              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
+            }
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             kernel.Reset(init);
           }
@@ -53,7 +53,6 @@ namespace hemelb
         private:
           KernelType kernel;
           boundaries::BoundaryValues* boundaryObject;
-          const geometry::LatticeData* latDat;
       };
 
     }

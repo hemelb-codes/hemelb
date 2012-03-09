@@ -75,9 +75,16 @@ def LinuxGrep(results):
 
 def LibToInclude(vtkLibDir):
     libDir, vtk = os.path.split(vtkLibDir)
-    prefix, lib = os.path.split(libDir)
+    if vtk.startswith('vtk'):
+        prefix, lib = os.path.split(libDir)
+    elif vtk == 'lib':
+        prefix = libDir
+        libDir = vtkLibDir
+    else:
+        raise ValueError("Can't deduce path to VTK include dir from library dir '%s'" % vtkLibDir)
+
     includeDir = os.path.join(prefix, 'include')
-    vtkIncludeDir = os.path.join(includeDir, vtk)
+    vtkIncludeDir = os.path.join(includeDir, 'vtk-%d.%d' % GetVtkVersion())
     return vtkIncludeDir
 
 def GetVtkLibDir():
@@ -137,24 +144,28 @@ if __name__ == "__main__":
                       for cpp in ['Neighbours.cpp',
                                   'Block.cpp',
                                   'BlockWriter.cpp',
-                                  'ConfigGenerator.cpp',
-                                  'ConfigWriter.cpp',
+                                  'GeometryGenerator.cpp',
+                                  'GeometryWriter.cpp',
                                   'Domain.cpp',
                                   'Site.cpp',
+                                  'Index.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
-                  for cpp in ['D3Q15.cc',
-                              'io/XdrFileWriter.cc',
-                              'io/XdrMemWriter.cc',
-                              'io/XdrWriter.cc',
-                              'io/Writer.cc']]
+                  for cpp in ['util/Vector3D.cc',
+                              'geometry/SiteData.cc',
+                              'lb/lattices/D3Q27.cc',
+                              'io/formats/geometry.cc',
+                              'io/writers/xdr/XdrFileWriter.cc',
+                              'io/writers/xdr/XdrMemWriter.cc',
+                              'io/writers/xdr/XdrWriter.cc',
+                              'io/writers/Writer.cc']]
 
     # SWIG wrapper
     swig_cpp = ['HemeLbSetupTool/Model/Generation/Wrap.cpp']
     # Do we need to swig it?
     if not os.path.exists(swig_cpp[0]) or os.path.getmtime(swig_cpp[0]) < os.path.getmtime('HemeLbSetupTool/Model/Generation/Wrap.i'):
-        cmd = 'swig -c++ -python -o HemeLbSetupTool/Model/Generation/Wrap.cpp -outdir HemeLbSetupTool/Model HemeLbSetupTool/Model/Generation/Wrap.i'
+        cmd = 'swig -I%s -c++ -python -o HemeLbSetupTool/Model/Generation/Wrap.cpp -outdir HemeLbSetupTool/Model HemeLbSetupTool/Model/Generation/Wrap.i' % HemeLbDir
         print cmd
         os.system(cmd)
     
@@ -172,6 +183,6 @@ if __name__ == "__main__":
           author='Rupert Nash',
           author_email='rupert.nash@ucl.ac.uk',
           packages=['HemeLbSetupTool', 'HemeLbSetupTool.Bindings', 'HemeLbSetupTool.Util', 'HemeLbSetupTool.Model', 'HemeLbSetupTool.View', 'HemeLbSetupTool.Controller'],
-          scripts=['scripts/setuptool', 'scripts/countsites'],
+          scripts=['scripts/hemelb-setup', 'scripts/hemelb-setup-nogui', 'scripts/hemelb-countsites'],
           ext_modules=[generation_ext]
           )

@@ -1,10 +1,10 @@
-#include <errno.h>
-#include <signal.h>
+#include <cerrno>
+#include <csignal>
 
 #include "log/Logger.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/Network.h"
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -12,13 +12,12 @@ namespace hemelb
   namespace steering
   {
     // Use initialisation list to do the work.
-    ImageSendComponent::ImageSendComponent(lb::LBM* lbm,
-                                           lb::SimulationState* iSimState,
+    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState,
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
-                                           Network* iNetwork) :
-      mNetwork(iNetwork), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
-          mLbmParams(iLbmParams)
+                                           Network* iNetwork,
+                                           unsigned inletCountIn) :
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn)
     {
       xdrSendBuffer = new char[maxSendSize];
 
@@ -45,7 +44,7 @@ namespace hemelb
         return;
       }
 
-      io::XdrMemWriter imageWriter = io::XdrMemWriter(xdrSendBuffer, maxSendSize);
+      io::writers::xdr::XdrMemWriter imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer, maxSendSize);
 
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
@@ -56,10 +55,7 @@ namespace hemelb
       imageWriter << (int) (pix->GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->WritePixels(&imageWriter,
-                               *pix,
-                               &mVisControl->mDomainStats,
-                               &mVisControl->mVisSettings);
+      mVisControl->WritePixels(&imageWriter, *pix, mVisControl->domainStats, mVisControl->visSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
@@ -68,13 +64,13 @@ namespace hemelb
         sim.timeStep = (int) mSimState->GetTimeStep();
         sim.time = mSimState->GetIntraCycleTime();
         sim.cycle = (int) mSimState->GetCycleId();
-        sim.nInlets = mLbm->inlets;
+        sim.nInlets = inletCount;
 
-        sim.mousePressure = mVisControl->mVisSettings.mouse_pressure;
-        sim.mouseStress = mVisControl->mVisSettings.mouse_stress;
+        sim.mousePressure = mVisControl->visSettings.mouse_pressure;
+        sim.mouseStress = mVisControl->visSettings.mouse_stress;
 
-        mVisControl->mVisSettings.mouse_pressure = -1.0;
-        mVisControl->mVisSettings.mouse_stress = -1.0;
+        mVisControl->visSettings.mouse_pressure = -1.0;
+        mVisControl->visSettings.mouse_stress = -1.0;
 
         sim.pack(&imageWriter);
       }

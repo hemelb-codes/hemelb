@@ -1,0 +1,27 @@
+version: 1
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  parsing:
+    format: '%(context)s - %(message)s'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: simple
+    stream: ext://sys.stdout
+  parsing:
+    class: logging.handlers.RotatingFileHandler
+    filename: 'parsing.log'
+    level: DEBUG
+    formatter: parsing
+    backupCount: 2
+    maxBytes: 65536
+loggers:
+  parsing:
+    level: DEBUG
+    handlers: [parsing]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console]

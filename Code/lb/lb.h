@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_H
-#define HEMELB_LB_H
+#ifndef HEMELB_LB_LB_H
+#define HEMELB_LB_LB_H
 
 #include "net/net.h"
 #include "net/IteratedAction.h"
@@ -10,14 +10,24 @@
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
+#include "reporting/Timers.h"
 #include <typeinfo>
 
 namespace hemelb
 {
+  /**
+   * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzman simulation
+   */
   namespace lb
   {
+    /**
+     * Class providing core Lattice Boltzmann functionality.
+     * Implements the IteratedAction interface.
+     */
+    template<class LatticeType>
     class LBM : public net::IteratedAction
     {
       private:
@@ -31,61 +41,71 @@ namespace hemelb
         //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
 
         // LGBK operator with support for non-Newtonian flow
-        //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
+        //typedef kernels::LBGKNN<RHEO_MODEL, LatticeType> LB_KERNEL;
+
+        // Multiple relaxation time collision operator
+        //typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> LB_KERNEL;
 
         // Standard LBGK collision operator
-        typedef kernels::LBGK LB_KERNEL;
+        typedef kernels::LBGK<LatticeType> LB_KERNEL;
 
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
-            tMidFluidCollision;
-        typedef streamers::SimpleBounceBack<collisions::Normal<kernels::LBGK> > tWallCollision;
-        typedef streamers::SimpleCollideAndStream<
-            collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
-            LB_KERNEL> > tInletOutletWallCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
+        typedef streamers::SimpleBounceBack<collisions::Normal<LB_KERNEL> > tWallCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletWallCollision;
 
       public:
-        LBM(hemelb::SimConfig *iSimulationConfig,
+        /**
+         * Constructor, stage 1.
+         * Object so initialized is not ready for simulation.
+         * Must have Initialise(...) called also. Constructor separated due to need to access
+         * the partially initialized LBM in order to initialize the arguments to the second construction phase.
+         */
+        LBM(hemelb::configuration::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
-            SimulationState* simState);
+            SimulationState* simState,
+            reporting::Timer &atimer);
         ~LBM();
 
-        void RequestComms();
-        void PreSend();
-        void PreReceive();
-        void PostReceive();
-        void EndIteration();
-        void Reset();
+        void RequestComms(); ///< part of IteratedAction interface.
+        void PreSend(); ///< part of IteratedAction interface.
+        void PreReceive(); ///< part of IteratedAction interface.
+        void PostReceive(); ///< part of IteratedAction interface.
+        void EndIteration(); ///< part of IteratedAction interface.
+        void Reset(); ///< part of IteratedAction interface.
 
-        site_t total_fluid_sites;
-        int inlets;
+        site_t TotalFluidSiteCount() const;
+        void SetTotalFluidSiteCount(site_t);
+        int InletCount() const;
 
-        void UpdateBoundaryDensities(unsigned long time_step);
-        void UpdateInletVelocities(unsigned long time_step);
+        /**
+         * Second constructor.
+         *
+         */
+        void Initialise(vis::Control* iControl,
+                        boundaries::BoundaryValues* iInletValues,
+                        boundaries::BoundaryValues* iOutletValues,
+                        util::UnitConverter* iUnits);
 
-        void
-        Initialise(site_t* iFTranslator,
-                   vis::Control* iControl,
-                   boundaries::BoundaryValues* iInletValues,
-                   boundaries::BoundaryValues* iOutletValues,
-                   util::UnitConverter* iUnits);
-
-        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
+        /**
+         * This routine writes the flow field on file, using MPIO to coordinate
+         * the writing. The format is detailed in io/formats/snapshot.h
+         */
+        // TODO filename argument should be const, but cannot be due to MPI constness issue #30
+        void WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const;
         void ReadVisParameters();
 
-        void CalculateMouseFlowField(float densityIn,
-                                     float stressIn,
-                                     distribn_t &mouse_pressure,
-                                     distribn_t &mouse_stress,
-                                     double density_threshold_min,
-                                     double density_threshold_minmax_inv,
-                                     double stress_threshold_max_inv);
+        void CalculateMouseFlowField(const ScreenDensity densityIn,
+                                     const ScreenStress stressIn,
+                                     const LatticeDensity density_threshold_min,
+                                     const LatticeDensity density_threshold_minmax_inv,
+                                     const LatticeStress stress_threshold_max_inv,
+                                     PhysicalPressure &mouse_pressure,
+                                     PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
-        double GetTimeSpent() const;
-
-        site_t siteMins[3], siteMaxes[3];
+        const lb::MacroscopicPropertyCache& GetPropertyCache() const;
 
       private:
         void SetInitialConditions();
@@ -93,14 +113,6 @@ namespace hemelb
         void InitCollisions();
 
         void ReadParameters();
-        void CalculateBC(distribn_t f[],
-                         hemelb::geometry::LatticeData::SiteType iSiteType,
-                         unsigned int iBoundaryId,
-                         distribn_t *density,
-                         distribn_t *vx,
-                         distribn_t *vy,
-                         distribn_t *vz,
-                         distribn_t f_neq[]);
 
         void handleIOError(int iError);
 
@@ -113,25 +125,15 @@ namespace hemelb
         tInletOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision,
-                              const site_t iFirstIndex,
-                              const site_t iSiteCount)
+        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex,
-                                                        iSiteCount,
-                                                        &mParams,
-                                                        mLatDat,
-                                                        mVisControl);
+            collision->template StreamAndCollide<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex,
-                                                         iSiteCount,
-                                                         &mParams,
-                                                         mLatDat,
-                                                         mVisControl);
+            collision->template StreamAndCollide<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -140,29 +142,20 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true> (iFirstIndex,
-                                                  iSiteCount,
-                                                  &mParams,
-                                                  mLatDat,
-                                                  mVisControl);
+            collision->template DoPostStep<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false> (iFirstIndex,
-                                                   iSiteCount,
-                                                   &mParams,
-                                                   mLatDat,
-                                                   mVisControl);
+            collision->template DoPostStep<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
-        double timeSpent;
-
         double *inlet_normal;
 
+        int inlets;
         int outlets;
 
-        SimConfig *mSimConfig;
+        configuration::SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
@@ -173,8 +166,17 @@ namespace hemelb
 
         util::UnitConverter* mUnits;
 
-        site_t* receivedFTranslator;
+        reporting::Timer &timer;
+
+        MacroscopicPropertyCache propertyCache;
     };
-  }
-}
-#endif // HEMELB_LB_H
+
+    template<class LatticeType>
+    inline int LBM<LatticeType>::InletCount() const
+    {
+      return inlets;
+    }
+
+  } // Namespace lb
+} // Namespace hemelb
+#endif // HEMELB_LB_LB_H

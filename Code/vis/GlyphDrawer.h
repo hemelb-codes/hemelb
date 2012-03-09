@@ -2,6 +2,7 @@
 #define HEMELB_VIS_GLYPHDRAWER_H
 
 #include "geometry/LatticeData.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 #include "vis/BasicPixel.h"
 #include "vis/PixelSet.h"
@@ -31,18 +32,24 @@ namespace hemelb
         ~GlyphDrawer();
 
         // Function to perform the rendering.
-        PixelSet<BasicPixel>* Render();
+        PixelSet<BasicPixel>* Render(const lb::MacroscopicPropertyCache& propertyCache);
 
       private:
         // A struct to represent a single glyph.
         struct Glyph
         {
+          /**
+           * The 3D coordinates of the glyph.
+           */
             float x, y, z;
-            distribn_t *f;
+            /**
+             * The local contiguous site id near there.
+             */
+            site_t siteId;
         };
 
-        void RenderLine(const Vector3D<float>& endPoint1,
-                        const Vector3D<float>& endPoint2,
+        void RenderLine(const XYCoordinates<float>& endPoint1,
+                        const XYCoordinates<float>& endPoint2,
                         const VisSettings* visSettings,
                         PixelSet<BasicPixel>*);
 

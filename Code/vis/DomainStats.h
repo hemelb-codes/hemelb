@@ -23,3 +23,4 @@ namespace hemelb
 }
 
 #endif /* HEMELB_VIS_DOMAINSTATS_H */
+

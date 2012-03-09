@@ -21,21 +21,34 @@ namespace hemelb
        * (Google for 'CRTP traits'). Each kernel implementation can also specialise this template.
        */
 
+      template<class LatticeType>
       struct FVector
       {
         public:
-          distribn_t f[D3Q15::NUMVECTORS];
+          distribn_t f[LatticeType::NUMVECTORS];
+
+          inline distribn_t& operator[](unsigned index)
+          {
+            return f[index];
+          }
+
+          inline const distribn_t& operator[](unsigned index) const
+          {
+            return f[index];
+          }
       };
 
+      template<class LatticeType>
       struct HydroVarsBase
       {
-          friend class Entropic;
-          friend class LBGK;
-          template<class rheologyModel> friend class LBGKNN;
+          template<class LatticeImpl> friend class Entropic;
+          template<class LatticeImpl> friend class LBGK;
+          template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
+          template<class LatticeImpl> friend class MRT;
 
         protected:
           HydroVarsBase(const distribn_t* const f) :
-            f(f)
+              f(f)
           {
           }
 
@@ -43,26 +56,38 @@ namespace hemelb
           distribn_t density, v_x, v_y, v_z;
           const distribn_t* const f;
 
-          const FVector& GetFEq()
+          inline const FVector<LatticeType>& GetFEq()
           {
             return f_eq;
           }
 
-          const FVector& GetFNeq()
+          inline const FVector<LatticeType>& GetFNeq()
           {
             return f_neq;
           }
 
+          // This is necessary as some of the streamers need the post-collision distribution.
+          // It is calculated by collisions and kernels.
+          inline void SetFPostCollision(Direction direction, distribn_t value)
+          {
+            fPostCollision[direction] = value;
+          }
+
+          inline const FVector<LatticeType>& GetFPostCollision()
+          {
+            return fPostCollision;
+          }
+
         protected:
-          FVector f_eq, f_neq;
+          FVector<LatticeType> f_eq, f_neq, fPostCollision;
       };
 
       template<typename KernelImpl>
-      struct HydroVars : HydroVarsBase
+      struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
+              HydroVarsBase<typename KernelImpl::LatticeType>(f)
           {
 
           }
@@ -103,6 +128,7 @@ namespace hemelb
        * complete interface usable by collision operators:
        *  - Constructor(InitParams&)
        *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
+       *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
        *  - CalculateDensityVelocityFeq(KHydroVars&, site_t) for calculating
        *      the density, velocity and equilibrium distribution
        *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
@@ -115,32 +141,31 @@ namespace hemelb
        *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
        *  - DoReset(InitParams*)
        */
-      template<typename KernelImpl>
+      template<typename KernelImpl, typename LatticeImpl>
       class BaseKernel
       {
         public:
           typedef HydroVars<KernelImpl> KHydroVars;
+          typedef LatticeImpl LatticeType;
 
-          void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateDensityVelocityFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateDensityVelocityFeq(hydroVars, index);
           }
 
-          void CalculateFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
           }
 
-          distribn_t Collide(const LbmParameters* lbmParams,
-                             KHydroVars& hydroVars,
-                             unsigned int directionIndex)
+          inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
           {
-            return static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars, directionIndex);
+            static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          void Reset(InitParams* init)
+          inline void Reset(InitParams* init)
           {
-            static_cast<KernelImpl*> (this)->DoReset(init);
+            static_cast<KernelImpl*>(this)->DoReset(init);
           }
       };
 

@@ -5,7 +5,7 @@
 #include "log/Logger.h"
 #include "util/fileutils.h"
 #include "util/utilityStructs.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 namespace hemelb
 {
@@ -16,14 +16,14 @@ namespace hemelb
       namespace iolets
       {
         InOutLetFile::InOutLetFile() :
-            InOutLetCycle<0, false>()
+          InOutLetCycle<0, false> ()
         {
 
         }
 
-        void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig)
+        void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
         {
-          iSimConfig->DoIO(iParent, iIsLoading, this);
+          iSimConfig->DoIOForFileInOutlet(iParent, iIsLoading, this);
         }
 
         InOutLet* InOutLetFile::Clone()
@@ -42,8 +42,7 @@ namespace hemelb
         // IMPORTANT: to allow reading in data taken at irregular intervals the user
         // needs to make sure that the last point in the file coincides with the first
         // point of a new cycle for a continuous trace.
-        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &densityCycle,
-                                          const SimulationState *iState)
+        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
         {
           // First read in values from file into vectors
           std::vector<util::key_value_pair<double, double> > TimeValuePair(0);
@@ -61,14 +60,14 @@ namespace hemelb
             tvPair.value = valueTemp;
 
             // Don't enter repeat values
-            if (TimeValuePair.size() == 0)
+            if (TimeValuePair.empty())
             {
               TimeValuePair.push_back(tvPair);
             }
             else
             {
-              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key
-                  || tvPair.value != TimeValuePair[TimeValuePair.size() - 1].value)
+              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key || tvPair.value
+                  != TimeValuePair[TimeValuePair.size() - 1].value)
               {
                 TimeValuePair.push_back(tvPair);
               }
@@ -88,10 +87,8 @@ namespace hemelb
           PressureMaxPhysical = TimeValuePair[0].value;
           for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
           {
-            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical,
-                                                                TimeValuePair[ii].value);
-            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical,
-                                                                TimeValuePair[ii].value);
+            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical, TimeValuePair[ii].value);
+            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical, TimeValuePair[ii].value);
             time.push_back(TimeValuePair[ii].key);
             value.push_back(TimeValuePair[ii].value);
           }
@@ -107,9 +104,8 @@ namespace hemelb
           // Now convert these vectors into arrays using linear interpolation
           for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
-            double point = time[0]
-                + ((double) time_step / (double) densityCycle.size())
-                    * (time[time.size() - 1] - time[0]);
+            double point = time[0] + ((double) time_step / (double) densityCycle.size()) * (time[time.size() - 1]
+                - time[0]);
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 

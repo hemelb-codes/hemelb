@@ -1,4 +1,4 @@
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
 
 #include "vis/Control.h"
 #include "steering/basic/SimulationParameters.h"
@@ -24,7 +24,7 @@ namespace hemelb
     {
     }
 
-    void SimulationParameters::pack(io::XdrWriter* writer)
+    void SimulationParameters::pack(io::writers::xdr::XdrWriter* writer)
     {
       writer->operator <<(timeStep);
 

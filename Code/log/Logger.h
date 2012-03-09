@@ -4,8 +4,6 @@
 #include <cstdarg>
 #include <string>
 
-#include "mpiInclude.h"
-
 namespace hemelb
 {
   namespace log

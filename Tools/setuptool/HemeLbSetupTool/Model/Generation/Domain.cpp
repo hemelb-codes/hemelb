@@ -3,9 +3,9 @@
 #include "Domain.h"
 #include "Debug.h"
 
-Domain::Domain(double VoxelSize, double SurfaceBounds[6],
+Domain::Domain(double VoxelSizeMetres, double SurfaceBoundsWorking[6],
 		unsigned int BlockSize) :
-	BlockSize(BlockSize), VoxelSize(VoxelSize) {
+	BlockSize(BlockSize), VoxelSizeMetres(VoxelSizeMetres) {
 	double min, max, size, extra, siteZero;
 	int nSites, nBlocks, remainder, totalBlocks = 1;
 
@@ -26,11 +26,11 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 	 */
 	for (unsigned int i = 0; i < 3; ++i) {
 		// Bounds of the vtkPolyData
-		min = SurfaceBounds[2 * i];
-		max = SurfaceBounds[2 * i + 1];
+		min = SurfaceBoundsWorking[2 * i];
+		max = SurfaceBoundsWorking[2 * i + 1];
 		size = max - min;
 
-		nSites = int(size / VoxelSize);
+		nSites = int(size / this->GetVoxelSizeWorking());
 		/* Since int() truncates, we have:
 		 * 		0 < size/VoxelSize - nSites < 1.
 		 * Hence we need nSites + 1 links and therefore nSites + 2 sites
@@ -39,16 +39,16 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 
 		/* The extra distance from size to the distance from x[0] to x[nSites -1]
 		 */
-		extra = (nSites - 1) * VoxelSize - size;
+		extra = (nSites - 1) * this->GetVoxelSizeWorking() - size;
 
 		/* To avoid numerical problems with the classifier, ensure that the
 		 * sites just outside the fluid region are at least 1% of a VoxelSize
 		 * away.
 		 */
-		if (extra < VoxelSize / 100.) {
+		if (extra < this->GetVoxelSizeWorking() / 100.) {
 			// They weren't, so add one to the # sites and recalculate extra
 			nSites += 1;
-			extra = (nSites - 1) * VoxelSize - size;
+			extra = (nSites - 1) * this->GetVoxelSizeWorking() - size;
 		}
 
 		/* Now ensure this extra space is equally balanced before & after the
@@ -62,7 +62,7 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 		if (remainder)
 			++nBlocks;
 		// Set the member vars for this axis
-		this->Origin[i] = siteZero;
+		this->OriginWorking[i] = siteZero;
 		this->BlockCounts[i] = nBlocks;
 		this->SiteCounts[i] = nBlocks * BlockSize;
 		totalBlocks *= nBlocks;
@@ -72,10 +72,10 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 	Log() << "Domain size " << this->BlockCounts << std::endl;
 }
 
-Vector Domain::CalcPositionFromIndex(const Index& index) const {
+Vector Domain::CalcPositionWorkingFromIndex(const Index& index) const {
 	Vector ans(index);
-	ans *= this->VoxelSize;
-	ans += this->Origin;
+	ans *= this->GetVoxelSizeWorking();
+	ans += this->OriginWorking;
 	return ans;
 }
 

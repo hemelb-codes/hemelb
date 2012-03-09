@@ -1,17 +1,17 @@
 #ifndef HEMELB_UNITTESTS_ONEINONEOUTSIMCONFIG_H
 #define HEMELB_UNITTESTS_ONEINONEOUTSIMCONFIG_H
 
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 namespace hemelb
 {
   namespace unittests
   {
-    class OneInOneOutSimConfig : public SimConfig
+    class OneInOneOutSimConfig : public configuration::SimConfig
     {
       public:
         OneInOneOutSimConfig() :
-          SimConfig()
+          configuration::SimConfig()
         {
           lb::boundaries::iolets::InOutLetCosine* inlet = new lb::boundaries::iolets::InOutLetCosine();
           inlet->PressureAmpPhysical = 1.0;

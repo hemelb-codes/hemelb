@@ -1,13 +1,13 @@
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-#include <signal.h>
+#include <csignal>
 #include <sys/stat.h>
-#include <stdio.h>
+#include <cstdio>
 
 #include "debug/Debugger.h"
 #include "log/Logger.h"

@@ -1,5 +1,0 @@
-CXX := mpicxx
-EXE := hemelb
-
-HEMELB_CXXFLAGS := -O3 -xT -ipo
-HEMELB_DEFS := BENCH NOOPENMP

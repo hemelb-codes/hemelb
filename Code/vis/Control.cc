@@ -1,5 +1,5 @@
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <limits>
 
 #include "log/Logger.h"
@@ -8,7 +8,7 @@
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/GlyphDrawer.h"
 
-#include "io/XdrFileWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 
 namespace hemelb
 
@@ -18,25 +18,26 @@ namespace hemelb
     Control::Control(lb::StressTypes iStressType,
                      net::Net* netIn,
                      lb::SimulationState* simState,
-                     geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(netIn, simState, SPREADFACTOR),
-          net(netIn), mLatDat(iLatDat)
+                     const lb::MacroscopicPropertyCache& propertyCache,
+                     geometry::LatticeData* iLatDat,
+                     reporting::Timer &atimer) :
+        net::PhasedBroadcastIrregular<true, 2, 0, false, true>(netIn, simState, SPREADFACTOR),
+        net(netIn), propertyCache(propertyCache), latticeData(iLatDat), timer(atimer)
     {
-      timeSpent = 0.0;
 
-      mVisSettings.mStressType = iStressType;
+      visSettings.mStressType = iStressType;
 
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
-      mVisSettings.mouse_x = -1;
-      mVisSettings.mouse_y = -1;
+      visSettings.mouse_x = -1;
+      visSettings.mouse_y = -1;
 
       initLayers();
     }
@@ -46,37 +47,26 @@ namespace hemelb
       // We don't have all the minima / maxima on one core, so we have to gather them.
       // NOTE this only happens once, during initialisation, otherwise it would be
       // totally unforgivable.
-      site_t block_min_x = std::numeric_limits<site_t>::max();
-      site_t block_min_y = std::numeric_limits<site_t>::max();
-      site_t block_min_z = std::numeric_limits<site_t>::max();
-      site_t block_max_x = std::numeric_limits<site_t>::min();
-      site_t block_max_y = std::numeric_limits<site_t>::min();
-      site_t block_max_z = std::numeric_limits<site_t>::min();
+      site_t block_min_x = std::numeric_limits < site_t > ::max();
+      site_t block_min_y = std::numeric_limits < site_t > ::max();
+      site_t block_min_z = std::numeric_limits < site_t > ::max();
+      site_t block_max_x = std::numeric_limits < site_t > ::min();
+      site_t block_max_y = std::numeric_limits < site_t > ::min();
+      site_t block_max_z = std::numeric_limits < site_t > ::min();
 
-      site_t n = -1;
-
-      for (site_t i = 0; i < mLatDat->GetXBlockCount(); i++)
+      for (geometry::BlockTraverser blockIt(*latticeData); blockIt.CurrentLocationValid(); blockIt.TraverseOne())
       {
-        for (site_t j = 0; j < mLatDat->GetYBlockCount(); j++)
+        if (blockIt.GetCurrentBlockData().IsEmpty())
         {
-          for (site_t k = 0; k < mLatDat->GetZBlockCount(); k++)
-          {
-            n++;
-
-            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(n);
-            if (lBlock->ProcessorRankForEachBlockSite == NULL)
-            {
-              continue;
-            }
-
-            block_min_x = util::NumericalFunctions::min(block_min_x, i);
-            block_min_y = util::NumericalFunctions::min(block_min_y, j);
-            block_min_z = util::NumericalFunctions::min(block_min_z, k);
-            block_max_x = util::NumericalFunctions::max(block_max_x, i);
-            block_max_y = util::NumericalFunctions::max(block_max_y, j);
-            block_max_z = util::NumericalFunctions::max(block_max_z, k);
-          }
+          continue;
         }
+
+        block_min_x = util::NumericalFunctions::min(block_min_x, blockIt.GetCurrentLocation().x);
+        block_min_y = util::NumericalFunctions::min(block_min_y, blockIt.GetCurrentLocation().y);
+        block_min_z = util::NumericalFunctions::min(block_min_z, blockIt.GetCurrentLocation().z);
+        block_max_x = util::NumericalFunctions::max(block_max_x, blockIt.GetCurrentLocation().x);
+        block_max_y = util::NumericalFunctions::max(block_max_y, blockIt.GetCurrentLocation().y);
+        block_max_z = util::NumericalFunctions::max(block_max_z, blockIt.GetCurrentLocation().z);
       }
 
       site_t mins[3], maxes[3];
@@ -90,28 +80,32 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
-      mVisSettings.ctr_x = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[0] + maxes[0]));
-      mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
-      mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
+      visSettings.ctr_x = 0.5F * (float) (latticeData->GetBlockSize() * (mins[0] + maxes[0]));
+      visSettings.ctr_y = 0.5F * (float) (latticeData->GetBlockSize() * (mins[1] + maxes[1]));
+      visSettings.ctr_z = 0.5F * (float) (latticeData->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new raytracer::RayTracer(mLatDat,
-                                             &mDomainStats,
-                                             &mScreen,
-                                             &mViewpoint,
-                                             &mVisSettings);
-      myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
+      normalRayTracer =
+          new raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>(latticeData,
+                                                                                                &domainStats,
+                                                                                                &screen,
+                                                                                                &viewpoint,
+                                                                                                &visSettings);
+
+      myGlypher = new GlyphDrawer(latticeData, &screen, &domainStats, &viewpoint, &visSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(mLatDat, &mScreen, &mViewpoint, &mVisSettings);
+      myStreaker = new streaklinedrawer::StreaklineDrawer(*latticeData, screen, viewpoint, visSettings, propertyCache);
+#else
+      myStreaker = NULL;
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
-      mVisSettings.ctr_x -= vis->half_dim[0];
-      mVisSettings.ctr_y -= vis->half_dim[1];
-      mVisSettings.ctr_z -= vis->half_dim[2];
+      visSettings.ctr_x -= vis->half_dim[0];
+      visSettings.ctr_y -= vis->half_dim[1];
+      visSettings.ctr_z -= vis->half_dim[2];
     }
 
     void Control::SetProjection(const int &iPixels_x,
@@ -126,22 +120,23 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
-      Vector3D<float> centre = Vector3D<float> (iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
+      //For now set the maximum draw distance to twice the radius;
+      visSettings.maximumDrawDistance = 2.0F * rad;
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
-          * (float) DEG_TO_RAD, centre, rad, dist);
+      util::Vector3D<float> centre = util::Vector3D<float>(iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mScreen.Set( (0.5F * vis->system_size) / iZoom,
-                   (0.5F * vis->system_size) / iZoom,
-                  iPixels_x,
-                  iPixels_y,
-                  rad,
-                  &mViewpoint);
-    }
+      viewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                     iLatitude * (float) DEG_TO_RAD,
+                                     centre,
+                                     rad,
+                                     dist);
 
-    void Control::RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress)
-    {
-      myRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
+      screen.Set( (0.5F * vis->system_size) / iZoom,
+                 (0.5F * vis->system_size) / iZoom,
+                 iPixels_x,
+                 iPixels_y,
+                 rad,
+                 &viewpoint);
     }
 
     void Control::SetSomeParams(const float iBrightness,
@@ -150,30 +145,30 @@ namespace hemelb
                                 const distribn_t iVelocityThresholdMaxInv,
                                 const distribn_t iStressThresholdMaxInv)
     {
-      mVisSettings.brightness = iBrightness;
-      mDomainStats.density_threshold_min = iDensityThresholdMin;
+      visSettings.brightness = iBrightness;
+      domainStats.density_threshold_min = iDensityThresholdMin;
 
-      mDomainStats.density_threshold_minmax_inv = iDensityThresholdMinMaxInv;
-      mDomainStats.velocity_threshold_max_inv = iVelocityThresholdMaxInv;
-      mDomainStats.stress_threshold_max_inv = iStressThresholdMaxInv;
+      domainStats.density_threshold_minmax_inv = iDensityThresholdMinMaxInv;
+      domainStats.velocity_threshold_max_inv = iVelocityThresholdMaxInv;
+      domainStats.stress_threshold_max_inv = iStressThresholdMaxInv;
     }
 
     void Control::UpdateImageSize(int pixels_x, int pixels_y)
     {
-      mScreen.Resize(pixels_x, pixels_y);
+      screen.Resize(pixels_x, pixels_y);
     }
 
     void Control::Render(unsigned long startIteration)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
 
-      PixelSet<raytracer::RayPixel>* ray = myRayTracer->Render();
+      PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render(propertyCache);
 
-      PixelSet<BasicPixel>* glyph = NULL;
+      PixelSet<BasicPixel> *glyph = NULL;
 
-      if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
+      if (visSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
-        glyph = myGlypher->Render();
+        glyph = myGlypher->Render(propertyCache);
       }
       else
       {
@@ -181,45 +176,40 @@ namespace hemelb
         glyph->Clear();
       }
 
-      PixelSet<StreakPixel>* streak = NULL;
+      PixelSet<streaklinedrawer::StreakPixel> *streak = NULL;
 
-#ifndef NO_STREAKLINES
-      if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
-          == VisSettings::WALLANDSTREAKLINES)
+      if (myStreaker != NULL
+          && (visSettings.mStressType == lb::ShearStress || visSettings.mode == VisSettings::WALLANDSTREAKLINES))
       {
-        streak = myStreaker->Render(mLatDat);
+        streak = myStreaker->Render();
       }
-#endif
 
-      localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
-                                                                       Rendering(glyph, ray, streak)));
+      localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, Rendering(glyph, ray, streak)));
     }
 
     void Control::InitialAction(unsigned long startIteration)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       Render(startIteration);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
-    void Control::WriteImage(io::Writer* writer,
+    void Control::WriteImage(io::writers::Writer* writer,
                              const PixelSet<ResultPixel>& imagePixels,
-                             const DomainStats* domainStats,
-                             const VisSettings* visSettings) const
+                             const DomainStats& domainStats,
+                             const VisSettings& visSettings) const
     {
-      *writer << (int) visSettings->mode;
+      *writer << (int) visSettings.mode;
 
-      *writer << domainStats->physical_pressure_threshold_min
-          << domainStats->physical_pressure_threshold_max
-          << domainStats->physical_velocity_threshold_max
-          << domainStats->physical_stress_threshold_max;
+      *writer << domainStats.physical_pressure_threshold_min << domainStats.physical_pressure_threshold_max
+          << domainStats.physical_velocity_threshold_max << domainStats.physical_stress_threshold_max;
 
-      *writer << mScreen.GetPixelsX();
-      *writer << mScreen.GetPixelsY();
+      *writer << screen.GetPixelsX();
+      *writer << screen.GetPixelsY();
       *writer << (int) imagePixels.GetPixelCount();
 
       WritePixels(writer, imagePixels, domainStats, visSettings);
@@ -227,34 +217,34 @@ namespace hemelb
 
     int Control::GetPixelsX() const
     {
-      return mScreen.GetPixelsX();
+      return screen.GetPixelsX();
     }
 
     int Control::GetPixelsY() const
     {
-      return mScreen.GetPixelsY();
+      return screen.GetPixelsY();
     }
 
-    void Control::WritePixels(io::Writer* writer,
+    void Control::WritePixels(io::writers::Writer* writer,
                               const PixelSet<ResultPixel>& imagePixels,
-                              const DomainStats* domainStats,
-                              const VisSettings* visSettings) const
+                              const DomainStats& domainStats,
+                              const VisSettings& visSettings) const
     {
       const int bits_per_char = sizeof(char) * 8;
 
       for (unsigned int i = 0; i < imagePixels.GetPixelCount(); i++)
       {
-        const ResultPixel pixel = imagePixels.GetPixels()[i];
+        const ResultPixel& pixel = imagePixels.GetPixels()[i];
 
         // Use a ray-tracer function to get the necessary pixel data.
-        int index;
+        unsigned index;
         unsigned char rgb_data[12];
 
         pixel.WritePixel(&index, rgb_data, domainStats, visSettings);
 
-        *writer << index;
+        *writer << (uint32_t) index;
 
-        int pix_data[3];
+        unsigned pix_data[3];
         pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
             + (rgb_data[2] << bits_per_char) + rgb_data[3];
 
@@ -266,30 +256,29 @@ namespace hemelb
 
         for (int i = 0; i < 3; i++)
         {
-          *writer << pix_data[i];
+          *writer << (uint32_t) pix_data[i];
         }
-        *writer << io::Writer::eol;
+        *writer << io::writers::Writer::eol;
       }
     }
 
     void Control::ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       if (splayNumber == 0)
       {
         for (unsigned int ii = 0; ii < GetChildren().size(); ++ii)
         {
           Rendering lRendering(myGlypher->GetUnusedPixelSet(),
-                               myRayTracer->GetUnusedPixelSet(),
-                               myStreaker != NULL
-                                 ? myStreaker->GetUnusedPixelSet()
-                                 : NULL);
+                               normalRayTracer->GetUnusedPixelSet(),
+                               myStreaker != NULL ?
+                                 myStreaker->GetUnusedPixelSet() :
+                                 NULL);
 
           lRendering.ReceivePixelCounts(net, GetChildren()[ii]);
 
-          childrenResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
-                                                                              lRendering));
+          childrenResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, lRendering));
         }
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel count.");
@@ -312,35 +301,33 @@ namespace hemelb
         }
       }
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void Control::ProgressToParent(unsigned long startIteration, unsigned long splayNumber)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       Rendering& rendering = (*localResultsByStartIt.find(startIteration)).second;
       if (splayNumber == 0)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li).",
-                                                      startIteration);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li).", startIteration);
 
         rendering.SendPixelCounts(net, GetParent());
       }
       else if (splayNumber == 1)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li).",
-                                                      startIteration);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li).", startIteration);
 
         rendering.SendPixelData(net, GetParent());
       }
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void Control::PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       // The first time round, ensure that we have enough memory to receive the image data that
       // will come next time.
@@ -350,8 +337,8 @@ namespace hemelb
       }
       if (splayNumber == 1)
       {
-        std::pair<std::multimap<unsigned long, Rendering>::iterator, std::multimap<unsigned long,
-            Rendering>::iterator> its = childrenResultsByStartIt.equal_range(startIteration);
+        std::pair < std::multimap<unsigned long, Rendering>::iterator , std::multimap<unsigned long, Rendering>::iterator
+            > its = childrenResultsByStartIt.equal_range(startIteration);
 
         Rendering local = (*localResultsByStartIt.find(startIteration)).second;
 
@@ -374,7 +361,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Combining in child pixel data.");
       }
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void Control::PostSendToParent(unsigned long startIteration, unsigned long splayNumber)
@@ -395,7 +382,7 @@ namespace hemelb
 
     void Control::ClearOut(unsigned long startIt)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       bool found;
 
@@ -408,8 +395,7 @@ namespace hemelb
           mapType::iterator it = localResultsByStartIt.begin();
           if (it->first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
-                                                          it->first);
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", it->first);
 
             (*it).second.ReleaseAll();
 
@@ -429,8 +415,7 @@ namespace hemelb
           mapType::iterator it = childrenResultsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
-                                                           (*it).first);
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second.ReleaseAll();
 
@@ -447,12 +432,10 @@ namespace hemelb
 
         if (renderingsByStartIt.size() > 0)
         {
-          std::multimap<unsigned long, PixelSet<ResultPixel>*>::iterator it =
-              renderingsByStartIt.begin();
+          std::multimap<unsigned long, PixelSet<ResultPixel>*>::iterator it = renderingsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
-                                                           (*it).first);
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second->Release();
             renderingsByStartIt.erase(it);
@@ -462,7 +445,7 @@ namespace hemelb
       }
       while (found);
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     const PixelSet<ResultPixel>* Control::GetResult(unsigned long startIt)
@@ -477,7 +460,7 @@ namespace hemelb
       if (localResultsByStartIt.count(startIt) != 0)
       {
         Rendering finalRender = (*localResultsByStartIt.find(startIt)).second;
-        PixelSet<ResultPixel>* result = GetUnusedPixelSet();
+        PixelSet<ResultPixel> *result = GetUnusedPixelSet();
 
         finalRender.PopulateResultSet(result);
 
@@ -492,14 +475,11 @@ namespace hemelb
 
     void Control::InstantBroadcast(unsigned long startIteration)
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Performing instant imaging.");
 
       Render(startIteration);
-
-      // Status object for MPI comms.
-      MPI_Status status;
 
       /*
        * We do several iterations.
@@ -516,21 +496,19 @@ namespace hemelb
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
       net::Net tempNet;
 
-      Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0
-        ? & (*localResultsByStartIt.find(startIteration)).second
-        : NULL;
-      Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(),
-                              myRayTracer->GetUnusedPixelSet(),
-                              myStreaker == NULL
-                                ? NULL
-                                : myStreaker->GetUnusedPixelSet());
+      Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0 ?
+        & (*localResultsByStartIt.find(startIteration)).second :
+        NULL;
+      Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(), normalRayTracer->GetUnusedPixelSet(), myStreaker == NULL ?
+        NULL :
+        myStreaker->GetUnusedPixelSet());
 
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
       {
         // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
-        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank); receivingProc
-            += deltaRank << 1)
+        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank);
+            receivingProc += deltaRank << 1)
         {
           proc_t sendingProc = receivingProc + deltaRank;
 
@@ -595,8 +573,7 @@ namespace hemelb
         tempNet.Wait();
 
         localResultsByStartIt.erase(startIteration);
-        localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
-                                                                         Rendering(receiveBuffer)));
+        localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, Rendering(receiveBuffer)));
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.", startIteration);
       }
@@ -606,33 +583,30 @@ namespace hemelb
         receiveBuffer.ReleaseAll();
       }
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
     {
-      mVisSettings.mouse_pressure = iPhysicalPressure;
-      mVisSettings.mouse_stress = iPhysicalStress;
+      visSettings.mouse_pressure = iPhysicalPressure;
+      visSettings.mouse_stress = iPhysicalStress;
     }
 
-    bool Control::MouseIsOverPixel(const PixelSet<ResultPixel>* result,
-                                   float* density,
-                                   float* stress)
+    bool Control::MouseIsOverPixel(const PixelSet<ResultPixel>* result, float* density, float* stress)
     {
-      if (mVisSettings.mouse_x < 0 || mVisSettings.mouse_y < 0)
+      if (visSettings.mouse_x < 0 || visSettings.mouse_y < 0)
       {
         return false;
       }
 
       const std::vector<ResultPixel>& screenPix = result->GetPixels();
 
-      for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); it++)
+      for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); ++it)
       {
-        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == mVisSettings.mouse_x && (*it).GetJ()
-            == mVisSettings.mouse_y)
+        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == visSettings.mouse_x && (*it).GetJ() == visSettings.mouse_y)
         {
-          *density = (*it).GetRayPixel()->GetDensity();
-          *stress = (*it).GetRayPixel()->GetStress();
+          *density = (*it).GetRayPixel()->GetNearestDensity();
+          *stress = (*it).GetRayPixel()->GetNearestStress();
 
           return true;
         }
@@ -643,29 +617,24 @@ namespace hemelb
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
-#ifndef NO_STREAKLINES
-      timeSpent -= util::myClock();
-
-      myStreaker ->StreakLines(time_step, period, mLatDat);
-
-      timeSpent += util::myClock();
-#endif
-    }
-
-    double Control::GetTimeSpent() const
-    {
-      return timeSpent;
+      if (myStreaker != NULL)
+      {
+        timer.Start();
+        myStreaker->ProgressStreaklines(time_step, period);
+        timer.Stop();
+      }
     }
 
     void Control::Reset()
     {
-      timeSpent = 0.0;
+      timer.Set(0);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
 
-#ifndef NO_STREAKLINES
-      myStreaker->Restart();
-#endif
+      if (myStreaker != NULL)
+      {
+        myStreaker->Restart();
+      }
 
       base::Reset();
 
@@ -674,13 +643,10 @@ namespace hemelb
 
     Control::~Control()
     {
-#ifndef NO_STREAKLINES
       delete myStreaker;
-#endif
-
       delete vis;
       delete myGlypher;
-      delete myRayTracer;
+      delete normalRayTracer;
     }
 
   } // namespace vis

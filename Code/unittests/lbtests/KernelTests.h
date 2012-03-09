@@ -1,12 +1,12 @@
 #ifndef HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
 #define HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
 
-#include <cppunit/TestFixture.h>
 #include <cstring>
 #include <sstream>
 
 #include "lb/kernels/Kernels.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
@@ -24,13 +24,21 @@ namespace hemelb
        */
       class KernelTests : public CppUnit::TestFixture
       {
+          CPPUNIT_TEST_SUITE(KernelTests);
+          CPPUNIT_TEST(TestEntropicCalculationsAndCollision);
+          CPPUNIT_TEST(TestLBGKCalculationsAndCollision);
+          CPPUNIT_TEST(TestLBGKNNCalculationsAndCollision);
+          CPPUNIT_TEST(TestMRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
             // Initialise the LBM parameters.
             lb::kernels::InitParams initParams;
 
-            latDat = new FourCubeLatticeData();
+            bool dummy;
+            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
+
+            latDat = FourCubeLatticeData::Create();
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
             distribn_t voxelSize = initParams.latDat->GetVoxelSize();
@@ -39,17 +47,20 @@ namespace hemelb
                                               voxelSize);
             initParams.lbmParams = lbmParams;
 
-            entropic = new lb::kernels::Entropic(initParams);
-            lbgk = new lb::kernels::LBGK(initParams);
+            entropic = new lb::kernels::Entropic<D3Q15>(initParams);
+            lbgk = new lb::kernels::LBGK<D3Q15>(initParams);
 
             /*
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
              *  values of tau consistent). One to be used with CalculateDensityVelocityFeq and another with CalculateFeq.
              */
             lbgknn0 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
             lbgknn1 = new lb::kernels::LBGKNN<
-                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15>(initParams);
+
+            mrtLbgkEquivalentKernel = new lb::kernels::MRT<
+                lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -60,6 +71,7 @@ namespace hemelb
             delete lbgk;
             delete lbgknn0;
             delete lbgknn1;
+            delete mrtLbgkEquivalentKernel;
             delete lbmParams;
             delete latDat;
           }
@@ -69,7 +81,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
 
             /*
              * Case 0: use the function that calculates density, velocity and
@@ -77,8 +89,8 @@ namespace hemelb
              * Case 1: use the function that leaves density and velocity and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::Entropic<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             entropic->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -134,14 +146,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            distribn_t postCollision0[D3Q15::NUMVECTORS];
-            distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              postCollision0[ii] = entropic->DoCollide(lbmParams, hydroVars0, ii);
-              postCollision1[ii] = entropic->DoCollide(lbmParams, hydroVars1, ii);
-            }
+            entropic->DoCollide(lbmParams, hydroVars0);
+            entropic->DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -166,12 +172,12 @@ namespace hemelb
               message << ii;
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision0[ii],
+                                                   hydroVars0.GetFPostCollision()[ii],
                                                    expectedPostCollision0[ii],
                                                    allowedError);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision1[ii],
+                                                   hydroVars1.GetFPostCollision()[ii],
                                                    expectedPostCollision1[ii],
                                                    allowedError);
             }
@@ -182,7 +188,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
 
             /*
              * Case 0: test the kernel function for calculating density, velocity
@@ -190,8 +196,8 @@ namespace hemelb
              * Case 1: test the function that uses a given density and velocity, and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars0(f_original);
-            lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars1(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<D3Q15> > hydroVars1(f_original);
 
             // Calculate density, velocity, equilibrium f.
             lbgk->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -246,14 +252,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            distribn_t postCollision0[D3Q15::NUMVECTORS];
-            distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              postCollision0[ii] = lbgk->DoCollide(lbmParams, hydroVars0, ii);
-              postCollision1[ii] = lbgk->DoCollide(lbmParams, hydroVars1, ii);
-            }
+            lbgk->DoCollide(lbmParams, hydroVars0);
+            lbgk->DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -276,12 +276,12 @@ namespace hemelb
               message << ii;
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision0[ii],
+                                                   hydroVars0.GetFPostCollision()[ii],
                                                    expectedPostCollision0[ii],
                                                    allowedError);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   postCollision1[ii],
+                                                   hydroVars1.GetFPostCollision()[ii],
                                                    expectedPostCollision1[ii],
                                                    allowedError);
             }
@@ -305,8 +305,8 @@ namespace hemelb
               f_setB[ii] = ((float) (D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel>
-                LB_KERNEL;
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
+                D3Q15> LB_KERNEL;
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -415,9 +415,9 @@ namespace hemelb
                                            numSites,
                                            (site_t) lbgknn0->GetTauValues().size());
 
-              distribn_t expectedTau0 = site_index % 2
-                ? 0.50009134451
-                : 0.50009285237;
+              distribn_t expectedTau0 = site_index % 2 ?
+                0.50009134451 :
+                0.50009285237;
 
               std::stringstream message;
               message << "Tau array [" << site_index << "] for dataset 0";
@@ -431,9 +431,9 @@ namespace hemelb
                                            numSites,
                                            (site_t) lbgknn1->GetTauValues().size());
 
-              distribn_t expectedTau1 = site_index % 2
-                ? 0.50009013551
-                : 0.50009021207;
+              distribn_t expectedTau1 = site_index % 2 ?
+                0.50009013551 :
+                0.50009021207;
 
               message.str("");
               message << "Tau array [" << site_index << "] for dataset 1";
@@ -446,14 +446,8 @@ namespace hemelb
                * Test part 3: Collision depends on the local relaxation time
                */
               // Do the collision and test the result.
-              distribn_t postCollision0[D3Q15::NUMVECTORS];
-              distribn_t postCollision1[D3Q15::NUMVECTORS];
-
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-              {
-                postCollision0[ii] = lbgknn0->DoCollide(lbmParams, *hydroVars0, ii);
-                postCollision1[ii] = lbgknn1->DoCollide(lbmParams, *hydroVars1, ii);
-              }
+              lbgknn0->DoCollide(lbmParams, *hydroVars0);
+              lbgknn1->DoCollide(lbmParams, *hydroVars1);
 
               // Get the expected post-collision densities.
               distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
@@ -479,28 +473,96 @@ namespace hemelb
                 message << "Post-collision: site " << site_index << " direction " << ii;
 
                 CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                     postCollision0[ii],
+                                                     hydroVars0->GetFPostCollision()[ii],
                                                      expectedPostCollision0[ii],
                                                      numTolerance);
 
                 CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                     postCollision1[ii],
+                                                     hydroVars1->GetFPostCollision()[ii],
                                                      expectedPostCollision1[ii],
                                                      numTolerance);
               }
             }
           }
 
+          void TestMRTConstantRelaxationTimeEqualsLBGK()
+          {
+            /*
+             *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
+             */
+            std::vector<distribn_t> relaxationParameters;
+            distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
+            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS,
+                                        oneOverTau);
+            mrtLbgkEquivalentKernel->SetMrtRelaxationParameters(relaxationParameters);
+
+            // Initialise the original f distribution to something asymmetric.
+            distribn_t f_original[D3Q15::NUMVECTORS];
+            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(0, f_original);
+            lb::kernels::HydroVars<
+                lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
+
+            // Calculate density, velocity, equilibrium f.
+            mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
+
+            // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
+            distribn_t expectedDensity0;
+            distribn_t expectedVelocity0[3];
+            distribn_t expectedFEq0[D3Q15::NUMVECTORS];
+            LbTestsHelper::CalculateRhoVelocity<D3Q15>(hydroVars0.f,
+                                                       expectedDensity0,
+                                                       expectedVelocity0);
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedDensity0,
+                                                    expectedVelocity0[0],
+                                                    expectedVelocity0[1],
+                                                    expectedVelocity0[2],
+                                                    expectedFEq0);
+
+            // Now compare the expected and actual values.
+            distribn_t allowedError = 1e-10;
+            LbTestsHelper::CompareHydros(expectedDensity0,
+                                         expectedVelocity0[0],
+                                         expectedVelocity0[1],
+                                         expectedVelocity0[2],
+                                         expectedFEq0,
+                                         "MRT against LBGK",
+                                         hydroVars0,
+                                         allowedError);
+
+            // Do the MRT collision.
+            mrtLbgkEquivalentKernel->DoCollide(lbmParams, hydroVars0);
+
+            // Get the expected post-collision velocity distributions with LBGK.
+            distribn_t expectedPostCollision0[D3Q15::NUMVECTORS];
+            LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
+                                                         hydroVars0.GetFEq().f,
+                                                         lbmParams->GetOmega(),
+                                                         expectedPostCollision0);
+
+            // Compare.
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              std::stringstream message;
+              message << "Post-collision " << ii;
+
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                   hydroVars0.GetFPostCollision()[ii],
+                                                   expectedPostCollision0[ii],
+                                                   allowedError);
+            }
+          }
+
         private:
           geometry::LatticeData* latDat;
           lb::LbmParameters* lbmParams;
-          lb::kernels::Entropic* entropic;
-          lb::kernels::LBGK* lbgk;
-          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
+          lb::kernels::Entropic<D3Q15>* entropic;
+          lb::kernels::LBGK<D3Q15>* lbgk;
+          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, D3Q15> *lbgknn0,
               *lbgknn1;
+          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
           site_t numSites;
       };
-
+      CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
     }
   }
 }

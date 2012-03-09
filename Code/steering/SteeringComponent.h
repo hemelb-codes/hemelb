@@ -2,9 +2,8 @@
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
 #include "net/PhasedBroadcastRegular.h"
-#include "lb/lb.h"
 #include "lb/SimulationState.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
 #include "vis/Control.h"
@@ -50,10 +49,9 @@ namespace hemelb
       public:
         SteeringComponent(Network* iNetwork,
                           vis::Control* iVisControl,
-                          lb::LBM* iLbm,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
-                          SimConfig* iSimConfig,
+                          configuration::SimConfig* iSimConfig,
                           util::UnitConverter* iUnits);
 
         static bool RequiresSeparateSteeringCore();
@@ -61,7 +59,7 @@ namespace hemelb
         /*
          * This function initialises all of the steering parameters, on all nodes.
          */
-        void Reset(SimConfig* iSimConfig);
+        void Reset(configuration::SimConfig* iSimConfig);
 
         bool readyForNextImage;
         bool updatedMouseCoords;
@@ -82,12 +80,12 @@ namespace hemelb
         bool isConnected;
 
         Network* mNetwork;
-        lb::LBM* mLbm;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
-        float privateSteeringParams[STEERABLE_PARAMETERS + 1];util::UnitConverter* mUnits;
-      };
-    }
+        float privateSteeringParams[STEERABLE_PARAMETERS + 1];
+        util::UnitConverter* mUnits;
+    };
   }
+}
 
 #endif /* HEMELB_STEERING_STEERINGCOMPONENT_H */

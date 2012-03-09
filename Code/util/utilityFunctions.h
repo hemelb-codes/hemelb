@@ -1,9 +1,8 @@
-#ifndef HEMELB_UTILITYFUNCTIONS_H
-#define HEMELB_UTILITYFUNCTIONS_H
+#ifndef HEMELB_UTIL_UTILITYFUNCTIONS_H
+#define HEMELB_UTIL_UTILITYFUNCTIONS_H
 
-#include "util/utilityFunctions.h"
 #include "log/Logger.h"
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <cstdlib>
 #include <vector>
@@ -41,6 +40,33 @@ namespace hemelb
           else
           {
             return b;
+          }
+        }
+
+        /**
+         * Helper for performing x^n when n is an integer. (And ought to be more efficient than
+         * using pow in cmath).
+         *
+         * Note that this function doesn't check for bad maths like 0^0.
+         *
+         * @param x
+         * @param n
+         * @return
+         */
+        template<typename T>
+        static inline T IntegerPower(T x, long n)
+        {
+          if (n == 0)
+          {
+            return (T) 1;
+          }
+          else if (n > 0)
+          {
+            return x * IntegerPower(x, n - 1);
+          }
+          else
+          {
+            return IntegerPower(x, n + 1) / x;
           }
         }
 
@@ -119,7 +145,7 @@ namespace hemelb
             dx = f / df;
             x -= dx;
 
-            if (fabs(dx) < alphaAcc)
+            if (std::fabs(dx) < alphaAcc)
             {
               return x;
             }
@@ -153,7 +179,7 @@ namespace hemelb
           double xBoundOld; // First set after first iteration hence mflag
           double xSolution = xHigher, ySolution = yHigher;
 
-          if (fabs(yLower) < fabs(yHigher))
+          if (std::fabs(yLower) < std::fabs(yHigher))
           {
             double temp = yLower;
             yLower = yHigher;
@@ -168,7 +194,7 @@ namespace hemelb
 
           bool mflag = true;
 
-          while (fabs(xHigher - xLower) > xAccuracy && fabs(yHigher) > yAccuracy && fabs(ySolution)
+          while (std::fabs(xHigher - xLower) > xAccuracy && std::fabs(yHigher) > yAccuracy && std::fabs(ySolution)
               > yAccuracy)
           {
             if (yLower != yBoundNew && yHigher != yBoundNew)
@@ -187,14 +213,14 @@ namespace hemelb
             bool condition1 = (xLower < xHigher
               ? (xSolution < (3 * xLower + xHigher) / 4.0 || xSolution > xHigher)
               : (xSolution > (3 * xLower + xHigher) / 4.0 || xSolution < xHigher)); // mflag is set and |s−b| ≥ |b−c| / 2)
-            bool condition2 = mflag && fabs(xSolution - xHigher) >= fabs(xHigher - xBoundNew) / 2.0;
+            bool condition2 = mflag && std::fabs(xSolution - xHigher) >= std::fabs(xHigher - xBoundNew) / 2.0;
             // mflag is cleared and |s−b| ≥ |c−d| / 2
-            bool condition3 = !mflag && fabs(xSolution - xHigher) >= fabs(xBoundNew - xBoundOld)
+            bool condition3 = !mflag && std::fabs(xSolution - xHigher) >= std::fabs(xBoundNew - xBoundOld)
                 / 2.0;
             // mflag is set and |b−c| < |δ|
-            bool condition4 = mflag && fabs(xHigher - xBoundNew) < xAccuracy;
+            bool condition4 = mflag && std::fabs(xHigher - xBoundNew) < xAccuracy;
             // mflag is cleared and |c−d| < |δ|
-            bool condition5 = !mflag && fabs(xBoundNew - xBoundOld) < xAccuracy;
+            bool condition5 = !mflag && std::fabs(xBoundNew - xBoundOld) < xAccuracy;
 
             if (condition1 || condition2 || condition3 || condition4 || condition5)
             {
@@ -222,7 +248,7 @@ namespace hemelb
               yLower = ySolution;
             }
 
-            if (fabs(yLower) < fabs(yHigher))
+            if (std::fabs(yLower) < std::fabs(yHigher))
             {
               double temp = yLower;
               yLower = yHigher;
@@ -233,7 +259,7 @@ namespace hemelb
             }
           }
 
-          if (fabs(yHigher) < fabs(ySolution))
+          if (std::fabs(yHigher) < std::fabs(ySolution))
             return xHigher;
           else
             return xSolution;

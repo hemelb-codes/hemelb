@@ -1,16 +1,13 @@
-#ifndef HEMELB_NET_H
-#define HEMELB_NET_H
+#ifndef HEMELB_NET_NET_H
+#define HEMELB_NET_NET_H
 
 #include <vector>
 #include <map>
+#include <cstdlib>
+#include <iostream>
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "D3Q15.h"
-#include "SimConfig.h"
-
-#include "geometry/LatticeData.h"
-#include "topology/NetworkTopology.h"
 
 namespace hemelb
 {
@@ -21,9 +18,9 @@ namespace hemelb
     {
       public:
         Net();
-        ~Net();
+        Net(MPI_Comm commObject);
 
-        site_t* Initialise(geometry::LatticeData* bLatDat);
+        ~Net();
 
         void Receive();
         void Send();
@@ -76,14 +73,6 @@ namespace hemelb
         }
 
       private:
-
-        void GetThisRankSiteData(const geometry::LatticeData* bLatDat,
-                                 unsigned int *& bThisRankSiteData);
-        void CountCollisionTypes(geometry::LatticeData* bLatDat,
-                                 const unsigned int * lThisRankSiteData);
-
-        void InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc);
-
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
@@ -131,9 +120,11 @@ namespace hemelb
         // on each core, but also to minimise creation / deletion overheads.
         std::vector<MPI_Request> mRequests;
         std::vector<MPI_Status> mStatuses;
+
+        MPI_Comm communicator;
     };
 
   }
 }
 
-#endif // HEMELB_NET_H
+#endif // HEMELB_NET_NET_H

@@ -3,7 +3,6 @@
 #include "util/fileutils.h"
 #include <algorithm>
 #include <fstream>
-#include <math.h>
 
 namespace hemelb
 {
@@ -12,12 +11,12 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
+      BoundaryValues::BoundaryValues(geometry::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
                                      std::vector<iolets::InOutLet*> &iiolets,
                                      SimulationState* iSimState,
                                      util::UnitConverter* units) :
-        net::IteratedAction(), mState(iSimState), mUnits(units)
+          net::IteratedAction(), mState(iSimState), mUnits(units)
       {
         nTotIOlets = (int) iiolets.size();
 
@@ -85,13 +84,15 @@ namespace hemelb
         }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType IOtype,
                                              geometry::LatticeData* iLatDat,
                                              int iBoundaryId)
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
         {
-          if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
+          const geometry::Site site = iLatDat->GetSite(i);
+
+          if (site.GetSiteType() == IOtype && site.GetBoundaryId() == iBoundaryId)
           {
             return true;
           }
@@ -229,7 +230,7 @@ namespace hemelb
           }
         }
 
-        for(int i = 0; i < nTotIOlets; ++i)
+        for (int i = 0; i < nTotIOlets; ++i)
         {
           iolets[i]->ResetValues();
         }

@@ -1,7 +1,7 @@
-#ifndef HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
-#define HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
+#ifndef HEMELB_STEERING_BASIC_SIMULATIONPARAMETERS_H
+#define HEMELB_STEERING_BASIC_SIMULATIONPARAMETERS_H
 
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
 #include "lb/SimulationState.h"
 
 namespace hemelb
@@ -25,7 +25,7 @@ namespace hemelb
 
         SimulationParameters();
         ~SimulationParameters();
-        void pack(io::XdrWriter* writer);
+        void pack(io::writers::xdr::XdrWriter* writer);
 
       private:
 
@@ -34,4 +34,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
+#endif // HEMELB_STEERING_BASIC_SIMULATIONPARAMETERS_H

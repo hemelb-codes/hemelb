@@ -13,13 +13,17 @@
 
 #include "vis/DomainStats.h"
 #include "vis/GlyphDrawer.h"
+#include "vis/rayTracer/ClusterWithWallNormals.h"
+#include "vis/rayTracer/RayDataNormal.h"
+#include "vis/rayTracer/RayDataEnhanced.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/Rendering.h"
 #include "vis/ResultPixel.h"
 #include "vis/Screen.h"
-#include "vis/StreaklineDrawer.h"
+#include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -44,7 +48,9 @@ namespace hemelb
         Control(lb::StressTypes iStressType,
                 net::Net* net,
                 lb::SimulationState* simState,
-                geometry::LatticeData* iLatDat);
+                const lb::MacroscopicPropertyCache& propertyCache,
+                geometry::LatticeData* iLatDat,
+                reporting::Timer &atimer);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -69,29 +75,26 @@ namespace hemelb
 
         void UpdateImageSize(int pixels_x, int pixels_y);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
         const PixelSet<ResultPixel>* GetResult(unsigned long startIteration);
 
-        void WritePixels(io::Writer* writer,
+        void WritePixels(io::writers::Writer* writer,
                          const PixelSet<ResultPixel>& imagePixels,
-                         const DomainStats* domainStats,
-                         const VisSettings* visSettings) const;
-        void WriteImage(io::Writer* writer,
+                         const DomainStats& domainStats,
+                         const VisSettings& visSettings) const;
+        void WriteImage(io::writers::Writer* writer,
                         const PixelSet<ResultPixel>& imagePixels,
-                        const DomainStats* domainStats,
-                        const VisSettings* visSettings) const;
+                        const DomainStats& domainStats,
+                        const VisSettings& visSettings) const;
 
         bool IsRendering() const;
 
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        Viewpoint mViewpoint;
-        DomainStats mDomainStats;
-        VisSettings mVisSettings;
-
-        double GetTimeSpent() const;
+        Viewpoint viewpoint;
+        DomainStats domainStats;
+        VisSettings visSettings;
 
       protected:
         void InitialAction(unsigned long startIteration);
@@ -124,15 +127,20 @@ namespace hemelb
         std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
         net::Net* net;
+        /**
+         * Cache of all the macroscopic fluid properties of each lattice site on this core.
+         */
+        const lb::MacroscopicPropertyCache& propertyCache;
 
-        geometry::LatticeData* mLatDat;
-        Screen mScreen;
+        geometry::LatticeData* latticeData;
+        Screen screen;
         Vis* vis;
-        raytracer::RayTracer *myRayTracer;
+        raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>
+            *normalRayTracer;
         GlyphDrawer *myGlypher;
-        StreaklineDrawer *myStreaker;
+        streaklinedrawer::StreaklineDrawer *myStreaker;
 
-        double timeSpent;
+        reporting::Timer &timer;
     };
   }
 }

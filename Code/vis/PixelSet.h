@@ -56,7 +56,9 @@ namespace hemelb
           else
           {
             pixels.push_back(PixelType(newPixel));
-            pixelLookup.insert(std::pair<BasicPixel, unsigned int>(location, pixels.size() - 1));
+            pixelLookup.insert(std::pair<BasicPixel, unsigned int>(location,
+                                                                   (unsigned int) (pixels.size()
+                                                                       - 1)));
           }
         }
 
@@ -77,7 +79,7 @@ namespace hemelb
 
         void SendQuantity(net::Net* net, proc_t destination)
         {
-          count = pixels.size();
+          count = (int) pixels.size();
           log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count of %i", count);
           net->RequestSend(&count, 1, destination);
         }

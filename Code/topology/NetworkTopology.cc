@@ -1,5 +1,4 @@
 #include "topology/NetworkTopology.h"
-#include "math.h"
 #include "mpiInclude.h"
 
 namespace hemelb
@@ -20,13 +19,12 @@ namespace hemelb
       return &instance;
     }
 
-    void NetworkTopology::Init(int * argCount, char *** argList, bool* oSuccess)
+    void NetworkTopology::Init(int argCount, char ** argList, bool* oSuccess)
     {
       if (!initialised)
       {
         initialised = true;
-
-        MPI_Init(argCount, argList);
+        MPI_Init(&argCount, &argList);
 
         int tempSize = 0, tempRank = 0;
         MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
@@ -36,8 +34,6 @@ namespace hemelb
         localRank = (proc_t) tempRank;
 
         *oSuccess = InitialiseMachineInfo();
-
-        FluidSitesOnEachProcessor = new site_t[processorCount];
       }
     }
 
@@ -47,8 +43,6 @@ namespace hemelb
       {
         MPI_Finalize();
 
-        delete[] NeighbourIndexFromProcRank;
-        delete[] FluidSitesOnEachProcessor;
         delete[] ProcCountOnEachMachine;
         delete[] MachineIdOfEachProc;
       }

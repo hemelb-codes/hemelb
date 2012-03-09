@@ -1,10 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <unistd.h>
 #include <dirent.h>
-
 #include <sys/dir.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -16,28 +15,26 @@ namespace hemelb
 {
   namespace util
   {
-    namespace
+
+    // Returns true if the file with the given name exists for reading,
+    // false otherwise.
+    //bool file_exists(const char * filename);
+
+    // Function to select directory contents that are not "." or ".."
+    // int selectOnlyContents (direct_t *entry);
+
+    // Return true if file exists for reading, false if not.
+    bool file_exists(const char * filename)
     {
-      // Returns true if the file with the given name exists for reading,
-      // false otherwise.
-      //bool file_exists(const char * filename);
 
-      // Function to select directory contents that are not "." or ".."
-      // int selectOnlyContents (direct_t *entry);
-
-
-      // Return true if file exists for reading, false if not.
-      bool file_exists(const char * filename)
+      if (access(filename, R_OK) == -1)
       {
-
-        if (access(filename, R_OK) == -1)
-        {
-          return false;
-        }
-        return true;
+        return false;
       }
-
+      return true;
     }
+
+
 
     // Check the existence of a critical file - exit if it's not there
     void check_file(const char * filename)
@@ -45,14 +42,14 @@ namespace hemelb
       if (!file_exists(filename))
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
-        exit(0);
+        std::exit(0);
       }
     }
 
     // Function to select directory contents that are not "." or ".."
     int selectOnlyContents(direct_t *entry)
     {
-      if ( (strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
+      if ( (std::strcmp(entry->d_name, ".") == 0) || (std::strcmp(entry->d_name, "..") == 0))
       {
         return 0;
 
@@ -62,6 +59,45 @@ namespace hemelb
         return 1;
       }
 
+    }
+
+    void ChangeDirectory(const char * target)
+    {
+      chdir(target);
+    }
+
+    void ChangeDirectory(const std::string & target)
+    {
+      chdir(target.c_str());
+    }
+
+    void GetCurrentDir(char * result, int bufflength)
+    {
+      getcwd(result, bufflength);
+    }
+
+    std::string GetCurrentDir()
+    {
+      char buff[1000];
+      GetCurrentDir(buff, 1000);
+      return std::string(buff); // return by copy.
+    }
+
+    // This copied from BOOST. TODO: Use boost
+    std::string GetTemporaryDir()
+    {
+      const char *dirname;
+      dirname = std::getenv("TMP");
+      if (NULL == dirname)
+        dirname = std::getenv("TMPDIR");
+      if (NULL == dirname)
+        dirname = std::getenv("TEMP");
+      if (NULL == dirname)
+      {
+        //assert(false); // no temp directory found
+        return GetCurrentDir();
+      }
+      return std::string(dirname); // return by copy
     }
 
     // Delete all files within a directory.
@@ -75,7 +111,7 @@ namespace hemelb
 
       for (int i = 0; i < file_count; i++)
       {
-        snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
+        std::snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
         unlink(filename);
       }
       return 0;

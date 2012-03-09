@@ -32,21 +32,19 @@ namespace hemelb
         public:
           typedef KernelImpl CKernel;
 
-          void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars, site_t index)
+          inline void CalculatePreCollision(kernels::HydroVars<KernelImpl>& hydroVars,
+                                            const geometry::Site& site)
           {
-            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, index);
+            static_cast<CollisionImpl*>(this)->DoCalculatePreCollision(hydroVars, site);
           }
 
-          distribn_t Collide(const LbmParameters* lbmParams,
-                             unsigned int directionIndex,
-                             kernels::HydroVars<KernelImpl>& hydroVars)
+          inline void Collide(const LbmParameters* lbmParams,
+                              kernels::HydroVars<KernelImpl>& hydroVars)
           {
-            return static_cast<CollisionImpl*>(this)->DoCollide(lbmParams,
-                                                                directionIndex,
-                                                                hydroVars);
+            static_cast<CollisionImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          void Reset(kernels::InitParams* init)
+          inline void Reset(kernels::InitParams* init)
           {
             static_cast<CollisionImpl*>(this)->DoReset(init);
           }

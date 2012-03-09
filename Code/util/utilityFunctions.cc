@@ -1,5 +1,4 @@
 #include "mpiInclude.h"
-
 namespace hemelb
 {
   namespace util

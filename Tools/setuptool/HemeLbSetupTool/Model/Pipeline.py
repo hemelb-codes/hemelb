@@ -1,7 +1,7 @@
 from vtk import vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree, \
-     vtkPolygonalSurfacePointPlacer, vtkRenderer, \
-     vtkAnnotatedCubeActor, vtkAxesActor, vtkTextProperty, \
-     vtkPropAssembly, vtkOrientationMarkerWidget, vtkSphereSource
+     vtkPolygonalSurfacePointPlacer, vtkRenderer, vtkAnnotatedCubeActor, \
+     vtkAxesActor, vtkTextProperty, vtkPropAssembly, \
+     vtkOrientationMarkerWidget, vtkSphereSource
 
 from ..Util.Observer import Observable
 
@@ -12,8 +12,8 @@ import pdb
 class Pipeline(Observable):
     def __init__(self):
         # 1 mm is probably about right.
-        # TODO: force this to be recalculated when the SurfaceSource updates
-        self.WidgetSize = 1e-3
+        # TODO: force this to be recalculated when the StlReader updates
+        self.WidgetSize = 1
         
         self.SurfaceMapper = vtkPolyDataMapper()
         self.SurfaceActor = vtkActor()

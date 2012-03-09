@@ -1,8 +1,8 @@
-#include <errno.h>
+#include <cerrno>
 
 #include "steering/SteeringComponent.h"
 #include "steering/Network.h"
-#include "io/XdrMemReader.h"
+#include "io/writers/xdr/XdrMemReader.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -11,14 +11,13 @@ namespace hemelb
   {
     SteeringComponent::SteeringComponent(Network* iNetwork,
                                          vis::Control* iVisControl,
-                                         lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState,
-                                         SimConfig* iSimConfig,
+                                         configuration::SimConfig* iSimConfig,
                                          util::UnitConverter* iUnits) :
-      net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl),
-          mUnits(iUnits)
+        net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl),
+        mUnits(iUnits)
     {
       Reset(iSimConfig);
       AssignValues();
@@ -26,12 +25,12 @@ namespace hemelb
 
     void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
     {
-      ReceiveFromParent<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
+      ReceiveFromParent<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
     void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
     {
-      SendToChildren<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
+      SendToChildren<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()
@@ -86,7 +85,7 @@ namespace hemelb
       if (newSteeringDataExists)
       {
         // Initialise the stream reader.
-        io::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
+        io::writers::xdr::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
 
         for (int i = 0; i < STEERABLE_PARAMETERS; i++)
           steeringStream.readFloat(privateSteeringParams[i]);

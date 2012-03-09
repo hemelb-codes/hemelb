@@ -1,7 +1,7 @@
 # Get out of sleep and disable the waiting flag
 up
 up
-set var amWaiting = 0
+set amWaiting = 0
 
 # Set up a breakpoint for our break function and a command to finish
 # it automatically

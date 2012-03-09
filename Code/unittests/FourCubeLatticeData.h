@@ -2,137 +2,150 @@
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
 #include <cstdlib>
+#include "units.h"
 #include "geometry/LatticeData.h"
+#include "io/formats/geometry.h"
 
 namespace hemelb
 {
   namespace unittests
   {
+    class TestSiteData : public geometry::SiteData
+    {
+      public:
+        TestSiteData(geometry::SiteData& siteData) :
+            geometry::SiteData(siteData)
+        {
+
+        }
+
+        void SetHasBoundary(Direction direction)
+        {
+          unsigned newValue = geometry::SiteData::GetIntersectionData();
+          newValue |= 1U << (direction - 1);
+          boundaryIntersection = newValue;
+        }
+    };
+
     class FourCubeLatticeData : public geometry::LatticeData
     {
       public:
+
         /**
-         * The constructor makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
+         * The create function makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
          * The plane (x,y,0) is an inlet (boundary 0).
          * The plane (x,y,3) is an outlet (boundary 1).
          * The planes (0,y,z), (3,y,z), (x,0,z) and (x,3,z) are all walls.
          *
          * @return
          */
-        FourCubeLatticeData() :
-          LatticeData()
+        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
-          globLatDat.SetBasicDetails(1, 1, 1, 4, 0.01, 0.0, 0.0, 0.0);
+          hemelb::geometry::GeometryReadResult readResult;
 
-          // All sites are dealt with on the local processor.
-          localLatDat.my_inner_sites = globLatDat.GetSitesPerBlockVolumeUnit()
-              * globLatDat.GetBlockCount();
-          localLatDat.Initialise(localLatDat.my_inner_sites);
-          localLatDat.SetSharedSiteCount(0);
+          readResult.voxelSize = 0.01;
+          readResult.origin = util::Vector3D<distribn_t>::Zero();
+          readResult.blockSize = sitesPerBlockUnit;
+          readResult.blocks = util::Vector3D<site_t>::Ones();
 
-          BlockData* block = &globLatDat.Blocks[0];
+          readResult.Blocks = std::vector<hemelb::geometry::BlockReadResult>(1);
 
-          block->ProcessorRankForEachBlockSite
-              = new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];
-          block ->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
-          block->wall_data = new LatticeData::WallData[globLatDat.GetSitesPerBlockVolumeUnit()];
-
-          // Iterate through the fluid sides and assign variables as necessary.
-          for (unsigned int collisionType = 0; collisionType < COLLISION_TYPES; ++collisionType)
-          {
-            localLatDat.my_inner_collisions[collisionType] = 0;
-            localLatDat.my_inter_collisions[collisionType] = 0;
-          }
+          hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
+          block.Sites.resize(readResult.GetSitesPerBlock(), geometry::SiteReadResult(false));
 
           site_t index = -1;
-          for (site_t i = 0; i < globLatDat.GetXSiteCount(); ++i)
+          for (site_t i = 0; i < sitesPerBlockUnit; ++i)
           {
-            for (site_t j = 0; j < globLatDat.GetYSiteCount(); ++j)
+            for (site_t j = 0; j < sitesPerBlockUnit; ++j)
             {
-              for (site_t k = 0; k < globLatDat.GetZSiteCount(); ++k)
+              for (site_t k = 0; k < sitesPerBlockUnit; ++k)
               {
                 ++index;
 
-                bool xMin = i == 0;
-                bool yMin = j == 0;
-                bool zMin = k == 0;
-                bool xMax = i == (globLatDat.GetXSiteCount() - 1);
-                bool yMax = j == (globLatDat.GetYSiteCount() - 1);
-                bool zMax = k == (globLatDat.GetZSiteCount() - 1);
+                hemelb::geometry::SiteReadResult& site = block.Sites[index];
 
-                bool nearWall = xMin || xMax || yMin || yMax;
+                site.isFluid = true;
+                site.targetProcessor = 0;
 
-                int collType = -1;
-                localLatDat.mSiteData[index] = 0;
-
-                // Near inlet
-                if (zMin)
+                for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
                 {
-                  localLatDat.mSiteData[index] |= INLET_TYPE;
-                  localLatDat.mSiteData[index] |= 0 << BOUNDARY_ID_SHIFT;
+                  site_t neighI = i + D3Q15::CX[direction];
+                  site_t neighJ = j + D3Q15::CY[direction];
+                  site_t neighK = k + D3Q15::CZ[direction];
 
-                  // Also near wall
-                  if (nearWall)
-                  {
-                    collType = 4;
-                  }
-                  else
-                  {
-                    collType = 2;
-                  }
-                }
-                // Near outlet
-                else if (zMax)
-                {
-                  localLatDat.mSiteData[index] |= OUTLET_TYPE;
-                  localLatDat.mSiteData[index] |= 0 << BOUNDARY_ID_SHIFT;
+                  hemelb::geometry::LinkReadResult link;
 
-                  if (nearWall)
-                  {
-                    collType = 5;
-                  }
-                  else
-                  {
-                    collType = 3;
-                  }
-                }
-                // Not near in/outlet
-                else
-                {
-                  localLatDat.mSiteData[index] |= FLUID_TYPE;
-                  if (nearWall)
-                  {
-                    collType = 1;
-                  }
-                  else
-                  {
-                    collType = 0;
-                  }
-                }
+                  float randomDistance = (float(std::rand() % 10000) / 10000.0);
 
-                for (unsigned int ll = 1; ll < D3Q15::NUMVECTORS; ++ll)
-                {
-                  if (!globLatDat.IsValidLatticeSite(i + D3Q15::CX[ll], j + D3Q15::CY[ll], k
-                      + D3Q15::CZ[ll]))
+                  // The inlet is by the minimal z value.
+                  if (neighK < 0)
                   {
-                    localLatDat.mSiteData[index] |= 1U << (BOUNDARY_CONFIG_SHIFT + ll - 1);
-                    block->wall_data[index].cut_dist[ll - 1] = double (std::rand() % 10000)
-                        / 10000.0;
+                    link.ioletId = 0;
+                    link.type = geometry::LinkReadResult::INLET_INTERSECTION;
+                    link.distanceToIntersection = randomDistance;
                   }
-                  localLatDat.SetDistanceToWall(index, block->wall_data[index].cut_dist);
-                }
+                  // The outlet is by the maximal z value.
+                  else if (neighK >= sitesPerBlockUnit)
+                  {
+                    link.ioletId = 0;
+                    link.type = geometry::LinkReadResult::OUTLET_INTERSECTION;
+                    link.distanceToIntersection = randomDistance;
+                  }
+                  // Walls are by extremes of x and y.
+                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit
+                      || neighJ >= sitesPerBlockUnit)
+                  {
+                    link.type = geometry::LinkReadResult::WALL_INTERSECTION;
+                    link.distanceToIntersection = randomDistance;
+                  }
 
-                localLatDat.my_inner_collisions[collType]++;
-                block->ProcessorRankForEachBlockSite[index] = 0;
-                block->site_data[index] = (unsigned int) index;
+                  site.links.push_back(link);
+                }
               }
             }
           }
 
-          InitialiseNeighbourLookup(NULL, 0, localLatDat.mSiteData);
+          FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult);
+
+          // First, fiddle with the fluid site count, for tests that require this set.
+          returnable->fluidSitesOnEachProcessor.resize(rankCount);
+          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit
+              * sitesPerBlockUnit;
+          for (proc_t rank = 1; rank < rankCount; ++rank)
+          {
+            returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
+          }
+
+          return returnable;
         }
 
-        ~FourCubeLatticeData()
+        /***
+        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+        **/
+        void SetHasBoundary(site_t site, Direction direction)
+        {
+          TestSiteData mutableSiteData(siteData[site]);
+          mutableSiteData.SetHasBoundary(direction);
+          siteData[site] = geometry::SiteData(mutableSiteData);
+        }
+        
+        /***
+        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+        **/
+        void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
+        {
+          distanceToWall[ (D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
+        }
+
+      protected:
+        FourCubeLatticeData(hemelb::geometry::GeometryReadResult& readResult) :
+            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo(), readResult)
+        {
+
+        }
+
+        FourCubeLatticeData() :
+            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo())
         {
 
         }

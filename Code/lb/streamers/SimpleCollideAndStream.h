@@ -12,63 +12,69 @@ namespace hemelb
     namespace streamers
     {
 
-      template<typename CollisionType>
-      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionType> >
+      template<typename CollisionImpl>
+      class SimpleCollideAndStream : public BaseStreamer<SimpleCollideAndStream<CollisionImpl> >
       {
+        public:
+          typedef CollisionImpl CollisionType;
+
         private:
           CollisionType collider;
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-            collider(initParams)
+              collider(initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl)
+          inline void DoStreamAndCollide(const site_t firstIndex,
+                                         const site_t siteCount,
+                                         const LbmParameters* lbmParams,
+                                         geometry::LatticeData* latDat,
+                                         lb::MacroscopicPropertyCache& propertyCache)
           {
-            for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
+              const geometry::Site site = latDat->GetSite(siteIndex);
+
+              distribn_t* lFOld = site.GetFOld();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
 
-              collider.CalculatePreCollision(hydroVars, iIndex - iFirstIndex);
+              collider.CalculatePreCollision(hydroVars, site);
 
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+              collider.Collide(lbmParams, hydroVars);
+
+              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
               {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
-                    = collider.Collide(iLbmParams, ii, hydroVars);
+                * (latDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] = hydroVars.GetFPostCollision()[ii];
+
               }
 
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                                hydroVars.v_y,
                                                                                                hydroVars.v_z,
-                                                                                               iIndex,
+                                                                                               site,
                                                                                                hydroVars.GetFNeq().f,
                                                                                                hydroVars.density,
-                                                                                               bLatDat,
-                                                                                               iLbmParams,
-                                                                                               iControl);
+                                                                                               lbmParams,
+                                                                                               propertyCache);
             }
           }
 
           template<bool tDoRayTracing>
-          void DoPostStep(const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t iFirstIndex,
+                                 const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams,
+                                 geometry::LatticeData* bLatDat,
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
 
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             collider.Reset(init);
           }

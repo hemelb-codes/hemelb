@@ -1,5 +1,5 @@
-#ifndef HEMELB_TOPOLOGY_LOCALNETWORKTOPOLOGY_H
-#define HEMELB_TOPOLOGY_LOCALNETWORKTOPOLOGY_H
+#ifndef HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H
+#define HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H
 
 #include <vector>
 #include <cstdio>
@@ -10,27 +10,13 @@ namespace hemelb
 {
   namespace topology
   {
-    class NeighbouringProcessor
-    {
-      public:
-        // Rank of the neighbouring processor.
-        proc_t Rank;
-
-        // The number of distributions shared between this neighbour and the current processor.
-        site_t SharedFCount;
-
-        // Index on this processor of the first distribution shared between this
-        // neighbour and the current processor.
-        site_t FirstSharedF;
-    };
-
     class NetworkTopology
     {
       public:
         static NetworkTopology* Instance();
         ~NetworkTopology();
 
-        void Init(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
+        void Init(int argCount, char ** argList, bool * oMachineDiscoverySuccess);
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size
@@ -39,16 +25,6 @@ namespace hemelb
         proc_t GetProcessorCount() const;
         int GetDepths() const;
         unsigned int GetMachineCount() const;
-
-        // Number of local distributions shared with neighbouring processors.
-        site_t TotalSharedFs;
-        // The vector of all neighbouring processors.
-        std::vector<NeighbouringProcessor> NeighbouringProcs;
-        // For each processor in the topology, holds the index into the
-        // neighbouring processor vector.
-        proc_t* NeighbourIndexFromProcRank;
-        // Array containing numbers of fluid sites on each processor.
-        site_t* FluidSitesOnEachProcessor;
 
       private:
         NetworkTopology();
@@ -78,4 +54,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_TOPOLOGY_LOCALNETWORKTOPOLOGY_H */
+#endif /* HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H */

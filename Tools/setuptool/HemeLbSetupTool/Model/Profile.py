@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 import os.path
-import pickle
+import cPickle
 from copy import copy
 import numpy as np
 
-from vtk import vtkSTLReader, vtkTransform, vtkTransformFilter
+from vtk import vtkSTLReader
 
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-from HemeLbSetupTool.Model.OutputGeneration import ConfigGenerator
+from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
 
 #import pdb
-import cProfile
 
 class LengthUnit(Observable):
     def __init__(self, sizeInMetres, name, abbrv):
@@ -40,10 +39,11 @@ class Profile(Observable):
              'StlFileUnitId': 1,
              'Iolets': ObservableList(),
              'VoxelSize': 0.,
+             'Cycles': 3,
+             'Steps': 1000,
              'SeedPoint': Vector(),
-             'OutputConfigFile': None,
-             'OutputXmlFile': None,
-             'StressType': 1}
+             'OutputGeometryFile': None,
+             'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
     
     def __init__(self, **kwargs):
@@ -61,78 +61,36 @@ class Profile(Observable):
 
         # We need a reader to get the polydata
         self.StlReader = vtkSTLReader()
-        # Something to scale it to metres
-        scale = self.StlFileUnit.SizeInMetres
-        trans = vtkTransform()
-        trans.Scale(scale, scale, scale)
-        self.SurfaceSource = vtkTransformFilter()
-        self.SurfaceSource.SetTransform(trans)
-        self.SurfaceSource.SetInputConnection(self.StlReader.GetOutputPort())
         
         # And a way to estimate the voxel size
         self.SideLengthCalculator = AverageSideLengthCalculator()
-        self.SideLengthCalculator.SetInputConnection(self.SurfaceSource.GetOutputPort())
+        self.SideLengthCalculator.SetInputConnection(self.StlReader.GetOutputPort())
 
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
-        self.AddDependency('HaveValidOutputConfigFile', 'OutputConfigFile')
+        self.AddDependency('HaveValidOutputGeometryFile', 'OutputGeometryFile')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.x')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.y')
         self.AddDependency('HaveValidSeedPoint', 'SeedPoint.z')
         self.AddDependency('IsReadyToGenerate', 'HaveValidStlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
-        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputConfigFile')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputGeometryFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
         self.AddDependency('StlFileUnit', 'StlFileUnitId')
+        self.AddDependency('VoxelSizeMetres', 'VoxelSize')
+        self.AddDependency('VoxelSizeMetres', 'StlFileUnit.SizeInMetres')
         
         # When the STL changes, we should reset the voxel size and
         # update the vtkSTLReader.
         self.AddObserver('StlFile', self.OnStlFileChanged)
-        
-        # And when the units are changed update the transform
-        self.AddObserver('StlFileUnitId', self.OnStlFileUnitIdChanged)
         return
     
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
         return
-    
-    def OnStlFileUnitIdChanged(self, change):
-        """When we change what we think the units are in the file, this is triggered.
-        The scaling of the read-in geometry is updated and the seed point and IOlet positions are suitably scaled.
-        """
-        # Get new length of '1' in the STL file
-        scale = self.StlFileUnit.SizeInMetres
-        # Get the old scaling
-        oldScale = self.SurfaceSource.GetTransform().GetMatrix().GetElement(0,0)
-        # Create a suitable, new Transformation
-        trans = vtkTransform()
-        trans.Scale(scale, scale, scale)
         
-        # Scale the SeedPoint
-        factor = scale/oldScale
-        self.SeedPoint.x *= factor
-        self.SeedPoint.y *= factor
-        self.SeedPoint.z *= factor
-        
-        # The voxel size
-        self.VoxelSize *= factor
-        
-        # Now any IOlet planes
-        for io in self.Iolets:
-            io.Centre.x *= factor
-            io.Centre.y *= factor
-            io.Centre.z *= factor
-            io.Radius *= factor
-            continue
-        
-        # We do this last to make sure the view reset is sensible
-        # (as Modifying the SurfaceSource triggers this)
-        self.SurfaceSource.SetTransform(trans)
-        return
-    
     @property
     def HaveValidStlFile(self):
         """Read only property indicating if our STL file is valid.
@@ -149,8 +107,8 @@ class Profile(Observable):
     def HaveValidOutputXmlFile(self):
         return IsFileValid(self.OutputXmlFile, ext='.xml')
     @property
-    def HaveValidOutputConfigFile(self):
-        return IsFileValid(self.OutputConfigFile, ext='.dat')
+    def HaveValidOutputGeometryFile(self):
+        return IsFileValid(self.OutputGeometryFile, ext='.gmy')
     
     @property
     def IsReadyToGenerate(self):
@@ -161,7 +119,7 @@ class Profile(Observable):
             return False
         if not self.HaveValidOutputXmlFile:
             return False
-        if not self.HaveValidOutputConfigFile:
+        if not self.HaveValidOutputGeometryFile:
             return False
         if not self.HaveValidStlFile:
             return False
@@ -171,21 +129,49 @@ class Profile(Observable):
     def StlFileUnit(self):
         return self._UnitChoices[self.StlFileUnitId]
     
+    @property
+    def VoxelSizeMetres(self):
+        return self.VoxelSize * self.StlFileUnit.SizeInMetres
+    @VoxelSizeMetres.setter
+    def VoxelSizeMetres(self, value):
+        self.VoxelSize = value / self.StlFileUnit.SizeInMetres
+        return
+    
     def LoadFromFile(self, filename):
-        restored = pickle.Unpickler(file(filename)).load()
+        restored = cPickle.Unpickler(file(filename)).load()
+        # Now adjust the paths of filenames relative to the Profile file.
+        # Note that this will work if an absolute path has been pickled as
+        # os.path.join will discard previous path elements when it gets an
+        # absolute path. (Of course, this will only work if that path is
+        # correct!)
+        basePath = os.path.dirname(os.path.abspath(filename))
+        restored.StlFile = os.path.abspath(
+            os.path.join(basePath, restored.StlFile)
+        )
+        restored.OutputGeometryFile = os.path.abspath(
+            os.path.join(basePath, restored.OutputGeometryFile)
+        )
+        restored.OutputXmlFile = os.path.abspath(
+            os.path.join(basePath, restored.OutputXmlFile)
+        )
+        
         self.CloneFrom(restored)
         return
     
     def Save(self, filename):
         outfile = file(filename, 'w')
-        pickler = pickle.Pickler(outfile)
-        pickler.dump(self)
+        self.BasePath = os.path.dirname(filename)
+        try:
+            pickler = cPickle.Pickler(outfile, protocol=2)
+            pickler.dump(self)
+        finally:
+            del self.BasePath
+            
         return
     
     def Generate(self):
-        generator = ConfigGenerator(self)
+        generator = GeometryGenerator(self)
         generator.Execute()
-#        cProfile.runctx('generator.Execute()', globals(), locals(), 'generate.prof')
         return
     
     def ResetVoxelSize(self, ignored=None):
@@ -193,6 +179,15 @@ class Profile(Observable):
         """
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
         return
+    
+    def __getstate__(self):
+        # First, use the superclass's getstate        
+        state = Observable.__getstate__(self)
+        # Now we need to make the paths relative to the directory of the pickle file
+        state['StlFile'] = os.path.relpath(self.StlFile, self.BasePath)
+        state['OutputXmlFile'] = os.path.relpath(self.OutputXmlFile, self.BasePath)
+        state['OutputGeometryFile'] = os.path.relpath(self.OutputGeometryFile, self.BasePath)
+        return state
     
     pass
     

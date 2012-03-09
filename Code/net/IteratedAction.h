@@ -8,6 +8,7 @@ namespace hemelb
     class IteratedAction
     {
       public:
+        virtual ~IteratedAction();
         virtual void RequestComms();
         virtual void PreSend();
         virtual void PreReceive();

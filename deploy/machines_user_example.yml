@@ -1,0 +1,14 @@
+# Copy this file as machines_user.yml, and fill in your details.
+# Details given in the default dictionary will override default settings in machines.yml
+# Details given in per-machine dictionaries will override machine settings in machines.yml
+default:
+  local_results: "~/devel/ccs/fabric/hemelb/results"
+  local_configs: "~/devel/ccs/fabric/hemelb/config_files"
+  local_profiles: "~/devel/ccs/fabric/hemelb/config_profiles"
+  username: "jamespjh"
+legion:
+  username: "ucgajhe"
+  project: "jamespjh_ccs"
+hector:
+  project: "e10"
+  budget: "e10-jamespjh"

@@ -28,6 +28,10 @@ namespace hemelb
         float brightness;
         float glyphLength;
 
+        //Maximum distance - used in the enhanced ray tracer to handle
+        //dept cuing
+        float maximumDrawDistance;
+
         lb::StressTypes mStressType;
 
         int mouse_x, mouse_y;

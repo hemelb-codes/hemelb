@@ -15,8 +15,7 @@ namespace hemelb
        * to equilibrium.
        */
       template<typename KernelType>
-      class ZeroVelocityEquilibrium : public BaseCollision<ZeroVelocityEquilibrium<KernelType>,
-          KernelType>
+      class ZeroVelocityEquilibrium : public BaseCollision<ZeroVelocityEquilibrium<KernelType>, KernelType>
       {
         public:
           typedef KernelType CKernel;
@@ -27,12 +26,11 @@ namespace hemelb
 
           }
 
-          void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
-                                       const site_t index)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
           {
             hydroVars.density = 0.0;
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < CKernel::LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.density += hydroVars.f[ii];
             }
@@ -41,17 +39,18 @@ namespace hemelb
             hydroVars.v_y = 0.0;
             hydroVars.v_z = 0.0;
 
-            kernel.CalculateFeq(hydroVars, index);
+            kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          distribn_t DoCollide(const LbmParameters* lbmParams,
-                               unsigned int directionIndex,
-                               kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
           {
-            return iHydroVars.GetFEq().f[directionIndex];
+            for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
+            {
+              iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
+            }
           }
 
-          void DoReset(kernels::InitParams* init)
+          inline void DoReset(kernels::InitParams* init)
           {
             kernel.Reset(init);
           }

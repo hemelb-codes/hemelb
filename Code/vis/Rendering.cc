@@ -4,8 +4,9 @@ namespace hemelb
 {
   namespace vis
   {
-    Rendering::Rendering(PixelSet<BasicPixel>* glyph, PixelSet<raytracer::RayPixel>* ray, PixelSet<
-        StreakPixel>* streak) :
+    Rendering::Rendering(PixelSet<BasicPixel>* glyph,
+                         PixelSet<raytracer::RayDataNormal>* ray,
+                         PixelSet<streaklinedrawer::StreakPixel>* streak) :
       glyphResult(glyph), rayResult(ray), streakResult(streak)
     {
 

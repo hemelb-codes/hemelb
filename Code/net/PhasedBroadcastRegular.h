@@ -41,7 +41,6 @@ namespace hemelb
           const unsigned long iCycleNumber = Get0IndexedIterationNumber();
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long firstDescent = base::GetFirstDescending();
-          const unsigned long traversalLength = base::GetTraverseTime();
 
           // Nothing to do for initial action case.
 
@@ -113,8 +112,6 @@ namespace hemelb
               goUp>::GetFirstAscending();
           const unsigned long traversalLength = PhasedBroadcast<initialAction, splay, overlap,
               goDown, goUp>::GetTraverseTime();
-          const unsigned long cycleLength = PhasedBroadcast<initialAction, splay, overlap, goDown,
-              goUp>::GetRoundTripLength();
 
           // Deal with the case of a cycle with an initial pass down the tree.
           if (goDown)

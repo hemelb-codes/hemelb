@@ -4,7 +4,7 @@ CC = g++
 ifeq ($(HEMELB_MACHINE),OSX)
 CFLAGS = -framework OpenGL -framework GLUT -framework Foundation -O4 -DHEMELB_CFG_ON_OSX
 else
-CFLAGS = -O4 -L/usr/include/GT/ -lglut -lGLU
+CFLAGS = -O4 -L/usr/include/GT/ -lglut -lGLU -lGL
 endif
 
 objects = visualize_images.o

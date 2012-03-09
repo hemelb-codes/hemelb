@@ -16,7 +16,7 @@ namespace hemelb
       class BoundaryValues : public net::IteratedAction
       {
         public:
-          BoundaryValues(geometry::LatticeData::SiteType IOtype,
+          BoundaryValues(geometry::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
                          std::vector<iolets::InOutLet*> &iiolets,
                          SimulationState* iSimState,
@@ -39,7 +39,7 @@ namespace hemelb
 
         private:
           std::vector<BoundaryComms*> mComms;
-          bool IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
+          bool IsIOletOnThisProc(geometry::SiteType IOtype,
                                  geometry::LatticeData* iLatDat,
                                  int iBoundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);

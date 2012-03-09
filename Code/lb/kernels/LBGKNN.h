@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STREAMERS_LBGKNN_H
-#define HEMELB_LB_STREAMERS_LBGKNN_H
+#ifndef HEMELB_LB_KERNELS_LBGKNN_H
+#define HEMELB_LB_KERNELS_LBGKNN_H
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/SimulationState.h"
@@ -13,14 +13,14 @@ namespace hemelb
     namespace kernels
     {
       // Forward declaration needed by the struct
-      template<class tRheologyModel> class LBGKNN;
+      template<class tRheologyModel, class LatticeType> class LBGKNN;
 
-      template<class tRheologyModel>
-      struct HydroVars<LBGKNN<tRheologyModel> > : public HydroVarsBase
+      template<class tRheologyModel, class LatticeType>
+      struct HydroVars<LBGKNN<tRheologyModel, LatticeType> > : public HydroVarsBase<LatticeType>
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
+              HydroVarsBase<LatticeType>(f)
           {
 
           }
@@ -28,12 +28,12 @@ namespace hemelb
           distribn_t tau;
       };
 
-      /*
+      /**
        * Class extending the original BGK collision operator to support non-Newtonian
        * fluids. Implements support for relaxation time not constant across the domain.
        */
-      template<class tRheologyModel>
-      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel> >
+      template<class tRheologyModel, class LatticeType>
+      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType> , LatticeType>
       {
         public:
 
@@ -42,58 +42,56 @@ namespace hemelb
             InitState(initParams);
           }
 
-          void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            D3Q15::CalculateDensityVelocityFEq(hydroVars.f,
-                                               hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
-                                               hydroVars.f_eq.f);
+            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+                                                     hydroVars.density,
+                                                     hydroVars.v_x,
+                                                     hydroVars.v_y,
+                                                     hydroVars.v_z,
+                                                     hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert(index < (site_t) mTau.size());
+            assert( (index < (site_t) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
             UpdateLocalTau(mTau[index], hydroVars);
           }
 
-          void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            D3Q15::CalculateFeq(hydroVars.density,
-                                hydroVars.v_x,
-                                hydroVars.v_y,
-                                hydroVars.v_z,
-                                hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert(index < (site_t) mTau.size());
+            assert( (index < (site_t) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
             UpdateLocalTau(mTau[index], hydroVars);
           }
 
-          distribn_t DoCollide(const LbmParameters* const lbmParams,
-                               HydroVars<LBGKNN>& hydroVars,
-                               unsigned int direction)
+          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGKNN>& hydroVars)
           {
             double omega = -1.0 / hydroVars.tau;
-            return hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega;
+
+            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+            {
+              hydroVars.SetFPostCollision(direction, hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega);
+            }
           }
 
-          void DoReset(InitParams* initParams)
+          inline void DoReset(InitParams* initParams)
           {
             InitState(*initParams);
           }
@@ -108,20 +106,20 @@ namespace hemelb
           }
 
         private:
-          /*
+          /**
            * Vector containing the current relaxation time for each site in the domain. It will be initialised
            * with the relaxation time corresponding to HemeLB's default Newtonian viscosity and each time step
            * will be updated based on the local hydrodynamic configuration
            */
           std::vector<distribn_t> mTau;
 
-          /* Current time step */
+          /** Current time step */
           distribn_t mTimeStep;
 
-          /* Current space step */
+          /** Current space step */
           distribn_t mSpaceStep;
 
-          /*
+          /**
            *  Helper method to set/update member variables. Called from the constructor and Reset()
            *
            *  @param initParams struct used to store variables required for initialisation of various operators
@@ -129,12 +127,12 @@ namespace hemelb
           void InitState(const InitParams& initParams)
           {
             // Initialise relaxation time across the domain to HemeLB's default value.
-            mTau.resize(initParams.siteCount, initParams.lbmParams->GetTau());
+            mTau.resize(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau());
             mTimeStep = initParams.lbmParams->GetTimeStep();
             mSpaceStep = initParams.latDat->GetVoxelSize();
           }
 
-          /*
+          /**
            *  Helper method to update the value of local relaxation time (tau) from a given hydrodynamic
            *  configuration. It requires values of f_neq and density at the current time step and it will
            *  compute the value of tau to be used in the next time step.
@@ -145,36 +143,25 @@ namespace hemelb
            */
           void UpdateLocalTau(distribn_t& localTau, HydroVars<LBGKNN>& hydroVars) const
           {
-
-            /*
-             *  TODO optimise, at this point hydroVars.f_neq has not been computed yet, so we
-             *  need to do it here for the shear-rate calculator. However, the streamer will do
-             *  it again before DoCollide is called.
-             *
-             *  Modify *all* the kernels to take care of this operation.
-             */
-            for (unsigned f_index = 0; f_index < D3Q15::NUMVECTORS; f_index++)
-            {
-              hydroVars.f_neq.f[f_index] = hydroVars.f[f_index] - hydroVars.f_eq.f[f_index];
-            }
-
             /*
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}
              */
-            double shear_rate = D3Q15::CalculateShearRate(localTau,
-                                                          hydroVars.f_neq.f,
-                                                          hydroVars.density) / mTimeStep;
+            double shear_rate = LatticeType::CalculateShearRate(localTau, hydroVars.f_neq.f, hydroVars.density)
+                / mTimeStep;
 
             // Update tau
-            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
-                                                                hydroVars.density,
-                                                                mSpaceStep,
-                                                                mTimeStep);
+            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate, hydroVars.density, mSpaceStep, mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
-            assert(!std::isinf(localTau));
-            assert(!std::isnan(localTau));
+#ifdef HAVE_STD_ISNAN
+            assert( (!std::isinf(localTau)) );
+            assert( (!std::isnan(localTau)) );
+#endif
+#ifdef HAVE_ISNAN
+            assert( (!isinf(localTau)) );
+            assert( (!isnan(localTau)) );
+#endif
           }
       };
     }

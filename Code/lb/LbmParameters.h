@@ -3,6 +3,10 @@
 
 #include <cmath>
 #include "constants.h"
+#include <vector>
+#include <cassert>
+#include "D3Q15.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 
 namespace hemelb
 {
@@ -26,8 +30,9 @@ namespace hemelb
         void Update(distribn_t timeStepLength, distribn_t voxelSize)
         {
           timestep = timeStepLength;
-          tau = 0.5 + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / (Cs2
-              * voxelSize * voxelSize);
+          tau = 0.5
+              + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+                  / (Cs2 * voxelSize * voxelSize);
 
           omega = -1.0 / tau;
           stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
@@ -66,7 +71,7 @@ namespace hemelb
         distribn_t omega;
         distribn_t tau;
         distribn_t stressParameter;
-        distribn_t beta; // Viscous dissipation in ELBM
+        distribn_t beta; ///< Viscous dissipation in ELBM
     };
   }
 }

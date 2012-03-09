@@ -113,5 +113,13 @@ namespace hemelb
       TotalTimeSteps *= 2;
       TimeStepsPerCycle *= 2;
     }
+
+    void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
+    {
+      // Note that CycleId is 1-indexed and will have just been incremented when we finish.
+      dictionary.SetIntValue("CYCLES", GetCycleId() - 1);
+      dictionary.SetIntValue("STEPS", GetTimeStepsPassed() - 1);
+      dictionary.SetIntValue("STEPS_PER_CYCLE", GetTimeStepsPerCycle());
+    }
   }
 }

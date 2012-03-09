@@ -6,7 +6,7 @@ namespace hemelb
   namespace debug
   {
 
-    Debugger* Debugger::Init(char *executable)
+    Debugger* Debugger::Init(const char * const executable)
     {
       /* Static member function that implements the singleton pattern.
        * Use the namespace function PlatformDebuggerFactory to
@@ -30,7 +30,7 @@ namespace hemelb
     // Init static members
     Debugger* Debugger::singleton = NULL;
 
-    Debugger::Debugger(char* executable)
+    Debugger::Debugger(const char* const executable)
     {
       // Ctor
       mExecutable = std::string(executable);

@@ -1,0 +1,6 @@
+#ifndef HEMELB_UNITTESTS_VISTESTS_VISTESTS_H
+#define HEMELB_UNITTESTS_VISTESTS_VISTESTS_H
+
+#include "unittests/vistests/HslToRgbConvertorTests.h"
+
+#endif /* HEMELB_UNITTESTS_VISTESTS_VISTESTS_H */

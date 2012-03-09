@@ -3,11 +3,11 @@
 
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
-#include "xml/tinyxml.h"
+#include "tinyxml.h"
 
 namespace hemelb
 {
-  class SimConfig;
+  namespace configuration{ class SimConfig; }
 
   namespace lb
   {
@@ -22,7 +22,7 @@ namespace hemelb
             InOutLet();
             virtual ~InOutLet();
 
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig*) = 0;
+            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig*) = 0;
 
             virtual InOutLet* Clone() = 0;
 
@@ -50,8 +50,8 @@ namespace hemelb
             double PressureMinPhysical;
             double PressureMaxPhysical;
 
-            util::Vector3D Position;
-            util::Vector3D Normal;
+            util::Vector3D<float> Position;
+            util::Vector3D<float> Normal;
 
           protected:
             const util::UnitConverter* mUnits;

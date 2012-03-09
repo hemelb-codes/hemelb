@@ -1,7 +1,8 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
-#include "lb/lb.h"
+#include "extraction/PropertyActor.h"
+#include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
@@ -9,11 +10,17 @@
 #include "lb/EntropyTester.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
+#include "configuration/CommandLine.h"
+#include "io/PathManager.h"
+#include "reporting/Reporter.h"
+#include "reporting/Timers.h"
+#include "reporting/BuildInfo.h"
+#include "lb/IncompressibilityChecker.hpp"
 
 class SimulationMaster
 {
   public:
-    SimulationMaster(int iArgCount, char *iArgList[]);
+    SimulationMaster(hemelb::configuration::CommandLine &options);
     ~SimulationMaster();
 
     void Abort();
@@ -22,53 +29,56 @@ class SimulationMaster
 
     int GetProcessorCount();
 
-    void RunSimulation(std::string image_directory,
-                       std::string snapshot_directory,
-                       unsigned int lSnapshotsPerCycle,
-                       unsigned int lImagesPerCycle);
-
-    void Initialise(hemelb::SimConfig *iSimConfig,
-                    unsigned int iImagesPerCycle,
-                    int iSteeringSessionid,
-                    FILE * bTimingsFile);
+    void RunSimulation();
 
   private:
-    void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
+    typedef hemelb::D3Q15 latticeType;
 
-    void PrintTimingData();
+    void Initialise();
+    void SetupReporting(); // set up the reporting file
+    unsigned int OutputPeriod(unsigned int frequency);
+    void HandleActors();
+    void ResetUnstableSimulation();
+    void WriteLocalImages();
+    void GenerateNetworkImages();
+    hemelb::configuration::SimConfig *simConfig;
+    hemelb::geometry::LatticeData* latticeData;
+    hemelb::io::PathManager* fileManager;
+    hemelb::reporting::Timers timings;
+    hemelb::reporting::Reporter* reporter;
+    hemelb::reporting::BuildInfo build_info;
+    typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    FILE *mTimingsFile;
-
-    hemelb::geometry::LatticeData* mLatDat;
+    MapType snapshotsCompleted;
+    MapType networkImagesCompleted;
 
     hemelb::steering::Network* network;
     hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 
-    hemelb::lb::SimulationState* mSimulationState;
-    hemelb::lb::StabilityTester* mStabilityTester;
-    hemelb::lb::EntropyTester* mEntropyTester;
-    hemelb::lb::LBM* mLbm;
-    hemelb::lb::boundaries::BoundaryValues* mInletValues;
-    hemelb::lb::boundaries::BoundaryValues* mOutletValues;
-    hemelb::net::Net mNet;
+    hemelb::lb::SimulationState* simulationState;
+    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
+    hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
-    hemelb::util::UnitConverter* mUnits;
+    /** Actor in charge of checking the maximum density difference across the domain */
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
-    hemelb::vis::Control* mVisControl;
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+    hemelb::lb::boundaries::BoundaryValues* inletValues;
+    hemelb::lb::boundaries::BoundaryValues* outletValues;
+    hemelb::net::Net communicationNet;
 
-    int mImagesWritten;
-    int mSnapshotsWritten;
+    hemelb::util::UnitConverter* unitConvertor;
 
-    double mCreationTime;
+    hemelb::vis::Control* visualisationControl;
+    hemelb::extraction::IterableDataSource* propertyDataSource;
+    hemelb::extraction::PropertyActor* propertyExtractor;
 
-    double mSnapshotTime;
-    double mDomainDecompTime;
-    double mFileReadTime;
-    double mNetInitialiseTime;
+    std::vector<hemelb::net::IteratedAction*> actors;
 
-    double mMPISendTime;
-    double mMPIWaitTime;
+    unsigned int snapshotsPerCycle;
+    unsigned int imagesPerCycle;
+    int steeringSessionId;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

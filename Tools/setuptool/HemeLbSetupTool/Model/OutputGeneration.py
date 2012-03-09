@@ -1,15 +1,14 @@
 import numpy as np
 import os.path
 from xml.etree.ElementTree import Element, SubElement, ElementTree
-import vtk
-from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
-    vtkStripper, vtkFeatureEdges, vtkPolyDataConnectivityFilter, \
-    vtkPolyDataNormals, vtkProgrammableFilter, vtkDelaunay2D, \
-    vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkOctreePointLocator, \
-    vtkImplicitFunction, vtkPoints, vtkPolyData, vtkCellArray, vtkTransform, \
-    vtkMatrix4x4, vtkIdList, vtkPolyLine, vtkCellData
-from vtk import vtkXMLPolyDataWriter, vtkAlgorithm
-from vmtk.vtkvmtk import vtkvmtkCapPolyData, vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
+
+from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
+    vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
+    vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
+    vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
+    vtkXMLPolyDataWriter, vtkAlgorithm
+    
+from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
 
 from .Iolets import Inlet, Outlet, Iolet
 import Generation
@@ -21,17 +20,15 @@ def DVfromV(v):
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
 
-class ConfigGenerator(object):
+class GeometryGenerator(object):
     def __init__(self, profile):
         """Clip the STL and set attributes on the SWIG-proxied C++ 
-        ConfigGenerator object.
+        GeometryGenerator object.
         """
         self.profile = profile
 
-        self.generator = Generation.ConfigGenerator()
-        self.generator.SetVoxelSize(profile.VoxelSize)
-        self.generator.SetOutputConfigFile(str(profile.OutputConfigFile))
-        self.generator.SetStressType(profile.StressType)
+        self.generator = Generation.GeometryGenerator()
+        self.generator.SetOutputGeometryFile(str(profile.OutputGeometryFile))
 
         # Construct the Iolet structs
         nIn = 0
@@ -40,9 +37,9 @@ class ConfigGenerator(object):
         for io in profile.Iolets:
             proxy = Generation.Iolet()
 
-            proxy.Centre = DVfromV(io.Centre)
-            proxy.Normal = DVfromV(io.Normal)
-            proxy.Radius = io.Radius
+            proxy.Centre = DVfromV(io.Centre) / profile.VoxelSize
+            proxy.Normal = DVfromV(io.Normal) 
+            proxy.Radius = io.Radius / profile.VoxelSize
 
             if isinstance(io, Inlet):
                 io.Id = proxy.Id = nIn
@@ -59,22 +56,33 @@ class ConfigGenerator(object):
         self.ioletProxies = ioletProxies
         self.generator.SetIolets(ioletProxies)
 
-        self.generator.SetSeedPoint(profile.SeedPoint.x,
-                                    profile.SeedPoint.y,
-                                    profile.SeedPoint.z)
+        self.generator.SetSeedPointWorking(profile.SeedPoint.x / profile.VoxelSize,
+                                           profile.SeedPoint.y / profile.VoxelSize,
+                                           profile.SeedPoint.z / profile.VoxelSize)
 
-        # This will create the pipeline for the clipped surface and excute it
+        # This will create the pipeline for the clipped surface
         clipper = Clipper(profile)
+
+        # Scale by the voxel size
+        trans = vtkTransform()
+        scale = 1. / profile.VoxelSize
+        trans.Scale(scale, scale, scale)
+        
+        transformer = vtkTransformFilter()
+        transformer.SetTransform(trans)
+        transformer.SetInputConnection(clipper.ClippedSurfaceSource.GetOutputPort())
         
         # Uncomment this an insert the output path to debug pipeline construction
         # write = StageWriter('/path/to/stage/output/directory').WriteOutput
-        # for alg in getpipeline(clipper.ClippedSurfaceSource):
+        # for alg in getpipeline(transformer):
         #    write(alg)
 
-        clipper.ClippedSurfaceSource.Update()
-        self.ClippedSurface = clipper.ClippedSurfaceSource.GetOutput()
+        transformer.Update()
+        self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
         
+        self.generator.SetVoxelSizeMetres(profile.VoxelSizeMetres)
+
         return
 
     def Execute(self):
@@ -112,7 +120,7 @@ class Timer(object):
     pass
 
 class Clipper(object):
-    """Clips the input STL file to the ROI and caps it.
+    """Clips the input STL file to the ROI and caps it. 
     """
 
     def __init__(self, profile):
@@ -125,7 +133,7 @@ class Clipper(object):
             setattr(self, k, getattr(profile, k))
             continue
         # Pull in the SurfaceSource too
-        self.SurfaceSource = profile.SurfaceSource
+        self.SurfaceSource = profile.StlReader
 
         self.ClippedSurfaceSource = self.ConstructClipPipeline()
         return
@@ -156,17 +164,18 @@ class Clipper(object):
             pdSource = capper
             continue
 
-        # Adds cell normals to the PolyData
-        normer = vtkPolyDataNormals()
-        normer.SetInputConnection(pdSource.GetOutputPort())
-        normer.ComputeCellNormalsOn()
-        normer.ComputePointNormalsOff()
-        normer.SplittingOff()
-        normer.ConsistencyOn()
-        normer.AutoOrientNormalsOn()
-        normer.NonManifoldTraversalOff()
-
-        return normer
+        # If we decide again that we need normals to the surface,
+        # the following adds cell normals to the PolyData
+        # normer = vtkPolyDataNormals()
+        # normer.SetInputConnection(pdSource.GetOutputPort())
+        # normer.ComputeCellNormalsOn()
+        # normer.ComputePointNormalsOff()
+        # normer.SplittingOff()
+        # normer.ConsistencyOn()
+        # normer.AutoOrientNormalsOn()
+        # normer.NonManifoldTraversalOff()
+                 
+        return pdSource
 
     pass
 
@@ -393,15 +402,16 @@ class XmlWriter(object):
 
     def DoSimulation(self):
         sim = SubElement(self.root, 'simulation')
-        sim.set('cycles', str(3))
-        sim.set('cyclesteps', str(1000))
+        sim.set('cycles', str(self.profile.Cycles))
+        sim.set('cyclesteps', str(self.profile.Steps))
+        sim.set('stresstype', str(1))
         return
 
     def DoGeometry(self):
         geom = SubElement(self.root, 'geometry')
 
         data = SubElement(geom, 'datafile')
-        data.set('path', os.path.relpath(self.profile.OutputConfigFile,
+        data.set('path', os.path.relpath(self.profile.OutputGeometryFile,
                                          os.path.split(self.profile.OutputXmlFile)[0]))
         return
 
@@ -427,9 +437,9 @@ class XmlWriter(object):
             normal.set('z', str(io.Normal.z))
 
             position = SubElement(iolet, 'position')
-            position.set('x', str(io.Centre.x))
-            position.set('y', str(io.Centre.y))
-            position.set('z', str(io.Centre.z))
+            position.set('x', str(io.Centre.x * self.profile.StlFileUnit.SizeInMetres))
+            position.set('y', str(io.Centre.y * self.profile.StlFileUnit.SizeInMetres))
+            position.set('z', str(io.Centre.z * self.profile.StlFileUnit.SizeInMetres))
             continue
         return
 

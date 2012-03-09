@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <netinet/in.h>
 
 #include "steering/ClientConnection.h"
@@ -18,7 +18,8 @@ namespace hemelb
      * @param iSteeringSessionId
      * @return
      */
-    ClientConnection::ClientConnection(int iSteeringSessionId)
+    ClientConnection::ClientConnection(int iSteeringSessionId):
+        mIsBusy()
     {
     }
 

@@ -266,6 +266,12 @@ class Observable(object):
             )
         return
     
+    def __getnewargs__(self):
+        """Must ensure that __new__ is called before the state is set.
+        Do this by returning an empty tuple of arguments.
+        """
+        return ()
+    
     def __getstate__(self):
         picdic = {}
         for attr in self._Args:
@@ -313,8 +319,9 @@ class Observable(object):
             elif isinstance(val, Observable):
                 val.CloneFrom(getattr(other, attr))
             else:
-                setattr(self, attr,
-                        getattr(other, attr))
+                if(hasattr(other,attr)):
+                    setattr(self, attr,
+                            getattr(other, attr))
                 pass
             continue
         return
