@@ -1,27 +1,27 @@
-#include "extraction/LineGeometrySelector.h"
+#include "extraction/StraightLineGeometrySelector.h"
 
 namespace hemelb
 {
   namespace extraction
   {
-    LineGeometrySelector::LineGeometrySelector(const util::Vector3D<float>& endpoint1,
+    StraightLineGeometrySelector::StraightLineGeometrySelector(const util::Vector3D<float>& endpoint1,
                                                const util::Vector3D<float>& endpoint2) :
       endpoint1(endpoint1), lineVector(endpoint2 - endpoint1), lineLength(lineVector.GetMagnitude())
     {
 
     }
 
-    util::Vector3D<float> LineGeometrySelector::GetEndpoint1() const
+    util::Vector3D<float> StraightLineGeometrySelector::GetEndpoint1() const
     {
       return endpoint1;
     }
 
-    util::Vector3D<float> LineGeometrySelector::GetEndpoint2() const
+    util::Vector3D<float> StraightLineGeometrySelector::GetEndpoint2() const
     {
       return lineVector + endpoint1;
     }
 
-    bool LineGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
+    bool StraightLineGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
                                                 const util::Vector3D<float>& location)
     {
       const float lengthAlongLine = (lineVector.Dot(location - endpoint1)) / lineLength;
