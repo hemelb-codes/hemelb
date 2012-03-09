@@ -18,7 +18,7 @@ namespace hemelb
         public:
           void setUp()
           {
-            exemplar = Resource("config.xml").Path();
+            exemplar = Resource("config0_2_0.xml").Path();
             config = SimConfig::Load(exemplar.c_str());
           }
           void tearDown()
