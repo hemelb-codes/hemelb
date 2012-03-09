@@ -7,7 +7,7 @@
 #include <string>
 #include <cppunit/TestFixture.h>
 #include "extraction/LbDataSourceIterator.h"
-#include "extraction/LineGeometrySelector.h"
+#include "extraction/StraightLineGeometrySelector.h"
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
 #include "unittests/FourCubeLatticeData.h"
@@ -21,7 +21,7 @@ namespace hemelb
       class GeometrySelectorTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(GeometrySelectorTests);
-          CPPUNIT_TEST(TestLineGeometrySelector);
+          CPPUNIT_TEST(TestStraightLineGeometrySelector);
           CPPUNIT_TEST(TestPlaneGeometrySelector);
           CPPUNIT_TEST(TestWholeGeometrySelector);CPPUNIT_TEST_SUITE_END();
 
@@ -53,7 +53,7 @@ namespace hemelb
                 new hemelb::extraction::PlaneGeometrySelector(planePosition,
                                                               planeNormal,
                                                               planeRadius);
-            lineGeometrySelector = new hemelb::extraction::LineGeometrySelector(lineEndPoint1,
+            straightLineGeometrySelector = new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1,
                                                                                 lineEndPoint2);
             wholeGeometrySelector = new hemelb::extraction::WholeGeometrySelector();
           }
@@ -62,7 +62,7 @@ namespace hemelb
           {
             delete planeGeometrySelector;
             delete planeGeometrySelectorWithRadius;
-            delete lineGeometrySelector;
+            delete straightLineGeometrySelector;
             delete wholeGeometrySelector;
 
             delete dataSourceIterator;
@@ -73,9 +73,9 @@ namespace hemelb
             delete latticeData;
           }
 
-          void TestLineGeometrySelector()
+          void TestStraightLineGeometrySelector()
           {
-            TestOutOfGeometrySites(lineGeometrySelector);
+            TestOutOfGeometrySites(straightLineGeometrySelector);
 
             // The line runs from the centre to the (size,size,size) point.
             // This includes anything with all three coordinates the same, above
@@ -90,7 +90,7 @@ namespace hemelb
               includedCoords.push_back(util::Vector3D<site_t>(xCoord));
             }
 
-            TestExpectedIncludedSites(lineGeometrySelector, includedCoords);
+            TestExpectedIncludedSites(straightLineGeometrySelector, includedCoords);
           }
 
           void TestPlaneGeometrySelector()
@@ -235,7 +235,7 @@ namespace hemelb
 
           hemelb::extraction::PlaneGeometrySelector* planeGeometrySelector;
           hemelb::extraction::PlaneGeometrySelector* planeGeometrySelectorWithRadius;
-          hemelb::extraction::LineGeometrySelector* lineGeometrySelector;
+          hemelb::extraction::StraightLineGeometrySelector* straightLineGeometrySelector;
           hemelb::extraction::WholeGeometrySelector* wholeGeometrySelector;
       };
 
