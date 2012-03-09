@@ -1,10 +1,27 @@
 #! /usr/bin/env python
 import xdrlib
 import sys
+from hemeTools.parsers import HemeLbMagicNumber
+
+ExtractionMagicNumber = 0x78747278
 
 def unpack(filename):
   file = open(filename, 'r')
   x = xdrlib.Unpacker(file.read())
+
+  hlbMagicNumber = x.unpack_uint()
+  extractionMagicNumber = x.unpack_uint()
+  extractionVersionNumber = x.unpack_uint()
+
+  if hlbMagicNumber != HemeLbMagicNumber:
+    print "Expected HemeLb magic number %i, got %i" % (HemeLbMagicNumber, hlbMagicNumber)
+    return
+  
+  if extractionMagicNumber != ExtractionMagicNumber:
+    print "Expected Extraction magic number %i, got %i" % (ExtractionMagicNumber, extractionMagicNumber)
+    return
+
+  print "Extraction version number %i" % extractionVersionNumber
 
   fieldCount = x.unpack_uint()
   fieldNames = [x.unpack_string() for fieldNum in xrange(fieldCount)]

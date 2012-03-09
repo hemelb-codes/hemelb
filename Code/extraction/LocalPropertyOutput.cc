@@ -1,4 +1,6 @@
 #include "extraction/LocalPropertyOutput.h"
+#include "io/formats/formats.h"
+#include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "topology/NetworkTopology.h"
 
@@ -7,15 +9,12 @@ namespace hemelb
   namespace extraction
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec) :
-        dataSource(dataSource), outputSpec(outputSpec)
+      dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      MPI_File_open(MPI_COMM_WORLD,
-                    const_cast<char*>(outputSpec->filename.c_str()),
-                    MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
-                    MPI_INFO_NULL,
-                    &outputFile);
+      MPI_File_open(MPI_COMM_WORLD, const_cast<char*> (outputSpec->filename.c_str()), MPI_MODE_WRONLY | MPI_MODE_CREATE
+          | MPI_MODE_EXCL, MPI_INFO_NULL, &outputFile);
 
       uint64_t siteCount = 0;
 
@@ -67,19 +66,21 @@ namespace hemelb
       }
 
       // Calculate the total length written during one iteration.
-      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t>(), MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t> (), MPI_SUM, MPI_COMM_WORLD);
 
       // Calculate the total number of sites to be written.
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t>(), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
 
       // Write the header information on the IO proc.
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
+        // Three uints for HemeLB magic number, extraction file magic number and
+        // version number.
         // Field count (uint)
         // Descriptions (variable strings).
         // Site count (ulong)
-        unsigned headerSize = 4 + 8;
+        unsigned headerSize = 3 * 4 + 4 + 8;
 
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
@@ -99,6 +100,9 @@ namespace hemelb
         // Create a header buffer, and write it.
         char* headerBuffer = new char[headerSize];
         io::writers::xdr::XdrMemWriter writer(headerBuffer, headerSize);
+
+        writer << (uint32_t) io::formats::HemeLbMagicNumber << (uint32_t) io::formats::Extraction::MagicNumber
+            << (uint32_t) io::formats::Extraction::VersionNumber;
 
         // Write the number of fields and their names and lengths (in float counts)
         writer << (uint32_t) outputSpec->fields.size();
@@ -144,7 +148,7 @@ namespace hemelb
         if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t>(), 1, 1, MPI_COMM_WORLD);
+          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
           localDataOffsetIntoFile -= writeLength;
         }
       }
@@ -153,7 +157,7 @@ namespace hemelb
         // Receive the writing start position from the previous core.
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
-                 MpiDataType<uint64_t>(),
+                 MpiDataType<uint64_t> (),
                  topology::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
@@ -166,7 +170,7 @@ namespace hemelb
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
-                   MpiDataType<uint64_t>(),
+                   MpiDataType<uint64_t> (),
                    topology::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
