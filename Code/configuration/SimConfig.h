@@ -6,7 +6,7 @@
 #include "util/Vector3D.h"
 #include "lb/boundaries/iolets/InOutLets.h"
 #include "extraction/PropertyOutputFile.h"
-#include "extraction/LineGeometrySelector.h"
+#include "extraction/StraightLineGeometrySelector.h"
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
 
@@ -66,7 +66,7 @@ namespace hemelb
         void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
         void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
         void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile* file);
-        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::LineGeometrySelector*& line);
+        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::StraightLineGeometrySelector*& line);
         void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);

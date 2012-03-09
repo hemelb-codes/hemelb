@@ -325,7 +325,7 @@ namespace hemelb
           }
           else if (propertyElement->ValueStr().compare("linegeometry") == 0)
           {
-            extraction::LineGeometrySelector* line = NULL;
+            extraction::StraightLineGeometrySelector* line = NULL;
             DoIOForLineGeometry(propertyElement, iIsLoading, line);
             file->geometry = line;
           }
@@ -357,7 +357,7 @@ namespace hemelb
 
     void SimConfig::DoIOForLineGeometry(TiXmlElement *iXmlNode,
                                         bool iIsLoading,
-                                        extraction::LineGeometrySelector*& line)
+                                        extraction::StraightLineGeometrySelector*& line)
     {
       TiXmlElement* point1 = GetChild(iXmlNode, "point", iIsLoading);
       TiXmlElement* point2 = iIsLoading ?
@@ -372,7 +372,7 @@ namespace hemelb
         DoIOForFloatVector(point1, iIsLoading, mutableVector);
         DoIOForFloatVector(point2, iIsLoading, mutableVector2);
 
-        line = new extraction::LineGeometrySelector(mutableVector, mutableVector2);
+        line = new extraction::StraightLineGeometrySelector(mutableVector, mutableVector2);
       }
       else
       {
