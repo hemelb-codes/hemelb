@@ -16,7 +16,6 @@ class SnapCollection(collections.Mapping):
     non-mutating methods of a standard dict (keys(), values(), etc.).
     """
     
-    period_s = 60.0/70.0
     
     def __init__(self, base, tol=tol, delimiter=" "):
         self.base = base
@@ -26,7 +25,7 @@ class SnapCollection(collections.Mapping):
         self.snapmap = {}
         times = []
         for s in self.snapshots:
-            t = self.snapToTime(s, delimiter) % self.period_s
+            t = self.snapToTime(s, delimiter)
             self.snapmap[t] = s
             times.append(t)
             continue
@@ -67,18 +66,19 @@ class SnapCollection(collections.Mapping):
 class Heme(SnapCollection):
     """Collection of HemeLB snapshots in original format."""
     
-    def __init__(self, base, timestep_s=None, tol=1e-8, snapPattern=os.path.join('Snapshots', 'snapshot_*.asc')):
+    def __init__(self, base, timestep_s=None, cyclesteps=1000, tol=1e-8, snapPattern=os.path.join('Snapshots', 'snapshot_*.asc')):
         if timestep_s is None:
             raise ValueError("Must supply keyword argument 'timestep_s', the length of a timestep in seconds.")
         self.snapPattern = snapPattern
         self.timestep_s = timestep_s
+        self.cyclesteps=cyclesteps
         return SnapCollection.__init__(self, base, tol=tol)
     
     def snapToTime(self, snap, delimiter='_'):
         ts = int(
             os.path.splitext(os.path.basename(snap))[0].split('_')[1]
             )
-        return ts *self.timestep_s
+        return (ts % self.cyclesteps) *self.timestep_s
     
     def loader(self, snap):
         ans = order(HemeLbSnapshot(snap))
@@ -111,7 +111,6 @@ class Diff(SnapCollection):
     def __init__(self, sc1, sc2, tolerance=1e-6):
         assert np.allclose(sc1.times, sc2.times, tolerance)
         self.times = sc1.times.copy()
-        
         self.sc1 = sc1
         self.sc2 = sc2
         return
