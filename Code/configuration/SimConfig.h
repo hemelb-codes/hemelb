@@ -35,9 +35,8 @@ namespace hemelb
         float VisBrightness;
         float MaxVelocity;
         float MaxStress;
-        unsigned long NumCycles;
-        long StepsPerCycle;
-        double PulsatilePeriod;
+        double TimeStepLength;
+        unsigned long TotalTimeSteps;
         lb::StressTypes StressType;
         std::vector<extraction::PropertyOutputFile*> propertyOutputs;
 
@@ -50,14 +49,14 @@ namespace hemelb
 
       private:
         void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
-        void DoIOForLong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
+        bool DoIOForLong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
         void DoIOForStressType(TiXmlElement* iXmlNode,
                                std::string iAttributeName,
                                bool iIsLoading,
                                lb::StressTypes &value);
-        void DoIOForULong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, unsigned long &value);
+        bool DoIOForULong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, unsigned long &value);
         void DoIOForFloat(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, float &value);
-        void DoIOForDouble(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
+        bool DoIOForDouble(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
         void DoIOForString(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, std::string &iValue);
         void DoIOForInOutlets(TiXmlElement *iXmlNode,
                               bool iIsLoading,

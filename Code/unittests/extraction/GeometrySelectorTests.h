@@ -38,7 +38,7 @@ namespace hemelb
           void setUp()
           {
             latticeData = FourCubeLatticeData::Create(CubeSize, 1);
-            simState = new lb::SimulationState(60.0/70.0,1000, 5);
+            simState = new lb::SimulationState(60.0/(70.0*5000.0),1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             lbmParams = new lb::LbmParameters(0.1, VoxelSize);
             unitConverter = new hemelb::util::UnitConverter(lbmParams, simState, VoxelSize);
