@@ -58,11 +58,6 @@ namespace hemelb
       return TimeStepsGone;
     }
 
-    double SimulationState::GetIntraCycleTime() const
-    {
-      return  TimeStepLength * static_cast<double>(TimeStep);
-    }
-
     bool SimulationState::GetIsTerminating() const
     {
       return IsTerminating;
