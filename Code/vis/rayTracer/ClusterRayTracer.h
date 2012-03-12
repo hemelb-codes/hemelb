@@ -32,8 +32,7 @@ namespace hemelb
                            const VisSettings& iVisSettings,
                            const hemelb::geometry::LatticeData& iLatticeData,
                            const lb::MacroscopicPropertyCache& propertyCache) :
-            viewpoint(iViewpoint), screen(iScreen), domainStats(iDomainStats), visSettings(iVisSettings),
-                latticeData(iLatticeData), propertyCache(propertyCache)
+              viewpoint(iViewpoint), screen(iScreen), domainStats(iDomainStats), visSettings(iVisSettings), latticeData(iLatticeData), propertyCache(propertyCache)
           {
             // TODO: This is absolutely horrible, but neccessary until RayDataNormal is
             // removed. 
@@ -168,18 +167,19 @@ namespace hemelb
 
             const std::vector<util::Vector3D<float> > lCorners = iCluster.GetCorners();
 
-            for (std::vector<util::Vector3D<float> >::const_iterator lIt = lCorners.begin(); lIt != lCorners.end(); lIt++)
+            for (std::vector<util::Vector3D<float> >::const_iterator lIt = lCorners.begin(); lIt != lCorners.end();
+                lIt++)
             {
               UpdateSubImageExtentForCorner(*lIt, lSubImageLowerLeft, lSubImageUpperRight);
             }
 
-            lowerLeftPixelCoordinatesOfSubImage
-                = screen.template TransformScreenToPixelCoordinates<int> (lSubImageLowerLeft);
+            lowerLeftPixelCoordinatesOfSubImage =
+                screen.template TransformScreenToPixelCoordinates<int>(lSubImageLowerLeft);
 
             // We add a unit vector here because the transformation will round down from float
             // to int.
-            upperRightPixelCoordinatesOfSubImage
-                = screen.template TransformScreenToPixelCoordinates<int> (lSubImageUpperRight);
+            upperRightPixelCoordinatesOfSubImage =
+                screen.template TransformScreenToPixelCoordinates<int>(lSubImageUpperRight);
           }
 
           void UpdateSubImageExtentForCorner(const util::Vector3D<float>& iCorner,
@@ -195,23 +195,24 @@ namespace hemelb
           bool SubImageOffScreen()
           {
             return (lowerLeftPixelCoordinatesOfSubImage.x >= screen.GetPixelsX()
-                || upperRightPixelCoordinatesOfSubImage.x < 0 || lowerLeftPixelCoordinatesOfSubImage.y
-                >= screen.GetPixelsY() || upperRightPixelCoordinatesOfSubImage.y < 0);
+                || upperRightPixelCoordinatesOfSubImage.x < 0
+                || lowerLeftPixelCoordinatesOfSubImage.y >= screen.GetPixelsY()
+                || upperRightPixelCoordinatesOfSubImage.y < 0);
           }
 
           void CropSubImageToScreen()
           {
-            lowerLeftPixelCoordinatesOfSubImage.x
-                = util::NumericalFunctions::max(lowerLeftPixelCoordinatesOfSubImage.x, 0);
+            lowerLeftPixelCoordinatesOfSubImage.x = util::NumericalFunctions::max(lowerLeftPixelCoordinatesOfSubImage.x,
+                                                                                  0);
 
-            upperRightPixelCoordinatesOfSubImage.x
-                = util::NumericalFunctions::min(upperRightPixelCoordinatesOfSubImage.x, screen.GetPixelsX() - 1);
+            upperRightPixelCoordinatesOfSubImage.x =
+                util::NumericalFunctions::min(upperRightPixelCoordinatesOfSubImage.x, screen.GetPixelsX() - 1);
 
-            lowerLeftPixelCoordinatesOfSubImage.y
-                = util::NumericalFunctions::max(lowerLeftPixelCoordinatesOfSubImage.y, 0);
+            lowerLeftPixelCoordinatesOfSubImage.y = util::NumericalFunctions::max(lowerLeftPixelCoordinatesOfSubImage.y,
+                                                                                  0);
 
-            upperRightPixelCoordinatesOfSubImage.y
-                = util::NumericalFunctions::min(upperRightPixelCoordinatesOfSubImage.y, screen.GetPixelsY() - 1);
+            upperRightPixelCoordinatesOfSubImage.y =
+                util::NumericalFunctions::min(upperRightPixelCoordinatesOfSubImage.y, screen.GetPixelsY() - 1);
           }
 
           void CalculateVectorsToClusterSpanAndLowerLeftPixel(const ClusterType& iCluster)
@@ -232,10 +233,12 @@ namespace hemelb
 
             //Loop over all the pixels
             util::Vector3D<float> lCameraToBottomRow = fromCameraToBottomLeftPixelOfSubImage;
-            for (lPixel.x = lowerLeftPixelCoordinatesOfSubImage.x; lPixel.x <= upperRightPixelCoordinatesOfSubImage.x; ++lPixel.x)
+            for (lPixel.x = lowerLeftPixelCoordinatesOfSubImage.x; lPixel.x <= upperRightPixelCoordinatesOfSubImage.x;
+                ++lPixel.x)
             {
               util::Vector3D<float> lCameraToPixel = lCameraToBottomRow;
-              for (lPixel.y = lowerLeftPixelCoordinatesOfSubImage.y; lPixel.y <= upperRightPixelCoordinatesOfSubImage.y; ++lPixel.y)
+              for (lPixel.y = lowerLeftPixelCoordinatesOfSubImage.y; lPixel.y <= upperRightPixelCoordinatesOfSubImage.y;
+                  ++lPixel.y)
               {
                 CastRayForPixel(iCluster, lPixel, lCameraToPixel, pixels);
 
@@ -308,17 +311,26 @@ namespace hemelb
                 if (localContiguousId != BIG_NUMBER3)
                 {
                   SiteData_t siteData;
-                  siteData.density = propertyCache.GetDensity(localContiguousId);
-                  siteData.velocity = propertyCache.GetVelocity(localContiguousId).GetMagnitude();
-                  siteData.stress = propertyCache.GetStress(localContiguousId);
+                  siteData.density = propertyCache.densityCache.Get(localContiguousId);
+                  siteData.velocity = propertyCache.velocityCache.Get(localContiguousId).GetMagnitude();
+
+                  if (visSettings.mStressType == lb::ShearStress)
+                  {
+                    siteData.stress = propertyCache.shearStressCache.Get(localContiguousId);
+                  }
+                  else
+                  {
+                    siteData.stress = propertyCache.vonMisesStressCache.Get(localContiguousId);
+                  }
 
                   const util::Vector3D<double>* lWallData = iCluster.GetWallData(blockNumberOnCluster,
                                                                                  siteTraverser.GetCurrentIndex());
 
                   if (lWallData == NULL || lWallData->x == NO_VALUE)
                   {
-                    ioRay.UpdateDataForNormalFluidSite(siteData, manhattanRayLengthThroughVoxel
-                        - euclideanClusterLengthTraversedByRay, // Manhattan Ray-length through the voxel
+                    ioRay.UpdateDataForNormalFluidSite(siteData,
+                                                       manhattanRayLengthThroughVoxel
+                                                           - euclideanClusterLengthTraversedByRay, // Manhattan Ray-length through the voxel
                                                        euclideanClusterLengthTraversedByRay, // euclidean ray units spent in cluster
                                                        domainStats,
                                                        visSettings);
@@ -571,8 +583,8 @@ namespace hemelb
 
               //Move to the next block based on the direction
               //of least travel and update variables accordingly
-              siteUnitsTraversed
-                  = totalRayUnitsToNextBlockFromFirstIntersection.GetByDirection(lDirectionOfLeastTravel);
+              siteUnitsTraversed =
+                  totalRayUnitsToNextBlockFromFirstIntersection.GetByDirection(lDirectionOfLeastTravel);
 
               switch (lDirectionOfLeastTravel)
               {
@@ -636,20 +648,20 @@ namespace hemelb
             const util::Vector3D<float> exactBlockCoordsOfFirstIntersectingBlock =
                 iLowerSiteToFirstRayClusterIntersection * (1.0F / (float) latticeData.GetBlockSize());
 
-            lBlockCoordinatesOfFirstIntersectionBlock.x
-                = (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.x,
-                                                                           0,
-                                                                           iCluster.GetBlocksX() - 1);
+            lBlockCoordinatesOfFirstIntersectionBlock.x =
+                (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.x,
+                                                                         0,
+                                                                         iCluster.GetBlocksX() - 1);
 
-            lBlockCoordinatesOfFirstIntersectionBlock.y
-                = (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.y,
-                                                                           0,
-                                                                           iCluster.GetBlocksY() - 1);
+            lBlockCoordinatesOfFirstIntersectionBlock.y =
+                (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.y,
+                                                                         0,
+                                                                         iCluster.GetBlocksY() - 1);
 
-            lBlockCoordinatesOfFirstIntersectionBlock.z
-                = (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.z,
-                                                                           0,
-                                                                           iCluster.GetBlocksZ() - 1);
+            lBlockCoordinatesOfFirstIntersectionBlock.z =
+                (site_t) util::NumericalFunctions::enforceBounds<site_t>((site_t) exactBlockCoordsOfFirstIntersectingBlock.z,
+                                                                         0,
+                                                                         iCluster.GetBlocksZ() - 1);
 
             return lBlockCoordinatesOfFirstIntersectionBlock;
           }

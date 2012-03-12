@@ -12,7 +12,7 @@ namespace hemelb
           Pressure,
           Velocity,
           ShearStress,
-          VonMisesStress
+          VonMisesStress,
         };
 
         std::string name;
