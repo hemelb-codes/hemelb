@@ -368,7 +368,6 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
   timings[hemelb::reporting::Timers::simulation].Start();
-  unsigned int snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
   unsigned int imagesPeriod = OutputPeriod(imagesPerCycle);
 
   bool isFinished = false;
@@ -441,6 +440,8 @@ void SimulationMaster::RunSimulation()
 
     }
 
+    RecalculatePropertyRequirements();
+
     HandleActors();
 
     stability = hemelb::lb::Stable;
@@ -448,7 +449,6 @@ void SimulationMaster::RunSimulation()
     if (simulationState->GetStability() == hemelb::lb::Unstable)
     {
       ResetUnstableSimulation();
-      snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
       imagesPeriod = OutputPeriod(imagesPerCycle);
       continue;
     }
@@ -470,7 +470,7 @@ void SimulationMaster::RunSimulation()
 
     timings[hemelb::reporting::Timers::snapshot].Start();
 
-    if (simulationState->GetTimeStep() % snapshotsPeriod == 0)
+    if (IsSnapshotting())
     {
       if (IsCurrentProcTheIOProc())
       {
@@ -518,6 +518,46 @@ void SimulationMaster::RunSimulation()
     reporter->Write();
   }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
+}
+
+void SimulationMaster::RecalculatePropertyRequirements()
+{
+  // Get the property cache & reset its list of properties to get.
+  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+
+  propertyCache.ResetRequirements();
+
+  // Check whether we're rendering images or snapshotting on this iteration.
+  if (visualisationControl->IsRendering() || IsSnapshotting())
+  {
+    propertyCache.densityCache.SetRefreshFlag();
+    propertyCache.velocityCache.SetRefreshFlag();
+
+    if (simConfig->StressType == hemelb::lb::ShearStress)
+    {
+      propertyCache.shearStressCache.SetRefreshFlag();
+    }
+    else if (simConfig->StressType == hemelb::lb::VonMises)
+    {
+      propertyCache.vonMisesStressCache.SetRefreshFlag();
+    }
+  }
+
+  // If extracting property results, check what's required by them.
+  if (propertyExtractor != NULL)
+  {
+    propertyExtractor->SetRequiredProperties(propertyCache);
+  }
+
+  // If using streaklines, the velocity will be needed.
+#ifndef NO_STREAKLINES
+  propertyCache.velocityCache.SetRefreshFlag();
+#endif
+}
+
+bool SimulationMaster::IsSnapshotting()
+{
+  return simulationState->GetTimeStep() % OutputPeriod(snapshotsPerCycle) == 0;
 }
 
 /**
