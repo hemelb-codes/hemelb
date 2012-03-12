@@ -13,27 +13,37 @@ namespace hemelb
       class SimConfigTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(SimConfigTests);
-          CPPUNIT_TEST(TestConstruct);
+          CPPUNIT_TEST(Test_0_2_0);
+          CPPUNIT_TEST(Test_0_2_1);
           CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
-            exemplar = Resource("config0_2_0.xml").Path();
-            config = SimConfig::Load(exemplar.c_str());
+
           }
           void tearDown()
           {
-            delete config;
+
           }
 
-          void TestConstruct()
+          void Test_0_2_0()
           {
             // smoke test the configuration as having loaded OK
-            CPPUNIT_ASSERT_EQUAL(3lu, config->NumCycles);
+            SimConfig *config=SimConfig::Load(Resource("config0_2_0.xml").Path().c_str());
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->TotalTimeSteps);
+            CPPUNIT_ASSERT_EQUAL(60.0/70.0, config->TimeStepLength);
+            delete config;
+          }
+          void Test_0_2_1()
+          {
+            // smoke test the configuration as having loaded OK
+            SimConfig *config=SimConfig::Load(Resource("config.xml").Path().c_str());
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->TotalTimeSteps);
+            CPPUNIT_ASSERT_EQUAL(0.0001, config->TimeStepLength);
+            delete config;
           }
         private:
           std::string exemplar;
-          SimConfig * config;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION(SimConfigTests);
     }
