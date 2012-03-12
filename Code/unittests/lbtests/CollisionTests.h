@@ -3,12 +3,8 @@
 
 #include <cppunit/TestFixture.h>
 
-#include "configuration/SimConfig.h"
-#include "lb/collisions/Collisions.h"
-#include "lb/SimulationState.h"
-#include "topology/NetworkTopology.h"
-#include "unittests/FourCubeLatticeData.h"
-#include "unittests/OneInOneOutSimConfig.h"
+
+#include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "util/UnitConverter.h"
 
 namespace hemelb
@@ -26,7 +22,7 @@ namespace hemelb
        * Note that we are only testing collision operators here, so we
        * can assume that the kernel objects work perfectly.
        */
-      class CollisionTests : public CppUnit::TestFixture
+      class CollisionTests : public helpers::FourCubeBasedTestFixture
       {
           CPPUNIT_TEST_SUITE(CollisionTests);
           CPPUNIT_TEST(TestNonZeroVelocityEquilibriumFixedDensity);
@@ -36,22 +32,8 @@ namespace hemelb
         public:
           void setUp()
           {
-            // Initialise the network topology (necessary for using the inlets and oulets.
-            int args = 1;
-            char** argv = NULL;
-            bool success;
-            topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
-            // Create a four-cube lattice data and a sim config with one inlet and one outlet.
-            latDat = FourCubeLatticeData::Create();
-            simConfig = new OneInOneOutSimConfig();
-
-            // use these to initialise the simulations state, LBM parameters and a unit converter.
-            simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
-            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
-                                              latDat->GetVoxelSize());
-            unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
-
+            FourCubeBasedTestFixture::setUp();
             // Create the inlet and outlet boundary objects.
             inletBoundary = new lb::boundaries::BoundaryValues(geometry::INLET_TYPE,
                                                                latDat,
@@ -64,10 +46,7 @@ namespace hemelb
                                                                 simState,
                                                                 unitConverter);
 
-            // Initialise a kernel of the same type that all our collisions will have.
-            lb::kernels::InitParams initParams;
 
-            initParams.latDat = latDat;
 
             lbgk = new lb::kernels::LBGK<D3Q15>(initParams);
 
@@ -86,11 +65,7 @@ namespace hemelb
 
           void tearDown()
           {
-            delete latDat;
-            delete simConfig;
-            delete simState;
-            delete unitConverter;
-            delete lbmParams;
+
 
             delete inletBoundary;
             delete outletBoundary;
@@ -297,11 +272,6 @@ namespace hemelb
           }
 
         private:
-          geometry::LatticeData* latDat;
-          configuration::SimConfig* simConfig;
-          lb::SimulationState* simState;
-          util::UnitConverter* unitConverter;
-          lb::LbmParameters* lbmParams;
 
           lb::boundaries::BoundaryValues* inletBoundary;
           lb::boundaries::BoundaryValues* outletBoundary;
