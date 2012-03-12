@@ -30,7 +30,6 @@ namespace hemelb
 
         unsigned long GetTimeStepsPassed() const;
         unsigned long GetTotalTimeSteps() const;
-        double GetIntraCycleTime() const;
         bool GetIsTerminating() const;
         bool GetDoRendering() const;
         Stability GetStability() const;
