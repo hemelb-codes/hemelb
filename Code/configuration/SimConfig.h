@@ -37,6 +37,7 @@ namespace hemelb
         float MaxStress;
         unsigned long NumCycles;
         long StepsPerCycle;
+        double PulsatilePeriod;
         lb::StressTypes StressType;
         std::vector<extraction::PropertyOutputFile*> propertyOutputs;
 
