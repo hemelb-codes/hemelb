@@ -126,7 +126,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
+  simulationState = new hemelb::lb::SimulationState(simConfig->PulsatilePeriod,simConfig->StepsPerCycle, simConfig->NumCycles);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
