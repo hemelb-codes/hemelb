@@ -33,18 +33,18 @@ namespace hemelb
          */
         void PrintUsage();
         /**
-         * @return Number of snapshots that should be produced per cycle.
+         * @return Number of snapshots that should be produced
          */
-        unsigned int NumberOfSnapshotsPerCycle() const
+        unsigned int NumberOfSnapshots() const
         {
-          return (snapshotsPerCycle);
+          return (snapshots);
         }
         /**
-         * @return Number of images that should be produced per cycle.
+         * @return Number of images that should be produced
          */
-        unsigned int NumberOfImagesPerCycle() const
+        unsigned int NumberOfImages() const
         {
-          return (imagesPerCycle);
+          return (images);
         }
         /**
          * The output directory that should be used for result files.
@@ -97,8 +97,8 @@ namespace hemelb
       private:
         std::string inputFile; //! local or full path to input file
         std::string outputDir; //! local or full path to input file
-        unsigned int snapshotsPerCycle; //! snapshots to produce per cycle
-        unsigned int imagesPerCycle; //! images to produce per cycle
+        unsigned int snapshots; //! snapshots to produce
+        unsigned int images; //! images to produce
         int steeringSessionId; //! unique identifier for steering session
         int argc; //! count of command line arguments, including program name
         const char * const * const argv; //! command line arguments
