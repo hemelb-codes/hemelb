@@ -30,12 +30,30 @@ namespace hemelb
         ~LocalPropertyOutput();
 
         /**
+         * True if this property output should be written on the current iteration.
+         * @return
+         */
+        bool ShouldWrite(unsigned long iterationNumber) const;
+
+        /**
+         * Returns the property output file object to be written.
+         * @return
+         */
+        const PropertyOutputFile* GetOutputSpec() const;
+
+        /**
          * Write this core's section of the data file. Only writes if appropriate for the current
          * iteration number
          */
         void Write(unsigned long iterationNumber);
 
       private:
+        /**
+         * Returns the number of floats written for the field.
+         * @param field
+         */
+        unsigned GetFieldLength(OutputField::FieldType field);
+
         /**
          * The MPI file to write into.
          */

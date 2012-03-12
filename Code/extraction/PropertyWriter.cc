@@ -21,6 +21,11 @@ namespace hemelb
       }
     }
 
+    const std::vector<LocalPropertyOutput*>& PropertyWriter::GetPropertyOutputs() const
+    {
+      return localPropertyOutputs;
+    }
+
     void PropertyWriter::Write(unsigned long iterationNumber) const
     {
       for (unsigned outputNumber = 0; outputNumber < localPropertyOutputs.size(); ++outputNumber)

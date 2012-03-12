@@ -17,7 +17,7 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    const lb::MacroscopicPropertyCache& LBM<LatticeType>::GetPropertyCache() const
+    lb::MacroscopicPropertyCache& LBM<LatticeType>::GetPropertyCache()
     {
       return propertyCache;
     }
@@ -454,16 +454,21 @@ namespace hemelb
              */
             stress = -1.0;
           }
-          else
+          else if (mParams.StressType)
           {
             /// @todo #138, wall normals don't seem to be initialised properly, they appear to be [nan,nan,nan]
-            stress = propertyCache.GetStress(my_site_id);
+            stress = propertyCache.shearStressCache.Get(my_site_id);
+          }
+          else
+          {
+            stress = propertyCache.vonMisesStressCache.Get(my_site_id);
           }
 
           // conversion from lattice to physical units
-          distribn_t pressure = mUnits->ConvertPressureToPhysicalUnits(propertyCache.GetDensity(my_site_id) * Cs2);
+          distribn_t pressure = mUnits->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(my_site_id)
+              * Cs2);
 
-          const util::Vector3D<distribn_t>& velocity = propertyCache.GetVelocity(my_site_id);
+          const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(my_site_id);
 
           distribn_t vx = mUnits->ConvertVelocityToPhysicalUnits(velocity.x);
           distribn_t vy = mUnits->ConvertVelocityToPhysicalUnits(velocity.y);
@@ -510,8 +515,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
-      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
+      distribn_t density_min = std::numeric_limits<distribn_t>::max();
+      distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);

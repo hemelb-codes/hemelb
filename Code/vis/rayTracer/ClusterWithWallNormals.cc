@@ -14,20 +14,20 @@ namespace hemelb
                                                      const util::Vector3D<float>& maximalSite,
                                                      const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                                                      const util::Vector3D<site_t>& minimalBlock) :
-        Cluster<ClusterWithWallNormals> (xBlockCount,
-                                         yBlockCount,
-                                         zBlockCount,
-                                         minimalSite,
-                                         maximalSite,
-                                         minimalSiteOnMinimalBlock,
-                                         minimalBlock)
+          Cluster<ClusterWithWallNormals>(xBlockCount,
+                                          yBlockCount,
+                                          zBlockCount,
+                                          minimalSite,
+                                          maximalSite,
+                                          minimalSiteOnMinimalBlock,
+                                          minimalBlock)
       {
         WallNormals.resize(GetBlocksX() * GetBlocksY() * GetBlocksZ());
       }
 
       const util::Vector3D<double>* ClusterWithWallNormals::DoGetWallData(site_t blockNumber, site_t siteNumber) const
       {
-        if (siteNumber < WallNormals[blockNumber].size())
+        if (siteNumber < (site_t) WallNormals[blockNumber].size())
         {
           return WallNormals[blockNumber][siteNumber];
         }

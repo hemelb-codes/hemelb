@@ -24,17 +24,42 @@ namespace hemelb
                              const util::UnitConverter& converter);
 
         /**
-         * Reads the next fluid site from the data source, obtaining its position,
-         * pressure, velocity and stress. Returns true if values could be obtained.
+         * Reads the next fluid site from the data source. Returns true if values could
+         * be obtained.
          *
-         * @param location
-         * @param pressure
-         * @param velocity
-         * @param stress
          * @return
          */
-        bool
-        ReadNext(util::Vector3D<site_t>& location, float& pressure, util::Vector3D<float>& velocity, float& stress);
+        bool ReadNext();
+
+        /**
+         * Returns the coordinates of the site.
+         * @return
+         */
+        util::Vector3D<site_t> GetPosition() const;
+
+        /**
+         * Returns the pressure at the site.
+         * @return
+         */
+        float GetPressure() const;
+
+        /**
+         * Returns the velocity at the site.
+         * @return
+         */
+        util::Vector3D<float> GetVelocity() const;
+
+        /**
+         * Returns the shear stress at the site.
+         * @return
+         */
+        float GetShearStress() const;
+
+        /**
+         * Returns the Von Mises stress at the site.
+         * @return
+         */
+        float GetVonMisesStress() const;
 
         /**
          * Resets the iterator to the beginning again.
