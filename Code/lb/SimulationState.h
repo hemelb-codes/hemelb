@@ -25,11 +25,9 @@ namespace hemelb
         void SetDoRendering(bool value);
         void SetStability(Stability value);
 
-        unsigned long GetCycleId() const;
         unsigned long GetTimeStep() const;
         unsigned long Get0IndexedTimeStep() const;
-        unsigned long GetTimeStepsPerCycle() const;
-        unsigned long GetNumberOfCycles() const;
+
         unsigned long GetTimeStepsPassed() const;
         unsigned long GetTotalTimeSteps() const;
         double GetIntraCycleTime() const;
