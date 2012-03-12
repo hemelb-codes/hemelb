@@ -31,7 +31,7 @@ namespace hemelb
             // smoke test the configuration as having loaded OK
             SimConfig *config=SimConfig::Load(Resource("config0_2_0.xml").Path().c_str());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->TotalTimeSteps);
-            CPPUNIT_ASSERT_EQUAL(60.0/70.0, config->TimeStepLength);
+            CPPUNIT_ASSERT_EQUAL(60.0/(70.0*1000), config->TimeStepLength);
             delete config;
           }
           void Test_0_2_1()

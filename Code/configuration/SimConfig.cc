@@ -80,7 +80,7 @@ namespace hemelb
 
       if ((!DoIOForDouble(simulationElement, "step_length",isLoading,TimeStepLength)) && isLoading)
       {
-        TimeStepLength=60.0/70.0;
+        TimeStepLength=60.0/(70.0*StepsPerCycle);
       }
 
       DoIOForStressType(simulationElement, "stresstype", isLoading, StressType);
