@@ -7,17 +7,10 @@ namespace hemelb
   namespace lb
   {
 
-    SimulationState::SimulationState(unsigned long StepsPerCycle, unsigned long numCycles)
+    SimulationState::SimulationState(double aPulsatilePeriod, unsigned long StepsPerCycle, unsigned long numCycles) :
+        CycleId(1), TimeStep(1), TimeStepsGone(1), TimeStepsPerCycle(StepsPerCycle), NumberOfCycles(numCycles),
+        TotalTimeSteps(numCycles * StepsPerCycle), PulsatilePeriod(aPulsatilePeriod), IsTerminating(false), DoRendering(false), mStability(Stable)
     {
-      CycleId = 1;
-      TimeStep = 1;
-      TimeStepsGone = 1;
-      TimeStepsPerCycle = StepsPerCycle;
-      NumberOfCycles = numCycles;
-      TotalTimeSteps = numCycles * StepsPerCycle;
-      IsTerminating = false;
-      DoRendering = false;
-      mStability = Stable;
     }
 
     void SimulationState::Increment()
@@ -92,7 +85,7 @@ namespace hemelb
 
     double SimulationState::GetIntraCycleTime() const
     {
-      return hemelb::PULSATILE_PERIOD_s * (double) TimeStep / (double) TimeStepsPerCycle;
+      return PulsatilePeriod * static_cast<double>(TimeStep) / static_cast<double>(TimeStepsPerCycle);
     }
 
     bool SimulationState::GetIsTerminating() const

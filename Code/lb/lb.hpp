@@ -28,8 +28,7 @@ namespace hemelb
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
                           reporting::Timer &atimer) :
-        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(PULSATILE_PERIOD_s
-                                                                                                 / (distribn_t) simState->GetTimeStepsPerCycle(),
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
                                                                                              latDat->GetVoxelSize()), timer(atimer), propertyCache(*simState,
                                                                                                                                                    *latDat)
     {
@@ -270,7 +269,7 @@ namespace hemelb
     {
       mState->DoubleTimeResolution();
 
-      mParams.Update(PULSATILE_PERIOD_s / (distribn_t) mState->GetTimeStepsPerCycle(), mLatDat->GetVoxelSize());
+      mParams.Update(mState->GetTimeStepLength(), mLatDat->GetVoxelSize());
 
       SetInitialConditions();
 
