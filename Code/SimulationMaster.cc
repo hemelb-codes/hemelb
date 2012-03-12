@@ -235,7 +235,7 @@ unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
   {
     return 1000000000;
   }
-  unsigned long roundedPeriod = simulationState->GetTimeStepsPerCycle() / frequency;
+  unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
   return hemelb::util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
 }
 
@@ -288,8 +288,8 @@ void SimulationMaster::ResetUnstableSimulation()
   visualisationControl->Reset();
 #endif
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
-                                                                      simulationState->GetTimeStepsPerCycle());
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %i\n",
+                                                                      simulationState->GetTimeStepLength());
 
   simulationState->Reset();
 }
@@ -305,7 +305,7 @@ void SimulationMaster::WriteLocalImages()
     {
       reporter->Image();
       hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
-          + ( (it->second - 1) % simulationState->GetTimeStepsPerCycle()));
+          + ( (it->second - 1) % simulationState->GetTimeStep()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);
 
@@ -454,7 +454,7 @@ void SimulationMaster::RunSimulation()
     }
 
 #ifndef NO_STREAKLINES
-    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTimeStepsPerCycle());
+    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
 #endif
 
     if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
@@ -491,7 +491,7 @@ void SimulationMaster::RunSimulation()
       isFinished = true;
       break;
     }
-    if (simulationState->GetTimeStepsPerCycle() > 400000)
+    if (simulationState->GetTotalTimeSteps() > 400000)
     {
       if (IsCurrentProcTheIOProc())
       {
@@ -500,12 +500,8 @@ void SimulationMaster::RunSimulation()
       break;
     }
 
-    if (simulationState->GetTimeStep() == simulationState->GetTimeStepsPerCycle() && IsCurrentProcTheIOProc())
+    if (simulationState->GetTimeStep()%1000==0 && IsCurrentProcTheIOProc())
     {
-
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
-                                                                          simulationState->GetCycleId());
-
       fflush(NULL);
     }
   }

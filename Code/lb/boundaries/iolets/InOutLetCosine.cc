@@ -35,7 +35,7 @@ namespace hemelb
 
         void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
         {
-          double w = 2.0 * PI / (double) iState->GetTimeStepsPerCycle();
+          double w = 2.0 * PI / (double) iState->GetTotalTimeSteps();
 
           for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
