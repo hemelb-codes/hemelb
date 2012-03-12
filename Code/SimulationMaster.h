@@ -89,8 +89,8 @@ class SimulationMaster
 
     std::vector<hemelb::net::IteratedAction*> actors;
 
-    unsigned int snapshotsPerCycle;
-    unsigned int imagesPerCycle;
+    unsigned int snapshotsPerSimulation;
+    unsigned int imagesPerSimulation;
     int steeringSessionId;
 };
 
