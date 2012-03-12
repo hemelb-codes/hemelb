@@ -8,6 +8,8 @@
 #include "lb/streamers/Streamers.h"
 #include "geometry/SiteData.h"
 
+#include "unittests/helpers/FourCubeBasedTestFixture.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -23,7 +25,7 @@ namespace hemelb
        * correct (as they're tested elsewhere), then compare the post-streamed values with
        * the values we expect to have been streamed there.
        */
-      class StreamerTests : public CppUnit::TestFixture
+      class StreamerTests : public helpers::FourCubeBasedTestFixture
       {
           CPPUNIT_TEST_SUITE(StreamerTests);
           CPPUNIT_TEST(TestSimpleCollideAndStream);
@@ -35,22 +37,11 @@ namespace hemelb
 
           void setUp()
           {
-            int args = 1;
-            char** argv = NULL;
-            bool success;
-            topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
-            latDat = FourCubeLatticeData::Create();
-            simConfig = new OneInOneOutSimConfig();
-            simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
-            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
-                                              latDat->GetVoxelSize());
-            unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
+            FourCubeBasedTestFixture::setUp();
             propertyCache = new lb::MacroscopicPropertyCache(*simState, *latDat);
 
-            // Initialise the collision.
-            lb::kernels::InitParams initParams;
-            initParams.latDat = latDat;
+
             normalCollision = new lb::collisions::Normal<lb::kernels::LBGK<D3Q15> >(initParams);
 
             simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<
@@ -67,11 +58,7 @@ namespace hemelb
 
           void tearDown()
           {
-            delete latDat;
-            delete simConfig;
-            delete simState;
-            delete unitConverter;
-            delete lbmParams;
+
             delete propertyCache;
 
             delete normalCollision;
@@ -634,11 +621,7 @@ namespace hemelb
           }
 
         private:
-          FourCubeLatticeData* latDat;
-          configuration::SimConfig* simConfig;
-          lb::SimulationState* simState;
-          util::UnitConverter* unitConverter;
-          lb::LbmParameters* lbmParams;
+
           lb::MacroscopicPropertyCache* propertyCache;
 
           lb::collisions::Normal<lb::kernels::LBGK<D3Q15> >* normalCollision;
