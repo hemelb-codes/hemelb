@@ -38,11 +38,6 @@ namespace hemelb
       mStability = value;
     }
 
-    unsigned long SimulationState::GetCycleId() const
-    {
-      return 1;
-    }
-
     unsigned long SimulationState::GetTimeStep() const
     {
       return TimeStep;
@@ -51,16 +46,6 @@ namespace hemelb
     unsigned long SimulationState::Get0IndexedTimeStep() const
     {
       return TimeStep - 1;
-    }
-
-    unsigned long SimulationState::GetTimeStepsPerCycle() const
-    {
-      return TotalTimeSteps;
-    }
-
-    unsigned long SimulationState::GetNumberOfCycles() const
-    {
-      return 1;
     }
 
     unsigned long SimulationState::GetTotalTimeSteps() const

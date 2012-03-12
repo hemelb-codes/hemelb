@@ -63,7 +63,7 @@ namespace hemelb
 
           if (updatePeriod == 0)
           {
-            densityCycle.resize(state->GetTimeStepsPerCycle());
+            densityCycle.resize(state->GetTotalTimeSteps());
           }
           else
           {
