@@ -31,8 +31,8 @@ namespace hemelb
 
           Outlets.push_back(outlet);
 
-          NumCycles = 10;
-          StepsPerCycle = 1000;
+          TotalTimeSteps = 10000;
+          TimeStepLength = 60.0/(70.0*1000.0);
         }
     };
   }

@@ -31,7 +31,7 @@ namespace hemelb
             mockTimers = new TimersMock();
             realTimers = new reporting::Timers();
             buildInfo = new reporting::BuildInfo();
-            state = new hemelb::lb::SimulationState(60.0/70.0,500, 2);
+            state = new hemelb::lb::SimulationState(0.0001,1000);
             net = new net::Net();
             latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
@@ -83,7 +83,6 @@ namespace hemelb
             {
               state->Increment();
             }
-            CPPUNIT_ASSERT_EQUAL(3lu, state->GetCycleId());
             CPPUNIT_ASSERT_EQUAL(1001lu, state->GetTimeStepsPassed());
             reporter->FillDictionary();
 
@@ -95,9 +94,9 @@ namespace hemelb
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
             AssertValue("4", "SNAPSHOTS");
-            AssertValue("2", "CYCLES");
+            AssertValue("0.000100", "TIME_STEP_LENGTH");
+            AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");
-            AssertValue("500", "STEPS_PER_CYCLE");
             AssertValue("64", "SITES");
             AssertValue("3", "DEPTHS");
             AssertValue("4", "MACHINES");
