@@ -17,7 +17,7 @@ namespace hemelb
     class SimulationState : public reporting::Reportable
     {
       public:
-        SimulationState(double pulsatilePeriod, unsigned long StepsPerCycle, unsigned long numCycles);
+        SimulationState(double timeStepLength, unsigned long totalTimeSteps);
 
         void Increment();
         void Reset();
@@ -37,19 +37,16 @@ namespace hemelb
         bool GetDoRendering() const;
         Stability GetStability() const;
 
-        double GetTimeStepLength() const {return PulsatilePeriod/ static_cast<double>(TimeStepsPerCycle);}
+        double GetTimeStepLength() const {return TimeStepLength;}
         void DoubleTimeResolution();
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
-        unsigned long CycleId;
+        double TimeStepLength;
         unsigned long TimeStep;
         unsigned long TimeStepsGone;
         unsigned long TotalTimeSteps;
-        unsigned long TimeStepsPerCycle;
-        unsigned long NumberOfCycles;
-        double PulsatilePeriod;
         bool IsTerminating;
         bool DoRendering;
         Stability mStability;
