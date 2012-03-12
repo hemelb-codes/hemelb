@@ -79,7 +79,6 @@ namespace hemelb
 
     void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
     {
-      // Note that CycleId is 1-indexed and will have just been incremented when we finish.
       dictionary.SetFormattedValue("TIME_STEP_LENGTH","%lf",GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStepsPassed() - 1);
       dictionary.SetIntValue("TOTAL_TIME_STEPS", GetTotalTimeSteps());

@@ -32,7 +32,7 @@ namespace hemelb
       NewMouseY = 15,
       SetIsTerminal = 16,
       Mode = 17,
-      StreaklinePerPulsatilePeriod = 18,
+      StreaklinePerSimulation = 18,
       StreallineLength = 19,
       SetDoRendering = 20
     };
