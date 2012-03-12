@@ -14,26 +14,26 @@ namespace hemelb
 
     LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
+      double temp = mState->GetTimeStepLength()/voxel_size;
       return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
     }
 
     PhysicalPressure UnitConverter::ConvertPressureToPhysicalUnits(LatticePressure pressure) const
     {
-      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
+      double temp = voxel_size/ mState->GetTimeStepLength();
       return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3 * temp * temp
           / mmHg_TO_PASCAL;
     }
 
     distribn_t UnitConverter::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
+      double temp = mState->GetTimeStepLength()/voxel_size;
       return pressure_grad * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double UnitConverter::ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const
     {
-      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
+      double temp = voxel_size/ mState->GetTimeStepLength();
       return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * temp * temp / mmHg_TO_PASCAL;
     }
 

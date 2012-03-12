@@ -18,6 +18,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig()
+      :PulsatilePeriod(60.0/70.0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -38,7 +39,6 @@ namespace hemelb
       lConfigFile->LoadFile(iPath);
 
       SimConfig *lRet = new SimConfig();
-
       lRet->DoIO(lConfigFile->FirstChildElement(), true);
       lRet->DataFilePath = util::NormalizePathRelativeToPath(lRet->DataFilePath, iPath);
       delete lConfigFile;

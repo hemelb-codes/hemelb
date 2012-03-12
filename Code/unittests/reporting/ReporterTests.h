@@ -31,7 +31,7 @@ namespace hemelb
             mockTimers = new TimersMock();
             realTimers = new reporting::Timers();
             buildInfo = new reporting::BuildInfo();
-            state = new hemelb::lb::SimulationState(500, 2);
+            state = new hemelb::lb::SimulationState(60.0/70.0,500, 2);
             net = new net::Net();
             latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
