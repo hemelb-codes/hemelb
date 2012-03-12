@@ -42,8 +42,8 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   visualisationControl = NULL;
   propertyExtractor = NULL;
   simulationState = NULL;
-  snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
-  imagesPerCycle = options.NumberOfImagesPerCycle();
+  snapshotsPerSimulation = options.NumberOfSnapshots();
+  imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
@@ -368,7 +368,7 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
   timings[hemelb::reporting::Timers::simulation].Start();
-  unsigned int imagesPeriod = OutputPeriod(imagesPerCycle);
+  unsigned int imagesPeriod = OutputPeriod(imagesPerSimulation);
 
   bool isFinished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
@@ -449,7 +449,7 @@ void SimulationMaster::RunSimulation()
     if (simulationState->GetStability() == hemelb::lb::Unstable)
     {
       ResetUnstableSimulation();
-      imagesPeriod = OutputPeriod(imagesPerCycle);
+      imagesPeriod = OutputPeriod(imagesPerSimulation);
       continue;
     }
 
@@ -553,7 +553,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
 bool SimulationMaster::IsSnapshotting()
 {
-  return simulationState->GetTimeStep() % OutputPeriod(snapshotsPerCycle) == 0;
+  return simulationState->GetTimeStep() % OutputPeriod(snapshotsPerSimulation) == 0;
 }
 
 /**
