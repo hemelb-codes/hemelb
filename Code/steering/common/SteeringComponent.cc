@@ -54,8 +54,8 @@ namespace hemelb
       mVisControl->visSettings.mode
           = (vis::VisSettings::Mode) (privateSteeringParams[Mode]);
 
-      mVisControl->visSettings.streaklines_per_pulsatile_period
-          = privateSteeringParams[StreaklinePerPulsatilePeriod];
+      mVisControl->visSettings.streaklines_per_simulation
+          = privateSteeringParams[StreaklinePerSimulation];
       mVisControl->visSettings.streakline_length
           = privateSteeringParams[StreallineLength];
 
@@ -138,7 +138,7 @@ namespace hemelb
       privateSteeringParams[Mode] = 0.0F;
 
       // vis_streaklines_per_pulsatile_period
-      privateSteeringParams[StreaklinePerPulsatilePeriod] = 5.0F;
+      privateSteeringParams[StreaklinePerSimulation] = 5.0F;
 
       // vis_streakline_length
       privateSteeringParams[StreallineLength] = 100.0F;
