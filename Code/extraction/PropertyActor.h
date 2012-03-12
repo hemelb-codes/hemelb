@@ -3,6 +3,7 @@
 
 #include "extraction/PropertyWriter.h"
 #include "io/PathManager.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "lb/SimulationState.h"
 #include "net/IteratedAction.h"
 
@@ -25,6 +26,12 @@ namespace hemelb
                       IterableDataSource& dataSource);
 
         ~PropertyActor();
+
+        /**
+         * Set which properties will be required this iteration.
+         * @param propertyCache
+         */
+        void SetRequiredProperties(lb::MacroscopicPropertyCache& propertyCache);
 
         /**
          * Override the iterated actor end of iteration method to perform writing.

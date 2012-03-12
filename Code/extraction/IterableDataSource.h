@@ -20,19 +20,43 @@ namespace hemelb
         virtual ~IterableDataSource();
 
         /**
-         * Reads the next fluid site from the data source, obtaining its position,
-         * pressure, velocity and stress. Returns true if values could be obtained.
+         * Reads the next fluid site from the data source. Its position,
+         * pressure, velocity, etc are available from other functions.
+         * Returns true if values could be obtained.
          *
-         * @param position
-         * @param pressure
-         * @param velocity
-         * @param stress
          * @return
          */
-        virtual bool ReadNext(util::Vector3D<site_t>& position,
-                              float& pressure,
-                              util::Vector3D<float>& velocity,
-                              float& stress) = 0;
+        virtual bool ReadNext() = 0;
+
+        /**
+         * Returns the coordinates of the site.
+         * @return
+         */
+        virtual util::Vector3D<site_t> GetPosition() const = 0;
+
+        /**
+         * Returns the pressure at the site.
+         * @return
+         */
+        virtual float GetPressure() const = 0;
+
+        /**
+         * Returns the velocity at the site.
+         * @return
+         */
+        virtual util::Vector3D<float> GetVelocity() const = 0;
+
+        /**
+         * Returns the shear stress at the site.
+         * @return
+         */
+        virtual float GetShearStress() const = 0;
+
+        /**
+         * Returns the Von Mises stress at the site.
+         * @return
+         */
+        virtual float GetVonMisesStress() const = 0;
 
         /**
          * Resets the iterator to the beginning again.
