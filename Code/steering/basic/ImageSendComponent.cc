@@ -62,8 +62,7 @@ namespace hemelb
         SimulationParameters sim;
 
         sim.timeStep = (int) mSimState->GetTimeStep();
-        sim.time = mSimState->GetIntraCycleTime();
-        sim.cycle = (int) mSimState->GetCycleId();
+        sim.time = mSimState->GetTime();
         sim.nInlets = inletCount;
 
         sim.mousePressure = mVisControl->visSettings.mouse_pressure;
