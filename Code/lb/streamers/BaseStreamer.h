@@ -85,13 +85,21 @@ namespace hemelb
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)
           {
-            propertyCache.SetDensity(site.GetIndex(), density);
-            propertyCache.SetVelocity(site.GetIndex(), velocity_x, velocity_y, velocity_z);
-
-            distribn_t stress;
-
-            if (lbmParams->StressType == ShearStress)
+            if (propertyCache.densityCache.RequiresRefresh())
             {
+              propertyCache.densityCache.Put(site.GetIndex(), density);
+            }
+
+            if (propertyCache.velocityCache.RequiresRefresh())
+            {
+              propertyCache.velocityCache.Put(site.GetIndex(),
+                                              util::Vector3D<distribn_t>(velocity_x, velocity_y, velocity_z));
+            }
+
+            if (propertyCache.shearStressCache.RequiresRefresh())
+            {
+              distribn_t stress;
+
               if (!site.IsEdge())
               {
                 stress = NO_VALUE;
@@ -104,15 +112,19 @@ namespace hemelb
                                                                                         stress,
                                                                                         lbmParams->GetStressParameter());
               }
+
+              propertyCache.shearStressCache.Put(site.GetIndex(), stress);
             }
-            else
+
+            if (propertyCache.vonMisesStressCache.RequiresRefresh())
             {
+              distribn_t stress;
               StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
                                                                                          stress,
                                                                                          lbmParams->GetStressParameter());
-            }
 
-            propertyCache.SetStress(site.GetIndex(), stress);
+              propertyCache.vonMisesStressCache.Put(site.GetIndex(), stress);
+            }
           }
 
       };
