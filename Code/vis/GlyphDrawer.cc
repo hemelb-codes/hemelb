@@ -181,7 +181,7 @@ namespace hemelb
       for (site_t n = 0; n < (site_t) mGlyphs.size(); n++)
       {
         // ... get the velocity at that point...
-        const util::Vector3D<distribn_t>& velocity = propertyCache.GetVelocity(mGlyphs[n].siteId);
+        const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(mGlyphs[n].siteId);
 
         // ... calculate the velocity vector multiplier...
         const double temp = mVisSettings->glyphLength * ((distribn_t) mLatDat->GetBlockSize())
