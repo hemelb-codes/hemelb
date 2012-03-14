@@ -67,11 +67,11 @@ namespace hemelb
                 site.isFluid = true;
                 site.targetProcessor = 0;
 
-                for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+                for (Direction direction = 1; direction < lb::lattices::D3Q15::NUMVECTORS; ++direction)
                 {
-                  site_t neighI = i + D3Q15::CX[direction];
-                  site_t neighJ = j + D3Q15::CY[direction];
-                  site_t neighK = k + D3Q15::CZ[direction];
+                  site_t neighI = i + lb::lattices::D3Q15::CX[direction];
+                  site_t neighJ = j + lb::lattices::D3Q15::CY[direction];
+                  site_t neighK = k + lb::lattices::D3Q15::CZ[direction];
 
                   hemelb::geometry::LinkReadResult link;
 
@@ -134,18 +134,18 @@ namespace hemelb
         **/
         void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
         {
-          distanceToWall[ (D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
+          distanceToWall[ (lb::lattices::D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
         }
 
       protected:
         FourCubeLatticeData(hemelb::geometry::GeometryReadResult& readResult) :
-            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo(), readResult)
+            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
         }
 
         FourCubeLatticeData() :
-            hemelb::geometry::LatticeData(D3Q15::GetLatticeInfo())
+            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
         {
 
         }

@@ -53,9 +53,10 @@ namespace hemelb
           return GetSiteData().HasBoundary(direction);
         }
 
+        template<typename LatticeType>
         inline const distribn_t GetWallDistance(Direction direction) const
         {
-          return latticeData.GetCutDistance(index, direction);
+          return latticeData.template GetCutDistance<LatticeType> (index, direction);
         }
 
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
@@ -76,14 +77,16 @@ namespace hemelb
          * @param direction
          * @return
          */
+        template<typename LatticeType>
         inline const site_t GetStreamedIndex(Direction direction) const
         {
-          return latticeData.GetStreamedIndex(index, direction);
+          return latticeData.template GetStreamedIndex<LatticeType> (index, direction);
         }
 
+        template<typename LatticeType>
         inline typename util::constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
         {
-          return latticeData.GetFOld(index * D3Q15::NUMVECTORS);
+          return latticeData.template GetFOld(index * LatticeType::NUMVECTORS);
         }
 
         inline const SiteData GetSiteData() const
