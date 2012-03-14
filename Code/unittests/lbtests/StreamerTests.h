@@ -68,6 +68,7 @@ namespace hemelb
             delete regularised;
             delete fInterpolation;
             delete guoZhengShi;
+            FourCubeBasedTestFixture::tearDown();
           }
 
           void TestSimpleCollideAndStream()
