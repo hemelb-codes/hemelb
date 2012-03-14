@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "net/net.h"
-#include "D3Q15.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
@@ -168,8 +167,18 @@ namespace hemelb
          * to the 'rubbish site', an extra position in the array that doesn't correspond to any
          * site in the geometry.
          */
-        site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
-        double GetCutDistance(site_t iSiteIndex, int iDirection) const;
+        template<typename LatticeType>
+        site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const
+        {
+          return neighbourIndices[iSiteIndex * LatticeType::NUMVECTORS + iDirectionIndex];
+        }
+
+        template<typename LatticeType>
+        double GetCutDistance(site_t iSiteIndex, int iDirection) const
+        {
+          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
+        }
+
         SiteData GetSiteData(site_t iSiteIndex) const;
 
         /**

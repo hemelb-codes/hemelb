@@ -16,7 +16,7 @@ namespace hemelb
          *
          *  See publication for  meaning of e, epsilon, etc.
          */
-        const distribn_t DHumieresD3Q15MRTBasis::REDUCED_MOMENT_BASIS[DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS][D3Q15::NUMVECTORS] =
+        const distribn_t DHumieresD3Q15MRTBasis::REDUCED_MOMENT_BASIS[DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS][Lattice::NUMVECTORS] =
             { { -2, -1, -1, -1, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1 }, // e
               { 16, -4, -4, -4, -4, -4, -4, 1, 1, 1, 1, 1, 1, 1, 1 }, // epsilon
               { 0, -4, 4, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 }, // q_x
@@ -39,7 +39,7 @@ namespace hemelb
           for (unsigned momentIndex = 0; momentIndex < NUM_KINETIC_MOMENTS; momentIndex++)
           {
             moments[momentIndex] = 0.;
-            for (Direction velocityIndex = 0; velocityIndex < D3Q15::NUMVECTORS; velocityIndex++)
+            for (Direction velocityIndex = 0; velocityIndex < Lattice::NUMVECTORS; velocityIndex++)
             {
               moments[momentIndex] += REDUCED_MOMENT_BASIS[momentIndex][velocityIndex]
                   * velDistributions[velocityIndex];
