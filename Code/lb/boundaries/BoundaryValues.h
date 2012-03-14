@@ -43,7 +43,7 @@ namespace hemelb
                                  geometry::LatticeData* iLatDat,
                                  int iBoundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
-
+          void SetDensityCycle(iolets::InOutLet* iolet, unsigned int iolet_index, unsigned long time_step);
           int nTotIOlets;
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;

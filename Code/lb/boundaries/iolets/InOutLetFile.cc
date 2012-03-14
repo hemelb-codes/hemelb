@@ -51,10 +51,11 @@ namespace hemelb
 
           util::check_file(PressureFilePath.c_str());
           std::ifstream datafile(PressureFilePath.c_str());
-
+          log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
           while (datafile.good())
           {
             datafile >> timeTemp >> valueTemp;
+            log::Logger::Log<log::Debug, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
             util::key_value_pair<double, double> tvPair;
             tvPair.key = timeTemp;
             tvPair.value = valueTemp;

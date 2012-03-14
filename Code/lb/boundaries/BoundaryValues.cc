@@ -84,9 +84,7 @@ namespace hemelb
         }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType IOtype,
-                                             geometry::LatticeData* iLatDat,
-                                             int iBoundaryId)
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType IOtype, geometry::LatticeData* iLatDat, int iBoundaryId)
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
         {
@@ -157,34 +155,36 @@ namespace hemelb
 
       void BoundaryValues::RequestComms()
       {
-        if (IsCurrentProcTheBCProc())
-        {
-          for (int i = 0; i < nIOlets; i++)
-          {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
-
-            if (iolets[ioletIDs[i]]->DoComms())
-            {
-              iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
-              mComms[i]->Send(&densityCycle[i][time_step]);
-            }
-          }
-        }
-
         for (int i = 0; i < nIOlets; i++)
         {
-          if (iolets[ioletIDs[i]]->DoComms())
+          unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
+          SetDensityCycle(iolets[ioletIDs[i]],i,time_step);
+        }
+      }
+
+      void BoundaryValues::SetDensityCycle(iolets::InOutLet* iolet, unsigned int iolet_index, unsigned long time_step)
+      {
+        if (IsCurrentProcTheBCProc())
+        {
+
+          if (iolet->DoComms())
           {
-            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-          }
-          else
-          {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
-            iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
-            iolets[ioletIDs[i]]->density = densityCycle[i][time_step];
+            iolet->UpdateCycle(densityCycle[iolet_index], mState);
+            mComms[iolet_index]->Send(&densityCycle[iolet_index][time_step]);
           }
         }
-
+        if (iolet->DoComms())
+        {
+          double incoming_density;
+          mComms[iolet_index]->Receive(&incoming_density);
+          iolet->SetDensity(incoming_density);
+        }
+        else
+        {
+          unsigned long time_step = (mState->Get0IndexedTimeStep()) % iolet->GetUpdatePeriod();
+          iolet->UpdateCycle(densityCycle[iolet_index], mState);
+          iolet->SetDensity(densityCycle[iolet_index][time_step]);
+        }
       }
 
       void BoundaryValues::EndIteration()
@@ -213,21 +213,14 @@ namespace hemelb
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          if (iolets[ioletIDs[i]]->DoComms())
+          iolets::InOutLet* iolet=iolets[ioletIDs[i]];
+          unsigned int updatePeriod=iolet->GetUpdatePeriod();
+          if (updatePeriod==0)
           {
-            if (IsCurrentProcTheBCProc())
-            {
-              iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
-              mComms[i]->Send(&densityCycle[i][0]);
-            }
-
-            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+            updatePeriod=mState->GetTotalTimeSteps();
           }
-          else
-          {
-            iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
-            iolets[ioletIDs[i]]->density = densityCycle[i][0];
-          }
+          densityCycle[i].resize(iolet->GetUpdatePeriod());
+          SetDensityCycle(iolet,i,0);
         }
 
         for (int i = 0; i < nIOlets; i++)
@@ -239,10 +232,10 @@ namespace hemelb
         }
       }
 
-      // This assumes the program has already waited for comms to finish before
+// This assumes the program has already waited for comms to finish before
       distribn_t BoundaryValues::GetBoundaryDensity(const int index)
       {
-        return iolets[index]->density;
+        return iolets[index]->GetDensity();
       }
 
       distribn_t BoundaryValues::GetDensityMin(int iBoundaryId)
