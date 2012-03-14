@@ -5,8 +5,6 @@
 #include "constants.h"
 #include <vector>
 #include <cassert>
-#include "D3Q15.h"
-#include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
 
 namespace hemelb
 {

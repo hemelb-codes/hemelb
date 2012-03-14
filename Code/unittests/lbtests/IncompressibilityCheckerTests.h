@@ -49,11 +49,11 @@ namespace hemelb
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
 
             hemelb::geometry::LatticeData* latticeData = FourCubeLatticeData::Create();
-            LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
+            LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             hemelb::reporting::Timers timings;
 
-            hemelb::lb::IncompressibilityChecker<net::BroadcastMock, D3Q15> incompChecker(latticeData,
+            hemelb::lb::IncompressibilityChecker<net::BroadcastMock, lb::lattices::D3Q15> incompChecker(latticeData,
                                                                                           &net,
                                                                                           &simulationState,
                                                                                           timings,
@@ -61,7 +61,7 @@ namespace hemelb
 
             // These are the smallest and largest density values in FourCubeLatticeData by default
             //! @23 The lattice class below must be consistent with the one used in FourCubeLatticeData. Consider templating FourCubeLatticeData over lattice class, so both can be controlled from the test.
-            distribn_t numDirections = (distribn_t) D3Q15::NUMVECTORS;
+            distribn_t numDirections = (distribn_t) lb::lattices::D3Q15::NUMVECTORS;
             distribn_t numSites = (distribn_t) latticeData->GetLocalFluidSiteCount();
             distribn_t smallestDefaultDensity = numDirections * (numDirections + 1) / 20; // = sum_{j=1}^{numDirections} j/10 = 12 with current configuration of FourCubeLatticeData
             distribn_t largestDefaultDensity = (numDirections * (numDirections + 1) / 20)

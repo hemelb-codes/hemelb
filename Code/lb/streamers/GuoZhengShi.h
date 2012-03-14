@@ -22,10 +22,11 @@ namespace hemelb
 
         private:
           CollisionType collider;
+          typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-              collider(initParams)
+            collider(initParams)
           {
 
           }
@@ -42,30 +43,30 @@ namespace hemelb
               geometry::Site site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld());
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 
               collider.CalculatePreCollision(hydroVars, site);
               collider.Collide(lbmParams, hydroVars);
 
               // Perform the streaming of the post-collision distribution.
-              for (Direction direction = 0; direction < D3Q15::NUMVECTORS; direction++)
+              for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex(direction))) = hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
+                    = hydroVars.GetFPostCollision()[direction];
               }
 
               // Now fill in the distributions that won't be streamed to
               // (those that point away from boundaries).
               // It's more convenient to iterate over the opposite direction.
-              for (Direction oppositeDirection = 1; oppositeDirection < D3Q15::NUMVECTORS; oppositeDirection++)
+              for (Direction oppositeDirection = 1; oppositeDirection < LatticeType::NUMVECTORS; oppositeDirection++)
               {
                 // If there's a boundary in the opposite direction, we need to fill in the distribution.
                 if (site.HasBoundary(oppositeDirection))
                 {
-                  Direction unstreamedDirection =
-                      CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[oppositeDirection];
+                  Direction unstreamedDirection = LatticeType::INVERSEDIRECTIONS[oppositeDirection];
 
                   // Get the distance to the boundary.
-                  double wallDistance = site.GetWallDistance(oppositeDirection);
+                  double wallDistance = site.GetWallDistance<LatticeType> (oppositeDirection);
 
                   // Now we work out the hypothetical velocity of the solid site on the other side
                   // of the wall.
@@ -96,31 +97,30 @@ namespace hemelb
                     // TODO I think we'll fail here if the next site out resides on a different core.
 
                     // Need some info about the next node away from the wall in this direction...
-                    site_t nextSiteOutId = site.GetStreamedIndex(unstreamedDirection) / D3Q15::NUMVECTORS;
+                    site_t nextSiteOutId = site.GetStreamedIndex<LatticeType> (unstreamedDirection)
+                        / LatticeType::NUMVECTORS;
 
                     if (log::Logger::ShouldDisplay<hemelb::log::Debug>())
                     {
                       if (nextSiteOutId < 0 || nextSiteOutId >= latDat->GetLocalFluidSiteCount())
                       {
                         log::Logger::Log<log::Debug, log::OnePerCore>("GZS "
-                                                                      "boundary condition can't yet handle when the second fluid site away from "
-                                                                      "a wall resides on a different core. The wall site was number %i on this core, "
-                                                                      "the absent fluid site was in direction %i",
-                                                                      siteIndex,
-                                                                      unstreamedDirection);
+                          "boundary condition can't yet handle when the second fluid site away from "
+                          "a wall resides on a different core. The wall site was number %i on this core, "
+                          "the absent fluid site was in direction %i", siteIndex, unstreamedDirection);
                       }
                     }
 
                     geometry::Site nextSiteOut = latDat->GetSite(nextSiteOutId);
 
                     // Next, calculate its density, velocity and eqm distribution.
-                    distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
-                    D3Q15::CalculateDensityVelocityFEq(nextSiteOut.GetFOld(),
-                                                       nextNodeDensity,
-                                                       nextNodeV[0],
-                                                       nextNodeV[1],
-                                                       nextNodeV[2],
-                                                       nextNodeFEq);
+                    distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[LatticeType::NUMVECTORS];
+                    LatticeType::CalculateDensityVelocityFEq(nextSiteOut.GetFOld<LatticeType> (),
+                                                             nextNodeDensity,
+                                                             nextNodeV[0],
+                                                             nextNodeV[1],
+                                                             nextNodeV[2],
+                                                             nextNodeFEq);
 
                     // Obtain a second estimate, this time ignoring the fluid site closest to
                     // the wall. Interpolating the next site away and the site within the wall
@@ -136,26 +136,29 @@ namespace hemelb
                     // Extrapolate to obtain the velocity at the wall site.
                     for (int dimension = 0; dimension < 3; dimension++)
                     {
-                      velocityWall[dimension] = wallDistance * velocityWall[dimension]
-                          + (1. - wallDistance) * velocityWallSecondEstimate[dimension];
+                      velocityWall[dimension] = wallDistance * velocityWall[dimension] + (1. - wallDistance)
+                          * velocityWallSecondEstimate[dimension];
                     }
 
                     // Interpolate in the same way to get f_neq.
-                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
-                        + (1. - wallDistance)
-                            * (nextSiteOut.GetFOld()[unstreamedDirection] - nextNodeFEq[unstreamedDirection]);
+                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection + (1. - wallDistance)
+                        * (nextSiteOut.GetFOld<LatticeType> ()[unstreamedDirection] - nextNodeFEq[unstreamedDirection]);
                   }
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
-                  distribn_t fEqTemp[D3Q15::NUMVECTORS];
-                  D3Q15::CalculateFeq(hydroVars.density, velocityWall[0], velocityWall[1], velocityWall[2], fEqTemp);
+                  distribn_t fEqTemp[LatticeType::NUMVECTORS];
+                  LatticeType::CalculateFeq(hydroVars.density,
+                                            velocityWall[0],
+                                            velocityWall[1],
+                                            velocityWall[2],
+                                            fEqTemp);
 
                   // Collide and stream!
                   // TODO: It's not clear whether we should defer to the template collision type here
                   // or do a standard LBGK (implemented).
-                  * (latDat->GetFNew(siteIndex * D3Q15::NUMVECTORS + unstreamedDirection)) =
-                      fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
+                  * (latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamedDirection))
+                      = fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
