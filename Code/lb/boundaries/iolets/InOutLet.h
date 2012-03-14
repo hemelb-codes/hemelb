@@ -72,17 +72,7 @@ namespace hemelb
              */
             virtual bool DoComms() = 0;
 
-            /***
-             * Reset the maximum and minimum values of the density in lattice units
-             * Need to call if the simulation state has changed its voxel size or time step.
-             */
-            virtual void ResetValues();
 
-            /***
-             * Reset the maximum and minimum values of the density in lattice units
-             * Need to call if the simulation state has changed its voxel size or time step.
-             */
-            void ResetCommonLatticeValues();
 
             /***
              * Set up the Iolet.
@@ -108,14 +98,7 @@ namespace hemelb
              */
             distribn_t density;
 
-            /***
-             * !!!!! Public data member
-             * The update period of the Iolet.
-             * This is not the same as the cycle period.
-             * It is the value of how often to recalculate the densities
-             * !!!!! Unused, is now a template parameter in InOutLetCycle
-             */
-            unsigned long UpdatePeriod;
+
 
             /***
              * !!!!! Public data member
@@ -131,10 +114,6 @@ namespace hemelb
 
           protected:
             const util::UnitConverter* mUnits;
-
-          private:
-            distribn_t DensityMinLattice; //! Minimum density, lattice units
-            distribn_t DensityMaxLattice; //! Maximum density, lattice units
 
         };
 
