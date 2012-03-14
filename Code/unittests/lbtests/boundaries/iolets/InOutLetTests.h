@@ -3,6 +3,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include "unittests/helpers/FolderTestFixture.h"
 #include "lb/boundaries/iolets/InOutLets.h"
 #include "resources/Resource.h"
 
@@ -27,10 +28,11 @@ namespace hemelb
            * Note that we are only testing collision operators here, so we
            * can assume that the kernel objects work perfectly.
            */
-          class InOutLetTests : public CppUnit::TestFixture
+          class InOutLetTests : public helpers::FolderTestFixture
           {
             CPPUNIT_TEST_SUITE(InOutLetTests);
                 CPPUNIT_TEST(TestCosineConstruct);
+                CPPUNIT_TEST(TestFileConstruct);
               CPPUNIT_TEST_SUITE_END();
             public:
               void setUp()
@@ -61,21 +63,62 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(80.1, cosine->PressureMeanPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->PressureAmpPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->Phase);
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05), cosine->Position);
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
+                                     cosine->Position);
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->Normal);
 
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
                 // The min and max are NOT set for cosine values currently, expect problems with steering code.
                 double temp = state.GetTimeStepLength() / voxel_size;
-                double targetMeanDensity = 1+(80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2*BLOOD_DENSITY_Kg_per_m3);
+                double targetMeanDensity = 1
+                    + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensityMean());
-                std::vector<distribn_t> densitiesBuffer;
-                cosine->InitialiseCycle(densitiesBuffer, &state);
+                std::vector<distribn_t> densitiesBuffer(1);
+                cosine->UpdateCycle(densitiesBuffer, &state);
                 CPPUNIT_ASSERT_EQUAL(1, static_cast<int>(densitiesBuffer.size()));
                 CPPUNIT_ASSERT_EQUAL(targetMeanDensity, densitiesBuffer[0]);
               }
+              void TestFileConstruct()
+              {
+                FolderTestFixture::setUp();
+                CopyResourceToTempdir("iolet.txt");
+                MoveToTempdir();
+                configuration::SimConfig *config =
+                    configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
+                lb::SimulationState state = lb::SimulationState(config->TimeStepLength, config->TotalTimeSteps);
+                double voxel_size = 0.0001;
+                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxel_size);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxel_size);
+                file = static_cast<InOutLetFile*>(config->Inlets[0]);
+                // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
+                file->Initialise(&converter);
+
+                std::vector<distribn_t> densitiesBuffer(state.GetTotalTimeSteps());
+                CPPUNIT_ASSERT_EQUAL(0lu,state.Get0IndexedTimeStep());
+                file->UpdateCycle(densitiesBuffer, &state);
+
+                CPPUNIT_ASSERT_EQUAL(79.0, file->GetPressureMin());
+                CPPUNIT_ASSERT_EQUAL(81.0, file->GetPressureMax());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
+                                     file->Position);
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->Normal);
+
+                // The min and max are NOT set for cosine values currently, expect problems with steering code.
+                double temp = state.GetTimeStepLength() / voxel_size;
+                double targetStartDensity = 1
+                    + (79.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                double targetMidDensity = 1
+                    + (81.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(),1e-6);
+
+                CPPUNIT_ASSERT_EQUAL(state.GetTotalTimeSteps(), static_cast<unsigned long>(densitiesBuffer.size()));
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, densitiesBuffer[0],1e-6);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity, densitiesBuffer[state.GetTotalTimeSteps()/2],1e-6);
+                FolderTestFixture::tearDown();
+              }
               InOutLetCosine *cosine;
+              InOutLetFile *file;
           };
           CPPUNIT_TEST_SUITE_REGISTRATION(InOutLetTests);
         }
