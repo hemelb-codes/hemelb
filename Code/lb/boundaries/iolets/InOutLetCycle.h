@@ -11,18 +11,19 @@ namespace hemelb
     {
       namespace iolets
       {
-        /*
+
+        /***
+         * InOutLet with varying update period and communications strategy.
          * This class exists to allow templating the update period as well as the bool which determines
          * whether the density values are to be updated locally or centrally through the BCproc. These
          * depend on the update rule of the InOutLet so it was chosen to be templated and it also allows
          * for some IOlets to be updated at regular intervals from the BCproc whilst allowing others
          * with simpler updating rules to update locally and save on communications.
          *
-         * updatePeriod - densityCycle is recalculated every updatePeriod time steps. If
+         * @tparam updatePeriod densityCycle is recalculated every updatePeriod time steps. If
          *                 it is 0 then the densityCycle is only initialised at the begining
          *                 and updated only when simulation is reset
-         *
-         * comms - if true BCproc updates values and sends them out. If false relevant procs update
+         * @tparam comms if true BCproc updates values and sends them out. If false relevant procs update
          *          locally.
          */
         template<unsigned long updatePeriod, bool comms>
