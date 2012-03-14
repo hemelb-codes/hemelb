@@ -13,7 +13,7 @@ namespace hemelb
       {
 
         /***
-         * InOutLet with varying update period and communications strategy.
+         * Generic base InOutLet with varying update period and communications strategy.
          * This class exists to allow templating the update period as well as the bool which determines
          * whether the density values are to be updated locally or centrally through the BCproc. These
          * depend on the update rule of the InOutLet so it was chosen to be templated and it also allows
@@ -31,64 +31,67 @@ namespace hemelb
         {
           public:
 
-            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *state);
-            virtual bool DoComms();
-            unsigned int GetUpdatePeriod(unsigned int total_time_steps)
+            virtual bool GetIsCommsRequired()
             {
-              if (updatePeriod == 0)
+              return comms;
+            }
+            LatticeDensity GetDensity(unsigned long time_step)
+            {
+              if (!GetIsCommsRequired())
               {
-                return total_time_steps;
+                UpdateCycle(time_step);
               }
-              return updatePeriod;
+              return densityBuffer[time_step % updatePeriod];
+            }
+
+            virtual void Reset(SimulationState &state)
+            {
+              densityBuffer.resize(state.GetTotalTimeSteps());
+            }
+            virtual void DoComms(bool is_io_proc, unsigned long time_step);
+          protected:
+            InOutLetCycle() :
+                InOutLet(), densityBuffer()
+            {
+            }
+            virtual ~InOutLetCycle()
+            {
+              delete comms;
+            }
+            ;
+            /***
+             * Fill in a vector of values of the density for this IOLet.
+             * The Iolet will not subsequently calculate it's density values, but will read them from this buffer.
+             * This array is NOT typically one value for each point in the pulsatile cycle.
+             * The length of the densityCycle argument is an arbitrary choice of how often to calculate the densities for this and some subsequent steps.
+             * This length is usually one, indicating that the calculation is done every time step,
+             * or zero, indicating that the calculation is done once for the whole simulation.
+             * @param densityCycle An array of densities for this iolet
+             * @param iState Simulation state for the iolet
+             */
+            virtual void CalculateCycle() = 0; // fill the density buffer
+
+          private:
+            void UpdateCycle(unsigned long time_step)
+            {
+              if (shouldUpdateBuffer(time_step))
+              {
+                CalculateCycle();
+              }
             }
             bool shouldUpdateBuffer(unsigned int time_step)
             {
-              if (updatePeriod==0)
+              if (updatePeriod == 0)
               {
-                return time_step==0;
+                return time_step == 0;
               }
-              return time_step%updatePeriod==0;
+              return time_step % updatePeriod == 0;
             }
-          protected:
-            InOutLetCycle();
-            virtual ~InOutLetCycle();
-        };
-
-        template<unsigned long updatePeriod, bool comms>
-        InOutLetCycle<updatePeriod, comms>::InOutLetCycle() :
-            InOutLet()
-        {
-
+            std::vector<LatticeDensity> densityBuffer;
         }
-
-        template<unsigned long updatePeriod, bool comms>
-        InOutLetCycle<updatePeriod, comms>::~InOutLetCycle()
-        {
-
-        }
-
-        template<unsigned long updatePeriod, bool comms>
-        void InOutLetCycle<updatePeriod, comms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
-                                                             const SimulationState *state)
-        {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Update cycle for iolet %d %d",
-                                                        updatePeriod,
-                                                        state->Get0IndexedTimeStep());
-          if ( shouldUpdateBuffer(state->Get0IndexedTimeStep()) )
-          {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Calculating iolet cycle");
-            CalculateCycle(densityCycle, state);
-          }
-        }
-
-        template<unsigned long updatePeriod, bool comms>
-        bool InOutLetCycle<updatePeriod, comms>::DoComms()
-        {
-          return comms;
-        }
+        ;
       }
     }
   }
 }
-
 #endif /* HEMELB_LB_BOUNDARIES_INOUTLETCYCLE_H */

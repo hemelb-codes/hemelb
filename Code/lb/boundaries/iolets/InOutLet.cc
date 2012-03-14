@@ -11,6 +11,7 @@ namespace hemelb
       {
 
         InOutLet::InOutLet()
+        :comms(NULL)
         {
 
         }
