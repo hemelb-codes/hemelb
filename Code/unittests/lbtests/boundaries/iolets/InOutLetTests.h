@@ -98,8 +98,8 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(0lu,state.Get0IndexedTimeStep());
                 file->UpdateCycle(densitiesBuffer, &state);
 
-                CPPUNIT_ASSERT_EQUAL(79.0, file->GetPressureMin());
-                CPPUNIT_ASSERT_EQUAL(81.0, file->GetPressureMax());
+                CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
+                CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
                                      file->Position);
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->Normal);
@@ -107,9 +107,9 @@ namespace hemelb
                 // The min and max are NOT set for cosine values currently, expect problems with steering code.
                 double temp = state.GetTimeStepLength() / voxel_size;
                 double targetStartDensity = 1
-                    + (79.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                    + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 double targetMidDensity = 1
-                    + (81.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                    + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(),1e-6);
 
                 CPPUNIT_ASSERT_EQUAL(state.GetTotalTimeSteps(), static_cast<unsigned long>(densitiesBuffer.size()));

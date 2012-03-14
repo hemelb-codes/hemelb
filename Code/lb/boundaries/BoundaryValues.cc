@@ -181,7 +181,7 @@ namespace hemelb
         }
         else
         {
-          unsigned long time_step = (mState->Get0IndexedTimeStep()) % iolet->GetUpdatePeriod();
+          unsigned long time_step = (mState->Get0IndexedTimeStep()) % iolet->GetUpdatePeriod(mState->GetTotalTimeSteps());
           iolet->UpdateCycle(densityCycle[iolet_index], mState);
           iolet->SetDensity(densityCycle[iolet_index][time_step]);
         }
@@ -214,12 +214,7 @@ namespace hemelb
         for (int i = 0; i < nIOlets; i++)
         {
           iolets::InOutLet* iolet=iolets[ioletIDs[i]];
-          unsigned int updatePeriod=iolet->GetUpdatePeriod();
-          if (updatePeriod==0)
-          {
-            updatePeriod=mState->GetTotalTimeSteps();
-          }
-          densityCycle[i].resize(iolet->GetUpdatePeriod());
+          densityCycle[i].resize(iolet->GetUpdatePeriod(mState->GetTotalTimeSteps()));
           SetDensityCycle(iolet,i,0);
         }
 
