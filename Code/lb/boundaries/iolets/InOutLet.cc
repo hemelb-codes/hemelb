@@ -27,12 +27,12 @@ namespace hemelb
 
         distribn_t InOutLet::GetDensityMin()
         {
-          return mUnits->ConvertPressureToLatticeUnits(PressureMinPhysical) / Cs2;
+          return mUnits->ConvertPressureToLatticeUnits(GetPressureMin()) / Cs2;
         }
 
         distribn_t InOutLet::GetDensityMax()
         {
-          return mUnits->ConvertPressureToLatticeUnits(PressureMaxPhysical) / Cs2;
+          return mUnits->ConvertPressureToLatticeUnits(GetPressureMax()) / Cs2;
         }
 
       }
