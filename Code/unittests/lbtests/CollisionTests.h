@@ -76,6 +76,7 @@ namespace hemelb
             delete zeroVFixedDensityOLet;
             delete zeroVEqm;
             delete normal;
+            FourCubeBasedTestFixture::tearDown();
           }
 
           void TestNonZeroVelocityEquilibriumFixedDensity()
