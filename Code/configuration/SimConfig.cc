@@ -37,7 +37,6 @@ namespace hemelb
       lConfigFile->LoadFile(iPath);
 
       SimConfig *lRet = new SimConfig();
-
       lRet->DoIO(lConfigFile->FirstChildElement(), true);
       lRet->DataFilePath = util::NormalizePathRelativeToPath(lRet->DataFilePath, iPath);
       delete lConfigFile;
@@ -62,8 +61,27 @@ namespace hemelb
     void SimConfig::DoIO(TiXmlElement *topNode, bool isLoading)
     {
       TiXmlElement* simulationElement = GetChild(topNode, "simulation", isLoading);
-      DoIOForULong(simulationElement, "cycles", isLoading, NumCycles);
-      DoIOForLong(simulationElement, "cyclesteps", isLoading, StepsPerCycle);
+
+      // Backwards compatibility with 0.2.0 input file.
+      unsigned long NumCycles;
+      long StepsPerCycle;
+      // short cut means DOIO will not be called for legacy values when saving.
+      if (isLoading
+          && DoIOForULong(simulationElement, "cycles", isLoading, NumCycles)
+          && DoIOForLong(simulationElement, "cyclesteps", isLoading, StepsPerCycle))
+      {
+        TotalTimeSteps=NumCycles*StepsPerCycle;
+      }
+      else
+      {
+        DoIOForULong(simulationElement, "steps", isLoading, TotalTimeSteps);
+      }
+
+      if ((!DoIOForDouble(simulationElement, "step_length",isLoading,TimeStepLength)) && isLoading)
+      {
+        TimeStepLength=60.0/(70.0*StepsPerCycle);
+      }
+
       DoIOForStressType(simulationElement, "stresstype", isLoading, StressType);
 
       TiXmlElement* geometryElement = GetChild(topNode, "geometry", isLoading);
@@ -117,7 +135,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForDouble(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, double &value)
+    bool SimConfig::DoIOForDouble(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, double &value)
     {
       if (iIsLoading)
       {
@@ -127,10 +145,12 @@ namespace hemelb
         {
           char *dummy;
           value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+          return true;
         }
         else
         {
           value = 0.0;
+          return false;
         }
       }
       else
@@ -145,6 +165,7 @@ namespace hemelb
         output << value;
 
         iParent->SetAttribute(iAttributeName, output.str());
+        return true;
       }
     }
 
@@ -174,13 +195,20 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForLong(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, long &bValue)
+    bool SimConfig::DoIOForLong(TiXmlElement* iParent, std::string iAttributeName, bool iIsLoading, long &bValue)
     {
       if (iIsLoading)
       {
+        const std::string *read_result = iParent->Attribute(iAttributeName);
+        if (read_result == NULL)
+        {
+          bValue = 0.0;
+          return false;
+        }
         char *dummy;
         // Read in, in base 10.
-        bValue = std::strtol(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
+        bValue = std::strtol(read_result->c_str(), &dummy, 10);
+        return true;
       }
       else
       {
@@ -190,19 +218,27 @@ namespace hemelb
         output << bValue;
 
         iParent->SetAttribute(iAttributeName, output.str());
+        return true;
       }
     }
 
-    void SimConfig::DoIOForULong(TiXmlElement* iParent,
+    bool SimConfig::DoIOForULong(TiXmlElement* iParent,
                                  std::string iAttributeName,
                                  bool iIsLoading,
                                  unsigned long &bValue)
     {
       if (iIsLoading)
       {
+        const std::string *read_result = iParent->Attribute(iAttributeName);
+        if (read_result == NULL)
+        {
+          bValue = 0.0;
+          return false;
+        }
         char *dummy;
         // Read in, in base 10.
-        bValue = std::strtoul(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
+        bValue = std::strtoul(read_result->c_str(), &dummy, 10);
+        return true;
       }
       else
       {
@@ -212,6 +248,7 @@ namespace hemelb
         output << bValue;
 
         iParent->SetAttribute(iAttributeName, output.str());
+        return true;
       }
     }
 

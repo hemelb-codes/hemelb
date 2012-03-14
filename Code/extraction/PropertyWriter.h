@@ -33,6 +33,12 @@ namespace hemelb
          */
         void Write(unsigned long iterationNumber) const;
 
+        /**
+         * Returns a vector of all the LocalPropertyOutputs.
+         * @return
+         */
+        const std::vector<LocalPropertyOutput*>& GetPropertyOutputs() const;
+
       private:
         /**
          * Holds sufficient information to output property information from this core.

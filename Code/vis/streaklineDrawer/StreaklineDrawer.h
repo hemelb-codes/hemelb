@@ -46,7 +46,7 @@ namespace hemelb
           void Restart();
 
           // Drawing methods.
-          void ProgressStreaklines(unsigned long time_steps, unsigned long time_steps_per_cycle);
+          void ProgressStreaklines(unsigned long time_steps, unsigned long total_time_steps);
           PixelSet<StreakPixel>* Render();
 
         private:
