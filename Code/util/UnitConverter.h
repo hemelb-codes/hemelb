@@ -15,12 +15,12 @@ namespace hemelb
       public:
         UnitConverter(lb::LbmParameters* iParams, lb::SimulationState* iState, double voxelSize);
 
-        distribn_t ConvertPressureToLatticeUnits(double pressure) const;
-        double ConvertVelocityToLatticeUnits(double velocity) const;
-        distribn_t ConvertStressToLatticeUnits(double stress) const;
-        distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
-        double ConvertPressureToPhysicalUnits(double pressure) const;
-        double ConvertStressToPhysicalUnits(double stress) const;
+        LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
+        LatticeVelocity ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const;
+        LatticeStress ConvertStressToLatticeUnits(PhysicalStress stress) const;
+        LatticeStress ConvertPressureGradToLatticeUnits(PhysicalStress pressure_grad) const;
+        PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
+        PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
         /**
          * Templated to handle both absolute and directional velocity.
          * @param velocity
@@ -30,8 +30,7 @@ namespace hemelb
         InputType ConvertVelocityToPhysicalUnits(InputType velocity) const
         {
           // convert velocity from lattice units to physical units (m/s)
-          return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / ( ( (mParams->GetTau() - 0.5) / 3.0)
-              * voxel_size);
+          return velocity * CharacteristicVelocity;
         }
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
@@ -42,7 +41,8 @@ namespace hemelb
       private:
         lb::LbmParameters* mParams;
         lb::SimulationState* mState;
-        double voxel_size;
+        PhysicalLength voxel_size;
+        PhysicalVelocity CharacteristicVelocity;
     };
 
   }
