@@ -507,8 +507,6 @@ namespace hemelb
       DoIOForDouble(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
       DoIOForDouble(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
       DoIOForDouble(lPressureElement, "phase", iIsLoading, value->Phase);
-      value->PressureMinPhysical = value->PressureMeanPhysical - value->PressureAmpPhysical;
-      value->PressureMaxPhysical = value->PressureMeanPhysical + value->PressureAmpPhysical;
 
       DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
       DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);

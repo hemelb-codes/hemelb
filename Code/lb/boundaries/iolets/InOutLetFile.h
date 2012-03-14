@@ -34,6 +34,12 @@ namespace hemelb
                                         const SimulationState *iState);
 
             std::string PressureFilePath;
+
+            PhysicalPressure GetPressureMin(){return PressureMinPhysical;}
+            PhysicalPressure GetPressureMax(){return PressureMaxPhysical;}
+          private:
+            PhysicalPressure PressureMinPhysical;
+            PhysicalPressure PressureMaxPhysical;
         };
 
       }
