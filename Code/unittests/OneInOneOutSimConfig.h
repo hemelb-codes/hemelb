@@ -15,8 +15,6 @@ namespace hemelb
         {
           lb::boundaries::iolets::InOutLetCosine* inlet = new lb::boundaries::iolets::InOutLetCosine();
           inlet->PressureAmpPhysical = 1.0;
-          inlet->PressureMaxPhysical = 81.0;
-          inlet->PressureMinPhysical = 79.0;
           inlet->PressureMeanPhysical = 80.0;
           inlet->Phase = PI;
 
@@ -24,8 +22,6 @@ namespace hemelb
 
           lb::boundaries::iolets::InOutLetCosine* outlet = new lb::boundaries::iolets::InOutLetCosine();
           outlet->PressureAmpPhysical = 0.0;
-          outlet->PressureMaxPhysical = 80.0;
-          outlet->PressureMinPhysical = 80.0;
           outlet->PressureMeanPhysical = 80.0;
           outlet->Phase = 0.0;
 
