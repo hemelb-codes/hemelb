@@ -60,6 +60,7 @@ namespace hemelb
             delete lbgknn0;
             delete lbgknn1;
             delete mrtLbgkEquivalentKernel;
+            FourCubeBasedTestFixture::tearDown();
           }
 
           void TestEntropicCalculationsAndCollision()
