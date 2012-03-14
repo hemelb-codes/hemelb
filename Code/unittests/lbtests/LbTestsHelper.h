@@ -81,8 +81,8 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
-                  + v_z * (float) Lattice::CZ[ii];
+              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
+                  * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
               distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
@@ -135,7 +135,7 @@ namespace hemelb
                                     distribn_t expectedVx,
                                     distribn_t expectedVy,
                                     distribn_t expectedVz,
-                                    distribn_t expectedFEq[D3Q15::NUMVECTORS],
+                                    distribn_t expectedFEq[lb::lattices::D3Q15::NUMVECTORS],
                                     std::string id,
                                     lb::kernels::HydroVars<Kernel> &hydroVars,
                                     distribn_t allowedError)
@@ -149,7 +149,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.v_z, allowedError);
 
             // Compare equilibrium f
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
               std::stringstream message("FEq ");
               message << ii << " " << id;
@@ -166,8 +166,8 @@ namespace hemelb
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetSite(site).GetFOld();
-              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
+              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType> ();
+              InitialiseAnisotropicTestData<LatticeType> (site, fOld);
             }
           }
 
@@ -191,14 +191,14 @@ namespace hemelb
 
             // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
             // (fi = fiEq + fopp(i) - fopp(i)Eq)
-            distribn_t fTemp[D3Q15::NUMVECTORS];
+            distribn_t fTemp[lb::lattices::D3Q15::NUMVECTORS];
 
-            for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+            for (unsigned l = 0; l < lb::lattices::D3Q15::NUMVECTORS; ++l)
             {
-              if (latDat->GetSite(siteIndex).HasBoundary(D3Q15::INVERSEDIRECTIONS[l]))
+              if (latDat->GetSite(siteIndex).HasBoundary(lb::lattices::D3Q15::INVERSEDIRECTIONS[l]))
               {
-                fTemp[l] = hydroVars.GetFEq().f[l] + fPreCollision[D3Q15::INVERSEDIRECTIONS[l]]
-                    - hydroVars.GetFEq().f[D3Q15::INVERSEDIRECTIONS[l]];
+                fTemp[l] = hydroVars.GetFEq().f[l] + fPreCollision[lb::lattices::D3Q15::INVERSEDIRECTIONS[l]]
+                    - hydroVars.GetFEq().f[lb::lattices::D3Q15::INVERSEDIRECTIONS[l]];
               }
               else
               {
@@ -206,15 +206,15 @@ namespace hemelb
               }
             }
 
-            distribn_t f_neq[D3Q15::NUMVECTORS];
-            for (unsigned l = 0; l < D3Q15::NUMVECTORS; ++l)
+            distribn_t f_neq[lb::lattices::D3Q15::NUMVECTORS];
+            for (unsigned l = 0; l < lb::lattices::D3Q15::NUMVECTORS; ++l)
             {
               f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
             }
 
             // Pi = sum_i e_i e_i f_i
             // zeta = Pi / 2 (Cs^4)
-            Order2Tensor zeta = D3Q15::CalculatePiTensor(f_neq);
+            Order2Tensor zeta = lb::lattices::D3Q15::CalculatePiTensor(f_neq);
 
             for (int m = 0; m < 3; m++)
             {
@@ -227,9 +227,9 @@ namespace hemelb
             // chi = Cs^2 I : zeta
             const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
 
-            const int *Cs[3] = { D3Q15::CX, D3Q15::CY, D3Q15::CZ };
+            const int *Cs[3] = { lb::lattices::D3Q15::CX, lb::lattices::D3Q15::CY, lb::lattices::D3Q15::CZ };
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
               // According to Latt & Chopard (Physical Review E77, 2008),
               // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
@@ -246,11 +246,11 @@ namespace hemelb
               {
                 for (int bb = 0; bb < 3; ++bb)
                 {
-                  f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                  f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
                 }
               }
 
-              f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
+              f_neq[ii] *= lb::lattices::D3Q15::EQMWEIGHTS[ii];
 
               /*
                * Newly constructed distribution function:

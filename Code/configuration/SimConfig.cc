@@ -1,13 +1,12 @@
-#include "configuration/SimConfig.h"
-
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <unistd.h>
 #include <cstdlib>
 
+#include "configuration/SimConfig.h"
+#include "log/Logger.h"
 #include "util/fileutils.h"
-#include "debug/Debugger.h"
 
 namespace hemelb
 {
