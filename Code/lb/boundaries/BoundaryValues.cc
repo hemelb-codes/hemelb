@@ -230,11 +230,6 @@ namespace hemelb
           }
         }
 
-        for (int i = 0; i < nTotIOlets; ++i)
-        {
-          iolets[i]->ResetValues();
-        }
-
         for (int i = 0; i < nIOlets; i++)
         {
           if (iolets[ioletIDs[i]]->DoComms())

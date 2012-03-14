@@ -20,19 +20,6 @@ namespace hemelb
 
         }
 
-        void InOutLet::ResetValues()
-        {
-          ResetCommonLatticeValues();
-        }
-
-        void InOutLet::ResetCommonLatticeValues()
-        {
-          DensityMinLattice
-              = mUnits->ConvertPressureToLatticeUnits(PressureMinPhysical) / Cs2;
-          DensityMaxLattice
-              = mUnits->ConvertPressureToLatticeUnits(PressureMaxPhysical) / Cs2;
-        }
-
         void InOutLet::Initialise(const util::UnitConverter* units)
         {
           mUnits = units;
@@ -40,12 +27,12 @@ namespace hemelb
 
         distribn_t InOutLet::GetDensityMin()
         {
-          return DensityMinLattice;
+          return mUnits->ConvertPressureToLatticeUnits(PressureMinPhysical) / Cs2;
         }
 
         distribn_t InOutLet::GetDensityMax()
         {
-          return DensityMaxLattice;
+          return mUnits->ConvertPressureToLatticeUnits(PressureMaxPhysical) / Cs2;
         }
 
       }

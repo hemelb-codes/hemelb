@@ -66,7 +66,6 @@ namespace hemelb
 
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
-                cosine->ResetValues();
                 // The min and max are NOT set for cosine values currently, expect problems with steering code.
                 double temp = state.GetTimeStepLength() / voxel_size;
                 double targetMeanDensity = 1+(80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2*BLOOD_DENSITY_Kg_per_m3);
