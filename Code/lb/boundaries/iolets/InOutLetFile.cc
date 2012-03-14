@@ -16,7 +16,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetFile::InOutLetFile() :
-          InOutLetCycle<0, false> ()
+          InOutLet(),densityTable(0)
         {
 
         }
@@ -42,7 +42,7 @@ namespace hemelb
         // IMPORTANT: to allow reading in data taken at irregular intervals the user
         // needs to make sure that the last point in the file coincides with the first
         // point of a new cycle for a continuous trace.
-        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
+        void InOutLetFile::CalculateTable(unsigned long total_time_steps)
         {
           // First read in values from file into vectors
           std::vector<util::key_value_pair<double, double> > TimeValuePair(0);
@@ -101,16 +101,17 @@ namespace hemelb
                                                          PressureFilePath.c_str());
             exit(0);
           }
-
+          // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
+          densityTable.resize(total_time_steps+1);
           // Now convert these vectors into arrays using linear interpolation
-          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
+          for (unsigned int time_step = 0; time_step <= total_time_steps; time_step++)
           {
-            double point = time[0] + ((double) time_step / (double) densityCycle.size()) * (time[time.size() - 1]
+            double point = time[0] + (static_cast<double>(time_step) / static_cast<double>(total_time_steps)) * (time[time.size() - 1]
                 - time[0]);
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
-            densityCycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+            densityTable[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
           }
         }
 

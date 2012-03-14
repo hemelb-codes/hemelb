@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCOSINE_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCOSINE_H
 
-#include "lb/boundaries/iolets/InOutLetCycle.h"
+#include "lb/boundaries/iolets/InOutLet.h"
 
 namespace hemelb
 {
@@ -17,18 +17,20 @@ namespace hemelb
          * The cosine pressure trace can be easily calculated locally by any proc and
          * there is no need to store values for any time step beyond the current one
          */
-        class InOutLetCosine : public InOutLetCycle<1, false>
+        class InOutLetCosine : public InOutLet
         {
           public:
             InOutLetCosine();
             virtual ~InOutLetCosine();
-
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
             virtual InOutLet* Clone();
-
-            distribn_t GetDensityMean();
-            distribn_t GetDensityAmp();
-
+            virtual void Reset(SimulationState &state)
+            {
+              Period=state.GetTotalTimeSteps();
+            }
+            LatticeDensity GetDensityMean();
+            LatticeDensity GetDensityAmp();
+            LatticeDensity GetDensity(unsigned long time_step);
             PhysicalPressure GetPressureMin()
             {
               return PressureMeanPhysical - PressureAmpPhysical;
@@ -38,12 +40,12 @@ namespace hemelb
               return PressureMeanPhysical + PressureAmpPhysical;
             }
 
-            double PressureMeanPhysical;
-            double PressureAmpPhysical;
+            PhysicalPressure PressureMeanPhysical;
+            PhysicalPressure PressureAmpPhysical;
 
             double Phase;
-          protected:
-            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState);
+            double Period;
+
 
         };
 

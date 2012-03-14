@@ -1,10 +1,10 @@
 #ifndef HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 #define HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 
-#include "lb/boundaries/BoundaryComms.h"
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
 #include "lb/boundaries/iolets/InOutLet.h"
+#include "geometry/LatticeData.h"
 
 namespace hemelb
 {
@@ -38,12 +38,9 @@ namespace hemelb
           static proc_t GetBCProcRank();
 
         private:
-          std::vector<BoundaryComms*> mComms;
-          bool IsIOletOnThisProc(geometry::SiteType IOtype,
-                                 geometry::LatticeData* iLatDat,
-                                 int iBoundaryId);
+          bool IsIOletOnThisProc(geometry::SiteType IOtype, geometry::LatticeData* iLatDat, int iBoundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
-          void SetDensityCycle(iolets::InOutLet* iolet, unsigned int iolet_index, unsigned long time_step);
+          void HandleComms(iolets::InOutLet* iolet);
           int nTotIOlets;
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;
@@ -51,12 +48,9 @@ namespace hemelb
           // Has to be a vector of pointers for InOutLet polymorphism
           std::vector<iolets::InOutLet*> iolets;
 
-          std::vector<distribn_t>* densityCycle;
-
           SimulationState* mState;
           util::UnitConverter* mUnits;
       };
-
     }
   }
 }
