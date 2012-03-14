@@ -1,6 +1,7 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
+#include "lb/lattices/D3Q15.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
@@ -32,7 +33,7 @@ class SimulationMaster
     void RunSimulation();
 
   private:
-    typedef hemelb::D3Q15 latticeType;
+    typedef hemelb::lb::lattices::D3Q15 latticeType;
 
     void Initialise();
     void SetupReporting(); // set up the reporting file

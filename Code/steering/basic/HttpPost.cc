@@ -32,7 +32,6 @@ namespace hemelb
       // This really does modify the strings passed in. Without
       // checking their lengths, of course.
       char hostname[256];
-      char ip_addr[16];
 
       // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
 #ifdef NGS2Leeds
@@ -63,6 +62,7 @@ namespace hemelb
 
       // Get information about our host.
       struct hostent *host = gethostbyname(name.nodename);
+      char ip_addr[16];
 
       // Now go through every associated IP adress, and use the first valid, public one.
       for (int address_id = 0; address_id < 4; address_id++)
@@ -81,11 +81,11 @@ namespace hemelb
         }
 
         std::sprintf(ip_addr,
-                "%d.%d.%d.%d",
-                (unsigned char) (host->h_addr_list[address_id][0]),
-                (unsigned char) (host->h_addr_list[address_id][1]),
-                (unsigned char) (host->h_addr_list[address_id][2]),
-                (unsigned char) (host->h_addr_list[address_id][3]));
+                     "%d.%d.%d.%d",
+                     (unsigned char) (host->h_addr_list[address_id][0]),
+                     (unsigned char) (host->h_addr_list[address_id][1]),
+                     (unsigned char) (host->h_addr_list[address_id][2]),
+                     (unsigned char) (host->h_addr_list[address_id][3]));
 
         std::printf("NAME %s IP %s\n", host->h_name, ip_addr);
 
@@ -124,8 +124,7 @@ namespace hemelb
       std::sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
 #endif
 
-      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s",
-                                                  rank_0_host_details);
+      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s", rank_0_host_details);
     }
 
     ssize_t HttpPost::Send_Request(int iSocket, const char *iMessage)
@@ -133,10 +132,7 @@ namespace hemelb
       return send(iSocket, iMessage, strlen(iMessage), 0);
     }
 
-    int HttpPost::request(const char* hostname,
-                          const in_port_t port,
-                          const char* api,
-                          const char* resourceid)
+    int HttpPost::request(const char* hostname, const in_port_t port, const char* api, const char* resourceid)
     {
       // Get the host name to communicate with.
       char host_name[1024];
@@ -165,7 +161,7 @@ namespace hemelb
 
       // Attempt to connect, but don't try for too long.
       timeval tv;
-      memset(&tv,0,sizeof (tv)); // so valgrind knows the whole struct is initialised.
+      memset(&tv, 0, sizeof (tv)); // so valgrind knows the whole struct is initialised.
       tv.tv_sec = 2;
       tv.tv_usec = 0;
 

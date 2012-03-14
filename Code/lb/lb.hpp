@@ -123,7 +123,7 @@ namespace hemelb
 
         geometry::Site site = mLatDat->GetSite(i);
 
-        distribn_t* f_old_p = site.GetFOld();
+        distribn_t* f_old_p = site.GetFOld<LatticeType>();
         distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
 
         for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)

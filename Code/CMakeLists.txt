@@ -138,7 +138,7 @@ if (HEMELB_USE_DEBUGGER)
 	set(CMAKE_BUILD_TYPE DEBUG)
 endif()
 
-set(root_sources SimulationMaster.cc mpiInclude.cc D3Q15.cc)
+set(root_sources SimulationMaster.cc mpiInclude.cc)
 add_executable(hemelb main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
