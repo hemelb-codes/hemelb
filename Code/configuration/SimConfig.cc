@@ -66,20 +66,19 @@ namespace hemelb
       unsigned long NumCycles;
       long StepsPerCycle;
       // short cut means DOIO will not be called for legacy values when saving.
-      if (isLoading
-          && DoIOForULong(simulationElement, "cycles", isLoading, NumCycles)
+      if (isLoading && DoIOForULong(simulationElement, "cycles", isLoading, NumCycles)
           && DoIOForLong(simulationElement, "cyclesteps", isLoading, StepsPerCycle))
       {
-        TotalTimeSteps=NumCycles*StepsPerCycle;
+        TotalTimeSteps = NumCycles * StepsPerCycle;
       }
       else
       {
         DoIOForULong(simulationElement, "steps", isLoading, TotalTimeSteps);
       }
 
-      if ((!DoIOForDouble(simulationElement, "step_length",isLoading,TimeStepLength)) && isLoading)
+      if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, TimeStepLength)) && isLoading)
       {
-        TimeStepLength=60.0/(70.0*StepsPerCycle);
+        TimeStepLength = LEGACY_PULSATILE_PERIOD / StepsPerCycle;
       }
 
       DoIOForStressType(simulationElement, "stresstype", isLoading, StressType);
@@ -509,6 +508,11 @@ namespace hemelb
 
       DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
       DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);
+
+      if (!DoIOForDouble(lPressureElement, "period", iIsLoading, value->Period) && iIsLoading)
+      {
+        value->Period=LEGACY_PULSATILE_PERIOD;
+      }
     }
 
     void SimConfig::DoIOForFileInOutlet(TiXmlElement *iParent,

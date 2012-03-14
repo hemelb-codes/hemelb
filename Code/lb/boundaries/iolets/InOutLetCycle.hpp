@@ -12,7 +12,7 @@ namespace hemelb
       namespace iolets
       {
         template<unsigned long updatePeriod, bool comms> virtual void InOutLetCycle<update_period, comms>::DoComms(bool is_io_proc,
-                                                                                                                   unsigned long time_step)
+                                                                                                                   LatticeTime time_step)
         {
           if (is_io_proc)
           {

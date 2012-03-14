@@ -91,7 +91,7 @@ namespace hemelb
              * @return
              */
             virtual PhysicalPressure GetPressureMax()=0;
-            virtual LatticeDensity GetDensity(unsigned long time_step)=0;
+            virtual LatticeDensity GetDensity(LatticeTime time_step)=0;
             virtual void Reset(SimulationState &state)=0;
             util::Vector3D<float> Position; //! !!!!! Public data member!
             util::Vector3D<float> Normal; //! !!!!!! Public data member!

@@ -63,6 +63,7 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(80.1, cosine->PressureMeanPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->PressureAmpPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->Phase);
+                CPPUNIT_ASSERT_EQUAL(0.6, cosine->Period);
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
                                      cosine->Position);
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->Normal);

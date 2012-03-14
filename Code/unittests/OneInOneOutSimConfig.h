@@ -17,6 +17,7 @@ namespace hemelb
           inlet->PressureAmpPhysical = 1.0;
           inlet->PressureMeanPhysical = 80.0;
           inlet->Phase = PI;
+          inlet->Period = 60.0/70.0;
 
           Inlets.push_back(inlet);
 

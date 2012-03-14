@@ -43,7 +43,7 @@ namespace hemelb
         // IMPORTANT: to allow reading in data taken at irregular intervals the user
         // needs to make sure that the last point in the file coincides with the first
         // point of a new cycle for a continuous trace.
-        void InOutLetFile::CalculateTable(unsigned long total_time_steps)
+        void InOutLetFile::CalculateTable(LatticeTime total_time_steps)
         {
           // First read in values from file into vectors
           std::vector<util::key_value_pair<double, double> > TimeValuePair(0);
