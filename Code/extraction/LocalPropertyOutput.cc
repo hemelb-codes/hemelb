@@ -9,25 +9,24 @@ namespace hemelb
   namespace extraction
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec) :
-      dataSource(dataSource), outputSpec(outputSpec)
+        dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      MPI_File_open(MPI_COMM_WORLD, const_cast<char*> (outputSpec->filename.c_str()), MPI_MODE_WRONLY | MPI_MODE_CREATE
-          | MPI_MODE_EXCL, MPI_INFO_NULL, &outputFile);
+      MPI_File_open(MPI_COMM_WORLD,
+                    const_cast<char*>(outputSpec->filename.c_str()),
+                    MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
+                    MPI_INFO_NULL,
+                    &outputFile);
 
       uint64_t siteCount = 0;
 
       dataSource.Reset();
 
-      util::Vector3D<site_t> position;
-      util::Vector3D<float> velocity;
-      float pressure, stress;
-
       // Count the sites.
-      while (dataSource.ReadNext(position, pressure, velocity, stress))
+      while (dataSource.ReadNext())
       {
-        if (outputSpec->geometry->Include(dataSource, position))
+        if (outputSpec->geometry->Include(dataSource, dataSource.GetPosition()))
         {
           ++siteCount;
         }
@@ -39,21 +38,7 @@ namespace hemelb
 
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
-        switch (outputSpec->fields[outputNumber].type)
-        {
-          //  * some floats for each field.
-          case OutputField::Pressure:
-            writeLength += 4;
-            break;
-          case OutputField::Velocity:
-            writeLength += 12;
-            break;
-            // TODO: Work out how to handle the different stresses.
-          case OutputField::VonMisesStress:
-          case OutputField::ShearStress:
-            writeLength += 4;
-            break;
-        }
+        writeLength += 4 * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
       //  * these are per local site.
@@ -66,11 +51,11 @@ namespace hemelb
       }
 
       // Calculate the total length written during one iteration.
-      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t> (), MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t>(), MPI_SUM, MPI_COMM_WORLD);
 
       // Calculate the total number of sites to be written.
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t>(), MPI_SUM, 0, MPI_COMM_WORLD);
 
       // Write the header information on the IO proc.
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -112,24 +97,7 @@ namespace hemelb
         }
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
-          unsigned fieldLength = 0;
-
-          switch (outputSpec->fields[outputNumber].type)
-          {
-            case OutputField::Pressure:
-              fieldLength = 1;
-              break;
-            case OutputField::Velocity:
-              fieldLength = 3;
-              break;
-              // TODO: Work out how to handle the different stresses.
-            case OutputField::VonMisesStress:
-            case OutputField::ShearStress:
-              fieldLength = 1;
-              break;
-          }
-
-          writer << (uint32_t) fieldLength;
+          writer << (uint32_t) GetFieldLength(outputSpec->fields[outputNumber].type);
         }
 
         // Write the total site count.
@@ -148,7 +116,7 @@ namespace hemelb
         if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
+          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t>(), 1, 1, MPI_COMM_WORLD);
           localDataOffsetIntoFile -= writeLength;
         }
       }
@@ -157,7 +125,7 @@ namespace hemelb
         // Receive the writing start position from the previous core.
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
-                 MpiDataType<uint64_t> (),
+                 MpiDataType<uint64_t>(),
                  topology::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
@@ -170,7 +138,7 @@ namespace hemelb
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
-                   MpiDataType<uint64_t> (),
+                   MpiDataType<uint64_t>(),
                    topology::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
@@ -189,10 +157,20 @@ namespace hemelb
       delete[] buffer;
     }
 
+    bool LocalPropertyOutput::ShouldWrite(unsigned long iterationNumber) const
+    {
+      return ( (iterationNumber % outputSpec->frequency) == 0);
+    }
+
+    const PropertyOutputFile* LocalPropertyOutput::GetOutputSpec() const
+    {
+      return outputSpec;
+    }
+
     void LocalPropertyOutput::Write(unsigned long iterationNumber)
     {
       // Don't write if we shouldn't this iteration.
-      if ( (iterationNumber % outputSpec->frequency) != 0)
+      if (!ShouldWrite(iterationNumber))
       {
         return;
       }
@@ -212,15 +190,11 @@ namespace hemelb
         xdrWriter << (uint64_t) iterationNumber;
       }
 
-      // Iterate through the data.
-      util::Vector3D<site_t> position;
-      util::Vector3D<float> velocity;
-      float pressure, stress;
-
       dataSource.Reset();
 
-      while (dataSource.ReadNext(position, pressure, velocity, stress))
+      while (dataSource.ReadNext())
       {
+        const util::Vector3D<site_t>& position = dataSource.GetPosition();
         if (outputSpec->geometry->Include(dataSource, position))
         {
           // Write the position
@@ -232,17 +206,18 @@ namespace hemelb
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << (float) pressure;
+                xdrWriter << (float) dataSource.GetPressure();
                 break;
               case OutputField::Velocity:
-                xdrWriter << (float) velocity.x << (float) velocity.y << (float) velocity.z;
+                xdrWriter << (float) dataSource.GetVelocity().x << (float) dataSource.GetVelocity().y
+                    << (float) dataSource.GetVelocity().z;
                 break;
                 // TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << (float) stress;
+                xdrWriter << (float) dataSource.GetVonMisesStress();
                 break;
               case OutputField::ShearStress:
-                xdrWriter << (float) stress;
+                xdrWriter << (float) dataSource.GetShearStress();
                 break;
             }
           }
@@ -254,6 +229,23 @@ namespace hemelb
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
+    }
+
+    unsigned LocalPropertyOutput::GetFieldLength(OutputField::FieldType field)
+    {
+      switch (field)
+      {
+        case OutputField::Pressure:
+        case OutputField::VonMisesStress:
+        case OutputField::ShearStress:
+          return 1;
+          break;
+        case OutputField::Velocity:
+          return 3;
+          break;
+        default:
+          return 0;
+      }
     }
   }
 }

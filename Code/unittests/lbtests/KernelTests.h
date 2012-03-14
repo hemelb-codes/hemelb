@@ -10,6 +10,8 @@
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
+#include "unittests/helpers/FourCubeBasedTestFixture.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -22,7 +24,7 @@ namespace hemelb
        * includes the functions for calculating hydrodynamic variables and for performing
        * collisions.
        */
-      class KernelTests : public CppUnit::TestFixture
+      class KernelTests : public helpers::FourCubeBasedTestFixture
       {
           CPPUNIT_TEST_SUITE( KernelTests);
           CPPUNIT_TEST( TestEntropicCalculationsAndCollision);
@@ -32,20 +34,10 @@ namespace hemelb
         public:
           void setUp()
           {
-            // Initialise the LBM parameters.
-            lb::kernels::InitParams initParams;
-
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
 
-            latDat = FourCubeLatticeData::Create();
-            initParams.latDat = latDat;
-            initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
-            distribn_t voxelSize = initParams.latDat->GetVoxelSize();
-            unsigned timeStepsPerCycle = 1000;
-            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) timeStepsPerCycle, voxelSize);
-            initParams.lbmParams = lbmParams;
-
+            FourCubeBasedTestFixture::setUp();
             entropic = new lb::kernels::Entropic<lb::lattices::D3Q15>(initParams);
             lbgk = new lb::kernels::LBGK<lb::lattices::D3Q15>(initParams);
 
@@ -58,10 +50,8 @@ namespace hemelb
             lbgknn1 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
                 lb::lattices::D3Q15>(initParams);
 
-            mrtLbgkEquivalentKernel = new lb::kernels::MRT<
-                lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
-
-            numSites = initParams.latDat->GetLocalFluidSiteCount();
+            mrtLbgkEquivalentKernel
+                = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
           }
 
           void tearDown()
@@ -71,8 +61,7 @@ namespace hemelb
             delete lbgknn0;
             delete lbgknn1;
             delete mrtLbgkEquivalentKernel;
-            delete lbmParams;
-            delete latDat;
+            FourCubeBasedTestFixture::tearDown();
           }
 
           void TestEntropicCalculationsAndCollision()
@@ -540,14 +529,11 @@ namespace hemelb
           }
 
         private:
-          geometry::LatticeData* latDat;
-          lb::LbmParameters* lbmParams;
           lb::kernels::Entropic<lb::lattices::D3Q15>* entropic;
           lb::kernels::LBGK<lb::lattices::D3Q15>* lbgk;
           lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15> *lbgknn0,
               *lbgknn1;
           lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
-          site_t numSites;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION( KernelTests);
     }

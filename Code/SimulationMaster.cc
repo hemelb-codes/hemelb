@@ -42,8 +42,8 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   visualisationControl = NULL;
   propertyExtractor = NULL;
   simulationState = NULL;
-  snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
-  imagesPerCycle = options.NumberOfImagesPerCycle();
+  snapshotsPerSimulation = options.NumberOfSnapshots();
+  imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
@@ -126,7 +126,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
+  simulationState = new hemelb::lb::SimulationState(simConfig->TimeStepLength,simConfig->TotalTimeSteps);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
@@ -235,7 +235,7 @@ unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
   {
     return 1000000000;
   }
-  unsigned long roundedPeriod = simulationState->GetTimeStepsPerCycle() / frequency;
+  unsigned long roundedPeriod = simulationState->GetTotalTimeSteps() / frequency;
   return hemelb::util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
 }
 
@@ -288,8 +288,8 @@ void SimulationMaster::ResetUnstableSimulation()
   visualisationControl->Reset();
 #endif
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
-                                                                      simulationState->GetTimeStepsPerCycle());
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %i\n",
+                                                                      simulationState->GetTimeStepLength());
 
   simulationState->Reset();
 }
@@ -305,7 +305,7 @@ void SimulationMaster::WriteLocalImages()
     {
       reporter->Image();
       hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
-          + ( (it->second - 1) % simulationState->GetTimeStepsPerCycle()));
+          + ( (it->second - 1) % simulationState->GetTimeStep()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);
 
@@ -368,8 +368,7 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
   timings[hemelb::reporting::Timers::simulation].Start();
-  unsigned int snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
-  unsigned int imagesPeriod = OutputPeriod(imagesPerCycle);
+  unsigned int imagesPeriod = OutputPeriod(imagesPerSimulation);
 
   bool isFinished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
@@ -441,6 +440,8 @@ void SimulationMaster::RunSimulation()
 
     }
 
+    RecalculatePropertyRequirements();
+
     HandleActors();
 
     stability = hemelb::lb::Stable;
@@ -448,13 +449,12 @@ void SimulationMaster::RunSimulation()
     if (simulationState->GetStability() == hemelb::lb::Unstable)
     {
       ResetUnstableSimulation();
-      snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
-      imagesPeriod = OutputPeriod(imagesPerCycle);
+      imagesPeriod = OutputPeriod(imagesPerSimulation);
       continue;
     }
 
 #ifndef NO_STREAKLINES
-    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTimeStepsPerCycle());
+    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
 #endif
 
     if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
@@ -470,7 +470,7 @@ void SimulationMaster::RunSimulation()
 
     timings[hemelb::reporting::Timers::snapshot].Start();
 
-    if (simulationState->GetTimeStep() % snapshotsPeriod == 0)
+    if (IsSnapshotting())
     {
       if (IsCurrentProcTheIOProc())
       {
@@ -491,7 +491,7 @@ void SimulationMaster::RunSimulation()
       isFinished = true;
       break;
     }
-    if (simulationState->GetTimeStepsPerCycle() > 400000)
+    if (simulationState->GetTotalTimeSteps() > 400000)
     {
       if (IsCurrentProcTheIOProc())
       {
@@ -500,12 +500,8 @@ void SimulationMaster::RunSimulation()
       break;
     }
 
-    if (simulationState->GetTimeStep() == simulationState->GetTimeStepsPerCycle() && IsCurrentProcTheIOProc())
+    if (simulationState->GetTimeStep()%1000==0 && IsCurrentProcTheIOProc())
     {
-
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
-                                                                          simulationState->GetCycleId());
-
       fflush(NULL);
     }
   }
@@ -518,6 +514,46 @@ void SimulationMaster::RunSimulation()
     reporter->Write();
   }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
+}
+
+void SimulationMaster::RecalculatePropertyRequirements()
+{
+  // Get the property cache & reset its list of properties to get.
+  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+
+  propertyCache.ResetRequirements();
+
+  // Check whether we're rendering images or snapshotting on this iteration.
+  if (visualisationControl->IsRendering() || IsSnapshotting())
+  {
+    propertyCache.densityCache.SetRefreshFlag();
+    propertyCache.velocityCache.SetRefreshFlag();
+
+    if (simConfig->StressType == hemelb::lb::ShearStress)
+    {
+      propertyCache.shearStressCache.SetRefreshFlag();
+    }
+    else if (simConfig->StressType == hemelb::lb::VonMises)
+    {
+      propertyCache.vonMisesStressCache.SetRefreshFlag();
+    }
+  }
+
+  // If extracting property results, check what's required by them.
+  if (propertyExtractor != NULL)
+  {
+    propertyExtractor->SetRequiredProperties(propertyCache);
+  }
+
+  // If using streaklines, the velocity will be needed.
+#ifndef NO_STREAKLINES
+  propertyCache.velocityCache.SetRefreshFlag();
+#endif
+}
+
+bool SimulationMaster::IsSnapshotting()
+{
+  return simulationState->GetTimeStep() % OutputPeriod(snapshotsPerSimulation) == 0;
 }
 
 /**

@@ -14,7 +14,6 @@ namespace hemelb
 
       timeStep = 0;
       time = 0.0;
-      cycle = 0;
       nInlets = 3;
       mousePressure = -1.0;
       mouseStress = -1.0;
@@ -30,7 +29,7 @@ namespace hemelb
 
       writer->operator <<(time);
 
-      writer->operator <<(cycle);
+      writer->operator <<(0); // Cycle is always zero, leave this in to stop steering clients breaking.
       writer->operator <<(nInlets);
 
       writer->operator <<(mousePressure);

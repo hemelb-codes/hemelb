@@ -13,8 +13,8 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn
-                                   , const lb::MacroscopicPropertyCache& propertyCache) :
+      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn,
+                                   const lb::MacroscopicPropertyCache& propertyCache) :
           counter(0), neighbouringProcessors(neighbouringProcessorsIn), propertyCache(propertyCache)
       {
       }
@@ -297,7 +297,7 @@ namespace hemelb
         // and the local velocity is calculated
         localVelocitySiteData->counter = counter;
 
-        const util::Vector3D<distribn_t>& velocity = propertyCache.GetVelocity(localVelocitySiteData->site_id);
+        const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(localVelocitySiteData->site_id);
         localVelocitySiteData->velocity.x = (float) velocity.x;
         localVelocitySiteData->velocity.y = (float) velocity.y;
         localVelocitySiteData->velocity.z = (float) velocity.z;

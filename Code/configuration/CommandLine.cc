@@ -6,7 +6,7 @@ namespace hemelb
   namespace configuration
   {
     CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-        inputFile("input.xml"), outputDir(""), snapshotsPerCycle(10), imagesPerCycle(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
+        inputFile("input.xml"), outputDir(""), snapshots(10), images(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
     {
 
       // Initialise the network discovery. If this fails, abort.
@@ -49,12 +49,12 @@ namespace hemelb
         else if (std::strcmp(paramName, "-s") == 0)
         {
           char * dummy;
-          snapshotsPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
+          snapshots = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
         else if (std::strcmp(paramName, "-i") == 0)
         {
           char *dummy;
-          imagesPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
+          images = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
         else if (std::strcmp(paramName, "-ss") == 0)
         {
@@ -78,8 +78,8 @@ namespace hemelb
       printf("Parameter name and significance:\n");
       printf("-in \t Path to the configuration xml file (default is config.xml)\n");
       printf("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
-      printf("-s \t Number of snapshots to take per cycle (default 10)\n");
-      printf("-i \t Number of images to create per cycle (default is 10)\n");
+      printf("-s \t Number of snapshots to take (default 10)\n");
+      printf("-i \t Number of images to create (default is 10)\n");
       printf("-ss \t Steering session identifier (default is 1)\n");
       printf("-!-!-!-!-!-!-!-!-!-!-!-!");
     }
