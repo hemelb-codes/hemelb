@@ -33,9 +33,21 @@ namespace hemelb
 
             virtual void UpdateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *state);
             virtual bool DoComms();
-            unsigned int GetUpdatePeriod()
+            unsigned int GetUpdatePeriod(unsigned int total_time_steps)
             {
+              if (updatePeriod == 0)
+              {
+                return total_time_steps;
+              }
               return updatePeriod;
+            }
+            bool shouldUpdateBuffer(unsigned int time_step)
+            {
+              if (updatePeriod==0)
+              {
+                return time_step==0;
+              }
+              return time_step%updatePeriod==0;
             }
           protected:
             InOutLetCycle();
@@ -59,9 +71,10 @@ namespace hemelb
         void InOutLetCycle<updatePeriod, comms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
                                                              const SimulationState *state)
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Update cycle for iolet %d %d",updatePeriod,state->Get0IndexedTimeStep());
-          if ( (updatePeriod != 0 && state->Get0IndexedTimeStep() % updatePeriod == 0)
-              || (updatePeriod == 0 && state->Get0IndexedTimeStep() == 0))
+          log::Logger::Log<log::Debug, log::OnePerCore>("Update cycle for iolet %d %d",
+                                                        updatePeriod,
+                                                        state->Get0IndexedTimeStep());
+          if ( shouldUpdateBuffer(state->Get0IndexedTimeStep()) )
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Calculating iolet cycle");
             CalculateCycle(densityCycle, state);

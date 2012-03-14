@@ -7,6 +7,7 @@
 #include "topology/NetworkTopology.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/OneInOneOutSimConfig.h"
+#include "unittests/helpers/FolderTestFixture.h"
 
 #include <iostream>
 namespace hemelb
@@ -15,7 +16,7 @@ namespace hemelb
   {
     namespace helpers
     {
-      class FourCubeBasedTestFixture : public CppUnit::TestFixture
+      class FourCubeBasedTestFixture : public helpers::FolderTestFixture
       {
 
 
