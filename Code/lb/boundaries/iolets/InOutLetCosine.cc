@@ -39,27 +39,19 @@ namespace hemelb
 
           for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
-            densityCycle[time_step] = DensityMeanLattice + DensityAmpLattice * cos(w * (double) (time_step
+            densityCycle[time_step] = GetDensityMean() + GetDensityAmp() * cos(w * (double) (time_step
                 + iState->Get0IndexedTimeStep()) + Phase);
           }
         }
 
-        void InOutLetCosine::ResetValues()
-        {
-          DensityMeanLattice = mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
-          DensityAmpLattice = mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
-
-          ResetCommonLatticeValues();
-        }
-
         distribn_t InOutLetCosine::GetDensityMean()
         {
-          return DensityMeanLattice;
+          return  mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
         }
 
         distribn_t InOutLetCosine::GetDensityAmp()
         {
-          return DensityAmpLattice;
+          return mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
         }
 
       }

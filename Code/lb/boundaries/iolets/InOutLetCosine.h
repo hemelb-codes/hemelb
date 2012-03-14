@@ -29,8 +29,6 @@ namespace hemelb
             virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
                                         const SimulationState *iState);
 
-            virtual void ResetValues();
-
             distribn_t GetDensityMean();
             distribn_t GetDensityAmp();
 
@@ -38,10 +36,6 @@ namespace hemelb
             double PressureAmpPhysical;
 
             double Phase;
-
-          private:
-            distribn_t DensityMeanLattice;
-            distribn_t DensityAmpLattice;
 
         };
 
