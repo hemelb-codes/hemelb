@@ -5,7 +5,7 @@ namespace hemelb
   namespace extraction
   {
     SnapshotParser::SnapshotParser(std::string filename) :
-      file(fopen(filename.c_str(), "r")), reader(file), sitesRead(0)
+        file(fopen(filename.c_str(), "r")), reader(file), sitesRead(0)
     {
       unsigned hemelbMagicNumber, snapshotMagicNumber, snapshotVersionNumber;
       reader.readUnsignedInt(hemelbMagicNumber);
@@ -43,10 +43,7 @@ namespace hemelb
       }
     }
 
-    bool SnapshotParser::ReadNext(util::Vector3D<float>& position,
-                                  float& pressure,
-                                  util::Vector3D<float>& velocity,
-                                  float& stress)
+    bool SnapshotParser::ReadNext()
     {
       if (sitesRead >= fluidSiteCount)
       {
@@ -60,16 +57,41 @@ namespace hemelb
       reader.readInt(coords.y);
       reader.readInt(coords.z);
 
-      position = (coords + minimalSite) * voxelSize + origin;
+      readPosition = (coords + minimalSite);
 
-      reader.readFloat(pressure);
-      reader.readFloat(velocity.x);
-      reader.readFloat(velocity.y);
-      reader.readFloat(velocity.z);
+      reader.readFloat(readPressure);
+      reader.readFloat(readVelocity.x);
+      reader.readFloat(readVelocity.y);
+      reader.readFloat(readVelocity.z);
 
-      reader.readFloat(stress);
+      reader.readFloat(readShearStress);
 
       return true;
+    }
+
+    util::Vector3D<site_t> SnapshotParser::GetPosition() const
+    {
+      return readPosition;
+    }
+
+    float SnapshotParser::GetPressure() const
+    {
+      return readPressure;
+    }
+
+    util::Vector3D<float> SnapshotParser::GetVelocity() const
+    {
+      return readVelocity;
+    }
+
+    float SnapshotParser::GetShearStress() const
+    {
+      return readShearStress;
+    }
+
+    float SnapshotParser::GetVonMisesStress() const
+    {
+      return readVonMisesStress;
     }
   }
 }

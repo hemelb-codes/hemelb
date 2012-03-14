@@ -7,37 +7,20 @@ namespace hemelb
   namespace lb
   {
 
-    SimulationState::SimulationState(unsigned long StepsPerCycle, unsigned long numCycles)
+    SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
+         TimeStepLength(timeStepLength), TimeStep(1), TimeStepsGone(1),
+        TotalTimeSteps(totalTimeSteps), IsTerminating(false), DoRendering(false), mStability(Stable)
     {
-      CycleId = 1;
-      TimeStep = 1;
-      TimeStepsGone = 1;
-      TimeStepsPerCycle = StepsPerCycle;
-      NumberOfCycles = numCycles;
-      TotalTimeSteps = numCycles * StepsPerCycle;
-      IsTerminating = false;
-      DoRendering = false;
-      mStability = Stable;
     }
 
     void SimulationState::Increment()
     {
       ++TimeStepsGone;
-
-      if (TimeStep >= TimeStepsPerCycle)
-      {
-        ++CycleId;
-        TimeStep = 1;
-      }
-      else
-      {
-        ++TimeStep;
-      }
+      ++TimeStep;
     }
 
     void SimulationState::Reset()
     {
-      CycleId = 1;
       TimeStep = 1;
       TimeStepsGone = 1;
     }
@@ -55,11 +38,6 @@ namespace hemelb
       mStability = value;
     }
 
-    unsigned long SimulationState::GetCycleId() const
-    {
-      return CycleId;
-    }
-
     unsigned long SimulationState::GetTimeStep() const
     {
       return TimeStep;
@@ -70,16 +48,6 @@ namespace hemelb
       return TimeStep - 1;
     }
 
-    unsigned long SimulationState::GetTimeStepsPerCycle() const
-    {
-      return TimeStepsPerCycle;
-    }
-
-    unsigned long SimulationState::GetNumberOfCycles() const
-    {
-      return NumberOfCycles;
-    }
-
     unsigned long SimulationState::GetTotalTimeSteps() const
     {
       return TotalTimeSteps;
@@ -88,11 +56,6 @@ namespace hemelb
     unsigned long SimulationState::GetTimeStepsPassed() const
     {
       return TimeStepsGone;
-    }
-
-    double SimulationState::GetIntraCycleTime() const
-    {
-      return hemelb::PULSATILE_PERIOD_s * (double) TimeStep / (double) TimeStepsPerCycle;
     }
 
     bool SimulationState::GetIsTerminating() const
@@ -111,15 +74,14 @@ namespace hemelb
     void SimulationState::DoubleTimeResolution()
     {
       TotalTimeSteps *= 2;
-      TimeStepsPerCycle *= 2;
+      TimeStepLength /= 2.0;
     }
 
     void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
     {
-      // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-      dictionary.SetIntValue("CYCLES", GetCycleId() - 1);
+      dictionary.SetFormattedValue("TIME_STEP_LENGTH","%lf",GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStepsPassed() - 1);
-      dictionary.SetIntValue("STEPS_PER_CYCLE", GetTimeStepsPerCycle());
+      dictionary.SetIntValue("TOTAL_TIME_STEPS", GetTotalTimeSteps());
     }
   }
 }

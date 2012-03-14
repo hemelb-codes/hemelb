@@ -2,6 +2,10 @@
 <report>
 	<configuration>
 		<file>{{CONFIG}}</file>
+		<steps>{{TOTAL_TIME_STEPS}}</steps>
+		<resolution>
+			<timestep>{{TIME_STEP_LENGTH}}</timestep>
+		</resolution>
 	</configuration>
 	{{#BUILD}}
 	<build>
@@ -33,7 +37,6 @@
 		<snapshots>{{SNAPSHOTS}}</snapshots>
 		<steps>
 			<total>{{STEPS}}</total>
-			<per_cycle>{{STEPS_PER_CYCLE}}</per_cycle>
 		</steps>
 	</results>
 	<checks>
