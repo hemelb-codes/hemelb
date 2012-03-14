@@ -30,12 +30,13 @@ namespace hemelb
         class InOutLetCycle : public InOutLet
         {
           public:
-            virtual void InitialiseCycle(std::vector<distribn_t> &densityCycle,
-                                         const SimulationState *state);
-            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle,
-                                     const SimulationState *state);
-            virtual bool DoComms();
 
+            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *state);
+            virtual bool DoComms();
+            unsigned int GetUpdatePeriod()
+            {
+              return updatePeriod;
+            }
           protected:
             InOutLetCycle();
             virtual ~InOutLetCycle();
@@ -43,7 +44,7 @@ namespace hemelb
 
         template<unsigned long updatePeriod, bool comms>
         InOutLetCycle<updatePeriod, comms>::InOutLetCycle() :
-          InOutLet()
+            InOutLet()
         {
 
         }
@@ -55,28 +56,14 @@ namespace hemelb
         }
 
         template<unsigned long updatePeriod, bool comms>
-        void InOutLetCycle<updatePeriod, comms>::InitialiseCycle(std::vector<distribn_t> &densityCycle,
-                                                                 const SimulationState *state)
-        {
-
-          if (updatePeriod == 0)
-          {
-            densityCycle.resize(state->GetTotalTimeSteps());
-          }
-          else
-          {
-            densityCycle.resize(updatePeriod);
-          }
-
-          CalculateCycle(densityCycle, state);
-        }
-
-        template<unsigned long updatePeriod, bool comms>
         void InOutLetCycle<updatePeriod, comms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
                                                              const SimulationState *state)
         {
-          if (updatePeriod != 0 && state->Get0IndexedTimeStep() % updatePeriod == 0)
+          log::Logger::Log<log::Debug, log::OnePerCore>("Update cycle for iolet %d %d",updatePeriod,state->Get0IndexedTimeStep());
+          if ( (updatePeriod != 0 && state->Get0IndexedTimeStep() % updatePeriod == 0)
+              || (updatePeriod == 0 && state->Get0IndexedTimeStep() == 0))
           {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Calculating iolet cycle");
             CalculateCycle(densityCycle, state);
           }
         }

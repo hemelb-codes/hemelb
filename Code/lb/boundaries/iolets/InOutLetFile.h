@@ -30,13 +30,18 @@ namespace hemelb
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
             virtual InOutLet* Clone();
 
-            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
-                                        const SimulationState *iState);
-
             std::string PressureFilePath;
 
-            PhysicalPressure GetPressureMin(){return PressureMinPhysical;}
-            PhysicalPressure GetPressureMax(){return PressureMaxPhysical;}
+            PhysicalPressure GetPressureMin()
+            {
+              return PressureMinPhysical;
+            }
+            PhysicalPressure GetPressureMax()
+            {
+              return PressureMaxPhysical;
+            }
+          protected:
+            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState);
           private:
             PhysicalPressure PressureMinPhysical;
             PhysicalPressure PressureMaxPhysical;

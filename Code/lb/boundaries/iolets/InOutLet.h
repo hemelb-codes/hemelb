@@ -40,14 +40,8 @@ namespace hemelb
             virtual InOutLet* Clone() = 0;
 
             // Should be called before simulation starts running (including after a reset)
-            // Resizes densityCycle and calls CalculateCycle
-            /***
-             * Size the densityCycle according to the update period for this iolet,
-             * and fill it in with an initial calculation.
-             * @param densityCycle
-             * @param iState
-             */
-            virtual void InitialiseCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState) = 0;
+            // Resizes densityCycle
+            virtual unsigned int GetUpdatePeriod()=0;
 
             /***
              * Determine if it is time to update the current set of stored densities (densityCycle) for this and a few subsequent steps,
@@ -92,12 +86,9 @@ namespace hemelb
              * @return
              */
             virtual PhysicalPressure GetPressureMax()=0;
+            double GetDensity(){return density;}
+            void SetDensity(double adensity){density=adensity;}
 
-            /***
-             * !!!!! Public data member
-             * The density at the Iolet in lattice units
-             */
-            distribn_t density;
             util::Vector3D<float> Position; //! !!!!! Public data member!
             util::Vector3D<float> Normal; //! !!!!!! Public data member!
           protected:
@@ -115,7 +106,10 @@ namespace hemelb
             virtual void CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState) = 0;
 
           private:
-
+            /***
+             * The density at the Iolet in lattice units
+             */
+            distribn_t density;
         };
 
       }
