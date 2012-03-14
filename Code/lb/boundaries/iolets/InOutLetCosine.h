@@ -29,8 +29,12 @@ namespace hemelb
             virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
                                         const SimulationState *iState);
 
+
             distribn_t GetDensityMean();
             distribn_t GetDensityAmp();
+
+            PhysicalPressure GetPressureMin(){return PressureMeanPhysical-PressureAmpPhysical;}
+            PhysicalPressure GetPressureMax(){return PressureMeanPhysical +PressureAmpPhysical;}
 
             double PressureMeanPhysical;
             double PressureAmpPhysical;
