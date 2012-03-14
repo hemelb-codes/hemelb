@@ -42,12 +42,12 @@ namespace hemelb
             {
               return PressureMaxPhysical;
             }
-            LatticeDensity GetDensity(unsigned long time_step)
+            LatticeDensity GetDensity(LatticeTime time_step)
             {
               return densityTable[time_step];
             }
           private:
-            void CalculateTable(unsigned long total_time_steps);
+            void CalculateTable(LatticeTime total_time_steps);
             std::vector<LatticeDensity> densityTable;
             PhysicalPressure PressureMinPhysical;
             PhysicalPressure PressureMaxPhysical;

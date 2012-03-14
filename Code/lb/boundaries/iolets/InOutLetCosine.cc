@@ -11,7 +11,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-          InOutLet(),PressureMeanPhysical(0),PressureAmpPhysical(0),Phase(0)
+          InOutLet(),PressureMeanPhysical(0.0),PressureAmpPhysical(0.0),Phase(0.0),Period(1.0)
         {
 
         }
@@ -36,7 +36,7 @@ namespace hemelb
         LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step)
         {
           double w = 2.0 * PI / static_cast<double>(Period);
-          return GetDensityMean() + GetDensityAmp() * cos(w * static_cast<double>(time_step) + Phase);
+          return GetDensityMean() + GetDensityAmp() * cos(w * mUnits->ConvertTimeStepToPhysicalUnits(time_step) + Phase);
         }
 
         LatticeDensity InOutLetCosine::GetDensityMean()
