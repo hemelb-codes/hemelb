@@ -3,7 +3,6 @@
 
 #include "constants.h"
 #include "lb/LbmParameters.h"
-#include "D3Q15.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb

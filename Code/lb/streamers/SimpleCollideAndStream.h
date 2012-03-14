@@ -20,10 +20,11 @@ namespace hemelb
 
         private:
           CollisionType collider;
+          typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-              collider(initParams)
+            collider(initParams)
           {
 
           }
@@ -39,7 +40,7 @@ namespace hemelb
             {
               const geometry::Site site = latDat->GetSite(siteIndex);
 
-              distribn_t* lFOld = site.GetFOld();
+              distribn_t* lFOld = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
 
@@ -47,9 +48,10 @@ namespace hemelb
 
               collider.Collide(lbmParams, hydroVars);
 
-              for (unsigned int ii = 0; ii < CollisionType::CKernel::LatticeType::NUMVECTORS; ii++)
+              for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex(ii))) = lFOld[ii] = hydroVars.GetFPostCollision()[ii];
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (ii))) = lFOld[ii]
+                    = hydroVars.GetFPostCollision()[ii];
 
               }
 

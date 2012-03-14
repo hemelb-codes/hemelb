@@ -20,9 +20,10 @@ namespace hemelb
   {
 
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
+                                   const lb::lattices::LatticeInfo& latticeInfo,
                                    GeometryReadResult& readResult,
                                    reporting::Timers &atimings) :
-        readingResult(readResult), timings(atimings)
+      latticeInfo(latticeInfo), readingResult(readResult), timings(atimings)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -108,7 +109,7 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
-      fflush(NULL);
+      fflush( NULL);
 
       // Set the view to the file.
       std::string mode = "native";
@@ -213,7 +214,7 @@ namespace hemelb
         MPI_File_read(file, preambleBuffer, preambleBytes, MpiDataType(preambleBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(preambleBuffer, preambleBytes, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(preambleBuffer, preambleBytes, MpiDataType<char> (), HEADER_READING_RANK, currentComm);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::writers::xdr::XdrReader preambleReader = hemelb::io::writers::xdr::XdrMemReader(preambleBuffer,
@@ -292,7 +293,7 @@ namespace hemelb
         MPI_File_read(file, headerBuffer, (int) headerByteCount, MpiDataType(headerBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(headerBuffer, (int) headerByteCount, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(headerBuffer, (int) headerByteCount, MpiDataType<char> (), HEADER_READING_RANK, currentComm);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::writers::xdr::XdrReader preambleReader =
@@ -405,8 +406,8 @@ namespace hemelb
         MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
 
         // Spread it.
-        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
-            receiver != procsWantingThisBlock.end(); receiver++)
+        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
+            != procsWantingThisBlock.end(); receiver++)
         {
           if (*receiver != currentCommRank)
           {
@@ -479,7 +480,7 @@ namespace hemelb
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*> (const_cast<char*> (&compressed.front()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
@@ -488,7 +489,7 @@ namespace hemelb
         std::exit(1);
       }
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*> (&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
@@ -538,7 +539,7 @@ namespace hemelb
 
       const io::formats::geometry::DisplacementVector& neighbourhood = io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
-      readInSite.links.resize(D3Q15::NUMVECTORS - 1);
+      readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -573,11 +574,9 @@ namespace hemelb
         // Now, attempt to match the direction read from the local neighbourhood to one in the
         // lattice being used for simulation. If a match is found, assign the link to the read
         // site.
-        for (Direction usedLatticeDirection = 1; usedLatticeDirection < D3Q15::NUMVECTORS; usedLatticeDirection++)
+        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors(); usedLatticeDirection++)
         {
-          if (D3Q15::CX[usedLatticeDirection] == neighbourhood[readDirection].x
-              && D3Q15::CY[usedLatticeDirection] == neighbourhood[readDirection].y
-              && D3Q15::CZ[usedLatticeDirection] == neighbourhood[readDirection].z)
+          if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
           {
             // If this link direction is necessary to the lattice in use, keep the link data.
             readInSite.links[usedLatticeDirection - 1] = link;
@@ -601,7 +600,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
 
         // We check the isFluid property and the link type for each direction
-        site_t blockSiteDataLength = readingResult.GetSitesPerBlock() * (1 + D3Q15::NUMVECTORS - 1);
+        site_t blockSiteDataLength = readingResult.GetSitesPerBlock() * (1 + latticeInfo.GetNumVectors() - 1);
 
         proc_t* procForSiteRecv = new proc_t[readingResult.GetSitesPerBlock()];
         proc_t * myProcForSite = new proc_t[readingResult.GetSitesPerBlock()];
@@ -616,10 +615,11 @@ namespace hemelb
             for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
             {
               myProcForSite[localSite] = BIG_NUMBER2;
-              dummySiteData[localSite * D3Q15::NUMVECTORS] = std::numeric_limits<unsigned>::max();
-              for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+              dummySiteData[localSite * latticeInfo.GetNumVectors()] = std::numeric_limits<unsigned>::max();
+              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
-                dummySiteData[localSite * D3Q15::NUMVECTORS + direction] = std::numeric_limits<unsigned>::max();
+                dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
+                    = std::numeric_limits<unsigned>::max();
               }
             }
           }
@@ -628,18 +628,20 @@ namespace hemelb
             for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
             {
               myProcForSite[localSite] = readingResult.Blocks[block].Sites[localSite].targetProcessor;
-              dummySiteData[localSite * D3Q15::NUMVECTORS] = readingResult.Blocks[block].Sites[localSite].isFluid;
+              dummySiteData[localSite * latticeInfo.GetNumVectors()]
+                  = readingResult.Blocks[block].Sites[localSite].isFluid;
 
-              for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
                 if (readingResult.Blocks[block].Sites[localSite].isFluid)
                 {
-                  dummySiteData[localSite * D3Q15::NUMVECTORS + direction] =
-                      readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
+                      = readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
                 }
                 else
                 {
-                  dummySiteData[localSite * D3Q15::NUMVECTORS + direction] = std::numeric_limits<unsigned>::max();
+                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
+                      = std::numeric_limits<unsigned>::max();
                 }
               }
             }
@@ -663,8 +665,8 @@ namespace hemelb
 
           for (site_t site = 0; site < readingResult.GetSitesPerBlock(); ++site)
           {
-            if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank)
-                && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyRank)))
+            if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank) && (myProcForSite[site]
+                != ConvertTopologyRankToGlobalRank(topologyRank)))
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                             site,
@@ -681,26 +683,28 @@ namespace hemelb
 
             if (readingResult.Blocks[block].Sites.size() > 0)
             {
-              if (dummySiteData[site * D3Q15::NUMVECTORS] != siteDataRecv[site * D3Q15::NUMVECTORS])
+              if (dummySiteData[site * latticeInfo.GetNumVectors()] != siteDataRecv[site * latticeInfo.GetNumVectors()])
               {
                 log::Logger::Log<log::Debug, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
                                                               site,
                                                               block,
-                                                              dummySiteData[site * D3Q15::NUMVECTORS],
-                                                              siteDataRecv[site * D3Q15::NUMVECTORS]);
+                                                              dummySiteData[site * latticeInfo.GetNumVectors()],
+                                                              siteDataRecv[site * latticeInfo.GetNumVectors()]);
               }
 
-              for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
-                if (dummySiteData[site * D3Q15::NUMVECTORS + direction]
-                    != siteDataRecv[site * D3Q15::NUMVECTORS + direction])
+                if (dummySiteData[site * latticeInfo.GetNumVectors() + direction] != siteDataRecv[site
+                    * latticeInfo.GetNumVectors() + direction])
                 {
                   log::Logger::Log<log::Debug, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
                                                                 site,
                                                                 direction,
                                                                 block,
-                                                                dummySiteData[site * D3Q15::NUMVECTORS + direction],
-                                                                siteDataRecv[site * D3Q15::NUMVECTORS + direction]);
+                                                                dummySiteData[site * latticeInfo.GetNumVectors()
+                                                                    + direction],
+                                                                siteDataRecv[site * latticeInfo.GetNumVectors()
+                                                                    + direction]);
                 }
               }
 
@@ -753,14 +757,14 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
-                (neighI <= (blockI + 1)) && (neighI < readingResult.blocks.x); ++neighI)
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI <= (blockI + 1))
+                && (neighI < readingResult.blocks.x); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
-                  (neighJ <= (blockJ + 1)) && (neighJ < readingResult.blocks.y); ++neighJ)
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ <= (blockJ + 1))
+                  && (neighJ < readingResult.blocks.y); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
-                    (neighK <= (blockK + 1)) && (neighK < readingResult.blocks.z); ++neighK)
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK <= (blockK + 1))
+                    && (neighK < readingResult.blocks.z); ++neighK)
                 {
                   site_t lNeighId = readingResult.GetBlockIdFromBlockCoordinates(neighI, neighJ, neighK);
 
@@ -827,7 +831,7 @@ namespace hemelb
         MPI_Allreduce(procForEachBlock,
                       procForEachBlockRecv,
                       (int) readingResult.GetBlockCount(),
-                      MpiDataType<proc_t>(),
+                      MpiDataType<proc_t> (),
                       MPI_MAX,
                       topologyComm);
 
@@ -1008,12 +1012,12 @@ namespace hemelb
       {
         util::Vector3D<site_t>& lNew = edgeBlocks[index_a];
 
-        for (unsigned int l = 1; l < D3Q15::NUMVECTORS && blocksOnCurrentUnit < blocksPerUnit; l++)
+        for (unsigned int l = 1; l < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit; l++)
         {
           // Record neighbour location.
-          site_t neighbourI = lNew.x + D3Q15::CX[l];
-          site_t neighbourJ = lNew.y + D3Q15::CY[l];
-          site_t neighbourK = lNew.z + D3Q15::CZ[l];
+          site_t neighbourI = lNew.x + latticeInfo.GetVector(l).x;
+          site_t neighbourJ = lNew.y + latticeInfo.GetVector(l).y;
+          site_t neighbourK = lNew.z + latticeInfo.GetVector(l).z;
 
           // Move on if neighbour is outside the bounding box.
           if (neighbourI == -1 || neighbourI == readingResult.blocks.x)
@@ -1291,16 +1295,15 @@ namespace hemelb
                   }
 
                   // ... for each lattice direction...
-                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+                  for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
                   {
                     // ... which leads to a valid neighbouring site...
-                    site_t neighbourI = blockI * readingResult.blockSize + localSiteI + D3Q15::CX[l];
-                    site_t neighbourJ = blockJ * readingResult.blockSize + localSiteJ + D3Q15::CY[l];
-                    site_t neighbourK = blockK * readingResult.blockSize + localSiteK + D3Q15::CZ[l];
+                    site_t neighbourI = blockI * readingResult.blockSize + localSiteI + latticeInfo.GetVector(l).x;
+                    site_t neighbourJ = blockJ * readingResult.blockSize + localSiteJ + latticeInfo.GetVector(l).y;
+                    site_t neighbourK = blockK * readingResult.blockSize + localSiteK + latticeInfo.GetVector(l).z;
 
-                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
-                        || neighbourI >= (readingResult.blockSize * readingResult.blocks.x)
-                        || neighbourJ >= (readingResult.blockSize * readingResult.blocks.y)
+                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0 || neighbourI >= (readingResult.blockSize
+                        * readingResult.blocks.x) || neighbourJ >= (readingResult.blockSize * readingResult.blocks.y)
                         || neighbourK >= (readingResult.blockSize * readingResult.blocks.z))
                     {
                       continue;
@@ -1325,8 +1328,8 @@ namespace hemelb
                                                                                         neighbourSiteJ,
                                                                                         neighbourSiteK);
 
-                    if (neighbourBlock.Sites.size() == 0
-                        || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
+                    if (neighbourBlock.Sites.size() == 0 || neighbourBlock.Sites[neighbourSiteId].targetProcessor
+                        == BIG_NUMBER2)
                     {
                       continue;
                     }
@@ -1494,8 +1497,7 @@ namespace hemelb
           idx_t vertex = vtxDistribn[topologyRank] + index;
 
           // Iterate over each adjacency (of each vertex).
-          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
-              ++adjNumber)
+          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]); ++adjNumber)
           {
             idx_t adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
             proc_t adjacentProc = -1;
@@ -1550,8 +1552,8 @@ namespace hemelb
 
             unsigned int adjacencyIndex = 0;
 
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
-                it != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1560,13 +1562,8 @@ namespace hemelb
             }
 
             // Send the data to the neighbour.
-            MPI_Isend(data[neigh],
-                      (int) counts[neigh],
-                      MpiDataType<idx_t>(),
-                      neigh,
-                      43,
-                      topologyComm,
-                      &requests[2 * neigh + 1]);
+            MPI_Isend(data[neigh], (int) counts[neigh], MpiDataType<idx_t> (), neigh, 43, topologyComm, &requests[2
+                * neigh + 1]);
 
             // Sending arrays don't perform comparison.
             continue;
@@ -1581,13 +1578,8 @@ namespace hemelb
 
             data[neigh] = new idx_t[counts[neigh]];
 
-            MPI_Irecv(data[neigh],
-                      (int) counts[neigh],
-                      MpiDataType<idx_t>(),
-                      neigh,
-                      43,
-                      topologyComm,
-                      &requests[2 * neigh + 1]);
+            MPI_Irecv(data[neigh], (int) counts[neigh], MpiDataType<idx_t> (), neigh, 43, topologyComm, &requests[2
+                * neigh + 1]);
 
             MPI_Wait(&requests[2 * neigh] + 1, MPI_STATUS_IGNORE);
           }
@@ -1600,8 +1592,8 @@ namespace hemelb
             data[neigh] = new idx_t[counts[neigh]];
 
             int adjacencyIndex = 0;
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
-                it != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1618,8 +1610,8 @@ namespace hemelb
 
             // Go through each neighbour we know about on this proc, and check whether it
             // matches the current received neighbour-data.
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].find(data[neigh][ii + 1]);
-                it != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].find(data[neigh][ii + 1]); it
+                != adjByNeighProc[neigh].end(); ++it)
             {
               idx_t recvAdj = it->first;
               idx_t recvAdj2 = it->second;
@@ -1768,9 +1760,9 @@ namespace hemelb
                                                             fluidSitesPerBlock[fluidSiteBlock],
                                                             fluidSiteBlock,
                                                             readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                == BIG_NUMBER2 ?
-                                                              " and site is solid" :
-                                                              "");
+                                                                == BIG_NUMBER2
+                                                              ? " and site is solid"
+                                                              : "");
             }
           }
 
@@ -1802,7 +1794,7 @@ namespace hemelb
 
       // Now share all the lists of moves - create a MPI type...
       MPI_Datatype moveType;
-      MPI_Type_contiguous(3, MpiDataType<idx_t>(), &moveType);
+      MPI_Type_contiguous(3, MpiDataType<idx_t> (), &moveType);
       MPI_Type_commit(&moveType);
 
       // ... create a destination array...
@@ -1898,8 +1890,8 @@ namespace hemelb
             if (readingResult.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
             {
               // ... set its rank to be the rank it had before optimisation.
-              readingResult.Blocks[block].Sites[siteIndex].targetProcessor =
-                  ConvertTopologyRankToGlobalRank(originalProc);
+              readingResult.Blocks[block].Sites[siteIndex].targetProcessor
+                  = ConvertTopologyRankToGlobalRank(originalProc);
             }
           }
         }
@@ -1950,9 +1942,9 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank) ?
-        topologyRankIn :
-        (topologyRankIn + 1);
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank)
+        ? topologyRankIn
+        : (topologyRankIn + 1);
     }
 
   }

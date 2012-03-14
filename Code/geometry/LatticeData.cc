@@ -30,7 +30,7 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
       GeometryReadResult readGeometryData;
-      GeometryReader reader(reserveSteeringCore, readGeometryData, timings);
+      GeometryReader reader(reserveSteeringCore, latticeInfo, readGeometryData, timings);
       reader.LoadAndDecompose(dataFilePath);
 
       // Create a new lattice based on that info and return it.
@@ -113,11 +113,11 @@ namespace hemelb
           }
           bool lIsInnerSite = true;
           // Iterate over all direction vectors.
-          for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+          for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
             // Find the neighbour site co-ords in this direction.
             util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation() * readResult.blockSize
-                + siteTraverser.GetCurrentLocation() + util::Vector3D<site_t>(D3Q15::CX[l], D3Q15::CY[l], D3Q15::CZ[l]);
+                + siteTraverser.GetCurrentLocation() + util::Vector3D<site_t>(latticeInfo.GetVector(l));
 
             if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0 || neighbourGlobalCoords.z < 0
                 || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize || neighbourGlobalCoords.y
@@ -219,13 +219,11 @@ namespace hemelb
           // NB. initialised to absurdly large distance (normal scale is (0, root(3)))
           float shortestDistance = 100.0;
 
-          for (Direction direction = 1; direction < D3Q15::NUMVECTORS; ++direction)
+          for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
           {
             if (blockReadIn.Sites[localSiteId].links[direction - 1].type == LinkReadResult::WALL_INTERSECTION)
             {
-              util::Vector3D<float> distance = util::Vector3D<int>(D3Q15::CX[direction],
-                                                                   D3Q15::CY[direction],
-                                                                   D3Q15::CZ[direction])
+              util::Vector3D<float> distance = latticeInfo.GetVector(direction)
                   * blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection;
 
               if (distance.GetMagnitude() < shortestDistance)
@@ -242,7 +240,7 @@ namespace hemelb
             intraSiteNumber[l].push_back(localSiteId);
             intraSiteData[l].push_back(siteData);
             intraWallNormals[l].push_back(normal);
-            for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
+            for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
             {
               intraWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
             }
@@ -253,7 +251,7 @@ namespace hemelb
             interSiteNumber[l].push_back(localSiteId);
             interSiteData[l].push_back(siteData);
             interWallNormals[l].push_back(normal);
-            for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
+            for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
             {
               interWallDistance[l].push_back(blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection);
             }
@@ -301,10 +299,10 @@ namespace hemelb
         {
           siteData.push_back(intraSiteData[collisionType][indexInType]);
           wallNormalAtSite.push_back(intraWallNormals[collisionType][indexInType]);
-          for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
+          for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
           {
-            distanceToWall.push_back(intraWallDistance[collisionType][indexInType * (D3Q15::NUMVECTORS - 1) + direction
-                - 1]);
+            distanceToWall.push_back(intraWallDistance[collisionType][indexInType * (latticeInfo.GetNumVectors() - 1)
+                + direction - 1]);
           }
 
           site_t blockId = intraBlockNumbers[collisionType][indexInType];
@@ -323,10 +321,10 @@ namespace hemelb
         {
           siteData.push_back(interSiteData[collisionType][indexInType]);
           wallNormalAtSite.push_back(interWallNormals[collisionType][indexInType]);
-          for (Direction direction = 1; direction < D3Q15::NUMVECTORS; direction++)
+          for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
           {
-            distanceToWall.push_back(interWallDistance[collisionType][indexInType * (D3Q15::NUMVECTORS - 1) + direction
-                - 1]);
+            distanceToWall.push_back(interWallDistance[collisionType][indexInType * (latticeInfo.GetNumVectors() - 1)
+                + direction - 1]);
           }
 
           site_t blockId = interBlockNumbers[collisionType][indexInType];
@@ -339,8 +337,8 @@ namespace hemelb
         }
       }
 
-      fOld.resize(localFluidSites * D3Q15::NUMVECTORS + 1 + totalSharedFs);
-      fNew.resize(localFluidSites * D3Q15::NUMVECTORS + 1 + totalSharedFs);
+      fOld.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+      fNew.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
     }
 
     void LatticeData::CollectFluidSiteDistribution()
@@ -461,7 +459,8 @@ namespace hemelb
       {
         // Pointing to a few things, but not setting any variables.
         // FirstSharedF points to start of shared_fs.
-        neighbouringProcs[n].FirstSharedF = GetLocalFluidSiteCount() * D3Q15::NUMVECTORS + 1 + totalSharedFsSoFar;
+        neighbouringProcs[n].FirstSharedF = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors() + 1
+            + totalSharedFsSoFar;
         totalSharedFsSoFar += neighbouringProcs[n].SharedFCount;
       }
 
@@ -476,7 +475,7 @@ namespace hemelb
     {
       const proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-      neighbourIndices.resize(D3Q15::NUMVECTORS * localFluidSites);
+      neighbourIndices.resize(latticeInfo.GetNumVectors() * localFluidSites);
 
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
@@ -497,21 +496,20 @@ namespace hemelb
 
           // Set neighbour location for the distribution component at the centre of
           // this site.
-          SetNeighbourLocation(localIndex, 0, localIndex * D3Q15::NUMVECTORS + 0);
-          for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+          SetNeighbourLocation(localIndex, 0, localIndex * latticeInfo.GetNumVectors() + 0);
+          for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
             util::Vector3D<site_t> currentLocationCoords = blockTraverser.GetCurrentLocation() * blockSize
                 + siteTraverser.GetCurrentLocation();
 
             // Work out positions of neighbours.
-            util::Vector3D<site_t> neighbourCoords = currentLocationCoords + util::Vector3D<site_t>(D3Q15::CX[l],
-                                                                                                    D3Q15::CY[l],
-                                                                                                    D3Q15::CZ[l]);
+            util::Vector3D<site_t> neighbourCoords = currentLocationCoords
+                + util::Vector3D<site_t>(latticeInfo.GetVector(l));
 
             if (!IsValidLatticeSite(neighbourCoords))
             {
               // Set the neighbour location to the rubbish site.
-              SetNeighbourLocation(localIndex, l, GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
+              SetNeighbourLocation(localIndex, l, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
             }
             // Get the id of the processor which the neighbouring site lies on.
@@ -519,7 +517,7 @@ namespace hemelb
             if (proc_id_p == BIG_NUMBER2)
             {
               // initialize f_id to the rubbish site.
-              SetNeighbourLocation(localIndex, l, GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
+              SetNeighbourLocation(localIndex, l, GetLocalFluidSiteCount() * latticeInfo.GetNumVectors());
               continue;
             }
             else
@@ -533,7 +531,7 @@ namespace hemelb
             {
               // Pointer to the neighbour.
               site_t contigSiteId = GetContiguousSiteId(neighbourCoords);
-              SetNeighbourLocation(localIndex, l, contigSiteId * D3Q15::NUMVECTORS + l);
+              SetNeighbourLocation(localIndex, l, contigSiteId * latticeInfo.GetNumVectors() + l);
               continue;
             }
             else
@@ -601,7 +599,7 @@ namespace hemelb
 
       f_recv_iv.resize(totalSharedFs);
 
-      site_t f_count = GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
+      site_t f_count = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors();
       site_t sharedSitesSeen = 0;
       for (size_t m = 0; m < neighbouringProcs.size(); m++)
       {
@@ -617,10 +615,10 @@ namespace hemelb
           // Correct so that each process has the correct coordinates.
           if (neigh_proc_p->Rank < localRank)
           {
-            i += D3Q15::CX[l];
-            j += D3Q15::CY[l];
-            k += D3Q15::CZ[l];
-            l = D3Q15::INVERSEDIRECTIONS[l];
+            i += latticeInfo.GetVector(l).x;
+            j += latticeInfo.GetVector(l).y;
+            k += latticeInfo.GetVector(l).z;
+            l = latticeInfo.GetInverseIndex(l);
           }
           // Get the fluid site number of site that will send data to another process.
           util::Vector3D<site_t> location(i, j, k);
@@ -630,7 +628,7 @@ namespace hemelb
           SetNeighbourLocation(contigSiteId, (unsigned int) (l), ++f_count);
           // Set the place where we put the received distribution functions, which is
           // f_new[number of fluid site that sends, inverse direction].
-          f_recv_iv[sharedSitesSeen] = contigSiteId * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+          f_recv_iv[sharedSitesSeen] = contigSiteId * latticeInfo.GetNumVectors() + latticeInfo.GetInverseIndex(l);
           ++sharedSitesSeen;
         }
       }
@@ -774,16 +772,6 @@ namespace hemelb
       return localFluidSites;
     }
 
-    site_t LatticeData::GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const
-    {
-      return neighbourIndices[iSiteIndex * D3Q15::NUMVECTORS + iDirectionIndex];
-    }
-
-    double LatticeData::GetCutDistance(site_t iSiteIndex, int iDirection) const
-    {
-      return distanceToWall[iSiteIndex * (D3Q15::NUMVECTORS - 1) + iDirection - 1];
-    }
-
     SiteData LatticeData::GetSiteData(site_t iSiteIndex) const
     {
       return siteData[iSiteIndex];
@@ -866,7 +854,7 @@ namespace hemelb
 
     void LatticeData::SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue)
     {
-      neighbourIndices[iSiteIndex * D3Q15::NUMVECTORS + iDirection] = iValue;
+      neighbourIndices[iSiteIndex * latticeInfo.GetNumVectors() + iDirection] = iValue;
     }
 
     void LatticeData::GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const
