@@ -41,19 +41,19 @@ namespace hemelb
       }
 
       // Create streakline particles and move them.
-      void StreaklineDrawer::ProgressStreaklines(unsigned long time_steps, unsigned long time_steps_per_cycle)
+      void StreaklineDrawer::ProgressStreaklines(unsigned long time_steps, unsigned long total_time_steps)
       {
         // Set the particle creation period to be every time step, unless there are >=10000
-        // timesteps per cycle
+        // timesteps
         unsigned int particle_creation_period =
-            util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle / 5000));
+            util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (total_time_steps / 5000));
 
         int timestepsBetweenStreaklinesRounded = (int) (0.5F
-            + (float) time_steps_per_cycle / visSettings.streaklines_per_pulsatile_period);
+            + (float) total_time_steps / visSettings.streaklines_per_simulation);
 
         if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
             <= (visSettings.streakline_length / 100.0F)
-                * ((float) time_steps_per_cycle / visSettings.streaklines_per_pulsatile_period)
+                * ((float) total_time_steps / visSettings.streaklines_per_simulation)
             && time_steps % particle_creation_period == 0)
         {
           CreateParticlesFromSeeds();

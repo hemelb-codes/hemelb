@@ -105,7 +105,7 @@ namespace hemelb
                                      PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
-        const lb::MacroscopicPropertyCache& GetPropertyCache() const;
+        lb::MacroscopicPropertyCache& GetPropertyCache();
 
       private:
         void SetInitialConditions();

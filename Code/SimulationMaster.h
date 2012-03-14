@@ -42,6 +42,19 @@ class SimulationMaster
     void ResetUnstableSimulation();
     void WriteLocalImages();
     void GenerateNetworkImages();
+
+    /**
+     * Updates the property caches record of which properties need to be calculated
+     * and cached on this iteration.
+     */
+    void RecalculatePropertyRequirements();
+
+    /**
+     * True if we are to create a snapshot on this iteration.
+     * @return
+     */
+    bool IsSnapshotting();
+
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
@@ -77,8 +90,8 @@ class SimulationMaster
 
     std::vector<hemelb::net::IteratedAction*> actors;
 
-    unsigned int snapshotsPerCycle;
-    unsigned int imagesPerCycle;
+    unsigned int snapshotsPerSimulation;
+    unsigned int imagesPerSimulation;
     int steeringSessionId;
 };
 

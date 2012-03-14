@@ -16,7 +16,6 @@ namespace hemelb
 
         int timeStep;
         double time;
-        int cycle;
         int nInlets;
         double mousePressure;
         double mouseStress;
