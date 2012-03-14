@@ -3,7 +3,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/TestAssert.h>
-#include "D3Q15.h"
+#include "lb/lattices/D3Q15.h"
 #include "lb/lattices/D3Q19.h"
 #include "lb/lattices/D3Q27.h"
 
@@ -15,15 +15,15 @@ namespace hemelb
     {
       class LatticeTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(LatticeTests);
-          CPPUNIT_TEST(TestD3Q15);
-          CPPUNIT_TEST(TestD3Q19);
-          CPPUNIT_TEST(TestD3Q27);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( LatticeTests);
+          CPPUNIT_TEST( TestD3Q15);
+          CPPUNIT_TEST( TestD3Q19);
+          CPPUNIT_TEST( TestD3Q27);CPPUNIT_TEST_SUITE_END();
 
         public:
 
           LatticeTests() :
-              epsilon(1e-10)
+            epsilon(1e-10)
           {
           }
           // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
@@ -40,17 +40,17 @@ namespace hemelb
 
           void TestD3Q15()
           {
-            TestLattice<D3Q15>();
+            TestLattice<lb::lattices::D3Q15> ();
           }
 
           void TestD3Q19()
           {
-            TestLattice<lb::lattices::D3Q19>();
+            TestLattice<lb::lattices::D3Q19> ();
           }
 
           void TestD3Q27()
           {
-            TestLattice<lb::lattices::D3Q27>();
+            TestLattice<lb::lattices::D3Q27> ();
           }
 
         private:
@@ -85,8 +85,8 @@ namespace hemelb
                 }
 
                 CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
-                    || LatticeType::CY[direction] != LatticeType::CY[otherDirection]
-                    || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
+                    || LatticeType::CY[direction] != LatticeType::CY[otherDirection] || LatticeType::CZ[direction]
+                    != LatticeType::CZ[otherDirection]);
               }
             }
 
@@ -187,14 +187,14 @@ namespace hemelb
                                                      entropicCalculatedVelocity[2]);
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, allowedError);
-// Turns out that this only passes for D3Q27      CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensity, targetDensity, allowedError);
+            // Turns out that this only passes for D3Q27      CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensity, targetDensity, allowedError);
 
             for (Direction direction = 0; direction < 3; direction++)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction], targetH[direction], allowedError);
-// Turns out that this only passes for D3Q27              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocity[direction],
-//                                           targetH[direction],
-//                                           allowedError);
+              // Turns out that this only passes for D3Q27              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocity[direction],
+              //                                           targetH[direction],
+              //                                           allowedError);
             }
 
             /*
@@ -233,7 +233,7 @@ namespace hemelb
           const double epsilon;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(LatticeTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( LatticeTests);
     }
   }
 }
