@@ -11,7 +11,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-          InOutLetCycle<1, false> ()
+          InOutLet(),PressureMeanPhysical(0),PressureAmpPhysical(0),Phase(0)
         {
 
         }
@@ -33,23 +33,18 @@ namespace hemelb
 
         }
 
-        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
+        LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step)
         {
-          double w = 2.0 * PI / (double) iState->GetTotalTimeSteps();
-
-          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
-          {
-            densityCycle[time_step] = GetDensityMean() + GetDensityAmp() * cos(w * (double) (time_step
-                + iState->Get0IndexedTimeStep()) + Phase);
-          }
+          double w = 2.0 * PI / static_cast<double>(Period);
+          return GetDensityMean() + GetDensityAmp() * cos(w * static_cast<double>(time_step) + Phase);
         }
 
-        distribn_t InOutLetCosine::GetDensityMean()
+        LatticeDensity InOutLetCosine::GetDensityMean()
         {
           return  mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
         }
 
-        distribn_t InOutLetCosine::GetDensityAmp()
+        LatticeDensity InOutLetCosine::GetDensityAmp()
         {
           return mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
         }

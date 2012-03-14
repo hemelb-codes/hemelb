@@ -16,6 +16,8 @@ namespace hemelb
   {
     namespace boundaries
     {
+      class BoundaryComms;
+      //forward decl;
       namespace iolets
       {
 
@@ -39,24 +41,27 @@ namespace hemelb
              */
             virtual InOutLet* Clone() = 0;
 
-            // Should be called before simulation starts running (including after a reset)
-            // Resizes densityCycle
-            virtual unsigned int GetUpdatePeriod(unsigned int total_time_steps)=0;
-
-            /***
-             * Determine if it is time to update the current set of stored densities (densityCycle) for this and a few subsequent steps,
-             * and if so, do so by calling CalculateCycle
-             * @param densityCycle
-             * @param iState
-             */
-            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState) = 0;
-
             /***
              * Carry out any communication needed for the IOLet.
              * @return true if any comms were done.
              */
-            virtual bool DoComms() = 0;
+            virtual bool GetIsCommsRequired()
+            {
+              return false;
+            }
 
+            void SetComms(BoundaryComms * acomms)
+            {
+              comms = acomms;
+            }
+            BoundaryComms * GetComms()
+            {
+              return comms;
+            }
+            virtual void DoComms(bool is_io_proc)
+            {
+              // pass
+            }
             /***
              * Set up the Iolet.
              * @param units a UnitConverter instance.
@@ -86,32 +91,14 @@ namespace hemelb
              * @return
              */
             virtual PhysicalPressure GetPressureMax()=0;
-            double GetDensity(){return density;}
-            void SetDensity(double adensity){density=adensity;}
-
+            virtual LatticeDensity GetDensity(unsigned long time_step)=0;
+            virtual void Reset(SimulationState &state)=0;
             util::Vector3D<float> Position; //! !!!!! Public data member!
             util::Vector3D<float> Normal; //! !!!!!! Public data member!
           protected:
             const util::UnitConverter* mUnits;
-            /***
-             * Fill in a vector of values of the density for this IOLet.
-             * The Iolet will not subsequently calculate it's density values, but will read them from this buffer.
-             * This array is NOT typically one value for each point in the pulsatile cycle.
-             * The length of the densityCycle argument is an arbitrary choice of how often to calculate the densities for this and some subsequent steps.
-             * This length is usually one, indicating that the calculation is done every time step,
-             * or zero, indicating that the calculation is done once for the whole simulation.
-             * @param densityCycle An array of densities for this iolet
-             * @param iState Simulation state for the iolet
-             */
-            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState) = 0;
-
-          private:
-            /***
-             * The density at the Iolet in lattice units
-             */
-            distribn_t density;
+            BoundaryComms * comms;
         };
-
       }
     }
   }

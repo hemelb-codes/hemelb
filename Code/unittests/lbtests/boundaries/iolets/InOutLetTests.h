@@ -74,10 +74,8 @@ namespace hemelb
                 double targetMeanDensity = 1
                     + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensityMean());
-                std::vector<distribn_t> densitiesBuffer(1);
-                cosine->UpdateCycle(densitiesBuffer, &state);
-                CPPUNIT_ASSERT_EQUAL(1, static_cast<int>(densitiesBuffer.size()));
-                CPPUNIT_ASSERT_EQUAL(targetMeanDensity, densitiesBuffer[0]);
+                cosine->Reset(state);
+                CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensity(0));
               }
               void TestFileConstruct()
               {
@@ -93,10 +91,7 @@ namespace hemelb
                 file = static_cast<InOutLetFile*>(config->Inlets[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);
-
-                std::vector<distribn_t> densitiesBuffer(state.GetTotalTimeSteps());
-                CPPUNIT_ASSERT_EQUAL(0lu,state.Get0IndexedTimeStep());
-                file->UpdateCycle(densitiesBuffer, &state);
+                file->Reset(state);
 
                 CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
                 CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
@@ -110,11 +105,10 @@ namespace hemelb
                     + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 double targetMidDensity = 1
                     + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(),1e-6);
 
-                CPPUNIT_ASSERT_EQUAL(state.GetTotalTimeSteps(), static_cast<unsigned long>(densitiesBuffer.size()));
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, densitiesBuffer[0],1e-6);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity, densitiesBuffer[state.GetTotalTimeSteps()/2],1e-6);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(),1e-6);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensity(0),1e-6);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity, file->GetDensity(state.GetTotalTimeSteps()/2),1e-6);
                 FolderTestFixture::tearDown();
               }
               InOutLetCosine *cosine;

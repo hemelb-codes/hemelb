@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETFILE_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETFILE_H
 
-#include "lb/boundaries/iolets/InOutLetCycle.h"
+#include "lb/boundaries/iolets/InOutLet.h"
 
 namespace hemelb
 {
@@ -21,15 +21,17 @@ namespace hemelb
          * zero, because it may not be what you expect - see comments on CalculateCycle in
          * cc file.
          */
-        class InOutLetFile : public InOutLetCycle<0, false>
+        class InOutLetFile : public InOutLet
         {
           public:
             InOutLetFile();
             virtual ~InOutLetFile();
-
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
             virtual InOutLet* Clone();
-
+            virtual void Reset(SimulationState &state)
+            {
+              CalculateTable(state.GetTotalTimeSteps());
+            }
             std::string PressureFilePath;
 
             PhysicalPressure GetPressureMin()
@@ -40,9 +42,13 @@ namespace hemelb
             {
               return PressureMaxPhysical;
             }
-          protected:
-            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState);
+            LatticeDensity GetDensity(unsigned long time_step)
+            {
+              return densityTable[time_step];
+            }
           private:
+            void CalculateTable(unsigned long total_time_steps);
+            std::vector<LatticeDensity> densityTable;
             PhysicalPressure PressureMinPhysical;
             PhysicalPressure PressureMaxPhysical;
         };

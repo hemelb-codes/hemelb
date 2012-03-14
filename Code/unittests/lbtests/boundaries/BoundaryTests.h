@@ -49,10 +49,10 @@ namespace hemelb
             {
               double targetStartDensity = pressureToDensity(80.0 - 1.0);
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
-                                                        latDat,
-                                                        simConfig->Inlets,
-                                                        simState,
-                                                        unitConverter);
+                                          latDat,
+                                          simConfig->Inlets,
+                                          simState,
+                                          unitConverter);
               CPPUNIT_ASSERT_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0));
               delete inlets;
             }
@@ -66,17 +66,17 @@ namespace hemelb
               inlets->RequestComms();
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
 
-              for (unsigned int step = 0; step < simState->GetTotalTimeSteps() / 2; step++)
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2; simState->Increment())
               {
-                simState->Increment();
+                //pass
               }
               inlets->RequestComms();
 
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 + 1.0), inlets->GetBoundaryDensity(0));
 
-              for (unsigned int step = 0; step < simState->GetTotalTimeSteps() / 2; step++)
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps(); simState->Increment())
               {
-                simState->Increment();
+                //pass
               }
               inlets->RequestComms();
 
@@ -93,29 +93,29 @@ namespace hemelb
                   configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
 
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
-                                                        latDat,
-                                                        fileInletConfig->Inlets,
-                                                        simState,
-                                                        unitConverter);
+                                          latDat,
+                                          fileInletConfig->Inlets,
+                                          simState,
+                                          unitConverter);
               inlets->RequestComms();
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0),1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 
-              for (unsigned int step = 0; step < simState->GetTotalTimeSteps() / 2; step++)
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2; simState->Increment())
               {
-                simState->Increment();
+                //pass
               }
               inlets->RequestComms();
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(82.0), inlets->GetBoundaryDensity(0),1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(82.0), inlets->GetBoundaryDensity(0), 1e-6);
 
-              for (unsigned int step = 0; step < simState->GetTotalTimeSteps() / 2; step++)
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps(); simState->Increment())
               {
-                simState->Increment();
+                //pass
               }
               inlets->RequestComms();
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0),1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 
               FolderTestFixture::tearDown();
               delete inlets;
