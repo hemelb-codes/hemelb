@@ -41,7 +41,7 @@ namespace hemelb
 
             // Should be called before simulation starts running (including after a reset)
             // Resizes densityCycle
-            virtual unsigned int GetUpdatePeriod()=0;
+            virtual unsigned int GetUpdatePeriod(unsigned int total_time_steps)=0;
 
             /***
              * Determine if it is time to update the current set of stored densities (densityCycle) for this and a few subsequent steps,
