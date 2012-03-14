@@ -25,26 +25,26 @@ namespace hemelb
         void SetDoRendering(bool value);
         void SetStability(Stability value);
 
-        unsigned long GetTimeStep() const;
-        unsigned long Get0IndexedTimeStep() const;
+        LatticeTime GetTimeStep() const;
+        LatticeTime Get0IndexedTimeStep() const;
 
-        unsigned long GetTimeStepsPassed() const;
-        unsigned long GetTotalTimeSteps() const;
+        LatticeTime GetTimeStepsPassed() const;
+        LatticeTime GetTotalTimeSteps() const;
         bool GetIsTerminating() const;
         bool GetDoRendering() const;
         Stability GetStability() const;
 
-        double GetTime() const {return GetTimeStepLength()*GetTimeStep();}
-        double GetTimeStepLength() const {return TimeStepLength;}
+        PhysicalTime GetTime() const {return GetTimeStepLength()*GetTimeStep();}
+        PhysicalTime GetTimeStepLength() const {return TimeStepLength;}
         void DoubleTimeResolution();
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
-        double TimeStepLength;
-        unsigned long TimeStep;
-        unsigned long TimeStepsGone;
-        unsigned long TotalTimeSteps;
+        PhysicalTime TimeStepLength;
+        LatticeTime TimeStep;
+        LatticeTime TimeStepsGone;
+        LatticeTime TotalTimeSteps;
         bool IsTerminating;
         bool DoRendering;
         Stability mStability;

@@ -20,8 +20,8 @@ namespace hemelb
          * for some IOlets to be updated at regular intervals from the BCproc whilst allowing others
          * with simpler updating rules to update locally and save on communications.
          *
-         * @tparam updatePeriod densityCycle is recalculated every updatePeriod time steps. If
-         *                 it is 0 then the densityCycle is only initialised at the begining
+         * @tparam updatePeriod densityBuffer is recalculated every updatePeriod time steps. If
+         *                 it is 0 then the densityBuffer is only initialised at the begining
          *                 and updated only when simulation is reset
          * @tparam comms if true BCproc updates values and sends them out. If false relevant procs update
          *          locally.
@@ -35,7 +35,7 @@ namespace hemelb
             {
               return comms;
             }
-            LatticeDensity GetDensity(unsigned long time_step)
+            LatticeDensity GetDensity(LatticeTime time_step)
             {
               if (!GetIsCommsRequired())
               {
@@ -48,7 +48,7 @@ namespace hemelb
             {
               densityBuffer.resize(state.GetTotalTimeSteps());
             }
-            virtual void DoComms(bool is_io_proc, unsigned long time_step);
+            virtual void DoComms(bool is_io_proc, LatticeTime time_step);
           protected:
             InOutLetCycle() :
                 InOutLet(), densityBuffer()
@@ -66,20 +66,18 @@ namespace hemelb
              * The length of the densityCycle argument is an arbitrary choice of how often to calculate the densities for this and some subsequent steps.
              * This length is usually one, indicating that the calculation is done every time step,
              * or zero, indicating that the calculation is done once for the whole simulation.
-             * @param densityCycle An array of densities for this iolet
-             * @param iState Simulation state for the iolet
              */
             virtual void CalculateCycle() = 0; // fill the density buffer
 
           private:
-            void UpdateCycle(unsigned long time_step)
+            void UpdateCycle(LatticeTime time_step)
             {
               if (shouldUpdateBuffer(time_step))
               {
                 CalculateCycle();
               }
             }
-            bool shouldUpdateBuffer(unsigned int time_step)
+            bool shouldUpdateBuffer(LatticeTime time_step)
             {
               if (updatePeriod == 0)
               {

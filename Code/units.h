@@ -32,5 +32,8 @@ namespace hemelb
   typedef double PhysicalStress;
   typedef distribn_t LatticeStress;
   typedef float ScreenStress;
+
+  typedef unsigned long LatticeTime; // lattice time steps.
+  typedef double PhysicalTime; // seconds
 }
 #endif //HEMELB_UNITS_H
