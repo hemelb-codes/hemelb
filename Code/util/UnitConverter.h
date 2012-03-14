@@ -35,6 +35,10 @@ namespace hemelb
         }
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
+        PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
+        {
+          return static_cast<double>(time_step)*mState->GetTimeStepLength();
+        }
       private:
         lb::LbmParameters* mParams;
         lb::SimulationState* mState;

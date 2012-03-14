@@ -24,9 +24,8 @@ namespace hemelb
             virtual ~InOutLetCosine();
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
             virtual InOutLet* Clone();
-            virtual void Reset(SimulationState &state)
-            {
-              Period=state.GetTotalTimeSteps();
+            virtual void Reset(SimulationState &state){
+              //pass;
             }
             LatticeDensity GetDensityMean();
             LatticeDensity GetDensityAmp();

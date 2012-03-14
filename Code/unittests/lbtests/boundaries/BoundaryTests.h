@@ -66,7 +66,7 @@ namespace hemelb
               inlets->RequestComms();
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2; simState->Increment())
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20; simState->Increment())
               {
                 //pass
               }
@@ -74,7 +74,7 @@ namespace hemelb
 
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 + 1.0), inlets->GetBoundaryDensity(0));
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps(); simState->Increment())
+              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10; simState->Increment())
               {
                 //pass
               }
