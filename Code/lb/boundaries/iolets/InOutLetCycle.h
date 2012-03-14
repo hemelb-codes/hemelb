@@ -58,9 +58,6 @@ namespace hemelb
         void InOutLetCycle<updatePeriod, comms>::InitialiseCycle(std::vector<distribn_t> &densityCycle,
                                                                  const SimulationState *state)
         {
-          // Currently this is unnecessary, but it may be only done here in the future
-          // Only called when initialising so doesn't impact performance anyway
-          ResetValues();
 
           if (updatePeriod == 0)
           {
