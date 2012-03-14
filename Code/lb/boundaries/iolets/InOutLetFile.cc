@@ -4,6 +4,7 @@
 #include "lb/boundaries/iolets/InOutLetFile.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
 

@@ -19,8 +19,7 @@ namespace hemelb
                       const geometry::LatticeData * iLatDat,
                       net::Net* net,
                       SimulationState* simState) :
-            net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
-            mLatDat(iLatDat)
+          net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR), mLatDat(iLatDat)
         {
           for (unsigned int i = 0; i < COLLISION_TYPES; i++)
           {
@@ -60,7 +59,7 @@ namespace hemelb
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
 
-                HFunction<LatticeType> HFunc(site.GetFOld(), NULL);
+                HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
               }
             }
@@ -76,7 +75,7 @@ namespace hemelb
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
 
-                HFunction<LatticeType> HFunc(site.GetFOld(), NULL);
+                HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
               }
             }
@@ -117,7 +116,7 @@ namespace hemelb
          */
         void ProgressFromChildren(unsigned long splayNumber)
         {
-          ReceiveFromChildren<int>(mChildrensValues, 1);
+          ReceiveFromChildren<int> (mChildrensValues, 1);
         }
 
         void ProgressToParent(unsigned long splayNumber)
@@ -132,7 +131,7 @@ namespace hemelb
               for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
-                HFunction<LatticeType> HFunc(site.GetFOld(), NULL);
+                HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 mHPreCollision[i] = HFunc.eval();
               }
             }
@@ -147,7 +146,7 @@ namespace hemelb
               for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
-                HFunction<LatticeType> HFunc(site.GetFOld(), NULL);
+                HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 mHPreCollision[i] = HFunc.eval();
               }
             }
@@ -155,7 +154,7 @@ namespace hemelb
             offset += mLatDat->GetInterCollisionCount(collision_type);
           }
 
-          SendToParent<int>(&mUpwardsValue, 1);
+          SendToParent<int> (&mUpwardsValue, 1);
         }
 
         /**

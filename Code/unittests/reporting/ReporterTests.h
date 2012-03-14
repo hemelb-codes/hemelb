@@ -17,13 +17,13 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef lb::IncompressibilityChecker<net::BroadcastMock, D3Q15> IncompressibilityCheckerMock;
+      typedef lb::IncompressibilityChecker<net::BroadcastMock, lb::lattices::D3Q15> IncompressibilityCheckerMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(ReporterTests);
-          CPPUNIT_TEST(TestInit);
-          CPPUNIT_TEST(TestMainReport);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( ReporterTests);
+          CPPUNIT_TEST( TestInit);
+          CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -34,7 +34,7 @@ namespace hemelb
             state = new hemelb::lb::SimulationState(0.0001,1000);
             net = new net::Net();
             latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
-            lbtests::LbTestsHelper::InitialiseAnisotropicTestData<D3Q15>(latticeData);
+            lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *realTimers, 10.0);
             reporter = new Reporter("mock_path", "exampleinputfile");
@@ -88,8 +88,7 @@ namespace hemelb
 
             CheckTimingsTable();
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
-            AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
-                           "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ", "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
             AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
@@ -148,7 +147,7 @@ namespace hemelb
           reporting::BuildInfo *buildInfo;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(ReporterTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);
 
     }
   }
