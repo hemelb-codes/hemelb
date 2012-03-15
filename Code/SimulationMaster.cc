@@ -392,7 +392,7 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
   timings[hemelb::reporting::Timers::simulation].Start();
 
-  for (; simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps(); simulationState->Increment())
+  while (simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps())
   {
     DoTimeStep();
     if (simulationState->GetTimeStepsPassed() > 400000)
@@ -407,6 +407,11 @@ void SimulationMaster::RunSimulation()
   }
 
   timings[hemelb::reporting::Timers::simulation].Stop();
+  Finalise();
+}
+
+ void SimulationMaster::Finalise()
+ {
   timings[hemelb::reporting::Timers::total].Stop();
   timings.Reduce();
   if (IsCurrentProcTheIOProc())
@@ -505,6 +510,7 @@ void SimulationMaster::DoTimeStep()
   {
     fflush(NULL);
   }
+  simulationState->Increment();
 }
 
 void SimulationMaster::RecalculatePropertyRequirements()

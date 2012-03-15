@@ -31,6 +31,14 @@ class SimulationMaster
     int GetProcessorCount();
 
     void RunSimulation();
+    hemelb::lb::SimulationState * const GetState(){
+      return simulationState;
+    }
+    void Finalise();
+  protected:
+    hemelb::lb::boundaries::BoundaryValues* inletValues;
+    hemelb::lb::boundaries::BoundaryValues* outletValues;
+    virtual void DoTimeStep();
 
   private:
     typedef hemelb::lb::lattices::D3Q15 latticeType;
@@ -42,7 +50,6 @@ class SimulationMaster
     void ResetUnstableSimulation();
     void WriteLocalImages();
     void GenerateNetworkImages();
-    void DoTimeStep();
     /**
      * Updates the property caches record of which properties need to be calculated
      * and cached on this iteration.
@@ -78,8 +85,6 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
-    hemelb::lb::boundaries::BoundaryValues* inletValues;
-    hemelb::lb::boundaries::BoundaryValues* outletValues;
     hemelb::net::Net communicationNet;
 
     hemelb::util::UnitConverter* unitConvertor;
