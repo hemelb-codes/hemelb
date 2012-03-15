@@ -42,7 +42,7 @@ class SimulationMaster
     void ResetUnstableSimulation();
     void WriteLocalImages();
     void GenerateNetworkImages();
-
+    void DoTimeStep();
     /**
      * Updates the property caches record of which properties need to be calculated
      * and cached on this iteration.
@@ -93,6 +93,7 @@ class SimulationMaster
     unsigned int snapshotsPerSimulation;
     unsigned int imagesPerSimulation;
     int steeringSessionId;
+    unsigned int imagesPeriod;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

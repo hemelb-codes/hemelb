@@ -8,8 +8,7 @@ namespace hemelb
   {
 
     SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
-         TimeStepLength(timeStepLength), TimeStep(1), TimeStepsGone(1),
-        TotalTimeSteps(totalTimeSteps), IsTerminating(false), DoRendering(false), mStability(Stable)
+        TimeStepLength(timeStepLength), TimeStep(1), TimeStepsGone(1), TotalTimeSteps(totalTimeSteps), IsTerminating(false), DoRendering(false), mStability(Stable)
     {
     }
 
@@ -79,9 +78,13 @@ namespace hemelb
 
     void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
     {
-      dictionary.SetFormattedValue("TIME_STEP_LENGTH","%lf",GetTimeStepLength());
+      dictionary.SetFormattedValue("TIME_STEP_LENGTH", "%lf", GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStepsPassed() - 1);
       dictionary.SetIntValue("TOTAL_TIME_STEPS", GetTotalTimeSteps());
+      if ( mStability == lb::Unstable)
+      {
+        dictionary.AddSectionDictionary("UNSTABLE");
+      }
     }
   }
 }

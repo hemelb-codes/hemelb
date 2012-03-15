@@ -57,10 +57,6 @@ namespace hemelb
         {
           return dictionary;
         }
-        void Stability(bool astability) //! Tell the reporter the current simulation stability state.
-        {
-          stability = astability;
-        }
       private:
         const std::string &path;
         void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
