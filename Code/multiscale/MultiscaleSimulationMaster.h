@@ -1,5 +1,5 @@
-#ifndef HEMELB_MULTISCALE_MULTISCALE_SIMULATION_MASTER_H
-#define HEMELB_MULTISCALE_MULTISCALE_SIMULATION_MASTER_H
+#ifndef HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
+#define HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
 #include <vector>
 #include "multiscale/Intercommunicator.h"
 #include "SimulationMaster.h"
@@ -19,7 +19,16 @@ namespace hemelb
           {
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,multiscaleIoletType);
+              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
+                                                                                                                multiscaleIoletType);
+            }
+          }
+          for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
+          {
+            if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
+            {
+              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
+                                                                                                                 multiscaleIoletType);
             }
           }
         }
