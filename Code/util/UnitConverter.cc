@@ -46,7 +46,7 @@ namespace hemelb
     {
       // convert stress from lattice units to physical units (Pa)
       return stress * (CharacteristicVelocity*CharacteristicVelocity*BLOOD_DENSITY_Kg_per_m3);
-      // stress=Force per unit area=mass * length / time^2 / length*2=mass / length * time*2
+      // stress=Force per unit area=mass * length / time^2 / length^2=mass / length * time^2
       // = mass * (length/time)^2 / length^3
     }
 
