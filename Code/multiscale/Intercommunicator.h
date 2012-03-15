@@ -1,8 +1,8 @@
 #ifndef HEMELB_MULTISCALE_INTERCOMMUNICATOR_H
 #define HEMELB_MULTISCALE_INTERCOMMUNICATOR_H
 
-#include "IntercommunicandType.h"
-#include "Intercommunicand.h"
+#include "multiscale/IntercommunicandType.h"
+#include "multiscale/Intercommunicand.h"
 #include <map>
 
 namespace hemelb

@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
-#define HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
+#ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
+#define HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
 #include "multiscale/Intercommunicator.h"
 #include "tinyxml.h"
 
@@ -43,11 +43,11 @@ namespace hemelb
           void AdvanceTime(double new_time)
           {
             current_time = new_time;
-            double_contents["shared_time"]=new_time;
+            double_contents["shared_time"] = new_time;
           }
           bool ShouldAdvance()
           {
-            return double_contents["shared_time"]>=current_time;
+            return double_contents["shared_time"] >= current_time;
           }
 
           bool GetFromMultiscale()
@@ -58,6 +58,7 @@ namespace hemelb
               hemelb::multiscale::Intercommunicand &shared_object = *intercommunicand_data->first;
               std::string &label = intercommunicand_data->second.second;
               IntercommunicandTypeT &resolver = *intercommunicand_data->second.first;
+
               for (unsigned int shared_field_index = 0; shared_field_index <= shared_object.Values().size();
                   shared_field_index++)
               {
@@ -94,7 +95,9 @@ namespace hemelb
           {
             if (type == ExampleTypeTraits<double>::type)
             {
-              static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents = double_contents[object_label + "_" + field_label];
+              static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents = double_contents[object_label
+                  + "_" + field_label];
+
             }
 
           }
@@ -105,7 +108,8 @@ namespace hemelb
           {
             if (type == ExampleTypeTraits<double>::type)
             {
-              double_contents[object_label + "_" + field_label] = static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents;
+              double_contents[object_label + "_" + field_label] =
+                  static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents;
             }
 
           }
