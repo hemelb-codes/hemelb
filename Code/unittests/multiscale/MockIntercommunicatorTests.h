@@ -121,8 +121,7 @@ namespace hemelb
         private:
           void TestCRRun()
           {
-            // In this example, we imagine we are coupling inlets in two different instances of HemeLB.
-            // Each has it's own instance of an intercommunicator - these would be running in different processes.
+            // In this example, we imagine we are coupling a mock hemelb with a zero-d capacitative model.
             // Our example intercommunicator has been hard coded with how to share the values.
             // In principle, though, this would be defined by whatever configuration file format the implementing intercommunicator wants to use.
             for (int steps = 0; steps < 100; steps++)
@@ -164,8 +163,8 @@ namespace hemelb
               heme->DoTimeStep();
               //std::cout << "Heme: I: p:" << heme->inlet.GetDensity() << " v:" << heme->inlet.GetVelocity() << " O: p: "
               //    << heme->outlet.GetDensity() << " v:" << heme->outlet.GetVelocity() << std::endl;
-              std::cout << "Zerod: @" << zerod->current_time << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
-                  << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
+              //std::cout << "Zerod: @" << zerod->current_time << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
+              //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
             }
             heme->Finalise();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->current_time,1e-6);
