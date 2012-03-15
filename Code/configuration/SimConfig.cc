@@ -16,8 +16,8 @@ namespace hemelb
     // should go into some Tiny XML abstraction layer. This would remove the need for the IOLet
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
-    SimConfig::SimConfig()
-      :LEGACY_PULSATILE_PERIOD(60.0/70.0)
+    SimConfig::SimConfig() :
+        LEGACY_PULSATILE_PERIOD(60.0 / 70.0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -287,20 +287,30 @@ namespace hemelb
           // Determine which InOutlet to create
           // This is done by checking if a path is specified
           std::string PFilePath;
+          std::string MultiscaleLabel;
           DoIOForString(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
-                        "path",
+                                        "path",
+                                        iIsLoading,
+                                        PFilePath);
+          DoIOForString(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
+                        "label",
                         iIsLoading,
-                        PFilePath);
+                        MultiscaleLabel);
           lb::boundaries::iolets::InOutLet *lNew;
-          if (PFilePath == "")
-          {
-            // If no file is specified we use a cosine trace
-            lNew = new lb::boundaries::iolets::InOutLetCosine();
-          }
-          else
+          if (PFilePath != "")
           {
             // If there is a file specified we use it
             lNew = new lb::boundaries::iolets::InOutLetFile();
+
+          }
+          else if (MultiscaleLabel != "")
+          {
+            lNew = new lb::boundaries::iolets::InOutLetMultiscale();
+          }
+          else
+          {
+            // If no file is specified we use a cosine trace
+            lNew = new lb::boundaries::iolets::InOutLetCosine();
           }
 
           lNew->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
@@ -512,7 +522,7 @@ namespace hemelb
 
       if (!DoIOForDouble(lPressureElement, "period", iIsLoading, value->Period) && iIsLoading)
       {
-        value->Period=LEGACY_PULSATILE_PERIOD;
+        value->Period = LEGACY_PULSATILE_PERIOD;
       }
     }
 
@@ -525,6 +535,20 @@ namespace hemelb
       TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
       DoIOForString(lPressureElement, "path", iIsLoading, value->PressureFilePath);
+
+      DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
+      DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);
+    }
+
+    void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *iParent,
+                                              bool iIsLoading,
+                                              lb::boundaries::iolets::InOutLetMultiscale* const value)
+    {
+      TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
+      TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
+      TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
+
+      DoIOForString(lPressureElement, "label", iIsLoading, value->Label);
 
       DoIOForFloatVector(lPositionElement, iIsLoading, value->Position);
       DoIOForFloatVector(lNormalElement, iIsLoading, value->Normal);

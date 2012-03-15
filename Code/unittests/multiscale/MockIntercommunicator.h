@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTEST_MULTISCALE_INTERCOMMUNICATOR_EXAMPLE_IMPLEMENTATION_H
-#define HEMELB_UNITTEST_MULTISCALE_INTERCOMMUNICATOR_EXAMPLE_IMPLEMENTATION_H
+#ifndef HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
+#define HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
 #include "multiscale/Intercommunicator.h"
 #include "tinyxml.h"
 
@@ -9,7 +9,7 @@
 #include <sstream>
 namespace hemelb
 {
-  namespace unittest
+  namespace unittests
   {
     namespace multiscale
     {
@@ -31,9 +31,7 @@ namespace hemelb
           }
       };
 
-      using namespace hemelb::multiscale;
-
-      class MockIntercommunicator : public Intercommunicator<ExampleRuntimeTypeImplementation>
+      class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<ExampleRuntimeTypeImplementation>
       {
         public:
           MockIntercommunicator(std::map<std::string, double> & buffer) :
@@ -49,7 +47,7 @@ namespace hemelb
           }
           bool ShouldAdvance()
           {
-            return double_contents["shared_time"]>=current_time;;
+            return double_contents["shared_time"]>=current_time;
           }
 
           bool GetFromMultiscale()
@@ -57,7 +55,7 @@ namespace hemelb
             for (ContentsType::iterator intercommunicand_data = registered_objects.begin();
                 intercommunicand_data != registered_objects.end(); intercommunicand_data++)
             {
-              Intercommunicand &shared_object = *intercommunicand_data->first;
+              hemelb::multiscale::Intercommunicand &shared_object = *intercommunicand_data->first;
               std::string &label = intercommunicand_data->second.second;
               IntercommunicandTypeT &resolver = *intercommunicand_data->second.first;
               for (unsigned int shared_field_index = 0; shared_field_index <= shared_object.Values().size();
@@ -76,7 +74,7 @@ namespace hemelb
             for (ContentsType::iterator intercommunicand_data = registered_objects.begin();
                 intercommunicand_data != registered_objects.end(); intercommunicand_data++)
             {
-              Intercommunicand &shared_object = *intercommunicand_data->first;
+              hemelb::multiscale::Intercommunicand &shared_object = *intercommunicand_data->first;
               std::string &label = intercommunicand_data->second.second;
               IntercommunicandTypeT &resolver = *intercommunicand_data->second.first;
               for (unsigned int shared_field_index = 0; shared_field_index <= shared_object.Values().size();
@@ -92,22 +90,22 @@ namespace hemelb
           void Receive(const std::string & field_label,
                        RuntimeType type,
                        const std::string object_label,
-                       BaseSharedValue & value)
+                       hemelb::multiscale::BaseSharedValue & value)
           {
             if (type == ExampleTypeTraits<double>::type)
             {
-              static_cast<SharedValue<double> &>(value).contents = double_contents[object_label + "_" + field_label];
+              static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents = double_contents[object_label + "_" + field_label];
             }
 
           }
           void Send(const std::string & field_label,
                     RuntimeType type,
                     const std::string object_label,
-                    BaseSharedValue & value)
+                    hemelb::multiscale::BaseSharedValue & value)
           {
             if (type == ExampleTypeTraits<double>::type)
             {
-              double_contents[object_label + "_" + field_label] = static_cast<SharedValue<double> &>(value).contents;
+              double_contents[object_label + "_" + field_label] = static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents;
             }
 
           }
@@ -119,4 +117,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_UNITTEST_MULTISCALE_INTERCOMMUNICATOR_EXAMPLE_IMPLEMENTATION_H
+#endif // HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
