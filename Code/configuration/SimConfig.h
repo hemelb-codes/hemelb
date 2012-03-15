@@ -71,7 +71,7 @@ namespace hemelb
 
         void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
         TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
-        static const double LEGACY_PULSATILE_PERIOD=60.0/70.0;
+        const double LEGACY_PULSATILE_PERIOD;
     };
   }
 }
