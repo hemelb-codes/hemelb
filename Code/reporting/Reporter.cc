@@ -41,11 +41,6 @@ namespace hemelb
       dictionary.SetIntValue("IMAGES", imageCount);
       dictionary.SetIntValue("SNAPSHOTS", snapshotCount);
 
-      if (!stability)
-      {
-        dictionary.AddSectionDictionary("UNSTABLE");
-      }
-
       for (std::vector<Reportable*>::iterator reporters = reportableObjects.begin();
           reporters != reportableObjects.end(); reporters++)
       {
