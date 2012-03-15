@@ -35,7 +35,7 @@ namespace hemelb
 
         LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step)
         {
-          double w = 2.0 * PI / static_cast<double>(Period);
+          double w = 2.0 * PI / Period;
           return GetDensityMean() + GetDensityAmp() * cos(w * mUnits->ConvertTimeStepToPhysicalUnits(time_step) + Phase);
         }
 
