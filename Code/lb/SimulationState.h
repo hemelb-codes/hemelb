@@ -34,7 +34,7 @@ namespace hemelb
         bool GetDoRendering() const;
         Stability GetStability() const;
 
-        PhysicalTime GetTime() const {return GetTimeStepLength()*GetTimeStep();}
+        PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
         PhysicalTime GetTimeStepLength() const {return TimeStepLength;}
         void DoubleTimeResolution();
 

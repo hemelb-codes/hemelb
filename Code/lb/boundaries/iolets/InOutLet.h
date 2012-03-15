@@ -49,7 +49,9 @@ namespace hemelb
             {
               return false;
             }
-
+            virtual bool IsRegistrationRequired(){
+                return false;
+              }
             void SetComms(BoundaryComms * acomms)
             {
               comms = acomms;

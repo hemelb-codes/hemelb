@@ -36,7 +36,14 @@ namespace hemelb
 
           static bool IsCurrentProcTheBCProc();
           static proc_t GetBCProcRank();
-
+          iolets::InOutLet* GetLocalIolet(unsigned int index)
+          {
+            return iolets[ioletIDs[index]];
+          }
+          unsigned int GetLocalIoletCount()
+          {
+            return nIOlets;
+          }
         private:
           bool IsIOletOnThisProc(geometry::SiteType IOtype, geometry::LatticeData* iLatDat, int iBoundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
@@ -50,7 +57,8 @@ namespace hemelb
 
           SimulationState* mState;
           util::UnitConverter* mUnits;
-      };
+      }
+      ;
     }
   }
 }

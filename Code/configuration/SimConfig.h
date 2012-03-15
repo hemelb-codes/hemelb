@@ -44,6 +44,9 @@ namespace hemelb
                                    bool iIsLoading,
                                    lb::boundaries::iolets::InOutLetCosine* value);
         void DoIOForFileInOutlet(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::iolets::InOutLetFile* value);
+        void DoIOForMultiscaleInOutlet(TiXmlElement *iXmlNode,
+                                       bool iIsLoading,
+                                       lb::boundaries::iolets::InOutLetMultiscale* value);
       protected:
         SimConfig();
 
@@ -66,7 +69,9 @@ namespace hemelb
         void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
         void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
         void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile* file);
-        void DoIOForLineGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::StraightLineGeometrySelector*& line);
+        void DoIOForLineGeometry(TiXmlElement *iXmlNode,
+                                 bool iIsLoading,
+                                 extraction::StraightLineGeometrySelector*& line);
         void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);

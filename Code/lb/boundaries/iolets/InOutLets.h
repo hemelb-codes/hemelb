@@ -5,5 +5,6 @@
 #include "lb/boundaries/iolets/InOutLetCosine.h"
 #include "lb/boundaries/iolets/InOutLetFile.h"
 #include "lb/boundaries/iolets/InOutLetCycle.h"
+#include "lb/boundaries/iolets/InOutLetMultiscale.h"
 
 #endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H */
