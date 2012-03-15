@@ -126,7 +126,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  simulationState = new hemelb::lb::SimulationState(simConfig->TimeStepLength,simConfig->TotalTimeSteps);
+  simulationState = new hemelb::lb::SimulationState(simConfig->TimeStepLength, simConfig->TotalTimeSteps);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
@@ -226,6 +226,30 @@ void SimulationMaster::Initialise()
     propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
                                                               simConfig->propertyOutputs,
                                                               *propertyDataSource);
+  }
+
+  imagesPeriod = OutputPeriod(imagesPerSimulation);
+
+
+  actors.push_back(latticeBoltzmannModel);
+  actors.push_back(inletValues);
+  actors.push_back(outletValues);
+  actors.push_back(steeringCpt);
+  actors.push_back(stabilityTester);
+  if (entropyTester != NULL)
+  {
+    actors.push_back(entropyTester);
+  }
+  actors.push_back(incompressibilityChecker);
+  actors.push_back(visualisationControl);
+  if (propertyExtractor != NULL)
+  {
+    actors.push_back(propertyExtractor);
+  }
+
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  {
+    actors.push_back(network);
   }
 }
 
@@ -366,145 +390,22 @@ void SimulationMaster::GenerateNetworkImages()
 void SimulationMaster::RunSimulation()
 {
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
-
   timings[hemelb::reporting::Timers::simulation].Start();
-  unsigned int imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  bool isFinished = false;
-  hemelb::lb::Stability stability = hemelb::lb::Stable;
-
-  actors.push_back(latticeBoltzmannModel);
-  actors.push_back(inletValues);
-  actors.push_back(outletValues);
-  actors.push_back(steeringCpt);
-  actors.push_back(stabilityTester);
-  if (entropyTester != NULL)
+  for (; simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps(); simulationState->Increment())
   {
-    actors.push_back(entropyTester);
-  }
-  actors.push_back(incompressibilityChecker);
-  actors.push_back(visualisationControl);
-  if (propertyExtractor != NULL)
-  {
-    actors.push_back(propertyExtractor);
-  }
-
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-  {
-    actors.push_back(network);
-  }
-
-  for (; simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps() && !isFinished;
-      simulationState->Increment())
-  {
-
-    bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
-      true :
-      false;
-
-    // Make sure we're rendering if we're writing this iteration.
-    if (writeSnapshotImage)
+    DoTimeStep();
+    if (simulationState->GetTimeStepsPassed() > 400000)
     {
-      snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                        simulationState->GetTimeStepsPassed()));
-    }
-
-    if (simulationState->GetDoRendering())
-    {
-      networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                            simulationState->GetTimeStepsPassed()));
-      simulationState->SetDoRendering(false);
-    }
-
-    /* In the following two if blocks we do the core magic to ensure we only Render
-     when (1) we are not sending a frame or (2) we need to output to disk */
-
-    /* for debugging purposes we want to ensure we capture the variables in a single
-     instant of time since variables might be altered by the thread half way through?
-     This is to be done. */
-
-    bool renderForNetworkStream = false;
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-    {
-      renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
-      steeringCpt->readyForNextImage = renderForNetworkStream;
-    }
-
-    if (simulationState->GetTimeStep() % 100 == 0)
-    {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
-                                                                          simulationState->GetTimeStep(),
-                                                                          renderForNetworkStream,
-                                                                          writeSnapshotImage,
-                                                                          simulationState->GetDoRendering());
-
-    }
-
-    RecalculatePropertyRequirements();
-
-    HandleActors();
-
-    stability = hemelb::lb::Stable;
-
-    if (simulationState->GetStability() == hemelb::lb::Unstable)
-    {
-      ResetUnstableSimulation();
-      imagesPeriod = OutputPeriod(imagesPerSimulation);
-      continue;
-    }
-
-#ifndef NO_STREAKLINES
-    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
-#endif
-
-    if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
-    {
-      WriteLocalImages();
-
-    }
-
-    if (networkImagesCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
-    {
-      GenerateNetworkImages();
-    }
-
-    timings[hemelb::reporting::Timers::snapshot].Start();
-
-    if (IsSnapshotting())
-    {
-      if (IsCurrentProcTheIOProc())
-      {
-        reporter->Snapshot();
-      }
-      latticeBoltzmannModel->WriteConfigParallel(stability, fileManager->SnapshotPath(simulationState->GetTimeStep()));
-    }
-
-    timings[hemelb::reporting::Timers::snapshot].Stop();
-
-    if (stability == hemelb::lb::StableAndConverged)
-    {
-      isFinished = true;
+      simulationState->SetStability(hemelb::lb::Unstable);
       break;
     }
     if (simulationState->GetIsTerminating())
     {
-      isFinished = true;
       break;
-    }
-    if (simulationState->GetTotalTimeSteps() > 400000)
-    {
-      if (IsCurrentProcTheIOProc())
-      {
-        reporter->Stability(false);
-      }
-      break;
-    }
-
-    if (simulationState->GetTimeStep()%1000==0 && IsCurrentProcTheIOProc())
-    {
-      fflush(NULL);
     }
   }
+
   timings[hemelb::reporting::Timers::simulation].Stop();
   timings[hemelb::reporting::Timers::total].Stop();
   timings.Reduce();
@@ -516,14 +417,104 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
+void SimulationMaster::DoTimeStep()
+{
+  bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
+    true :
+    false;
+
+// Make sure we're rendering if we're writing this iteration.
+  if (writeSnapshotImage)
+  {
+    snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
+                                                                      simulationState->GetTimeStepsPassed()));
+  }
+
+  if (simulationState->GetDoRendering())
+  {
+    networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
+                                                                          simulationState->GetTimeStepsPassed()));
+    simulationState->SetDoRendering(false);
+  }
+
+  /* In the following two if blocks we do the core magic to ensure we only Render
+   when (1) we are not sending a frame or (2) we need to output to disk */
+
+  /* for debugging purposes we want to ensure we capture the variables in a single
+   instant of time since variables might be altered by the thread half way through?
+   This is to be done. */
+
+  bool renderForNetworkStream = false;
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  {
+    renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
+    steeringCpt->readyForNextImage = renderForNetworkStream;
+  }
+
+  if (simulationState->GetTimeStep() % 100 == 0)
+  {
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
+                                                                        simulationState->GetTimeStep(),
+                                                                        renderForNetworkStream,
+                                                                        writeSnapshotImage,
+                                                                        simulationState->GetDoRendering());
+
+  }
+
+  RecalculatePropertyRequirements();
+
+  HandleActors();
+
+  if (simulationState->GetStability() == hemelb::lb::Unstable)
+  {
+    ResetUnstableSimulation();
+    imagesPeriod = OutputPeriod(imagesPerSimulation);
+    return;
+  }
+
+#ifndef NO_STREAKLINES
+  visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
+#endif
+
+  if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
+  {
+    WriteLocalImages();
+
+  }
+
+  if (networkImagesCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
+  {
+    GenerateNetworkImages();
+  }
+
+  timings[hemelb::reporting::Timers::snapshot].Start();
+
+  if (IsSnapshotting())
+  {
+    if (IsCurrentProcTheIOProc())
+    {
+      reporter->Snapshot();
+    }
+    latticeBoltzmannModel->WriteConfigParallel(simulationState->GetStability(),
+                                               fileManager->SnapshotPath(simulationState->GetTimeStep()));
+  }
+
+  timings[hemelb::reporting::Timers::snapshot].Stop();
+
+  if (simulationState->GetTimeStep() % 1000 == 0 && IsCurrentProcTheIOProc())
+  {
+    fflush(NULL);
+  }
+}
+
 void SimulationMaster::RecalculatePropertyRequirements()
 {
-  // Get the property cache & reset its list of properties to get.
+// Get the property cache & reset its list of properties to get.
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
   propertyCache.ResetRequirements();
 
-  // Check whether we're rendering images or snapshotting on this iteration.
+// Check whether we're rendering images or snapshotting on this iteration.
   if (visualisationControl->IsRendering() || IsSnapshotting())
   {
     propertyCache.densityCache.SetRefreshFlag();
@@ -539,13 +530,13 @@ void SimulationMaster::RecalculatePropertyRequirements()
     }
   }
 
-  // If extracting property results, check what's required by them.
+// If extracting property results, check what's required by them.
   if (propertyExtractor != NULL)
   {
     propertyExtractor->SetRequiredProperties(propertyCache);
   }
 
-  // If using streaklines, the velocity will be needed.
+// If using streaklines, the velocity will be needed.
 #ifndef NO_STREAKLINES
   propertyCache.velocityCache.SetRefreshFlag();
 #endif
@@ -563,8 +554,8 @@ void SimulationMaster::Abort()
 {
   MPI_Abort(MPI_COMM_WORLD, 1);
 
-  // This gives us something to work from when we have an error - we get the rank
-  // that calls abort, and we get a stack-trace from the exception having been thrown.
+// This gives us something to work from when we have an error - we get the rank
+// that calls abort, and we get a stack-trace from the exception having been thrown.
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
   exit(1);
 }
