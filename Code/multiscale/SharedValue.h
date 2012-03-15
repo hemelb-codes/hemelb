@@ -1,6 +1,6 @@
-#ifndef HEMELB_MULTISCALE_SHARED_VALUE_H
-#define HEMELB_MULTISCALE_SHARED_VALUE_H
-#include "Intercommunicand.h"
+#ifndef HEMELB_MULTISCALE_SHAREDVALUE_H
+#define HEMELB_MULTISCALE_SHAREDVALUE_H
+#include "multiscale/Intercommunicand.h"
 
 namespace hemelb
 {
@@ -38,4 +38,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_MULTISCALE_INTERCOMMUNICAND_H
+#endif // HEMELB_MULTISCALE_SHAREDVALUE_H

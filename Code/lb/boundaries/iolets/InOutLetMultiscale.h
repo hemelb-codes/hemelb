@@ -4,6 +4,7 @@
 #include "lb/boundaries/iolets/InOutLet.h"
 #include "multiscale/Intercommunicand.h"
 #include "multiscale/SharedValue.h"
+#include "log/Logger.h"
 namespace hemelb
 {
   namespace lb
@@ -35,6 +36,12 @@ namespace hemelb
             virtual InOutLet* Clone()
             {
               InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
+              // copy constructor must copy pointers to the new locations of the shared data into the copy's reference buffer.
+              copy->Values().clear();
+              copy->RegisterSharedValue(&copy->Pressure);
+              copy->RegisterSharedValue(&copy->MinPressure);
+              copy->RegisterSharedValue(&copy->MaxPressure);
+              copy->RegisterSharedValue(&copy->Velocity);
               return copy;
             }
             virtual void Reset(SimulationState &state)
@@ -47,7 +54,9 @@ namespace hemelb
             }
             LatticeDensity GetDensity(unsigned long time_step)
             {
+              Velocity = 0.1;
               return mUnits->ConvertPressureToLatticeUnits(Pressure);
+
             }
             PhysicalPressure GetPressureMin()
             {

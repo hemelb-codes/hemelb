@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATORTESTS_H
-#define HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATORTESTS_H
+#ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATORTESTS_H
+#define HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATORTESTS_H
 #include "unittests/multiscale/MockIntercommunicand.h"
 #include "resources/Resource.h"
 #include "unittests/multiscale/MockIntercommunicator.h"
@@ -94,6 +94,18 @@ namespace hemelb
 
       };
 
+
+      // Useful for debugging to have this.
+      std::ostream & operator <<(std::ostream & stream, std::map<std::string,double> buffer){
+        stream << " { ";
+        for (std::map<std::string,double>::iterator entry=buffer.begin();entry!=buffer.end();entry++){
+          stream << entry->first << " : " << entry->second << " , ";
+        }
+        stream << " } ";
+        stream << std::flush;
+        return stream;
+      }
+
       class MockIntercommunicatorTests : public FolderTestFixture
       {
           CPPUNIT_TEST_SUITE(MockIntercommunicatorTests);
@@ -165,6 +177,7 @@ namespace hemelb
               //    << heme->outlet.GetDensity() << " v:" << heme->outlet.GetVelocity() << std::endl;
               //std::cout << "Zerod: @" << zerod->current_time << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
               //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
+              //std::cout << *pbuffer << std::endl;
             }
             heme->Finalise();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->current_time,1e-6);
