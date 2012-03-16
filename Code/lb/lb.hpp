@@ -108,12 +108,12 @@ namespace hemelb
     {
       distribn_t density = 0.0;
 
-      for (int i = 0; i < outlets; i++)
+      for (int i = 0; i < OutletCount(); i++)
       {
         density += mOutletValues->GetDensityMin(i);
       }
 
-      density /= outlets;
+      density /= OutletCount();
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
@@ -318,19 +318,21 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadParameters()
     {
-      inlets = (int) mSimConfig->Inlets.size();
-      outlets = (int) mSimConfig->Outlets.size();
+      std::vector<lb::boundaries::iolets::InOutLet*> inlets= mSimConfig->GetInlets();
+      std::vector<lb::boundaries::iolets::InOutLet*> outlets= mSimConfig->GetOutlets();
+      inletCount = inlets.size();
+      outletCount = outlets.size();
 
-      inlet_normal = new distribn_t[3 * inlets];
+      inlet_normal = new distribn_t[3 * InletCount()];
 
-      for (int ii = 0; ii < inlets; ii++)
+      for (unsigned int ii = 0; ii < inletCount; ii++)
       {
-        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
-        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
-        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
+        inlet_normal[3 * ii] = inlets[ii]->Normal.x;
+        inlet_normal[3 * ii + 1] = inlets[ii]->Normal.y;
+        inlet_normal[3 * ii + 2] = inlets[ii]->Normal.z;
       }
 
-      mParams.StressType = mSimConfig->StressType;
+      mParams.StressType = mSimConfig->GetStressType();
     }
 
     template<class LatticeType>
@@ -517,15 +519,15 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
+      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->GetMaximumVelocity());
+      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->GetMaximumStress());
 
-      for (int i = 0; i < inlets; i++)
+      for (int i = 0; i < InletCount(); i++)
       {
         density_min = util::NumericalFunctions::min(density_min, mInletValues->GetDensityMin(i));
         density_max = util::NumericalFunctions::max(density_max, mInletValues->GetDensityMax(i));
       }
-      for (int i = 0; i < outlets; i++)
+      for (int i = 0; i < OutletCount(); i++)
       {
         density_min = util::NumericalFunctions::min(density_min, mOutletValues->GetDensityMin(i));
         density_max = util::NumericalFunctions::max(density_max, mOutletValues->GetDensityMax(i));
@@ -536,7 +538,7 @@ namespace hemelb
       distribn_t lVelocity_threshold_max_inv = 1.0F / velocity_max;
       distribn_t lStress_threshold_max_inv = 1.0F / stress_max;
 
-      mVisControl->SetSomeParams(mSimConfig->VisBrightness,
+      mVisControl->SetSomeParams(mSimConfig->GetVisualisationBrightness(),
                                  lDensity_threshold_min,
                                  lDensity_threshold_minmax_inv,
                                  lVelocity_threshold_max_inv,

@@ -72,12 +72,12 @@ namespace hemelb
 
           void TestRead()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath);
+            reader->LoadAndDecompose(simConfig->GetDataFilePath());
           }
 
           void TestSameAsFourCube()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath);
+            reader->LoadAndDecompose(simConfig->GetDataFilePath());
 
             site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)

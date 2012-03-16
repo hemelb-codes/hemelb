@@ -19,17 +19,17 @@ namespace hemelb
           inlet->Phase = PI;
           inlet->Period = 60.0/70.0;
 
-          Inlets.push_back(inlet);
+          inlets.push_back(inlet);
 
           lb::boundaries::iolets::InOutLetCosine* outlet = new lb::boundaries::iolets::InOutLetCosine();
           outlet->PressureAmpPhysical = 0.0;
           outlet->PressureMeanPhysical = 80.0;
           outlet->Phase = 0.0;
 
-          Outlets.push_back(outlet);
+          outlets.push_back(outlet);
 
-          TotalTimeSteps = 10000;
-          TimeStepLength = 60.0/(70.0*1000.0);
+          totalTimeSteps = 10000;
+          timeStepLength = 60.0/(70.0*1000.0);
         }
     };
   }

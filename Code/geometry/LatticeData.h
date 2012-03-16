@@ -42,7 +42,7 @@ namespace hemelb
 
         static LatticeData* Load(const bool reserveSteeringCore,
                                  const lb::lattices::LatticeInfo& latticeInfo,
-                                 std::string& dataFilePath,
+                                 const std::string& dataFilePath,
                                  reporting::Timers &timings);
 
         virtual ~LatticeData();

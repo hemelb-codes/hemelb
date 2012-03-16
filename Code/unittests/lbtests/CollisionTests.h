@@ -37,12 +37,12 @@ namespace hemelb
             // Create the inlet and outlet boundary objects.
             inletBoundary = new lb::boundaries::BoundaryValues(geometry::INLET_TYPE,
                                                                latDat,
-                                                               simConfig->Inlets,
+                                                               simConfig->GetInlets(),
                                                                simState,
                                                                unitConverter);
             outletBoundary = new lb::boundaries::BoundaryValues(geometry::OUTLET_TYPE,
                                                                 latDat,
-                                                                simConfig->Outlets,
+                                                                simConfig->GetOutlets(),
                                                                 simState,
                                                                 unitConverter);
 
