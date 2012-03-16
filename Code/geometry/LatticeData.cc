@@ -23,7 +23,7 @@ namespace hemelb
 
     LatticeData* LatticeData::Load(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
-                                   std::string& dataFilePath,
+                                   const std::string& dataFilePath,
                                    reporting::Timers &timings)
     {
       // Use a reader to read in the file.

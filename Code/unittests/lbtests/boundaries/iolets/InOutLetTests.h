@@ -55,11 +55,11 @@ namespace hemelb
                  */
                 configuration::SimConfig *config =
                     configuration::SimConfig::Load(Resource("config.xml").Path().c_str());
-                lb::SimulationState state = lb::SimulationState(config->TimeStepLength, config->TotalTimeSteps);
+                lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(), config->GetTotalTimeSteps());
                 double voxel_size = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxel_size);
                 util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxel_size);
-                cosine = static_cast<InOutLetCosine*>(config->Inlets[0]);
+                cosine = static_cast<InOutLetCosine*>(config->GetInlets()[0]);
                 CPPUNIT_ASSERT_EQUAL(80.1, cosine->PressureMeanPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->PressureAmpPhysical);
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->Phase);
@@ -85,11 +85,11 @@ namespace hemelb
                 MoveToTempdir();
                 configuration::SimConfig *config =
                     configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
-                lb::SimulationState state = lb::SimulationState(config->TimeStepLength, config->TotalTimeSteps);
+                lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(), config->GetTotalTimeSteps());
                 double voxel_size = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxel_size);
                 util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxel_size);
-                file = static_cast<InOutLetFile*>(config->Inlets[0]);
+                file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);
                 file->Reset(state);
