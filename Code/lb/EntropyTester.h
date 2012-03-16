@@ -55,7 +55,7 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
+              for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
 
@@ -64,14 +64,14 @@ namespace hemelb
               }
             }
 
-            offset += mLatDat->GetInnerCollisionCount(collision_type);
+            offset += mLatDat->GetMidDomainCollisionCount(collision_type);
           }
 
           for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
+              for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
 
@@ -80,7 +80,7 @@ namespace hemelb
               }
             }
 
-            offset += mLatDat->GetInterCollisionCount(collision_type);
+            offset += mLatDat->GetDomainEdgeCollisionCount(collision_type);
           }
 
           /*
@@ -128,7 +128,7 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
+              for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
@@ -136,14 +136,14 @@ namespace hemelb
               }
             }
 
-            offset += mLatDat->GetInnerCollisionCount(collision_type);
+            offset += mLatDat->GetMidDomainCollisionCount(collision_type);
           }
 
           for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
+              for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
                 geometry::ConstSite site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
@@ -151,7 +151,7 @@ namespace hemelb
               }
             }
 
-            offset += mLatDat->GetInterCollisionCount(collision_type);
+            offset += mLatDat->GetDomainEdgeCollisionCount(collision_type);
           }
 
           SendToParent<int> (&mUpwardsValue, 1);
