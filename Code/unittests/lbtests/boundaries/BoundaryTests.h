@@ -17,22 +17,16 @@ namespace hemelb
       {
         using namespace hemelb::lb::boundaries;
         using namespace resources;
-        /**
-         * Class to test the collision operators. These tests are for the functions involved in
-         * calculating the post-collision values, specifically CalculatePreCollision and Collide.
-         * For each collision operator, we test that these functions return the expected values of
-         * hydrodynamic quantities and f-distribution values.
-         *
-         * Note that we are only testing collision operators here, so we
-         * can assume that the kernel objects work perfectly.
+        /***
+         * Class asserting behaviour of boundary-collection objects and the boundaries (in- and out- lets) within them.
          */
         class BoundaryTests : public helpers::FourCubeBasedTestFixture
         {
           CPPUNIT_TEST_SUITE(BoundaryTests);
-              CPPUNIT_TEST(TestConstruct);
-              CPPUNIT_TEST(TestUpdate);
-              CPPUNIT_TEST(TestUpdateFile);
-            CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestConstruct);
+          CPPUNIT_TEST(TestUpdate);
+          CPPUNIT_TEST(TestUpdateFile);
+          CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
