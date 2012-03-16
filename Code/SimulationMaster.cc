@@ -321,8 +321,8 @@ void SimulationMaster::ResetUnstableSimulation()
 void SimulationMaster::WriteLocalImages()
 {
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      snapshotsCompleted.find(simulationState->GetTimeStepsPassed());
-      it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStepsPassed(); ++it)
+      snapshotsCompleted.find(simulationState->GetTimeStep());
+      it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -342,14 +342,14 @@ void SimulationMaster::WriteLocalImages()
     }
   }
 
-  snapshotsCompleted.erase(simulationState->GetTimeStepsPassed());
+  snapshotsCompleted.erase(simulationState->GetTimeStep());
 }
 
 void SimulationMaster::GenerateNetworkImages()
 {
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      networkImagesCompleted.find(simulationState->GetTimeStepsPassed());
-      it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStepsPassed(); ++it)
+      networkImagesCompleted.find(simulationState->GetTimeStep());
+      it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
@@ -381,7 +381,7 @@ void SimulationMaster::GenerateNetworkImages()
     }
   }
 
-  networkImagesCompleted.erase(simulationState->GetTimeStepsPassed());
+  networkImagesCompleted.erase(simulationState->GetTimeStep());
 }
 
 /**
@@ -392,10 +392,10 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
   timings[hemelb::reporting::Timers::simulation].Start();
 
-  while (simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps())
+  while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
   {
     DoTimeStep();
-    if (simulationState->GetTimeStepsPassed() > 400000)
+    if (simulationState->GetTimeStep() > 400000)
     {
       simulationState->SetStability(hemelb::lb::Unstable);
       break;
@@ -432,13 +432,13 @@ void SimulationMaster::DoTimeStep()
   if (writeSnapshotImage)
   {
     snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                      simulationState->GetTimeStepsPassed()));
+                                                                      simulationState->GetTimeStep()));
   }
 
   if (simulationState->GetDoRendering())
   {
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                          simulationState->GetTimeStepsPassed()));
+                                                                          simulationState->GetTimeStep()));
     simulationState->SetDoRendering(false);
   }
 
@@ -481,13 +481,13 @@ void SimulationMaster::DoTimeStep()
   visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
 #endif
 
-  if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
+  if (snapshotsCompleted.count(simulationState->GetTimeStep()) > 0)
   {
     WriteLocalImages();
 
   }
 
-  if (networkImagesCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
+  if (networkImagesCompleted.count(simulationState->GetTimeStep()) > 0)
   {
     GenerateNetworkImages();
   }

@@ -638,7 +638,7 @@ namespace hemelb
 
       base::Reset();
 
-      ClearOut(base::mSimState->GetTimeStepsPassed() + 1);
+      ClearOut(base::mSimState->GetTimeStep() + 1);
     }
 
     Control::~Control()
