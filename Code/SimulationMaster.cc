@@ -400,7 +400,7 @@ void SimulationMaster::RunSimulation()
       simulationState->SetStability(hemelb::lb::Unstable);
       break;
     }
-    if (simulationState->GetIsTerminating())
+    if (simulationState->IsTerminating())
     {
       break;
     }
@@ -435,11 +435,11 @@ void SimulationMaster::DoTimeStep()
                                                                       simulationState->GetTimeStep()));
   }
 
-  if (simulationState->GetDoRendering())
+  if (simulationState->IsRendering())
   {
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                           simulationState->GetTimeStep()));
-    simulationState->SetDoRendering(false);
+    simulationState->SetIsRendering(false);
   }
 
   /* In the following two if blocks we do the core magic to ensure we only Render
@@ -462,7 +462,7 @@ void SimulationMaster::DoTimeStep()
                                                                         simulationState->GetTimeStep(),
                                                                         renderForNetworkStream,
                                                                         writeSnapshotImage,
-                                                                        simulationState->GetDoRendering());
+                                                                        simulationState->IsRendering());
 
   }
 

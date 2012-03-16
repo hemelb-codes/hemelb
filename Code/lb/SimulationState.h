@@ -22,29 +22,29 @@ namespace hemelb
         void Increment();
         void Reset();
         void SetIsTerminating(bool value);
-        void SetDoRendering(bool value);
+        void SetIsRendering(bool value);
         void SetStability(Stability value);
 
         LatticeTime GetTimeStep() const;
         LatticeTime Get0IndexedTimeStep() const;
         LatticeTime GetTotalTimeSteps() const;
-        bool GetIsTerminating() const;
-        bool GetDoRendering() const;
+        bool IsTerminating() const;
+        bool IsRendering() const;
         Stability GetStability() const;
 
         PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
-        PhysicalTime GetTimeStepLength() const {return TimeStepLength;}
+        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
         void DoubleTimeResolution();
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
       private:
-        PhysicalTime TimeStepLength;
-        LatticeTime TimeStep;
-        LatticeTime TotalTimeSteps;
-        bool IsTerminating;
-        bool DoRendering;
-        Stability mStability;
+        PhysicalTime timeStepLength;
+        LatticeTime timeStep;
+        LatticeTime totalTimeSteps;
+        bool isTerminating;
+        bool isRendering;
+        Stability stability;
     };
   }
 }
