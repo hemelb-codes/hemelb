@@ -7,66 +7,66 @@ namespace hemelb
   namespace lb
   {
 
-    SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
-        TimeStepLength(timeStepLength), TimeStep(1),TotalTimeSteps(totalTimeSteps), IsTerminating(false), DoRendering(false), mStability(Stable)
+    SimulationState::SimulationState(double atimeStepLength, unsigned long atotalTimeSteps) :
+        timeStepLength(atimeStepLength), timeStep(1), totalTimeSteps(atotalTimeSteps), isTerminating(false), isRendering(false), stability(Stable)
     {
     }
 
     void SimulationState::Increment()
     {
-      ++TimeStep;
+      ++timeStep;
     }
 
     void SimulationState::Reset()
     {
-      TimeStep = 1;
+      timeStep = 1;
     }
 
     void SimulationState::SetIsTerminating(bool value)
     {
-      IsTerminating = value;
+      isTerminating = value;
     }
-    void SimulationState::SetDoRendering(bool value)
+    void SimulationState::SetIsRendering(bool value)
     {
-      DoRendering = value;
+      isRendering = value;
     }
     void SimulationState::SetStability(Stability value)
     {
-      mStability = value;
+      stability = value;
     }
 
     unsigned long SimulationState::GetTimeStep() const
     {
-      return TimeStep;
+      return timeStep;
     }
 
     unsigned long SimulationState::Get0IndexedTimeStep() const
     {
-      return TimeStep - 1;
+      return timeStep - 1;
     }
 
     unsigned long SimulationState::GetTotalTimeSteps() const
     {
-      return TotalTimeSteps;
+      return totalTimeSteps;
     }
 
-    bool SimulationState::GetIsTerminating() const
+    bool SimulationState::IsTerminating() const
     {
-      return IsTerminating;
+      return isTerminating;
     }
-    bool SimulationState::GetDoRendering() const
+    bool SimulationState::IsRendering() const
     {
-      return DoRendering;
+      return isRendering;
     }
     Stability SimulationState::GetStability() const
     {
-      return mStability;
+      return stability;
     }
 
     void SimulationState::DoubleTimeResolution()
     {
-      TotalTimeSteps *= 2;
-      TimeStepLength /= 2.0;
+      totalTimeSteps *= 2;
+      timeStepLength /= 2.0;
     }
 
     void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
@@ -74,7 +74,7 @@ namespace hemelb
       dictionary.SetFormattedValue("TIME_STEP_LENGTH", "%lf", GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStep() - 1);
       dictionary.SetIntValue("TOTAL_TIME_STEPS", GetTotalTimeSteps());
-      if ( mStability == lb::Unstable)
+      if (stability == lb::Unstable)
       {
         dictionary.AddSectionDictionary("UNSTABLE");
       }

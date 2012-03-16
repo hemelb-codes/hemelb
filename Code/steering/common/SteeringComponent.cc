@@ -59,7 +59,7 @@ namespace hemelb
       mVisControl->visSettings.streakline_length
           = privateSteeringParams[StreallineLength];
 
-      mSimState->SetDoRendering(1 == (int) privateSteeringParams[SetDoRendering]);
+      mSimState->SetIsRendering(1 == (int) privateSteeringParams[SetDoRendering]);
 
       mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 
