@@ -27,8 +27,6 @@ namespace hemelb
 
         LatticeTime GetTimeStep() const;
         LatticeTime Get0IndexedTimeStep() const;
-
-        LatticeTime GetTimeStepsPassed() const;
         LatticeTime GetTotalTimeSteps() const;
         bool GetIsTerminating() const;
         bool GetDoRendering() const;
@@ -43,7 +41,6 @@ namespace hemelb
       private:
         PhysicalTime TimeStepLength;
         LatticeTime TimeStep;
-        LatticeTime TimeStepsGone;
         LatticeTime TotalTimeSteps;
         bool IsTerminating;
         bool DoRendering;

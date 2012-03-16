@@ -46,7 +46,7 @@ namespace hemelb
          */
         unsigned long Start()
         {
-          unsigned long currentTimeStep = base::mSimState->GetTimeStepsPassed();
+          unsigned long currentTimeStep = base::mSimState->GetTimeStep();
           unsigned long finishTime = currentTimeStep + base::GetRoundTripLength() - 1;
 
           // If it's going to take longer than is available for the simulation, assume the
@@ -83,7 +83,7 @@ namespace hemelb
          */
         void RequestComms()
         {
-          const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
+          const unsigned long currentIt = base::mSimState->GetTimeStep();
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long firstDescent = base::GetFirstDescending();
 
@@ -162,7 +162,7 @@ namespace hemelb
           {
             if (IsInitialAction())
             {
-              InitialAction(base::mSimState->GetTimeStepsPassed());
+              InitialAction(base::mSimState->GetTimeStep());
             }
           }
         }
@@ -176,7 +176,7 @@ namespace hemelb
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long traversalLength = base::GetTraverseTime();
           const unsigned long cycleLength = base::GetRoundTripLength();
-          const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
+          const unsigned long currentIt = base::mSimState->GetTimeStep();
 
           for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
@@ -265,7 +265,7 @@ namespace hemelb
         {
           for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
-            if (*it == base::mSimState->GetTimeStepsPassed())
+            if (*it == base::mSimState->GetTimeStep())
             {
               return true;
             }
