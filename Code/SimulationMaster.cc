@@ -126,14 +126,14 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  simulationState = new hemelb::lb::SimulationState(simConfig->TimeStepLength, simConfig->TotalTimeSteps);
+  simulationState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(), simConfig->GetTotalTimeSteps());
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
   latticeData = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                                     latticeType::GetLatticeInfo(),
-                                                    simConfig->DataFilePath,
+                                                    simConfig->GetDataFilePath(),
                                                     timings);
   timings[hemelb::reporting::Timers::netInitialise].Stop();
 
@@ -188,13 +188,13 @@ void SimulationMaster::Initialise()
 
   inletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::INLET_TYPE,
                                                            latticeData,
-                                                           simConfig->Inlets,
+                                                           simConfig->GetInlets(),
                                                            simulationState,
                                                            unitConvertor);
 
   outletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
                                                             latticeData,
-                                                            simConfig->Outlets,
+                                                            simConfig->GetOutlets(),
                                                             simulationState,
                                                             unitConvertor);
 
@@ -214,17 +214,17 @@ void SimulationMaster::Initialise()
                                                                     *latticeData,
                                                                     *unitConvertor);
 
-  if (simConfig->propertyOutputs.size() > 0)
+  if (simConfig->PropertyOutputCount() > 0)
   {
 
-    for (unsigned outputNumber = 0; outputNumber < simConfig->propertyOutputs.size(); ++outputNumber)
+    for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount(); ++outputNumber)
     {
-      simConfig->propertyOutputs[outputNumber]->filename = fileManager->GetDataExtractionPath()
-          + simConfig->propertyOutputs[outputNumber]->filename;
+      simConfig->GetPropertyOutput(outputNumber)->filename = fileManager->GetDataExtractionPath()
+          + simConfig->GetPropertyOutput(outputNumber)->filename;
     }
 
     propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
-                                                              simConfig->propertyOutputs,
+                                                              simConfig->GetPropertyOutputs(),
                                                               *propertyDataSource);
   }
 
@@ -526,11 +526,11 @@ void SimulationMaster::RecalculatePropertyRequirements()
     propertyCache.densityCache.SetRefreshFlag();
     propertyCache.velocityCache.SetRefreshFlag();
 
-    if (simConfig->StressType == hemelb::lb::ShearStress)
+    if (simConfig->GetStressType() == hemelb::lb::ShearStress)
     {
       propertyCache.shearStressCache.SetRefreshFlag();
     }
-    else if (simConfig->StressType == hemelb::lb::VonMises)
+    else if (simConfig->GetStressType() == hemelb::lb::VonMises)
     {
       propertyCache.vonMisesStressCache.SetRefreshFlag();
     }

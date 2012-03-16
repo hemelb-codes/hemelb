@@ -26,7 +26,7 @@ namespace hemelb
         GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, GeometryReadResult& readResult, reporting::Timers &timings);
         ~GeometryReader();
 
-        void LoadAndDecompose(std::string& dataFilePath);
+        void LoadAndDecompose(const std::string& dataFilePath);
 
       private:
         void ReadPreamble();

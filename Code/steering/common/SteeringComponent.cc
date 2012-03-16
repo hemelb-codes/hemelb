@@ -100,21 +100,21 @@ namespace hemelb
       updatedMouseCoords = false;
 
       // scene center (dx,dy,dz)
-      privateSteeringParams[SceneCentreX] = iSimConfig->VisCentre.x;
-      privateSteeringParams[SceneCentreY] = iSimConfig->VisCentre.y;
-      privateSteeringParams[SceneCentreZ] = iSimConfig->VisCentre.z;
+      privateSteeringParams[SceneCentreX] = iSimConfig->GetVisualisationCentre().x;
+      privateSteeringParams[SceneCentreY] = iSimConfig->GetVisualisationCentre().y;
+      privateSteeringParams[SceneCentreZ] = iSimConfig->GetVisualisationCentre().z;
 
       // longitude and latitude
-      privateSteeringParams[Longitude] = iSimConfig->VisLongitude;
-      privateSteeringParams[Latitude] = iSimConfig->VisLatitude;
+      privateSteeringParams[Longitude] = iSimConfig->GetVisualisationLongitude();
+      privateSteeringParams[Latitude] = iSimConfig->GetVisualisationLatitude();
 
       // zoom and brightness
-      privateSteeringParams[Zoom] = iSimConfig->VisZoom;
-      privateSteeringParams[Brightness] = iSimConfig->VisBrightness;
+      privateSteeringParams[Zoom] = iSimConfig->GetVisualisationZoom();
+      privateSteeringParams[Brightness] = iSimConfig->GetVisualisationBrightness();
 
       // velocity and stress ranges
-      privateSteeringParams[PhysicalVelocityThresholdMax] = iSimConfig->MaxVelocity;
-      privateSteeringParams[PhysicalStressThrehsholdMaximum] = iSimConfig->MaxStress;
+      privateSteeringParams[PhysicalVelocityThresholdMax] = iSimConfig->GetMaximumVelocity();
+      privateSteeringParams[PhysicalStressThrehsholdMaximum] = iSimConfig->GetMaximumStress();
 
       // Minimum pressure and maximum pressure for Colour mapping
       privateSteeringParams[PhysicalPressureThresholdMinimum] = 80.0F;

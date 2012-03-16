@@ -14,7 +14,7 @@ namespace hemelb
 
       BoundaryValues::BoundaryValues(geometry::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
-                                     std::vector<iolets::InOutLet*> &iiolets,
+                                     const std::vector<iolets::InOutLet*> &iiolets,
                                      SimulationState* iSimState,
                                      util::UnitConverter* units) :
           net::IteratedAction(), mState(iSimState), mUnits(units)

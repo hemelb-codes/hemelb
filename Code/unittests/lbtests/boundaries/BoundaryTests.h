@@ -50,7 +50,7 @@ namespace hemelb
               double targetStartDensity = pressureToDensity(80.0 - 1.0);
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
-                                          simConfig->Inlets,
+                                          simConfig->GetInlets(),
                                           simState,
                                           unitConverter);
               CPPUNIT_ASSERT_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0));
@@ -60,7 +60,7 @@ namespace hemelb
             {
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
-                                          simConfig->Inlets,
+                                          simConfig->GetInlets(),
                                           simState,
                                           unitConverter);
               inlets->RequestComms();
@@ -94,7 +94,7 @@ namespace hemelb
 
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
-                                          fileInletConfig->Inlets,
+                                          fileInletConfig->GetInlets(),
                                           simState,
                                           unitConverter);
               inlets->RequestComms();
