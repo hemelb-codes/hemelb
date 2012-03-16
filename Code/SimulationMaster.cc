@@ -395,7 +395,7 @@ void SimulationMaster::RunSimulation()
   while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
   {
     DoTimeStep();
-    if (simulationState->GetTimeStep() > 400000)
+    if (simulationState->GetTimeStep() > MAX_TIME_STEPS)
     {
       simulationState->SetStability(hemelb::lb::Unstable);
       break;
@@ -506,7 +506,7 @@ void SimulationMaster::DoTimeStep()
 
   timings[hemelb::reporting::Timers::snapshot].Stop();
 
-  if (simulationState->GetTimeStep() % 1000 == 0 && IsCurrentProcTheIOProc())
+  if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
   {
     fflush(NULL);
   }
