@@ -27,7 +27,7 @@ namespace hemelb
           iSimConfig->DoIOForFileInOutlet(iParent, iIsLoading, this);
         }
 
-        InOutLet* InOutLetFile::Clone()
+        InOutLet* InOutLetFile::Clone() const
         {
           InOutLetFile* copy = new InOutLetFile(*this);
 
@@ -112,7 +112,7 @@ namespace hemelb
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
-            densityTable[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+            densityTable[time_step] = units->ConvertPressureToLatticeUnits(pressure) / Cs2;
           }
         }
 

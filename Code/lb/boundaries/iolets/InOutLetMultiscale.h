@@ -33,7 +33,7 @@ namespace hemelb
             {
             }
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
-            virtual InOutLet* Clone()
+            virtual InOutLet* Clone() const
             {
               InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
               // copy constructor must copy pointers to the new locations of the shared data into the copy's reference buffer.
@@ -48,21 +48,20 @@ namespace hemelb
             {
               //pass;
             }
-            virtual bool IsRegistrationRequired()
+            virtual bool IsRegistrationRequired() const
             {
               return true;
             }
-            LatticeDensity GetDensity(unsigned long time_step)
+            LatticeDensity GetDensity(unsigned long time_step) const
             {
-              Velocity = 0.1;
-              return mUnits->ConvertPressureToLatticeUnits(Pressure);
+              return units->ConvertPressureToLatticeUnits(Pressure);
 
             }
-            PhysicalPressure GetPressureMin()
+            PhysicalPressure GetPressureMin() const
             {
               return MinPressure;
             }
-            PhysicalPressure GetPressureMax()
+            PhysicalPressure GetPressureMax() const
             {
               return MaxPressure;
             }

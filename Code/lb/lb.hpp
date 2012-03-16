@@ -341,9 +341,9 @@ namespace hemelb
 
       for (unsigned int ii = 0; ii < inletCount; ii++)
       {
-        inlet_normal[3 * ii] = inlets[ii]->Normal.x;
-        inlet_normal[3 * ii + 1] = inlets[ii]->Normal.y;
-        inlet_normal[3 * ii + 2] = inlets[ii]->Normal.z;
+        inlet_normal[3 * ii] = inlets[ii]->GetNormal().x;
+        inlet_normal[3 * ii + 1] = inlets[ii]->GetNormal().y;
+        inlet_normal[3 * ii + 2] = inlets[ii]->GetNormal().z;
       }
 
       mParams.StressType = mSimConfig->GetStressType();
