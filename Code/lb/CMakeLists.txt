@@ -1,6 +1,6 @@
 add_library(hemelb_lb
 	boundaries/BoundaryComms.cc boundaries/BoundaryValues.cc
-	boundaries/iolets/InOutLet.cc boundaries/iolets/InOutLetCosine.cc boundaries/iolets/InOutLetFile.cc
+	boundaries/iolets/InOutLetCosine.cc boundaries/iolets/InOutLetFile.cc
 	boundaries/iolets/InOutLetMultiscale.cc
 	IncompressibilityChecker.cc
 	kernels/momentBasis/DHumieresD3Q15MRTBasis.cc

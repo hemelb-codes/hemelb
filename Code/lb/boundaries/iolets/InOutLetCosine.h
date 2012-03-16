@@ -23,18 +23,18 @@ namespace hemelb
             InOutLetCosine();
             virtual ~InOutLetCosine();
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
-            virtual InOutLet* Clone();
+            virtual InOutLet* Clone() const;
             virtual void Reset(SimulationState &state){
               //pass;
             }
-            LatticeDensity GetDensityMean();
-            LatticeDensity GetDensityAmp();
-            LatticeDensity GetDensity(unsigned long time_step);
-            PhysicalPressure GetPressureMin()
+            LatticeDensity GetDensityMean() const;
+            LatticeDensity GetDensityAmp() const;
+            LatticeDensity GetDensity(unsigned long time_step) const;
+            PhysicalPressure GetPressureMin() const
             {
               return PressureMeanPhysical - PressureAmpPhysical;
             }
-            PhysicalPressure GetPressureMax()
+            PhysicalPressure GetPressureMax() const
             {
               return PressureMeanPhysical + PressureAmpPhysical;
             }

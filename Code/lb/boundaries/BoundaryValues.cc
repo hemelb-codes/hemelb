@@ -42,7 +42,7 @@ namespace hemelb
             localIoletCount++;
 
             localIoletIDs.push_back(ioletIndex);
-            if (iolet->GetIsCommsRequired())
+            if (iolet->IsCommsRequired())
             {
               iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
             }
@@ -146,7 +146,7 @@ namespace hemelb
       void BoundaryValues::HandleComms(iolets::InOutLet* iolet)
       {
 
-        if (iolet->GetIsCommsRequired())
+        if (iolet->IsCommsRequired())
         {
           iolet->DoComms(IsCurrentProcTheBCProc());
         }
@@ -157,7 +157,7 @@ namespace hemelb
       {
         for (int i = 0; i < localIoletCount; i++)
         {
-          if (GetLocalIolet(i)->GetIsCommsRequired())
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
             GetLocalIolet(i)->GetComms()->FinishSend();
           }
@@ -168,7 +168,7 @@ namespace hemelb
       {
         for (int i = 0; i < localIoletCount; i++)
         {
-          if (GetLocalIolet(i)->GetIsCommsRequired())
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
             GetLocalIolet(i)->GetComms()->Wait();
           }
@@ -180,7 +180,7 @@ namespace hemelb
         for (int i = 0; i < localIoletCount; i++)
         {
           GetLocalIolet(i)->Reset(*state);
-          if (GetLocalIolet(i)->GetIsCommsRequired())
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
             GetLocalIolet(i)->GetComms()->WaitAllComms();
 
