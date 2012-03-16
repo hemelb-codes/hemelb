@@ -35,7 +35,7 @@ namespace hemelb
             {
               return comms;
             }
-            LatticeDensity GetDensity(LatticeTime time_step)
+            LatticeDensity GetDensity(LatticeTime time_step) const
             {
               if (!GetIsCommsRequired())
               {

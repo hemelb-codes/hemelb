@@ -69,8 +69,8 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->Phase);
                 CPPUNIT_ASSERT_EQUAL(0.6, cosine->Period);
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
-                                     cosine->Position);
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->Normal);
+                                     cosine->GetPosition());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->GetNormal());
 
                 // Set an approriate target value for the density, the maximum.
                 double temp = state.GetTimeStepLength() / voxel_size;
@@ -108,8 +108,8 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
                 CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
-                                     file->Position);
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->Normal);
+                                     file->GetPosition());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->GetNormal());
 
                 // Set some target values for the density at various times.
                 double temp = state.GetTimeStepLength() / voxel_size;

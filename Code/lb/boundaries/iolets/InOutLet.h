@@ -16,16 +16,26 @@ namespace hemelb
   {
     namespace boundaries
     {
+
+      //forward declare boundary comms class
       class BoundaryComms;
-      //forward decl;
       namespace iolets
       {
-
+        /**
+         * Base Iolet class
+         * Contains information configured from the xml config file, and calculates a density near itself for use in LB calculation
+         * Provides maximum and minimum range of densities/pressures for use by steering.
+         */
         class InOutLet
         {
           public:
-            InOutLet();
-            virtual ~InOutLet();
+            InOutLet() :
+                comms(NULL)
+            {
+            }
+            virtual ~InOutLet()
+            {
+            }
 
             /***
              * Read the TinyXML structure and set up the iolet, or write it to a TinyXML structure.
@@ -33,34 +43,35 @@ namespace hemelb
              * @param iIsLoading Read or write?
              * @param simConfig The config object being read
              */
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* simConfig) = 0;
+            virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig) = 0;
 
             /***
              * Copy the InOutLet.
              * @return Pointer to new IOLet.
              */
-            virtual InOutLet* Clone() = 0;
+            virtual InOutLet* Clone() const = 0;
 
             /***
              * Carry out any communication needed for the IOLet.
              * @return true if any comms were done.
              */
-            virtual bool GetIsCommsRequired()
+            virtual bool IsCommsRequired() const
             {
               return false;
             }
-            virtual bool IsRegistrationRequired(){
-                return false;
-              }
+            virtual bool IsRegistrationRequired() const
+            {
+              return false;
+            }
             void SetComms(BoundaryComms * acomms)
             {
               comms = acomms;
             }
-            BoundaryComms * GetComms()
+            BoundaryComms * GetComms() const
             {
               return comms;
             }
-            virtual void DoComms(bool is_io_proc)
+            virtual void DoComms(bool isIoProcess)
             {
               // pass
             }
@@ -68,37 +79,54 @@ namespace hemelb
              * Set up the Iolet.
              * @param units a UnitConverter instance.
              */
-            void Initialise(const util::UnitConverter* units);
+            void Initialise(const util::UnitConverter* aunits)
+            {
+              units = aunits;
+            }
 
             /***
              * Get the minimum density, in lattice units
              * @return minimum density, in lattice units
              */
-            LatticePressure GetDensityMin();
+            LatticePressure GetDensityMin() const
+            {
+              return units->ConvertPressureToLatticeUnits(GetPressureMin()) / Cs2;
+            }
 
             /***
              * Get the maximum density, in lattice units
              * @return maximum density, in lattice units
              */
-            LatticePressure GetDensityMax();
+            LatticePressure GetDensityMax() const
+            {
+              return units->ConvertPressureToLatticeUnits(GetPressureMax()) / Cs2;
+            }
 
             /***
              * Get the minimum pressure, in physical units
              * @return
              */
-            virtual PhysicalPressure GetPressureMin()=0;
+            virtual PhysicalPressure GetPressureMin() const =0;
 
             /***
              * Get the maximum pressure, in physical units
              * @return
              */
-            virtual PhysicalPressure GetPressureMax()=0;
-            virtual LatticeDensity GetDensity(LatticeTime time_step)=0;
+            virtual PhysicalPressure GetPressureMax() const =0;
+            virtual LatticeDensity GetDensity(LatticeTime time_step) const =0;
             virtual void Reset(SimulationState &state)=0;
-            util::Vector3D<float> Position; //! !!!!! Public data member!
-            util::Vector3D<float> Normal; //! !!!!!! Public data member!
+            util::Vector3D<float> &GetPosition()
+            {
+              return position;
+            }
+            util::Vector3D<float> &GetNormal()
+            {
+              return normal;
+            }
           protected:
-            const util::UnitConverter* mUnits;
+            util::Vector3D<float> position;
+            util::Vector3D<float> normal;
+            const util::UnitConverter* units;
             BoundaryComms * comms;
         };
       }

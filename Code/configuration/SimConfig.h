@@ -74,6 +74,9 @@ namespace hemelb
         void DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::PlaneGeometrySelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
+        void DoIOForBaseInOutlet(TiXmlElement *parent,
+                                                bool isLoading,
+                                                lb::boundaries::iolets::InOutLet* const value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
         const double LEGACY_PULSATILE_PERIOD;
         std::string dataFilePath;
