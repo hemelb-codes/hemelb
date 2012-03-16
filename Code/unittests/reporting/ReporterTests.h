@@ -83,7 +83,7 @@ namespace hemelb
             {
               state->Increment();
             }
-            CPPUNIT_ASSERT_EQUAL(1001lu, state->GetTimeStepsPassed());
+            CPPUNIT_ASSERT_EQUAL(1001lu, state->GetTimeStep());
             reporter->FillDictionary();
 
             CheckTimingsTable();

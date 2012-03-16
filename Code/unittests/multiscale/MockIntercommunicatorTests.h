@@ -169,7 +169,7 @@ namespace hemelb
             MockIntercommunicator intercomms(*pbuffer);
             heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options,intercomms);
             // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
-            while (heme->GetState()->GetTimeStepsPassed() <= heme->GetState()->GetTotalTimeSteps())
+            while (heme->GetState()->GetTimeStep() <= heme->GetState()->GetTotalTimeSteps())
             {
               zerod->Simulate();
               heme->DoTimeStep();
