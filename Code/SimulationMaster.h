@@ -1,6 +1,5 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-
 #include "lb/lattices/D3Q15.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
@@ -99,6 +98,9 @@ class SimulationMaster
     unsigned int imagesPerSimulation;
     int steeringSessionId;
     unsigned int imagesPeriod;
+
+    static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
+    static const hemelb::LatticeTime MAX_TIME_STEPS=400000;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */
