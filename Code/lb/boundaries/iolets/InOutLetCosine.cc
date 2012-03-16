@@ -21,7 +21,7 @@ namespace hemelb
           iSimConfig->DoIOForCosineInOutlet(iParent, iIsLoading, this);
         }
 
-        InOutLet* InOutLetCosine::Clone()
+        InOutLet* InOutLetCosine::Clone() const
         {
           InOutLetCosine* copy = new InOutLetCosine(*this);
 
@@ -33,20 +33,20 @@ namespace hemelb
 
         }
 
-        LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step)
+        LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step) const
         {
           double w = 2.0 * PI / Period;
-          return GetDensityMean() + GetDensityAmp() * cos(w * mUnits->ConvertTimeStepToPhysicalUnits(time_step) + Phase);
+          return GetDensityMean() + GetDensityAmp() * cos(w * units->ConvertTimeStepToPhysicalUnits(time_step) + Phase);
         }
 
-        LatticeDensity InOutLetCosine::GetDensityMean()
+        LatticeDensity InOutLetCosine::GetDensityMean() const
         {
-          return  mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
+          return  units->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
         }
 
-        LatticeDensity InOutLetCosine::GetDensityAmp()
+        LatticeDensity InOutLetCosine::GetDensityAmp() const
         {
-          return mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
+          return units->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
         }
 
       }

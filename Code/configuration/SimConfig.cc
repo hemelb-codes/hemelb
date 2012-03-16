@@ -169,10 +169,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForString(TiXmlElement* parent,
-                                  std::string attributeName,
-                                  bool isLoading,
-                                  std::string &value)
+    void SimConfig::DoIOForString(TiXmlElement* parent, std::string attributeName, bool isLoading, std::string &value)
     {
       if (isLoading)
       {
@@ -222,10 +219,7 @@ namespace hemelb
       }
     }
 
-    bool SimConfig::DoIOForULong(TiXmlElement* parent,
-                                 std::string attributeName,
-                                 bool isLoading,
-                                 unsigned long &value)
+    bool SimConfig::DoIOForULong(TiXmlElement* parent, std::string attributeName, bool isLoading, unsigned long &value)
     {
       if (isLoading)
       {
@@ -289,9 +283,9 @@ namespace hemelb
           std::string PFilePath;
           std::string MultiscaleLabel;
           DoIOForString(GetChild(GetChild(parent, childNodeName, isLoading), "pressure", isLoading),
-                                        "path",
-                                        isLoading,
-                                        PFilePath);
+                        "path",
+                        isLoading,
+                        PFilePath);
           DoIOForString(GetChild(GetChild(parent, childNodeName, isLoading), "pressure", isLoading),
                         "label",
                         isLoading,
@@ -505,20 +499,26 @@ namespace hemelb
       }
     }
 
+    void SimConfig::DoIOForBaseInOutlet(TiXmlElement *parent,
+                                        bool isLoading,
+                                        lb::boundaries::iolets::InOutLet* const value)
+    {
+      TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
+      TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
+      DoIOForFloatVector(lPositionElement, isLoading, value->GetPosition());
+      DoIOForFloatVector(lNormalElement, isLoading, value->GetNormal());
+    }
+
     void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent,
                                           bool isLoading,
                                           lb::boundaries::iolets::InOutLetCosine* const value)
     {
-      TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
-      TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
+      DoIOForBaseInOutlet(parent,isLoading,value);
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
       DoIOForDouble(lPressureElement, "mean", isLoading, value->PressureMeanPhysical);
       DoIOForDouble(lPressureElement, "amplitude", isLoading, value->PressureAmpPhysical);
       DoIOForDouble(lPressureElement, "phase", isLoading, value->Phase);
-
-      DoIOForFloatVector(lPositionElement, isLoading, value->Position);
-      DoIOForFloatVector(lNormalElement, isLoading, value->Normal);
 
       if (!DoIOForDouble(lPressureElement, "period", isLoading, value->Period) && isLoading)
       {
@@ -530,28 +530,23 @@ namespace hemelb
                                         bool isLoading,
                                         lb::boundaries::iolets::InOutLetFile* const value)
     {
-      TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
-      TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
+      DoIOForBaseInOutlet(parent,isLoading,value);
+
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
       DoIOForString(lPressureElement, "path", isLoading, value->PressureFilePath);
 
-      DoIOForFloatVector(lPositionElement, isLoading, value->Position);
-      DoIOForFloatVector(lNormalElement, isLoading, value->Normal);
     }
 
     void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *parent,
                                               bool isLoading,
                                               lb::boundaries::iolets::InOutLetMultiscale* const value)
     {
-      TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
-      TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
+      DoIOForBaseInOutlet(parent,isLoading,value);
+
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
       DoIOForString(lPressureElement, "label", isLoading, value->Label);
-
-      DoIOForFloatVector(lPositionElement, isLoading, value->Position);
-      DoIOForFloatVector(lNormalElement, isLoading, value->Normal);
     }
 
     void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading, util::Vector3D<float> &value)

@@ -27,22 +27,22 @@ namespace hemelb
             InOutLetFile();
             virtual ~InOutLetFile();
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
-            virtual InOutLet* Clone();
+            virtual InOutLet* Clone() const;
             virtual void Reset(SimulationState &state)
             {
               CalculateTable(state.GetTotalTimeSteps());
             }
             std::string PressureFilePath;
 
-            PhysicalPressure GetPressureMin()
+            PhysicalPressure GetPressureMin() const
             {
               return PressureMinPhysical;
             }
-            PhysicalPressure GetPressureMax()
+            PhysicalPressure GetPressureMax() const
             {
               return PressureMaxPhysical;
             }
-            LatticeDensity GetDensity(LatticeTime time_step)
+            LatticeDensity GetDensity(LatticeTime time_step) const
             {
               return densityTable[time_step];
             }

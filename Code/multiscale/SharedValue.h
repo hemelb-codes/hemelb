@@ -24,6 +24,9 @@ namespace hemelb
         operator payload &(){
           return contents;
         }
+        operator const payload &() const {
+          return contents;
+        }
         // assignment operator
         SharedValue<payload> & operator= (const payload & input)
           {
