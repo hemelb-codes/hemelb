@@ -63,25 +63,25 @@ namespace hemelb
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInterCollisionCount(0);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(1) + mLatDat->GetInterCollisionCount(1);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
       mWallCollision = new tWallCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(2) + mLatDat->GetInterCollisionCount(2);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletOutletCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(3) + mLatDat->GetInterCollisionCount(3);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tInletOutletCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(4) + mLatDat->GetInterCollisionCount(4);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletOutletWallCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(5) + mLatDat->GetInterCollisionCount(5);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tInletOutletWallCollision(initParams);
     }
@@ -150,30 +150,30 @@ namespace hemelb
 
       /**
        * In the PreSend phase, we do LB on all the sites that need to have results sent to
-       * neighbouring ranks ('inter' sites). In site id terms, this means we start at the
-       * end of the sites whose neighbours all lie on this rank ('inner'), then progress
+       * neighbouring ranks ('domainEdge' sites). In site id terms, this means we start at the
+       * end of the sites whose neighbours all lie on this rank ('midDomain'), then progress
        * through the sites of each type in turn.
        */
-      site_t offset = mLatDat->GetInnerSiteCount();
+      site_t offset = mLatDat->GetMidDomainSiteCount();
 
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInterCollisionCount(0));
-      offset += mLatDat->GetInterCollisionCount(0);
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
+      offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetInterCollisionCount(1));
-      offset += mLatDat->GetInterCollisionCount(1);
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
+      offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
       mInletValues->FinishReceive();
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetInterCollisionCount(2));
-      offset += mLatDat->GetInterCollisionCount(2);
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
+      offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
       mOutletValues->FinishReceive();
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetInterCollisionCount(3));
-      offset += mLatDat->GetInterCollisionCount(3);
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
+      offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetInterCollisionCount(4));
-      offset += mLatDat->GetInterCollisionCount(4);
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
+      offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInterCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
       timer.Stop();
     }
@@ -185,30 +185,30 @@ namespace hemelb
 
       /**
        * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
-       * rank ('inner' rather than 'inter' sites). Ideally this phase is the longest bit (maximising time for the asynchronous sends
+       * rank ('midDomain' rather than 'domainEdge' sites). Ideally this phase is the longest bit (maximising time for the asynchronous sends
        * and receives to complete).
        *
        * In site id terms, this means starting at the first site and progressing through the
-       * inner sites, one type at a time.
+       * midDomain sites, one type at a time.
        */
       site_t offset = 0;
 
-      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInnerCollisionCount(0));
-      offset += mLatDat->GetInnerCollisionCount(0);
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
+      offset += mLatDat->GetMidDomainCollisionCount(0);
 
-      StreamAndCollide(mWallCollision, offset, mLatDat->GetInnerCollisionCount(1));
-      offset += mLatDat->GetInnerCollisionCount(1);
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
+      offset += mLatDat->GetMidDomainCollisionCount(1);
 
-      StreamAndCollide(mInletCollision, offset, mLatDat->GetInnerCollisionCount(2));
-      offset += mLatDat->GetInnerCollisionCount(2);
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
+      offset += mLatDat->GetMidDomainCollisionCount(2);
 
-      StreamAndCollide(mOutletCollision, offset, mLatDat->GetInnerCollisionCount(3));
-      offset += mLatDat->GetInnerCollisionCount(3);
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
+      offset += mLatDat->GetMidDomainCollisionCount(3);
 
-      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetInnerCollisionCount(4));
-      offset += mLatDat->GetInnerCollisionCount(4);
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
+      offset += mLatDat->GetMidDomainCollisionCount(4);
 
-      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
 
       timer.Stop();
     }
@@ -226,40 +226,40 @@ namespace hemelb
       site_t offset = 0;
 
       //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, mLatDat->GetInterCollisionCount(0));
-      offset += mLatDat->GetInterCollisionCount(0);
+      PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
+      offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetInterCollisionCount(1));
-      offset += mLatDat->GetInterCollisionCount(1);
+      PostStep(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
+      offset += mLatDat->GetDomainEdgeCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetInterCollisionCount(2));
-      offset += mLatDat->GetInterCollisionCount(2);
+      PostStep(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
+      offset += mLatDat->GetDomainEdgeCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetInterCollisionCount(3));
-      offset += mLatDat->GetInterCollisionCount(3);
+      PostStep(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
+      offset += mLatDat->GetDomainEdgeCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetInterCollisionCount(4));
-      offset += mLatDat->GetInterCollisionCount(4);
+      PostStep(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
+      offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetInterCollisionCount(5));
-      offset += mLatDat->GetInterCollisionCount(5);
+      PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      offset += mLatDat->GetDomainEdgeCollisionCount(5);
 
-      PostStep(mMidFluidCollision, offset, mLatDat->GetInnerCollisionCount(0));
-      offset += mLatDat->GetInnerCollisionCount(0);
+      PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
+      offset += mLatDat->GetMidDomainCollisionCount(0);
 
-      PostStep(mWallCollision, offset, mLatDat->GetInnerCollisionCount(1));
-      offset += mLatDat->GetInnerCollisionCount(1);
+      PostStep(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
+      offset += mLatDat->GetMidDomainCollisionCount(1);
 
-      PostStep(mInletCollision, offset, mLatDat->GetInnerCollisionCount(2));
-      offset += mLatDat->GetInnerCollisionCount(2);
+      PostStep(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
+      offset += mLatDat->GetMidDomainCollisionCount(2);
 
-      PostStep(mOutletCollision, offset, mLatDat->GetInnerCollisionCount(3));
-      offset += mLatDat->GetInnerCollisionCount(3);
+      PostStep(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
+      offset += mLatDat->GetMidDomainCollisionCount(3);
 
-      PostStep(mInletWallCollision, offset, mLatDat->GetInnerCollisionCount(4));
-      offset += mLatDat->GetInnerCollisionCount(4);
+      PostStep(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
+      offset += mLatDat->GetMidDomainCollisionCount(4);
 
-      PostStep(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
+      PostStep(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
 
       timer.Stop();
     }
@@ -291,25 +291,25 @@ namespace hemelb
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInterCollisionCount(0);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision->Reset(&initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(1) + mLatDat->GetInterCollisionCount(1);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
       mWallCollision->Reset(&initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(2) + mLatDat->GetInterCollisionCount(2);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
       mInletCollision->Reset(&initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(3) + mLatDat->GetInterCollisionCount(3);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision->Reset(&initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(4) + mLatDat->GetInterCollisionCount(4);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision->Reset(&initParams);
 
-      initParams.siteCount = mLatDat->GetInnerCollisionCount(5) + mLatDat->GetInterCollisionCount(5);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision->Reset(&initParams);
     }
