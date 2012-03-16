@@ -277,8 +277,8 @@ namespace hemelb
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>( latDat);
 
-            site_t firstWallSite = latDat->GetInnerCollisionCount(0);
-            site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
+            site_t firstWallSite = latDat->GetMidDomainCollisionCount(0);
+            site_t wallSitesCount = latDat->GetMidDomainCollisionCount(1) - firstWallSite;
 
             // Check that the lattice has sites labeled as wall (otherwise this test is void)
             CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, (site_t) 16);
@@ -287,19 +287,19 @@ namespace hemelb
 
             // Mid-Fluid sites use simple collide and stream
             simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetInnerCollisionCount(0),
+                                                             latDat->GetMidDomainCollisionCount(0),
                                                              lbmParams,
                                                              latDat,
                                                              *propertyCache);
-            offset += latDat->GetInnerCollisionCount(0);
+            offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use simple bounce back
             simpleBounceBack->StreamAndCollide<false> (offset,
-                                                       latDat->GetInnerCollisionCount(1),
+                                                       latDat->GetMidDomainCollisionCount(1),
                                                        lbmParams,
                                                        latDat,
                                                        *propertyCache);
-            offset += latDat->GetInnerCollisionCount(1);
+            offset += latDat->GetMidDomainCollisionCount(1);
 
             // Consider inlet/outlets and their walls as mid-fluid sites
             simpleCollideAndStream->StreamAndCollide<false> (offset,
@@ -388,8 +388,8 @@ namespace hemelb
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>( latDat);
 
-            site_t firstWallSite = latDat->GetInnerCollisionCount(0);
-            site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
+            site_t firstWallSite = latDat->GetMidDomainCollisionCount(0);
+            site_t wallSitesCount = latDat->GetMidDomainCollisionCount(1) - firstWallSite;
 
             // Check that the lattice has sites labeled as wall (otherwise this test is void)
             CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, (site_t) 16);
@@ -398,19 +398,19 @@ namespace hemelb
 
             // Mid-Fluid sites use simple collide and stream
             simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetInnerCollisionCount(0),
+                                                             latDat->GetMidDomainCollisionCount(0),
                                                              lbmParams,
                                                              latDat,
                                                              *propertyCache);
-            offset += latDat->GetInnerCollisionCount(0);
+            offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use regularised BC
             regularised->StreamAndCollide<false> (offset,
-                                                  latDat->GetInnerCollisionCount(1),
+                                                  latDat->GetMidDomainCollisionCount(1),
                                                   lbmParams,
                                                   latDat,
                                                   *propertyCache);
-            offset += latDat->GetInnerCollisionCount(1);
+            offset += latDat->GetMidDomainCollisionCount(1);
 
             // Inlet/outlets and their walls use regularised BC
             regularised->StreamAndCollide<false> (offset,
