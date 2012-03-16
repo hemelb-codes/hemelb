@@ -148,6 +148,12 @@ namespace hemelb
     {
       timer.Start();
 
+      /**
+       * In the PreSend phase, we do LB on all the sites that need to have results sent to
+       * neighbouring ranks ('inter' sites). In site id terms, this means we start at the
+       * end of the sites whose neighbours all lie on this rank ('inner'), then progress
+       * through the sites of each type in turn.
+       */
       site_t offset = mLatDat->GetInnerSiteCount();
 
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInterCollisionCount(0));
@@ -177,6 +183,14 @@ namespace hemelb
     {
       timer.Start();
 
+      /**
+       * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
+       * rank ('inner' rather than 'inter' sites). Ideally this phase is the longest bit (maximising time for the asynchronous sends
+       * and receives to complete).
+       *
+       * In site id terms, this means starting at the first site and progressing through the
+       * inner sites, one type at a time.
+       */
       site_t offset = 0;
 
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInnerCollisionCount(0));
