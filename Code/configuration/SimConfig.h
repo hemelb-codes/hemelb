@@ -17,66 +17,85 @@ namespace hemelb
     class SimConfig
     {
       public:
-        static SimConfig *Load(const char *iPath);
+        static SimConfig *Load(const char *path);
         ~SimConfig();
 
-        void Save(std::string iPath); // TODO this method should be able to be CONST
+        void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
-        std::string DataFilePath;
-        // These have to contain pointers because there are multiple derived types that might be
-        // instantiated.
-        std::vector<lb::boundaries::iolets::InOutLet*> Inlets;
-        std::vector<lb::boundaries::iolets::InOutLet*> Outlets;
-        util::Vector3D<float> VisCentre;
-        float VisLongitude;
-        float VisLatitude;
-        float VisZoom;
-        float VisBrightness;
-        float MaxVelocity;
-        float MaxStress;
-        double TimeStepLength;
-        unsigned long TotalTimeSteps;
-        lb::StressTypes StressType;
-        std::vector<extraction::PropertyOutputFile*> propertyOutputs;
-
-        void DoIOForCosineInOutlet(TiXmlElement *iXmlNode,
-                                   bool iIsLoading,
+        void DoIOForCosineInOutlet(TiXmlElement *xmlNode,
+                                   bool isLoading,
                                    lb::boundaries::iolets::InOutLetCosine* value);
-        void DoIOForFileInOutlet(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::iolets::InOutLetFile* value);
-        void DoIOForMultiscaleInOutlet(TiXmlElement *iXmlNode,
-                                       bool iIsLoading,
+        void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetFile* value);
+        void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
+                                       bool isLoading,
                                        lb::boundaries::iolets::InOutLetMultiscale* value);
+        const util::Vector3D<float> & GetVisualisationCentre() const {return visualisationCentre;}
+        const std::vector<lb::boundaries::iolets::InOutLet*> & GetInlets() const {return inlets;}
+        const std::vector<lb::boundaries::iolets::InOutLet*> & GetOutlets() const {return outlets;}
+        lb::StressTypes GetStressType() const {return stressType;}
+        float GetVisualisationLongitude() const {return visualisationLongitude;}
+        float GetVisualisationLatitude() const {return visualisationLatitude;}
+        float GetVisualisationZoom() const {return visualisationZoom;}
+        float GetVisualisationBrightness() const {return visualisationBrightness;}
+        float GetMaximumVelocity() const {return maxVelocity;}
+        float GetMaximumStress() const {return maxStress;}
+        const std::string & GetDataFilePath() const {return dataFilePath;}
+        LatticeTime GetTotalTimeSteps() const {return totalTimeSteps;}
+        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
+        unsigned int PropertyOutputCount() const {return propertyOutputs.size();}
+        extraction::PropertyOutputFile* const GetPropertyOutput(unsigned int index) const {return propertyOutputs[index];}
+        std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const {return propertyOutputs;}
       protected:
         SimConfig();
 
       private:
-        void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
-        bool DoIOForLong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
-        void DoIOForStressType(TiXmlElement* iXmlNode,
-                               std::string iAttributeName,
-                               bool iIsLoading,
+        void DoIO(TiXmlElement *xmlNode, bool isLoading);
+        bool DoIOForLong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, long &value);
+        void DoIOForStressType(TiXmlElement* xmlNode,
+                               std::string attributeName,
+                               bool isLoading,
                                lb::StressTypes &value);
-        bool DoIOForULong(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, unsigned long &value);
-        void DoIOForFloat(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, float &value);
-        bool DoIOForDouble(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
-        void DoIOForString(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, std::string &iValue);
-        void DoIOForInOutlets(TiXmlElement *iXmlNode,
-                              bool iIsLoading,
+        bool DoIOForULong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, unsigned long &value);
+        void DoIOForFloat(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, float &value);
+        bool DoIOForDouble(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, double &value);
+        void DoIOForString(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, std::string &value);
+        void DoIOForInOutlets(TiXmlElement *xmlNode,
+                              bool isLoading,
                               std::vector<lb::boundaries::iolets::InOutLet*> &value,
-                              std::string iChildNodeName);
-        void DoIOForProperties(TiXmlElement *iXmlNode, bool iIsLoading);
-        void DoIOForProperty(TiXmlElement *iXmlNode, bool iIsLoading);
-        void DoIOForPropertyField(TiXmlElement *iXmlNode, bool iIsLoading, extraction::OutputField& field);
-        void DoIOForPropertyOutputFile(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PropertyOutputFile* file);
-        void DoIOForLineGeometry(TiXmlElement *iXmlNode,
-                                 bool iIsLoading,
+                              std::string childNodeName);
+        void DoIOForProperties(TiXmlElement *xmlNode, bool isLoading);
+        void DoIOForProperty(TiXmlElement *xmlNode, bool isLoading);
+        void DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field);
+        void DoIOForPropertyOutputFile(TiXmlElement *xmlNode, bool isLoading, extraction::PropertyOutputFile* file);
+        void DoIOForLineGeometry(TiXmlElement *xmlNode,
+                                 bool isLoading,
                                  extraction::StraightLineGeometrySelector*& line);
-        void DoIOForPlaneGeometry(TiXmlElement *iXmlNode, bool iIsLoading, extraction::PlaneGeometrySelector*& plane);
+        void DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::PlaneGeometrySelector*& plane);
 
-        void DoIOForFloatVector(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
-        TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
+        void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
+        TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
         const double LEGACY_PULSATILE_PERIOD;
+        std::string dataFilePath;
+
+        util::Vector3D<float> visualisationCentre;
+        float visualisationLongitude;
+        float visualisationLatitude;
+        float visualisationZoom;
+        float visualisationBrightness;
+        float maxVelocity;
+        float maxStress;
+        lb::StressTypes stressType;
+        std::vector<extraction::PropertyOutputFile*> propertyOutputs;
+
+      protected:
+        // These have to contain pointers because there are multiple derived types that might be
+        // instantiated.
+        std::vector<lb::boundaries::iolets::InOutLet*> inlets;
+        std::vector<lb::boundaries::iolets::InOutLet*> outlets;
+        double timeStepLength;
+        unsigned long totalTimeSteps;
+
     };
   }
 }

@@ -32,7 +32,7 @@ namespace hemelb
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();
-            simState = new hemelb::lb::SimulationState(simConfig->TimeStepLength,simConfig->TotalTimeSteps);
+            simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
                                               latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());

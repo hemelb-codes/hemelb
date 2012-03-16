@@ -77,7 +77,8 @@ namespace hemelb
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
-        int InletCount() const;
+        int InletCount() const {return inletCount;}
+        int OutletCount() const {return outletCount;}
 
         /**
          * Second constructor.
@@ -152,8 +153,8 @@ namespace hemelb
 
         double *inlet_normal;
 
-        int inlets;
-        int outlets;
+        unsigned int inletCount;
+        unsigned int outletCount;
 
         configuration::SimConfig *mSimConfig;
         net::Net* mNet;
@@ -171,11 +172,6 @@ namespace hemelb
         MacroscopicPropertyCache propertyCache;
     };
 
-    template<class LatticeType>
-    inline int LBM<LatticeType>::InletCount() const
-    {
-      return inlets;
-    }
 
   } // Namespace lb
 } // Namespace hemelb

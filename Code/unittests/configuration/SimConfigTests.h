@@ -30,21 +30,21 @@ namespace hemelb
           {
             // smoke test the configuration as having loaded OK
             SimConfig *config=SimConfig::Load(Resource("config0_2_0.xml").Path().c_str());
-            CPPUNIT_ASSERT_EQUAL(3000lu, config->TotalTimeSteps);
-            CPPUNIT_ASSERT_EQUAL(60.0/(70.0*1000), config->TimeStepLength);
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
+            CPPUNIT_ASSERT_EQUAL(60.0/(70.0*1000), config->GetTimeStepLength());
 
 
-            CPPUNIT_ASSERT_EQUAL(60.0/70.0, static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->Inlets[0])->Period);
+            CPPUNIT_ASSERT_EQUAL(60.0/70.0, static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->Period);
             delete config;
           }
           void Test_0_2_1()
           {
             // smoke test the configuration as having loaded OK
             SimConfig *config=SimConfig::Load(Resource("config.xml").Path().c_str());
-            CPPUNIT_ASSERT_EQUAL(3000lu, config->TotalTimeSteps);
-            CPPUNIT_ASSERT_EQUAL(0.0001, config->TimeStepLength);
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
+            CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
 
-            CPPUNIT_ASSERT_EQUAL(0.6, static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->Inlets[0])->Period);
+            CPPUNIT_ASSERT_EQUAL(0.6, static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->Period);
             delete config;
           }
         private:

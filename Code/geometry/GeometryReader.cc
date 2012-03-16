@@ -73,7 +73,7 @@ namespace hemelb
       }
     }
 
-    void GeometryReader::LoadAndDecompose(std::string& dataFilePath)
+    void GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -93,7 +93,8 @@ namespace hemelb
       MPI_Info_set(fileInfo, &buffering[0], &bufferingValue[0]);
 
       // Open the file.
-      error = MPI_File_open(MPI_COMM_WORLD, &dataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
+      // Stupid C-MPI lack of const-correctness
+      error = MPI_File_open(MPI_COMM_WORLD, const_cast<char *>(dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
 
       currentCommRank = topology::NetworkTopology::Instance()->GetLocalRank();
       currentCommSize = topology::NetworkTopology::Instance()->GetProcessorCount();
@@ -155,7 +156,7 @@ namespace hemelb
       {
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
-        MPI_File_open(topologyComm, &dataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
+        MPI_File_open(topologyComm, const_cast<char*>(dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
 
         currentCommRank = topologyRank;
         currentCommSize = topologySize;
