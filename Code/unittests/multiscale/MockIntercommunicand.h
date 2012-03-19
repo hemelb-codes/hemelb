@@ -27,14 +27,14 @@ namespace hemelb
           {
           }
           ;
-          double GetDensity(){
+          double GetPressure(){
             return pressure;
           }
           double GetVelocity(){
             return velocity;
           }
-          void SetDensity(double aDensity){
-            pressure=aDensity;
+          void SetPressure(double aPressure){
+            pressure=aPressure;
           }
           void SetVelocity(double aVelocity){
             velocity=aVelocity;
