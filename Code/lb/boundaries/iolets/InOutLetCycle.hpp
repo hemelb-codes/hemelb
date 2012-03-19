@@ -11,7 +11,7 @@ namespace hemelb
     {
       namespace iolets
       {
-        template<unsigned long updatePeriod, bool comms> virtual void InOutLetCycle<update_period, comms>::DoComms(bool is_io_proc,
+        template<unsigned long updatePeriod, bool comms> void InOutLetCycle<updatePeriod, comms>::DoComms(bool is_io_proc,
                                                                                                                    LatticeTime time_step)
         {
           if (is_io_proc)
@@ -29,4 +29,5 @@ namespace hemelb
       }
     }
   }
+}
 #endif /* HEMELB_LB_BOUNDARIES_INOUTLETCYCLE_H */
