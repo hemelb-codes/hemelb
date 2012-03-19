@@ -70,9 +70,9 @@ namespace hemelb
             {
               return false;
             }
-            void SetComms(BoundaryComms * acomms)
+            void SetComms(BoundaryComms * boundaryComms)
             {
-              comms = acomms;
+              comms = boundaryComms;
             }
             BoundaryComms * GetComms() const
             {
@@ -90,9 +90,9 @@ namespace hemelb
              * Set up the Iolet.
              * @param units a UnitConverter instance.
              */
-            void Initialise(const util::UnitConverter* aunits)
+            void Initialise(const util::UnitConverter* unitConverter)
             {
-              units = aunits;
+              units = unitConverter;
             }
 
             /***
@@ -126,10 +126,14 @@ namespace hemelb
             virtual PhysicalPressure GetPressureMax() const =0;
             virtual LatticeDensity GetDensity(LatticeTime time_step) const =0;
             virtual void Reset(SimulationState &state)=0;
+            // TODO I do not like returning non-const references, this method should be const and we should have a setter.
+            // but, the way the IO code in SimConfig is currently set up prevents this for now.
             util::Vector3D<float> &GetPosition()
             {
               return position;
             }
+            // TODO I do not like returning non-const references, this method should be const and we should have a setter.
+            // but, the way the IO code in SimConfig is currently set up prevents this for now.
             util::Vector3D<float> &GetNormal()
             {
               return normal;

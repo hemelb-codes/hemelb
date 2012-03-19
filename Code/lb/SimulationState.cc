@@ -7,8 +7,8 @@ namespace hemelb
   namespace lb
   {
 
-    SimulationState::SimulationState(double atimeStepLength, unsigned long atotalTimeSteps) :
-        timeStepLength(atimeStepLength), timeStep(1), totalTimeSteps(atotalTimeSteps), isTerminating(false), isRendering(false), stability(Stable)
+    SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
+        timeStepLength(timeStepLength), timeStep(1), totalTimeSteps(totalTimeSteps), isTerminating(false), isRendering(false), stability(Stable)
     {
     }
 
