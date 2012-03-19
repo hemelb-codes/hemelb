@@ -183,9 +183,6 @@ namespace hemelb
             {
               zerod->Simulate();
               heme->DoTimeStep();
-              //std::cout << "Zerod: @" << zerod->currentTime << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
-              //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
-              // std::cout << *pbuffer << std::endl;
             }
             // In advancing 100 time steps, at 0.2 s per time step, with a 0d model at 0.5s per time step
             // the 0d model with execute 100*2/5=40 times.
