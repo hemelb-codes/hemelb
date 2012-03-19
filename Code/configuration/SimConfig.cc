@@ -516,13 +516,13 @@ namespace hemelb
       DoIOForBaseInOutlet(parent,isLoading,value);
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
-      DoIOForDouble(lPressureElement, "mean", isLoading, value->PressureMeanPhysical);
-      DoIOForDouble(lPressureElement, "amplitude", isLoading, value->PressureAmpPhysical);
-      DoIOForDouble(lPressureElement, "phase", isLoading, value->Phase);
+      DoIOForDouble(lPressureElement, "mean", isLoading, value->GetPressureMean());
+      DoIOForDouble(lPressureElement, "amplitude", isLoading, value->GetPressureAmp());
+      DoIOForDouble(lPressureElement, "phase", isLoading, value->GetPhase());
 
-      if (!DoIOForDouble(lPressureElement, "period", isLoading, value->Period) && isLoading)
+      if (!DoIOForDouble(lPressureElement, "period", isLoading, value->GetPeriod()) && isLoading)
       {
-        value->Period = LEGACY_PULSATILE_PERIOD;
+        value->SetPeriod(LEGACY_PULSATILE_PERIOD);
       }
     }
 
