@@ -81,14 +81,14 @@ namespace hemelb
           double currentTime;
           double GetOutletPressure()
           {
-            return outlet.GetDensity();
+            return outlet.GetPressure();
           }
           void Do1D()
           {
             double capacitance = 10.0;
             double deltap = -1.0 * inlet.GetVelocity() / capacitance;
 
-            outlet.SetDensity(outlet.GetDensity() + deltap);
+            outlet.SetPressure(outlet.GetPressure() + deltap);
           }
 
           void Simulate()
