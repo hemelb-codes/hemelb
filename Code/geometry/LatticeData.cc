@@ -833,13 +833,15 @@ namespace hemelb
     void LatticeData::Report(ctemplate::TemplateDictionary& dictionary)
     {
       dictionary.SetIntValue("SITES", GetTotalFluidSites());
-
+      dictionary.SetIntValue("BLOCKS",blockCount);
+      dictionary.SetIntValue("SITESPERBLOCK",sitesPerBlockVolumeUnit);
       for (size_t n = 0; n < fluidSitesOnEachProcessor.size(); n++)
       {
         ctemplate::TemplateDictionary *proc = dictionary.AddSectionDictionary("PROCESSOR");
         proc->SetIntValue("RANK", n);
         proc->SetIntValue("SITES", fluidSitesOnEachProcessor[n]);
       }
+
     }
   }
 }

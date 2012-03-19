@@ -1,4 +1,5 @@
 Configured by file {{CONFIG}} with a {{SITES}} site geometry.
+There were {{BLOCKS}} blocks, each with {{SITESPERBLOCK}} sites (fluid and solid).
 Recorded {{IMAGES}} images and {{SNAPSHOTS}} snapshots.
 Ran with {{THREADS}} threads on {{MACHINES}} machines with {{DEPTHS}} deep topology.
 Ran for {{STEPS}} steps of an intended {{TOTAL_TIME_STEPS}}.

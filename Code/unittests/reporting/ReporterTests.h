@@ -99,6 +99,8 @@ namespace hemelb
             AssertValue("64", "SITES");
             AssertValue("3", "DEPTHS");
             AssertValue("4", "MACHINES");
+            AssertValue("1","BLOCKS");
+            AssertValue("64","SITESPERBLOCK");
           }
 
         private:
