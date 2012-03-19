@@ -39,7 +39,7 @@ namespace hemelb
           void DoLB()
           {
             double resistance = 10.0;
-            double velocity = (inlet.GetDensity() - outlet.GetDensity()) / resistance;
+            double velocity = (inlet.GetPressure() - outlet.GetPressure()) / resistance;
             inlet.SetVelocity(velocity);
             outlet.SetVelocity(velocity);
           }
