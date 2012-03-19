@@ -66,7 +66,7 @@ namespace hemelb
             }
             LatticeDensity GetDensity(unsigned long timeStep) const
             {
-              return units->ConvertPressureToLatticeUnits(pressure);
+              return units->ConvertPressureToLatticeUnits(pressure) / Cs2;
             }
             PhysicalPressure GetPressureMin() const
             {
