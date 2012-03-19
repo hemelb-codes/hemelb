@@ -30,7 +30,7 @@ class SimulationMaster
     int GetProcessorCount();
 
     void RunSimulation();
-    hemelb::lb::SimulationState * const GetState(){
+    hemelb::lb::SimulationState const * GetState() const {
       return simulationState;
     }
     void Finalise();
