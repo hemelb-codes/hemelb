@@ -1,3 +1,4 @@
+#include <cassert>
 #include "extraction/LocalPropertyOutput.h"
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
@@ -244,6 +245,9 @@ namespace hemelb
           return 3;
           break;
         default:
+          // This should never happen. Only occurs if someone adds a new field and forgets
+          // to add to this method.
+          assert(false);
           return 0;
       }
     }
