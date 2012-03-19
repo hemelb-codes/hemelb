@@ -32,18 +32,45 @@ namespace hemelb
             LatticeDensity GetDensity(unsigned long time_step) const;
             PhysicalPressure GetPressureMin() const
             {
-              return PressureMeanPhysical - PressureAmpPhysical;
+              return pressureMeanPhysical - pressureAmpPhysical;
             }
             PhysicalPressure GetPressureMax() const
             {
-              return PressureMeanPhysical + PressureAmpPhysical;
+              return pressureMeanPhysical + pressureAmpPhysical;
             }
+            // TODO I do not like returning references, this method should be const and we should have a setter.
+            // but, the way the IO code in SimConfig is currently set up prevents this for now.
+            PhysicalPressure & GetPressureMean() {
+              return pressureMeanPhysical;
+            }
+            void SetPressureMean(PhysicalPressure apressure){
+              pressureMeanPhysical=apressure;
+            }
+            PhysicalPressure & GetPressureAmp() {
+              return pressureAmpPhysical;
+            }
+            void SetPressureAmp(PhysicalPressure apressure){
+              pressureAmpPhysical=apressure;
+            }
+            double & GetPhase() {
+              return phase;
+            }
+            void SetPhase(double aphase){
+              phase=aphase;
+            }
+            PhysicalTime & GetPeriod() {
+              return period;
+            }
+            void SetPeriod(PhysicalTime aperiod) {
+              period=aperiod;
+            }
+          private:
 
-            PhysicalPressure PressureMeanPhysical;
-            PhysicalPressure PressureAmpPhysical;
+            PhysicalPressure pressureMeanPhysical;
+            PhysicalPressure pressureAmpPhysical;
 
-            double Phase;
-            double Period;
+            double phase;
+            PhysicalTime period;
 
 
         };
