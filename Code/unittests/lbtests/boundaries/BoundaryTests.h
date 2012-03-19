@@ -23,10 +23,10 @@ namespace hemelb
         class BoundaryTests : public helpers::FourCubeBasedTestFixture
         {
           CPPUNIT_TEST_SUITE(BoundaryTests);
-          CPPUNIT_TEST(TestConstruct);
-          CPPUNIT_TEST(TestUpdate);
-          CPPUNIT_TEST(TestUpdateFile);
-          CPPUNIT_TEST_SUITE_END();
+              CPPUNIT_TEST(TestConstruct);
+              CPPUNIT_TEST(TestUpdate);
+              CPPUNIT_TEST(TestUpdateFile);
+            CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
@@ -57,22 +57,19 @@ namespace hemelb
                                           simConfig->GetInlets(),
                                           simState,
                                           unitConverter);
-              inlets->RequestComms();
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20; simState->Increment())
+              while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20)
               {
-                //pass
+                simState->Increment();
               }
-              inlets->RequestComms();
 
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 + 1.0), inlets->GetBoundaryDensity(0));
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10; simState->Increment())
+              while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10)
               {
-                //pass
+                simState->Increment();
               }
-              inlets->RequestComms();
 
               CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
               delete inlets;
@@ -91,23 +88,20 @@ namespace hemelb
                                           fileInletConfig->GetInlets(),
                                           simState,
                                           unitConverter);
-              inlets->RequestComms();
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2; simState->Increment())
+              while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 2)
               {
-                //pass
+                simState->Increment();
               }
-              inlets->RequestComms();
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(82.0), inlets->GetBoundaryDensity(0), 1e-6);
 
-              for (; simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps(); simState->Increment())
+              while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps())
               {
-                //pass
+                simState->Increment();
               }
-              inlets->RequestComms();
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 
@@ -116,9 +110,9 @@ namespace hemelb
             }
             double pressureToDensity(double pressure)
             {
-              double inverse_velocity = simState->GetTimeStepLength() / latDat->GetVoxelSize();
+              double inverseVelocity = simState->GetTimeStepLength() / latDat->GetVoxelSize();
               return 1
-                  + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * inverse_velocity * inverse_velocity
+                  + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
                       / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
             }
             BoundaryValues *inlets;
