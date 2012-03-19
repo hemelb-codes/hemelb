@@ -49,9 +49,9 @@ namespace hemelb
                 // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
                 lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
                                                                 config->GetTotalTimeSteps());
-                double voxel_size = 0.0001;
-                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxel_size);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxel_size);
+                double voxelSize = 0.0001;
+                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
                 cosine->Reset(state);
@@ -73,7 +73,7 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->GetNormal());
 
                 // Set an approriate target value for the density, the maximum.
-                double temp = state.GetTimeStepLength() / voxel_size;
+                double temp = state.GetTimeStepLength() / voxelSize;
                 double targetMeanDensity = 1
                     + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
 
@@ -95,9 +95,9 @@ namespace hemelb
                     configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
                 lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
                                                                 config->GetTotalTimeSteps());
-                double voxel_size = 0.0001;
-                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxel_size);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxel_size);
+                double voxelSize = 0.0001;
+                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
                 file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);
@@ -112,7 +112,7 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->GetNormal());
 
                 // Set some target values for the density at various times.
-                double temp = state.GetTimeStepLength() / voxel_size;
+                double temp = state.GetTimeStepLength() / voxelSize;
                 double targetStartDensity = 1
                     + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
                 double targetMidDensity = 1
