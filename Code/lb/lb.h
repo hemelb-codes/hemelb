@@ -151,8 +151,6 @@ namespace hemelb
           }
         }
 
-        double *inlet_normal;
-
         unsigned int inletCount;
         unsigned int outletCount;
 

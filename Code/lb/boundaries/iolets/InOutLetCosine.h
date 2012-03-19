@@ -43,26 +43,26 @@ namespace hemelb
             PhysicalPressure & GetPressureMean() {
               return pressureMeanPhysical;
             }
-            void SetPressureMean(PhysicalPressure apressure){
-              pressureMeanPhysical=apressure;
+            void SetPressureMean(PhysicalPressure pressure){
+              pressureMeanPhysical=pressure;
             }
             PhysicalPressure & GetPressureAmp() {
               return pressureAmpPhysical;
             }
-            void SetPressureAmp(PhysicalPressure apressure){
-              pressureAmpPhysical=apressure;
+            void SetPressureAmp(PhysicalPressure pressure){
+              pressureAmpPhysical=pressure;
             }
             double & GetPhase() {
               return phase;
             }
-            void SetPhase(double aphase){
-              phase=aphase;
+            void SetPhase(double aPhase){
+              phase=aPhase;
             }
             PhysicalTime & GetPeriod() {
               return period;
             }
-            void SetPeriod(PhysicalTime aperiod) {
-              period=aperiod;
+            void SetPeriod(PhysicalTime aPeriod) {
+              period=aPeriod;
             }
           private:
 
