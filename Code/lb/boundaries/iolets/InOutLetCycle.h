@@ -72,12 +72,12 @@ namespace hemelb
           private:
             void UpdateCycle(LatticeTime time_step) const
             {
-              if (shouldUpdateBuffer(time_step))
+              if (ShouldUpdateBuffer(time_step))
               {
                 CalculateCycle();
               }
             }
-            bool shouldUpdateBuffer(LatticeTime time_step) const
+            bool ShouldUpdateBuffer(LatticeTime time_step) const
             {
               if (updatePeriod == 0)
               {
