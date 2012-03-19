@@ -140,6 +140,7 @@ namespace hemelb
           {
             delete zerod;
             delete mockheme;
+            delete pbuffer;
           }
         private:
           void TestCRRun()
