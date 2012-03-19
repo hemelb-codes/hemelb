@@ -26,31 +26,31 @@ namespace hemelb
           public:
             InOutLetFile();
             virtual ~InOutLetFile();
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
+            virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
             virtual InOutLet* Clone() const;
             virtual void Reset(SimulationState &state)
             {
               CalculateTable(state.GetTotalTimeSteps());
             }
-            std::string PressureFilePath;
-
+            std::string & GetFilePath(){return pressureFilePath;}
             PhysicalPressure GetPressureMin() const
             {
-              return PressureMinPhysical;
+              return pressureMinPhysical;
             }
             PhysicalPressure GetPressureMax() const
             {
-              return PressureMaxPhysical;
+              return pressureMaxPhysical;
             }
-            LatticeDensity GetDensity(LatticeTime time_step) const
+            LatticeDensity GetDensity(LatticeTime timeStep) const
             {
-              return densityTable[time_step];
+              return densityTable[timeStep];
             }
           private:
-            void CalculateTable(LatticeTime total_time_steps);
+            void CalculateTable(LatticeTime totalTimeSteps);
             std::vector<LatticeDensity> densityTable;
-            PhysicalPressure PressureMinPhysical;
-            PhysicalPressure PressureMaxPhysical;
+            PhysicalPressure pressureMinPhysical;
+            PhysicalPressure pressureMaxPhysical;
+            std::string pressureFilePath;
         };
 
       }
