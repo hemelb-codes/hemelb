@@ -219,9 +219,11 @@ def result_model(config):
             prop=self.datum(property)
             try:
                 if value[0]=='<':
-                    return prop<type(prop)(value[1:])
+                    return prop<ResultProperty.parse_value(value[1:])
+                if value[0]=='!':
+                    return not prop==ResultProperty.parse_value(value[1:])
                 elif value[0]=='>':
-                    return prop>type(prop)(value[1:])
+                    return prop>ResultProperty.parse_value(value[1:])
                 else:
                     return prop==value
             except TypeError:
