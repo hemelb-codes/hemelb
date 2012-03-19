@@ -1,6 +1,7 @@
 #ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
 #define HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
 #include "multiscale/Intercommunicator.h"
+#include "mpiInclude.h"
 #include "tinyxml.h"
 
 #include <algorithm>
@@ -13,109 +14,108 @@ namespace hemelb
   {
     namespace multiscale
     {
-      template<class T> struct ExampleTypeTraits
-      {
-          static unsigned int type;
-      };
+      /***
+       * Example type traits structure, using the HemeLB implementation of MPI_TYPE traits.
+       */
 
-      template<class T> unsigned int ExampleTypeTraits<T>::type = 0;
-      template<> unsigned int ExampleTypeTraits<double>::type = 1;
-      template<> unsigned int ExampleTypeTraits<int>::type = 2;
-
-      struct ExampleRuntimeTypeImplementation
+      struct MPIRuntimeType
       {
-          typedef unsigned int RuntimeType;
-          template<class T> static unsigned int GetType()
+          typedef MPI_Datatype RuntimeType;
+          template<class T> static RuntimeType GetType()
           {
-            return ExampleTypeTraits<T>::type;
+            return MpiDataTypeTraits<T>::GetMpiDataType();
           }
       };
 
-      class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<ExampleRuntimeTypeImplementation>
+      /***
+       * This is a very dumb example of an intercommunicator
+       * It stores communicated examples in a string-keyed buffer
+       * By sharing the same buffer between multiple intercommunicator interfaces, one can mock the behaviour of interprocess communication.
+       */
+      class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
       {
         public:
           MockIntercommunicator(std::map<std::string, double> & buffer) :
-              double_contents(buffer), current_time(0)
+              doubleContents(buffer), currentTime(0)
           {
 
           }
 
           void AdvanceTime(double new_time)
           {
-            current_time = new_time;
-            double_contents["shared_time"] = new_time;
+            currentTime = new_time;
+            doubleContents["shared_time"] = new_time;
           }
           bool ShouldAdvance()
           {
-            return double_contents["shared_time"] >= current_time;
+            return doubleContents["shared_time"] >= currentTime;
           }
 
           bool GetFromMultiscale()
           {
-            for (ContentsType::iterator intercommunicand_data = registered_objects.begin();
-                intercommunicand_data != registered_objects.end(); intercommunicand_data++)
+            for (ContentsType::iterator intercommunicandData = registeredObjects.begin();
+                intercommunicandData != registeredObjects.end(); intercommunicandData++)
             {
-              hemelb::multiscale::Intercommunicand &shared_object = *intercommunicand_data->first;
-              std::string &label = intercommunicand_data->second.second;
-              IntercommunicandTypeT &resolver = *intercommunicand_data->second.first;
+              hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
+              std::string &label = intercommunicandData->second.second;
+              IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
-              for (unsigned int shared_field_index = 0; shared_field_index <= shared_object.Values().size();
-                  shared_field_index++)
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex <= sharedObject.Values().size();
+                  sharedFieldIndex++)
               {
-                Receive(resolver.Fields()[shared_field_index].first,
-                        resolver.Fields()[shared_field_index].second,
+                Receive(resolver.Fields()[sharedFieldIndex].first,
+                        resolver.Fields()[sharedFieldIndex].second,
                         label,
-                        *shared_object.Values()[shared_field_index]);
+                        *sharedObject.Values()[sharedFieldIndex]);
               }
             }
             return true;
           }
           void SendToMultiscale()
           {
-            for (ContentsType::iterator intercommunicand_data = registered_objects.begin();
-                intercommunicand_data != registered_objects.end(); intercommunicand_data++)
+            for (ContentsType::iterator intercommunicandData = registeredObjects.begin();
+                intercommunicandData != registeredObjects.end(); intercommunicandData++)
             {
-              hemelb::multiscale::Intercommunicand &shared_object = *intercommunicand_data->first;
-              std::string &label = intercommunicand_data->second.second;
-              IntercommunicandTypeT &resolver = *intercommunicand_data->second.first;
-              for (unsigned int shared_field_index = 0; shared_field_index <= shared_object.Values().size();
-                  shared_field_index++)
+              hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
+              std::string &label = intercommunicandData->second.second;
+              IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex <= sharedObject.Values().size();
+                  sharedFieldIndex++)
               {
-                Send(resolver.Fields()[shared_field_index].first,
-                     resolver.Fields()[shared_field_index].second,
+                Send(resolver.Fields()[sharedFieldIndex].first,
+                     resolver.Fields()[sharedFieldIndex].second,
                      label,
-                     *shared_object.Values()[shared_field_index]);
+                     *sharedObject.Values()[sharedFieldIndex]);
               }
             }
           }
-          void Receive(const std::string & field_label,
+          void Receive(const std::string & fieldLabel,
                        RuntimeType type,
-                       const std::string object_label,
+                       const std::string objectLabel,
                        hemelb::multiscale::BaseSharedValue & value)
           {
-            if (type == ExampleTypeTraits<double>::type)
+            if (type == RuntimeTypeTraits::GetType<double>())
             {
-              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = double_contents[object_label
-                  + "_" + field_label];
+              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = doubleContents[objectLabel
+                  + "_" + fieldLabel];
 
             }
 
           }
-          void Send(const std::string & field_label,
+          void Send(const std::string & fieldLabel,
                     RuntimeType type,
-                    const std::string object_label,
+                    const std::string objectLabel,
                     hemelb::multiscale::BaseSharedValue & value)
           {
-            if (type == ExampleTypeTraits<double>::type)
+            if (type == RuntimeTypeTraits::GetType<double>())
             {
-              double_contents[object_label + "_" + field_label] =
+              doubleContents[objectLabel + "_" + fieldLabel] =
                   static_cast<hemelb::multiscale::SharedValue<double> &>(value);
             }
 
           }
-          std::map<std::string, double> &double_contents;
-          double current_time;
-          double shared_time;
+          std::map<std::string, double> &doubleContents;
+          double currentTime;
       };
     }
   }
