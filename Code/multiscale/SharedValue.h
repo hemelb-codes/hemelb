@@ -26,7 +26,7 @@ namespace hemelb
     /***
      * A shared value is a field in an object which can be read and set by the multiscale system.
      * Should be used as a field in classes inheriting Intercommunicand.
-     * The cast operators are defined so these fields can be treated as interchangable with their contents.
+     * The cast operators are defined so these fields can be treated as interchangeable with their contents.
      * @tparam payload The type of value contained.
      */
     template<class Payload> class SharedValue : public BaseSharedValue {
