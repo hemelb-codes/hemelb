@@ -59,7 +59,6 @@ namespace hemelb
             {
               delete comms;
             }
-            ;
             /***
              * Fill in a vector of values of the density for this IOLet.
              * The Iolet will not subsequently calculate it's density values, but will read them from this buffer.

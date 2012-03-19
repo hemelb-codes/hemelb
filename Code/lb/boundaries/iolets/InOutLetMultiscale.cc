@@ -10,9 +10,9 @@ namespace hemelb
     {
       namespace iolets
       {
-        void InOutLetMultiscale::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
+        void InOutLetMultiscale::DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig)
         {
-          iSimConfig->DoIOForMultiscaleInOutlet(iParent, iIsLoading, this);
+          simConfig->DoIOForMultiscaleInOutlet(parent, isLoading, this);
         }
       }
     }
