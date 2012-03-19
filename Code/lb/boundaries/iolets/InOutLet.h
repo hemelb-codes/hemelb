@@ -52,13 +52,20 @@ namespace hemelb
             virtual InOutLet* Clone() const = 0;
 
             /***
-             * Carry out any communication needed for the IOLet.
+             * This is a castable? virtual method, which is perhaps an anti-pattern
+             * We should potentially use dynamic cast checks instead.
              * @return true if any comms were done.
              */
             virtual bool IsCommsRequired() const
             {
               return false;
             }
+
+            /***
+             * This is a castable? virtual method, which is perhaps an anti-pattern
+             * We should potentially use dynamic cast checks instead.
+             * @return true if any comms were done.
+             */
             virtual bool IsRegistrationRequired() const
             {
               return false;
@@ -71,6 +78,10 @@ namespace hemelb
             {
               return comms;
             }
+            /***
+             * Carry out communication necessary
+             * @param isIoProcess Is the process the master process?
+             */
             virtual void DoComms(bool isIoProcess)
             {
               // pass

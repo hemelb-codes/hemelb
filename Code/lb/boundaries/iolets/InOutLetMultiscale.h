@@ -14,18 +14,35 @@ namespace hemelb
       namespace iolets
       {
 
-        /*
-         * Template values are chosen to be tUpdatePeriod = 1 and tComms = false
-         * The multiscale pressure trace can be easily calculated locally by any proc and
-         * there is no need to store values for any time step beyond the current one
+        /***
+         * An inlet/outlet whose density is obtained from the multiscale intercommunicator
+         * We envisage communication of velocity information outwards to other processes
+         * the velocity SharedValue is a place-holder for this.
+         * We set 0.1 as an arbitrary value for the output velocity for now.
+         * We do not yet have an understanding of the necessary physics, or the necessary computational infrastructure,
+         * for building boundary conditions which have access to their nearby velocity field.
+         * The min and max pressure SharedValues are placeholders for information needed by the steering and visualisation code.
+         * The steering and visualisation code requires minimum and maximum pressure values.
          */
         class InOutLetMultiscale : public multiscale::Intercommunicand,
                                    public InOutLet
         {
           public:
             InOutLetMultiscale() :
-                multiscale::Intercommunicand(), InOutLet(), pressure(this), minPressure(this), maxPressure(this), velocity(this,
-                                                                                                                           0.0)
+                multiscale::Intercommunicand(), InOutLet(), pressure(this), minPressure(this), maxPressure(this), velocity(this)
+            {
+
+            }
+            /***
+             * The shared values are registered through the initialiser-list syntactic sugar.
+             */
+            InOutLetMultiscale(const InOutLetMultiscale &other) :
+                Intercommunicand(other),
+                label(other.label),
+                pressure(this, other.GetPressure()),
+                minPressure(this, other.GetPressureMin()),
+                maxPressure(this,other.GetPressureMax()),
+                velocity(this,other.GetVelocity())
             {
 
             }
@@ -33,15 +50,10 @@ namespace hemelb
             {
             }
             virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
+
             virtual InOutLet* Clone() const
             {
               InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
-              // copy constructor must copy pointers to the new locations of the shared data into the copy's reference buffer.
-              copy->Values().clear();
-              copy->RegisterSharedValue(&copy->pressure);
-              copy->RegisterSharedValue(&copy->minPressure);
-              copy->RegisterSharedValue(&copy->maxPressure);
-              copy->RegisterSharedValue(&copy->velocity);
               return copy;
             }
             virtual void Reset(SimulationState &state)
@@ -55,7 +67,6 @@ namespace hemelb
             LatticeDensity GetDensity(unsigned long timeStep) const
             {
               return units->ConvertPressureToLatticeUnits(pressure);
-
             }
             PhysicalPressure GetPressureMin() const
             {
@@ -64,6 +75,14 @@ namespace hemelb
             PhysicalPressure GetPressureMax() const
             {
               return maxPressure;
+            }
+            PhysicalVelocity GetVelocity() const
+            {
+              return velocity;
+            }
+            PhysicalPressure GetPressure() const
+            {
+              return pressure;
             }
 
             template<class Intercommunicator> void Register(Intercommunicator &intercomms,
@@ -91,7 +110,7 @@ namespace hemelb
             multiscale::SharedValue<PhysicalPressure> pressure;
             multiscale::SharedValue<PhysicalPressure> minPressure;
             multiscale::SharedValue<PhysicalPressure> maxPressure;
-            multiscale::SharedValue<PhysicalVelocity> velocity;
+            mutable multiscale::SharedValue<PhysicalVelocity> velocity;
         };
       }
     }

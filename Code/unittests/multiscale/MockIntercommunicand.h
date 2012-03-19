@@ -13,6 +13,9 @@ namespace hemelb
     namespace multiscale
     {
       using namespace hemelb::multiscale;
+      /***
+       * A mock intercommunicand, representing an iolet which has density (a.k.a. pressure) and
+       */
       class MockIntercommunicand : public Intercommunicand
       {
         public:
