@@ -324,9 +324,6 @@ namespace hemelb
       delete mOutletCollision;
       delete mInletWallCollision;
       delete mOutletWallCollision;
-
-      // Delete various other arrays used
-      delete[] inlet_normal;
     }
 
     template<class LatticeType>
@@ -336,16 +333,6 @@ namespace hemelb
       std::vector<lb::boundaries::iolets::InOutLet*> outlets= mSimConfig->GetOutlets();
       inletCount = inlets.size();
       outletCount = outlets.size();
-
-      inlet_normal = new distribn_t[3 * InletCount()];
-
-      for (unsigned int ii = 0; ii < inletCount; ii++)
-      {
-        inlet_normal[3 * ii] = inlets[ii]->GetNormal().x;
-        inlet_normal[3 * ii + 1] = inlets[ii]->GetNormal().y;
-        inlet_normal[3 * ii + 2] = inlets[ii]->GetNormal().z;
-      }
-
       mParams.StressType = mSimConfig->GetStressType();
     }
 
