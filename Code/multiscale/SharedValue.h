@@ -26,29 +26,30 @@ namespace hemelb
     /***
      * A shared value is a field in an object which can be read and set by the multiscale system.
      * Should be used as a field in classes inheriting Intercommunicand.
+     * The cast operators are defined so these fields can be treated as interchangable with their contents.
      * @tparam payload The type of value contained.
      */
-    template<class payload> class SharedValue : public BaseSharedValue {
+    template<class Payload> class SharedValue : public BaseSharedValue {
       public:
       /***
        * Construct a shared value
        * @param owner The owning intercommunicand, used as "this" in an initialiser list in the parent.
        * @param val An initial value for the payload.
        */
-        SharedValue(Intercommunicand* owner, payload val=payload())
+        SharedValue(Intercommunicand* owner, Payload val=Payload())
           :BaseSharedValue(owner),contents(val)
           {}
 
         /***
          * Cast operator to payload value
          */
-        operator payload &(){
+        operator Payload &(){
           return contents;
         }
         /***
          * Cast operator to const payload value
          */
-        operator const payload &() const {
+        operator const Payload &() const {
           return contents;
         }
         /***
@@ -56,16 +57,16 @@ namespace hemelb
          * @param input the value to assign
          * @return the value assigned.
          */
-        SharedValue<payload> & operator= (const payload & input)
+        SharedValue<Payload> & operator= (const Payload & input)
           {
             contents=input;
             return *this;
           }
       private:
-        payload contents;
+        Payload contents;
     };
-    template<class payload> std::ostream & operator<<(std::ostream & stream, const SharedValue<payload> & sv){
-      return stream << static_cast<payload>(sv);
+    template<class Payload> std::ostream & operator<<(std::ostream & stream, const SharedValue<Payload> & sv){
+      return stream << static_cast<Payload>(sv);
     }
   }
 }
