@@ -26,6 +26,8 @@
 	</nodes>
 	<geometry>
 		<sites>{{SITES}}</sites>
+		<blocks>{{BLOCKS}}</blocks>
+		<sites_per_block>{{SITESPERBLOCK}}</sites_per_block>
 		{{#PROCESSOR}}
 		<domain>
 			<rank>{{RANK}}</rank><sites>{{SITES}}</sites>

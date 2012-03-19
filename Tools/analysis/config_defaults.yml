@@ -29,6 +29,8 @@ results:
             reading_communications: 'timings/timer[name="Reading communications"]/mean'
             parsing: 'timings/timer[name="Parsing"]/mean'
             read_io: 'timings/timer[name="Read IO"]/mean'
+            block_count: 'geometry/blocks'
+            sites_per_block: 'geometry/sites_per_block'
         'config.xml':
             cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
@@ -43,6 +45,11 @@ results:
             streaklines: 'HEMELB_USE_STREAKLINES:BOOL=(.*)'
         'acceptance.txt':
             acceptance: 'Accepted: (.*)'
+    gmy_files:
+        'config.gmy':
+            gmy_fluid_site_count: sum(BlockFluidSiteCounts)
+            gmy_block_size: _BlockSize
+            gmy_block_count: len(Blocks)
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
         type_by_name: '(regression|unittests)'
@@ -74,6 +81,10 @@ results:
         cost: (5.78*kau)
         report_created: (datetime.datetime.fromtimestamp(report_created_timestamp))
         normalised: (True if snapshot_normalisation else False)
+        solid_and_fluid_sites: block_count*sites_per_block
+        fluid_fraction: sites*1.0/solid_and_fluid_sites
+        gmy_sites_per_block: gmy_block_size**3
+        gmy_fluid_fraction: gmy_fluid_site_count*1.0/(gmy_sites_per_block*gmy_block_count)
 
     yaml_files:
         'env.yml':
