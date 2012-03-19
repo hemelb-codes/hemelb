@@ -14,17 +14,17 @@ namespace hemelb
           configuration::SimConfig()
         {
           lb::boundaries::iolets::InOutLetCosine* inlet = new lb::boundaries::iolets::InOutLetCosine();
-          inlet->PressureAmpPhysical = 1.0;
-          inlet->PressureMeanPhysical = 80.0;
-          inlet->Phase = PI;
-          inlet->Period = 60.0/70.0;
+          inlet->SetPressureAmp(1.0);
+          inlet->SetPressureMean(80.0);
+          inlet->SetPhase(PI);
+          inlet->SetPeriod(60.0/70.0);
 
           inlets.push_back(inlet);
 
           lb::boundaries::iolets::InOutLetCosine* outlet = new lb::boundaries::iolets::InOutLetCosine();
-          outlet->PressureAmpPhysical = 0.0;
-          outlet->PressureMeanPhysical = 80.0;
-          outlet->Phase = 0.0;
+          outlet->SetPressureAmp(0.0);
+          outlet->SetPressureMean(80.0);
+          outlet->SetPhase(0.0);
 
           outlets.push_back(outlet);
 
