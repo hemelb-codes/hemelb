@@ -30,15 +30,16 @@ namespace hemelb
         class InOutLetCycle : public InOutLet
         {
           public:
-
-            virtual bool GetIsCommsRequired()
+            //@override
+            virtual bool IsCommsRequired() const
             {
               return comms;
             }
             LatticeDensity GetDensity(LatticeTime time_step) const
             {
-              if (!GetIsCommsRequired())
+              if (!IsCommsRequired())
               {
+                // logically constant method with a non-const implementation.
                 UpdateCycle(time_step);
               }
               return densityBuffer[time_step % updatePeriod];
@@ -48,7 +49,7 @@ namespace hemelb
             {
               densityBuffer.resize(state.GetTotalTimeSteps());
             }
-            virtual void DoComms(bool is_io_proc, LatticeTime time_step);
+            void DoComms(bool is_io_proc, LatticeTime time_step);
           protected:
             InOutLetCycle() :
                 InOutLet(), densityBuffer()
@@ -67,17 +68,17 @@ namespace hemelb
              * This length is usually one, indicating that the calculation is done every time step,
              * or zero, indicating that the calculation is done once for the whole simulation.
              */
-            virtual void CalculateCycle() = 0; // fill the density buffer
+            virtual void CalculateCycle() const = 0; // fill the density buffer
 
           private:
-            void UpdateCycle(LatticeTime time_step)
+            void UpdateCycle(LatticeTime time_step) const
             {
               if (shouldUpdateBuffer(time_step))
               {
                 CalculateCycle();
               }
             }
-            bool shouldUpdateBuffer(LatticeTime time_step)
+            bool shouldUpdateBuffer(LatticeTime time_step) const
             {
               if (updatePeriod == 0)
               {
@@ -85,7 +86,9 @@ namespace hemelb
               }
               return time_step % updatePeriod == 0;
             }
-            std::vector<LatticeDensity> densityBuffer;
+            // a cache, logically constant methods can modify this.
+            // (Perfect use-case for mutable.)
+            mutable std::vector<LatticeDensity> densityBuffer;
         }
         ;
       }
