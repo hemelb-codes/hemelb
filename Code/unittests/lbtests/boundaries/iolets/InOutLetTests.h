@@ -105,6 +105,7 @@ namespace hemelb
 
 
                 // Ok, now we have an inlet, check the values are right.
+                CPPUNIT_ASSERT_EQUAL(std::string("./iolet.txt"),file->GetFilePath());
                 CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
                 CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),

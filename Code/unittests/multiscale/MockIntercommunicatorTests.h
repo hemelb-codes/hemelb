@@ -32,7 +32,6 @@ namespace hemelb
           double time_resolution;
           double space_resolution;
           double current_time;
-
           void DoLB()
           {
             double resistance = 10.0;
@@ -72,7 +71,10 @@ namespace hemelb
           double time_resolution;
           double space_resolution;
           double current_time;
-
+          double GetOutletPressure()
+          {
+            return outlet.GetDensity();
+          }
           void Do1D()
           {
             double capacitance = 10.0;
@@ -94,11 +96,12 @@ namespace hemelb
 
       };
 
-
       // Useful for debugging to have this.
-      std::ostream & operator <<(std::ostream & stream, std::map<std::string,double> buffer){
+      std::ostream & operator <<(std::ostream & stream, std::map<std::string, double> buffer)
+      {
         stream << " { ";
-        for (std::map<std::string,double>::iterator entry=buffer.begin();entry!=buffer.end();entry++){
+        for (std::map<std::string, double>::iterator entry = buffer.begin(); entry != buffer.end(); entry++)
+        {
           stream << entry->first << " : " << entry->second << " , ";
         }
         stream << " } ";
@@ -118,8 +121,8 @@ namespace hemelb
             std::map<std::string, double> &buffer = *pbuffer;
             buffer["boundary1_pressure"] = 81.0;
             buffer["boundary2_pressure"] = 79.0;
-            buffer["boundary1_velocity"] = 0.0;
-            buffer["boundary2_velocity"] = 0.0;
+            buffer["boundary1_velocity"] = 0.1;
+            buffer["boundary2_velocity"] = 0.1;
             buffer["shared_time"] = 0.0;
             mockheme = new MockHemeLB<MockIntercommunicator>(25.0, 0.2, buffer);
             zerod = new Mock0DModel<MockIntercommunicator>(10.0, 0.5, buffer);
@@ -146,7 +149,7 @@ namespace hemelb
               //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
             }
 
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(mockheme->current_time, zerod->current_time,1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(mockheme->current_time, zerod->current_time, 1e-6);
           }
           void TestCHemeRun()
           {
@@ -167,20 +170,23 @@ namespace hemelb
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);
             MockIntercommunicator intercomms(*pbuffer);
-            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options,intercomms);
+            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, intercomms);
             // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
             while (heme->GetState()->GetTimeStep() <= heme->GetState()->GetTotalTimeSteps())
             {
               zerod->Simulate();
               heme->DoTimeStep();
-              //std::cout << "Heme: I: p:" << heme->inlet.GetDensity() << " v:" << heme->inlet.GetVelocity() << " O: p: "
-              //    << heme->outlet.GetDensity() << " v:" << heme->outlet.GetVelocity() << std::endl;
               //std::cout << "Zerod: @" << zerod->current_time << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
               //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
-              //std::cout << *pbuffer << std::endl;
+              // std::cout << *pbuffer << std::endl;
             }
+            // In advancing 100 time steps, at 0.2 s per time step, with a 0d model at 0.5s per time step
+            // the 0d model with execute 100*2/5=40 times.
+            // Each time, the pressure difference will drop by 0.1*0.1=0.01 mmHg.
+            // So the final pressure will be 81.0-40*0.01=80.6 mmHg
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(80.6, zerod->GetOutletPressure(), 1e-6);
             heme->Finalise();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->current_time,1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->current_time, 1e-6);
             delete heme;
           }
           MockHemeLB<MockIntercommunicator> *mockheme;
