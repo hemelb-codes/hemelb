@@ -24,7 +24,7 @@ namespace hemelb
         {
           public:
             InOutLetMultiscale() :
-                multiscale::Intercommunicand(), InOutLet(), Pressure(this), MinPressure(this), MaxPressure(this), Velocity(this,
+                multiscale::Intercommunicand(), InOutLet(), pressure(this), minPressure(this), maxPressure(this), velocity(this,
                                                                                                                            0.0)
             {
 
@@ -32,16 +32,16 @@ namespace hemelb
             virtual ~InOutLetMultiscale()
             {
             }
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
+            virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
             virtual InOutLet* Clone() const
             {
               InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
               // copy constructor must copy pointers to the new locations of the shared data into the copy's reference buffer.
               copy->Values().clear();
-              copy->RegisterSharedValue(&copy->Pressure);
-              copy->RegisterSharedValue(&copy->MinPressure);
-              copy->RegisterSharedValue(&copy->MaxPressure);
-              copy->RegisterSharedValue(&copy->Velocity);
+              copy->RegisterSharedValue(&copy->pressure);
+              copy->RegisterSharedValue(&copy->minPressure);
+              copy->RegisterSharedValue(&copy->maxPressure);
+              copy->RegisterSharedValue(&copy->velocity);
               return copy;
             }
             virtual void Reset(SimulationState &state)
@@ -52,31 +52,24 @@ namespace hemelb
             {
               return true;
             }
-            LatticeDensity GetDensity(unsigned long time_step) const
+            LatticeDensity GetDensity(unsigned long timeStep) const
             {
-              return units->ConvertPressureToLatticeUnits(Pressure);
+              return units->ConvertPressureToLatticeUnits(pressure);
 
             }
             PhysicalPressure GetPressureMin() const
             {
-              return MinPressure;
+              return minPressure;
             }
             PhysicalPressure GetPressureMax() const
             {
-              return MaxPressure;
+              return maxPressure;
             }
-
-            std::string Label;
-
-            multiscale::SharedValue<PhysicalPressure> Pressure;
-            multiscale::SharedValue<PhysicalPressure> MinPressure;
-            multiscale::SharedValue<PhysicalPressure> MaxPressure;
-            multiscale::SharedValue<PhysicalVelocity> Velocity;
 
             template<class Intercommunicator> void Register(Intercommunicator &intercomms,
                                                             typename Intercommunicator::IntercommunicandTypeT &type)
             {
-              intercomms.RegisterIntercommunicand(type, *this, Label);
+              intercomms.RegisterIntercommunicand(type, *this, label);
             }
             template<class IntercommunicandType> static void DefineType(IntercommunicandType &type)
             {
@@ -86,6 +79,19 @@ namespace hemelb
               type.template RegisterSharedValue<PhysicalPressure>("maxPressure");
               type.template RegisterSharedValue<PhysicalPressure>("velocity");
             }
+            // This should be const, and we should have a setter.
+            // But the way SimConfig is set up prevents this.
+            std::string & GetLabel()
+            {
+              return label;
+            }
+          private:
+            std::string label;
+
+            multiscale::SharedValue<PhysicalPressure> pressure;
+            multiscale::SharedValue<PhysicalPressure> minPressure;
+            multiscale::SharedValue<PhysicalPressure> maxPressure;
+            multiscale::SharedValue<PhysicalVelocity> velocity;
         };
       }
     }
