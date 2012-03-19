@@ -13,25 +13,29 @@ namespace hemelb
   {
     namespace multiscale
     {
+      /***
+       * Mock intercommunicating entity which looks a bit like a heme lb conceptually
+       * It has an input, and an output, and the flow rate depends on the difference in pressures.
+       */
       template<class IntercommuniatorImplementation> class MockHemeLB
       {
         public:
-          MockHemeLB(double aspace_resolution, double atime_resolution, std::map<std::string, double> & buffer) :
-              inlet(), outlet(), inoutlettype("inoutlet"), intercomms(buffer), time_resolution(atime_resolution), space_resolution(aspace_resolution), current_time(0)
+          MockHemeLB(double spaceResolution, double timeResolution, std::map<std::string, double> & buffer) :
+              inlet(), outlet(), inOutLetType("inoutlet"), intercomms(buffer), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
           {
             // The intercommunicators have a shared buffer which represents imaginary communication
-            inoutlettype.template RegisterSharedValue<double>("pressure");
-            inoutlettype.template RegisterSharedValue<double>("velocity");
-            intercomms.RegisterIntercommunicand(inoutlettype, inlet, "boundary1");
-            intercomms.RegisterIntercommunicand(inoutlettype, outlet, "boundary2");
+            inOutLetType.template RegisterSharedValue<double>("pressure");
+            inOutLetType.template RegisterSharedValue<double>("velocity");
+            intercomms.RegisterIntercommunicand(inOutLetType, inlet, "boundary1");
+            intercomms.RegisterIntercommunicand(inOutLetType, outlet, "boundary2");
           }
           MockIntercommunicand inlet;
           MockIntercommunicand outlet;
-          typename IntercommuniatorImplementation::IntercommunicandTypeT inoutlettype;
+          typename IntercommuniatorImplementation::IntercommunicandTypeT inOutLetType;
           IntercommuniatorImplementation intercomms;
-          double time_resolution;
-          double space_resolution;
-          double current_time;
+          double timeResolution;
+          double spaceResolution;
+          double currentTime;
           void DoLB()
           {
             double resistance = 10.0;
@@ -46,31 +50,35 @@ namespace hemelb
               return;
             intercomms.GetFromMultiscale();
             DoLB();
-            current_time += time_resolution;
-            intercomms.AdvanceTime(current_time);
+            currentTime += timeResolution;
+            intercomms.AdvanceTime(currentTime);
             intercomms.SendToMultiscale();
           }
 
       };
+      /***
+       * Mock intercommunicating entity which is a tank of water.
+       * It has a pressure difference which drops depending on the flow rate.
+       */
       template<class IntercommuniatorImplementation> class Mock0DModel
       {
         public:
-          Mock0DModel(double aspace_resolution, double atime_resolution, std::map<std::string, double> & buffer) :
-              inlet(), outlet(), inoutlettype("inoutlet"), intercomms(buffer), time_resolution(atime_resolution), space_resolution(aspace_resolution), current_time(0)
+          Mock0DModel(double spaceResolution, double timeResolution, std::map<std::string, double> & buffer) :
+              inlet(), outlet(), inOutLetType("inoutlet"), intercomms(buffer), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
           {
             // The intercommunicators have a shared buffer which represents imaginary communication
-            inoutlettype.template RegisterSharedValue<double>("pressure");
-            inoutlettype.template RegisterSharedValue<double>("velocity");
-            intercomms.RegisterIntercommunicand(inoutlettype, inlet, "boundary2");
-            intercomms.RegisterIntercommunicand(inoutlettype, outlet, "boundary1");
+            inOutLetType.template RegisterSharedValue<double>("pressure");
+            inOutLetType.template RegisterSharedValue<double>("velocity");
+            intercomms.RegisterIntercommunicand(inOutLetType, inlet, "boundary2");
+            intercomms.RegisterIntercommunicand(inOutLetType, outlet, "boundary1");
           }
           MockIntercommunicand inlet;
           MockIntercommunicand outlet;
-          typename IntercommuniatorImplementation::IntercommunicandTypeT inoutlettype;
+          typename IntercommuniatorImplementation::IntercommunicandTypeT inOutLetType;
           IntercommuniatorImplementation intercomms;
-          double time_resolution;
-          double space_resolution;
-          double current_time;
+          double timeResolution;
+          double spaceResolution;
+          double currentTime;
           double GetOutletPressure()
           {
             return outlet.GetDensity();
@@ -89,8 +97,8 @@ namespace hemelb
               return;
             intercomms.GetFromMultiscale();
             Do1D();
-            current_time += time_resolution;
-            intercomms.AdvanceTime(current_time);
+            currentTime += timeResolution;
+            intercomms.AdvanceTime(currentTime);
             intercomms.SendToMultiscale();
           }
 
@@ -143,13 +151,11 @@ namespace hemelb
             {
               mockheme->Simulate();
               zerod->Simulate();
-              //std::cout << "Heme: I: p:" << heme->inlet.GetDensity() << " v:" << heme->inlet.GetVelocity() << " O: p: "
-              //    << heme->outlet.GetDensity() << " v:" << heme->outlet.GetVelocity() << std::endl;
-              //std::cout << "Zerod: I: p:" << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
-              //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
             }
-
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(mockheme->current_time, zerod->current_time, 1e-6);
+            // The asserted value here is a result of discretised exponential decay.
+            // I have not thought it worth determining this by a formula.
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(80.3379435171394, zerod->GetOutletPressure(), 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(mockheme->currentTime, zerod->currentTime, 1e-6);
           }
           void TestCHemeRun()
           {
@@ -176,7 +182,7 @@ namespace hemelb
             {
               zerod->Simulate();
               heme->DoTimeStep();
-              //std::cout << "Zerod: @" << zerod->current_time << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
+              //std::cout << "Zerod: @" << zerod->currentTime << " I: p:"  << zerod->inlet.GetDensity() << " v:" << zerod->inlet.GetVelocity()
               //    << " O: p: " << zerod->outlet.GetDensity() << " v:" << zerod->outlet.GetVelocity() << std::endl;
               // std::cout << *pbuffer << std::endl;
             }
@@ -186,7 +192,7 @@ namespace hemelb
             // So the final pressure will be 81.0-40*0.01=80.6 mmHg
             CPPUNIT_ASSERT_DOUBLES_EQUAL(80.6, zerod->GetOutletPressure(), 1e-6);
             heme->Finalise();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->current_time, 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), zerod->currentTime, 1e-6);
             delete heme;
           }
           MockHemeLB<MockIntercommunicator> *mockheme;

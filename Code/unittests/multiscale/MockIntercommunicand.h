@@ -14,7 +14,7 @@ namespace hemelb
     {
       using namespace hemelb::multiscale;
       /***
-       * A mock intercommunicand, representing an iolet which has density (a.k.a. pressure) and
+       * A mock intercommunicand, representing an iolet which has density (a.k.a. pressure) and a velocity.
        */
       class MockIntercommunicand : public Intercommunicand
       {
@@ -33,11 +33,11 @@ namespace hemelb
           double GetVelocity(){
             return velocity;
           }
-          void SetDensity(double adensity){
-            pressure=adensity;
+          void SetDensity(double aDensity){
+            pressure=aDensity;
           }
-          void SetVelocity(double avelocity){
-            velocity=avelocity;
+          void SetVelocity(double aVelocity){
+            velocity=aVelocity;
           }
         private:
           SharedValue<double> pressure;
