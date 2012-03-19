@@ -64,10 +64,10 @@ namespace hemelb
                  <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
                  </inlet>
                  */
-                CPPUNIT_ASSERT_EQUAL(80.1, cosine->PressureMeanPhysical);
-                CPPUNIT_ASSERT_EQUAL(0.0, cosine->PressureAmpPhysical);
-                CPPUNIT_ASSERT_EQUAL(0.0, cosine->Phase);
-                CPPUNIT_ASSERT_EQUAL(0.6, cosine->Period);
+                CPPUNIT_ASSERT_EQUAL(80.1, cosine->GetPressureMean());
+                CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPressureAmp());
+                CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPhase());
+                CPPUNIT_ASSERT_EQUAL(0.6, cosine->GetPeriod());
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
                                      cosine->GetPosition());
                 CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->GetNormal());
