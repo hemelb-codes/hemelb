@@ -445,7 +445,7 @@ void SimulationMaster::DoTimeStep()
   /* In the following two if blocks we do the core magic to ensure we only Render
    when (1) we are not sending a frame or (2) we need to output to disk */
 
-  /* for debugging purposes we want to ensure we capture the variables in a single
+  /* TODO for debugging purposes we want to ensure we capture the variables in a single
    instant of time since variables might be altered by the thread half way through?
    This is to be done. */
 
