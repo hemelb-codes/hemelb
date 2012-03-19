@@ -46,6 +46,7 @@ namespace hemelb
          *  }
          * };
          */
+        typedef RuntimeTypeImplementation RuntimeTypeTraits;
         typedef typename RuntimeTypeImplementation::RuntimeType RuntimeType;
         /***
          * The type which should be used for specifying an intercommunicand type.
@@ -80,7 +81,7 @@ namespace hemelb
                                       Intercommunicand & intercommunicand,
                                       const std::string &label)
         {
-          registered_objects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
+          registeredObjects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
         }
 
         /***
@@ -94,7 +95,7 @@ namespace hemelb
 
       protected:
         typedef std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> > ContentsType;
-        ContentsType registered_objects;
+        ContentsType registeredObjects;
     };
   }
 }
