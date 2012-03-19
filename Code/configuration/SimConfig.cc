@@ -534,7 +534,7 @@ namespace hemelb
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
-      DoIOForString(lPressureElement, "path", isLoading, value->PressureFilePath);
+      DoIOForString(lPressureElement, "path", isLoading, value->GetFilePath());
 
     }
 
