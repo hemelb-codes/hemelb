@@ -546,7 +546,7 @@ namespace hemelb
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
-      DoIOForString(lPressureElement, "label", isLoading, value->Label);
+      DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
     }
 
     void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading, util::Vector3D<float> &value)
