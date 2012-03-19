@@ -95,7 +95,7 @@ namespace hemelb
           {
             if (type == ExampleTypeTraits<double>::type)
             {
-              static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents = double_contents[object_label
+              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = double_contents[object_label
                   + "_" + field_label];
 
             }
@@ -109,7 +109,7 @@ namespace hemelb
             if (type == ExampleTypeTraits<double>::type)
             {
               double_contents[object_label + "_" + field_label] =
-                  static_cast<hemelb::multiscale::SharedValue<double> &>(value).contents;
+                  static_cast<hemelb::multiscale::SharedValue<double> &>(value);
             }
 
           }
