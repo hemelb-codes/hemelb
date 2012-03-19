@@ -14,6 +14,7 @@ import datetime
 import functools
 import subprocess
 from xml.etree import ElementTree
+from hemeTools.parsers.geometry.simple import ConfigLoader
 
 import logging
 import environment
@@ -139,7 +140,13 @@ def xml_loader(path):
         raise ParseError("Could not parse file.")
 def stat_loader(path):
     return os.stat(path)
-
+def geometry_header_loader(path):
+    model=ConfigLoader(path)
+    model._LoadPreamble()
+    model._LoadHeader()
+    def binder(expression):
+        return model.Domain.__dict__
+    return binder
 
 def null_filter(result):
     return None
@@ -230,4 +237,5 @@ def result_model(config):
     Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
     Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
+    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,eval_parser)
     return Result
