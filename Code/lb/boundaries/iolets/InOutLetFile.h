@@ -32,7 +32,10 @@ namespace hemelb
             {
               CalculateTable(state.GetTotalTimeSteps());
             }
-            std::string & GetFilePath(){return pressureFilePath;}
+            std::string & GetFilePath()
+            {
+              return pressureFilePath;
+            }
             PhysicalPressure GetPressureMin() const
             {
               return pressureMinPhysical;
