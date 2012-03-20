@@ -59,7 +59,7 @@ class SimulationMaster
      * True if we are to create a snapshot on this iteration.
      * @return
      */
-    bool IsSnapshotting();
+    bool ShouldWriteSnapshot();
 
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* latticeData;

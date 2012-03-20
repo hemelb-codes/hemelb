@@ -88,9 +88,21 @@ namespace hemelb
         distribn_t GetVoxelSize() const;
 
       private:
+        /**
+         * The cache of properties for each site, which we iterate through.
+         */
         const lb::MacroscopicPropertyCache& propertyCache;
+        /**
+         * The object containing information about the lattice.
+         */
         const geometry::LatticeData& data;
+        /**
+         * Object capable of converting from physical to lattice units and vice versa.
+         */
         const util::UnitConverter& converter;
+        /**
+         * Iteration variable for tracking progress through all the local fluid sites.
+         */
         site_t position;
     };
   }
