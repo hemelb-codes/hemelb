@@ -87,18 +87,6 @@ namespace hemelb
             CalculateFeq(density, v_x, v_y, v_z, f_eq);
           }
 
-          inline static void CalculateEntropicDensityVelocityFEq(const distribn_t f[],
-                                                                 distribn_t &density,
-                                                                 distribn_t &v_x,
-                                                                 distribn_t &v_y,
-                                                                 distribn_t &v_z,
-                                                                 distribn_t f_eq[])
-          {
-            CalculateDensityAndVelocity(f, density, v_x, v_y, v_z);
-
-            CalculateEntropicFeq(density, v_x, v_y, v_z, f_eq);
-          }
-
           // von Mises stress computation given the non-equilibrium distribution functions.
           inline static void CalculateVonMisesStress(const distribn_t f[],
                                                      distribn_t &stress,
@@ -231,28 +219,30 @@ namespace hemelb
 
           // Entropic ELBM has an analytical form for FEq
           // (see Aidun and Clausen "Lattice-Boltzmann Method for Complex Flows" Annu. Rev. Fluid. Mech. 2010)
-          inline static void CalculateEntropicFeq(const distribn_t &density,
-                                                  const distribn_t &v_x,
-                                                  const distribn_t &v_y,
-                                                  const distribn_t &v_z,
-                                                  distribn_t f_eq[])
+          // Originally Ansumali, S., Karlin, I. V., and Ottinger, H.C. (2003) Minimal entropic kinetic models
+          // for hydrodynamics. Europhys. Lett. 63(6), 798–804
+          inline static void CalculateEntropicFeqAnsumali(const distribn_t &density,
+                                                          const distribn_t &v_x,
+                                                          const distribn_t &v_y,
+                                                          const distribn_t &v_z,
+                                                          distribn_t f_eq[])
           {
             // Get velocity
             util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(v_x, v_y, v_z) / density;
 
             // Combining some terms for use in evaluating the next few terms
             // B_i = sqrt(1 + 3 * u_i^2)
-            util::Vector3D<distribn_t> B = util::Vector3D < distribn_t
-                > (sqrt(1.0 + 3.0 * velocity.x * velocity.x), sqrt(1.0 + 3.0 * velocity.y * velocity.y), sqrt(1.0
-                    + 3.0 * velocity.z * velocity.z));
+            util::Vector3D<distribn_t> B = util::Vector3D<distribn_t>(sqrt(1.0 + 3.0 * velocity.x * velocity.x),
+                                                                      sqrt(1.0 + 3.0 * velocity.y * velocity.y),
+                                                                      sqrt(1.0 + 3.0 * velocity.z * velocity.z));
 
             // The formula contains the product term1_i*(term2_i)^e_ia
             // term1_i is 2 - B_i
             util::Vector3D<distribn_t> term1 = util::Vector3D<distribn_t>(2.0) - B;
 
             // term2_i is (2*u_i + B)/(1 - u_i)
-            util::Vector3D<distribn_t> term2 =
-                (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones() - velocity);
+            util::Vector3D<distribn_t> term2 = (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones()
+                - velocity);
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
@@ -260,6 +250,71 @@ namespace hemelb
                   * util::NumericalFunctions::IntegerPower(term2.x, DmQn::CX[direction])
                   * util::NumericalFunctions::IntegerPower(term2.y, DmQn::CY[direction])
                   * util::NumericalFunctions::IntegerPower(term2.z, DmQn::CZ[direction]);
+            }
+          }
+
+          /**
+           * Calculate entropic equilibrium distribution, as in Chikatamarla et al (PRL, 97, 010201 (2006)
+           *
+           * @param density
+           * @param v_x
+           * @param v_y
+           * @param v_z
+           * @param f_eq
+           */
+          inline static void CalculateEntropicFeqChik(const distribn_t &density,
+                                                      const distribn_t &v_x,
+                                                      const distribn_t &v_y,
+                                                      const distribn_t &v_z,
+                                                      distribn_t f_eq[])
+          {
+            // Get velocity and the vector with velocity components squared.
+            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(v_x, v_y, v_z) / (density);
+            util::Vector3D<distribn_t> velocitySquared = velocity.PointwiseMultiplication(velocity);
+            util::Vector3D<distribn_t> velocityFour = velocitySquared.PointwiseMultiplication(velocitySquared);
+            util::Vector3D<distribn_t> velocityEight = velocityFour.PointwiseMultiplication(velocityFour);
+
+            // Compute in advance the first four powers of the velocity magnitude squared.
+            distribn_t velocityMagnitudeSquared = velocity.GetMagnitudeSquared();
+            distribn_t velocityMagnitudeFour = velocityMagnitudeSquared * velocityMagnitudeSquared;
+            distribn_t velocityMagnitudeSix = velocityMagnitudeFour * velocityMagnitudeSquared;
+            distribn_t velocityMagnitudeEight = velocityMagnitudeSix * velocityMagnitudeSquared;
+
+            // Compute chi as per equation (9).
+            distribn_t chi = 1.0 + (-3.0 * velocityMagnitudeSquared / 2.0) + 9.0 * velocityMagnitudeFour / 8.0;
+
+            // Add in the (6) term.
+            chi += 27.0
+                * (-velocityMagnitudeSix
+                    + 2.0 * (velocitySquared.y + velocitySquared.z)
+                        * (velocityMagnitudeSquared * velocitySquared.x + velocitySquared.y * velocitySquared.z)
+                    + 20. * velocitySquared.x * velocitySquared.y + velocitySquared.z) / 16.0;
+
+            // Add in the (8) term.
+            chi += 81.0 * velocityMagnitudeEight / 128.0
+                + 81.0
+                    * (velocityEight.x + velocityEight.y + velocityEight.z
+                        - (36.0 * velocitySquared.x * velocitySquared.y * velocitySquared.z * velocityMagnitudeSquared
+                            + velocityFour.x * velocityFour.y + velocityFour.x * velocityFour.z
+                            + velocityFour.y * velocityFour.z)) / 32.0;
+
+            // Multiple whole expression by the density.
+            chi *= density;
+
+            util::Vector3D<distribn_t> zeta = util::Vector3D<distribn_t>::Ones() + velocity * 3.0
+                + velocitySquared * 9.0 / 2.0 + velocitySquared.PointwiseMultiplication(velocity) * 9.0 / 2.0
+                + velocityFour * 27.0 / 8.0;
+
+            zeta.x += CalculateHighOrdersOfZeta<0, 1, 2>(velocity, velocityMagnitudeSquared);
+            zeta.y += CalculateHighOrdersOfZeta<1, 2, 0>(velocity, velocityMagnitudeSquared);
+            zeta.z += CalculateHighOrdersOfZeta<2, 0, 1>(velocity, velocityMagnitudeSquared);
+
+            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            {
+              f_eq[direction] = DmQn::EQMWEIGHTS[direction] * chi
+                  * util::NumericalFunctions::IntegerPower(zeta.x, DmQn::CX[direction])
+                  * util::NumericalFunctions::IntegerPower(zeta.y, DmQn::CY[direction])
+                  * util::NumericalFunctions::IntegerPower(zeta.z, DmQn::CZ[direction]);
             }
           }
 
@@ -302,6 +357,43 @@ namespace hemelb
             strain_rate_tensor_i_j *= -1.0 / (2.0 * iTau * iDensity * Cs2);
 
             return strain_rate_tensor_i_j;
+          }
+
+          /**
+           * Calculate high order of zeta as defined by equation 10 in Chikatamarla et al (PRL, 97, 010201 (2006)
+           * @param velocity
+           * @param velocityMagnitudeSquared
+           * @return
+           */
+          template<unsigned thisIndex, unsigned otherIndex1, unsigned otherIndex2>
+          inline static distribn_t CalculateHighOrdersOfZeta(const util::Vector3D<distribn_t>& velocity,
+                                                             distribn_t velocityMagnitudeSquared)
+          {
+            // Get the velocity components. Note that the naming is to make it easier to follow the
+            // paper. ux does not necessarily hold the velocity in the x direction; it's the velocity
+            // component in the direction we're calculating zeta for.
+            distribn_t ux = velocity[thisIndex], uy = velocity[otherIndex1], uz = velocity[otherIndex2];
+
+            // The 5th order term.
+            distribn_t zetaHighOrders = 27.0
+                * (util::NumericalFunctions::IntegerPower(ux, 5) - 4. * ux * uy * uy * uz * uz) / 8.0;
+
+            // The 6th order term.
+            zetaHighOrders += 81.0 * (util::NumericalFunctions::IntegerPower(ux, 6) - 8. * ux * ux * uy * uy * uz * uz)
+                / 16.0;
+
+            // The 7th order term.
+            zetaHighOrders += 81.0
+                * (util::NumericalFunctions::IntegerPower(ux, 7)
+                    + 2. * ux * uy * uy * uz * uz * velocityMagnitudeSquared - 10. * ux * ux * ux * uy * uy * uz * uz)
+                / 16.0;
+
+            // The 8th order term.
+            zetaHighOrders += 243.0
+                * (util::NumericalFunctions::IntegerPower(ux, 8)
+                    + 16.0 * ux * ux * uy * uy * uz * uz * (uy * uy + uz * uz)) / 128.0;
+
+            return zetaHighOrders;
           }
 
           static LatticeInfo* singletonInfo;
