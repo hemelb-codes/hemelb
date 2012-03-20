@@ -6,10 +6,11 @@ namespace hemelb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
-        densityCache(simState, latticeData.GetLocalFluidSiteCount()), velocityCache(simState,
-                                                                                    latticeData.GetLocalFluidSiteCount()), shearStressCache(simState,
-                                                                                                                                            latticeData.GetLocalFluidSiteCount()), vonMisesStressCache(simState,
-                                                                                                                                                                                                       latticeData.GetLocalFluidSiteCount()), simulationState(simState), siteCount(latticeData.GetLocalFluidSiteCount())
+      densityCache(simState, latticeData.GetLocalFluidSiteCount()),
+          velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+          shearStressCache(simState, latticeData.GetLocalFluidSiteCount()),
+          vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()), simulationState(simState),
+          siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();
     }
