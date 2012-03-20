@@ -15,15 +15,15 @@ namespace hemelb
     {
       class LatticeTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( LatticeTests);
-          CPPUNIT_TEST( TestD3Q15);
-          CPPUNIT_TEST( TestD3Q19);
-          CPPUNIT_TEST( TestD3Q27);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (LatticeTests);
+          CPPUNIT_TEST (TestD3Q15);
+          CPPUNIT_TEST (TestD3Q19);
+          CPPUNIT_TEST (TestD3Q27);CPPUNIT_TEST_SUITE_END();
 
         public:
 
           LatticeTests() :
-            epsilon(1e-10)
+              epsilon(1e-10), weakerEpsilon(1e-4)
           {
           }
           // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
@@ -40,17 +40,17 @@ namespace hemelb
 
           void TestD3Q15()
           {
-            TestLattice<lb::lattices::D3Q15> ();
+            TestLattice<lb::lattices::D3Q15>();
           }
 
           void TestD3Q19()
           {
-            TestLattice<lb::lattices::D3Q19> ();
+            TestLattice<lb::lattices::D3Q19>();
           }
 
           void TestD3Q27()
           {
-            TestLattice<lb::lattices::D3Q27> ();
+            TestLattice<lb::lattices::D3Q27>();
           }
 
         private:
@@ -84,9 +84,7 @@ namespace hemelb
                   continue;
                 }
 
-                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
-                    || LatticeType::CY[direction] != LatticeType::CY[otherDirection] || LatticeType::CZ[direction]
-                    != LatticeType::CZ[otherDirection]);
+                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection] || LatticeType::CY[direction] != LatticeType::CY[otherDirection] || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
               }
             }
 
@@ -140,13 +138,24 @@ namespace hemelb
              distribn_t f_eq[]);
              */
             distribn_t equilibriumF[LatticeType::NUMVECTORS], expectedEquilibriumF[LatticeType::NUMVECTORS],
-                equilibriumEntropicF[LatticeType::NUMVECTORS], expectedEquilibriumEntropicF[LatticeType::NUMVECTORS];
+                equilibriumEntropicFAnsumali[LatticeType::NUMVECTORS],
+                expectedEquilibriumEntropicFAnsumali[LatticeType::NUMVECTORS],
+                equilibriumEntropicFChikatamarla[LatticeType::NUMVECTORS];
 
             // These values chosen as they're pairwise coprime. Probably doesn't matter.
-            distribn_t targetDensity = 7.0, targetH[3] = { 4.0, 3.0, 11.0 };
+            distribn_t targetDensity = 0.95, targetH[3] = { 0.002, 0.003, 0.004 };
 
             LatticeType::CalculateFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumF);
-            LatticeType::CalculateEntropicFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumEntropicF);
+            LatticeType::CalculateEntropicFeqAnsumali(targetDensity,
+                                                      targetH[0],
+                                                      targetH[1],
+                                                      targetH[2],
+                                                      equilibriumEntropicFAnsumali);
+            LatticeType::CalculateEntropicFeqChik(targetDensity,
+                                                  targetH[0],
+                                                  targetH[1],
+                                                  targetH[2],
+                                                  equilibriumEntropicFChikatamarla);
 
             LbTestsHelper::CalculateLBGKEqmF<LatticeType>(targetDensity,
                                                           targetH[0],
@@ -154,24 +163,25 @@ namespace hemelb
                                                           targetH[2],
                                                           expectedEquilibriumF);
 
-            LbTestsHelper::CalculateEntropicEqmF<LatticeType>(targetDensity,
-                                                              targetH[0],
-                                                              targetH[1],
-                                                              targetH[2],
-                                                              expectedEquilibriumEntropicF);
+            LbTestsHelper::CalculateAnsumaliEntropicEqmF<LatticeType>(targetDensity,
+                                                                      targetH[0],
+                                                                      targetH[1],
+                                                                      targetH[2],
+                                                                      expectedEquilibriumEntropicFAnsumali);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction], equilibriumF[direction], allowedError);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumEntropicF[direction],
-                                           equilibriumEntropicF[direction],
-                                           allowedError);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction], equilibriumF[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumEntropicFAnsumali[direction],
+                                           equilibriumEntropicFAnsumali[direction],
+                                           epsilon);
             }
 
             /*
              * It's also the case that these should be invertible (i.e. the density and velocity should be what we started with).
              */
-            distribn_t entropicCalculatedDensity, entropicCalculatedVelocity[3], calculatedDensity,
+            distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedVelocityAnsumali[3],
+                entropicCalculatedDensityChikatamarla, entropicCalculatedVelocityChikatamarla[3], calculatedDensity,
                 calculatedVelocity[3];
 
             LatticeType::CalculateDensityAndVelocity(equilibriumF,
@@ -180,21 +190,29 @@ namespace hemelb
                                                      calculatedVelocity[1],
                                                      calculatedVelocity[2]);
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicF,
-                                                     entropicCalculatedDensity,
-                                                     entropicCalculatedVelocity[0],
-                                                     entropicCalculatedVelocity[1],
-                                                     entropicCalculatedVelocity[2]);
+            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFAnsumali,
+                                                     entropicCalculatedDensityAnsumali,
+                                                     entropicCalculatedVelocityAnsumali[0],
+                                                     entropicCalculatedVelocityAnsumali[1],
+                                                     entropicCalculatedVelocityAnsumali[2]);
 
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, allowedError);
-            // Turns out that this only passes for D3Q27      CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensity, targetDensity, allowedError);
+            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFChikatamarla,
+                                                     entropicCalculatedDensityChikatamarla,
+                                                     entropicCalculatedVelocityChikatamarla[0],
+                                                     entropicCalculatedVelocityChikatamarla[1],
+                                                     entropicCalculatedVelocityChikatamarla[2]);
+
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityAnsumali, targetDensity, epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityChikatamarla, targetDensity, weakerEpsilon);
 
             for (Direction direction = 0; direction < 3; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction], targetH[direction], allowedError);
-              // Turns out that this only passes for D3Q27              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocity[direction],
-              //                                           targetH[direction],
-              //                                           allowedError);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction], targetH[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityAnsumali[direction], targetH[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityChikatamarla[direction],
+                                           targetH[direction],
+                                           weakerEpsilon);
             }
 
             /*
@@ -231,9 +249,10 @@ namespace hemelb
           }
 
           const double epsilon;
+          const double weakerEpsilon;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( LatticeTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (LatticeTests);
     }
   }
 }
