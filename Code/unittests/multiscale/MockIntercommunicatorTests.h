@@ -14,7 +14,7 @@ namespace hemelb
     namespace multiscale
     {
       /***
-       * Mock intercommunicating entity which looks a bit like a heme lb conceptually
+       * Mock intercommunicating entity which looks a bit like a HemeLB conceptually
        * It has an input, and an output, and the flow rate depends on the difference in pressures.
        */
       template<class IntercommuniatorImplementation> class MockHemeLB
