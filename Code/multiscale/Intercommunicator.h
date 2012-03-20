@@ -54,7 +54,7 @@ namespace hemelb
          * void DefineType(IntercommunicandType &type)
          * {
          *  type.template RegisterSharedValue<PhysicalPressure>("pressure");
-         *  type.template RegisterSharedValue<PhysicalPressure>("velocity");
+         *  type.template RegisterSharedValue<PhysicalVelocity>("velocity");
          }
          */
         typedef IntercommunicandType<RuntimeTypeImplementation> IntercommunicandTypeT;
