@@ -106,7 +106,7 @@ namespace hemelb
 
           inline void DoReset(InitParams* initParams)
           {
-            InitState(initParams);
+            InitState(*initParams);
           }
 
           /**
