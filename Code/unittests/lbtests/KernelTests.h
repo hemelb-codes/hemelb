@@ -7,6 +7,7 @@
 #include "lb/kernels/Kernels.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "lb/kernels/momentBasis/DHumieresD3Q15MRTBasis.h"
+#include "lb/kernels/momentBasis/DHumieresD3Q19MRTBasis.h"
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
@@ -26,12 +27,13 @@ namespace hemelb
        */
       class KernelTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE(KernelTests);
-          CPPUNIT_TEST(TestAnsumaliEntropicCalculationsAndCollision);
-          CPPUNIT_TEST(TestChikatamarlaEntropicCalculationsAndCollision);
-          CPPUNIT_TEST(TestLBGKCalculationsAndCollision);
-          CPPUNIT_TEST(TestLBGKNNCalculationsAndCollision);
-          CPPUNIT_TEST(TestMRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (KernelTests);
+          CPPUNIT_TEST (TestAnsumaliEntropicCalculationsAndCollision);
+          CPPUNIT_TEST (TestChikatamarlaEntropicCalculationsAndCollision);
+          CPPUNIT_TEST (TestLBGKCalculationsAndCollision);
+          CPPUNIT_TEST (TestLBGKNNCalculationsAndCollision);
+          CPPUNIT_TEST (TestMRTConstantRelaxationTimeEqualsLBGK);
+          CPPUNIT_TEST (TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -53,6 +55,9 @@ namespace hemelb
 
             mrtLbgkEquivalentKernel =
                 new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
+            mrtLbgkEquivalentKernel19 =
+                new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>(initParams);
+
           }
 
           void tearDown()
@@ -62,6 +67,7 @@ namespace hemelb
             delete lbgknn0;
             delete lbgknn1;
             delete mrtLbgkEquivalentKernel;
+            delete mrtLbgkEquivalentKernel19;
             FourCubeBasedTestFixture::tearDown();
           }
 
@@ -637,14 +643,79 @@ namespace hemelb
             }
           }
 
+          void TestD3Q19MRTConstantRelaxationTimeEqualsLBGK()
+          {
+            /*
+             *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
+             */
+            std::vector<distribn_t> relaxationParameters;
+            distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
+            relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q19MRTBasis::NUM_KINETIC_MOMENTS,
+                                        oneOverTau);
+            mrtLbgkEquivalentKernel19->SetMrtRelaxationParameters(relaxationParameters);
+
+            // Initialise the original f distribution to something asymmetric.
+            distribn_t f_original[lb::lattices::D3Q19::NUMVECTORS];
+            LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q19>(0, f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> > hydroVars0(f_original);
+
+            // Calculate density, velocity, equilibrium f.
+            mrtLbgkEquivalentKernel19->CalculateDensityVelocityFeq(hydroVars0, 0);
+
+            // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
+            distribn_t expectedDensity0;
+            distribn_t expectedVelocity0[3];
+            distribn_t expectedFEq0[lb::lattices::D3Q19::NUMVECTORS];
+            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q19>(hydroVars0.f, expectedDensity0, expectedVelocity0);
+            LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q19>(expectedDensity0,
+                                                                  expectedVelocity0[0],
+                                                                  expectedVelocity0[1],
+                                                                  expectedVelocity0[2],
+                                                                  expectedFEq0);
+
+            // Now compare the expected and actual values.
+            distribn_t allowedError = 1e-10;
+            LbTestsHelper::CompareHydros(expectedDensity0,
+                                         expectedVelocity0[0],
+                                         expectedVelocity0[1],
+                                         expectedVelocity0[2],
+                                         expectedFEq0,
+                                         "MRT against LBGK",
+                                         hydroVars0,
+                                         allowedError);
+
+            // Do the MRT collision.
+            mrtLbgkEquivalentKernel19->DoCollide(lbmParams, hydroVars0);
+
+            // Get the expected post-collision velocity distributions with LBGK.
+            distribn_t expectedPostCollision0[lb::lattices::D3Q19::NUMVECTORS];
+            LbTestsHelper::CalculateLBGKCollision<lb::lattices::D3Q19>(f_original,
+                                                                       hydroVars0.GetFEq().f,
+                                                                       lbmParams->GetOmega(),
+                                                                       expectedPostCollision0);
+
+            // Compare.
+            for (unsigned int ii = 0; ii < lb::lattices::D3Q19::NUMVECTORS; ++ii)
+            {
+              std::stringstream message;
+              message << "Post-collision " << ii;
+
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                   hydroVars0.GetFPostCollision()[ii],
+                                                   expectedPostCollision0[ii],
+                                                   allowedError);
+            }
+          }
+
         private:
           lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>* entropic;
           lb::kernels::LBGK<lb::lattices::D3Q15>* lbgk;
           lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15> *lbgknn0,
               *lbgknn1;
           lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
+          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>* mrtLbgkEquivalentKernel19;
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION(KernelTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (KernelTests);
     }
   }
 }
