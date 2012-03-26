@@ -13,6 +13,9 @@ namespace hemelb
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
     static const std::string build_time="@HEMELB_BUILD_TIME@";
     static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
+    static const std::string lattice_type="@HEMELB_LATTICE@";
+    static const std::string kernel_type="@HEMELB_KERNEL@";
+    static const std::string wall_boundary_condition="@HEMELB_WALL_BOUNDARY@";
     
     class BuildInfo : public Reportable {
       void Report(ctemplate::TemplateDictionary& dictionary){
@@ -25,6 +28,9 @@ namespace hemelb
         build->SetValue("OPTIMISATION", optimisation);
         build->SetValue("TIME", build_time);
         build->SetValue("READING_GROUP_SIZE", reading_group_size);
+        build->SetValue("LATTICE_TYPE", lattice_type);
+        build->SetValue("KERNEL_TYPE", kernel_type);
+        build->SetValue("WALL_BOUNDARY_CONDITION", wall_boundary_condition);
       }
     };
   }
