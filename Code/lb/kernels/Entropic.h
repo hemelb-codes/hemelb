@@ -31,7 +31,7 @@ namespace hemelb
            * Initialises the value of alpha to 2.0 for every site.
            * @param init
            */
-          inline void Reset(InitParams* init)
+          inline void DoReset(InitParams* init)
           {
             for (site_t i = 0; i < init->siteCount; i++)
             {
@@ -66,7 +66,7 @@ namespace hemelb
           Entropic(InitParams* initParams)
           {
             oldAlpha = new distribn_t[initParams->siteCount];
-            Reset(initParams);
+            DoReset(initParams);
           }
 
           /**
