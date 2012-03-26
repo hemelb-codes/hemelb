@@ -54,7 +54,7 @@ namespace hemelb
            * Calculates the density and velocity for the given f. Then calculates the
            * equilibrium distribution as described by Ansumali.
            * @param hydroVars
-           * @param index
+           * @param index The current lattice site index.
            */
           inline void DoCalculateDensityVelocityFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
           {
@@ -80,7 +80,7 @@ namespace hemelb
            * Calculates the equilibrium f distribution for the given density and velocity, as
            * described by Ansumali.
            * @param hydroVars
-           * @param index
+           * @param index The current lattice site index.
            */
           inline void DoCalculateFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
           {

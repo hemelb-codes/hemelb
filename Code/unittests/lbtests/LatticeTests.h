@@ -23,7 +23,7 @@ namespace hemelb
         public:
 
           LatticeTests() :
-              epsilon(1e-10), weakerEpsilon(1e-4)
+              epsilon(1e-10)
           {
           }
           // had to move this here for compilation portability, see http://stackoverflow.com/questions/370283/why-cant-i-have-a-non-integral-static-const-member-in-a-class
@@ -204,7 +204,7 @@ namespace hemelb
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityAnsumali, targetDensity, epsilon);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityChikatamarla, targetDensity, weakerEpsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityChikatamarla, targetDensity, epsilon);
 
             for (Direction direction = 0; direction < 3; direction++)
             {
@@ -212,7 +212,7 @@ namespace hemelb
               CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityAnsumali[direction], targetH[direction], epsilon);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityChikatamarla[direction],
                                            targetH[direction],
-                                           weakerEpsilon);
+                                           epsilon);
             }
 
             /*
@@ -249,7 +249,6 @@ namespace hemelb
           }
 
           const double epsilon;
-          const double weakerEpsilon;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (LatticeTests);
