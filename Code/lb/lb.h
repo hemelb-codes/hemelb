@@ -5,16 +5,12 @@
 #include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
-#include "lb/kernels/Kernels.h"
-#include "lb/kernels/momentBasis/MomentBases.h"
-#include "lb/collisions/Collisions.h"
-#include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
-#include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
+#include "lb/BuildSystemInterface.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -32,28 +28,16 @@ namespace hemelb
     class LBM : public net::IteratedAction
     {
       private:
-        // TODO These should eventually be template parameters that are given to the generic LBM object.
-        // At the moment, doing this will cause problems with other objects that have a pointer to the
-        // LBM (and hence would also need to be templated, on the LBM-type).
-
-        // Models of non-Newtonian rheology currently implemented.
-        //typedef kernels::rheologyModels::CarreauYasudaRheologyModel RHEO_MODEL;
-        //typedef kernels::rheologyModels::CassonRheologyModel RHEO_MODEL;
-        //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
-
-        // LGBK operator with support for non-Newtonian flow
-        //typedef kernels::LBGKNN<RHEO_MODEL, LatticeType> LB_KERNEL;
-
-        // Multiple relaxation time collision operator
-        //typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q15MRTBasis> LB_KERNEL;
-
-        // Standard LBGK collision operator
-        typedef kernels::LBGK<LatticeType> LB_KERNEL;
+        // Use the kernel specified through the build system. This will select one of the above classes.
+        typedef typename HEMELB_KERNEL<LatticeType>::Type LB_KERNEL;
 
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
-        typedef streamers::SimpleBounceBack<collisions::Normal<LB_KERNEL> > tWallCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletWallCollision;
+        // Use the wall boundary condition specified through the build system.
+        typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
+            tInletOutletCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
+            tInletOutletWallCollision;
 
       public:
         /**
@@ -78,8 +62,14 @@ namespace hemelb
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
-        int InletCount() const {return inletCount;}
-        int OutletCount() const {return outletCount;}
+        int InletCount() const
+        {
+          return inletCount;
+        }
+        int OutletCount() const
+        {
+          return outletCount;
+        }
 
         /**
          * Second constructor.
@@ -131,11 +121,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -144,11 +134,11 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false>(iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
           }
         }
 
@@ -170,7 +160,6 @@ namespace hemelb
 
         MacroscopicPropertyCache propertyCache;
     };
-
 
   } // Namespace lb
 } // Namespace hemelb
