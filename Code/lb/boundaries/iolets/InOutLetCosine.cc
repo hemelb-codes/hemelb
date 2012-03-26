@@ -46,7 +46,7 @@ namespace hemelb
 
         LatticeDensity InOutLetCosine::GetDensityAmp() const
         {
-          return units->ConvertPressureGradToLatticeUnits(pressureAmpPhysical) / Cs2;
+          return units->ConvertPressureDifferenceToLatticeUnits(pressureAmpPhysical) / Cs2;
         }
 
       }

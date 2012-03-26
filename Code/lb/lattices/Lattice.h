@@ -285,10 +285,10 @@ namespace hemelb
 
             // Add in the (6) term.
             chi += 27.0
-                * (-velocityMagnitudeSix
+                * ((-velocityMagnitudeSix)
                     + 2.0 * (velocitySquared.y + velocitySquared.z)
                         * (velocityMagnitudeSquared * velocitySquared.x + velocitySquared.y * velocitySquared.z)
-                    + 20. * velocitySquared.x * velocitySquared.y + velocitySquared.z) / 16.0;
+                    + 20. * velocitySquared.x * velocitySquared.y * velocitySquared.z) / 16.0;
 
             // Add in the (8) term.
             chi += 81.0 * velocityMagnitudeEight / 128.0
