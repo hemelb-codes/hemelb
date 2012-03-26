@@ -29,7 +29,7 @@ namespace hemelb
 
           /**
            * Initialises the value of alpha to 2.0 for every site.
-           * @param init
+           * @param initParams
            */
           inline void DoReset(InitParams* init)
           {
@@ -61,7 +61,7 @@ namespace hemelb
         protected:
           /**
            * Constructs the alpha array.
-           * @param init
+           * @param initParams
            */
           Entropic(InitParams* initParams)
           {
@@ -71,9 +71,9 @@ namespace hemelb
 
           /**
            * Calculates the new value of alpha (the relaxation parameter) and updates the cache.
-           * @param tau
+           * @param tau The value of tau to use as a basis for calculating alpha.
            * @param hydroVars
-           * @param prevAlpha
+           * @param prevAlpha Alpha value from the previous timestep.
            * @return
            */
           template<typename HydroVarsType>
