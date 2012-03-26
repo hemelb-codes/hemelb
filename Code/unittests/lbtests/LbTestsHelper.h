@@ -42,11 +42,11 @@ namespace hemelb
           }
 
           template<typename Lattice>
-          static void CalculateEntropicEqmF(distribn_t density,
-                                            distribn_t v_x,
-                                            distribn_t v_y,
-                                            distribn_t v_z,
-                                            distribn_t f[Lattice::NUMVECTORS])
+          static void CalculateAnsumaliEntropicEqmF(distribn_t density,
+                                                    distribn_t v_x,
+                                                    distribn_t v_y,
+                                                    distribn_t v_z,
+                                                    distribn_t f[Lattice::NUMVECTORS])
           {
             // Calculate velocity.
             distribn_t u[3] = { v_x / density, v_y / density, v_z / density };
@@ -81,8 +81,8 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
-                  * (float) Lattice::CZ[ii];
+              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
+                  + v_z * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
               distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
@@ -166,8 +166,8 @@ namespace hemelb
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType> ();
-              InitialiseAnisotropicTestData<LatticeType> (site, fOld);
+              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType>();
+              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
             }
           }
 
@@ -246,7 +246,7 @@ namespace hemelb
               {
                 for (int bb = 0; bb < 3; ++bb)
                 {
-                  f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                  f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
                 }
               }
 

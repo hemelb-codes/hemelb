@@ -6,6 +6,7 @@
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
 #include "lb/kernels/Kernels.h"
+#include "lb/kernels/momentBasis/MomentBases.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
