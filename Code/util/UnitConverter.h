@@ -13,12 +13,12 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(lb::LbmParameters* iParams, lb::SimulationState* iState, double voxelSize);
+        UnitConverter(lb::LbmParameters* params, lb::SimulationState* state, double voxelSize);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeVelocity ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const;
         LatticeStress ConvertStressToLatticeUnits(PhysicalStress stress) const;
-        LatticeStress ConvertPressureGradToLatticeUnits(PhysicalStress pressure_grad) const;
+        LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
         PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
         /**
@@ -30,19 +30,19 @@ namespace hemelb
         InputType ConvertVelocityToPhysicalUnits(InputType velocity) const
         {
           // convert velocity from lattice units to physical units (m/s)
-          return velocity * CharacteristicVelocity;
+          return velocity * latticeSpeed;
         }
-        double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
+        double ConvertPressureDifferenceToPhysicalUnits(distribn_t pressure_grad) const;
 
         PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
         {
-          return static_cast<double>(time_step)*mState->GetTimeStepLength();
+          return static_cast<double>(time_step)*simulationState->GetTimeStepLength();
         }
       private:
-        lb::LbmParameters* mParams;
-        lb::SimulationState* mState;
-        PhysicalLength voxel_size;
-        PhysicalVelocity CharacteristicVelocity;
+        lb::LbmParameters* lbmParameters;
+        lb::SimulationState* simulationState;
+        PhysicalLength voxelSize; //!< Lattice displacement in physical units.
+        PhysicalVelocity latticeSpeed; //!< Lattice displacement length divided by time step.
     };
 
   }
