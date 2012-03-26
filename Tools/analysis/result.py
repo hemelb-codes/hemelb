@@ -14,7 +14,6 @@ import datetime
 import functools
 import subprocess
 from xml.etree import ElementTree
-from hemeTools.parsers.geometry.simple import ConfigLoader
 
 import logging
 import environment
@@ -141,12 +140,23 @@ def xml_loader(path):
 def stat_loader(path):
     return os.stat(path)
 def geometry_header_loader(path):
-    model=ConfigLoader(path)
-    model._LoadPreamble()
-    model._LoadHeader()
-    def binder(expression):
-        return model.Domain.__dict__
-    return binder
+    from hemeTools.parsers.geometry.simple import ConfigLoader
+    class GeometryHeader:
+        def __init__(self,path):
+            self.model=ConfigLoader(path)
+            self.model._LoadPreamble()
+            self.model._LoadHeader()
+            self.domain=self.model.Domain
+        @property
+        def site_count(self):
+            return sum(self.domain.BlockFluidSiteCounts)
+        @property
+        def block_size(self):
+            return self.domain._BlockSize
+        @property
+        def block_count(self):
+            return len(self.domain.Blocks)
+    return GeometryHeader(path)
 
 def null_filter(result):
     return None
@@ -239,5 +249,5 @@ def result_model(config):
     Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
     Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
-    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,eval_parser)
+    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
     return Result
