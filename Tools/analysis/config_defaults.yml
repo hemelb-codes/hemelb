@@ -47,9 +47,9 @@ results:
             acceptance: 'Accepted: (.*)'
     gmy_files:
         'config.gmy':
-            gmy_fluid_site_count: sum(BlockFluidSiteCounts)
-            gmy_block_size: _BlockSize
-            gmy_block_count: len(Blocks)
+            gmy_fluid_site_count: site_count
+            gmy_block_size: block_size
+            gmy_block_count: block_count
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
         type_by_name: '(regression|unittests)'
