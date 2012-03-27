@@ -6,3 +6,4 @@ a37662bd25b46589a66c1736643702d02054abc3 Version_1_0
 6b6b8cd84b15f2cf2d83f1310c7432385930c8b4 New compositing (compositing on rank 1) made non-optional. Removed the NEW_COMPOSITING macro.
 cf69e9e672eb2366c422909f4a7c8c61beef7e46 C++ Vis-client removed - Java one, which is more fully featured, remains.
 a6b66311e3c4712559ff6852157263d8e46f1eed 0.2.0
+85a80e60d1452e3d440752034db94be3feeae12d 0.2.1
