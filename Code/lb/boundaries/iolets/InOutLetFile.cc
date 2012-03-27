@@ -4,6 +4,7 @@
 #include "lb/boundaries/iolets/InOutLetFile.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
 
@@ -16,17 +17,17 @@ namespace hemelb
       namespace iolets
       {
         InOutLetFile::InOutLetFile() :
-          InOutLetCycle<0, false> ()
+          InOutLet(),densityTable(0)
         {
 
         }
 
-        void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
+        void InOutLetFile::DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig)
         {
-          iSimConfig->DoIOForFileInOutlet(iParent, iIsLoading, this);
+          simConfig->DoIOForFileInOutlet(parent, isLoading, this);
         }
 
-        InOutLet* InOutLetFile::Clone()
+        InOutLet* InOutLetFile::Clone() const
         {
           InOutLetFile* copy = new InOutLetFile(*this);
 
@@ -42,74 +43,60 @@ namespace hemelb
         // IMPORTANT: to allow reading in data taken at irregular intervals the user
         // needs to make sure that the last point in the file coincides with the first
         // point of a new cycle for a continuous trace.
-        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
+        void InOutLetFile::CalculateTable(LatticeTime totalTimeSteps)
         {
-          // First read in values from file into vectors
-          std::vector<util::key_value_pair<double, double> > TimeValuePair(0);
+          // First read in values from file
+          // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
+          std::map<PhysicalTime, PhysicalPressure> timeValuePairs;
 
           double timeTemp, valueTemp;
 
-          util::check_file(PressureFilePath.c_str());
-          std::ifstream datafile(PressureFilePath.c_str());
-
+          util::check_file(pressureFilePath.c_str());
+          std::ifstream datafile(pressureFilePath.c_str());
+          log::Logger::Log<log::Debug, log::OnePerCore>("Reading iolet values from file:");
           while (datafile.good())
           {
             datafile >> timeTemp >> valueTemp;
-            util::key_value_pair<double, double> tvPair;
-            tvPair.key = timeTemp;
-            tvPair.value = valueTemp;
-
-            // Don't enter repeat values
-            if (TimeValuePair.empty())
-            {
-              TimeValuePair.push_back(tvPair);
-            }
-            else
-            {
-              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key || tvPair.value
-                  != TimeValuePair[TimeValuePair.size() - 1].value)
-              {
-                TimeValuePair.push_back(tvPair);
-              }
-            }
+            log::Logger::Log<log::Debug, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
+            timeValuePairs[timeTemp]=valueTemp;
           }
 
           datafile.close();
+          // the default iterator for maps traverses in key order, so no sort is needed.
 
-          std::sort(TimeValuePair.begin(), TimeValuePair.end());
-
-          std::vector<double> time(0);
-          std::vector<double> value(0);
+          std::vector<double> times(0);
+          std::vector<double> values(0);
 
           // Must convert into vectors since LinearInterpolate works on a pair of vectors
           // Determine min and max pressure on the way
-          PressureMinPhysical = TimeValuePair[0].value;
-          PressureMaxPhysical = TimeValuePair[0].value;
-          for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
+          pressureMinPhysical = timeValuePairs.begin()->second;
+          pressureMaxPhysical = timeValuePairs.begin()->second;
+          for (std::map<PhysicalTime, PhysicalPressure>::iterator entry=timeValuePairs.begin(); entry!=timeValuePairs.end(); entry++)
           {
-            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical, TimeValuePair[ii].value);
-            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical, TimeValuePair[ii].value);
-            time.push_back(TimeValuePair[ii].key);
-            value.push_back(TimeValuePair[ii].value);
+            pressureMinPhysical = util::NumericalFunctions::min(pressureMinPhysical, entry->second);
+            pressureMaxPhysical = util::NumericalFunctions::max(pressureMaxPhysical, entry->second);
+            times.push_back(entry->first);
+            values.push_back(entry->second);
           }
 
           // Check if last point's value matches the first
-          if (value[value.size() - 1] != value[0])
+          if (values.back()!= values.front())
           {
             log::Logger::Log<log::Info, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
-                                                         PressureFilePath.c_str());
+                                                         pressureFilePath.c_str());
             exit(0);
           }
-
+          // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
+          densityTable.resize(totalTimeSteps+1);
           // Now convert these vectors into arrays using linear interpolation
-          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
+          for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
           {
-            double point = time[0] + ((double) time_step / (double) densityCycle.size()) * (time[time.size() - 1]
-                - time[0]);
+            double point = times.front() + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps)) * (times.back()
+                - times.front());
 
-            double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
+            double pressure = util::NumericalFunctions::LinearInterpolate(times, values, point);
 
-            densityCycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+            densityTable[timeStep] = units->ConvertPressureToLatticeUnits(pressure) / Cs2;
           }
         }
 

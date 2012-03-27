@@ -1,4 +1,7 @@
+#include <cassert>
 #include "extraction/LocalPropertyOutput.h"
+#include "io/formats/formats.h"
+#include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 #include "topology/NetworkTopology.h"
 
@@ -21,14 +24,10 @@ namespace hemelb
 
       dataSource.Reset();
 
-      util::Vector3D<site_t> position;
-      util::Vector3D<float> velocity;
-      float pressure, stress;
-
       // Count the sites.
-      while (dataSource.ReadNext(position, pressure, velocity, stress))
+      while (dataSource.ReadNext())
       {
-        if (outputSpec->geometry->Include(dataSource, position))
+        if (outputSpec->geometry->Include(dataSource, dataSource.GetPosition()))
         {
           ++siteCount;
         }
@@ -40,21 +39,7 @@ namespace hemelb
 
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
-        switch (outputSpec->fields[outputNumber].type)
-        {
-          //  * some floats for each field.
-          case OutputField::Pressure:
-            writeLength += 4;
-            break;
-          case OutputField::Velocity:
-            writeLength += 12;
-            break;
-            // TODO: Work out how to handle the different stresses.
-          case OutputField::VonMisesStress:
-          case OutputField::ShearStress:
-            writeLength += 4;
-            break;
-        }
+        writeLength += 4 * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
       //  * these are per local site.
@@ -76,10 +61,12 @@ namespace hemelb
       // Write the header information on the IO proc.
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
+        // Three uints for HemeLB magic number, extraction file magic number and
+        // version number.
         // Field count (uint)
         // Descriptions (variable strings).
         // Site count (ulong)
-        unsigned headerSize = 4 + 8;
+        unsigned headerSize = 3 * 4 + 4 + 8;
 
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
@@ -100,6 +87,9 @@ namespace hemelb
         char* headerBuffer = new char[headerSize];
         io::writers::xdr::XdrMemWriter writer(headerBuffer, headerSize);
 
+        writer << (uint32_t) io::formats::HemeLbMagicNumber << (uint32_t) io::formats::Extraction::MagicNumber
+            << (uint32_t) io::formats::Extraction::VersionNumber;
+
         // Write the number of fields and their names and lengths (in float counts)
         writer << (uint32_t) outputSpec->fields.size();
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
@@ -108,24 +98,7 @@ namespace hemelb
         }
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
-          unsigned fieldLength = 0;
-
-          switch (outputSpec->fields[outputNumber].type)
-          {
-            case OutputField::Pressure:
-              fieldLength = 1;
-              break;
-            case OutputField::Velocity:
-              fieldLength = 3;
-              break;
-              // TODO: Work out how to handle the different stresses.
-            case OutputField::VonMisesStress:
-            case OutputField::ShearStress:
-              fieldLength = 1;
-              break;
-          }
-
-          writer << (uint32_t) fieldLength;
+          writer << (uint32_t) GetFieldLength(outputSpec->fields[outputNumber].type);
         }
 
         // Write the total site count.
@@ -185,10 +158,20 @@ namespace hemelb
       delete[] buffer;
     }
 
+    bool LocalPropertyOutput::ShouldWrite(unsigned long iterationNumber) const
+    {
+      return ( (iterationNumber % outputSpec->frequency) == 0);
+    }
+
+    const PropertyOutputFile* LocalPropertyOutput::GetOutputSpec() const
+    {
+      return outputSpec;
+    }
+
     void LocalPropertyOutput::Write(unsigned long iterationNumber)
     {
       // Don't write if we shouldn't this iteration.
-      if ( (iterationNumber % outputSpec->frequency) != 0)
+      if (!ShouldWrite(iterationNumber))
       {
         return;
       }
@@ -208,15 +191,11 @@ namespace hemelb
         xdrWriter << (uint64_t) iterationNumber;
       }
 
-      // Iterate through the data.
-      util::Vector3D<site_t> position;
-      util::Vector3D<float> velocity;
-      float pressure, stress;
-
       dataSource.Reset();
 
-      while (dataSource.ReadNext(position, pressure, velocity, stress))
+      while (dataSource.ReadNext())
       {
+        const util::Vector3D<site_t>& position = dataSource.GetPosition();
         if (outputSpec->geometry->Include(dataSource, position))
         {
           // Write the position
@@ -228,17 +207,18 @@ namespace hemelb
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << (float) pressure;
+                xdrWriter << (float) dataSource.GetPressure();
                 break;
               case OutputField::Velocity:
-                xdrWriter << (float) velocity.x << (float) velocity.y << (float) velocity.z;
+                xdrWriter << (float) dataSource.GetVelocity().x << (float) dataSource.GetVelocity().y
+                    << (float) dataSource.GetVelocity().z;
                 break;
                 // TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << (float) stress;
+                xdrWriter << (float) dataSource.GetVonMisesStress();
                 break;
               case OutputField::ShearStress:
-                xdrWriter << (float) stress;
+                xdrWriter << (float) dataSource.GetShearStress();
                 break;
             }
           }
@@ -250,6 +230,26 @@ namespace hemelb
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;
+    }
+
+    unsigned LocalPropertyOutput::GetFieldLength(OutputField::FieldType field)
+    {
+      switch (field)
+      {
+        case OutputField::Pressure:
+        case OutputField::VonMisesStress:
+        case OutputField::ShearStress:
+          return 1;
+          break;
+        case OutputField::Velocity:
+          return 3;
+          break;
+        default:
+          // This should never happen. Only occurs if someone adds a new field and forgets
+          // to add to this method.
+          assert(false);
+          return 0;
+      }
     }
   }
 }

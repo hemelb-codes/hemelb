@@ -25,9 +25,16 @@ namespace hemelb
         WallNormals.resize(GetBlocksX() * GetBlocksY() * GetBlocksZ());
       }
 
-      const util::Vector3D<double>* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
+      const util::Vector3D<double>* ClusterWithWallNormals::DoGetWallData(site_t blockNumber, site_t siteNumber) const
       {
-        return WallNormals[iBlockNumber][iSiteNumber];
+        if (siteNumber < (site_t) WallNormals[blockNumber].size())
+        {
+          return WallNormals[blockNumber][siteNumber];
+        }
+        else
+        {
+          return NULL;
+        }
       }
 
       void ClusterWithWallNormals::DoSetWallData(site_t blockNumber,

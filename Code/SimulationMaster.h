@@ -1,6 +1,6 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-
+#include "lb/lattices/D3Q15.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
@@ -30,9 +30,17 @@ class SimulationMaster
     int GetProcessorCount();
 
     void RunSimulation();
+    hemelb::lb::SimulationState const * GetState() const {
+      return simulationState;
+    }
+    void Finalise();
+  protected:
+    hemelb::lb::boundaries::BoundaryValues* inletValues;
+    hemelb::lb::boundaries::BoundaryValues* outletValues;
+    virtual void DoTimeStep();
 
   private:
-    typedef hemelb::D3Q15 latticeType;
+    typedef hemelb::lb::lattices::D3Q15 latticeType;
 
     void Initialise();
     void SetupReporting(); // set up the reporting file
@@ -41,6 +49,18 @@ class SimulationMaster
     void ResetUnstableSimulation();
     void WriteLocalImages();
     void GenerateNetworkImages();
+    /**
+     * Updates the property caches record of which properties need to be calculated
+     * and cached on this iteration.
+     */
+    void RecalculatePropertyRequirements();
+
+    /**
+     * True if we are to create a snapshot on this iteration.
+     * @return
+     */
+    bool ShouldWriteSnapshot();
+
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
@@ -64,8 +84,6 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
 
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
-    hemelb::lb::boundaries::BoundaryValues* inletValues;
-    hemelb::lb::boundaries::BoundaryValues* outletValues;
     hemelb::net::Net communicationNet;
 
     hemelb::util::UnitConverter* unitConvertor;
@@ -76,9 +94,13 @@ class SimulationMaster
 
     std::vector<hemelb::net::IteratedAction*> actors;
 
-    unsigned int snapshotsPerCycle;
-    unsigned int imagesPerCycle;
+    unsigned int snapshotsPerSimulation;
+    unsigned int imagesPerSimulation;
     int steeringSessionId;
+    unsigned int imagesPeriod;
+
+    static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
+    static const hemelb::LatticeTime MAX_TIME_STEPS=400000;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

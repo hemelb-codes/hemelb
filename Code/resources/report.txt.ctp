@@ -1,8 +1,9 @@
 Configured by file {{CONFIG}} with a {{SITES}} site geometry.
+There were {{BLOCKS}} blocks, each with {{SITESPERBLOCK}} sites (fluid and solid).
 Recorded {{IMAGES}} images and {{SNAPSHOTS}} snapshots.
 Ran with {{THREADS}} threads on {{MACHINES}} machines with {{DEPTHS}} deep topology.
-Ran for {{STEPS}} steps over {{CYCLES}} cycles.
-With {{STEPS_PER_CYCLE}} per cycle.
+Ran for {{STEPS}} steps of an intended {{TOTAL_TIME_STEPS}}.
+With {{TIME_STEP_LENGTH}} seconds per time step.
 {{#DENSITIES}}
 !! Maximum relative density difference allowed {{ALLOWED}} was violated: {{ACTUAL}} !!
 {{/DENSITIES}}

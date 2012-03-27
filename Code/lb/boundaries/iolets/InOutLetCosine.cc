@@ -11,7 +11,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-          InOutLetCycle<1, false> ()
+            InOutLet(), pressureMeanPhysical(0.0), pressureAmpPhysical(0.0), phase(0.0), period(1.0)
         {
 
         }
@@ -21,7 +21,7 @@ namespace hemelb
           iSimConfig->DoIOForCosineInOutlet(iParent, iIsLoading, this);
         }
 
-        InOutLet* InOutLetCosine::Clone()
+        InOutLet* InOutLetCosine::Clone() const
         {
           InOutLetCosine* copy = new InOutLetCosine(*this);
 
@@ -33,33 +33,20 @@ namespace hemelb
 
         }
 
-        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle, const SimulationState *iState)
+        LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step) const
         {
-          double w = 2.0 * PI / (double) iState->GetTimeStepsPerCycle();
-
-          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
-          {
-            densityCycle[time_step] = DensityMeanLattice + DensityAmpLattice * cos(w * (double) (time_step
-                + iState->Get0IndexedTimeStep()) + Phase);
-          }
+          double w = 2.0 * PI / period;
+          return GetDensityMean() + GetDensityAmp() * cos(w * units->ConvertTimeStepToPhysicalUnits(time_step) + phase);
         }
 
-        void InOutLetCosine::ResetValues()
+        LatticeDensity InOutLetCosine::GetDensityMean() const
         {
-          DensityMeanLattice = mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
-          DensityAmpLattice = mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
-
-          ResetCommonLatticeValues();
+          return units->ConvertPressureToLatticeUnits(pressureMeanPhysical) / Cs2;
         }
 
-        distribn_t InOutLetCosine::GetDensityMean()
+        LatticeDensity InOutLetCosine::GetDensityAmp() const
         {
-          return DensityMeanLattice;
-        }
-
-        distribn_t InOutLetCosine::GetDensityAmp()
-        {
-          return DensityAmpLattice;
+          return units->ConvertPressureDifferenceToLatticeUnits(pressureAmpPhysical) / Cs2;
         }
 
       }

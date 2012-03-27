@@ -1,10 +1,10 @@
 #ifndef HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 #define HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 
-#include "lb/boundaries/BoundaryComms.h"
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
 #include "lb/boundaries/iolets/InOutLet.h"
+#include "geometry/LatticeData.h"
 
 namespace hemelb
 {
@@ -16,10 +16,10 @@ namespace hemelb
       class BoundaryValues : public net::IteratedAction
       {
         public:
-          BoundaryValues(geometry::SiteType IOtype,
-                         geometry::LatticeData* iLatDat,
-                         std::vector<iolets::InOutLet*> &iiolets,
-                         SimulationState* iSimState,
+          BoundaryValues(geometry::SiteType ioletType,
+                         geometry::LatticeData* latticeData,
+                         const std::vector<iolets::InOutLet*> &iolets,
+                         SimulationState* simulationState,
                          util::UnitConverter* units);
           ~BoundaryValues();
 
@@ -31,32 +31,34 @@ namespace hemelb
 
           distribn_t GetBoundaryDensity(const int index);
 
-          distribn_t GetDensityMin(int iBoundaryId);
-          distribn_t GetDensityMax(int iBoundaryId);
+          distribn_t GetDensityMin(int boundaryId);
+          distribn_t GetDensityMax(int boundaryId);
 
           static bool IsCurrentProcTheBCProc();
           static proc_t GetBCProcRank();
-
+          iolets::InOutLet* GetLocalIolet(unsigned int index)
+          {
+            return iolets[localIoletIDs[index]];
+          }
+          unsigned int GetLocalIoletCount()
+          {
+            return localIoletCount;
+          }
         private:
-          std::vector<BoundaryComms*> mComms;
-          bool IsIOletOnThisProc(geometry::SiteType IOtype,
-                                 geometry::LatticeData* iLatDat,
-                                 int iBoundaryId);
+          bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
-
-          int nTotIOlets;
+          void HandleComms(iolets::InOutLet* iolet);
+          int totalIoletCount;
           // Number of IOlets and vector of their indices for communication purposes
-          int nIOlets;
-          std::vector<int> ioletIDs;
+          int localIoletCount;
+          std::vector<int> localIoletIDs;
           // Has to be a vector of pointers for InOutLet polymorphism
           std::vector<iolets::InOutLet*> iolets;
 
-          std::vector<distribn_t>* densityCycle;
-
-          SimulationState* mState;
-          util::UnitConverter* mUnits;
-      };
-
+          SimulationState* state;
+          util::UnitConverter* unitConverter;
+      }
+      ;
     }
   }
 }

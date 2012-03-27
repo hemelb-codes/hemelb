@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<hemelbsettings>
+  <simulation steps="100" step_length="0.2" stresstype="1" />
+  <geometry>
+    <datafile path="./four_cube.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <pressure label="boundary1" />
+      <normal x="0.0" y="0.0" z="1.0" />
+      <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <pressure label="boundary2" />
+      <normal x="0.0" y="0.0" z="-1.0" />
+      <position x="0.0" y="0.0" z="0.05" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre x="0.0" y="0.0" z="0.0" />
+    <orientation latitude="45.0" longitude="45.0" />
+    <display brightness="0.03" zoom="1.0" />
+    <range maxstress="0.1" maxvelocity="0.1" />
+  </visualisation>
+  <properties>
+    <propertyoutput frequency="2" file="wholegeometryvelocityandstress.dat">
+      <wholegeometry>
+        <field type="velocity" name="Whole velocity field"/>
+        <field type="vonmisesstress"/>
+      </wholegeometry>      
+    </propertyoutput>
+    <propertyoutput frequency="5" file="centrelinepressure.dat">
+      <linegeometry>
+        <point x="2.5" y="2.5" z="0"/>
+        <point x="2.5" y="2.5" z="5"/> 
+        <field type="pressure"/>
+      </linegeometry>    
+    </propertyoutput>
+  </properties>
+</hemelbsettings>

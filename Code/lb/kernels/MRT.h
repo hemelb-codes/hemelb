@@ -65,7 +65,7 @@ namespace hemelb
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
-            /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
+            /** @todo #222 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
             MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
@@ -82,7 +82,7 @@ namespace hemelb
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
-            /** @todo #61 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
+            /** @todo #222 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
             MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 
@@ -90,7 +90,7 @@ namespace hemelb
           {
             for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
             {
-              /** @todo #61 many optimisations possible (and necessary!).
+              /** @todo #222 many optimisations possible (and necessary!).
                *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
@@ -106,7 +106,7 @@ namespace hemelb
 
           inline void DoReset(InitParams* initParams)
           {
-            InitState(initParams);
+            InitState(*initParams);
           }
 
           /**

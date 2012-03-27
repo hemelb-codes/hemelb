@@ -23,16 +23,41 @@ namespace hemelb
         ~SnapshotParser();
 
         /**
-         * Reads the next bit of data from the file, returning the position of the site,
-         * and the pressure, velocity and stress there. Returns true if the site was read
+         * Reads the next bit of data from the file. Returns true if the site was read
          * successfully.
-         * @param position
-         * @param pressure
-         * @param velocity
-         * @param stress
          * @return
          */
-        bool ReadNext(util::Vector3D<float>& position, float& pressure, util::Vector3D<float>& velocity, float& stress);
+        bool ReadNext();
+
+        /**
+         * Returns the coordinates of the site.
+         * @return
+         */
+        util::Vector3D<site_t> GetPosition() const;
+
+        /**
+         * Returns the pressure at the site.
+         * @return
+         */
+        float GetPressure() const;
+
+        /**
+         * Returns the velocity at the site.
+         * @return
+         */
+        util::Vector3D<float> GetVelocity() const;
+
+        /**
+         * Returns the shear stress at the site.
+         * @return
+         */
+        float GetShearStress() const;
+
+        /**
+         * Returns the Von Mises stress at the site.
+         * @return
+         */
+        float GetVonMisesStress() const;
 
       private:
         /**
@@ -64,6 +89,13 @@ namespace hemelb
          * Count of the number of sites read so far.
          */
         int sitesRead;
+
+        /**
+         * Variables read in.
+         */
+        util::Vector3D<site_t> readPosition;
+        float readPressure, readShearStress, readVonMisesStress;
+        util::Vector3D<float> readVelocity;
     };
   }
 }

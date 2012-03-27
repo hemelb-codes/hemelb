@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_GEOMETRY_GEOMETRYREADERTESTS_H
 #include "geometry/LatticeData.h"
 #include <cppunit/TestFixture.h>
+#include "lb/lattices/D3Q15.h"
 #include "resources/Resource.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/helpers/FolderTestFixture.h"
@@ -20,26 +21,35 @@ namespace hemelb
           class GeometryReader : public hemelb::geometry::GeometryReader
           {
             public:
-              GeometryReader(const bool reserveSteeringCore, hemelb::geometry::GeometryReadResult& readResult, reporting::Timers &timings) :
-                  hemelb::geometry::GeometryReader(reserveSteeringCore, readResult, timings)
+              GeometryReader(const bool reserveSteeringCore,
+                             const hemelb::lb::lattices::LatticeInfo& latticeInfo,
+                             hemelb::geometry::GeometryReadResult& readResult,
+                             reporting::Timers &timings) :
+                hemelb::geometry::GeometryReader(reserveSteeringCore, latticeInfo, readResult, timings)
               {
               }
           };
       };
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE(GeometryReaderTests);
-          CPPUNIT_TEST(TestRead);
-          CPPUNIT_TEST(TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( GeometryReaderTests);
+          CPPUNIT_TEST( TestRead);
+          CPPUNIT_TEST( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
-          
-          GeometryReaderTests():timings(){}
-          
+
+          GeometryReaderTests() :
+            timings()
+          {
+          }
+
           void setUp()
           {
             readResult = new GeometryReadResult();
-            reader = new TestableLatticeData::GeometryReader(false, *readResult, timings);
+            reader = new TestableLatticeData::GeometryReader(false,
+                                                             hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
+                                                             *readResult,
+                                                             timings);
             lattice = NULL;
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
@@ -62,12 +72,12 @@ namespace hemelb
 
           void TestRead()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath);
+            reader->LoadAndDecompose(simConfig->GetDataFilePath());
           }
 
           void TestSameAsFourCube()
           {
-            reader->LoadAndDecompose(simConfig->DataFilePath);
+            reader->LoadAndDecompose(simConfig->GetDataFilePath());
 
             site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)
@@ -104,7 +114,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( GeometryReaderTests);
     }
   }
 }

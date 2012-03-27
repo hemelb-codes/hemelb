@@ -1,5 +1,5 @@
-#ifndef HEMELB_EXTRACTION_LINEGEOMETRYSELECTOR_H
-#define HEMELB_EXTRACTION_LINEGEOMETRYSELECTOR_H
+#ifndef HEMELB_EXTRACTION_STRAIGHTLINEGEOMETRYSELECTOR_H
+#define HEMELB_EXTRACTION_STRAIGHTLINEGEOMETRYSELECTOR_H
 
 #include "extraction/GeometrySelector.h"
 
@@ -11,7 +11,7 @@ namespace hemelb
      * Selects a geometry that forms a thin cylinder with radius 0.5 lattice units
      * around a line segment between two given points.
      */
-    class LineGeometrySelector : public GeometrySelector
+    class StraightLineGeometrySelector : public GeometrySelector
     {
       public:
         /**
@@ -19,7 +19,7 @@ namespace hemelb
          * @param endpoint1
          * @param endpoint2
          */
-        LineGeometrySelector(const util::Vector3D<float>& endpoint1, const util::Vector3D<float>& endpoint2);
+        StraightLineGeometrySelector(const util::Vector3D<float>& endpoint1, const util::Vector3D<float>& endpoint2);
 
         /**
          * Get the first endpoint of the line.
@@ -56,4 +56,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_EXTRACTION_LINEGEOMETRYSELECTOR_H */
+#endif /* HEMELB_EXTRACTION_STRAIGHTLINEGEOMETRYSELECTOR_H */

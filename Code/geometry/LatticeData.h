@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "net/net.h"
-#include "D3Q15.h"
 #include "constants.h"
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
@@ -43,7 +42,7 @@ namespace hemelb
 
         static LatticeData* Load(const bool reserveSteeringCore,
                                  const lb::lattices::LatticeInfo& latticeInfo,
-                                 std::string& dataFilePath,
+                                 const std::string& dataFilePath,
                                  reporting::Timers &timings);
 
         virtual ~LatticeData();
@@ -102,9 +101,21 @@ namespace hemelb
                                         util::Vector3D<site_t>& blockCoords,
                                         util::Vector3D<site_t>& siteCoords) const;
 
-        site_t GetInnerSiteCount() const;
-        site_t GetInnerCollisionCount(unsigned int collisionType) const;
-        site_t GetInterCollisionCount(unsigned int collisionType) const;
+        site_t GetMidDomainSiteCount() const;
+        /**
+         * Number of sites with all fluid neighbours residing on this rank, for the given
+         * collision type.
+         * @param collisionType
+         * @return
+         */
+        site_t GetMidDomainCollisionCount(unsigned int collisionType) const;
+        /**
+         * Number of sites with at least one fluid neighbour residing on another rank
+         * for the given collision type.
+         * @param collisionType
+         * @return
+         */
+        site_t GetDomainEdgeCollisionCount(unsigned int collisionType) const;
 
         site_t GetFluidSiteCountOnProc(proc_t proc) const;
         site_t GetTotalFluidSites() const;
@@ -127,16 +138,69 @@ namespace hemelb
 
         void ProcessReadSites(const GeometryReadResult& readResult);
 
-        void PopulateWithReadData(const std::vector<site_t> intraBlockNumbers[COLLISION_TYPES],
-                                  const std::vector<site_t> intraSiteNumbers[COLLISION_TYPES],
-                                  const std::vector<SiteData> intraSiteData[COLLISION_TYPES],
-                                  const std::vector<util::Vector3D<float> > intraWallNormals[COLLISION_TYPES],
-                                  const std::vector<float> intraWallDistance[COLLISION_TYPES],
-                                  const std::vector<site_t> interBlockNumbers[COLLISION_TYPES],
-                                  const std::vector<site_t> interSiteNumbers[COLLISION_TYPES],
-                                  const std::vector<SiteData> interSiteData[COLLISION_TYPES],
-                                  const std::vector<util::Vector3D<float> > interWallNormals[COLLISION_TYPES],
-                                  const std::vector<float> interWallDistance[COLLISION_TYPES]);
+        void PopulateWithReadData(const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> midDomainSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > midDomainWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> midDomainWallDistance[COLLISION_TYPES],
+                                  const std::vector<site_t> domainEdgeBlockNumbers[COLLISION_TYPES],
+                                  const std::vector<site_t> domainEdgeSiteNumbers[COLLISION_TYPES],
+                                  const std::vector<SiteData> domainEdgeSiteData[COLLISION_TYPES],
+                                  const std::vector<util::Vector3D<float> > domainEdgeWallNormals[COLLISION_TYPES],
+                                  const std::vector<float> domainEdgeWallDistance[COLLISION_TYPES])
+        {
+          // Populate the collision count arrays.
+          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
+          {
+            midDomainProcCollisions[collisionType] = midDomainBlockNumbers[collisionType].size();
+            domainEdgeProcCollisions[collisionType] = domainEdgeBlockNumbers[collisionType].size();
+          }
+          // Data about local sites.
+          localFluidSites = 0;
+          // Data about contiguous local sites. First midDomain stuff, then domainEdge.
+          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
+          {
+            for (unsigned indexInType = 0; indexInType < midDomainProcCollisions[collisionType]; indexInType++)
+            {
+              siteData.push_back(midDomainSiteData[collisionType][indexInType]);
+              wallNormalAtSite.push_back(midDomainWallNormals[collisionType][indexInType]);
+              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
+              {
+                distanceToWall.push_back(midDomainWallDistance[collisionType][indexInType
+                    * (latticeInfo.GetNumVectors() - 1) + direction - 1]);
+              }
+              site_t blockId = midDomainBlockNumbers[collisionType][indexInType];
+              site_t siteId = midDomainSiteNumbers[collisionType][indexInType];
+              Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+              globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
+              localFluidSites++;
+            }
+
+          }
+
+          for (unsigned collisionType = 0; collisionType < COLLISION_TYPES; collisionType++)
+          {
+            for (unsigned indexInType = 0; indexInType < domainEdgeProcCollisions[collisionType]; indexInType++)
+            {
+              siteData.push_back(domainEdgeSiteData[collisionType][indexInType]);
+              wallNormalAtSite.push_back(domainEdgeWallNormals[collisionType][indexInType]);
+              for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
+              {
+                distanceToWall.push_back(domainEdgeWallDistance[collisionType][indexInType
+                    * (latticeInfo.GetNumVectors() - 1) + direction - 1]);
+              }
+              site_t blockId = domainEdgeBlockNumbers[collisionType][indexInType];
+              site_t siteId = domainEdgeSiteNumbers[collisionType][indexInType];
+              Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+              globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
+              localFluidSites++;
+            }
+
+          }
+
+          fOld.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          fNew.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+        }
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
@@ -168,8 +232,18 @@ namespace hemelb
          * to the 'rubbish site', an extra position in the array that doesn't correspond to any
          * site in the geometry.
          */
-        site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
-        double GetCutDistance(site_t iSiteIndex, int iDirection) const;
+        template<typename LatticeType>
+        site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const
+        {
+          return neighbourIndices[iSiteIndex * LatticeType::NUMVECTORS + iDirectionIndex];
+        }
+
+        template<typename LatticeType>
+        double GetCutDistance(site_t iSiteIndex, int iDirection) const
+        {
+          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
+        }
+
         SiteData GetSiteData(site_t iSiteIndex) const;
 
         /**
@@ -180,9 +254,10 @@ namespace hemelb
         const util::Vector3D<site_t>& GetGlobalSiteCoords(site_t siteIndex) const;
 
         // Variables are listed here in approximate order of initialisation.
-        // Note that all data is ordered in increasing order of collision type, by intra-proc then
-        // inter-proc.
-        // I.e. Intra type 0 to intra type 5 then inter type 0 to inter type 5.
+        // Note that all data is ordered in increasing order of collision type, by
+        // midDomain (all neighbours on this core) then domainEdge (some neighbours on
+        // another core)
+        // I.e. midDomain type 0 to midDomain type 5 then domainEdge type 0 to domainEdge type 5.
         /**
          * Basic lattice variables.
          */
@@ -204,10 +279,14 @@ namespace hemelb
         std::vector<NeighbouringProcessor> neighbouringProcs;
 
         /**
-         * Data about local fluid sites.
+         * Number of fluid sites with all fluid neighbours on this rank, for each collision type.
          */
-        site_t intraProcCollisions[COLLISION_TYPES];
-        site_t interProcCollisions[COLLISION_TYPES];
+        site_t midDomainProcCollisions[COLLISION_TYPES];
+        /**
+         * Number of fluid sites with at least one fluid neighbour on another rank, for each
+         * collision type.
+         */
+        site_t domainEdgeProcCollisions[COLLISION_TYPES];
 
         site_t localFluidSites;
 

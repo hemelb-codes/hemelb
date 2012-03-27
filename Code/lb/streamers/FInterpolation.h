@@ -18,10 +18,11 @@ namespace hemelb
 
         private:
           CollisionType collider;
+          typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
           FInterpolation(kernels::InitParams& initParams) :
-              collider(initParams)
+            collider(initParams)
           {
 
           }
@@ -37,7 +38,7 @@ namespace hemelb
             {
               const geometry::Site site = latticeData->GetSite(index);
 
-              distribn_t* distribution = site.GetFOld();
+              distribn_t* distribution = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
 
@@ -47,13 +48,13 @@ namespace hemelb
 
               collider.Collide(lbmParams, hydroVars);
 
-              for (unsigned int direction = 0; direction < CollisionType::CKernel::LatticeType::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
                 // Note that the post-step of this boundary condition relies on the post-collsion
                 // value being written over f_old.
                 distribution[direction] = hydroVars.GetFPostCollision()[direction];
 
-                * (latticeData->GetFNew(site.GetStreamedIndex(direction))) = distribution[direction];
+                * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction))) = distribution[direction];
               }
 
               BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
@@ -79,40 +80,39 @@ namespace hemelb
               geometry::Site site = latticeData->GetSite(siteIndex);
 
               // Iterate over the direction indices.
-              for (unsigned int direction = 1; direction < CollisionType::CKernel::LatticeType::NUMVECTORS; direction++)
+              for (unsigned int direction = 1; direction < LatticeType::NUMVECTORS; direction++)
               {
                 // If there's a boundary in that direction and none in the other direction, do the
                 // f-interpolation.
                 if (site.HasBoundary(direction))
                 {
-                  int inverseDirection = CollisionType::CKernel::LatticeType::INVERSEDIRECTIONS[direction];
+                  int inverseDirection = LatticeType::INVERSEDIRECTIONS[direction];
 
                   if (!site.HasBoundary(inverseDirection))
                   {
                     // Calculate 2 x the distance to the boundary.
-                    distribn_t twoQ = 2.0 * site.GetWallDistance(direction);
+                    distribn_t twoQ = 2.0 * site.GetWallDistance<LatticeType> (direction);
 
                     distribn_t thisDirectionNew = *latticeData->GetFNew(siteIndex
                         * CollisionType::CKernel::LatticeType::NUMVECTORS + direction);
-                    distribn_t thisDirectionOld = site.GetFOld()[direction];
-                    distribn_t oppDirectionOld = site.GetFOld()[inverseDirection];
+                    distribn_t thisDirectionOld = site.GetFOld<LatticeType> ()[direction];
+                    distribn_t oppDirectionOld = site.GetFOld<LatticeType> ()[inverseDirection];
 
                     // Interpolate between the values of the f direction to work out a new streamed value.
-                    distribn_t streamed = (twoQ < 1.0) ?
-                      (thisDirectionNew + twoQ * (thisDirectionOld - thisDirectionNew)) :
-                      (oppDirectionOld + (1. / twoQ) * (thisDirectionOld - oppDirectionOld));
+                    distribn_t streamed = (twoQ < 1.0)
+                      ? (thisDirectionNew + twoQ * (thisDirectionOld - thisDirectionNew))
+                      : (oppDirectionOld + (1. / twoQ) * (thisDirectionOld - oppDirectionOld));
 
                     // This streamed value is assigned to the f-distribution in the direction facing
                     // away from the boundary.
-                    * (latticeData->GetFNew(siteIndex * CollisionType::CKernel::LatticeType::NUMVECTORS
-                        + inverseDirection)) = streamed;
+                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection)) = streamed;
                   }
                   // If there are boundaries in both directions perform simple bounce-back using the
                   // post-collision values in f_old.
                   else
                   {
-                    * (latticeData->GetFNew(siteIndex * CollisionType::CKernel::LatticeType::NUMVECTORS
-                        + inverseDirection)) = site.GetFOld()[direction];
+                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection)) = site.GetFOld<
+                        LatticeType> ()[direction];
                   }
                 }
               }

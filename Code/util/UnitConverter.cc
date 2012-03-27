@@ -6,54 +6,48 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(lb::LbmParameters* iParams, lb::SimulationState* iState, double voxelSize) :
-      mParams(iParams), mState(iState), voxel_size(voxelSize)
+    UnitConverter::UnitConverter(lb::LbmParameters* params, lb::SimulationState* state, double voxelSize) :
+      lbmParameters(params), simulationState(state), voxelSize(voxelSize), latticeSpeed(voxelSize/ simulationState->GetTimeStepLength())
     {
 
     }
 
-    LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
+    LatticeDensity UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
-      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
+      return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - REFERENCE_PRESSURE_mmHg);
     }
 
     PhysicalPressure UnitConverter::ConvertPressureToPhysicalUnits(LatticePressure pressure) const
     {
-      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
-      return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3 * temp * temp
-          / mmHg_TO_PASCAL;
+      return REFERENCE_PRESSURE_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure  - Cs2);
     }
 
-    distribn_t UnitConverter::ConvertPressureGradToLatticeUnits(double pressure_grad) const
+    LatticeDensity UnitConverter::ConvertPressureDifferenceToLatticeUnits(double pressure_grad) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
-      return pressure_grad * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
+      return pressure_grad * mmHg_TO_PASCAL  / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
     }
 
-    double UnitConverter::ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const
+    double UnitConverter::ConvertPressureDifferenceToPhysicalUnits(LatticePressure pressure_grad) const
     {
-      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
-      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * temp * temp / mmHg_TO_PASCAL;
+      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * latticeSpeed * latticeSpeed / mmHg_TO_PASCAL;
     }
 
-    distribn_t UnitConverter::ConvertVelocityToLatticeUnits(double velocity) const
+    LatticeVelocity UnitConverter::ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const
     {
-      return velocity * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY_Pa_s
-          / BLOOD_DENSITY_Kg_per_m3);
+      return velocity / latticeSpeed;
     }
 
-    distribn_t UnitConverter::ConvertStressToLatticeUnits(double stress) const
+    LatticeStress UnitConverter::ConvertStressToLatticeUnits(PhysicalStress stress) const
     {
-      return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s))
-          * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size) * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size);
+      return stress / (latticeSpeed*latticeSpeed*BLOOD_DENSITY_Kg_per_m3);
     }
 
-    double UnitConverter::ConvertStressToPhysicalUnits(distribn_t stress) const
+    PhysicalStress UnitConverter::ConvertStressToPhysicalUnits(PhysicalStress stress) const
     {
       // convert stress from lattice units to physical units (Pa)
-      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams->GetTau()
-          - 0.5) / 3.0) * voxel_size) * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size));
+      return stress * (latticeSpeed*latticeSpeed*BLOOD_DENSITY_Kg_per_m3);
+      // stress=Force per unit area=mass * length / time^2 / length^2=mass / length * time^2
+      // = mass * (length/time)^2 / length^3
     }
 
   }

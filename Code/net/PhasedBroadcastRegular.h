@@ -168,8 +168,7 @@ namespace hemelb
         {
           if (base::GetTreeDepth() > 0)
           {
-            unsigned long stepsPassed = (base::mSimState->GetCycleId() - 1)
-                * base::mSimState->GetTimeStepsPerCycle() + base::mSimState->GetTimeStep() - 1;
+            unsigned long stepsPassed = base::mSimState->Get0IndexedTimeStep();
 
             return stepsPassed % base::GetRoundTripLength();
           }

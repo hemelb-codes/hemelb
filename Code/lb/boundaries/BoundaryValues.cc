@@ -1,4 +1,5 @@
 #include "lb/boundaries/BoundaryValues.h"
+#include "lb/boundaries/BoundaryComms.h"
 #include "util/utilityFunctions.h"
 #include "util/fileutils.h"
 #include <algorithm>
@@ -11,51 +12,42 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryValues::BoundaryValues(geometry::SiteType IOtype,
-                                     geometry::LatticeData* iLatDat,
-                                     std::vector<iolets::InOutLet*> &iiolets,
-                                     SimulationState* iSimState,
-                                     util::UnitConverter* units) :
-          net::IteratedAction(), mState(iSimState), mUnits(units)
+      BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
+                                      geometry::LatticeData* latticeData,
+                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
+                                      SimulationState* simulationState,
+                                      util::UnitConverter* units):
+          net::IteratedAction(),totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState),  unitConverter(units)
       {
-        nTotIOlets = (int) iiolets.size();
 
-        std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
-
-        nIOlets = 0;
+        std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
 
         // Determine which iolets need comms and create them
-        for (int i = 0; i < nTotIOlets; i++)
+        for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
           // First create a copy of all iolets
-          iolets::InOutLet* iolet = iiolets[i]->Clone();
+          iolets::InOutLet* iolet = incoming_iolets[ioletIndex]->Clone();
 
-          iolet->Initialise(mUnits);
+          iolet->Initialise(unitConverter);
 
           iolets.push_back(iolet);
 
-          bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
-          procsList[i] = GatherProcList(IOletOnThisProc);
+          bool isIOletOnThisProc = IsIOletOnThisProc(ioletType, latticeData, ioletIndex);
+          procsList[ioletIndex] = GatherProcList(isIOletOnThisProc);
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
           // on the BC task we can create the comms
-          if (IOletOnThisProc || IsCurrentProcTheBCProc())
+          if (isIOletOnThisProc || IsCurrentProcTheBCProc())
           {
-            nIOlets++;
-            ioletIDs.push_back(i);
-            if (iolets[i]->DoComms())
+            localIoletCount++;
+
+            localIoletIDs.push_back(ioletIndex);
+            if (iolet->IsCommsRequired())
             {
-              mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc));
-            }
-            else
-            {
-              // NULL values fill up space to make indexing easier
-              mComms.push_back(NULL);
+              iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
             }
           }
         }
-
-        densityCycle = new std::vector<distribn_t>[nIOlets];
 
         // Send out initial values
         Reset();
@@ -68,31 +60,19 @@ namespace hemelb
       BoundaryValues::~BoundaryValues()
       {
 
-        delete[] densityCycle;
-
-        for (int i = 0; i < nTotIOlets; i++)
+        for (int i = 0; i <totalIoletCount; i++)
         {
           delete iolets[i];
         }
-
-        for (int i = 0; i < nIOlets; i++)
-        {
-          if (mComms[i] != NULL)
-          {
-            delete mComms[i];
-          }
-        }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType IOtype,
-                                             geometry::LatticeData* iLatDat,
-                                             int iBoundaryId)
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId)
       {
-        for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
+        for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
-          const geometry::Site site = iLatDat->GetSite(i);
+          const geometry::Site site = latticeData->GetSite(i);
 
-          if (site.GetSiteType() == IOtype && site.GetBoundaryId() == iBoundaryId)
+          if (site.GetSiteType() == ioletType && site.GetBoundaryId() == boundaryId)
           {
             return true;
           }
@@ -103,25 +83,25 @@ namespace hemelb
 
       std::vector<int> BoundaryValues::GatherProcList(bool hasBoundary)
       {
-        std::vector<int> procsList(0);
+        std::vector<int> processorsNeedingIoletList(0);
 
         // This is where the info about whether a proc contains the given inlet/outlet is sent
         // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
-        int IOletOnThisProc = hasBoundary; // true if inlet i is on this proc
+        int isIOletOnThisProc = hasBoundary; // true if inlet i is on this proc
 
         // These should be bool, but MPI only supports MPI_INT
         // For each inlet/outlet there is an array of length equal to total number of procs.
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
-        int nTotProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
-        int *boolList = new int[nTotProcs];
+        proc_t processorCount = topology::NetworkTopology::Instance()->GetProcessorCount();
+        int *processorsNeedingIoletFlags = new int[processorCount];
 
-        MPI_Gather(&IOletOnThisProc,
+        MPI_Gather(&isIOletOnThisProc,
                    1,
-                   hemelb::MpiDataType(IOletOnThisProc),
-                   boolList,
+                   hemelb::MpiDataType(isIOletOnThisProc),
+                   processorsNeedingIoletFlags,
                    1,
-                   hemelb::MpiDataType(boolList[0]),
+                   hemelb::MpiDataType(processorsNeedingIoletFlags[0]),
                    GetBCProcRank(),
                    MPI_COMM_WORLD);
 
@@ -130,19 +110,19 @@ namespace hemelb
           // Now we have an array for each IOlet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
           // of ints which store a list of processor ranks.
-          for (int j = 0; j < nTotProcs; j++)
+          for (proc_t process = 0; process < processorCount; process++)
           {
-            if (boolList[j])
+            if (processorsNeedingIoletFlags[process])
             {
-              procsList.push_back(j);
+              processorsNeedingIoletList.push_back(process);
             }
           }
         }
 
         // Clear up
-        delete[] boolList;
+        delete[] processorsNeedingIoletFlags;
 
-        return procsList;
+        return processorsNeedingIoletList; // return by copy
       }
 
       bool BoundaryValues::IsCurrentProcTheBCProc()
@@ -157,89 +137,53 @@ namespace hemelb
 
       void BoundaryValues::RequestComms()
       {
-        if (IsCurrentProcTheBCProc())
+        for (int i = 0; i < localIoletCount; i++)
         {
-          for (int i = 0; i < nIOlets; i++)
-          {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
-
-            if (iolets[ioletIDs[i]]->DoComms())
-            {
-              iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
-              mComms[i]->Send(&densityCycle[i][time_step]);
-            }
-          }
+          HandleComms(GetLocalIolet(i));
         }
+      }
 
-        for (int i = 0; i < nIOlets; i++)
+      void BoundaryValues::HandleComms(iolets::InOutLet* iolet)
+      {
+
+        if (iolet->IsCommsRequired())
         {
-          if (iolets[ioletIDs[i]]->DoComms())
-          {
-            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-          }
-          else
-          {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
-            iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
-            iolets[ioletIDs[i]]->density = densityCycle[i][time_step];
-          }
+          iolet->DoComms(IsCurrentProcTheBCProc());
         }
 
       }
 
       void BoundaryValues::EndIteration()
       {
-        for (int i = 0; i < nIOlets; i++)
+        for (int i = 0; i < localIoletCount; i++)
         {
-          if (iolets[ioletIDs[i]]->DoComms())
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
-            mComms[i]->FinishSend();
+            GetLocalIolet(i)->GetComms()->FinishSend();
           }
         }
       }
 
       void BoundaryValues::FinishReceive()
       {
-        for (int i = 0; i < nIOlets; i++)
+        for (int i = 0; i < localIoletCount; i++)
         {
-          if (iolets[ioletIDs[i]]->DoComms())
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
-            mComms[i]->Wait();
+            GetLocalIolet(i)->GetComms()->Wait();
           }
         }
       }
 
       void BoundaryValues::Reset()
       {
-        for (int i = 0; i < nIOlets; i++)
+        for (int i = 0; i < localIoletCount; i++)
         {
-          if (iolets[ioletIDs[i]]->DoComms())
+          GetLocalIolet(i)->Reset(*state);
+          if (GetLocalIolet(i)->IsCommsRequired())
           {
-            if (IsCurrentProcTheBCProc())
-            {
-              iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
-              mComms[i]->Send(&densityCycle[i][0]);
-            }
+            GetLocalIolet(i)->GetComms()->WaitAllComms();
 
-            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-          }
-          else
-          {
-            iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
-            iolets[ioletIDs[i]]->density = densityCycle[i][0];
-          }
-        }
-
-        for (int i = 0; i < nTotIOlets; ++i)
-        {
-          iolets[i]->ResetValues();
-        }
-
-        for (int i = 0; i < nIOlets; i++)
-        {
-          if (iolets[ioletIDs[i]]->DoComms())
-          {
-            mComms[i]->WaitAllComms();
           }
         }
       }
@@ -247,7 +191,7 @@ namespace hemelb
       // This assumes the program has already waited for comms to finish before
       distribn_t BoundaryValues::GetBoundaryDensity(const int index)
       {
-        return iolets[index]->density;
+        return iolets[index]->GetDensity(state->Get0IndexedTimeStep());
       }
 
       distribn_t BoundaryValues::GetDensityMin(int iBoundaryId)

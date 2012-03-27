@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETFILE_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETFILE_H
 
-#include "lb/boundaries/iolets/InOutLetCycle.h"
+#include "lb/boundaries/iolets/InOutLet.h"
 
 namespace hemelb
 {
@@ -21,19 +21,39 @@ namespace hemelb
          * zero, because it may not be what you expect - see comments on CalculateCycle in
          * cc file.
          */
-        class InOutLetFile : public InOutLetCycle<0, false>
+        class InOutLetFile : public InOutLet
         {
           public:
             InOutLetFile();
             virtual ~InOutLetFile();
-
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
-            virtual InOutLet* Clone();
-
-            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
-                                        const SimulationState *iState);
-
-            std::string PressureFilePath;
+            virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
+            virtual InOutLet* Clone() const;
+            virtual void Reset(SimulationState &state)
+            {
+              CalculateTable(state.GetTotalTimeSteps());
+            }
+            std::string & GetFilePath()
+            {
+              return pressureFilePath;
+            }
+            PhysicalPressure GetPressureMin() const
+            {
+              return pressureMinPhysical;
+            }
+            PhysicalPressure GetPressureMax() const
+            {
+              return pressureMaxPhysical;
+            }
+            LatticeDensity GetDensity(LatticeTime timeStep) const
+            {
+              return densityTable[timeStep];
+            }
+          private:
+            void CalculateTable(LatticeTime totalTimeSteps);
+            std::vector<LatticeDensity> densityTable;
+            PhysicalPressure pressureMinPhysical;
+            PhysicalPressure pressureMaxPhysical;
+            std::string pressureFilePath;
         };
 
       }

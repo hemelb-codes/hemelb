@@ -141,6 +141,38 @@ def stat_loader(path):
     return os.stat(path)
 
 
+def geometry_header_loader(path):
+    from hemeTools.parsers.geometry.simple import ConfigLoader
+    class GeometryHeaderParsedException(BaseException):
+        """Inherit from BaseException as this isn't really an error, 
+        a la GeneratorExit."""
+        
+        pass
+    
+    class GeometryHeader(ConfigLoader):
+        def OnEndHeader(self):
+            # Abort
+            raise GeometryHeaderParsedException
+        def Load(self):
+            try:
+                ConfigLoader.Load(self)
+            except GeometryHeaderParsedException:
+                pass
+            return
+        @property
+        def site_count(self):
+            return sum(self.Domain.BlockFluidSiteCounts)
+        @property
+        def block_size(self):
+            return self.Domain.BlockSize
+        @property
+        def block_count(self):
+            return len(self.Domain.Blocks)
+        pass
+    gh = GeometryHeader(path)
+    gh.Load()
+    return gh
+
 def null_filter(result):
     return None
 def name_filter(result):
@@ -212,9 +244,11 @@ def result_model(config):
             prop=self.datum(property)
             try:
                 if value[0]=='<':
-                    return prop<type(prop)(value[1:])
+                    return prop<ResultProperty.parse_value(value[1:])
+                if value[0]=='!':
+                    return not prop==ResultProperty.parse_value(value[1:])
                 elif value[0]=='>':
-                    return prop>type(prop)(value[1:])
+                    return prop>ResultProperty.parse_value(value[1:])
                 else:
                     return prop==value
             except TypeError:
@@ -230,4 +264,5 @@ def result_model(config):
     Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
     Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
+    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
     return Result

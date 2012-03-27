@@ -2,6 +2,10 @@
 <report>
 	<configuration>
 		<file>{{CONFIG}}</file>
+		<steps>{{TOTAL_TIME_STEPS}}</steps>
+		<resolution>
+			<timestep>{{TIME_STEP_LENGTH}}</timestep>
+		</resolution>
 	</configuration>
 	{{#BUILD}}
 	<build>
@@ -22,6 +26,8 @@
 	</nodes>
 	<geometry>
 		<sites>{{SITES}}</sites>
+		<blocks>{{BLOCKS}}</blocks>
+		<sites_per_block>{{SITESPERBLOCK}}</sites_per_block>
 		{{#PROCESSOR}}
 		<domain>
 			<rank>{{RANK}}</rank><sites>{{SITES}}</sites>
@@ -33,7 +39,6 @@
 		<snapshots>{{SNAPSHOTS}}</snapshots>
 		<steps>
 			<total>{{STEPS}}</total>
-			<per_cycle>{{STEPS_PER_CYCLE}}</per_cycle>
 		</steps>
 	</results>
 	<checks>

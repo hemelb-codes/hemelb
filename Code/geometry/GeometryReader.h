@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 
-#include "D3Q15.h"
 #include "io/writers/xdr/XdrReader.h"
+#include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
 #include "mpiInclude.h"
 #include "parmetis.h"
@@ -23,10 +23,10 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        GeometryReader(const bool reserveSteeringCore, GeometryReadResult& readResult, reporting::Timers &timings);
+        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, GeometryReadResult& readResult, reporting::Timers &timings);
         ~GeometryReader();
 
-        void LoadAndDecompose(std::string& dataFilePath);
+        void LoadAndDecompose(const std::string& dataFilePath);
 
       private:
         void ReadPreamble();
@@ -148,6 +148,7 @@ namespace hemelb
         static const proc_t HEADER_READING_RANK = 0;
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
+        const lb::lattices::LatticeInfo& latticeInfo;
         GeometryReadResult& readingResult;
         MPI_File file;
         MPI_Info fileInfo;

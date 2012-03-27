@@ -23,7 +23,7 @@ namespace hemelb
         Mode mode;
 
         float ctr_x, ctr_y, ctr_z;
-        float streaklines_per_pulsatile_period, streakline_length;
+        float streaklines_per_simulation, streakline_length;
         double mouse_pressure, mouse_stress;
         float brightness;
         float glyphLength;

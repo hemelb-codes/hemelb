@@ -138,7 +138,7 @@ if (HEMELB_USE_DEBUGGER)
 	set(CMAKE_BUILD_TYPE DEBUG)
 endif()
 
-set(root_sources SimulationMaster.cc mpiInclude.cc D3Q15.cc)
+set(root_sources SimulationMaster.cc mpiInclude.cc)
 add_executable(hemelb main.cc ${root_sources})
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -192,7 +192,10 @@ if(HEMELB_BUILD_UNITTESTS)
 		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/config.xml)
+	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
+		unittests/resources/config.xml unittests/resources/config0_2_0.xml
+		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
+		)
 endif()
 
 #-------- Copy and install resources --------------

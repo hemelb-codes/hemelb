@@ -1,19 +1,19 @@
 <?xml version="1.0" ?>
-<hemelbsettings>
-  <simulation cycles="3" cyclesteps="1000" stresstype="1"/>
+<hemelbsettings version="0.2.1">
+  <simulation steps="3000" stresstype="1" step_length="0.0001"/>
   <geometry>
     <datafile path="./config.dat" />
   </geometry>
   <inlets>
     <inlet>
-      <pressure amplitude="0.0" mean="80.1" phase="0.0" />
+      <pressure amplitude="0.0" mean="80.1" phase="0.0" period="0.6"/>
       <normal x="0.0" y="0.0" z="1.0" />
       <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
     </inlet>
   </inlets>
   <outlets>
     <outlet>
-      <pressure amplitude="0.0" mean="80.0" phase="0.0" />
+      <pressure amplitude="0.0" mean="80.0" phase="0.0" period="0.6"/>
       <normal x="0.0" y="0.0" z="-1.0" />
       <position x="0.0" y="0.0" z="0.05" />
     </outlet>

@@ -6,6 +6,7 @@
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
 #include "lb/kernels/Kernels.h"
+#include "lb/kernels/momentBasis/MomentBases.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
@@ -77,7 +78,8 @@ namespace hemelb
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
-        int InletCount() const;
+        int InletCount() const {return inletCount;}
+        int OutletCount() const {return outletCount;}
 
         /**
          * Second constructor.
@@ -105,7 +107,7 @@ namespace hemelb
                                      PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
-        const lb::MacroscopicPropertyCache& GetPropertyCache() const;
+        lb::MacroscopicPropertyCache& GetPropertyCache();
 
       private:
         void SetInitialConditions();
@@ -150,10 +152,8 @@ namespace hemelb
           }
         }
 
-        double *inlet_normal;
-
-        int inlets;
-        int outlets;
+        unsigned int inletCount;
+        unsigned int outletCount;
 
         configuration::SimConfig *mSimConfig;
         net::Net* mNet;
@@ -171,11 +171,6 @@ namespace hemelb
         MacroscopicPropertyCache propertyCache;
     };
 
-    template<class LatticeType>
-    inline int LBM<LatticeType>::InletCount() const
-    {
-      return inlets;
-    }
 
   } // Namespace lb
 } // Namespace hemelb

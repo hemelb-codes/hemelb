@@ -8,6 +8,7 @@
 #include "vis/VisSettings.h"
 #include "vis/rayTracer/SiteData.h"
 #include "lb/LbmParameters.h"
+#include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
