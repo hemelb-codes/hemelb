@@ -174,15 +174,23 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t iFirstIndex,
-                                 const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams,
-                                 geometry::LatticeData* bLatDat,
-                                 hemelb::vis::Control *iControl)
+          inline void DoPostStep(const site_t firstIndex,
+                                 const site_t siteCount,
+                                 const LbmParameters* lbmParams,
+                                 geometry::LatticeData* latDat,
+                                 lb::MacroscopicPropertyCache& propertyCache)
           {
 
           }
 
+          /**
+           * The DoReset member function must be implemented but doesn't need to do anything
+           * for this boundary condition.
+           * @param init
+           */
+          inline void DoReset(kernels::InitParams* init)
+          {
+          }
       };
     }
   }
