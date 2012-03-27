@@ -40,8 +40,8 @@ class SimulationMaster
     virtual void DoTimeStep();
 
   private:
-    typedef hemelb::lb::lattices::D3Q15 latticeType;
-
+    // Set the lattice type via a build parameter
+    typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
