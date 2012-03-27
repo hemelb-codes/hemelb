@@ -24,6 +24,12 @@ set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
 	CACHE FILEPATH "Path to find dependency includes and libraries")
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+set(HEMELB_LATTICE "D3Q15"
+  CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
+set(HEMELB_KERNEL "LBGK"
+  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
+set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
+  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK)")
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -36,6 +42,9 @@ if(HEMELB_OPTIMISATION)
 endif()
 
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
+add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
+add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
+add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
 
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
