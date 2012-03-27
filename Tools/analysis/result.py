@@ -139,24 +139,39 @@ def xml_loader(path):
         raise ParseError("Could not parse file.")
 def stat_loader(path):
     return os.stat(path)
+
+
 def geometry_header_loader(path):
     from hemeTools.parsers.geometry.simple import ConfigLoader
-    class GeometryHeader:
-        def __init__(self,path):
-            self.model=ConfigLoader(path)
-            self.model._LoadPreamble()
-            self.model._LoadHeader()
-            self.domain=self.model.Domain
+    class GeometryHeaderParsedException(BaseException):
+        """Inherit from BaseException as this isn't really an error, 
+        a la GeneratorExit."""
+        
+        pass
+    
+    class GeometryHeader(ConfigLoader):
+        def OnEndHeader(self):
+            # Abort
+            raise GeometryHeaderParsedException
+        def Load(self):
+            try:
+                ConfigLoader.Load(self)
+            except GeometryHeaderParsedException:
+                pass
+            return
         @property
         def site_count(self):
-            return sum(self.domain.BlockFluidSiteCounts)
+            return sum(self.Domain.BlockFluidSiteCounts)
         @property
         def block_size(self):
-            return self.domain._BlockSize
+            return self.Domain.BlockSize
         @property
         def block_count(self):
-            return len(self.domain.Blocks)
-    return GeometryHeader(path)
+            return len(self.Domain.Blocks)
+        pass
+    gh = GeometryHeader(path)
+    gh.Load()
+    return gh
 
 def null_filter(result):
     return None
