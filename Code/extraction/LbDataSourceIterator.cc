@@ -49,6 +49,11 @@ namespace hemelb
       return converter.ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
     }
 
+    float LbDataSourceIterator::GetShearRate() const
+    {
+      return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
+    }
+
     void LbDataSourceIterator::Reset()
     {
       position = -1;

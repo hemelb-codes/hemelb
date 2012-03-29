@@ -55,7 +55,7 @@ namespace hemelb
           }
 
         public:
-          distribn_t density, v_x, v_y, v_z;
+          distribn_t density, v_x, v_y, v_z, tau;
           const distribn_t* const f;
 
           inline const FVector<LatticeType>& GetFEq()

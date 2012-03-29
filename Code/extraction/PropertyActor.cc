@@ -49,6 +49,9 @@ namespace hemelb
               case OutputField::VonMisesStress:
                 propertyCache.vonMisesStressCache.SetRefreshFlag();
                 break;
+              case OutputField::ShearRate:
+                propertyCache.shearRateCache.SetRefreshFlag();
+                break;
             }
           }
         }

@@ -62,6 +62,12 @@ namespace hemelb
         float GetVonMisesStress() const;
 
         /**
+         * Returns the shear rate at the site.
+         * @return shear rate
+         */
+        float GetShearRate() const;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         void Reset();
