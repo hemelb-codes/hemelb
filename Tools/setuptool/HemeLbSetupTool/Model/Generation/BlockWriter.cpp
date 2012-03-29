@@ -8,23 +8,29 @@
 #include "GenerationError.h"
 
 BlockWriter::BlockWriter(int blocksize) :
-		maxBufferSize(geometry::GetMaxBlockRecordLength(blocksize)), buffer(
-				new char[this->maxBufferSize]), writer(buffer, maxBufferSize) {
+	writer(NULL), buffer(NULL), maxBufferSize(
+			geometry::GetMaxBlockRecordLength(blocksize)) {
 	this->Reset();
 }
 
 void BlockWriter::Reset() {
-	nFluidSites = 0;
-	CompressedBlockLength = 0;
-	UncompressedBlockLength = 0;
+	this->nFluidSites = 0;
+	this->CompressedBlockLength = 0;
+	this->UncompressedBlockLength = 0;
 
-	IsFinished = false;
+	this->IsFinished = false;
 
-	writer = hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
+	delete[] this->buffer;
+	this->buffer = new char[this->maxBufferSize];
+
+	delete this->writer;
+	this->writer = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
 			this->maxBufferSize);
 }
 
 BlockWriter::~BlockWriter() {
+	delete this->writer;
+	delete[] this->buffer;
 }
 
 void BlockWriter::IncrementFluidSitesCount() {
@@ -39,8 +45,8 @@ void BlockWriter::Finish() {
 		int ret; // zlib return code
 
 		// How much data to compress?
-		this->UncompressedBlockLength =
-				this->writer.getCurrentStreamPosition();
+		this->UncompressedBlockLength
+				= this->writer->getCurrentStreamPosition();
 
 		// Set up our compressor
 		z_stream stream;
@@ -59,10 +65,10 @@ void BlockWriter::Finish() {
 
 		// Set input. The XDR buffer has to be char but zlib only works with
 		// unsigned char. Just cast for now...
-		stream.next_in = reinterpret_cast<unsigned char*>(this->buffer);
+		stream.next_in = reinterpret_cast<unsigned char*> (this->buffer);
 		stream.avail_in = this->UncompressedBlockLength;
 		// Set output
-		stream.next_out = reinterpret_cast<unsigned char*>(compressedBuffer);
+		stream.next_out = reinterpret_cast<unsigned char*> (compressedBuffer);
 		stream.avail_out = maxDeflatedLength;
 
 		// Deflate. This should be it, if not their was an error.
@@ -71,7 +77,7 @@ void BlockWriter::Finish() {
 			throw GenerationErrorMessage("Error compressing buffer");
 
 		// How much space did we actually use?
-		this->CompressedBlockLength = reinterpret_cast<char*>(stream.next_out)
+		this->CompressedBlockLength = reinterpret_cast<char*> (stream.next_out)
 				- compressedBuffer;
 
 		// Tell zlib to clean up.
@@ -79,14 +85,17 @@ void BlockWriter::Finish() {
 		if (ret != Z_OK)
 			throw GenerationErrorMessage("Cannot free zlib structures");
 
-		std::swap(buffer, compressedBuffer);
+
+		std::swap(this->buffer, compressedBuffer);
 		delete[] compressedBuffer;
 	} else {
-		delete[] buffer;
-		buffer = NULL;
+		delete[] this->buffer;
+		this->buffer = NULL;
 	}
+	delete this->writer;
+	this->writer = NULL;
 
-	IsFinished = true;
+	this->IsFinished = true;
 }
 
 void BlockWriter::Write(GeometryWriter& gw) {
