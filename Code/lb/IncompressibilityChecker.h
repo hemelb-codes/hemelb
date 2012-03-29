@@ -2,6 +2,7 @@
 #define HEMELB_LB_INCOMPRESSIBILITYCHECKER_H
 
 #include "geometry/LatticeData.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "net/PhasedBroadcastRegular.h"
 #include "reporting/Reportable.h"
 #include <cfloat>
@@ -17,7 +18,7 @@ namespace hemelb
      */
     static const distribn_t REFERENCE_DENSITY = 1.0;
 
-    template<class BroadcastPolicy, class Lattice>
+    template<class BroadcastPolicy>
     class IncompressibilityChecker : public BroadcastPolicy,
                                      public reporting::Reportable
     {
@@ -116,6 +117,7 @@ namespace hemelb
         IncompressibilityChecker(const geometry::LatticeData * latticeData,
                                  net::Net* net,
                                  SimulationState* simState,
+                                 lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,
                                  distribn_t maximumRelativeDensityDifferenceAllowed = 0.05);
 
@@ -205,6 +207,9 @@ namespace hemelb
 
         /** Pointer to lattice data object. */
         const geometry::LatticeData * mLatDat;
+
+        /** Cache of macroscopic properties (including density). */
+        lb::MacroscopicPropertyCache& propertyCache;
 
         /** Pointer to the simulation state used in the rest of the simulation. */
         lb::SimulationState* mSimState;
