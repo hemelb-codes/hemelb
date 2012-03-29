@@ -27,14 +27,14 @@ public:
 	// Overload << to delegate to the XdrMemWriter
 	template<typename T>
 	BlockWriter& operator<<(T const & value) {
-		writer << value;
+		(*this->writer) << value;
 		return *this;
 	}
 
 protected:
-	const unsigned int maxBufferSize;
+	unsigned int maxBufferSize;
 	char* buffer;
-	hemelb::io::writers::xdr::XdrMemWriter writer;
+	hemelb::io::writers::xdr::XdrMemWriter* writer;
 	unsigned int nFluidSites;
 	unsigned int CompressedBlockLength;
 	unsigned int UncompressedBlockLength;
