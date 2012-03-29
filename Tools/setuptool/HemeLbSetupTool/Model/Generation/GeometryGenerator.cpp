@@ -94,7 +94,7 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 		Block& block = *blockIt;
 
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
-			Site& site = **siteIt;
+			Site& site = *siteIt;
 			/*
 			 * ClassifySite expects to be given a site of known fluidness.
 			 * The constructor of Block will ensure that all sites at the edge
