@@ -80,10 +80,10 @@ Vector Domain::CalcPositionWorkingFromIndex(const Index& index) const {
 }
 
 Block& Domain::GetBlock(const Index& index) {
-	int i = this->TranslateIndex(index);
-	Block* bp = this->blocks[i];
+	int i = TranslateIndex(index);
+	Block* bp = blocks[i];
 	// If the block hasn't been created yet, do so.
-	if (!bp) {
+	if (bp == NULL) {
 		bp = this->blocks[i] = new Block(*this, index, this->BlockSize);
 	}
 	return *bp;
