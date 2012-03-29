@@ -36,8 +36,16 @@ namespace hemelb
 
         PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
         {
-          return static_cast<double>(time_step)*simulationState->GetTimeStepLength();
+          return static_cast<double>(time_step) * simulationState->GetTimeStepLength();
         }
+
+        /**
+         * Converts a shear rate in lattice units into physical units
+         * @param shearRate shear rate in lattice units (1/time_step_length)
+         * @return shear rate in physical units (1/s)
+         */
+        PhysicalReciprocalTime ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const;
+
       private:
         lb::LbmParameters* lbmParameters;
         lb::SimulationState* simulationState;
