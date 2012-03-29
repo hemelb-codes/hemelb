@@ -4,6 +4,7 @@
 #include <cmath>
 #include "constants.h"
 #include "lb/kernels/BaseKernel.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
@@ -263,6 +264,44 @@ namespace hemelb
               fPostCollision[ii] = hydroVars.GetFEq().f[ii] + (1.0 + lbmParams->GetOmega()) * f_neq[ii];
             }
 
+          }
+
+          /**
+           * Updates a property cache for the macroscopic variables selected. This should have
+           * identical behaviour to in UpdateSiteMinsAndMaxes in BaseStreamer where the cache
+           * is normally populated.
+           * @param latDat
+           * @param cache
+           * @param simState
+           */
+          template<typename Lattice>
+          static void UpdatePropertyCache(geometry::LatticeData& latDat,
+                                          lb::MacroscopicPropertyCache& cache,
+                                          lb::SimulationState& simState)
+          {
+            for (site_t site = 0; site < latDat.GetLocalFluidSiteCount(); ++site)
+            {
+              distribn_t density, feq[Lattice::NUMVECTORS];
+              util::Vector3D<distribn_t> velocity;
+
+              Lattice::CalculateDensityVelocityFEq(latDat.GetSite(site).GetFOld<Lattice>(),
+                                                   density,
+                                                   velocity[0],
+                                                   velocity[1],
+                                                   velocity[2],
+                                                   feq);
+
+              if (cache.densityCache.RequiresRefresh())
+              {
+                cache.densityCache.Put(site, density);
+              }
+              if (cache.velocityCache.RequiresRefresh())
+              {
+                cache.velocityCache.Put(site, velocity / density);
+              }
+
+              // TODO stress cache filling not yet implemented.
+            }
           }
       };
     }
