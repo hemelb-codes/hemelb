@@ -82,6 +82,7 @@ namespace hemelb
                                                 const geometry::Site& site,
                                                 const distribn_t* f_neq,
                                                 const distribn_t density,
+                                                const distribn_t tau,
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)
           {
@@ -124,6 +125,15 @@ namespace hemelb
                                                                                          lbmParams->GetStressParameter());
 
               propertyCache.vonMisesStressCache.Put(site.GetIndex(), stress);
+            }
+
+            if (propertyCache.shearRateCache.RequiresRefresh())
+            {
+              distribn_t shear_rate = StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(tau,
+                                                                                                            f_neq,
+                                                                                                            density);
+
+              propertyCache.shearRateCache.Put(site.GetIndex(), shear_rate);
             }
           }
 
