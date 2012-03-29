@@ -17,13 +17,13 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef lb::IncompressibilityChecker<net::BroadcastMock, lb::lattices::D3Q15> IncompressibilityCheckerMock;
+      typedef lb::IncompressibilityChecker<net::BroadcastMock> IncompressibilityCheckerMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( ReporterTests);
-          CPPUNIT_TEST( TestInit);
-          CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (ReporterTests);
+          CPPUNIT_TEST (TestInit);
+          CPPUNIT_TEST (TestMainReport);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -31,12 +31,15 @@ namespace hemelb
             mockTimers = new TimersMock();
             realTimers = new reporting::Timers();
             buildInfo = new reporting::BuildInfo();
-            state = new hemelb::lb::SimulationState(0.0001,1000);
+            state = new hemelb::lb::SimulationState(0.0001, 1000);
             net = new net::Net();
             latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
-            incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *realTimers, 10.0);
+            cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
+            cache->densityCache.SetRefreshFlag();
+            lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latticeData, *cache, *state);
+            incompChecker = new IncompressibilityCheckerMock(latticeData, net, state, *cache, *realTimers, 10.0);
             reporter = new Reporter("mock_path", "exampleinputfile");
             reporter->AddReportable(incompChecker);
             reporter->AddReportable(mockTimers);
@@ -50,6 +53,7 @@ namespace hemelb
             delete reporter;
             delete mockTimers;
             delete realTimers;
+            delete cache;
             delete incompChecker;
             delete net;
             delete buildInfo;
@@ -88,7 +92,8 @@ namespace hemelb
 
             CheckTimingsTable();
             AssertTemplate("", "{{#UNSTABLE}} unstable{{/UNSTABLE}}");
-            AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ", "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
+            AssertTemplate("R0S64 R1S1000 R2S2000 R3S3000 R4S4000 ",
+                           "{{#PROCESSOR}}R{{RANK}}S{{SITES}} {{/PROCESSOR}}");
             AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
@@ -99,8 +104,8 @@ namespace hemelb
             AssertValue("64", "SITES");
             AssertValue("3", "DEPTHS");
             AssertValue("4", "MACHINES");
-            AssertValue("1","BLOCKS");
-            AssertValue("64","SITESPERBLOCK");
+            AssertValue("1", "BLOCKS");
+            AssertValue("64", "SITESPERBLOCK");
           }
 
         private:
@@ -143,13 +148,15 @@ namespace hemelb
           MPICommsMock* communicator;
 
           lb::SimulationState *state;
+          lb::MacroscopicPropertyCache* cache;
           IncompressibilityCheckerMock *incompChecker;
+
           net::Net *net;
           hemelb::geometry::LatticeData *latticeData;
           reporting::BuildInfo *buildInfo;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (ReporterTests);
 
     }
   }
