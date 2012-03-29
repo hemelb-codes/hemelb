@@ -220,6 +220,9 @@ namespace hemelb
               case OutputField::ShearStress:
                 xdrWriter << (float) dataSource.GetShearStress();
                 break;
+              case OutputField::ShearRate:
+                xdrWriter << (float) dataSource.GetShearRate();
+                break;
             }
           }
         }
@@ -239,6 +242,7 @@ namespace hemelb
         case OutputField::Pressure:
         case OutputField::VonMisesStress:
         case OutputField::ShearStress:
+        case OutputField::ShearRate:
           return 1;
           break;
         case OutputField::Velocity:
