@@ -73,5 +73,10 @@ namespace hemelb
     {
       return data.GetVoxelSize();
     }
+
+    const util::Vector3D<distribn_t>& LbDataSourceIterator::GetOrigin() const
+    {
+      return data.GetOrigin();
+    }
   }
 }
