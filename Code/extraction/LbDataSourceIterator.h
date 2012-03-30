@@ -117,6 +117,10 @@ namespace hemelb
          * Iteration variable for tracking progress through all the local fluid sites.
          */
         site_t position;
+        /**
+         * The origin of the geometry.
+         */
+        const util::Vector3D<distribn_t> origin;
     };
   }
 }

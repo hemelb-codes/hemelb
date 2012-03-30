@@ -7,7 +7,7 @@ namespace hemelb
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                                                const geometry::LatticeData& data,
                                                const util::UnitConverter& converter) :
-        propertyCache(propertyCache), data(data), converter(converter), position(-1)
+        propertyCache(propertyCache), data(data), converter(converter), position(-1), origin(data.GetOrigin())
     {
 
     }
@@ -76,7 +76,7 @@ namespace hemelb
 
     const util::Vector3D<distribn_t>& LbDataSourceIterator::GetOrigin() const
     {
-      return data.GetOrigin();
+      return origin;
     }
   }
 }
