@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <limits>
 #include "util/static_assert.h"
+#include "util/Vector3DArithmeticTraits.h"
+
 namespace hemelb
 {
   namespace util
@@ -18,8 +20,8 @@ namespace hemelb
        */
       enum Direction
       {
-        X,//!< X
-        Y,//!< Y
+        X, //!< X
+        Y, //!< Y
         Z
       //!< Z
       };
@@ -40,7 +42,7 @@ namespace hemelb
         /**
          * Typedef for the error handler function.
          */
-        typedef void ( HandlerFunction)(int direction);
+        typedef void (HandlerFunction)(int direction);
 
         /**
          * Set the function used to handle errors, overriding the default.
@@ -119,7 +121,7 @@ namespace hemelb
          * Default constructor, instantiates with zeros.
          */
         Vector3D() :
-          x(0), y(0), z(0)
+            x(0), y(0), z(0)
         {
         }
 
@@ -130,7 +132,7 @@ namespace hemelb
          * @param z-component
          */
         Vector3D(const T iX, const T iY, const T iZ) :
-          x(iX), y(iY), z(iZ)
+            x(iX), y(iY), z(iZ)
         {
         }
 
@@ -139,7 +141,7 @@ namespace hemelb
          * @param used for all components
          */
         Vector3D(const T iX) :
-          x(iX), y(iX), z(iX)
+            x(iX), y(iX), z(iX)
         {
         }
 
@@ -385,9 +387,11 @@ namespace hemelb
          * @return
          */
         template<class MultiplierT>
-        Vector3D operator*(const MultiplierT multiplier) const
+        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::type> operator*(const MultiplierT multiplier) const
         {
-          return Vector3D(x * multiplier, y * multiplier, z * multiplier);
+          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::type>(x * multiplier,
+                                                                                   y * multiplier,
+                                                                                   z * multiplier);
         }
 
         /**
@@ -555,7 +559,7 @@ namespace hemelb
          * Default constructor
          */
         Vector3DIterator() :
-          vec(NULL), i(0)
+            vec(NULL), i(0)
         {
         }
 
@@ -566,7 +570,7 @@ namespace hemelb
          * @param element index
          */
         Vector3DIterator(vector& vec, unsigned int i = 0) :
-          vec(&vec), i(i)
+            vec(&vec), i(i)
         {
         }
 
@@ -575,7 +579,7 @@ namespace hemelb
          * @param other
          */
         Vector3DIterator(const Vector3DIterator& other) :
-          vec(other.vec), i(other.i)
+            vec(other.vec), i(other.i)
         {
         }
 
