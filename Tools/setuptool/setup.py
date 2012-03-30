@@ -103,6 +103,10 @@ def GetVtkLibDir():
     results = os.popen(sharedLibCmd % aVtkSharedLibrary).read()
     return grep(results)
 
+def GetBoostDir(hemeLbDir):
+    boostDir = os.path.join(hemeLbDir, '../dependencies/include/') 
+    return boostDir
+
 def GetVtkCompileFlags(vtkLibDir):
     # SET(VTK_REQUIRED_CXX_FLAGS " -Wno-deprecated -no-cpp-precomp")
     flagFinder = re.compile(r'SET\(VTK_REQUIRED_CXX_FLAGS "(.*)"\)')
@@ -132,7 +136,8 @@ if __name__ == "__main__":
     # numpy, vtk
     vtkLibDir = GetVtkLibDir()
     HemeLbDir = os.path.abspath('../../Code')
-    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir]
+    BoostDir = GetBoostDir(HemeLbDir)
+    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
