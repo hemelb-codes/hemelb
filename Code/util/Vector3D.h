@@ -330,7 +330,7 @@ namespace hemelb
          * @param right
          * @return this + right
          */
-        Vector3D operator+(const Vector3D<T> right) const
+        Vector3D operator+(const Vector3D right) const
         {
           return Vector3D(x + right.x, y + right.y, z + right.z);
         }
@@ -414,9 +414,9 @@ namespace hemelb
          * @return
          */
         template<class DivisorT>
-        Vector3D operator/(const DivisorT divisor) const
+        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::type> operator/(const DivisorT divisor) const
         {
-          return Vector3D(x / divisor, y / divisor, z / divisor);
+          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::type>(x / divisor, y / divisor, z / divisor);
         }
 
         /**
