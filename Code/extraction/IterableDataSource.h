@@ -89,6 +89,12 @@ namespace hemelb
          * @return
          */
         virtual distribn_t GetVoxelSize() const = 0;
+
+        /**
+         * Returns the origin of the geometry in real units.
+         * @return
+         */
+        virtual const util::Vector3D<distribn_t>& GetOrigin() const = 0;
     };
   }
 }
