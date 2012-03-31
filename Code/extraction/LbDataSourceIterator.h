@@ -93,6 +93,13 @@ namespace hemelb
          */
         distribn_t GetVoxelSize() const;
 
+        /**
+         * Returns the origin of the geometry in real, spatial units.
+         *
+         * @return
+         */
+        const util::Vector3D<distribn_t>& GetOrigin() const;
+
       private:
         /**
          * The cache of properties for each site, which we iterate through.
@@ -110,6 +117,10 @@ namespace hemelb
          * Iteration variable for tracking progress through all the local fluid sites.
          */
         site_t position;
+        /**
+         * The origin of the geometry.
+         */
+        const util::Vector3D<distribn_t> origin;
     };
   }
 }
