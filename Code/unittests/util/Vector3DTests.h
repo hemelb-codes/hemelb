@@ -4,8 +4,6 @@
 #include <cppunit/TestFixture.h>
 #include "util/Vector3D.h"
 
-#include <boost/type_traits.hpp>
-
 namespace hemelb
 {
   namespace unittests
