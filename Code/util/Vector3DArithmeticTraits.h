@@ -1,7 +1,7 @@
 #ifndef HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 #define HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 
-#include <boost/static_assert.hpp>
+//#include <boost/static_assert.hpp>
 #include "units.h"
 
 namespace hemelb
@@ -26,7 +26,12 @@ namespace hemelb
          *
          * See http://www.boost.org/doc/libs/1_49_0/doc/html/boost_staticassert.html
          */
-        BOOST_STATIC_ASSERT_MSG(sizeof(T1) == 0, "Vector3D has not been tested with this combination of types");
+
+        ///@todo 138, reenable once BOOST is usable in other machines
+        //BOOST_STATIC_ASSERT_MSG(sizeof(T1) == 0, "Vector3D has not been tested with this combination of types");
+
+        ///@todo 138, remove once BOOST is usable in other machines
+        typedef T1 type;
     };
 
     // Trivial case: both arguments share type.
