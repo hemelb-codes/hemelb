@@ -28,10 +28,13 @@ def unpack(filename):
   fieldLengths = [x.unpack_uint() for fieldNum in xrange(fieldCount)]
 
   siteCount = x.unpack_uhyper()
+  voxelSize = x.unpack_float()
+  origin = [x.unpack_float() for fieldNum in xrange(3)]
 
   print "-----\nOpened file \"%s\"...\n-----" % filename
   print "File has %s fields: %s, for %s sites" % (fieldCount, fieldNames, siteCount)
   print "Each of these fields has %s floats" % fieldLengths
+  print "Geometry origin: %s, voxel size: %s" % (origin, voxelSize)
  
   while x.get_position() < (len(x.get_buffer())):
     iterationNumber = x.unpack_hyper()
