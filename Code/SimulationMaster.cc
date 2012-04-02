@@ -4,11 +4,13 @@
 #include "extraction/LbDataSourceIterator.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
+#include "geometry/GeometryReader.h"
 #include "geometry/LatticeData.h"
 #include "debug/Debugger.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
+#include "colloids/ColloidController.h"
 
 #include "topology/NetworkTopology.h"
 
@@ -36,6 +38,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
 
   latticeData = NULL;
 
+  colloidController = NULL;
   latticeBoltzmannModel = NULL;
   steeringCpt = NULL;
   propertyDataSource = NULL;
@@ -78,6 +81,7 @@ SimulationMaster::~SimulationMaster()
     delete imageSendCpt;
   }
   delete latticeData;
+  delete colloidController;
   delete latticeBoltzmannModel;
   delete inletValues;
   delete outletValues;
@@ -131,11 +135,30 @@ void SimulationMaster::Initialise()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
-  latticeData = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                                    latticeType::GetLatticeInfo(),
-                                                    simConfig->GetDataFilePath(),
-                                                    timings);
+
+  // Use a reader to read in the file.
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
+
+  hemelb::geometry::GeometryReadResult readGeometryData;
+  hemelb::geometry::GeometryReader reader(
+                   hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                   latticeType::GetLatticeInfo(),
+                   readGeometryData,
+                   timings);
+  reader.LoadAndDecompose(simConfig->GetDataFilePath());
+
+  // Create a new lattice based on that info and return it.
+  latticeData = new hemelb::geometry::LatticeData::LatticeData(
+                   latticeType::GetLatticeInfo(),
+                   readGeometryData);
+
   timings[hemelb::reporting::Timers::netInitialise].Stop();
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
+  colloidController = new hemelb::colloids::ColloidController(
+                   &communicationNet,
+                   latticeData,
+                   &readGeometryData);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
