@@ -40,10 +40,9 @@ namespace hemelb
         friend class InnerSite<false> ;
         friend class BlockTraverser;
 
-        static LatticeData* Load(const bool reserveSteeringCore,
-                                 const lb::lattices::LatticeInfo& latticeInfo,
-                                 const std::string& dataFilePath,
-                                 reporting::Timers &timings);
+        LatticeData(
+               const lb::lattices::LatticeInfo& latticeInfo,
+               const GeometryReadResult& readResult);
 
         virtual ~LatticeData();
 
@@ -131,7 +130,6 @@ namespace hemelb
          * @return
          */
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize, distribn_t voxelSize, util::Vector3D<
             distribn_t> originIn);
