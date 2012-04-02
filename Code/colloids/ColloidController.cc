@@ -1,4 +1,4 @@
-#include "ColloidController.h"
+#include "colloids/ColloidController.h"
 
 namespace hemelb
 {
