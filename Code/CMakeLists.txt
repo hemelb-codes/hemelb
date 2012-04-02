@@ -164,6 +164,7 @@ set(package_subdirs
 	util
 	io
 	log
+        colloids
 	)
 foreach(subdir ${package_subdirs})
 	set(lib "hemelb_${subdir}")
