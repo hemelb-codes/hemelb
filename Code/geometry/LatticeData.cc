@@ -21,22 +21,6 @@ namespace hemelb
     {
     }
 
-    LatticeData* LatticeData::Load(const bool reserveSteeringCore,
-                                   const lb::lattices::LatticeInfo& latticeInfo,
-                                   const std::string& dataFilePath,
-                                   reporting::Timers &timings)
-    {
-      // Use a reader to read in the file.
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
-
-      GeometryReadResult readGeometryData;
-      GeometryReader reader(reserveSteeringCore, latticeInfo, readGeometryData, timings);
-      reader.LoadAndDecompose(dataFilePath);
-
-      // Create a new lattice based on that info and return it.
-      return new LatticeData(latticeInfo, readGeometryData);
-    }
-
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult) :
       latticeInfo(latticeInfo)
     {
