@@ -133,12 +133,16 @@ namespace hemelb
                     * f_neq[ii];
               }
 
+              ///< @todo #126 It would be nicer if tau is handled in a single place.
+              hydroVars.tau = lbmParams->GetTau();
+
               BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                     hydroVars.v_y,
                                                                                     hydroVars.v_z,
                                                                                     site,
                                                                                     hydroVars.GetFNeq().f,
                                                                                     hydroVars.density,
+                                                                                    hydroVars.tau,
                                                                                     lbmParams,
                                                                                     propertyCache);
             }

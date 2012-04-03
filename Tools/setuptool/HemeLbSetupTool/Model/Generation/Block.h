@@ -8,7 +8,7 @@ class Site;
 
 #include "Domain.h"
 
-typedef std::vector<Site*> SiteVec;
+typedef std::vector<Site> SiteVec;
 typedef SiteVec::iterator SiteIterator;
 class Block {
 public:
