@@ -13,31 +13,31 @@ gdb:
   HEMELB_USE_DEBUGGER: "ON"
 no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
-'15':
+d3q15:
   HEMELB_LATTICE: "D3Q15"
-'19':
-  HEMELB_LATTICE: "D3Q19"
-'27':
+d3q19:
+ HEMELB_LATTICE: "D3Q19"
+d3q27:
   HEMELB_LATTICE: "D3Q27"
 lbgk:
   HEMELB_KERNEL: "LBGK"
-ent_a:
+entropic_a:
   HEMELB_KERNEL: "EntropicAnsumali"
-ent_c:
+entropic_c:
   HEMELB_KERNEL: "EntropicChik"
 mrt:
   HEMELB_KERNEL: "MRT"
-nncy:
+non_newtonian_cy:
   HEMELB_KERNEL: "NNCY"
-nnc:
+non_newtonian_c:
   HEMELB_KERNEL: "NNC"
-nntpl:
+non_newtonian_tpl:
   HEMELB_KERNEL: "NNTPL"
-fin:
+f_interpolation:
   HEMELB_WALL_BOUNDARY: "FINTERPOLATION"
-gzs:
+guo_zheng_shi:
   HEMELB_WALL_BOUNDARY: "GZS"
-reg:
+regularised:
   HEMELB_WALL_BOUNDARY: "REGULARISED"
-sbb:
+simple_bounce_back:
   HEMELB_WALL_BOUNDARY: "SIMPLEBOUNCEBACK"

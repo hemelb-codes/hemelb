@@ -24,7 +24,7 @@ namespace hemelb
            */
           enum
           {
-            VersionNumber = 0
+            VersionNumber = 1
           };
       };
     }

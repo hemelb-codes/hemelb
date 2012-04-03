@@ -59,6 +59,12 @@ namespace hemelb
         virtual float GetVonMisesStress() const = 0;
 
         /**
+         * Returns the shear rate at the site.
+         * @return
+         */
+        virtual float GetShearRate() const = 0;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         virtual void Reset() = 0;
@@ -83,6 +89,12 @@ namespace hemelb
          * @return
          */
         virtual distribn_t GetVoxelSize() const = 0;
+
+        /**
+         * Returns the origin of the geometry in real units.
+         * @return
+         */
+        virtual const util::Vector3D<distribn_t>& GetOrigin() const = 0;
     };
   }
 }
