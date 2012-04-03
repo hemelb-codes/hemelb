@@ -29,9 +29,9 @@ namespace hemelb
 
         ///@todo 138, reenable once BOOST is usable in other machines
         //BOOST_STATIC_ASSERT_MSG(sizeof(T1) == 0, "Vector3D has not been tested with this combination of types");
-
+        HEMELB_STATIC_ASSERT(sizeof(T1) == 0);
         ///@todo 138, remove once BOOST is usable in other machines
-        typedef T1 type;
+        //typedef T1 type;
     };
 
     // Trivial case: both arguments share type.
