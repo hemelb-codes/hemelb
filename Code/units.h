@@ -36,6 +36,9 @@ namespace hemelb
   typedef unsigned long LatticeTime; // lattice time steps.
   typedef double PhysicalTime; // seconds
 
+  typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
+  typedef double PhysicalReciprocalTime; ///< 1/seconds
+
   typedef double RadianAngle;
 
   typedef double PhysicalLength;

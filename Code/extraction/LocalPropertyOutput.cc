@@ -66,7 +66,9 @@ namespace hemelb
         // Field count (uint)
         // Descriptions (variable strings).
         // Site count (ulong)
-        unsigned headerSize = 3 * 4 + 4 + 8;
+        // Voxel size (float)
+        // Origin (3*float)
+        unsigned headerSize = 3 * 4 + 4 + 8 + 4 + 3 * 4;
 
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
@@ -103,6 +105,13 @@ namespace hemelb
 
         // Write the total site count.
         writer << (uint64_t) allSiteCount;
+
+        // Write voxel size
+        writer << (float) dataSource.GetVoxelSize();
+
+        // Write origin
+        const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
+        writer << (float) origin[0] << (float) origin[1] << (float) origin[2];
 
         // Write from the buffer
         MPI_File_write_at(outputFile, 0, headerBuffer, headerSize, MPI_BYTE, MPI_STATUS_IGNORE);
@@ -220,6 +229,9 @@ namespace hemelb
               case OutputField::ShearStress:
                 xdrWriter << (float) dataSource.GetShearStress();
                 break;
+              case OutputField::ShearRate:
+                xdrWriter << (float) dataSource.GetShearRate();
+                break;
             }
           }
         }
@@ -239,6 +251,7 @@ namespace hemelb
         case OutputField::Pressure:
         case OutputField::VonMisesStress:
         case OutputField::ShearStress:
+        case OutputField::ShearRate:
           return 1;
           break;
         case OutputField::Velocity:

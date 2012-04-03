@@ -88,7 +88,8 @@ def LibToInclude(vtkLibDir):
     return vtkIncludeDir
 
 def GetVtkLibDir():
-    aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
+    vtklib = vtk.libvtkCommonPython if hasattr(vtk, 'libvtkCommonPython') else vtk.vtkCommonPython
+    aVtkSharedLibrary = vtklib.__file__
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
@@ -101,6 +102,10 @@ def GetVtkLibDir():
 
     results = os.popen(sharedLibCmd % aVtkSharedLibrary).read()
     return grep(results)
+
+def GetBoostDir(hemeLbDir):
+    boostDir = os.path.join(hemeLbDir, '../dependencies/include/') 
+    return boostDir
 
 def GetVtkCompileFlags(vtkLibDir):
     # SET(VTK_REQUIRED_CXX_FLAGS " -Wno-deprecated -no-cpp-precomp")
@@ -131,7 +136,8 @@ if __name__ == "__main__":
     # numpy, vtk
     vtkLibDir = GetVtkLibDir()
     HemeLbDir = os.path.abspath('../../Code')
-    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir]
+    BoostDir = GetBoostDir(HemeLbDir)
+    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()

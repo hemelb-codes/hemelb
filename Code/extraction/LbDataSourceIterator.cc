@@ -7,7 +7,7 @@ namespace hemelb
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                                                const geometry::LatticeData& data,
                                                const util::UnitConverter& converter) :
-        propertyCache(propertyCache), data(data), converter(converter), position(-1)
+        propertyCache(propertyCache), data(data), converter(converter), position(-1), origin(data.GetOrigin())
     {
 
     }
@@ -49,6 +49,11 @@ namespace hemelb
       return converter.ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
     }
 
+    float LbDataSourceIterator::GetShearRate() const
+    {
+      return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
+    }
+
     void LbDataSourceIterator::Reset()
     {
       position = -1;
@@ -67,6 +72,11 @@ namespace hemelb
     distribn_t LbDataSourceIterator::GetVoxelSize() const
     {
       return data.GetVoxelSize();
+    }
+
+    const util::Vector3D<distribn_t>& LbDataSourceIterator::GetOrigin() const
+    {
+      return origin;
     }
   }
 }

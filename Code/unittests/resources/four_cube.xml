@@ -38,5 +38,12 @@
         <field type="pressure"/>
       </linegeometry>    
     </propertyoutput>
+    <propertyoutput frequency="5" file="centrelineshearrate.dat">
+      <linegeometry>
+        <point x="2.5" y="2.5" z="0"/>
+        <point x="2.5" y="2.5" z="5"/> 
+        <field type="shearrate"/>
+      </linegeometry>    
+    </propertyoutput>    
   </properties>
 </hemelbsettings>
