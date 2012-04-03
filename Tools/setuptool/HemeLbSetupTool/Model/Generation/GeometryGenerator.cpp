@@ -90,11 +90,11 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		// case where there are no fluid sites).
-		BlockWriter* blockWriterPtr = writer.StartNextBlock();
+		BlockWriter& blockWriter = writer.StartNextBlock();
 		Block& block = *blockIt;
 
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
-			Site& site = **siteIt;
+			Site& site = *siteIt;
 			/*
 			 * ClassifySite expects to be given a site of known fluidness.
 			 * The constructor of Block will ensure that all sites at the edge
@@ -104,15 +104,14 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 			this->ClassifySite(site);
 
 			if (site.IsFluid) {
-				blockWriterPtr->IncrementFluidSitesCount();
-				WriteFluidSite(*blockWriterPtr, site);
+				blockWriter.IncrementFluidSitesCount();
+				WriteFluidSite(blockWriter, site);
 			} else {
-				WriteSolidSite(*blockWriterPtr, site);
+				WriteSolidSite(blockWriter, site);
 			}
 		}
-		blockWriterPtr->Finish();
-		blockWriterPtr->Write(writer);
-		delete blockWriterPtr;
+		blockWriter.Finish();
+		blockWriter.Write(writer);
 	}
 	writer.Close();
 }

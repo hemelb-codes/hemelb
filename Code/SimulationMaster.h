@@ -16,6 +16,7 @@
 #include "reporting/Timers.h"
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
+#include "colloids/ColloidController.h"
 
 class SimulationMaster
 {
@@ -81,8 +82,9 @@ class SimulationMaster
     hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
+    hemelb::colloids::ColloidController* colloidController;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::net::Net communicationNet;
 
