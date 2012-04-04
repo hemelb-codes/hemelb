@@ -185,7 +185,6 @@ namespace hemelb
         {
           ValidateAllReadData();
         }
-
         MPI_File_close(&file);
       }
 
@@ -1060,6 +1059,7 @@ namespace hemelb
 
     void GeometryReader::OptimiseDomainDecomposition(const proc_t* procForEachBlock)
     {
+      timings[hemelb::reporting::Timers::dbg5].Start(); //overall dbg timing
       // Get some arrays that ParMetis needs.
       idx_t* vtxDistribn = new idx_t[topologySize + 1];
 
@@ -1085,6 +1085,8 @@ namespace hemelb
         ValidateGraphData(vtxDistribn, localVertexCount, adjacenciesPerVertex, localAdjacencies);
       }
 
+      timings[hemelb::reporting::Timers::dbg5].Stop();
+
       // Call parmetis.
       idx_t* partitionVector = new idx_t[localVertexCount];
       timings[hemelb::reporting::Timers::parmetis].Start();
@@ -1095,14 +1097,14 @@ namespace hemelb
 
       // Convert the ParMetis results into a nice format.
       idx_t* allMoves = new idx_t[topologySize];
-
+      timings[hemelb::reporting::Timers::dbg4].Start();
       idx_t* movesList = GetMovesList(allMoves,
                                       firstSiteIndexPerBlock,
                                       procForEachBlock,
                                       fluidSitesPerBlock,
                                       vtxDistribn,
                                       partitionVector);
-
+      timings[hemelb::reporting::Timers::dbg4].Stop();
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
@@ -1690,12 +1692,16 @@ namespace hemelb
                                         const idx_t* vtxDistribn,
                                         const idx_t* partitionVector)
     {
+      timings[hemelb::reporting::Timers::dbg1].Start();
+
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
       std::vector<idx_t> moveData;
 
       const idx_t myLowest = vtxDistribn[topologyRank];
       const idx_t myHighest = vtxDistribn[topologyRank + 1] - 1;
+
+      long long int derek_dbg_fluidsiteblocks = 0;
 
       // For each local fluid site...
       for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
@@ -1710,11 +1716,14 @@ namespace hemelb
           // with firstIdOnBlock <= localFluidSiteId < (firstIdOnBlock + sitesOnBlock)...
           idx_t fluidSiteBlock = 0;
 
+          timings[hemelb::reporting::Timers::dbg3].Start();
           while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
               || ( (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock]) <= localFluidSiteId))
           {
             fluidSiteBlock++;
           }
+          timings[hemelb::reporting::Timers::dbg3].Stop();
+          derek_dbg_fluidsiteblocks += fluidSiteBlock;
 
           // ... and find its site id within that block. Start by working out how many fluid sites
           // we have to pass before we arrive at the fluid site we're after...
@@ -1776,6 +1785,8 @@ namespace hemelb
 
       // Spread the move-count data around, so all processes now how many moves each process is
       // doing.
+      timings[hemelb::reporting::Timers::dbg1].Stop();
+      timings[hemelb::reporting::Timers::dbg2].Start();
       idx_t moves = moveData.size() / 3;
       MPI_Allgather(&moves,
                     1,
@@ -1784,6 +1795,7 @@ namespace hemelb
                     1,
                     MpiDataType(movesFromEachProc[0]),
                     topologyComm);
+      timings[hemelb::reporting::Timers::dbg2].Stop();
 
       // Count the total moves.
       idx_t totalMoves = 0;
@@ -1824,6 +1836,29 @@ namespace hemelb
         delete[] procMovesInt;
 
       }
+
+      int dbg_rank = 0;
+      int dbg_size = 0;
+      MPI_Comm_rank( topologyComm, &dbg_rank);
+      MPI_Comm_size( topologyComm, &dbg_size);
+      long long int* derek_dbg_blockbuffer = new long long int[dbg_size];
+
+      MPI_Gather(&derek_dbg_fluidsiteblocks,
+                   1,
+                   MPI_LONG_LONG_INT,
+                   derek_dbg_blockbuffer,
+                   1,
+                   MPI_LONG_LONG_INT,
+                   1,
+                   topologyComm);
+
+      if(dbg_rank == 1) {
+        for(int i=0; i<dbg_size; i++) {
+          std::cerr << "proc id: " <<  i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
+        }
+      }
+
+      delete[] derek_dbg_blockbuffer;
 
       // ... clean up...
       MPI_Type_free(&moveType);

@@ -106,10 +106,22 @@ hector:
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
 hector_login: #Hector, compiling for login nodes and serial queues
-   import: "hector"
-   fabric_dir: "FabricHemeLbLogin"
-   modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
-   job_dispatch: ""
+  import: "hector"
+  fabric_dir: "FabricHemeLbLogin"
+  modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
+  job_dispatch: ""
+hector_scalasca:
+  import: "hector"
+  fabric_dir: "FabricHemeLBScalasca"
+  modules: ["load CMake/2.8.6","load scalasca"]
+  cmake_options:
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "/home/e10/e10/derek/bin/scalasca-CC" #scalasca-CC contains "scalasca -inst CC"
+    CMAKE_C_COMPILER: "/home/e10/e10/derek/bin/scalasca-cc"   #scalasca-cc contains "scalasca -inst cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+
 julian:
    home_path_template: "/Users/$username"
    remote: "julian.chem.ucl.ac.uk"

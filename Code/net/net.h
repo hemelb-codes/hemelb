@@ -22,6 +22,11 @@ namespace hemelb
 
         ~Net();
 
+        //DTMP: monitoring variables
+        long long int BytesSent;
+        long long int SyncPointsCounted;
+
+
         void Receive();
         void Send();
         void Wait();
