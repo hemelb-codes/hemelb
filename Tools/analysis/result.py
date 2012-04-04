@@ -14,7 +14,6 @@ import datetime
 import functools
 import subprocess
 from xml.etree import ElementTree
-from hemeTools.parsers.geometry.simple import ConfigLoader
 
 import logging
 import environment
@@ -141,6 +140,7 @@ def xml_loader(path):
 def stat_loader(path):
     return os.stat(path)
 def geometry_header_loader(path):
+    from hemeTools.parsers.geometry.simple import ConfigLoader
     model=ConfigLoader(path)
     model._LoadPreamble()
     model._LoadHeader()

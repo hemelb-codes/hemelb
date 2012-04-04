@@ -9,6 +9,7 @@ results:
             file_read: 'timings/timer[name="File Read"]/mean'
             net: 'timings/timer[name="Net initialisation"]/mean'
             lb: 'timings/timer[name="Lattice Boltzmann"]/mean'
+            lb_calc_only: 'timings/timer[name="LB calc only"]/mean'
             visualisation_raw: 'timings/timer[name="Visualisation"]/mean'
             monitoring: 'timings/timer[name="Monitoring"]/mean'
             send: 'timings/timer[name="MPI Send"]/mean'
@@ -31,6 +32,11 @@ results:
             read_io: 'timings/timer[name="Read IO"]/mean'
             block_count: 'geometry/blocks'
             sites_per_block: 'geometry/sites_per_block'
+            dbg1: 'timings/timer[name="dbg1"]/mean'
+            dbg2: 'timings/timer[name="dbg2"]/mean'
+            dbg3: 'timings/timer[name="dbg3"]/mean'
+            dbg4: 'timings/timer[name="dbg4"]/mean'
+            dbg5: 'timings/timer[name="dbg5"]/mean'
         'config.xml':
             cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
@@ -46,10 +52,10 @@ results:
         'acceptance.txt':
             acceptance: 'Accepted: (.*)'
     gmy_files:
-        'config.gmy':
-            gmy_fluid_site_count: sum(BlockFluidSiteCounts)
-            gmy_block_size: _BlockSize
-            gmy_block_count: len(Blocks)
+#        'config.gmy':
+#            gmy_fluid_site_count: sum(BlockFluidSiteCounts)
+#            gmy_block_size: _BlockSize
+#            gmy_block_count: len(Blocks)
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
         type_by_name: '(regression|unittests)'
@@ -67,6 +73,7 @@ results:
         images_norm: (images_count if normalised else 1.0)
         snapshots: (snapshots_raw * snapshots_norm)
         visualisation: (visualisation_raw * images_norm)
+        lb_calc_rate: (sites*steps*1.0)/((cores-1.0)*lb)
         velocity: (sites*steps*1.0/(cores*non_io))
         setup_velocity: (sites*1.0/(cores*setup))
         decomposition_velocity: (sites*1.0/(cores*domain_decomposition))
