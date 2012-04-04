@@ -84,6 +84,7 @@ namespace hemelb
           parmetis, //!< Time spent in Parmetis
           netInitialise, //!< Time spent initialising the network topology
           lb, //!< Time spent doing the core lattice boltzman simulation
+          lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
           visualisation, //!< Time spent on visualisation
           monitoring, //!< Time spent monitoring for stability, compressibility, etc.
           mpiSend, //!< Time spent sending MPI data
@@ -95,6 +96,11 @@ namespace hemelb
           readBlock,
           readBlocksPrelim,
           readBlocksAll,
+          dbg1,
+          dbg2,
+          dbg3,
+          dbg4,
+          dbg5,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -190,8 +196,8 @@ namespace hemelb
 
     template<class ClockPolicy, class CommsPolicy>
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
-        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Net initialisation", "Lattice Boltzmann", "Visualisation",
-          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all" };
+        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Net initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation",
+          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all", "dbg1", "dbg2", "dbg3", "dbg4", "dbg5" };
   }
 
 }
