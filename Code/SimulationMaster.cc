@@ -143,7 +143,7 @@ void SimulationMaster::Initialise()
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,
-                                                           timings[hemelb::reporting::Timers::lb]);
+                                                           timings);
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -416,6 +416,11 @@ void SimulationMaster::Finalise()
     reporter->FillDictionary();
     reporter->Write();
   }
+  // DTMP: Logging output on communication as debug output for now.
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("sync points: %lld, bytes sent: %lld",
+                                                                        communicationNet.SyncPointsCounted, 
+                                                                        communicationNet.BytesSent);
+
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 

@@ -27,9 +27,9 @@ namespace hemelb
                           net::Net* net,
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
-                          reporting::Timer &atimer) :
+                          reporting::Timers &atimings) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
-                                                                                             latDat->GetVoxelSize()), timer(atimer), propertyCache(*simState,
+                                                                                             latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
                                                                                                                                                    *latDat)
     {
       ReadParameters();
@@ -136,17 +136,18 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::RequestComms()
     {
-      timer.Start();
+      timings[hemelb::reporting::Timers::lb].Start();
 
       mLatDat->SendAndReceive(mNet);
 
-      timer.Stop();
+      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     template<class LatticeType>
     void LBM<LatticeType>::PreSend()
     {
-      timer.Start();
+      timings[hemelb::reporting::Timers::lb].Start();
+      timings[hemelb::reporting::Timers::lb_calc].Start();
 
       /**
        * In the PreSend phase, we do LB on all the sites that need to have results sent to
@@ -175,13 +176,13 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
-      timer.Stop();
+      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     template<class LatticeType>
     void LBM<LatticeType>::PreReceive()
     {
-      timer.Start();
+      timings[hemelb::reporting::Timers::lb].Start();
 
       /**
        * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
@@ -210,13 +211,14 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
 
-      timer.Stop();
+      timings[hemelb::reporting::Timers::lb_calc].Stop();
+      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     template<class LatticeType>
     void LBM<LatticeType>::PostReceive()
     {
-      timer.Start();
+      timings[hemelb::reporting::Timers::lb].Start();
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
@@ -224,6 +226,8 @@ namespace hemelb
 
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = 0;
+
+      timings[hemelb::reporting::Timers::lb_calc].Start();
 
       //TODO yup, this is horrible. If you read this, please improve the following code.
       PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
@@ -261,18 +265,19 @@ namespace hemelb
 
       PostStep(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
 
-      timer.Stop();
+      timings[hemelb::reporting::Timers::lb_calc].Stop();
+      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     template<class LatticeType>
     void LBM<LatticeType>::EndIteration()
     {
-      timer.Start();
+      timings[hemelb::reporting::Timers::lb].Start();
 
       // Swap f_old and f_new ready for the next timestep.
       mLatDat->SwapOldAndNew();
 
-      timer.Stop();
+      timings[hemelb::reporting::Timers::lb].Stop();
     }
 
     // In the case of instability, this function restart the simulation
