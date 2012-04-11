@@ -28,6 +28,15 @@
 							<builder cleanBuildTarget="clean_all" command="make" enableCleanBuild="true" id="cdt.managedbuild.target.gnu.builder.base.2089749554" incrementalBuildTarget="" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.515845438" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1112400632" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
+								<option id="gnu.cpp.compiler.option.include.paths.2002640655" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/Users/jamespjh/devel/ccs/hemelb/dependencies/include"/>
+									<listOptionValue builtIn="false" value="/Users/jamespjh/devel/ccs/hemelb/dependencies/include/ctemplate"/>
+								</option>
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1684662925" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="HEMELB_LATTICE=D3Q15"/>
+									<listOptionValue builtIn="false" value="HEMELB_WALL_BOUNDARY=SIMPLEBOUNCEBACK"/>
+									<listOptionValue builtIn="false" value="HEMELB_KERNEL=LBGK"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.70459761" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.2001070575" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
