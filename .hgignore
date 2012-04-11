@@ -5,6 +5,7 @@ syntax: glob
 *~
 .metadata/*
 build/*
+Tools/visclients/dependencies/jogamp
 Code/build/*
 Code/build_clang/*
 results/*

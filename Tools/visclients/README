@@ -1,0 +1,26 @@
+To setup the steering client, you need to:
+
+(0) Install 'ant' if you haven't already
+which ant
+.. if nothing, then consult http://ant.apache.org/manual/install.html or use apt or port etc.
+
+(1) Build and install JOGL:
+cd dependencies/jogamp
+cat README
+follow instructions:
+git clone git://jogamp.org/srv/scm/gluegen.git gluegen
+git clone git://jogamp.org/srv/scm/jogl.git jogl
+cd gluegen/make
+ant
+cd ../../jogl/make
+ant
+
+(2) Build the steering client
+cd ../..
+ant
+
+(3) Run the steering client
+java -jar lib/visclient.jar
+click main window
+use connection menu to set hemelb host and port
+use connection menu to connect
