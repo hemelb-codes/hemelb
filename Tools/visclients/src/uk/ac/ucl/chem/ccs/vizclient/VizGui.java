@@ -21,10 +21,14 @@ import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.media.opengl.GL;
+import javax.media.opengl.GL2GL3;
 import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLJPanel;
+import javax.media.opengl.awt.GLJPanel;
+import javax.media.opengl.fixedfunc.GLLightingFunc;
+import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -32,8 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
-
-import com.sun.opengl.util.Animator;
+import com.jogamp.opengl.util.Animator;
 
 public class VizGui extends javax.swing.JPanel implements GLEventListener
 {
@@ -282,10 +285,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener
     // print every openGL call for debugging purposes
     // drawable.setGL(new TraceGL(drawable.getGL(), System.err));
     GL gl = drawable.getGL();
-
+   
     gl.glDisable(GL.GL_DEPTH_TEST);
     gl.glDisable(GL.GL_BLEND);
-    gl.glShadeModel(GL.GL_FLAT);
+    gl.getGL2().glShadeModel(GLLightingFunc.GL_FLAT);
     gl.glDisable(GL.GL_DITHER);
 
     gl.glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // white
@@ -302,10 +305,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener
     GL gl = drawable.getGL();
 
     gl.glViewport(0, 0, width, height);
-    gl.glMatrixMode(GL.GL_PROJECTION);
-    gl.glLoadIdentity();
+    gl.getGL2().glMatrixMode(GLMatrixFunc.GL_PROJECTION);
+    gl.getGL2().glLoadIdentity();
 
-    gl.glOrtho(0, width, 0, height, -1, 1);
+    gl.getGL2().glOrtho(0, width, 0, height, -1, 1);
     gl.glClear(GL.GL_COLOR_BUFFER_BIT);
   }
 
@@ -350,35 +353,35 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener
 
     if (view < VIEWALL)
     {
-      gl.glPixelZoom(zoom, zoom);
-      gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f),
+      gl.getGL2().glPixelZoom(zoom, zoom);
+      gl.getGL2().glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f),
           (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-      gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd
+      gl.getGL2().glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL2GL3.GL_UNSIGNED_INT_8_8_8_8, vfd
           .getBuffer(view));
     }
     else
     {
       // for viewing all frames zoom needs to be halved
       float zoomAll = zoom * 0.5f;
-      gl.glPixelZoom(zoomAll, zoomAll);
+      gl.getGL2().glPixelZoom(zoomAll, zoomAll);
 
-      gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) (viewHeight * 0.5));
-      gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd
+      gl.getGL2().glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) (viewHeight * 0.5));
+      gl.getGL2().glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL2GL3.GL_UNSIGNED_INT_8_8_8_8, vfd
           .getBuffer(0));
 
-      gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) (viewHeight * 0.5));
-      gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd
+      gl.getGL2().glRasterPos2i((int) (viewWidth * 0.5f), (int) (viewHeight * 0.5));
+      gl.getGL2().glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL2GL3.GL_UNSIGNED_INT_8_8_8_8, vfd
           .getBuffer(1));
 
-      gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f),
+      gl.getGL2().glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f),
           (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-      gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd
+      gl.getGL2().glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL2GL3.GL_UNSIGNED_INT_8_8_8_8, vfd
           .getBuffer(2));
 
-      gl
+      gl.getGL2()
           .glRasterPos2i((int) (viewWidth * 0.5f),
               (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-      gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd
+      gl.getGL2().glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL2GL3.GL_UNSIGNED_INT_8_8_8_8, vfd
           .getBuffer(3));
     }
 
@@ -430,7 +433,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener
       this.setMinimumSize(new java.awt.Dimension(570, 677));
       // this.setPreferredSize(new java.awt.Dimension(570, 677));
       {
-        cap = new GLCapabilities();
+        GLProfile profile = GLProfile.get(GLProfile.GL2GL3);
+        cap = new GLCapabilities(profile);
         // canvas1 = new GLCanvas(cap);
         canvas1 = new GLJPanel(cap);
 
@@ -1179,6 +1183,13 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener
       DecimalFormat df = new DecimalFormat("#####0.###");
     }
 
+  }
+
+  @Override
+  public void dispose(GLAutoDrawable arg0)
+  {
+    // TODO Auto-generated method stub
+    
   }
 
 }
