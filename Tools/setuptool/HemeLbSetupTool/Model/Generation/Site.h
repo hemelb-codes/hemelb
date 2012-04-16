@@ -43,13 +43,13 @@ public:
 		return this->index;
 	}
 	inline const Block& GetBlock() const {
-			return *this->block;
+			return this->block;
 	}
 	const Index GetDomainBlockCount();
 	const int GetDomainBlockSize();
 
 protected:
-	Block* block;
+	Block& block;
 	Index index;
 	friend class NeighbourIteratorBase;
 	friend class LaterNeighbourIterator;
