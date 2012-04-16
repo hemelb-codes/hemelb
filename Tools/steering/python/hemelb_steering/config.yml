@@ -1,0 +1,5 @@
+default:
+  steering_id: 1111
+  port: 65250
+localhost:
+  remote: "localhost"
