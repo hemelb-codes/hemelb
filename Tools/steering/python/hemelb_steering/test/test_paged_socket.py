@@ -29,5 +29,14 @@ class TestPagedSocket(unittest.TestCase):
         self.assertEqual(None,self.ps.receive())
         self.mockSocket.recv.assert_has_calls([mock.call(1024),mock.call(1024)])
     def test_send(self):
-        self.ps.send('hello')
-        self.mockSocket.send.assert_called_once_with('hello')
+        payload=[1,2,3,4,5]
+        payload_string=str(bytearray(payload))
+        self.mockSocket.send.return_value=len(payload)
+        self.ps.send(payload)
+        self.mockSocket.send.assert_called_once_with(payload_string)
+    def test_staged_send(self):
+        payload=[1,2,3,4,5]
+        self.mockSocket.send.side_effect=[3,2]
+        self.ps.send(payload)
+        self.mockSocket.send.assert_has_calls([mock.call(str(bytearray([1,2,3,4,5]))),mock.call(str(bytearray([4,5])))])
+        
