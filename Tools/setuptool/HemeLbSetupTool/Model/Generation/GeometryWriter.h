@@ -5,10 +5,11 @@
 #include <cstdio>
 
 #include "Index.h"
-#include "BlockWriter.h"
 
 #include "io/writers/xdr/XdrWriter.h"
 using hemelb::io::writers::xdr::XdrWriter;
+
+class BlockWriter;
 
 class GeometryWriter {
 public:
@@ -18,7 +19,7 @@ public:
 	~GeometryWriter();
 
 	void Close();
-	BlockWriter& StartNextBlock();
+	BlockWriter* StartNextBlock();
 
 protected:
 	std::string OutputGeometryFile;
@@ -34,8 +35,6 @@ protected:
 
 	int bodyStart;
 	FILE* bodyFile;
-	BlockWriter blockWriter;
-
 	friend class BlockWriter;
 };
 
