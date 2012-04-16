@@ -36,6 +36,10 @@ class TestRemoteHemeLB(unittest.TestCase):
 	    self.rhlb.step()
 	    self.assertEqual(self.mockSocket.send.mock_calls,[])
 	def test_change_send(self):
-	    self.rhlb.latitude=50
-	    self.rhlb.step() 
-	    self.mockSocket.send.assert_called_once_with(50)
+	    self.assertEqual(self.rhlb.Latitude,0.0)
+	    self.rhlb.Latitude=50.0
+	    self.assertEqual(self.rhlb.Latitude,50.0)
+	    self.rhlb.step()
+	    result=[0.0]*21
+	    result[4]=50.0
+	    self.mockSocket.send.assert_called_once_with(result)
