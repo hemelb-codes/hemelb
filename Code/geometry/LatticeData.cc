@@ -35,7 +35,7 @@ namespace hemelb
              itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
           log::Logger::Log<log::Info, log::OnePerCore>(
-                "Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
+                "LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
                 localRank, itNeighProc->Rank, itNeighProc->SharedFCount);
         }
       }
@@ -185,7 +185,7 @@ namespace hemelb
               // if debugging then output decisions with reasoning for all neighbour processors
               if (log::Logger::ShouldDisplay<log::Debug>())
                 log::Logger::Log<log::Info, log::OnePerCore>(
-                     "LD: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                     "LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
                      (int)neighbourProc, (int)localRank,
                      (int)neighbourSiteId, (int)neighbourBlockId,
                      (int)localSiteId, (int)blockId,
