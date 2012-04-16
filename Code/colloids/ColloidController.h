@@ -13,39 +13,50 @@ namespace hemelb
   {
     class ColloidController // : public net::IteratedAction
     {
+      public:
+        /** constructor - currently only initialises the neighbour list */
+        ColloidController(net::Net* net,
+                          geometry::LatticeData* latDatLBM,
+                          geometry::GeometryReadResult* gmyResult);
+
+        /** destructor - releases resources allocated by this class */
+        ~ColloidController();
+
       private:
-        // enables simplified general point-to-point communication via MPI
-        net::Net* mNet;
+        /** enables simplified general point-to-point communication via MPI */
+        net::Net* net;
 
-        // holds fluid information for local sites, i.e. the velocity distribution values
-        geometry::LatticeData* mLatDat;
+        /** holds fluid information for local sites, i.e. the velocity distribution values */
+        geometry::LatticeData* latDat;
 
-        proc_t mLocalRank;
+        /** cached copy of local rank (obtained from topology) */
+        proc_t localRank;
 
-        // a vector of the processors that might be interested in
-        // particles near the edge of this processor's sub-domain
-        std::vector<proc_t> mNeighbourProcessors;
+        /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
+        const static site_t REGION_OF_INFLUENCE = (site_t)2;
 
-        typedef std::vector<util::Vector3D<site_t> > neighbourhood_t;
-        neighbourhood_t GetNeighbourhoodVectors(site_t distance);
+        /** a vector of the processors that might be interested in
+            particles near the edge of this processor's sub-domain */
+        std::vector<proc_t> neighbourProcessors;
 
+        /** a list of relative 3D vectors that defines the sites within a region of influence */
+        typedef std::vector<util::Vector3D<site_t> > Neighbourhood;
+
+        /** obtains the neighbourhood for a particular region of influence defined by distance */
+        Neighbourhood GetNeighbourhoodVectors(site_t distance);
+
+        /** determines the list of neighbour processors
+            i.e. processors that are within the region of influence of the local domain's edge
+            i.e. processors that own at least one site in the neighbourhood of a local site */
         void InitialiseNeighbourList(geometry::GeometryReadResult* gmyResult,
-                                     neighbourhood_t neighbourhood);
+                                     Neighbourhood neighbourhood);
 
+        /** get local coordinates and the owner rank for a site from its global coordinates */
         bool GetLocalInformationForGlobalSite(geometry::GeometryReadResult* gmyResult,
                                               util::Vector3D<site_t> globalLocationForSite,
                                               site_t* blockIdForSite,
                                               site_t* localSiteIdForSite,
                                               proc_t* ownerRankForSite);
-
-      public:
-        // constructor - called by SimulationMaster::Initialise()
-        ColloidController(net::Net* net,
-                          geometry::LatticeData* latDatLBM,
-                          geometry::GeometryReadResult* gmyResult);
-
-        // destructor - called by SimulationMaster::~SimulationMaster()
-        ~ColloidController();
     };
   }
 }
