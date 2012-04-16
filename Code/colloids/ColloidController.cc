@@ -17,8 +17,8 @@ namespace hemelb
     ColloidController::ColloidController(net::Net* net,
                                          geometry::LatticeData* latDatLBM,
                                          geometry::GeometryReadResult* gmyResult) :
-            mNet(net), mLatDat(latDatLBM),
-            mLocalRank(topology::NetworkTopology::Instance()->GetLocalRank())
+            net(net), latDat(latDatLBM),
+            localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -27,15 +27,14 @@ namespace hemelb
       // from the geometry file using a neighbour lattice definition appropriate for colloids
 
       // get the description of the colloid neighbourhood (as a vector of Vector3D of site_t)
-      neighbourhood_t neighbourhood = GetNeighbourhoodVectors((site_t)2);
+      Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
 
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(gmyResult, neighbourhood);
     }
 
-    void ColloidController::InitialiseNeighbourList(
-                                         geometry::GeometryReadResult* gmyResult,
-                                         neighbourhood_t neighbourhood)
+    void ColloidController::InitialiseNeighbourList(geometry::GeometryReadResult* gmyResult,
+                                                    Neighbourhood neighbourhood)
     {
       // PLAN
       // foreach block in gmyResult (i.e. each block that may have been read from the input file)
@@ -49,7 +48,7 @@ namespace hemelb
       //                 add the targetProcessor of the neighbour site to our neighbourRanks list
 
       // foreach block in geometry
-      for (geometry::BlockTraverser blockTraverser(*mLatDat);
+      for (geometry::BlockTraverser blockTraverser(*(this->latDat));
            blockTraverser.CurrentLocationValid();
            blockTraverser.TraverseOne())
       {
@@ -71,11 +70,11 @@ namespace hemelb
 
           // if site is local
           site_t siteId = siteTraverser.GetCurrentIndex();
-          if (gmyResult->Blocks[blockId].Sites[siteId].targetProcessor != mLocalRank)
+          if (gmyResult->Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
             continue;
 
           // foreach neighbour of site
-          for (neighbourhood_t::iterator itDirectionVector = neighbourhood.begin();
+          for (Neighbourhood::iterator itDirectionVector = neighbourhood.begin();
                itDirectionVector != neighbourhood.end();
                itDirectionVector++)
           {
@@ -90,24 +89,24 @@ namespace hemelb
                   &neighbourBlockId, &neighbourSiteId, &neighbourRank);
 
             // if neighbour is remote
-            if (!isValid || neighbourRank == mLocalRank)
+            if (!isValid || neighbourRank == this->localRank)
               continue;
 
             // if new neighbourRank
-            int addedAlready = count(mNeighbourProcessors.begin(),
-                                     mNeighbourProcessors.end(),
-                                     neighbourRank);
+            int addedAlready = std::count(neighbourProcessors.begin(),
+                                          neighbourProcessors.end(),
+                                          neighbourRank);
             if (addedAlready != 0)
               continue;
 
             // add the targetProcessor of the neighbour site to our neighbourRanks list
-            mNeighbourProcessors.push_back(neighbourRank);
+            this->neighbourProcessors.push_back(neighbourRank);
 
-            // debug message to verify the neighbour list is the same as produced by LatticeData
+            // debug message so this neighbour list can be compared to the LatticeData one
             if (log::Logger::ShouldDisplay<log::Debug>())
               log::Logger::Log<log::Info, log::OnePerCore>(
-                  "CC: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                  (int)neighbourRank, (int)mLocalRank,
+                  "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                  (int)neighbourRank, (int)(this->localRank),
                   (int)neighbourSiteId, (int)neighbourBlockId,
                   (int)siteId, (int)blockId,
                   (*itDirectionVector).x, (*itDirectionVector).y, (*itDirectionVector).z);
@@ -167,9 +166,9 @@ namespace hemelb
     // produces a relative vector two all sites within distance site units in all 3 directions
     // examples: if distance==1 then the vectors will describe D3Q27 lattice pattern
     //           if distance==2 then the vectors will describe a 5x5 cube pattern
-    ColloidController::neighbourhood_t ColloidController::GetNeighbourhoodVectors(site_t distance)
+    ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
     {
-      neighbourhood_t vectors;
+      Neighbourhood vectors;
 
       for (site_t xAdj = -distance; xAdj <= distance; xAdj++)
         for (site_t yAdj = -distance; yAdj <= distance; yAdj++)
