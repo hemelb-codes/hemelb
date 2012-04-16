@@ -1,6 +1,6 @@
 <project default="install">
 	<property environment="env" />
-	<property name="visdir" value="${env.HEMELB_SRC}/../Tools/visclients" />
+	<property name="visdir" value="${env.HEMELB_SRC}/../Tools/steering/javagui" />
 	<property name="libdir" value="${visdir}/lib" />
 	<property name="jogldir" value="${visdir}/dependencies/jogamp/gluegen/build" />
 	<property name="gluegendir" value="${visdir}/dependencies/jogamp/jogl/build/jar" />
