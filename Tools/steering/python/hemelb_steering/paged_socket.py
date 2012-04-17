@@ -8,7 +8,7 @@ class PagedSocket(object):
         self.address=address
         self.port=port
         self.socket=socket.socket()
-        self.socket.connect(address,port)
+        self.socket.connect((address,port))
         self.receive_length=receive_length
         self.additional_receive_length_function=additional_receive_length_function
     def send(self,vals):

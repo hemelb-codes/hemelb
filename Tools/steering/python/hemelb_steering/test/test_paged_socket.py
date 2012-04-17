@@ -18,7 +18,7 @@ class TestPagedSocket(unittest.TestCase):
             self.mockSocket=mock_socket_maker.return_value
             self.ps=PagedSocket(address='fibble',port=8080,receive_length=9)
             mock_socket_maker.assert_called_once_with()
-            self.mockSocket.connect.assert_called_once_with('fibble',8080)
+            self.mockSocket.connect.assert_called_once_with(('fibble',8080))
     def test_connect(self):
         pass #The mocks defined in setUp are sufficient here
     def test_receive(self):

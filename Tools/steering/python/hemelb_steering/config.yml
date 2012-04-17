@@ -1,6 +1,5 @@
-default:
-  steering_id: 1111
-  port: 65250
+steering_id: 1111
+port: 65250
 steered_parameters:
   - SceneCentreX #0
   - SceneCentreY #1
