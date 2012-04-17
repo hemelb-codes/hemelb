@@ -21,7 +21,7 @@ class TestRemoteHemeLB(unittest.TestCase):
 	        mockPagedSocket.assert_called_once_with(address='fibble',
 	            port=8080,
 	            receive_length=12,
-	            additional_receive_length_function=self.rhlb._calculate_receive_length)
+	            additional_receive_length_function=RemoteHemeLB._calculate_receive_length)
             fixture=xdrlib.Packer()
     	    fixture.pack_int(4) #x
     	    fixture.pack_int(4) #y

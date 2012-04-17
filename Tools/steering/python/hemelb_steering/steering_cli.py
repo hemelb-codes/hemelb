@@ -12,7 +12,7 @@ import sys
 import os
 import argparse
 import shutil
-from config import config,config_user
+from config import config, config_user
 from remote_hemelb import RemoteHemeLB
 
 class Intervention(object):
@@ -22,21 +22,24 @@ class Intervention(object):
         # By default, an unsupplied argument does not create a result property
         parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
         
-
         # Every property of a result is a potential command line argument argument
-        for prop in config.steered_parameters:
+        for prop in config['steered_parameters']:
             parser.add_argument("--"+prop)
 
         # Additional possible argument, to invert the selection
         parser.add_argument("--monitor",action='store_true',default=False)
-        options,remote=vars(parser.parse_known_args(clargs))
+        options,(program,remote)=parser.parse_known_args(clargs)
+
+        options=vars(options)
         self.monitor=options.pop('monitor')
-        config.update(config[remote])
+
+        config.update(config.get(remote,{}))
         config.update(config_user)
-        config.update(config[remote])
+        config.update(config.get(remote,{}))
+
         self.port=config['port']
         self.steering_id=config['steering_id']
-        self.address-config['address']
+        self.address=config['address']
         
         # This Remote will have now connected, but not attempted to send/receive
         self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
