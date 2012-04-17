@@ -26,7 +26,7 @@ namespace hemelb
      * The entropic implementation by Ansumali et al.
      */
     template<class Lattice>
-    class ENTROPICANSUMALI
+    class EntropicAnsumali
     {
       public:
         typedef kernels::EntropicAnsumali<Lattice> Type;
@@ -36,7 +36,7 @@ namespace hemelb
      * The entropic implementation by Chikatamarla et al.
      */
     template<class Lattice>
-    class ENTROPICCHIK
+    class EntropicChik
     {
       public:
         typedef kernels::EntropicChik<Lattice> Type;
