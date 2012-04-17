@@ -16,6 +16,7 @@
 #include "reporting/Timers.h"
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
+#include "colloids/ColloidController.h"
 
 class SimulationMaster
 {
@@ -40,8 +41,8 @@ class SimulationMaster
     virtual void DoTimeStep();
 
   private:
-    typedef hemelb::lb::lattices::D3Q15 latticeType;
-
+    // Set the lattice type via a build parameter
+    typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -81,8 +82,9 @@ class SimulationMaster
     hemelb::lb::EntropyTester<latticeType>* entropyTester;
 
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<>, latticeType>* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
+    hemelb::colloids::ColloidController* colloidController;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::net::Net communicationNet;
 

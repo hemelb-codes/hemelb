@@ -14,6 +14,7 @@
 #include "unittests/SimulationMasterTests.h"
 #include "unittests/extraction/extraction.h"
 #include "unittests/multiscale/multiscale.h"
+#include "unittests/util/util.h"
 #include <unistd.h>
 
 int main(int argc, char **argv)

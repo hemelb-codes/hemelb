@@ -12,7 +12,7 @@ namespace hemelb
         return false;
       }
 
-      return IsWithinGeometry(data, util::Vector3D<float>(location) * data.GetVoxelSize());
+      return IsWithinGeometry(data, util::Vector3D<float>(location) * data.GetVoxelSize() + data.GetOrigin());
     }
   }
 }

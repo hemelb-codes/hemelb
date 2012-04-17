@@ -42,6 +42,9 @@ namespace hemelb
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
 
+              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+              hydroVars.tau = lbmParams->GetTau();
+
               // In the first step, we stream and collide as we would for the SimpleCollideAndStream
               // streamer.
               collider.CalculatePreCollision(hydroVars, site);
@@ -63,6 +66,7 @@ namespace hemelb
                                                                                        site,
                                                                                        hydroVars.GetFNeq().f,
                                                                                        hydroVars.density,
+                                                                                       hydroVars.tau,
                                                                                        lbmParams,
                                                                                        propertyCache);
             }

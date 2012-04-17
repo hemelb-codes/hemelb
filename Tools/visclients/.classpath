@@ -29,8 +29,6 @@
 	<classpathentry kind="lib" path="lib/saaj.jar"/>
 	<classpathentry kind="lib" path="lib/TableLayout.jar"/>
 	<classpathentry kind="lib" path="lib/wsdl4j-1.5.1.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/gluegen-rt.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jogl.jar"/>
 	<classpathentry kind="lib" path="lib/clibwrapper_jiio.jar"/>
 	<classpathentry kind="lib" path="lib/ij.jar"/>
 	<classpathentry kind="lib" path="lib/dcm4che-core-2.0.15.jar"/>
@@ -38,5 +36,10 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/dcm4che-tool-dcmqr-2.0.15.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/gluegen/build/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/gluegen/build/gluegen.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/gluegen/build/gluegen-rt-natives-macosx-universal.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/jogl/build/jar/jogl-all-natives-macosx-universal.jar"/>
+	<classpathentry kind="lib" path="dependencies/jogamp/jogl/build/jar/jogl.all.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
