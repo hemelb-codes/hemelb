@@ -11,7 +11,7 @@ import unittest
 import mock
 import xdrlib
 from hemelb_steering.remote_hemelb import RemoteHemeLB 
-
+from config import config
 
 class TestRemoteHemeLB(unittest.TestCase):
 	def setUp(self):
@@ -44,12 +44,13 @@ class TestRemoteHemeLB(unittest.TestCase):
 	    self.assertEqual(0.7,self.rhlb.time)
 	def test_no_change_no_send(self):
 	    self.rhlb.step()
+	    self.assertEqual(self.rhlb.Latitude,45.0)
 	    self.assertEqual(self.mockSocket.send.mock_calls,[])
 	def test_change_send(self):
-	    self.assertEqual(self.rhlb.Latitude,0.0)
+	    self.assertEqual(self.rhlb.Latitude,45.0)
 	    self.rhlb.Latitude=50.0
 	    self.assertEqual(self.rhlb.Latitude,50.0)
 	    self.rhlb.step()
-	    result=[0.0]*21
+	    result=[config['steered_parameter_defaults'][parameter] for parameter in config['steered_parameters']]
 	    result[4]=50.0
 	    self.mockSocket.send.assert_called_once_with(result)
