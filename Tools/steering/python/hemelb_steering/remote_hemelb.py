@@ -13,7 +13,7 @@ class RemoteHemeLB(object):
         self.socket=PagedSocket(address=self.address,
             port=self.port,
             receive_length=3*RemoteHemeLB.xdr_int_bytes,
-            additional_receive_length_function=self._calculate_receive_length)
+            additional_receive_length_function=RemoteHemeLB._calculate_receive_length)
         self.latitude=0
         self.image=None
         for steered_parameter in self.steered_parameters:
@@ -23,13 +23,15 @@ class RemoteHemeLB(object):
     xdr_double_bytes=8
 
     def step(self):
-        self.receive()
-        self.image=self.socket.receive() or self.image
         if any([par.changed(self) for par in self.steered_parameters]):
             self.socket.send([par.value(self) for par in self.steered_parameters])
-            
+        self.receive()
+        self.image=self.socket.receive() or self.image
+    
+    @staticmethod
     def _calculate_receive_length(header):
         unpacker=xdrlib.Unpacker(header)
+        print header
         width=unpacker.unpack_int()
         height=unpacker.unpack_int()
         frame=unpacker.unpack_int()
