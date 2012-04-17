@@ -17,7 +17,7 @@ class RemoteHemeLB(object):
         self.latitude=0
         self.image=None
         for steered_parameter in self.steered_parameters:
-            steered_parameter.initialise_in_instance(self)
+            steered_parameter.initialise_in_instance(self,config['steered_parameter_defaults'][steered_parameter.name])
 
     xdr_int_bytes=4
     xdr_double_bytes=8

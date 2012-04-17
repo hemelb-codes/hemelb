@@ -343,7 +343,12 @@ void SimulationMaster::ResetUnstableSimulation()
 
 void SimulationMaster::WriteLocalImages()
 {
-  for (std::multimap<unsigned long, unsigned long>::const_iterator it =
+  /**
+   * this map iteration iterates over all those image generation requests completing this step.
+   * The map key (it->first) is the completion time step number.
+   * The map value (it->second) is the initiation time step number.
+   */
+  for (MapType::const_iterator it =
       snapshotsCompleted.find(simulationState->GetTimeStep());
       it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
@@ -454,6 +459,11 @@ void SimulationMaster::DoTimeStep()
   // Make sure we're rendering if we're writing this iteration.
   if (writeSnapshotImage)
   {
+    /***
+     * snapShotsCompleted and networkImagesCompleted are multimaps.
+     * The keys are the iterations on which production of an image will complete, and should be written or sent over the network.
+     * The values are the iterations on which the image creation began.
+     */
     snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                       simulationState->GetTimeStep()));
   }
