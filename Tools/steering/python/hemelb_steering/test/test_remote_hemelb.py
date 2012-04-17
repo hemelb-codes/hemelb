@@ -53,4 +53,7 @@ class TestRemoteHemeLB(unittest.TestCase):
 	    self.rhlb.step()
 	    result=[config['steered_parameter_defaults'][parameter] for parameter in config['steered_parameters']]
 	    result[4]=50.0
-	    self.mockSocket.send.assert_called_once_with(result)
+	    fixture=xdrlib.Packer()
+	    for val in result:
+	        fixture.pack_float(val)
+	    self.mockSocket.send.assert_called_once_with(fixture.get_buffer())

@@ -1,7 +1,7 @@
 import socket
 
 #Model of the way HemeLB steering treats socket-comms.
-#On send, is a known-length buffer of float values.
+#On send, is a known-length buffer of values.
 #On receive, there is a header, which is used to determine the length of the rest of the message
 class PagedSocket(object):
     def __init__(self,address,port,receive_length,additional_receive_length_function=lambda header:0):
@@ -14,10 +14,11 @@ class PagedSocket(object):
     def send(self,vals):
         totalsent = 0
         while totalsent < len(vals):
-            sent = self.socket.send(str(bytearray(vals[totalsent:])))
+            sent = self.socket.send(vals[totalsent:])
             if sent == 0:
                 raise RuntimeError("socket connection broken")
             totalsent += sent
+            print totalsent,len(vals)
     def receive(self):
         header=self._receive_fixed_length(self.receive_length)
         additional_length=self.additional_receive_length_function(header)
@@ -29,4 +30,4 @@ class PagedSocket(object):
             if chunk == '':
                 raise RuntimeError("socket connection broken")
             msg = msg + chunk
-        return bytearray(msg)
+        return msg
