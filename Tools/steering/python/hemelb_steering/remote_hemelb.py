@@ -23,15 +23,19 @@ class RemoteHemeLB(object):
     xdr_double_bytes=8
 
     def step(self):
-        if any([par.changed(self) for par in self.steered_parameters]):
-            self.socket.send([par.value(self) for par in self.steered_parameters])
+        self.send()
         self.receive()
-        self.image=self.socket.receive() or self.image
+        
+    def send(self):
+        if any([par.changed(self) for par in self.steered_parameters]):
+            vals=xdrlib.Packer()
+            for par in self.steered_parameters:
+                vals.pack_float(float(par.value(self)))
+            self.socket.send(vals.get_buffer())
     
     @staticmethod
     def _calculate_receive_length(header):
         unpacker=xdrlib.Unpacker(header)
-        print header
         width=unpacker.unpack_int()
         height=unpacker.unpack_int()
         frame=unpacker.unpack_int()
@@ -44,12 +48,15 @@ class RemoteHemeLB(object):
         self.height=unpacker.unpack_int()
         self.frame=unpacker.unpack_int()
         self.image=Image(self.frame/Image.bytes_per_pixel,unpacker)
-        self.step=unpacker.unpack_int()
+        self.time_step=unpacker.unpack_int()
         self.time=unpacker.unpack_double()
         unpacker.unpack_int() # throw away cycle
         self.inlets=unpacker.unpack_int()
         self.mouse_pressure=unpacker.unpack_double()
         self.mouse_stress=unpacker.unpack_double()
+        
+    def __str__(self):
+        return "HemeLB at %s: Step %s" % (self.address,self.time_step)
 
 #Metaprogram property access
 RemoteHemeLB.steered_parameters=[]        

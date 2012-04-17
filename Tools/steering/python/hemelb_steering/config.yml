@@ -21,7 +21,6 @@ steered_parameters:
   - Mode #17
   - StreaklinePerSimulation #18
   - StreallineLength #19
-  - SetDoRendering #20
 steered_parameter_defaults:
   SceneCentreX: 0.0 #0
   SceneCentreY: 0.0 #1
@@ -43,6 +42,5 @@ steered_parameter_defaults:
   Mode: 0 #17
   StreaklinePerSimulation: 5.0 #18
   StreallineLength: 100.0 #19
-  SetDoRendering: 0 #20
 localhost:
   address: "localhost"
