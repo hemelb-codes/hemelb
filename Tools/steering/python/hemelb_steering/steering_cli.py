@@ -28,9 +28,13 @@ class Intervention(object):
 
         # Additional possible argument, to invert the selection
         parser.add_argument("--monitor",action='store_true',default=False)
-        options,(program,remote)=parser.parse_known_args(clargs)
-
+        options,extra=parser.parse_known_args(clargs)
+        print(extra)
+        print(vars(options))
+        remote=extra[1]
         options=vars(options)
+        
+        print(remote)
         self.monitor=options.pop('monitor')
 
         config.update(config.get(remote,{}))
@@ -48,14 +52,14 @@ class Intervention(object):
             print("Setting %s to %s"%(option,options[option]))
             setattr(self.hemelb,option,options[option])
         
-    def report():
+    def report(self):
         print(self.hemelb,file=self.stream)
 
     def act(self):        
         self.hemelb.step()
         self.report()
         if self.monitor:
-            while true:
+            while True:
                 self.hemelb.step()
                 self.report()
 
