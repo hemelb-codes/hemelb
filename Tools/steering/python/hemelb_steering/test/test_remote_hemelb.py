@@ -40,7 +40,7 @@ class TestRemoteHemeLB(unittest.TestCase):
     	    self.mockSocket.receive.return_value=str(bytearray(fixture.get_buffer()))
 	def test_receive_image(self):
 	    self.rhlb.step()
-	    self.assertEqual(7,self.rhlb.step)
+	    self.assertEqual(7,self.rhlb.time_step)
 	    self.assertEqual(0.7,self.rhlb.time)
 	def test_no_change_no_send(self):
 	    self.rhlb.step()

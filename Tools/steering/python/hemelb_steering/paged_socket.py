@@ -18,7 +18,6 @@ class PagedSocket(object):
             if sent == 0:
                 raise RuntimeError("socket connection broken")
             totalsent += sent
-            print totalsent,len(vals)
     def receive(self):
         header=self._receive_fixed_length(self.receive_length)
         additional_length=self.additional_receive_length_function(header)

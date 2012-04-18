@@ -1,20 +1,27 @@
+from PIL import Image as PILImage
+from collections import OrderedDict
+import numpy as N
+
 class Image(object):
-    class Pixel(object):
-        def __init__(self,unpacker):
-            self.index=unpacker.unpack_int()
-            self.x=self.index&((1<<17)-1)
-            self.y=self.index>>16
-            self.velocity=[]
-            self.stress=[]
-            self.pressure=[]
-            self.stress2=[]
-            self.components=[self.velocity,self.stress,self.pressure,self.stress2]
-            for _ in ['red','green','blue']:
-                blob=unpacker.unpack_fopaque(4)
-                for index,component in enumerate(self.components):
-                    component.append(blob[index])
-    def __init__(self,pixel_count,unpacker):
-        pixels=[]
-        for _ in xrange(pixel_count):
-            pixels.append(Image.Pixel(unpacker))
+    def __init__(self,width,height,pixel_count,unpacker):
+        self.pixels=[]
+        self.width=width
+        self.height=height
+        self.given_pixel_count=pixel_count
+        self.full_pixel_count=width*height # Might be sparse
+        self.data=N.frombuffer(unpacker.unpack_fopaque(pixel_count*Image.bytes_per_pixel),dtype=Image.pixel)
+    
+        
+    def pil(self,component='velocity'):
+        pil_string_data=bytearray([255]*3*self.full_pixel_count)
+        fields_wanted=["%s_%s"%(component,color) for color in Image.colors]
+        for pixel in self.data:
+            offset=pixel['y']*self.width+pixel['x']
+            pil_string_data[3*offset:3*offset+3]=[pixel[field] for field in fields_wanted]
+        return PILImage.fromstring("RGB",(self.width,self.height),str(pil_string_data))
+        
+    subimages=['velocity','stress','pressure','stress2']
+    colors=['red','green','blue']
+    fields=["%s_%s"%(subimage,color) for subimage in subimages for color in colors ]
     bytes_per_pixel=2*2+3*4 #each of three colors with four sub-images per color and two two-byte coordinates
+    pixel=N.dtype({'names': ['x','y']+fields,'formats': [N.dtype('>H')]*2+[N.uint8]*len(subimages)*len(colors)})
