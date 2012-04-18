@@ -12,6 +12,7 @@ namespace hemelb
 {
   namespace colloids
   {
+    /** provides the control interface between colloid simulation and the rest of the system */
     class ColloidController // : public net::IteratedAction
     {
       public:
