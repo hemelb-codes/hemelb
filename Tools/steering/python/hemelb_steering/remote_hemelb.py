@@ -47,7 +47,7 @@ class RemoteHemeLB(object):
         self.width=unpacker.unpack_int()
         self.height=unpacker.unpack_int()
         self.frame=unpacker.unpack_int()
-        self.image=Image(self.frame/Image.bytes_per_pixel,unpacker)
+        self.image=Image(self.width,self.height,self.frame/Image.bytes_per_pixel,unpacker)
         self.time_step=unpacker.unpack_int()
         self.time=unpacker.unpack_double()
         unpacker.unpack_int() # throw away cycle
