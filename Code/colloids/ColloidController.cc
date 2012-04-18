@@ -14,9 +14,9 @@ namespace hemelb
     }
 
     // constructor - called by SimulationMaster::Initialise()
-    ColloidController::ColloidController(net::Net* net,
-                                         geometry::LatticeData* latDatLBM,
-                                         geometry::GeometryReadResult* gmyResult) :
+    ColloidController::ColloidController(const net::Net* const net,
+                                         const geometry::LatticeData* const latDatLBM,
+                                         const geometry::GeometryReadResult* const gmyResult) :
             net(net), latDat(latDatLBM),
             localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
@@ -27,14 +27,15 @@ namespace hemelb
       // from the geometry file using a neighbour lattice definition appropriate for colloids
 
       // get the description of the colloid neighbourhood (as a vector of Vector3D of site_t)
-      Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
+      const Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
 
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(gmyResult, neighbourhood);
     }
 
-    void ColloidController::InitialiseNeighbourList(geometry::GeometryReadResult* gmyResult,
-                                                    Neighbourhood neighbourhood)
+    void ColloidController::InitialiseNeighbourList(
+            const geometry::GeometryReadResult* const gmyResult,
+            const Neighbourhood neighbourhood)
     {
       // PLAN
       // foreach block in gmyResult (i.e. each block that may have been read from the input file)
@@ -74,7 +75,7 @@ namespace hemelb
             continue;
 
           // foreach neighbour of site
-          for (Neighbourhood::iterator itDirectionVector = neighbourhood.begin();
+          for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
                itDirectionVector != neighbourhood.end();
                itDirectionVector++)
           {
@@ -119,8 +120,8 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-                                      geometry::GeometryReadResult* gmyResult,
-                                      util::Vector3D<site_t> globalLocationForSite,
+                                      const geometry::GeometryReadResult* const gmyResult,
+                                      const util::Vector3D<site_t> globalLocationForSite,
                                       site_t* blockIdForSite,
                                       site_t* localSiteIdForSite,
                                       proc_t* ownerRankForSite)
@@ -166,7 +167,7 @@ namespace hemelb
     // produces a relative vector two all sites within distance site units in all 3 directions
     // examples: if distance==1 then the vectors will describe D3Q27 lattice pattern
     //           if distance==2 then the vectors will describe a 5x5 cube pattern
-    ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
+    const ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
     {
       Neighbourhood vectors;
 
