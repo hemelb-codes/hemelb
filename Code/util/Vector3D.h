@@ -387,11 +387,11 @@ namespace hemelb
          * @return
          */
         template<class MultiplierT>
-        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::type> operator*(const MultiplierT multiplier) const
+        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType> operator*(const MultiplierT multiplier) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::type>(x * multiplier,
-                                                                                   y * multiplier,
-                                                                                   z * multiplier);
+          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType>(x * multiplier,
+                                                                                                 y * multiplier,
+                                                                                                 z * multiplier);
         }
 
         /**
@@ -414,9 +414,11 @@ namespace hemelb
          * @return
          */
         template<class DivisorT>
-        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::type> operator/(const DivisorT divisor) const
+        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType> operator/(const DivisorT divisor) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::type>(x / divisor, y / divisor, z / divisor);
+          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType>(x / divisor,
+                                                                                              y / divisor,
+                                                                                              z / divisor);
         }
 
         /**
