@@ -4,6 +4,7 @@
 #include "Block.h"
 #include "Domain.h"
 
+
 /*
  * Helper functions to check if sites are on the edge of the Domain.
  */
@@ -36,26 +37,26 @@ bool SiteIsEdge(const Site& site) {
 	return false;
 }
 
+
 Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
-		size(size), index(ind), min(ind * size), max((ind + 1) * size), domain(
-				dom) {
-	sites.reserve(size * size * size);
+	size(size), index(ind), min(ind * size), max((ind + 1) * size), domain(dom) {
+	this->sites.resize(size * size * size);
 	unsigned int ijk = 0;
 	const bool blockHasEdge = BlockHasEdges(*this);
 
 	for (unsigned int i = ind[0] * size; i < (ind[0] + 1) * size; ++i) {
 		for (unsigned int j = ind[1] * size; j < (ind[1] + 1) * size; ++j) {
 			for (unsigned int k = ind[2] * size; k < (ind[2] + 1) * size; ++k) {
-				sites.push_back(Site(*this, i, j, k));
+				this->sites[ijk] = new Site(*this, i, j, k);
 
 				/*
 				 * If the site is on the edge of the domain, we known that it
 				 * must be solid. Set this here in order to bootstrap the
 				 * classification process.
 				 */
-				if (blockHasEdge && SiteIsEdge(this->sites[ijk])) {
-					this->sites[ijk].IsFluidKnown = true;
-					this->sites[ijk].IsFluid = false;
+				if (blockHasEdge && SiteIsEdge(*this->sites[ijk])) {
+					this->sites[ijk]->IsFluidKnown = true;
+					this->sites[ijk]->IsFluid = false;
 				}
 
 				++ijk;
@@ -65,6 +66,12 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 }
 
 Block::~Block() {
+	SiteIterator end = this->sites.end();
+	SiteIterator current = this->sites.begin();
+	for (; current != end; ++current) {
+		// current will dereference to a Site*
+		delete *current;
+	}
 }
 
 Site& Block::GetGlobalSite(const Index& globalInd) {
@@ -89,5 +96,5 @@ Site& Block::GetLocalSite(const Index& ind) {
 	 * Get the site, creating it if it didn't exist.
 	 */
 	unsigned int ijk = this->TranslateIndex(ind);
-	return sites[ijk];
+	return *this->sites[ijk];
 }

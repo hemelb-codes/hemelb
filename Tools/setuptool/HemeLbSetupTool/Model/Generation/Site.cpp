@@ -12,22 +12,22 @@
 Site::Site(Block& block, Index& index) :
 	IsFluidKnown(false), IsFluid(false),
 			Position(block.GetDomain().CalcPositionWorkingFromIndex(index)),
-			block(&block), index(index) {
+			block(block), index(index) {
 }
 
 // C'tor with index constructed in-place
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
 	IsFluidKnown(false), IsFluid(false),
-			block(&block), index(i, j, k) {
-	this->Position = this->block->GetDomain().CalcPositionWorkingFromIndex(this->index);
+			block(block), index(i, j, k) {
+	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(this->index);
 }
 
 const Index Site::GetDomainBlockCount() {
-	return block->GetDomain().GetBlockCounts();
+	return block.GetDomain().GetBlockCounts();
 }
 
 const int Site::GetDomainBlockSize() {
-	return block->GetDomain().GetBlockSize();
+	return block.GetDomain().GetBlockSize();
 }
 
 // Get start and end LaterNeighbourIterators for this
@@ -51,7 +51,7 @@ NeighbourIterator Site::endall() {
  */
 
 NeighbourIteratorBase::NeighbourIteratorBase(Site& site, unsigned int startpos) :
-	site(&site), domain(&site.block->domain), i(startpos) {
+	site(&site), domain(&site.block.domain), i(startpos) {
 	/* Should advance to the first valid neighbour
 	 * HOWEVER, we can't do that here, in the abstract class's c'tor
 	 * since the subclass c'tors haven't yet executed. The virtual
@@ -146,7 +146,7 @@ bool LaterNeighbourIterator::IsCurrentValid() {
 	if (this->IsCurrentInDomain()) {
 		// neighbour's in the domain, check it's block
 		int siteBlockIjk =
-				this->domain->TranslateIndex(this->site->block->index);
+				this->domain->TranslateIndex(this->site->block.index);
 		int neighBlockIjk = this->domain->TranslateIndex(
 				neighIndex / this->domain->GetBlockSize());
 		if (neighBlockIjk != siteBlockIjk) {
@@ -154,8 +154,8 @@ bool LaterNeighbourIterator::IsCurrentValid() {
 			return (neighBlockIjk > siteBlockIjk);
 		} else {
 			// sites are in the same block
-			int neighLocalIjk = this->site->block->TranslateIndex(neighIndex);
-			int siteLocalIjk = this->site->block->TranslateIndex(
+			int neighLocalIjk = this->site->block.TranslateIndex(neighIndex);
+			int siteLocalIjk = this->site->block.TranslateIndex(
 					this->site->index);
 			return (neighLocalIjk > siteLocalIjk);
 		}

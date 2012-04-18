@@ -6,12 +6,13 @@
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 
+
 GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
-		int BlockSize, Index BlockCounts, double VoxelSizeMetres,
-		Vector OriginMetres) :
-		BlockSize(BlockSize), OutputGeometryFile(OutputGeometryFile), blockWriter(BlockSize) {
+		int BlockSize, Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres) :
+	OutputGeometryFile(OutputGeometryFile) {
 
 	// Copy in key data
+	this->BlockSize = BlockSize;
 	this->VoxelSizeMetres = VoxelSizeMetres;
 
 	for (unsigned int i = 0; i < 3; ++i) {
@@ -20,20 +21,16 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 	}
 
 	{
-		hemelb::io::writers::xdr::XdrFileWriter encoder(
-				this->OutputGeometryFile);
+		hemelb::io::writers::xdr::XdrFileWriter encoder(this->OutputGeometryFile);
 
 		// Write the preamble
 
 		// General magic
-		encoder
-				<< static_cast<unsigned int>(hemelb::io::formats::HemeLbMagicNumber);
+		encoder << static_cast<unsigned int>(hemelb::io::formats::HemeLbMagicNumber);
 		// Geometry magic
-		encoder
-				<< static_cast<unsigned int>(hemelb::io::formats::geometry::MagicNumber);
+		encoder << static_cast<unsigned int>(hemelb::io::formats::geometry::MagicNumber);
 		// Geometry file format version number
-		encoder
-				<< static_cast<unsigned int>(hemelb::io::formats::geometry::VersionNumber);
+		encoder << static_cast<unsigned int>(hemelb::io::formats::geometry::VersionNumber);
 
 		// Blocks in each dimension
 		for (unsigned int i = 0; i < 3; ++i)
@@ -65,8 +62,7 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		// We need to write HeaderRecordLength * nBlocks worth of junk bytes.
 		// The smallest unit XDR will write is 32 bits, so divide by 4 and
 		// write that many zeros
-		unsigned int headerLengthInXdrWords =
-				hemelb::io::formats::geometry::HeaderRecordLength * nBlocks / 4;
+		unsigned int headerLengthInXdrWords = hemelb::io::formats::geometry::HeaderRecordLength * nBlocks / 4;
 		// Write a dummy header
 		for (unsigned int i = 0; i < headerLengthInXdrWords; ++i) {
 			encoder << 0;
@@ -77,8 +73,8 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		// Setup the encoder for the header
 		this->headerBufferLength = this->bodyStart - this->headerStart;
 		this->headerBuffer = new char[this->headerBufferLength];
-		this->headerEncoder = new hemelb::io::writers::xdr::XdrMemWriter(
-				this->headerBuffer, this->headerBufferLength);
+		this->headerEncoder = new hemelb::io::writers::xdr::XdrMemWriter(this->headerBuffer,
+				this->headerBufferLength);
 	}
 	// "encoder" declared in the block above will now have been destructed, thereby closing the file.
 	// Reopen it for writing the blocks we're about to generate.
@@ -96,7 +92,7 @@ GeometryWriter::~GeometryWriter() {
 void GeometryWriter::Close() {
 	// Close the geometry file
 	std::fclose(this->bodyFile);
-	this->bodyFile = NULL;
+	this->bodyFile= NULL;
 
 	// Reopen it, write the header buffer, close it.
 	std::FILE* cfg = std::fopen(this->OutputGeometryFile.c_str(), "r+");
@@ -106,8 +102,7 @@ void GeometryWriter::Close() {
 
 }
 
-BlockWriter& GeometryWriter::StartNextBlock() {
-	blockWriter.Reset();
-	return blockWriter;
+BlockWriter* GeometryWriter::StartNextBlock() {
+	return new BlockWriter(this->BlockSize);
 }
 

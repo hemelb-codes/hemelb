@@ -56,9 +56,9 @@ public:
 	 */
 
 	// 1d => 3d
-	inline Index TranslateIndex(const unsigned int i) {
-		Index bInd ;
-		this->TranslateIndex(i, bInd);
+	inline Index* TranslateIndex(const unsigned int i) {
+		Index* bInd = new Index();
+		this->TranslateIndex(i, *bInd);
 		return bInd;
 	}
 	// 1d => 3d, putting the answer in an existing Index
