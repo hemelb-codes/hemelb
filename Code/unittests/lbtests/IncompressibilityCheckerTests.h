@@ -96,6 +96,7 @@ namespace hemelb
             // The previous values are not reported by any children anymore. Testing that the checker remembers them
             CPPUNIT_ASSERT(incompChecker.AreDensitiesAvailable());
 
+            cache->densityCache.SetRefreshFlag();
             LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latDat, *cache, *simState);
             AdvanceActorOneTimeStep(incompChecker);
 

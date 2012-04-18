@@ -88,8 +88,7 @@ def LibToInclude(vtkLibDir):
     return vtkIncludeDir
 
 def GetVtkLibDir():
-    vtklib = vtk.libvtkCommonPython if hasattr(vtk, 'libvtkCommonPython') else vtk.vtkCommonPython
-    aVtkSharedLibrary = vtklib.__file__
+    aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
