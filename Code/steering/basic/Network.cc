@@ -44,13 +44,13 @@ namespace hemelb
       }
 
       ssize_t bytesGot = 0;
-
       // If we have some buffered data to receive, include that in our count.
       if (recvBuf.length() > 0)
       {
         bytesGot += recvBuf.length();
       }
 
+      log::Logger::Log<log::Debug, log::Singleton>("Steering component will try to receive %d bytes, has %d so far",length,bytesGot);
       // While some data left to be received...
       while (bytesGot < length)
       {
@@ -78,18 +78,21 @@ namespace hemelb
               // of the buffer.
               long int numNewBytes = bytesGot - recvBuf.length();
               recvBuf.append(buf + recvBuf.length(), numNewBytes);
+              log::Logger::Log<log::Debug, log::Singleton>("Steering component: blocked socket");
             }
           }
-
+          log::Logger::Log<log::Debug, log::Singleton>("Steering component exiting after incomplete reception");
           // We didn't fully receive.
           return false;
         }
         else
         {
           bytesGot += n;
+          log::Logger::Log<log::Debug, log::Singleton>("Steering component: received bytes... (New total %d)",
+                                                                     bytesGot);
         }
       }
-
+      log::Logger::Log<log::Debug, log::Singleton>("Steering component is happy with what it has received");
       // Successfully received what we needed to. Now use the buffer to fill in the gaps, if
       // we were using the buffer at the front of the received data.
       if (recvBuf.length() > 0)
