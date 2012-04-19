@@ -17,7 +17,7 @@ namespace hemelb
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork,
                                            unsigned inletCountIn) :
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn)
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn), MaxFramerate(25.0)
     {
       xdrSendBuffer = new char[maxSendSize];
 
@@ -93,7 +93,7 @@ namespace hemelb
 
         double deltaTime = frameTimeStart - lastRender;
 
-        if ( (1.0 / 25.0) > deltaTime)
+        if ( (1.0 / MaxFramerate) > deltaTime)
         {
           return false;
         }
