@@ -8,7 +8,7 @@ namespace hemelb
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork,
-                                           unsigned int inletCountIn): inletCount(inletCountIn)
+                                           unsigned int inletCountIn): inletCount(inletCountIn), MaxFramerate(25.0)
     {
 
     }
