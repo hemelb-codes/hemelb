@@ -12,6 +12,7 @@ option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -39,6 +40,10 @@ add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
+endif()
+
+if (HEMELB_WAIT_ON_CONNECT)
+	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()
 
 if (NOT HEMELB_STATIC_ASSERT)

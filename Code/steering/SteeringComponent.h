@@ -7,6 +7,7 @@
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
 #include "vis/Control.h"
+#include "steering/ImageSendComponent.h"
 
 namespace hemelb
 {
@@ -33,8 +34,9 @@ namespace hemelb
       SetIsTerminal = 16,
       Mode = 17,
       StreaklinePerSimulation = 18,
-      StreallineLength = 19,
-      SetDoRendering = 20
+      StreaklineLength = 19,
+      MaxFramerate=20,
+      SetDoRendering = 21
     };
 
     /**
@@ -49,6 +51,7 @@ namespace hemelb
       public:
         SteeringComponent(Network* iNetwork,
                           vis::Control* iVisControl,
+                          steering::ImageSendComponent* imageSendComponent,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
                           configuration::SimConfig* iSimConfig,
@@ -74,7 +77,7 @@ namespace hemelb
       private:
         void AssignValues();
 
-        const static int STEERABLE_PARAMETERS = 20;
+        const static int STEERABLE_PARAMETERS = 21;
         const static unsigned int SPREADFACTOR = 10;
 
         bool isConnected;
@@ -82,6 +85,7 @@ namespace hemelb
         Network* mNetwork;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
+        steering::ImageSendComponent* imageSendComponent;
         float privateSteeringParams[STEERABLE_PARAMETERS + 1];
         util::UnitConverter* mUnits;
     };

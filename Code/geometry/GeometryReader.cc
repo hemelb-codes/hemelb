@@ -2106,7 +2106,7 @@ namespace hemelb
                                                       movesFromEachProc[otherProc],
                                                       otherProc);
       }
-
+/*
       netForMoveSending.Receive();
       netForMoveSending.Send();
       netForMoveSending.Wait();
@@ -2125,10 +2125,10 @@ namespace hemelb
                  derek_dbg_blockbuffer,
                  1,
                  MPI_LONG_LONG_INT,
-                 1,
+                   0,
                  topologyComm);
 
-      if (dbg_rank == 1)
+      if(dbg_rank == 0) {
       {
         for (int i = 0; i < dbg_size; i++)
         {
@@ -2137,7 +2137,7 @@ namespace hemelb
       }
 
       delete[] derek_dbg_blockbuffer;
-
+*/
       // ... and return the list of moves.
       return movesList;
     }

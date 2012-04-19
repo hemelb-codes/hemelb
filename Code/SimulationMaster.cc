@@ -178,6 +178,9 @@ void SimulationMaster::Initialise()
                                                             latticeBoltzmannModel->GetLbmParams(),
                                                             network,
                                                             latticeBoltzmannModel->InletCount());
+
+  } else {
+    imageSendCpt=NULL;
   }
 
   unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
@@ -200,6 +203,7 @@ void SimulationMaster::Initialise()
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
+                                                        imageSendCpt,
                                                         &communicationNet,
                                                         simulationState,
                                                         simConfig,
