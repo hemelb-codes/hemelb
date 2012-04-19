@@ -33,6 +33,7 @@ dependencies/cppunit-prefix
 dependencies/tinyxml-prefix
 Tools/visim/visim
 Tools/setuptool/*.gdb
+Tools/steering/javagui/dependencies
 Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
 Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
