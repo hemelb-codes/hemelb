@@ -2066,8 +2066,6 @@ namespace hemelb
 
       idx_t localMoveId = 0;
 
-      debug::Debugger::Get()->BreakHere();
-
       for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
       {
         movesFromEachProc[otherProc] = 0;
