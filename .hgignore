@@ -37,4 +37,5 @@ Tools/setuptool/*.gdb
 Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
 Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
+Tools/steering/javagui/dependencies/jogamp/
 Tools/visclients/hs_err*.log
