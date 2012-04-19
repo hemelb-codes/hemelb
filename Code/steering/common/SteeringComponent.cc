@@ -57,7 +57,7 @@ namespace hemelb
       mVisControl->visSettings.streaklines_per_simulation
           = privateSteeringParams[StreaklinePerSimulation];
       mVisControl->visSettings.streakline_length
-          = privateSteeringParams[StreallineLength];
+          = privateSteeringParams[StreaklineLength];
 
       mSimState->SetIsRendering(1 == (int) privateSteeringParams[SetDoRendering]);
 
@@ -85,7 +85,9 @@ namespace hemelb
                                  longitude,
                                  latitude,
                                  zoom);
-
+      if (imageSendComponent!=NULL){
+        imageSendComponent->SetMaxFramerate(privateSteeringParams[MaxFramerate]);
+      }
       mVisControl->domainStats.density_threshold_min = lattice_density_min;
       mVisControl->domainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max
           - lattice_density_min);
@@ -141,7 +143,9 @@ namespace hemelb
       privateSteeringParams[StreaklinePerSimulation] = 5.0F;
 
       // vis_streakline_length
-      privateSteeringParams[StreallineLength] = 100.0F;
+      privateSteeringParams[StreaklineLength] = 100.0F;
+
+      privateSteeringParams[MaxFramerate]=25.0F;
 
       // Value of DoRendering
       privateSteeringParams[SetDoRendering] = 0.0F;

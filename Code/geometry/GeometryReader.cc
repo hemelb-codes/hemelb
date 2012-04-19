@@ -1836,7 +1836,7 @@ namespace hemelb
         delete[] procMovesInt;
 
       }
-
+/*
       int dbg_rank = 0;
       int dbg_size = 0;
       MPI_Comm_rank( topologyComm, &dbg_rank);
@@ -1859,7 +1859,7 @@ namespace hemelb
       }
 
       delete[] derek_dbg_blockbuffer;
-
+*/
       // ... clean up...
       MPI_Type_free(&moveType);
       delete[] offsets;

@@ -26,6 +26,7 @@ set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or 
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
@@ -61,6 +62,7 @@ ExternalProject_Add(
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}
 	-DHEMELB_DEPENDENCIES_SET_RPATH=${HEMELB_DEPENDENCIES_SET_RPATH}
 	-DHEMELB_STATIC_ASSERT=${HEMELB_STATIC_ASSERT}
+	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 

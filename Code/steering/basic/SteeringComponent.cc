@@ -11,12 +11,13 @@ namespace hemelb
   {
     SteeringComponent::SteeringComponent(Network* iNetwork,
                                          vis::Control* iVisControl,
+                                         steering::ImageSendComponent* imageSendComponent,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
                                          util::UnitConverter* iUnits) :
         net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl),
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
         mUnits(iUnits)
     {
       Reset(iSimConfig);

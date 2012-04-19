@@ -113,10 +113,12 @@ namespace hemelb
           {
             flags = 0;
           }
+#ifndef HEMELB_WAIT_ON_CONNECT
           if (fcntl(mListeningSocket, F_SETFL, flags | O_NONBLOCK) < 0)
           {
             perror("flags");
           }
+#endif
 
           // Try to accept a socket (from the non-blocking socket)
           mCurrentSocket
