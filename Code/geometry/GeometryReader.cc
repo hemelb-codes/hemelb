@@ -1849,10 +1849,10 @@ namespace hemelb
                    derek_dbg_blockbuffer,
                    1,
                    MPI_LONG_LONG_INT,
-                   1,
+                   0,
                    topologyComm);
 
-      if(dbg_rank == 1) {
+      if(dbg_rank == 0) {
         for(int i=0; i<dbg_size; i++) {
           std::cerr << "proc id: " <<  i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
         }
