@@ -120,7 +120,7 @@ def build_python_tools():
 def stat():
     """Check the remote message queue status"""
     #TODO: Respect varying remote machine queue systems.
-    run(template("qstat -u $username"))
+    run(template("$stat -u $username"))
 
 @task
 def monitor():
@@ -485,6 +485,7 @@ def job(*option_dictionaries):
         env.coresusedpernode=env.corespernode
         if int(env.coresusedpernode)>int(env.cores):
             env.coresusedpernode=env.cores
+        env.nodes=int(env.cores)/int(env.coresusedpernode)
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
@@ -629,3 +630,19 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                 if not str(create_configs).lower()[0]=='f':
                     modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
+
+
+@task
+def get_running_location(job):
+    with_job(job)
+    run(template("cat $job_results/env_details.asc"))
+
+@task
+def steer(job,orbit=False):
+    with_job(job)
+    env.running_node=run(template("cat $job_results/env_details.asc"))
+    command="python $repository_path/Tools/steering/python/hemelb_steering/timing_client.py "
+    if orbit:
+        run(template(command+"--orbit ${running_node}"))
+    else:
+        run(template(command+"${running_node}"))
