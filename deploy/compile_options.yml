@@ -13,3 +13,5 @@ gdb:
   HEMELB_USE_DEBUGGER: "ON"
 no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
+wait_on_connect:
+  HEMELB_WAIT_ON_CONNECT: "ON"
