@@ -1,5 +1,8 @@
-from PIL import Image as PILImage
-from collections import OrderedDict
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
+    
 import numpy as N
 
 class Image(object):
@@ -13,6 +16,7 @@ class Image(object):
     
         
     def pil(self,component='velocity'):
+        from PIL import Image as PILImage
         pil_string_data=bytearray([255]*3*self.full_pixel_count)
         fields_wanted=["%s_%s"%(component,color) for color in Image.colors]
         for pixel in self.data:

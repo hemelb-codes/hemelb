@@ -25,9 +25,12 @@ class Driver(object):
         remote=extra[1]
         self.options=vars(options)
 
-        config.update(config.get(remote,{}))
-        config.update(config_user)
-        config.update(config.get(remote,{}))
+        if remote in config:
+            config.update(config.get(remote,{}))
+            config.update(config_user)
+            config.update(config.get(remote,{}))
+        else:
+            config['address']=remote
 
         self.port=config['port']
         self.steering_id=config['steering_id']
