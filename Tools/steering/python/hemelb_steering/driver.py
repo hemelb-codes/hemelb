@@ -41,6 +41,9 @@ class Driver(object):
 
     def define_args(self):
        pass
+       
+    def act(self):
+        self.hemelb.step()
 
 def main():
     Intervention(sys.argv).act()
