@@ -37,8 +37,9 @@ default:
   template_key: false
   temp_path_template: "/tmp"
   cmake_options: {}
-  job_name_template: '${config}_${build_number}_${machine_name}_${cores}_${snapshots}_${images}_$jobsuffix'
+  job_name_template: '${config}_${build_number}_${machine_name}_${cores}_${snapshots}_${images}'
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
+  stat: qstat
 legion: 
   job_dispatch: "qsub"
   # The remote host-name to use.
@@ -127,4 +128,25 @@ localhost:
    python_build: "lib/python2.7"
    template_key: default
    make_jobs: 4
-   
+huygens:
+    remote: "huygens.sara.nl"
+    username: "sar00033"
+    no_hg: true
+    home_path_template: "/home/$username/hemelb"
+    modules: ["load cmake/2.8.5","load gcc"]
+    build_prefix_commands: [] #Tell autoconf for dependencies where the hector compilers are
+    temp_path_template: /scratch/shared
+    regression_test_path_template: "$work_path/regression"
+    corespernode: 32
+    job_dispatch:  llsubmit
+    stat: llq
+    needs_tarballs: true
+    python_build: 'lib64/python2.6'
+    cmake_options: 
+      HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+      CMAKE_CXX_COMPILER: "mpCC"
+      CMAKE_C_COMPILER: "mpcc"
+      CMAKE_CXX_FLAGS_RELEASE: ""
+      HEMELB_OPTIMISATION: "-O3"
+      CPPUNIT_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
+      CTEMPLATE_CONFIGURE_OPTIONS: --host=powerpc64-unknown-linux-gnu
