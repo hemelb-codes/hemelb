@@ -57,12 +57,15 @@ results:
     stat_properties:
         'results/report.txt':
             report_created_timestamp: st_mtime
+        'tests.xml':
+            test_results_timestamp: st_mtime
     mercurial_properties: #Properties based on the mercurial build number
         revision: '{rev}'
         revision_date: '{date|isodate}'
         branch: '{branch}'
         
     compound_properties:
+        result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp)
         snapshots_norm: (snapshots_count if normalised else 1.0)
         images_norm: (images_count if normalised else 1.0)
         snapshots: (snapshots_raw * snapshots_norm)
@@ -80,7 +83,7 @@ results:
         core_hours: (total*cores*1.0/(60*60))
         kau: (total*cores*125*1.0/(20000*60*60)) #20000 core hours is 125 kAU
         cost: (5.78*kau)
-        report_created: (datetime.datetime.fromtimestamp(report_created_timestamp))
+        report_created: (datetime.datetime.fromtimestamp(result_timestamp))
         geometry_type: ('old' if normalised else 'new')
         normalised: (True if snapshot_normalisation else False)
         solid_and_fluid_sites: block_count*sites_per_block
