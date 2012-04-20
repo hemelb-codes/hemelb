@@ -23,8 +23,8 @@ class RemoteHemeLB(object):
     xdr_double_bytes=8
 
     def step(self):
-        self.send()
         self.receive()
+        self.send()
         
     def send(self):
         if any([par.changed(self) for par in self.steered_parameters]):
