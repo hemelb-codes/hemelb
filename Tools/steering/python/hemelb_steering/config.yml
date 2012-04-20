@@ -20,7 +20,8 @@ steered_parameters:
   - SetIsTerminal #16
   - Mode #17
   - StreaklinePerSimulation #18
-  - StreallineLength #19
+  - StreaklineLength #19
+  - MaxFramerate #20
 steered_parameter_defaults:
   SceneCentreX: 0.0 #0
   SceneCentreY: 0.0 #1
@@ -41,6 +42,7 @@ steered_parameter_defaults:
   SetIsTerminal: 0 #16
   Mode: 0 #17
   StreaklinePerSimulation: 5.0 #18
-  StreallineLength: 100.0 #19
+  StreaklineLength: 100.0 #19
+  MaxFramerate: 0.1
 localhost:
   address: "localhost"
