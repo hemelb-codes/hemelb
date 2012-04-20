@@ -1,6 +1,7 @@
 #include <cmath>
 #include <list>
 #include <map>
+#include <algorithm>
 #include <zlib.h>
 
 #include "debug/Debugger.h"
@@ -23,7 +24,7 @@ namespace hemelb
                                    const lb::lattices::LatticeInfo& latticeInfo,
                                    GeometryReadResult& readResult,
                                    reporting::Timers &atimings) :
-      latticeInfo(latticeInfo), readingResult(readResult), timings(atimings)
+        latticeInfo(latticeInfo), readingResult(readResult), timings(atimings)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -110,7 +111,7 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
-      fflush( NULL);
+      fflush(NULL);
 
       // Set the view to the file.
       std::string mode = "native";
@@ -214,7 +215,7 @@ namespace hemelb
         MPI_File_read(file, preambleBuffer, preambleBytes, MpiDataType(preambleBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(preambleBuffer, preambleBytes, MpiDataType<char> (), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(preambleBuffer, preambleBytes, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::writers::xdr::XdrReader preambleReader = hemelb::io::writers::xdr::XdrMemReader(preambleBuffer,
@@ -293,7 +294,7 @@ namespace hemelb
         MPI_File_read(file, headerBuffer, (int) headerByteCount, MpiDataType(headerBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(headerBuffer, (int) headerByteCount, MpiDataType<char> (), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(headerBuffer, (int) headerByteCount, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::writers::xdr::XdrReader preambleReader =
@@ -406,8 +407,8 @@ namespace hemelb
         MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
 
         // Spread it.
-        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
-            != procsWantingThisBlock.end(); receiver++)
+        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
+            receiver != procsWantingThisBlock.end(); receiver++)
         {
           if (*receiver != currentCommRank)
           {
@@ -480,7 +481,7 @@ namespace hemelb
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*> (const_cast<char*> (&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
@@ -489,7 +490,7 @@ namespace hemelb
         std::exit(1);
       }
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*> (&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
@@ -574,7 +575,8 @@ namespace hemelb
         // Now, attempt to match the direction read from the local neighbourhood to one in the
         // lattice being used for simulation. If a match is found, assign the link to the read
         // site.
-        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors(); usedLatticeDirection++)
+        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors();
+            usedLatticeDirection++)
         {
           if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
           {
@@ -618,8 +620,8 @@ namespace hemelb
               dummySiteData[localSite * latticeInfo.GetNumVectors()] = std::numeric_limits<unsigned>::max();
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
-                dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
-                    = std::numeric_limits<unsigned>::max();
+                dummySiteData[localSite * latticeInfo.GetNumVectors() + direction] =
+                    std::numeric_limits<unsigned>::max();
               }
             }
           }
@@ -628,20 +630,20 @@ namespace hemelb
             for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
             {
               myProcForSite[localSite] = readingResult.Blocks[block].Sites[localSite].targetProcessor;
-              dummySiteData[localSite * latticeInfo.GetNumVectors()]
-                  = readingResult.Blocks[block].Sites[localSite].isFluid;
+              dummySiteData[localSite * latticeInfo.GetNumVectors()] =
+                  readingResult.Blocks[block].Sites[localSite].isFluid;
 
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
                 if (readingResult.Blocks[block].Sites[localSite].isFluid)
                 {
-                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
-                      = readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
+                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction] =
+                      readingResult.Blocks[block].Sites[localSite].links[direction - 1].type;
                 }
                 else
                 {
-                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction]
-                      = std::numeric_limits<unsigned>::max();
+                  dummySiteData[localSite * latticeInfo.GetNumVectors() + direction] =
+                      std::numeric_limits<unsigned>::max();
                 }
               }
             }
@@ -665,8 +667,8 @@ namespace hemelb
 
           for (site_t site = 0; site < readingResult.GetSitesPerBlock(); ++site)
           {
-            if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank) && (myProcForSite[site]
-                != ConvertTopologyRankToGlobalRank(topologyRank)))
+            if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank)
+                && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyRank)))
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                             site,
@@ -694,8 +696,8 @@ namespace hemelb
 
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
               {
-                if (dummySiteData[site * latticeInfo.GetNumVectors() + direction] != siteDataRecv[site
-                    * latticeInfo.GetNumVectors() + direction])
+                if (dummySiteData[site * latticeInfo.GetNumVectors() + direction]
+                    != siteDataRecv[site * latticeInfo.GetNumVectors() + direction])
                 {
                   log::Logger::Log<log::Debug, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
                                                                 site,
@@ -757,14 +759,14 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI <= (blockI + 1))
-                && (neighI < readingResult.blocks.x); ++neighI)
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
+                (neighI <= (blockI + 1)) && (neighI < readingResult.blocks.x); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ <= (blockJ + 1))
-                  && (neighJ < readingResult.blocks.y); ++neighJ)
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
+                  (neighJ <= (blockJ + 1)) && (neighJ < readingResult.blocks.y); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK <= (blockK + 1))
-                    && (neighK < readingResult.blocks.z); ++neighK)
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
+                    (neighK <= (blockK + 1)) && (neighK < readingResult.blocks.z); ++neighK)
                 {
                   site_t lNeighId = readingResult.GetBlockIdFromBlockCoordinates(neighI, neighJ, neighK);
 
@@ -831,7 +833,7 @@ namespace hemelb
         MPI_Allreduce(procForEachBlock,
                       procForEachBlockRecv,
                       (int) readingResult.GetBlockCount(),
-                      MpiDataType<proc_t> (),
+                      MpiDataType<proc_t>(),
                       MPI_MAX,
                       topologyComm);
 
@@ -1305,8 +1307,9 @@ namespace hemelb
                     site_t neighbourJ = blockJ * readingResult.blockSize + localSiteJ + latticeInfo.GetVector(l).y;
                     site_t neighbourK = blockK * readingResult.blockSize + localSiteK + latticeInfo.GetVector(l).z;
 
-                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0 || neighbourI >= (readingResult.blockSize
-                        * readingResult.blocks.x) || neighbourJ >= (readingResult.blockSize * readingResult.blocks.y)
+                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
+                        || neighbourI >= (readingResult.blockSize * readingResult.blocks.x)
+                        || neighbourJ >= (readingResult.blockSize * readingResult.blocks.y)
                         || neighbourK >= (readingResult.blockSize * readingResult.blocks.z))
                     {
                       continue;
@@ -1331,8 +1334,8 @@ namespace hemelb
                                                                                         neighbourSiteJ,
                                                                                         neighbourSiteK);
 
-                    if (neighbourBlock.Sites.size() == 0 || neighbourBlock.Sites[neighbourSiteId].targetProcessor
-                        == BIG_NUMBER2)
+                    if (neighbourBlock.Sites.size() == 0
+                        || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
                     {
                       continue;
                     }
@@ -1500,7 +1503,8 @@ namespace hemelb
           idx_t vertex = vtxDistribn[topologyRank] + index;
 
           // Iterate over each adjacency (of each vertex).
-          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]); ++adjNumber)
+          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
+              ++adjNumber)
           {
             idx_t adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
             proc_t adjacentProc = -1;
@@ -1555,8 +1559,8 @@ namespace hemelb
 
             unsigned int adjacencyIndex = 0;
 
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
-                != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
+                it != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1565,8 +1569,13 @@ namespace hemelb
             }
 
             // Send the data to the neighbour.
-            MPI_Isend(data[neigh], (int) counts[neigh], MpiDataType<idx_t> (), neigh, 43, topologyComm, &requests[2
-                * neigh + 1]);
+            MPI_Isend(data[neigh],
+                      (int) counts[neigh],
+                      MpiDataType<idx_t>(),
+                      neigh,
+                      43,
+                      topologyComm,
+                      &requests[2 * neigh + 1]);
 
             // Sending arrays don't perform comparison.
             continue;
@@ -1581,8 +1590,13 @@ namespace hemelb
 
             data[neigh] = new idx_t[counts[neigh]];
 
-            MPI_Irecv(data[neigh], (int) counts[neigh], MpiDataType<idx_t> (), neigh, 43, topologyComm, &requests[2
-                * neigh + 1]);
+            MPI_Irecv(data[neigh],
+                      (int) counts[neigh],
+                      MpiDataType<idx_t>(),
+                      neigh,
+                      43,
+                      topologyComm,
+                      &requests[2 * neigh + 1]);
 
             MPI_Wait(&requests[2 * neigh] + 1, MPI_STATUS_IGNORE);
           }
@@ -1595,8 +1609,8 @@ namespace hemelb
             data[neigh] = new idx_t[counts[neigh]];
 
             int adjacencyIndex = 0;
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
-                != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
+                it != adjByNeighProc[neigh].end(); ++it)
 
             {
               data[neigh][2 * adjacencyIndex] = it->first;
@@ -1613,8 +1627,8 @@ namespace hemelb
 
             // Go through each neighbour we know about on this proc, and check whether it
             // matches the current received neighbour-data.
-            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].find(data[neigh][ii + 1]); it
-                != adjByNeighProc[neigh].end(); ++it)
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].find(data[neigh][ii + 1]);
+                it != adjByNeighProc[neigh].end(); ++it)
             {
               idx_t recvAdj = it->first;
               idx_t recvAdj2 = it->second;
@@ -1770,9 +1784,9 @@ namespace hemelb
                                                             fluidSitesPerBlock[fluidSiteBlock],
                                                             fluidSiteBlock,
                                                             readingResult.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                == BIG_NUMBER2
-                                                              ? " and site is solid"
-                                                              : "");
+                                                                == BIG_NUMBER2 ?
+                                                              " and site is solid" :
+                                                              "");
             }
           }
 
@@ -1783,87 +1797,347 @@ namespace hemelb
         }
       }
 
-      // Spread the move-count data around, so all processes now how many moves each process is
-      // doing.
+      // Spread the move data around
       timings[hemelb::reporting::Timers::dbg1].Stop();
       timings[hemelb::reporting::Timers::dbg2].Start();
-      idx_t moves = moveData.size() / 3;
-      MPI_Allgather(&moves,
-                    1,
-                    MpiDataType(moves),
-                    movesFromEachProc,
-                    1,
-                    MpiDataType(movesFromEachProc[0]),
-                    topologyComm);
-      timings[hemelb::reporting::Timers::dbg2].Stop();
 
-      // Count the total moves.
-      idx_t totalMoves = 0;
+      // First, for each core, gather a list of which blocks the current core wants to
+      // know more data about.
+      // Handily, the blocks we want to know about are exactly those for which we already
+      // have some data.
+      std::map<proc_t, std::vector<site_t> > blockIdsIRequireFromX;
 
-      for (unsigned int ii = 0; ii < topologySize; ++ii)
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
       {
-        totalMoves += movesFromEachProc[ii];
-      }
-
-      // Now share all the lists of moves - create a MPI type...
-      MPI_Datatype moveType;
-      MPI_Type_contiguous(3, MpiDataType<idx_t> (), &moveType);
-      MPI_Type_commit(&moveType);
-
-      // ... create a destination array...
-      idx_t* movesList = new idx_t[3 * totalMoves];
-
-      // ... create an array of offsets into the destination array for each rank...
-      int * offsets = new int[topologySize];
-
-      offsets[0] = 0;
-      for (unsigned int ii = 1; ii < topologySize; ++ii)
-      {
-        offsets[ii] = (int) (offsets[ii - 1] + movesFromEachProc[ii - 1]);
-      }
-
-      {
-        int* procMovesInt = new int[topologySize];
-
-        for (proc_t ii = 0; ii < (proc_t) topologySize; ++ii)
+        if (!readingResult.Blocks[block].Sites.empty())
         {
-          procMovesInt[ii] = (int) movesFromEachProc[ii];
+          proc_t residentProc = procForEachBlock[block];
+
+          if (blockIdsIRequireFromX.count(residentProc) == 0)
+          {
+            blockIdsIRequireFromX[residentProc] = std::vector<site_t>();
+          }
+
+          blockIdsIRequireFromX[residentProc].push_back(block);
+          log::Logger::Log<log::Debug, log::OnePerCore>("I require block %i from proc %i (running total %i)", block, residentProc, blockIdsIRequireFromX[residentProc].size());
+        }
+      }
+
+      // We also need to force some data upon blocks, i.e. when they're receiving data from a new
+      // block they didn't previously want to know about.
+      std::map<proc_t, std::vector<site_t> > blockForcedUponX;
+      std::vector<proc_t> numberOfBlocksIForceUponX(topologySize, 0);
+
+      for (idx_t moveNumber = 0; moveNumber < (idx_t) moveData.size(); moveNumber += 3)
+      {
+        proc_t target_proc = moveData[moveNumber + 2];
+        site_t blockId = moveData[moveNumber];
+
+        if (blockForcedUponX.count(target_proc) == 0)
+        {
+          blockForcedUponX[target_proc] = std::vector<site_t>();
         }
 
-        // ... use MPI to gather the data...
-        MPI_Allgatherv(&moveData[0], (int) moves, moveType, movesList, procMovesInt, offsets, moveType, topologyComm);
+        if (std::count(blockForcedUponX[target_proc].begin(), blockForcedUponX[target_proc].end(), blockId) == 0)
+        {
+          blockForcedUponX[target_proc].push_back(blockId);
+          ++numberOfBlocksIForceUponX[target_proc];
 
-        delete[] procMovesInt;
+          log::Logger::Log<log::Debug, log::OnePerCore>("I'm ensuring proc %i takes data about block %i",
+                                                        target_proc,
+                                                        blockId);
+        }
+      }
 
+      // Now find how many blocks are being forced upon us from every other core.
+      net::Net netForMoveSending(topologyComm);
+
+      std::vector<proc_t> blocksForcedOnMe(topologySize, 0);
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        netForMoveSending.RequestReceive(&blocksForcedOnMe[otherProc], 1, otherProc);
+        netForMoveSending.RequestSend(&numberOfBlocksIForceUponX[otherProc], 1, otherProc);
+      }
+
+      netForMoveSending.Receive();
+      netForMoveSending.Send();
+      netForMoveSending.Wait();
+
+      // Now get all the blocks being forced upon me.
+      std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        if (blocksForcedOnMe[otherProc] > 0)
+        {
+          blocksForcedOnMeByEachProc[otherProc] = std::vector<site_t>(blocksForcedOnMe[otherProc]);
+          netForMoveSending.RequestReceive(&blocksForcedOnMeByEachProc[otherProc][0],
+                                           blocksForcedOnMe[otherProc],
+                                           otherProc);
+        }
+
+        if (numberOfBlocksIForceUponX[otherProc] > 0)
+        {
+          netForMoveSending.RequestSend(&blockForcedUponX[otherProc][0],
+                                        numberOfBlocksIForceUponX[otherProc],
+                                        otherProc);
+        }
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
+                                                      numberOfBlocksIForceUponX[otherProc],
+                                                      otherProc);
+      }
+
+      netForMoveSending.Receive();
+      netForMoveSending.Send();
+      netForMoveSending.Wait();
+
+      // Now go through every block forced upon me and add it to the list of ones I want.
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        if (blocksForcedOnMe[otherProc] > 0)
+        {
+          for (std::vector<site_t>::iterator it = blocksForcedOnMeByEachProc[otherProc].begin();
+              it != blocksForcedOnMeByEachProc[otherProc].end(); ++it)
+          {
+
+            if (std::count(blockIdsIRequireFromX[otherProc].begin(), blockIdsIRequireFromX[otherProc].end(), *it) == 0)
+            {
+              blockIdsIRequireFromX[otherProc].push_back(*it);
+
+              log::Logger::Log<log::Debug, log::OnePerCore>("I'm being forced to take block %i from proc %i",
+                                                            *it,
+                                                            otherProc);
+            }
+          }
+        }
+      }
+
+      // Now we want to spread this info around so that each core knows which blocks each other
+      // requires from it.
+      std::vector<site_t> numberOfBlocksRequiredFrom(topologySize, 0);
+      std::vector<site_t> numberOfBlocksXRequiresFromMe(topologySize, 0);
+
+      // Populate numberOfBlocksRequiredFrom
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0 ?
+          0 :
+          blockIdsIRequireFromX[otherProc].size();
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("I require a total of %i blocks from proc %i",
+                                                      numberOfBlocksRequiredFrom[otherProc],
+                                                      otherProc);
+      }
+
+      // Now perform the exchange s.t. each core knows how many blocks are required of it from
+      // each other core.
+      MPI_Alltoall(&numberOfBlocksRequiredFrom[0],
+                   1,
+                   MpiDataType<site_t>(),
+                   &numberOfBlocksXRequiresFromMe[0],
+                   1,
+                   MpiDataType<site_t>(),
+                   topologyComm);
+
+      // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
+      // core.
+      std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe;
+
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        blockIdsXRequiresFromMe[otherProc] = std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires %i blocks from me",
+                                                      otherProc,
+                                                      blockIdsXRequiresFromMe[otherProc].size());
+
+        netForMoveSending.RequestReceive(&blockIdsXRequiresFromMe[otherProc][0],
+                                         numberOfBlocksXRequiresFromMe[otherProc],
+                                         otherProc);
+        netForMoveSending.RequestSend(&blockIdsIRequireFromX[otherProc][0],
+                                      numberOfBlocksRequiredFrom[otherProc],
+                                      otherProc);
+      }
+
+      netForMoveSending.Receive();
+      netForMoveSending.Send();
+      netForMoveSending.Wait();
+
+      // OK, now to get on with the actual sending of the data...
+      // Except first, it'll be helpful to organise things by blocks.
+      std::map<site_t, std::vector<proc_t> > coresInterestedInEachBlock;
+      std::map<site_t, std::vector<idx_t> > moveDataForEachBlock;
+      std::map<site_t, idx_t> movesForEachLocalBlock;
+
+      // Initialise the moves for each local block to 0. This handles an edge case where a local
+      // block has no moves.
+      for (site_t blockId = 0; blockId < readingResult.GetBlockCount(); ++blockId)
+      {
+        if (procForEachBlock[blockId] == topologyRank)
+        {
+          movesForEachLocalBlock[blockId] = 0;
+        }
+      }
+
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        for (site_t blockNum = 0; blockNum < (site_t) blockIdsXRequiresFromMe[otherProc].size(); ++blockNum)
+        {
+          site_t blockId = blockIdsXRequiresFromMe[otherProc][blockNum];
+
+          log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires block %i from me", otherProc, blockId);
+
+          if (coresInterestedInEachBlock.count(blockId) == 0)
+          {
+            coresInterestedInEachBlock[blockId] = std::vector<proc_t>();
+          }
+
+          coresInterestedInEachBlock[blockId].push_back(otherProc);
+        }
+      }
+
+      for (site_t moveNumber = 0; moveNumber < (site_t) moveData.size(); moveNumber += 3)
+      {
+        site_t blockId = moveData[moveNumber];
+
+        if (moveDataForEachBlock.count(blockId) == 0)
+        {
+          moveDataForEachBlock[blockId] = std::vector<idx_t>();
+        }
+
+        moveDataForEachBlock[blockId].push_back(blockId);
+        moveDataForEachBlock[blockId].push_back(moveData[moveNumber + 1]);
+        moveDataForEachBlock[blockId].push_back(moveData[moveNumber + 2]);
+        movesForEachLocalBlock[blockId]++;
+      }
+
+      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
+      {
+        for (site_t moveNumber = 0; moveNumber < (site_t) moveDataForEachBlock[block].size(); moveNumber += 3)
+        {
+          log::Logger::Log<log::Debug, log::OnePerCore>("Block %i has move data: block %i, site %i to proc %i",
+                                                        block,
+                                                        moveDataForEachBlock[block][moveNumber],
+                                                        moveDataForEachBlock[block][moveNumber + 1],
+                                                        moveDataForEachBlock[block][moveNumber + 2]);
+        }
+      }
+
+      // And it'll also be super-handy to know how many moves we're going to have locally.
+      std::vector<idx_t> movesForEachBlockWeCareAbout(readingResult.GetBlockCount(), 0);
+
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
+            it != blockIdsIRequireFromX[otherProc].end(); ++it)
+        {
+          netForMoveSending.RequestReceive(&movesForEachBlockWeCareAbout[*it], 1, otherProc);
+          log::Logger::Log<log::Debug, log::OnePerCore>("I want the move count for block %i from proc %i",
+                                                        *it,
+                                                        otherProc);
+        }
+
+        for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
+            it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
+        {
+          netForMoveSending.RequestSend(&movesForEachLocalBlock[*it], 1, otherProc);
+          log::Logger::Log<log::Debug, log::OnePerCore>("I'm sending move count for block %i to proc %i",
+                                                        *it,
+                                                        otherProc);
+        }
+      }
+
+      netForMoveSending.Receive();
+      netForMoveSending.Send();
+      netForMoveSending.Wait();
+
+      idx_t totalMovesToReceive = 0;
+
+      for (site_t blockId = 0; blockId < readingResult.GetBlockCount(); ++blockId)
+      {
+        totalMovesToReceive += movesForEachBlockWeCareAbout[blockId];
+      }
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("I'm expecting a total of %i moves", totalMovesToReceive);
+
+      // Gather the moves to the places they need to go to.
+      // Moves list has block, site id, destination proc
+      idx_t* movesList = new idx_t[totalMovesToReceive * 3];
+
+      idx_t localMoveId = 0;
+
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      {
+        movesFromEachProc[otherProc] = 0;
+
+        for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
+            it != blockIdsIRequireFromX[otherProc].end(); ++it)
+        {
+          if (movesForEachBlockWeCareAbout[*it] > 0)
+          {
+            netForMoveSending.RequestReceive(&movesList[localMoveId * 3],
+                                             3 * movesForEachBlockWeCareAbout[*it],
+                                             otherProc);
+            localMoveId += movesForEachBlockWeCareAbout[*it];
+            movesFromEachProc[otherProc] += movesForEachBlockWeCareAbout[*it];
+
+            log::Logger::Log<log::Debug, log::OnePerCore>("Expect %i moves from from proc %i about block %i",
+                                                          movesForEachBlockWeCareAbout[*it],
+                                                          otherProc,
+                                                          *it);
+          }
+        }
+
+        for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
+            it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
+        {
+          if (moveDataForEachBlock[*it].size() > 0)
+          {
+            netForMoveSending.RequestSend(&moveDataForEachBlock[*it][0], moveDataForEachBlock[*it].size(), otherProc);
+
+            log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
+                                                          moveDataForEachBlock[*it].size() / 3,
+                                                          otherProc,
+                                                          *it);
+          }
+        }
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("%i moves from proc %i",
+                                                      movesFromEachProc[otherProc],
+                                                      otherProc);
       }
 /*
+      netForMoveSending.Receive();
+      netForMoveSending.Send();
+      netForMoveSending.Wait();
+
+      timings[hemelb::reporting::Timers::dbg2].Stop();
+
       int dbg_rank = 0;
       int dbg_size = 0;
-      MPI_Comm_rank( topologyComm, &dbg_rank);
-      MPI_Comm_size( topologyComm, &dbg_size);
+      MPI_Comm_rank(topologyComm, &dbg_rank);
+      MPI_Comm_size(topologyComm, &dbg_size);
       long long int* derek_dbg_blockbuffer = new long long int[dbg_size];
 
       MPI_Gather(&derek_dbg_fluidsiteblocks,
-                   1,
-                   MPI_LONG_LONG_INT,
-                   derek_dbg_blockbuffer,
-                   1,
-                   MPI_LONG_LONG_INT,
+                 1,
+                 MPI_LONG_LONG_INT,
+                 derek_dbg_blockbuffer,
+                 1,
+                 MPI_LONG_LONG_INT,
                    0,
-                   topologyComm);
+                 topologyComm);
 
       if(dbg_rank == 0) {
-        for(int i=0; i<dbg_size; i++) {
-          std::cerr << "proc id: " <<  i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
+      {
+        for (int i = 0; i < dbg_size; i++)
+        {
+          std::cerr << "proc id: " << i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
         }
       }
 
       delete[] derek_dbg_blockbuffer;
 */
-      // ... clean up...
-      MPI_Type_free(&moveType);
-      delete[] offsets;
-
       // ... and return the list of moves.
       return movesList;
     }
@@ -1926,8 +2200,8 @@ namespace hemelb
             if (readingResult.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
             {
               // ... set its rank to be the rank it had before optimisation.
-              readingResult.Blocks[block].Sites[siteIndex].targetProcessor
-                  = ConvertTopologyRankToGlobalRank(originalProc);
+              readingResult.Blocks[block].Sites[siteIndex].targetProcessor =
+                  ConvertTopologyRankToGlobalRank(originalProc);
             }
           }
         }
@@ -1978,9 +2252,9 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank)
-        ? topologyRankIn
-        : (topologyRankIn + 1);
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank) ?
+        topologyRankIn :
+        (topologyRankIn + 1);
     }
 
   }
