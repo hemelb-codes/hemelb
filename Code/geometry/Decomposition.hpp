@@ -32,7 +32,7 @@ namespace hemelb
       }
 
       // Share the counts of needed blocks
-      unsigned int blocksNeededSize[readingGroupSize];
+      std::vector<unsigned int>blocksNeededSize(readingGroupSize);
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
