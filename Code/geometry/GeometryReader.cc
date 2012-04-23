@@ -1577,6 +1577,8 @@ namespace hemelb
                       topologyComm,
                       &requests[2 * neigh + 1]);
 
+            MPI_Wait(&requests[2 * neigh + 1], MPI_STATUS_IGNORE);
+
             // Sending arrays don't perform comparison.
             continue;
           }
@@ -1664,7 +1666,6 @@ namespace hemelb
                                                           adj1,
                                                           adj2,
                                                           neigh);
-
           }
         }
 
@@ -2003,18 +2004,6 @@ namespace hemelb
         moveDataForEachBlock[blockId].push_back(moveData[moveNumber + 1]);
         moveDataForEachBlock[blockId].push_back(moveData[moveNumber + 2]);
         movesForEachLocalBlock[blockId]++;
-      }
-
-      for (site_t block = 0; block < readingResult.GetBlockCount(); ++block)
-      {
-        for (site_t moveNumber = 0; moveNumber < (site_t) moveDataForEachBlock[block].size(); moveNumber += 3)
-        {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Block %i has move data: block %i, site %i to proc %i",
-                                                        block,
-                                                        moveDataForEachBlock[block][moveNumber],
-                                                        moveDataForEachBlock[block][moveNumber + 1],
-                                                        moveDataForEachBlock[block][moveNumber + 2]);
-        }
       }
 
       // And it'll also be super-handy to know how many moves we're going to have locally.
