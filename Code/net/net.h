@@ -26,7 +26,6 @@ namespace hemelb
         long long int BytesSent;
         long long int SyncPointsCounted;
 
-
         void Receive();
         void Send();
         void Wait();
@@ -44,8 +43,7 @@ namespace hemelb
         {
           if (sendReceivePrepped)
           {
-            std::cerr
-                << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
+            std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
             exit(1);
           }
 
@@ -101,11 +99,14 @@ namespace hemelb
         ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
         template<typename T>
-        void AddToList(T* iNew, int iLength, ProcComms *bMetaData)
+        void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
         {
-          bMetaData->PointerList.push_back(iNew);
-          bMetaData->LengthList.push_back(iLength);
-          bMetaData->TypeList.push_back(MpiDataType<T>());
+          if (dataLength > 0)
+          {
+            procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
+            procCommsObjectToAddTo->LengthList.push_back(dataLength);
+            procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
+          }
         }
 
         void EnsurePreparedToSendReceive();
