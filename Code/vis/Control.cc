@@ -412,7 +412,7 @@ namespace hemelb
 
         if (childrenResultsByStartIt.size() > 0)
         {
-          mapType::iterator it = childrenResultsByStartIt.begin();
+          multimapType::iterator it = childrenResultsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
