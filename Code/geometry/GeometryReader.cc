@@ -1813,13 +1813,11 @@ namespace hemelb
         {
           proc_t residentProc = procForEachBlock[block];
 
-          if (blockIdsIRequireFromX.count(residentProc) == 0)
-          {
-            blockIdsIRequireFromX[residentProc] = std::vector<site_t>();
-          }
-
           blockIdsIRequireFromX[residentProc].push_back(block);
-          log::Logger::Log<log::Debug, log::OnePerCore>("I require block %i from proc %i (running total %i)", block, residentProc, blockIdsIRequireFromX[residentProc].size());
+          log::Logger::Log<log::Debug, log::OnePerCore>("I require block %i from proc %i (running total %i)",
+                                                        block,
+                                                        residentProc,
+                                                        blockIdsIRequireFromX[residentProc].size());
         }
       }
 
@@ -1832,11 +1830,6 @@ namespace hemelb
       {
         proc_t target_proc = moveData[moveNumber + 2];
         site_t blockId = moveData[moveNumber];
-
-        if (blockForcedUponX.count(target_proc) == 0)
-        {
-          blockForcedUponX[target_proc] = std::vector<site_t>();
-        }
 
         if (std::count(blockForcedUponX[target_proc].begin(), blockForcedUponX[target_proc].end(), blockId) == 0)
         {
@@ -1954,6 +1947,7 @@ namespace hemelb
         netForMoveSending.RequestReceive(&blockIdsXRequiresFromMe[otherProc][0],
                                          numberOfBlocksXRequiresFromMe[otherProc],
                                          otherProc);
+
         netForMoveSending.RequestSend(&blockIdsIRequireFromX[otherProc][0],
                                       numberOfBlocksRequiredFrom[otherProc],
                                       otherProc);
@@ -2102,42 +2096,42 @@ namespace hemelb
           }
         }
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("%i moves from proc %i",
-                                                      movesFromEachProc[otherProc],
-                                                      otherProc);
+        log::Logger::Log<log::Debug, log::OnePerCore>("%i moves from proc %i", movesFromEachProc[otherProc], otherProc);
       }
-/*
+
       netForMoveSending.Receive();
       netForMoveSending.Send();
       netForMoveSending.Wait();
 
-      timings[hemelb::reporting::Timers::dbg2].Stop();
+      /*
 
-      int dbg_rank = 0;
-      int dbg_size = 0;
-      MPI_Comm_rank(topologyComm, &dbg_rank);
-      MPI_Comm_size(topologyComm, &dbg_size);
-      long long int* derek_dbg_blockbuffer = new long long int[dbg_size];
+       timings[hemelb::reporting::Timers::dbg2].Stop();
 
-      MPI_Gather(&derek_dbg_fluidsiteblocks,
-                 1,
-                 MPI_LONG_LONG_INT,
-                 derek_dbg_blockbuffer,
-                 1,
-                 MPI_LONG_LONG_INT,
-                   0,
-                 topologyComm);
+       int dbg_rank = 0;
+       int dbg_size = 0;
+       MPI_Comm_rank(topologyComm, &dbg_rank);
+       MPI_Comm_size(topologyComm, &dbg_size);
+       long long int* derek_dbg_blockbuffer = new long long int[dbg_size];
 
-      if(dbg_rank == 0) {
-      {
-        for (int i = 0; i < dbg_size; i++)
-        {
-          std::cerr << "proc id: " << i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
-        }
-      }
+       MPI_Gather(&derek_dbg_fluidsiteblocks,
+       1,
+       MPI_LONG_LONG_INT,
+       derek_dbg_blockbuffer,
+       1,
+       MPI_LONG_LONG_INT,
+       0,
+       topologyComm);
 
-      delete[] derek_dbg_blockbuffer;
-*/
+       if(dbg_rank == 0) {
+       {
+       for (int i = 0; i < dbg_size; i++)
+       {
+       std::cerr << "proc id: " << i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
+       }
+       }
+
+       delete[] derek_dbg_blockbuffer;
+       */
       // ... and return the list of moves.
       return movesList;
     }
