@@ -41,15 +41,18 @@ namespace hemelb
         template<class T>
         void RequestSend(T* oPointer, int iCount, proc_t iToRank)
         {
-          if (sendReceivePrepped)
+          if (iCount > 0)
           {
-            std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
-            exit(1);
+            if (sendReceivePrepped)
+            {
+              std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
+              exit(1);
+            }
+
+            ProcComms *lComms = GetProcComms(iToRank, true);
+
+            AddToList(oPointer, iCount, lComms);
           }
-
-          ProcComms *lComms = GetProcComms(iToRank, true);
-
-          AddToList(oPointer, iCount, lComms);
         }
 
         /**
@@ -63,16 +66,19 @@ namespace hemelb
         template<class T>
         void RequestReceive(T* oPointer, int iCount, proc_t iFromRank)
         {
-          if (sendReceivePrepped)
+          if (iCount > 0)
           {
-            std::cerr
-                << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
-            exit(1);
+            if (sendReceivePrepped)
+            {
+              std::cerr
+                  << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
+              exit(1);
+            }
+
+            ProcComms *lComms = GetProcComms(iFromRank, false);
+
+            AddToList(oPointer, iCount, lComms);
           }
-
-          ProcComms *lComms = GetProcComms(iFromRank, false);
-
-          AddToList(oPointer, iCount, lComms);
         }
 
       private:
@@ -101,12 +107,9 @@ namespace hemelb
         template<typename T>
         void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
         {
-          if (dataLength > 0)
-          {
-            procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
-            procCommsObjectToAddTo->LengthList.push_back(dataLength);
-            procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
-          }
+          procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
+          procCommsObjectToAddTo->LengthList.push_back(dataLength);
+          procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
         }
 
         void EnsurePreparedToSendReceive();
