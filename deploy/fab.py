@@ -641,6 +641,7 @@ def manual(cmd):
     pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
     local(pre_cmd + cmd, capture=False)
 
+@task
 def steer(job,orbit=False,view=False):
     with_job(job)
     env.running_node=run(template("cat $job_results/env_details.asc"))
