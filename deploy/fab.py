@@ -631,18 +631,27 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                     modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
 
-
 @task
 def get_running_location(job):
     with_job(job)
     run(template("cat $job_results/env_details.asc"))
 
+def manual(cmd):
+    #From the fabric wiki, bypass fabric internal ssh control
+    pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
+    local(pre_cmd + cmd, capture=False)
+
 @task
-def steer(job,orbit=False):
+def steer(job,orbit=False,view=False):
     with_job(job)
     env.running_node=run(template("cat $job_results/env_details.asc"))
-    command="python $repository_path/Tools/steering/python/hemelb_steering/timing_client.py "
-    if orbit:
-        run(template(command+"--orbit ${running_node}"))
+    command="python $repository_path/Tools/steering/python/hemelb_steering/"
+    if view:
+        client='steering.py'
+        manual(template(command+client+" ${running_node}"))
     else:
-        run(template(command+"${running_node}"))
+        client='timing_client.py'
+        if orbit:
+            run(template(command+client+" --orbit ${running_node}"))
+        else:
+            run(template(command+client+" ${running_node}"))
