@@ -630,6 +630,7 @@ namespace hemelb
             for (site_t localSite = 0; localSite < readingResult.GetSitesPerBlock(); ++localSite)
             {
               myProcForSite[localSite] = readingResult.Blocks[block].Sites[localSite].targetProcessor;
+
               dummySiteData[localSite * latticeInfo.GetNumVectors()] =
                   readingResult.Blocks[block].Sites[localSite].isFluid;
 
@@ -678,9 +679,9 @@ namespace hemelb
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                             myProcForSite[site],
-                                                            procForSiteRecv[site],
                                                             site,
-                                                            block);
+                                                            block,
+                                                            procForSiteRecv[site]);
             }
 
             if (readingResult.Blocks[block].Sites.size() > 0)
@@ -1457,6 +1458,7 @@ namespace hemelb
       real_t tolerance = 1.001F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+
       ParMETIS_V3_PartKway(vtxDistribn,
                            adjacenciesPerVertex,
                            adjacencies,
@@ -1553,6 +1555,8 @@ namespace hemelb
             // Send the array length.
             counts[neigh] = 2 * adjByNeighProc[neigh].size();
             MPI_Isend(&counts[neigh], 1, MpiDataType(counts[0]), neigh, 42, topologyComm, &requests[2 * neigh]);
+
+            MPI_Wait(&requests[2 * neigh], MPI_STATUS_IGNORE);
 
             // Create a sendable array (std::lists aren't organised in a sendable format).
             data[neigh] = new idx_t[counts[neigh]];
@@ -1668,9 +1672,6 @@ namespace hemelb
                                                           neigh);
           }
         }
-
-        // Wait for everything to complete before deallocating.
-        MPI_Waitall((int) topologySize, requests, MPI_STATUSES_IGNORE);
 
         delete[] counts;
         delete[] requests;
@@ -1893,7 +1894,6 @@ namespace hemelb
           for (std::vector<site_t>::iterator it = blocksForcedOnMeByEachProc[otherProc].begin();
               it != blocksForcedOnMeByEachProc[otherProc].end(); ++it)
           {
-
             if (std::count(blockIdsIRequireFromX[otherProc].begin(), blockIdsIRequireFromX[otherProc].end(), *it) == 0)
             {
               blockIdsIRequireFromX[otherProc].push_back(*it);
@@ -1901,6 +1901,47 @@ namespace hemelb
               log::Logger::Log<log::Debug, log::OnePerCore>("I'm being forced to take block %i from proc %i",
                                                             *it,
                                                             otherProc);
+            }
+
+            // We also need to take all neighbours of the forced block from their processors.
+            util::Vector3D<site_t> blockCoords = readingResult.GetBlockCoordinatesFromBlockId(*it);
+
+            // Iterate over every direction we might need (except 0 as we obviously already have
+            // that block in the list).
+            for (Direction direction = 1; direction < lb::lattices::D3Q27::NUMVECTORS; ++direction)
+            {
+              // Calculate the putative neighbour's coordinates...
+              util::Vector3D<site_t> neighbourCoords = blockCoords
+                  + util::Vector3D<site_t>(lb::lattices::D3Q27::CX[direction],
+                                           lb::lattices::D3Q27::CY[direction],
+                                           lb::lattices::D3Q27::CZ[direction]);
+
+              // If the neighbour is a real block...
+              if (readingResult.AreBlockCoordinatesValid(neighbourCoords))
+              {
+                // Get the block id, and check whether it has any fluid sites...
+                site_t neighbourBlockId = readingResult.GetBlockIdFromBlockCoordinates(neighbourCoords.x,
+                                                                                       neighbourCoords.y,
+                                                                                       neighbourCoords.z);
+                proc_t neighbourBlockProc = procForEachBlock[neighbourBlockId];
+
+                if (neighbourBlockProc >= 0)
+                {
+                  // Check whether this is a block we're already interested in from that neighbour.
+                  if (std::count(blockIdsIRequireFromX[neighbourBlockProc].begin(),
+                                 blockIdsIRequireFromX[neighbourBlockProc].end(),
+                                 neighbourBlockId) == 0)
+                  {
+                    // Then add it to the list of blocks we're getting from that neighbour.
+                    blockIdsIRequireFromX[neighbourBlockProc].push_back(neighbourBlockId);
+
+                    log::Logger::Log<log::Debug, log::OnePerCore>("I need to also take block %i from proc %i",
+                                                                  neighbourBlockId,
+                                                                  neighbourBlockProc);
+
+                  }
+                }
+              }
             }
           }
         }
