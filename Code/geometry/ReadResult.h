@@ -120,11 +120,32 @@ namespace hemelb
         }
 
         /***
+         * Get the coordinates of a block from a block id.
+         */
+        util::Vector3D<site_t> GetBlockCoordinatesFromBlockId(site_t blockId) const
+        {
+          site_t blockZ = blockId % blocks.z;
+          site_t remainder = blockId / blocks.z;
+          site_t blockY = remainder % blocks.y;
+          site_t blockX = remainder / blocks.y;
+          return util::Vector3D<site_t>(blockX, blockY, blockZ);
+        }
+
+        /***
          * Get the i.d. of a site, i.e. the one-d coordinate, from the three-d coordinate.
          */
         site_t GetSiteIdFromSiteCoordinates(site_t siteI, site_t siteJ, site_t siteK) const
         {
           return (siteI * blockSize + siteJ) * blockSize + siteK;
+        }
+
+        /**
+         * True if the given block coordinates are within the geometry bounding-box.
+         */
+        bool AreBlockCoordinatesValid(const util::Vector3D<site_t>& blockCoords) const
+        {
+          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0 && blockCoords.x < blocks.x
+              && blockCoords.y < blocks.y && blockCoords.z < blocks.z;
         }
     };
 
