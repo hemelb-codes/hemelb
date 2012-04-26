@@ -89,8 +89,8 @@ namespace hemelb
         char* headerBuffer = new char[headerSize];
         io::writers::xdr::XdrMemWriter writer(headerBuffer, headerSize);
 
-        writer << (uint32_t) io::formats::HemeLbMagicNumber << (uint32_t) io::formats::Extraction::MagicNumber
-            << (uint32_t) io::formats::Extraction::VersionNumber;
+        writer << (uint32_t) io::formats::HemeLbMagicNumber << (uint32_t) io::formats::extraction::MagicNumber
+            << (uint32_t) io::formats::extraction::VersionNumber;
 
         // Write the number of fields and their names and lengths (in float counts)
         writer << (uint32_t) outputSpec->fields.size();
