@@ -5,6 +5,7 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
+#include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
