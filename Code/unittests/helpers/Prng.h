@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_HELPERS_PRNG_H
 
 #include <limits>
+#include <stdint.h>
 
 namespace hemelb
 {
