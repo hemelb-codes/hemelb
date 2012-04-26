@@ -1823,6 +1823,8 @@ namespace hemelb
         }
       }
 
+      timings[hemelb::reporting::Timers::moveForcingNumbers].Start();
+
       // We also need to force some data upon blocks, i.e. when they're receiving data from a new
       // block they didn't previously want to know about.
       std::map<proc_t, std::vector<site_t> > blockForcedUponX;
@@ -1848,15 +1850,11 @@ namespace hemelb
       net::Net netForMoveSending(topologyComm);
 
       std::vector<proc_t> blocksForcedOnMe(topologySize, 0);
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
-      {
-        netForMoveSending.RequestReceive(&blocksForcedOnMe[otherProc], 1, otherProc);
-        netForMoveSending.RequestSend(&numberOfBlocksIForceUponX[otherProc], 1, otherProc);
-      }
 
-      netForMoveSending.Receive();
-      netForMoveSending.Send();
-      netForMoveSending.Wait();
+      MPI_Alltoall(&numberOfBlocksIForceUponX[0], 1, MpiDataType<proc_t>(), &blocksForcedOnMe[0], 1, MpiDataType<proc_t>(), topologyComm);
+
+      timings[hemelb::reporting::Timers::moveForcingNumbers].Stop();
+      timings[hemelb::reporting::Timers::moveForcingData].Start();
 
       // Now get all the blocks being forced upon me.
       std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
@@ -1947,6 +1945,9 @@ namespace hemelb
         }
       }
 
+      timings[hemelb::reporting::Timers::moveForcingData].Stop();
+      timings[hemelb::reporting::Timers::blockRequirements].Start();
+
       // Now we want to spread this info around so that each core knows which blocks each other
       // requires from it.
       std::vector<site_t> numberOfBlocksRequiredFrom(topologySize, 0);
@@ -1998,6 +1999,10 @@ namespace hemelb
       netForMoveSending.Receive();
       netForMoveSending.Send();
       netForMoveSending.Wait();
+
+      timings[hemelb::reporting::Timers::blockRequirements].Stop();
+
+      timings[hemelb::reporting::Timers::moveCountsSending].Start();
 
       // OK, now to get on with the actual sending of the data...
       // Except first, it'll be helpful to organise things by blocks.
@@ -2075,6 +2080,9 @@ namespace hemelb
       netForMoveSending.Send();
       netForMoveSending.Wait();
 
+      timings[hemelb::reporting::Timers::moveCountsSending].Stop();
+      timings[hemelb::reporting::Timers::moveDataSending].Start();
+
       idx_t totalMovesToReceive = 0;
 
       for (site_t blockId = 0; blockId < readingResult.GetBlockCount(); ++blockId)
@@ -2133,9 +2141,10 @@ namespace hemelb
       netForMoveSending.Send();
       netForMoveSending.Wait();
 
-      /*
+      timings[hemelb::reporting::Timers::moveDataSending].Stop();
+      timings[hemelb::reporting::Timers::dbg2].Stop();
 
-       timings[hemelb::reporting::Timers::dbg2].Stop();
+      /*
 
        int dbg_rank = 0;
        int dbg_size = 0;

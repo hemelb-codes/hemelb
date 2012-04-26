@@ -82,7 +82,7 @@ namespace hemelb
           unzip, //!< Time spend in un-zipping
           moves, //!< Time spent moving things around post-parmetis
           parmetis, //!< Time spent in Parmetis
-          netInitialise, //!< Time spent initialising the network topology
+          latDatInitialise, //!< Time spent initialising the lattice data
           lb, //!< Time spent doing the core lattice boltzman simulation
           lb_calc, //!< Time spent doing calculations in the core lattice boltzmann simulation
           visualisation, //!< Time spent on visualisation
@@ -98,6 +98,11 @@ namespace hemelb
           readBlocksAll,
           dbg1,
           dbg2,
+          moveForcingNumbers,
+          moveForcingData,
+          blockRequirements,
+          moveCountsSending,
+          moveDataSending,
           dbg3,
           dbg4,
           dbg5,
@@ -196,8 +201,14 @@ namespace hemelb
 
     template<class ClockPolicy, class CommsPolicy>
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
-        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Net initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation",
-          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all", "dbg1", "dbg2", "dbg3", "dbg4", "dbg5" };
+        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation",
+          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all", "dbg1", "dbg2",
+          "Move Forcing Counts",
+          "Move Forcing Data",
+          "Block Requirements",
+          "Move Counts Sending",
+          "Move Data Sending",
+          "dbg3", "dbg4", "dbg5" };
   }
 
 }
