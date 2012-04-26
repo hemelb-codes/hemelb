@@ -23,7 +23,7 @@ namespace hemelb
          */
         enum
         {
-          VersionNumber = 1
+          VersionNumber = 2
         };
 
         /**
