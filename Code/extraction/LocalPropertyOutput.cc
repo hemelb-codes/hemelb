@@ -10,21 +10,19 @@ namespace hemelb
   namespace extraction
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec) :
-        dataSource(dataSource), outputSpec(outputSpec)
+      dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
       MPI_File_open(MPI_COMM_WORLD,
-                    const_cast<char*>(outputSpec->filename.c_str()),
+                    const_cast<char*> (outputSpec->filename.c_str()),
                     MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
                     MPI_INFO_NULL,
                     &outputFile);
 
+      // Count sites on this task
       uint64_t siteCount = 0;
-
       dataSource.Reset();
-
-      // Count the sites.
       while (dataSource.ReadNext())
       {
         if (outputSpec->geometry->Include(dataSource, dataSource.GetPosition()))
@@ -34,99 +32,102 @@ namespace hemelb
       }
 
       // Calculate how long local writes need to be.
-      //  * 3 longs for the position of a site.
-      writeLength = 3 * 8;
 
+      // First get the length per-site
+      // Always have 3 uint32's for the position of a site
+      writeLength = 3 * 4;
+
+      // Then get add each field's length
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
         writeLength += 4 * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
-      //  * these are per local site.
+      //  Now multiply by local site count
       writeLength *= siteCount;
 
+      // The IO proc also writes the iteration number
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        // The IO proc also writes the iteration number
         writeLength += 8;
       }
 
-      // Calculate the total length written during one iteration.
-      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t>(), MPI_SUM, MPI_COMM_WORLD);
+      //TODO: These two MPI calls can be replaced with one
 
-      // Calculate the total number of sites to be written.
+      // Everyone needs to know the total length written during one iteration.
+      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t> (), MPI_SUM, MPI_COMM_WORLD);
+
+      // Only the root process must know the total number of sites written
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t>(), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
+
+      unsigned totalHeaderLength = 0;
 
       // Write the header information on the IO proc.
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        // Three uints for HemeLB magic number, extraction file magic number and
-        // version number.
-        // Field count (uint)
-        // Descriptions (variable strings).
-        // Site count (ulong)
-        // Voxel size (float)
-        // Origin (3*float)
-        unsigned headerSize = 3 * 4 + 4 + 8 + 4 + 3 * 4;
-
+        // Compute the length of the field header
+        unsigned fieldHeaderLength = 0;
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
-          // An extra:
-          //  4 bytes are used for the string length in XDR.
-          //  4 bytes are used for the number of floats in each field
-          size_t stringLength = outputSpec->fields[outputNumber].name.length();
-          headerSize += stringLength + 4 + 4;
+          // Name
+          fieldHeaderLength += io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
+          // Uint32 for number of fields
+          fieldHeaderLength += 4;
+        }
 
-          // String content is rounded-up to the nearest 4 bytes
-          if (stringLength % 4 != 0)
+        // Create a header buffer
+        totalHeaderLength = io::formats::extraction::MainHeaderLength + fieldHeaderLength;
+        char* headerBuffer = new char[totalHeaderLength];
+
+        {
+          // Encoder for ONLY the main header (note shorter length)
+          io::writers::xdr::XdrMemWriter mainHeaderWriter(headerBuffer, io::formats::extraction::MainHeaderLength);
+
+          // Fill it
+          mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber)
+              << uint32_t(io::formats::extraction::MagicNumber) << uint32_t(io::formats::extraction::VersionNumber);
+          mainHeaderWriter << double(dataSource.GetVoxelSize());
+          const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
+          mainHeaderWriter << double(origin[0]) << double(origin[1]) << double(origin[2]);
+
+          // Write the total site count and number of fields
+          mainHeaderWriter << uint64_t(allSiteCount) << uint32_t(outputSpec->fields.size())
+              << uint32_t(fieldHeaderLength);
+          // Main header now finished.
+          // Exiting the block kills the mainHeaderWriter.
+        }
+        {
+          // Create the field header writer
+          io::writers::xdr::XdrMemWriter fieldHeaderWriter(headerBuffer + io::formats::extraction::MainHeaderLength,
+                                                           fieldHeaderLength);
+          // Write it
+          for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
-            headerSize += (4 - (stringLength % 4));
+            fieldHeaderWriter << outputSpec->fields[outputNumber].name
+                << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type));
           }
+          //Exiting the block cleans up the writer
         }
-
-        // Create a header buffer, and write it.
-        char* headerBuffer = new char[headerSize];
-        io::writers::xdr::XdrMemWriter writer(headerBuffer, headerSize);
-
-        writer << (uint32_t) io::formats::HemeLbMagicNumber << (uint32_t) io::formats::extraction::MagicNumber
-            << (uint32_t) io::formats::extraction::VersionNumber;
-
-        // Write the number of fields and their names and lengths (in float counts)
-        writer << (uint32_t) outputSpec->fields.size();
-        for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
-        {
-          writer << outputSpec->fields[outputNumber].name;
-        }
-        for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
-        {
-          writer << (uint32_t) GetFieldLength(outputSpec->fields[outputNumber].type);
-        }
-
-        // Write the total site count.
-        writer << (uint64_t) allSiteCount;
-
-        // Write voxel size
-        writer << (float) dataSource.GetVoxelSize();
-
-        // Write origin
-        const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
-        writer << (float) origin[0] << (float) origin[1] << (float) origin[2];
 
         // Write from the buffer
-        MPI_File_write_at(outputFile, 0, headerBuffer, headerSize, MPI_BYTE, MPI_STATUS_IGNORE);
+        MPI_File_write_at(outputFile, 0, headerBuffer, totalHeaderLength, MPI_BYTE, MPI_STATUS_IGNORE);
 
         // And clear it up.
         delete[] headerBuffer;
+      }
 
-        // Calculate where each core should start writing - for core 0 this is easy.
-        // It passes the value for core 1 to the core.
-        localDataOffsetIntoFile = headerSize;
+      // Calculate where each core should start writing
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        // For core 0 this is easy: it passes the value for core 1 to the core.
+        localDataOffsetIntoFile = totalHeaderLength;
 
+        // TODO: is this correct in the no steering case?
         if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t>(), 1, 1, MPI_COMM_WORLD);
+          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
           localDataOffsetIntoFile -= writeLength;
         }
       }
@@ -135,7 +136,7 @@ namespace hemelb
         // Receive the writing start position from the previous core.
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
-                 MpiDataType<uint64_t>(),
+                 MpiDataType<uint64_t> (),
                  topology::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
@@ -148,7 +149,7 @@ namespace hemelb
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
-                   MpiDataType<uint64_t>(),
+                   MpiDataType<uint64_t> (),
                    topology::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
@@ -167,9 +168,9 @@ namespace hemelb
       delete[] buffer;
     }
 
-    bool LocalPropertyOutput::ShouldWrite(unsigned long iterationNumber) const
+    bool LocalPropertyOutput::ShouldWrite(unsigned long timestepNumber) const
     {
-      return ( (iterationNumber % outputSpec->frequency) == 0);
+      return ( (timestepNumber % outputSpec->frequency) == 0);
     }
 
     const PropertyOutputFile* LocalPropertyOutput::GetOutputSpec() const
@@ -177,10 +178,10 @@ namespace hemelb
       return outputSpec;
     }
 
-    void LocalPropertyOutput::Write(unsigned long iterationNumber)
+    void LocalPropertyOutput::Write(unsigned long timestepNumber)
     {
       // Don't write if we shouldn't this iteration.
-      if (!ShouldWrite(iterationNumber))
+      if (!ShouldWrite(timestepNumber))
       {
         return;
       }
@@ -197,7 +198,7 @@ namespace hemelb
       // Firstly, the IO proc must write the iteration number.
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        xdrWriter << (uint64_t) iterationNumber;
+        xdrWriter << (uint64_t) timestepNumber;
       }
 
       dataSource.Reset();
@@ -208,7 +209,7 @@ namespace hemelb
         if (outputSpec->geometry->Include(dataSource, position))
         {
           // Write the position
-          xdrWriter << (uint64_t) position.x << (uint64_t) position.y << (uint64_t) position.z;
+          xdrWriter << (uint32_t) position.x << (uint32_t) position.y << (uint32_t) position.z;
 
           // Write for each field.
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
