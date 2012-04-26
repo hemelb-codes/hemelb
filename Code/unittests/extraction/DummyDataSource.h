@@ -99,11 +99,11 @@ namespace hemelb
           {
             return 0.f;
           }
-          bool IsValidLatticeSite(const hemelb::util::Vector3D<long long int>&) const
+          bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {
             return true;
           }
-          bool IsAvailable(const hemelb::util::Vector3D<long long int>&) const
+          bool IsAvailable(const hemelb::util::Vector3D<site_t>&) const
           {
             return true;
           }
