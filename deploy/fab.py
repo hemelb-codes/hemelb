@@ -440,6 +440,8 @@ def hemelb(config,**args):
     execute(put_configs,config)
     job(dict(script='hemelb',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
+    if args.get('steer',False):
+        execute(steer,env.name,retry=True)
 
 @task
 def hemelbs(config,**args):
@@ -642,16 +644,32 @@ def manual(cmd):
     local(pre_cmd + cmd, capture=False)
 
 @task
-def steer(job,orbit=False,view=False):
+def steer(job,orbit=False,view=False,retry=False,framerate=None):
     with_job(job)
-    env.running_node=run(template("cat $job_results/env_details.asc"))
-    command="python $repository_path/Tools/steering/python/hemelb_steering/"
     if view:
-        client='steering.py'
+        env.steering_client='steering.py'
         manual(template(command+client+" ${running_node}"))
     else:
-        client='timing_client.py'
-        if orbit:
-            run(template(command+client+" --orbit ${running_node}"))
-        else:
-            run(template(command+client+" ${running_node}"))
+        env.steering_client='timing_client.py'
+    if orbit:
+        env.steering_options="--orbit"
+    else:
+        env.steering_options=""
+    if retry:
+       env.steering_options+=" --retry"
+    if framerate:
+        env.steering_options+=" --MaxFramerate=framerate"
+    command_template="python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
+    if retry:
+        while True:
+            try:
+                env.running_node=run(template("cat $job_results/env_details.asc"))
+                run(template(command_template))
+                break
+            except:
+                print "Couldn't connect. Will retry"
+                execute(stat)
+                time.sleep(10)
+    else:
+        env.running_node=run(template("cat $job_results/env_details.asc"))
+        run(template(command_template))
