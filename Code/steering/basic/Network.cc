@@ -19,8 +19,8 @@ namespace hemelb
 {
   namespace steering
   {
-    Network::Network(int steeringSessionId) :
-      clientConnection(steeringSessionId)
+    Network::Network(int steeringSessionId, reporting::Timers & timings) :
+      clientConnection(steeringSessionId, timings)
     {
 
     }
@@ -118,7 +118,8 @@ namespace hemelb
 
     bool Network::IsConnected()
     {
-      return clientConnection.GetWorkingSocket() > 0;
+      int res=clientConnection.GetWorkingSocket();
+      return res > 0;
     }
 
     /**

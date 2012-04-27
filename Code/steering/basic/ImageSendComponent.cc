@@ -75,6 +75,7 @@ namespace hemelb
       }
 
       // Send to the client.
+      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
       mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
     }
 
@@ -99,8 +100,8 @@ namespace hemelb
         }
         else
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Image-send component requesting new render, %f seconds since last one.",
-                                                        deltaTime);
+          log::Logger::Log<log::Debug, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
+                                                        deltaTime, mSimState->GetTimeStep(), MaxFramerate);
           lastRender = frameTimeStart;
           return true;
         }
