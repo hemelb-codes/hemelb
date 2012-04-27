@@ -14,7 +14,7 @@ namespace hemelb
     class Network : public net::IteratedAction
     {
       public:
-        Network(int iSteeringSessionId);
+        Network(int iSteeringSessionId, reporting::Timers & timings);
 
         // Receive a bytestream of known length from a socket into a buffer.
         bool recv_all(char *buf, const int length);
