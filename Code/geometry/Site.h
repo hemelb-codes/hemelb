@@ -86,7 +86,7 @@ namespace hemelb
         template<typename LatticeType>
         inline typename util::constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
         {
-          return latticeData.template GetFOld(index * LatticeType::NUMVECTORS);
+          return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
         inline const SiteData GetSiteData() const

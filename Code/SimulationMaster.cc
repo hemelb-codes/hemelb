@@ -130,13 +130,13 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
-  timings[hemelb::reporting::Timers::netInitialise].Start();
+  timings[hemelb::reporting::Timers::latDatInitialise].Start();
   latticeData
       = hemelb::geometry::LatticeData::Load(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                             latticeType::GetLatticeInfo(),
                                             simConfig->GetDataFilePath(),
                                             timings);
-  timings[hemelb::reporting::Timers::netInitialise].Stop();
+  timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
