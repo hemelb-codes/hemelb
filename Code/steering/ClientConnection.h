@@ -26,11 +26,12 @@ namespace hemelb
         int mCurrentSocket;
         int mListeningSocket;
         bool mIsBroken;
-        reporting::Timers & timers;
         // Use a semaphore to make sure that we don't create two new connections
         // when a broken one is reported simultaneously by two separate threads
         // (for example).
         sem_t mIsBusy;
+        reporting::Timers & timers;
+
     };
   }
 }
