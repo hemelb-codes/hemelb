@@ -11,6 +11,8 @@ import sys
 import os
 import argparse
 import shutil
+import socket
+import time
 from config import config, config_user
 from remote_hemelb import RemoteHemeLB
 
@@ -19,6 +21,7 @@ class Driver(object):
     def __init__(self,clargs):
         # By default, an unsupplied argument does not create a result property
         self.parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
+        self.parser.add_argument("--retry",action='store_true',default=False)
         self.define_args()
         options,extra=self.parser.parse_known_args(clargs)
 
@@ -37,7 +40,19 @@ class Driver(object):
         self.address=config['address']
         
         # This Remote will have now connected, but not attempted to send/receive
-        self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
+        if  self.options['retry']:
+            while True:
+                try:
+                    self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
+                    break
+                except socket.error as (errno,message):
+                    if errno!=61:
+                        raise
+                    else:
+                        print("# No steering server, will retry")
+                        time.sleep(10)
+        else:
+            self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
 
     def define_args(self):
        pass
