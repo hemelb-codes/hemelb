@@ -148,7 +148,7 @@ void SimulationMaster::Initialise()
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    network = new hemelb::steering::Network(steeringSessionId);
+    network = new hemelb::steering::Network(steeringSessionId,timings);
   }
   else
   {
@@ -437,14 +437,18 @@ void SimulationMaster::DoTimeStep()
   // Make sure we're rendering if we're writing this iteration.
   if (writeSnapshotImage)
   {
+    // Here, Start() actually triggers the render.
     snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                       simulationState->GetTimeStep()));
   }
 
   if (simulationState->IsRendering())
   {
+    // Here, Start() actually triggers the render.
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                           simulationState->GetTimeStep()));
+    hemelb::log::Logger::Log<hemelb::log::Debug,
+      hemelb::log::Singleton>("Number of currently rendering images: %d", networkImagesCompleted.size());
     simulationState->SetIsRendering(false);
   }
 
@@ -456,7 +460,7 @@ void SimulationMaster::DoTimeStep()
    This is to be done. */
 
   bool renderForNetworkStream = false;
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc()&&!steeringCpt->readyForNextImage)
   {
     renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
     steeringCpt->readyForNextImage = renderForNetworkStream;
