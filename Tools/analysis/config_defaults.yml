@@ -1,7 +1,7 @@
 results:
     xml_files:
         'results/report.xml':
-            total: 'timings/timer[name="Total"]/mean'
+            total_raw: 'timings/timer[name="Total"]/mean'
             sites: 'geometry/sites'
             images_count: 'results/images'
             snapshots_count: results/snapshots
@@ -15,7 +15,7 @@ results:
             send: 'timings/timer[name="MPI Send"]/mean'
             wait: 'timings/timer[name="MPI Wait"]/mean'
             snapshots_raw: 'timings/timer[name="Snapshots"]/mean'
-            simulation: 'timings/timer[name="Simulation total"]/mean'
+            simulation_raw: 'timings/timer[name="Simulation total"]/mean'
             steps: results/steps/total
             snapshot_normalisation: 'timings/timer[name="Snapshots"]/normalisation'
             changeset: build/revision
@@ -28,6 +28,8 @@ results:
             reading_preliminaries: 'timings/timer[name="Read Blocks prelim"]/mean'
             reading_blocks: 'timings/timer[name="Read blocks all"]/mean'
             reading_communications: 'timings/timer[name="Reading communications"]/mean'
+            steering_wait_raw: 'timings/timer[name="Steering Client Wait"]/local'
+            steering_wait_raw_2: 'timings/timer[name="Steering Client Wait Time"]/local'
             parsing: 'timings/timer[name="Parsing"]/mean'
             read_io: 'timings/timer[name="Read IO"]/mean'
             block_count: 'geometry/blocks'
@@ -67,10 +69,20 @@ results:
         revision: '{rev}'
         revision_date: '{date|isodate}'
         branch: '{branch}'
+    ssv_files:
+      'steering_results.txt':
+        steering_step: 0
+        steering_elapsed_steps: 1
+        steering_latitude: 2
+        steering_longitude: 3
+        steering_elapsed_time: 4
+        steering_pixels: 5
+        
         
     compound_properties:
         snapshots_norm: (snapshots_count if normalised else 1.0)
         images_norm: (images_count if normalised else 1.0)
+        steering_wait: (steering_wait_raw if steering_wait_raw else steering_wait_raw_2 if steering_wait_raw_2 else 0)
         snapshots: (snapshots_raw * snapshots_norm)
         visualisation: (visualisation_raw * images_norm)
         lb_calc_rate: (sites*steps*1.0)/((cores-1.0)*lb)
@@ -82,6 +94,8 @@ results:
         snapshot_velocity: (sites*snapshots_count*1.0/(cores*snapshots))
         visualisation_velocity: (sites*images_count*1.0/(cores*visualisation))
         non_io: (simulation- snapshots - visualisation)
+        simulation: (simulation_raw-steering_wait)
+        total: (total_raw-steering_wait)
         setup: total-simulation
         sites_per_core: (sites*1.0/cores)
         core_hours: (total*cores*1.0/(60*60))
@@ -95,6 +109,7 @@ results:
         gmy_sites_per_block: gmy_block_size**3
         gmy_fluid_fraction: gmy_fluid_site_count*1.0/(gmy_sites_per_block*gmy_block_count)
         reading_group: reading_group_raw if reading_group_raw else 5
+        steering_frame_rate: float(len(steering_elapsed_time))/sum(steering_elapsed_time)
 
     yaml_files:
         'env.yml':
