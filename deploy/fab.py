@@ -441,7 +441,7 @@ def hemelb(config,**args):
     job(dict(script='hemelb',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
     if args.get('steer',False):
-        execute(steer,env.name,retry=True)
+        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
 @task
 def hemelbs(config,**args):
@@ -658,7 +658,7 @@ def steer(job,orbit=False,view=False,retry=False,framerate=None):
     if retry:
        env.steering_options+=" --retry"
     if framerate:
-        env.steering_options+=" --MaxFramerate=framerate"
+        env.steering_options+=" --MaxFramerate=%s" %framerate
     command_template="python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
     if retry:
         while True:
