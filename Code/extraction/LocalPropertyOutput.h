@@ -33,7 +33,7 @@ namespace hemelb
          * True if this property output should be written on the current iteration.
          * @return
          */
-        bool ShouldWrite(unsigned long iterationNumber) const;
+        bool ShouldWrite(unsigned long timestepNumber) const;
 
         /**
          * Returns the property output file object to be written.
@@ -45,7 +45,7 @@ namespace hemelb
          * Write this core's section of the data file. Only writes if appropriate for the current
          * iteration number
          */
-        void Write(unsigned long iterationNumber);
+        void Write(unsigned long timestepNumber);
 
       private:
         /**
