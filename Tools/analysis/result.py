@@ -13,6 +13,7 @@ import yaml
 import datetime
 import functools
 import subprocess
+import csv
 from xml.etree import ElementTree
 
 import logging
@@ -56,17 +57,19 @@ class ResultProperty(object):
             return True
         if value in ['False','false',False]:
             return False
+        if type(value) in [list,float]:
+            return value
         try:
-            return int(value)
+            return int(str(value))
         except (TypeError,ValueError):
             try:
-                return float(value)
+                return float(str(value))
             except (TypeError,ValueError):
                 try:
-                    return float(value.replace("_","."))
+                    return float(str(value).replace("_","."))
                 except (TypeError,ValueError):
                     try:
-                        return value.strip()
+                        return str(value).strip()
                     except AttributeError:
                         return value
     def get(self,result):
@@ -75,7 +78,7 @@ class ResultProperty(object):
             if not model:
                 raise ParseError("Bad file.")
             value=self.parser(model,self.pattern)
-            result.properties[self.label]=result.properties.get(self.label) or self.parse_value(str(value))
+            result.properties[self.label]=result.properties.get(self.label) or self.parse_value(value)
             return result.properties.get(self.label)
         except (IOError,ParseError, OSError) as err:
             self.file.logger(result).warning("Problem parsing value: %s"%err)
@@ -127,6 +130,8 @@ def attribute_parser(content,pattern):
 def fncall_parser(content,pattern):
     out= content(pattern)
     return out
+def column_parser(content,pattern):
+    return [ResultProperty.parse_value(row[pattern]) for row in content]
 
 def yaml_loader(path):
     return yaml.load(open(path))
@@ -147,7 +152,12 @@ def geometry_header_loader(path):
     def binder(expression):
         return model.Domain.__dict__
     return binder
-
+def csv_loader(path):
+    content=csv.reader(open(path))
+    return [row for row in content]
+def ssv_loader(path):
+    content=csv.reader(open(path),delimiter=' ')
+    return [row for row in content]
 def null_filter(result):
     return None
 def name_filter(result):
@@ -240,4 +250,6 @@ def result_model(config):
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
     Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
     Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,eval_parser)
+    Result.define_file_properties(config.get('ssv_files'),ssv_loader,column_parser)
+    Result.define_file_properties(config.get('csv_files'),ssv_loader,column_parser)
     return Result
