@@ -15,8 +15,8 @@ namespace hemelb
 {
   namespace steering
   {
-    ClientConnection::ClientConnection(int iSteeringSessionId)
-      :mIsBusy()
+    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings)
+      :mIsBusy(), timers(timings)
     {
       sem_init(&mIsBusy, 0, 1);
 
@@ -118,15 +118,22 @@ namespace hemelb
           {
             perror("flags");
           }
-#endif
+#else
+          log::Logger::Log<log::Info, log::Singleton>("Waiting for steering client connection");
+          timers[reporting::Timers::steeringWait].Start();
 
+#endif
           // Try to accept a socket (from the non-blocking socket)
           mCurrentSocket
               = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
-
+#ifdef HEMELB_WAIT_ON_CONNECT
+          timers[reporting::Timers::steeringWait].Stop();
+          log::Logger::Log<log::Debug, log::Singleton>("Restarted after blocking socket listen.");
+#endif
           // We've got a socket - make that socket non-blocking too.
           if (mCurrentSocket > 0)
           {
+            log::Logger::Log<log::Info, log::Singleton>("Steering client connected");
             flags = fcntl(mCurrentSocket, F_GETFL, 0);
             if (flags == -1)
             {
