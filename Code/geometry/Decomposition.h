@@ -32,7 +32,7 @@ namespace hemelb
          * @param size Size of decomposiiton topology
          */
         DecompositionBase(const site_t BlockCount,
-                          bool *readBlock,
+                          const std::vector<bool>& readBlock,
                           const proc_t areadingGroupSize,
                           Net &anet,
                           MPI_Comm comm,
