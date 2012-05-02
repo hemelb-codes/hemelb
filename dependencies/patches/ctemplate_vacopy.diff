@@ -1,0 +1,13 @@
+diff -r db39f1793513 src/template_dictionary.cc
+--- a/src/template_dictionary.cc	Fri Dec 23 09:28:11 2011 +0000
++++ b/src/template_dictionary.cc	Wed May 02 14:34:11 2012 +0100
+@@ -58,7 +58,7 @@
+ using std::map;
+ using std::pair;
+ using std::make_pair;
+-
++#define va_copy(to, from)       ((void)((to) = (from)))
+ typedef long int64;   // used with SetIntValue
+ 
+ _START_GOOGLE_NAMESPACE_
+ 
