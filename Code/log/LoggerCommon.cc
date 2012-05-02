@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdio>
 #include <cstdarg>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "mpiInclude.h"
 #include "util/utilityFunctions.h"
@@ -28,8 +30,11 @@ namespace hemelb
         startTime = util::myClock();
       }
 
-      char lead[40];
-      std::sprintf(lead, "[Rank %.6i, %.1fs]: ", thisRank, util::myClock() - startTime);
+      rusage usage;
+      getrusage(RUSAGE_SELF, &usage);
+
+      char lead[60];
+      std::sprintf(lead, "[Rank %.6i, %.1fs, mem: %li]: ", thisRank, util::myClock() - startTime, usage.ru_maxrss);
 
       std::string overFormat(lead);
       overFormat.append(format).append("\n");
