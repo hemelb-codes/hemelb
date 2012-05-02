@@ -96,6 +96,7 @@ namespace hemelb
           readBlock,
           readBlocksPrelim,
           readBlocksAll,
+          steeringWait, //!< Time spent waiting for a steering client in wait on connect mode.
           dbg1,
           dbg2,
           moveForcingNumbers,
@@ -201,14 +202,12 @@ namespace hemelb
 
     template<class ClockPolicy, class CommsPolicy>
     const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
-        { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis", "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation",
-          "Monitoring", "MPI Send", "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim","Read blocks all", "dbg1", "dbg2",
-          "Move Forcing Counts",
-          "Move Forcing Data",
-          "Block Requirements",
-          "Move Counts Sending",
-          "Move Data Sending",
-          "dbg3", "dbg4", "dbg5" };
+
+    { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
+      "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation", "Monitoring", "MPI Send",
+      "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
+      "Read blocks all", "Steering Client Wait", "dbg1", "dbg2", "Move Forcing Counts", "Move Forcing Data",
+      "Block Requirements", "Move Counts Sending", "Move Data Sending", "dbg3", "dbg4", "dbg5" };
   }
 
 }
