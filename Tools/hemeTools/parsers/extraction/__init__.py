@@ -165,6 +165,8 @@ class ExtractedProperty(object):
     def GetByIndex(self, idx):
         """Get the fields by time index. 
         """
+        # Attempt to look up the index in the times array to catch any 
+        # IndexError that will be raised.
         t = self.times[idx]
         return self._LoadByIndex(idx)
 
@@ -180,7 +182,14 @@ class ExtractedProperty(object):
         """Use numpy.memmap to make a single timestep's worth of data
         accessible through a numpy array.
         """
-        start = self._totalHeaderLength + idx * self._recordLength + 8
+        # Figure out the start position of the data for this timestep in the
+        # file. This is made up of
+        #    - file headers
+        #    - number of previous records * record length
+        #    - stored timestep 
+        start = self._totalHeaderLength + \
+            idx * self._recordLength + \
+            TimeStepDataLength
         return np.memmap(self.filename, dtype=self._fieldSpec.GetXdr(),
                          mode='r', offset=start, shape=(self.siteCount,))
 
