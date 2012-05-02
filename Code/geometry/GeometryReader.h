@@ -43,7 +43,7 @@ namespace hemelb
 
         void ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank);
 
-        void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
+        void DecideWhichBlocksToRead(std::vector<bool>& readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.

@@ -76,6 +76,7 @@ namespace hemelb
 
     void GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
+      log::Logger::Log<log::Info, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
 
       int error;
@@ -109,7 +110,7 @@ namespace hemelb
       }
       else
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+        log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
       fflush(NULL);
 
@@ -117,11 +118,11 @@ namespace hemelb
       std::string mode = "native";
       MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, &mode[0], fileInfo);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
+      log::Logger::Log<log::Info, log::OnePerCore>("Reading file preamble");
       ReadPreamble();
 
       // Read the file header.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
+      log::Logger::Log<log::Info, log::OnePerCore>("Reading file header");
 
       fluidSitesPerBlock = new site_t[readingResult.GetBlockCount()];
       bytesPerCompressedBlock = new unsigned int[readingResult.GetBlockCount()];
@@ -131,7 +132,7 @@ namespace hemelb
       ReadHeader();
       timings[hemelb::reporting::Timers::initialDecomposition].Start();
       // Perform an initial decomposition, of which processor should read each block.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
+      log::Logger::Log<log::Info, log::OnePerCore>("Beginning initial decomposition");
 
       if (!participateInTopology)
       {
@@ -148,7 +149,7 @@ namespace hemelb
       }
       timings[hemelb::reporting::Timers::initialDecomposition].Stop();
       // Perform the initial read-in.
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
+      log::Logger::Log<log::Info, log::OnePerCore>("Reading in my blocks");
 
       // Close the file - only the ranks participating in the topology need to read it again.
       MPI_File_close(&file);
@@ -178,9 +179,9 @@ namespace hemelb
       // Optimise.
       if (participateInTopology)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
+        log::Logger::Log<log::Info, log::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(procForEachBlock);
-        log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
+        log::Logger::Log<log::Info, log::OnePerCore>("Ending domain decomposition optimisation");
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
@@ -324,8 +325,8 @@ namespace hemelb
     {
       // Create a list of which blocks to read in.
       timings[hemelb::reporting::Timers::readBlocksPrelim].Start();
-      bool* readBlock = new bool[readingResult.GetBlockCount()];
-      log::Logger::Log<log::Debug, log::OnePerCore>("Determining blocks to read");
+      std::vector<bool> readBlock(readingResult.GetBlockCount());
+      log::Logger::Log<log::Info, log::OnePerCore>("Determining blocks to read");
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank);
 
       if (log::Logger::ShouldDisplay<log::Debug>())
@@ -345,9 +346,9 @@ namespace hemelb
         }
       }
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Informing reading cores of block needs");
+      log::Logger::Log<log::Info, log::OnePerCore>("Informing reading cores of block needs");
       net::Net net = net::Net(currentComm);
-      Decomposition *decomposition = new Decomposition(readingResult.GetBlockCount(),
+      Decomposition decomposition(readingResult.GetBlockCount(),
                                                        readBlock,
                                                        util::NumericalFunctions::min(READING_GROUP_SIZE,
                                                                                      currentCommSize),
@@ -357,7 +358,7 @@ namespace hemelb
                                                        currentCommSize);
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading blocks");
+      log::Logger::Log<log::Info, log::OnePerCore>("Reading blocks");
       timings[hemelb::reporting::Timers::readBlocksAll].Start();
 
       // Set the view and read in.
@@ -366,7 +367,7 @@ namespace hemelb
       for (site_t nextBlockToRead = 0; nextBlockToRead < readingResult.GetBlockCount(); ++nextBlockToRead)
       {
         ReadInBlock(offset,
-                    decomposition->ProcessorsNeedingBlock(nextBlockToRead),
+                    decomposition.ProcessorsNeedingBlock(nextBlockToRead),
                     nextBlockToRead,
                     fluidSitesPerBlock[nextBlockToRead],
                     bytesPerCompressedBlock[nextBlockToRead],
@@ -376,8 +377,6 @@ namespace hemelb
         offset += bytesPerCompressedBlock[nextBlockToRead];
       }
 
-      delete decomposition;
-      delete[] readBlock;
       timings[hemelb::reporting::Timers::readBlocksAll].Stop();
     }
 
@@ -462,6 +461,10 @@ namespace hemelb
           }
         }
       }
+      else if(!readingResult.Blocks[blockNumber].Sites.empty())
+      {
+        readingResult.Blocks[blockNumber].Sites = std::vector<SiteReadResult>(0, SiteReadResult(false));
+      }
       timings[hemelb::reporting::Timers::readParse].Stop();
     }
 
@@ -486,7 +489,7 @@ namespace hemelb
       ret = inflateInit(&stream);
       if (ret != Z_OK)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
       stream.avail_out = uncompressed.size();
@@ -495,7 +498,7 @@ namespace hemelb
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
 
@@ -503,7 +506,7 @@ namespace hemelb
       ret = inflateEnd(&stream);
       if (ret != Z_OK)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
       timings[hemelb::reporting::Timers::unzip].Stop();
@@ -734,7 +737,7 @@ namespace hemelb
      * @param localRank
      * @param iGlobLatDat
      */
-    void GeometryReader::DecideWhichBlocksToRead(bool* readBlock,
+    void GeometryReader::DecideWhichBlocksToRead(std::vector<bool>& readBlock,
                                                  const proc_t* unitForEachBlock,
                                                  const proc_t localRank)
     {
@@ -1093,31 +1096,38 @@ namespace hemelb
       // Call parmetis.
       idx_t* partitionVector = new idx_t[localVertexCount];
       timings[hemelb::reporting::Timers::parmetis].Start();
+      log::Logger::Log<log::Info, log::OnePerCore>("Making the call to Parmetis");
       CallParmetis(partitionVector, localVertexCount, vtxDistribn, adjacenciesPerVertex, localAdjacencies);
       timings[hemelb::reporting::Timers::parmetis].Stop();
+      log::Logger::Log<log::Info, log::OnePerCore>("Parmetis has finished.");
+
       delete[] localAdjacencies;
       delete[] adjacenciesPerVertex;
 
       // Convert the ParMetis results into a nice format.
       idx_t* allMoves = new idx_t[topologySize];
       timings[hemelb::reporting::Timers::dbg4].Start();
+      log::Logger::Log<log::Info, log::OnePerCore>("Getting moves lists for this core.");
       idx_t* movesList = GetMovesList(allMoves,
                                       firstSiteIndexPerBlock,
                                       procForEachBlock,
                                       fluidSitesPerBlock,
                                       vtxDistribn,
                                       partitionVector);
+      log::Logger::Log<log::Info, log::OnePerCore>("Done getting moves lists for this core");
       timings[hemelb::reporting::Timers::dbg4].Stop();
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
       timings[hemelb::reporting::Timers::reRead].Start();
+      log::Logger::Log<log::Info, log::OnePerCore>("Rereading blocks");
       // Reread the blocks based on the ParMetis decomposition.
       RereadBlocks(allMoves, movesList, procForEachBlock);
       timings[hemelb::reporting::Timers::reRead].Stop();
 
       timings[hemelb::reporting::Timers::moves].Start();
       // Implement the decomposition now that we have read the necessary data.
+      log::Logger::Log<log::Info, log::OnePerCore>("Implementing moves");
       ImplementMoves(procForEachBlock, allMoves, movesList);
       timings[hemelb::reporting::Timers::moves].Stop();
       delete[] movesList;
@@ -1457,7 +1467,7 @@ namespace hemelb
 
       real_t tolerance = 1.001F;
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+      log::Logger::Log<log::Info, log::OnePerCore>("Calling ParMetis");
 
       ParMETIS_V3_PartKway(vtxDistribn,
                            adjacenciesPerVertex,
@@ -1474,7 +1484,7 @@ namespace hemelb
                            &edgesCut,
                            partitionVector,
                            &topologyComm);
-      log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
+      log::Logger::Log<log::Info, log::OnePerCore>("ParMetis returned.");
 
       delete[] domainWeights;
       delete[] vertexWeight;
@@ -1801,6 +1811,7 @@ namespace hemelb
 
       // Spread the move data around
       timings[hemelb::reporting::Timers::dbg1].Stop();
+      log::Logger::Log<log::Info, log::OnePerCore>("Starting to spread move data");
       timings[hemelb::reporting::Timers::dbg2].Start();
 
       // First, for each core, gather a list of which blocks the current core wants to
@@ -1851,6 +1862,8 @@ namespace hemelb
 
       std::vector<proc_t> blocksForcedOnMe(topologySize, 0);
 
+      log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block numbers");
+
       MPI_Alltoall(&numberOfBlocksIForceUponX[0], 1, MpiDataType<proc_t>(), &blocksForcedOnMe[0], 1, MpiDataType<proc_t>(), topologyComm);
 
       timings[hemelb::reporting::Timers::moveForcingNumbers].Stop();
@@ -1879,6 +1892,8 @@ namespace hemelb
                                                       numberOfBlocksIForceUponX[otherProc],
                                                       otherProc);
       }
+
+      log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block ids");
 
       netForMoveSending.Receive();
       netForMoveSending.Send();
@@ -1947,6 +1962,8 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::moveForcingData].Stop();
       timings[hemelb::reporting::Timers::blockRequirements].Start();
+
+      log::Logger::Log<log::Info, log::OnePerCore>("Calculating block requirements");
 
       // Now we want to spread this info around so that each core knows which blocks each other
       // requires from it.
@@ -2076,6 +2093,8 @@ namespace hemelb
         }
       }
 
+      log::Logger::Log<log::Info, log::OnePerCore>("Sending move counts");
+
       netForMoveSending.Receive();
       netForMoveSending.Send();
       netForMoveSending.Wait();
@@ -2136,6 +2155,8 @@ namespace hemelb
 
         log::Logger::Log<log::Debug, log::OnePerCore>("%i moves from proc %i", movesFromEachProc[otherProc], otherProc);
       }
+
+      log::Logger::Log<log::Info, log::OnePerCore>("Sending move data");
 
       netForMoveSending.Receive();
       netForMoveSending.Send();
