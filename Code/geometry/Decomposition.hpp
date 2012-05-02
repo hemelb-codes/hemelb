@@ -9,17 +9,13 @@ namespace hemelb
   namespace geometry
   {
     template<class Net> DecompositionBase<Net>::DecompositionBase(const site_t blockCount,
-                                                                  bool *readBlock,
+                                                                  const std::vector<bool>& readBlock,
                                                                   const proc_t areadingGroupSize,
                                                                   Net & anet,
                                                                   MPI_Comm comm,
                                                                   const proc_t rank,
                                                                   const proc_t size) :
-        procsWantingBlocksBuffer(blockCount), net(anet),
-        decompositionCommunicator(comm),
-        decompositionCommunicatorRank(rank),
-        decompositionCommunicatorSize(size),
-        readingGroupSize(areadingGroupSize)
+        procsWantingBlocksBuffer(blockCount), net(anet), decompositionCommunicator(comm), decompositionCommunicatorRank(rank), decompositionCommunicatorSize(size), readingGroupSize(areadingGroupSize)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -32,77 +28,83 @@ namespace hemelb
       }
 
       // Share the counts of needed blocks
-      unsigned int blocksNeededSize[readingGroupSize];
+      int blocksNeededSize[readingGroupSize];
+      std::vector<int> blocksNeededSizes(decompositionCommunicatorSize);
+
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
+        // Ensure each vector has some underlying array, even if it's unused.
+        blocksNeededHere[readingCore].reserve(1);
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
-        if (readingCore == decompositionCommunicatorRank)
-        {
-          continue;
-        }
+
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
                                                       blocksNeededSize[readingCore],
                                                       readingCore,
                                                       decompositionCommunicatorRank);
-        net.RequestSend(&blocksNeededSize[readingCore], 1, readingCore);
+
+        MPI_Gather(&blocksNeededSize[readingCore],
+                   1,
+                   MpiDataType<int>(),
+                   &blocksNeededSizes[0],
+                   1,
+                   MpiDataType<int>(),
+                   readingCore,
+                   decompositionCommunicator);
       }
-
-      std::vector<unsigned int> blocksNeededSizes(decompositionCommunicatorSize);
-
-      if (decompositionCommunicatorRank < readingGroupSize)
-      {
-        for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
-        {
-          if (sendingCore == decompositionCommunicatorRank)
-          {
-            continue;
-          }
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving count of needed blocks to core %i from core %i",
-                                                        decompositionCommunicatorRank,
-                                                        sendingCore);
-          net.RequestReceive(&blocksNeededSizes[sendingCore], 1, sendingCore);
-        }
-      }
-
-      net.Send();
-      net.Receive();
-      net.Wait();
 
       // Communicate the arrays of needed blocks
+      std::vector<std::vector<site_t> > blocksNeededOn(decompositionCommunicatorSize);
+
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         if (readingCore == decompositionCommunicatorRank)
         {
-          continue;
-        }
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
-                                                      blocksNeededHere[readingCore].size(),
-                                                      readingCore,
-                                                      decompositionCommunicatorRank);
-        net.RequestSend(&blocksNeededHere[readingCore].front(), blocksNeededHere[readingCore].size(), readingCore);
-      }
+          site_t totalBlockNeeds = 0;
+          std::vector<int> displacements(decompositionCommunicatorSize);
 
-      std::vector<std::vector<site_t> > blocksNeededOn(decompositionCommunicatorSize);
-
-      if (decompositionCommunicatorRank < readingGroupSize)
-      {
-        for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
-        {
-          blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
-          if (sendingCore == decompositionCommunicatorRank)
+          for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
           {
-            continue;
+            blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
+            // Ensure there's some buffere there.
+            blocksNeededOn[sendingCore].reserve(1);
+            totalBlockNeeds += blocksNeededSizes[sendingCore];
+            displacements[sendingCore] = &blocksNeededOn[sendingCore][0] - &blocksNeededOn[0][0];
           }
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving list of %i needed blocks to core %i from core %i",
-                                                        blocksNeededSizes[sendingCore],
-                                                        decompositionCommunicatorRank,
-                                                        sendingCore);
-          net.RequestReceive(&blocksNeededOn[sendingCore].front(), blocksNeededOn[sendingCore].size(), sendingCore);
+
+          MPI_Gatherv(&blocksNeededHere[readingCore][0],
+                      blocksNeededHere[readingCore].size(),
+                      MpiDataType<site_t>(),
+                      &blocksNeededOn[0][0],
+                      &blocksNeededSizes[0],
+                      &displacements[0],
+                      MpiDataType<site_t>(),
+                      readingCore,
+                      decompositionCommunicator);
+
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed from core %i",
+                                                        decompositionCommunicatorRank);
+        }
+        else
+        {
+          std::vector<site_t> dummy(10);
+          std::vector<int> int_dummy(10);
+          
+          MPI_Gatherv(&blocksNeededHere[readingCore].front(),
+                      blocksNeededHere[readingCore].size(),
+                      MpiDataType<site_t>(),
+                      &dummy.front(),
+                      &int_dummy.front(),
+                      &int_dummy.front(),
+                      MpiDataType<site_t>(),
+                      readingCore,
+                      decompositionCommunicator);
+
+          log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
+                                                        blocksNeededHere[readingCore].size(),
+                                                        readingCore,
+                                                        decompositionCommunicatorRank);
         }
       }
-      net.Send();
-      net.Receive();
-      net.Wait();
 
       if (decompositionCommunicatorRank < readingGroupSize)
       {
@@ -121,7 +123,7 @@ namespace hemelb
       if (log::Logger::ShouldDisplay<log::Debug>() && decompositionCommunicator != NULL)
       {
 
-        int* procsWantingThisBlockBuffer = new int[decompositionCommunicatorSize];
+        std::vector<int> procsWantingThisBlockBuffer(decompositionCommunicatorSize);
         for (site_t block = 0; block < blockCount; ++block)
         {
           int neededHere = readBlock[block];
@@ -129,7 +131,7 @@ namespace hemelb
           MPI_Gather(&neededHere,
                      1,
                      MpiDataType<int>(),
-                     procsWantingThisBlockBuffer,
+                     &procsWantingThisBlockBuffer[0],
                      1,
                      MpiDataType<int>(),
                      readingCore,
@@ -164,7 +166,6 @@ namespace hemelb
             } // for old proc
           } // if reading group
         } // for block
-        delete[] procsWantingThisBlockBuffer;
       } // if debug mode
     } //constructor
 
