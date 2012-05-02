@@ -156,6 +156,8 @@ if(HEMELB_USE_BOOST)
 endif()
 
 #----------------Google C++ template ----------------
+
+option(CTEMPLATE_PATCH_VACOPY "Define va_copy macro through patch" OFF)
 find_package(CTemplate)
 if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
@@ -178,6 +180,15 @@ else()
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
+	if (CTEMPLATE_PATCH_VACOPY)
+		ExternalProject_Add_Step(
+			ctemplate vacopy
+			COMMAND patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff
+			DEPENDEES download
+			DEPENDERS configure
+			WORKING_DIRECTORY <SOURCE_DIR>
+		)
+	endif()
 endif()
 
 #-----------------ZLIB --------------------------------
