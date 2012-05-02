@@ -10,7 +10,7 @@ if(HEMELB_STEERING_LIB MATCHES [Bb]asic)
 		basic/ImageSendComponent.cc
 		basic/Network.cc
 		basic/SimulationParameters.cc
-		basic/SteeringComponent.cc
+		basic/SteeringComponentB.cc
 	)
 	add_definitions(-DHEMELB_STEERING_LIB=basic)
 elseif(HEMELB_STEERING_LIB MATCHES [Nn]one)
@@ -18,7 +18,7 @@ elseif(HEMELB_STEERING_LIB MATCHES [Nn]one)
 		none/ClientConnection.cc
 		none/ImageSendComponent.cc
 		none/Network.cc
-		none/SteeringComponent.cc
+		none/SteeringComponentN.cc
 	)
 	add_definitions(-DHEMELB_STEERING_LIB=none)
 else()
@@ -29,14 +29,14 @@ else()
 		basic/ImageSendComponent.cc
 		basic/Network.cc
 		basic/SimulationParameters.cc
-		basic/SteeringComponent.cc
+		basic/SteeringComponentB.cc
 	)
 	add_definitions(-DHEMELB_STEERING_LIB=basic)
 endif()
 
 add_library(hemelb_steering
 	#common/Steerer.cc # Not used in old nrmake build either -- TODO find out why
-	common/SteeringComponent.cc
+	common/SteeringComponentC.cc
 	#common/Tags.cc
 	${steerers}
 )
