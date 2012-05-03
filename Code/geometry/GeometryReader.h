@@ -23,7 +23,10 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, GeometryReadResult& readResult, reporting::Timers &timings);
+        GeometryReader(const bool reserveSteeringCore,
+                       const lb::lattices::LatticeInfo&,
+                       GeometryReadResult& readResult,
+                       reporting::Timers &timings);
         ~GeometryReader();
 
         void LoadAndDecompose(const std::string& dataFilePath);
@@ -37,13 +40,15 @@ namespace hemelb
 
         void DivideBlocks(site_t unassignedBlocks,
                           const proc_t unitCount,
-                          site_t* blocksOnEachUnit,
-                          proc_t* unitForEachBlock,
-                          const site_t* fluidSitesPerBlock);
+                          std::vector<site_t>& blocksOnEachUnit,
+                          std::vector<proc_t>& unitForEachBlock,
+                          const std::vector<site_t>& fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank);
+        void ReadInLocalBlocks(const std::vector<proc_t>& unitForEachBlock, const proc_t localRank);
 
-        void DecideWhichBlocksToRead(std::vector<bool>& readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
+        void DecideWhichBlocksToRead(std::vector<bool>& readBlock,
+                                     const std::vector<proc_t>& unitForEachBlock,
+                                     const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
@@ -89,19 +94,19 @@ namespace hemelb
 
         bool Expand(std::vector<util::Vector3D<site_t> >& edgeBlocks,
                     std::vector<util::Vector3D<site_t> >& expansionBlocks,
-                    const site_t* fluidSitesPerBlock,
-                    bool* blockAssigned,
+                    const std::vector<site_t>& fluidSitesPerBlock,
+                    std::vector<bool>& blockAssigned,
                     const proc_t currentUnit,
-                    proc_t* unitForEachBlock,
+                    std::vector<proc_t>& unitForEachBlock,
                     site_t &blocksOnCurrentUnit,
                     const site_t blocksPerUnit);
 
-        void OptimiseDomainDecomposition(const proc_t* procForEachBlock);
+        void OptimiseDomainDecomposition(const std::vector<proc_t>& procForEachBlock);
 
-        void ValidateGraphData(idx_t* vtxDistribn,
+        void ValidateGraphData(const std::vector<idx_t>& vtxDistribn,
                                idx_t localVertexCount,
-                               idx_t* adjacenciesPerVertex,
-                               idx_t* adjacencies);
+                               const std::vector<idx_t>& adjacenciesPerVertex,
+                               const std::vector<idx_t>& adjacencies);
 
         void ValidateAllReadData();
 
@@ -109,38 +114,38 @@ namespace hemelb
 
         site_t GetHeaderLength(site_t blockCount) const;
 
-        void GetSiteDistributionArray(idx_t* vertexDistribn,
-                                      const proc_t* procForEachBlock,
-                                      const site_t* fluidSitesPerBlock) const;
+        void GetSiteDistributionArray(std::vector<idx_t>& vertexDistribn,
+                                      const std::vector<proc_t>& procForEachBlock,
+                                      const std::vector<site_t>& fluidSitesPerBlock) const;
 
-        void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
-                                          const idx_t* vertexDistribution,
-                                          const proc_t* procForEachBlock,
-                                          const site_t* fluidSitesPerBlock) const;
+        void GetFirstSiteIndexOnEachBlock(std::vector<idx_t>& firstSiteIndexPerBlock,
+                                          const std::vector<idx_t>& vertexDistribution,
+                                          const std::vector<proc_t>& procForEachBlock,
+                                          const std::vector<site_t>& fluidSitesPerBlock) const;
 
-        void GetAdjacencyData(idx_t* adjacenciesPerVertex,
-                              idx_t* &localAdjacencies,
+        void GetAdjacencyData(std::vector<idx_t>& adjacenciesPerVertex,
+                              std::vector<idx_t>& localAdjacencies,
                               const idx_t localVertexCount,
-                              const proc_t* procForEachBlock,
-                              const idx_t* firstSiteIndexPerBlock) const;
+                              const std::vector<proc_t>& procForEachBlock,
+                              const std::vector<idx_t>& firstSiteIndexPerBlock) const;
 
-        void CallParmetis(idx_t* partitionVector,
+        void CallParmetis(std::vector<idx_t>& partitionVector,
                           idx_t localVertexCount,
-                          idx_t* vtxDistribn,
-                          idx_t* adjacenciesPerVertex,
-                          idx_t* adjacencies);
+                          std::vector<idx_t>& vtxDistribn,
+                          std::vector<idx_t>& adjacenciesPerVertex,
+                          std::vector<idx_t>& adjacencies);
 
-        idx_t* GetMovesList(idx_t* movesFromEachProc,
-                            const idx_t* firstSiteIndexPerBlock,
-                            const proc_t* procForEachBlock,
-                            const site_t* fluidSitesPerBlock,
-                            const idx_t* vtxDistribn,
-                            const idx_t* partitionVector);
+        idx_t* GetMovesList(std::vector<idx_t>& movesFromEachProc,
+                            const std::vector<idx_t>& firstSiteIndexPerBlock,
+                            const std::vector<proc_t>& procForEachBlock,
+                            const std::vector<site_t>& fluidSitesPerBlock,
+                            const std::vector<idx_t>& vtxDistribn,
+                            const std::vector<idx_t>& partitionVector);
 
-        void RereadBlocks(const idx_t* movesPerProc, const idx_t* movesList, const int* procForEachBlock);
+        void RereadBlocks(const std::vector<idx_t>& movesPerProc, const idx_t* movesList, const std::vector<int>& procForEachBlock);
 
-        void ImplementMoves(const proc_t* procForEachBlock,
-                            const idx_t* movesFromEachProc,
+        void ImplementMoves(const std::vector<proc_t>& procForEachBlock,
+                            const std::vector<idx_t>& movesFromEachProc,
                             const idx_t* movesList) const;
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
@@ -160,10 +165,12 @@ namespace hemelb
         int currentCommRank;
         int currentCommSize;
         bool participateInTopology;
-        site_t* fluidSitesPerBlock;
-        unsigned int* bytesPerCompressedBlock;
-        unsigned int* bytesPerUncompressedBlock;
-        proc_t* procForEachBlock;
+
+        std::vector<site_t> fluidSitesPerBlock;
+        std::vector<unsigned int> bytesPerCompressedBlock;
+        std::vector<unsigned int> bytesPerUncompressedBlock;
+        std::vector<proc_t> procForEachBlock;
+
         hemelb::reporting::Timers &timings;
     };
   }
