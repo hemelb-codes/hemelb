@@ -448,7 +448,7 @@ void SimulationMaster::DoTimeStep()
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                           simulationState->GetTimeStep()));
     hemelb::log::Logger::Log<hemelb::log::Debug,
-      hemelb::log::Singleton>("Number of currently rendering images: %d", networkImagesCompleted.size());
+      hemelb::log::Singleton>("%d images currently being composited for the steering client", networkImagesCompleted.size());
     simulationState->SetIsRendering(false);
   }
 

@@ -110,6 +110,7 @@ results:
         gmy_fluid_fraction: gmy_fluid_site_count*1.0/(gmy_sites_per_block*gmy_block_count)
         reading_group: reading_group_raw if reading_group_raw else 5
         steering_frame_rate: float(len(steering_elapsed_time))/sum(steering_elapsed_time)
+        steering_steps_per_frame: sum(steering_elapsed_steps)/float(len(steering_elapsed_steps))
 
     yaml_files:
         'env.yml':

@@ -634,9 +634,10 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                 execute(hemelbs,env.config,**args)
 
 @task
-def get_running_location(job):
-    with_job(job)
-    run(template("cat $job_results/env_details.asc"))
+def get_running_location(job=None):
+    if job:
+        with_job(job)
+    env.running_node=run(template("cat $job_results/env_details.asc"))
 
 def manual(cmd):
     #From the fabric wiki, bypass fabric internal ssh control
@@ -663,7 +664,7 @@ def steer(job,orbit=False,view=False,retry=False,framerate=None):
     if retry:
         while True:
             try:
-                env.running_node=run(template("cat $job_results/env_details.asc"))
+                get_running_location()
                 run(template(command_template))
                 break
             except:
@@ -671,5 +672,5 @@ def steer(job,orbit=False,view=False,retry=False,framerate=None):
                 execute(stat)
                 time.sleep(10)
     else:
-        env.running_node=run(template("cat $job_results/env_details.asc"))
+        get_running_location()
         run(template(command_template))
