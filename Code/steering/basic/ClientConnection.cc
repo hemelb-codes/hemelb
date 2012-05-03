@@ -128,7 +128,7 @@ namespace hemelb
               = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
 #ifdef HEMELB_WAIT_ON_CONNECT
           timers[reporting::Timers::steeringWait].Stop();
-          log::Logger::Log<log::Debug, log::Singleton>("Restarted after blocking socket listen.");
+          log::Logger::Log<log::Debug, log::Singleton>("Continuing after receiving steering connection.");
 #endif
           // We've got a socket - make that socket non-blocking too.
           if (mCurrentSocket > 0)
