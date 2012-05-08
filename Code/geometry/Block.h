@@ -23,6 +23,7 @@ namespace hemelb
 
         proc_t GetProcessorRankForSite(site_t localSiteIndex) const;
         site_t GetLocalContiguousIndexForSite(site_t localSiteIndex) const;
+        bool SiteIsSolid(site_t localSiteIndex) const;
 
         void SetProcessorRankForSite(site_t localSiteIndex, proc_t rank);
         void SetLocalContiguousIndexForSite(site_t localSiteIndex, site_t localContiguousIndex);
@@ -33,6 +34,9 @@ namespace hemelb
 
         // The local index for each site on the block in the LocalLatticeData.
         std::vector<site_t> localContiguousIndex;
+
+        // Constant for the id assigned to any solid sites.
+        static const site_t SOLID_SITE_ID = 1U << 31;
     };
   }
 }

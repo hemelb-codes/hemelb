@@ -29,7 +29,7 @@ namespace hemelb
         const site_t siteIdOnBlock = mLatDat->GetLocalSiteIdFromLocalSiteCoords(midBlockSite);
 
         // ... (only if there's fluid there).
-        if (block.GetLocalContiguousIndexForSite(siteIdOnBlock) == BIG_NUMBER3)
+        if (block.SiteIsSolid(siteIdOnBlock))
         {
           continue;
         }
