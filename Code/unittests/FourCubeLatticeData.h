@@ -41,7 +41,7 @@ namespace hemelb
          */
         static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
-          hemelb::geometry::GeometryReadResult readResult;
+          hemelb::geometry::Geometry readResult;
 
           readResult.voxelSize = 0.01;
           readResult.origin = util::Vector3D<distribn_t>::Zero();
@@ -51,7 +51,7 @@ namespace hemelb
           readResult.Blocks = std::vector<hemelb::geometry::BlockReadResult>(1);
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
-          block.Sites.resize(readResult.GetSitesPerBlock(), geometry::SiteReadResult(false));
+          block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
 
           site_t index = -1;
           for (site_t i = 0; i < sitesPerBlockUnit; ++i)
@@ -62,7 +62,7 @@ namespace hemelb
               {
                 ++index;
 
-                hemelb::geometry::SiteReadResult& site = block.Sites[index];
+                hemelb::geometry::GeometrySite& site = block.Sites[index];
 
                 site.isFluid = true;
                 site.targetProcessor = 0;
@@ -73,7 +73,7 @@ namespace hemelb
                   site_t neighJ = j + lb::lattices::D3Q15::CY[direction];
                   site_t neighK = k + lb::lattices::D3Q15::CZ[direction];
 
-                  hemelb::geometry::LinkReadResult link;
+                  hemelb::geometry::GeometrySiteLink link;
 
                   float randomDistance = (float(std::rand() % 10000) / 10000.0);
 
@@ -81,21 +81,21 @@ namespace hemelb
                   if (neighK < 0)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::LinkReadResult::INLET_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::INLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // The outlet is by the maximal z value.
                   else if (neighK >= sitesPerBlockUnit)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::LinkReadResult::OUTLET_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::OUTLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
                   else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit
                       || neighJ >= sitesPerBlockUnit)
                   {
-                    link.type = geometry::LinkReadResult::WALL_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::WALL_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
 
@@ -138,7 +138,7 @@ namespace hemelb
         }
 
       protected:
-        FourCubeLatticeData(hemelb::geometry::GeometryReadResult& readResult) :
+        FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
             hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
