@@ -10,8 +10,7 @@ namespace hemelb
     }
 
     Block::Block(site_t sitesPerBlock) :
-        processorRankForEachBlockSite(sitesPerBlock, BIG_NUMBER2), localContiguousIndex(sitesPerBlock,
-                                                                                        BIG_NUMBER3)
+        processorRankForEachBlockSite(sitesPerBlock, BIG_NUMBER2), localContiguousIndex(sitesPerBlock, SOLID_SITE_ID)
     {
     }
 
@@ -32,6 +31,11 @@ namespace hemelb
     site_t Block::GetLocalContiguousIndexForSite(site_t localSiteIndex) const
     {
       return localContiguousIndex[localSiteIndex];
+    }
+
+    bool Block::SiteIsSolid(site_t localSiteIndex) const
+    {
+      return localContiguousIndex[localSiteIndex] == SOLID_SITE_ID;
     }
 
     void Block::SetProcessorRankForSite(site_t localSiteIndex, proc_t rank)
