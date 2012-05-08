@@ -29,7 +29,7 @@ namespace hemelb
       // Use a reader to read in the file.
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
-      GeometryReadResult readGeometryData;
+      Geometry readGeometryData;
       GeometryReader reader(reserveSteeringCore, latticeInfo, readGeometryData, timings);
       reader.LoadAndDecompose(dataFilePath);
 
@@ -37,7 +37,7 @@ namespace hemelb
       return new LatticeData(latticeInfo, readGeometryData);
     }
 
-    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult) :
+    LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult) :
       latticeInfo(latticeInfo)
     {
       SetBasicDetails(readResult.blocks, readResult.blockSize, readResult.voxelSize, readResult.origin);
@@ -65,7 +65,7 @@ namespace hemelb
       blockCount = blockCounts.x * blockCounts.y * blockCounts.z;
     }
 
-    void LatticeData::ProcessReadSites(const GeometryReadResult & readResult)
+    void LatticeData::ProcessReadSites(const Geometry & readResult)
     {
       Blocks.resize(GetBlockCount());
 
@@ -218,7 +218,7 @@ namespace hemelb
           float shortestDistance = 100.0;
           for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
           {
-            if (blockReadIn.Sites[localSiteId].links[direction - 1].type == LinkReadResult::WALL_INTERSECTION)
+            if (blockReadIn.Sites[localSiteId].links[direction - 1].type == GeometrySiteLink::WALL_INTERSECTION)
             {
               util::Vector3D<float> distance = latticeInfo.GetVector(direction)
                   * blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection;

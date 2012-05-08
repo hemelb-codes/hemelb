@@ -131,12 +131,12 @@ namespace hemelb
          * @return
          */
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const GeometryReadResult& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize, distribn_t voxelSize, util::Vector3D<
             distribn_t> originIn);
 
-        void ProcessReadSites(const GeometryReadResult& readResult);
+        void ProcessReadSites(const Geometry& readResult);
 
         void PopulateWithReadData(const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
                                   const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
