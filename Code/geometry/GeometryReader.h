@@ -12,7 +12,7 @@
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
-#include "geometry/ReadResult.h"
+#include "geometry/Geometry.h"
 #include "geometry/Decomposition.h"
 
 namespace hemelb
@@ -25,7 +25,7 @@ namespace hemelb
       public:
         GeometryReader(const bool reserveSteeringCore,
                        const lb::lattices::LatticeInfo&,
-                       GeometryReadResult& readResult,
+                       Geometry& readResult,
                        reporting::Timers &timings);
         ~GeometryReader();
 
@@ -81,7 +81,7 @@ namespace hemelb
 
         void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
 
-        SiteReadResult ParseSite(io::writers::xdr::XdrReader& reader);
+        GeometrySite ParseSite(io::writers::xdr::XdrReader& reader);
 
         /**
          * Calculates the number of the rank used to read in a given block.
@@ -154,7 +154,7 @@ namespace hemelb
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         const lb::lattices::LatticeInfo& latticeInfo;
-        GeometryReadResult& readingResult;
+        Geometry& readingResult;
         MPI_File file;
         MPI_Info fileInfo;
         MPI_Comm topologyComm;

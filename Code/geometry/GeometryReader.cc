@@ -22,7 +22,7 @@ namespace hemelb
 
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
-                                   GeometryReadResult& readResult,
+                                   Geometry& readResult,
                                    reporting::Timers &atimings) :
         latticeInfo(latticeInfo), readingResult(readResult), timings(atimings)
     {
@@ -457,7 +457,7 @@ namespace hemelb
       }
       else if (!readingResult.Blocks[blockNumber].Sites.empty())
       {
-        readingResult.Blocks[blockNumber].Sites = std::vector<SiteReadResult>(0, SiteReadResult(false));
+        readingResult.Blocks[blockNumber].Sites = std::vector<GeometrySite>(0, GeometrySite(false));
       }
       timings[hemelb::reporting::Timers::readParse].Stop();
     }
@@ -517,7 +517,7 @@ namespace hemelb
       }
     }
 
-    SiteReadResult GeometryReader::ParseSite(io::writers::xdr::XdrReader& reader)
+    GeometrySite GeometryReader::ParseSite(io::writers::xdr::XdrReader& reader)
     {
       // Read the fluid property.
       unsigned isFluid;
@@ -527,7 +527,7 @@ namespace hemelb
         log::Logger::Log<log::Info, log::OnePerCore>("Error reading site type");
       }
 
-      SiteReadResult readInSite(isFluid != 0);
+      GeometrySite readInSite(isFluid != 0);
 
       // If solid, there's nothing more to do.
       if (!readInSite.isFluid)
@@ -546,11 +546,11 @@ namespace hemelb
         unsigned intersectionType;
         reader.readUnsignedInt(intersectionType);
 
-        LinkReadResult link;
-        link.type = (LinkReadResult::IntersectionType) intersectionType;
+        GeometrySiteLink link;
+        link.type = (GeometrySiteLink::IntersectionType) intersectionType;
 
         // walls have a floating-point distance to the wall...
-        if (link.type == LinkReadResult::WALL_INTERSECTION)
+        if (link.type == GeometrySiteLink::WALL_INTERSECTION)
         {
           float distance;
           reader.readFloat(distance);
@@ -558,7 +558,7 @@ namespace hemelb
         }
         // inlets and outlets (which together with none make up the other intersection types)
         // have an iolet id and a distance float...
-        else if (link.type != LinkReadResult::NO_INTERSECTION)
+        else if (link.type != GeometrySiteLink::NO_INTERSECTION)
         {
           float distance;
           unsigned ioletId;

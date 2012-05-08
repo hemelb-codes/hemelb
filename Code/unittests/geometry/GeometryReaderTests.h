@@ -23,7 +23,7 @@ namespace hemelb
             public:
               GeometryReader(const bool reserveSteeringCore,
                              const hemelb::lb::lattices::LatticeInfo& latticeInfo,
-                             hemelb::geometry::GeometryReadResult& readResult,
+                             hemelb::geometry::Geometry& readResult,
                              reporting::Timers &timings) :
                 hemelb::geometry::GeometryReader(reserveSteeringCore, latticeInfo, readResult, timings)
               {
@@ -45,7 +45,7 @@ namespace hemelb
 
           void setUp()
           {
-            readResult = new GeometryReadResult();
+            readResult = new Geometry();
             reader = new TestableLatticeData::GeometryReader(false,
                                                              hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
                                                              *readResult,
@@ -106,7 +106,7 @@ namespace hemelb
 
         private:
           TestableLatticeData::GeometryReader *reader;
-          GeometryReadResult* readResult;
+          Geometry* readResult;
           TestableLatticeData* lattice;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
