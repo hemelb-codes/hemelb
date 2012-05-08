@@ -1667,7 +1667,18 @@ namespace hemelb
       const idx_t myLowest = vtxDistribn[topologyRank];
       const idx_t myHighest = vtxDistribn[topologyRank + 1] - 1;
 
-      long long int derek_dbg_fluidsiteblocks = 0;
+      // Create a map for looking up block Ids: the map is from the contiguous site index
+      // of the first fluid site on the block, to the block id.
+      std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
+
+      for (site_t blockId = 0; blockId < readingResult.GetBlockCount(); ++blockId)
+      {
+        if (procForEachBlock[blockId] >= 0 && procForEachBlock[blockId] != BIG_NUMBER2)
+        {
+          site_t lastFluidSiteId = firstSiteIndexPerBlock[blockId] + fluidSitesPerBlock[blockId] - 1;
+          blockIdLookupByLastSiteIndex[lastFluidSiteId] = blockId;
+        }
+      }
 
       // For each local fluid site...
       for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
@@ -1678,18 +1689,44 @@ namespace hemelb
           // ... get it's id on the local processor...
           idx_t localFluidSiteId = myLowest + ii;
 
-          // ... find out which block it's on, by going through all blocks until we find one
-          // with firstIdOnBlock <= localFluidSiteId < (firstIdOnBlock + sitesOnBlock)...
-          idx_t fluidSiteBlock = 0;
-
           timings[hemelb::reporting::Timers::dbg3].Start();
-          while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
-              || ( (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock]) <= localFluidSiteId))
+          // ... find out which block it's on, using our lookup map...
+          // A feature of std::map::equal_range is that if there's no equal key, both iterators
+          // returned will point to the entry with the next greatest key. Since we store block
+          // ids by last fluid site number, this immediately gives us the block id.
+          std::pair<std::map<site_t, site_t>::iterator, std::map<site_t, site_t>::iterator> rangeMatch =
+              blockIdLookupByLastSiteIndex.equal_range(localFluidSiteId);
+
+          idx_t fluidSiteBlock = rangeMatch.first->second;
+
+          // Check the block id is correct
+          if (log::Logger::ShouldDisplay<log::Debug>())
           {
-            fluidSiteBlock++;
+            if (procForEachBlock[fluidSiteBlock] < 0)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
+                                                            fluidSiteBlock,
+                                                            localFluidSiteId,
+                                                            procForEachBlock[fluidSiteBlock]);
+            }
+            if (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
+                                                            fluidSiteBlock,
+                                                            localFluidSiteId,
+                                                            firstSiteIndexPerBlock[fluidSiteBlock]);
+            }
+            if (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock] - 1 < localFluidSiteId)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
+                                                            fluidSiteBlock,
+                                                            localFluidSiteId,
+                                                            fluidSitesPerBlock[fluidSiteBlock],
+                                                            firstSiteIndexPerBlock[fluidSiteBlock]);
+            }
           }
+
           timings[hemelb::reporting::Timers::dbg3].Stop();
-          derek_dbg_fluidsiteblocks += fluidSiteBlock;
 
           // ... and find its site id within that block. Start by working out how many fluid sites
           // we have to pass before we arrive at the fluid site we're after...
@@ -2111,33 +2148,6 @@ namespace hemelb
       timings[hemelb::reporting::Timers::moveDataSending].Stop();
       timings[hemelb::reporting::Timers::dbg2].Stop();
 
-      /*
-
-       int dbg_rank = 0;
-       int dbg_size = 0;
-       MPI_Comm_rank(topologyComm, &dbg_rank);
-       MPI_Comm_size(topologyComm, &dbg_size);
-       long long int* derek_dbg_blockbuffer = new long long int[dbg_size];
-
-       MPI_Gather(&derek_dbg_fluidsiteblocks,
-       1,
-       MPI_LONG_LONG_INT,
-       derek_dbg_blockbuffer,
-       1,
-       MPI_LONG_LONG_INT,
-       0,
-       topologyComm);
-
-       if(dbg_rank == 0) {
-       {
-       for (int i = 0; i < dbg_size; i++)
-       {
-       std::cerr << "proc id: " << i << ", fluid site blocks: " << derek_dbg_blockbuffer[i] << std::endl;
-       }
-       }
-
-       delete[] derek_dbg_blockbuffer;
-       */
       // ... and return the list of moves.
       return movesList;
     }
