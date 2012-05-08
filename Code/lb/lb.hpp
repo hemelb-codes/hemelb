@@ -439,13 +439,13 @@ namespace hemelb
             continue;
           }
 
-          site_t my_site_id = block.GetLocalContiguousIndexForSite(siteTrav.GetCurrentIndex());
-
           /* Skip over solid sites. */
-          if (my_site_id & BIG_NUMBER3)
+          if (block.SiteIsSolid(siteTrav.GetCurrentIndex()))
           {
             continue;
           }
+
+          site_t my_site_id = block.GetLocalContiguousIndexForSite(siteTrav.GetCurrentIndex());
 
           distribn_t stress;
 

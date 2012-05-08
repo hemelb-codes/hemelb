@@ -9,6 +9,7 @@
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"
+#include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
@@ -19,20 +20,6 @@ namespace hemelb
 {
   namespace geometry
   {
-    class NeighbouringProcessor
-    {
-      public:
-        // Rank of the neighbouring processor.
-        proc_t Rank;
-
-        // The number of distributions shared between this neighbour and the current processor.
-        site_t SharedFCount;
-
-        // Index on this processor of the first distribution shared between this
-        // neighbour and the current processor.
-        site_t FirstSharedF;
-    };
-
     class LatticeData : public reporting::Reportable
     {
       public:

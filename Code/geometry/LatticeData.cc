@@ -13,7 +13,7 @@ namespace hemelb
   namespace geometry
   {
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-      latticeInfo(latticeInfo)
+        latticeInfo(latticeInfo)
     {
     }
 
@@ -38,7 +38,7 @@ namespace hemelb
     }
 
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult) :
-      latticeInfo(latticeInfo)
+        latticeInfo(latticeInfo)
     {
       SetBasicDetails(readResult.blocks, readResult.blockSize, readResult.voxelSize, readResult.origin);
 
@@ -95,7 +95,8 @@ namespace hemelb
         }
 
         // Iterate over all sites within the current block.
-        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
+        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid();
+            siteTraverser.TraverseOne())
         {
           site_t localSiteId = siteTraverser.GetCurrentIndex();
 
@@ -120,9 +121,9 @@ namespace hemelb
                 + siteTraverser.GetCurrentLocation() + util::Vector3D<site_t>(latticeInfo.GetVector(l));
 
             if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0 || neighbourGlobalCoords.z < 0
-                || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize || neighbourGlobalCoords.y
-                >= readResult.blocks.y * readResult.blockSize || neighbourGlobalCoords.z >= readResult.blocks.z
-                * readResult.blockSize)
+                || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize
+                || neighbourGlobalCoords.y >= readResult.blocks.y * readResult.blockSize
+                || neighbourGlobalCoords.z >= readResult.blocks.z * readResult.blockSize)
             {
               continue;
             }
@@ -146,6 +147,7 @@ namespace hemelb
             site_t neighbourSiteId = readResult.GetSiteIdFromSiteCoordinates(neighbourSite.x,
                                                                              neighbourSite.y,
                                                                              neighbourSite.z);
+
             proc_t neighbourProc = readResult.Blocks[neighbourBlockId].Sites[neighbourSiteId].targetProcessor;
             if (neighbourProc == BIG_NUMBER2 || localRank == neighbourProc)
             {
@@ -273,7 +275,7 @@ namespace hemelb
     void LatticeData::CollectFluidSiteDistribution()
     {
       fluidSitesOnEachProcessor.resize(topology::NetworkTopology::Instance()->GetProcessorCount());
-      hemelb::log::Logger::Log < hemelb::log::Warning, hemelb::log::Singleton > ("Gathering lattice info.");
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
                     MpiDataType<site_t>(),
@@ -292,9 +294,9 @@ namespace hemelb
     {
       site_t localMins[3];
       site_t localMaxes[3];
-      localMins[0] = std::numeric_limits < site_t > ::max();
-      localMins[1] = std::numeric_limits < site_t > ::max();
-      localMins[2] = std::numeric_limits < site_t > ::max();
+      localMins[0] = std::numeric_limits<site_t>::max();
+      localMins[1] = std::numeric_limits<site_t>::max();
+      localMins[2] = std::numeric_limits<site_t>::max();
       localMaxes[0] = 0;
       localMaxes[1] = 0;
       localMaxes[2] = 0;
@@ -311,7 +313,7 @@ namespace hemelb
           if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex())
               == topology::NetworkTopology::Instance()->GetLocalRank())
           {
-            util::Vector3D < site_t > globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
+            util::Vector3D<site_t> globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
                 + siteSet.GetCurrentLocation();
             localMins[0] = hemelb::util::NumericalFunctions::min(localMins[0], globalCoords.x);
             localMins[1] = hemelb::util::NumericalFunctions::min(localMins[1], globalCoords.y);
@@ -373,8 +375,8 @@ namespace hemelb
     {
       // Allocate the index in which to put the distribution functions received from the other
       // process.
-      std::vector < std::vector<site_t> > sharedFLocationForEachProc = std::vector < std::vector<site_t>
-          > (topology::NetworkTopology::Instance()->GetProcessorCount());
+      std::vector<std::vector<site_t> > sharedFLocationForEachProc =
+          std::vector<std::vector<site_t> >(topology::NetworkTopology::Instance()->GetProcessorCount());
       site_t totalSharedFsSoFar = 0;
       // Set the remaining neighbouring processor data.
       for (size_t n = 0; n < neighbouringProcs.size(); n++)
@@ -385,7 +387,7 @@ namespace hemelb
             + totalSharedFsSoFar;
         totalSharedFsSoFar += neighbouringProcs[n].SharedFCount;
       }
-      InitialiseNeighbourLookup (sharedFLocationForEachProc);
+      InitialiseNeighbourLookup(sharedFLocationForEachProc);
       InitialisePointToPointComms(sharedFLocationForEachProc);
       InitialiseReceiveLookup(sharedFLocationForEachProc);
     }
@@ -415,11 +417,11 @@ namespace hemelb
           SetNeighbourLocation(localIndex, 0, localIndex * latticeInfo.GetNumVectors() + 0);
           for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
-            util::Vector3D < site_t > currentLocationCoords = blockTraverser.GetCurrentLocation() * blockSize
+            util::Vector3D<site_t> currentLocationCoords = blockTraverser.GetCurrentLocation() * blockSize
                 + siteTraverser.GetCurrentLocation();
             // Work out positions of neighbours.
-            util::Vector3D < site_t > neighbourCoords = currentLocationCoords + util::Vector3D < site_t
-                > (latticeInfo.GetVector(l));
+            util::Vector3D<site_t> neighbourCoords = currentLocationCoords
+                + util::Vector3D<site_t>(latticeInfo.GetVector(l));
             if (!IsValidLatticeSite(neighbourCoords))
             {
               // Set the neighbour location to the rubbish site.
@@ -464,7 +466,6 @@ namespace hemelb
               sharedFLocationForEachProc[proc_id_p].push_back(l);
             }
           }
-
         }
 
       }
@@ -535,7 +536,7 @@ namespace hemelb
             l = latticeInfo.GetInverseIndex(l);
           }
           // Get the fluid site number of site that will send data to another process.
-          util::Vector3D < site_t > location(i, j, k);
+          util::Vector3D<site_t> location(i, j, k);
           site_t contigSiteId = GetContiguousSiteId(location);
           // Set f_id to the element in the send buffer that we put the updated
           // distribution functions in.
@@ -716,14 +717,14 @@ namespace hemelb
     const util::Vector3D<site_t> LatticeData::GetGlobalCoords(site_t blockNumber,
                                                               const util::Vector3D<site_t>& localSiteCoords) const
     {
-      util::Vector3D < site_t > blockCoords;
+      util::Vector3D<site_t> blockCoords;
       GetBlockIJK(blockNumber, blockCoords);
       return GetGlobalCoords(blockCoords, localSiteCoords);
     }
 
     util::Vector3D<site_t> LatticeData::GetSiteCoordsFromSiteId(site_t siteId) const
     {
-      util::Vector3D < site_t > siteCoords;
+      util::Vector3D<site_t> siteCoords;
       siteCoords.z = siteId % blockSize;
       site_t siteIJData = siteId / blockSize;
       siteCoords.y = siteIJData % blockSize;
@@ -778,9 +779,9 @@ namespace hemelb
           it != neighbouringProcs.end(); ++it)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive < distribn_t > (GetFOld( (*it).FirstSharedF), (int) ( ( (*it).SharedFCount)), (*it).Rank);
+        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedF), (int) ( ( (*it).SharedFCount)), (*it).Rank);
         // Request the send from the right bit of FNew.
-        net->RequestSend < distribn_t > (GetFNew( (*it).FirstSharedF), (int) ( ( (*it).SharedFCount)), (*it).Rank);
+        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedF), (int) ( ( (*it).SharedFCount)), (*it).Rank);
 
       }
     }
@@ -833,8 +834,8 @@ namespace hemelb
     void LatticeData::Report(ctemplate::TemplateDictionary& dictionary)
     {
       dictionary.SetIntValue("SITES", GetTotalFluidSites());
-      dictionary.SetIntValue("BLOCKS",blockCount);
-      dictionary.SetIntValue("SITESPERBLOCK",sitesPerBlockVolumeUnit);
+      dictionary.SetIntValue("BLOCKS", blockCount);
+      dictionary.SetIntValue("SITESPERBLOCK", sitesPerBlockVolumeUnit);
       for (size_t n = 0; n < fluidSitesOnEachProcessor.size(); n++)
       {
         ctemplate::TemplateDictionary *proc = dictionary.AddSectionDictionary("PROCESSOR");
