@@ -23,9 +23,8 @@ namespace hemelb
             public:
               GeometryReader(const bool reserveSteeringCore,
                              const hemelb::lb::lattices::LatticeInfo& latticeInfo,
-                             hemelb::geometry::Geometry& readResult,
                              reporting::Timers &timings) :
-                hemelb::geometry::GeometryReader(reserveSteeringCore, latticeInfo, readResult, timings)
+                hemelb::geometry::GeometryReader(reserveSteeringCore, latticeInfo, timings)
               {
               }
           };
@@ -45,10 +44,8 @@ namespace hemelb
 
           void setUp()
           {
-            readResult = new Geometry();
             reader = new TestableLatticeData::GeometryReader(false,
                                                              hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                                             *readResult,
                                                              timings);
             lattice = NULL;
             bool dummy;
@@ -67,7 +64,6 @@ namespace hemelb
             delete lattice;
             delete fourCube;
             delete simConfig;
-            delete readResult;
           }
 
           void TestRead()
@@ -77,7 +73,7 @@ namespace hemelb
 
           void TestSameAsFourCube()
           {
-            reader->LoadAndDecompose(simConfig->GetDataFilePath());
+            Geometry readResult = reader->LoadAndDecompose(simConfig->GetDataFilePath());
 
             site_t siteIndex = 0;
             for (site_t i = 0; i < 4; i++)
@@ -89,7 +85,7 @@ namespace hemelb
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
                   util::Vector3D<site_t> location(i, j, k);
 
-                  hemelb::geometry::SiteData siteData(readResult->Blocks[0].Sites[siteIndex]);
+                  hemelb::geometry::SiteData siteData(readResult.Blocks[0].Sites[siteIndex]);
 
                   CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetOtherRawData(),
                                        siteData.GetOtherRawData());
@@ -106,7 +102,6 @@ namespace hemelb
 
         private:
           TestableLatticeData::GeometryReader *reader;
-          Geometry* readResult;
           TestableLatticeData* lattice;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
