@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <cstdio>
 #include <cstdarg>
 #include <sys/time.h>
@@ -30,14 +31,22 @@ namespace hemelb
         startTime = util::myClock();
       }
 
+      char rankAndTime[30];
+      std::sprintf(rankAndTime, "Rank %.6i, %.1fs", thisRank, util::myClock() - startTime);
+
+      std::stringstream output;
+      output << "[" << rankAndTime;
+
+#ifdef HAVE_RUSAGE
       rusage usage;
       getrusage(RUSAGE_SELF, &usage);
 
-      char lead[60];
-      std::sprintf(lead, "[Rank %.6i, %.1fs, mem: %li]: ", thisRank, util::myClock() - startTime, usage.ru_maxrss);
+      output << ", mem: " << usage.ru_maxrss;
+#endif
 
-      std::string overFormat(lead);
-      overFormat.append(format).append("\n");
+      output << "]: " << format << '\n';
+
+      std::string overFormat(output.str());
 
       std::vprintf(overFormat.c_str(), args);
     }
