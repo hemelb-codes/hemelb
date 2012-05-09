@@ -54,7 +54,7 @@ namespace hemelb
         }
 
         template<typename LatticeType>
-        inline const distribn_t GetWallDistance(Direction direction) const
+        inline distribn_t GetWallDistance(Direction direction) const
         {
           return latticeData.template GetCutDistance<LatticeType> (index, direction);
         }
@@ -64,7 +64,7 @@ namespace hemelb
           return latticeData.GetNormalToWall(index);
         }
 
-        inline const site_t GetIndex() const
+        inline site_t GetIndex() const
         {
           return index;
         }
@@ -78,7 +78,7 @@ namespace hemelb
          * @return
          */
         template<typename LatticeType>
-        inline const site_t GetStreamedIndex(Direction direction) const
+        inline site_t GetStreamedIndex(Direction direction) const
         {
           return latticeData.template GetStreamedIndex<LatticeType> (index, direction);
         }
