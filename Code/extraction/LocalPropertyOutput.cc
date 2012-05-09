@@ -254,10 +254,8 @@ namespace hemelb
         case OutputField::ShearStress:
         case OutputField::ShearRate:
           return 1;
-          break;
         case OutputField::Velocity:
           return 3;
-          break;
         default:
           // This should never happen. Only occurs if someone adds a new field and forgets
           // to add to this method.

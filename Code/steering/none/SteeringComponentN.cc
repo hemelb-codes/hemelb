@@ -22,9 +22,9 @@ namespace hemelb
                                          configuration::SimConfig* iSimConfig,
                                          util::UnitConverter* iUnits) :
         net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-        mSimState(iSimState), mVisControl(iVisControl), mUnits(iUnits)
+        mSimState(iSimState), mVisControl(iVisControl), mUnits(iUnits), simConfig(iSimConfig)
     {
-      Reset(iSimConfig);
+      Reset();
       AssignValues();
     }
 
