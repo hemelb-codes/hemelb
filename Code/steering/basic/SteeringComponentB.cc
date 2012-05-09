@@ -17,9 +17,9 @@ namespace hemelb
                                          util::UnitConverter* iUnits) :
         net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
         mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl),
-        mUnits(iUnits)
+        mUnits(iUnits),simConfig(iSimConfig)
     {
-      Reset(iSimConfig);
+      Reset();
       AssignValues();
     }
 

@@ -59,7 +59,7 @@ namespace hemelb
         /*
          * This function initialises all of the steering parameters, on all nodes.
          */
-        void Reset(configuration::SimConfig* iSimConfig);
+        void Reset();
 
         bool readyForNextImage;
         bool updatedMouseCoords;
@@ -84,6 +84,7 @@ namespace hemelb
         vis::Control* mVisControl;
         float privateSteeringParams[STEERABLE_PARAMETERS + 1];
         util::UnitConverter* mUnits;
+        configuration::SimConfig* simConfig;
     };
   }
 }
