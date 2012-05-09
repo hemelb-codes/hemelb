@@ -156,15 +156,12 @@ namespace hemelb
           {
             case Direction::X:
               return x;
-              break;
 
             case Direction::Y:
               return y;
-              break;
 
             case Direction::Z:
               return z;
-              break;
 
             default:
               HandleIndexError(lDirection);
@@ -185,15 +182,12 @@ namespace hemelb
           {
             case 0:
               return x;
-              break;
 
             case 1:
               return y;
-              break;
 
             case 2:
               return z;
-              break;
 
             default:
               HandleIndexError(index);
@@ -214,15 +208,12 @@ namespace hemelb
           {
             case 0:
               return x;
-              break;
 
             case 1:
               return y;
-              break;
 
             case 2:
               return z;
-              break;
 
             default:
               HandleIndexError(index);

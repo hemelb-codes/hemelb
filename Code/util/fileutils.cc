@@ -107,8 +107,6 @@ namespace hemelb
 
       int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
 
-      char filename[1024];
-
       for (int i = 0; i < file_count; i++)
       {
         std::stringstream filename;
