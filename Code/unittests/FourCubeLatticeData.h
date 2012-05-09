@@ -41,14 +41,10 @@ namespace hemelb
          */
         static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
-          hemelb::geometry::Geometry readResult;
-
-          readResult.voxelSize = 0.01;
-          readResult.origin = util::Vector3D<distribn_t>::Zero();
-          readResult.blockSize = sitesPerBlockUnit;
-          readResult.blocks = util::Vector3D<site_t>::Ones();
-
-          readResult.Blocks = std::vector<hemelb::geometry::BlockReadResult>(1);
+          hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
+                                                sitesPerBlockUnit,
+                                                0.01,
+                                                util::Vector3D<PhysicalLength>::Zero());
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
           block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
@@ -92,8 +88,7 @@ namespace hemelb
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
-                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit
-                      || neighJ >= sitesPerBlockUnit)
+                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit || neighJ >= sitesPerBlockUnit)
                   {
                     link.type = geometry::GeometrySiteLink::WALL_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
@@ -109,8 +104,7 @@ namespace hemelb
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
-          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit
-              * sitesPerBlockUnit;
+          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit * sitesPerBlockUnit;
           for (proc_t rank = 1; rank < rankCount; ++rank)
           {
             returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
@@ -120,18 +114,18 @@ namespace hemelb
         }
 
         /***
-        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
-        **/
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
         void SetHasBoundary(site_t site, Direction direction)
         {
           TestSiteData mutableSiteData(siteData[site]);
           mutableSiteData.SetHasBoundary(direction);
           siteData[site] = geometry::SiteData(mutableSiteData);
         }
-        
+
         /***
-        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
-        **/
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
         void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
         {
           distanceToWall[ (lb::lattices::D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
