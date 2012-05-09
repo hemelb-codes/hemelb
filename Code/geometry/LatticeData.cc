@@ -29,9 +29,8 @@ namespace hemelb
       // Use a reader to read in the file.
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
-      Geometry readGeometryData;
-      GeometryReader reader(reserveSteeringCore, latticeInfo, readGeometryData, timings);
-      reader.LoadAndDecompose(dataFilePath);
+      GeometryReader reader(reserveSteeringCore, latticeInfo, timings);
+      Geometry readGeometryData = reader.LoadAndDecompose(dataFilePath);
 
       // Create a new lattice based on that info and return it.
       return new LatticeData(latticeInfo, readGeometryData);
@@ -40,7 +39,10 @@ namespace hemelb
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult) :
         latticeInfo(latticeInfo)
     {
-      SetBasicDetails(readResult.blocks, readResult.blockSize, readResult.voxelSize, readResult.origin);
+      SetBasicDetails(readResult.GetBlockDimensions(),
+                      readResult.GetBlockSize(),
+                      readResult.GetVoxelSize(),
+                      readResult.GetOrigin());
 
       ProcessReadSites(readResult);
       CollectFluidSiteDistribution();
@@ -117,20 +119,21 @@ namespace hemelb
           for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
             // Find the neighbour site co-ords in this direction.
-            util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation() * readResult.blockSize
-                + siteTraverser.GetCurrentLocation() + util::Vector3D<site_t>(latticeInfo.GetVector(l));
+            util::Vector3D<site_t> neighbourGlobalCoords = blockTraverser.GetCurrentLocation()
+                * readResult.GetBlockSize() + siteTraverser.GetCurrentLocation()
+                + util::Vector3D<site_t>(latticeInfo.GetVector(l));
 
             if (neighbourGlobalCoords.x < 0 || neighbourGlobalCoords.y < 0 || neighbourGlobalCoords.z < 0
-                || neighbourGlobalCoords.x >= readResult.blocks.x * readResult.blockSize
-                || neighbourGlobalCoords.y >= readResult.blocks.y * readResult.blockSize
-                || neighbourGlobalCoords.z >= readResult.blocks.z * readResult.blockSize)
+                || neighbourGlobalCoords.x >= readResult.GetBlockDimensions().x * readResult.GetBlockSize()
+                || neighbourGlobalCoords.y >= readResult.GetBlockDimensions().y * readResult.GetBlockSize()
+                || neighbourGlobalCoords.z >= readResult.GetBlockDimensions().z * readResult.GetBlockSize())
             {
               continue;
             }
 
             // ... (that is actually being simulated and not a solid)...
-            util::Vector3D<site_t> neighbourBlock = neighbourGlobalCoords / readResult.blockSize;
-            util::Vector3D<site_t> neighbourSite = neighbourGlobalCoords % readResult.blockSize;
+            util::Vector3D<site_t> neighbourBlock = neighbourGlobalCoords / readResult.GetBlockSize();
+            util::Vector3D<site_t> neighbourSite = neighbourGlobalCoords % readResult.GetBlockSize();
             site_t neighbourBlockId = readResult.GetBlockIdFromBlockCoordinates(neighbourBlock.x,
                                                                                 neighbourBlock.y,
                                                                                 neighbourBlock.z);

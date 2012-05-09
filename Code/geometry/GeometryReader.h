@@ -23,30 +23,31 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        GeometryReader(const bool reserveSteeringCore,
-                       const lb::lattices::LatticeInfo&,
-                       Geometry& readResult,
-                       reporting::Timers &timings);
+        typedef typename util::Vector3D<site_t> BlockLocation;
+
+        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
         ~GeometryReader();
 
-        void LoadAndDecompose(const std::string& dataFilePath);
+        Geometry LoadAndDecompose(const std::string& dataFilePath);
 
       private:
-        void ReadPreamble();
+        Geometry ReadPreamble();
 
-        void ReadHeader();
+        void ReadHeader(site_t blockCount);
 
-        void BlockDecomposition();
+        void BlockDecomposition(const Geometry& geometry);
 
         void DivideBlocks(site_t unassignedBlocks,
+                          const Geometry& geometry,
                           const proc_t unitCount,
                           std::vector<site_t>& blocksOnEachUnit,
                           std::vector<proc_t>& unitForEachBlock,
                           const std::vector<site_t>& fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(const std::vector<proc_t>& unitForEachBlock, const proc_t localRank);
+        void ReadInLocalBlocks(Geometry& geometry, const std::vector<proc_t>& unitForEachBlock, const proc_t localRank);
 
         void DecideWhichBlocksToRead(std::vector<bool>& readBlock,
+                                     const Geometry& geometry,
                                      const std::vector<proc_t>& unitForEachBlock,
                                      const proc_t localRank);
 
@@ -61,6 +62,7 @@ namespace hemelb
          * @param neededOnThisRank
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
+                         Geometry& geometry,
                          const std::vector<proc_t>& procsWantingThisBlock,
                          const site_t blockNumber,
                          const site_t sites,
@@ -79,7 +81,7 @@ namespace hemelb
         std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
                                               const unsigned int uncompressedBytes);
 
-        void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
+        void ParseBlock(Geometry& geometry, const site_t block, io::writers::xdr::XdrReader& reader);
 
         GeometrySite ParseSite(io::writers::xdr::XdrReader& reader);
 
@@ -92,39 +94,43 @@ namespace hemelb
          */
         proc_t GetReadingCoreForBlock(site_t blockNumber);
 
-        bool Expand(std::vector<util::Vector3D<site_t> >& edgeBlocks,
-                    std::vector<util::Vector3D<site_t> >& expansionBlocks,
+        bool Expand(std::vector<BlockLocation>& edgeBlocks,
+                    std::vector<BlockLocation>& expansionBlocks,
                     const std::vector<site_t>& fluidSitesPerBlock,
                     std::vector<bool>& blockAssigned,
                     const proc_t currentUnit,
                     std::vector<proc_t>& unitForEachBlock,
                     site_t &blocksOnCurrentUnit,
-                    const site_t blocksPerUnit);
+                    const site_t blocksPerUnit,
+                    const Geometry& geometry);
 
-        void OptimiseDomainDecomposition(const std::vector<proc_t>& procForEachBlock);
+        void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
 
         void ValidateGraphData(const std::vector<idx_t>& vtxDistribn,
                                idx_t localVertexCount,
                                const std::vector<idx_t>& adjacenciesPerVertex,
                                const std::vector<idx_t>& adjacencies);
 
-        void ValidateAllReadData();
+        void ValidateGeometry(const Geometry& geometry);
 
-        void ValidateProcForEachBlock();
+        void ValidateProcForEachBlock(site_t blockCount);
 
         site_t GetHeaderLength(site_t blockCount) const;
 
         void GetSiteDistributionArray(std::vector<idx_t>& vertexDistribn,
+                                      site_t blockCount,
                                       const std::vector<proc_t>& procForEachBlock,
                                       const std::vector<site_t>& fluidSitesPerBlock) const;
 
         void GetFirstSiteIndexOnEachBlock(std::vector<idx_t>& firstSiteIndexPerBlock,
+                                          site_t blockCount,
                                           const std::vector<idx_t>& vertexDistribution,
                                           const std::vector<proc_t>& procForEachBlock,
                                           const std::vector<site_t>& fluidSitesPerBlock) const;
 
         void GetAdjacencyData(std::vector<idx_t>& adjacenciesPerVertex,
                               std::vector<idx_t>& localAdjacencies,
+                              const Geometry& geometry,
                               const idx_t localVertexCount,
                               const std::vector<proc_t>& procForEachBlock,
                               const std::vector<idx_t>& firstSiteIndexPerBlock) const;
@@ -136,15 +142,20 @@ namespace hemelb
                           std::vector<idx_t>& adjacencies);
 
         idx_t* GetMovesList(std::vector<idx_t>& movesFromEachProc,
+                            const Geometry& geometry,
                             const std::vector<idx_t>& firstSiteIndexPerBlock,
                             const std::vector<proc_t>& procForEachBlock,
                             const std::vector<site_t>& fluidSitesPerBlock,
                             const std::vector<idx_t>& vtxDistribn,
                             const std::vector<idx_t>& partitionVector);
 
-        void RereadBlocks(const std::vector<idx_t>& movesPerProc, const idx_t* movesList, const std::vector<int>& procForEachBlock);
+        void RereadBlocks(Geometry& geometry,
+                          const std::vector<idx_t>& movesPerProc,
+                          const idx_t* movesList,
+                          const std::vector<int>& procForEachBlock);
 
-        void ImplementMoves(const std::vector<proc_t>& procForEachBlock,
+        void ImplementMoves(Geometry& geometry,
+                            const std::vector<proc_t>& procForEachBlock,
                             const std::vector<idx_t>& movesFromEachProc,
                             const idx_t* movesList) const;
 
@@ -154,7 +165,6 @@ namespace hemelb
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         const lb::lattices::LatticeInfo& latticeInfo;
-        Geometry& readingResult;
         MPI_File file;
         MPI_Info fileInfo;
         MPI_Comm topologyComm;
