@@ -39,6 +39,7 @@ default:
   cmake_options: {}
   job_name_template: '${config}_${build_number}_${machine_name}_$cores'
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
+  manual_ssh: false
 legion: 
   job_dispatch: "qsub"
   # The remote host-name to use.
@@ -105,11 +106,31 @@ hector:
     CMAKE_CXX_FLAGS_RELEASE: ""
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
 hector_login: #Hector, compiling for login nodes and serial queues
    import: "hector"
    fabric_dir: "FabricHemeLbLogin"
    modules: ["load CMake/2.8.6", "swap xtpe-interlagos xtpe-istanbul"]
    job_dispatch: ""
+hector_vampir:
+  import: "hector"
+  template_key: hector
+  fabric_dir: "FabricHemeLBVampir"
+  build_prefix_commands:
+    - export CXX=vtCC
+    - export CC=vtcc
+    - export LD=vtCC
+  run_prefix_commands:
+    - export VT_BUFFER_SIZE=150M
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "vtCC"
+    CMAKE_C_COMPILER: "vtcc"
+    CMAKE_CXX_FLAGS_RELEASE: "-vt:mpi"
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+  modules: ["load CMake/2.8.6","use /home/d37/d37/vampir/privatemodules","load vampirtrace","load vampir"]
 julian:
    home_path_template: "/Users/$username"
    remote: "julian.chem.ucl.ac.uk"
@@ -127,4 +148,45 @@ localhost:
    python_build: "lib/python2.7"
    template_key: default
    make_jobs: 4
-   
+riken:
+   remote: "127.0.0.1:2200"  #Not a place to run code, just to get the via code there to run on Marigold
+   no_ssh: true
+   no_hg: true
+   needs_tarballs: true
+# Before the marigold section will work, you need to set up your LOCAL ssh config as follows:
+# Host riken
+#  HostName 127.0.0.1
+#  Port 2200
+#  User jamespjh
+#  Host marigold
+#  ProxyCommand ssh -q riken nc -w60 10.1.40.31 22
+#  Host marigold_run
+#  ProxyCommand ssh -q marigold nc -w60 mg 22
+# And also, have followed the RIKEN instructions to join the RIKEN VPN with localhost:2200 forwarding to Riken.
+marigold:
+   remote: marigold
+   no_ssh: true
+   no_hg: true
+   needs_tarballs: true
+   manual_ssh: true
+   runtime_path_template: "/data/$username"
+   install_path_template: "$work_path/install"
+   template_key: marigold
+   build_prefix_commands:
+     - export CXX=/opt/FJSVtclang/1.2.0/bin/mpiFCCpx
+     - export CC=/opt/FJSVtclang/1.2.0/bin/mpifccpx
+     - export CPPFLAGS="-DNO_THREADS"
+     - export CXXFLAGS=""
+   cmake_options:
+     CMAKE_CXX_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
+     CMAKE_C_COMPILER: /opt/FJSVtclang/1.2.0/bin/mpifccpx
+     CTEMPLATE_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
+     CPPUNIT_CONFIGURE_OPTIONS: --host=sparc64-unknown-linux-gnu
+     PARMETIS_CXX: /opt/FJSVtclang/1.2.0/bin/mpiFCCpx
+     PARMETIS_CC: /opt/FJSVtclang/1.2.0/bin/mpifccpx
+     CTEMPLATE_PATCH_VACOPY: ON
+     CTEMPLATE_PATCH_ALIGN: ON
+marigold_run:
+  import: marigold
+  remote: marigold_run
+  
