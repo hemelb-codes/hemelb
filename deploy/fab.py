@@ -503,7 +503,8 @@ def job(*option_dictionaries):
             put(tempf.name,env.pather.join(env.job_results,'env.yml'))
         run(template("chmod u+x $dest_name"))
         with cd(env.job_results):
-            run(template("$job_dispatch $dest_name"))
+            with prefix(env.run_prefix):
+                run(template("$job_dispatch $dest_name"))
 
 def input_to_range(arg,default):
     ttype=type(default)
@@ -629,3 +630,39 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                 if not str(create_configs).lower()[0]=='f':
                     modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
+
+
+def manual(cmd):
+    #From the fabric wiki, bypass fabric internal ssh control
+    commands=env.command_prefixes[:]
+    if env.get('cwd'):
+        commands.append("cd %s"%env.cwd)
+    commands.append(cmd)
+    manual_command=" && ".join(commands)
+    pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
+    local(pre_cmd + "'"+manual_command+"'", capture=False)
+    
+def run(cmd):
+    if env.manual_ssh:
+        manual(cmd)
+    else:
+        fabric.api.run(cmd)
+        
+def put(src,dest):
+    if env.manual_ssh:
+        env.manual_src=src
+        env.manual_dest=dest
+        local(template("scp $manual_src $user@$host:$manual_dest"))
+    else:
+        fabric.api.put(src,dest)
+        
+@task
+def vampir(original_job,*args):
+    env.original_job=original_job
+    env.original_job_results=env.pather.join(env.results_path,original_job)
+    job(dict(job_name_template='vampir_${original_job}', script='vampir',
+            cores=16,wall_time='0:15:0'),args)
+
+@task
+def vampir_tunnel(node,port):
+    local("ssh hector -L 30070:nid%s:%s -N"%node,port)
