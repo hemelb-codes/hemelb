@@ -7,6 +7,7 @@
 #include "debug/Debugger.h"
 #include "io/formats/geometry.h"
 #include "io/writers/xdr/XdrMemReader.h"
+#include "geometry/decomposition/BasicDecomposition.h"
 #include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q27.h"
 #include "net/net.h"
@@ -36,7 +37,7 @@ namespace hemelb
       participateInTopology = !reserveSteeringCore || topology::NetworkTopology::Instance()->GetLocalRank() != 0
           || topology::NetworkTopology::Instance()->GetProcessorCount() == 1;
 
-      // Create our own group, without the root node.
+      // Create our own group, without the root node if we're not running with it.
       if (reserveSteeringCore && topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
       {
         int lExclusions[1] = { 0 };
@@ -48,21 +49,13 @@ namespace hemelb
       }
 
       // Create a communicator just for the domain decomposition.
-      MPI_Comm_create(MPI_COMM_WORLD, topologyGroup, &topologyComm);
+      MPI_Comm_create(MPI_COMM_WORLD, topologyGroup, &topologyCommunicator);
 
       // Each rank needs to know its rank wrt the domain
       // decomposition.
       if (participateInTopology)
       {
-        int temp = 0;
-        MPI_Comm_rank(topologyComm, &topologyRank);
-        MPI_Comm_size(topologyComm, &temp);
-        topologySize = (unsigned int) temp;
-      }
-      else
-      {
-        topologyRank = -1;
-        topologySize = 0;
+        topologyComms = topology::Communicator(topologyCommunicator);
       }
     }
 
@@ -73,7 +66,7 @@ namespace hemelb
       // Note that on rank 0, this is the same as MPI_COMM_WORLD.
       if (participateInTopology)
       {
-        MPI_Comm_free(&topologyComm);
+        MPI_Comm_free(&topologyCommunicator);
       }
     }
 
@@ -103,9 +96,7 @@ namespace hemelb
                                 fileInfo,
                                 &file);
 
-      currentCommRank = topology::NetworkTopology::Instance()->GetLocalRank();
-      currentCommSize = topology::NetworkTopology::Instance()->GetProcessorCount();
-      currentComm = MPI_COMM_WORLD;
+      currentComms = topology::Communicator(MPI_COMM_WORLD);
 
       if (error != MPI_SUCCESS)
       {
@@ -145,11 +136,14 @@ namespace hemelb
       }
       else
       {
-        BlockDecomposition(geometry);
+        // Get an initial base-level decomposition of the domain macro-blocks over processors.
+        // This will later be improved upon by ParMetis.
+        decomposition::BasicDecomposition basicDecomposer(geometry, latticeInfo, topologyComms, fluidSitesOnEachBlock);
+        basicDecomposer.Decompose(principalProcForEachBlock);
 
         if (ShouldValidate())
         {
-          ValidateProcForEachBlock(geometry.GetBlockCount());
+          basicDecomposer.Validate(principalProcForEachBlock);
         }
       }
       timings[hemelb::reporting::Timers::initialDecomposition].Stop();
@@ -163,13 +157,11 @@ namespace hemelb
       {
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
-        MPI_File_open(topologyComm, const_cast<char*>(dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
+        MPI_File_open(topologyCommunicator, const_cast<char*>(dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
 
-        currentCommRank = topologyRank;
-        currentCommSize = topologySize;
-        currentComm = topologyComm;
+        currentComms = topologyComms;
 
-        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, topologyRank);
+        ReadInBlocksWithHalo(geometry, principalProcForEachBlock, topologyComms.GetRank());
 
         if (ShouldValidate())
         {
@@ -217,12 +209,16 @@ namespace hemelb
       // read).
       char preambleBuffer[preambleBytes];
 
-      if (currentCommRank == HEADER_READING_RANK)
+      if (currentComms.GetRank() == HEADER_READING_RANK)
       {
         MPI_File_read(file, preambleBuffer, preambleBytes, MpiDataType(preambleBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(preambleBuffer, preambleBytes, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(preambleBuffer,
+                preambleBytes,
+                MpiDataType<char>(),
+                HEADER_READING_RANK,
+                currentComms.GetCommunicator());
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::writers::xdr::XdrReader preambleReader = hemelb::io::writers::xdr::XdrMemReader(preambleBuffer,
@@ -291,12 +287,16 @@ namespace hemelb
       // Allocate a buffer to read into, then do the reading.
       char* headerBuffer = new char[headerByteCount];
 
-      if (currentCommRank == HEADER_READING_RANK)
+      if (currentComms.GetRank() == HEADER_READING_RANK)
       {
         MPI_File_read(file, headerBuffer, (int) headerByteCount, MpiDataType(headerBuffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(headerBuffer, (int) headerByteCount, MpiDataType<char>(), HEADER_READING_RANK, currentComm);
+      MPI_Bcast(headerBuffer,
+                (int) headerByteCount,
+                MpiDataType<char>(),
+                HEADER_READING_RANK,
+                currentComms.GetCommunicator());
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::writers::xdr::XdrReader preambleReader =
@@ -354,14 +354,14 @@ namespace hemelb
 
       // Next we spread round the lists of which blocks each core needs access to.
       log::Logger::Log<log::Info, log::OnePerCore>("Informing reading cores of block needs");
-      net::Net net = net::Net(currentComm);
+      net::Net net = net::Net(currentComms.GetCommunicator());
       Decomposition decomposition(geometry.GetBlockCount(),
                                   readBlock,
-                                  util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize),
+                                  util::NumericalFunctions::min(READING_GROUP_SIZE, currentComms.GetSize()),
                                   net,
-                                  currentComm,
-                                  currentCommRank,
-                                  currentCommSize);
+                                  currentComms.GetCommunicator(),
+                                  currentComms.GetRank(),
+                                  currentComms.GetSize());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
       log::Logger::Log<log::Info, log::OnePerCore>("Reading blocks");
@@ -402,9 +402,9 @@ namespace hemelb
       std::vector<char> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
-      net::Net net = net::Net(currentComm);
+      net::Net net = net::Net(currentComms.GetCommunicator());
 
-      if (readingCore == currentCommRank)
+      if (readingCore == currentComms.GetRank())
       {
         timings[hemelb::reporting::Timers::readBlock].Start();
         // Read the data.
@@ -420,7 +420,7 @@ namespace hemelb
         for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
             receiver != procsWantingThisBlock.end(); receiver++)
         {
-          if (*receiver != currentCommRank)
+          if (*receiver != currentComms.GetRank())
           {
             net.RequestSend(&compressedBlockData.front(), bytesPerCompressedBlock[blockNumber], *receiver);
           }
@@ -609,7 +609,7 @@ namespace hemelb
 
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
-      return proc_t(blockNumber % util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize));
+      return proc_t(blockNumber % util::NumericalFunctions::min(READING_GROUP_SIZE, currentComms.GetSize()));
     }
 
     /**
@@ -677,19 +677,19 @@ namespace hemelb
                       (int) geometry.GetSitesPerBlock(),
                       MpiDataType(procForSiteRecv[0]),
                       MPI_MIN,
-                      topologyComm);
+                      topologyCommunicator);
 
         MPI_Allreduce(&dummySiteData[0],
                       &siteDataRecv[0],
                       (int) blockSiteDataLength,
                       MpiDataType(dummySiteData[0]),
                       MPI_MIN,
-                      topologyComm);
+                      topologyCommunicator);
 
         for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
         {
-          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyRank)
-              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyRank)))
+          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyComms.GetRank())
+              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyComms.GetRank())))
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                           site,
@@ -780,270 +780,6 @@ namespace hemelb
       return shouldReadBlock;
     }
 
-    /**
-     * Get an initial distribution of which block should be on which processor.
-     *
-     * To make this fast and remove a need to read in the site info about blocks,
-     * we assume that neighbouring blocks with any fluid sites on have lattice links
-     * between them.
-     *
-     * NOTE that the old version of this code used to cope with running on multiple machines,
-     * by decomposing fluid sites over machines, then decomposing over processors within one machine.
-     * To achieve this here, one could use parmetis's "nparts" parameters to first decompose over machines, then
-     * to decompose within machines.
-     *
-     * @param geometry [in] The geometry object we're decomposing.
-     */
-    void GeometryReader::BlockDecomposition(const Geometry& geometry)
-    {
-      std::vector<site_t> blockCountPerProc(topologySize, 0);
-
-      // Count of block sites.
-      site_t unvisitedFluidBlockCount = 0;
-      for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
-      {
-        if (fluidSitesOnEachBlock[block] != 0)
-        {
-          ++unvisitedFluidBlockCount;
-        }
-      }
-
-      // Divide blocks between the processors.
-      DivideBlocks(blockCountPerProc,
-                   principalProcForEachBlock,
-                   unvisitedFluidBlockCount,
-                   geometry,
-                   topologySize,
-                   fluidSitesOnEachBlock);
-    }
-
-    void GeometryReader::ValidateProcForEachBlock(site_t blockCount)
-    {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
-
-      std::vector<proc_t> procForEachBlockRecv(blockCount);
-
-      MPI_Allreduce(&principalProcForEachBlock[0],
-                    &procForEachBlockRecv[0],
-                    (int) blockCount,
-                    MpiDataType<proc_t>(),
-                    MPI_MAX,
-                    topologyComm);
-
-      for (site_t block = 0; block < blockCount; ++block)
-      {
-        if (principalProcForEachBlock[block] != procForEachBlockRecv[block])
-        {
-          log::Logger::Log<log::Debug, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
-                                                        block,
-                                                        principalProcForEachBlock[block],
-                                                        procForEachBlockRecv[block]);
-        }
-      }
-    }
-
-    /**
-     * We just do a basic decomposition here, ParMetis will improve on it later.
-     *
-     * The algorithm iterates over processors (units).
-     * We start by assigning the next unassigned block to the current unit, then growing out
-     * the region by adding new blocks, until the current unit has approximately the right
-     * number of blocks for the given numbers of blocks / units. When adding blocks, we prefer
-     * blocks that are neighbours of blocks already assigned to the current unit.
-     *
-     * @param blocksOnEachUnit [out] The number of blocks each processor gets assigned
-     * @param unitForEachBlock [out] The processor id for each block
-     * @param unassignedBlocks [in] The number of blocks yet to be assigned a processor
-     * @param geometry [in] The geometry we're decomposing
-     * @param unitCount [in] The total number of processors
-     * @param fluidSitesPerBlock [in] The number of fluid sites in each block
-     */
-    void GeometryReader::DivideBlocks(std::vector<site_t>& blocksOnEachUnit,
-                                      std::vector<proc_t>& unitForEachBlock,
-                                      site_t unassignedBlocks,
-                                      const Geometry& geometry,
-                                      const proc_t unitCount,
-                                      const std::vector<site_t>& fluidSitesPerBlock)
-    {
-      // Initialise the unit being assigned to, and the approximate number of blocks
-      // required on each unit.
-      proc_t currentUnit = 0;
-
-      site_t blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (topologySize));
-
-      // Create an array to monitor whether each block has been assigned yet.
-      std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
-
-      std::vector<BlockLocation> currentEdge;
-      std::vector<BlockLocation> expandedEdge;
-
-      site_t blockNumber = -1;
-
-      // Domain Decomposition.  Pick a site. Set it to the rank we are
-      // looking at. Find its neighbours and put those on the same
-      // rank, then find the next-nearest neighbours, etc. until we
-      // have a completely joined region, or there are enough fluid
-      // sites on the rank.  In the former case, start again at
-      // another site. In the latter case, move on to the next rank.
-      // Do this until all sites are assigned to a rank. There is a
-      // high chance of of all sites on a rank being joined.
-
-      site_t blocksOnCurrentProc = 0;
-
-      // Iterate over all blocks.
-      for (site_t blockCoordI = 0; blockCoordI < geometry.GetBlockDimensions().x; blockCoordI++)
-      {
-        for (site_t blockCoordJ = 0; blockCoordJ < geometry.GetBlockDimensions().y; blockCoordJ++)
-        {
-          for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z; blockCoordK++)
-          {
-            // Block number is the number of the block we're currently on.
-            blockNumber++;
-
-            // If the array of proc rank for each site is NULL, we're on an all-solid block.
-            // Alternatively, if this block has already been assigned, move on.
-            if (fluidSitesPerBlock[blockNumber] == 0)
-            {
-              unitForEachBlock[blockNumber] = -1;
-              continue;
-            }
-            else if (blockAssigned[blockNumber])
-            {
-              continue;
-            }
-
-            // Assign this block to the current unit.
-            blockAssigned[blockNumber] = true;
-            unitForEachBlock[blockNumber] = currentUnit;
-
-            ++blocksOnCurrentProc;
-
-            // Record the location of this initial site.
-            currentEdge.clear();
-            BlockLocation lNew(blockCoordI, blockCoordJ, blockCoordK);
-            currentEdge.push_back(lNew);
-
-            // The subdomain can grow.
-            bool isRegionGrowing = true;
-
-            // While the region can grow (i.e. it is not bounded by solids or visited
-            // sites), and we need more sites on this particular rank.
-            while (blocksOnCurrentProc < blocksPerUnit && isRegionGrowing)
-            {
-              expandedEdge.clear();
-
-              // Sites added to the edge of the mClusters during the iteration.
-              isRegionGrowing = Expand(currentEdge,
-                                       expandedEdge,
-                                       fluidSitesPerBlock,
-                                       blockAssigned,
-                                       currentUnit,
-                                       unitForEachBlock,
-                                       blocksOnCurrentProc,
-                                       blocksPerUnit,
-                                       geometry);
-
-              // When the new layer of edge sites has been found, swap the buffers for
-              // the current and new layers of edge sites.
-              currentEdge.swap(expandedEdge);
-            }
-
-            // If we have enough sites, we have finished.
-            if (blocksOnCurrentProc >= blocksPerUnit)
-            {
-              blocksOnEachUnit[currentUnit] = blocksOnCurrentProc;
-
-              ++currentUnit;
-
-              unassignedBlocks -= blocksOnCurrentProc;
-              blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (unitCount - currentUnit));
-
-              blocksOnCurrentProc = 0;
-            }
-            // If not, we have to start growing a different region for the same rank:
-            // region expansions could get trapped.
-
-          } // Block co-ord k
-        } // Block co-ord j
-      } // Block co-ord i
-    }
-
-    /**
-     * Returns true if the region was expanded.
-     *
-     * @param edgeBlocks
-     * @param iGlobLatDat
-     * @param fluidSitesPerBlock
-     * @param blockAssigned
-     * @param currentUnit
-     * @param unitForEachBlock
-     * @param blocksOnCurrentProc
-     * @param blocksPerUnit
-     * @return
-     */
-    bool GeometryReader::Expand(std::vector<BlockLocation>& edgeBlocks,
-                                std::vector<BlockLocation>& expansionBlocks,
-                                const std::vector<site_t>& fluidSitesPerBlock,
-                                std::vector<bool>& blockAssigned,
-                                const proc_t currentUnit,
-                                std::vector<proc_t>& unitForEachBlock,
-                                site_t &blocksOnCurrentUnit,
-                                const site_t blocksPerUnit,
-                                const Geometry& geometry)
-    {
-      bool regionExpanded = false;
-
-      // For sites on the edge of the domain (sites_a), deal with the neighbours.
-      for (unsigned int index_a = 0; (index_a < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit); index_a++)
-      {
-        BlockLocation& lNew = edgeBlocks[index_a];
-
-        for (Direction direction = 1; direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit;
-            direction++)
-        {
-          // Record neighbour location.
-          site_t neighbourI = lNew.x + latticeInfo.GetVector(direction).x;
-          site_t neighbourJ = lNew.y + latticeInfo.GetVector(direction).y;
-          site_t neighbourK = lNew.z + latticeInfo.GetVector(direction).z;
-
-          // Move on if neighbour is outside the bounding box.
-          if (neighbourI == -1 || neighbourI == geometry.GetBlockDimensions().x)
-            continue;
-          if (neighbourJ == -1 || neighbourJ == geometry.GetBlockDimensions().y)
-            continue;
-          if (neighbourK == -1 || neighbourK == geometry.GetBlockDimensions().z)
-            continue;
-
-          // Move on if the neighbour is in a block of solids (in which case
-          // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
-          // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
-          // was initialized in lbmReadConfig in io.cc.
-
-          site_t neighBlockId = geometry.GetBlockIdFromBlockCoordinates(neighbourI, neighbourJ, neighbourK);
-
-          // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
-          if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
-          {
-            continue;
-          }
-
-          // Set the rank for a neighbour and update the fluid site counters.
-          blockAssigned[neighBlockId] = true;
-          unitForEachBlock[neighBlockId] = currentUnit;
-          ++blocksOnCurrentUnit;
-
-          // Neighbour was found, so the region can grow.
-          regionExpanded = true;
-
-          // Record the location of the neighbour.
-          BlockLocation lNewB(neighbourI, neighbourJ, neighbourK);
-          expansionBlocks.push_back(lNewB);
-        }
-      }
-
-      return regionExpanded;
-    }
-
     void GeometryReader::OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock)
     {
       timings[hemelb::reporting::Timers::dbg5].Start(); //overall dbg timing
@@ -1060,7 +796,7 @@ namespace hemelb
                                    procForEachBlock,
                                    fluidSitesOnEachBlock);
 
-      idx_t localVertexCount = vtxDistribn[topologyRank + 1] - vtxDistribn[topologyRank];
+      idx_t localVertexCount = vtxDistribn[topologyComms.GetRank() + 1] - vtxDistribn[topologyComms.GetRank()];
 
       std::vector<idx_t> adjacenciesPerVertex;
       std::vector<idx_t> localAdjacencies;
@@ -1095,7 +831,7 @@ namespace hemelb
       log::Logger::Log<log::Info, log::OnePerCore>("Parmetis has finished.");
 
       // Convert the ParMetis results into a nice format.
-      std::vector<idx_t> allMoves(topologySize);
+      std::vector<idx_t> allMoves(topologyComms.GetSize());
       timings[hemelb::reporting::Timers::dbg4].Start();
       log::Logger::Log<log::Info, log::OnePerCore>("Getting moves lists for this core.");
       idx_t* movesList = GetMovesList(allMoves,
@@ -1141,7 +877,7 @@ namespace hemelb
                                                                 const std::vector<proc_t>& procForEachBlock,
                                                                 const std::vector<site_t>& fluidSitesPerBlock) const
     {
-      std::vector<idx_t> vertexDistribn(topologySize + 1, 0);
+      std::vector<idx_t> vertexDistribn(topologyComms.GetSize() + 1, 0);
 
       // Firstly, count the sites per processor. Do this off-by-one
       // to be compatible with ParMetis.
@@ -1154,7 +890,7 @@ namespace hemelb
       }
 
       // Now make the count cumulative, again off-by-one.
-      for (unsigned int rank = 0; rank < topologySize; ++rank)
+      for (proc_t rank = 0; rank < topologyComms.GetSize(); ++rank)
       {
         vertexDistribn[rank + 1] += vertexDistribn[rank];
       }
@@ -1165,16 +901,16 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
 
         // vtxDistribn should be the same on all cores.
-        std::vector<idx_t> vtxDistribnRecv(topologySize + 1);
+        std::vector<idx_t> vtxDistribnRecv(topologyComms.GetSize() + 1);
 
         MPI_Allreduce(&vertexDistribn[0],
                       &vtxDistribnRecv[0],
-                      topologySize + 1,
+                      topologyComms.GetSize() + 1,
                       MpiDataType(vtxDistribnRecv[0]),
                       MPI_MIN,
-                      topologyComm);
+                      topologyCommunicator);
 
-        for (unsigned int rank = 0; rank < topologySize + 1; ++rank)
+        for (proc_t rank = 0; rank < topologyComms.GetSize() + 1; ++rank)
         {
           if (vertexDistribn[rank] != vtxDistribnRecv[rank])
           {
@@ -1230,7 +966,7 @@ namespace hemelb
                       (int) blockCount,
                       MpiDataType(firstSiteIndexPerBlock[0]),
                       MPI_MAX,
-                      topologyComm);
+                      topologyCommunicator);
 
         for (site_t block = 0; block < blockCount; ++block)
         {
@@ -1264,7 +1000,7 @@ namespace hemelb
             const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI, blockJ, blockK);
 
             // ... considering only the ones which live on this proc...
-            if (procForEachBlock[blockNumber] != topologyRank)
+            if (procForEachBlock[blockNumber] != topologyComms.GetRank())
             {
               continue;
             }
@@ -1392,14 +1128,14 @@ namespace hemelb
       // Initialise the partition vector.
       for (idx_t vertexIndex = 0; vertexIndex < localVertexCount; ++vertexIndex)
       {
-        partitionVector[vertexIndex] = topologyRank;
+        partitionVector[vertexIndex] = topologyComms.GetRank();
       }
 
       // Weight all vertices evenly.
       std::vector<idx_t> vertexWeight(localVertexCount, 1);
 
       // Set the weights of each partition to be even, and to sum to 1.
-      idx_t desiredPartitionSize = topologySize;
+      idx_t desiredPartitionSize = topologyComms.GetSize();
 
       std::vector<real_t> domainWeights(desiredPartitionSize, (real_t)(1.0) / ((real_t) desiredPartitionSize));
 
@@ -1451,7 +1187,7 @@ namespace hemelb
                            options,
                            &edgesCut,
                            &partitionVector[0],
-                           &topologyComm);
+                           &topologyCommunicator);
       log::Logger::Log<log::Info, log::OnePerCore>("ParMetis returned.");
     }
 
@@ -1468,12 +1204,13 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(topologySize, std::multimap<idx_t, idx_t>());
+        std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(topologyComms.GetSize(),
+                                                                 std::multimap<idx_t, idx_t>());
 
         // The adjacency data should correspond across all cores.
         for (idx_t index = 0; index < localVertexCount; ++index)
         {
-          idx_t vertex = vtxDistribn[topologyRank] + index;
+          idx_t vertex = vtxDistribn[topologyComms.GetRank()] + index;
 
           // Iterate over each adjacency (of each vertex).
           for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
@@ -1483,7 +1220,7 @@ namespace hemelb
             proc_t adjacentProc = -1;
 
             // Calculate the proc of the neighbouring vertex.
-            for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
+            for (proc_t proc = 0; proc < topologyComms.GetSize(); ++proc)
             {
               if (vtxDistribn[proc] <= adjacentVertex && vtxDistribn[proc + 1] > adjacentVertex)
               {
@@ -1507,24 +1244,24 @@ namespace hemelb
         }
 
         // Create variables for the neighbour data to go into.
-        std::vector<idx_t> counts(topologySize);
-        std::vector<std::vector<idx_t> > data(topologySize);
-        std::vector<MPI_Request> requests(2 * topologySize);
+        std::vector<idx_t> counts(topologyComms.GetSize());
+        std::vector<std::vector<idx_t> > data(topologyComms.GetSize());
+        std::vector<MPI_Request> requests(2 * topologyComms.GetSize());
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
 
         // Now spread and compare the adjacency information. Larger ranks send data to smaller
         // ranks which receive the data and compare it.
-        for (proc_t neigh = 0; neigh < (proc_t) topologySize; ++neigh)
+        for (proc_t neigh = 0; neigh < (proc_t) topologyComms.GetSize(); ++neigh)
         {
           requests[2 * neigh] = MPI_REQUEST_NULL;
           requests[2 * neigh + 1] = MPI_REQUEST_NULL;
 
-          if (neigh < topologyRank)
+          if (neigh < topologyComms.GetRank())
           {
             // Send the array length.
             counts[neigh] = 2 * adjByNeighProc[neigh].size();
-            MPI_Isend(&counts[neigh], 1, MpiDataType(counts[0]), neigh, 42, topologyComm, &requests[2 * neigh]);
+            MPI_Isend(&counts[neigh], 1, MpiDataType(counts[0]), neigh, 42, topologyCommunicator, &requests[2 * neigh]);
 
             MPI_Wait(&requests[2 * neigh], MPI_STATUS_IGNORE);
 
@@ -1548,7 +1285,7 @@ namespace hemelb
                       MpiDataType<idx_t>(),
                       neigh,
                       43,
-                      topologyComm,
+                      topologyCommunicator,
                       &requests[2 * neigh + 1]);
 
             MPI_Wait(&requests[2 * neigh + 1], MPI_STATUS_IGNORE);
@@ -1558,9 +1295,15 @@ namespace hemelb
           }
 
           // If this is a greater rank number than the neighbour, receive the data.
-          if (neigh > topologyRank)
+          if (neigh > topologyComms.GetRank())
           {
-            MPI_Irecv(&counts[neigh], 1, MpiDataType(counts[neigh]), neigh, 42, topologyComm, &requests[2 * neigh]);
+            MPI_Irecv(&counts[neigh],
+                      1,
+                      MpiDataType(counts[neigh]),
+                      neigh,
+                      42,
+                      topologyCommunicator,
+                      &requests[2 * neigh]);
 
             MPI_Wait(&requests[2 * neigh], MPI_STATUS_IGNORE);
 
@@ -1571,7 +1314,7 @@ namespace hemelb
                       MpiDataType<idx_t>(),
                       neigh,
                       43,
-                      topologyComm,
+                      topologyCommunicator,
                       &requests[2 * neigh + 1]);
 
             MPI_Wait(&requests[2 * neigh] + 1, MPI_STATUS_IGNORE);
@@ -1672,8 +1415,8 @@ namespace hemelb
       // sites to be moved, and collect the site id and the destination processor.
       std::vector<idx_t> moveData;
 
-      const idx_t myLowest = vtxDistribn[topologyRank];
-      const idx_t myHighest = vtxDistribn[topologyRank + 1] - 1;
+      const idx_t myLowest = vtxDistribn[topologyComms.GetRank()];
+      const idx_t myHighest = vtxDistribn[topologyComms.GetRank() + 1] - 1;
 
       // Create a map for looking up block Ids: the map is from the contiguous site index
       // of the first fluid site on the block, to the block id.
@@ -1692,7 +1435,7 @@ namespace hemelb
       for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
       {
         // ... if it's going elsewhere...
-        if (partitionVector[ii] != topologyRank)
+        if (partitionVector[ii] != topologyComms.GetRank())
         {
           // ... get it's id on the local processor...
           idx_t localFluidSiteId = myLowest + ii;
@@ -1761,7 +1504,8 @@ namespace hemelb
           {
             // If we've ended up on an impossible block, or one that doesn't live on this rank,
             // inform the user.
-            if (fluidSiteBlock >= geometry.GetBlockCount() || procForEachBlock[fluidSiteBlock] != topologyRank)
+            if (fluidSiteBlock >= geometry.GetBlockCount()
+                || procForEachBlock[fluidSiteBlock] != topologyComms.GetRank())
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
                                                             ii,
@@ -1824,7 +1568,7 @@ namespace hemelb
       // We also need to force some data upon blocks, i.e. when they're receiving data from a new
       // block they didn't previously want to know about.
       std::map<proc_t, std::vector<site_t> > blockForcedUponX;
-      std::vector<proc_t> numberOfBlocksIForceUponX(topologySize, 0);
+      std::vector<proc_t> numberOfBlocksIForceUponX(topologyComms.GetSize(), 0);
 
       for (idx_t moveNumber = 0; moveNumber < (idx_t) moveData.size(); moveNumber += 3)
       {
@@ -1843,9 +1587,9 @@ namespace hemelb
       }
 
       // Now find how many blocks are being forced upon us from every other core.
-      net::Net netForMoveSending(topologyComm);
+      net::Net netForMoveSending(topologyCommunicator);
 
-      std::vector<proc_t> blocksForcedOnMe(topologySize, 0);
+      std::vector<proc_t> blocksForcedOnMe(topologyComms.GetSize(), 0);
 
       log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block numbers");
 
@@ -1855,14 +1599,14 @@ namespace hemelb
                    &blocksForcedOnMe[0],
                    1,
                    MpiDataType<proc_t>(),
-                   topologyComm);
+                   topologyCommunicator);
 
       timings[hemelb::reporting::Timers::moveForcingNumbers].Stop();
       timings[hemelb::reporting::Timers::moveForcingData].Start();
 
       // Now get all the blocks being forced upon me.
       std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         if (blocksForcedOnMe[otherProc] > 0)
         {
@@ -1891,7 +1635,7 @@ namespace hemelb
       netForMoveSending.Wait();
 
       // Now go through every block forced upon me and add it to the list of ones I want.
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         if (blocksForcedOnMe[otherProc] > 0)
         {
@@ -1958,11 +1702,11 @@ namespace hemelb
 
       // Now we want to spread this info around so that each core knows which blocks each other
       // requires from it.
-      std::vector<site_t> numberOfBlocksRequiredFrom(topologySize, 0);
-      std::vector<site_t> numberOfBlocksXRequiresFromMe(topologySize, 0);
+      std::vector<site_t> numberOfBlocksRequiredFrom(topologyComms.GetSize(), 0);
+      std::vector<site_t> numberOfBlocksXRequiresFromMe(topologyComms.GetSize(), 0);
 
       // Populate numberOfBlocksRequiredFrom
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0 ?
           0 :
@@ -1981,13 +1725,13 @@ namespace hemelb
                    &numberOfBlocksXRequiresFromMe[0],
                    1,
                    MpiDataType<site_t>(),
-                   topologyComm);
+                   topologyCommunicator);
 
       // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
       // core.
       std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe;
 
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         blockIdsXRequiresFromMe[otherProc] = std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
 
@@ -2022,13 +1766,13 @@ namespace hemelb
       // block has no moves.
       for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
       {
-        if (procForEachBlock[blockId] == topologyRank)
+        if (procForEachBlock[blockId] == topologyComms.GetRank())
         {
           movesForEachLocalBlock[blockId] = 0;
         }
       }
 
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         for (site_t blockNum = 0; blockNum < (site_t) blockIdsXRequiresFromMe[otherProc].size(); ++blockNum)
         {
@@ -2063,7 +1807,7 @@ namespace hemelb
       // And it'll also be super-handy to know how many moves we're going to have locally.
       std::vector<idx_t> movesForEachBlockWeCareAbout(geometry.GetBlockCount(), 0);
 
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
             it != blockIdsIRequireFromX[otherProc].end(); ++it)
@@ -2108,7 +1852,7 @@ namespace hemelb
 
       idx_t localMoveId = 0;
 
-      for (proc_t otherProc = 0; otherProc < (proc_t) topologySize; ++otherProc)
+      for (proc_t otherProc = 0; otherProc < (proc_t) topologyComms.GetSize(); ++otherProc)
       {
         movesFromEachProc[otherProc] = 0;
 
@@ -2177,7 +1921,7 @@ namespace hemelb
       // going to be moved to the current proc.
       idx_t moveIndex = 0;
 
-      for (unsigned int fromProc = 0; fromProc < topologySize; ++fromProc)
+      for (proc_t fromProc = 0; fromProc < topologyComms.GetSize(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesPerProc[fromProc]; ++moveNumber)
         {
@@ -2185,15 +1929,15 @@ namespace hemelb
           idx_t toProc = movesList[3 * moveIndex + 2];
           ++moveIndex;
 
-          if (toProc == (idx_t) topologyRank)
+          if (toProc == (idx_t) topologyComms.GetRank())
           {
-            newProcForEachBlock[block] = topologyRank;
+            newProcForEachBlock[block] = topologyComms.GetRank();
           }
         }
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInBlocksWithHalo(geometry, newProcForEachBlock, topologyRank);
+      ReadInBlocksWithHalo(geometry, newProcForEachBlock, topologyComms.GetRank());
     }
 
     void GeometryReader::ImplementMoves(Geometry& geometry,
@@ -2229,7 +1973,7 @@ namespace hemelb
       idx_t moveIndex = 0;
 
       // For each source proc, go through as many moves as it had.
-      for (unsigned int fromProc = 0; fromProc < topologySize; ++fromProc)
+      for (proc_t fromProc = 0; fromProc < topologyComms.GetSize(); ++fromProc)
       {
         for (idx_t moveNumber = 0; moveNumber < movesFromEachProc[fromProc]; ++moveNumber)
         {
@@ -2270,7 +2014,7 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyRank) ?
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyComms.GetRank()) ?
         topologyRankIn :
         (topologyRankIn + 1);
     }

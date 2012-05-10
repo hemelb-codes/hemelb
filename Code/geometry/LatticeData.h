@@ -23,8 +23,8 @@ namespace hemelb
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class InnerSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
-        friend class InnerSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
 
         static LatticeData* Load(const bool reserveSteeringCore,
                                  const lb::lattices::LatticeInfo& latticeInfo,
