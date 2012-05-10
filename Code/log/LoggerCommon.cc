@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <cstdio>
 #include <cstdarg>
 #include <sys/time.h>
@@ -25,23 +26,26 @@ namespace hemelb
         // need to be able to log, even if MPI not initialised (for testability)
         int initialized;
         MPI_Initialized(&initialized);
-        if (initialized) {
+        if (initialized)
+        {
           MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
         }
         startTime = util::myClock();
       }
 
-      char rankAndTime[30];
-      std::sprintf(rankAndTime, "Rank %.6i, %.1fs", thisRank, util::myClock() - startTime);
-
       std::stringstream output;
-      output << "[" << rankAndTime;
+
+      // Set the fill digit to be 0, so the integer 1 renders as 0000001
+      output.fill('0');
+
+      output << "[Rank " << std::setw(7) << thisRank << ", " << std::setiosflags(std::ios::fixed)
+          << std::setprecision(1) << (util::myClock() - startTime) << "s";
 
 #ifdef HAVE_RUSAGE
       rusage usage;
       getrusage(RUSAGE_SELF, &usage);
 
-      output << ", mem: " << usage.ru_maxrss;
+      output << ", mem: " << std::setw(7) << usage.ru_maxrss;
 #endif
 
       output << "]: " << format << '\n';
@@ -58,7 +62,8 @@ namespace hemelb
       {
         int initialized;
         MPI_Initialized(&initialized);
-        if (initialized) {
+        if (initialized)
+        {
           MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
         }
         startTime = util::myClock();
