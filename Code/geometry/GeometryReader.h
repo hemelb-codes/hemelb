@@ -51,11 +51,11 @@ namespace hemelb
          * @param unitForEachBlock The rank number for each block after the decomposition
          * @param fluidSitesPerBlock The number of fluid sites on each block
          */
-        void DivideBlocks(site_t unassignedBlocks,
+        void DivideBlocks(std::vector<site_t>& blocksOnEachUnit,
+                          std::vector<proc_t>& unitForEachBlock,
+                          site_t unassignedBlocks,
                           const Geometry& geometry,
                           const proc_t unitCount,
-                          std::vector<site_t>& blocksOnEachUnit,
-                          std::vector<proc_t>& unitForEachBlock,
                           const std::vector<site_t>& fluidSitesPerBlock);
 
         void ReadInBlocksWithHalo(Geometry& geometry,
@@ -80,22 +80,18 @@ namespace hemelb
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
-         * @param offsetSoFar
-         * @param procsWantingThisBlock
-         * @param blockNumber
-         * @param sites
-         * @param compressedBytes
-         * @param uncompressedBytes
-         * @param neededOnThisRank
+         *
+         * @param offsetSoFar [in] The offset into the file to read from to get the block.
+         * @param geometry [out] The geometry object to populate with info about the block.
+         * @param procsWantingThisBlock [in] A list of proc ids where info about this block is required.
+         * @param blockNumber [in] The id of the block we're reading.
+         * @param neededOnThisRank [in] A boolean indicating whether the block is required locally.
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
                          Geometry& geometry,
                          const std::vector<proc_t>& procsWantingThisBlock,
                          const site_t blockNumber,
-                         const site_t sites,
-                         const unsigned int compressedBytes,
-                         const unsigned int uncompressedBytes,
-                         const int neededOnThisRank);
+                         const bool neededOnThisRank);
 
         /**
          * Decompress the block data. Uses the known number of sites to get an
@@ -110,6 +106,11 @@ namespace hemelb
 
         void ParseBlock(Geometry& geometry, const site_t block, io::writers::xdr::XdrReader& reader);
 
+        /**
+         * Parse the next site from the XDR reader. Note that we return by copy here.
+         * @param reader
+         * @return
+         */
         GeometrySite ParseSite(io::writers::xdr::XdrReader& reader);
 
         /**
@@ -131,6 +132,12 @@ namespace hemelb
                     const site_t blocksPerUnit,
                     const Geometry& geometry);
 
+        /**
+         * Optimise the domain decomposition using ParMetis. We take this approach because ParMetis
+         * is more efficient when given an initial decomposition to start with.
+         * @param geometry
+         * @param procForEachBlock
+         */
         void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
 
         void ValidateGraphData(const std::vector<idx_t>& vtxDistribn,

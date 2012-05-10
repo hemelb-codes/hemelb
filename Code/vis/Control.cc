@@ -30,9 +30,7 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
+      vis->half_dim = util::Vector3D<float>(iLatDat->GetSiteDimensions()) * 0.5F;
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
