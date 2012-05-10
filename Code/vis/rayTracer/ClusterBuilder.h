@@ -203,10 +203,8 @@ namespace hemelb
                           util::Vector3D<site_t> clusterVoxelMin,
                           util::Vector3D<site_t> clusterVoxelMax)
           {
-            const util::Vector3D<float> halfLatticeSiteCount =
-                util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
-                                      (float) mLatticeData->GetYSiteCount(),
-                                      (float) mLatticeData->GetZSiteCount()) * 0.5F;
+            const util::Vector3D<float> halfLatticeSiteCount = util::Vector3D<float>(mLatticeData->GetSiteDimensions())
+                * 0.5F;
 
             //The friendly locations must be turned into a format usable by the ray tracer
             ClusterType lNewCluster((unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x),

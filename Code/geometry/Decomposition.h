@@ -50,7 +50,9 @@ namespace hemelb
         }
 
         /***
-         * Which core should be responsible for reading a given block?
+         * Which core should be responsible for reading a given block? This core does not necessarily
+         * require information about the block
+         *
          * @param blockNumber Block number to query
          * @return Rank in the decomposition topology, for core which should read the block.
          */

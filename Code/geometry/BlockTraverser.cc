@@ -57,17 +57,17 @@ namespace hemelb
 
     site_t BlockTraverser::GetXCount() const
     {
-      return mLatticeData.GetXBlockCount();
+      return mLatticeData.GetBlockDimensions().x;
     }
 
     site_t BlockTraverser::GetYCount() const
     {
-      return mLatticeData.GetYBlockCount();
+      return mLatticeData.GetBlockDimensions().y;
     }
 
     site_t BlockTraverser::GetZCount() const
     {
-      return mLatticeData.GetZBlockCount();
+      return mLatticeData.GetBlockDimensions().z;
     }
   }
 }

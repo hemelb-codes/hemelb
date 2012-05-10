@@ -20,11 +20,11 @@ namespace hemelb
         //! The number of distributions shared between this neighbour and the current processor.
         //! Note that this is not equal to the number of interfacing sites * lattice connectivity
         //! because we only send the distributions that point towards the neighbour.
-        site_t SharedFCount;
+        site_t SharedDistributionCount;
 
         //! Index on this processor of the first distribution shared between this
         //! neighbour and the current processor.
-        site_t FirstSharedF;
+        site_t FirstSharedDistribution;
     };
   }
 }
