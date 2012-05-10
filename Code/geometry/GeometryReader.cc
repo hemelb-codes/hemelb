@@ -379,9 +379,6 @@ namespace hemelb
                     geometry,
                     decomposition.ProcessorsNeedingBlock(nextBlockToRead),
                     nextBlockToRead,
-                    fluidSitesOnEachBlock[nextBlockToRead],
-                    bytesPerCompressedBlock[nextBlockToRead],
-                    bytesPerUncompressedBlock[nextBlockToRead],
                     readBlock[nextBlockToRead]);
 
         // Update the offset to be ready for the next block.
@@ -395,13 +392,10 @@ namespace hemelb
                                      Geometry& geometry,
                                      const std::vector<proc_t>& procsWantingThisBlock,
                                      const site_t blockNumber,
-                                     const site_t sites,
-                                     const unsigned int compressedBytes,
-                                     const unsigned int uncompressedBytes,
-                                     const int neededOnThisRank)
+                                     const bool neededOnThisRank)
     {
       // Easy case if there are no sites on the block.
-      if (sites <= 0)
+      if (fluidSitesOnEachBlock[blockNumber] <= 0)
       {
         return;
       }
@@ -414,8 +408,13 @@ namespace hemelb
       {
         timings[hemelb::reporting::Timers::readBlock].Start();
         // Read the data.
-        compressedBlockData.resize(compressedBytes);
-        MPI_File_read_at(file, offsetSoFar, &compressedBlockData.front(), compressedBytes, MPI_CHAR, MPI_STATUS_IGNORE);
+        compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
+        MPI_File_read_at(file,
+                         offsetSoFar,
+                         &compressedBlockData.front(),
+                         bytesPerCompressedBlock[blockNumber],
+                         MPI_CHAR,
+                         MPI_STATUS_IGNORE);
 
         // Spread it.
         for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
@@ -423,15 +422,15 @@ namespace hemelb
         {
           if (*receiver != currentCommRank)
           {
-            net.RequestSend(&compressedBlockData.front(), compressedBytes, *receiver);
+            net.RequestSend(&compressedBlockData.front(), bytesPerCompressedBlock[blockNumber], *receiver);
           }
         }
         timings[hemelb::reporting::Timers::readBlock].Stop();
       }
       else if (neededOnThisRank)
       {
-        compressedBlockData.resize(compressedBytes);
-        net.RequestReceive(&compressedBlockData.front(), compressedBytes, readingCore);
+        compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
+        net.RequestReceive(&compressedBlockData.front(), bytesPerCompressedBlock[blockNumber], readingCore);
       }
       else
       {
@@ -446,7 +445,7 @@ namespace hemelb
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        std::vector<char> blockData = DecompressBlockData(compressedBlockData, uncompressedBytes);
+        std::vector<char> blockData = DecompressBlockData(compressedBlockData, bytesPerUncompressedBlock[blockNumber]);
         io::writers::xdr::XdrMemReader lReader(&blockData.front(), blockData.size());
 
         ParseBlock(geometry, blockNumber, lReader);
@@ -464,10 +463,10 @@ namespace hemelb
             }
           }
           // Compare with the sites we expected to read.
-          if (numSitesRead != sites)
+          if (numSitesRead != fluidSitesOnEachBlock[blockNumber])
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
-                                                          sites,
+                                                          fluidSitesOnEachBlock[blockNumber],
                                                           blockNumber,
                                                           numSitesRead);
           }
@@ -541,8 +540,9 @@ namespace hemelb
     {
       // Read the fluid property.
       unsigned isFluid;
+      bool success = reader.readUnsignedInt(isFluid);
 
-      if (!reader.readUnsignedInt(isFluid))
+      if (!success)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Error reading site type");
       }
@@ -789,13 +789,10 @@ namespace hemelb
      *
      * NOTE that the old version of this code used to cope with running on multiple machines,
      * by decomposing fluid sites over machines, then decomposing over processors within one machine.
-     * To achieve this here, use parmetis's "nparts" parameters to first decompose over machines, then
+     * To achieve this here, one could use parmetis's "nparts" parameters to first decompose over machines, then
      * to decompose within machines.
      *
-     * @param initialProcForEachBlock Array of length iBlockCount, into which the rank number will be
-     * written for each block
-     * @param blockCountPerProc Array of length topology size, into which the number of blocks
-     * allocated to each processor will be written.
+     * @param geometry [in] The geometry object we're decomposing.
      */
     void GeometryReader::BlockDecomposition(const Geometry& geometry)
     {
@@ -812,11 +809,11 @@ namespace hemelb
       }
 
       // Divide blocks between the processors.
-      DivideBlocks(unvisitedFluidBlockCount,
+      DivideBlocks(blockCountPerProc,
+                   principalProcForEachBlock,
+                   unvisitedFluidBlockCount,
                    geometry,
                    topologySize,
-                   blockCountPerProc,
-                   principalProcForEachBlock,
                    fluidSitesOnEachBlock);
     }
 
@@ -845,7 +842,7 @@ namespace hemelb
       }
     }
 
-    /*
+    /**
      * We just do a basic decomposition here, ParMetis will improve on it later.
      *
      * The algorithm iterates over processors (units).
@@ -853,12 +850,19 @@ namespace hemelb
      * the region by adding new blocks, until the current unit has approximately the right
      * number of blocks for the given numbers of blocks / units. When adding blocks, we prefer
      * blocks that are neighbours of blocks already assigned to the current unit.
+     *
+     * @param blocksOnEachUnit [out] The number of blocks each processor gets assigned
+     * @param unitForEachBlock [out] The processor id for each block
+     * @param unassignedBlocks [in] The number of blocks yet to be assigned a processor
+     * @param geometry [in] The geometry we're decomposing
+     * @param unitCount [in] The total number of processors
+     * @param fluidSitesPerBlock [in] The number of fluid sites in each block
      */
-    void GeometryReader::DivideBlocks(site_t unassignedBlocks,
+    void GeometryReader::DivideBlocks(std::vector<site_t>& blocksOnEachUnit,
+                                      std::vector<proc_t>& unitForEachBlock,
+                                      site_t unassignedBlocks,
                                       const Geometry& geometry,
                                       const proc_t unitCount,
-                                      std::vector<site_t>& blocksOnEachUnit,
-                                      std::vector<proc_t>& unitForEachBlock,
                                       const std::vector<site_t>& fluidSitesPerBlock)
     {
       // Initialise the unit being assigned to, and the approximate number of blocks
@@ -990,16 +994,17 @@ namespace hemelb
       bool regionExpanded = false;
 
       // For sites on the edge of the domain (sites_a), deal with the neighbours.
-      for (unsigned int index_a = 0; index_a < edgeBlocks.size() && blocksOnCurrentUnit < blocksPerUnit; index_a++)
+      for (unsigned int index_a = 0; (index_a < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit); index_a++)
       {
         BlockLocation& lNew = edgeBlocks[index_a];
 
-        for (unsigned int l = 1; l < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit; l++)
+        for (Direction direction = 1; direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit;
+            direction++)
         {
           // Record neighbour location.
-          site_t neighbourI = lNew.x + latticeInfo.GetVector(l).x;
-          site_t neighbourJ = lNew.y + latticeInfo.GetVector(l).y;
-          site_t neighbourK = lNew.z + latticeInfo.GetVector(l).z;
+          site_t neighbourI = lNew.x + latticeInfo.GetVector(direction).x;
+          site_t neighbourJ = lNew.y + latticeInfo.GetVector(direction).y;
+          site_t neighbourK = lNew.z + latticeInfo.GetVector(direction).z;
 
           // Move on if neighbour is outside the bounding box.
           if (neighbourI == -1 || neighbourI == geometry.GetBlockDimensions().x)
