@@ -35,29 +35,6 @@ namespace hemelb
 
         void ReadHeader(site_t blockCount);
 
-        void BlockDecomposition(const Geometry& geometry);
-
-        /**
-         * Get an initial base-level decomposition of the domain macro-blocks over processors (or some other
-         * unit of computation, like an entire machine). This will later be improved upon by ParMetis.
-         *
-         * NOTE: We need the global lattice data and fluid sites per block in order to try to keep
-         * contiguous blocks together, and to skip blocks with no fluid sites.
-         *
-         * @param unassignedBlocks The number of blocks still unassigned
-         * @param geometry The geometry object which will end up containing the blocks
-         * @param unitCount The number of units (e.g. processors) to divide up the geometry onto
-         * @param blocksOnEachUnit The number of blocks assigned to each processor after the decomposition
-         * @param unitForEachBlock The rank number for each block after the decomposition
-         * @param fluidSitesPerBlock The number of fluid sites on each block
-         */
-        void DivideBlocks(std::vector<site_t>& blocksOnEachUnit,
-                          std::vector<proc_t>& unitForEachBlock,
-                          site_t unassignedBlocks,
-                          const Geometry& geometry,
-                          const proc_t unitCount,
-                          const std::vector<site_t>& fluidSitesPerBlock);
-
         void ReadInBlocksWithHalo(Geometry& geometry,
                                   const std::vector<proc_t>& unitForEachBlock,
                                   const proc_t localRank);
@@ -122,16 +99,6 @@ namespace hemelb
          */
         proc_t GetReadingCoreForBlock(site_t blockNumber);
 
-        bool Expand(std::vector<BlockLocation>& edgeBlocks,
-                    std::vector<BlockLocation>& expansionBlocks,
-                    const std::vector<site_t>& fluidSitesPerBlock,
-                    std::vector<bool>& blockAssigned,
-                    const proc_t currentUnit,
-                    std::vector<proc_t>& unitForEachBlock,
-                    site_t &blocksOnCurrentUnit,
-                    const site_t blocksPerUnit,
-                    const Geometry& geometry);
-
         /**
          * Optimise the domain decomposition using ParMetis. We take this approach because ParMetis
          * is more efficient when given an initial decomposition to start with.
@@ -146,8 +113,6 @@ namespace hemelb
                                const std::vector<idx_t>& adjacencies);
 
         void ValidateGeometry(const Geometry& geometry);
-
-        void ValidateProcForEachBlock(site_t blockCount);
 
         /**
          * Get the length of the header section, given the number of blocks.
@@ -243,21 +208,11 @@ namespace hemelb
         MPI_File file;
         //! Information about the file, to give cues and hints to MPI.
         MPI_Info fileInfo;
-        //! MPI Communicator for all ranks that will need a slice of the geometry.
-        MPI_Comm topologyComm;
-        //! MPI Group of the ranks that will take a piece of the geometry.
-        MPI_Group topologyGroup;
-        //! This core's rank within the topology group.
-        int topologyRank;
-        //! The size of the topology group.
-        unsigned int topologySize;
+        MPI_Group topologyGroup; //! New group for ranks in the topology.
+        MPI_Comm topologyCommunicator; //! New communicator for ranks in the topology.
+        topology::Communicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
         // TODO: This was never a good plan, better code design will avoid the need for it.
-        //! The communicator currently in use.
-        MPI_Comm currentComm;
-        //! This core's rank within the current communicator
-        int currentCommRank;
-        //! The size of the current communicator
-        int currentCommSize;
+        topology::Communicator currentComms; //! The communicator currently in use.
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 
