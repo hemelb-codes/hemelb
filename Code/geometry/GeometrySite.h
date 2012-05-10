@@ -12,6 +12,9 @@ namespace hemelb
     /***
      * Model of the data for a site, as contained within a geometry file.
      * this data will be broken up and placed in various arrays in hemelb::Geometry::LatticeData
+     *
+     * Note that this should be able to be returned by copy (as we sometimes do) so be careful about
+     * using heap-allocated data in this struct.
      */
     struct GeometrySite
     {
