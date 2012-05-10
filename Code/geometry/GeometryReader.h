@@ -37,6 +37,20 @@ namespace hemelb
 
         void BlockDecomposition(const Geometry& geometry);
 
+        /**
+         * Get an initial base-level decomposition of the domain macro-blocks over processors (or some other
+         * unit of computation, like an entire machine). This will later be improved upon by ParMetis.
+         *
+         * NOTE: We need the global lattice data and fluid sites per block in order to try to keep
+         * contiguous blocks together, and to skip blocks with no fluid sites.
+         *
+         * @param unassignedBlocks The number of blocks still unassigned
+         * @param geometry The geometry object which will end up containing the blocks
+         * @param unitCount The number of units (e.g. processors) to divide up the geometry onto
+         * @param blocksOnEachUnit The number of blocks assigned to each processor after the decomposition
+         * @param unitForEachBlock The rank number for each block after the decomposition
+         * @param fluidSitesPerBlock The number of fluid sites on each block
+         */
         void DivideBlocks(site_t unassignedBlocks,
                           const Geometry& geometry,
                           const proc_t unitCount,
@@ -44,12 +58,25 @@ namespace hemelb
                           std::vector<proc_t>& unitForEachBlock,
                           const std::vector<site_t>& fluidSitesPerBlock);
 
-        void ReadInLocalBlocks(Geometry& geometry, const std::vector<proc_t>& unitForEachBlock, const proc_t localRank);
+        void ReadInBlocksWithHalo(Geometry& geometry,
+                                  const std::vector<proc_t>& unitForEachBlock,
+                                  const proc_t localRank);
 
-        void DecideWhichBlocksToRead(std::vector<bool>& readBlock,
-                                     const Geometry& geometry,
-                                     const std::vector<proc_t>& unitForEachBlock,
-                                     const proc_t localRank);
+        /**
+         * Compile a list of blocks to be read onto this core, including all the ones we perform
+         * LB on, and also any of their neighbouring blocks.
+         *
+         * NOTE: that the skipping-over of blocks without any fluid sites is dealt with by other
+         * code.
+         *
+         * @param geometry [in] Geometry object as it has been read so far
+         * @param unitForEachBlock [in] The initial processor assigned to each block
+         * @param localRank [in] Local rank number
+         * @return Vector with true for each block we should read in.
+         */
+        std::vector<bool> DecideWhichBlocksToReadIncludingHalo(const Geometry& geometry,
+                                                               const std::vector<proc_t>& unitForEachBlock,
+                                                               const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
@@ -115,12 +142,17 @@ namespace hemelb
 
         void ValidateProcForEachBlock(site_t blockCount);
 
+        /**
+         * Get the length of the header section, given the number of blocks.
+         *
+         * @param blockCount The number of blocks.
+         * @return
+         */
         site_t GetHeaderLength(site_t blockCount) const;
 
-        void GetSiteDistributionArray(std::vector<idx_t>& vertexDistribn,
-                                      site_t blockCount,
-                                      const std::vector<proc_t>& procForEachBlock,
-                                      const std::vector<site_t>& fluidSitesPerBlock) const;
+        std::vector<idx_t> GetSiteDistributionArray(site_t blockCount,
+                                                    const std::vector<proc_t>& procForEachBlock,
+                                                    const std::vector<site_t>& fluidSitesPerBlock) const;
 
         void GetFirstSiteIndexOnEachBlock(std::vector<idx_t>& firstSiteIndexPerBlock,
                                           site_t blockCount,
@@ -128,6 +160,18 @@ namespace hemelb
                                           const std::vector<proc_t>& procForEachBlock,
                                           const std::vector<site_t>& fluidSitesPerBlock) const;
 
+        /**
+         * Gets the list of adjacencies and the count of adjacencies per local fluid site
+         * in a format suitable for use with ParMetis.
+         *
+         * @param adjacenciesPerVertex [out] The number of adjacencies for each local fluid site
+         * @param localAdjacencies [out] The list of adjacent vertex numbers for each local fluid site
+         * @param geometry The geometry that's been read in
+         * @param localVertexCount The number of local vertices
+         * @param procForEachBlock The initial processor for each block
+         * @param firstSiteIndexPerBlock The universal contiguous index of the first fluid site
+         * on each block.
+         */
         void GetAdjacencyData(std::vector<idx_t>& adjacenciesPerVertex,
                               std::vector<idx_t>& localAdjacencies,
                               const Geometry& geometry,
@@ -135,6 +179,20 @@ namespace hemelb
                               const std::vector<proc_t>& procForEachBlock,
                               const std::vector<idx_t>& firstSiteIndexPerBlock) const;
 
+        /**
+         * Perform the call to ParMetis. Returns the result in the partition vector, other
+         * parameters are input only. These can't be made const because of the API to ParMetis
+         *
+         * @param partitionVector [out] The result from ParMetis, giving the destination proc of each
+         * local fluid site
+         * @param localVertexCount [in] The number of local fluid sites
+         * @param vtxDistribn [in] The number of fluid sites on each cores (in ParMetis-compatible
+         * format)
+         * @param adjacenciesPerVertex [in] The number of adjacencies each local fluid site has, in
+         * ParMetis-compatible format
+         * @param adjacencies [in] The list of adjacent fluid site ids for each local fluid site in
+         * order
+         */
         void CallParmetis(std::vector<idx_t>& partitionVector,
                           idx_t localVertexCount,
                           std::vector<idx_t>& vtxDistribn,
@@ -161,26 +219,51 @@ namespace hemelb
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
+        /**
+         * True if we should validate the geometry.
+         * @return
+         */
+        bool ShouldValidate() const;
+
+        //! The rank which reads in the header information.
         static const proc_t HEADER_READING_RANK = 0;
+        //! The number of cores (0-READING_GROUP_SIZE-1) that read files in parallel
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
+        //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
+        //! File accessed to read in the geometry data.
         MPI_File file;
+        //! Information about the file, to give cues and hints to MPI.
         MPI_Info fileInfo;
+        //! MPI Communicator for all ranks that will need a slice of the geometry.
         MPI_Comm topologyComm;
+        //! MPI Group of the ranks that will take a piece of the geometry.
         MPI_Group topologyGroup;
+        //! This core's rank within the topology group.
         int topologyRank;
+        //! The size of the topology group.
         unsigned int topologySize;
+        // TODO: This was never a good plan, better code design will avoid the need for it.
+        //! The communicator currently in use.
         MPI_Comm currentComm;
+        //! This core's rank within the current communicator
         int currentCommRank;
+        //! The size of the current communicator
         int currentCommSize;
+        //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 
-        std::vector<site_t> fluidSitesPerBlock;
+        //! The number of fluid sites on each block in the geometry
+        std::vector<site_t> fluidSitesOnEachBlock;
+        //! The number of bytes each block takes up while still compressed.
         std::vector<unsigned int> bytesPerCompressedBlock;
+        //! The number of bytes each block takes up when uncompressed.
         std::vector<unsigned int> bytesPerUncompressedBlock;
-        std::vector<proc_t> procForEachBlock;
+        //! The processor assigned to each block.
+        std::vector<proc_t> principalProcForEachBlock;
 
+        //! Timings object for recording the time taken for each step of the domain decomposition.
         hemelb::reporting::Timers &timings;
     };
   }
