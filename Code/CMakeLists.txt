@@ -76,13 +76,18 @@ endif()
 include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
+CHECK_CXX_SOURCE_COMPILES("#include <sys/time.h>\n#include <sys/resource.h>\nint main(int c,char** v){ rusage usage;\ngetrusage(RUSAGE_SELF, &usage);\nreturn usage.ru_maxrss; }" HAVE_RUSAGE)
 
 if(HAVE_ISNAN)
   add_definitions(-DHAVE_ISNAN)
 endif()
 
-if( HAVE_STD_ISNAN)
-  add_definitions(-D HAVE_STD_ISNAN)
+if(HAVE_STD_ISNAN)
+  add_definitions(-DHAVE_STD_ISNAN)
+endif()
+
+if(HAVE_RUSAGE)
+  add_definitions(-DHAVE_RUSAGE)
 endif()
 
 # ------MPI------------------
