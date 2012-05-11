@@ -107,11 +107,6 @@ namespace hemelb
          */
         void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
 
-        void ValidateGraphData(const std::vector<idx_t>& vtxDistribn,
-                               idx_t localVertexCount,
-                               const std::vector<idx_t>& adjacenciesPerVertex,
-                               const std::vector<idx_t>& adjacencies);
-
         void ValidateGeometry(const Geometry& geometry);
 
         /**
@@ -122,72 +117,15 @@ namespace hemelb
          */
         site_t GetHeaderLength(site_t blockCount) const;
 
-        std::vector<idx_t> GetSiteDistributionArray(site_t blockCount,
-                                                    const std::vector<proc_t>& procForEachBlock,
-                                                    const std::vector<site_t>& fluidSitesPerBlock) const;
-
-        void GetFirstSiteIndexOnEachBlock(std::vector<idx_t>& firstSiteIndexPerBlock,
-                                          site_t blockCount,
-                                          const std::vector<idx_t>& vertexDistribution,
-                                          const std::vector<proc_t>& procForEachBlock,
-                                          const std::vector<site_t>& fluidSitesPerBlock) const;
-
-        /**
-         * Gets the list of adjacencies and the count of adjacencies per local fluid site
-         * in a format suitable for use with ParMetis.
-         *
-         * @param adjacenciesPerVertex [out] The number of adjacencies for each local fluid site
-         * @param localAdjacencies [out] The list of adjacent vertex numbers for each local fluid site
-         * @param geometry The geometry that's been read in
-         * @param localVertexCount The number of local vertices
-         * @param procForEachBlock The initial processor for each block
-         * @param firstSiteIndexPerBlock The universal contiguous index of the first fluid site
-         * on each block.
-         */
-        void GetAdjacencyData(std::vector<idx_t>& adjacenciesPerVertex,
-                              std::vector<idx_t>& localAdjacencies,
-                              const Geometry& geometry,
-                              const idx_t localVertexCount,
-                              const std::vector<proc_t>& procForEachBlock,
-                              const std::vector<idx_t>& firstSiteIndexPerBlock) const;
-
-        /**
-         * Perform the call to ParMetis. Returns the result in the partition vector, other
-         * parameters are input only. These can't be made const because of the API to ParMetis
-         *
-         * @param partitionVector [out] The result from ParMetis, giving the destination proc of each
-         * local fluid site
-         * @param localVertexCount [in] The number of local fluid sites
-         * @param vtxDistribn [in] The number of fluid sites on each cores (in ParMetis-compatible
-         * format)
-         * @param adjacenciesPerVertex [in] The number of adjacencies each local fluid site has, in
-         * ParMetis-compatible format
-         * @param adjacencies [in] The list of adjacent fluid site ids for each local fluid site in
-         * order
-         */
-        void CallParmetis(std::vector<idx_t>& partitionVector,
-                          idx_t localVertexCount,
-                          std::vector<idx_t>& vtxDistribn,
-                          std::vector<idx_t>& adjacenciesPerVertex,
-                          std::vector<idx_t>& adjacencies);
-
-        idx_t* GetMovesList(std::vector<idx_t>& movesFromEachProc,
-                            const Geometry& geometry,
-                            const std::vector<idx_t>& firstSiteIndexPerBlock,
-                            const std::vector<proc_t>& procForEachBlock,
-                            const std::vector<site_t>& fluidSitesPerBlock,
-                            const std::vector<idx_t>& vtxDistribn,
-                            const std::vector<idx_t>& partitionVector);
-
         void RereadBlocks(Geometry& geometry,
                           const std::vector<idx_t>& movesPerProc,
-                          const idx_t* movesList,
+                          const std::vector<idx_t>& movesList,
                           const std::vector<int>& procForEachBlock);
 
         void ImplementMoves(Geometry& geometry,
                             const std::vector<proc_t>& procForEachBlock,
                             const std::vector<idx_t>& movesFromEachProc,
-                            const idx_t* movesList) const;
+                            const std::vector<idx_t>& movesList) const;
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
