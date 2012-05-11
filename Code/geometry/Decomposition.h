@@ -15,8 +15,8 @@ namespace hemelb
      */
     /***
      *  Class defining HemeLB domain decomposition
-         Used by geometry reader to know where to send which blocks.
-         @tparam Net Class implementing the Net Communication Protocol, used to share information.
+     Used by geometry reader to know where to send which blocks.
+     @tparam Net Class implementing the Net Communication Protocol, used to share information.
      */
     template<class Net> class DecompositionBase
     {
