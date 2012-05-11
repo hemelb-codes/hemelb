@@ -128,24 +128,80 @@ namespace hemelb
                                     const std::vector<idx_t>& neighboursAdjacencyData,
                                     std::multimap<idx_t, idx_t>& expectedAdjacencyData);
 
+          /**
+           * Compile a list of all the moves that need to be made from this processor.
+           * @param blockIdLookupByLastSiteIndex
+           * @return
+           */
+          std::vector<idx_t> CompileMoveData(std::map<site_t, site_t>& blockIdLookupByLastSiteIndex);
+
+          /**
+           * Force some other cores to take info on blocks they might not know they need to know
+           * about.
+           * @param moveData
+           * @param blockIdsIRequireFromX
+           */
+          void ForceSomeBlocksOnOtherCores(std::vector<idx_t>& moveData,
+                                           std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX);
+
+          /**
+           * Get the blocks required from every other processor.
+           *
+           * @param numberOfBlocksRequiredFrom
+           * @param blockIdsIRequireFromX
+           * @param numberOfBlocksXRequiresFromMe
+           * @param blockIdsXRequiresFromMe
+           */
+          void GetBlockRequirements(std::vector<site_t>& numberOfBlocksRequiredFrom,
+                                    std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX,
+                                    std::vector<site_t>& numberOfBlocksXRequiresFromMe,
+                                    std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe);
+
+          /**
+           * Share the number of moves to be made between each pair of processors that need to move
+           * data.
+           * @param movesForEachLocalBlock
+           * @param blockIdsXRequiresFromMe
+           * @param coresInterestedInEachBlock
+           * @param moveData
+           * @param moveDataForEachBlock
+           * @param blockIdsIRequireFromX
+           * @param movesForEachBlockWeCareAbout
+           */
+          void ShareMoveCounts(std::map<site_t, idx_t>& movesForEachLocalBlock,
+                               std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe,
+                               std::map<site_t, std::vector<proc_t> >& coresInterestedInEachBlock,
+                               std::vector<idx_t>& moveData,
+                               std::map<site_t, std::vector<idx_t> >& moveDataForEachBlock,
+                               std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX,
+                               std::vector<idx_t>& movesForEachBlockWeCareAbout);
+
+          /**
+           * Share the move data between cores
+           *
+           * @param movesForEachBlockWeCareAbout
+           * @param blockIdsIRequireFromX
+           * @param blockIdsXRequiresFromMe
+           * @param moveDataForEachBlock
+           */
+          void ShareMoveData(std::vector<idx_t> movesForEachBlockWeCareAbout,
+                             std::map<proc_t, std::vector<site_t> > blockIdsIRequireFromX,
+                             std::map<proc_t, std::vector<site_t> > blockIdsXRequiresFromMe,
+                             std::map<site_t, std::vector<idx_t> > moveDataForEachBlock);
+
           reporting::Timers& timers; //! Timers for reporting.
           topology::Communicator& comms; //! Communicator
           const Geometry& geometry; //! The geometry being optimised.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice info to optimise for.
-
           const std::vector<proc_t>& procForEachBlock; //! The processor assigned to each block at the moment
           const std::vector<site_t>& fluidSitesPerBlock; //! The number of fluid sites on each block.
-
           std::vector<idx_t> vtxDistribn; //! The vertex distribution across participating cores.
           std::vector<idx_t> firstSiteIndexPerBlock; //! The global contiguous index of the first fluid site on each block.
-
           std::vector<idx_t> adjacenciesPerVertex; //! The number of adjacencies for each local fluid site
           std::vector<idx_t> localAdjacencies; //! The list of adjacent vertex numbers for each local fluid site
-
           std::vector<idx_t> partitionVector; //! The results of the optimisation -- which core each fluid site should go to.
-
           std::vector<idx_t> allMoves; //! The list of move counts from each core
-          std::vector<idx_t> movesList; //! The list of all moves (in order of source core).
+          std::vector<idx_t> movesList;
       };
     }
   }
