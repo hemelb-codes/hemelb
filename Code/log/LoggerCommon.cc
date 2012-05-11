@@ -1,4 +1,6 @@
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <cstdio>
 #include <cstdarg>
 #include <sys/time.h>
@@ -24,20 +26,31 @@ namespace hemelb
         // need to be able to log, even if MPI not initialised (for testability)
         int initialized;
         MPI_Initialized(&initialized);
-        if (initialized) {
+        if (initialized)
+        {
           MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
         }
         startTime = util::myClock();
       }
 
+      std::stringstream output;
+
+      // Set the fill digit to be 0, so the integer 1 renders as 0000001
+      output.fill('0');
+
+      output << "[Rank " << std::setw(7) << thisRank << ", " << std::setiosflags(std::ios::fixed)
+          << std::setprecision(1) << (util::myClock() - startTime) << "s";
+
+#ifdef HAVE_RUSAGE
       rusage usage;
       getrusage(RUSAGE_SELF, &usage);
 
-      char lead[60];
-      std::sprintf(lead, "[Rank %.6i, %.1fs, mem: %li]: ", thisRank, util::myClock() - startTime, usage.ru_maxrss);
+      output << ", mem: " << std::setw(7) << usage.ru_maxrss;
+#endif
 
-      std::string overFormat(lead);
-      overFormat.append(format).append("\n");
+      output << "]: " << format << '\n';
+
+      std::string overFormat(output.str());
 
       std::vprintf(overFormat.c_str(), args);
     }
@@ -49,7 +62,8 @@ namespace hemelb
       {
         int initialized;
         MPI_Initialized(&initialized);
-        if (initialized) {
+        if (initialized)
+        {
           MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
         }
         startTime = util::myClock();
