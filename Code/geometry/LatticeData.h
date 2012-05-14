@@ -26,10 +26,9 @@ namespace hemelb
         friend class BaseSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
         friend class BaseSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        static LatticeData* Load(const bool reserveSteeringCore,
-                                 const lb::lattices::LatticeInfo& latticeInfo,
-                                 const std::string& dataFilePath,
-                                 reporting::Timers &timings);
+        LatticeData(
+               const lb::lattices::LatticeInfo& latticeInfo,
+               const Geometry& readResult);
 
         virtual ~LatticeData();
 
@@ -306,7 +305,6 @@ namespace hemelb
          * @return
          */
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks,
                              site_t blockSize,

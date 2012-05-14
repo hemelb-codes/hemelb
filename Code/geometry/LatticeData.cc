@@ -21,23 +21,8 @@ namespace hemelb
     {
     }
 
-    LatticeData* LatticeData::Load(const bool reserveSteeringCore,
-                                   const lb::lattices::LatticeInfo& latticeInfo,
-                                   const std::string& dataFilePath,
-                                   reporting::Timers &timings)
-    {
-      // Use a reader to read in the file.
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
-
-      GeometryReader reader(reserveSteeringCore, latticeInfo, timings);
-      Geometry readGeometryData = reader.LoadAndDecompose(dataFilePath);
-
-      // Create a new lattice based on that info and return it.
-      return new LatticeData(latticeInfo, readGeometryData);
-    }
-
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult) :
-        latticeInfo(latticeInfo)
+      latticeInfo(latticeInfo)
     {
       SetBasicDetails(readResult.GetBlockDimensions(),
                       readResult.GetBlockSize(),
@@ -45,6 +30,18 @@ namespace hemelb
                       readResult.GetOrigin());
 
       ProcessReadSites(readResult);
+      // if debugging then output beliefs regarding geometry and neighbour list
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
+        for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
+             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
+        {
+          log::Logger::Log<log::Info, log::OnePerCore>(
+                "LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
+                localRank, itNeighProc->Rank, itNeighProc->SharedDistributionCount);
+        }
+      }
       CollectFluidSiteDistribution();
       CollectGlobalSiteExtrema();
 
@@ -138,10 +135,12 @@ namespace hemelb
                                                                                 neighbourBlock.y,
                                                                                 neighbourBlock.z);
 
-            // Move on if the neighbour is in a block of solids (in which case
-            // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
-            // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
-            // in lbmReadConfig in io.cc.
+            // Move on if the neighbour is in a block of solids
+            // in which case the block will contain zero sites
+            // Or on if the neighbour site is solid
+            // in which case the targetProcessor is BIG_NUMBER2
+            // Or the neighbour is also on this processor
+            // in which case the targetProcessor is localRank
             if (readResult.Blocks[neighbourBlockId].Sites.size() == 0)
             {
               continue;
@@ -188,6 +187,17 @@ namespace hemelb
               lNewNeighbour.SharedDistributionCount = 1;
               lNewNeighbour.Rank = neighbourProc;
               neighbouringProcs.push_back(lNewNeighbour);
+
+              // if debugging then output decisions with reasoning for all neighbour processors
+              if (log::Logger::ShouldDisplay<log::Debug>())
+                log::Logger::Log<log::Info, log::OnePerCore>(
+                     "LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                     (int)neighbourProc, (int)localRank,
+                     (int)neighbourSiteId, (int)neighbourBlockId,
+                     (int)localSiteId, (int)blockId,
+                     latticeInfo.GetVector(l).x,
+                     latticeInfo.GetVector(l).y,
+                     latticeInfo.GetVector(l).z);
             }
           }
 

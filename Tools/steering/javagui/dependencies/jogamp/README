@@ -1,0 +1,9 @@
+This is the place to install and build jogl and gluegen.
+Instructions as at http://jogamp.org/jogl/doc/HowToBuild.html
+cd <this folder>
+git clone git://jogamp.org/srv/scm/gluegen.git gluegen
+git clone git://jogamp.org/srv/scm/jogl.git jogl
+cd gluegen/make
+ant
+cd ../../jogl/make
+ant

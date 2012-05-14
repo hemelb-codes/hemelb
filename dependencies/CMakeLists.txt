@@ -156,28 +156,57 @@ if(HEMELB_USE_BOOST)
 endif()
 
 #----------------Google C++ template ----------------
+
+option(CTEMPLATE_PATCH_VACOPY "Define va_copy macro through patch" OFF)
+option(CTEMPLATE_PATCH_ALIGN "Define GTL align macros as gnu" OFF)
 find_package(CTemplate)
 if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
 	message("Ctemplate not installed, will build from source")
-	find_file(CTEMPLATE_TARBALL ctemplate-1.0.tar.gz
+	find_file(CTEMPLATE_TARBALL ctemplate-2.2.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://google-ctemplate.googlecode.com/files/ctemplate-1.0.tar.gz
+		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	ExternalProject_Add(
    	ctemplate
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> ${CTEMPLATE_CONFIGURE_OPTIONS}
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
+#if (CTEMPLATE_PATCH_VACOPY)
+#	ExternalProject_Add_Step(
+#		ctemplate vacopy
+#		COMMAND patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff
+#		DEPENDEES download
+#		DEPENDERS align
+#		WORKING_DIRECTORY <SOURCE_DIR>
+#	)
+# else()
+#   ExternalProject_Add_Step(
+#  		ctemplate vacopy
+#  		COMMAND echo pass
+#  		DEPENDEES download
+#  		DEPENDERS align
+#  		WORKING_DIRECTORY <SOURCE_DIR>
+#  	)
+# endif()
+ 	if (CTEMPLATE_PATCH_ALIGN)
+   	ExternalProject_Add_Step(
+   		ctemplate align
+   		COMMAND patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff
+   		DEPENDEES download
+   		DEPENDERS configure
+   		WORKING_DIRECTORY <SOURCE_DIR>
+   	)
+  endif()
 endif()
 
 #-----------------ZLIB --------------------------------

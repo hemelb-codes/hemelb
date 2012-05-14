@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+VISCLIENT_DIR=$HEMELB_SRC/../Tools/visclients
+java -Xmx512m -jar $VISCLIENT_DIR/lib/visclient.jar $@

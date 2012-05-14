@@ -40,8 +40,9 @@ namespace hemelb
       class DecompositionTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(DecompositionTests);
-          CPPUNIT_TEST(TestReadingOne);
-          CPPUNIT_TEST(TestNonReading);CPPUNIT_TEST_SUITE_END();
+          //CPPUNIT_TEST(TestReadingOne);
+          //CPPUNIT_TEST(TestNonReading);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           DecompositionTests() :

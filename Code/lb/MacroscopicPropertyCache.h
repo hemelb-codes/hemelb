@@ -53,6 +53,11 @@ namespace hemelb
          */
         util::RefreshableCache<distribn_t> vonMisesStressCache;
 
+        /**
+         * The cache of shear rates for each fluid site on this core.
+         */
+        util::RefreshableCache<distribn_t> shearRateCache;
+
       private:
         /**
          * The state of the simulation, including the number of timesteps passed.

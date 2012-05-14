@@ -43,7 +43,7 @@ namespace hemelb
           }
 
         private:
-          typedef typename util::Vector3D<site_t> BlockLocation;
+          typedef util::Vector3D<site_t> BlockLocation;
           /**
            * Populates the vertex distribution array in a ParMetis-compatible way. (off-by-1,
            * cumulative count)

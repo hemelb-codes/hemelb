@@ -15,3 +15,31 @@ no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
 wait_on_connect:
   HEMELB_WAIT_ON_CONNECT: "ON"
+d3q15:
+  HEMELB_LATTICE: "D3Q15"
+d3q19:
+ HEMELB_LATTICE: "D3Q19"
+d3q27:
+  HEMELB_LATTICE: "D3Q27"
+lbgk:
+  HEMELB_KERNEL: "LBGK"
+entropic_a:
+  HEMELB_KERNEL: "EntropicAnsumali"
+entropic_c:
+  HEMELB_KERNEL: "EntropicChik"
+mrt:
+  HEMELB_KERNEL: "MRT"
+non_newtonian_cy:
+  HEMELB_KERNEL: "NNCY"
+non_newtonian_c:
+  HEMELB_KERNEL: "NNC"
+non_newtonian_tpl:
+  HEMELB_KERNEL: "NNTPL"
+f_interpolation:
+  HEMELB_WALL_BOUNDARY: "FINTERPOLATION"
+guo_zheng_shi:
+  HEMELB_WALL_BOUNDARY: "GZS"
+regularised:
+  HEMELB_WALL_BOUNDARY: "REGULARISED"
+simple_bounce_back:
+  HEMELB_WALL_BOUNDARY: "SIMPLEBOUNCEBACK"
