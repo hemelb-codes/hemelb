@@ -23,7 +23,7 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        typedef typename util::Vector3D<site_t> BlockLocation;
+        typedef util::Vector3D<site_t> BlockLocation;
 
         GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
         ~GeometryReader();

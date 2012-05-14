@@ -44,7 +44,7 @@ namespace hemelb
         LatticeTime GetTotalTimeSteps() const {return totalTimeSteps;}
         PhysicalTime GetTimeStepLength() const {return timeStepLength;}
         unsigned int PropertyOutputCount() const {return propertyOutputs.size();}
-        extraction::PropertyOutputFile* const GetPropertyOutput(unsigned int index) const {return propertyOutputs[index];}
+        extraction::PropertyOutputFile * GetPropertyOutput(unsigned int index) const {return propertyOutputs[index];}
         std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const {return propertyOutputs;}
       protected:
         SimConfig();

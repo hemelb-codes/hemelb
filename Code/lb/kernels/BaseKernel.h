@@ -42,6 +42,8 @@ namespace hemelb
       struct HydroVarsBase
       {
           template<class LatticeImpl> friend class Entropic;
+          template<class LatticeImpl> friend class EntropicAnsumali;
+          template<class LatticeImpl> friend class EntropicChik;
           template<class LatticeImpl> friend class LBGK;
           template<class rheologyModel, class LatticeImpl> friend class LBGKNN;
           template<class LatticeImpl> friend class MRT;
@@ -53,7 +55,7 @@ namespace hemelb
           }
 
         public:
-          distribn_t density, v_x, v_y, v_z;
+          distribn_t density, v_x, v_y, v_z, tau;
           const distribn_t* const f;
 
           inline const FVector<LatticeType>& GetFEq()

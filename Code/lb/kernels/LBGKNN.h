@@ -12,21 +12,6 @@ namespace hemelb
   {
     namespace kernels
     {
-      // Forward declaration needed by the struct
-      template<class tRheologyModel, class LatticeType> class LBGKNN;
-
-      template<class tRheologyModel, class LatticeType>
-      struct HydroVars<LBGKNN<tRheologyModel, LatticeType> > : public HydroVarsBase<LatticeType>
-      {
-        public:
-          HydroVars(const distribn_t* const f) :
-              HydroVarsBase<LatticeType>(f)
-          {
-
-          }
-
-          distribn_t tau;
-      };
 
       /**
        * Class extending the original BGK collision operator to support non-Newtonian

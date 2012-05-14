@@ -1,0 +1,61 @@
+<project default="install">
+	<property environment="env" />
+	<property name="visdir" value="${env.HEMELB_SRC}/../Tools/steering/javagui" />
+	<property name="libdir" value="${visdir}/lib" />
+	<property name="jogldir" value="${visdir}/dependencies/jogamp/gluegen/build" />
+	<property name="gluegendir" value="${visdir}/dependencies/jogamp/jogl/build/jar" />
+	<property name="srcdir" value="${visdir}/src" />
+	<property name="destdir" value="${visdir}/build" />
+
+	<target name="info">
+		<echo>
+Compile the HemeLB steering client
+
+targets:
+[clean] - remove compiled code
+[compile] - compile the source
+[jar] - create jar file from compiled source
+[install] - copy the jar file and plug-in directory to /lib
+        </echo>
+	</target>
+
+	<target name="clean">
+		<delete dir="${destdir}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${destdir}" />
+		<javac srcdir="${srcdir}" destdir="${destdir}">
+			<classpath>
+				<fileset dir="${libdir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${gluegendir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${jogldir}">
+					<include name="*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="clean, compile">
+		<mkdir dir="${destdir}/jar" />
+		<jar destfile="${destdir}/jar/visclient.jar" basedir="build" manifest="${visdir}/MANIFEST">
+		</jar>
+	</target>
+
+	<target name="install" depends="jar">
+		<copy file="${destdir}/jar/visclient.jar" todir="${libdir}" />
+		<copy todir="${libdir}">
+			<fileset dir="${gluegendir}">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="${jogldir}">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+</project>

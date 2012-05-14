@@ -82,7 +82,7 @@ namespace hemelb
              * Carry out communication necessary
              * @param isIoProcess Is the process the master process?
              */
-            virtual void DoComms(bool isIoProcess)
+            virtual void DoComms(bool isIoProcess,const LatticeTime timeStep)
             {
               // pass
             }

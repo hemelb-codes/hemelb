@@ -144,20 +144,40 @@ def xml_loader(path):
         raise ParseError("Could not parse file.")
 def stat_loader(path):
     return os.stat(path)
+
+
 def geometry_header_loader(path):
     from hemeTools.parsers.geometry.simple import ConfigLoader
-    model=ConfigLoader(path)
-    model._LoadPreamble()
-    model._LoadHeader()
-    def binder(expression):
-        return model.Domain.__dict__
-    return binder
-def csv_loader(path):
-    content=csv.reader(open(path))
-    return [row for row in content]
-def ssv_loader(path):
-    content=csv.reader(open(path),delimiter=' ')
-    return [row for row in content]
+    class GeometryHeaderParsedException(BaseException):
+        """Inherit from BaseException as this isn't really an error, 
+        a la GeneratorExit."""
+        
+        pass
+    
+    class GeometryHeader(ConfigLoader):
+        def OnEndHeader(self):
+            # Abort
+            raise GeometryHeaderParsedException
+        def Load(self):
+            try:
+                ConfigLoader.Load(self)
+            except GeometryHeaderParsedException:
+                pass
+            return
+        @property
+        def site_count(self):
+            return sum(self.Domain.BlockFluidSiteCounts)
+        @property
+        def block_size(self):
+            return self.Domain.BlockSize
+        @property
+        def block_count(self):
+            return len(self.Domain.Blocks)
+        pass
+    gh = GeometryHeader(path)
+    gh.Load()
+    return gh
+
 def null_filter(result):
     return None
 def name_filter(result):
@@ -249,7 +269,7 @@ def result_model(config):
     Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
     Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
     Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
-    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,eval_parser)
+    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
     Result.define_file_properties(config.get('ssv_files'),ssv_loader,column_parser)
     Result.define_file_properties(config.get('csv_files'),ssv_loader,column_parser)
     return Result
