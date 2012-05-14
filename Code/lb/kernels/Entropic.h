@@ -1,8 +1,6 @@
 #ifndef HEMELB_LB_KERNELS_ENTROPIC_H
 #define HEMELB_LB_KERNELS_ENTROPIC_H
 
-#include <cstdlib>
-
 #include "lb/kernels/BaseKernel.h"
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
@@ -13,76 +11,41 @@ namespace hemelb
   {
     namespace kernels
     {
-      // We have to declare this up here in order for it to be used as a template parameter in the
-      // following declaration. Moving the template specialisation to the bottom of the file would
-      // prevent it from being used as the HydroVars for this kernel.
-      template<class LatticeType> class Entropic;
-
-      template<class LatticeType>
-      struct HydroVars<Entropic<LatticeType> > : public HydroVarsBase<LatticeType>
-      {
-        public:
-          HydroVars(const distribn_t* const f) :
-              HydroVarsBase<LatticeType>(f)
-          {
-
-          }
-
-          site_t index;
-      };
-
       /**
-       * Entropic: This class implements the entropic kernel, a modification to the standard
-       * LBGK kernel which ensures the increase of entropy.
+       * Entropic: an incomplete kernel implementation that includes some common elements for implementations of
+       * entropic LB.
        */
-      template<class LatticeType>
-      class Entropic : public BaseKernel<Entropic<LatticeType>, LatticeType>
+      template<typename LatticeType>
+      class Entropic
       {
         public:
-          Entropic(InitParams& initParams)
-          {
-            oldAlpha = new distribn_t[initParams.siteCount];
-
-            Reset(&initParams);
-          }
-
+          /**
+           * Destructor, deallocates the alpha array.
+           */
           ~Entropic()
           {
             delete[] oldAlpha;
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<Entropic<LatticeType> >& hydroVars, site_t index)
+          /**
+           * Initialises the value of alpha to 2.0 for every site.
+           * @param initParams
+           */
+          inline void DoReset(InitParams* init)
           {
-            hydroVars.index = index;
-            LatticeType::CalculateEntropicDensityVelocityFEq(hydroVars.f,
-                                                             hydroVars.density,
-                                                             hydroVars.v_x,
-                                                             hydroVars.v_y,
-                                                             hydroVars.v_z,
-                                                             hydroVars.f_eq.f);
-
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
+            for (site_t i = 0; i < init->siteCount; i++)
             {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+              oldAlpha[i] = 2.0;
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<Entropic<LatticeType> >& hydroVars, site_t index)
-          {
-            hydroVars.index = index;
-            LatticeType::CalculateEntropicFeq(hydroVars.density,
-                                              hydroVars.v_x,
-                                              hydroVars.v_y,
-                                              hydroVars.v_z,
-                                              hydroVars.f_eq.f);
-
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
-            {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
-            }
-          }
-
-          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<Entropic<LatticeType> >& hydroVars)
+          /**
+           * Performs the Entropic LB collision (using alpha as a relaxation parameter)
+           * @param lbmParams
+           * @param hydroVars
+           */
+          template<typename HydroVarsType>
+          inline void DoCollide(const LbmParameters* const lbmParams, HydroVarsType& hydroVars)
           {
             distribn_t alpha = CalculateAlpha(lbmParams->GetTau(), hydroVars, oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = alpha;
@@ -95,20 +58,26 @@ namespace hemelb
             }
           }
 
-          inline void Reset(InitParams* init)
+        protected:
+          /**
+           * Constructs the alpha array.
+           * @param initParams
+           */
+          Entropic(InitParams* initParams)
           {
-            for (site_t i = 0; i < init->siteCount; i++)
-            {
-              oldAlpha[i] = 2.0;
-            }
+            oldAlpha = new distribn_t[initParams->siteCount];
+            DoReset(initParams);
           }
 
-        private:
-          distribn_t* oldAlpha;
-
-          double CalculateAlpha(const distribn_t tau,
-                                const HydroVars<Entropic<LatticeType> >& hydroVars,
-                                double prevAlpha)
+          /**
+           * Calculates the new value of alpha (the relaxation parameter) and updates the cache.
+           * @param tau The value of tau to use as a basis for calculating alpha.
+           * @param hydroVars
+           * @param prevAlpha Alpha value from the previous timestep.
+           * @return
+           */
+          template<typename HydroVarsType>
+          double CalculateAlpha(const distribn_t tau, const HydroVarsType& hydroVars, double prevAlpha)
           {
             bool big = false;
             double deviation = 0.0;
@@ -178,8 +147,11 @@ namespace hemelb
 
           }
 
+          /**
+           * Stores the value of alpha (the relaxation parameter) from the previous iteration.
+           */
+          distribn_t* oldAlpha;
       };
-
     }
   }
 }

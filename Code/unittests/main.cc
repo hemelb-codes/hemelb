@@ -5,6 +5,7 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
+#include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
@@ -14,6 +15,7 @@
 #include "unittests/SimulationMasterTests.h"
 #include "unittests/extraction/extraction.h"
 #include "unittests/multiscale/multiscale.h"
+#include "unittests/util/util.h"
 #include <unistd.h>
 
 int main(int argc, char **argv)

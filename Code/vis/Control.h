@@ -109,6 +109,7 @@ namespace hemelb
         typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
         typedef net::PhasedBroadcast<true, 2, 0, false, true> deepbase;
         typedef std::map<unsigned long, Rendering> mapType;
+        typedef std::multimap<unsigned long, Rendering> multimapType;
 
         // This is mainly constrained by the memory available per core.
         static const unsigned int SPREADFACTOR = 2;

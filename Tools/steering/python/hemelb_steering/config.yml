@@ -1,0 +1,48 @@
+steering_id: 1111
+port: 65250
+steered_parameters:
+  - SceneCentreX #0
+  - SceneCentreY #1
+  - SceneCentreZ #2
+  - Longitude #3
+  - Latitude #4
+  - Zoom #5
+  - Brightness #6
+  - PhysicalVelocityThresholdMax #7
+  - PhysicalStressThresholdMaximum #8
+  - PhysicalPressureThresholdMinimum #9
+  - PhysicalPressureThresholdMaximum #10
+  - GlyphLength #11
+  - PixelsX #12
+  - PixelsY #13
+  - NewMouseX #14
+  - NewMouseY #15
+  - SetIsTerminal #16
+  - Mode #17
+  - StreaklinePerSimulation #18
+  - StreaklineLength #19
+  - MaxFramerate #20
+steered_parameter_defaults:
+  SceneCentreX: 0.0 #0
+  SceneCentreY: 0.0 #1
+  SceneCentreZ: 0.0 #2
+  Longitude: 45.0 #3
+  Latitude: 45.0 #4
+  Zoom: 1.0 #5
+  Brightness: 0.03 #6
+  PhysicalVelocityThresholdMax: 0.1 #7
+  PhysicalStressThresholdMaximum: 0.1 #8
+  PhysicalPressureThresholdMinimum: 80.0 #9
+  PhysicalPressureThresholdMaximum: 120.0 #10
+  GlyphLength: 1.0 #11
+  PixelsX: 512 #12
+  PixelsY: 512 #13
+  NewMouseX: -1 #14
+  NewMouseY: -1 #15
+  SetIsTerminal: 0 #16
+  Mode: 0 #17
+  StreaklinePerSimulation: 5.0 #18
+  StreaklineLength: 100.0 #19
+  MaxFramerate: 0.1
+localhost:
+  address: "localhost"

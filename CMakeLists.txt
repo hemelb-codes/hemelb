@@ -23,6 +23,12 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+set(HEMELB_LATTICE "D3Q15"
+  CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
+set(HEMELB_KERNEL "LBGK"
+  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
+set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
+  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
@@ -62,6 +68,9 @@ ExternalProject_Add(
 	-DCPPUNIT_USE_STATIC=${CPPUNIT_USE_STATIC}
 	-DHEMELB_DEPENDENCIES_SET_RPATH=${HEMELB_DEPENDENCIES_SET_RPATH}
 	-DHEMELB_STATIC_ASSERT=${HEMELB_STATIC_ASSERT}
+        -DHEMELB_LATTICE=${HEMELB_LATTICE}
+        -DHEMELB_KERNEL=${HEMELB_KERNEL}
+        -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
 	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )

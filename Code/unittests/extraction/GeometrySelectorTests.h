@@ -20,17 +20,17 @@ namespace hemelb
     {
       class GeometrySelectorTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE (GeometrySelectorTests);
-          CPPUNIT_TEST (TestStraightLineGeometrySelector);
-          CPPUNIT_TEST (TestPlaneGeometrySelector);
-          CPPUNIT_TEST (TestWholeGeometrySelector);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE ( GeometrySelectorTests);
+          CPPUNIT_TEST ( TestStraightLineGeometrySelector);
+          CPPUNIT_TEST ( TestPlaneGeometrySelector);
+          CPPUNIT_TEST ( TestWholeGeometrySelector);CPPUNIT_TEST_SUITE_END();
 
         public:
           GeometrySelectorTests() :
-              VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
+            VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
 
-              planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0), lineEndPoint1(CentreCoordinate
-                  * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize)
+            planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0),
+                lineEndPoint1(CentreCoordinate * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize)
           {
 
           }
@@ -38,7 +38,7 @@ namespace hemelb
           void setUp()
           {
             latticeData = FourCubeLatticeData::Create(CubeSize, 1);
-            simState = new lb::SimulationState(60.0/(70.0*5000.0),1000);
+            simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             lbmParams = new lb::LbmParameters(0.1, VoxelSize);
             unitConverter = new hemelb::util::UnitConverter(lbmParams, simState, VoxelSize);
@@ -224,7 +224,7 @@ namespace hemelb
           hemelb::extraction::WholeGeometrySelector* wholeGeometrySelector;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION (GeometrySelectorTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometrySelectorTests);
 
     }
   }

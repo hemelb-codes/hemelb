@@ -16,7 +16,7 @@ if 'VIRTUAL_ENV' in environ:
     site.addsitedir(virtual_env)
     print 'Using Virtualenv =>', virtual_env
 del site, environ, join, version_info
-
+import fabric.api
 from fabric.api import *
 import os
 import sys

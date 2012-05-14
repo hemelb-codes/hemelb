@@ -9,7 +9,7 @@ namespace hemelb
     namespace streaklinedrawer
     {
       Particle::Particle() :
-          position(NO_VALUE), velocity(NO_VALUE), vel(NO_VALUE), inletID(-1)
+          position(NO_VALUE), velocity(NO_VALUE), vel(NO_VALUE), inletID()
       {
 
       }
