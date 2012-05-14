@@ -78,6 +78,7 @@ planck:
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   template_key: default
+  home_path_template: "/home/$username/.fabric/Remote"
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
