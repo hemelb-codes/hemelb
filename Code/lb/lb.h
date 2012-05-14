@@ -50,7 +50,7 @@ namespace hemelb
             net::Net* net,
             geometry::LatticeData* latDat,
             SimulationState* simState,
-            reporting::Timer &atimer);
+            reporting::Timers &atimings);
         ~LBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
@@ -156,7 +156,7 @@ namespace hemelb
 
         util::UnitConverter* mUnits;
 
-        reporting::Timer &timer;
+        hemelb::reporting::Timers &timings;
 
         MacroscopicPropertyCache propertyCache;
     };

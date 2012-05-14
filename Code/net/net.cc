@@ -69,6 +69,11 @@ namespace hemelb
       for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
           != mSendProcessorComms.end(); ++it)
       {
+        int TypeSizeStorage = 0;                         //DTMP:byte size tracking 
+        MPI_Type_size(it->second.Type,&TypeSizeStorage); //DTMP:
+        BytesSent += TypeSizeStorage;                   //DTMP:
+
+
         MPI_Isend(it->second.PointerList.front(),
                   1,
                   it->second.Type,
@@ -83,6 +88,8 @@ namespace hemelb
 
     void Net::Wait()
     {
+      SyncPointsCounted++; //DTMP: counter for monitoring purposes.
+
       MPI_Waitall((int) (mSendProcessorComms.size() + mReceiveProcessorComms.size()),
                   &mRequests[0],
                   &mStatuses[0]);
@@ -172,6 +179,7 @@ namespace hemelb
 
         lengths[ii] = iMetaData->LengthList[ii];
         types[ii] = iMetaData->TypeList[ii];
+        /* total_length == lengths[ii]*/
       }
 
       // Create the type and commit it.
@@ -187,7 +195,9 @@ namespace hemelb
       delete[] types;
     }
 
-    Net::Net()
+    Net::Net(): 
+        BytesSent(0), 
+        SyncPointsCounted(0)
     {
       sendReceivePrepped = false;
       communicator = MPI_COMM_WORLD;

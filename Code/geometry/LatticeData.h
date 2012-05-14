@@ -9,6 +9,7 @@
 #include "configuration/SimConfig.h"
 #include "geometry/Block.h"
 #include "geometry/GeometryReader.h"
+#include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
@@ -19,53 +20,112 @@ namespace hemelb
 {
   namespace geometry
   {
-    class NeighbouringProcessor
-    {
-      public:
-        // Rank of the neighbouring processor.
-        proc_t Rank;
-
-        // The number of distributions shared between this neighbour and the current processor.
-        site_t SharedFCount;
-
-        // Index on this processor of the first distribution shared between this
-        // neighbour and the current processor.
-        site_t FirstSharedF;
-    };
-
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class InnerSite<true> ;
-        friend class InnerSite<false> ;
-        friend class BlockTraverser;
+        friend class BaseSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(
                const lb::lattices::LatticeInfo& latticeInfo,
-               const GeometryReadResult& readResult);
+               const Geometry& readResult);
 
         virtual ~LatticeData();
 
-        void SwapOldAndNew();
+        /**
+         * Swap the fOld and fNew arrays around.
+         */
+        inline void SwapOldAndNew()
+        {
+          oldDistributions.swap(newDistributions);
+        }
+
         void SendAndReceive(net::Net* net);
         void CopyReceived();
 
-        const lb::lattices::LatticeInfo& GetLatticeInfo() const;
+        /**
+         * Get the lattice info object for the current lattice
+         * @return
+         */
+        inline const lb::lattices::LatticeInfo& GetLatticeInfo() const
+        {
+          return latticeInfo;
+        }
 
-        Site GetSite(site_t localIndex);
-        ConstSite GetSite(site_t localIndex) const;
+        /**
+         * Get a site object for the given index.
+         * @param localIndex
+         * @return
+         */
+        inline Site GetSite(site_t localIndex)
+        {
+          return Site(localIndex, *this);
+        }
 
-        site_t GetXSiteCount() const;
-        site_t GetYSiteCount() const;
-        site_t GetZSiteCount() const;
+        /**
+         * Get a const site object for the given index.
+         * @param localIndex
+         * @return
+         */
+        inline ConstSite GetSite(site_t localIndex) const
+        {
+          return ConstSite(localIndex, *this);
+        }
 
-        distribn_t GetVoxelSize() const;
-        const util::Vector3D<distribn_t> GetOrigin() const;
+        /**
+         * Get the dimensions of the bounding-box of the geometry in sites
+         * @return
+         */
+        inline const util::Vector3D<site_t>& GetSiteDimensions() const
+        {
+          return sites;
+        }
 
-        site_t GetBlockSize() const;
-        site_t GetBlockCount() const;
+        /**
+         * Get the voxel size, the real-world length of a lattice unit
+         * @return
+         */
+        inline distribn_t GetVoxelSize() const
+        {
+          return voxelSize;
+        }
 
-        site_t GetSitesPerBlockVolumeUnit() const;
+        /**
+         * Get the real-world origin of the geometry (i.e. where the lattice point
+         * (0,0,0) maps to)
+         * @return
+         */
+        inline const util::Vector3D<distribn_t> GetOrigin() const
+        {
+          return origin;
+        }
+
+        /**
+         * Get the number of sites along one block length
+         * @return
+         */
+        inline site_t GetBlockSize() const
+        {
+          return blockSize;
+        }
+
+        /**
+         * Get the total number of blocks in the bounding-box.
+         * @return
+         */
+        inline site_t GetBlockCount() const
+        {
+          return blockCount;
+        }
+
+        /**
+         * Get the total number of sites in a block-cube.
+         * @return
+         */
+        inline site_t GetSitesPerBlockVolumeUnit() const
+        {
+          return sitesPerBlockVolumeUnit;
+        }
 
         /**
          * Convert a 3D site location within a block to a scalar site id on that block.
@@ -73,24 +133,99 @@ namespace hemelb
          * @param blockCoords
          * @return
          */
-        site_t GetLocalSiteIdFromLocalSiteCoords(const util::Vector3D<site_t>& siteCoords) const;
-        site_t GetBlockIdFromBlockCoords(const util::Vector3D<site_t>& blockCoords) const;
+        inline site_t GetLocalSiteIdFromLocalSiteCoords(const util::Vector3D<site_t>& siteCoords) const
+        {
+          return ( (siteCoords.x * blockSize) + siteCoords.y) * blockSize + siteCoords.z;
+        }
+
+        /**
+         * Get the scalar id of a block from its 3D coordinates
+         * @param blockCoords
+         * @return
+         */
+        inline site_t GetBlockIdFromBlockCoords(const util::Vector3D<site_t>& blockCoords) const
+        {
+          return (blockCoords.x * blockCounts.y + blockCoords.y) * blockCounts.z + blockCoords.z;
+        }
 
         bool IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const;
 
-        distribn_t* GetFNew(site_t siteNumber);
-        const distribn_t* GetFNew(site_t siteNumber) const;
+        /**
+         * Get a pointer into the fNew array at the given index
+         * @param distributionIndex
+         * @return
+         */
+        inline distribn_t* GetFNew(site_t distributionIndex)
+        {
+          return &newDistributions[distributionIndex];
+        }
+
+        /**
+         * Get a pointer into the fNew array at the given index. This version of the above lets us
+         * use a const version of a LatticeData to get a const *.
+         * @param distributionIndex
+         * @return
+         */
+        inline const distribn_t* GetFNew(site_t siteNumber) const
+        {
+          return &newDistributions[siteNumber];
+        }
 
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
-        const Block& GetBlock(site_t blockNumber) const;
+        /**
+         * True if the given coordinates correspond to a valid block within the bounding
+         * box of the geometry.
+         *
+         * @param i
+         * @param j
+         * @param k
+         * @return
+         */
+        bool IsValidBlock(site_t i, site_t j, site_t k) const;
 
-        site_t GetLocalFluidSiteCount() const;
+        /**
+         * Get the dimensions of the bounding box of the geometry in terms of blocks.
+         * @return
+         */
+        inline const util::Vector3D<site_t>& GetBlockDimensions() const
+        {
+          return blockCounts;
+        }
+
+        /**
+         * Get the block data for the given block id.
+         * @param blockNumber
+         * @return
+         */
+        inline const Block& GetBlock(site_t blockNumber) const
+        {
+          return blocks[blockNumber];
+        }
+
+        /**
+         * Get the number of fluid sites local to this proc.
+         * @return
+         */
+        inline site_t GetLocalFluidSiteCount() const
+        {
+          return localFluidSites;
+        }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
 
-        const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords, const util::Vector3D<
-            site_t>& localSiteCoords) const;
+        /**
+         * Get the global site coordinates from block coordinates and the site's local coordinates
+         * within the block
+         * @param blockCoords
+         * @param localSiteCoords
+         * @return
+         */
+        inline const util::Vector3D<site_t> GetGlobalCoords(const util::Vector3D<site_t>& blockCoords,
+                                                            const util::Vector3D<site_t>& localSiteCoords) const
+        {
+          return blockCoords * blockSize + localSiteCoords;
+        }
 
         const util::Vector3D<site_t>
         GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
@@ -101,25 +236,65 @@ namespace hemelb
                                         util::Vector3D<site_t>& siteCoords) const;
 
         site_t GetMidDomainSiteCount() const;
+
         /**
          * Number of sites with all fluid neighbours residing on this rank, for the given
          * collision type.
          * @param collisionType
          * @return
          */
-        site_t GetMidDomainCollisionCount(unsigned int collisionType) const;
+        inline site_t GetMidDomainCollisionCount(unsigned int collisionType) const
+        {
+          return midDomainProcCollisions[collisionType];
+        }
+
         /**
          * Number of sites with at least one fluid neighbour residing on another rank
          * for the given collision type.
          * @param collisionType
          * @return
          */
-        site_t GetDomainEdgeCollisionCount(unsigned int collisionType) const;
+        inline site_t GetDomainEdgeCollisionCount(unsigned int collisionType) const
+        {
+          return domainEdgeProcCollisions[collisionType];
+        }
 
-        site_t GetFluidSiteCountOnProc(proc_t proc) const;
-        site_t GetTotalFluidSites() const;
-        const util::Vector3D<site_t>& GetGlobalSiteMins() const;
-        const util::Vector3D<site_t>& GetGlobalSiteMaxes() const;
+        /**
+         * Get the number of fluid sites on the given rank.
+         * @param proc
+         * @return
+         */
+        inline site_t GetFluidSiteCountOnProc(proc_t proc) const
+        {
+          return fluidSitesOnEachProcessor[proc];
+        }
+
+        /**
+         * Get the total number of fluid sites in the whole geometry.
+         * @return
+         */
+        inline site_t GetTotalFluidSites() const
+        {
+          return totalFluidSites;
+        }
+
+        /**
+         * Get the minimal x,y,z coordinates for any fluid site.
+         * @return
+         */
+        inline const util::Vector3D<site_t>& GetGlobalSiteMins() const
+        {
+          return globalSiteMins;
+        }
+
+        /**
+         * Get the maximal x,y,z coordinates for any fluid site.
+         * @return
+         */
+        inline const util::Vector3D<site_t>& GetGlobalSiteMaxes() const
+        {
+          return globalSiteMaxes;
+        }
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
@@ -131,10 +306,12 @@ namespace hemelb
          */
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
 
-        void SetBasicDetails(util::Vector3D<site_t> blocks, site_t blockSize, distribn_t voxelSize, util::Vector3D<
-            distribn_t> originIn);
+        void SetBasicDetails(util::Vector3D<site_t> blocks,
+                             site_t blockSize,
+                             distribn_t voxelSize,
+                             util::Vector3D<distribn_t> originIn);
 
-        void ProcessReadSites(const GeometryReadResult& readResult);
+        void ProcessReadSites(const Geometry& readResult);
 
         void PopulateWithReadData(const std::vector<site_t> midDomainBlockNumbers[COLLISION_TYPES],
                                   const std::vector<site_t> midDomainSiteNumbers[COLLISION_TYPES],
@@ -169,7 +346,7 @@ namespace hemelb
               }
               site_t blockId = midDomainBlockNumbers[collisionType][indexInType];
               site_t siteId = midDomainSiteNumbers[collisionType][indexInType];
-              Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+              blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
               globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
               localFluidSites++;
             }
@@ -189,39 +366,76 @@ namespace hemelb
               }
               site_t blockId = domainEdgeBlockNumbers[collisionType][indexInType];
               site_t siteId = domainEdgeSiteNumbers[collisionType][indexInType];
-              Blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
+              blocks[blockId].SetLocalContiguousIndexForSite(siteId, localFluidSites);
               globalSiteCoords.push_back(GetGlobalCoords(blockId, GetSiteCoordsFromSiteId(siteId)));
               localFluidSites++;
             }
 
           }
 
-          fOld.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
-          fNew.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
         }
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
         void CleanEmptyBlocks();
 
-        void InitialiseNeighbourStuff();
+        void InitialiseNeighbourLookups();
 
         void InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
         void InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
+
         sitedata_t GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
-        void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
+        /**
+         * Set the location (in the distribution array) of the streaming from site at siteIndex in direction
+         * to be value.
+         * @param iSiteIndex
+         * @param iDirection
+         * @param iValue
+         */
+        inline void SetNeighbourLocation(const site_t siteIndex,
+                                         const unsigned int direction,
+                                         const site_t distributionIndex)
+        {
+          neighbourIndices[siteIndex * latticeInfo.GetNumVectors() + direction] = distributionIndex;
+        }
+
         void GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const;
 
-        site_t GetXBlockCount() const;
-        site_t GetYBlockCount() const;
-        site_t GetZBlockCount() const;
-        bool IsValidBlock(site_t i, site_t j, site_t k) const;
+        /**
+         * Get the wall normal at the given site
+         * @param iSiteIndex
+         * @return
+         */
+        inline const util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex) const
+        {
+          return wallNormalAtSite[iSiteIndex];
+        }
 
-        const util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex) const;
-        distribn_t* GetFOld(site_t siteNumber);
-        const distribn_t* GetFOld(site_t siteNumber) const;
+        /**
+         * Get a pointer to the fOld array starting at the requested index
+         * @param distributionIndex
+         * @return
+         */
+        distribn_t* GetFOld(site_t distributionIndex)
+        {
+          return &oldDistributions[distributionIndex];
+        }
+
+        /**
+         * Get a pointer to the fOld array starting at the requested index. This version
+         * of the function allows us to access the fOld array in a const way from a const
+         * LatticeData
+         * @param distributionIndex
+         * @return
+         */
+        const distribn_t* GetFOld(site_t distributionIndex) const
+        {
+          return &oldDistributions[distributionIndex];
+        }
 
         /*
          * This returns the index of the distribution to stream to.
@@ -242,14 +456,25 @@ namespace hemelb
           return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
         }
 
-        SiteData GetSiteData(site_t iSiteIndex) const;
+        /**
+         * Get the site data object for the given index.
+         * @param iSiteIndex
+         * @return
+         */
+        inline SiteData GetSiteData(site_t iSiteIndex) const
+        {
+          return siteData[iSiteIndex];
+        }
 
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex
          * @return
          */
-        const util::Vector3D<site_t>& GetGlobalSiteCoords(site_t siteIndex) const;
+        inline const util::Vector3D<site_t>& GetGlobalSiteCoords(site_t siteIndex) const
+        {
+          return globalSiteCoords[siteIndex];
+        }
 
         // Variables are listed here in approximate order of initialisation.
         // Note that all data is ordered in increasing order of collision type, by
@@ -268,58 +493,25 @@ namespace hemelb
         site_t sitesPerBlockVolumeUnit;
         site_t blockCount;
 
-        /**
-         * Data about sending and receiving fs.
-         */
-        // Number of local distributions shared with neighbouring processors.
-        site_t totalSharedFs;
-        // Vector of info about processors with neighbouring fluid sites.
-        std::vector<NeighbouringProcessor> neighbouringProcs;
+        site_t totalSharedFs; //! Number of local distributions shared with neighbouring processors.
+        std::vector<NeighbouringProcessor> neighbouringProcs; //! Info about processors with neighbouring fluid sites.
 
-        /**
-         * Number of fluid sites with all fluid neighbours on this rank, for each collision type.
-         */
-        site_t midDomainProcCollisions[COLLISION_TYPES];
-        /**
-         * Number of fluid sites with at least one fluid neighbour on another rank, for each
-         * collision type.
-         */
-        site_t domainEdgeProcCollisions[COLLISION_TYPES];
+        site_t midDomainProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with all fluid neighbours on this rank, for each collision type.
+        site_t domainEdgeProcCollisions[COLLISION_TYPES]; //! Number of fluid sites with at least one fluid neighbour on another rank, for each collision type.
+        site_t localFluidSites; //! The number of local fluid sites.
+        std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
+        std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
+        std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
-        site_t localFluidSites;
-
-        std::vector<distribn_t> fOld;
-        std::vector<distribn_t> fNew;
-
-        /**
-         * Data where local fluid sites are stored contiguously.
-         */
-        std::vector<Block> Blocks;
-
-        std::vector<distribn_t> distanceToWall;
-        /**
-         * Hold the global site coordinates for each contiguous site.
-         */
-        std::vector<util::Vector3D<site_t> > globalSiteCoords;
-        std::vector<util::Vector3D<distribn_t> > wallNormalAtSite;
-        std::vector<SiteData> siteData;
-
-        /**
-         * Data about all fluid sites.
-         */
-        // Array containing numbers of fluid sites on each processor.
-        std::vector<site_t> fluidSitesOnEachProcessor;
-        site_t totalFluidSites;
-
-        // Hold the min and max site coordinates
-        util::Vector3D<site_t> globalSiteMins, globalSiteMaxes;
-
-        /**
-         * Data about neighbouring fluid sites.
-         */
-        std::vector<site_t> neighbourIndices;
-        std::vector<site_t> f_recv_iv;
-
+        std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
+        std::vector<util::Vector3D<site_t> > globalSiteCoords; //! Hold the global site coordinates for each contiguous site.
+        std::vector<util::Vector3D<distribn_t> > wallNormalAtSite; //! Holds the wall normal near the fluid site, where appropriate
+        std::vector<SiteData> siteData; //! Holds the SiteData for each site.
+        std::vector<site_t> fluidSitesOnEachProcessor; //! Array containing numbers of fluid sites on each processor.
+        site_t totalFluidSites; //! The total number of fluid sites in the geometry.
+        util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
+        std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
+        std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
     };
   }
 }

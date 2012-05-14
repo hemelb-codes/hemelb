@@ -16,7 +16,7 @@ namespace hemelb
     // constructor - called by SimulationMaster::Initialise()
     ColloidController::ColloidController(const net::Net* const net,
                                          const geometry::LatticeData* const latDatLBM,
-                                         const geometry::GeometryReadResult* const gmyResult) :
+                                         const geometry::Geometry* const gmyResult) :
             net(net), latDat(latDatLBM),
             localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
@@ -34,7 +34,7 @@ namespace hemelb
     }
 
     void ColloidController::InitialiseNeighbourList(
-            const geometry::GeometryReadResult* const gmyResult,
+            const geometry::Geometry* const gmyResult,
             const Neighbourhood neighbourhood)
     {
       // PLAN
@@ -54,7 +54,7 @@ namespace hemelb
            blockTraverser.TraverseOne())
       {
         util::Vector3D<site_t> globalLocationForBlock =
-              blockTraverser.GetCurrentLocation() * gmyResult->blockSize;
+              blockTraverser.GetCurrentLocation() * gmyResult->GetBlockSize();
 
         // if block has sites
         site_t blockId = blockTraverser.GetCurrentIndex();
@@ -120,23 +120,20 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-                                      const geometry::GeometryReadResult* const gmyResult,
+                                      const geometry::Geometry* const gmyResult,
                                       const util::Vector3D<site_t> globalLocationForSite,
                                       site_t* blockIdForSite,
                                       site_t* localSiteIdForSite,
                                       proc_t* ownerRankForSite)
     {
       // check for global location being outside the simulation entirely
-      if (globalLocationForSite.x < (site_t)0 ||
-          globalLocationForSite.y < (site_t)0 ||
-          globalLocationForSite.z < (site_t)0 ||
-          globalLocationForSite.x >= gmyResult->blocks.x * gmyResult->blockSize ||
-          globalLocationForSite.y >= gmyResult->blocks.y * gmyResult->blockSize ||
-          globalLocationForSite.z >= gmyResult->blocks.z * gmyResult->blockSize )
+      if (!gmyResult->AreBlockCoordinatesValid(globalLocationForSite))
+      {
         return false;
+      }
 
       // obtain block information (3D location vector and 1D id number) for the site
-      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult->blockSize;
+      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult->GetBlockSize();
       *blockIdForSite = gmyResult->GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
                                                                   blockLocationForSite.y,
                                                                   blockLocationForSite.z);
@@ -147,7 +144,7 @@ namespace hemelb
 
       // obtain site information (3D location vector and 1D id number)
       // note: these are both local to the block that contains the site
-      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult->blockSize;
+      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult->GetBlockSize();
       *localSiteIdForSite = gmyResult->GetSiteIdFromSiteCoordinates(localSiteLocation.x,
                                                                     localSiteLocation.y,
                                                                     localSiteLocation.z);

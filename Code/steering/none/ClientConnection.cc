@@ -18,8 +18,8 @@ namespace hemelb
      * @param iSteeringSessionId
      * @return
      */
-    ClientConnection::ClientConnection(int iSteeringSessionId):
-        mIsBusy()
+    ClientConnection::ClientConnection(int iSteeringSessionId, reporting::Timers & timings):
+        mIsBusy(), timers(timings)
     {
     }
 
