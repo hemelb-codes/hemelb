@@ -5,7 +5,7 @@
 #include "net/net.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
-#include "geometry/geometry.h"
+#include "geometry/Geometry.h"
 //#include "colloids/Particle.h"
 
 namespace hemelb
