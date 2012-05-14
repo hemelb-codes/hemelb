@@ -17,7 +17,7 @@ namespace hemelb
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork,
                                            unsigned inletCountIn) :
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn)
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn), MaxFramerate(25.0)
     {
       xdrSendBuffer = new char[maxSendSize];
 
@@ -75,6 +75,7 @@ namespace hemelb
       }
 
       // Send to the client.
+      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
       mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
     }
 
@@ -93,14 +94,14 @@ namespace hemelb
 
         double deltaTime = frameTimeStart - lastRender;
 
-        if ( (1.0 / 25.0) > deltaTime)
+        if ( (1.0 / MaxFramerate) > deltaTime)
         {
           return false;
         }
         else
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Image-send component requesting new render, %f seconds since last one.",
-                                                        deltaTime);
+          log::Logger::Log<log::Debug, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
+                                                        deltaTime, mSimState->GetTimeStep(), MaxFramerate);
           lastRender = frameTimeStart;
           return true;
         }

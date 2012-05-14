@@ -34,13 +34,12 @@ namespace hemelb
     SimConfig *SimConfig::Load(const char *path)
     {
       util::check_file(path);
-      TiXmlDocument *configFile = new TiXmlDocument();
-      configFile->LoadFile(path);
+      TiXmlDocument configFile;
+      configFile.LoadFile(path);
 
       SimConfig *result = new SimConfig();
-      result->DoIO(configFile->FirstChildElement(), true);
+      result->DoIO(configFile.FirstChildElement(), true);
       result->dataFilePath = util::NormalizePathRelativeToPath(result->dataFilePath, path);
-      delete configFile;
 
       return result;
     }

@@ -41,17 +41,13 @@ namespace hemelb
          */
         static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
         {
-          hemelb::geometry::GeometryReadResult readResult;
-
-          readResult.voxelSize = 0.01;
-          readResult.origin = util::Vector3D<distribn_t>::Zero();
-          readResult.blockSize = sitesPerBlockUnit;
-          readResult.blocks = util::Vector3D<site_t>::Ones();
-
-          readResult.Blocks = std::vector<hemelb::geometry::BlockReadResult>(1);
+          hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
+                                                sitesPerBlockUnit,
+                                                0.01,
+                                                util::Vector3D<PhysicalLength>::Zero());
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
-          block.Sites.resize(readResult.GetSitesPerBlock(), geometry::SiteReadResult(false));
+          block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
 
           site_t index = -1;
           for (site_t i = 0; i < sitesPerBlockUnit; ++i)
@@ -62,7 +58,7 @@ namespace hemelb
               {
                 ++index;
 
-                hemelb::geometry::SiteReadResult& site = block.Sites[index];
+                hemelb::geometry::GeometrySite& site = block.Sites[index];
 
                 site.isFluid = true;
                 site.targetProcessor = 0;
@@ -73,7 +69,7 @@ namespace hemelb
                   site_t neighJ = j + lb::lattices::D3Q15::CY[direction];
                   site_t neighK = k + lb::lattices::D3Q15::CZ[direction];
 
-                  hemelb::geometry::LinkReadResult link;
+                  hemelb::geometry::GeometrySiteLink link;
 
                   float randomDistance = (float(std::rand() % 10000) / 10000.0);
 
@@ -81,21 +77,20 @@ namespace hemelb
                   if (neighK < 0)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::LinkReadResult::INLET_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::INLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // The outlet is by the maximal z value.
                   else if (neighK >= sitesPerBlockUnit)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::LinkReadResult::OUTLET_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::OUTLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
-                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit
-                      || neighJ >= sitesPerBlockUnit)
+                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit || neighJ >= sitesPerBlockUnit)
                   {
-                    link.type = geometry::LinkReadResult::WALL_INTERSECTION;
+                    link.type = geometry::GeometrySiteLink::WALL_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
 
@@ -109,8 +104,7 @@ namespace hemelb
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
-          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit
-              * sitesPerBlockUnit;
+          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit * sitesPerBlockUnit;
           for (proc_t rank = 1; rank < rankCount; ++rank)
           {
             returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
@@ -120,25 +114,25 @@ namespace hemelb
         }
 
         /***
-        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
-        **/
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
         void SetHasBoundary(site_t site, Direction direction)
         {
           TestSiteData mutableSiteData(siteData[site]);
           mutableSiteData.SetHasBoundary(direction);
           siteData[site] = geometry::SiteData(mutableSiteData);
         }
-        
+
         /***
-        Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
-        **/
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
         void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
         {
           distanceToWall[ (lb::lattices::D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
         }
 
       protected:
-        FourCubeLatticeData(hemelb::geometry::GeometryReadResult& readResult) :
+        FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
             hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
