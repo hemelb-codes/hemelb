@@ -134,27 +134,23 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
-  timings[hemelb::reporting::Timers::netInitialise].Start();
-
-  // Use a reader to read in the file.
+  timings[hemelb::reporting::Timers::latDatInitialise].Start();
+// Use a reader to read in the file.
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
-  hemelb::geometry::GeometryReadResult readGeometryData;
   hemelb::geometry::GeometryReader reader(
                    hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                    latticeType::GetLatticeInfo(),
-                   readGeometryData,
                    timings);
-  reader.LoadAndDecompose(simConfig->GetDataFilePath());
+                 
+  hemelb::geometry::Geometry readGeometryData = reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
   // Create a new lattice based on that info and return it.
   latticeData = new hemelb::geometry::LatticeData(
                    latticeType::GetLatticeInfo(),
                    readGeometryData);
-
-  timings[hemelb::reporting::Timers::netInitialise].Stop();
-
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
+  timings[hemelb::reporting::Timers::latDatInitialise].Stop();
+ hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(
                    &communicationNet,
                    latticeData,
@@ -165,12 +161,12 @@ void SimulationMaster::Initialise()
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,
-                                                           timings[hemelb::reporting::Timers::lb]);
+                                                           timings);
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    network = new hemelb::steering::Network(steeringSessionId);
+    network = new hemelb::steering::Network(steeringSessionId,timings);
   }
   else
   {
@@ -204,6 +200,9 @@ void SimulationMaster::Initialise()
                                                             latticeBoltzmannModel->GetLbmParams(),
                                                             network,
                                                             latticeBoltzmannModel->InletCount());
+
+  } else {
+    imageSendCpt=NULL;
   }
 
   unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
@@ -226,6 +225,7 @@ void SimulationMaster::Initialise()
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
+                                                        imageSendCpt,
                                                         &communicationNet,
                                                         simulationState,
                                                         simConfig,
@@ -447,6 +447,11 @@ void SimulationMaster::Finalise()
     reporter->FillDictionary();
     reporter->Write();
   }
+  // DTMP: Logging output on communication as debug output for now.
+  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sync points: %lld, bytes sent: %lld",
+                                                                        communicationNet.SyncPointsCounted, 
+                                                                        communicationNet.BytesSent);
+
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
@@ -470,8 +475,11 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->IsRendering())
   {
+    // Here, Start() actually triggers the render.
     networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
                                                                           simulationState->GetTimeStep()));
+    hemelb::log::Logger::Log<hemelb::log::Debug,
+      hemelb::log::Singleton>("%d images currently being composited for the steering client", networkImagesCompleted.size());
     simulationState->SetIsRendering(false);
   }
 
@@ -483,7 +491,7 @@ void SimulationMaster::DoTimeStep()
    This is to be done. */
 
   bool renderForNetworkStream = false;
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc()&&!steeringCpt->readyForNextImage)
   {
     renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
     steeringCpt->readyForNextImage = renderForNetworkStream;

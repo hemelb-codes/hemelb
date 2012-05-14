@@ -40,7 +40,6 @@ namespace hemelb
   // TODO almost certainly filth.
   const distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
   const int BIG_NUMBER2 = 1 << 30;
-  const unsigned BIG_NUMBER3 = 1U << 31;
 }
 
 #endif //HEMELB_CONSTANTS_H

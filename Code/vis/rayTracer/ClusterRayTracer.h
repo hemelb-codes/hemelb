@@ -306,10 +306,11 @@ namespace hemelb
 
               if (!block.IsEmpty()) // Ensure fluid site
               {
-                const site_t localContiguousId = block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
-
-                if (localContiguousId != BIG_NUMBER3)
+                if (!block.SiteIsSolid(siteTraverser.GetCurrentIndex()))
                 {
+                  const site_t localContiguousId =
+                      block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex());
+
                   SiteData_t siteData;
                   siteData.density = propertyCache.densityCache.Get(localContiguousId);
                   siteData.velocity = propertyCache.velocityCache.Get(localContiguousId).GetMagnitude();

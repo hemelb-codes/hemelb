@@ -102,7 +102,7 @@ else()
 	   cppunit
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CPPUNIT_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot  ${CPPUNIT_CONFIGURE_OPTIONS}
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot ${CPPUNIT_CONFIGURE_OPTIONS}
 		BUILD_IN_SOURCE 1
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
