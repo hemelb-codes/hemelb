@@ -1,6 +1,5 @@
 import vtk
 import numpy as N
-from . import coordinates
 from .Plane import Plane
 
 def planeToVTK(pp):
@@ -126,7 +125,6 @@ class SurfacePlaneClipper(object):
 
 def clip(infile, planes, outfile):
     import vmtk
-#     ctr = coordinates.meshCentre(infile)
     
     reader = vmtk.vmtksurfacereader.vmtkSurfaceReader()
     reader.InputFileName = infile

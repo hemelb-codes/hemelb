@@ -17,6 +17,9 @@
 		<optimisation>{{OPTIMISATION}}</optimisation>
 		<date>{{TIME}}</date>
 		<reading_group>{{READING_GROUP_SIZE}}</reading_group>
+		<lattice_type>{{LATTICE_TYPE}}</lattice_type>
+		<kernel_type>{{KERNEL_TYPE}}</kernel_type>
+		<wall_boundary_condition>{{WALL_BOUNDARY_CONDITION}}</wall_boundary_condition>
 	</build>
 	{{/BUILD}}
 	<nodes>

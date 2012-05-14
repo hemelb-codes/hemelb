@@ -5,6 +5,7 @@ syntax: glob
 *~
 .metadata/*
 build/*
+Tools/visclients/dependencies/jogamp
 Code/build/*
 Code/build_clang/*
 results/*
@@ -37,6 +38,7 @@ Tools/steering/javagui/dependencies
 Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
 Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
+Tools/steering/javagui/dependencies/jogamp/
 Tools/visclients/hs_err*.log
 Tools/analysis/config.yml
 Tools/analysis/plot.sh

@@ -24,7 +24,7 @@ namespace hemelb
         }
 
         // We put the glyph at the site at the centre of the block...
-        const util::Vector3D<site_t> midBlockSite = util::Vector3D<site_t>(mLatDat->GetBlockSize()) / 2;
+        const util::Vector3D<site_t> midBlockSite = util::Vector3D<site_t>(mLatDat->GetBlockSize()) / (site_t) 2;
 
         const site_t siteIdOnBlock = mLatDat->GetLocalSiteIdFromLocalSiteCoords(midBlockSite);
 

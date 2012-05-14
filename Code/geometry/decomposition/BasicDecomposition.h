@@ -16,7 +16,7 @@ namespace hemelb
       class BasicDecomposition
       {
         public:
-          typedef typename util::Vector3D<site_t> BlockLocation;
+          typedef util::Vector3D<site_t> BlockLocation;
 
           /**
            * Constructor to populate all fields necessary for a decomposition

@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Class-Path: gluegen.jar jogl.all.jar TableLayout.jar 
+Main-Class: uk.ac.ucl.chem.ccs.vizclient.VizStandalone
