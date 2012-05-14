@@ -13,7 +13,7 @@ namespace hemelb
      *
      * @param readResult
      */
-    SiteData::SiteData(const SiteReadResult& readResult)
+    SiteData::SiteData(const GeometrySite& readResult)
     {
       if (!readResult.isFluid)
       {
@@ -31,22 +31,22 @@ namespace hemelb
         for (Direction direction = 1; direction <= readResult.links.size(); ++direction)
         {
           // Get the link
-          const LinkReadResult& link = readResult.links[direction - 1];
+          const GeometrySiteLink& link = readResult.links[direction - 1];
 
           // If it's a wall link, set the bit for this direction
-          if (link.type == LinkReadResult::WALL_INTERSECTION)
+          if (link.type == GeometrySiteLink::WALL_INTERSECTION)
           {
             boundaryIntersection |= 1 << (direction - 1);
           }
 
           // If it's an inlet, take the IOlet id
-          if (link.type == LinkReadResult::INLET_INTERSECTION)
+          if (link.type == GeometrySiteLink::INLET_INTERSECTION)
           {
             ioletId = link.ioletId;
             hadInlet = true;
           }
           // Ditto if it's an outlet.
-          else if (link.type == LinkReadResult::OUTLET_INTERSECTION)
+          else if (link.type == GeometrySiteLink::OUTLET_INTERSECTION)
           {
             ioletId = link.ioletId;
             hadOutlet = true;

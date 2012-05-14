@@ -129,8 +129,7 @@ namespace hemelb
                 do
                 {
                   //If the site is not a solid
-                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation).GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex())
-                      != BIG_NUMBER3)
+                  if (!mBlockTraverser.GetBlockDataForLocation(lCurrentLocation).SiteIsSolid(siteTraverser.GetCurrentIndex()))
                   {
                     clusterSiteMin.UpdatePointwiseMin(siteTraverser.GetCurrentLocation()
                         + lCurrentLocation * mBlockTraverser.GetBlockSize());
@@ -204,10 +203,8 @@ namespace hemelb
                           util::Vector3D<site_t> clusterVoxelMin,
                           util::Vector3D<site_t> clusterVoxelMax)
           {
-            const util::Vector3D<float> halfLatticeSiteCount =
-                util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
-                                      (float) mLatticeData->GetYSiteCount(),
-                                      (float) mLatticeData->GetZSiteCount()) * 0.5F;
+            const util::Vector3D<float> halfLatticeSiteCount = util::Vector3D<float>(mLatticeData->GetSiteDimensions())
+                * 0.5F;
 
             //The friendly locations must be turned into a format usable by the ray tracer
             ClusterType lNewCluster((unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x),
@@ -265,10 +262,9 @@ namespace hemelb
                                             site_t siteIdOnBlock)
           {
             const geometry::Block& block = mLatticeData->GetBlock(blockId);
-            site_t clusterVoxelSiteId = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 
             //If site not a solid and on the current processor [net.cc]
-            if (clusterVoxelSiteId != BIG_NUMBER3)
+            if (!block.SiteIsSolid(siteIdOnBlock))
             {
               if (ClusterType::NeedsWallNormals())
               {

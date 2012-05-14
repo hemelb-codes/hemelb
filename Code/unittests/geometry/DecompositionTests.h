@@ -40,12 +40,13 @@ namespace hemelb
       class DecompositionTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(DecompositionTests);
-          CPPUNIT_TEST(TestReadingOne);
-          CPPUNIT_TEST(TestNonReading);CPPUNIT_TEST_SUITE_END();
+          //CPPUNIT_TEST(TestReadingOne);
+          //CPPUNIT_TEST(TestNonReading);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           DecompositionTests() :
-              inputNeededBlocks(NULL), mockedDecomposition(NULL), netMock(NULL)
+              mockedDecomposition(NULL), netMock(NULL)
           {
           }
 
@@ -56,7 +57,6 @@ namespace hemelb
 
           void tearDown()
           {
-            delete[] inputNeededBlocks;
             delete mockedDecomposition;
           }
 
@@ -177,7 +177,7 @@ namespace hemelb
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
-            inputNeededBlocks = new bool[block_count];
+            inputNeededBlocks = std::vector<bool>(block_count);
             for (site_t i = 0; i < block_count; i++)
             {
               // Mock with a tridiagonal needs example
@@ -201,7 +201,7 @@ namespace hemelb
           site_t blockCount;
           proc_t size;
           proc_t rank;
-          bool *inputNeededBlocks;
+          std::vector<bool> inputNeededBlocks;
           MockedDecomposition *mockedDecomposition;
           NetMock *netMock;
 

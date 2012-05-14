@@ -19,8 +19,8 @@ namespace hemelb
 {
   namespace steering
   {
-    Network::Network(int steeringSessionId) :
-      clientConnection(steeringSessionId)
+    Network::Network(int steeringSessionId, reporting::Timers & timings) :
+      clientConnection(steeringSessionId, timings)
     {
 
     }
@@ -118,7 +118,8 @@ namespace hemelb
 
     bool Network::IsConnected()
     {
-      return clientConnection.GetWorkingSocket() > 0;
+      int res=clientConnection.GetWorkingSocket();
+      return res > 0;
     }
 
     /**
@@ -139,7 +140,7 @@ namespace hemelb
       {
         return false;
       }
-
+      log::Logger::Log<log::Debug, log::Singleton>("Steering component will try to send %d new bytes and a buffer of %d",length,sendBuf.length());
       // If we have buffered strings to be sent, send those first.
       if (sendBuf.length() > 0)
       {
@@ -161,6 +162,7 @@ namespace hemelb
           // to the client.
           // What we *would* do is sendBuf.append(buf, length);
 
+          log::Logger::Log<log::Debug, log::Singleton>("Steering component could not send all buffer, managed %d bytes",sent);
           return true;
         }
         // If not, we sent the whole buffer.
@@ -169,18 +171,21 @@ namespace hemelb
           sendBuf.clear();
         }
       }
-
+      log::Logger::Log<log::Debug, log::Singleton>("Steering component sent all the buffer, sending new data");
       // If we sent the whole buffer, try to send the new data.
       long sent_bytes = sendInternal(buf, length, socketToClient);
 
       // Is the socket broken?
       if (sent_bytes < 0)
       {
+        log::Logger::Log<log::Debug, log::Singleton>("Steering component socket broke sending new bytes");
         return false;
       }
       // Did the socket block? Still return true, because we'll try again next time.
       else if (sent_bytes < length)
       {
+        log::Logger::Log<log::Debug, log::Singleton>(
+            "Steering component socket blocked after sending %d bytes, adding %d bytes to buffer",sent_bytes,length - sent_bytes);
         sendBuf.append(buf + sent_bytes, length - sent_bytes);
       }
 

@@ -22,6 +22,10 @@ namespace hemelb
 
         ~Net();
 
+        //DTMP: monitoring variables
+        long long int BytesSent;
+        long long int SyncPointsCounted;
+
         void Receive();
         void Send();
         void Wait();
@@ -37,16 +41,18 @@ namespace hemelb
         template<class T>
         void RequestSend(T* oPointer, int iCount, proc_t iToRank)
         {
-          if (sendReceivePrepped)
+          if (iCount > 0)
           {
-            std::cerr
-                << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
-            exit(1);
+            if (sendReceivePrepped)
+            {
+              std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
+              exit(1);
+            }
+
+            ProcComms *lComms = GetProcComms(iToRank, true);
+
+            AddToList(oPointer, iCount, lComms);
           }
-
-          ProcComms *lComms = GetProcComms(iToRank, true);
-
-          AddToList(oPointer, iCount, lComms);
         }
 
         /**
@@ -60,16 +66,19 @@ namespace hemelb
         template<class T>
         void RequestReceive(T* oPointer, int iCount, proc_t iFromRank)
         {
-          if (sendReceivePrepped)
+          if (iCount > 0)
           {
-            std::cerr
-                << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
-            exit(1);
+            if (sendReceivePrepped)
+            {
+              std::cerr
+                  << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
+              exit(1);
+            }
+
+            ProcComms *lComms = GetProcComms(iFromRank, false);
+
+            AddToList(oPointer, iCount, lComms);
           }
-
-          ProcComms *lComms = GetProcComms(iFromRank, false);
-
-          AddToList(oPointer, iCount, lComms);
         }
 
       private:
@@ -96,11 +105,11 @@ namespace hemelb
         ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
         template<typename T>
-        void AddToList(T* iNew, int iLength, ProcComms *bMetaData)
+        void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
         {
-          bMetaData->PointerList.push_back(iNew);
-          bMetaData->LengthList.push_back(iLength);
-          bMetaData->TypeList.push_back(MpiDataType<T>());
+          procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
+          procCommsObjectToAddTo->LengthList.push_back(dataLength);
+          procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
         }
 
         void EnsurePreparedToSendReceive();

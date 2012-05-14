@@ -12,7 +12,7 @@
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
-#include "geometry/ReadResult.h"
+#include "geometry/Geometry.h"
 #include "geometry/Decomposition.h"
 
 namespace hemelb
@@ -23,45 +23,52 @@ namespace hemelb
     class GeometryReader
     {
       public:
-        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, GeometryReadResult& readResult, reporting::Timers &timings);
+        typedef util::Vector3D<site_t> BlockLocation;
+
+        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
         ~GeometryReader();
 
-        void LoadAndDecompose(const std::string& dataFilePath);
+        Geometry LoadAndDecompose(const std::string& dataFilePath);
 
       private:
-        void ReadPreamble();
+        Geometry ReadPreamble();
 
-        void ReadHeader();
+        void ReadHeader(site_t blockCount);
 
-        void BlockDecomposition();
+        void ReadInBlocksWithHalo(Geometry& geometry,
+                                  const std::vector<proc_t>& unitForEachBlock,
+                                  const proc_t localRank);
 
-        void DivideBlocks(site_t unassignedBlocks,
-                          const proc_t unitCount,
-                          site_t* blocksOnEachUnit,
-                          proc_t* unitForEachBlock,
-                          const site_t* fluidSitesPerBlock);
-
-        void ReadInLocalBlocks(const proc_t* unitForEachBlock, const proc_t localRank);
-
-        void DecideWhichBlocksToRead(bool* readBlock, const proc_t* unitForEachBlock, const proc_t localRank);
+        /**
+         * Compile a list of blocks to be read onto this core, including all the ones we perform
+         * LB on, and also any of their neighbouring blocks.
+         *
+         * NOTE: that the skipping-over of blocks without any fluid sites is dealt with by other
+         * code.
+         *
+         * @param geometry [in] Geometry object as it has been read so far
+         * @param unitForEachBlock [in] The initial processor assigned to each block
+         * @param localRank [in] Local rank number
+         * @return Vector with true for each block we should read in.
+         */
+        std::vector<bool> DecideWhichBlocksToReadIncludingHalo(const Geometry& geometry,
+                                                               const std::vector<proc_t>& unitForEachBlock,
+                                                               const proc_t localRank);
 
         /**
          * Reads in a single block and ensures it is distributed to all cores that need it.
-         * @param offsetSoFar
-         * @param procsWantingThisBlock
-         * @param blockNumber
-         * @param sites
-         * @param compressedBytes
-         * @param uncompressedBytes
-         * @param neededOnThisRank
+         *
+         * @param offsetSoFar [in] The offset into the file to read from to get the block.
+         * @param geometry [out] The geometry object to populate with info about the block.
+         * @param procsWantingThisBlock [in] A list of proc ids where info about this block is required.
+         * @param blockNumber [in] The id of the block we're reading.
+         * @param neededOnThisRank [in] A boolean indicating whether the block is required locally.
          */
         void ReadInBlock(MPI_Offset offsetSoFar,
+                         Geometry& geometry,
                          const std::vector<proc_t>& procsWantingThisBlock,
                          const site_t blockNumber,
-                         const site_t sites,
-                         const unsigned int compressedBytes,
-                         const unsigned int uncompressedBytes,
-                         const int neededOnThisRank);
+                         const bool neededOnThisRank);
 
         /**
          * Decompress the block data. Uses the known number of sites to get an
@@ -74,9 +81,14 @@ namespace hemelb
         std::vector<char> DecompressBlockData(const std::vector<char>& compressed,
                                               const unsigned int uncompressedBytes);
 
-        void ParseBlock(const site_t block, io::writers::xdr::XdrReader& reader);
+        void ParseBlock(Geometry& geometry, const site_t block, io::writers::xdr::XdrReader& reader);
 
-        SiteReadResult ParseSite(io::writers::xdr::XdrReader& reader);
+        /**
+         * Parse the next site from the XDR reader. Note that we return by copy here.
+         * @param reader
+         * @return
+         */
+        GeometrySite ParseSite(io::writers::xdr::XdrReader& reader);
 
         /**
          * Calculates the number of the rank used to read in a given block.
@@ -87,83 +99,71 @@ namespace hemelb
          */
         proc_t GetReadingCoreForBlock(site_t blockNumber);
 
-        bool Expand(std::vector<util::Vector3D<site_t> >& edgeBlocks,
-                    std::vector<util::Vector3D<site_t> >& expansionBlocks,
-                    const site_t* fluidSitesPerBlock,
-                    bool* blockAssigned,
-                    const proc_t currentUnit,
-                    proc_t* unitForEachBlock,
-                    site_t &blocksOnCurrentUnit,
-                    const site_t blocksPerUnit);
+        /**
+         * Optimise the domain decomposition using ParMetis. We take this approach because ParMetis
+         * is more efficient when given an initial decomposition to start with.
+         * @param geometry
+         * @param procForEachBlock
+         */
+        void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
 
-        void OptimiseDomainDecomposition(const proc_t* procForEachBlock);
+        void ValidateGeometry(const Geometry& geometry);
 
-        void ValidateGraphData(idx_t* vtxDistribn,
-                               idx_t localVertexCount,
-                               idx_t* adjacenciesPerVertex,
-                               idx_t* adjacencies);
-
-        void ValidateAllReadData();
-
-        void ValidateProcForEachBlock();
-
+        /**
+         * Get the length of the header section, given the number of blocks.
+         *
+         * @param blockCount The number of blocks.
+         * @return
+         */
         site_t GetHeaderLength(site_t blockCount) const;
 
-        void GetSiteDistributionArray(idx_t* vertexDistribn,
-                                      const proc_t* procForEachBlock,
-                                      const site_t* fluidSitesPerBlock) const;
+        void RereadBlocks(Geometry& geometry,
+                          const std::vector<idx_t>& movesPerProc,
+                          const std::vector<idx_t>& movesList,
+                          const std::vector<int>& procForEachBlock);
 
-        void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
-                                          const idx_t* vertexDistribution,
-                                          const proc_t* procForEachBlock,
-                                          const site_t* fluidSitesPerBlock) const;
-
-        void GetAdjacencyData(idx_t* adjacenciesPerVertex,
-                              idx_t* &localAdjacencies,
-                              const idx_t localVertexCount,
-                              const proc_t* procForEachBlock,
-                              const idx_t* firstSiteIndexPerBlock) const;
-
-        void CallParmetis(idx_t* partitionVector,
-                          idx_t localVertexCount,
-                          idx_t* vtxDistribn,
-                          idx_t* adjacenciesPerVertex,
-                          idx_t* adjacencies);
-
-        idx_t* GetMovesList(idx_t* movesFromEachProc,
-                            const idx_t* firstSiteIndexPerBlock,
-                            const proc_t* procForEachBlock,
-                            const site_t* fluidSitesPerBlock,
-                            const idx_t* vtxDistribn,
-                            const idx_t* partitionVector);
-
-        void RereadBlocks(const idx_t* movesPerProc, const idx_t* movesList, const int* procForEachBlock);
-
-        void ImplementMoves(const proc_t* procForEachBlock,
-                            const idx_t* movesFromEachProc,
-                            const idx_t* movesList) const;
+        void ImplementMoves(Geometry& geometry,
+                            const std::vector<proc_t>& procForEachBlock,
+                            const std::vector<idx_t>& movesFromEachProc,
+                            const std::vector<idx_t>& movesList) const;
 
         proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
+        /**
+         * True if we should validate the geometry.
+         * @return
+         */
+        bool ShouldValidate() const;
+
+        //! The rank which reads in the header information.
         static const proc_t HEADER_READING_RANK = 0;
+        //! The number of cores (0-READING_GROUP_SIZE-1) that read files in parallel
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
+        //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
-        GeometryReadResult& readingResult;
+        //! File accessed to read in the geometry data.
         MPI_File file;
+        //! Information about the file, to give cues and hints to MPI.
         MPI_Info fileInfo;
-        MPI_Comm topologyComm;
-        MPI_Group topologyGroup;
-        int topologyRank;
-        unsigned int topologySize;
-        MPI_Comm currentComm;
-        int currentCommRank;
-        int currentCommSize;
+        MPI_Group topologyGroup; //! New group for ranks in the topology.
+        MPI_Comm topologyCommunicator; //! New communicator for ranks in the topology.
+        topology::Communicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
+        // TODO: This was never a good plan, better code design will avoid the need for it.
+        topology::Communicator currentComms; //! The communicator currently in use.
+        //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
-        site_t* fluidSitesPerBlock;
-        unsigned int* bytesPerCompressedBlock;
-        unsigned int* bytesPerUncompressedBlock;
-        proc_t* procForEachBlock;
+
+        //! The number of fluid sites on each block in the geometry
+        std::vector<site_t> fluidSitesOnEachBlock;
+        //! The number of bytes each block takes up while still compressed.
+        std::vector<unsigned int> bytesPerCompressedBlock;
+        //! The number of bytes each block takes up when uncompressed.
+        std::vector<unsigned int> bytesPerUncompressedBlock;
+        //! The processor assigned to each block.
+        std::vector<proc_t> principalProcForEachBlock;
+
+        //! Timings object for recording the time taken for each step of the domain decomposition.
         hemelb::reporting::Timers &timings;
     };
   }
