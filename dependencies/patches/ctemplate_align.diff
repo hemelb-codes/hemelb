@@ -1,0 +1,12 @@
+diff -r 3d87a62c5939 src/base/manual_constructor.h
+--- a/src/base/manual_constructor.h	Wed May 09 11:41:21 2012 +0100
++++ b/src/base/manual_constructor.h	Wed May 09 12:50:26 2012 +0100
+@@ -68,7 +68,7 @@
+ #define UTIL_GTL_ALIGN_ATTRIBUTE(X) __declspec(align(X))
+ #define UTIL_GTL_ALIGN_OF(T) __alignof(T)
+ #elif defined(__GNUC__) || defined(__APPLE__) || defined(__INTEL_COMPILER) \
+-  || defined(__nacl__)
++  || defined(__nacl__) || true
+ #define UTIL_GTL_ALIGN_ATTRIBUTE(X) __attribute__((aligned(X)))
+ #define UTIL_GTL_ALIGN_OF(T) __alignof__(T)
+ #endif
