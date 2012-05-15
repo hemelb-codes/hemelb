@@ -5,6 +5,10 @@ set(HEMELB_DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
 set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
+set(CPPUNIT_CONFIGURE_OPTIONS "" CACHE STRING "Extra configuration options for CPPUNIT")
+option(CPPUNIT_PATCH_LDL "Add -ldl option to cppunit" OFF)
+set(CTEMPLATE_CONFIGURE_OPTIONS "" CACHE STRING "Extra configurations options for CTEMPLATE")
+
 
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
 
@@ -98,23 +102,25 @@ else()
 		set(RECONFIGURE_CPPUNIT_DEFAULT OFF)
 	endif()
 	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
+	if (CPPUNIT_PATCH_LDL)
+    	set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_ldl.diff)
+    else()
+        set(PATCH_COMMAND_LDL echo noldl)
+    endif()
+    if (RECONFIGURE_CPPUNIT)
+    	set(PATCH_COMMAND_RECONFIGURE autoreconf -fvi) #autoreconf required on osx - based on contents of portfile)
+    else()
+        set(PATCH_COMMAND_RECONFIGURE echo noreconf)
+    endif()
 	ExternalProject_Add(
 	   cppunit
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CPPUNIT_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot ${CPPUNIT_CONFIGURE_OPTIONS}
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot "${CPPUNIT_CONFIGURE_OPTIONS}"
 		BUILD_IN_SOURCE 1
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+		PATCH_COMMAND ${PATCH_COMMAND_LDL} && ${PATCH_COMMAND_RECONFIGURE}
 	)
-	if (RECONFIGURE_CPPUNIT)
-		ExternalProject_Add_Step(
-			cppunit reconf
-			COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
-			DEPENDEES download
-			DEPENDERS configure
-			WORKING_DIRECTORY <SOURCE_DIR>
-		)
-	endif()
 endif()
 
 if(HEMELB_USE_BOOST)
@@ -173,6 +179,16 @@ else()
 		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
+	if (CTEMPLATE_PATCH_VACOPY)
+    	set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
+    else()
+        set(PATCH_COMMAND_VACOPY echo novacopy)
+    endif()
+    if (PATCH_ALIGN)
+    	set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
+    else()
+        set(PATCH_COMMAND_ALIGN echo noreconf)
+    endif()
 	ExternalProject_Add(
    	ctemplate
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
@@ -180,33 +196,8 @@ else()
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
+		PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
 	)
-#if (CTEMPLATE_PATCH_VACOPY)
-#	ExternalProject_Add_Step(
-#		ctemplate vacopy
-#		COMMAND patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff
-#		DEPENDEES download
-#		DEPENDERS align
-#		WORKING_DIRECTORY <SOURCE_DIR>
-#	)
-# else()
-#   ExternalProject_Add_Step(
-#  		ctemplate vacopy
-#  		COMMAND echo pass
-#  		DEPENDEES download
-#  		DEPENDERS align
-#  		WORKING_DIRECTORY <SOURCE_DIR>
-#  	)
-# endif()
- 	if (CTEMPLATE_PATCH_ALIGN)
-   	ExternalProject_Add_Step(
-   		ctemplate align
-   		COMMAND patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff
-   		DEPENDEES download
-   		DEPENDERS configure
-   		WORKING_DIRECTORY <SOURCE_DIR>
-   	)
-  endif()
 endif()
 
 #-----------------ZLIB --------------------------------

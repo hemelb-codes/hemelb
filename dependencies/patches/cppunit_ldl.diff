@@ -1,0 +1,74 @@
+diff -r 96181271db17 examples/cppunittest/Makefile.in
+--- a/examples/cppunittest/Makefile.in	Fri Dec 23 09:23:35 2011 +0000
++++ b/examples/cppunittest/Makefile.in	Tue May 15 18:04:04 2012 +0100
+@@ -347,7 +347,7 @@
+ 	done
+ cppunittestmain$(EXEEXT): $(cppunittestmain_OBJECTS) $(cppunittestmain_DEPENDENCIES) 
+ 	@rm -f cppunittestmain$(EXEEXT)
+-	$(cppunittestmain_LINK) $(cppunittestmain_OBJECTS) $(cppunittestmain_LDADD) $(LIBS)
++	$(cppunittestmain_LINK) $(cppunittestmain_OBJECTS) $(cppunittestmain_LDADD) $(LIBS) -ldl
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -r 96181271db17 examples/hierarchy/Makefile.in
+--- a/examples/hierarchy/Makefile.in	Fri Dec 23 09:23:35 2011 +0000
++++ b/examples/hierarchy/Makefile.in	Tue May 15 18:04:04 2012 +0100
+@@ -271,7 +271,7 @@
+ 	done
+ hierarchy$(EXEEXT): $(hierarchy_OBJECTS) $(hierarchy_DEPENDENCIES) 
+ 	@rm -f hierarchy$(EXEEXT)
+-	$(hierarchy_LINK) $(hierarchy_OBJECTS) $(hierarchy_LDADD) $(LIBS)
++	$(hierarchy_LINK) $(hierarchy_OBJECTS) $(hierarchy_LDADD) $(LIBS) -ldl
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -r 96181271db17 examples/money/Makefile.in
+--- a/examples/money/Makefile.in	Fri Dec 23 09:23:35 2011 +0000
++++ b/examples/money/Makefile.in	Tue May 15 18:04:04 2012 +0100
+@@ -266,7 +266,7 @@
+ 	done
+ MoneyApp$(EXEEXT): $(MoneyApp_OBJECTS) $(MoneyApp_DEPENDENCIES) 
+ 	@rm -f MoneyApp$(EXEEXT)
+-	$(MoneyApp_LINK) $(MoneyApp_OBJECTS) $(MoneyApp_LDADD) $(LIBS)
++	$(MoneyApp_LINK) $(MoneyApp_OBJECTS) $(MoneyApp_LDADD) $(LIBS) -ldl
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -r 96181271db17 examples/simple/Makefile.in
+--- a/examples/simple/Makefile.in	Fri Dec 23 09:23:35 2011 +0000
++++ b/examples/simple/Makefile.in	Tue May 15 18:04:04 2012 +0100
+@@ -262,7 +262,7 @@
+ 	done
+ simple$(EXEEXT): $(simple_OBJECTS) $(simple_DEPENDENCIES) 
+ 	@rm -f simple$(EXEEXT)
+-	$(simple_LINK) $(simple_OBJECTS) $(simple_LDADD) $(LIBS)
++	$(simple_LINK) $(simple_OBJECTS) $(simple_LDADD) $(LIBS) -ldl
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -r 96181271db17 src/DllPlugInTester/Makefile.in
+--- a/src/DllPlugInTester/Makefile.in	Fri Dec 23 09:23:35 2011 +0000
++++ b/src/DllPlugInTester/Makefile.in	Tue May 15 18:04:04 2012 +0100
+@@ -319,10 +319,10 @@
+ 	done
+ DllPlugInTester$(EXEEXT): $(DllPlugInTester_OBJECTS) $(DllPlugInTester_DEPENDENCIES) 
+ 	@rm -f DllPlugInTester$(EXEEXT)
+-	$(DllPlugInTester_LINK) $(DllPlugInTester_OBJECTS) $(DllPlugInTester_LDADD) $(LIBS)
++	$(DllPlugInTester_LINK) $(DllPlugInTester_OBJECTS) $(DllPlugInTester_LDADD) $(LIBS) -ldl
+ DllPlugInTesterTest$(EXEEXT): $(DllPlugInTesterTest_OBJECTS) $(DllPlugInTesterTest_DEPENDENCIES) 
+ 	@rm -f DllPlugInTesterTest$(EXEEXT)
+-	$(DllPlugInTesterTest_LINK) $(DllPlugInTesterTest_OBJECTS) $(DllPlugInTesterTest_LDADD) $(LIBS)
++	$(DllPlugInTesterTest_LINK) $(DllPlugInTesterTest_OBJECTS) $(DllPlugInTesterTest_LDADD) $(LIBS) -ldl
+ 
+ mostlyclean-compile:
+ 	-rm -f *.$(OBJEXT)
+diff -r 96181271db17 src/Makefile.am
+--- a/src/Makefile.am	Fri Dec 23 09:23:35 2011 +0000
++++ b/src/Makefile.am	Tue May 15 18:04:04 2012 +0100
+@@ -1,4 +1,3 @@
+ SUBDIRS = cppunit DllPlugInTester
+-
+ # already handled by toplevel dist-hook.
+-# DIST_SUBDIRS = msvc6
+\ No newline at end of file
++# DIST_SUBDIRS = msvc6
