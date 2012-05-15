@@ -34,8 +34,13 @@ dependencies/cppunit-prefix
 dependencies/tinyxml-prefix
 Tools/visim/visim
 Tools/setuptool/*.gdb
+Tools/steering/javagui/dependencies
 Tools/setuptool/HemeLbSetupTool/Model/_Generation.so
 Tools/setuptool/HemeLbSetupTool/Model/Generation.py 
 Tools/setuptool/HemeLbSetupTool/Model/Generation/Wrap.cpp
 Tools/steering/javagui/dependencies/jogamp/
 Tools/visclients/hs_err*.log
+Tools/analysis/config.yml
+Tools/analysis/plot.sh
+Tools/derek
+hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
