@@ -79,6 +79,8 @@ planck:
   python_build: "lib/python2.6"
   template_key: default
   home_path_template: "/home/$username/.fabric/Remote"
+  cmake_options:
+    CPPUNIT_PATCH_LDL: ON
 entropy: 
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
