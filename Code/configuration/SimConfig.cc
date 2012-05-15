@@ -38,6 +38,7 @@ namespace hemelb
       configFile.LoadFile(path);
 
       SimConfig *result = new SimConfig();
+      result->colloidConfigPath = path;
       result->DoIO(configFile.FirstChildElement(), true);
       result->dataFilePath = util::NormalizePathRelativeToPath(result->dataFilePath, path);
 
