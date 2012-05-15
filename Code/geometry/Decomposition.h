@@ -15,8 +15,8 @@ namespace hemelb
      */
     /***
      *  Class defining HemeLB domain decomposition
-         Used by geometry reader to know where to send which blocks.
-         @tparam Net Class implementing the Net Communication Protocol, used to share information.
+     Used by geometry reader to know where to send which blocks.
+     @tparam Net Class implementing the Net Communication Protocol, used to share information.
      */
     template<class Net> class DecompositionBase
     {
@@ -32,7 +32,7 @@ namespace hemelb
          * @param size Size of decomposiiton topology
          */
         DecompositionBase(const site_t BlockCount,
-                          bool *readBlock,
+                          const std::vector<bool>& readBlock,
                           const proc_t areadingGroupSize,
                           Net &anet,
                           MPI_Comm comm,
@@ -50,7 +50,9 @@ namespace hemelb
         }
 
         /***
-         * Which core should be responsible for reading a given block?
+         * Which core should be responsible for reading a given block? This core does not necessarily
+         * require information about the block
+         *
          * @param blockNumber Block number to query
          * @return Rank in the decomposition topology, for core which should read the block.
          */

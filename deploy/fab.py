@@ -124,7 +124,7 @@ def build_python_tools():
 def stat():
     """Check the remote message queue status"""
     #TODO: Respect varying remote machine queue systems.
-    run(template("qstat -u $username"))
+    run(template("$stat -u $username"))
 
 @task
 def monitor():
@@ -473,6 +473,8 @@ def hemelb(config,**args):
     execute(put_configs,config)
     job(dict(script='hemelb',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
+    if args.get('steer',False):
+        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
 @task
 def hemelbs(config,**args):
@@ -519,6 +521,7 @@ def job(*option_dictionaries):
         env.coresusedpernode=env.corespernode
         if int(env.coresusedpernode)>int(env.cores):
             env.coresusedpernode=env.cores
+        env.nodes=int(env.cores)/int(env.coresusedpernode)
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
@@ -665,6 +668,11 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                     modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
 
+@task
+def get_running_location(job=None):
+    if job:
+        with_job(job)
+    env.running_node=run(template("cat $job_results/env_details.asc"))
 
 def manual(cmd):
     #From the fabric wiki, bypass fabric internal ssh control
@@ -700,3 +708,35 @@ def vampir(original_job,*args):
 @task
 def vampir_tunnel(node,port):
     local("ssh hector -L 30070:nid%s:%s -N"%node,port)
+
+@task
+def steer(job,orbit=False,view=False,retry=False,framerate=None):
+    with_job(job)
+    if view:
+        env.steering_client='steering.py'
+        manual(template(command+client+" ${running_node}"))
+    else:
+        env.steering_client='timing_client.py'
+    if orbit:
+        env.steering_options="--orbit"
+    else:
+        env.steering_options=""
+    if retry:
+       env.steering_options+=" --retry"
+    if framerate:
+        env.steering_options+=" --MaxFramerate=%s" %framerate
+    command_template="python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
+    if retry:
+        while True:
+            try:
+                get_running_location()
+                run(template(command_template))
+                break
+            except:
+                print "Couldn't connect. Will retry"
+                execute(stat)
+                time.sleep(10)
+    else:
+        get_running_location()
+        run(template(command_template))
+

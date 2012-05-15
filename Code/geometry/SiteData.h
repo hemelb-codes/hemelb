@@ -2,7 +2,7 @@
 #define HEMELB_GEOMETRY_SITEDATA_H
 
 #include "units.h"
-#include "geometry/ReadResult.h"
+#include "geometry/GeometrySite.h"
 
 namespace hemelb
 {
@@ -20,7 +20,7 @@ namespace hemelb
     class SiteData
     {
       public:
-        SiteData(const SiteReadResult& siteReadResult);
+        SiteData(const GeometrySite& siteReadResult);
         SiteData(const SiteData& other);
         virtual ~SiteData();
 

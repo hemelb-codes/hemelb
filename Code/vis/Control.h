@@ -116,7 +116,7 @@ namespace hemelb
 
         struct Vis
         {
-            float half_dim[3];
+            util::Vector3D<float> half_dim;
             float system_size;
         };
 

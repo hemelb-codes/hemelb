@@ -17,6 +17,10 @@ namespace hemelb
     {
       public:
         BlockTraverser(const LatticeData& iLatDat);
+
+        /**
+         * @override Of the default destructor in VolumeTraverser.
+         */
         ~BlockTraverser();
 
         site_t CurrentBlockNumber() const;
@@ -31,10 +35,25 @@ namespace hemelb
 
         SiteTraverser GetSiteTraverser();
 
+        /**
+         * Gets the number of blocks in the x direction.
+         * @override of the abstract function in VolumeTraverser.
+         * @return
+         */
         site_t GetXCount() const;
 
+        /**
+         * Gets the number of blocks in the y direction.
+         * @override of the abstract function in VolumeTraverser.
+         * @return
+         */
         site_t GetYCount() const;
 
+        /**
+         * Gets the number of blocks in the z direction.
+         * @override of the abstract function in VolumeTraverser.
+         * @return
+         */
         site_t GetZCount() const;
 
         bool IsValidLocation(util::Vector3D<site_t> block);

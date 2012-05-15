@@ -5,8 +5,9 @@
 #include "net/net.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
-#include "geometry/ReadResult.h"
-//#include "colloids/Particle.h"
+#include "geometry/Geometry.h"
+#include "io/xml/XmlAbstractionLayer.h"
+#include "colloids/ParticleSet.h"
 
 namespace hemelb
 {
@@ -19,7 +20,8 @@ namespace hemelb
         /** constructor - currently only initialises the neighbour list */
         ColloidController(const net::Net* const net,
                           const geometry::LatticeData* const latDatLBM,
-                          const geometry::GeometryReadResult* const gmyResult);
+                          const geometry::Geometry* const gmyResult,
+                          configuration::XmlAbstractionLayer& xml);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
@@ -33,6 +35,9 @@ namespace hemelb
 
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
+
+        /** holds the set of Particles that this processor knows about */
+        const ParticleSet* particleSet;
 
         /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
         const static site_t REGION_OF_INFLUENCE = (site_t)2;
@@ -50,11 +55,11 @@ namespace hemelb
         /** determines the list of neighbour processors
             i.e. processors that are within the region of influence of the local domain's edge
             i.e. processors that own at least one site in the neighbourhood of a local site */
-        void InitialiseNeighbourList(const geometry::GeometryReadResult* const gmyResult,
+        void InitialiseNeighbourList(const geometry::Geometry* const gmyResult,
                                      const Neighbourhood neighbourhood);
 
         /** get local coordinates and the owner rank for a site from its global coordinates */
-        bool GetLocalInformationForGlobalSite(const geometry::GeometryReadResult* const gmyResult,
+        bool GetLocalInformationForGlobalSite(const geometry::Geometry* const gmyResult,
                                               const util::Vector3D<site_t> globalLocationForSite,
                                               site_t* blockIdForSite,
                                               site_t* localSiteIdForSite,
