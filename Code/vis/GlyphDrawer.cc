@@ -29,7 +29,7 @@ namespace hemelb
         const site_t siteIdOnBlock = mLatDat->GetLocalSiteIdFromLocalSiteCoords(midBlockSite);
 
         // ... (only if there's fluid there).
-        if (block.GetLocalContiguousIndexForSite(siteIdOnBlock) == BIG_NUMBER3)
+        if (block.SiteIsSolid(siteIdOnBlock))
         {
           continue;
         }
@@ -40,9 +40,9 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteCoords = mLatDat->GetGlobalCoords(blockTrav.GetCurrentLocation(),
                                                                            midBlockSite);
 
-        lGlyph.x = float(globalSiteCoords.x) - 0.5F * float(mLatDat->GetXSiteCount());
-        lGlyph.y = float(globalSiteCoords.y) - 0.5F * float(mLatDat->GetYSiteCount());
-        lGlyph.z = float(globalSiteCoords.z) - 0.5F * float(mLatDat->GetZSiteCount());
+        lGlyph.x = float(globalSiteCoords.x) - 0.5F * float(mLatDat->GetSiteDimensions().x);
+        lGlyph.y = float(globalSiteCoords.y) - 0.5F * float(mLatDat->GetSiteDimensions().y);
+        lGlyph.z = float(globalSiteCoords.z) - 0.5F * float(mLatDat->GetSiteDimensions().z);
 
         lGlyph.siteId = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 

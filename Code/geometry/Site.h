@@ -14,10 +14,10 @@ namespace hemelb
     class LatticeData;
 
     template<bool isConst>
-    class InnerSite
+    class BaseSite
     {
       public:
-        InnerSite(site_t localContiguousIndex, typename util::constSelector<isConst, geometry::LatticeData&,
+        BaseSite(site_t localContiguousIndex, typename util::constSelector<isConst, geometry::LatticeData&,
             const geometry::LatticeData&>::type latticeData) :
           index(localContiguousIndex), latticeData(latticeData)
         {
@@ -104,9 +104,9 @@ namespace hemelb
         typename util::constSelector<isConst, LatticeData&, const LatticeData&>::type latticeData;
     };
 
-    typedef InnerSite<false> Site;
+    typedef BaseSite<false> Site;
 
-    typedef InnerSite<true> ConstSite;
+    typedef BaseSite<true> ConstSite;
   }
 }
 

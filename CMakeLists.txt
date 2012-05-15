@@ -32,6 +32,7 @@ set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
@@ -70,7 +71,7 @@ ExternalProject_Add(
         -DHEMELB_LATTICE=${HEMELB_LATTICE}
         -DHEMELB_KERNEL=${HEMELB_KERNEL}
         -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
-
+	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 

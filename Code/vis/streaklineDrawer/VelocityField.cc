@@ -60,17 +60,17 @@ namespace hemelb
                                                                             * blockTraverser.GetBlockSize()
                                                                             + siteTraverser.GetZ() - 1);
 
-            const site_t endI = util::NumericalFunctions::min<site_t>(latDat.GetXSiteCount() - 1,
+            const site_t endI = util::NumericalFunctions::min<site_t>(latDat.GetSiteDimensions().x - 1,
                                                                       blockTraverser.GetX()
                                                                           * blockTraverser.GetBlockSize()
                                                                           + siteTraverser.GetX() + 1);
 
-            const site_t endJ = util::NumericalFunctions::min<site_t>(latDat.GetYSiteCount() - 1,
+            const site_t endJ = util::NumericalFunctions::min<site_t>(latDat.GetSiteDimensions().y - 1,
                                                                       blockTraverser.GetY()
                                                                           * blockTraverser.GetBlockSize()
                                                                           + siteTraverser.GetY() + 1);
 
-            const site_t endK = util::NumericalFunctions::min<site_t>(latDat.GetZSiteCount() - 1,
+            const site_t endK = util::NumericalFunctions::min<site_t>(latDat.GetSiteDimensions().z - 1,
                                                                       blockTraverser.GetZ()
                                                                           * blockTraverser.GetBlockSize()
                                                                           + siteTraverser.GetZ() + 1);

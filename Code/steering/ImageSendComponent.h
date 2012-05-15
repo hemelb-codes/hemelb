@@ -23,7 +23,9 @@ namespace hemelb
         ~ImageSendComponent();
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
-
+        void SetMaxFramerate(float maxFramerate){
+          MaxFramerate=maxFramerate;
+        }
         bool ShouldRenderNewNetworkImage();
 
         bool isConnected;
@@ -35,7 +37,7 @@ namespace hemelb
         vis::Control* mVisControl;
         const lb::LbmParameters* mLbmParams;
         const unsigned inletCount;
-
+        float MaxFramerate;
         char* xdrSendBuffer;
         double lastRender;
 
