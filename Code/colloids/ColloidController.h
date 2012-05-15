@@ -6,7 +6,8 @@
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
 #include "geometry/Geometry.h"
-//#include "colloids/Particle.h"
+#include "io/xml/XmlAbstractionLayer.h"
+#include "colloids/ParticleSet.h"
 
 namespace hemelb
 {
@@ -19,7 +20,8 @@ namespace hemelb
         /** constructor - currently only initialises the neighbour list */
         ColloidController(const net::Net* const net,
                           const geometry::LatticeData* const latDatLBM,
-                          const geometry::Geometry* const gmyResult);
+                          const geometry::Geometry* const gmyResult,
+                          configuration::XmlAbstractionLayer& xml);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
@@ -33,6 +35,9 @@ namespace hemelb
 
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
+
+        /** holds the set of Particles that this processor knows about */
+        const ParticleSet* particleSet;
 
         /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
         const static site_t REGION_OF_INFLUENCE = (site_t)2;

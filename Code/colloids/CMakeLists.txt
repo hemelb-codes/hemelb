@@ -1,3 +1,10 @@
-add_library(
-	hemelb_colloids ColloidController.cc
-	)
+add_library(hemelb_colloids
+            #XmlAbstractionLayer.cc
+            ParticleSet.cc
+            Particle.cc
+            PersistedParticle.cc
+            ColloidController.cc
+	   )
+target_link_libraries(hemelb_colloids
+                      hemelb_io
+                     )
