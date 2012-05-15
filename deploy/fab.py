@@ -42,7 +42,11 @@ def clone():
                 run("hg id -q -i > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
-    execute(copy_regression_tests)
+
+@task
+def clone_with_regression_tests():
+    execute(clone)
+    execute(clone_regression_tests)
 
 @task(alias='cold')
 def deploy_cold():
@@ -239,6 +243,21 @@ def fetch_distributions():
     local(template("rsync -pthrvz $username@$remote:$repository_path/dependencies/distributions/ $localroot/dependencies/distributions"))
 
 @task
+def clone_regression_tests():
+    """Delete and checkout the repository afresh."""
+    run(template("mkdir -p $regression_test_source_path"))
+    if env.no_ssh or env.no_hg:
+        with cd(env.remote_path):
+            run(template("rm -rf $regression_test_source_path"))
+        # Some machines do not allow outgoing connections back to the mercurial server
+        # so the data must be sent by a project sync instead.
+        execute(sync_regression_tests)
+    else:
+        with cd(env.remote_path):
+            run(template("rm -rf $regression_test_source_path"))
+            run(template("hg clone $hg/$regression_tests_repository"))
+
+@task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
         run(template("cp -r $regression_test_source_path $regression_test_path"))
@@ -254,8 +273,7 @@ def sync():
             local_dir=env.localroot+'/',
             exclude=map(lambda x: x.replace('\n',''),
             list(open(os.path.join(env.localroot,'.hgignore')))+
-            ['.hg']+
-            list(open(os.path.join(env.localroot,'RegressionTests','.hgignore')))
+            ['.hg']
             )
     )
     # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
@@ -264,6 +282,21 @@ def sync():
     with open(revision_info_path,'w') as revision_info:
         revision_info.write(env.build_number)
     put(revision_info_path,env.repository_path)
+
+@task
+def sync_regression_tests():
+    """Update the remote repository with local changes.
+    Uses rysnc.
+    Respects the local .hgignore files to avoid sending unnecessary information.
+    """
+    rsync_project(
+            remote_dir=env.regression_test_path,
+            local_dir=env.regression_tests_root+'/',
+            exclude=map(lambda x: x.replace('\n',''),
+            list(open(os.path.join(env.localroot,'.hgignore')))+
+            ['.hg']
+            )
+    )
 
 @task
 def patch(args=""):
@@ -465,6 +498,7 @@ def hemelbs(config,**args):
 @task(alias='regress')
 def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
+    execute(clone_regression_tests)
     execute(copy_regression_tests)
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
             wall_time='0:20:0',memory='2G',images=0, snapshots=1, steering=1111,script='regression'),args)
