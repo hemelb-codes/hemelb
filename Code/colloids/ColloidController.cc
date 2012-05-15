@@ -11,12 +11,14 @@ namespace hemelb
     // destructor
     ColloidController::~ColloidController()
     {
+      delete particleSet;
     }
 
     // constructor - called by SimulationMaster::Initialise()
     ColloidController::ColloidController(const net::Net* const net,
                                          const geometry::LatticeData* const latDatLBM,
-                                         const geometry::Geometry* const gmyResult) :
+                                         const geometry::Geometry* const gmyResult,
+                                         configuration::XmlAbstractionLayer& xml) :
             net(net), latDat(latDatLBM),
             localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
@@ -31,6 +33,12 @@ namespace hemelb
 
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(gmyResult, neighbourhood);
+
+      bool ok = true;
+      xml.ResetToTopLevel();
+      ok &= xml.MoveToChild("colloids");
+      ok &= xml.MoveToChild("particles");
+      particleSet = new ParticleSet(xml);
     }
 
     void ColloidController::InitialiseNeighbourList(

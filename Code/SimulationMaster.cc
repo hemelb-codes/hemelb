@@ -10,6 +10,7 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
+#include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
 
 #include "topology/NetworkTopology.h"
@@ -149,12 +150,19 @@ void SimulationMaster::Initialise()
   latticeData = new hemelb::geometry::LatticeData(
                    latticeType::GetLatticeInfo(),
                    readGeometryData);
+
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
- hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
+  std::string colloidConfigPath = simConfig->GetColloidConfigPath();
+  hemelb::configuration::XmlAbstractionLayer xml(colloidConfigPath);
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(
                    &communicationNet,
                    latticeData,
-                   &readGeometryData);
+                   &readGeometryData,
+                   xml);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
