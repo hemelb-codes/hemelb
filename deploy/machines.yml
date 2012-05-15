@@ -5,6 +5,8 @@ default:
   hg: "ssh://hg@entropy.chem.ucl.ac.uk"
   # Repository on the mercurial server to find HemeLB
   repository: "hemelb"
+  # Repository on the mercurial server holding the RegressionTests
+  regression_tests_repository: "hemelb-input"
   # Default Modules to load or unload on remote, via module 'foo'
   # e.g. ['load cmake'].
   modules: []
