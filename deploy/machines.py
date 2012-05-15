@@ -122,7 +122,8 @@ def complete_environment():
     env.local_profiles=os.path.expanduser(env.local_profiles)
 
     env.tools_path=env.pather.join(env.repository_path,"Tools")
-    env.regression_test_source_path=env.pather.join(env.pather.dirname(env.repository_path),"RegressionTests","diffTest")
+    env.regression_test_repo_path=env.pather.join(env.pather.dirname(env.repository_path),"RegressionTests")
+    env.regression_test_source_path=env.pather.join(env.regression_test_repo_path,"diffTest")
     env.regression_test_path=template(env.regression_test_path_template)
     env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
 
