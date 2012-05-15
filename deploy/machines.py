@@ -32,6 +32,7 @@ pp=PrettyPrinter()
 
 #Root of local HemeLB checkout.
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env.regression_tests_root=os.path.join(os.path.dirname(env.localroot),'RegressionTests')
 env.no_ssh=False
 env.no_hg=False
 #Load and invoke the default non-machine specific config JSON dictionaries.
@@ -121,7 +122,8 @@ def complete_environment():
     env.local_profiles=os.path.expanduser(env.local_profiles)
 
     env.tools_path=env.pather.join(env.repository_path,"Tools")
-    env.regression_test_source_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
+    env.regression_test_repo_path=env.pather.join(env.pather.dirname(env.repository_path),"RegressionTests")
+    env.regression_test_source_path=env.pather.join(env.regression_test_repo_path,"diffTest")
     env.regression_test_path=template(env.regression_test_path_template)
     env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
 
