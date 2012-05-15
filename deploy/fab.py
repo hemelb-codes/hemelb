@@ -254,8 +254,8 @@ def clone_regression_tests():
         execute(sync_regression_tests)
     else:
         with cd(env.remote_path):
-            run(template("rm -rf $regression_test_source_path"))
-            run(template("hg clone $hg/$regression_tests_repository"))
+            run(template("rm -rf $regression_test_repo_path"))
+            run(template("hg clone $hg/$regression_tests_repository $regression_test_repo_path"))
 
 @task
 def copy_regression_tests():
@@ -290,7 +290,7 @@ def sync_regression_tests():
     Respects the local .hgignore files to avoid sending unnecessary information.
     """
     rsync_project(
-            remote_dir=env.regression_test_path,
+            remote_dir=env.regression_test_source_path,
             local_dir=env.regression_tests_root+'/',
             exclude=map(lambda x: x.replace('\n',''),
             list(open(os.path.join(env.localroot,'.hgignore')))+
