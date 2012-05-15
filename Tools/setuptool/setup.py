@@ -5,6 +5,11 @@ import re
 
 import numpy
 import vtk
+try:
+    import wxversion
+    wxversion.select('2.8')
+except ImportError:
+    pass
 
 from distutils.core import setup
 from distutils.extension import Extension
@@ -88,7 +93,10 @@ def LibToInclude(vtkLibDir):
     return vtkIncludeDir
 
 def GetVtkLibDir():
-    aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
+    try:
+        aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
+    except:
+        aVtkSharedLibrary=vtk.vtkCommonPython.__file__
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
