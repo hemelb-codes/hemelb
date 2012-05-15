@@ -46,6 +46,8 @@ namespace hemelb
         unsigned int PropertyOutputCount() const {return propertyOutputs.size();}
         extraction::PropertyOutputFile * GetPropertyOutput(unsigned int index) const {return propertyOutputs[index];}
         std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const {return propertyOutputs;}
+        const std::string GetColloidConfigPath() const {return colloidConfigPath;}
+
       protected:
         SimConfig();
 
@@ -90,6 +92,7 @@ namespace hemelb
         float maxStress;
         lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile*> propertyOutputs;
+        std::string colloidConfigPath;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

@@ -12,6 +12,7 @@ option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -50,6 +51,10 @@ if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
 endif()
 
+if (HEMELB_WAIT_ON_CONNECT)
+	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
+endif()
+
 if (NOT HEMELB_STATIC_ASSERT)
 	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
 endif()
@@ -80,13 +85,18 @@ endif()
 include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
+CHECK_CXX_SOURCE_COMPILES("#include <sys/time.h>\n#include <sys/resource.h>\nint main(int c,char** v){ rusage usage;\ngetrusage(RUSAGE_SELF, &usage);\nreturn usage.ru_maxrss; }" HAVE_RUSAGE)
 
 if(HAVE_ISNAN)
   add_definitions(-DHAVE_ISNAN)
 endif()
 
-if( HAVE_STD_ISNAN)
-  add_definitions(-D HAVE_STD_ISNAN)
+if(HAVE_STD_ISNAN)
+  add_definitions(-DHAVE_STD_ISNAN)
+endif()
+
+if(HAVE_RUSAGE)
+  add_definitions(-DHAVE_RUSAGE)
 endif()
 
 # ------MPI------------------

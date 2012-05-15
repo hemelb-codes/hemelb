@@ -13,6 +13,8 @@ gdb:
   HEMELB_USE_DEBUGGER: "ON"
 no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
+wait_on_connect:
+  HEMELB_WAIT_ON_CONNECT: "ON"
 d3q15:
   HEMELB_LATTICE: "D3Q15"
 d3q19:
