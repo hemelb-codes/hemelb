@@ -2,6 +2,7 @@
 #define HEMELB_GEOMETRY_GEOMETRYSITE_H
 
 #include <vector>
+#include "constants.h"
 #include "units.h"
 #include "geometry/GeometrySiteLink.h"
 
