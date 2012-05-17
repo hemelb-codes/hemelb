@@ -1,6 +1,6 @@
 #ifndef HEMELB_UNITTESTS_HELPERS_HELPERS_H
 #define HEMELB_UNITTESTS_HELPERS_HELPERS_H
 
-#include "unittests/helpers/PrngTests.h"
+#include "unittests/helpers/RandomSourceTests.h"
 
 #endif /* HEMELB_UNITTESTS_HELPERS_HELPERS_H */

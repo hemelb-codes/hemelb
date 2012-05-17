@@ -77,7 +77,9 @@ class PRNG(object):
         return
     
     def rand(self):
-        """State[n+1] = (a State[n] + c) mod m
+        """Get a random int by
+        State[n+1] = (a State[n] + c) mod m
+        Since we have m == 2**32 the overflow does the modulus operation for us.
         """
         self.state = (self.a * self.state + self.c)
         return self.state
