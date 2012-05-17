@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_HELPERS_PRNG_H
-#define HEMELB_UNITTESTS_HELPERS_PRNG_H
+#ifndef HEMELB_UNITTESTS_HELPERS_RANDOMSOURCE_H
+#define HEMELB_UNITTESTS_HELPERS_RANDOMSOURCE_H
 
 #include <limits>
 #include <stdint.h>
@@ -13,13 +13,15 @@ namespace hemelb
     namespace helpers
     {
       /**
-       * Need a source of data; use a linear congruential PRNG as no
-       * requirement for it to be "good". Implementation from Numerical
-       * Recipes. This implementation must give identical output to the
-       * Python implementation in MakeDummyExtraction.py (given the same seed)
+       * Need a source of data; use a linear congruential pseudorandom number
+       * generator as there is no requirement for it to be "good".
+       *
+       * Implementation from Numerical Recipes. This implementation must give
+       * identical output to the Python implementation in
+       * MakeDummyExtraction.py (given the same seed)
        *
        */
-      class Prng
+      class RandomSource
       {
         private:
           /**
@@ -42,7 +44,7 @@ namespace hemelb
           uint32_t state;
 
         public:
-          Prng(uint32_t seed) :
+          RandomSource(uint32_t seed) :
             state(seed)
           {
 
@@ -69,4 +71,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_UNITTESTS_HELPERS_PRNG_H
+#endif // HEMELB_UNITTESTS_HELPERS_RANDOMSOURCE_H

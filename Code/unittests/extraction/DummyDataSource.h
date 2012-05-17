@@ -6,7 +6,7 @@
 #include "util/Vector3D.h"
 #include "extraction/IterableDataSource.h"
 
-#include "unittests/helpers/Prng.h"
+#include "unittests/helpers/RandomSource.h"
 
 namespace hemelb
 {
@@ -18,7 +18,7 @@ namespace hemelb
       {
         public:
           DummyDataSource() :
-            rng(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount),
+            randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount),
                 velocities(siteCount), voxelSize(0.3e-3), origin(0.034, 0.001, 0.074)
           {
             unsigned ijk = 0;
@@ -45,10 +45,10 @@ namespace hemelb
             // Fill in pressure & velocities as in the Python
             for (unsigned i = 0; i < siteCount; ++i)
             {
-              pressures[i] = 80. + 2. * rng.uniform();
+              pressures[i] = 80. + 2. * randomNumberGenerator.uniform();
               for (unsigned j = 0; j < 3; ++j)
               {
-                velocities[i][j] = 0.01 * rng.uniform();
+                velocities[i][j] = 0.01 * randomNumberGenerator.uniform();
               }
             }
 
@@ -108,7 +108,7 @@ namespace hemelb
             return true;
           }
         private:
-          helpers::Prng rng;
+          helpers::RandomSource randomNumberGenerator;
           const site_t siteCount;
           site_t location;
           std::vector<hemelb::util::Vector3D<site_t> > gridPositions;
