@@ -1,9 +1,9 @@
-#ifndef HEMELB_UNITTESTS_HELPERS_PRNGTESTS_H
-#define HEMELB_UNITTESTS_HELPERS_PRNGTESTS_H
+#ifndef HEMELB_UNITTESTS_HELPERS_RANDOMSOURCETESTS_H
+#define HEMELB_UNITTESTS_HELPERS_RANDOMSOURCETESTS_H
 
 #include <cppunit/TestFixture.h>
 
-#include "unittests/helpers/Prng.h"
+#include "unittests/helpers/RandomSource.h"
 
 namespace hemelb
 {
@@ -11,14 +11,14 @@ namespace hemelb
   {
     namespace helpers
     {
-      class PrngTests : public CppUnit::TestFixture
+      class RandomSourceTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( PrngTests);
+          CPPUNIT_TEST_SUITE( RandomSourceTests);
           CPPUNIT_TEST( TestRand);CPPUNIT_TEST_SUITE_END();
         public:
 
           /**
-           * Ensure that the PRNG gives the same output as the Python implementation
+           * Ensure that the RandomSource gives the same output as the Python implementation
            */
           void TestRand()
           {
@@ -34,7 +34,7 @@ namespace hemelb
                                    2195845879, 2731914218, 953307713, 4097574572, 888132123, 4277559486, 3423310085,
                                    1581928096 };
 
-            Prng generator(seed);
+            RandomSource generator(seed);
             for (unsigned i = 0; i < nRandoms; ++i)
             {
               unsigned rand = generator.rand();
@@ -44,8 +44,8 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( PrngTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( RandomSourceTests);
     }
   }
 }
-#endif // HEMELB_UNITTESTS_HELPERS_PRNGTESTS_H
+#endif // HEMELB_UNITTESTS_HELPERS_RANDOMSOURCETESTS_H
