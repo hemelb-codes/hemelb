@@ -549,7 +549,8 @@ namespace hemelb
       DoIOForBaseInOutlet(parent,isLoading,value);
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
-
+      DoIOForDouble(lPressureElement,"pressure",isLoading,value->GetPressureReference());
+      DoIOForDouble(lPressureElement,"velocity",isLoading,value->GetVelocityReference());
       DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
     }
 

@@ -59,24 +59,19 @@ namespace hemelb
          */
         typedef IntercommunicandType<RuntimeTypeImplementation> IntercommunicandTypeT;
 
-        /***
-         * Declare to the multiscale simulation, the value to which the preceding simulation step advanced the time.
-         * @param newtime
-         */
-        void AdvanceTime(double newtime);
-        /***
-         * Ask the multiscale system, if this component should execute a simulation step, or idle waiting for brethren to catch up.
-         * @return
-         */
-        bool ShouldAdvance(); // return false if this simulation is ahead in time, and should wait.
 
         /***
-         * Declare an intercommunicand to the multiscale system.
-         * This intercommunicand is a collection of shared values which the multiscale system should read and write
-         * @param resolver A collection of labels and runtime type values describing the intercommunicand
-         * @param intercommunicand The intercommunicand whose values should be read and written.
-         * @param label A string label identifying the intercommunicand to the system.
+         * Share multiscale information.
+         * @param newtime time advanced to last step.
+         * @returntrue if HemeLB should advance again.
          */
+        virtual bool DoMultiscale(double newtime)=0;
+
+        /***
+         * Share initial multiscale information to the partners, achieving consistent initial conditions
+         */
+        virtual void ShareInitialConditions()=0;
+
         void RegisterIntercommunicand(IntercommunicandTypeT & resolver,
                                       Intercommunicand & intercommunicand,
                                       const std::string &label)
@@ -84,14 +79,6 @@ namespace hemelb
           registeredObjects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
         }
 
-        /***
-         * Set the shared values in all registered intercommunicands, based on the values in sibling processes
-         */
-        void GetFromMultiscale();
-        /***
-         * Get the values from registered intercommunicands.
-         */
-        void SendToMultiscale();
 
       protected:
         typedef std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> > ContentsType;

@@ -6,14 +6,14 @@
   </geometry>
   <inlets>
     <inlet>
-      <pressure label="boundary1" />
+      <pressure label="boundary1" pressure="81.0" velocity="0.1"/>
       <normal x="0.0" y="0.0" z="1.0" />
       <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
     </inlet>
   </inlets>
   <outlets>
     <outlet>
-      <pressure label="boundary2" />
+      <pressure label="boundary2" pressure="79.0" velocity="0.1"/>
       <normal x="0.0" y="0.0" z="-1.0" />
       <position x="0.0" y="0.0" z="0.05" />
     </outlet>
