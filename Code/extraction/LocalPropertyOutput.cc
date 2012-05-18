@@ -52,7 +52,7 @@ namespace hemelb
         writeLength += 8;
       }
 
-      //TODO: These two MPI calls can be replaced with one
+      //! @TODO: These two MPI calls can be replaced with one
 
       // Everyone needs to know the total length written during one iteration.
       MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t> (), MPI_SUM, MPI_COMM_WORLD);
@@ -123,7 +123,6 @@ namespace hemelb
         // For core 0 this is easy: it passes the value for core 1 to the core.
         localDataOffsetIntoFile = totalHeaderLength;
 
-        // TODO: is this correct in the no steering case?
         if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
@@ -223,7 +222,7 @@ namespace hemelb
                 xdrWriter << (float) dataSource.GetVelocity().x << (float) dataSource.GetVelocity().y
                     << (float) dataSource.GetVelocity().z;
                 break;
-                // TODO: Work out how to handle the different stresses.
+                //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
                 xdrWriter << (float) dataSource.GetVonMisesStress();
                 break;
