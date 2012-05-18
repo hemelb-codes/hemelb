@@ -31,16 +31,36 @@ namespace hemelb
        * This is a very dumb example of an intercommunicator
        * It stores communicated examples in a string-keyed buffer
        * By sharing the same buffer between multiple intercommunicator interfaces, one can mock the behaviour of interprocess communication.
+       * Orchestration is true if it is intent out, and false if intent in.
        */
       class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
       {
         public:
-          MockIntercommunicator(std::map<std::string, double> & buffer) :
-              doubleContents(buffer), currentTime(0)
+          MockIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
+              doubleContents(buffer), currentTime(0), orchestration(orchestration)
           {
 
           }
 
+          void ShareInitialConditions()
+          {
+            doubleContents["shared_time"] = 0.0;
+            SendToMultiscale();
+          }
+
+          bool DoMultiscale(double new_time){
+            if (ShouldAdvance()){
+              AdvanceTime(new_time);
+              SendToMultiscale();
+            }
+            bool should_advance=ShouldAdvance();
+            if (should_advance)
+            {
+              GetFromMultiscale();
+            }
+            return should_advance;
+          }
+        private:
           void AdvanceTime(double new_time)
           {
             currentTime = new_time;
@@ -60,9 +80,10 @@ namespace hemelb
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex <= sharedObject.Values().size();
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.Values().size();
                   sharedFieldIndex++)
               {
+
                 Receive(resolver.Fields()[sharedFieldIndex].first,
                         resolver.Fields()[sharedFieldIndex].second,
                         label,
@@ -79,7 +100,7 @@ namespace hemelb
               hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex <= sharedObject.Values().size();
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.Values().size();
                   sharedFieldIndex++)
               {
                 Send(resolver.Fields()[sharedFieldIndex].first,
@@ -94,10 +115,12 @@ namespace hemelb
                        const std::string objectLabel,
                        hemelb::multiscale::BaseSharedValue & value)
           {
+
+            std::string label(objectLabel+ "_" + fieldLabel);
+            if (orchestration[label]) return;
             if (type == RuntimeTypeTraits::GetType<double>())
             {
-              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = doubleContents[objectLabel
-                  + "_" + fieldLabel];
+              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = doubleContents[label];
 
             }
 
@@ -107,15 +130,18 @@ namespace hemelb
                     const std::string objectLabel,
                     hemelb::multiscale::BaseSharedValue & value)
           {
+            std::string label(objectLabel+ "_" + fieldLabel);
+            if (!orchestration[label]) return;
             if (type == RuntimeTypeTraits::GetType<double>())
             {
-              doubleContents[objectLabel + "_" + fieldLabel] =
+              doubleContents[label] =
                   static_cast<hemelb::multiscale::SharedValue<double> &>(value);
             }
 
           }
           std::map<std::string, double> &doubleContents;
           double currentTime;
+          std::map<std::string,bool> & orchestration;
       };
     }
   }

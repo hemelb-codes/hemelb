@@ -40,21 +40,23 @@ namespace hemelb
                                                                                                                  multiscaleIoletType);
             }
           }
+          intercomms.ShareInitialConditions();
         }
 
         void DoTimeStep()
         {
-          if (!intercomms.ShouldAdvance())
+
+          if (intercomms.DoMultiscale(GetState()->GetTime()))
+          {
+            SimulationMaster::DoTimeStep();
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
+                                                                           GetState()->GetTime());
+          }
+          else
           {
             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB waiting pending multiscale siblings.");
             return;
-          }
-          intercomms.GetFromMultiscale();
-          SimulationMaster::DoTimeStep();
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
-                                                                              GetState()->GetTime());
-          intercomms.AdvanceTime(GetState()->GetTime());
-          intercomms.SendToMultiscale();
+          };
         }
         Intercommunicator &intercomms;
         typename Intercommunicator::IntercommunicandTypeT multiscaleIoletType;

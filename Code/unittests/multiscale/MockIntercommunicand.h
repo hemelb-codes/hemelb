@@ -19,8 +19,8 @@ namespace hemelb
       class MockIntercommunicand : public Intercommunicand
       {
         public:
-          MockIntercommunicand() :
-          Intercommunicand(), pressure(this), velocity(this)
+          MockIntercommunicand(double pressure=0,double velocity=0) :
+          Intercommunicand(), pressure(this,pressure), velocity(this,velocity)
           {
           }
           virtual ~MockIntercommunicand()

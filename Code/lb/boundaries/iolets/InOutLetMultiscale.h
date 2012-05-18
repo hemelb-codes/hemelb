@@ -37,12 +37,10 @@ namespace hemelb
              * The shared values are registered through the initialiser-list syntactic sugar.
              */
             InOutLetMultiscale(const InOutLetMultiscale &other) :
-                Intercommunicand(other),
-                label(other.label),
-                pressure(this, other.GetPressure()),
-                minPressure(this, other.GetPressureMin()),
-                maxPressure(this,other.GetPressureMax()),
-                velocity(this,other.GetVelocity())
+                Intercommunicand(other), label(other.label), pressure(this, other.GetPressure()), minPressure(this,
+                                                                                                              other.GetPressureMin()), maxPressure(this,
+                                                                                                                                                   other.GetPressureMax()), velocity(this,
+                                                                                                                                                                                     other.GetVelocity())
             {
 
             }
@@ -83,6 +81,16 @@ namespace hemelb
             PhysicalPressure GetPressure() const
             {
               return pressure;
+            }
+
+            multiscale::SharedValue<PhysicalPressure> & GetPressureReference()
+            {
+              return pressure;
+            }
+
+            multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference()
+            {
+              return velocity;
             }
 
             template<class Intercommunicator> void Register(Intercommunicator &intercomms,
