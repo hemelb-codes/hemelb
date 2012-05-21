@@ -2,6 +2,7 @@
 #define HEMELB_LB_LATTICES_LATTICE_H
 
 #include <cmath>
+#include <cassert>
 #include "constants.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "util/utilityFunctions.h"
@@ -9,19 +10,71 @@
 
 namespace hemelb
 {
-  struct Order2Tensor
+  class Order2Tensor
   {
       distribn_t tensor[3][3];
 
+    public:
       /**
        * Convenience accessor.
        *
-       * * @param row
+       * @param row
        * @return
        */
       distribn_t* operator [](const unsigned int row)
       {
         return tensor[row];
+      }
+
+      /**
+       * Multiplies all the entries of the tensor by a given value
+       *
+       * @param value multiplier value
+       */
+      void operator*=(distribn_t value)
+      {
+        for (unsigned row = 0; row < 3; row++)
+        {
+          for (unsigned column = 0; column < 3; column++)
+          {
+            tensor[row][column] *= value;
+          }
+        }
+      }
+
+      /**
+       * Adds a given value to all the entries along the diagonal:
+       *    tensor = tensor + value*I
+       * where I is the identity tensor.
+       *
+       * @param value value to be added to the tensor diagonal
+       */
+      void addDiagonal(distribn_t value)
+      {
+        for (unsigned row = 0; row < 3; row++)
+        {
+          tensor[row][row] += value;
+        }
+      }
+
+      /**
+       * Computes the matrix-vector product:
+       *    result =  tensor*multiplier
+       *
+       * @param multiplier vector to be multiplied by the tensor
+       * @param result matrix-vector product result. result is assumed initialised to 0.
+       */
+      void timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result)
+      {
+        assert(result==0.0);
+
+        for (unsigned row = 0; row < 3; row++)
+        {
+          for (unsigned column = 0; column < 3; column++)
+          {
+            result[row] += tensor[row][column] * multiplier[column];
+          }
+        }
       }
   };
 
@@ -129,8 +182,47 @@ namespace hemelb
             stress = iStressParameter * sqrt(a + 6.0 * b);
           }
 
-          // The magnitude of the tangential component of the shear stress acting on the
-          // wall.
+          /**
+           * Calculates the force acting on a point. This is done by multiplying the full stress tensor by the
+           * (outward pointing) surface normal at that point.
+           *
+           *    \vec{f} = \sigma \dot \vec{normal}
+           *
+           * The full stress tensor is assembled based on the formula:
+           *
+           *    \sigma = p*I + 2*\mu*S = p*I - \Pi^{(neq)}
+           *
+           * where p is hydrostatic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
+           * viscosity. -2*\mu*S can be shown to be equals to the non equilibrium part of the moment flux tensor \Pi^{(neq)}.
+           *
+           * @param density
+           * @param f
+           * @param wallNormal
+           * @param forceActing
+           */
+          inline static void CalculateForceActingOnAPoint(const distribn_t density,
+                                                          const distribn_t tau,
+                                                          const distribn_t fNonEquilibrium[],
+                                                          const util::Vector3D<double>& wallNormal,
+                                                          util::Vector3D<double>& forceActing)
+          {
+            // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
+            Order2Tensor sigma = CalculatePiTensor(fNonEquilibrium);
+            sigma *= - (1 - 1 / 2 * tau);
+
+            // Adds the pressure component to the stress tensor
+            LatticePressure pressure = density * Cs2;
+            sigma.addDiagonal(pressure);
+
+            // Multiply the stress tensor by the surface normal
+            sigma.timesVector(wallNormal, forceActing);
+          }
+
+          /**
+           * The magnitude of the tangential component of the shear stress acting on the
+           * wall. For this method to make sense f has to be the non equilibrium part of
+           * a distribution function
+           */
           inline static void CalculateShearStress(const distribn_t &density,
                                                   const distribn_t f[],
                                                   const util::Vector3D<double> nor,
@@ -151,8 +243,11 @@ namespace hemelb
             // unit area normal to the
             // surface
 
+            // Multiplying the second moment of the non equilibrium function by temp gives the non equilibrium part
+            // of the moment flux tensor pi.
             distribn_t temp = iStressParameter * (-sqrt(2.0));
 
+            // Computes the second moment of the equilibrium function f.
             Order2Tensor pi = CalculatePiTensor(f);
 
             for (unsigned i = 0; i < 3; i++)
@@ -167,6 +262,15 @@ namespace hemelb
             stress = sqrt(square_stress_vector - normal_stress * normal_stress);
           }
 
+          /**
+           * Despite its name, this method does not compute the whole pi tensor (i.e. momentum flux tensor). What it does is
+           * computing the second moment of a distribution function. If this distribution happens to be f_eq, the resulting
+           * tensor will be the equilibrium part of pi. However, if the distribution function is f_neq, the result WON'T be
+           * the non equilibrium part of pi. In order to get it, you will have to multiply by (1 - timestep/2*tau)
+           *
+           * @param f distribution function
+           * @return second moment of the distribution function f
+           */
           inline static Order2Tensor CalculatePiTensor(const distribn_t* const f)
           {
             Order2Tensor ret;
@@ -285,7 +389,7 @@ namespace hemelb
 
             // Add in the (6) term.
             chi += 27.0
-                * ((-velocityMagnitudeSix)
+                * ( (-velocityMagnitudeSix)
                     + 2.0 * (velocitySquared.y + velocitySquared.z)
                         * (velocityMagnitudeSquared * velocitySquared.x + velocitySquared.y * velocitySquared.z)
                     + 20. * velocitySquared.x * velocitySquared.y * velocitySquared.z) / 16.0;
