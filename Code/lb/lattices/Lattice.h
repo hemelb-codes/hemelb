@@ -222,6 +222,9 @@ namespace hemelb
            * The magnitude of the tangential component of the shear stress acting on the
            * wall. For this method to make sense f has to be the non equilibrium part of
            * a distribution function
+           *
+           * @todo No pressure is being added to the full stress tensor before multiplying it by the normal
+           * in order to get stress_vector. This method should be used with caution for the time being.
            */
           inline static void CalculateShearStress(const distribn_t &density,
                                                   const distribn_t f[],
