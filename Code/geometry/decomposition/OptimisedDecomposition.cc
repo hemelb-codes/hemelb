@@ -646,7 +646,7 @@ namespace hemelb
           for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
               it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
           {
-            netForMoveSending.RequestSend(&movesForEachLocalBlock[*it], 1, otherProc);
+            netForMoveSending.RequestSend(movesForEachLocalBlock[*it], otherProc);
             log::Logger::Log<log::Debug, log::OnePerCore>("I'm sending move count for block %i to proc %i",
                                                           *it,
                                                           otherProc);
