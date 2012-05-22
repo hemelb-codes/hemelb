@@ -38,6 +38,31 @@ namespace hemelb
         AddToList(oPointer, iCount, lComms);
       }
     }
+
+    template<class T>
+    void Net::RequestSend(std::vector<T> &payload, proc_t toRank)
+    {
+      RequestSend(&payload[0], payload.size(), toRank);
+    }
+
+    template<class T>
+    void Net::RequestSend(T& value, proc_t toRank)
+    {
+      RequestSend(&value, 1, toRank);
+    }
+
+    template<class T>
+    void Net::RequestReceive(T& value, proc_t fromRank)
+    {
+      RequestReceive(&value, 1, fromRank);
+    }
+
+    template<class T>
+    void Net::RequestReceive(std::vector<T> &payload, proc_t toRank)
+    {
+      RequestReceive(&payload[0], payload.size(), toRank);
+    }
+
     template<typename T>
     void Net::AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
     {

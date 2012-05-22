@@ -41,6 +41,22 @@ namespace hemelb
         template<class T>
         void RequestSend(T* oPointer, int iCount, proc_t iToRank);
 
+        /***
+         * Request that a signle value be sent
+         * @param value Value to send
+         * @param toRank Rank to send to
+         */
+        template<class T>
+        void RequestSend(T& value, proc_t toRank);
+
+        /***
+         * Request send of the contents of vector specified
+         * @param payload Vector whose contents should be sent
+         * @param toRank Rank to send to
+         */
+        template<class T>
+        void RequestSend(std::vector<T> &payload, proc_t toRank);
+
         /**
          * Request that iCount entries of type T be included in the receive from iFromRank
          * starting at oPointer.
@@ -51,6 +67,23 @@ namespace hemelb
          */
         template<class T>
         void RequestReceive(T* oPointer, int iCount, proc_t iFromRank);
+
+
+        /***
+         * Request that a single value be received
+         * @param value Value to send
+         * @param fromRank Rank to receive from
+         */
+        template<class T>
+        void RequestReceive(T& value,proc_t fromRank);
+
+        /***
+         * Request that the vector specified should receive content
+         * @param payload Vector to receive content, should already be sized to size of expected message
+         * @param fromRank Rank to receive from
+         */
+        template<class T>
+        void RequestReceive(std::vector<T> &payload, proc_t fromRank);
 
       private:
         /**
