@@ -6,7 +6,9 @@ project(HemeLB)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
+option(HEMELB_BUILD_ALLTESTS "Build all the tests" ON)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
+option(HEMELB_BUILD_FUNCTIONALTESTS "Build the functional-tests" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
@@ -201,8 +203,9 @@ target_link_libraries(hemelb
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+
 # ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_UNITTESTS)
+if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_UNITTESTS)
 	#------CPPUnit ---------------
 		find_package(CPPUnit REQUIRED)
 		include_directories(${CPPUNIT_INCLUDE_DIR})
@@ -225,6 +228,28 @@ if(HEMELB_BUILD_UNITTESTS)
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
 		)
+endif()
+
+# ----------- HEMELB functionaltests ---------------
+if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_FUNCTIONALTESTS)
+	#------CPPUnit ---------------
+		find_package(CPPUnit REQUIRED)
+		include_directories(${CPPUNIT_INCLUDE_DIR})
+	add_executable(functionaltests_hemelb ${root_sources})
+	add_subdirectory(functionaltests)
+	target_link_libraries(functionaltests_hemelb 
+		hemelb_functionaltests 
+		${heme_libraries}
+		${MPI_LIBRARIES}
+		${PARMETIS_LIBRARIES}
+		${TINYXML_LIBRARIES}
+		${CPPUNIT_LIBRARY}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES}
+		${ZLIB_LIBRARIES}
+		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+	list(APPEND RESOURCES functionaltests/resources/poiseuille_flow_test.gmy functionaltests/resources/poiseuille_flow_test.xml)
 endif()
 
 #-------- Copy and install resources --------------
