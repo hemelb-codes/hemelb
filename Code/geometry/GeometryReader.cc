@@ -355,7 +355,7 @@ namespace hemelb
 
       // Next we spread round the lists of which blocks each core needs access to.
       log::Logger::Log<log::Info, log::OnePerCore>("Informing reading cores of block needs");
-      net::Net net = net::Net(currentComms.GetCommunicator());
+      net::Net net = net::Net(currentComms);
       Decomposition decomposition(geometry.GetBlockCount(),
                                   readBlock,
                                   util::NumericalFunctions::min(READING_GROUP_SIZE, currentComms.GetSize()),
@@ -403,7 +403,7 @@ namespace hemelb
       std::vector<char> compressedBlockData;
       proc_t readingCore = GetReadingCoreForBlock(blockNumber);
 
-      net::Net net = net::Net(currentComms.GetCommunicator());
+      net::Net net = net::Net(currentComms);
 
       if (readingCore == currentComms.GetRank())
       {
