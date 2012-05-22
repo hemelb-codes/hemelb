@@ -15,7 +15,9 @@
 #include "unittests/SimulationMasterTests.h"
 #include "unittests/extraction/extraction.h"
 #include "unittests/multiscale/multiscale.h"
-#include "unittests/multiscale/mpwide/mpwide.h"
+#ifdef HEMELB_BUILD_MULTISCALE
+  #include "unittests/multiscale/mpwide/mpwide.h"
+#endif
 #include "unittests/util/util.h"
 #include <unistd.h>
 
