@@ -11,7 +11,7 @@
 #include "net/net.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
-
+#include "topology/NetworkTopology.h"
 namespace hemelb
 {
   namespace net
@@ -30,7 +30,8 @@ namespace hemelb
       }
     }
 
-    void Net::Dispatch(){
+    void Net::Dispatch()
+    {
       Send();
       Receive();
       Wait();
@@ -51,17 +52,33 @@ namespace hemelb
 
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-          != mReceiveProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
+          ++it)
       {
-        MPI_Irecv(it->second.PointerList.front(),
+        MPI_Irecv(it->second.front().Pointer,
                   1,
                   it->second.Type,
                   it->first,
                   10,
-                  communicator,
+                  communicator.GetCommunicator(),
                   &mRequests[m]);
         ++m;
+      }
+
+      int gather_index = 0;
+      for (std::vector<ScalarRequest>::iterator it = gatherReceiveProcessorComms.begin();
+          it != gatherReceiveProcessorComms.end(); ++it)
+      {
+        ScalarRequest toself = gatherSendProcessorComms[communicator.GetRank()][m];
+        MPI_Gather(toself.Pointer,
+                   1,
+                   toself.Type,
+                   it->Pointer,
+                   1,
+                   it->Type,
+                   communicator.GetRank(),
+                   communicator.GetCommunicator());
+        ++gather_index;
       }
     }
 
@@ -72,23 +89,42 @@ namespace hemelb
 
       proc_t m = 0;
 
-      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-          != mSendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
-        int TypeSizeStorage = 0;                         //DTMP:byte size tracking 
-        MPI_Type_size(it->second.Type,&TypeSizeStorage); //DTMP:
-        BytesSent += TypeSizeStorage;                   //DTMP:
+        int TypeSizeStorage = 0; //DTMP:byte size tracking
+        MPI_Type_size(it->second.Type, &TypeSizeStorage); //DTMP:
+        BytesSent += TypeSizeStorage; //DTMP:
 
-
-        MPI_Isend(it->second.PointerList.front(),
+        MPI_Isend(it->second.front().Pointer,
                   1,
                   it->second.Type,
                   it->first,
                   10,
-                  communicator,
-                  &mRequests[mReceiveProcessorComms.size() + m]);
+                  communicator.GetCommunicator(),
+                  &mRequests[receiveProcessorComms.size() + m]);
 
         ++m;
+      }
+
+      for (std::map<proc_t, GatherProcComms>::iterator it = gatherSendProcessorComms.begin();
+          it != gatherSendProcessorComms.end(); ++it)
+      {
+        if (it->first==communicator.GetRank())
+        {
+          continue;
+        }
+        for (std::vector<ScalarRequest>::iterator req = it->second.begin(); req != it->second.end(); req++)
+        {
+          MPI_Gather(req->Pointer,
+                     1,
+                     req->Type,
+                     NULL,
+                     1,
+                     req->Type,
+                     it->first,
+                     communicator.GetCommunicator());
+        }
+
       }
     }
 
@@ -96,46 +132,22 @@ namespace hemelb
     {
       SyncPointsCounted++; //DTMP: counter for monitoring purposes.
 
-      MPI_Waitall((int) (mSendProcessorComms.size() + mReceiveProcessorComms.size()),
-                  &mRequests[0],
-                  &mStatuses[0]);
+      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
 
       sendReceivePrepped = false;
 
-      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-          != mReceiveProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
+          ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
-      mReceiveProcessorComms.clear();
+      receiveProcessorComms.clear();
 
-      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-          != mSendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
-      mSendProcessorComms.clear();
-    }
-
-    // Helper function to get the ProcessorCommunications object, and create it if it doesn't exist yet.
-    Net::ProcComms* Net::GetProcComms(proc_t iRank, bool iIsSend)
-    {
-      std::map<proc_t, ProcComms>* lMap = iIsSend
-        ? &mSendProcessorComms
-        : &mReceiveProcessorComms;
-
-      std::map<proc_t, ProcComms>::iterator lValue = lMap->find(iRank);
-
-      if (lValue == lMap->end())
-      {
-        ProcComms lRet;
-        lMap->insert(std::pair<proc_t, ProcComms>(iRank, lRet));
-        return &lMap->find(iRank)->second;
-      }
-      else
-      {
-        return & (lValue ->second);
-      }
+      sendProcessorComms.clear();
     }
 
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
@@ -146,73 +158,32 @@ namespace hemelb
         return;
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-          != mSendProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
-        CreateMPIType(& (*it).second);
+        it->second.CreateMPIType();
       }
 
-      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-          != mReceiveProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
+          ++it)
       {
-        CreateMPIType(& (*it).second);
+        it->second.CreateMPIType();
       }
 
-      EnsureEnoughRequests(mReceiveProcessorComms.size() + mSendProcessorComms.size());
+      EnsureEnoughRequests(receiveProcessorComms.size() + sendProcessorComms.size());
 
       sendReceivePrepped = true;
     }
 
-    // Helper function to create a MPI derived datatype given a list of pointers, types and lengths.
-    void Net::CreateMPIType(ProcComms *iMetaData)
-    {
-      MPI_Aint* displacements = new MPI_Aint[iMetaData->PointerList.size()];
-      int* lengths = new int[iMetaData->PointerList.size()];
-      MPI_Datatype* types = new MPI_Datatype[iMetaData->PointerList.size()];
-
-      int lLocation = 0;
-
-      for (std::vector<void*>::const_iterator it = iMetaData->PointerList.begin(); it
-          != iMetaData->PointerList.end(); ++it)
-      {
-        MPI_Get_address(*it, &displacements[lLocation]);
-        ++lLocation;
-      }
-
-      for (int ii = (int) iMetaData->PointerList.size() - 1; ii >= 0; ii--)
-      {
-        displacements[ii] -= displacements[0];
-
-        lengths[ii] = iMetaData->LengthList[ii];
-        types[ii] = iMetaData->TypeList[ii];
-        /* total_length == lengths[ii]*/
-      }
-
-      // Create the type and commit it.
-      MPI_Type_create_struct((int) iMetaData->PointerList.size(),
-                             lengths,
-                             displacements,
-                             types,
-                             &iMetaData->Type);
-      MPI_Type_commit(&iMetaData->Type);
-
-      delete[] displacements;
-      delete[] lengths;
-      delete[] types;
-    }
-
-    Net::Net(): 
-        BytesSent(0), 
-        SyncPointsCounted(0)
+    Net::Net() :
+        BytesSent(0), SyncPointsCounted(0), communicator(topology::NetworkTopology::Instance()->GetComms())
     {
       sendReceivePrepped = false;
-      communicator = MPI_COMM_WORLD;
     }
 
-    Net::Net(MPI_Comm commObject)
+    Net::Net(topology::Communicator &commObject) :
+        BytesSent(0), SyncPointsCounted(0), communicator(commObject)
     {
       sendReceivePrepped = false;
-      communicator = commObject;
     }
 
     /*!
@@ -222,14 +193,14 @@ namespace hemelb
     {
       if (sendReceivePrepped)
       {
-        for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
-            != mSendProcessorComms.end(); ++it)
+        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
+            ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
 
-        for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
-            != mReceiveProcessorComms.end(); ++it)
+        for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
+            it != receiveProcessorComms.end(); ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
