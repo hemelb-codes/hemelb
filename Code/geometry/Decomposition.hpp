@@ -41,15 +41,11 @@ namespace hemelb
                                                       blocksNeededSize[readingCore],
                                                       readingCore,
                                                       decompositionCommunicatorRank);
-
-        MPI_Gather(&blocksNeededSize[readingCore],
-                   1,
-                   MpiDataType<int>(),
-                   &blocksNeededSizes[0],
-                   1,
-                   MpiDataType<int>(),
-                   readingCore,
-                   decompositionCommunicator);
+        anet.RequestGatherSend(blocksNeededSize[readingCore],readingCore);
+        if (decompositionCommunicatorRank==readingCore){
+          anet.RequestGatherReceive(blocksNeededSizes);
+        }
+        anet.Dispatch();
       }
 
       // Communicate the arrays of needed blocks
