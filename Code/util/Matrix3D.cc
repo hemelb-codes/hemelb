@@ -5,7 +5,7 @@
  *      Author: mobernabeu
  */
 
-#include "Matrix3D.h"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
