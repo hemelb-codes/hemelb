@@ -517,9 +517,7 @@ namespace hemelb
         }
       }
 
-      tempNet.Send();
-      tempNet.Receive();
-      tempNet.Wait();
+      tempNet.Dispatch();
     }
 
     void LatticeData::InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)

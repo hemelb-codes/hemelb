@@ -515,13 +515,11 @@ namespace hemelb
           {
             localBuffer->SendPixelCounts(&tempNet, receivingProc);
 
-            tempNet.Send();
-            tempNet.Wait();
+            tempNet.Dispatch();
 
             localBuffer->SendPixelData(&tempNet, receivingProc);
 
-            tempNet.Send();
-            tempNet.Wait();
+            tempNet.Dispatch();
           }
 
           // If we're the receiving proc, receive.
@@ -530,13 +528,11 @@ namespace hemelb
           {
             receiveBuffer.ReceivePixelCounts(&tempNet, sendingProc);
 
-            tempNet.Receive();
-            tempNet.Wait();
+            tempNet.Dispatch();
 
             receiveBuffer.ReceivePixelData(&tempNet, sendingProc);
 
-            tempNet.Receive();
-            tempNet.Wait();
+            tempNet.Dispatch();
 
             localBuffer->Combine(receiveBuffer);
           }
@@ -548,13 +544,11 @@ namespace hemelb
       {
         localBuffer->SendPixelCounts(&tempNet, 0);
 
-        tempNet.Send();
-        tempNet.Wait();
+        tempNet.Dispatch();
 
         localBuffer->SendPixelData(&tempNet, 0);
 
-        tempNet.Send();
-        tempNet.Wait();
+        tempNet.Dispatch();
       }
       // Receive the final image on proc 0.
 
@@ -562,13 +556,11 @@ namespace hemelb
       {
         receiveBuffer.ReceivePixelCounts(&tempNet, 1);
 
-        tempNet.Receive();
-        tempNet.Wait();
+        tempNet.Dispatch();
 
         receiveBuffer.ReceivePixelData(&tempNet, 1);
 
-        tempNet.Receive();
-        tempNet.Wait();
+        tempNet.Dispatch();
 
         localResultsByStartIt.erase(startIteration);
         localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, Rendering(receiveBuffer)));
