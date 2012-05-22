@@ -90,11 +90,29 @@ namespace hemelb
         template<class T>
         void RequestReceive(std::vector<T> &payload, proc_t fromRank);
 
+        template<class T>
+        void RequestGatherReceive(T* buffer,int * displacements, int *counts);
+
+        template<class T>
+        void RequestGatherReceive(std::vector< std::vector<T> > &buffer);
+
+        template<class T>
+        void RequestGatherReceive(std::vector<T> &buffer);
+
+        template<class T>
+        void RequestGatherSend(T& value, proc_t toRank);
+
+        template<class T>
+        void RequestGatherSend(std::vector<T> &payload,proc_t toRank);
+
+        template<class T>
+        void RequestGatherSend(T* buffer,int count,proc_t toRank);
+
       private:
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
-        struct ProcComms
+        class ProcComms
         {
           public:
             std::vector<void*> PointerList;
