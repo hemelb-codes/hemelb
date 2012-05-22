@@ -129,10 +129,12 @@ endif()
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
-#------MPWide ----------------
-find_package(MPWide REQUIRED)
-include_directories(${MPWide_INCLUDE_DIR})
-
+if(HEMELB_BUILD_MULTISCALE)
+  #------MPWide ----------------
+  find_package(MPWide REQUIRED)
+  include_directories(${MPWide_INCLUDE_DIR})
+  add_definitions(-DHEMELB_BUILD_MULTISCALE)
+endif()
 
 #------zlib ----------------
 find_package(ZLIB REQUIRED)
@@ -195,7 +197,7 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
+  ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -216,7 +218,7 @@ if(HEMELB_BUILD_UNITTESTS)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
-        ${MPWide_LIBRARIES}
+    ${MPWide_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
