@@ -438,9 +438,7 @@ namespace hemelb
         return;
       }
       timings[hemelb::reporting::Timers::readNet].Start();
-      net.Send();
-      net.Receive();
-      net.Wait();
+      net.Dispatch();
       timings[hemelb::reporting::Timers::readNet].Stop();
       timings[hemelb::reporting::Timers::readParse].Start();
       if (neededOnThisRank)
