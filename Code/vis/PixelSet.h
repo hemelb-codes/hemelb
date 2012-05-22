@@ -81,12 +81,12 @@ namespace hemelb
         {
           count = (int) pixels.size();
           log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count of %i", count);
-          net->RequestSend(&count, 1, destination);
+          net->RequestSend(count, destination);
         }
 
         void ReceiveQuantity(net::Net* net, proc_t source)
         {
-          net->RequestReceive(&count, 1, source);
+          net->RequestReceive(count,source);
         }
 
         void SendPixels(net::Net* net, proc_t destination)
@@ -96,7 +96,7 @@ namespace hemelb
             log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i pixels to proc %i",
                                                           (int) pixels.size(),
                                                           (int) destination);
-            net->RequestSend(&pixels[0], (int) pixels.size(), destination);
+            net->RequestSend(pixels, destination);
           }
         }
 

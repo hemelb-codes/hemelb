@@ -423,7 +423,7 @@ namespace hemelb
         {
           if (*receiver != currentComms.GetRank())
           {
-            net.RequestSend(&compressedBlockData.front(), bytesPerCompressedBlock[blockNumber], *receiver);
+            net.RequestSend(compressedBlockData, *receiver);
           }
         }
         timings[hemelb::reporting::Timers::readBlock].Stop();
@@ -431,7 +431,7 @@ namespace hemelb
       else if (neededOnThisRank)
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
-        net.RequestReceive(&compressedBlockData.front(), bytesPerCompressedBlock[blockNumber], readingCore);
+        net.RequestReceive(compressedBlockData, readingCore);
       }
       else
       {
