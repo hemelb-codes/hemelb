@@ -13,6 +13,7 @@ option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -128,6 +129,10 @@ endif()
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
+#------MPWide ----------------
+find_package(MPWide REQUIRED)
+include_directories(${MPWide_INCLUDE_DIR})
+
 
 #------zlib ----------------
 find_package(ZLIB REQUIRED)
@@ -190,6 +195,7 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
+    ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -210,6 +216,7 @@ if(HEMELB_BUILD_UNITTESTS)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
+        ${MPWide_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml

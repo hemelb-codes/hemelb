@@ -8,8 +8,7 @@ set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH
 set(CPPUNIT_CONFIGURE_OPTIONS "" CACHE STRING "Extra configuration options for CPPUNIT")
 option(CPPUNIT_PATCH_LDL "Add -ldl option to cppunit" OFF)
 set(CTEMPLATE_CONFIGURE_OPTIONS "" CACHE STRING "Extra configurations options for CTEMPLATE")
-
-
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
 
 # --------- tinyxml -------------------
@@ -43,6 +42,34 @@ else()
 		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
+endif()
+
+# --------- mpwide -------------------
+if (HEMELB_BUILD_MULTISCALE)
+    find_package(MPWide QUIET)
+    if (MPWide_FOUND)
+	    message("MPWide already installed, no need to download")
+    else()
+	    message("MPWide not installed, will build from source")
+	    find_file(MPWIDE_TARBALL MPWide-1.2b.tar.gz 
+		    DOC "Path to download MPWide (can be url http://)"
+		    PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	    )
+	    if(NOT MPWIDE_TARBALL)
+		    message("No MPWide source found, will download.")
+		    set(MPWIDE_TARBALL http://castle.strw.leidenuniv.nl/~derek/MPWide-1.2.1.tar.gz
+			    CACHE STRING "Path to download MPWide (can be local file://)" FORCE)
+	    endif()
+	    ExternalProject_Add(
+	       MPWide
+		    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+		    URL ${MPWIDE_TARBALL}
+		    BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND echo "No configure step for MPWIDE"
+		    BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} 
+            INSTALL_COMMAND make install INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH} ${MWIDE_BUILD_OPTIONS}
+	    )
+    endif()
 endif()
 
 # ------- parmetis --------------------
