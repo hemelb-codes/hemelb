@@ -39,21 +39,7 @@ namespace hemelb
          * @param iToRank Rank to send to.
          */
         template<class T>
-        void RequestSend(T* oPointer, int iCount, proc_t iToRank)
-        {
-          if (iCount > 0)
-          {
-            if (sendReceivePrepped)
-            {
-              std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
-              exit(1);
-            }
-
-            ProcComms *lComms = GetProcComms(iToRank, true);
-
-            AddToList(oPointer, iCount, lComms);
-          }
-        }
+        void RequestSend(T* oPointer, int iCount, proc_t iToRank);
 
         /**
          * Request that iCount entries of type T be included in the receive from iFromRank
@@ -64,22 +50,7 @@ namespace hemelb
          * @param iFromRank Rank to receive from.
          */
         template<class T>
-        void RequestReceive(T* oPointer, int iCount, proc_t iFromRank)
-        {
-          if (iCount > 0)
-          {
-            if (sendReceivePrepped)
-            {
-              std::cerr
-                  << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
-              exit(1);
-            }
-
-            ProcComms *lComms = GetProcComms(iFromRank, false);
-
-            AddToList(oPointer, iCount, lComms);
-          }
-        }
+        void RequestReceive(T* oPointer, int iCount, proc_t iFromRank);
 
       private:
         /**
@@ -105,12 +76,7 @@ namespace hemelb
         ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
         template<typename T>
-        void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
-        {
-          procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
-          procCommsObjectToAddTo->LengthList.push_back(dataLength);
-          procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
-        }
+        void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo);
 
         void EnsurePreparedToSendReceive();
 
@@ -135,5 +101,6 @@ namespace hemelb
 
   }
 }
-
+// include template definitions
+#include "net/net.hpp"
 #endif // HEMELB_NET_NET_H
