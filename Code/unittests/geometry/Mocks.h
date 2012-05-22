@@ -25,16 +25,15 @@ namespace hemelb
           void Receive()
           {
           }
-          ;
           void Send()
           {
           }
-          ;
           void Wait()
           {
           }
-          ;
-
+          void Dispatch()
+          {
+          }
           ~NetMock()
           {
 

@@ -30,6 +30,11 @@ namespace hemelb
         void Send();
         void Wait();
 
+        /***
+         * Carry out a complete send-receive-wait
+         */
+        void Dispatch();
+
         /**
          * Request that iCount entries of type T be included in the send to iToRank,
          * starting at oPointer.
