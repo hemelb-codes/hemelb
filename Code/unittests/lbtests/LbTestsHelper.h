@@ -215,7 +215,7 @@ namespace hemelb
 
             // Pi = sum_i e_i e_i f_i
             // zeta = Pi / 2 (Cs^4)
-            Order2Tensor zeta = lb::lattices::D3Q15::CalculatePiTensor(f_neq);
+            util::Matrix3D zeta = lb::lattices::D3Q15::CalculatePiTensor(f_neq);
 
             for (int m = 0; m < 3; m++)
             {

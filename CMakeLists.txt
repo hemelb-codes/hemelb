@@ -23,6 +23,7 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 set(HEMELB_KERNEL "LBGK"
@@ -72,6 +73,7 @@ ExternalProject_Add(
         -DHEMELB_KERNEL=${HEMELB_KERNEL}
         -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
 	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
+	-DHEMELB_BUILD_MULTISCALE=${HEMELB_BUILD_MULTISCALE}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
