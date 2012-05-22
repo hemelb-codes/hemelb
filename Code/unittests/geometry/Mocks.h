@@ -7,6 +7,7 @@
 
 #include "constants.h"
 #include "mpiInclude.h"
+#include "net/net.h"
 
 namespace hemelb
 {
@@ -120,6 +121,86 @@ namespace hemelb
             delete requiredReceipts.front();
             requiredReceipts.pop_front();
           }
+
+          /////////----------------------------------------------
+          // Temporary copy in to make tests pass
+          template<class T>
+           void RequestSend(std::vector<T> &payload, proc_t toRank)
+           {
+             RequestSend(&payload[0], payload.size(), toRank);
+           }
+
+           template<class T>
+           void RequestSend(T& value, proc_t toRank)
+           {
+             RequestSend(&value, 1, toRank);
+           }
+
+           template<class T>
+           void RequestReceive(T& value, proc_t fromRank)
+           {
+             RequestReceive(&value, 1, fromRank);
+           }
+
+           template<class T>
+           void RequestReceive(std::vector<T> &payload, proc_t toRank)
+           {
+             RequestReceive(&payload[0], payload.size(), toRank);
+           }
+
+           template<class T>
+           void RequestGatherVReceive(std::vector<std::vector<T> > &buffer)
+           {
+             std::vector<int> displacements;
+             std::vector<int> counts;
+             for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin();
+                 buffer_iterator != buffer.end(); buffer++)
+             {
+               displacements.push_back(&buffer_iterator->front() - &buffer.front());
+               counts.push_back(buffer_iterator->size());
+             }
+             RequestGatherVReceive(&buffer.front(), &displacements.front(), &counts.front());
+           }
+
+           template<class T>
+           void RequestGatherReceive(std::vector<T> &buffer)
+           {
+
+             RequestGatherReceive(&buffer.front());
+           }
+
+           template<class T>
+           void RequestGatherSend(T& value, proc_t toRank)
+           {
+             RequestGatherSend(&value, toRank);
+           }
+
+           template<class T>
+           void RequestGatherVSend(std::vector<T> &payload, proc_t toRank)
+           {
+             RequestGatherVSend(&payload.front(), payload.size(), toRank);
+           }
+
+           template<class T>
+           void RequestGatherVSend(T* buffer, int count, proc_t toRank)
+           {
+           }
+
+           template<class T>
+           void RequestGatherReceive(T* buffer)
+           {
+           }
+
+           template<class T>
+           void RequestGatherSend(T* buffer, proc_t toRank)
+           {
+           }
+
+           template<class T>
+           void RequestGatherVReceive(T* buffer, int * displacements, int *counts)
+           {
+           }
+           ///--------------------------------------------------
 
           template<class T> void RequireReceive(T* oPointer,
                                                 unsigned int iCount,
