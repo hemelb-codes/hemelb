@@ -12,8 +12,6 @@ namespace hemelb
 
     class Matrix3D
     {
-        distribn_t matrix[3][3];
-
       public:
         /**
          * Convenience accessor.
@@ -47,6 +45,12 @@ namespace hemelb
          * @param result matrix-vector product result. result is assumed initialised to 0.
          */
         void timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result);
+
+      private:
+
+        //! Internal data representation
+        distribn_t matrix[3][3];
+
     };
   } /* namespace util */
 } /* namespace hemelb */
