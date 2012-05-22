@@ -471,9 +471,7 @@ namespace hemelb
         }
 
         log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block ids");
-        netForMoveSending.Receive();
-        netForMoveSending.Send();
-        netForMoveSending.Wait();
+        netForMoveSending.Dispatch();
         // Now go through every block forced upon me and add it to the list of ones I want.
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
@@ -572,15 +570,12 @@ namespace hemelb
           log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires %i blocks from me",
                                                         otherProc,
                                                         blockIdsXRequiresFromMe[otherProc].size());
-          netForMoveSending.RequestReceive(&blockIdsXRequiresFromMe[otherProc][0],
-                                           numberOfBlocksXRequiresFromMe[otherProc],
+          netForMoveSending.RequestReceive(blockIdsXRequiresFromMe[otherProc],
                                            otherProc);
           netForMoveSending.RequestSend(blockIdsIRequireFromX[otherProc],
                                         otherProc);
         }
-        netForMoveSending.Receive();
-        netForMoveSending.Send();
-        netForMoveSending.Wait();
+        netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::blockRequirements].Stop();
       }
 
@@ -654,9 +649,7 @@ namespace hemelb
         }
 
         log::Logger::Log<log::Info, log::OnePerCore>("Sending move counts");
-        netForMoveSending.Receive();
-        netForMoveSending.Send();
-        netForMoveSending.Wait();
+        netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::moveCountsSending].Stop();
       }
 
@@ -716,9 +709,7 @@ namespace hemelb
         }
 
         log::Logger::Log<log::Info, log::OnePerCore>("Sending move data");
-        netForMoveSending.Receive();
-        netForMoveSending.Send();
-        netForMoveSending.Wait();
+        netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::moveDataSending].Stop();
       }
 

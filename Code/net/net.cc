@@ -30,6 +30,12 @@ namespace hemelb
       }
     }
 
+    void Net::Dispatch(){
+      Send();
+      Receive();
+      Wait();
+    }
+
     /*!
      This is called from the main function.  First function to deal with processors.
      The domain partitioning technique and the management of the
