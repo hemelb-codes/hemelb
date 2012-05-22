@@ -6,36 +6,30 @@ namespace hemelb
   namespace net
   {
     template<class T>
-    void Net::RequestSend(T* oPointer, int iCount, proc_t iToRank)
+    void Net::RequestSend(T* pointer, int count, proc_t rank)
     {
-      if (iCount > 0)
+      if (count > 0)
       {
         if (sendReceivePrepped)
         {
           std::cerr << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
           exit(1);
         }
-
-        ProcComms *lComms = GetProcComms(iToRank, true);
-
-        AddToList(oPointer, iCount, lComms);
+        sendProcessorComms[rank].push_back(BaseRequest(pointer, count, MpiDataType<T>()));
       }
     }
 
     template<class T>
-    void Net::RequestReceive(T* oPointer, int iCount, proc_t iFromRank)
+    void Net::RequestReceive(T* pointer, int count, proc_t rank)
     {
-      if (iCount > 0)
+      if (count > 0)
       {
         if (sendReceivePrepped)
         {
           std::cerr << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
           exit(1);
         }
-
-        ProcComms *lComms = GetProcComms(iFromRank, false);
-
-        AddToList(oPointer, iCount, lComms);
+        receiveProcessorComms[rank].push_back(BaseRequest(pointer, count, MpiDataType<T>()));
       }
     }
 
@@ -64,63 +58,62 @@ namespace hemelb
     }
 
     template<class T>
-    void Net::RequestGatherReceive(T* buffer, int * displacements, int *counts)
-    {
-
-    }
-
-    template<class T>
-    void Net::RequestGatherReceive(std::vector<std::vector<T> > &buffer)
+    void Net::RequestGatherVReceive(std::vector<std::vector<T> > &buffer)
     {
       std::vector<int> displacements;
       std::vector<int> counts;
-      for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin(); buffer_iterator != buffer.end();
-          buffer++)
+      for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin();
+          buffer_iterator != buffer.end(); buffer++)
       {
         displacements.push_back(&buffer_iterator->front() - &buffer.front());
         counts.push_back(buffer_iterator->size());
       }
-      RequestGatherReceive(&buffer.front(), &displacements.front(), &counts.front());
+      RequestGatherVReceive(&buffer.front(), &displacements.front(), &counts.front());
     }
 
     template<class T>
     void Net::RequestGatherReceive(std::vector<T> &buffer)
     {
-      std::vector<int> displacements;
-      std::vector<int> counts;
-      for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin(); buffer_iterator != buffer.end();
-          buffer++)
-      {
-        displacements.push_back(&*buffer_iterator - &buffer->front());
-        counts.push_back(1);
-      }
-      RequestGatherReceive(&buffer.front(), &displacements.front(), &counts.front());
+
+      RequestGatherReceive(&buffer.front());
     }
 
     template<class T>
     void Net::RequestGatherSend(T& value, proc_t toRank)
     {
-      RequestGatherSend(&value,1,toRank);
+      RequestGatherSend(&value, toRank);
     }
 
     template<class T>
-    void Net::RequestGatherSend(std::vector<T> &payload, proc_t toRank)
+    void Net::RequestGatherVSend(std::vector<T> &payload, proc_t toRank)
     {
-      RequestGatherSend(&payload.front(), payload.size(), toRank);
+      RequestGatherVSend(&payload.front(), payload.size(), toRank);
     }
 
     template<class T>
-    void Net::RequestGatherSend(T* buffer, int count, proc_t toRank)
+    void Net::RequestGatherVSend(T* buffer, int count, proc_t toRank)
     {
+      gatherVSendProcessorComms[toRank].push_back(BaseRequest(buffer, count, MpiDataType<T>()));
     }
 
-    template<typename T>
-    void Net::AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
+    template<class T>
+    void Net::RequestGatherReceive(T* buffer)
     {
-      procCommsObjectToAddTo->PointerList.push_back(dataToAdd);
-      procCommsObjectToAddTo->LengthList.push_back(dataLength);
-      procCommsObjectToAddTo->TypeList.push_back(MpiDataType<T>());
+      gatherReceiveProcessorComms.push_back(ScalarRequest(buffer, MpiDataType<T>()));
     }
+
+    template<class T>
+    void Net::RequestGatherSend(T* buffer, proc_t toRank)
+    {
+      gatherSendProcessorComms[toRank].push_back(ScalarRequest(buffer, MpiDataType<T>()));
+    }
+
+    template<class T>
+    void Net::RequestGatherVReceive(T* buffer, int * displacements, int *counts)
+    {
+      gatherVReceiveProcessorComms.push_back(GatherVReceiveRequest(buffer, displacements, counts, MpiDataType<T>()));
+    }
+
   }
 }
 
