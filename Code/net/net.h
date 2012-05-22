@@ -166,15 +166,15 @@ namespace hemelb
           public:
             void CreateMPIType()
             {
-              std::vector<MPI_Aint> displacements(this->size());
+              std::vector<MPI_Aint> displacements(size());
               std::vector<int> lengths;
               std::vector<MPI_Datatype> types;
 
               int lLocation = 0;
 
               MPI_Aint offset;
-              MPI_Get_address(this->front().Pointer, &offset);
-              for (typename std::vector<BaseRequest>::iterator it = this->begin(); it != this->end(); ++it)
+              MPI_Get_address(front().Pointer, &offset);
+              for (iterator it = begin(); it != end(); ++it)
               {
                 MPI_Get_address(it->Pointer, &displacements[lLocation]);
                 displacements[lLocation] -= offset;
