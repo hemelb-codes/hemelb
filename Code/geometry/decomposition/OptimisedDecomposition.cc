@@ -459,15 +459,11 @@ namespace hemelb
           if (blocksForcedOnMe[otherProc] > 0)
           {
             blocksForcedOnMeByEachProc[otherProc] = std::vector<site_t>(blocksForcedOnMe[otherProc]);
-            netForMoveSending.RequestReceive(&blocksForcedOnMeByEachProc[otherProc][0],
-                                             blocksForcedOnMe[otherProc],
-                                             otherProc);
+            netForMoveSending.RequestReceive(blocksForcedOnMeByEachProc[otherProc], otherProc);
           }
           if (numberOfBlocksIForceUponX[otherProc] > 0)
           {
-            netForMoveSending.RequestSend(&blockForcedUponX[otherProc][0],
-                                          numberOfBlocksIForceUponX[otherProc],
-                                          otherProc);
+            netForMoveSending.RequestSend(blockForcedUponX[otherProc], otherProc);
           }
           log::Logger::Log<log::Debug, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
                                                         numberOfBlocksIForceUponX[otherProc],
@@ -579,8 +575,7 @@ namespace hemelb
           netForMoveSending.RequestReceive(&blockIdsXRequiresFromMe[otherProc][0],
                                            numberOfBlocksXRequiresFromMe[otherProc],
                                            otherProc);
-          netForMoveSending.RequestSend(&blockIdsIRequireFromX[otherProc][0],
-                                        numberOfBlocksRequiredFrom[otherProc],
+          netForMoveSending.RequestSend(blockIdsIRequireFromX[otherProc],
                                         otherProc);
         }
         netForMoveSending.Receive();
@@ -709,7 +704,7 @@ namespace hemelb
           {
             if (moveDataForEachBlock[*it].size() > 0)
             {
-              netForMoveSending.RequestSend(&moveDataForEachBlock[*it][0], moveDataForEachBlock[*it].size(), otherProc);
+              netForMoveSending.RequestSend(moveDataForEachBlock[*it], otherProc);
               log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
                                                             moveDataForEachBlock[*it].size() / 3,
                                                             otherProc,
