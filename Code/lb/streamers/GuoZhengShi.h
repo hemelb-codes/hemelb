@@ -100,11 +100,11 @@ namespace hemelb
                     site_t nextSiteOutId = site.GetStreamedIndex<LatticeType> (unstreamedDirection)
                         / LatticeType::NUMVECTORS;
 
-                    if (log::Logger::ShouldDisplay<hemelb::log::Debug>())
+                    if (log::Logger::ShouldDisplay<hemelb::log::Info>())
                     {
                       if (nextSiteOutId < 0 || nextSiteOutId >= latDat->GetLocalFluidSiteCount())
                       {
-                        log::Logger::Log<log::Debug, log::OnePerCore>("GZS "
+                        log::Logger::Log<log::Info, log::OnePerCore>("GZS "
                           "boundary condition can't yet handle when the second fluid site away from "
                           "a wall resides on a different core. The wall site was number %i on this core, "
                           "the absent fluid site was in direction %i", siteIndex, unstreamedDirection);
