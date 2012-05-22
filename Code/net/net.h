@@ -8,6 +8,7 @@
 
 #include "constants.h"
 #include "mpiInclude.h"
+#include "topology/Communicator.h"
 
 namespace hemelb
 {
@@ -18,7 +19,7 @@ namespace hemelb
     {
       public:
         Net();
-        Net(MPI_Comm commObject);
+        Net(topology::Communicator &communicator);
 
         ~Net();
 
@@ -73,14 +74,13 @@ namespace hemelb
         template<class T>
         void RequestReceive(T* oPointer, int iCount, proc_t iFromRank);
 
-
         /***
          * Request that a single value be received
          * @param value Value to send
          * @param fromRank Rank to receive from
          */
         template<class T>
-        void RequestReceive(T& value,proc_t fromRank);
+        void RequestReceive(T& value, proc_t fromRank);
 
         /***
          * Request that the vector specified should receive content
@@ -91,48 +91,113 @@ namespace hemelb
         void RequestReceive(std::vector<T> &payload, proc_t fromRank);
 
         template<class T>
-        void RequestGatherReceive(T* buffer,int * displacements, int *counts);
+        void RequestGatherVReceive(T* buffer, int * displacements, int *counts);
 
         template<class T>
-        void RequestGatherReceive(std::vector< std::vector<T> > &buffer);
+        void RequestGatherVReceive(std::vector<std::vector<T> > &buffer);
 
         template<class T>
         void RequestGatherReceive(std::vector<T> &buffer);
 
         template<class T>
+        void RequestGatherReceive(T* buffer);
+
+        template<class T>
         void RequestGatherSend(T& value, proc_t toRank);
 
         template<class T>
-        void RequestGatherSend(std::vector<T> &payload,proc_t toRank);
+        void RequestGatherVSend(std::vector<T> &payload, proc_t toRank);
 
         template<class T>
-        void RequestGatherSend(T* buffer,int count,proc_t toRank);
+        void RequestGatherSend(T* buffer, proc_t toRank);
+
+        template<class T>
+        void RequestGatherVSend(T* buffer, int count, proc_t toRank);
 
       private:
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
-        class ProcComms
+        class BaseRequest
         {
           public:
-            std::vector<void*> PointerList;
-            std::vector<int> LengthList;
-            std::vector<MPI_Datatype> TypeList;
-
-            void clear()
+            void * Pointer;
+            int Count;
+            MPI_Datatype Type;
+            BaseRequest(void *pointer, int count, MPI_Datatype type) :
+                Pointer(pointer), Count(count), Type(type)
             {
-              PointerList.clear();
-              LengthList.clear();
-              TypeList.clear();
             }
+        };
 
+        class ScalarRequest
+        {
+          public:
+            void * Pointer;
+            MPI_Datatype Type;
+            ScalarRequest(void *pointer, MPI_Datatype type) :
+                Pointer(pointer), Type(type)
+            {
+            }
+        };
+
+        class GatherVReceiveRequest
+        {
+          public:
+            void * Pointer;
+            int * Displacements;
+            int * Counts;
+            MPI_Datatype Type;
+            GatherVReceiveRequest(void *pointer,int *displacements, int *counts, MPI_Datatype type) :
+            Pointer(pointer),  Displacements(displacements), Counts(counts),Type(type)
+            {
+            }
+        };
+
+        template<class Request>
+        class BaseProcComms : public std::vector<Request>
+        {
+          public:
             MPI_Datatype Type;
         };
 
-        ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
+        class ProcComms : public BaseProcComms<BaseRequest>
+        {
+          public:
+            void CreateMPIType()
+            {
+              std::vector<MPI_Aint> displacements(this->size());
+              std::vector<int> lengths;
+              std::vector<MPI_Datatype> types;
 
-        template<typename T>
-        void AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo);
+              int lLocation = 0;
+
+              MPI_Aint offset;
+              MPI_Get_address(this->front().Pointer, &offset);
+              for (typename std::vector<BaseRequest>::iterator it = this->begin(); it != this->end(); ++it)
+              {
+                MPI_Get_address(it->Pointer, &displacements[lLocation]);
+                displacements[lLocation] -= offset;
+                ++lLocation;
+                lengths.push_back(it->Count);
+                types.push_back(it->Type);
+              }
+
+              // Create the type and commit it.
+              MPI_Type_create_struct(this->size(), &lengths.front(), &displacements.front(), &types.front(), &Type);
+              MPI_Type_commit(&Type);
+            }
+        };
+
+        class GatherProcComms : public BaseProcComms<ScalarRequest>
+        {
+
+        };
+
+        class GatherVReceiveProcComms : public BaseProcComms<GatherVReceiveRequest>
+        {
+
+        };
 
         void EnsurePreparedToSendReceive();
 
@@ -141,9 +206,12 @@ namespace hemelb
         void EnsureEnoughRequests(size_t count);
 
         bool sendReceivePrepped;
-
-        std::map<proc_t, ProcComms> mSendProcessorComms;
-        std::map<proc_t, ProcComms> mReceiveProcessorComms;
+        std::map<proc_t, ProcComms> sendProcessorComms;
+        std::map<proc_t, ProcComms> receiveProcessorComms;
+        std::map<proc_t, ProcComms> gatherVSendProcessorComms;
+        GatherVReceiveProcComms gatherVReceiveProcessorComms;
+        std::map<proc_t, GatherProcComms> gatherSendProcessorComms;
+        GatherProcComms gatherReceiveProcessorComms;
 
         // Requests and statuses available for general communication within the Net object (both
         // initialisation and during each iteration). Code using these must make sure
@@ -152,7 +220,7 @@ namespace hemelb
         std::vector<MPI_Request> mRequests;
         std::vector<MPI_Status> mStatuses;
 
-        MPI_Comm communicator;
+        const topology::Communicator &communicator;
     };
 
   }

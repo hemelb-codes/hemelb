@@ -26,6 +26,9 @@ namespace hemelb
         proc_t GetProcessorCount() const;
         int GetDepths() const;
         unsigned int GetMachineCount() const;
+        Communicator const & GetComms() const {
+          return comms;
+        }
 
       private:
         NetworkTopology();
