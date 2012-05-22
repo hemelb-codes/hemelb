@@ -1,0 +1,4 @@
+#ifndef HEMELB_UNITTESTS_MULTISCALE_MPWIDE_MPWIDE_H
+#define HEMELB_UNITTESTS_MULTISCALE_MPWIDE_MPWIDE_H
+#include "unittests/multiscale/mpwide/MPWideIntercommunicatorTests.h"
+#endif // HEMELB_UNITTESTS_MULTISCALE_MPWIDE_MPWIDE_H

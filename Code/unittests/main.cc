@@ -15,6 +15,7 @@
 #include "unittests/SimulationMasterTests.h"
 #include "unittests/extraction/extraction.h"
 #include "unittests/multiscale/multiscale.h"
+#include "unittests/multiscale/mpwide/mpwide.h"
 #include "unittests/util/util.h"
 #include <unistd.h>
 

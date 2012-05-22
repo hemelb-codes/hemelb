@@ -145,7 +145,8 @@ if __name__ == '__main__':
     codeDir = os.path.normpath(os.path.join(scriptDir, os.pardir, 'Code'))
 
     ignoredIncludes = set((
-        'tinyxml.h',
+        'MPWide.h',
+	'tinyxml.h',
         'parmetis.h',
         'ctemplate/template.h',
         ))
