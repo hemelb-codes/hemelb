@@ -420,7 +420,7 @@ namespace hemelb
       {
         timers[hemelb::reporting::Timers::moveForcingNumbers].Start();
 
-        net::Net netForMoveSending(comms.GetCommunicator());
+        net::Net netForMoveSending(comms);
 
         // We also need to force some data upon blocks, i.e. when they're receiving data from a new
         // block they didn't previously want to know about.
@@ -563,7 +563,7 @@ namespace hemelb
                      comms.GetCommunicator());
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
-        net::Net netForMoveSending(comms.GetCommunicator());
+        net::Net netForMoveSending(comms);
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
           blockIdsXRequiresFromMe[otherProc] = std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
@@ -627,7 +627,7 @@ namespace hemelb
           movesForEachLocalBlock[blockId]++;
         }
 
-        net::Net netForMoveSending(comms.GetCommunicator());
+        net::Net netForMoveSending(comms);
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
@@ -670,7 +670,7 @@ namespace hemelb
         movesList.resize(totalMovesToReceive * 3);
         idx_t localMoveId = 0;
 
-        net::Net netForMoveSending(comms.GetCommunicator());
+        net::Net netForMoveSending(comms);
 
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
