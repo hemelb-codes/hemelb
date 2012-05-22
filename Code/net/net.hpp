@@ -63,6 +63,57 @@ namespace hemelb
       RequestReceive(&payload[0], payload.size(), toRank);
     }
 
+    template<class T>
+    void Net::RequestGatherReceive(T* buffer, int * displacements, int *counts)
+    {
+
+    }
+
+    template<class T>
+    void Net::RequestGatherReceive(std::vector<std::vector<T> > &buffer)
+    {
+      std::vector<int> displacements;
+      std::vector<int> counts;
+      for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin(); buffer_iterator != buffer.end();
+          buffer++)
+      {
+        displacements.push_back(&buffer_iterator->front() - &buffer.front());
+        counts.push_back(buffer_iterator->size());
+      }
+      RequestGatherReceive(&buffer.front(), &displacements.front(), &counts.front());
+    }
+
+    template<class T>
+    void Net::RequestGatherReceive(std::vector<T> &buffer)
+    {
+      std::vector<int> displacements;
+      std::vector<int> counts;
+      for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin(); buffer_iterator != buffer.end();
+          buffer++)
+      {
+        displacements.push_back(&*buffer_iterator - &buffer->front());
+        counts.push_back(1);
+      }
+      RequestGatherReceive(&buffer.front(), &displacements.front(), &counts.front());
+    }
+
+    template<class T>
+    void Net::RequestGatherSend(T& value, proc_t toRank)
+    {
+      RequestGatherSend(&value,1,toRank);
+    }
+
+    template<class T>
+    void Net::RequestGatherSend(std::vector<T> &payload, proc_t toRank)
+    {
+      RequestGatherSend(&payload.front(), payload.size(), toRank);
+    }
+
+    template<class T>
+    void Net::RequestGatherSend(T* buffer, int count, proc_t toRank)
+    {
+    }
+
     template<typename T>
     void Net::AddToList(T* dataToAdd, int dataLength, ProcComms *procCommsObjectToAddTo)
     {
