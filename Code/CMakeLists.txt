@@ -6,9 +6,9 @@ project(HemeLB)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
-option(HEMELB_BUILD_ALLTESTS "Build all the tests" ON)
-option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
-option(HEMELB_BUILD_FUNCTIONALTESTS "Build the functional-tests" ON)
+option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
+option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
+option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
@@ -205,7 +205,7 @@ INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_UNITTESTS)
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
@@ -231,7 +231,7 @@ if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_UNITTESTS)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
-if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_FUNCTIONALTESTS)
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
@@ -246,7 +246,7 @@ if(HEMELB_BUILD_ALLTESTS OR HEMELB_BUILD_FUNCTIONALTESTS)
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
-	    ${MPWide_LIBRARIES}
+		${MPWide_LIBRARIES}
 		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
