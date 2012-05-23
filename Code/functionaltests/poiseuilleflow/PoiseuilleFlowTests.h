@@ -50,7 +50,7 @@ namespace hemelb
             delete options;
           }
 
-          void TestVelocityProfile()
+          void TestSimulationRunsAndGeneratesOutput()
           {
             master->RunSimulation();
             AssertPresent("results/report.txt");
