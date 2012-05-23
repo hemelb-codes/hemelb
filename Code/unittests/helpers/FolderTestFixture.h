@@ -4,6 +4,8 @@
 #include <cmath>
 #include <iomanip>
 #include "resources/Resource.h"
+#include "util/utilityFunctions.h"
+
 namespace hemelb
 {
   namespace unittests
