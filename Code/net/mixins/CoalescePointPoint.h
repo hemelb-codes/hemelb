@@ -9,6 +9,7 @@ namespace hemelb
     class CoalescePointPoint : public virtual StoringNet
     {
       public:
+        CoalescePointPoint():sendReceivePrepped(false),mRequests(),mStatuses(){}
         void Wait();
       protected:
         void ReceivePointToPoint();
