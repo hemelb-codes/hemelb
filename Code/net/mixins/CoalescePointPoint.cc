@@ -1,4 +1,5 @@
 #include "net/mixins/CoalescePointPoint.h"
+#include "log/Logger.h"
 namespace hemelb{
   namespace net{
     void CoalescePointPoint::EnsureEnoughRequests(size_t count)
@@ -41,7 +42,6 @@ namespace hemelb{
       {
         return;
       }
-
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
         it->second.CreateMPIType();
@@ -117,7 +117,6 @@ namespace hemelb{
         MPI_Type_free(&it->second.Type);
       }
       sendProcessorComms.clear();
-
       sendReceivePrepped = false;
 
       MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
