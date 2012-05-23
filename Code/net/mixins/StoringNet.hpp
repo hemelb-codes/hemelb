@@ -111,16 +111,16 @@ namespace hemelb
               std::vector<int> lengths;
               std::vector<MPI_Datatype> types;
 
-              int lLocation = 0;
+              int location = 0;
 
               MPI_Aint offset;
               MPI_Get_address(front().Pointer, &offset);
 
               for (iterator it = begin(); it != end(); ++it)
               {
-                MPI_Get_address(it->Pointer, &displacements[lLocation]);
-                displacements[lLocation] -= offset;
-                ++lLocation;
+                MPI_Get_address(it->Pointer, &displacements[location]);
+                displacements[location] -= offset;
+                ++location;
                 lengths.push_back(it->Count);
                 types.push_back(it->Type);
               }

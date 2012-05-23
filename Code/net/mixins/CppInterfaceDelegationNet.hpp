@@ -16,19 +16,19 @@ namespace hemelb
         template<class T>
         void RequestSendR(T& value, proc_t toRank)
         {
-            BaseNet::RequestSend(&value, 1, toRank);
+          BaseNet::RequestSend(&value, 1, toRank);
         }
 
         template<class T>
         void RequestReceiveR(T& value, proc_t fromRank)
         {
-            BaseNet::RequestReceive(&value, 1, fromRank);
+          BaseNet::RequestReceive(&value, 1, fromRank);
         }
 
         template<class T>
         void RequestReceiveV(std::vector<T> &payload, proc_t toRank)
         {
-            BaseNet::RequestReceive(&payload[0], payload.size(), toRank);
+          BaseNet::RequestReceive(&payload[0], payload.size(), toRank);
         }
 
         template<class T>
@@ -49,19 +49,19 @@ namespace hemelb
         void RequestGatherReceive(std::vector<T> &buffer)
         {
 
-            BaseNet::RequestGatherReceive(&buffer.front());
+          BaseNet::RequestGatherReceive(&buffer.front());
         }
 
         template<class T>
         void RequestGatherSend(T& value, proc_t toRank)
         {
-            BaseNet::RequestGatherSend(&value, toRank);
+          BaseNet::RequestGatherSend(&value, toRank);
         }
 
         template<class T>
         void RequestGatherVSend(std::vector<T> &payload, proc_t toRank)
         {
-            BaseNet::RequestGatherVSend(&payload.front(), payload.size(), toRank);
+          BaseNet::RequestGatherVSend(&payload.front(), payload.size(), toRank);
         }
 
     };

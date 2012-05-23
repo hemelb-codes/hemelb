@@ -1,5 +1,5 @@
-#ifndef HEMELB_NET_MIXINS_COALESCE_POINT_POINT_H
-#define HEMELB_NET_MIXINS_COALESCE_POINT_POINT_H
+#ifndef HEMELB_NET_MIXINS_COALESCEPOINTPOINT_H
+#define HEMELB_NET_MIXINS_COALESCEPOINTPOINT_H
 #include "net/BaseNet.h"
 #include "net/mixins/StoringNet.hpp"
 namespace hemelb
