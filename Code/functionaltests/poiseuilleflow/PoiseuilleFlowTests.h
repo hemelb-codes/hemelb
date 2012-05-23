@@ -20,7 +20,9 @@ namespace hemelb
       class PoiseuilleFlowTests : public hemelb::unittests::helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE(PoiseuilleFlowTests);
+          CPPUNIT_TEST(TestSimulationRunsAndGeneratesOutput);
           CPPUNIT_TEST(TestVelocityProfile);
+          CPPUNIT_TEST(TestShearStressProfile);
           CPPUNIT_TEST_SUITE_END();
 
         public:
