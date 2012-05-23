@@ -1,6 +1,7 @@
 #ifndef HEMELB_NET_MIXINS_STORINGNET_HPP
 #define HEMELB_NET_MIXINS_STORINGNET_HPP
 #include "net/BaseNet.h"
+#include "log/Logger.h"
 namespace hemelb
 {
   namespace net
@@ -114,6 +115,7 @@ namespace hemelb
 
               MPI_Aint offset;
               MPI_Get_address(front().Pointer, &offset);
+
               for (iterator it = begin(); it != end(); ++it)
               {
                 MPI_Get_address(it->Pointer, &displacements[lLocation]);
@@ -122,7 +124,6 @@ namespace hemelb
                 lengths.push_back(it->Count);
                 types.push_back(it->Type);
               }
-
               // Create the type and commit it.
               MPI_Type_create_struct(this->size(), &lengths.front(), &displacements.front(), &types.front(), &Type);
               MPI_Type_commit(&Type);
