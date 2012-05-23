@@ -6,7 +6,9 @@ project(HemeLB)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
-option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
+option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
+option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
+option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
@@ -129,10 +131,12 @@ endif()
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
-#------MPWide ----------------
-find_package(MPWide REQUIRED)
-include_directories(${MPWide_INCLUDE_DIR})
-
+if(HEMELB_BUILD_MULTISCALE)
+  #------MPWide ----------------
+  find_package(MPWide REQUIRED)
+  include_directories(${MPWide_INCLUDE_DIR})
+  add_definitions(-DHEMELB_BUILD_MULTISCALE)
+endif()
 
 #------zlib ----------------
 find_package(ZLIB REQUIRED)
@@ -195,15 +199,16 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
+  ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+
 # ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_UNITTESTS)
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 	#------CPPUnit ---------------
-		find_package(CPPUnit REQUIRED)
-		include_directories(${CPPUNIT_INCLUDE_DIR})
+	find_package(CPPUnit REQUIRED)
+	include_directories(${CPPUNIT_INCLUDE_DIR})
 	add_executable(unittests_hemelb ${root_sources})
 	add_subdirectory(unittests)
 	target_link_libraries(unittests_hemelb 
@@ -216,13 +221,36 @@ if(HEMELB_BUILD_UNITTESTS)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
-        ${MPWide_LIBRARIES}
+		${MPWide_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
 		)
+endif()
+
+# ----------- HEMELB functionaltests ---------------
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
+	#------CPPUnit ---------------
+	find_package(CPPUnit REQUIRED)
+	include_directories(${CPPUNIT_INCLUDE_DIR})
+	add_executable(functionaltests_hemelb ${root_sources})
+	add_subdirectory(functionaltests)
+	target_link_libraries(functionaltests_hemelb 
+		hemelb_functionaltests 
+		${heme_libraries}
+		${MPI_LIBRARIES}
+		${PARMETIS_LIBRARIES}
+		${TINYXML_LIBRARIES}
+		${CPPUNIT_LIBRARY}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES}
+		${MPWide_LIBRARIES}
+		${ZLIB_LIBRARIES}
+		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
+	list(APPEND RESOURCES functionaltests/resources/poiseuille_flow_test.gmy functionaltests/resources/poiseuille_flow_test.xml)
 endif()
 
 #-------- Copy and install resources --------------
