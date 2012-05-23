@@ -16,6 +16,7 @@ cd ../../jogl/make
 ant
 
 (2) Build the steering client
+set the environment variable HEMELB_SRC to point to hemelb-dev/hemelb/Code
 cd ../..
 ant
 
