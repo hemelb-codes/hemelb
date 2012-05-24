@@ -40,8 +40,8 @@ namespace hemelb
       void NeighbouringProcessor::ExchangeParticleCounts(net::Net& net)
       {
         numberOfParticlesToSend = particlesToSend.size();
-        net.RequestSendR(numberOfParticlesToSend, neighbourRank);
-        net.RequestReceiveR(numberOfParticlesToReceive, neighbourRank);
+        net.RequestSend(numberOfParticlesToSend, neighbourRank);
+        net.RequestReceive(numberOfParticlesToReceive, neighbourRank);
       }
 
       void NeighbouringProcessor::ClearParticleSendingList()
@@ -55,13 +55,14 @@ namespace hemelb
         {
           particlesToReceive.resize(numberOfParticlesToReceive);
 
-          net.RequestReceiveV(particlesToReceive,
+          net.RequestReceive(&particlesToReceive[0],
+                             (int) numberOfParticlesToReceive,
                              neighbourRank);
         }
 
         if (particlesToSend.size() > 0)
         {
-          net.RequestSendV(particlesToSend, neighbourRank); //Request
+          net.RequestSend(particlesToSend, neighbourRank); //Request
         }
       }
 
@@ -76,8 +77,8 @@ namespace hemelb
       {
         numberOfSitesRequestedByThisCore = siteCoordsRequestedByThisCore.size();
 
-        net.RequestReceiveR(numberOfSiteBeingRequestedByNeighbour, neighbourRank);
-        net.RequestSendR(numberOfSitesRequestedByThisCore, neighbourRank);
+        net.RequestReceive(numberOfSiteBeingRequestedByNeighbour, neighbourRank);
+        net.RequestSend(numberOfSitesRequestedByThisCore, neighbourRank);
       }
 
       void NeighbouringProcessor::ExchangeSiteIds(net::Net& net)
@@ -96,7 +97,7 @@ namespace hemelb
         {
           velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
 
-          net.RequestSendV(siteCoordsRequestedByThisCore,
+          net.RequestSend(siteCoordsRequestedByThisCore,
                           neighbourRank);
         }
       }
@@ -107,7 +108,8 @@ namespace hemelb
         {
           velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
 
-          net.RequestReceiveV(velocityFieldDataFromNeighbour,
+          net.RequestReceive(&velocityFieldDataFromNeighbour[0],
+                             (int) numberOfSitesRequestedByThisCore,
                              neighbourRank);
         }
 
@@ -115,7 +117,7 @@ namespace hemelb
         {
           velocityFieldDataForNeighbour.resize(numberOfSiteBeingRequestedByNeighbour);
 
-          net.RequestSendV(velocityFieldDataForNeighbour,
+          net.RequestSend(velocityFieldDataForNeighbour,
                           neighbourRank);
         }
       }
