@@ -506,13 +506,13 @@ namespace hemelb
         // other processor.
         if (neigh_proc_p->Rank > localRank)
         {
-          tempNet.RequestSend(sharedFLocationForEachProc[neigh_proc_p->Rank],
+          tempNet.RequestSendV(sharedFLocationForEachProc[neigh_proc_p->Rank],
                               neigh_proc_p->Rank);
         }
         else
         {
           sharedFLocationForEachProc[neigh_proc_p->Rank].resize(neigh_proc_p->SharedDistributionCount * 4);
-          tempNet.RequestReceive(sharedFLocationForEachProc[neigh_proc_p->Rank],
+          tempNet.RequestReceiveV(sharedFLocationForEachProc[neigh_proc_p->Rank],
                                  neigh_proc_p->Rank);
         }
       }
