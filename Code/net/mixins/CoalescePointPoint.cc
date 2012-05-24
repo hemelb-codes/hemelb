@@ -106,6 +106,8 @@ namespace hemelb{
     {
       BaseNet::Wait();
 
+      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
+
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
           it != receiveProcessorComms.end(); ++it)
       {
@@ -121,7 +123,6 @@ namespace hemelb{
       sendProcessorComms.clear();
       sendReceivePrepped = false;
 
-      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
 
     }
   }
