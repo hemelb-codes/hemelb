@@ -236,7 +236,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
 	add_executable(functionaltests_hemelb ${root_sources})
-	add_subdirectory(functionaltests)
+	add_subdirectory(functionaltests/cpptests)
 	target_link_libraries(functionaltests_hemelb 
 		hemelb_functionaltests 
 		${heme_libraries}
@@ -250,7 +250,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES functionaltests/resources/poiseuille_flow_test.gmy functionaltests/resources/poiseuille_flow_test.xml)
+	list(APPEND RESOURCES functionaltests/cpptests/resources/poiseuille_flow_test.gmy functionaltests/cpptests/resources/poiseuille_flow_test.xml)
 endif()
 
 #-------- Copy and install resources --------------

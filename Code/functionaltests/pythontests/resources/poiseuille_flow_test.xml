@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+<hemelbsettings>
+  <simulation steps="6000"  step_length="5e-6" stresstype="1" />
+  <geometry>
+    <datafile path="poiseuille_flow_test.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <pressure amplitude="0.0" mean="16.0" phase="0.0" />
+      <normal x="0.0" y="0.0" z="1.0" />
+      <position x="0.0" y="0.0" z="-0.03" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <pressure amplitude="0.0" mean="0.0" phase="0.0" />
+      <normal x="0.0" y="0.0" z="-1.0" />
+      <position x="0.0" y="0.0" z="0.03" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre x="0.0" y="0.0" z="0.0" />
+    <orientation latitude="45.0" longitude="45.0" />
+    <display brightness="0.03" zoom="1.0" />
+    <range maxstress="0.1" maxvelocity="0.1" />
+  </visualisation>
+  <properties>
+    <propertyoutput frequency="4000" file="velocity_40mm_in.dat">
+      <linegeometry>
+        <point x="-0.75e-3" y="0" z="10e-3"/>
+        <point x="0.75e-3" y="0" z="10e-3"/> 
+        <field type="velocity" name="velocity_40mm_in"/>
+      </linegeometry>    
+    </propertyoutput>
+
+    <propertyoutput frequency="4000" file="shear_stress_40mm_in.dat">
+      <linegeometry>
+        <point x="-0.75e-3" y="0" z="10e-3"/>
+        <point x="0.75e-3" y="0" z="10e-3"/> 
+        <field type="shearstress" name="shear_stress_40mm_in"/>
+      </linegeometry>    
+    </propertyoutput>
+  </properties>
+</hemelbsettings>

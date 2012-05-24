@@ -1,7 +1,7 @@
 #ifndef HEMELB_FUNCTIONALTESTS_POISEUILLEFLOW_POISEUILLEFLOW_H
 #define HEMELB_FUNCTIONALTESTS_POISEUILLEFLOW_POISEUILLEFLOW_H
 
-#include "functionaltests/poiseuilleflow/PoiseuilleFlowTests.h"
+#include "functionaltests/cpptests/poiseuilleflow/PoiseuilleFlowTests.h"
 
 
 #endif /* HEMELB_FUNCTIONALTESTS_POISEUILLEFLOW_POISEUILLEFLOW_H */
