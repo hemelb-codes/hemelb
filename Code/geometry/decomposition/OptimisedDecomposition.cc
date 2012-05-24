@@ -459,11 +459,11 @@ namespace hemelb
           if (blocksForcedOnMe[otherProc] > 0)
           {
             blocksForcedOnMeByEachProc[otherProc] = std::vector<site_t>(blocksForcedOnMe[otherProc]);
-            netForMoveSending.RequestReceive(blocksForcedOnMeByEachProc[otherProc], otherProc);
+            netForMoveSending.RequestReceiveV(blocksForcedOnMeByEachProc[otherProc], otherProc);
           }
           if (numberOfBlocksIForceUponX[otherProc] > 0)
           {
-            netForMoveSending.RequestSend(blockForcedUponX[otherProc], otherProc);
+            netForMoveSending.RequestSendV(blockForcedUponX[otherProc], otherProc);
           }
           log::Logger::Log<log::Debug, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
                                                         numberOfBlocksIForceUponX[otherProc],
@@ -570,9 +570,9 @@ namespace hemelb
           log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires %i blocks from me",
                                                         otherProc,
                                                         blockIdsXRequiresFromMe[otherProc].size());
-          netForMoveSending.RequestReceive(blockIdsXRequiresFromMe[otherProc],
+          netForMoveSending.RequestReceiveV(blockIdsXRequiresFromMe[otherProc],
                                            otherProc);
-          netForMoveSending.RequestSend(blockIdsIRequireFromX[otherProc],
+          netForMoveSending.RequestSendV(blockIdsIRequireFromX[otherProc],
                                         otherProc);
         }
         netForMoveSending.Dispatch();
@@ -633,7 +633,7 @@ namespace hemelb
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
               it != blockIdsIRequireFromX[otherProc].end(); ++it)
           {
-            netForMoveSending.RequestReceive(&movesForEachBlockWeCareAbout[*it], 1, otherProc);
+            netForMoveSending.RequestReceiveR(movesForEachBlockWeCareAbout[*it], otherProc);
             log::Logger::Log<log::Debug, log::OnePerCore>("I want the move count for block %i from proc %i",
                                                           *it,
                                                           otherProc);
@@ -641,7 +641,7 @@ namespace hemelb
           for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
               it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
           {
-            netForMoveSending.RequestSend(movesForEachLocalBlock[*it], otherProc);
+            netForMoveSending.RequestSendR(movesForEachLocalBlock[*it], otherProc);
             log::Logger::Log<log::Debug, log::OnePerCore>("I'm sending move count for block %i to proc %i",
                                                           *it,
                                                           otherProc);
@@ -697,7 +697,7 @@ namespace hemelb
           {
             if (moveDataForEachBlock[*it].size() > 0)
             {
-              netForMoveSending.RequestSend(moveDataForEachBlock[*it], otherProc);
+              netForMoveSending.RequestSendV(moveDataForEachBlock[*it], otherProc);
               log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
                                                             moveDataForEachBlock[*it].size() / 3,
                                                             otherProc,
