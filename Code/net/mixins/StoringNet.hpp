@@ -120,6 +120,8 @@ namespace hemelb
               {
                 MPI_Get_address(it->Pointer, &displacements[location]);
                 displacements[location] -= offset;
+
+
                 ++location;
                 lengths.push_back(it->Count);
                 types.push_back(it->Type);
