@@ -1,3 +1,7 @@
+"""
+Parse the configs defined in config.yml and config_user.yml
+"""
+
 import os
 import yaml
 path=os.path.dirname(os.path.abspath(__file__))

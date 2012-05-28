@@ -1,3 +1,4 @@
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -5,6 +6,10 @@ except ImportError:
     
 import numpy as N
 
+
+"""
+Class describing the image data streamed by HemeLB
+"""
 class Image(object):
     def __init__(self,width,height,pixel_count,unpacker):
         self.pixels=[]
@@ -16,6 +21,9 @@ class Image(object):
     
         
     def pil(self,component='velocity'):
+        """ 
+        Transform the data to python image library format
+        """
         from PIL import Image as PILImage
         pil_string_data=bytearray([255]*3*self.full_pixel_count)
         fields_wanted=["%s_%s"%(component,color) for color in Image.colors]
@@ -24,6 +32,7 @@ class Image(object):
             pil_string_data[3*offset:3*offset+3]=[pixel[field] for field in fields_wanted]
         return PILImage.fromstring("RGB",(self.width,self.height),str(pil_string_data))
         
+    # Constants useful for parsing the image
     subimages=['velocity','stress','pressure','stress2']
     colors=['red','green','blue']
     fields=["%s_%s"%(subimage,color) for subimage in subimages for color in colors ]
