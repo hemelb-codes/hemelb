@@ -69,7 +69,7 @@ namespace hemelb
     template<>
     struct Vector3DArithmeticTraits<long int, int>
     {
-        typedef long long int operatorReturnType;
+        typedef long int operatorReturnType;
     };
     
     // This specialisation is needed by the setup tool. Keep the most precise type.
