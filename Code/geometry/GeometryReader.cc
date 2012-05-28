@@ -423,6 +423,7 @@ namespace hemelb
         {
           if (*receiver != currentComms.GetRank())
           {
+
             net.RequestSendV(compressedBlockData, *receiver);
           }
         }
@@ -431,7 +432,10 @@ namespace hemelb
       else if (neededOnThisRank)
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
+
+
         net.RequestReceiveV(compressedBlockData, readingCore);
+
       }
       else
       {
