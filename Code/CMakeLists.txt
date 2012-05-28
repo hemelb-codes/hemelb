@@ -250,7 +250,6 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES functionaltests/cpptests/resources/poiseuille_flow_test.gmy functionaltests/cpptests/resources/poiseuille_flow_test.xml)
 endif()
 
 #-------- Copy and install resources --------------
