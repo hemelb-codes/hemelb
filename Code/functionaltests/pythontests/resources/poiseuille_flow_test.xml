@@ -25,7 +25,7 @@
     <range maxstress="0.1" maxvelocity="0.1" />
   </visualisation>
   <properties>
-    <propertyoutput frequency="4000" file="velocity_40mm_in.dat">
+    <propertyoutput frequency="6000" file="velocity_40mm_in.dat">
       <linegeometry>
         <point x="-0.75e-3" y="0" z="10e-3"/>
         <point x="0.75e-3" y="0" z="10e-3"/> 
@@ -33,7 +33,7 @@
       </linegeometry>    
     </propertyoutput>
 
-    <propertyoutput frequency="4000" file="shear_stress_40mm_in.dat">
+    <propertyoutput frequency="6000" file="shear_stress_40mm_in.dat">
       <linegeometry>
         <point x="-0.75e-3" y="0" z="10e-3"/>
         <point x="0.75e-3" y="0" z="10e-3"/> 
