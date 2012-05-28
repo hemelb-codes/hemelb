@@ -5,7 +5,12 @@ from config import config
 import xdrlib
 
 class RemoteHemeLB(object):
-    # Metaprogram property access       
+    """
+    Represent a remote HemeLB as a python object
+    Steerable parameters become properties of the object:
+    e.g. myheme.Latitude=50
+    """
+   
     def __init__(self,address,port,steering_id):
         self.address=address
         self.port=port
@@ -58,7 +63,11 @@ class RemoteHemeLB(object):
     def __str__(self):
         return "HemeLB at %s: Step %s" % (self.address,self.time_step)
 
-#Metaprogram property access
+# Metaprogram property access
+# We use metaprogramming techniques to define the properties which can be steered,
+# based on the contents of config.yml
+# We use the SteeredParameter python "descriptor" class to define these attributes.
+# See the descriptors discussion in http://docs.python.org/reference/datamodel.html#new-style-and-classic-classes if you never tried these.
 RemoteHemeLB.steered_parameters=[]        
 for index,name in enumerate(config['steered_parameters']):
     steered_parameter=SteeredParameter(index,name)
