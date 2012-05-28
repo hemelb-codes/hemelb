@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 from hemeTools.parsers.extraction import ExtractedProperty
+from pylab import *
 
 class TestPoiseuilleFlowTest(unittest.TestCase):
     @classmethod
@@ -24,13 +25,13 @@ class TestPoiseuilleFlowTest(unittest.TestCase):
 
     def test_run_simulation_and_check_output_created(self):
         try:
-            subprocess.call("mpirun -np 4 hemelb -in poiseuille_flow_test.xml -i 10 -s 1", shell=True)
+            subprocess.call("mpirun -np 4 hemelb -in poiseuille_flow_test.xml", shell=True)
         except OSError, e:
             print >>sys.stderr, "Call to HemeLB failed:", e
             
         # Make sure the .dat files have been created
-        os.path.isfile("results/Extracted/velocity_40mm_in.dat")
-        os.path.isfile("results/Extracted/shear_stress_40mm_in.dat")
+        self.assertTrue(os.path.isfile("results/Extracted/velocity_40mm_in.dat"))
+        self.assertTrue(os.path.isfile("results/Extracted/shear_stress_40mm_in.dat"))
 
     def compute_analytical_velocity(self, site_data):
         x_coord = site_data[0]
@@ -42,6 +43,7 @@ class TestPoiseuilleFlowTest(unittest.TestCase):
         filename = "results/Extracted/velocity_40mm_in.dat"
         propFile = ExtractedProperty(filename)
 
+        # Print some basic information about the properties extracted
         print '# Dump of file "{}"'.format(filename)
         print '# File has {} sites.'.format(propFile.siteCount)
         print '# File has {} fields:'.format(propFile.fieldCount)
@@ -59,23 +61,31 @@ class TestPoiseuilleFlowTest(unittest.TestCase):
             print "# Timestep {:d}".format(t)
             
             # Create a list of tuples (x_coordinate, z_velocity) for all the sites along the line
-            velocities_along_line = []
-            [velocities_along_line.append((site.position[0], site.velocity_40mm_in[2])) for site in sites_along_line]
+            coord_vel_along_line = []
+            [coord_vel_along_line.append((site.position[0], site.velocity_40mm_in[2])) for site in sites_along_line]
+            coord_vel_along_line.sort() # Sorting the lists helps with plotting
 
-            # Work out pipe radius
-            max_coord = max(velocities_along_line)[0]
-            min_coord = min(velocities_along_line)[0]
-
-            # With bounce back, the actual wall is half a lattice site away
-            self.radius = (max_coord - min_coord)/2 + propFile.voxelSizeMetres/2
+            # Work out pipe radius and z coordinate of the axis
+            max_coord = max(coord_vel_along_line)[0]
+            min_coord = min(coord_vel_along_line)[0]
+            self.radius = (max_coord - min_coord)/2 + propFile.voxelSizeMetres/2 # With bounce back, the actual wall is half a lattice site away
             self.centre = (max_coord + min_coord)/2
 
-            # Compare velocities along the line with analytical solution
-            analytical_solutions = map(self.compute_analytical_velocity, velocities_along_line)
+            # Compute Poiseuille flow analytical solution along the line
+            analytical_solutions = map(self.compute_analytical_velocity, coord_vel_along_line)
 
-            # Check the results of the comparison
+            # Plot analytical and simulated velocity profiles
+            [coords, vels] = zip(*coord_vel_along_line) 
+            plot(coords, vels, 'o-', label='HemeLB')
+            plot(coords, analytical_solutions, 'o-', label='Analytical')
+            xlabel('Lattice site radius')
+            ylabel('Velocity along the z axis')
+            legend()
+            savefig('poiseuille_velocity_profile.png')
+
+            # Compare simulation results with analytical solution
             [self.assertAlmostEqual(analytical, computed, delta=1e-3, msg="Velocity {0} differs from analytical solution {1} at site with z coordinate {2}".format(computed,analytical,z_coord))
-             for (analytical, (z_coord,computed)) in zip(analytical_solutions, velocities_along_line)]
+             for (analytical, (z_coord,computed)) in zip(analytical_solutions, coord_vel_along_line)]
 
     def test_shear_stress_profile(self):
         pass
