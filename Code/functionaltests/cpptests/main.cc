@@ -5,7 +5,7 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
-#include "functionaltests/cpptests/poiseuilleflow/poiseuilleflow.h"
+#include "functionaltests/cpptests/example/example.h"
 #include <unistd.h>
 
 int main(int argc, char **argv)
