@@ -1,4 +1,5 @@
-default:
-  username: "jamespjh"
+# User specific configuration
+# Copy me as config_user.yml
+username: "jamespjh"
 localhost:
   

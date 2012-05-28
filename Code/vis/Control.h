@@ -123,8 +123,8 @@ namespace hemelb
         void initLayers();
         void Render(unsigned long startIteration);
 
-        std::map<unsigned long, Rendering> localResultsByStartIt;
-        std::multimap<unsigned long, Rendering> childrenResultsByStartIt;
+        mapType localResultsByStartIt;
+        multimapType childrenResultsByStartIt;
         std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
         net::Net* net;

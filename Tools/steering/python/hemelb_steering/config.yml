@@ -1,3 +1,4 @@
+# Yaml file to define steerable parameters, default host and port, and preconfigured remotes.
 steering_id: 1111
 port: 65250
 steered_parameters:

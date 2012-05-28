@@ -1,10 +1,19 @@
 import socket
 
-#Model of the way HemeLB steering treats socket-comms.
-#On send, is a known-length buffer of values.
-#On receive, there is a header, which is used to determine the length of the rest of the message
+
 class PagedSocket(object):
+    """
+    Model of the way HemeLB steering treats socket-comms.
+    On send, is a known-length buffer of values.
+    On receive, there is a header, which is used to determine the length of the rest of the message
+    """
     def __init__(self,address,port,receive_length,additional_receive_length_function=lambda header:0):
+        """
+        Initialise a paged socket connection
+        additional_receive_length_function: a function which, 
+        given the beginning of the received page,
+        tells you how much more is to receive
+        """
         self.address=address
         self.port=port
         self.socket=socket.socket()
