@@ -1,6 +1,11 @@
 #Jiggery-pokery so that client classes of RemoteHemeLB can write remote.Latitude=50
+# We define a python "descriptor protocol" class
+# See the descriptors discussion in http://docs.python.org/reference/datamodel.html#new-style-and-classic-classes if you never tried these.
 
 class SteeredParameter(object):
+    """
+    Descriptor implementation for a HemeLB steered parameter
+    """
     def __init__(self,index,name):
         self.name=name
         self.index=index
