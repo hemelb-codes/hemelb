@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-curate.py
-
-Created by James Hetherington on 2012-01-27.
-Copyright (c) 2012 UCL. All rights reserved.
+Executable intended to be the beginnings of a python gui.
+Not working well yet.
 """
 
 import sys
