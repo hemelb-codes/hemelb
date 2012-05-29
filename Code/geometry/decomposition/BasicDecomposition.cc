@@ -41,7 +41,7 @@ namespace hemelb
 
       void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
+        log::Logger::Log<log::Info, log::OnePerCore>("Validating procForEachBlock");
 
         std::vector<proc_t> procForEachBlockRecv(geometry.GetBlockCount());
 
@@ -56,10 +56,10 @@ namespace hemelb
         {
           if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
-                                                          block,
-                                                          procAssignedToEachBlock[block],
-                                                          procForEachBlockRecv[block]);
+            log::Logger::Log<log::Info, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+                                                         block,
+                                                         procAssignedToEachBlock[block],
+                                                         procForEachBlockRecv[block]);
           }
         }
       }
