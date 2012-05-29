@@ -16,6 +16,7 @@ tcs = TriangulatedCylinderSource()
 w = vtkSTLWriter()
 w.SetInputConnection(tcs.GetOutputPort())
 
+tcs.SetRadius(r)
 tcs.SetResolution(n)
 tcs.SetHeight(length)
 tcs.CappingOff()
