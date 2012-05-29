@@ -727,8 +727,9 @@ namespace hemelb
       {
         allMoves = std::vector<idx_t>(comms.GetSize());
         timers[hemelb::reporting::Timers::dbg1].Start();
+
         // Create a map for looking up block Ids: the map is from the contiguous site index
-        // of the first fluid site on the block, to the block id.
+        // of the last fluid site on the block, to the block id.
         std::map<site_t, site_t> blockIdLookupByLastSiteIndex;
         for (site_t blockId = 0; blockId < geometry.GetBlockCount(); ++blockId)
         {
