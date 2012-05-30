@@ -1,6 +1,6 @@
-#ifndef HEMELB_GEOMETRY_DECOMPOSITION_HPP
-#define HEMELB_GEOMETRY_DECOMPOSITION_HPP
-#include "geometry/Decomposition.h"
+#ifndef HEMELB_GEOMETRY_NEEDS_NEEDS_HPP
+#define HEMELB_GEOMETRY_NEEDS_NEEDS_HPP
+#include "geometry/needs/Needs.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 
@@ -8,14 +8,14 @@ namespace hemelb
 {
   namespace geometry
   {
-    template<class Net> DecompositionBase<Net>::DecompositionBase(const site_t blockCount,
-                                                                  const std::vector<bool>& readBlock,
-                                                                  const proc_t areadingGroupSize,
-                                                                  Net & anet,
-                                                                  MPI_Comm comm,
-                                                                  const proc_t rank,
-                                                                  const proc_t size,
-                                                                  bool shouldValidate) :
+    template<class Net> NeedsBase<Net>::NeedsBase(const site_t blockCount,
+                                                  const std::vector<bool>& readBlock,
+                                                  const proc_t areadingGroupSize,
+                                                  Net & anet,
+                                                  MPI_Comm comm,
+                                                  const proc_t rank,
+                                                  const proc_t size,
+                                                  bool shouldValidate) :
         procsWantingBlocksBuffer(blockCount), net(anet), decompositionCommunicator(comm), decompositionCommunicatorRank(rank), decompositionCommunicatorSize(size), readingGroupSize(areadingGroupSize), shouldValidate(shouldValidate)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
@@ -98,8 +98,7 @@ namespace hemelb
       }
     }
 
-    template<class Net> void DecompositionBase<Net>::Validate(const site_t blockCount,
-                                                              const std::vector<bool>& readBlock)
+    template<class Net> void NeedsBase<Net>::Validate(const site_t blockCount, const std::vector<bool>& readBlock)
     {
       std::vector<int> procsWantingThisBlockBuffer(decompositionCommunicatorSize);
       for (site_t block = 0; block < blockCount; ++block)
@@ -146,10 +145,10 @@ namespace hemelb
       } // for blocks
     } //constructor
 
-    template<class Net> proc_t DecompositionBase<Net>::GetReadingCoreForBlock(const site_t blockNumber) const
+    template<class Net> proc_t NeedsBase<Net>::GetReadingCoreForBlock(const site_t blockNumber) const
     {
       return proc_t(blockNumber % readingGroupSize);
     }
   } //namespace
 } //namespace
-#endif //HEMELB_GEOMETRY_DECOMPOSITION_HPP
+#endif //HEMELB_GEOMETRY_NEEDS_NEEDS_HPP

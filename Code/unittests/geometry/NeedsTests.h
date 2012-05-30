@@ -1,6 +1,6 @@
-#ifndef HEMELB_UNITTESTS_GEOMETRY_DECOMPOSITIONTESTS_H
-#define HEMELB_UNITTESTS_GEOMETRY_DECOMPOSITIONTESTS_H
-#include "geometry/Decomposition.hpp"
+#ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDS_NEEDSTESTS_H
+#define HEMELB_UNITTESTS_GEOMETRY_NEEDS_NEEDSTESTS_H
+#include "geometry/needs/Needs.hpp"
 #include "unittests/geometry/Mocks.h"
 #include <cppunit/TestFixture.h>
 
@@ -36,17 +36,17 @@ namespace hemelb
     namespace geometry
     {
       using namespace hemelb::geometry;
-      typedef DecompositionBase<NetMock> MockedDecomposition;
-      class DecompositionTests : public CppUnit::TestFixture
+      typedef NeedsBase<NetMock> MockedNeeds;
+      class NeedsTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(DecompositionTests);
+          CPPUNIT_TEST_SUITE (NeedsTests);
           //CPPUNIT_TEST(TestReadingOne);
           //CPPUNIT_TEST(TestNonReading);
           CPPUNIT_TEST_SUITE_END();
 
         public:
-          DecompositionTests() :
-              mockedDecomposition(NULL), netMock(NULL)
+          NeedsTests() :
+              mockedNeeds(NULL), netMock(NULL)
           {
           }
 
@@ -57,7 +57,7 @@ namespace hemelb
 
           void tearDown()
           {
-            delete mockedDecomposition;
+            delete mockedNeeds;
           }
 
           void TestReadingOne()
@@ -128,12 +128,12 @@ namespace hemelb
             needing_block_4.push_back(4);
             std::vector<proc_t> needing_block_5;
 
-            CPPUNIT_ASSERT_EQUAL(needing_block_0, mockedDecomposition->ProcessorsNeedingBlock(0));
-            CPPUNIT_ASSERT_EQUAL(needing_block_1, mockedDecomposition->ProcessorsNeedingBlock(1));
-            CPPUNIT_ASSERT_EQUAL(needing_block_2, mockedDecomposition->ProcessorsNeedingBlock(2));
-            CPPUNIT_ASSERT_EQUAL(needing_block_3, mockedDecomposition->ProcessorsNeedingBlock(3));
-            CPPUNIT_ASSERT_EQUAL(needing_block_4, mockedDecomposition->ProcessorsNeedingBlock(4));
-            CPPUNIT_ASSERT_EQUAL(needing_block_5, mockedDecomposition->ProcessorsNeedingBlock(5));
+            CPPUNIT_ASSERT_EQUAL(needing_block_0, mockedNeeds->ProcessorsNeedingBlock(0));
+            CPPUNIT_ASSERT_EQUAL(needing_block_1, mockedNeeds->ProcessorsNeedingBlock(1));
+            CPPUNIT_ASSERT_EQUAL(needing_block_2, mockedNeeds->ProcessorsNeedingBlock(2));
+            CPPUNIT_ASSERT_EQUAL(needing_block_3, mockedNeeds->ProcessorsNeedingBlock(3));
+            CPPUNIT_ASSERT_EQUAL(needing_block_4, mockedNeeds->ProcessorsNeedingBlock(4));
+            CPPUNIT_ASSERT_EQUAL(needing_block_5, mockedNeeds->ProcessorsNeedingBlock(5));
           }
 
           void TestNonReading()
@@ -160,12 +160,12 @@ namespace hemelb
             // Finally, I would expect the resulting array of needs to be empty
             std::vector<proc_t> empty_needs_array;
 
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(0));
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(1));
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(2));
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(3));
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(4));
-            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedDecomposition->ProcessorsNeedingBlock(5));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(0));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(1));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(2));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(3));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(4));
+            CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(5));
           }
 
           void SetupMocks(const site_t block_count,
@@ -187,13 +187,14 @@ namespace hemelb
 
           void ShareMockNeeds()
           {
-            mockedDecomposition = new MockedDecomposition(blockCount,
-                                                          inputNeededBlocks,
-                                                          readingCores,
-                                                          *netMock,
-                                                          NULL,
-                                                          rank,
-                                                          size,true);
+            mockedNeeds = new MockedNeeds(blockCount,
+                                          inputNeededBlocks,
+                                          readingCores,
+                                          *netMock,
+                                          NULL,
+                                          rank,
+                                          size,
+                                          true);
           }
 
         private:
@@ -202,12 +203,12 @@ namespace hemelb
           proc_t size;
           proc_t rank;
           std::vector<bool> inputNeededBlocks;
-          MockedDecomposition *mockedDecomposition;
+          MockedNeeds *mockedNeeds;
           NetMock *netMock;
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(DecompositionTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (NeedsTests);
     }
   }
 }
