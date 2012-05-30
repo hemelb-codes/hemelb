@@ -14,8 +14,9 @@ namespace hemelb
                                                                   Net & anet,
                                                                   MPI_Comm comm,
                                                                   const proc_t rank,
-                                                                  const proc_t size) :
-        procsWantingBlocksBuffer(blockCount), net(anet), decompositionCommunicator(comm), decompositionCommunicatorRank(rank), decompositionCommunicatorSize(size), readingGroupSize(areadingGroupSize)
+                                                                  const proc_t size,
+                                                                  bool shouldValidate) :
+        procsWantingBlocksBuffer(blockCount), net(anet), decompositionCommunicator(comm), decompositionCommunicatorRank(rank), decompositionCommunicatorSize(size), readingGroupSize(areadingGroupSize), shouldValidate(shouldValidate)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -40,14 +41,13 @@ namespace hemelb
                                                       readingCore,
                                                       decompositionCommunicatorRank);
         anet.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
-        if (decompositionCommunicatorRank == readingCore)
-        {
-          anet.RequestGatherReceive(blocksNeededSizes);
-        }
 
-        anet.Dispatch();
       }
-
+      if (decompositionCommunicatorRank < readingGroupSize)
+      {
+        anet.RequestGatherReceive(blocksNeededSizes);
+      }
+      anet.Dispatch();
       // Communicate the arrays of needed blocks
       std::vector<std::vector<site_t> > blocksNeededOn(decompositionCommunicatorSize);
 
@@ -60,22 +60,24 @@ namespace hemelb
           {
             blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
             log::Logger::Log<log::Debug, log::OnePerCore>("Expecting %i needs from core %i",
-                                                                    blocksNeededOn[sendingCore].size(),sendingCore);
+                                                          blocksNeededOn[sendingCore].size(),
+                                                          sendingCore);
           }
-          anet.RequestGatherVReceive(blocksNeededOn);
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed at core %i",
-                                                        decompositionCommunicatorRank);
+
         }
         anet.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
                                                       blocksNeededHere[readingCore].size(),
                                                       readingCore,
                                                       decompositionCommunicatorRank);
-
-        anet.Dispatch();
       }
-
-
+      if (decompositionCommunicatorRank < readingGroupSize)
+      {
+        anet.RequestGatherVReceive(blocksNeededOn);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed at core %i",
+                                                      decompositionCommunicatorRank);
+      }
+      anet.Dispatch();
       if (decompositionCommunicatorRank < readingGroupSize)
       {
         // Transpose the blocks needed on cores matrix
@@ -90,53 +92,58 @@ namespace hemelb
       } //if a reading core
 
       // If in debug mode, also reduce the old-fashioned way, and check these are the same.
-      if (log::Logger::ShouldDisplay<log::Debug>() && decompositionCommunicator != NULL)
+      if (shouldValidate)
       {
+        Validate(blockCount, readBlock);
+      }
+    }
 
-        std::vector<int> procsWantingThisBlockBuffer(decompositionCommunicatorSize);
-        for (site_t block = 0; block < blockCount; ++block)
+    template<class Net> void DecompositionBase<Net>::Validate(const site_t blockCount,
+                                                              const std::vector<bool>& readBlock)
+    {
+      std::vector<int> procsWantingThisBlockBuffer(decompositionCommunicatorSize);
+      for (site_t block = 0; block < blockCount; ++block)
+      {
+        int neededHere = readBlock[block];
+        proc_t readingCore = GetReadingCoreForBlock(block);
+        MPI_Gather(&neededHere,
+                   1,
+                   MpiDataType<int>(),
+                   &procsWantingThisBlockBuffer[0],
+                   1,
+                   MpiDataType<int>(),
+                   readingCore,
+                   decompositionCommunicator);
+
+        if (decompositionCommunicatorRank == readingCore)
         {
-          int neededHere = readBlock[block];
-          proc_t readingCore = GetReadingCoreForBlock(block);
-          MPI_Gather(&neededHere,
-                     1,
-                     MpiDataType<int>(),
-                     &procsWantingThisBlockBuffer[0],
-                     1,
-                     MpiDataType<int>(),
-                     readingCore,
-                     decompositionCommunicator);
 
-          if (decompositionCommunicatorRank == readingCore)
+          for (proc_t needingProcOld = 0; needingProcOld < decompositionCommunicatorSize; needingProcOld++)
           {
-
-            for (proc_t needingProcOld = 0; needingProcOld < decompositionCommunicatorSize; needingProcOld++)
+            bool found = false;
+            for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
+                needingProc != procsWantingBlocksBuffer[block].end(); needingProc++)
             {
-              bool found = false;
-              for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
-                  needingProc != procsWantingBlocksBuffer[block].end(); needingProc++)
+              if (*needingProc == needingProcOld)
               {
-                if (*needingProc == needingProcOld)
-                {
-                  found = true;
-                }
+                found = true;
               }
-              if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
-              {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
-                                                              block,
-                                                              needingProcOld);
-              }
-              if ( (!found) && procsWantingThisBlockBuffer[needingProcOld] && (needingProcOld != readingCore))
-              {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
-                                                              block,
-                                                              needingProcOld);
-              } //if problem
-            } // for old proc
-          } // if reading group
-        } // for block
-      } // if debug mode
+            }
+            if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
+                                                            block,
+                                                            needingProcOld);
+            }
+            if ( (!found) && procsWantingThisBlockBuffer[needingProcOld] && (needingProcOld != readingCore))
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
+                                                            block,
+                                                            needingProcOld);
+            } //if problem
+          } // for old proc
+        } // if reading group
+      } // for blocks
     } //constructor
 
     template<class Net> proc_t DecompositionBase<Net>::GetReadingCoreForBlock(const site_t blockNumber) const
