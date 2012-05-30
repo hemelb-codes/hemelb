@@ -33,18 +33,18 @@ namespace hemelb
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
-        // Ensure each vector has some underlying array, even if it's unused.
-        blocksNeededHere[readingCore].reserve(1);
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
                                                       blocksNeededSize[readingCore],
                                                       readingCore,
                                                       decompositionCommunicatorRank);
-        anet.RequestGatherSend(blocksNeededSize[readingCore],readingCore);
-        if (decompositionCommunicatorRank==readingCore){
+        anet.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
+        if (decompositionCommunicatorRank == readingCore)
+        {
           anet.RequestGatherReceive(blocksNeededSizes);
         }
+
         anet.Dispatch();
       }
 
@@ -53,54 +53,28 @@ namespace hemelb
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
+
         if (readingCore == decompositionCommunicatorRank)
         {
-          site_t totalBlockNeeds = 0;
-          std::vector<int> displacements(decompositionCommunicatorSize);
-
           for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
           {
             blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
-            // Ensure there's some buffere there.
-            blocksNeededOn[sendingCore].reserve(1);
-            totalBlockNeeds += blocksNeededSizes[sendingCore];
-            displacements[sendingCore] = &blocksNeededOn[sendingCore][0] - &blocksNeededOn[0][0];
+            log::Logger::Log<log::Debug, log::OnePerCore>("Expecting %i needs from core %i",
+                                                                    blocksNeededOn[sendingCore].size(),sendingCore);
           }
-
-          MPI_Gatherv(&blocksNeededHere[readingCore][0],
-                      blocksNeededHere[readingCore].size(),
-                      MpiDataType<site_t>(),
-                      &blocksNeededOn[0][0],
-                      &blocksNeededSizes[0],
-                      &displacements[0],
-                      MpiDataType<site_t>(),
-                      readingCore,
-                      decompositionCommunicator);
-
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed from core %i",
+          anet.RequestGatherVReceive(blocksNeededOn);
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed at core %i",
                                                         decompositionCommunicatorRank);
         }
-        else
-        {
-          std::vector<site_t> dummy(10);
-          std::vector<int> int_dummy(10);
-          
-          MPI_Gatherv(&blocksNeededHere[readingCore].front(),
-                      blocksNeededHere[readingCore].size(),
-                      MpiDataType<site_t>(),
-                      &dummy.front(),
-                      &int_dummy.front(),
-                      &int_dummy.front(),
-                      MpiDataType<site_t>(),
-                      readingCore,
-                      decompositionCommunicator);
+        anet.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
+                                                      blocksNeededHere[readingCore].size(),
+                                                      readingCore,
+                                                      decompositionCommunicatorRank);
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
-                                                        blocksNeededHere[readingCore].size(),
-                                                        readingCore,
-                                                        decompositionCommunicatorRank);
-        }
+        anet.Dispatch();
       }
+
 
       if (decompositionCommunicatorRank < readingGroupSize)
       {
