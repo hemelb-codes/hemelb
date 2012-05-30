@@ -362,7 +362,8 @@ namespace hemelb
                                   net,
                                   currentComms.GetCommunicator(),
                                   currentComms.GetRank(),
-                                  currentComms.GetSize());
+                                  currentComms.GetSize(),
+                                  ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
       log::Logger::Log<log::Info, log::OnePerCore>("Reading blocks");

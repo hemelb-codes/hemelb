@@ -37,7 +37,8 @@ namespace hemelb
                           Net &anet,
                           MPI_Comm comm,
                           const proc_t rank,
-                          const proc_t size); // Temporarily during the refactor, constructed just to abstract the block sharing bit
+                          const proc_t size,
+                          bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
          * Which processors need a given block?
@@ -64,6 +65,8 @@ namespace hemelb
         const proc_t decompositionCommunicatorRank;
         const proc_t decompositionCommunicatorSize;
         const proc_t readingGroupSize;
+        bool shouldValidate;
+        void Validate(const site_t blockCount, const std::vector<bool>& readBlock);
     };
     typedef DecompositionBase<net::Net> Decomposition;
   }
