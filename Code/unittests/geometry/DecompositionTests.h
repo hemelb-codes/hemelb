@@ -193,7 +193,7 @@ namespace hemelb
                                                           *netMock,
                                                           NULL,
                                                           rank,
-                                                          size);
+                                                          size,true);
           }
 
         private:
