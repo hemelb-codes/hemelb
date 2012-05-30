@@ -10,6 +10,7 @@ if(TIXML_USE_STL)
 endif(TIXML_USE_STL)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL info
