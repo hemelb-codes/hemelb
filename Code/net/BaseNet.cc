@@ -61,6 +61,19 @@ namespace hemelb
       WaitPointToPoint();
       WaitGathers();
       WaitGatherVs();
+      displacementsBuffer.clear();
+      countsBuffer.clear();
+    }
+
+    std::vector<int> & BaseNet::GetDisplacementsBuffer()
+    {
+      displacementsBuffer.push_back(std::vector<int>());
+      return displacementsBuffer.back();
+    }
+    std::vector<int> & BaseNet::GetCountsBuffer()
+    {
+      countsBuffer.push_back(std::vector<int>());
+      return countsBuffer.back();
     }
 
   }

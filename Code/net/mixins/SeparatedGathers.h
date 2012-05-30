@@ -11,7 +11,7 @@ namespace hemelb{
       void ReceiveGatherVs(){}
       void SendGatherVs(){}
       void WaitGathers();
-      void WaitGatherVs(){}
+      void WaitGatherVs();
     };
   }
 }
