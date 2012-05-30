@@ -13,7 +13,7 @@
 #include "util/Vector3D.h"
 #include "units.h"
 #include "geometry/Geometry.h"
-#include "geometry/Decomposition.h"
+#include "geometry/needs/Needs.h"
 
 namespace hemelb
 {
