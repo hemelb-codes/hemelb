@@ -75,6 +75,16 @@ namespace hemelb
         virtual void WaitGathers()=0;
         virtual void WaitGatherVs()=0;
         virtual void EnsurePreparedToSendReceive()=0;
+
+        std::vector<int> & GetDisplacementsBuffer();
+        std::vector<int> & GetCountsBuffer();
+      private:
+        /***
+         * Buffers which can be used to store displacements and counts for cleaning up interfaces
+         * These will be cleaned up following a Wait/Dispatch
+         */
+        std::vector<std::vector<int> > displacementsBuffer;
+        std::vector<std::vector<int> > countsBuffer;
     };
   }
 }
