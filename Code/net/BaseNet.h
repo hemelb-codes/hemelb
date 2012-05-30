@@ -71,6 +71,9 @@ namespace hemelb
         virtual void ReceiveGathers()=0;
         virtual void ReceiveGatherVs()=0;
         virtual void ReceivePointToPoint()=0;
+        virtual void WaitPointToPoint()=0;
+        virtual void WaitGathers()=0;
+        virtual void WaitGatherVs()=0;
         virtual void EnsurePreparedToSendReceive()=0;
     };
   }
