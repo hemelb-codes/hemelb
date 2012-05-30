@@ -1,7 +1,9 @@
 #include "net/mixins/SeparatedGathers.h"
-namespace hemelb{
-  namespace net{
-    void SeparatedGathers::ReceiveGathers()
+namespace hemelb
+{
+  namespace net
+  {
+    void SeparatedGathers::WaitGathers()
     {
       int gather_index = 0;
       for (std::vector<ScalarRequest>::iterator it = gatherReceiveProcessorComms.begin();
@@ -18,11 +20,7 @@ namespace hemelb{
                    communicator.GetCommunicator());
         ++gather_index;
       }
-    }
 
-
-    void SeparatedGathers::SendGathers()
-    {
       for (std::map<proc_t, GatherProcComms>::iterator it = gatherSendProcessorComms.begin();
           it != gatherSendProcessorComms.end(); ++it)
       {

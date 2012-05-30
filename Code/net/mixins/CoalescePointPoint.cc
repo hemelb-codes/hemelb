@@ -102,9 +102,8 @@ namespace hemelb{
       }
     }
 
-    void CoalescePointPoint::Wait()
+    void CoalescePointPoint::WaitPointToPoint()
     {
-      BaseNet::Wait();
 
       MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
 
