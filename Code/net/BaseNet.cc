@@ -58,7 +58,9 @@ namespace hemelb
     void BaseNet::Wait()
     {
       SyncPointsCounted++; //DTMP: counter for monitoring purposes.
-
+      WaitPointToPoint();
+      WaitGathers();
+      WaitGatherVs();
     }
 
   }
