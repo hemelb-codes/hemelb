@@ -13,7 +13,7 @@ namespace hemelb
     class ParticleSet
     {
       public:
-        ParticleSet(configuration::XmlAbstractionLayer& xml);
+        ParticleSet(io::xml::XmlAbstractionLayer& xml);
         ~ParticleSet()
         {
           for (std::vector<Particle*>::const_iterator iter = particles.begin();
