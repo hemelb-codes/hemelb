@@ -145,6 +145,14 @@ namespace hemelb
         upwardsDensityTracker.UpdateDensityTracker(childDensities);
       }
 
+      timings[hemelb::reporting::Timers::monitoring].Stop();
+    }
+
+    template<class BroadcastPolicy>
+    void IncompressibilityChecker<BroadcastPolicy>::PostSendToParent(unsigned long splayNumber)
+    {
+      timings[hemelb::reporting::Timers::monitoring].Start();
+
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
         upwardsDensityTracker.UpdateDensityTracker(propertyCache.densityCache.Get(i));
