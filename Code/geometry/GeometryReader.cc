@@ -356,13 +356,14 @@ namespace hemelb
       // Next we spread round the lists of which blocks each core needs access to.
       log::Logger::Log<log::Info, log::OnePerCore>("Informing reading cores of block needs");
       net::Net net = net::Net(currentComms);
-      Decomposition decomposition(geometry.GetBlockCount(),
+      Needs needs(geometry.GetBlockCount(),
                                   readBlock,
                                   util::NumericalFunctions::min(READING_GROUP_SIZE, currentComms.GetSize()),
                                   net,
                                   currentComms.GetCommunicator(),
                                   currentComms.GetRank(),
-                                  currentComms.GetSize());
+                                  currentComms.GetSize(),
+                                  ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
       log::Logger::Log<log::Info, log::OnePerCore>("Reading blocks");
@@ -378,7 +379,7 @@ namespace hemelb
         // Read in the block on all cores (nothing will be done if this core doesn't need the block).
         ReadInBlock(offset,
                     geometry,
-                    decomposition.ProcessorsNeedingBlock(nextBlockToRead),
+                    needs.ProcessorsNeedingBlock(nextBlockToRead),
                     nextBlockToRead,
                     readBlock[nextBlockToRead]);
 
