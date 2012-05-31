@@ -21,7 +21,7 @@ namespace hemelb
         ColloidController(const net::Net* const net,
                           const geometry::LatticeData* const latDatLBM,
                           const geometry::Geometry* const gmyResult,
-                          configuration::XmlAbstractionLayer& xml);
+                          io::xml::XmlAbstractionLayer& xml);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();

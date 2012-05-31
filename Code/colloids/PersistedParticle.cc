@@ -4,7 +4,7 @@ namespace hemelb
 {
   namespace colloids
   {
-    PersistedParticle::PersistedParticle(configuration::XmlAbstractionLayer& xml)
+    PersistedParticle::PersistedParticle(io::xml::XmlAbstractionLayer& xml)
     {
       // assume we are currently at a <SubgridParticle> node
 
