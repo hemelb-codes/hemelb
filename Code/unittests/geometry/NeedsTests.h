@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDS_NEEDSTESTS_H
-#define HEMELB_UNITTESTS_GEOMETRY_NEEDS_NEEDSTESTS_H
+#ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
+#define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #include "geometry/needs/Needs.hpp"
 #include "unittests/geometry/Mocks.h"
 #include <cppunit/TestFixture.h>
