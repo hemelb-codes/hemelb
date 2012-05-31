@@ -34,21 +34,29 @@ namespace hemelb
         template<class T>
         void RequestGatherVReceive(std::vector<std::vector<T> > &buffer)
         {
-          std::vector<int> displacements;
-          std::vector<int> counts;
+          std::vector<int> & displacements=this->GetDisplacementsBuffer();
+          std::vector<int> &counts=this->GetCountsBuffer();
+
+          log::Logger::Log<log::Debug, log::OnePerCore>("Request receiving GatherV getting %i",
+                                                        buffer[0].size());
+
           for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin();
-              buffer_iterator != buffer.end(); buffer++)
+              buffer_iterator != buffer.end(); buffer_iterator++)
           {
-            displacements.push_back(&buffer_iterator->front() - &buffer.front());
+            // Ensure each vector has some underlying array, even if it's unused.
+            buffer_iterator->reserve(1);
+            displacements.push_back(&buffer_iterator->front() - &buffer.front().front());
+            log::Logger::Log<log::Debug, log::OnePerCore>("Getting %i from this piece",buffer_iterator->size());
             counts.push_back(buffer_iterator->size());
           }
-          BaseNet::RequestGatherVReceive(&buffer.front(), &displacements.front(), &counts.front());
+          BaseNet::RequestGatherVReceive(&buffer.front().front(), &displacements.front(), &counts.front());
         }
 
         template<class T>
         void RequestGatherReceive(std::vector<T> &buffer)
         {
-
+          // Ensure vector has some underlying array, even if it's unused.
+          buffer.reserve(1);
           BaseNet::RequestGatherReceive(&buffer.front());
         }
 
@@ -63,7 +71,6 @@ namespace hemelb
         {
           BaseNet::RequestGatherVSend(&payload.front(), payload.size(), toRank);
         }
-
     };
   }
 }
