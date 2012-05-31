@@ -11,7 +11,7 @@ namespace hemelb
     class PersistedParticle
     {
       public:
-        PersistedParticle(configuration::XmlAbstractionLayer& xml);
+        PersistedParticle(io::xml::XmlAbstractionLayer& xml);
 
       protected:
         PersistedParticle(int particleId, double a0, double ah,

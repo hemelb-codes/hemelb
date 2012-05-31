@@ -13,7 +13,7 @@ namespace hemelb
     class Particle : PersistedParticle
     {
       public:
-        Particle(configuration::XmlAbstractionLayer& xml);
+        Particle(io::xml::XmlAbstractionLayer& xml);
 
         util::Vector3D<double> velocity;
     };
