@@ -18,6 +18,8 @@ namespace hemelb{
     void CoalescePointPoint::ReceivePointToPoint()
     {
 
+      // Make sure the MPI datatypes have been created.
+      EnsurePreparedToSendReceive();
       proc_t m = 0;
 
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
@@ -61,6 +63,9 @@ namespace hemelb{
 
     void CoalescePointPoint::SendPointToPoint()
     {
+
+      // Make sure the MPI datatypes have been created.
+      EnsurePreparedToSendReceive();
       proc_t m = 0;
 
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
