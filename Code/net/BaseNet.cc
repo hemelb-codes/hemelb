@@ -36,10 +36,6 @@ namespace hemelb
 
     void BaseNet::Receive()
     {
-
-      // Make sure the MPI datatypes have been created.
-      EnsurePreparedToSendReceive();
-
       ReceiveGathers();
       ReceiveGatherVs();
       ReceivePointToPoint();
@@ -47,11 +43,10 @@ namespace hemelb
 
     void BaseNet::Send()
     {
-      // Make sure the datatypes have been created.
-      EnsurePreparedToSendReceive();
-      SendPointToPoint();
+
       SendGathers();
       SendGatherVs();
+      SendPointToPoint();
 
     }
 

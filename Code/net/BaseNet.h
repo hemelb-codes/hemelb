@@ -74,7 +74,6 @@ namespace hemelb
         virtual void WaitPointToPoint()=0;
         virtual void WaitGathers()=0;
         virtual void WaitGatherVs()=0;
-        virtual void EnsurePreparedToSendReceive()=0;
 
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();

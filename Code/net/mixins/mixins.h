@@ -2,8 +2,9 @@
 #define HEMELB_NET_MIXINS_MIXINS_H
 
 #include "net/mixins/CoalescePointPoint.h"
-#include "net/mixins/StoringNet.hpp"
+#include "net/mixins/StoringNet.h"
 #include "net/mixins/SeparatedGathers.h"
-#include "net/mixins/CppInterfaceDelegationNet.hpp"
+#include "net/mixins/InterfaceDelegationNet.hpp"
+#include "net/mixins/GathersViaPointPoint.h"
 
 #endif
