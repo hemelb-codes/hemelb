@@ -10,7 +10,7 @@ namespace hemelb
     {
       public:
         CoalescePointPoint():sendReceivePrepped(false),mRequests(),mStatuses(){}
-        void Wait();
+        void WaitPointToPoint();
       protected:
         void ReceivePointToPoint();
         void EnsurePreparedToSendReceive();

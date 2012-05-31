@@ -29,6 +29,12 @@ namespace hemelb
           }
         }
 
+        /*
+         * Blocking gathers are implemented in MPI as a single call for both send/receive
+         * But, here we separate send and receive parts, since this interface may one day be used for
+         * nonblocking collectives.
+         */
+
         template<class T>
         void RequestGatherVSend(T* buffer, int count, proc_t toRank)
         {

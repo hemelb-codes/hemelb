@@ -6,10 +6,12 @@ namespace hemelb{
   namespace net{
     class SeparatedGathers : public virtual StoringNet
     {
-      void ReceiveGathers();
-      void SendGathers();
+      void ReceiveGathers(){}
+      void SendGathers(){}
       void ReceiveGatherVs(){}
       void SendGatherVs(){}
+      void WaitGathers();
+      void WaitGatherVs();
     };
   }
 }
