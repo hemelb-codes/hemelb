@@ -1,7 +1,7 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #include "geometry/needs/Needs.hpp"
-#include "unittests/geometry/Mocks.h"
+#include "unittests/net/RecordingNet.h"
 #include <cppunit/TestFixture.h>
 
 // Let vectors be output to an ostream, so that CPPUNIT can assert equality on them
@@ -36,12 +36,12 @@ namespace hemelb
     namespace geometry
     {
       using namespace hemelb::geometry;
-      typedef NeedsBase<NetMock> MockedNeeds;
+      typedef NeedsBase<net::NetMock> MockedNeeds;
       class NeedsTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
-          //CPPUNIT_TEST(TestReadingOne);
-          //CPPUNIT_TEST(TestNonReading);
+          CPPUNIT_TEST(TestReadingOne);
+          CPPUNIT_TEST(TestNonReading);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -52,7 +52,7 @@ namespace hemelb
 
           void setUp()
           {
-            netMock = new NetMock();
+            netMock = new net::NetMock();
           }
 
           void tearDown()
@@ -204,7 +204,7 @@ namespace hemelb
           proc_t rank;
           std::vector<bool> inputNeededBlocks;
           MockedNeeds *mockedNeeds;
-          NetMock *netMock;
+          net::NetMock *netMock;
 
       };
 
