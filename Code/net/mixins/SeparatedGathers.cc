@@ -12,7 +12,7 @@ namespace hemelb
         if (send_it->first == communicator.GetRank())
         {
           int gather_index = 0;
-          for (std::vector<ScalarRequest>::iterator receive_it = gatherReceiveProcessorComms.begin();
+          for (GatherProcComms::iterator receive_it = gatherReceiveProcessorComms.begin();
               receive_it != gatherReceiveProcessorComms.end(); ++receive_it)
           {
             ScalarRequest toself = send_it->second[gather_index];
@@ -32,7 +32,7 @@ namespace hemelb
         }
         else
         {
-          for (std::vector<ScalarRequest>::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
+          for (GatherProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Sending Gather at core %i to core %i",
                                                           communicator.GetRank(),
@@ -54,7 +54,7 @@ namespace hemelb
         if (send_it->first == communicator.GetRank())
         {
           int gather_index = 0;
-          for (std::vector<GatherVReceiveRequest>::iterator receive_it = gatherVReceiveProcessorComms.begin();
+          for (GatherVReceiveProcComms::iterator receive_it = gatherVReceiveProcessorComms.begin();
               receive_it != gatherVReceiveProcessorComms.end(); ++receive_it)
           {
             BaseRequest toself = send_it->second[gather_index];
@@ -77,7 +77,7 @@ namespace hemelb
         else
         {
 
-          for (std::vector<BaseRequest>::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
+          for (ProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
           {
             MPI_Gatherv(req->Pointer,
                         req->Count,
