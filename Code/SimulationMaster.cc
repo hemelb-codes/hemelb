@@ -155,7 +155,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-  hemelb::configuration::XmlAbstractionLayer xml(colloidConfigPath);
+  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(
