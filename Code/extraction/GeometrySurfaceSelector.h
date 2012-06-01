@@ -1,7 +1,7 @@
 #ifndef HEMELB_EXTRACTION_GEOMETRYSURFACESELECTOR_H
 #define HEMELB_EXTRACTION_GEOMETRYSURFACESELECTOR_H
 
-#include "GeometrySelector.h"
+#include "extraction/GeometrySelector.h"
 
 namespace hemelb
 {
