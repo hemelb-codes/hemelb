@@ -16,8 +16,6 @@ namespace hemelb
               receive_it != gatherReceiveProcessorComms.end(); ++receive_it)
           {
             ScalarRequest toself = send_it->second[gather_index];
-            log::Logger::Log<log::Debug, log::OnePerCore>("Sending/receiving Gather at core %i",
-                                                          communicator.GetRank());
 
             MPI_Gather(toself.Pointer,
                        1,
@@ -34,9 +32,6 @@ namespace hemelb
         {
           for (GatherProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Sending Gather at core %i to core %i",
-                                                          communicator.GetRank(),
-                                                          send_it->first);
             MPI_Gather(req->Pointer, 1, req->Type, NULL, 1, req->Type, send_it->first, communicator.GetCommunicator());
           }
         }
@@ -58,10 +53,7 @@ namespace hemelb
               receive_it != gatherVReceiveProcessorComms.end(); ++receive_it)
           {
             BaseRequest toself = send_it->second[gather_index];
-            log::Logger::Log<log::Debug, log::OnePerCore>("Sending/receiving GatherV at core %i, getting %i, sending %i",
-                                                          communicator.GetRank(),
-                                                          receive_it->Counts[0],
-                                                          toself.Count);
+
             MPI_Gatherv(toself.Pointer,
                         toself.Count,
                         toself.Type,
