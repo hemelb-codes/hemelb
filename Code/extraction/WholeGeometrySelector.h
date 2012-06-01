@@ -20,7 +20,7 @@ namespace hemelb
          * @param location
          * @return
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<float>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
     };
   }
 }
