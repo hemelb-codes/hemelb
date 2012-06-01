@@ -360,9 +360,6 @@ namespace hemelb
                                   readBlock,
                                   util::NumericalFunctions::min(READING_GROUP_SIZE, currentComms.GetSize()),
                                   net,
-                                  currentComms.GetCommunicator(),
-                                  currentComms.GetRank(),
-                                  currentComms.GetSize(),
                                   ShouldValidate());
 
       timings[hemelb::reporting::Timers::readBlocksPrelim].Stop();
