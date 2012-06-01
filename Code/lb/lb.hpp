@@ -138,6 +138,10 @@ namespace hemelb
     {
       timings[hemelb::reporting::Timers::lb].Start();
 
+      // Delegate to the lattice data object to post the asynchronous sends and receives
+      // (via the Net object).
+      // NOTE that this doesn't actually *perform* the sends and receives, it asks the Net
+      // to include them in the ISends and IRecvs that happen later.
       mLatDat->SendAndReceive(mNet);
 
       timings[hemelb::reporting::Timers::lb].Stop();
@@ -222,6 +226,7 @@ namespace hemelb
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
+      // This is done here, after receiving the sent distributions from neighbours.
       mLatDat->CopyReceived();
 
       // Do any cleanup steps necessary on boundary nodes
