@@ -9,16 +9,16 @@ namespace hemelb
 {
   namespace net
   {
+    /**
+     * In this mock, we pretend that the current process is the root node of a phased
+     * broadcast and that a pair of values is going up the tree. The mock simulates
+     * three rounds of communications:
+     *  1) All children report (14,15).
+     *  2) One child reports (1,100) and the rest (14,15).
+     *  3) All back to (14,15).
+     */
     class BroadcastMock : public net::PhasedBroadcastRegular<>
     {
-        /*
-         * In this mock, we pretend that the current process is the root node of a phased
-         * broadcast and that a pair of values is going up the tree. The mock simulates
-         * three rounds of communications:
-         *  1) All children report (14,15).
-         *  2) One child reports (1,100) and the rest (14,15).
-         *  3) All back to (14,15).
-         */
 
       public:
         BroadcastMock(net::Net * net,
@@ -78,6 +78,9 @@ namespace hemelb
     {
       // Action taken after data has been received from its children
       PostReceiveFromChildren(0);
+
+      // Action taken after data has been sent to its parent
+      PostSendToParent(0);
     }
 
     void BroadcastMock::EndIteration()

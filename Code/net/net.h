@@ -8,7 +8,7 @@ namespace hemelb
   namespace net
   {
     class Net : public CoalescePointPoint,
-                              public CppInterfaceDelegationNet<StoringNet>,
+                              public InterfaceDelegationNet<StoringNet>,
                               public SeparatedGathers
     {
       public:
