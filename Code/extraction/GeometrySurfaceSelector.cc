@@ -1,4 +1,4 @@
-#include "GeometrySurfaceSelector.h"
+#include "extraction/GeometrySurfaceSelector.h"
 #include <iostream>
 
 namespace hemelb
