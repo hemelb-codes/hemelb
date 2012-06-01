@@ -59,6 +59,15 @@ namespace hemelb
          */
         float GetVonMisesStress() const;
 
+        /**
+         * Returns true if there's a boundary site at given location
+         *
+         * @param location coordinates of interest
+         * @return whether there is a boundary site at location
+         */
+        bool IsBoundarySite(const util::Vector3D<site_t>& location) const;
+
+
       private:
         /**
          * File handle to open snapshot.
