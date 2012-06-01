@@ -330,25 +330,25 @@ namespace hemelb
             {
               if (procForEachBlock[fluidSiteBlock] < 0)
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
-                                                              fluidSiteBlock,
-                                                              localFluidSiteId,
-                                                              procForEachBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
+                                                             fluidSiteBlock,
+                                                             localFluidSiteId,
+                                                             procForEachBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
-                                                              fluidSiteBlock,
-                                                              localFluidSiteId,
-                                                              firstSiteIndexPerBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
+                                                             fluidSiteBlock,
+                                                             localFluidSiteId,
+                                                             firstSiteIndexPerBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock] - 1 < localFluidSiteId)
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
-                                                              fluidSiteBlock,
-                                                              localFluidSiteId,
-                                                              fluidSitesPerBlock[fluidSiteBlock],
-                                                              firstSiteIndexPerBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
+                                                             fluidSiteBlock,
+                                                             localFluidSiteId,
+                                                             fluidSitesPerBlock[fluidSiteBlock],
+                                                             firstSiteIndexPerBlock[fluidSiteBlock]);
               }
             }
 
@@ -381,26 +381,26 @@ namespace hemelb
               // inform the user.
               if (fluidSiteBlock >= geometry.GetBlockCount() || procForEachBlock[fluidSiteBlock] != comms.GetRank())
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
-                                                              ii,
-                                                              fluidSiteBlock,
-                                                              geometry.GetBlockCount(),
-                                                              procForEachBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Info, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
+                                                             ii,
+                                                             fluidSiteBlock,
+                                                             geometry.GetBlockCount(),
+                                                             procForEachBlock[fluidSiteBlock]);
               }
               // Similarly, if we've ended up with an impossible site index, or a solid site,
               // print an error message.
               if (siteIndex >= geometry.GetSitesPerBlock()
                   || geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor == BIG_NUMBER2)
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
-                                                              ii,
-                                                              siteIndex,
-                                                              fluidSitesPerBlock[fluidSiteBlock],
-                                                              fluidSiteBlock,
-                                                              geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                  == BIG_NUMBER2 ?
-                                                                " and site is solid" :
-                                                                "");
+                log::Logger::Log<log::Info, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
+                                                             ii,
+                                                             siteIndex,
+                                                             fluidSitesPerBlock[fluidSiteBlock],
+                                                             fluidSiteBlock,
+                                                             geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
+                                                                 == BIG_NUMBER2 ?
+                                                               " and site is solid" :
+                                                               "");
               }
             }
 
@@ -570,10 +570,8 @@ namespace hemelb
           log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires %i blocks from me",
                                                         otherProc,
                                                         blockIdsXRequiresFromMe[otherProc].size());
-          netForMoveSending.RequestReceiveV(blockIdsXRequiresFromMe[otherProc],
-                                           otherProc);
-          netForMoveSending.RequestSendV(blockIdsIRequireFromX[otherProc],
-                                        otherProc);
+          netForMoveSending.RequestReceiveV(blockIdsXRequiresFromMe[otherProc], otherProc);
+          netForMoveSending.RequestSendV(blockIdsIRequireFromX[otherProc], otherProc);
         }
         netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::blockRequirements].Stop();
@@ -759,9 +757,9 @@ namespace hemelb
             proc_t residentProc = procForEachBlock[block];
             blockIdsIRequireFromX[residentProc].push_back(block);
             log::Logger::Log<log::Debug, log::OnePerCore>("I require block %i from proc %i (running total %i)",
-                                                          block,
-                                                          residentProc,
-                                                          blockIdsIRequireFromX[residentProc].size());
+                                                         block,
+                                                         residentProc,
+                                                         blockIdsIRequireFromX[residentProc].size());
           }
         }
 
@@ -802,12 +800,16 @@ namespace hemelb
 
       bool OptimisedDecomposition::ShouldValidate() const
       {
-        return log::Logger::ShouldDisplay<log::Debug>();
+#ifdef HEMELB_VALIDATE_GEOMETRY
+        return true;
+#else
+        return false;
+#endif
       }
 
       void OptimisedDecomposition::ValidateVertexDistribution()
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
+        log::Logger::Log<log::Info, log::OnePerCore>("Validating the vertex distribution.");
         // vtxDistribn should be the same on all cores.
         std::vector<idx_t> vtxDistribnRecv(comms.GetSize() + 1);
         MPI_Allreduce(&vtxDistribn[0],
@@ -820,10 +822,10 @@ namespace hemelb
         {
           if (vtxDistribn[rank] != vtxDistribnRecv[rank])
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
-                                                          rank,
-                                                          vtxDistribn[rank],
-                                                          vtxDistribnRecv[rank]);
+            log::Logger::Log<log::Info, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
+                                                         rank,
+                                                         vtxDistribn[rank],
+                                                         vtxDistribnRecv[rank]);
           }
         }
 
@@ -835,7 +837,7 @@ namespace hemelb
         // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
         if (ShouldValidate())
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Validating the graph adjacency structure");
+          log::Logger::Log<log::Info, log::OnePerCore>("Validating the graph adjacency structure");
           // Create an array of lists to store all of this node's adjacencies, arranged by the
           // proc the adjacent vertex is on.
           std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(comms.GetSize(), std::multimap<idx_t, idx_t>());
@@ -862,9 +864,9 @@ namespace hemelb
               // If it doesn't appear to belong to any proc, something's wrong.
               if (adjacentProc == -1)
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
-                                                              vertex,
-                                                              adjacentVertex);
+                log::Logger::Log<log::Info, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
+                                                             vertex,
+                                                             adjacentVertex);
                 continue;
               }
               // Store the data if it does belong to a proc.
@@ -876,7 +878,7 @@ namespace hemelb
           // Create variables for the neighbour data to go into.
           std::vector<idx_t> counts(comms.GetSize());
           std::vector<std::vector<idx_t> > data(comms.GetSize());
-          log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
+          log::Logger::Log<log::Info, log::OnePerCore>("Validating neighbour data");
           // Now spread and compare the adjacency information. Larger ranks send data to smaller
           // ranks which receive the data and compare it.
           for (proc_t neigh = 0; neigh < (proc_t) ( ( ( ( (comms.GetSize()))))); ++neigh)
@@ -992,10 +994,10 @@ namespace hemelb
           // No neighbour data on this proc matched the data received.
           if (!found)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
-                                                          neighbouringProc,
-                                                          neighboursAdjacencyData[ii],
-                                                          neighboursAdjacencyData[ii + 1]);
+            log::Logger::Log<log::Info, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
+                                                         neighbouringProc,
+                                                         neighboursAdjacencyData[ii],
+                                                         neighboursAdjacencyData[ii + 1]);
           }
         }
 
@@ -1007,16 +1009,16 @@ namespace hemelb
           idx_t adj2 = it->second;
           ++it;
           // We had neighbour-data on this proc that didn't match that received.
-          log::Logger::Log<log::Debug, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
-                                                        adj1,
-                                                        adj2,
-                                                        neighbouringProc);
+          log::Logger::Log<log::Info, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
+                                                       adj1,
+                                                       adj2,
+                                                       neighbouringProc);
         }
       }
 
       void OptimisedDecomposition::ValidateFirstSiteIndexOnEachBlock()
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
+        log::Logger::Log<log::Info, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
         std::vector<idx_t> firstSiteIndexPerBlockRecv(geometry.GetBlockCount());
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
@@ -1032,10 +1034,10 @@ namespace hemelb
         {
           if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block] != firstSiteIndexPerBlockRecv[block])
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
-                                                          block,
-                                                          firstSiteIndexPerBlock[block],
-                                                          firstSiteIndexPerBlockRecv[block]);
+            log::Logger::Log<log::Info, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
+                                                         block,
+                                                         firstSiteIndexPerBlock[block],
+                                                         firstSiteIndexPerBlockRecv[block]);
           }
         }
       }
