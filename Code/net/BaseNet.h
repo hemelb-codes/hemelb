@@ -29,7 +29,6 @@ namespace hemelb
         //DTMP: monitoring variables
         long long int BytesSent;
         long long int SyncPointsCounted;
-        const topology::Communicator &communicator;
 
         void Receive();
         void Send();
@@ -63,7 +62,7 @@ namespace hemelb
          template<class T> void RequestGatherSend(T* buffer, proc_t toRank);
 
          */
-
+        const topology::Communicator &GetCommunicator(){return communicator;}
       protected:
         virtual void SendPointToPoint()=0;
         virtual void SendGathers()=0;
@@ -77,6 +76,8 @@ namespace hemelb
 
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();
+
+        const topology::Communicator &communicator;
       private:
         /***
          * Buffers which can be used to store displacements and counts for cleaning up interfaces
