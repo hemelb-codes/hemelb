@@ -38,6 +38,18 @@ namespace hemelb
           size = commSize;
         }
 
+        /***
+         * Constructor for a dummy communicator
+         * Can be useful for testing.
+         * Communicator and group are invalid when used in this way.
+         * @param rank
+         * @param size
+         */
+        Communicator(proc_t rank, proc_t size) :
+            rank(rank), size(size), communicator(NULL), group(NULL)
+        {
+        }
+
         /**
          * Returns the local rank on the communicator
          * @return

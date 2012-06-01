@@ -11,10 +11,8 @@ namespace hemelb
      * PhasedBroadcastRegular - a class for performing phased broadcasts starting at regular
      * intervals. A longer description is given in PhasedBroadcast.h.
      */
-    template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown =
-        true, bool goUp = true>
-    class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown,
-        goUp>
+    template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown = true, bool goUp = true>
+    class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>
     {
       public:
         /**
@@ -25,10 +23,8 @@ namespace hemelb
          * @param spreadFactor
          * @return
          */
-        PhasedBroadcastRegular(Net * iNet,
-                               const lb::SimulationState * iSimState,
-                               unsigned int spreadFactor) :
-          base(iNet, iSimState, spreadFactor)
+        PhasedBroadcastRegular(Net * iNet, const lb::SimulationState * iSimState, unsigned int spreadFactor) :
+            base(iNet, iSimState, spreadFactor)
         {
 
         }
@@ -108,16 +104,16 @@ namespace hemelb
         void PostReceive()
         {
           const unsigned long iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned long firstAscent = PhasedBroadcast<initialAction, splay, overlap, goDown,
-              goUp>::GetFirstAscending();
-          const unsigned long traversalLength = PhasedBroadcast<initialAction, splay, overlap,
-              goDown, goUp>::GetTraverseTime();
+          const unsigned long firstAscent =
+              PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetFirstAscending();
+          const unsigned long traversalLength =
+              PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetTraverseTime();
 
           // Deal with the case of a cycle with an initial pass down the tree.
           if (goDown)
           {
-            const unsigned long firstDescent = PhasedBroadcast<initialAction, splay, overlap,
-                goDown, goUp>::GetFirstDescending();
+            const unsigned long firstDescent =
+                PhasedBroadcast<initialAction, splay, overlap, goDown, goUp>::GetFirstDescending();
 
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {
@@ -142,12 +138,18 @@ namespace hemelb
           {
             if (iCycleNumber >= firstAscent)
             {
-              unsigned long receiveOverlap;
+              unsigned long receiveOverlap, sendOverlap;
 
               if (base::GetReceiveChildrenOverlap(iCycleNumber - firstAscent, &receiveOverlap))
               {
                 PostReceiveFromChildren(receiveOverlap);
               }
+
+              if (base::GetSendParentOverlap(iCycleNumber - firstAscent, &sendOverlap))
+              {
+                PostSendToParent(sendOverlap);
+              }
+
             }
           }
 
@@ -243,6 +245,15 @@ namespace hemelb
         virtual void PostReceiveFromChildren(unsigned long splayNumber)
         {
 
+        }
+
+        /**
+         * Overridable function, called by a node after data has been sent to its parent.
+         *
+         * @param splayNumber The parameter splayNumber is 0 indexed and less than splay.
+         */
+        virtual void PostSendToParent(unsigned long splayNumber)
+        {
         }
 
         /**

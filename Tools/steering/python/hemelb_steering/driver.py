@@ -66,8 +66,5 @@ class Driver(object):
         """
         self.hemelb.step()
 
-def main():
-    Intervention(sys.argv).act()
-
 if __name__ == '__main__':
     main()

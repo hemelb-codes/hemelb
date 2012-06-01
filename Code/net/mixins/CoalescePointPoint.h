@@ -1,7 +1,7 @@
 #ifndef HEMELB_NET_MIXINS_COALESCEPOINTPOINT_H
 #define HEMELB_NET_MIXINS_COALESCEPOINTPOINT_H
 #include "net/BaseNet.h"
-#include "net/mixins/StoringNet.hpp"
+#include "net/mixins/StoringNet.h"
 namespace hemelb
 {
   namespace net
@@ -10,15 +10,14 @@ namespace hemelb
     {
       public:
         CoalescePointPoint():sendReceivePrepped(false),mRequests(),mStatuses(){}
-        void Wait();
+        void WaitPointToPoint();
       protected:
         void ReceivePointToPoint();
-        void EnsurePreparedToSendReceive();
         void SendPointToPoint();
         ~CoalescePointPoint();
       private:
         void EnsureEnoughRequests(size_t count);
-
+        void EnsurePreparedToSendReceive();
         bool sendReceivePrepped;
 
         // Requests and statuses available for general communication within the Net object (both
