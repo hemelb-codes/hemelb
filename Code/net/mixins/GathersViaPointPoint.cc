@@ -10,12 +10,14 @@ namespace hemelb
       {
         int size;
         MPI_Type_size(receive_it->Type, &size);
-        for (int source_rank = 0; source_rank <= communicator.GetSize(); source_rank++)
+        for (int source_rank = 0; source_rank < communicator.GetSize(); source_rank++)
         {
-          RequestReceive(&receive_it->Pointer + size * source_rank, 1, source_rank, receive_it->Type);
+          // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
+          // But we cannot currently see a better solution to avoid compiler warnings from void* arithmetic.
+          RequestReceive(static_cast<unsigned char *>(receive_it->Pointer) + size * source_rank, 1, source_rank, receive_it->Type);
         }
       }
-      gatherSendProcessorComms.clear();
+      gatherReceiveProcessorComms.clear();
     }
     void GathersViaPointPoint::SendGathers()
     {
@@ -29,16 +31,22 @@ namespace hemelb
         }
       }
 
-      gatherReceiveProcessorComms.clear();
+      gatherSendProcessorComms.clear();
     }
     void GathersViaPointPoint::ReceiveGatherVs()
     {
       for (GatherVReceiveProcComms::iterator receive_it = gatherVReceiveProcessorComms.begin();
           receive_it != gatherVReceiveProcessorComms.end(); ++receive_it)
       {
-        for (int source_rank = 0; source_rank <= communicator.GetSize(); source_rank++)
+        int size;
+        MPI_Type_size(receive_it->Type, &size);
+
+        for (int source_rank = 0; source_rank < communicator.GetSize(); source_rank++)
         {
-          RequestReceive(receive_it->Pointer + receive_it->Displacements[source_rank],
+          // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
+          // But we cannot currently see a better solution to avoid compiler warnings from void* arithmetic.
+          // Note that MPI Displacements are given in the arithmetic appropriate to the MPI_Datatype, not void*, i.e. in units of the size
+          RequestReceive(static_cast<unsigned char *>(receive_it->Pointer) + receive_it->Displacements[source_rank]*size,
                          receive_it->Counts[source_rank],
                          source_rank,
                          receive_it->Type);

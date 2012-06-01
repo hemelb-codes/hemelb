@@ -53,17 +53,19 @@ namespace hemelb
           {
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
-            netMock = new net::NetMock();
+
           }
 
           void tearDown()
           {
             delete mockedNeeds;
+            delete communicatorMock;
           }
 
           void TestReadingOne()
           {
             SetupMocks(6, 2, 5, 0);
+            CPPUNIT_ASSERT_EQUAL(communicatorMock->GetSize(),5);
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // I would expect to send to the other reading core, my count of needed cores
@@ -80,7 +82,6 @@ namespace hemelb
             int core_3_requires_count = 2;
             int core_4_requires_count = 1;
             netMock->RequireReceive(&core_0_requires_count, 1, 0, "Count");
-            netMock->RequireReceive(&core_1_requires_count, 1, 1, "Count");
             netMock->RequireReceive(&core_1_requires_count, 1, 1, "Count");
             netMock->RequireReceive(&core_2_requires_count, 1, 2, "Count");
             netMock->RequireReceive(&core_3_requires_count, 1, 3, "Count");
@@ -154,6 +155,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(needing_block_3, mockedNeeds->ProcessorsNeedingBlock(3));
             CPPUNIT_ASSERT_EQUAL(needing_block_4, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(needing_block_5, mockedNeeds->ProcessorsNeedingBlock(5));
+            netMock->ExpectationsAllCompleted();
           }
 
           void TestNonReading()
@@ -162,8 +164,8 @@ namespace hemelb
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // So I would expect the non-reading core to post a send to each of the reading cores, its count of needed blocks
-            unsigned int core_2_requires_from_0_count = 1;
-            unsigned int core_2_requires_from_1_count = 2;
+            int core_2_requires_from_0_count = 1;
+            int core_2_requires_from_1_count = 2;
             netMock->RequireSend(&core_2_requires_from_0_count, 1, 0);
             netMock->RequireSend(&core_2_requires_from_1_count, 1, 1);
             // Then, I would expect to send my list of needed blocks
@@ -186,6 +188,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(3));
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(5));
+            netMock->ExpectationsAllCompleted();
           }
 
           void SetupMocks(const site_t block_count,
@@ -197,6 +200,8 @@ namespace hemelb
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
+            communicatorMock=new topology::Communicator(current_core,core_count);
+            netMock = new net::NetMock(*communicatorMock);
             inputNeededBlocks = std::vector<bool>(block_count);
             for (site_t i = 0; i < block_count; i++)
             {
@@ -211,9 +216,6 @@ namespace hemelb
                                           inputNeededBlocks,
                                           readingCores,
                                           *netMock,
-                                          NULL,
-                                          rank,
-                                          size,
                                           false);
           }
 
@@ -225,7 +227,7 @@ namespace hemelb
           std::vector<bool> inputNeededBlocks;
           MockedNeeds *mockedNeeds;
           net::NetMock *netMock;
-
+          topology::Communicator *communicatorMock;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NeedsTests);
