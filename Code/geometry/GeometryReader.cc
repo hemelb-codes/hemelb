@@ -336,7 +336,7 @@ namespace hemelb
 
       if (ShouldValidate())
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Validating block sizes");
+        log::Logger::Log<log::Info, log::OnePerCore>("Validating block sizes");
 
         // Validate the uncompressed length of the block on disk fits out expectations.
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
@@ -344,11 +344,11 @@ namespace hemelb
           if (bytesPerUncompressedBlock[block]
               > io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(), fluidSitesOnEachBlock[block]))
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
-                                                          block,
-                                                          bytesPerUncompressedBlock[block],
-                                                          io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
-                                                                                                         fluidSitesOnEachBlock[block]));
+            log::Logger::Log<log::Info, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
+                                                         block,
+                                                         bytesPerUncompressedBlock[block],
+                                                         io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
+                                                                                                        fluidSitesOnEachBlock[block]));
           }
         }
       }
@@ -433,7 +433,6 @@ namespace hemelb
       {
         compressedBlockData.resize(bytesPerCompressedBlock[blockNumber]);
 
-
         net.RequestReceiveV(compressedBlockData, readingCore);
 
       }
@@ -468,10 +467,10 @@ namespace hemelb
           // Compare with the sites we expected to read.
           if (numSitesRead != fluidSitesOnEachBlock[blockNumber])
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
-                                                          fluidSitesOnEachBlock[blockNumber],
-                                                          blockNumber,
-                                                          numSitesRead);
+            log::Logger::Log<log::Info, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
+                                                         fluidSitesOnEachBlock[blockNumber],
+                                                         blockNumber,
+                                                         numSitesRead);
           }
         }
       }
@@ -616,12 +615,12 @@ namespace hemelb
     }
 
     /**
-     * This function is only called if in Debug mode.
+     * This function is only called if in geometry-validation mode.
      * @param geometry
      */
     void GeometryReader::ValidateGeometry(const Geometry& geometry)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
+      log::Logger::Log<log::Info, log::OnePerCore>("Validating the GlobalLatticeData");
 
       // We check the isFluid property and the link type for each direction
       site_t blockSiteDataLength = geometry.GetSitesPerBlock() * (1 + latticeInfo.GetNumVectors() - 1);
@@ -694,28 +693,28 @@ namespace hemelb
           if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyComms.GetRank())
               && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyComms.GetRank())))
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
-                                                          site,
-                                                          block);
+            log::Logger::Log<log::Info, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
+                                                         site,
+                                                         block);
           }
           else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site] != myProcForSite[site])
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
-                                                          myProcForSite[site],
-                                                          site,
-                                                          block,
-                                                          procForSiteRecv[site]);
+            log::Logger::Log<log::Info, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
+                                                         myProcForSite[site],
+                                                         site,
+                                                         block,
+                                                         procForSiteRecv[site]);
           }
 
           if (geometry.Blocks[block].Sites.size() > 0)
           {
             if (dummySiteData[site * latticeInfo.GetNumVectors()] != siteDataRecv[site * latticeInfo.GetNumVectors()])
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
-                                                            site,
-                                                            block,
-                                                            dummySiteData[site * latticeInfo.GetNumVectors()],
-                                                            siteDataRecv[site * latticeInfo.GetNumVectors()]);
+              log::Logger::Log<log::Info, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
+                                                           site,
+                                                           block,
+                                                           dummySiteData[site * latticeInfo.GetNumVectors()],
+                                                           siteDataRecv[site * latticeInfo.GetNumVectors()]);
             }
 
             for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
@@ -723,14 +722,13 @@ namespace hemelb
               if (dummySiteData[site * latticeInfo.GetNumVectors() + direction]
                   != siteDataRecv[site * latticeInfo.GetNumVectors() + direction])
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
-                                                              site,
-                                                              direction,
-                                                              block,
-                                                              dummySiteData[site * latticeInfo.GetNumVectors()
-                                                                  + direction],
-                                                              siteDataRecv[site * latticeInfo.GetNumVectors()
-                                                                  + direction]);
+                log::Logger::Log<log::Info, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
+                                                             site,
+                                                             direction,
+                                                             block,
+                                                             dummySiteData[site * latticeInfo.GetNumVectors()
+                                                                 + direction],
+                                                             siteDataRecv[site * latticeInfo.GetNumVectors() + direction]);
               }
             }
 
@@ -899,12 +897,12 @@ namespace hemelb
               if (geometry.Blocks[block].Sites[site].targetProcessor
                   != ConvertTopologyRankToGlobalRank((proc_t) fromProc))
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
-                                                              block,
-                                                              site,
-                                                              moveIndex,
-                                                              geometry.Blocks[block].Sites[site].targetProcessor,
-                                                              fromProc);
+                log::Logger::Log<log::Info, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
+                                                             block,
+                                                             site,
+                                                             moveIndex,
+                                                             geometry.Blocks[block].Sites[site].targetProcessor,
+                                                             fromProc);
               }
             }
 
@@ -928,7 +926,11 @@ namespace hemelb
 
     bool GeometryReader::ShouldValidate() const
     {
-      return log::Logger::ShouldDisplay<log::Debug>();
+#ifdef HEMELB_VALIDATE_GEOMETRY
+      return true;
+#else
+      return false;
+#endif
     }
   }
 }
