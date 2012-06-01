@@ -12,11 +12,8 @@ namespace hemelb
                                                   const std::vector<bool>& readBlock,
                                                   const proc_t areadingGroupSize,
                                                   Net & anet,
-                                                  MPI_Comm comm,
-                                                  const proc_t rank,
-                                                  const proc_t size,
                                                   bool shouldValidate) :
-        procsWantingBlocksBuffer(blockCount), net(anet), decompositionCommunicator(comm), decompositionCommunicatorRank(rank), decompositionCommunicatorSize(size), readingGroupSize(areadingGroupSize), shouldValidate(shouldValidate)
+        procsWantingBlocksBuffer(blockCount), net(anet), communicator(anet.GetCommunicator()), readingGroupSize(areadingGroupSize), shouldValidate(shouldValidate)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -30,58 +27,44 @@ namespace hemelb
 
       // Share the counts of needed blocks
       int blocksNeededSize[readingGroupSize];
-      std::vector<int> blocksNeededSizes(decompositionCommunicatorSize);
+      std::vector<int> blocksNeededSizes(communicator.GetSize());
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
-
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending count of needed blocks (%i) to core %i from core %i",
-                                                      blocksNeededSize[readingCore],
-                                                      readingCore,
-                                                      decompositionCommunicatorRank);
         anet.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
 
       }
-      if (decompositionCommunicatorRank < readingGroupSize)
+      if (communicator.GetRank() < readingGroupSize)
       {
         anet.RequestGatherReceive(blocksNeededSizes);
       }
       anet.Dispatch();
       // Communicate the arrays of needed blocks
-      std::vector<std::vector<site_t> > blocksNeededOn(decompositionCommunicatorSize);
+      std::vector<std::vector<site_t> > blocksNeededOn(communicator.GetSize());
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
 
-        if (readingCore == decompositionCommunicatorRank)
+        if (readingCore == communicator.GetRank())
         {
-          for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
+          for (proc_t sendingCore = 0; sendingCore < communicator.GetSize(); sendingCore++)
           {
             blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
-            log::Logger::Log<log::Debug, log::OnePerCore>("Expecting %i needs from core %i",
-                                                          blocksNeededOn[sendingCore].size(),
-                                                          sendingCore);
           }
 
         }
         anet.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending list of %i needed blocks to core %i from %i",
-                                                      blocksNeededHere[readingCore].size(),
-                                                      readingCore,
-                                                      decompositionCommunicatorRank);
       }
-      if (decompositionCommunicatorRank < readingGroupSize)
+      if (communicator.GetRank() < readingGroupSize)
       {
         anet.RequestGatherVReceive(blocksNeededOn);
-        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving lists of blocks needed at core %i",
-                                                      decompositionCommunicatorRank);
       }
       anet.Dispatch();
-      if (decompositionCommunicatorRank < readingGroupSize)
+      if (communicator.GetRank() < readingGroupSize)
       {
         // Transpose the blocks needed on cores matrix
-        for (proc_t sendingCore = 0; sendingCore < decompositionCommunicatorSize; sendingCore++)
+        for (proc_t sendingCore = 0; sendingCore < communicator.GetSize(); sendingCore++)
         {
           for (std::vector<site_t>::iterator need = blocksNeededOn[sendingCore].begin();
               need != blocksNeededOn[sendingCore].end(); need++)
@@ -100,7 +83,7 @@ namespace hemelb
 
     template<class Net> void NeedsBase<Net>::Validate(const site_t blockCount, const std::vector<bool>& readBlock)
     {
-      std::vector<int> procsWantingThisBlockBuffer(decompositionCommunicatorSize);
+      std::vector<int> procsWantingThisBlockBuffer(communicator.GetSize());
       for (site_t block = 0; block < blockCount; ++block)
       {
         int neededHere = readBlock[block];
@@ -112,12 +95,12 @@ namespace hemelb
                    1,
                    MpiDataType<int>(),
                    readingCore,
-                   decompositionCommunicator);
+                   communicator.GetCommunicator());
 
-        if (decompositionCommunicatorRank == readingCore)
+        if (communicator.GetRank() == readingCore)
         {
 
-          for (proc_t needingProcOld = 0; needingProcOld < decompositionCommunicatorSize; needingProcOld++)
+          for (proc_t needingProcOld = 0; needingProcOld < communicator.GetSize(); needingProcOld++)
           {
             bool found = false;
             for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
