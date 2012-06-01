@@ -32,9 +32,6 @@ namespace hemelb
                           const std::vector<bool>& readBlock,
                           const proc_t areadingGroupSize,
                           Net &anet,
-                          MPI_Comm comm,
-                          const proc_t rank,
-                          const proc_t size,
                           bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
@@ -58,9 +55,7 @@ namespace hemelb
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
         Net &net;
-        MPI_Comm decompositionCommunicator;
-        const proc_t decompositionCommunicatorRank;
-        const proc_t decompositionCommunicatorSize;
+        const topology::Communicator & communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;
         void Validate(const site_t blockCount, const std::vector<bool>& readBlock);
