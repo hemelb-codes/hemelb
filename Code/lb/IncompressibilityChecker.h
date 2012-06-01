@@ -192,6 +192,13 @@ namespace hemelb
         void PostReceiveFromChildren(unsigned long splayNumber);
 
         /**
+         * Override the method from the base class for a node in the tree to update its density tracker
+         *
+         * @param splayNumber The parameter splayNumber is 0 indexed and less than splay (a template parameter of PhasedBroadcast)
+         */
+        virtual void PostSendToParent(unsigned long splayNumber);
+
+        /**
          * Use the density tracker sent by the root node.
          */
         void Effect();

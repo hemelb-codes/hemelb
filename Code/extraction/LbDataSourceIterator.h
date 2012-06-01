@@ -100,6 +100,15 @@ namespace hemelb
          */
         const util::Vector3D<distribn_t>& GetOrigin() const;
 
+        /**
+         * Returns true if there's a boundary site at given location
+         *
+         * @param location coordinates of interest
+         * @return whether there is a boundary site at location
+         */
+        bool IsBoundarySite(const util::Vector3D<site_t>& location) const;
+
+
       private:
         /**
          * The cache of properties for each site, which we iterate through.

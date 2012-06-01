@@ -36,10 +36,6 @@ namespace hemelb
 
     void BaseNet::Receive()
     {
-
-      // Make sure the MPI datatypes have been created.
-      EnsurePreparedToSendReceive();
-
       ReceiveGathers();
       ReceiveGatherVs();
       ReceivePointToPoint();
@@ -47,18 +43,32 @@ namespace hemelb
 
     void BaseNet::Send()
     {
-      // Make sure the datatypes have been created.
-      EnsurePreparedToSendReceive();
-      SendPointToPoint();
+
       SendGathers();
       SendGatherVs();
+      SendPointToPoint();
 
     }
 
     void BaseNet::Wait()
     {
       SyncPointsCounted++; //DTMP: counter for monitoring purposes.
+      WaitPointToPoint();
+      WaitGathers();
+      WaitGatherVs();
+      displacementsBuffer.clear();
+      countsBuffer.clear();
+    }
 
+    std::vector<int> & BaseNet::GetDisplacementsBuffer()
+    {
+      displacementsBuffer.push_back(std::vector<int>());
+      return displacementsBuffer.back();
+    }
+    std::vector<int> & BaseNet::GetCountsBuffer()
+    {
+      countsBuffer.push_back(std::vector<int>());
+      return countsBuffer.back();
     }
 
   }
