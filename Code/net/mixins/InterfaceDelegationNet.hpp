@@ -37,15 +37,13 @@ namespace hemelb
           std::vector<int> & displacements = this->GetDisplacementsBuffer();
           std::vector<int> &counts = this->GetCountsBuffer();
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("Request receiving GatherV getting %i", buffer[0].size());
-
           for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin();
               buffer_iterator != buffer.end(); buffer_iterator++)
           {
             // Ensure each vector has some underlying array, even if it's unused.
             buffer_iterator->reserve(1);
             displacements.push_back(&buffer_iterator->front() - &buffer.front().front());
-            log::Logger::Log<log::Debug, log::OnePerCore>("Getting %i from this piece", buffer_iterator->size());
+
             counts.push_back(buffer_iterator->size());
           }
           RequestGatherVReceive(&buffer.front().front(), &displacements.front(), &counts.front());
