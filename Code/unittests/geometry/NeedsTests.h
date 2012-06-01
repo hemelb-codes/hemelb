@@ -40,9 +40,8 @@ namespace hemelb
       class NeedsTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
-          CPPUNIT_TEST(TestReadingOne);
-          CPPUNIT_TEST(TestNonReading);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (TestReadingOne);
+          CPPUNIT_TEST (TestNonReading);CPPUNIT_TEST_SUITE_END();
 
         public:
           NeedsTests() :
@@ -52,6 +51,8 @@ namespace hemelb
 
           void setUp()
           {
+            bool dummy;
+            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             netMock = new net::NetMock();
           }
 
@@ -65,24 +66,42 @@ namespace hemelb
             SetupMocks(6, 2, 5, 0);
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
-            // Then, I would expect to send to the other reading core, my count of needed cores
-            unsigned int core_0_requires_count = 1;
-            unsigned int core_1_requires_count = 2;
-            unsigned int core_2_requires_count = 1;
-            unsigned int core_3_requires_count = 2;
-            unsigned int core_4_requires_count = 1;
-            netMock->RequireSend(&core_0_requires_count, 1, 1, "Count");
-            // And I would expect the reading core to post a receive from each of the other cores, 
+            // I would expect to send to the other reading core, my count of needed cores
+            int core_0_requires_from_0_count = 1;
+            int core_0_requires_from_1_count = 1;
+
+            netMock->RequireSend(&core_0_requires_from_0_count, 1, 0, "Count");
+            netMock->RequireSend(&core_0_requires_from_1_count, 1, 1, "Count");
+            // And I would expect the reading core to post a receive from each of the other cores,
             // asking for its count of needed blocks from this reading core
+            int core_0_requires_count = 1;
+            int core_1_requires_count = 2;
+            int core_2_requires_count = 1;
+            int core_3_requires_count = 2;
+            int core_4_requires_count = 1;
+            netMock->RequireReceive(&core_0_requires_count, 1, 0, "Count");
+            netMock->RequireReceive(&core_1_requires_count, 1, 1, "Count");
             netMock->RequireReceive(&core_1_requires_count, 1, 1, "Count");
             netMock->RequireReceive(&core_2_requires_count, 1, 2, "Count");
             netMock->RequireReceive(&core_3_requires_count, 1, 3, "Count");
             netMock->RequireReceive(&core_4_requires_count, 1, 4, "Count");
 
+            // Then, I would expect to send to myself, my needs
+            std::vector<site_t> core_0_requires_from_0;
+            core_0_requires_from_0.push_back(0);
+            netMock->RequireSend(&core_0_requires_from_0[0], 1, 0, "Needs");
+
             // Then, I would expect to send to the other reading core, my needs
+            std::vector<site_t> core_0_requires_from_1;
+            core_0_requires_from_1.push_back(1);
+            netMock->RequireSend(&core_0_requires_from_1[0], 1, 1, "Needs");
+
+            // Then, I should receieve from myself, my own requirements
+            // Then, I would expect to receive the lists of needed blocks themselves.
+            // Core 0, I expect it to need blocks 0,1
             std::vector<site_t> core_0_requires;
-            core_0_requires.push_back(1);
-            netMock->RequireSend(&core_0_requires[0], 1, 1, "Needs");
+            core_0_requires.push_back(0);
+            netMock->RequireReceive(&core_0_requires[0], 1, 0, "Needs");
 
             // Then, I would expect to receive the lists of needed blocks themselves.
             // From core 1, the other reading core, I expect it to need blocks 0,1,2
@@ -114,6 +133,7 @@ namespace hemelb
             ShareMockNeeds();
             // Finally, I would expect the resulting array of needs on core one to be as planned:
             std::vector<proc_t> needing_block_0;
+            needing_block_0.push_back(0);
             needing_block_0.push_back(1);
             std::vector<proc_t> needing_block_1;
 
@@ -194,7 +214,7 @@ namespace hemelb
                                           NULL,
                                           rank,
                                           size,
-                                          true);
+                                          false);
           }
 
         private:
