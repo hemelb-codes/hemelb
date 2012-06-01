@@ -19,31 +19,6 @@ namespace hemelb
             Pointer(pointer), Count(count), Type(type), Rank(rank)
         {
         }
-        virtual bool EnvelopeIdentical(const BaseRequest & other)
-        {
-          return ( (Count == other.Count) && (Rank == other.Rank) && (Type == other.Type));
-        }
-        virtual bool PayloadIdentical(const BaseRequest & other)
-        {
-          // reduction
-          bool ok = true;
-          for (unsigned int element = 0; element < Count; element++)
-          {
-            int size;
-            MPI_Type_size(other.Type, &size);
-            ok = ok && std::memcmp(other.Pointer + size * element, Pointer + size * element, size);
-          }
-          return ok;
-        }
-        virtual void Unpack(BaseRequest & other)
-        {
-          for (unsigned int element = 0; element < Count; element++)
-          {
-            int size;
-            MPI_Type_size(other.Type, &size);
-            std::memcpy(other.Pointer + size * element, Pointer + size * element, size);
-          }
-        }
     };
 
     class ScalarRequest : public BaseRequest
@@ -58,10 +33,10 @@ namespace hemelb
     class GatherVReceiveRequest : public BaseRequest
     {
       public:
-        int * Displacements;
         int * Counts;
+        int * Displacements;
         GatherVReceiveRequest(void *pointer, int *displacements, int *counts, MPI_Datatype type) :
-            BaseRequest(pointer, 0, type, 0), Counts(counts)
+            BaseRequest(pointer, 0, type, 0), Counts(counts), Displacements(displacements)
         {
         }
     };
