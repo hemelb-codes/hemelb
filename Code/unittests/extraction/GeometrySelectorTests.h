@@ -10,6 +10,7 @@
 #include "extraction/StraightLineGeometrySelector.h"
 #include "extraction/PlaneGeometrySelector.h"
 #include "extraction/WholeGeometrySelector.h"
+#include "extraction/GeometrySurfaceSelector.h"
 #include "unittests/FourCubeLatticeData.h"
 
 namespace hemelb
@@ -20,17 +21,18 @@ namespace hemelb
     {
       class GeometrySelectorTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE ( GeometrySelectorTests);
-          CPPUNIT_TEST ( TestStraightLineGeometrySelector);
-          CPPUNIT_TEST ( TestPlaneGeometrySelector);
-          CPPUNIT_TEST ( TestWholeGeometrySelector);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (GeometrySelectorTests);
+          CPPUNIT_TEST (TestStraightLineGeometrySelector);
+          CPPUNIT_TEST (TestPlaneGeometrySelector);
+          CPPUNIT_TEST (TestWholeGeometrySelector);
+          CPPUNIT_TEST (TestGeometrySurfaceSelector);CPPUNIT_TEST_SUITE_END();
 
         public:
           GeometrySelectorTests() :
-            VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
+              VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
 
-            planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0),
-                lineEndPoint1(CentreCoordinate * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize)
+              planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0), lineEndPoint1(CentreCoordinate
+                  * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize)
           {
 
           }
@@ -53,6 +55,8 @@ namespace hemelb
             straightLineGeometrySelector = new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1,
                                                                                                 lineEndPoint2);
             wholeGeometrySelector = new hemelb::extraction::WholeGeometrySelector();
+
+            geometrySurfaceSelector = new hemelb::extraction::GeometrySurfaceSelector();
           }
 
           void tearDown()
@@ -61,6 +65,7 @@ namespace hemelb
             delete planeGeometrySelectorWithRadius;
             delete straightLineGeometrySelector;
             delete wholeGeometrySelector;
+            delete geometrySurfaceSelector;
 
             delete dataSourceIterator;
             delete unitConverter;
@@ -153,6 +158,31 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(CubeSize * CubeSize * CubeSize, count);
           }
 
+          void TestGeometrySurfaceSelector()
+          {
+            TestOutOfGeometrySites(geometrySurfaceSelector);
+
+            // Gather the list of coordinates we expect to be on the geometry surface, we do not
+            // consider inlets or outlets as edges.
+            std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
+
+            for (site_t xCoord = 0; xCoord < CubeSize; ++xCoord)
+            {
+              for (site_t yCoord = 0; yCoord < CubeSize; ++yCoord)
+              {
+                for (site_t zCoord = 0; zCoord < CubeSize; ++zCoord)
+                {
+                  if (xCoord==0 || xCoord==CubeSize-1 || yCoord==0 || yCoord==CubeSize-1)
+                  {
+                    includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(xCoord, yCoord, zCoord));
+                  }
+                }
+              }
+            }
+
+            TestExpectedIncludedSites(geometrySurfaceSelector, includedCoordsOnTheSurface);
+          }
+
         private:
           void TestOutOfGeometrySites(hemelb::extraction::GeometrySelector* geometrySelector)
           {
@@ -222,9 +252,10 @@ namespace hemelb
           hemelb::extraction::PlaneGeometrySelector* planeGeometrySelectorWithRadius;
           hemelb::extraction::StraightLineGeometrySelector* straightLineGeometrySelector;
           hemelb::extraction::WholeGeometrySelector* wholeGeometrySelector;
+          hemelb::extraction::GeometrySurfaceSelector* geometrySurfaceSelector;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometrySelectorTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GeometrySelectorTests);
 
     }
   }

@@ -33,7 +33,7 @@ namespace hemelb
 
       protected:
         virtual bool
-            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<float>& location) = 0;
+            IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location) = 0;
     };
   }
 }

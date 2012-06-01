@@ -1,4 +1,5 @@
 #include "extraction/SnapshotParser.h"
+#include <cassert>
 
 namespace hemelb
 {
@@ -93,5 +94,14 @@ namespace hemelb
     {
       return readVonMisesStress;
     }
+
+    bool SnapshotParser::IsBoundarySite(const util::Vector3D<site_t>& location) const
+    {
+      // The current implementation of SnapshotParser does not know enough about the domain to be able implement this method
+      assert(false);
+
+      return false;
+    }
+
   }
 }
