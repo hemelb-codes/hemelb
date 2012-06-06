@@ -115,8 +115,8 @@ namespace hemelb
           }
 
           /**
-           * Calculates the force acting on a point. This is done by multiplying the full stress tensor by the
-           * (outward pointing) surface normal at that point.
+           * Calculates the normal stress (force per unit area) acting on a point. This is done by multiplying the full
+           * stress tensor by the (outward pointing) surface normal at that point.
            *
            *    \vec{f} = \sigma \dot \vec{normal}
            *
@@ -127,16 +127,23 @@ namespace hemelb
            * where p is hydrostatic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
            * viscosity. -2*\mu*S can be shown to be equals to the non equilibrium part of the moment flux tensor \Pi^{(neq)}.
            *
-           * @param density
-           * @param f
-           * @param wallNormal
-           * @param forceActing
+           * \Pi^{(neq)} is assumed to be defined as in Chen&Doolen 1998:
+           *
+           *    \Pi^{(neq)} = (1 - 1/2*\tau) * \sum_over_i e_i e_i f^{(neq)}_i
+           *
+           * where \tau is the relaxation time and e_i is the i-th direction vector
+           *
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param wallNormal wall normal at a given site
+           * @param normalStress normal stress acting at a given point
            */
-          inline static void CalculateForceActingOnAPoint(const distribn_t density,
-                                                          const distribn_t tau,
-                                                          const distribn_t fNonEquilibrium[],
-                                                          const util::Vector3D<double>& wallNormal,
-                                                          util::Vector3D<double>& forceActing)
+          inline static void CalculateNormalStressOnAPoint(const distribn_t density,
+                                                           const distribn_t tau,
+                                                           const distribn_t fNonEquilibrium[],
+                                                           const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                           util::Vector3D<LatticeStress>& normalStress)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
             util::Matrix3D sigma = CalculatePiTensor(fNonEquilibrium);
@@ -147,7 +154,7 @@ namespace hemelb
             sigma.addDiagonal(pressure);
 
             // Multiply the stress tensor by the surface normal
-            sigma.timesVector(wallNormal, forceActing);
+            sigma.timesVector(wallNormal, normalStress);
           }
 
           /**
