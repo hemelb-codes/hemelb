@@ -29,6 +29,24 @@ namespace hemelb
           particles.clear();
         }
 
+        /** updates the position of each particle using body forces and fluid velocity */
+        const void UpdatePositions() const;
+
+        /** calculates the effect of all body forces on each particle */
+        const void CalculateBodyForces() const;
+
+        /** calculates the effects of all particles on each lattice site */
+        const void CalculateFeedbackForces() const;
+
+        /** interpolates the fluid velocity to the location of each particle */
+        const void InterpolateFluidVelocity() const;
+
+        /** communicates the positions of all particles to&from all neighbours */
+        const void CommunicateParticlePositions() const;
+
+        /** communicates the partial fluid interpolations to&from all neighbours */
+        const void CommunicateFluidVelocities() const;
+
       private:
         std::vector<Particle*> particles;
     };
