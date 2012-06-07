@@ -42,7 +42,7 @@ namespace hemelb
          *    result =  matrix*multiplier
          *
          * @param multiplier vector to be multiplied by the matrix
-         * @param result matrix-vector product result. result is assumed initialised to 0.
+         * @param result matrix-vector product result.
          */
         void timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result);
 

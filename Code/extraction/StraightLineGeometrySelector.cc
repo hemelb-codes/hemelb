@@ -22,9 +22,11 @@ namespace hemelb
     }
 
     bool StraightLineGeometrySelector::IsWithinGeometry(const extraction::IterableDataSource& data,
-                                                const util::Vector3D<float>& location)
+                                                        const util::Vector3D<site_t>& location)
     {
-      const float lengthAlongLine = (lineVector.Dot(location - endpoint1)) / lineLength;
+      util::Vector3D<float> coords = util::Vector3D<float>(location) * data.GetVoxelSize() + data.GetOrigin();
+
+      const float lengthAlongLine = (lineVector.Dot(coords - endpoint1)) / lineLength;
 
       if (lengthAlongLine < 0. || lengthAlongLine > lineLength)
       {
@@ -33,7 +35,7 @@ namespace hemelb
 
       // Use magnitude squared as it saves a sqrt operation.
       const float perpendicularDistanceSquared =
-          ( (endpoint1 + lineVector * lengthAlongLine / lineLength) - location).GetMagnitudeSquared();
+          ( (endpoint1 + lineVector * lengthAlongLine / lineLength) - coords).GetMagnitudeSquared();
 
       // This is chosen so that a line as far as possible from all lattice points will
       // still gather some data.
