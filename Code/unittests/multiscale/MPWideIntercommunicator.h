@@ -18,7 +18,7 @@ http://castle.strw.leidenuniv.nl/software/MPWide.html
 //#include "MPWide.h"
 
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdio>
 
 
 /*
