@@ -39,40 +39,36 @@ namespace hemelb
          */
         void Dispatch();
 
-        /*****************************************************************************
-         * The interface for net also includes a large number of templated methods which should be defined in the implementing classes
-         * We cannot formally write these here as virtual templates, because of a slight suckyness in C++
-         * But I list them here for the record.
-
-         template<class T> void RequestSend(T* oPointer, int iCount, proc_t iToRank);
-         template<class T> void RequestSend(T& value, proc_t toRank);
-         template<class T> void RequestSend(std::vector<T> &payload, proc_t toRank);
-         template<class T> void RequestReceive(T* oPointer, int iCount, proc_t iFromRank);
-         template<class T> void RequestReceive(T& value, proc_t fromRank);
-         template<class T> void RequestReceive(std::vector<T> &payload, proc_t fromRank);
-
-         template<class T> void RequestGatherVReceive(T* buffer, int * displacements, int *counts);
-         template<class T> void RequestGatherVReceive(std::vector<std::vector<T> > &buffer);
-         template<class T> void RequestGatherVSend(T* buffer, int count, proc_t toRank);
-         template<class T> void RequestGatherVSend(T* buffer, int count, proc_t toRank);
-
-         template<class T> void RequestGatherReceive(std::vector<T> &buffer);
-         template<class T> void RequestGatherReceive(T* buffer);
-         template<class T> void RequestGatherSend(T& value, proc_t toRank);
-         template<class T> void RequestGatherSend(T* buffer, proc_t toRank);
-
-         */
-        const topology::Communicator &GetCommunicator(){return communicator;}
+        const topology::Communicator &GetCommunicator() const
+        {
+          return communicator;
+        }
       protected:
         virtual void SendPointToPoint()=0;
         virtual void SendGathers()=0;
         virtual void SendGatherVs()=0;
+
         virtual void ReceiveGathers()=0;
         virtual void ReceiveGatherVs()=0;
         virtual void ReceivePointToPoint()=0;
+
         virtual void WaitPointToPoint()=0;
         virtual void WaitGathers()=0;
         virtual void WaitGatherVs()=0;
+
+        virtual void RequestSend(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
+        virtual void RequestReceive(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
+
+
+        /*
+         * Blocking gathers are implemented in MPI as a single call for both send/receive
+         * But, here we separate send and receive parts, since this interface may one day be used for
+         * nonblocking collectives.
+         */
+        virtual void RequestGatherVSend(void* buffer, int count, proc_t toRank, MPI_Datatype type)=0;
+        virtual void RequestGatherReceive(void* buffer, MPI_Datatype type)=0;
+        virtual void RequestGatherSend(void* buffer, proc_t toRank, MPI_Datatype type)=0;
+        virtual void RequestGatherVReceive(void* buffer, int * displacements, int *counts, MPI_Datatype type)=0;
 
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();
