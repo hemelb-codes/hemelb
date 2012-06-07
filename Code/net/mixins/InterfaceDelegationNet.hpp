@@ -4,6 +4,11 @@ namespace hemelb
 {
   namespace net
   {
+    /***
+     * Define the external template-based interface to be used by client classes.
+     * We define a series of templates with nice C++ style interfaces which delegate to C-style template interfaces
+     * And then, delegate the templated C-style interfaces to nontemplated interfaces taking an MPI datatype.
+     */
     template<class BaseNet> class InterfaceDelegationNet : public virtual BaseNet
     {
       public:
