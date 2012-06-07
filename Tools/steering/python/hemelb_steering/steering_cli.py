@@ -11,29 +11,30 @@ import sys
 from config import config, config_user
 
 class Intervention(Driver):
+
     """Gather a group of results, and manipulate them in some way"""
-    def __init__(self,clargs,stream=sys.stdout):
-        Driver.__init__(self,clargs)
-        self.stream=stream
+    def __init__(self, clargs, stream=sys.stdout):
+        Driver.__init__(self, clargs)
+        self.stream = stream
         
-        self.monitor=self.options.pop('monitor')
-        self.show=self.options.pop('show',False)
+        self.monitor = self.options.pop('monitor')
+        self.show = self.options.pop('show')
         
         for option in self.options:
-            print("Setting %s to %s"%(option,self.options[option]))
-            setattr(self.hemelb,option,self.options[option])
+            print("Setting %s to %s" % (option, self.options[option]) )
+            setattr(self.hemelb, option, self.options[option])
         
     def define_args(self):
        # Every property of a result is a potential command line argument argument
        for prop in config['steered_parameters']:
-           self.parser.add_argument("--"+prop)
+           self.parser.add_argument("--"+prop,help='Set the value of steered parameter %s'%prop)
 
        # Additional possible argument, to invert the selection
-       self.parser.add_argument("--monitor",action='store_true',default=False)
-       self.parser.add_argument("--show")
+       self.parser.add_argument("--monitor", action='store_true', default=False,help='Monitor the status of the remote client on the command line')
+       self.parser.add_argument("--show", action='store_true', default=False,help='Open a window showing the streamed images')
     
     def report(self):
-        print(self.hemelb,file=self.stream)
+        print(self.hemelb, file=self.stream)
 
     def act(self):        
         self.hemelb.step()
