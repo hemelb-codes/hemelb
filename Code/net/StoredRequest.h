@@ -8,35 +8,35 @@ namespace hemelb
   namespace net
   {
 
-    class BaseRequest
+    class SimpleRequest
     {
       public:
         void * Pointer;
         int Count;
         MPI_Datatype Type;
         proc_t Rank;
-        BaseRequest(void *pointer, int count, MPI_Datatype type, proc_t rank) :
+        SimpleRequest(void *pointer, int count, MPI_Datatype type, proc_t rank) :
             Pointer(pointer), Count(count), Type(type), Rank(rank)
         {
         }
     };
 
-    class ScalarRequest : public BaseRequest
+    class ScalarRequest : public SimpleRequest
     {
       public:
         ScalarRequest(void *pointer, MPI_Datatype type, proc_t rank) :
-            BaseRequest(pointer, 1, type, rank)
+          SimpleRequest(pointer, 1, type, rank)
         {
         }
     };
 
-    class GatherVReceiveRequest : public BaseRequest
+    class GatherVReceiveRequest : public SimpleRequest
     {
       public:
         int * Counts;
         int * Displacements;
         GatherVReceiveRequest(void *pointer, int *displacements, int *counts, MPI_Datatype type) :
-            BaseRequest(pointer, 0, type, 0), Counts(counts), Displacements(displacements)
+          SimpleRequest(pointer, 0, type, 0), Counts(counts), Displacements(displacements)
         {
         }
     };

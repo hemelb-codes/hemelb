@@ -98,15 +98,15 @@ namespace hemelb
           }
         private:
 
-          class LabelledRequest : public BaseRequest
+          class LabelledRequest : public SimpleRequest
           {
             public:
               const std::string Label;
               LabelledRequest(void *pointer, int count, MPI_Datatype type, proc_t rank, const std::string &label) :
-                  BaseRequest(pointer, count, type, rank), Label(label)
+                SimpleRequest(pointer, count, type, rank), Label(label)
               {
               }
-              virtual bool EnvelopeIdentical(const BaseRequest & other)
+              virtual bool EnvelopeIdentical(const SimpleRequest & other)
               {
                 bool this_ok = ( (Count == other.Count) && (Rank == other.Rank) && (Type == other.Type));
                 if (!this_ok)
@@ -117,7 +117,7 @@ namespace hemelb
                 }
                 return this_ok;
               }
-              virtual bool PayloadIdentical(const BaseRequest & other)
+              virtual bool PayloadIdentical(const SimpleRequest & other)
               {
                 // reduction
                 bool ok = true;
@@ -150,7 +150,7 @@ namespace hemelb
                 }
                 return ok;
               }
-              virtual void Unpack(BaseRequest & other)
+              virtual void Unpack(SimpleRequest & other)
               {
                 for (int element = 0; element < Count; element++)
                 {
