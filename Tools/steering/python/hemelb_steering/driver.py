@@ -21,7 +21,7 @@ class Driver(object):
     def __init__(self, clargs):
         # By default, an unsupplied argument does not create a result property
         self.parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-        self.parser.add_argument("--retry", action='store_true', default=False)
+        self.parser.add_argument("--retry", action='store_true', default=False,help='Keep trying to connect to the remote until interrupted')
         self.define_args()
         options,extra = self.parser.parse_known_args(clargs)
 
