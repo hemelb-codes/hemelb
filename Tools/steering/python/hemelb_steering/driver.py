@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-curate.py
-
-Created by James Hetherington on 2012-01-27.
-Copyright (c) 2012 UCL. All rights reserved.
+driver.py
+Base example command line entry point. 
+Should be subclassed to make specific steering executables
 """
 
 import sys
@@ -17,7 +16,7 @@ from config import config, config_user
 from remote_hemelb import RemoteHemeLB
 
 class Driver(object):
-    """Gather a group of results, and manipulate them in some way"""
+    """Initialise based on command line arguments"""
     def __init__(self,clargs):
         # By default, an unsupplied argument does not create a result property
         self.parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
@@ -55,13 +54,17 @@ class Driver(object):
             self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
 
     def define_args(self):
+       """ 
+       Overrideable to define extra arguments for specific executables
+       """
        pass
        
     def act(self):
+        """ 
+        Overrideable to state what the driver should do.
+        Example: Run one step of the remote HemeLB
+        """
         self.hemelb.step()
-
-def main():
-    Intervention(sys.argv).act()
 
 if __name__ == '__main__':
     main()

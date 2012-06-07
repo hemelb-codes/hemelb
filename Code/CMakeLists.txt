@@ -5,6 +5,7 @@ project(HemeLB)
 #---- OPTION switches accepted by the build -------
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
@@ -49,6 +50,10 @@ add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
 add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
+
+if(HEMELB_VALIDATE_GEOMETRY)
+  add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
+endif()
 
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
@@ -236,7 +241,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
 	add_executable(functionaltests_hemelb ${root_sources})
-	add_subdirectory(functionaltests)
+	add_subdirectory(functionaltests/cpptests)
 	target_link_libraries(functionaltests_hemelb 
 		hemelb_functionaltests 
 		${heme_libraries}
@@ -250,7 +255,6 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 		${ZLIB_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES functionaltests/resources/poiseuille_flow_test.gmy functionaltests/resources/poiseuille_flow_test.xml)
 endif()
 
 #-------- Copy and install resources --------------

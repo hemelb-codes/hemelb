@@ -4,7 +4,7 @@ namespace hemelb
 {
   namespace colloids
   {
-    ParticleSet::ParticleSet(configuration::XmlAbstractionLayer& xml)
+    ParticleSet::ParticleSet(io::xml::XmlAbstractionLayer& xml)
     {
       // assume we are at the <Particles> node
       bool found = xml.MoveToChild("subgridParticle");
