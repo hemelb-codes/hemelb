@@ -107,7 +107,7 @@ namespace hemelb
           {
             return true;
           }
-          bool IsBoundarySite(const util::Vector3D<site_t>& location) const
+          bool IsEdgeSite(const util::Vector3D<site_t>& location) const
           {
             /// @todo: #375 This method is not covered by any test. I'm leaving it unimplemented.
             assert(false);
