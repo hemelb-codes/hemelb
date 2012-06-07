@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "net/net.h"
+#include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
 #include "geometry/Geometry.h"
@@ -14,7 +15,7 @@ namespace hemelb
   namespace colloids
   {
     /** provides the control interface between colloid simulation and the rest of the system */
-    class ColloidController // : public net::IteratedAction
+    class ColloidController : public net::IteratedAction
     {
       public:
         /** constructor - currently only initialises the neighbour list */
@@ -25,6 +26,9 @@ namespace hemelb
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
+
+        /** overloaded from IteratedAction */
+        void RequestComms();
 
       private:
         /** enables simplified general point-to-point communication via MPI */

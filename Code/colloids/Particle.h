@@ -24,6 +24,22 @@ namespace hemelb
 
         /** partial interpolation of fluid velocity - temporary value only */
         util::Vector3D<double> velocity;
+
+        /** the effect of all body forces on this particle */
+        util::Vector3D<double> bodyForces;
+
+        /** updates the position of this particle using body forces and fluid velocity */
+        const void UpdatePosition();
+
+        /** */
+        const void CalculateBodyForces();
+
+        /** calculates the effects of all particles on each lattice site */
+        const void CalculateFeedbackForces() const;
+
+        /** interpolates the fluid velocity to the location of each particle */
+        const void InterpolateFluidVelocity();
+
     };
   }
 }
