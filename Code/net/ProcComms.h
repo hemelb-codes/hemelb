@@ -17,7 +17,7 @@ namespace hemelb
         MPI_Datatype Type;
     };
 
-    class ProcComms : public BaseProcComms<BaseRequest>
+    class ProcComms : public BaseProcComms<SimpleRequest>
     {
       public:
         void CreateMPIType();
