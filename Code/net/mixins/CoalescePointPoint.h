@@ -8,13 +8,20 @@ namespace hemelb
   {
     class CoalescePointPoint : public virtual StoringNet
     {
+
       public:
-        CoalescePointPoint():sendReceivePrepped(false),mRequests(),mStatuses(){}
+        CoalescePointPoint() :
+            sendReceivePrepped(false)
+        {
+        }
+        ~CoalescePointPoint();
+
         void WaitPointToPoint();
+
       protected:
         void ReceivePointToPoint();
         void SendPointToPoint();
-        ~CoalescePointPoint();
+
       private:
         void EnsureEnoughRequests(size_t count);
         void EnsurePreparedToSendReceive();
@@ -24,8 +31,8 @@ namespace hemelb
         // initialisation and during each iteration). Code using these must make sure
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
-        std::vector<MPI_Request> mRequests;
-        std::vector<MPI_Status> mStatuses;
+        std::vector<MPI_Request> requests;
+        std::vector<MPI_Status> statuses;
     };
   }
 }
