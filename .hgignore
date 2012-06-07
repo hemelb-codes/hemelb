@@ -8,6 +8,7 @@ build/*
 Tools/visclients/dependencies/jogamp
 Code/build/*
 Code/build_clang/*
+install/*
 results/*
 dependencies/build/*
 deploy/.jobscripts
