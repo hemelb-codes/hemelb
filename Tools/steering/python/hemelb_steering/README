@@ -1,1 +1,52 @@
 Python module for attaching to HemeLB as a steering client
+
+Usage:
+
+Use one of the following executables:
+
+* steering_cli
+* timing_client
+* steering
+
+Usage:
+
+<executable> [options] [remote]
+
+If remote is one of the pre-defined remotes given in config.yml (Currently just localhost) then host, port, etc are taken from there.
+
+Otherwise, can set the following options:
+
+All executables:
+
+-address <host>
+--port <port>
+--steering_id <steering_id>
+
+--retry : if given, keep trying to connect until a remote is running there. (Default false)
+
+== Steering_cli ==
+
+Command line steering interface.
+
+Extra options:
+
+--monitor : show text output describing behaviour of remote (Default false)
+--show : open local window showing streamed imaged (Default false)
+--<any steerable parameter> <value> : set the parameter on connecting
+ : list of steerable parameters is in config.yml
+
+== Timing_client ==
+
+Writes timing information to stdout, each time info is exchanged.
+
+Timestep, Delta timesteps between lines, latitude, longitude,Time spent since last line, pixels in last sent image
+
+Extra options:
+-- orbit: keep sending orbiting latitude/longitude information
+-- MaxFramerate <value> : throttle steering to the given max framerate.
+
+== Steering.py ==
+
+Is intended eventually to be the gui client. Just displays the image for now.
+
+

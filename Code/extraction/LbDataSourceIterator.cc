@@ -78,5 +78,12 @@ namespace hemelb
     {
       return origin;
     }
+
+    bool LbDataSourceIterator::IsEdgeSite(const util::Vector3D<site_t>& location) const
+    {
+      site_t localSiteId = data.GetContiguousSiteId(location);
+
+      return data.GetSite(localSiteId).IsEdge();
+    }
   }
 }
