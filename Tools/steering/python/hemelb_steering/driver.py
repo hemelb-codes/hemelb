@@ -16,42 +16,43 @@ from config import config, config_user
 from remote_hemelb import RemoteHemeLB
 
 class Driver(object):
+
     """Initialise based on command line arguments"""
-    def __init__(self,clargs):
+    def __init__(self, clargs):
         # By default, an unsupplied argument does not create a result property
         self.parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
-        self.parser.add_argument("--retry",action='store_true',default=False)
+        self.parser.add_argument("--retry", action='store_true', default=False)
         self.define_args()
-        options,extra=self.parser.parse_known_args(clargs)
+        options,extra = self.parser.parse_known_args(clargs)
 
-        remote=extra[1]
-        self.options=vars(options)
+        remote = extra[1]
+        self.options = vars(options)
 
         if remote in config:
-            config.update(config.get(remote,{}))
+            config.update(config.get(remote, {}))
             config.update(config_user)
-            config.update(config.get(remote,{}))
+            config.update(config.get(remote, {}))
         else:
-            config['address']=remote
+            config['address'] = remote
 
-        self.port=config['port']
-        self.steering_id=config['steering_id']
-        self.address=config['address']
+        self.port = config['port']
+        self.steering_id = config['steering_id']
+        self.address = config['address']
         
         # This Remote will have now connected, but not attempted to send/receive
         if  self.options['retry']:
             while True:
                 try:
-                    self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
+                    self.hemelb = RemoteHemeLB(port=self.port, address=self.address, steering_id=self.steering_id)
                     break
-                except socket.error as (errno,message):
-                    if errno!=61:
+                except socket.error as (errno, message):
+                    if errno != 61:
                         raise
                     else:
                         print("# No steering server, will retry")
                         time.sleep(10)
         else:
-            self.hemelb=RemoteHemeLB(port=self.port,address=self.address,steering_id=self.steering_id)
+            self.hemelb = RemoteHemeLB(port=self.port, address=self.address, steering_id=self.steering_id)
 
     def define_args(self):
        """ 
