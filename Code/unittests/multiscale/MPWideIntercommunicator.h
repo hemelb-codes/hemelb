@@ -48,14 +48,14 @@ namespace hemelb
        * Example type traits structure, using the HemeLB implementation of MPI_TYPE traits.
        */
 
-      /*struct MPIRuntimeType
+      struct MPWideRuntimeType
       {
           typedef MPI_Datatype RuntimeType;
           template<class T> static RuntimeType GetType()
           {
             return MpiDataTypeTraits<T>::GetMpiDataType();
           }
-      };*/
+      };
 
       /***
        * This is a very dumb example of an intercommunicator
@@ -67,7 +67,7 @@ namespace hemelb
         bool mpwide_initialized = false;
       }
 
-      class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
+      class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
       {
         public:
           MPWideIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
