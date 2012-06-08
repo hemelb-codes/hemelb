@@ -4,7 +4,7 @@
 #include "unittests/multiscale/MockIntercommunicand.h"
 #include <resources/Resource.h>
 #include "unittests/multiscale/MPWideIntercommunicator.h"
-#include <multiscale/MultiscaleSimulationMaster.h>
+#include "multiscale/MultiscaleSimulationMaster.h"
 
 
 namespace hemelb
