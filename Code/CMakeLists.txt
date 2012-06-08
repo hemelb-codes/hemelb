@@ -220,7 +220,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		set(CMAKE_BUILD_TYPE DEBUG)
 	endif()
 	
-	set(root_sources multiscale/MultiscaleSimulationMaster.h SimulationMaster.cc mpiInclude.cc)
+	set(root_sources SimulationMaster.cc mpiInclude.cc multiscale/MultiscaleSimulationMaster.h)
 	add_executable(ms_hemelb mainMultiscale.cc ${root_sources})
 	include_directories(${PROJECT_SOURCE_DIR})
 	set(package_subdirs
