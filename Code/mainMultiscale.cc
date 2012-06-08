@@ -3,7 +3,7 @@
 #include <multiscale/MultiscaleSimulationMaster.h>
 #include <resources/Resource.h>
 #include <multiscale/Intercommunicator.h>
-#include "unittests/multiscale/MPWideIntercommunicator.h"
+#include "multiscale/mpwide/MPWideIntercommunicator.h"
 
 int main(int argc, char *argv[])
 {
