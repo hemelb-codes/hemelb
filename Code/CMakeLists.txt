@@ -162,7 +162,7 @@ configure_file (
 # so that we will find TutorialConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
-# ----------- HemeLB ------------------s
+# ----------- HemeLB ------------------
 if (APPLE)
 	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
 endif()
@@ -173,6 +173,7 @@ endif()
 
 set(root_sources SimulationMaster.cc mpiInclude.cc)
 add_executable(hemelb main.cc ${root_sources})
+
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
 	configuration
@@ -208,6 +209,55 @@ target_link_libraries(hemelb
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+
+# ----------- HemeLB Multiscale ------------------
+if (HEMELB_BUILD_MULTISCALE)
+	if (APPLE)
+		add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+	endif()
+	if (HEMELB_USE_DEBUGGER)
+		# Force a debug build, because the debugger makes no sense without debug symbols
+		set(CMAKE_BUILD_TYPE DEBUG)
+	endif()
+	
+	set(root_sources SimulationMaster.cc mpiInclude.cc multiscale/MultiscaleSimulationMaster.h)
+	add_executable(ms_hemelb mainMultiscale.cc ${root_sources})
+	include_directories(${PROJECT_SOURCE_DIR})
+	set(package_subdirs
+		configuration
+		extraction
+		reporting
+		steering
+		vis
+		geometry
+		lb
+		net
+		debug
+		topology
+		util
+		io
+		log
+	    colloids
+		)
+	foreach(subdir ${package_subdirs})
+		set(lib "hemelb_${subdir}")
+		list(APPEND heme_libraries ${lib})
+#		add_subdirectory(${subdir})
+	endforeach()
+#	add_subdirectory(resources)
+	target_link_libraries(ms_hemelb 
+		${heme_libraries}
+		${MPI_LIBRARIES}
+		${PARMETIS_LIBRARIES}
+		${TINYXML_LIBRARIES}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES}
+		${ZLIB_LIBRARIES}
+	    ${MPWide_LIBRARIES}
+		)
+	INSTALL(TARGETS ms_hemelb RUNTIME DESTINATION bin)
+	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
