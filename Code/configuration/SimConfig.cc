@@ -374,6 +374,11 @@ namespace hemelb
             extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
             file->geometry = whole;
           }
+          else if (propertyElement->ValueStr().compare("geometrysurface") == 0)
+          {
+            extraction::GeometrySurfaceSelector* surface = new extraction::GeometrySurfaceSelector();
+            file->geometry = surface;
+          }
           else
           {
             log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
