@@ -60,12 +60,13 @@ namespace hemelb
         float GetVonMisesStress() const;
 
         /**
-         * Returns true if there's a boundary site at given location
+         * Returns true if the site at the given location is marked as an edge site
+         * (i.e. one of its links intersects a wall)
          *
          * @param location coordinates of interest
          * @return whether there is a boundary site at location
          */
-        bool IsBoundarySite(const util::Vector3D<site_t>& location) const;
+        bool IsEdgeSite(const util::Vector3D<site_t>& location) const;
 
 
       private:

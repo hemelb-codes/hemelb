@@ -10,10 +10,10 @@ namespace hemelb
   {
     template<class Net> NeedsBase<Net>::NeedsBase(const site_t blockCount,
                                                   const std::vector<bool>& readBlock,
-                                                  const proc_t areadingGroupSize,
-                                                  Net & anet,
+                                                  const proc_t readingGroupSize,
+                                                  Net & net,
                                                   bool shouldValidate) :
-        procsWantingBlocksBuffer(blockCount), net(anet), communicator(anet.GetCommunicator()), readingGroupSize(areadingGroupSize), shouldValidate(shouldValidate)
+        procsWantingBlocksBuffer(blockCount), net(net), communicator(net.GetCommunicator()), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -32,14 +32,14 @@ namespace hemelb
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
         blocksNeededSize[readingCore] = blocksNeededHere[readingCore].size();
-        anet.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
+        net.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
 
       }
       if (communicator.GetRank() < readingGroupSize)
       {
-        anet.RequestGatherReceive(blocksNeededSizes);
+        net.RequestGatherReceive(blocksNeededSizes);
       }
-      anet.Dispatch();
+      net.Dispatch();
       // Communicate the arrays of needed blocks
       std::vector<std::vector<site_t> > blocksNeededOn(communicator.GetSize());
 
@@ -54,13 +54,13 @@ namespace hemelb
           }
 
         }
-        anet.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
+        net.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
       }
       if (communicator.GetRank() < readingGroupSize)
       {
-        anet.RequestGatherVReceive(blocksNeededOn);
+        net.RequestGatherVReceive(blocksNeededOn);
       }
-      anet.Dispatch();
+      net.Dispatch();
       if (communicator.GetRank() < readingGroupSize)
       {
         // Transpose the blocks needed on cores matrix

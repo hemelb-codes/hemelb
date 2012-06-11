@@ -1,17 +1,17 @@
 #include "net/mixins/CoalescePointPoint.h"
 #include "log/Logger.h"
-namespace hemelb{
-  namespace net{
+
+namespace hemelb
+{
+  namespace net
+  {
+
     void CoalescePointPoint::EnsureEnoughRequests(size_t count)
     {
-      if (mRequests.size() < count)
+      if (requests.size() < count)
       {
-        size_t deficit = count - mRequests.size();
-        for (unsigned int ii = 0; ii < deficit; ii++)
-        {
-          mRequests.push_back(MPI_Request());
-          mStatuses.push_back(MPI_Status());
-        }
+        requests.resize(count, MPI_Request());
+        statuses.resize(count, MPI_Status());
       }
     }
 
@@ -32,7 +32,7 @@ namespace hemelb{
                   it->first,
                   10,
                   communicator.GetCommunicator(),
-                  &mRequests[m]);
+                  &requests[m]);
         ++m;
       }
 
@@ -45,6 +45,7 @@ namespace hemelb{
       {
         return;
       }
+
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
         it->second.CreateMPIType();
@@ -70,6 +71,7 @@ namespace hemelb{
 
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
+
         int TypeSizeStorage = 0; //DTMP:byte size tracking
         MPI_Type_size(it->second.Type, &TypeSizeStorage); //DTMP:
         BytesSent += TypeSizeStorage; //DTMP:
@@ -80,7 +82,7 @@ namespace hemelb{
                   it->first,
                   10,
                   communicator.GetCommunicator(),
-                  &mRequests[receiveProcessorComms.size() + m]);
+                  &requests[receiveProcessorComms.size() + m]);
 
         ++m;
       }
@@ -93,13 +95,14 @@ namespace hemelb{
     {
       if (sendReceivePrepped)
       {
-        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
+        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
+            ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
 
-        for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
-            ++it)
+        for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
+            it != receiveProcessorComms.end(); ++it)
         {
           MPI_Type_free(&it->second.Type);
         }
@@ -110,23 +113,21 @@ namespace hemelb{
     void CoalescePointPoint::WaitPointToPoint()
     {
 
-      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &mRequests[0], &mStatuses[0]);
+      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &requests[0], &statuses[0]);
 
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-          it != receiveProcessorComms.end(); ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
+          ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
       receiveProcessorComms.clear();
 
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
-          ++it)
+      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
         MPI_Type_free(&it->second.Type);
       }
       sendProcessorComms.clear();
       sendReceivePrepped = false;
-
 
     }
   }

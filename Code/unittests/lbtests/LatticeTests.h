@@ -236,8 +236,8 @@ namespace hemelb
               }
             }
 
-            /*
-             * TODO: Currently untested
+            /**
+             * @todo: Currently untested
              * * CalculateDensityVelocityFEq (it should just call other functions that *are* tested)
              * * CalculateEntropicDensityVelocityFEq (as above)
              * * CalculateVonMisesStress (probably needs a manually calculated test)
@@ -262,15 +262,15 @@ namespace hemelb
                 nonEquilibriumF[index] = 0;
               }
 
-              distribn_t density = 3.0;
+              LatticeDensity density = 3.0;
 
-              util::Vector3D<double> wallNormal(1, 0, 0);
-              util::Vector3D<double> forceActing;
-              LatticeType::CalculateForceActingOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, forceActing);
+              util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
+              util::Vector3D<LatticeStress> stressActingOnAPoint;
+              LatticeType::CalculateNormalStressOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, stressActingOnAPoint);
 
-              CPPUNIT_ASSERT_EQUAL(forceActing[0], density*Cs2);
-              CPPUNIT_ASSERT_EQUAL(forceActing[1], 0.0);
-              CPPUNIT_ASSERT_EQUAL(forceActing[2], 0.0);
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[0], density*Cs2);
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[1], 0.0);
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[2], 0.0);
             }
           }
 
