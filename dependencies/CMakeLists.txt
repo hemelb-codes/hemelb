@@ -211,10 +211,10 @@ else()
     else()
         set(PATCH_COMMAND_VACOPY echo novacopy)
     endif()
-    if (PATCH_ALIGN)
+    if (CTEMPLATE_PATCH_ALIGN)
     	set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
     else()
-        set(PATCH_COMMAND_ALIGN echo noreconf)
+        set(PATCH_COMMAND_ALIGN echo noalign)
     endif()
 	ExternalProject_Add(
    	ctemplate
