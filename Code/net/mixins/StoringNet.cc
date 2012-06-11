@@ -8,8 +8,7 @@ namespace hemelb
     {
       if (count > 0)
       {
-
-        sendProcessorComms[rank].push_back(BaseRequest(pointer, count, type,rank));
+        sendProcessorComms[rank].push_back(SimpleRequest(pointer, count, type, rank));
       }
     }
 
@@ -17,7 +16,7 @@ namespace hemelb
     {
       if (count > 0)
       {
-        receiveProcessorComms[rank].push_back(BaseRequest(pointer, count, type,rank));
+        receiveProcessorComms[rank].push_back(SimpleRequest(pointer, count, type, rank));
       }
     }
 
@@ -29,17 +28,21 @@ namespace hemelb
 
     void StoringNet::RequestGatherVSend(void* buffer, int count, proc_t toRank, MPI_Datatype type)
     {
-      gatherVSendProcessorComms[toRank].push_back(BaseRequest(buffer, count, type,toRank));
+      gatherVSendProcessorComms[toRank].push_back(SimpleRequest(buffer, count, type, toRank));
     }
 
     void StoringNet::RequestGatherReceive(void* buffer, MPI_Datatype type)
     {
-      gatherReceiveProcessorComms.push_back(ScalarRequest(buffer, type,0));
+      /*
+       * Dummy rank to ScalarRequest of zero -- gathers always receive to the core where the receive request is made.
+       * Avoids defining another type of request.
+       */
+      gatherReceiveProcessorComms.push_back(ScalarRequest(buffer, type, 0));
     }
 
     void StoringNet::RequestGatherSend(void* buffer, proc_t toRank, MPI_Datatype type)
     {
-      gatherSendProcessorComms[toRank].push_back(ScalarRequest(buffer, type,toRank));
+      gatherSendProcessorComms[toRank].push_back(ScalarRequest(buffer, type, toRank));
     }
 
     void StoringNet::RequestGatherVReceive(void* buffer, int * displacements, int *counts, MPI_Datatype type)

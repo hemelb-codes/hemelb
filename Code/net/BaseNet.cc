@@ -53,9 +53,11 @@ namespace hemelb
     void BaseNet::Wait()
     {
       SyncPointsCounted++; //DTMP: counter for monitoring purposes.
-      WaitPointToPoint();
+
       WaitGathers();
       WaitGatherVs();
+      WaitPointToPoint();
+
       displacementsBuffer.clear();
       countsBuffer.clear();
     }
@@ -65,6 +67,7 @@ namespace hemelb
       displacementsBuffer.push_back(std::vector<int>());
       return displacementsBuffer.back();
     }
+
     std::vector<int> & BaseNet::GetCountsBuffer()
     {
       countsBuffer.push_back(std::vector<int>());
