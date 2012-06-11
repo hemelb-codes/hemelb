@@ -4,6 +4,7 @@
 #include "mpiInclude.h"
 #include "colloids/PersistedParticle.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -20,7 +21,8 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(io::xml::XmlAbstractionLayer& xml);
+        Particle(io::xml::XmlAbstractionLayer& xml,
+                 lb::MacroscopicPropertyCache& propertyCache);
 
         /** partial interpolation of fluid velocity - temporary value only */
         util::Vector3D<double> velocity;
@@ -40,6 +42,8 @@ namespace hemelb
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
 
+      private:
+        lb::MacroscopicPropertyCache& propertyCache;
     };
   }
 }
