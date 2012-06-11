@@ -236,8 +236,8 @@ namespace hemelb
               }
             }
 
-            /*
-             * TODO: Currently untested
+            /**
+             * @todo: Currently untested
              * * CalculateDensityVelocityFEq (it should just call other functions that *are* tested)
              * * CalculateEntropicDensityVelocityFEq (as above)
              * * CalculateVonMisesStress (probably needs a manually calculated test)
@@ -246,6 +246,32 @@ namespace hemelb
              * * CalculateShearRate (as above)
              *
              */
+
+            /*
+             inline static void CalculateForceActingOnAPoint(const distribn_t density,
+             const distribn_t tau,
+             const distribn_t fNonEquilibrium[],
+             const util::Vector3D<double>& wallNormal,
+             util::Vector3D<double>& forceActing)
+             */
+            {
+              // Test 1: non equilibrium distribution function equals to 0 and wall normal (1,0,0). Result should be (pressure, 0, 0)
+              distribn_t nonEquilibriumF[LatticeType::NUMVECTORS];
+              for (unsigned index = 0; index < LatticeType::NUMVECTORS; index++)
+              {
+                nonEquilibriumF[index] = 0;
+              }
+
+              LatticeDensity density = 3.0;
+
+              util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
+              util::Vector3D<LatticeStress> stressActingOnAPoint;
+              LatticeType::CalculateNormalStressOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, stressActingOnAPoint);
+
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[0], density*Cs2);
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[1], 0.0);
+              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[2], 0.0);
+            }
           }
 
           const double epsilon;

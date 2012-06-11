@@ -34,13 +34,13 @@ namespace hemelb
     SimConfig *SimConfig::Load(const char *path)
     {
       util::check_file(path);
-      TiXmlDocument *configFile = new TiXmlDocument();
-      configFile->LoadFile(path);
+      TiXmlDocument configFile;
+      configFile.LoadFile(path);
 
       SimConfig *result = new SimConfig();
-      result->DoIO(configFile->FirstChildElement(), true);
+      result->colloidConfigPath = path;
+      result->DoIO(configFile.FirstChildElement(), true);
       result->dataFilePath = util::NormalizePathRelativeToPath(result->dataFilePath, path);
-      delete configFile;
 
       return result;
     }
@@ -374,6 +374,11 @@ namespace hemelb
             extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
             file->geometry = whole;
           }
+          else if (propertyElement->ValueStr().compare("geometrysurface") == 0)
+          {
+            extraction::GeometrySurfaceSelector* surface = new extraction::GeometrySurfaceSelector();
+            file->geometry = surface;
+          }
           else
           {
             log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
@@ -549,7 +554,8 @@ namespace hemelb
       DoIOForBaseInOutlet(parent,isLoading,value);
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
-
+      DoIOForDouble(lPressureElement,"pressure",isLoading,value->GetPressureReference());
+      DoIOForDouble(lPressureElement,"velocity",isLoading,value->GetVelocityReference());
       DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
     }
 

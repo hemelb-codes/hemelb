@@ -97,10 +97,7 @@ namespace hemelb
 
         for (unsigned int n = 0; n < particles.size(); n++)
         {
-          util::Vector3D<float> p1;
-          p1.x = particles[n].position.x - float(latDat.GetXSiteCount() >> 1);
-          p1.y = particles[n].position.y - float(latDat.GetYSiteCount() >> 1);
-          p1.z = particles[n].position.z - float(latDat.GetZSiteCount() >> 1);
+          util::Vector3D<float> p1 = particles[n].position - util::Vector3D<float>(latDat.GetSiteDimensions() / 2);
 
           util::Vector3D<float> p2 = viewpoint.Project(p1);
 

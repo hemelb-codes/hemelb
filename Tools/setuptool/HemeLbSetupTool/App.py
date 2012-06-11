@@ -1,3 +1,8 @@
+try:
+    import wxversion
+    wxversion.select('2.8')
+except ImportError:
+    pass
 import wx
 
 from HemeLbSetupTool.Model.Profile import Profile

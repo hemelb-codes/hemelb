@@ -42,7 +42,11 @@ def clone():
                 run("hg id -q -i > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
-    execute(copy_regression_tests)
+
+@task
+def clone_with_regression_tests():
+    execute(clone)
+    execute(clone_regression_tests)
 
 @task(alias='cold')
 def deploy_cold():
@@ -120,7 +124,7 @@ def build_python_tools():
 def stat():
     """Check the remote message queue status"""
     #TODO: Respect varying remote machine queue systems.
-    run(template("qstat -u $username"))
+    run(template("$stat -u $username"))
 
 @task
 def monitor():
@@ -239,6 +243,21 @@ def fetch_distributions():
     local(template("rsync -pthrvz $username@$remote:$repository_path/dependencies/distributions/ $localroot/dependencies/distributions"))
 
 @task
+def clone_regression_tests():
+    """Delete and checkout the repository afresh."""
+    run(template("mkdir -p $regression_test_source_path"))
+    if env.no_ssh or env.no_hg:
+        with cd(env.remote_path):
+            run(template("rm -rf $regression_test_source_path"))
+        # Some machines do not allow outgoing connections back to the mercurial server
+        # so the data must be sent by a project sync instead.
+        execute(sync_regression_tests)
+    else:
+        with cd(env.remote_path):
+            run(template("rm -rf $regression_test_repo_path"))
+            run(template("hg clone $hg/$regression_tests_repository $regression_test_repo_path"))
+
+@task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
         run(template("cp -r $regression_test_source_path $regression_test_path"))
@@ -254,8 +273,7 @@ def sync():
             local_dir=env.localroot+'/',
             exclude=map(lambda x: x.replace('\n',''),
             list(open(os.path.join(env.localroot,'.hgignore')))+
-            ['.hg']+
-            list(open(os.path.join(env.localroot,'RegressionTests','.hgignore')))
+            ['.hg']
             )
     )
     # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
@@ -264,6 +282,21 @@ def sync():
     with open(revision_info_path,'w') as revision_info:
         revision_info.write(env.build_number)
     put(revision_info_path,env.repository_path)
+
+@task
+def sync_regression_tests():
+    """Update the remote repository with local changes.
+    Uses rysnc.
+    Respects the local .hgignore files to avoid sending unnecessary information.
+    """
+    rsync_project(
+            remote_dir=env.regression_test_source_path,
+            local_dir=env.regression_tests_root+'/',
+            exclude=map(lambda x: x.replace('\n',''),
+            list(open(os.path.join(env.localroot,'.hgignore')))+
+            ['.hg']
+            )
+    )
 
 @task
 def patch(args=""):
@@ -440,6 +473,8 @@ def hemelb(config,**args):
     execute(put_configs,config)
     job(dict(script='hemelb',
             cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
+    if args.get('steer',False):
+        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
 @task
 def hemelbs(config,**args):
@@ -465,6 +500,7 @@ def hemelbs(config,**args):
 @task(alias='regress')
 def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
+    execute(clone_regression_tests)
     execute(copy_regression_tests)
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
             wall_time='0:20:0',memory='2G',images=0, snapshots=1, steering=1111,script='regression'),args)
@@ -485,6 +521,7 @@ def job(*option_dictionaries):
         env.coresusedpernode=env.corespernode
         if int(env.coresusedpernode)>int(env.cores):
             env.coresusedpernode=env.cores
+        env.nodes=int(env.cores)/int(env.coresusedpernode)
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
@@ -503,7 +540,8 @@ def job(*option_dictionaries):
             put(tempf.name,env.pather.join(env.job_results,'env.yml'))
         run(template("chmod u+x $dest_name"))
         with cd(env.job_results):
-            run(template("$job_dispatch $dest_name"))
+            with prefix(env.run_prefix):
+                run(template("$job_dispatch $dest_name"))
 
 def input_to_range(arg,default):
     ttype=type(default)
@@ -629,3 +667,76 @@ def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=
                 if not str(create_configs).lower()[0]=='f':
                     modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
                 execute(hemelbs,env.config,**args)
+
+@task
+def get_running_location(job=None):
+    if job:
+        with_job(job)
+    env.running_node=run(template("cat $job_results/env_details.asc"))
+
+def manual(cmd):
+    #From the fabric wiki, bypass fabric internal ssh control
+    commands=env.command_prefixes[:]
+    if env.get('cwd'):
+        commands.append("cd %s"%env.cwd)
+    commands.append(cmd)
+    manual_command=" && ".join(commands)
+    pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
+    local(pre_cmd + "'"+manual_command+"'", capture=False)
+    
+def run(cmd):
+    if env.manual_ssh:
+        manual(cmd)
+    else:
+        fabric.api.run(cmd)
+        
+def put(src,dest):
+    if env.manual_ssh:
+        env.manual_src=src
+        env.manual_dest=dest
+        local(template("scp $manual_src $user@$host:$manual_dest"))
+    else:
+        fabric.api.put(src,dest)
+        
+@task
+def vampir(original_job,*args):
+    env.original_job=original_job
+    env.original_job_results=env.pather.join(env.results_path,original_job)
+    job(dict(job_name_template='vampir_${original_job}', script='vampir',
+            cores=16,wall_time='0:15:0'),args)
+
+@task
+def vampir_tunnel(node,port):
+    local("ssh hector -L 30070:nid%s:%s -N"%node,port)
+
+@task
+def steer(job,orbit=False,view=False,retry=False,framerate=None):
+    with_job(job)
+    if view:
+        env.steering_client='steering.py'
+        manual(template(command+client+" ${running_node}"))
+    else:
+        env.steering_client='timing_client.py'
+    if orbit:
+        env.steering_options="--orbit"
+    else:
+        env.steering_options=""
+    if retry:
+       env.steering_options+=" --retry"
+    if framerate:
+        env.steering_options+=" --MaxFramerate=%s" %framerate
+    command_template="python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
+    if retry:
+        while True:
+            try:
+                get_running_location()
+                run(template(command_template))
+                break
+            except:
+                print "Couldn't connect. Will retry"
+                execute(stat)
+                time.sleep(10)
+    else:
+        get_running_location()
+        run(template(command_template))
+

@@ -3,6 +3,7 @@
 
 #include <netinet/in.h>
 #include <semaphore.h>
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -11,7 +12,7 @@ namespace hemelb
     class ClientConnection
     {
       public:
-        ClientConnection(int iSteeringSessionId);
+        ClientConnection(int iSteeringSessionId, reporting::Timers & timings);
         ~ClientConnection();
 
         int GetWorkingSocket();
@@ -29,6 +30,8 @@ namespace hemelb
         // when a broken one is reported simultaneously by two separate threads
         // (for example).
         sem_t mIsBusy;
+        reporting::Timers & timers;
+
     };
   }
 }

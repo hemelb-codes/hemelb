@@ -5,7 +5,10 @@ set(HEMELB_DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
 set(CMAKE_MODULE_PATH "${HEMELB_DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
-
+set(CPPUNIT_CONFIGURE_OPTIONS "" CACHE STRING "Extra configuration options for CPPUNIT")
+option(CPPUNIT_PATCH_LDL "Add -ldl option to cppunit" OFF)
+set(CTEMPLATE_CONFIGURE_OPTIONS "" CACHE STRING "Extra configurations options for CTEMPLATE")
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
 
 # --------- tinyxml -------------------
@@ -39,6 +42,34 @@ else()
 		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 	)
+endif()
+
+# --------- mpwide -------------------
+if (HEMELB_BUILD_MULTISCALE)
+    find_package(MPWide QUIET)
+    if (MPWide_FOUND)
+	    message("MPWide already installed, no need to download")
+    else()
+	    message("MPWide not installed, will build from source")
+	    find_file(MPWIDE_TARBALL MPWide-1.2b.tar.gz 
+		    DOC "Path to download MPWide (can be url http://)"
+		    PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	    )
+	    if(NOT MPWIDE_TARBALL)
+		    message("No MPWide source found, will download.")
+		    set(MPWIDE_TARBALL http://castle.strw.leidenuniv.nl/~derek/MPWide-1.2.1.tar.gz
+			    CACHE STRING "Path to download MPWide (can be local file://)" FORCE)
+	    endif()
+	    ExternalProject_Add(
+	       MPWide
+		    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+		    URL ${MPWIDE_TARBALL}
+		    BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND echo "No configure step for MPWIDE"
+		    BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} 
+            INSTALL_COMMAND make install INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH} ${MWIDE_BUILD_OPTIONS}
+	    )
+    endif()
 endif()
 
 # ------- parmetis --------------------
@@ -98,23 +129,25 @@ else()
 		set(RECONFIGURE_CPPUNIT_DEFAULT OFF)
 	endif()
 	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
+	if (CPPUNIT_PATCH_LDL)
+    	set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_ldl.diff)
+    else()
+        set(PATCH_COMMAND_LDL echo noldl)
+    endif()
+    if (RECONFIGURE_CPPUNIT)
+    	set(PATCH_COMMAND_RECONFIGURE autoreconf -fvi) #autoreconf required on osx - based on contents of portfile)
+    else()
+        set(PATCH_COMMAND_RECONFIGURE echo noreconf)
+    endif()
 	ExternalProject_Add(
 	   cppunit
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CPPUNIT_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot "${CPPUNIT_CONFIGURE_OPTIONS}"
 		BUILD_IN_SOURCE 1
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+		PATCH_COMMAND ${PATCH_COMMAND_LDL} && ${PATCH_COMMAND_RECONFIGURE}
 	)
-	if (RECONFIGURE_CPPUNIT)
-		ExternalProject_Add_Step(
-			cppunit reconf
-			COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
-			DEPENDEES download
-			DEPENDERS configure
-			WORKING_DIRECTORY <SOURCE_DIR>
-		)
-	endif()
 endif()
 
 if(HEMELB_USE_BOOST)
@@ -156,27 +189,41 @@ if(HEMELB_USE_BOOST)
 endif()
 
 #----------------Google C++ template ----------------
+
+option(CTEMPLATE_PATCH_VACOPY "Define va_copy macro through patch" OFF)
+option(CTEMPLATE_PATCH_ALIGN "Define GTL align macros as gnu" OFF)
 find_package(CTemplate)
 if (CTEMPLATE_FOUND)
 	message("Ctemplate already installed, no need to download")
 else()
 	message("Ctemplate not installed, will build from source")
-	find_file(CTEMPLATE_TARBALL ctemplate-1.0.tar.gz
+	find_file(CTEMPLATE_TARBALL ctemplate-2.2.tar.gz
 		DOC "Path to download CTemplate (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://google-ctemplate.googlecode.com/files/ctemplate-1.0.tar.gz
+		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
+	if (CTEMPLATE_PATCH_VACOPY)
+    	set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
+    else()
+        set(PATCH_COMMAND_VACOPY echo novacopy)
+    endif()
+    if (CTEMPLATE_PATCH_ALIGN)
+    	set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
+    else()
+        set(PATCH_COMMAND_ALIGN echo noalign)
+    endif()
 	ExternalProject_Add(
    	ctemplate
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
+		PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
 	)
 endif()
 

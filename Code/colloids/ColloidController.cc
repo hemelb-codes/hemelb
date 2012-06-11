@@ -11,12 +11,14 @@ namespace hemelb
     // destructor
     ColloidController::~ColloidController()
     {
+      delete particleSet;
     }
 
     // constructor - called by SimulationMaster::Initialise()
-    ColloidController::ColloidController(net::Net* net,
-                                         geometry::LatticeData* latDatLBM,
-                                         geometry::GeometryReadResult* gmyResult) :
+    ColloidController::ColloidController(const net::Net* const net,
+                                         const geometry::LatticeData* const latDatLBM,
+                                         const geometry::Geometry* const gmyResult,
+                                         io::xml::XmlAbstractionLayer& xml) :
             net(net), latDat(latDatLBM),
             localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
@@ -27,14 +29,21 @@ namespace hemelb
       // from the geometry file using a neighbour lattice definition appropriate for colloids
 
       // get the description of the colloid neighbourhood (as a vector of Vector3D of site_t)
-      Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
+      const Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
 
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(gmyResult, neighbourhood);
+
+      bool ok = true;
+      xml.ResetToTopLevel();
+      ok &= xml.MoveToChild("colloids");
+      ok &= xml.MoveToChild("particles");
+      particleSet = new ParticleSet(xml);
     }
 
-    void ColloidController::InitialiseNeighbourList(geometry::GeometryReadResult* gmyResult,
-                                                    Neighbourhood neighbourhood)
+    void ColloidController::InitialiseNeighbourList(
+            const geometry::Geometry* const gmyResult,
+            const Neighbourhood neighbourhood)
     {
       // PLAN
       // foreach block in gmyResult (i.e. each block that may have been read from the input file)
@@ -53,7 +62,7 @@ namespace hemelb
            blockTraverser.TraverseOne())
       {
         util::Vector3D<site_t> globalLocationForBlock =
-              blockTraverser.GetCurrentLocation() * gmyResult->blockSize;
+              blockTraverser.GetCurrentLocation() * gmyResult->GetBlockSize();
 
         // if block has sites
         site_t blockId = blockTraverser.GetCurrentIndex();
@@ -74,7 +83,7 @@ namespace hemelb
             continue;
 
           // foreach neighbour of site
-          for (Neighbourhood::iterator itDirectionVector = neighbourhood.begin();
+          for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
                itDirectionVector != neighbourhood.end();
                itDirectionVector++)
           {
@@ -119,23 +128,20 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-                                      geometry::GeometryReadResult* gmyResult,
-                                      util::Vector3D<site_t> globalLocationForSite,
+                                      const geometry::Geometry* const gmyResult,
+                                      const util::Vector3D<site_t> globalLocationForSite,
                                       site_t* blockIdForSite,
                                       site_t* localSiteIdForSite,
                                       proc_t* ownerRankForSite)
     {
       // check for global location being outside the simulation entirely
-      if (globalLocationForSite.x < (site_t)0 ||
-          globalLocationForSite.y < (site_t)0 ||
-          globalLocationForSite.z < (site_t)0 ||
-          globalLocationForSite.x >= gmyResult->blocks.x * gmyResult->blockSize ||
-          globalLocationForSite.y >= gmyResult->blocks.y * gmyResult->blockSize ||
-          globalLocationForSite.z >= gmyResult->blocks.z * gmyResult->blockSize )
+      if (!gmyResult->AreBlockCoordinatesValid(globalLocationForSite))
+      {
         return false;
+      }
 
       // obtain block information (3D location vector and 1D id number) for the site
-      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult->blockSize;
+      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult->GetBlockSize();
       *blockIdForSite = gmyResult->GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
                                                                   blockLocationForSite.y,
                                                                   blockLocationForSite.z);
@@ -146,7 +152,7 @@ namespace hemelb
 
       // obtain site information (3D location vector and 1D id number)
       // note: these are both local to the block that contains the site
-      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult->blockSize;
+      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult->GetBlockSize();
       *localSiteIdForSite = gmyResult->GetSiteIdFromSiteCoordinates(localSiteLocation.x,
                                                                     localSiteLocation.y,
                                                                     localSiteLocation.z);
@@ -166,7 +172,7 @@ namespace hemelb
     // produces a relative vector two all sites within distance site units in all 3 directions
     // examples: if distance==1 then the vectors will describe D3Q27 lattice pattern
     //           if distance==2 then the vectors will describe a 5x5 cube pattern
-    ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
+    const ColloidController::Neighbourhood ColloidController::GetNeighbourhoodVectors(site_t distance)
     {
       Neighbourhood vectors;
 

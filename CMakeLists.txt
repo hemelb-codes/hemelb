@@ -10,6 +10,7 @@ if(TIXML_USE_STL)
 endif(TIXML_USE_STL)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL info
@@ -23,6 +24,7 @@ option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development bu
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 set(HEMELB_KERNEL "LBGK"
@@ -32,6 +34,7 @@ set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
@@ -47,6 +50,7 @@ ExternalProject_Add(
 	-DHEMELB_DEPENDENCIES_INSTALL_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
 	-DTIXML_USE_STL=${TIXML_USE_STL}
 	-DHEMELB_USE_DEBUGGER=${HEMELB_USE_DEBUGGER}
+        -DHEMELB_VALIDATE_GEOMETRY=${HEMELB_VALIDATE_GEOMETRY}
 	-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL}
 	-DHEMELB_STEERING_LIB=${HEMELB_STEERING_LIB}
 	-DHEMELB_USE_MULTIMACHINE=${HEMELB_USE_MULTIMACHINE}
@@ -70,7 +74,8 @@ ExternalProject_Add(
         -DHEMELB_LATTICE=${HEMELB_LATTICE}
         -DHEMELB_KERNEL=${HEMELB_KERNEL}
         -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
-
+	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
+	-DHEMELB_BUILD_MULTISCALE=${HEMELB_BUILD_MULTISCALE}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 

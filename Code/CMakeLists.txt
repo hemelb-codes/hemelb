@@ -5,13 +5,18 @@ project(HemeLB)
 #---- OPTION switches accepted by the build -------
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
-option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
+option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
+option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
+option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
 option(HEMELB_USE_BOOST "Use Boost" OFF)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
+option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
+option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -46,8 +51,16 @@ add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
 add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
 
+if(HEMELB_VALIDATE_GEOMETRY)
+  add_definitions(-DHEMELB_VALIDATE_GEOMETRY)
+endif()
+
 if (NOT HEMELB_USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
+endif()
+
+if (HEMELB_WAIT_ON_CONNECT)
+	add_definitions(-DHEMELB_WAIT_ON_CONNECT)
 endif()
 
 if (NOT HEMELB_STATIC_ASSERT)
@@ -72,7 +85,7 @@ list(APPEND CMAKE_LIBRARY_PATH ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib)
 #--- Set up runtime search path for DLLs -----
 if(HEMELB_DEPENDENCIES_SET_RPATH)
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_PATH}/lib")
+	SET(CMAKE_INSTALL_RPATH "${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib")
 endif()
 
 #-------Check for platform dependent features ----
@@ -80,13 +93,18 @@ endif()
 include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
+CHECK_CXX_SOURCE_COMPILES("#include <sys/time.h>\n#include <sys/resource.h>\nint main(int c,char** v){ rusage usage;\ngetrusage(RUSAGE_SELF, &usage);\nreturn usage.ru_maxrss; }" HAVE_RUSAGE)
 
 if(HAVE_ISNAN)
   add_definitions(-DHAVE_ISNAN)
 endif()
 
-if( HAVE_STD_ISNAN)
-  add_definitions(-D HAVE_STD_ISNAN)
+if(HAVE_STD_ISNAN)
+  add_definitions(-DHAVE_STD_ISNAN)
+endif()
+
+if(HAVE_RUSAGE)
+  add_definitions(-DHAVE_RUSAGE)
 endif()
 
 # ------MPI------------------
@@ -118,6 +136,12 @@ endif()
 #------CTemplate ----------------
 find_package(CTemplate REQUIRED)
 include_directories(${CTEMPLATE_INCLUDE_DIR})
+if(HEMELB_BUILD_MULTISCALE)
+  #------MPWide ----------------
+  find_package(MPWide REQUIRED)
+  include_directories(${MPWide_INCLUDE_DIR})
+  add_definitions(-DHEMELB_BUILD_MULTISCALE)
+endif()
 
 #------zlib ----------------
 find_package(ZLIB REQUIRED)
@@ -138,7 +162,7 @@ configure_file (
 # so that we will find TutorialConfig.h
 include_directories("${PROJECT_BINARY_DIR}")
 
-# ----------- HemeLB ------------------s
+# ----------- HemeLB ------------------
 if (APPLE)
 	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
 endif()
@@ -149,6 +173,7 @@ endif()
 
 set(root_sources SimulationMaster.cc mpiInclude.cc)
 add_executable(hemelb main.cc ${root_sources})
+
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
 	configuration
@@ -180,14 +205,65 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
+  ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+
+# ----------- HemeLB Multiscale ------------------
+if (HEMELB_BUILD_MULTISCALE)
+	if (APPLE)
+		add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+	endif()
+	if (HEMELB_USE_DEBUGGER)
+		# Force a debug build, because the debugger makes no sense without debug symbols
+		set(CMAKE_BUILD_TYPE DEBUG)
+	endif()
+	
+	set(root_sources SimulationMaster.cc mpiInclude.cc multiscale/MultiscaleSimulationMaster.h)
+	add_executable(ms_hemelb mainMultiscale.cc ${root_sources})
+	include_directories(${PROJECT_SOURCE_DIR})
+	set(package_subdirs
+		configuration
+		extraction
+		reporting
+		steering
+		vis
+		geometry
+		lb
+		net
+		debug
+		topology
+		util
+		io
+		log
+	    colloids
+		)
+	foreach(subdir ${package_subdirs})
+		set(lib "hemelb_${subdir}")
+		list(APPEND heme_libraries ${lib})
+#		add_subdirectory(${subdir})
+	endforeach()
+#	add_subdirectory(resources)
+	target_link_libraries(ms_hemelb 
+		${heme_libraries}
+		${MPI_LIBRARIES}
+		${PARMETIS_LIBRARIES}
+		${TINYXML_LIBRARIES}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES}
+		${ZLIB_LIBRARIES}
+	    ${MPWide_LIBRARIES}
+		)
+	INSTALL(TARGETS ms_hemelb RUNTIME DESTINATION bin)
+	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+endif()
+
 # ----------- HEMELB unittests ---------------
-if(HEMELB_BUILD_UNITTESTS)
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 	#------CPPUnit ---------------
-		find_package(CPPUnit REQUIRED)
-		include_directories(${CPPUNIT_INCLUDE_DIR})
+	find_package(CPPUnit REQUIRED)
+	include_directories(${CPPUNIT_INCLUDE_DIR})
 	add_executable(unittests_hemelb ${root_sources})
 	add_subdirectory(unittests)
 	target_link_libraries(unittests_hemelb 
@@ -200,12 +276,35 @@ if(HEMELB_BUILD_UNITTESTS)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
+		${MPWide_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
 		)
+endif()
+
+# ----------- HEMELB functionaltests ---------------
+if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
+	#------CPPUnit ---------------
+	find_package(CPPUnit REQUIRED)
+	include_directories(${CPPUNIT_INCLUDE_DIR})
+	add_executable(functionaltests_hemelb ${root_sources})
+	add_subdirectory(functionaltests/cpptests)
+	target_link_libraries(functionaltests_hemelb 
+		hemelb_functionaltests 
+		${heme_libraries}
+		${MPI_LIBRARIES}
+		${PARMETIS_LIBRARIES}
+		${TINYXML_LIBRARIES}
+		${CPPUNIT_LIBRARY}
+		${Boost_LIBRARIES}
+		${CTEMPLATE_LIBRARIES}
+		${MPWide_LIBRARIES}
+		${ZLIB_LIBRARIES}
+		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
 endif()
 
 #-------- Copy and install resources --------------

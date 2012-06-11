@@ -148,7 +148,7 @@ namespace hemelb
 
         if (iolet->IsCommsRequired())
         {
-          iolet->DoComms(IsCurrentProcTheBCProc());
+          iolet->DoComms(IsCurrentProcTheBCProc(),state->GetTimeStep());
         }
 
       }

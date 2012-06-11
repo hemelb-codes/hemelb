@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "constants.h"
+#include "topology/Communicator.h"
 
 namespace hemelb
 {
@@ -25,13 +26,15 @@ namespace hemelb
         proc_t GetProcessorCount() const;
         int GetDepths() const;
         unsigned int GetMachineCount() const;
+        Communicator const & GetComms() const {
+          return comms;
+        }
 
       private:
         NetworkTopology();
         bool InitialiseMachineInfo();
 
-        proc_t localRank;
-        proc_t processorCount;
+        Communicator comms;
 
         // Number of depths in the topology.
         int depths;

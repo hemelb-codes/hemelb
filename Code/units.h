@@ -42,7 +42,10 @@ namespace hemelb
   typedef double RadianAngle;
 
   typedef double PhysicalLength;
+
   typedef double PhysicalVelocity;
   typedef distribn_t LatticeVelocity;
+
+  typedef double DimensionlessQuantity;
 }
 #endif //HEMELB_UNITS_H

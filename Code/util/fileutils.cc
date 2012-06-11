@@ -7,7 +7,7 @@
 #include <sys/dir.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <sstream>
 #include "log/Logger.h"
 #include "util/fileutils.h"
 
@@ -107,12 +107,11 @@ namespace hemelb
 
       int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
 
-      char filename[1024];
-
       for (int i = 0; i < file_count; i++)
       {
-        std::snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
-        unlink(filename);
+        std::stringstream filename;
+        filename << pathname.c_str() << "/" << files[i]->d_name <<std::flush;
+        unlink(filename.str().c_str());
       }
       return 0;
     }
