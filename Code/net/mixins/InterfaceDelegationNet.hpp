@@ -9,7 +9,7 @@ namespace hemelb
      * We define a series of templates with nice C++ style interfaces which delegate to C-style template interfaces
      * And then, delegate the templated C-style interfaces to nontemplated interfaces taking an MPI datatype.
      */
-    template<class BaseNet> class InterfaceDelegationNet : public virtual BaseNet
+    template<class ImplementingNet> class InterfaceDelegationNet : public virtual ImplementingNet
     {
       public:
         template<class T>
@@ -77,13 +77,13 @@ namespace hemelb
         template<class T>
         void RequestSend(T* pointer, int count, proc_t rank)
         {
-            BaseNet::RequestSend(pointer, count, rank, MpiDataType<T>());
+            ImplementingNet::RequestSend(pointer, count, rank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestReceive(T* pointer, int count, proc_t rank)
         {
-            BaseNet::RequestReceive(pointer, count, rank, MpiDataType<T>());
+            ImplementingNet::RequestReceive(pointer, count, rank, MpiDataType<T>());
         }
 
         /*
@@ -95,25 +95,25 @@ namespace hemelb
         template<class T>
         void RequestGatherVSend(T* buffer, int count, proc_t toRank)
         {
-            BaseNet::RequestGatherVSend(buffer, count, toRank, MpiDataType<T>());
+            ImplementingNet::RequestGatherVSend(buffer, count, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherReceive(T* buffer)
         {
-            BaseNet::RequestGatherReceive(buffer, MpiDataType<T>());
+            ImplementingNet::RequestGatherReceive(buffer, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherSend(T* buffer, proc_t toRank)
         {
-            BaseNet::RequestGatherSend(buffer, toRank, MpiDataType<T>());
+            ImplementingNet::RequestGatherSend(buffer, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherVReceive(T* buffer, int * displacements, int *counts)
         {
-            BaseNet::RequestGatherVReceive(buffer, displacements, counts, MpiDataType<T>());
+            ImplementingNet::RequestGatherVReceive(buffer, displacements, counts, MpiDataType<T>());
         }
 
     };
