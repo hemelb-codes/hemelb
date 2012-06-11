@@ -4,6 +4,7 @@
 #include <vector>
 #include "mpiInclude.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "colloids/Particle.h"
 
 namespace hemelb
@@ -15,7 +16,8 @@ namespace hemelb
     {
       public:
         /** constructor - gets local particle information from xml config file */
-        ParticleSet(io::xml::XmlAbstractionLayer& xml);
+        ParticleSet(io::xml::XmlAbstractionLayer& xml,
+                    lb::MacroscopicPropertyCache& propertyCache);
 
         /** destructor - de-allocates all Particle objects created by this Set */
         ~ParticleSet()
