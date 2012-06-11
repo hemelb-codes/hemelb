@@ -153,23 +153,24 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
-  std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
-
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
-  colloidController = new hemelb::colloids::ColloidController(
-                   &communicationNet,
-                   latticeData,
-                   &readGeometryData,
-                   xml);
-
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,
                                                            timings);
+
+  hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
+  std::string colloidConfigPath = simConfig->GetColloidConfigPath();
+  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
+  colloidController = new hemelb::colloids::ColloidController(&communicationNet,
+                                                              latticeData,
+                                                              &readGeometryData,
+                                                              xml,
+                                                              propertyCache);
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -262,6 +263,7 @@ void SimulationMaster::Initialise()
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
+  actors.push_back(colloidController);
   actors.push_back(latticeBoltzmannModel);
   actors.push_back(inletValues);
   actors.push_back(outletValues);
