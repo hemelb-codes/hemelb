@@ -111,9 +111,12 @@ namespace hemelb
                 bool this_ok = ( (Count == other.Count) && (Rank == other.Rank) && (Type == other.Type));
                 if (!this_ok)
                 {
-                  std::cerr << "Envelope different: " << Label << " R: " << Rank << " C: " << Count << " T: "
-                      << static_cast<void*>(Type) << " : " << " R" << other.Rank << " C " << other.Count << " T "
-                      << static_cast<void*>(other.Type) << std::flush;
+                  std::cerr << "Envelope different: "
+                      << Label << " R: " << Rank << " C: " << Count << " T: "
+//                      << static_cast<void*>(Type)
+                      << " : " << " R" << other.Rank << " C " << other.Count << " T "
+//                      << static_cast<void*>(other.Type)
+                      << std::flush;
                 }
                 return this_ok;
               }

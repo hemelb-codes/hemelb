@@ -4,13 +4,14 @@ namespace hemelb
 {
   namespace colloids
   {
-    ParticleSet::ParticleSet(io::xml::XmlAbstractionLayer& xml)
+    ParticleSet::ParticleSet(io::xml::XmlAbstractionLayer& xml,
+                             lb::MacroscopicPropertyCache& propertyCache)
     {
       // assume we are at the <Particles> node
       bool found = xml.MoveToChild("subgridParticle");
       while (found)
       {
-        particles.push_back(new Particle(xml));
+        particles.push_back(new Particle(xml, propertyCache));
         found = xml.NextSibling("subgridParticle");
       }
     };
