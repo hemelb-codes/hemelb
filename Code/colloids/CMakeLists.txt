@@ -1,5 +1,4 @@
 add_library(hemelb_colloids
-            #XmlAbstractionLayer.cc
             ParticleSet.cc
             Particle.cc
             PersistedParticle.cc
@@ -7,4 +6,5 @@ add_library(hemelb_colloids
 	   )
 target_link_libraries(hemelb_colloids
                       hemelb_io
+                      hemelb_lb
                      )
