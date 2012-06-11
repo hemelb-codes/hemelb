@@ -15,6 +15,7 @@ namespace CPPUNIT_NS
         return x == y;
       }
 
+      // Note this vector print doesn't visually distinguish between ("1" "2" "3") and("1, 2" "3").
       static std::string toString(const std::vector<T>& values)
       {
         std::stringstream output;
@@ -45,7 +46,7 @@ namespace hemelb
 
         public:
           NeedsTests() :
-              mockedNeeds(NULL), netMock(NULL)
+              mockedNeeds(NULL), netMock(NULL), communicatorMock(NULL)
           {
           }
 
@@ -60,6 +61,7 @@ namespace hemelb
           {
             delete mockedNeeds;
             delete communicatorMock;
+            delete netMock;
           }
 
           void TestReadingOne()
@@ -74,6 +76,7 @@ namespace hemelb
 
             netMock->RequireSend(&core_0_requires_from_0_count, 1, 0, "Count");
             netMock->RequireSend(&core_0_requires_from_1_count, 1, 1, "Count");
+
             // And I would expect the reading core to post a receive from each of the other cores,
             // asking for its count of needed blocks from this reading core
             int core_0_requires_count = 1;
@@ -81,6 +84,7 @@ namespace hemelb
             int core_2_requires_count = 1;
             int core_3_requires_count = 2;
             int core_4_requires_count = 1;
+
             netMock->RequireReceive(&core_0_requires_count, 1, 0, "Count");
             netMock->RequireReceive(&core_1_requires_count, 1, 1, "Count");
             netMock->RequireReceive(&core_2_requires_count, 1, 2, "Count");
@@ -155,26 +159,32 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(needing_block_3, mockedNeeds->ProcessorsNeedingBlock(3));
             CPPUNIT_ASSERT_EQUAL(needing_block_4, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(needing_block_5, mockedNeeds->ProcessorsNeedingBlock(5));
+
             netMock->ExpectationsAllCompleted();
           }
 
           void TestNonReading()
           {
             SetupMocks(6, 2, 5, 2);
+
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // So I would expect the non-reading core to post a send to each of the reading cores, its count of needed blocks
             int core_2_requires_from_0_count = 1;
             int core_2_requires_from_1_count = 2;
+
             netMock->RequireSend(&core_2_requires_from_0_count, 1, 0);
             netMock->RequireSend(&core_2_requires_from_1_count, 1, 1);
+
             // Then, I would expect to send my list of needed blocks
             // From core 2, the other reading core, I expect it to need blocks 1,2,3
             std::vector<site_t> core_2_requires_from_0;
             std::vector<site_t> core_2_requires_from_1;
+
             core_2_requires_from_1.push_back(1);
             core_2_requires_from_0.push_back(2);
             core_2_requires_from_1.push_back(3);
+
             netMock->RequireSend(&core_2_requires_from_0[0], 1, 0);
             netMock->RequireSend(&core_2_requires_from_1[0], 2, 1);
 
@@ -188,6 +198,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(3));
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(4));
             CPPUNIT_ASSERT_EQUAL(empty_needs_array, mockedNeeds->ProcessorsNeedingBlock(5));
+
             netMock->ExpectationsAllCompleted();
           }
 
@@ -200,9 +211,12 @@ namespace hemelb
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
+
             communicatorMock=new topology::Communicator(current_core,core_count);
             netMock = new net::NetMock(*communicatorMock);
+
             inputNeededBlocks = std::vector<bool>(block_count);
+
             for (site_t i = 0; i < block_count; i++)
             {
               // Mock with a tridiagonal needs example
