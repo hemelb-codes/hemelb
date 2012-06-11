@@ -35,11 +35,9 @@ namespace hemelb
             {
             }
 
-
           private:
 
         };
-
         CPPUNIT_TEST_SUITE_REGISTRATION (ConcernTests);
       }
     }
