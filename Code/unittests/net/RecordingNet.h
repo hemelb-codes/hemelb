@@ -112,8 +112,8 @@ namespace hemelb
                 if (!this_ok)
                 {
                   std::cerr << "Envelope different: " << Label << " R: " << Rank << " C: " << Count << " T: "
-                      << static_cast<void*>(Type) << " : " << " R" << other.Rank << " C " << other.Count << " T "
-                      << static_cast<void*>(other.Type) << std::flush;
+                       << " : " << " R" << other.Rank << " C " << other.Count << " T "
+                       << std::flush;
                 }
                 return this_ok;
               }
