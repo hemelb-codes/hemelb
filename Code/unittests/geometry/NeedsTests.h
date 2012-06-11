@@ -1,7 +1,7 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #include "geometry/needs/Needs.hpp"
-#include "unittests/net/RecordingNet.h"
+#include "unittests/net/NetMock.h"
 #include <cppunit/TestFixture.h>
 
 // Let vectors be output to an ostream, so that CPPUNIT can assert equality on them
