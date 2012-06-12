@@ -9,6 +9,6 @@
 cd $job_results
 $run_prefix
 rm -rf results
-aprun -n $cores -N $corespernode $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results/results -i $images -s $snapshots -ss $steering
+aprun -n $cores -N $coresusedpernode $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results/results -i $images -s $snapshots -ss $steering
 $regression_test_path/ImageComparison $regression_test_path/CleanImages results/Images
 $regression_test_path/NumericalComparison $regression_test_path/CleanSnapshots results/Snapshots
