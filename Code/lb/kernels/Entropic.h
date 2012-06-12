@@ -33,7 +33,7 @@ namespace hemelb
            */
           inline void DoReset(InitParams* init)
           {
-            for (site_t i = 0; i < init->siteCount; i++)
+            for (site_t i = 0; i < init->latDat->GetLocalFluidSiteCount(); i++)
             {
               oldAlpha[i] = 2.0;
             }
@@ -65,7 +65,7 @@ namespace hemelb
            */
           Entropic(InitParams* initParams)
           {
-            oldAlpha = new distribn_t[initParams->siteCount];
+            oldAlpha = new distribn_t[initParams->latDat->GetLocalFluidSiteCount()];
             DoReset(initParams);
           }
 
