@@ -57,7 +57,7 @@ namespace hemelb
             {
               for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
-                geometry::ConstSite site = mLatDat->GetSite(i);
+                const geometry::ConstSite site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
@@ -73,7 +73,7 @@ namespace hemelb
             {
               for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
-                geometry::ConstSite site = mLatDat->GetSite(i);
+                const geometry::ConstSite site = mLatDat->GetSite(i);
 
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 dHMax = util::NumericalFunctions::max(dHMax, HFunc.eval() - mHPreCollision[i]);
@@ -130,7 +130,7 @@ namespace hemelb
             {
               for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
-                geometry::ConstSite site = mLatDat->GetSite(i);
+                const geometry::ConstSite site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 mHPreCollision[i] = HFunc.eval();
               }
@@ -145,7 +145,7 @@ namespace hemelb
             {
               for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
-                geometry::ConstSite site = mLatDat->GetSite(i);
+                const geometry::ConstSite site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType> (), NULL);
                 mHPreCollision[i] = HFunc.eval();
               }
