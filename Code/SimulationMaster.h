@@ -17,8 +17,6 @@
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
 #include "colloids/ColloidController.h"
-#include "net/phased/StepManager.h"
-#include "net/phased/NetConcern.h"
 
 class SimulationMaster
 {
@@ -96,8 +94,7 @@ class SimulationMaster
     hemelb::extraction::IterableDataSource* propertyDataSource;
     hemelb::extraction::PropertyActor* propertyExtractor;
 
-    hemelb::net::phased::StepManager* stepManager;
-    hemelb::net::phased::NetConcern* netConcern;
+    std::vector<hemelb::net::IteratedAction*> actors;
 
     unsigned int snapshotsPerSimulation;
     unsigned int imagesPerSimulation;
