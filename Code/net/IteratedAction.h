@@ -1,13 +1,14 @@
 #ifndef HEMELB_NET_ITERATEDACTION_H
 #define HEMELB_NET_ITERATEDACTION_H
-
+#include "net/phased/Concern.h"
 namespace hemelb
 {
   namespace net
   {
-    class IteratedAction
+    class IteratedAction : public phased::Concern
     {
       public:
+        bool CallAction(int action);
         virtual ~IteratedAction();
         virtual void RequestComms();
         virtual void PreSend();
