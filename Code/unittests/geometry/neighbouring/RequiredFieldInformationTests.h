@@ -1,8 +1,10 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_REQUIREDFIELDINFORMATIONTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_REQUIREDFIELDINFORMATIONTESTS_H
-namespace unittests
+
+#include "geometry/neighbouring/RequiredFieldInformation.h"
+namespace hemelb
 {
-  namespace hemelb
+  namespace unittests
   {
     namespace geometry
     {
@@ -39,6 +41,7 @@ namespace unittests
 
         };
         // CPPUNIT USES LINENUMBER TO REGISTER MACRO
+        // EXTRA LINE
         // EXTRA LINE
         // EXTRA LINE
         // EXTRA LINE

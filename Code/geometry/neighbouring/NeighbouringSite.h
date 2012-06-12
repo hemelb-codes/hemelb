@@ -1,11 +1,14 @@
 #ifndef HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGSITE_H
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGSITE_H
+
+#include "geometry/Site.h"
+
+
 namespace hemelb{
   namespace geometry{
     namespace neighbouring{
-      class NeighbouringSite : public Site {
-
-      };
+      class NeighbouringLatticeData;
+      typedef BaseSite<NeighbouringLatticeData> NeighbouringSite;
     }
   }
 }

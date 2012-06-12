@@ -38,7 +38,7 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              const geometry::Site site = latDat->GetSite(siteIndex);
+              geometry::Site site = latDat->GetSite(siteIndex);
 
               distribn_t* lFOld = site.GetFOld<LatticeType> ();
 
