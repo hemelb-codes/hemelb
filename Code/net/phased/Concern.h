@@ -3,7 +3,12 @@
 namespace hemelb{
   namespace net{
     namespace phased{
-
+      class Concern{
+        public:
+          Concern(){}
+          virtual ~Concern(){}
+          virtual bool CallAction()=0;
+      };
     }
   }
 }
