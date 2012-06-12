@@ -1,5 +1,5 @@
 #ifndef HEMELB_UNITTESTS_NET_PHASED_CONCERNTESTS_H
-#define HEMELB_UNITTESTS_NET_PHASED_CONCERNSTESTS_H
+#define HEMELB_UNITTESTS_NET_PHASED_CONCERNTESTS_H
 #include "net/phased/Concern.h"
 #include <cppunit/TestFixture.h>
 
