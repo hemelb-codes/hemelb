@@ -61,6 +61,10 @@ namespace hemelb
         }
         return total;
       }
+
+      void  StepManager::CallActionsForPhase(Phase phase) {
+
+      }
     }
   }
 }
