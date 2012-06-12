@@ -1,8 +1,11 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
-namespace unittests
+
+#include "geometry/neighbouring/NeighbouringDataManager.h"
+
+namespace hemelb
 {
-  namespace hemelb
+  namespace unittests
   {
     namespace geometry
     {
