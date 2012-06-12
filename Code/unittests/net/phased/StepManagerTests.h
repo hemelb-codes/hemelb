@@ -36,6 +36,9 @@ namespace hemelb
             CPPUNIT_TEST (TestCallSpecialActions);
             CPPUNIT_TEST (TestCallAllActionsOnePhase);
 
+            CPPUNIT_TEST (TestCallAllActionsManyPhases);
+            CPPUNIT_TEST (TestCallAllActionsPhaseByPhase);
+
             CPPUNIT_TEST_SUITE_END();
 
           public:
@@ -48,7 +51,7 @@ namespace hemelb
             {
               bool dummy;
               topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
-              stepManager = new StepManager();
+              stepManager = new StepManager(3);
 
             }
 
@@ -264,6 +267,190 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
             }
 
+            void TestCallAllActionsManyPhases()
+            {
+
+              SetupMocks(4, 1);
+              int payload0 = 0;
+              int payload1 = 1;
+
+              int payload0Expectation = 5;
+              int payload1Expectation = 1;
+              netMock->RequestSendR(payload1, 1);
+              netMock->RequestReceiveR(payload0, 1);
+              netMock->RequireSend(&payload1Expectation, 1, 1);
+              netMock->RequireReceive(&payload0Expectation, 1, 1);
+
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              action2 = new MockIteratedAction("mockThree");
+              concern2 = new MockConcern("mockFour");
+
+              stepManager->RegisterIteratedActorSteps(*action, 0);
+              stepManager->RegisterIteratedActorSteps(*action2, 1);
+
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+              stepManager->Register(0, steps::BeginAll, *concern, 17);
+
+              stepManager->Register(2, steps::PreSend, *concern2, 56);
+              stepManager->Register(0, steps::EndPhase, *concern2, 42);
+              stepManager->Register(0, steps::EndAll, *concern2, 13);
+
+              stepManager->RegisterCommsForAllPhases(*netConcern);
+
+              stepManager->CallActions();
+
+              std::vector<int> shouldHaveCalled;
+
+              shouldHaveCalled.push_back(17);
+              shouldHaveCalled.push_back(0);
+              shouldHaveCalled.push_back(1);
+
+              std::vector<int> shouldHaveCalled2;
+
+              shouldHaveCalled2.push_back(42); // gets called first cos is in phase 0
+              shouldHaveCalled2.push_back(56);
+              shouldHaveCalled2.push_back(13); // still called last cos is final special action
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
+                                   action2->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 5);
+              netMock->ExpectationsAllCompleted();
+            }
+
+            void TestCallAllActionsPhaseByPhase()
+            {
+
+              SetupMocks(4, 1);
+              int payload0 = 0;
+              int payload1 = 1;
+
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              action2 = new MockIteratedAction("mockThree");
+              concern2 = new MockConcern("mockFour");
+
+              stepManager->RegisterIteratedActorSteps(*action, 0);
+              stepManager->RegisterIteratedActorSteps(*action2, 1);
+
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+              stepManager->Register(0, steps::BeginAll, *concern, 17);
+
+              stepManager->Register(2, steps::PreSend, *concern2, 56);
+              stepManager->Register(0, steps::EndPhase, *concern2, 42);
+              stepManager->Register(0, steps::EndAll, *concern2, 13);
+
+              stepManager->RegisterCommsForAllPhases(*netConcern);
+
+              //-------------------BeginAll-----------------------------------------
+
+              stepManager->CallSpecialAction(steps::BeginAll);
+
+              std::vector<int> shouldHaveCalled;
+              std::vector<int> shouldHaveCalled2;
+
+              shouldHaveCalled.push_back(17);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string(""), action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string(""), action2->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 0);
+              netMock->ExpectationsAllCompleted();
+
+              //------------------Phase 0 ---------------------------------------------
+
+              int payload0Expectation = 5;
+              int payload1Expectation = 1;
+              netMock->RequestSendR(payload1, 1);
+              netMock->RequestReceiveR(payload0, 1);
+              netMock->RequireSend(&payload1Expectation, 1, 1);
+              netMock->RequireReceive(&payload0Expectation, 1, 1);
+
+              stepManager->CallActionsForPhase(0);
+
+              shouldHaveCalled.push_back(0);
+              shouldHaveCalled.push_back(1);
+
+              shouldHaveCalled2.push_back(42); // gets called first cos is in phase 0
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string(""), action2->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 5);
+              netMock->ExpectationsAllCompleted();
+
+              // ------------------- Phase 1 ------------------------------------------
+
+              payload0Expectation = 13;
+              payload1Expectation = 4;
+              payload1 = 4;
+              netMock->RequestSendR(payload1, 1);
+              netMock->RequestReceiveR(payload0, 1);
+              netMock->RequireSend(&payload1Expectation, 1, 1);
+              netMock->RequireReceive(&payload0Expectation, 1, 1);
+
+              stepManager->CallActionsForPhase(1);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action2->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 13);
+              netMock->ExpectationsAllCompleted();
+
+              // ------------------------- Phase 2 -----------------------------------------
+
+              payload0Expectation = 77;
+              payload1Expectation = 16;
+              payload1 = 16;
+              netMock->RequestSendR(payload1, 1);
+              netMock->RequestReceiveR(payload0, 1);
+              netMock->RequireSend(&payload1Expectation, 1, 1);
+              netMock->RequireReceive(&payload0Expectation, 1, 1);
+
+              stepManager->CallActionsForPhase(2);
+
+              shouldHaveCalled2.push_back(56);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action2->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 77);
+              netMock->ExpectationsAllCompleted();
+
+              // -------------------------- EndAll -----------------------------------------------
+
+              stepManager->CallSpecialAction(steps::EndAll);
+
+              shouldHaveCalled2.push_back(13); // still called last cos is final special action
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled2, concern2->ActionsCalled());
+
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
+                                   action2->CallsSoFar());
+              netMock->ExpectationsAllCompleted();
+            }
+
             void SetupMocks(const proc_t core_count, const proc_t current_core)
             {
               communicatorMock = new topology::Communicator(current_core, core_count);
@@ -279,6 +466,8 @@ namespace hemelb
             MockIteratedAction *action;
             MockConcern *concern;
             NetConcern *netConcern;
+            MockIteratedAction *action2;
+            MockConcern *concern2;
         };
 
         CPPUNIT_TEST_SUITE_REGISTRATION (StepManagerTests);
