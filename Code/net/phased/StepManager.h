@@ -43,6 +43,8 @@ namespace hemelb
 
           void RegisterCommsSteps(Concern &concern, Phase phase = 0);
 
+          void CallActionsForPhase(Phase phase=0);
+
           unsigned int ConcernCount() const;
 
           unsigned int ActionCount() const;
