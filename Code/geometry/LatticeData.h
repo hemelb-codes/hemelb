@@ -23,12 +23,10 @@ namespace hemelb
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class BaseSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
-        friend class BaseSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<const LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(
-               const lb::lattices::LatticeInfo& latticeInfo,
-               const Geometry& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
         virtual ~LatticeData();
 

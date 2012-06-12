@@ -10,16 +10,13 @@ namespace hemelb
 {
   namespace geometry
   {
-    // Forward definition of LatticeData; makes things easier.
-    class LatticeData;
 
-    template<bool isConst>
+    template<class DataSource>
     class BaseSite
     {
       public:
-        BaseSite(site_t localContiguousIndex, typename util::constSelector<isConst, geometry::LatticeData&,
-            const geometry::LatticeData&>::type latticeData) :
-          index(localContiguousIndex), latticeData(latticeData)
+        BaseSite(site_t localContiguousIndex, DataSource &latticeData) :
+            index(localContiguousIndex), latticeData(latticeData)
         {
         }
 
@@ -56,7 +53,7 @@ namespace hemelb
         template<typename LatticeType>
         inline distribn_t GetWallDistance(Direction direction) const
         {
-          return latticeData.template GetCutDistance<LatticeType> (index, direction);
+          return latticeData.template GetCutDistance<LatticeType>(index, direction);
         }
 
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
@@ -80,11 +77,17 @@ namespace hemelb
         template<typename LatticeType>
         inline site_t GetStreamedIndex(Direction direction) const
         {
-          return latticeData.template GetStreamedIndex<LatticeType> (index, direction);
+          return latticeData.template GetStreamedIndex<LatticeType>(index, direction);
         }
 
         template<typename LatticeType>
-        inline typename util::constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
+        inline const distribn_t* GetFOld() const
+        {
+          return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
+        }
+
+        template<typename LatticeType>
+        inline distribn_t* GetFOld()
         {
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
@@ -101,12 +104,13 @@ namespace hemelb
 
       private:
         site_t index;
-        typename util::constSelector<isConst, LatticeData&, const LatticeData&>::type latticeData;
+        DataSource & latticeData;
     };
 
-    typedef BaseSite<false> Site;
+    class LatticeData;
+    typedef BaseSite<LatticeData> Site;
 
-    typedef BaseSite<true> ConstSite;
+    typedef BaseSite<const LatticeData> ConstSite;
   }
 }
 
