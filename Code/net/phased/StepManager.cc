@@ -62,8 +62,17 @@ namespace hemelb
         return total;
       }
 
-      void  StepManager::CallActionsForPhase(Phase phase) {
-
+      void StepManager::CallActionsForPhase(Phase phase)
+      {
+        for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
+        {
+          std::pair<Registry::iterator, Registry::iterator> actionsForStep =
+              registry[phase].equal_range(static_cast<steps::Step>(step));
+          for (Registry::iterator action = actionsForStep.first; action != actionsForStep.second; ++action)
+          {
+            action->second.Call();
+          }
+        }
       }
     }
   }
