@@ -30,6 +30,9 @@ namespace hemelb
                   concern(concern), method(method)
               {
               }
+              bool Call(){
+                return concern.CallAction(method);
+              }
           };
 
           typedef std::pair<steps::Step, Action> BoundAction;
