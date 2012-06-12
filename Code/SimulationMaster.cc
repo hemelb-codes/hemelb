@@ -292,7 +292,7 @@ void SimulationMaster::Initialise()
   {
     stepManager->RegisterIteratedActorSteps(*network);
   }
-  stepManager->RegisterCommsSteps(*netConcern);
+  stepManager->RegisterCommsForAllPhases(*netConcern);
 }
 
 unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
