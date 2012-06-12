@@ -6,9 +6,7 @@
 #include "util/Vector3D.h"
 #include "lb/boundaries/iolets/InOutLets.h"
 #include "extraction/PropertyOutputFile.h"
-#include "extraction/StraightLineGeometrySelector.h"
-#include "extraction/PlaneGeometrySelector.h"
-#include "extraction/WholeGeometrySelector.h"
+#include "extraction/GeometrySelectors.h"
 
 namespace hemelb
 {
