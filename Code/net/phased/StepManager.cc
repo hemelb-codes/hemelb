@@ -13,8 +13,9 @@ namespace hemelb
 
       void StepManager::Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method)
       {
-        if (step==steps::BeginAll || step==steps::EndAll || step==steps::Reset) {
-          phase=0; // special actions are always recorded in the phase zero registry
+        if (step == steps::BeginAll || step == steps::EndAll || step == steps::Reset)
+        {
+          phase = 0; // special actions are always recorded in the phase zero registry
         }
         registry[phase].insert(BoundAction(step, Action(concern, method)));
       }
@@ -37,6 +38,14 @@ namespace hemelb
         Register(phase, steps::Send, concern, steps::Send);
         Register(phase, steps::Receive, concern, steps::Receive);
         Register(phase, steps::Wait, concern, steps::Wait);
+      }
+
+      void StepManager::RegisterCommsForAllPhases(Concern &concern)
+      {
+        for (Phase phase = 0; phase < registry.size(); phase++)
+        {
+          RegisterCommsSteps(concern, phase);
+        }
       }
 
       unsigned int StepManager::ConcernCount() const
@@ -69,30 +78,30 @@ namespace hemelb
       {
         for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
         {
-          CallActionsForStep(static_cast<steps::Step>(step),phase);
+          CallActionsForStep(static_cast<steps::Step>(step), phase);
         }
       }
 
       void StepManager::CallSpecialAction(steps::Step step)
       {
         // special actions are always recorded in the phase zero registry
-        CallActionsForStep(static_cast<steps::Step>(step),0);
+        CallActionsForStep(static_cast<steps::Step>(step), 0);
       }
 
       void StepManager::CallActions()
       {
         CallSpecialAction(steps::BeginAll);
-        for (Phase phase=0;phase<registry.size();phase++){
+        for (Phase phase = 0; phase < registry.size(); phase++)
+        {
           CallActionsForPhase(phase);
         }
         CallSpecialAction(steps::EndAll);
       }
 
-      void StepManager::CallActionsForStep(steps::Step step,Phase phase)
+      void StepManager::CallActionsForStep(steps::Step step, Phase phase)
       {
 
-        std::pair<Registry::iterator, Registry::iterator> actionsForStep =
-            registry[phase].equal_range(step);
+        std::pair<Registry::iterator, Registry::iterator> actionsForStep = registry[phase].equal_range(step);
         for (Registry::iterator action = actionsForStep.first; action != actionsForStep.second; ++action)
         {
           action->second.Call();

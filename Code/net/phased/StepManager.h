@@ -45,6 +45,7 @@ namespace hemelb
           void RegisterIteratedActorSteps(Concern &concern, Phase phase = 0);
 
           void RegisterCommsSteps(Concern &concern, Phase phase = 0);
+          void RegisterCommsForAllPhases(Concern &concern);
 
           void CallActionsForPhase(Phase phase=0);
           void CallActionsForStep(steps::Step step,Phase phase=0);
