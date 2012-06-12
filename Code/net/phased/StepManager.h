@@ -3,16 +3,18 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <string>
 #include "net/IteratedAction.h"
 #include "net/phased/Concern.h"
 #include "net/phased/steps.h"
+
+#include "log/Logger.h"
 namespace hemelb
 {
   namespace net
   {
     namespace phased
     {
-
 
       class StepManager
       {
@@ -24,31 +26,36 @@ namespace hemelb
           class Action
           {
             public:
-              Concern & concern;
+              Concern * concern;
               MethodLabel method;
+              std::string name;
               Action(Concern &concern, MethodLabel method) :
-                  concern(concern), method(method)
+                  concern(&concern), method(method)
               {
               }
-              bool Call(){
-                return concern.CallAction(method);
+              Action(const Action & action) :
+                  concern(action.concern), method(action.method)
+              {
+              }
+              bool Call()
+              {
+                return concern->CallAction(method);
               }
           };
 
-          typedef std::pair<steps::Step, Action> BoundAction;
-          typedef std::multimap<steps::Step, Action> Registry;
+          typedef std::map<steps::Step, std::vector<Action> > Registry;
 
           StepManager(Phase phases = 1);
 
           void Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method);
 
-          void RegisterIteratedActorSteps(Concern &concern, Phase phase = 0);
+          void RegisterIteratedActorSteps(Concern &concern,Phase phase = 0);
 
           void RegisterCommsSteps(Concern &concern, Phase phase = 0);
           void RegisterCommsForAllPhases(Concern &concern);
 
-          void CallActionsForPhase(Phase phase=0);
-          void CallActionsForStep(steps::Step step,Phase phase=0);
+          void CallActionsForPhase(Phase phase = 0);
+          void CallActionsForStep(steps::Step step, Phase phase = 0);
           void CallActions();
           void CallSpecialAction(steps::Step step);
 
