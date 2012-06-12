@@ -22,6 +22,7 @@ namespace hemelb
             CPPUNIT_TEST (TestRegisterActor);
             CPPUNIT_TEST (TestRegisterAction);
             CPPUNIT_TEST (TestRegisterTwoConcerns);
+            CPPUNIT_TEST (TestCallActions);
             CPPUNIT_TEST_SUITE_END();
 
           public:
@@ -79,6 +80,27 @@ namespace hemelb
 
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 2u);
               CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 7u);
+            }
+
+            void TestCallActions()
+            {
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              stepManager->RegisterIteratedActorSteps(*action);
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+
+              stepManager->CallActionsForPhase(0);
+
+              std::vector<int> shouldHaveCalled;
+
+              shouldHaveCalled.push_back(0);
+              shouldHaveCalled.push_back(1);
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action->CallsSoFar());
             }
 
             void SetupMocks(const proc_t core_count, const proc_t current_core)
