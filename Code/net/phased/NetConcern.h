@@ -22,10 +22,10 @@ namespace hemelb
             switch (static_cast<phased::steps::Step>(action))
             {
               case phased::steps::Send:
-                net.Receive();
+                net.Send();
                 return true;
               case phased::steps::Receive:
-                net.Send();
+                net.Receive();
                 return true;
               case phased::steps::Wait:
                 net.Wait();
