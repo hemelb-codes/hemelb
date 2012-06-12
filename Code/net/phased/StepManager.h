@@ -47,13 +47,16 @@ namespace hemelb
           void RegisterCommsSteps(Concern &concern, Phase phase = 0);
 
           void CallActionsForPhase(Phase phase=0);
+          void CallActionsForStep(steps::Step step,Phase phase=0);
+          void CallActions();
+          void CallSpecialAction(steps::Step step);
 
           unsigned int ConcernCount() const;
 
           unsigned int ActionCount() const;
 
         private:
-          std::vector<Registry> registry;
+          std::vector<Registry> registry; // one registry for each phase
 
       };
     }
