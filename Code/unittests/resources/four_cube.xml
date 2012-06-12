@@ -45,5 +45,10 @@
         <field type="shearrate"/>
       </linegeometry>    
     </propertyoutput>    
+    <propertyoutput frequency="5" file="surfaceshearstress.dat">
+      <geometrysurface>
+        <field type="shearstress"/>
+      </geometrysurface>    
+    </propertyoutput>    
   </properties>
 </hemelbsettings>

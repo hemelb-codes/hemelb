@@ -21,17 +21,14 @@ namespace hemelb
         /***
          * Constructor for Needs manager.
          * @param BlockCount Count of blocks
-         * @param readBlock Temporary input - which cores need which blocks, as an array of booleans.
-         * @param areadingGroupSize Number of cores to use for reading blocks
-         * @param anet Instance of Net Communication Protocol -- typically just Net(comm)
-         * @param comm Communicator used for decomposition topology
-         * @param rank Rank in decomposition topology
-         * @param size Size of decomposiiton topology
+         * @param readBlock Which cores need which blocks, as an array of booleans.
+         * @param readingGroupSize Number of cores to use for reading blocks
+         * @param net Instance of Net communication class to use.
          */
-       NeedsBase(const site_t BlockCount,
+       NeedsBase(const site_t blockCount,
                           const std::vector<bool>& readBlock,
-                          const proc_t areadingGroupSize,
-                          Net &anet,
+                          const proc_t readingGroupSize,
+                          Net &net,
                           bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***

@@ -14,6 +14,7 @@
 #include "unittests/geometry/geometry.h"
 #include "unittests/SimulationMasterTests.h"
 #include "unittests/extraction/extraction.h"
+#include "unittests/net/net.h"
 #include "unittests/multiscale/multiscale.h"
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"

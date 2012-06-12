@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_MULTISCALE_MPWIDEINTERCOMMUNICATOR_H
-#define HEMELB_UNITTESTS_MULTISCALE_MPWIDEINTERCOMMUNICATOR_H
+#ifndef HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H
+#define HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H
 #include "multiscale/Intercommunicator.h"
 #include "mpiInclude.h"
 #include "tinyxml.h"
@@ -14,7 +14,8 @@ http://castle.strw.leidenuniv.nl/software/MPWide.html
 #include <functional>
 #include <vector>
 #include <sstream>
-#include "unittests/multiscale/MockMPWide.h"
+/* TODO: make a good separation of test and production includes here. */
+#include "unittests/multiscale/MockMPWide.h" /* This is temporary! */
 //#include "MPWide.h"
 
 #include <unistd.h>
@@ -48,14 +49,14 @@ namespace hemelb
        * Example type traits structure, using the HemeLB implementation of MPI_TYPE traits.
        */
 
-      /*struct MPIRuntimeType
+      struct MPWideRuntimeType
       {
           typedef MPI_Datatype RuntimeType;
           template<class T> static RuntimeType GetType()
           {
             return MpiDataTypeTraits<T>::GetMpiDataType();
           }
-      };*/
+      };
 
       /***
        * This is a very dumb example of an intercommunicator
@@ -67,7 +68,7 @@ namespace hemelb
         bool mpwide_initialized = false;
       }
 
-      class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
+      class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
       {
         public:
           MPWideIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
@@ -416,4 +417,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_UNITTEST_MULTISCALE_MOCKINTERCOMMUNICATOR_H
+#endif // HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H

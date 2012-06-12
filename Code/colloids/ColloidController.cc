@@ -18,8 +18,9 @@ namespace hemelb
     ColloidController::ColloidController(const net::Net* const net,
                                          const geometry::LatticeData* const latDatLBM,
                                          const geometry::Geometry* const gmyResult,
-                                         io::xml::XmlAbstractionLayer& xml) :
-            net(net), latDat(latDatLBM),
+                                         io::xml::XmlAbstractionLayer& xml,
+                                         lb::MacroscopicPropertyCache& propertyCache) :
+            net(net),
             localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
@@ -32,16 +33,17 @@ namespace hemelb
       const Neighbourhood neighbourhood = GetNeighbourhoodVectors(REGION_OF_INFLUENCE);
 
       // determine information about neighbour sites and processors for all local fluid sites
-      InitialiseNeighbourList(gmyResult, neighbourhood);
+      InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
       bool ok = true;
       xml.ResetToTopLevel();
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
-      particleSet = new ParticleSet(xml);
+      particleSet = new ParticleSet(xml, propertyCache);
     }
 
     void ColloidController::InitialiseNeighbourList(
+            const geometry::LatticeData* const latDatLBM,
             const geometry::Geometry* const gmyResult,
             const Neighbourhood neighbourhood)
     {
@@ -57,7 +59,7 @@ namespace hemelb
       //                 add the targetProcessor of the neighbour site to our neighbourRanks list
 
       // foreach block in geometry
-      for (geometry::BlockTraverser blockTraverser(*(this->latDat));
+      for (geometry::BlockTraverser blockTraverser(*latDatLBM);
            blockTraverser.CurrentLocationValid();
            blockTraverser.TraverseOne())
       {
@@ -184,6 +186,29 @@ namespace hemelb
           }
 
       return vectors;
+    }
+
+    void ColloidController::RequestComms()
+    {
+      // step 6
+      particleSet->InterpolateFluidVelocity();
+
+      // communication from step 6
+      particleSet->CommunicateFluidVelocities();
+
+      // steps 7 & 2 combined
+      particleSet->UpdatePositions();
+
+      // step 3
+      particleSet->CalculateBodyForces();
+
+      // communication from step 2
+      particleSet->CommunicateParticlePositions();
+
+      // steps 1 & 4 combined
+      particleSet->CalculateFeedbackForces();
+      
+      // steps 5 and 8 performed by LBM actor
     }
 
   }

@@ -3,10 +3,12 @@
 
 #include <vector>
 #include "net/net.h"
+#include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
 #include "geometry/Geometry.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
 
 namespace hemelb
@@ -14,24 +16,28 @@ namespace hemelb
   namespace colloids
   {
     /** provides the control interface between colloid simulation and the rest of the system */
-    class ColloidController // : public net::IteratedAction
+    class ColloidController : public net::IteratedAction
     {
       public:
         /** constructor - currently only initialises the neighbour list */
         ColloidController(const net::Net* const net,
                           const geometry::LatticeData* const latDatLBM,
                           const geometry::Geometry* const gmyResult,
-                          io::xml::XmlAbstractionLayer& xml);
+                          io::xml::XmlAbstractionLayer& xml,
+                          lb::MacroscopicPropertyCache& propertyCache);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
+
+        /** overloaded from IteratedAction */
+        void RequestComms();
 
       private:
         /** enables simplified general point-to-point communication via MPI */
         const net::Net* const net;
 
         /** holds fluid information for local sites, i.e. the velocity distribution values */
-        const geometry::LatticeData* const latDat;
+        //const geometry::LatticeData* const latDat;
 
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
@@ -55,7 +61,8 @@ namespace hemelb
         /** determines the list of neighbour processors
             i.e. processors that are within the region of influence of the local domain's edge
             i.e. processors that own at least one site in the neighbourhood of a local site */
-        void InitialiseNeighbourList(const geometry::Geometry* const gmyResult,
+        void InitialiseNeighbourList(const geometry::LatticeData* const latDatLBM,
+                                     const geometry::Geometry* const gmyResult,
                                      const Neighbourhood neighbourhood);
 
         /** get local coordinates and the owner rank for a site from its global coordinates */
