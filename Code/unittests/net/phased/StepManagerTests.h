@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #include "net/phased/StepManager.h"
 #include "unittests/net/NetMock.h"
+#include "unittests/net/phased/MockConcern.h"
 #include "unittests/net/phased/MockIteratedAction.h"
 #include <cppunit/TestFixture.h>
 
@@ -19,11 +20,13 @@ namespace hemelb
             CPPUNIT_TEST_SUITE (StepManagerTests);
             CPPUNIT_TEST (TestConstruct);
             CPPUNIT_TEST (TestRegisterActor);
+            CPPUNIT_TEST (TestRegisterAction);
+            CPPUNIT_TEST (TestRegisterTwoConcerns);
             CPPUNIT_TEST_SUITE_END();
 
           public:
             StepManagerTests() :
-                netMock(NULL), communicatorMock(NULL), stepManager(NULL)
+                netMock(NULL), communicatorMock(NULL), stepManager(NULL), action(NULL), concern(NULL)
             {
             }
 
@@ -48,9 +51,33 @@ namespace hemelb
 
             void TestRegisterActor()
             {
-              concern = new MockIteratedAction("mockOne");
-              stepManager->RegisterAllSteps(*concern);
+              action = new MockIteratedAction("mockOne");
+              stepManager->RegisterIteratedActorSteps(*action);
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 1u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 5u);
+            }
+
+            void TestRegisterAction()
+            {
+              concern = new MockConcern("mockTwo");
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 1u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 1u);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 1u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 2u);
+            }
+
+            void TestRegisterTwoConcerns()
+            {
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              stepManager->RegisterIteratedActorSteps(*action);
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+
+              CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 2u);
               CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 7u);
             }
 
@@ -63,11 +90,11 @@ namespace hemelb
 
           private:
 
-
             net::NetMock *netMock;
             topology::Communicator *communicatorMock;
             StepManager *stepManager;
-            MockIteratedAction *concern;
+            MockIteratedAction *action;
+            MockConcern *concern;
         };
 
         CPPUNIT_TEST_SUITE_REGISTRATION (StepManagerTests);

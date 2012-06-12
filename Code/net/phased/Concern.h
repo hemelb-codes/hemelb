@@ -7,7 +7,7 @@ namespace hemelb{
         public:
           Concern(){}
           virtual ~Concern(){}
-          virtual bool CallAction()=0;
+          virtual bool CallAction(int action)=0;
       };
     }
   }

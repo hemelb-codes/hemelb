@@ -3,6 +3,8 @@
 
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include "unittests/net/phased/MockConcern.h"
+#include "unittests/net/phased/MockIteratedAction.h"
+#include "net/phased/steps.h"
 #include <cppunit/TestFixture.h>
 
 namespace hemelb
@@ -18,7 +20,9 @@ namespace hemelb
         {
             CPPUNIT_TEST_SUITE (ConcernTests);
             CPPUNIT_TEST (TestConstruct);
-            CPPUNIT_TEST (TestCallAction);CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST (TestCallAction);
+            CPPUNIT_TEST (TestCallActorAsConcern);
+            CPPUNIT_TEST_SUITE_END();
 
           public:
             ConcernTests()
@@ -27,7 +31,8 @@ namespace hemelb
 
             void setUp()
             {
-              concern = new MockConcern();
+              concern = new MockConcern("mockOne");
+              actor = new MockIteratedAction("mockTwo");
             }
 
             void tearDown()
@@ -60,8 +65,29 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
             }
 
+            void TestCallActorAsConcern()
+            {
+              actor->CallAction(steps::BeginPhase);
+
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, "),actor->CallsSoFar());
+
+              actor->CallAction(steps::PreSend);
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, "), actor->CallsSoFar());
+
+              actor->CallAction(steps::PreWait);
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, "), actor->CallsSoFar());
+
+              actor->CallAction(steps::EndPhase);
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "), actor->CallsSoFar());
+
+              actor->CallAction(steps::EndAll);
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
+                                   actor->CallsSoFar());
+            }
+
           private:
             MockConcern * concern;
+            MockIteratedAction * actor;
 
         };
         CPPUNIT_TEST_SUITE_REGISTRATION (ConcernTests);
