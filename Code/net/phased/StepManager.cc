@@ -17,10 +17,10 @@ namespace hemelb
         {
           phase = 0; // special actions are always recorded in the phase zero registry
         }
-        registry[phase].insert(BoundAction(step, Action(concern, method)));
+        registry[phase][step].push_back(Action(concern, method));
       }
 
-      void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
+      void StepManager::RegisterIteratedActorSteps(Concern &concern,Phase phase)
       {
         for (int step = steps::BeginPhase; step <= steps::Reset; step++)
         {
@@ -53,9 +53,12 @@ namespace hemelb
         std::set<Concern *> concerns;
         for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end(); phase++)
         {
-          for (Registry::const_iterator boundAction = phase->begin(); boundAction != phase->end(); boundAction++)
+          for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            concerns.insert(&boundAction->second.concern);
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            {
+              concerns.insert(action->concern);
+            }
           }
         }
         return concerns.size();
@@ -66,9 +69,12 @@ namespace hemelb
         unsigned int total = 0;
         for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end(); phase++)
         {
-          for (Registry::const_iterator boundAction = phase->begin(); boundAction != phase->end(); boundAction++)
+          for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            total++;
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            {
+              total++;
+            }
           }
         }
         return total;
@@ -100,11 +106,10 @@ namespace hemelb
 
       void StepManager::CallActionsForStep(steps::Step step, Phase phase)
       {
-
-        std::pair<Registry::iterator, Registry::iterator> actionsForStep = registry[phase].equal_range(step);
-        for (Registry::iterator action = actionsForStep.first; action != actionsForStep.second; ++action)
+        std::vector<Action> &actionsForStep = registry[phase][step];
+        for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
         {
-          action->second.Call();
+          action->Call();
         }
       }
     }
