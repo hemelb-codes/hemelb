@@ -31,7 +31,10 @@ namespace hemelb
             CPPUNIT_TEST (TestCallCommsActions);
 
             CPPUNIT_TEST (TestRegisterThreeConcerns);
-            CPPUNIT_TEST (TestCallActions);
+            CPPUNIT_TEST (TestCallPhaseActions);
+
+            CPPUNIT_TEST (TestCallSpecialActions);
+            CPPUNIT_TEST (TestCallAllActionsOnePhase);
 
             CPPUNIT_TEST_SUITE_END();
 
@@ -65,7 +68,7 @@ namespace hemelb
               action = new MockIteratedAction("mockOne");
               stepManager->RegisterIteratedActorSteps(*action);
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 1u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 5u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 6u);
             }
 
             void TestRegisterAction()
@@ -89,7 +92,7 @@ namespace hemelb
               stepManager->Register(0, steps::EndPhase, *concern, 1);
 
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 2u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 7u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 8u);
             }
 
             void TestRegisterCommsConcern()
@@ -112,7 +115,7 @@ namespace hemelb
               stepManager->Register(0, steps::EndPhase, *concern, 1);
 
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 3u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 10u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 11u);
             }
 
             void TestCallCommsActions()
@@ -157,7 +160,35 @@ namespace hemelb
                                    action->CallsSoFar());
             }
 
-            void TestCallActions()
+            void TestCallSpecialActions()
+            {
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              stepManager->RegisterIteratedActorSteps(*action);
+              stepManager->Register(0, steps::BeginAll, *concern, 37);
+              stepManager->Register(0, steps::Reset, *concern, 19);
+
+              stepManager->CallSpecialAction(steps::BeginAll);
+
+              std::vector<int> shouldHaveCalled;
+              shouldHaveCalled.push_back(37);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string(""), action->CallsSoFar());
+
+              stepManager->CallSpecialAction(steps::Reset);
+              shouldHaveCalled.push_back(19);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string("Reset, "), action->CallsSoFar());
+
+              stepManager->CallSpecialAction(steps::EndAll);
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+              CPPUNIT_ASSERT_EQUAL(std::string("Reset, EndIteration, "), action->CallsSoFar());
+            }
+
+            void TestCallPhaseActions()
             {
 
               SetupMocks(4, 1);
@@ -189,6 +220,45 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
 
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(payload0, 5);
+              netMock->ExpectationsAllCompleted();
+            }
+
+            void TestCallAllActionsOnePhase()
+            {
+
+              SetupMocks(4, 1);
+              int payload0 = 0;
+              int payload1 = 1;
+
+              int payload0Expectation = 5;
+              int payload1Expectation = 1;
+              netMock->RequestSendR(payload1, 1);
+              netMock->RequestReceiveR(payload0, 1);
+              netMock->RequireSend(&payload1Expectation, 1, 1);
+              netMock->RequireReceive(&payload0Expectation, 1, 1);
+
+              action = new MockIteratedAction("mockOne");
+              concern = new MockConcern("mockTwo");
+
+              stepManager->RegisterIteratedActorSteps(*action);
+              stepManager->Register(0, steps::PreSend, *concern, 0);
+              stepManager->Register(0, steps::EndPhase, *concern, 1);
+              stepManager->Register(0, steps::BeginAll, *concern, 17);
+              stepManager->RegisterCommsSteps(*netConcern, 0);
+
+              stepManager->CallActions();
+
+              std::vector<int> shouldHaveCalled;
+
+              shouldHaveCalled.push_back(17);
+              shouldHaveCalled.push_back(0);
+              shouldHaveCalled.push_back(1);
+
+              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
+
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),
                                    action->CallsSoFar());
               CPPUNIT_ASSERT_EQUAL(payload0, 5);
               netMock->ExpectationsAllCompleted();

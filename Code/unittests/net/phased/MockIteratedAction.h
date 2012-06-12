@@ -41,6 +41,10 @@ namespace hemelb
             {
               calls << "RequestComms, " << std::flush;
             }
+            void Reset()
+            {
+              calls << "Reset, " << std::flush;
+            }
             std::string CallsSoFar(){
               return calls.str();
             }
