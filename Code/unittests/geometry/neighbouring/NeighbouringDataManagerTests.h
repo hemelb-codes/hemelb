@@ -13,22 +13,26 @@ namespace hemelb
       namespace neighbouring
       {
         using namespace hemelb::geometry::neighbouring;
-        class NeighbouringDataManagerTests : public FourCubeBasedTestFixture, public MockNetHelper
+        class NeighbouringDataManagerTests : public FourCubeBasedTestFixture,
+                                             public MockNetHelper
         {
             CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
             CPPUNIT_TEST (TestConstruct);
+            CPPUNIT_TEST (TestRegisterNeed);
 
             CPPUNIT_TEST_SUITE_END();
 
           public:
-            NeighbouringDataManagerTests()
+            NeighbouringDataManagerTests() :
+                data(NULL)
             {
             }
 
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
-              manager=new NeighbouringDataManager();
+              data = new NeighbouringLatticeData(latDat->GetLatticeInfo());
+              manager = new NeighbouringDataManager(*latDat, *data);
             }
 
             void tearDown()
@@ -42,8 +46,15 @@ namespace hemelb
               // PASS -- just verify setUp and tearDown
             }
 
+            void TestRegisterNeed()
+            {
+              // We imagine that unbeknownst to us, there is a site at x=1,y=1,z=7 which for some unexplained reason we need to know about.
+              // The client code has a duty to determine the global index for the site, which it can do, in this way:
+            }
+
           private:
             NeighbouringDataManager *manager;
+            NeighbouringLatticeData *data;
 
         };
         CPPUNIT_TEST_SUITE_REGISTRATION (NeighbouringDataManagerTests);
