@@ -8,8 +8,8 @@ namespace hemelb
     {
 
       NeighbouringDataManager::NeighbouringDataManager(const LatticeData & localLatticeData,
-                                                       NeighbouringLatticeData & neighbouringLatticeData) :
-          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData)
+                                                       NeighbouringLatticeData & neighbouringLatticeData,net::BaseNet & net) :
+          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),net(net)
       {
       }
 
