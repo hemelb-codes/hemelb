@@ -13,7 +13,6 @@ namespace hemelb
     /***
      *  Class defining HemeLB needs communication
      Used by geometry reader to know where to send which blocks.
-     @tparam Net Class implementing the Net Communication Protocol, used to share information.
      */
     class Needs
     {
