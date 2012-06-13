@@ -39,6 +39,7 @@ namespace hemelb
       ReceiveGathers();
       ReceiveGatherVs();
       ReceivePointToPoint();
+      ReceiveAllToAll();
     }
 
     void BaseNet::Send()
@@ -47,7 +48,7 @@ namespace hemelb
       SendGathers();
       SendGatherVs();
       SendPointToPoint();
-
+      SendAllToAll();
     }
 
     void BaseNet::Wait()
@@ -57,6 +58,7 @@ namespace hemelb
       WaitGathers();
       WaitGatherVs();
       WaitPointToPoint();
+      WaitAllToAll();
 
       displacementsBuffer.clear();
       countsBuffer.clear();
