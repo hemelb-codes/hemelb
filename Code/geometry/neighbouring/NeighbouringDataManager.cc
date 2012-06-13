@@ -8,11 +8,13 @@ namespace hemelb
     {
 
       NeighbouringDataManager::NeighbouringDataManager(const LatticeData & localLatticeData,
-                                                       NeighbouringLatticeData & neighbouringLatticeData,net::BaseNet & net) :
+                                                       NeighbouringLatticeData & neighbouringLatticeData,net::InterfaceDelegationNet & net) :
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),net(net)
       {
       }
-
+      void NeighbouringDataManager::RegisterNeededSite(site_t globalId){
+        neededSites.push_back(globalId);
+      }
     }
   }
 }
