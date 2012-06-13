@@ -19,6 +19,7 @@ namespace hemelb
             CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
             CPPUNIT_TEST (TestConstruct);
             CPPUNIT_TEST (TestRegisterNeed);
+            CPPUNIT_TEST (TestShareNeeds);
 
             CPPUNIT_TEST_SUITE_END();
 
@@ -31,8 +32,8 @@ namespace hemelb
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
-              MockNetHelper::setUp(1,0);
               data = new NeighbouringLatticeData(latDat->GetLatticeInfo());
+              MockNetHelper::setUp(1,0);
               manager = new NeighbouringDataManager(*latDat, *data, *netMock);
             }
 
@@ -66,6 +67,16 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(desiredId,static_cast<site_t>(43)); // 43 = 2*16+2*4+3
 
               manager->RegisterNeededSite(desiredId);
+            }
+
+            void TestShareNeeds()
+            {
+              manager->RegisterNeededSite(43);
+              std::vector<site_t> needsShouldBeSentToSelf;
+              needsShouldBeSentToSelf.push_back(43);
+              netMock->RequireSend(&needsShouldBeSentToSelf.front(),1,0,"ToSelf");
+              manager->ShareNeeds();
+              netMock->ExpectationsAllCompleted();
             }
 
           private:
