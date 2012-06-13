@@ -1,4 +1,4 @@
-#include "NeighbouringLatticeData.h"
+#include "geometry/neighbouring/NeighbouringLatticeData.h"
 namespace hemelb
 {
   namespace geometry
