@@ -65,7 +65,7 @@ namespace hemelb
               site_t desiredId = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(desiredGlobalCoord);
               CPPUNIT_ASSERT_EQUAL(desiredId,static_cast<site_t>(43)); // 43 = 2*16+2*4+3
 
-              //manager->RegisterNeededSite(desiredId);
+              manager->RegisterNeededSite(desiredId);
             }
 
           private:
