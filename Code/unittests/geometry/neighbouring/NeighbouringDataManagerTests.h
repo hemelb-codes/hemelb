@@ -12,7 +12,7 @@ namespace hemelb
       namespace neighbouring
       {
         using namespace hemelb::geometry::neighbouring;
-        class NeighbouringDataManagerTests : public CppUnit::TestFixture
+        class NeighbouringDataManagerTests : public FourCubeBasedTestFixture
         {
             CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
             CPPUNIT_TEST (TestConstruct);
@@ -26,11 +26,12 @@ namespace hemelb
 
             void setUp()
             {
-
+              FourCubeBasedTestFixture::setUp();
             }
 
             void tearDown()
             {
+              FourCubeBasedTestFixture::tearDown();
             }
 
             void TestConstruct()
@@ -39,6 +40,9 @@ namespace hemelb
             }
 
           private:
+            net::NetMock *netMock;
+            topology::Communicator *communicatorMock;
+            NeighbouringDataManager *manager;
 
         };
         CPPUNIT_TEST_SUITE_REGISTRATION (NeighbouringDataManagerTests);
