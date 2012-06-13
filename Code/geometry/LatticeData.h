@@ -230,13 +230,19 @@ namespace hemelb
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
         }
 
-        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId,
-                                                                       util::Vector3D<site_t>& globalCoords) const
+        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId, util::Vector3D<site_t>& globalCoords) const
         {
           globalCoords.z = globalId % sites.z;
           site_t blockIJData = globalId / sites.z;
           globalCoords.y = blockIJData % sites.y;
           globalCoords.x = blockIJData / sites.y;
+        }
+
+        proc_t ProcProvidingSiteByGlobalNoncontiguousId(site_t globalId) const
+        {
+          util::Vector3D < site_t > resultCoord;
+          GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, resultCoord);
+          return GetProcIdFromGlobalCoords(resultCoord);
         }
 
         const util::Vector3D<site_t>
