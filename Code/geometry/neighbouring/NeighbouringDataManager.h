@@ -14,11 +14,7 @@ namespace hemelb
       {
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
-                                  NeighbouringLatticeData & neighbouringLatticeData) :
-              localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData)
-          {
-          }
-
+                                  NeighbouringLatticeData & neighbouringLatticeData);
         private:
           const LatticeData & localLatticeData;
           const NeighbouringLatticeData & neighbouringLatticeData;
