@@ -2,6 +2,7 @@
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "net/net.h"
 
 namespace hemelb
 {
@@ -14,10 +15,11 @@ namespace hemelb
       {
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
-                                  NeighbouringLatticeData & neighbouringLatticeData);
+                                  NeighbouringLatticeData & neighbouringLatticeData,net::BaseNet & net);
         private:
           const LatticeData & localLatticeData;
           const NeighbouringLatticeData & neighbouringLatticeData;
+          const net::BaseNet & net;
       };
 
     }
