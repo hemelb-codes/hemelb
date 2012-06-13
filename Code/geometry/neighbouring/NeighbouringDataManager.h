@@ -1,11 +1,29 @@
 #ifndef HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
-namespace hemelb{
-  namespace geometry{
-    namespace neighbouring{
-      class NeighbouringDataManager {
 
+#include "geometry/neighbouring/NeighbouringLatticeData.h"
+
+namespace hemelb
+{
+  namespace geometry
+  {
+    namespace neighbouring
+    {
+
+      class NeighbouringDataManager
+      {
+        public:
+          NeighbouringDataManager(const LatticeData & localLatticeData,
+                                  NeighbouringLatticeData & neighbouringLatticeData) :
+              localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData)
+          {
+          }
+
+        private:
+          const LatticeData & localLatticeData;
+          const NeighbouringLatticeData & neighbouringLatticeData;
       };
+
     }
   }
 }
