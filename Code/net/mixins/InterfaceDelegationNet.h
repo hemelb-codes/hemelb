@@ -75,15 +75,26 @@ namespace hemelb
         }
 
         template<class T>
+        void RequestAllToAllSend(std::vector<T> &buffer)
+        {
+          RequestAllToAllSend(&buffer.front(), buffer.size());
+        }
+        template<class T>
+        void RequestAllToAllReceive(std::vector<T> &buffer)
+        {
+          RequestAllToAllReceive(&buffer.front(), buffer.size());
+        }
+
+        template<class T>
         void RequestSend(T* pointer, int count, proc_t rank)
         {
-            RequestSendImpl(pointer, count, rank, MpiDataType<T>());
+          RequestSendImpl(pointer, count, rank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestReceive(T* pointer, int count, proc_t rank)
         {
-            RequestReceiveImpl(pointer, count, rank, MpiDataType<T>());
+          RequestReceiveImpl(pointer, count, rank, MpiDataType<T>());
         }
 
         /*
@@ -95,25 +106,36 @@ namespace hemelb
         template<class T>
         void RequestGatherVSend(T* buffer, int count, proc_t toRank)
         {
-            RequestGatherVSendImpl(buffer, count, toRank, MpiDataType<T>());
+          RequestGatherVSendImpl(buffer, count, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherReceive(T* buffer)
         {
-           RequestGatherReceiveImpl(buffer, MpiDataType<T>());
+          RequestGatherReceiveImpl(buffer, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherSend(T* buffer, proc_t toRank)
         {
-            RequestGatherSendImpl(buffer, toRank, MpiDataType<T>());
+          RequestGatherSendImpl(buffer, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherVReceive(T* buffer, int * displacements, int *counts)
         {
-            RequestGatherVReceiveImpl(buffer, displacements, counts, MpiDataType<T>());
+          RequestGatherVReceiveImpl(buffer, displacements, counts, MpiDataType<T>());
+        }
+
+        template<class T>
+        void RequestAllToAllSend(T* buffer, int count)
+        {
+          RequestAllToAllSendImpl(buffer, count, MpiDataType<T>());
+        }
+        template<class T>
+        void RequestAllToAllReceive(T* buffer, int count)
+        {
+          RequestAllToAllReceiveImpl(buffer, count, MpiDataType<T>());
         }
 
     };
