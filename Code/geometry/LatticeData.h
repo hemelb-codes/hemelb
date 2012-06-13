@@ -225,6 +225,20 @@ namespace hemelb
           return blockCoords * blockSize + localSiteCoords;
         }
 
+        inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(const util::Vector3D<site_t>&globalCoords) const
+        {
+          return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
+        }
+
+        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId,
+                                                                       util::Vector3D<site_t>& globalCoords) const
+        {
+          globalCoords.z = globalId % sites.z;
+          site_t blockIJData = globalId / sites.z;
+          globalCoords.y = blockIJData % sites.y;
+          globalCoords.x = blockIJData / sites.y;
+        }
+
         const util::Vector3D<site_t>
         GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
         util::Vector3D<site_t> GetSiteCoordsFromSiteId(site_t siteId) const;
