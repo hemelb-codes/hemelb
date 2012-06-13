@@ -3,7 +3,7 @@
 
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "net/net.h"
-
+#include <vector>
 namespace hemelb
 {
   namespace geometry
@@ -15,11 +15,14 @@ namespace hemelb
       {
         public:
           NeighbouringDataManager(const LatticeData & localLatticeData,
-                                  NeighbouringLatticeData & neighbouringLatticeData,net::BaseNet & net);
+                                  NeighbouringLatticeData & neighbouringLatticeData,net::InterfaceDelegationNet & net);
+          void RegisterNeededSite(site_t globalId);
         private:
           const LatticeData & localLatticeData;
           const NeighbouringLatticeData & neighbouringLatticeData;
-          const net::BaseNet & net;
+          const net::InterfaceDelegationNet & net;
+
+          std::vector<site_t> neededSites;
       };
 
     }
