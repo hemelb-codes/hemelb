@@ -44,7 +44,6 @@ namespace hemelb
         // EXTRA LINE
         // EXTRA LINE
         // EXTRA LINE
-        // EXTRA LINE
         CPPUNIT_TEST_SUITE_REGISTRATION (RequiredFieldInformationTests);
       }
     }
