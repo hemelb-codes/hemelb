@@ -18,7 +18,7 @@ namespace hemelb
     {
       using namespace hemelb::net;
 
-      class NetMock : public InterfaceDelegationNet<RecordingNet>,
+      class NetMock : public InterfaceDelegationNet,public RecordingNet,
                       public GathersViaPointPoint
       {
         public:

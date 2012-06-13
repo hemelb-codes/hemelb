@@ -11,14 +11,14 @@ namespace hemelb
     {
       public:
 
-        void RequestSend(void* pointer, int count, proc_t rank, MPI_Datatype type);
-        void RequestReceive(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
 
-        void RequestGatherVSend(void* buffer, int count, proc_t toRank, MPI_Datatype type);
-        void RequestGatherReceive(void* buffer, MPI_Datatype type);
+        void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type);
+        void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type);
 
-        void RequestGatherSend(void* buffer, proc_t toRank, MPI_Datatype type);
-        void RequestGatherVReceive(void* buffer, int * displacements, int *counts, MPI_Datatype type);
+        void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type);
+        void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type);
 
       protected:
         /**

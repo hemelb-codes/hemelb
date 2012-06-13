@@ -1,6 +1,6 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
-#include "geometry/needs/Needs.hpp"
+#include "geometry/needs/Needs.h"
 #include "unittests/helpers/MockNetHelper.h"
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include <cppunit/TestFixture.h>
@@ -17,7 +17,6 @@ namespace hemelb
     {
       using namespace hemelb::geometry;
       using namespace hemelb::unittests::helpers;
-      typedef NeedsBase<net::NetMock> MockedNeeds;
       class NeedsTests : public CppUnit::TestFixture, MockNetHelper
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
@@ -203,7 +202,7 @@ namespace hemelb
 
           void ShareMockNeeds()
           {
-            mockedNeeds = new MockedNeeds(blockCount,
+            mockedNeeds = new Needs(blockCount,
                                           inputNeededBlocks,
                                           readingCores,
                                           *netMock,
@@ -216,7 +215,7 @@ namespace hemelb
           proc_t size;
           proc_t rank;
           std::vector<bool> inputNeededBlocks;
-          MockedNeeds *mockedNeeds;
+          Needs *mockedNeeds;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NeedsTests);

@@ -8,8 +8,8 @@ namespace hemelb
   namespace net
   {
     class Net : public CoalescePointPoint,
-                              public InterfaceDelegationNet<StoringNet>,
-                              public SeparatedGathers
+                public InterfaceDelegationNet,
+                public SeparatedGathers
     {
       public:
         Net() :
