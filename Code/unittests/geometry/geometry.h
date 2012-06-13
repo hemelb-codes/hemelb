@@ -3,6 +3,7 @@
 
 #include "unittests/geometry/GeometryReaderTests.h"
 #include "unittests/geometry/NeedsTests.h"
+#include "unittests/geometry/LatticeDataTests.h"
 #include "unittests/geometry/neighbouring/neighbouring.h"
 
 #endif // ONCE
