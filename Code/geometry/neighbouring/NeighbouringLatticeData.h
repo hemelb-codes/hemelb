@@ -3,6 +3,7 @@
 #include <map>
 #include "geometry/SiteData.h"
 #include "geometry/neighbouring/NeighbouringSite.h"
+#include "lb/lattices/LatticeInfo.h"
 namespace hemelb
 {
   namespace geometry
@@ -18,11 +19,7 @@ namespace hemelb
         public:
           friend class BaseSite<NeighbouringLatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
 
-          NeighbouringLatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-              distributions(), distanceToWall(), wallNormalAtSite(), siteData(), latticeInfo(latticeInfo)
-          {
-          }
-
+          NeighbouringLatticeData(const lb::lattices::LatticeInfo& latticeInfo);
           virtual ~NeighbouringLatticeData()
           {
           }
@@ -31,53 +28,28 @@ namespace hemelb
                         const std::vector<distribn_t> &distribution,
                         const std::vector<distribn_t> &distances,
                         const util::Vector3D<distribn_t> &normal,
-                        const SiteData & data)
-          {
-            SaveDistribution(index, distribution);
-            SaveDistances(index, distances);
-            SaveNormal(index, normal);
-            SaveData(index, data);
-          }
-          void SaveDistribution(site_t index, const std::vector<distribn_t> &distribution)
-          {
-            distributions[index] = distribution;
-          }
+                        const SiteData & data);
+          void SaveDistribution(site_t index, const std::vector<distribn_t> &distribution);
 
-          void SaveDistances(site_t index, const std::vector<distribn_t> & distances)
-          {
-            distanceToWall[index] = distances;
-          }
+          void SaveDistances(site_t index, const std::vector<distribn_t> & distances);
 
-          void SaveNormal(site_t index, const util::Vector3D<distribn_t> &normal)
-          {
-            wallNormalAtSite[index] = normal;
-          }
+          void SaveNormal(site_t index, const util::Vector3D<distribn_t> &normal);
 
-          void SaveData(site_t index, const SiteData & data)
-          {
-            // no default constructor for site data, so don't use operator[]
-            siteData.insert(std::pair<site_t, SiteData>(index, data));
-          }
+          void SaveData(site_t index, const SiteData & data);
 
           /**
            * Get a site object for the given index.
            * @param localIndex
            * @return
            */
-          inline NeighbouringSite GetSite(site_t globalIndex)
-          {
-            return NeighbouringSite(globalIndex, *this);
-          }
+          NeighbouringSite GetSite(site_t globalIndex);
 
           /**
            * Get the wall normal at the given site
            * @param iSiteIndex
            * @return
            */
-          inline const util::Vector3D<distribn_t>& GetNormalToWall(site_t globalIndex) const
-          {
-            return wallNormalAtSite.find(globalIndex)->second;
-          }
+          const util::Vector3D<distribn_t>& GetNormalToWall(site_t globalIndex) const;
 
           /**
            * Get a pointer to the fOld array starting at the requested index
@@ -85,12 +57,7 @@ namespace hemelb
            * @param distributionIndex
            * @return
            */
-          distribn_t* GetFOld(site_t distributionIndex)
-          {
-            site_t globalIndex = distributionIndex / latticeInfo.GetNumVectors();
-            site_t direction = distributionIndex % latticeInfo.GetNumVectors();
-            return &distributions[globalIndex][direction];
-          }
+          distribn_t* GetFOld(site_t distributionIndex);
           /**
            * Get a pointer to the fOld array starting at the requested index. This version
            * of the function allows us to access the fOld array in a const way from a const
@@ -98,12 +65,7 @@ namespace hemelb
            * @param distributionIndex
            * @return
            */
-          const distribn_t* GetFOld(site_t distributionIndex) const
-          {
-            site_t globalIndex = distributionIndex / latticeInfo.GetNumVectors();
-            site_t direction = distributionIndex % latticeInfo.GetNumVectors();
-            return &distributions.find(globalIndex)->second[direction];
-          }
+          const distribn_t* GetFOld(site_t distributionIndex) const;
 
           /*
            * This is not defined for Neighbouring Data.
@@ -126,10 +88,7 @@ namespace hemelb
            * @param iSiteIndex
            * @return
            */
-          inline SiteData GetSiteData(site_t globalIndex) const
-          {
-            return siteData.find(globalIndex)->second;
-          }
+          SiteData GetSiteData(site_t globalIndex) const;
 
         private:
           std::map<site_t, std::vector<distribn_t> > distributions; //! The distribution values for the previous time step
