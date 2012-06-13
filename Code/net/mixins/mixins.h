@@ -6,5 +6,6 @@
 #include "net/mixins/SeparatedGathers.h"
 #include "net/mixins/InterfaceDelegationNet.h"
 #include "net/mixins/GathersViaPointPoint.h"
+#include "net/mixins/SeparatedAllToAll.h"
 
 #endif
