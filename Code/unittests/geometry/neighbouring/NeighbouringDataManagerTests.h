@@ -2,6 +2,7 @@
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "unittests/helpers/MockNetHelper.h"
 
 namespace hemelb
 {
@@ -12,7 +13,7 @@ namespace hemelb
       namespace neighbouring
       {
         using namespace hemelb::geometry::neighbouring;
-        class NeighbouringDataManagerTests : public FourCubeBasedTestFixture
+        class NeighbouringDataManagerTests : public FourCubeBasedTestFixture, public MockNetHelper
         {
             CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
             CPPUNIT_TEST (TestConstruct);
@@ -27,11 +28,13 @@ namespace hemelb
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
+              manager=new NeighbouringDataManager();
             }
 
             void tearDown()
             {
               FourCubeBasedTestFixture::tearDown();
+              MockNetHelper::tearDown();
             }
 
             void TestConstruct()
@@ -40,8 +43,6 @@ namespace hemelb
             }
 
           private:
-            net::NetMock *netMock;
-            topology::Communicator *communicatorMock;
             NeighbouringDataManager *manager;
 
         };
