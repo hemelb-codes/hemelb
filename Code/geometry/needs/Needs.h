@@ -15,20 +15,20 @@ namespace hemelb
      Used by geometry reader to know where to send which blocks.
      @tparam Net Class implementing the Net Communication Protocol, used to share information.
      */
-    template<class Net> class NeedsBase
+    class Needs
     {
       public:
         /***
          * Constructor for Needs manager.
          * @param BlockCount Count of blocks
          * @param readBlock Which cores need which blocks, as an array of booleans.
-         * @param readingGroupSize Number of cores to use for reading blocks
+         * @param readingGroupSize Number sof cores to use for reading blocks
          * @param net Instance of Net communication class to use.
          */
-       NeedsBase(const site_t blockCount,
+       Needs(const site_t blockCount,
                           const std::vector<bool>& readBlock,
                           const proc_t readingGroupSize,
-                          Net &net,
+                          net::InterfaceDelegationNet &net,
                           bool shouldValidate); // Temporarily during the refactor, constructed just to abstract the block sharing bit
 
         /***
@@ -51,13 +51,12 @@ namespace hemelb
         proc_t GetReadingCoreForBlock(const site_t blockNumber) const;
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
-        Net &net;
+        net::InterfaceDelegationNet &net;
         const topology::Communicator & communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;
         void Validate(const site_t blockCount, const std::vector<bool>& readBlock);
     };
-    typedef NeedsBase<net::Net> Needs;
   }
 }
 #endif // HEMELB_GEOMETRY_NEEDS_NEEDS_H
