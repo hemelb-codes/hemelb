@@ -20,7 +20,8 @@ namespace hemelb
                                   net::InterfaceDelegationNet & net);
           void RegisterNeededSite(site_t globalId);
           void ShareNeeds();
-          std::multimap<site_t, proc_t> & GetProcsNeedingEachSite(){return procsNeedingEachSite;}
+          std::vector<proc_t> & GetProcsNeedingSite(site_t site){return procsNeedingEachSite[site];}
+          std::vector<site_t> & GetNeededSites(){return neededSites;}
 
         private:
           const LatticeData & localLatticeData;
@@ -28,7 +29,7 @@ namespace hemelb
           net::InterfaceDelegationNet & net;
 
           std::vector<site_t> neededSites;
-          std::multimap<site_t, proc_t> procsNeedingEachSite;
+          std::map<site_t, std::vector<proc_t> > procsNeedingEachSite;
 
       };
 
