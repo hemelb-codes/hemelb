@@ -38,8 +38,8 @@ namespace hemelb
     {
       ReceiveGathers();
       ReceiveGatherVs();
-      ReceivePointToPoint();
       ReceiveAllToAll();
+      ReceivePointToPoint();
     }
 
     void BaseNet::Send()
@@ -47,8 +47,8 @@ namespace hemelb
 
       SendGathers();
       SendGatherVs();
-      SendPointToPoint();
       SendAllToAll();
+      SendPointToPoint();
     }
 
     void BaseNet::Wait()
