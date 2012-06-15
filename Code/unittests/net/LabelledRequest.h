@@ -21,9 +21,20 @@ namespace hemelb
             bool this_ok = ( (Count == other.Count) && (Rank == other.Rank) && (Type == other.Type));
             if (!this_ok)
             {
-              std::cerr << "Envelope different: " << Label << " R: " << Rank << " C: " << Count << " T: " << " : "
-                  << " R" << other.Rank << " C " << other.Count << " T " << std::flush;
+              std::cerr << "Envelope different: " << Label << " R: " << Rank << " C: " << Count << " T: " <<  " : "
+                  << " R" << other.Rank << " C " << other.Count << " T " << std::endl;
+              // uncomment the below for type diagnostics if your compiler supports them
+              /*std::cerr << "Types are:" << static_cast<void*>(Type) << " : " << static_cast<void*>(other.Type) << std::endl;
+              std::cerr << "Type candidates include" << " int: " << static_cast<void*>(MpiDataType<int>())
+                  << " unsigned int :" << static_cast<void*>(MpiDataType<unsigned int>())
+                  << " site_t: " << static_cast<void*>(MpiDataType<site_t>())
+                  << " proc_t: " << static_cast<void*>(MpiDataType<proc_t>())
+                  << std::endl;*/
             }
+            /*else{
+              std::cerr << "Envelope same: " << Label << " R: " << Rank << " C: " << Count << " T: " <<  " : "
+                              << " R" << other.Rank << " C " << other.Count << " T " << std::endl;
+            }*/
             return this_ok;
           }
 
