@@ -18,8 +18,8 @@ namespace hemelb
         {
             CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
             CPPUNIT_TEST (TestConstruct);
-            CPPUNIT_TEST (TestRegisterNeed);
-            CPPUNIT_TEST (TestShareNeeds);
+            CPPUNIT_TEST (TestRegisterNeedOneProc);
+            CPPUNIT_TEST (TestShareNeedsOneProc);
 
             CPPUNIT_TEST_SUITE_END();
 
@@ -48,7 +48,7 @@ namespace hemelb
               // PASS -- just verify setUp and tearDown
             }
 
-            void TestRegisterNeed()
+            void TestRegisterNeedOneProc()
             {
               // We imagine that unbeknownst to us, there is a site at x=1,y=1,z=7 which for some unexplained reason we need to know about.
               // The client code has a duty to determine the global index for the site, which it can do,
@@ -67,16 +67,35 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(desiredId,static_cast<site_t>(43)); // 43 = 2*16+2*4+3
 
               manager->RegisterNeededSite(desiredId);
+              CPPUNIT_ASSERT_EQUAL(static_cast<std::vector<site_t>::size_type >(1),manager->GetNeededSites().size());
+              CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(43),manager->GetNeededSites()[0]);
             }
 
-            void TestShareNeeds()
+            void TestShareNeedsOneProc()
             {
               manager->RegisterNeededSite(43);
+
+              // We should receive a signal that we need one from ourselves
+              std::vector<int> countOfNeedsToZeroFromZero;
+              countOfNeedsToZeroFromZero.push_back(1); // expectation
+              std::vector<int> countOfNeedsFromZeroToZero;
+              countOfNeedsFromZeroToZero.push_back(1); //fixture
+              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(),1,0,"CountToSelf");
+              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(),1,0,"CountFromSelf");
+
+              // Once we've received the signal that we need one from ourselves, we should receive that one.
               std::vector<site_t> needsShouldBeSentToSelf;
-              needsShouldBeSentToSelf.push_back(43);
-              netMock->RequireSend(&needsShouldBeSentToSelf.front(),1,0,"ToSelf");
+              std::vector<site_t> needsShouldBeReceivedFromSelf;
+              needsShouldBeSentToSelf.push_back(43); //expectation
+              needsShouldBeReceivedFromSelf.push_back(43);//fixture
+              netMock->RequireSend(&needsShouldBeSentToSelf.front(),1,0,"NeedToSelf");
+              netMock->RequireReceive(&needsShouldBeSentToSelf.front(),1,0,"NeedFromSelf");
+
               manager->ShareNeeds();
               netMock->ExpectationsAllCompleted();
+
+              CPPUNIT_ASSERT_EQUAL(manager->GetProcsNeedingSite(43).size(),static_cast<std::vector<int>::size_type >(1));
+              CPPUNIT_ASSERT_EQUAL(manager->GetProcsNeedingSite(43).front(),0);
             }
 
           private:
