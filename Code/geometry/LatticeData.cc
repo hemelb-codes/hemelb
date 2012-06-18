@@ -595,6 +595,18 @@ namespace hemelb
       return true;
     }
 
+    bool LatticeData::IsValidBlock(const util::Vector3D<site_t>& blockCoords) const
+    {
+      if (blockCoords.x < 0 || blockCoords.x >= blockCounts.x)
+        return false;
+      if (blockCoords.y < 0 || blockCoords.y >= blockCounts.y)
+        return false;
+      if (blockCoords.z < 0 || blockCoords.z >= blockCounts.z)
+        return false;
+
+      return true;
+    }
+
     bool LatticeData::IsValidLatticeSite(const util::Vector3D<site_t>& siteCoords) const
     {
       if (siteCoords.x < 0 || siteCoords.x >= sites.x)
@@ -616,6 +628,37 @@ namespace hemelb
       const Block& lBlock = GetBlock(GetBlockIdFromBlockCoords(blockCoords));
       // Return pointer to site_data[site]
       return lBlock.GetLocalContiguousIndexForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords));
+    }
+
+    bool LatticeData::GetContiguousSiteId(
+      const util::Vector3D<site_t>& globalLocation,
+      proc_t& procId, site_t& siteId) const
+    {
+      // convert global coordinates to local coordinates - i.e.
+      // to location of block and location of site within block
+      util::Vector3D<site_t> blockCoords, localSiteCoords;
+      GetBlockAndLocalSiteCoords(globalLocation, blockCoords, localSiteCoords);
+      if (!IsValidBlock(blockCoords) || !IsValidLatticeSite(localSiteCoords))
+        return false;
+
+      // get information for the block using the block location
+      const Block& block = GetBlock(GetBlockIdFromBlockCoords(blockCoords));
+      if (block.IsEmpty())
+        return false;
+
+      // get the local site id, i.e. its index within the block
+      site_t localSiteIndex = GetLocalSiteIdFromLocalSiteCoords(localSiteCoords);
+      if (block.SiteIsSolid(localSiteIndex))
+        return false;
+
+      // get the rank of the processor that owns the site
+      procId = block.GetProcessorRankForSite(localSiteIndex);
+      if (procId != topology::NetworkTopology::Instance()->GetLocalRank())
+        return false;
+
+      // get the local contiguous index of the fluid site
+      siteId = block.GetLocalContiguousIndexForSite(localSiteIndex);
+      return true;
     }
 
     const util::Vector3D<site_t> LatticeData::GetGlobalCoords(site_t blockNumber,
