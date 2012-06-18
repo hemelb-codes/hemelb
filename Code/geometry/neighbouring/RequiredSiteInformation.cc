@@ -1,4 +1,4 @@
-#include "RequiredSiteInformation.h"
+#include "geometry/neighbouring/RequiredSiteInformation.h"
 namespace hemelb
 {
   namespace geometry
