@@ -29,13 +29,6 @@ namespace hemelb
                         const std::vector<distribn_t> &distances,
                         const util::Vector3D<distribn_t> &normal,
                         const SiteData & data);
-          void SaveDistribution(site_t index, const std::vector<distribn_t> &distribution);
-
-          void SaveDistances(site_t index, const std::vector<distribn_t> & distances);
-
-          void SaveNormal(site_t index, const util::Vector3D<distribn_t> &normal);
-
-          void SaveData(site_t index, const SiteData & data);
 
           /**
            * Get a site object for the given index.
@@ -50,7 +43,7 @@ namespace hemelb
            * @return
            */
           const util::Vector3D<distribn_t>& GetNormalToWall(site_t globalIndex) const;
-
+          util::Vector3D<distribn_t>& GetNormalToWall(site_t globalIndex);
           /**
            * Get a pointer to the fOld array starting at the requested index
            * LatticeData assumes that the index for GetFOld is in distribution-space not site-space
@@ -58,6 +51,14 @@ namespace hemelb
            * @return
            */
           distribn_t* GetFOld(site_t distributionIndex);
+
+          /**
+           * Get a vector of the fOld array for the site
+           * LatticeData assumes that the index for GetFOld is in distribution-space not site-space
+           * @param globalIndex
+           * @return
+           */
+          std::vector<distribn_t>& GetDistribution(site_t globalIndex);
           /**
            * Get a pointer to the fOld array starting at the requested index. This version
            * of the function allows us to access the fOld array in a const way from a const
@@ -83,12 +84,16 @@ namespace hemelb
             return distanceToWall.find(globalIndex)->second[direction - 1];
           }
 
+          const std::vector<distribn_t> & GetCutDistances(site_t globalIndex) const;
+          std::vector<distribn_t> & GetCutDistances(site_t globalIndex);
+
           /**
            * Get the site data object for the given index.
            * @param iSiteIndex
            * @return
            */
-          SiteData GetSiteData(site_t globalIndex) const;
+          const SiteData &GetSiteData(site_t globalIndex) const;
+          SiteData &GetSiteData(site_t globalIndex);
 
         private:
           std::map<site_t, std::vector<distribn_t> > distributions; //! The distribution values for the previous time step

@@ -52,7 +52,7 @@ namespace hemelb
 
             void TestInsertAndRetrieveSiteData()
             {
-              data->SaveData(dummyId, exampleSite->GetSiteData());
+              data->GetSiteData(dummyId) = exampleSite->GetSiteData();
               CPPUNIT_ASSERT_EQUAL(exampleSite->GetSiteData(), data->GetSiteData(dummyId));
             }
 
@@ -64,7 +64,7 @@ namespace hemelb
                 distances.push_back(exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1));
               }
 
-              data->SaveDistances(dummyId, distances);
+              data->GetCutDistances(dummyId) = distances;
 
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
               {
@@ -75,7 +75,7 @@ namespace hemelb
 
             void TestInsertAndRetrieveNormal()
             {
-              data->SaveNormal(dummyId, exampleSite->GetWallNormal());
+              data->GetNormalToWall(dummyId) = exampleSite->GetWallNormal();
               CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallNormal(), data->GetNormalToWall(dummyId));
             }
 
@@ -87,7 +87,7 @@ namespace hemelb
                 distribution.push_back(exampleSite->GetFOld<lb::lattices::D3Q15>()[direction]);
               }
 
-              data->SaveDistribution(dummyId, distribution);
+              data->GetDistribution(dummyId) = distribution;
 
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
               {
