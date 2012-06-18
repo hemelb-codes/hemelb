@@ -105,6 +105,11 @@ namespace hemelb
           return latticeData.GetSiteData(index);
         }
 
+        inline SiteData& GetSiteData()
+        {
+          return latticeData.GetSiteData(index);
+        }
+
         inline const util::Vector3D<site_t>& GetGlobalSiteCoords() const
         {
           return latticeData.GetGlobalSiteCoords(index);
