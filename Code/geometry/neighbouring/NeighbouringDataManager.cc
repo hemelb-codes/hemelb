@@ -34,12 +34,13 @@ namespace hemelb
         for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
-          net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetIntersectionData(), source);
-          net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetOtherRawData(), source);
-          net.RequestReceive(neighbouringLatticeData.GetCutDistances(*localNeed),
+          NeighbouringSite site=neighbouringLatticeData.GetSite(*localNeed);
+          net.RequestReceiveR(site.GetSiteData().GetIntersectionData(), source);
+          net.RequestReceiveR(site.GetSiteData().GetOtherRawData(), source);
+          net.RequestReceive(site.GetWallDistances(),
                              localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                              source);
-          net.RequestReceiveR(neighbouringLatticeData.GetNormalToWall(*localNeed), source);
+          net.RequestReceiveR(site.GetWallNormal(), source);
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
@@ -48,15 +49,16 @@ namespace hemelb
           {
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+            Site site=const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetIntersectionData(),
+            net.RequestSendR(site.GetSiteData().GetIntersectionData(),
                              other);
-            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetOtherRawData(),
+            net.RequestSendR(site.GetSiteData().GetOtherRawData(),
                              other);
-            net.RequestSend(const_cast<LatticeData&>(localLatticeData).GetCutDistances(localContiguousId),
+            net.RequestSend(site.GetWallDistances(),
                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                             other);
-            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetNormalToWall(localContiguousId), other);
+            net.RequestSendR(site.GetWallNormal(), other);
           }
         }
         net.Dispatch();
