@@ -18,7 +18,10 @@ namespace hemelb
                                              const SiteData & data)
       {
         GetDistribution(index) = distribution;
-        GetCutDistances(index) = distances;
+        for (unsigned int direction = 0; direction < latticeInfo.GetNumVectors() - 1; direction++)
+        {
+          GetCutDistances(index)[direction] = distances[direction];
+        }
         GetNormalToWall(index) = normal;
         GetSiteData(index) = data;
       }
@@ -67,16 +70,16 @@ namespace hemelb
         return siteData.find(globalIndex)->second; // no default constructor, so no operator []
       }
 
-      const std::vector<distribn_t> & NeighbouringLatticeData::GetCutDistances(site_t globalIndex) const
+      const distribn_t * NeighbouringLatticeData::GetCutDistances(site_t globalIndex) const
       {
-        return distanceToWall.find(globalIndex)->second;
+        return &distanceToWall.find(globalIndex)->second.front();
       }
 
-      std::vector<distribn_t> & NeighbouringLatticeData::GetCutDistances(site_t globalIndex)
+      distribn_t* NeighbouringLatticeData::GetCutDistances(site_t globalIndex)
       {
         std::vector<distribn_t> &buffer = distanceToWall[globalIndex];
         buffer.resize(latticeInfo.GetNumVectors() - 1);
-        return buffer;
+        return &buffer.front();
       }
 
     }

@@ -131,10 +131,27 @@ namespace hemelb
               netMock->RequireReceive(&fixtureData.GetIntersectionData(), 1, 0, "IntersectionDataFromSelf");
               netMock->RequireSend(&expectedData.GetOtherRawData(), 1, 0, "RawDataToSelf");
               netMock->RequireReceive(&fixtureData.GetOtherRawData(), 1, 0, "RawDataFromSelf");
+
+              netMock->RequireSend(exampleSite.GetWallDistances(),
+                                   lb::lattices::D3Q15::NUMVECTORS - 1,
+                                   0,
+                                   "WallToSelf");
+              netMock->RequireReceive(exampleSite.GetWallDistances(),
+                                      lb::lattices::D3Q15::NUMVECTORS - 1,
+                                      0,
+                                      "WallFromSelf");
+              netMock->RequireSend(&exampleSite.GetWallNormal(), 1, 0, "NormalToSelf");
+              netMock->RequireReceive(&exampleSite.GetWallNormal(), 1, 0, "NormalFromSelf");
               manager->TransferNonFieldDependentInformation();
               netMock->ExpectationsAllCompleted();
               NeighbouringSite transferredSite = data->GetSite(43);
               CPPUNIT_ASSERT_EQUAL(exampleSite.GetSiteData(), transferredSite.GetSiteData());
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              {
+                CPPUNIT_ASSERT_EQUAL(exampleSite.GetWallDistances()[direction],
+                                     transferredSite.GetWallDistances()[direction]);
+              }
+              CPPUNIT_ASSERT_EQUAL(exampleSite.GetWallNormal(), transferredSite.GetWallNormal());
             }
 
           private:
