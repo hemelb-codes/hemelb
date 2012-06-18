@@ -35,8 +35,9 @@ namespace hemelb
          * These functions return internal representations and should only be used for debugging.
          */
         uint32_t GetIntersectionData() const;
+        uint32_t &GetIntersectionData(){return boundaryIntersection;}
         uint32_t GetOtherRawData() const;
-
+        uint32_t &GetOtherRawData(){return data;}
         static const uint32_t SITE_TYPE_BITS = 2U;
         /**
          * Arbitrarily set this to 20 bits.
