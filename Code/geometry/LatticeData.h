@@ -323,27 +323,6 @@ namespace hemelb
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
-        /***
-         * Non-const version of getting site-data, for use with MPI calls, where const-ness is not respected on sends.
-         * Not available on const LatticeDatas
-         * @param iSiteIndex
-         * @return
-         */
-        inline SiteData &GetSiteData(site_t iSiteIndex)
-        {
-          return siteData[iSiteIndex];
-        }
-
-        distribn_t * GetCutDistances(site_t iSiteIndex)
-        {
-          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
-        }
-
-        util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
-        {
-          return wallNormalAtSite[iSiteIndex];
-        }
-
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -512,6 +491,26 @@ namespace hemelb
           return siteData[iSiteIndex];
         }
 
+        /***
+         * Non-const version of getting site-data, for use with MPI calls, where const-ness is not respected on sends.
+         * Not available on const LatticeDatas
+         * @param iSiteIndex
+         * @return
+         */
+        inline SiteData &GetSiteData(site_t iSiteIndex)
+        {
+          return siteData[iSiteIndex];
+        }
+
+        distribn_t * GetCutDistances(site_t iSiteIndex)
+        {
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
+        }
+
+        util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
+        {
+          return wallNormalAtSite[iSiteIndex];
+        }
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex
