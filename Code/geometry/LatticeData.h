@@ -230,6 +230,13 @@ namespace hemelb
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
         }
 
+        inline site_t GetLocalContiguousIdFromGlobalNoncontiguousId(const site_t globalId) const
+        {
+          util::Vector3D<site_t> location;
+          GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, location);
+          return GetContiguousSiteId(location);
+        }
+
         void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId, util::Vector3D<site_t>& globalCoords) const
         {
           globalCoords.z = globalId % sites.z;
@@ -240,7 +247,7 @@ namespace hemelb
 
         proc_t ProcProvidingSiteByGlobalNoncontiguousId(site_t globalId) const
         {
-          util::Vector3D < site_t > resultCoord;
+          util::Vector3D<site_t> resultCoord;
           GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, resultCoord);
           return GetProcIdFromGlobalCoords(resultCoord);
         }
@@ -315,6 +322,17 @@ namespace hemelb
         }
 
         void Report(ctemplate::TemplateDictionary& dictionary);
+
+        /***
+         * Non-const version of getting site-data, for use with MPI calls, where const-ness is not respected on sends.
+         * Not available on const LatticeDatas
+         * @param iSiteIndex
+         * @return
+         */
+        inline SiteData &GetSiteData(site_t iSiteIndex)
+        {
+          return siteData[iSiteIndex];
+        }
 
       protected:
         /**
@@ -472,6 +490,10 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const
         {
           return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
+        }
+
+        distribn_t * GetCutDistances(site_t iSiteIndex){
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
         }
 
         /**
