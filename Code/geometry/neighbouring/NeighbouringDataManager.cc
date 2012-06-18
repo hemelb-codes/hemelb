@@ -12,12 +12,49 @@ namespace hemelb
       NeighbouringDataManager::NeighbouringDataManager(const LatticeData & localLatticeData,
                                                        NeighbouringLatticeData & neighbouringLatticeData,
                                                        net::InterfaceDelegationNet & net) :
-          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net)
+          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize())
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId)
       {
         neededSites.push_back(globalId);
+      }
+
+      proc_t NeighbouringDataManager::ProcForSite(site_t site)
+      {
+        return localLatticeData.ProcProvidingSiteByGlobalNoncontiguousId(site);
+      }
+
+      void NeighbouringDataManager::TransferNonFieldDependentInformation()
+      {
+        // Ordering is important here, to ensure the requests are registered in the same order
+        // on the sending and receiving procs.
+        // But, the needsEachProcHasFromMe is always ordered,
+        // by the same order, as the neededSites, so this should be OK.
+        for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
+        {
+          proc_t source = ProcForSite(*localNeed);
+          net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetIntersectionData(), source);
+          net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetOtherRawData(), source);
+          //net.RequestReceiveV(neighbouringLatticeData.GetCutDistances(*localNeed), source);
+          //net.RequestReceiveR(neighbouringLatticeData.GetNormalToWall(*localNeed), source);
+        }
+        for (proc_t other=0; other < net.GetCommunicator().GetSize(); other++)
+        {
+          for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
+              needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
+          {
+            site_t localContiguousId =
+                localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+            // have to cast away the const, because no respect for const-ness for sends in MPI
+            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetIntersectionData(), other);
+            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetOtherRawData(), other);
+            //net.RequestSend(localLatticeData.GetCutDistances(localContiguousId),
+            //localLatticeData.GetLatticeInfo().GetNumVectors() - 1, other);
+            //net.RequestSendR(localLatticeData.GetNormalToWall(localContiguousId), other);
+          }
+        }
+        net.Dispatch();
       }
 
       void NeighbouringDataManager::ShareNeeds()
@@ -27,8 +64,8 @@ namespace hemelb
         std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
         for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
-          needsIHaveFromEachProc[localLatticeData.ProcProvidingSiteByGlobalNoncontiguousId(*localNeed)].push_back(*localNeed);
-          countOfNeedsIHaveFromEachProc[localLatticeData.ProcProvidingSiteByGlobalNoncontiguousId(*localNeed)]++;
+          needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
+          countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
         }
         // every proc must send to all procs, how many it needs from that proc
         net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
@@ -37,9 +74,6 @@ namespace hemelb
         std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().GetSize(), 0);
         net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
         net.Dispatch();
-
-
-        std::vector<std::vector<site_t> > needsEachProcHasFromMe(net.GetCommunicator().GetSize());
 
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
@@ -54,17 +88,6 @@ namespace hemelb
         }
 
         net.Dispatch();
-
-        // Now, every proc knows the needs, of which other procs it must send sites to
-        // so iterate that and invert the matrix into the map we use for storing this
-        for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
-        {
-          for (std::vector<site_t>::iterator neededSite = needsEachProcHasFromMe[other].begin();
-              neededSite != needsEachProcHasFromMe[other].end(); neededSite++)
-          {
-            procsNeedingEachSite[*neededSite].push_back(other);
-          }
-        }
       }
     }
   }
