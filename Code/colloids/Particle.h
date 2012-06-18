@@ -21,7 +21,8 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(io::xml::XmlAbstractionLayer& xml,
+        Particle(const geometry::LatticeData* const latDatLBM,
+                 io::xml::XmlAbstractionLayer& xml,
                  lb::MacroscopicPropertyCache& propertyCache);
 
         /** partial interpolation of fluid velocity - temporary value only */
@@ -43,6 +44,7 @@ namespace hemelb
         const void InterpolateFluidVelocity();
 
       private:
+        const geometry::LatticeData* const latDatLBM;
         lb::MacroscopicPropertyCache& propertyCache;
     };
   }
