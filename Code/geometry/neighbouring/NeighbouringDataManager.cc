@@ -36,10 +36,12 @@ namespace hemelb
           proc_t source = ProcForSite(*localNeed);
           net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetIntersectionData(), source);
           net.RequestReceiveR(neighbouringLatticeData.GetSiteData(*localNeed).GetOtherRawData(), source);
-          //net.RequestReceiveV(neighbouringLatticeData.GetCutDistances(*localNeed), source);
-          //net.RequestReceiveR(neighbouringLatticeData.GetNormalToWall(*localNeed), source);
+          net.RequestReceive(neighbouringLatticeData.GetCutDistances(*localNeed),
+                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
+                             source);
+          net.RequestReceiveR(neighbouringLatticeData.GetNormalToWall(*localNeed), source);
         }
-        for (proc_t other=0; other < net.GetCommunicator().GetSize(); other++)
+        for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
@@ -47,11 +49,14 @@ namespace hemelb
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetIntersectionData(), other);
-            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetOtherRawData(), other);
-            //net.RequestSend(localLatticeData.GetCutDistances(localContiguousId),
-            //localLatticeData.GetLatticeInfo().GetNumVectors() - 1, other);
-            //net.RequestSendR(localLatticeData.GetNormalToWall(localContiguousId), other);
+            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetIntersectionData(),
+                             other);
+            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetSiteData(localContiguousId).GetOtherRawData(),
+                             other);
+            net.RequestSend(const_cast<LatticeData&>(localLatticeData).GetCutDistances(localContiguousId),
+                            localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
+                            other);
+            net.RequestSendR(const_cast<LatticeData&>(localLatticeData).GetNormalToWall(localContiguousId), other);
           }
         }
         net.Dispatch();

@@ -58,13 +58,10 @@ namespace hemelb
 
             void TestInsertAndRetrieveDistance()
             {
-              std::vector<distribn_t> distances;
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
               {
-                distances.push_back(exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1));
+                data->GetCutDistances(dummyId)[direction]=exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1);
               }
-
-              data->GetCutDistances(dummyId) = distances;
 
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
               {
