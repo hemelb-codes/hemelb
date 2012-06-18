@@ -20,8 +20,10 @@ namespace hemelb
                                   net::InterfaceDelegationNet & net);
           void RegisterNeededSite(site_t globalId);
           void ShareNeeds();
-          std::vector<proc_t> & GetProcsNeedingSite(site_t site){return procsNeedingEachSite[site];}
+          std::vector<site_t> &GetNeedsForProc(proc_t proc){return needsEachProcHasFromMe[proc];}
           std::vector<site_t> & GetNeededSites(){return neededSites;}
+          void TransferNonFieldDependentInformation();
+          virtual proc_t ProcForSite(site_t site); // virtual to make this class testable
 
         private:
           const LatticeData & localLatticeData;
@@ -29,7 +31,7 @@ namespace hemelb
           net::InterfaceDelegationNet & net;
 
           std::vector<site_t> neededSites;
-          std::map<site_t, std::vector<proc_t> > procsNeedingEachSite;
+          std::vector<std::vector<site_t> > needsEachProcHasFromMe;
 
       };
 
