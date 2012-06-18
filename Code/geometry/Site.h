@@ -56,11 +56,19 @@ namespace hemelb
           return latticeData.template GetCutDistance<LatticeType>(index, direction);
         }
 
+        inline distribn_t* GetWallDistances()
+        {
+          return latticeData.GetCutDistances(index);
+        }
+
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
         {
           return latticeData.GetNormalToWall(index);
         }
-
+        inline util::Vector3D<distribn_t>& GetWallNormal()
+        {
+          return latticeData.GetNormalToWall(index);
+        }
         inline site_t GetIndex() const
         {
           return index;

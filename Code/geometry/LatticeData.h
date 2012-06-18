@@ -334,6 +334,16 @@ namespace hemelb
           return siteData[iSiteIndex];
         }
 
+        distribn_t * GetCutDistances(site_t iSiteIndex)
+        {
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
+        }
+
+        util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
+        {
+          return wallNormalAtSite[iSiteIndex];
+        }
+
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -490,10 +500,6 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const
         {
           return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
-        }
-
-        distribn_t * GetCutDistances(site_t iSiteIndex){
-          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
         }
 
         /**

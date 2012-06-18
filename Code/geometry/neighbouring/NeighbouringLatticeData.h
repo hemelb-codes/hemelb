@@ -84,8 +84,13 @@ namespace hemelb
             return distanceToWall.find(globalIndex)->second[direction - 1];
           }
 
-          const std::vector<distribn_t> & GetCutDistances(site_t globalIndex) const;
-          std::vector<distribn_t> & GetCutDistances(site_t globalIndex);
+          /*
+           * For compatibility with lattice data,
+           * these have to be distribn_t *, not a vector
+           * because the lattice data stores the distances as a contiguous array
+           */
+          const distribn_t * GetCutDistances(site_t globalIndex) const;
+          distribn_t* GetCutDistances(site_t globalIndex);
 
           /**
            * Get the site data object for the given index.
