@@ -94,6 +94,12 @@ namespace hemelb
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
+        // Non-templated version of GetFOld, for when you haven't got a constant lattice type handy
+        inline distribn_t* GetFOld(int numvectors)
+        {
+          return latticeData.GetFOld(index * numvectors);
+        }
+
         template<typename LatticeType>
         inline distribn_t* GetFOld()
         {
