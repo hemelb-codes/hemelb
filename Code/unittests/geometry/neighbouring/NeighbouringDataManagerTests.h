@@ -36,13 +36,14 @@ namespace hemelb
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
-              data = new NeighbouringLatticeData(latDat->GetLatticeInfo());
+              data = &latDat->GetNeighbouringData();
               MockNetHelper::setUp(1, 0);
               manager = new NeighbouringDataManager(*latDat, *data, *netMock);
             }
 
             void tearDown()
             {
+              delete manager;
               FourCubeBasedTestFixture::tearDown();
               MockNetHelper::tearDown();
             }
