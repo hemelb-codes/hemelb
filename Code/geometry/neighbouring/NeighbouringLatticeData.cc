@@ -32,6 +32,11 @@ namespace hemelb
         return NeighbouringSite(globalIndex, *this);
       }
 
+      ConstNeighbouringSite NeighbouringLatticeData::GetSite(site_t globalIndex) const
+      {
+        return ConstNeighbouringSite(globalIndex, *this);
+      }
+
       const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex) const
       {
         return wallNormalAtSite.find(globalIndex)->second;
