@@ -15,8 +15,9 @@ namespace hemelb
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize())
       {
       }
-      void NeighbouringDataManager::RegisterNeededSite(site_t globalId)
+      void NeighbouringDataManager::RegisterNeededSite(site_t globalId,RequiredSiteInformation requirements)
       {
+        //ignore the requirements, we reqire everying.
         neededSites.push_back(globalId);
       }
 
