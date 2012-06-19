@@ -23,6 +23,7 @@ namespace hemelb
           std::vector<site_t> &GetNeedsForProc(proc_t proc){return needsEachProcHasFromMe[proc];}
           std::vector<site_t> & GetNeededSites(){return neededSites;}
           void TransferNonFieldDependentInformation();
+          void TransferFieldDependentInformation();
           virtual proc_t ProcForSite(site_t site); // virtual to make this class testable
 
         private:
