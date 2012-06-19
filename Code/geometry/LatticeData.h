@@ -486,7 +486,7 @@ namespace hemelb
          * @param iSiteIndex
          * @return
          */
-        inline SiteData GetSiteData(site_t iSiteIndex) const
+        inline const SiteData &GetSiteData(site_t iSiteIndex) const
         {
           return siteData[iSiteIndex];
         }
