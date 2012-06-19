@@ -1,12 +1,13 @@
 #include "geometry/neighbouring/RequiredSiteInformation.h"
+#include "mpiInclude.h"
 namespace hemelb
 {
   namespace geometry
   {
     namespace neighbouring
     {
-      RequiredSiteInformation::RequiredSiteInformation() :
-          choices(terms::Length, false)
+      RequiredSiteInformation::RequiredSiteInformation(bool initial) :
+          choices(terms::Length, initial)
       {
       }
       void RequiredSiteInformation::Require(terms::Term term)

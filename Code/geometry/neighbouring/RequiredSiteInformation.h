@@ -25,10 +25,14 @@ namespace hemelb
           Length
         };
       }
+      /***
+       * Class to represent, eventually, exactly what information is needed from a remote site.
+       * Initially, this will not be used -- we will just transfer all information.
+       */
       class RequiredSiteInformation
       {
         public:
-          RequiredSiteInformation();
+          RequiredSiteInformation(bool initial=false);
           void Or(const RequiredSiteInformation& other);
           void And(const RequiredSiteInformation& other);
           void Require(terms::Term term);
