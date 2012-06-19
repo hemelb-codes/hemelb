@@ -48,6 +48,8 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   simulationState = NULL;
   stepManager = NULL;
   netConcern = NULL;
+  neighbouringDataManager=NULL;
+  neighbouringLatticeData=NULL;
   snapshotsPerSimulation = options.NumberOfSnapshots();
   imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
@@ -98,6 +100,8 @@ SimulationMaster::~SimulationMaster()
   delete simulationState;
   delete unitConvertor;
   delete incompressibilityChecker;
+  delete neighbouringDataManager;
+  delete neighbouringLatticeData;
 
   delete simConfig;
   delete fileManager;
@@ -265,6 +269,9 @@ void SimulationMaster::Initialise()
   }
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
+
+  neighbouringLatticeData=new hemelb::geometry::neighbouring::NeighbouringLatticeData(latticeData->GetLatticeInfo());
+  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,*neighbouringLatticeData,communicationNet);
 
   stepManager = new hemelb::net::phased::StepManager(1);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
