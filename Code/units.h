@@ -7,6 +7,8 @@ namespace hemelb
 {
   // Basic types for use in HemeLB.
 
+  namespace util { template<typename T> class Vector3D; } // forward declaration of Vector3D
+
   // ------ OLD POLICY:  ---------
   //Any variable which scales as a function of the number of sites
   // can have type site_t, processors proc_t.
@@ -41,8 +43,12 @@ namespace hemelb
 
   typedef double RadianAngle;
 
+  typedef double LatticeLength; // any length measured in lattice displacements
   typedef double PhysicalLength;
 
+  typedef util::Vector3D<LatticeLength> LatticePosition; // origin of lattice is at {0,0,0}
+
+  // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
   typedef double PhysicalVelocity;
   typedef distribn_t LatticeVelocity;
 
