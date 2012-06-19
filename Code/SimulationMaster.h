@@ -19,6 +19,7 @@
 #include "colloids/ColloidController.h"
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
+#include "geometry/neighbouring/NeighbouringDataManager.h"
 
 class SimulationMaster
 {
@@ -98,6 +99,9 @@ class SimulationMaster
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
+
+    hemelb::geometry::neighbouring::NeighbouringLatticeData *neighbouringLatticeData;
+    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
 
     unsigned int snapshotsPerSimulation;
     unsigned int imagesPerSimulation;

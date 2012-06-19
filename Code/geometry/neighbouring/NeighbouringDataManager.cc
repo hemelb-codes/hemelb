@@ -15,7 +15,7 @@ namespace hemelb
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize())
       {
       }
-      void NeighbouringDataManager::RegisterNeededSite(site_t globalId,RequiredSiteInformation requirements)
+      void NeighbouringDataManager::RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements)
       {
         //ignore the requirements, we reqire everying.
         neededSites.push_back(globalId);
@@ -61,6 +61,12 @@ namespace hemelb
 
       void NeighbouringDataManager::TransferFieldDependentInformation()
       {
+        RequestComms();
+        net.Dispatch();
+      }
+
+      void NeighbouringDataManager::RequestComms()
+      {
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
@@ -69,7 +75,9 @@ namespace hemelb
         {
           proc_t source = ProcForSite(*localNeed);
           NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
-          net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()), localLatticeData.GetLatticeInfo().GetNumVectors(), source);
+          net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
+                             localLatticeData.GetLatticeInfo().GetNumVectors(),
+                             source);
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
@@ -80,10 +88,11 @@ namespace hemelb
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
             Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSend(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()), localLatticeData.GetLatticeInfo().GetNumVectors(), other);
+            net.RequestSend(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
+                            localLatticeData.GetLatticeInfo().GetNumVectors(),
+                            other);
           }
         }
-        net.Dispatch();
       }
 
       void NeighbouringDataManager::ShareNeeds()
