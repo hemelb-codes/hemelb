@@ -49,7 +49,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   stepManager = NULL;
   netConcern = NULL;
   neighbouringDataManager=NULL;
-  neighbouringLatticeData=NULL;
   snapshotsPerSimulation = options.NumberOfSnapshots();
   imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
@@ -101,7 +100,6 @@ SimulationMaster::~SimulationMaster()
   delete unitConvertor;
   delete incompressibilityChecker;
   delete neighbouringDataManager;
-  delete neighbouringLatticeData;
 
   delete simConfig;
   delete fileManager;
@@ -270,34 +268,33 @@ void SimulationMaster::Initialise()
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  neighbouringLatticeData=new hemelb::geometry::neighbouring::NeighbouringLatticeData(latticeData->GetLatticeInfo());
-  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,*neighbouringLatticeData,communicationNet);
+  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,latticeData->GetNeighbouringData(),communicationNet);
 
-  stepManager = new hemelb::net::phased::StepManager(1);
+  stepManager = new hemelb::net::phased::StepManager(2);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
+  stepManager->RegisterIteratedActorSteps(*neighbouringDataManager,0);
+  stepManager->RegisterIteratedActorSteps(*colloidController,1);
+  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel,1);
 
-  stepManager->RegisterIteratedActorSteps(*colloidController);
-  stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel);
-
-  stepManager->RegisterIteratedActorSteps(*inletValues);
-  stepManager->RegisterIteratedActorSteps(*outletValues);
-  stepManager->RegisterIteratedActorSteps(*steeringCpt);
-  stepManager->RegisterIteratedActorSteps(*stabilityTester);
+  stepManager->RegisterIteratedActorSteps(*inletValues,1);
+  stepManager->RegisterIteratedActorSteps(*outletValues,1);
+  stepManager->RegisterIteratedActorSteps(*steeringCpt,1);
+  stepManager->RegisterIteratedActorSteps(*stabilityTester,1);
   if (entropyTester != NULL)
   {
-    stepManager->RegisterIteratedActorSteps(*entropyTester);
+    stepManager->RegisterIteratedActorSteps(*entropyTester,1);
   }
 
-  stepManager->RegisterIteratedActorSteps(*incompressibilityChecker);
-  stepManager->RegisterIteratedActorSteps(*visualisationControl);
+  stepManager->RegisterIteratedActorSteps(*incompressibilityChecker,1);
+  stepManager->RegisterIteratedActorSteps(*visualisationControl,1);
   if (propertyExtractor != NULL)
   {
-    stepManager->RegisterIteratedActorSteps(*propertyExtractor);
+    stepManager->RegisterIteratedActorSteps(*propertyExtractor,1);
   }
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    stepManager->RegisterIteratedActorSteps(*network);
+    stepManager->RegisterIteratedActorSteps(*network,1);
   }
   stepManager->RegisterCommsForAllPhases(*netConcern);
 }

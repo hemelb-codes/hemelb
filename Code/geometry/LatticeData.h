@@ -11,6 +11,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
+#include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
@@ -323,6 +324,8 @@ namespace hemelb
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
+        neighbouring::NeighbouringLatticeData &GetNeighbouringData();
+        neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -557,6 +560,7 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
+        neighbouring::NeighbouringLatticeData *neighbouringData;
     };
   }
 }

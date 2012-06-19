@@ -34,13 +34,12 @@ namespace hemelb
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
-              data = new NeighbouringLatticeData(latDat->GetLatticeInfo());
+              data = &latDat->GetNeighbouringData();
               exampleSite = new Site(latDat->GetSite(0));
             }
 
             void tearDown()
             {
-              delete data;
               delete exampleSite;
               FourCubeBasedTestFixture::tearDown();
             }

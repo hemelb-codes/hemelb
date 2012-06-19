@@ -100,7 +100,6 @@ class SimulationMaster
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
 
-    hemelb::geometry::neighbouring::NeighbouringLatticeData *neighbouringLatticeData;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
 
     unsigned int snapshotsPerSimulation;
