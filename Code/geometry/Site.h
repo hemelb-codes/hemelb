@@ -100,7 +100,7 @@ namespace hemelb
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
-        inline const SiteData GetSiteData() const
+        inline const SiteData& GetSiteData() const
         {
           return latticeData.GetSiteData(index);
         }

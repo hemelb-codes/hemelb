@@ -67,7 +67,7 @@ namespace hemelb
 
       SiteData& NeighbouringLatticeData::GetSiteData(site_t globalIndex)
       {
-        return siteData.find(globalIndex)->second; // no default constructor, so no operator []
+        return siteData[globalIndex];
       }
 
       const distribn_t * NeighbouringLatticeData::GetCutDistances(site_t globalIndex) const

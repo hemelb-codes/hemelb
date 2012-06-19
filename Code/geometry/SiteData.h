@@ -22,6 +22,7 @@ namespace hemelb
       public:
         SiteData(const GeometrySite& siteReadResult);
         SiteData(const SiteData& other);
+        SiteData():boundaryIntersection(0),data(0){}//default constructor allows one to use operator[] for maps
         virtual ~SiteData();
 
         bool IsEdge() const;
