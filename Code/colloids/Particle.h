@@ -26,9 +26,11 @@ namespace hemelb
                  lb::MacroscopicPropertyCache& propertyCache);
 
         /** partial interpolation of fluid velocity - temporary value only */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> velocity;
 
-        /** the effect of all body forces on this particle */
+        /** the effect of all body forces on this particle - this is NOT a force vector */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> bodyForces;
 
         /** updates the position of this particle using body forces and fluid velocity */

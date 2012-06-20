@@ -43,10 +43,15 @@ namespace hemelb
 
   typedef double RadianAngle;
 
-  typedef double LatticeLength; // any length measured in lattice displacements
+  // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
   typedef double PhysicalLength;
 
-  typedef util::Vector3D<LatticeLength> LatticePosition; // origin of lattice is at {0,0,0}
+  typedef double PhysicalDistance; // continuous distance in physical units
+  typedef double LatticeDistance; // continuous distance in lattice units
+  typedef int64_t LatticeCoordinate; // discrete distance in lattice units
+
+  typedef util::Vector3D<LatticeDistance> LatticePosition; // origin of lattice is at {0.0,0.0,0.0}
+  typedef util::Vector3D<LatticeCoordinate> LatticeVector; // origin of lattice is at {0,0,0}
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
   typedef double PhysicalVelocity;
