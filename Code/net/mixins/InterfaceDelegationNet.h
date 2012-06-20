@@ -1,5 +1,5 @@
-#ifndef HEMELB_NET_MIXINS_INTERFACEDELEGATIONNET_HPP
-#define HEMELB_NET_MIXINS_INTERFACEDELEGATIONNET_HPP
+#ifndef HEMELB_NET_MIXINS_INTERFACEDELEGATIONNET_H
+#define HEMELB_NET_MIXINS_INTERFACEDELEGATIONNET_H
 namespace hemelb
 {
   namespace net
@@ -9,7 +9,7 @@ namespace hemelb
      * We define a series of templates with nice C++ style interfaces which delegate to C-style template interfaces
      * And then, delegate the templated C-style interfaces to nontemplated interfaces taking an MPI datatype.
      */
-    template<class ImplementingNet> class InterfaceDelegationNet : public virtual ImplementingNet
+    class InterfaceDelegationNet : public virtual BaseNet
     {
       public:
         template<class T>
@@ -74,16 +74,35 @@ namespace hemelb
           RequestGatherVSend(&payload.front(), payload.size(), toRank);
         }
 
+        /***
+         * This is for a scalar all to all
+         * @param buffer vector with length same as communicator size
+         */
+        template<class T>
+        void RequestAllToAllSend(std::vector<T> &buffer)
+        {
+          RequestAllToAllSend(&buffer.front(), 1);
+        }
+        /***
+         * This is for a scalar all to all
+         * @param buffer vector with length same as communicator size
+         */
+        template<class T>
+        void RequestAllToAllReceive(std::vector<T> &buffer)
+        {
+          RequestAllToAllReceive(&buffer.front(), 1);
+        }
+
         template<class T>
         void RequestSend(T* pointer, int count, proc_t rank)
         {
-            ImplementingNet::RequestSend(pointer, count, rank, MpiDataType<T>());
+          RequestSendImpl(pointer, count, rank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestReceive(T* pointer, int count, proc_t rank)
         {
-            ImplementingNet::RequestReceive(pointer, count, rank, MpiDataType<T>());
+          RequestReceiveImpl(pointer, count, rank, MpiDataType<T>());
         }
 
         /*
@@ -95,25 +114,36 @@ namespace hemelb
         template<class T>
         void RequestGatherVSend(T* buffer, int count, proc_t toRank)
         {
-            ImplementingNet::RequestGatherVSend(buffer, count, toRank, MpiDataType<T>());
+          RequestGatherVSendImpl(buffer, count, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherReceive(T* buffer)
         {
-            ImplementingNet::RequestGatherReceive(buffer, MpiDataType<T>());
+          RequestGatherReceiveImpl(buffer, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherSend(T* buffer, proc_t toRank)
         {
-            ImplementingNet::RequestGatherSend(buffer, toRank, MpiDataType<T>());
+          RequestGatherSendImpl(buffer, toRank, MpiDataType<T>());
         }
 
         template<class T>
         void RequestGatherVReceive(T* buffer, int * displacements, int *counts)
         {
-            ImplementingNet::RequestGatherVReceive(buffer, displacements, counts, MpiDataType<T>());
+          RequestGatherVReceiveImpl(buffer, displacements, counts, MpiDataType<T>());
+        }
+
+        template<class T>
+        void RequestAllToAllSend(T* buffer, int count)
+        {
+          RequestAllToAllSendImpl(buffer, count, MpiDataType<T>());
+        }
+        template<class T>
+        void RequestAllToAllReceive(T* buffer, int count)
+        {
+          RequestAllToAllReceiveImpl(buffer, count, MpiDataType<T>());
         }
 
     };

@@ -1,7 +1,7 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
-#include "geometry/needs/Needs.hpp"
-#include "unittests/net/NetMock.h"
+#include "geometry/needs/Needs.h"
+#include "unittests/helpers/MockNetHelper.h"
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include <cppunit/TestFixture.h>
 
@@ -16,8 +16,8 @@ namespace hemelb
     namespace geometry
     {
       using namespace hemelb::geometry;
-      typedef NeedsBase<net::NetMock> MockedNeeds;
-      class NeedsTests : public CppUnit::TestFixture
+      using namespace hemelb::unittests::helpers;
+      class NeedsTests : public CppUnit::TestFixture, MockNetHelper
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
           CPPUNIT_TEST (TestReadingOne);
@@ -25,7 +25,7 @@ namespace hemelb
 
         public:
           NeedsTests() :
-              mockedNeeds(NULL), netMock(NULL), communicatorMock(NULL)
+              mockedNeeds(NULL)
           {
           }
 
@@ -39,8 +39,7 @@ namespace hemelb
           void tearDown()
           {
             delete mockedNeeds;
-            delete communicatorMock;
-            delete netMock;
+            MockNetHelper::tearDown();
           }
 
           void TestReadingOne()
@@ -190,9 +189,7 @@ namespace hemelb
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
-
-            communicatorMock=new topology::Communicator(current_core,core_count);
-            netMock = new net::NetMock(*communicatorMock);
+            MockNetHelper::setUp(core_count,current_core);
 
             inputNeededBlocks = std::vector<bool>(block_count);
 
@@ -205,7 +202,7 @@ namespace hemelb
 
           void ShareMockNeeds()
           {
-            mockedNeeds = new MockedNeeds(blockCount,
+            mockedNeeds = new Needs(blockCount,
                                           inputNeededBlocks,
                                           readingCores,
                                           *netMock,
@@ -218,9 +215,7 @@ namespace hemelb
           proc_t size;
           proc_t rank;
           std::vector<bool> inputNeededBlocks;
-          MockedNeeds *mockedNeeds;
-          net::NetMock *netMock;
-          topology::Communicator *communicatorMock;
+          Needs *mockedNeeds;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (NeedsTests);

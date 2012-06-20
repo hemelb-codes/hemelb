@@ -10,16 +10,13 @@ namespace hemelb
 {
   namespace geometry
   {
-    // Forward definition of LatticeData; makes things easier.
-    class LatticeData;
 
-    template<bool isConst>
+    template<class DataSource>
     class BaseSite
     {
       public:
-        BaseSite(site_t localContiguousIndex, typename util::constSelector<isConst, geometry::LatticeData&,
-            const geometry::LatticeData&>::type latticeData) :
-          index(localContiguousIndex), latticeData(latticeData)
+        BaseSite(site_t localContiguousIndex, DataSource &latticeData) :
+            index(localContiguousIndex), latticeData(latticeData)
         {
         }
 
@@ -56,14 +53,22 @@ namespace hemelb
         template<typename LatticeType>
         inline distribn_t GetWallDistance(Direction direction) const
         {
-          return latticeData.template GetCutDistance<LatticeType> (index, direction);
+          return latticeData.template GetCutDistance<LatticeType>(index, direction);
+        }
+
+        inline distribn_t* GetWallDistances()
+        {
+          return latticeData.GetCutDistances(index);
         }
 
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
         {
           return latticeData.GetNormalToWall(index);
         }
-
+        inline util::Vector3D<distribn_t>& GetWallNormal()
+        {
+          return latticeData.GetNormalToWall(index);
+        }
         inline site_t GetIndex() const
         {
           return index;
@@ -80,16 +85,33 @@ namespace hemelb
         template<typename LatticeType>
         inline site_t GetStreamedIndex(Direction direction) const
         {
-          return latticeData.template GetStreamedIndex<LatticeType> (index, direction);
+          return latticeData.template GetStreamedIndex<LatticeType>(index, direction);
         }
 
         template<typename LatticeType>
-        inline typename util::constSelector<isConst, distribn_t*, const distribn_t*>::type GetFOld() const
+        inline const distribn_t* GetFOld() const
         {
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
-        inline const SiteData GetSiteData() const
+        // Non-templated version of GetFOld, for when you haven't got a constant lattice type handy
+        inline distribn_t* GetFOld(int numvectors)
+        {
+          return latticeData.GetFOld(index * numvectors);
+        }
+
+        template<typename LatticeType>
+        inline distribn_t* GetFOld()
+        {
+          return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
+        }
+
+        inline const SiteData& GetSiteData() const
+        {
+          return latticeData.GetSiteData(index);
+        }
+
+        inline SiteData& GetSiteData()
         {
           return latticeData.GetSiteData(index);
         }
@@ -101,12 +123,13 @@ namespace hemelb
 
       private:
         site_t index;
-        typename util::constSelector<isConst, LatticeData&, const LatticeData&>::type latticeData;
+        DataSource & latticeData;
     };
 
-    typedef BaseSite<false> Site;
+    class LatticeData;
+    typedef BaseSite<LatticeData> Site;
 
-    typedef BaseSite<true> ConstSite;
+    typedef BaseSite<const LatticeData> ConstSite;
   }
 }
 
