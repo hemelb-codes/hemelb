@@ -156,12 +156,13 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
+  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,latticeData->GetNeighbouringData(),communicationNet);
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,
-                                                           timings);
+                                                           timings,neighbouringDataManager);
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
@@ -268,7 +269,6 @@ void SimulationMaster::Initialise()
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,latticeData->GetNeighbouringData(),communicationNet);
 
   stepManager = new hemelb::net::phased::StepManager(2);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
