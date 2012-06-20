@@ -69,7 +69,7 @@ namespace hemelb
       DimensionlessQuantity delta = 1.0;
       for (int xyz=0;xyz<3;xyz++)
       {
-        LatticeLength rmod = fabs(relativePosition[xyz]);
+        LatticeDistance rmod = fabs(relativePosition[xyz]);
 
         if (rmod <= 1.0)
           delta *= 0.125*(3.0 - 2.0*rmod + sqrt(1.0 + 4.0*rmod - 4.0*rmod*rmod));
