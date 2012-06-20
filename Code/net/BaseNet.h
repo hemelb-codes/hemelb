@@ -47,17 +47,21 @@ namespace hemelb
         virtual void SendPointToPoint()=0;
         virtual void SendGathers()=0;
         virtual void SendGatherVs()=0;
+        virtual void SendAllToAll()=0;
 
         virtual void ReceiveGathers()=0;
         virtual void ReceiveGatherVs()=0;
         virtual void ReceivePointToPoint()=0;
+        virtual void ReceiveAllToAll()=0;
 
         virtual void WaitPointToPoint()=0;
         virtual void WaitGathers()=0;
         virtual void WaitGatherVs()=0;
+        virtual void WaitAllToAll()=0;
 
-        virtual void RequestSend(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
-        virtual void RequestReceive(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
+        // Interfaces exposing MPI_Datatype, not intended for client class use
+        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
+        virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
 
 
         /*
@@ -65,10 +69,14 @@ namespace hemelb
          * But, here we separate send and receive parts, since this interface may one day be used for
          * nonblocking collectives.
          */
-        virtual void RequestGatherVSend(void* buffer, int count, proc_t toRank, MPI_Datatype type)=0;
-        virtual void RequestGatherReceive(void* buffer, MPI_Datatype type)=0;
-        virtual void RequestGatherSend(void* buffer, proc_t toRank, MPI_Datatype type)=0;
-        virtual void RequestGatherVReceive(void* buffer, int * displacements, int *counts, MPI_Datatype type)=0;
+        virtual void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type)=0;
+        virtual void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type)=0;
+        virtual void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type)=0;
+        virtual void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type)=0;
+
+
+        virtual void RequestAllToAllReceiveImpl(void * buffer,int count,MPI_Datatype type)=0;
+        virtual void RequestAllToAllSendImpl(void * buffer,int count,MPI_Datatype type)=0;
 
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();

@@ -18,8 +18,8 @@ namespace hemelb
     {
       using namespace hemelb::net;
 
-      class NetMock : public InterfaceDelegationNet<RecordingNet>,
-                      public GathersViaPointPoint
+      class NetMock : public InterfaceDelegationNet,public RecordingNet,
+                      public GathersViaPointPoint, public AllToAllViaPointPoint
       {
         public:
           NetMock(topology::Communicator & communicator) :
