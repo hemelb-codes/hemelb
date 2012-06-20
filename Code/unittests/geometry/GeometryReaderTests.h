@@ -14,39 +14,23 @@ namespace hemelb
     {
       using namespace hemelb::geometry;
       using namespace resources;
-      // open the protected classes for testing
-      class TestableLatticeData : public LatticeData
-      {
-        public:
-          class GeometryReader : public hemelb::geometry::GeometryReader
-          {
-            public:
-              GeometryReader(const bool reserveSteeringCore,
-                             const hemelb::lb::lattices::LatticeInfo& latticeInfo,
-                             reporting::Timers &timings) :
-                hemelb::geometry::GeometryReader(reserveSteeringCore, latticeInfo, timings)
-              {
-              }
-          };
-      };
+
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE( GeometryReaderTests);
-          CPPUNIT_TEST( TestRead);
-          CPPUNIT_TEST( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (GeometryReaderTests);
+          CPPUNIT_TEST (TestRead);
+          CPPUNIT_TEST (TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
 
           GeometryReaderTests() :
-            timings()
+              timings()
           {
           }
 
           void setUp()
           {
-            reader = new TestableLatticeData::GeometryReader(false,
-                                                             hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                                             timings);
+            reader = new GeometryReader(false, hemelb::lb::lattices::D3Q15::GetLatticeInfo(), timings);
             lattice = NULL;
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
@@ -101,15 +85,15 @@ namespace hemelb
           }
 
         private:
-          TestableLatticeData::GeometryReader *reader;
-          TestableLatticeData* lattice;
+          GeometryReader *reader;
+          LatticeData* lattice;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
           hemelb::geometry::LatticeData *fourCube;
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GeometryReaderTests);
     }
   }
 }

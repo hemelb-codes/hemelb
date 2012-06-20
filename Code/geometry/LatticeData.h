@@ -11,6 +11,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
+#include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
@@ -23,12 +24,10 @@ namespace hemelb
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class BaseSite<true>; //! Let the inner classes have access to site-related data that's otherwise private.
-        friend class BaseSite<false>; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
+        friend class BaseSite<const LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(
-               const lb::lattices::LatticeInfo& latticeInfo,
-               const Geometry& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
         virtual ~LatticeData();
 
@@ -238,6 +237,33 @@ namespace hemelb
           return blockCoords * blockSize + localSiteCoords;
         }
 
+        inline site_t GetGlobalNoncontiguousSiteIdFromGlobalCoords(const util::Vector3D<site_t>&globalCoords) const
+        {
+          return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
+        }
+
+        inline site_t GetLocalContiguousIdFromGlobalNoncontiguousId(const site_t globalId) const
+        {
+          util::Vector3D<site_t> location;
+          GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, location);
+          return GetContiguousSiteId(location);
+        }
+
+        void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId, util::Vector3D<site_t>& globalCoords) const
+        {
+          globalCoords.z = globalId % sites.z;
+          site_t blockIJData = globalId / sites.z;
+          globalCoords.y = blockIJData % sites.y;
+          globalCoords.x = blockIJData / sites.y;
+        }
+
+        proc_t ProcProvidingSiteByGlobalNoncontiguousId(site_t globalId) const
+        {
+          util::Vector3D<site_t> resultCoord;
+          GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, resultCoord);
+          return GetProcIdFromGlobalCoords(resultCoord);
+        }
+
         const util::Vector3D<site_t>
         GetGlobalCoords(site_t blockNumber, const util::Vector3D<site_t>& localSiteCoords) const;
         util::Vector3D<site_t> GetSiteCoordsFromSiteId(site_t siteId) const;
@@ -309,6 +335,8 @@ namespace hemelb
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
+        neighbouring::NeighbouringLatticeData &GetNeighbouringData();
+        neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -472,11 +500,31 @@ namespace hemelb
          * @param iSiteIndex
          * @return
          */
-        inline SiteData GetSiteData(site_t iSiteIndex) const
+        inline const SiteData &GetSiteData(site_t iSiteIndex) const
         {
           return siteData[iSiteIndex];
         }
 
+        /***
+         * Non-const version of getting site-data, for use with MPI calls, where const-ness is not respected on sends.
+         * Not available on const LatticeDatas
+         * @param iSiteIndex
+         * @return
+         */
+        inline SiteData &GetSiteData(site_t iSiteIndex)
+        {
+          return siteData[iSiteIndex];
+        }
+
+        distribn_t * GetCutDistances(site_t iSiteIndex)
+        {
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
+        }
+
+        util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
+        {
+          return wallNormalAtSite[iSiteIndex];
+        }
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex
@@ -523,6 +571,7 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
+        neighbouring::NeighbouringLatticeData *neighbouringData;
     };
   }
 }
