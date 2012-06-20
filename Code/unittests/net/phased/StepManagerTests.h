@@ -1,7 +1,7 @@
 #ifndef HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #define HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #include "net/phased/StepManager.h"
-#include "unittests/net/NetMock.h"
+#include "unittests/helpers/MockNetHelper.h"
 #include "unittests/net/phased/MockConcern.h"
 #include "unittests/net/phased/MockIteratedAction.h"
 #include "net/phased/NetConcern.h"
@@ -16,7 +16,8 @@ namespace hemelb
       namespace phased
       {
         using namespace hemelb::net::phased;
-        class StepManagerTests : public CppUnit::TestFixture
+        using namespace hemelb::unittests::helpers;
+        class StepManagerTests : public CppUnit::TestFixture, public MockNetHelper
         {
             CPPUNIT_TEST_SUITE (StepManagerTests);
             CPPUNIT_TEST (TestConstruct);
@@ -43,7 +44,7 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                netMock(NULL), communicatorMock(NULL), stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL)
+                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL)
             {
             }
 
@@ -57,8 +58,7 @@ namespace hemelb
 
             void tearDown()
             {
-              delete communicatorMock;
-              delete netMock;
+              MockNetHelper::tearDown();
             }
 
             void TestConstruct()
@@ -453,15 +453,12 @@ namespace hemelb
 
             void SetupMocks(const proc_t core_count, const proc_t current_core)
             {
-              communicatorMock = new topology::Communicator(current_core, core_count);
-              netMock = new net::NetMock(*communicatorMock);
+              MockNetHelper::setUp(core_count,current_core);
               netConcern = new NetConcern(*netMock);
             }
 
           private:
 
-            net::NetMock *netMock;
-            topology::Communicator *communicatorMock;
             StepManager *stepManager;
             MockIteratedAction *action;
             MockConcern *concern;
