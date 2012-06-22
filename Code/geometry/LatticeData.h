@@ -11,6 +11,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
+#include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
@@ -181,6 +182,7 @@ namespace hemelb
          * @return
          */
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
+        bool IsValidBlock(const util::Vector3D<site_t>& blockCoords) const;
 
         /**
          * Get the dimensions of the bounding box of the geometry in terms of blocks.
@@ -211,6 +213,16 @@ namespace hemelb
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
+
+        /**
+         * Get both the owner processor id and the local site id (if local)
+         * @param globalLocation the location to retrieve information about
+         * @param procId (out) the rank of the processor that owns the site
+         * @param siteId (out) the index of the site for the property cache
+         * @return true when globalLocation is local fluid, false otherwise
+         */
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
+                                 proc_t& procId, site_t& siteId) const;
 
         /**
          * Get the global site coordinates from block coordinates and the site's local coordinates
@@ -323,6 +335,8 @@ namespace hemelb
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
+        neighbouring::NeighbouringLatticeData &GetNeighbouringData();
+        neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -557,6 +571,7 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
+        neighbouring::NeighbouringLatticeData *neighbouringData;
     };
   }
 }

@@ -1,4 +1,5 @@
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "log/Logger.h"
 namespace hemelb
 {
   namespace geometry
@@ -31,6 +32,11 @@ namespace hemelb
         return NeighbouringSite(globalIndex, *this);
       }
 
+      ConstNeighbouringSite NeighbouringLatticeData::GetSite(site_t globalIndex) const
+      {
+        return ConstNeighbouringSite(globalIndex, *this);
+      }
+
       const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex) const
       {
         return wallNormalAtSite.find(globalIndex)->second;
@@ -45,7 +51,9 @@ namespace hemelb
       {
         site_t globalIndex = distributionIndex / latticeInfo.GetNumVectors();
         site_t direction = distributionIndex % latticeInfo.GetNumVectors();
-        return &distributions[globalIndex][direction];
+        std::vector<distribn_t> &buffer = distributions[globalIndex];
+        buffer.resize(latticeInfo.GetNumVectors());
+        return &buffer[direction];
       }
 
       std::vector<distribn_t>& NeighbouringLatticeData::GetDistribution(site_t globalIndex)
