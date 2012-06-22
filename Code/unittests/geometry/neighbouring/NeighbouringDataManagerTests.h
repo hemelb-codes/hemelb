@@ -1,6 +1,7 @@
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGERTESTS_H
-
+#include "net/phased/StepManager.h"
+#include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "unittests/helpers/MockNetHelper.h"
 
@@ -21,6 +22,8 @@ namespace hemelb
             CPPUNIT_TEST (TestRegisterNeedOneProc);
             CPPUNIT_TEST (TestShareNeedsOneProc);
             CPPUNIT_TEST (TestShareConstantDataOneProc);
+            CPPUNIT_TEST (TestShareFieldDataOneProc);
+            CPPUNIT_TEST (TestShareFieldDataOneProcViaIterableAction);
 
             CPPUNIT_TEST_SUITE_END();
 
@@ -33,13 +36,14 @@ namespace hemelb
             void setUp()
             {
               FourCubeBasedTestFixture::setUp();
-              data = new NeighbouringLatticeData(latDat->GetLatticeInfo());
+              data = &latDat->GetNeighbouringData();
               MockNetHelper::setUp(1, 0);
               manager = new NeighbouringDataManager(*latDat, *data, *netMock);
             }
 
             void tearDown()
             {
+              delete manager;
               FourCubeBasedTestFixture::tearDown();
               MockNetHelper::tearDown();
             }
@@ -152,6 +156,100 @@ namespace hemelb
                                      transferredSite.GetWallDistances()[direction]);
               }
               CPPUNIT_ASSERT_EQUAL(exampleSite.GetWallNormal(), transferredSite.GetWallNormal());
+            }
+
+            void TestShareFieldDataOneProc()
+            {
+              // begin by setting up mocks for the required site
+              std::vector<int> countOfNeedsToZeroFromZero;
+              countOfNeedsToZeroFromZero.push_back(1); // expectation
+              std::vector<int> countOfNeedsFromZeroToZero;
+              countOfNeedsFromZeroToZero.push_back(1); //fixture
+              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
+              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
+
+              std::vector<site_t> needsShouldBeSentToSelf;
+              std::vector<site_t> needsShouldBeReceivedFromSelf;
+              needsShouldBeSentToSelf.push_back(43); //expectation
+              needsShouldBeReceivedFromSelf.push_back(43); //fixture
+              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
+              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
+
+              manager->RegisterNeededSite(43);
+              manager->ShareNeeds();
+              netMock->ExpectationsAllCompleted();
+
+              // Now, transfer the data about that site.
+              Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+
+              netMock->RequireSend(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+                                   lb::lattices::D3Q15::NUMVECTORS,
+                                   0,
+                                   "IntersectionDataToSelf");
+              netMock->RequireReceive(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+                                      lb::lattices::D3Q15::NUMVECTORS,
+                                      0,
+                                      "IntersectionDataFromSelf");
+
+              manager->TransferFieldDependentInformation();
+              netMock->ExpectationsAllCompleted();
+
+              NeighbouringSite transferredSite = data->GetSite(43);
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              {
+                CPPUNIT_ASSERT_EQUAL(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction],
+                                     transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+              }
+            }
+
+            void TestShareFieldDataOneProcViaIterableAction()
+            {
+              // begin by setting up mocks for the required site
+              std::vector<int> countOfNeedsToZeroFromZero;
+              countOfNeedsToZeroFromZero.push_back(1); // expectation
+              std::vector<int> countOfNeedsFromZeroToZero;
+              countOfNeedsFromZeroToZero.push_back(1); //fixture
+              netMock->RequireSend(&countOfNeedsToZeroFromZero.front(), 1, 0, "CountToSelf");
+              netMock->RequireReceive(&countOfNeedsFromZeroToZero.front(), 1, 0, "CountFromSelf");
+
+              std::vector<site_t> needsShouldBeSentToSelf;
+              std::vector<site_t> needsShouldBeReceivedFromSelf;
+              needsShouldBeSentToSelf.push_back(43); //expectation
+              needsShouldBeReceivedFromSelf.push_back(43); //fixture
+              netMock->RequireSend(&needsShouldBeSentToSelf.front(), 1, 0, "NeedToSelf");
+              netMock->RequireReceive(&needsShouldBeSentToSelf.front(), 1, 0, "NeedFromSelf");
+
+              manager->RegisterNeededSite(43);
+              manager->ShareNeeds();
+              netMock->ExpectationsAllCompleted();
+
+              // Now, transfer the data about that site.
+              Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
+
+              netMock->RequireSend(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+                                   lb::lattices::D3Q15::NUMVECTORS,
+                                   0,
+                                   "IntersectionDataToSelf");
+              netMock->RequireReceive(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+                                      lb::lattices::D3Q15::NUMVECTORS,
+                                      0,
+                                      "IntersectionDataFromSelf");
+
+              net::phased::StepManager stepManager;
+              stepManager.RegisterIteratedActorSteps(*manager,0);
+              net::phased::NetConcern netConcern=net::phased::NetConcern(*netMock);
+              stepManager.RegisterCommsForAllPhases(netConcern);
+              stepManager.CallActions();
+              netMock->ExpectationsAllCompleted();
+
+              NeighbouringSite transferredSite = data->GetSite(43);
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              {
+                CPPUNIT_ASSERT_EQUAL(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction],
+                                     transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+              }
             }
 
           private:
