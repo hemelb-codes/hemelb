@@ -50,7 +50,9 @@ namespace hemelb
             net::Net* net,
             geometry::LatticeData* latDat,
             SimulationState* simState,
-            reporting::Timers &atimings);
+            reporting::Timers &atimings,
+            geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager
+            );
         ~LBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
@@ -159,6 +161,8 @@ namespace hemelb
         hemelb::reporting::Timers &timings;
 
         MacroscopicPropertyCache propertyCache;
+
+        geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     };
 
   } // Namespace lb

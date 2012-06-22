@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
   hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc,argv);
   
-  hemelb::multiscale::MultiscaleSimulationMaster<hemelb::unittests::multiscale::MPWideIntercommunicator> *lMaster;
+  hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> *lMaster;
 
   pbuffer = new std::map<std::string, double>();
   std::map<std::string, double> &buffer = *pbuffer;
@@ -28,11 +28,11 @@ int main(int argc, char *argv[])
   rorchestrationLB["boundary1_velocity"] = true;
   rorchestrationLB["boundary2_velocity"] = true;
 
-  hemelb::unittests::multiscale::MPWideIntercommunicator intercomms(*pbuffer,*orchestrationLB);
-
+  hemelb::multiscale::mpwide::mpwide_config_file = "../../config_files/MPWSettings.cfg";
+  hemelb::multiscale::MPWideIntercommunicator intercomms(*pbuffer,*orchestrationLB);
   //TODO: Add an IntercommunicatorImplementation?
 
-  lMaster = new hemelb::multiscale::MultiscaleSimulationMaster<hemelb::unittests::multiscale::MPWideIntercommunicator>(options, intercomms);
+  lMaster = new hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator>(options, intercomms);
 
   lMaster->RunSimulation();
 

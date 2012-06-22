@@ -39,7 +39,7 @@ namespace hemelb
       xml.ResetToTopLevel();
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
-      particleSet = new ParticleSet(xml, propertyCache);
+      particleSet = new ParticleSet(latDatLBM, xml, propertyCache);
     }
 
     void ColloidController::InitialiseNeighbourList(

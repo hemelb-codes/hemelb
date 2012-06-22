@@ -1,4 +1,5 @@
 #include "colloids/PersistedParticle.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
