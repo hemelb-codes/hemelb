@@ -16,20 +16,12 @@ namespace hemelb
     {
       public:
         /** constructor - gets local particle information from xml config file */
-        ParticleSet(io::xml::XmlAbstractionLayer& xml,
+        ParticleSet(const geometry::LatticeData* const latDatLBM,
+                    io::xml::XmlAbstractionLayer& xml,
                     lb::MacroscopicPropertyCache& propertyCache);
 
         /** destructor - de-allocates all Particle objects created by this Set */
-        ~ParticleSet()
-        {
-          for (std::vector<Particle*>::const_iterator iter = particles.begin();
-               iter != particles.end();
-               iter++)
-          {
-            delete *iter;
-          }
-          particles.clear();
-        }
+        ~ParticleSet();
 
         /** updates the position of each particle using body forces and fluid velocity */
         const void UpdatePositions() const;

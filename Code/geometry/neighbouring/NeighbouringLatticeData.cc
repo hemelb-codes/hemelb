@@ -1,4 +1,5 @@
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "log/Logger.h"
 namespace hemelb
 {
   namespace geometry
@@ -11,44 +12,29 @@ namespace hemelb
       {
       }
 
-
       void NeighbouringLatticeData::SaveSite(site_t index,
                                              const std::vector<distribn_t> &distribution,
                                              const std::vector<distribn_t> &distances,
                                              const util::Vector3D<distribn_t> &normal,
                                              const SiteData & data)
       {
-        SaveDistribution(index, distribution);
-        SaveDistances(index, distances);
-        SaveNormal(index, normal);
-        SaveData(index, data);
+        GetDistribution(index) = distribution;
+        for (unsigned int direction = 0; direction < latticeInfo.GetNumVectors() - 1; direction++)
+        {
+          GetCutDistances(index)[direction] = distances[direction];
+        }
+        GetNormalToWall(index) = normal;
+        GetSiteData(index) = data;
       }
-
-      void NeighbouringLatticeData::SaveDistribution(site_t index, const std::vector<distribn_t> &distribution)
-      {
-        distributions[index] = distribution;
-      }
-
-      void NeighbouringLatticeData::SaveDistances(site_t index, const std::vector<distribn_t> & distances)
-      {
-        distanceToWall[index] = distances;
-      }
-
-      void NeighbouringLatticeData::SaveNormal(site_t index, const util::Vector3D<distribn_t> &normal)
-      {
-        wallNormalAtSite[index] = normal;
-      }
-
-      void NeighbouringLatticeData::SaveData(site_t index, const SiteData & data)
-      {
-        // no default constructor for site data, so don't use operator[]
-        siteData.insert(std::pair<site_t, SiteData>(index, data));
-      }
-
 
       NeighbouringSite NeighbouringLatticeData::GetSite(site_t globalIndex)
       {
         return NeighbouringSite(globalIndex, *this);
+      }
+
+      ConstNeighbouringSite NeighbouringLatticeData::GetSite(site_t globalIndex) const
+      {
+        return ConstNeighbouringSite(globalIndex, *this);
       }
 
       const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex) const
@@ -56,12 +42,25 @@ namespace hemelb
         return wallNormalAtSite.find(globalIndex)->second;
       }
 
+      util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex)
+      {
+        return wallNormalAtSite[globalIndex];
+      }
+
       distribn_t* NeighbouringLatticeData::GetFOld(site_t distributionIndex)
       {
         site_t globalIndex = distributionIndex / latticeInfo.GetNumVectors();
         site_t direction = distributionIndex % latticeInfo.GetNumVectors();
-        return &distributions[globalIndex][direction];
+        std::vector<distribn_t> &buffer = distributions[globalIndex];
+        buffer.resize(latticeInfo.GetNumVectors());
+        return &buffer[direction];
       }
+
+      std::vector<distribn_t>& NeighbouringLatticeData::GetDistribution(site_t globalIndex)
+      {
+        return distributions[globalIndex];
+      }
+
       const distribn_t* NeighbouringLatticeData::GetFOld(site_t distributionIndex) const
       {
         site_t globalIndex = distributionIndex / latticeInfo.GetNumVectors();
@@ -69,9 +68,26 @@ namespace hemelb
         return &distributions.find(globalIndex)->second[direction];
       }
 
-      SiteData NeighbouringLatticeData::GetSiteData(site_t globalIndex) const
+      const SiteData & NeighbouringLatticeData::GetSiteData(site_t globalIndex) const
       {
         return siteData.find(globalIndex)->second;
+      }
+
+      SiteData& NeighbouringLatticeData::GetSiteData(site_t globalIndex)
+      {
+        return siteData[globalIndex];
+      }
+
+      const distribn_t * NeighbouringLatticeData::GetCutDistances(site_t globalIndex) const
+      {
+        return &distanceToWall.find(globalIndex)->second.front();
+      }
+
+      distribn_t* NeighbouringLatticeData::GetCutDistances(site_t globalIndex)
+      {
+        std::vector<distribn_t> &buffer = distanceToWall[globalIndex];
+        buffer.resize(latticeInfo.GetNumVectors() - 1);
+        return &buffer.front();
       }
 
     }
