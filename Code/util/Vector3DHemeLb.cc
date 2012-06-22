@@ -35,6 +35,12 @@ namespace hemelb
   {
     return GenerateTypeForVector<site_t> ();
   }
+
+  template<>
+   MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
+   {
+     return GenerateTypeForVector<distribn_t> ();
+   }
   namespace util
   {
     namespace

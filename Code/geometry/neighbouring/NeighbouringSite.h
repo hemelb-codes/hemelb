@@ -9,6 +9,7 @@ namespace hemelb{
     namespace neighbouring{
       class NeighbouringLatticeData;
       typedef BaseSite<NeighbouringLatticeData> NeighbouringSite;
+      typedef BaseSite<const NeighbouringLatticeData> ConstNeighbouringSite;
     }
   }
 }

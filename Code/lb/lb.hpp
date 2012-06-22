@@ -27,10 +27,11 @@ namespace hemelb
                           net::Net* net,
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
-                          reporting::Timers &atimings) :
+                          reporting::Timers &atimings,
+                          geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
                                                                                              latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
-                                                                                                                                                   *latDat)
+                                                                                                                                                       *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
@@ -62,6 +63,7 @@ namespace hemelb
       kernels::InitParams initParams = kernels::InitParams();
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
+      initParams.neighbouringDataManager=neighbouringDataManager;
 
       initParams.firstSite = 0;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
@@ -345,8 +347,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadParameters()
     {
-      std::vector<lb::boundaries::iolets::InOutLet*> inlets= mSimConfig->GetInlets();
-      std::vector<lb::boundaries::iolets::InOutLet*> outlets= mSimConfig->GetOutlets();
+      std::vector<lb::boundaries::iolets::InOutLet*> inlets = mSimConfig->GetInlets();
+      std::vector<lb::boundaries::iolets::InOutLet*> outlets = mSimConfig->GetOutlets();
       inletCount = inlets.size();
       outletCount = outlets.size();
       mParams.StressType = mSimConfig->GetStressType();

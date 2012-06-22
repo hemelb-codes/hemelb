@@ -74,15 +74,23 @@ namespace hemelb
           RequestGatherVSend(&payload.front(), payload.size(), toRank);
         }
 
+        /***
+         * This is for a scalar all to all
+         * @param buffer vector with length same as communicator size
+         */
         template<class T>
         void RequestAllToAllSend(std::vector<T> &buffer)
         {
-          RequestAllToAllSend(&buffer.front(), buffer.size());
+          RequestAllToAllSend(&buffer.front(), 1);
         }
+        /***
+         * This is for a scalar all to all
+         * @param buffer vector with length same as communicator size
+         */
         template<class T>
         void RequestAllToAllReceive(std::vector<T> &buffer)
         {
-          RequestAllToAllReceive(&buffer.front(), buffer.size());
+          RequestAllToAllReceive(&buffer.front(), 1);
         }
 
         template<class T>
