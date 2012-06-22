@@ -1,6 +1,5 @@
 #include "constants.h"
 #include "geometry/SiteData.h"
-#include "mpiInclude.h"
 
 namespace hemelb
 {
