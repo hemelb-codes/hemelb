@@ -41,8 +41,6 @@ as flexible vessel walls.
 
 namespace hemelb
 {
-  namespace unittests
-  {
     namespace multiscale
     {
       /***
@@ -66,6 +64,7 @@ namespace hemelb
       namespace mpwide
       {
         bool mpwide_initialized = false;
+        std::string mpwide_config_file = "../../../config_files/MPWSettings.cfg";
       }
 
       class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
@@ -74,8 +73,8 @@ namespace hemelb
           MPWideIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
               doubleContents(buffer), currentTime(0), orchestration(orchestration)
           {
-            if(!hemelb::unittests::multiscale::mpwide::mpwide_initialized) {
-              hemelb::unittests::multiscale::mpwide::mpwide_initialized = true;
+            if(!hemelb::multiscale::mpwide::mpwide_initialized) {
+              hemelb::multiscale::mpwide::mpwide_initialized = true;
               Initialize();
             }
           }
@@ -91,7 +90,7 @@ namespace hemelb
               if (getcwd(cwd, sizeof(cwd)) != NULL) { fprintf(stdout, "Current [head] working dir: %s\n", cwd); }
               else { perror("getcwd() error"); }
 
-              num_channels = ReadInputHead("../../../config_files/MPWSettings.cfg");
+              num_channels = ReadInputHead(hemelb::multiscale::mpwide::mpwide_config_file.c_str());
 
               hosts = new std::string[num_channels];
               server_side_ports = (int *) malloc(num_channels*sizeof(int));
@@ -100,7 +99,7 @@ namespace hemelb
               else { perror("getcwd() error"); }
 
               // 1. Read the file with MPWide settings.
-              ReadInputFile("../../../config_files/MPWSettings.cfg", hosts, server_side_ports, &num_channels);
+              ReadInputFile(hemelb::multiscale::mpwide::mpwide_config_file.c_str(), hosts, server_side_ports, &num_channels);
 
               // 2. Initializa MPWide.
               MPW_Init(hosts, server_side_ports, num_channels);
@@ -414,7 +413,6 @@ namespace hemelb
           int num_channels;
       };
     }
-  }
 }
 
 #endif // HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H

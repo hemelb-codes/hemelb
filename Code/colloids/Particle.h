@@ -21,13 +21,16 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(io::xml::XmlAbstractionLayer& xml,
+        Particle(const geometry::LatticeData* const latDatLBM,
+                 io::xml::XmlAbstractionLayer& xml,
                  lb::MacroscopicPropertyCache& propertyCache);
 
         /** partial interpolation of fluid velocity - temporary value only */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> velocity;
 
-        /** the effect of all body forces on this particle */
+        /** the effect of all body forces on this particle - this is NOT a force vector */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> bodyForces;
 
         /** updates the position of this particle using body forces and fluid velocity */
@@ -43,6 +46,7 @@ namespace hemelb
         const void InterpolateFluidVelocity();
 
       private:
+        const geometry::LatticeData* const latDatLBM;
         lb::MacroscopicPropertyCache& propertyCache;
     };
   }

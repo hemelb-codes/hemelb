@@ -182,6 +182,7 @@ namespace hemelb
          * @return
          */
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
+        bool IsValidBlock(const util::Vector3D<site_t>& blockCoords) const;
 
         /**
          * Get the dimensions of the bounding box of the geometry in terms of blocks.
@@ -212,6 +213,16 @@ namespace hemelb
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
+
+        /**
+         * Get both the owner processor id and the local site id (if local)
+         * @param globalLocation the location to retrieve information about
+         * @param procId (out) the rank of the processor that owns the site
+         * @param siteId (out) the index of the site for the property cache
+         * @return true when globalLocation is local fluid, false otherwise
+         */
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
+                                 proc_t& procId, site_t& siteId) const;
 
         /**
          * Get the global site coordinates from block coordinates and the site's local coordinates

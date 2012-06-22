@@ -1,23 +1,43 @@
 #include "colloids/ParticleSet.h"
-
+#include "log/Logger.h"
+ 
 namespace hemelb
 {
   namespace colloids
   {
-    ParticleSet::ParticleSet(io::xml::XmlAbstractionLayer& xml,
+    ParticleSet::ParticleSet(const geometry::LatticeData* const latDatLBM,
+                             io::xml::XmlAbstractionLayer& xml,
                              lb::MacroscopicPropertyCache& propertyCache)
     {
       // assume we are at the <Particles> node
       bool found = xml.MoveToChild("subgridParticle");
+      if (found) propertyCache.velocityCache.SetRefreshFlag();
       while (found)
       {
-        particles.push_back(new Particle(xml, propertyCache));
+        particles.push_back(new Particle(latDatLBM, xml, propertyCache));
         found = xml.NextSibling("subgridParticle");
       }
     };
 
+    ParticleSet::~ParticleSet()
+    {
+      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+           iter != particles.end();
+           iter++)
+      {
+        delete *iter;
+      }
+      particles.clear();
+    }
+
     const void ParticleSet::UpdatePositions() const
     {
+      if (log::Logger::ShouldDisplay<log::Debug>())
+        log::Logger::Log<log::Debug, log::OnePerCore>(
+          "[Rank: %i] In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
+          topology::NetworkTopology::Instance()->GetLocalRank(),
+          particles.size());
+
       for (std::vector<Particle*>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
