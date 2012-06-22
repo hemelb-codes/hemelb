@@ -205,7 +205,7 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
-  ${MPWide_LIBRARIES}
+    ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

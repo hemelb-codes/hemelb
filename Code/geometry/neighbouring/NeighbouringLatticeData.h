@@ -36,7 +36,7 @@ namespace hemelb
            * @return
            */
           NeighbouringSite GetSite(site_t globalIndex);
-
+          ConstNeighbouringSite GetSite(site_t globalIndex) const;
           /**
            * Get the wall normal at the given site
            * @param iSiteIndex
