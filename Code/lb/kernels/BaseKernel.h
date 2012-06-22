@@ -8,6 +8,11 @@
 
 namespace hemelb
 {
+  namespace geometry{
+    namespace neighbouring{
+      class NeighbouringDataManager;
+    }
+  }
   namespace lb
   {
     namespace kernels
@@ -123,6 +128,7 @@ namespace hemelb
           // The LB parameters object. Currently only used in LBGKNN to access the current
           // time step.
           const LbmParameters* lbmParams;
+          geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
       };
 
       /**
