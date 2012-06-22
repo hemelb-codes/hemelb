@@ -3,6 +3,6 @@
 
 #include "unittests/geometry/neighbouring/NeighbouringDataManagerTests.h"
 #include "unittests/geometry/neighbouring/NeighbouringLatticeDataTests.h"
-#include "unittests/geometry/neighbouring/RequiredFieldInformationTests.h"
+#include "unittests/geometry/neighbouring/RequiredSiteInformationTests.h"
 
 #endif // ONCE

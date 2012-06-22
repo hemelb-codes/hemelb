@@ -56,11 +56,19 @@ namespace hemelb
           return latticeData.template GetCutDistance<LatticeType>(index, direction);
         }
 
+        inline distribn_t* GetWallDistances()
+        {
+          return latticeData.GetCutDistances(index);
+        }
+
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
         {
           return latticeData.GetNormalToWall(index);
         }
-
+        inline util::Vector3D<distribn_t>& GetWallNormal()
+        {
+          return latticeData.GetNormalToWall(index);
+        }
         inline site_t GetIndex() const
         {
           return index;
@@ -86,13 +94,24 @@ namespace hemelb
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
+        // Non-templated version of GetFOld, for when you haven't got a constant lattice type handy
+        inline distribn_t* GetFOld(int numvectors)
+        {
+          return latticeData.GetFOld(index * numvectors);
+        }
+
         template<typename LatticeType>
         inline distribn_t* GetFOld()
         {
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
-        inline const SiteData GetSiteData() const
+        inline const SiteData& GetSiteData() const
+        {
+          return latticeData.GetSiteData(index);
+        }
+
+        inline SiteData& GetSiteData()
         {
           return latticeData.GetSiteData(index);
         }

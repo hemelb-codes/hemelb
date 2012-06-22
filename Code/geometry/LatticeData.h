@@ -11,6 +11,7 @@
 #include "geometry/GeometryReader.h"
 #include "geometry/NeighbouringProcessor.h"
 #include "geometry/Site.h"
+#include "geometry/neighbouring/NeighbouringSite.h"
 #include "geometry/SiteData.h"
 #include "reporting/Reportable.h"
 #include "reporting/Timers.h"
@@ -181,6 +182,7 @@ namespace hemelb
          * @return
          */
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
+        bool IsValidBlock(const util::Vector3D<site_t>& blockCoords) const;
 
         /**
          * Get the dimensions of the bounding box of the geometry in terms of blocks.
@@ -213,6 +215,16 @@ namespace hemelb
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
 
         /**
+         * Get both the owner processor id and the local site id (if local)
+         * @param globalLocation the location to retrieve information about
+         * @param procId (out) the rank of the processor that owns the site
+         * @param siteId (out) the index of the site for the property cache
+         * @return true when globalLocation is local fluid, false otherwise
+         */
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
+                                 proc_t& procId, site_t& siteId) const;
+
+        /**
          * Get the global site coordinates from block coordinates and the site's local coordinates
          * within the block
          * @param blockCoords
@@ -230,6 +242,13 @@ namespace hemelb
           return (globalCoords.x * sites.y + globalCoords.y) * sites.z + globalCoords.z;
         }
 
+        inline site_t GetLocalContiguousIdFromGlobalNoncontiguousId(const site_t globalId) const
+        {
+          util::Vector3D<site_t> location;
+          GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, location);
+          return GetContiguousSiteId(location);
+        }
+
         void GetGlobalCoordsFromGlobalNoncontiguousSiteId(site_t globalId, util::Vector3D<site_t>& globalCoords) const
         {
           globalCoords.z = globalId % sites.z;
@@ -240,7 +259,7 @@ namespace hemelb
 
         proc_t ProcProvidingSiteByGlobalNoncontiguousId(site_t globalId) const
         {
-          util::Vector3D < site_t > resultCoord;
+          util::Vector3D<site_t> resultCoord;
           GetGlobalCoordsFromGlobalNoncontiguousSiteId(globalId, resultCoord);
           return GetProcIdFromGlobalCoords(resultCoord);
         }
@@ -321,6 +340,9 @@ namespace hemelb
         {
           return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
         }
+
+        neighbouring::NeighbouringLatticeData &GetNeighbouringData();
+        neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
 
       protected:
         /**
@@ -479,11 +501,31 @@ namespace hemelb
          * @param iSiteIndex
          * @return
          */
-        inline SiteData GetSiteData(site_t iSiteIndex) const
+        inline const SiteData &GetSiteData(site_t iSiteIndex) const
         {
           return siteData[iSiteIndex];
         }
 
+        /***
+         * Non-const version of getting site-data, for use with MPI calls, where const-ness is not respected on sends.
+         * Not available on const LatticeDatas
+         * @param iSiteIndex
+         * @return
+         */
+        inline SiteData &GetSiteData(site_t iSiteIndex)
+        {
+          return siteData[iSiteIndex];
+        }
+
+        distribn_t * GetCutDistances(site_t iSiteIndex)
+        {
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
+        }
+
+        util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
+        {
+          return wallNormalAtSite[iSiteIndex];
+        }
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex
@@ -530,6 +572,7 @@ namespace hemelb
         util::Vector3D<site_t> globalSiteMins, globalSiteMaxes; //! The minimal and maximal coordinates of any fluid sites.
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
+        neighbouring::NeighbouringLatticeData *neighbouringData;
     };
   }
 }

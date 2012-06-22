@@ -1,5 +1,4 @@
-#ifndef HEMELB_GEOMETRY_NEEDS_NEEDS_HPP
-#define HEMELB_GEOMETRY_NEEDS_NEEDS_HPP
+
 #include "geometry/needs/Needs.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
@@ -134,4 +133,3 @@ namespace hemelb
     }
   } //namespace
 } //namespace
-#endif //HEMELB_GEOMETRY_NEEDS_NEEDS_HPP
