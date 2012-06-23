@@ -245,10 +245,10 @@ def fetch_distributions():
 @task
 def clone_regression_tests():
     """Delete and checkout the repository afresh."""
-    run(template("mkdir -p $regression_test_source_path"))
+    # run(template("mkdir -p $regression_test_repo_path"))
     if env.no_ssh or env.no_hg:
         with cd(env.remote_path):
-            run(template("rm -rf $regression_test_source_path"))
+            run(template("rm -rf $regression_test_repo_path"))
         # Some machines do not allow outgoing connections back to the mercurial server
         # so the data must be sent by a project sync instead.
         execute(sync_regression_tests)
@@ -260,7 +260,7 @@ def clone_regression_tests():
 @task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
-        run(template("cp -r $regression_test_source_path $regression_test_path"))
+        run(template("cp -r $regression_test_source_path/* $regression_test_path"))
 
 @task
 def sync():
@@ -290,7 +290,7 @@ def sync_regression_tests():
     Respects the local .hgignore files to avoid sending unnecessary information.
     """
     rsync_project(
-            remote_dir=env.regression_test_source_path,
+            remote_dir=env.regression_test_repo_path,
             local_dir=env.regression_tests_root+'/',
             exclude=map(lambda x: x.replace('\n',''),
             list(open(os.path.join(env.localroot,'.hgignore')))+
