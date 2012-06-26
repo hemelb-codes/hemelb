@@ -14,19 +14,14 @@ namespace hemelb
       if (found) propertyCache.velocityCache.SetRefreshFlag();
       while (found)
       {
-        particles.push_back(new Particle(latDatLBM, xml, propertyCache));
+        Particle nextParticle(latDatLBM, xml, propertyCache);
+        particles.push_back(nextParticle);
         found = xml.NextSibling("subgridParticle");
       }
     };
 
     ParticleSet::~ParticleSet()
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
-      {
-        delete *iter;
-      }
       particles.clear();
     }
 
@@ -38,45 +33,45 @@ namespace hemelb
           topology::NetworkTopology::Instance()->GetLocalRank(),
           particles.size());
 
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
-        particle->UpdatePosition();
+        Particle particle = *iter;
+        particle.UpdatePosition();
       }
     }
 
     const void ParticleSet::CalculateBodyForces() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
-        particle->CalculateBodyForces();
+        Particle particle = *iter;
+        particle.CalculateBodyForces();
       }
     }
 
     const void ParticleSet::CalculateFeedbackForces() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
-        particle->CalculateFeedbackForces();
+        Particle particle = *iter;
+        particle.CalculateFeedbackForces();
       }
     }
 
     const void ParticleSet::InterpolateFluidVelocity() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
-        particle->InterpolateFluidVelocity();
+        Particle particle = *iter;
+        particle.InterpolateFluidVelocity();
       }
     }
 
@@ -90,11 +85,11 @@ namespace hemelb
        *    - MPI_ISEND( list_of_local_particles )
        *    MPI_WAITALL()
        */
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
+        Particle particle = *iter;
       }
     }
 
@@ -108,11 +103,11 @@ namespace hemelb
        *    - MPI_ISEND( list_of_local_velocities )
        *    MPI_WAITALL()
        */
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        Particle* particle = *iter;
+        Particle particle = *iter;
       }
     }
 
