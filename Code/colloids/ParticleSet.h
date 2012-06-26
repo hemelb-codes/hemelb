@@ -2,7 +2,7 @@
 #define HEMELB_COLLOIDS_PARTICLESET_H
 
 #include <vector>
-#include "mpiInclude.h"
+#include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/Particle.h"

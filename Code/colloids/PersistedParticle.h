@@ -2,7 +2,6 @@
 #define HEMELB_COLLOIDS_PERSISTEDPARTICLE_H
 
 #include "io/xml/XmlAbstractionLayer.h"
-#include "util/Vector3D.h"
 #include "units.h"
 
 namespace hemelb
@@ -24,6 +23,8 @@ namespace hemelb
           globalPosition(globalPosition)
         {
         };
+
+        PersistedParticle(){}
 
         /** system-wide-unique identifier for this particle */
         unsigned long   particleId;
