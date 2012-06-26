@@ -215,7 +215,420 @@ marigold:
      PARMETIS_CC: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_PATCH_VACOPY: ON
      CTEMPLATE_PATCH_ALIGN: ON
+
 marigold_run:
   import: marigold
   remote: marigold_run
-  
+
+oppenheimer15LbgkSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_SBB'
+
+oppenheimer15LbgkFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_FIN'
+
+oppenheimer15LbgkGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_GZS'
+
+oppenheimer15LbgkReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_REG'
+
+
+oppenheimer15MrtSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_SBB'
+
+oppenheimer15MrtFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_FIN'
+
+oppenheimer15MrtGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_GZS'
+
+oppenheimer15MrtReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_REG'
+
+
+oppenheimer15EntASbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_SBB'
+
+oppenheimer15EntAFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_FIN'
+
+oppenheimer15EntAGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_GZS'
+
+oppenheimer15EntAReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_REG'
+
+
+oppenheimer15EntCSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_SBB'
+
+oppenheimer15EntCFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_FIN'
+
+oppenheimer15EntCGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_GZS'
+
+oppenheimer15EntCReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_REG'
+
+
+
+oppenheimer19LbgkSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_SBB'
+
+oppenheimer19LbgkFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_FIN'
+
+oppenheimer19LbgkGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_GZS'
+
+oppenheimer19LbgkReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_REG'
+
+
+
+
+oppenheimer19MrtSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_SBB'
+
+oppenheimer19MrtFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_FIN'
+
+oppenheimer19MrtGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_GZS'
+
+oppenheimer19MrtReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_REG'
+
+
+oppenheimer19EntASbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_SBB'
+
+oppenheimer19EntAFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_FIN'
+
+oppenheimer19EntAGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_GZS'
+
+oppenheimer19EntAReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_REG'
+
+
+oppenheimer19EntCSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_SBB'
+
+oppenheimer19EntCFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_FIN'
+
+oppenheimer19EntCGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_GZS'
+
+oppenheimer19EntCReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_REG'
+
+
+
+oppenheimer27LbgkSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_SBB'
+
+oppenheimer27LbgkFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_FIN'
+
+oppenheimer27LbgkGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_GZS'
+
+oppenheimer27LbgkReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_REG'
+
+
+
+
+# Note: there's not 27 MRT possible
+oppenheimer27EntASbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_SBB'
+
+oppenheimer27EntAFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_FIN'
+
+oppenheimer27EntAGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_GZS'
+
+oppenheimer27EntAReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_REG'
+
+
+oppenheimer27EntCSbb:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_SBB_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_SBB'
+
+oppenheimer27EntCFin:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_FIN_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_FIN'
+
+oppenheimer27EntCGzs:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_GZS_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_GZS'
+
+oppenheimer27EntCReg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_REG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_REG'
