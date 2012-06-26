@@ -51,7 +51,7 @@ namespace hemelb
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
          *  when you no longer need this type, remember to call MPI::Datatype::Free 
          */
-        const MPI::Datatype CreateMpiDataType() const;
+        const MPI::Datatype CreateMpiDatatype() const;
 
       private:
         const geometry::LatticeData* latDatLBM;

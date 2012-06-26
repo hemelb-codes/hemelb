@@ -6,6 +6,7 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/Particle.h"
+#include "mpiInclude.h"
 
 namespace hemelb
 {
@@ -43,6 +44,7 @@ namespace hemelb
 
       private:
         std::vector<Particle> particles;
+        MPI::Datatype particleType;
     };
   }
 }

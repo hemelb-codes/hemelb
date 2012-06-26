@@ -15,6 +15,8 @@ namespace hemelb
       while (found)
       {
         Particle nextParticle(latDatLBM, xml, propertyCache);
+        if (particles.size() == 0)
+          particleType = nextParticle.CreateMpiDatatype();
         particles.push_back(nextParticle);
         found = xml.NextSibling("subgridParticle");
       }
