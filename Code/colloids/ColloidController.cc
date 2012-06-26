@@ -190,15 +190,6 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
-      // step 6
-      particleSet->InterpolateFluidVelocity();
-
-      // communication from step 6
-      particleSet->CommunicateFluidVelocities();
-
-      // steps 7 & 2 combined
-      particleSet->UpdatePositions();
-
       // step 3
       particleSet->CalculateBodyForces();
 
@@ -209,6 +200,18 @@ namespace hemelb
       particleSet->CalculateFeedbackForces();
       
       // steps 5 and 8 performed by LBM actor
+    }
+
+    void ColloidController::EndIteration()
+    {
+      // step 6
+      particleSet->InterpolateFluidVelocity();
+
+      // communication from step 6
+      particleSet->CommunicateFluidVelocities();
+
+      // steps 7 & 2 combined
+      particleSet->UpdatePositions();
     }
 
   }
