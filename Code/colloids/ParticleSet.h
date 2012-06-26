@@ -42,7 +42,7 @@ namespace hemelb
         const void CommunicateFluidVelocities() const;
 
       private:
-        std::vector<Particle*> particles;
+        std::vector<Particle> particles;
     };
   }
 }
