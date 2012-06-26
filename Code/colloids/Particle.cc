@@ -43,6 +43,51 @@ namespace hemelb
           particleId, globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
+    /** creates a derived MPI datatype that represents a single particle object
+     *  note - this data type uses displacements rather than absolute addresses
+     *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
+     *  when you no longer need this type, remember to call MPI::Datatype::Free
+     */
+    const MPI::Datatype Particle::CreateMpiDataType() const
+    {
+      // MPI::Get_address specifies non-const pointers
+      // so need a non-const copy of a particle object
+      Particle temp(*this);
+
+      // we want a re-usable MPI data type
+      // so we need relative displacements
+      MPI::Aint baseAddress = MPI::Get_address(&temp);
+
+      // we have chosen to make each block of fields contain a single field
+      // so, the number of field blocks is the same as the number of fields
+      int numberOfFieldBlocks = 6;
+
+      // and the length of every field block is one
+      int lengthOfEachFieldBlock[] = {1, 1, 1, 1, 1, 1};
+
+      // there is no guarantee that the fields will be contiguous, so
+      // the displacement of each field must be determined separately
+      MPI::Aint displacementOfEachFieldBlock[numberOfFieldBlocks];
+      displacementOfEachFieldBlock[0] = MPI::Get_address(&(temp.particleId)) - baseAddress; 
+      displacementOfEachFieldBlock[1] = MPI::Get_address(&(temp.smallRadius_a0)) - baseAddress; 
+      displacementOfEachFieldBlock[2] = MPI::Get_address(&(temp.largeRadius_ah)) - baseAddress; 
+      displacementOfEachFieldBlock[3] = MPI::Get_address(&(temp.globalPosition.x)) - baseAddress; 
+      displacementOfEachFieldBlock[4] = MPI::Get_address(&(temp.globalPosition.y)) - baseAddress; 
+      displacementOfEachFieldBlock[5] = MPI::Get_address(&(temp.globalPosition.z)) - baseAddress; 
+
+      // the built-in MPI datatype of each field must match the C++ type
+      MPI::Datatype datatypeOfEachFieldBlock[] =
+        {MPI::UNSIGNED_LONG, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE};
+
+      MPI::Datatype particleType = MPI::Datatype::Create_struct(
+        numberOfFieldBlocks,
+        lengthOfEachFieldBlock,
+        displacementOfEachFieldBlock,
+        datatypeOfEachFieldBlock);
+
+      return particleType;
+    }
+
     const void Particle::CalculateBodyForces()
     {
       /** todo: CalculateBodyForces

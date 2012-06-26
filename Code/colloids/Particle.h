@@ -3,6 +3,7 @@
 
 #include "mpiInclude.h"
 #include "colloids/PersistedParticle.h"
+#include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
@@ -44,6 +45,13 @@ namespace hemelb
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
+
+        /** creates a derived MPI datatype that represents a single particle object
+         *  note - this data type uses displacements rather than absolute addresses
+         *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
+         *  when you no longer need this type, remember to call MPI::Datatype::Free 
+         */
+        const MPI::Datatype CreateMpiDataType() const;
 
       private:
         const geometry::LatticeData* const latDatLBM;
