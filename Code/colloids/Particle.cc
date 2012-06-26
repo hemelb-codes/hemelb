@@ -12,7 +12,7 @@ namespace hemelb
                        lb::MacroscopicPropertyCache& propertyCache) :
       PersistedParticle(xml),
       latDatLBM(latDatLBM),
-      propertyCache(propertyCache)
+      propertyCache(&propertyCache)
     {
       /** TODO: this conversion should be done in the xml abstraction layer */
       smallRadius_a0 /= latDatLBM->GetVoxelSize();
@@ -186,7 +186,7 @@ namespace hemelb
 
             // read value of velocity for site index from macroscopic cache
             // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-            util::Vector3D<double> siteFluidVelocity = propertyCache.velocityCache.Get(siteId);
+            util::Vector3D<double> siteFluidVelocity = propertyCache->velocityCache.Get(siteId);
 
             // calculate term of the interpolation sum
             LatticePosition relativePosition(siteGlobalPosition);
@@ -205,7 +205,7 @@ namespace hemelb
                 partialInterpolation.x, partialInterpolation.y, partialInterpolation.z,
                 velocity.x, velocity.y, velocity.z);
           }
-      propertyCache.velocityCache.SetRefreshFlag();
+      propertyCache->velocityCache.SetRefreshFlag();
     }
 
   }

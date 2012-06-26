@@ -54,8 +54,8 @@ namespace hemelb
         const MPI::Datatype CreateMpiDataType() const;
 
       private:
-        const geometry::LatticeData* const latDatLBM;
-        lb::MacroscopicPropertyCache& propertyCache;
+        const geometry::LatticeData* latDatLBM;
+        lb::MacroscopicPropertyCache* propertyCache;
     };
   }
 }
