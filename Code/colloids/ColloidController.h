@@ -5,11 +5,11 @@
 #include "net/net.h"
 #include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
-#include "util/Vector3D.h"
 #include "geometry/Geometry.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -31,6 +31,9 @@ namespace hemelb
 
         /** overloaded from IteratedAction */
         void RequestComms();
+
+        /** overloaded from IteratedAction */
+        void EndIteration();
 
       private:
         /** enables simplified general point-to-point communication via MPI */
