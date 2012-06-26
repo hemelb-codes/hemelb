@@ -48,7 +48,7 @@ namespace hemelb
      *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
      *  when you no longer need this type, remember to call MPI::Datatype::Free
      */
-    const MPI::Datatype Particle::CreateMpiDataType() const
+    const MPI::Datatype Particle::CreateMpiDatatype() const
     {
       // MPI::Get_address specifies non-const pointers
       // so need a non-const copy of a particle object
