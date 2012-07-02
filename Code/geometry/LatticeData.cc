@@ -50,7 +50,7 @@ namespace hemelb
 
       InitialiseNeighbourLookups();
 
-      CleanEmptyBlocks();
+      //CleanEmptyBlocks();
     }
 
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
