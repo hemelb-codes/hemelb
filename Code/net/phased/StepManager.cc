@@ -1,4 +1,8 @@
 #include "net/phased/StepManager.h"
+
+#include <cstdlib>
+#include <iostream>
+
 namespace hemelb
 {
   namespace net
@@ -20,7 +24,7 @@ namespace hemelb
         registry[phase][step].push_back(Action(concern, method));
       }
 
-      void StepManager::RegisterIteratedActorSteps(Concern &concern,Phase phase)
+      void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
       {
         for (int step = steps::BeginPhase; step <= steps::Reset; step++)
         {
@@ -55,7 +59,8 @@ namespace hemelb
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
+                action++)
             {
               concerns.insert(action->concern);
             }
@@ -71,7 +76,8 @@ namespace hemelb
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
+                action++)
             {
               total++;
             }
@@ -106,6 +112,7 @@ namespace hemelb
 
       void StepManager::CallActionsForStep(steps::Step step, Phase phase)
       {
+
         std::vector<Action> &actionsForStep = registry[phase][step];
         for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
         {
