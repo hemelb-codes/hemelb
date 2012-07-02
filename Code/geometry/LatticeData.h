@@ -418,8 +418,6 @@ namespace hemelb
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
 
-        void CleanEmptyBlocks();
-
         void InitialiseNeighbourLookups();
 
         void InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc);
