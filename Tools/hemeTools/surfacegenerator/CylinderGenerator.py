@@ -1,7 +1,6 @@
 from TriangulatedCylinderSource import TriangulatedCylinderSource
 from vtk import vtkSTLWriter
-import yaml
-import os
+
 def CylinderGenerator(radius, length, resolution, outfile):
     """Write an STL file of a triangulated, uncapped, origin-centred cylinder
     of the specified radius, length and resolution to the specified file.
@@ -15,15 +14,8 @@ def CylinderGenerator(radius, length, resolution, outfile):
     tcs.SetHeight(length)
     tcs.CappingOff()
     w.SetFileName(outfile)
+
     w.Write()
-    outleaf,ext=os.path.splitext(outfile)
-    outsummaryfile=outleaf+'.smy'
-    summary={
-      'type': 'cylinder',
-      'ends': [[0,0,-1.0*length/2],[0,0,length/2]],
-      'radius' : radius
-    }
-    yaml.dump(summary,file(outsummaryfile,'w'))
 
 if __name__ == "__main__":
     import sys
