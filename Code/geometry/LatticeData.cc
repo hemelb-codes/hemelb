@@ -49,8 +49,6 @@ namespace hemelb
       CollectGlobalSiteExtrema();
 
       InitialiseNeighbourLookups();
-
-      //CleanEmptyBlocks();
     }
 
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
@@ -355,41 +353,6 @@ namespace hemelb
       }
     }
 
-    void LatticeData::CleanEmptyBlocks()
-    {
-      std::vector<bool> blockIsOnThisRank(blockCount, false);
-      for (site_t blockNumber = 0; blockNumber < GetBlockCount(); blockNumber++)
-      {
-        const Block& currentDataBlock = GetBlock(blockNumber);
-        // If we are in a block of solids, move to the next block.
-        if (currentDataBlock.IsEmpty())
-        {
-          continue;
-        }
-        for (site_t localSiteIndex = 0; localSiteIndex < GetSitesPerBlockVolumeUnit(); localSiteIndex++)
-        {
-          if (topology::NetworkTopology::Instance()->GetLocalRank()
-              == currentDataBlock.GetProcessorRankForSite(localSiteIndex))
-          {
-            blockIsOnThisRank[blockNumber] = true;
-            break;
-          }
-        }
-
-      }
-
-      // If we are in a block of solids, we set map_block[n].site_data to NULL.
-      for (site_t n = 0; n < GetBlockCount(); n++)
-      {
-        if (!blockIsOnThisRank[n])
-        {
-          blocks[n] = Block();
-          continue;
-        }
-      }
-
-    }
-
     void LatticeData::InitialiseNeighbourLookups()
     {
       // Allocate the index in which to put the distribution functions received from the other
@@ -633,9 +596,9 @@ namespace hemelb
       return lBlock.GetLocalContiguousIndexForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords));
     }
 
-    bool LatticeData::GetContiguousSiteId(
-      const util::Vector3D<site_t>& globalLocation,
-      proc_t& procId, site_t& siteId) const
+    bool LatticeData::GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
+                                          proc_t& procId,
+                                          site_t& siteId) const
     {
       // convert global coordinates to local coordinates - i.e.
       // to location of block and location of site within block
