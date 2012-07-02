@@ -19,6 +19,9 @@ namespace hemelb
                      receivereq.Type,
                      communicator.GetCommunicator());
       }
+
+      allToAllReceiveProcComms.clear();
+      allToAllSendProcComms.clear();
     }
   }
 }
