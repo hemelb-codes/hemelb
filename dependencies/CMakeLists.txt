@@ -130,15 +130,15 @@ else()
 	endif()
 	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
 	if (CPPUNIT_PATCH_LDL)
-    	set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_ldl.diff)
-    else()
-        set(PATCH_COMMAND_LDL echo noldl)
-    endif()
-    if (RECONFIGURE_CPPUNIT)
-    	set(PATCH_COMMAND_RECONFIGURE autoreconf -fvi) #autoreconf required on osx - based on contents of portfile)
-    else()
-        set(PATCH_COMMAND_RECONFIGURE echo noreconf)
-    endif()
+		set(PATCH_COMMAND_LDL patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/cppunit_ldl.diff)
+	else()
+		set(PATCH_COMMAND_LDL echo noldl)
+	endif()
+	if (RECONFIGURE_CPPUNIT)
+		set(PATCH_COMMAND_RECONFIGURE autoreconf -fvi) #autoreconf required on osx - based on contents of portfile)
+	else()
+		set(PATCH_COMMAND_RECONFIGURE echo noreconf)
+	endif()
 	ExternalProject_Add(
 	   cppunit
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
@@ -207,20 +207,20 @@ else()
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
-    	set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
-    else()
-        set(PATCH_COMMAND_VACOPY echo novacopy)
-    endif()
-    if (CTEMPLATE_PATCH_ALIGN)
-    	set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
-    else()
-        set(PATCH_COMMAND_ALIGN echo noalign)
-    endif()
+		set(PATCH_COMMAND_VACOPY patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_vacopy.diff)
+	else()
+		set(PATCH_COMMAND_VACOPY echo novacopy)
+	endif()
+	if (CTEMPLATE_PATCH_ALIGN)
+		set(PATCH_COMMAND_ALIGN patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/ctemplate_align.diff)
+	else()
+		set(PATCH_COMMAND_ALIGN echo noalign)
+	endif()
 	ExternalProject_Add(
    	ctemplate
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
-	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
+		CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 		PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
