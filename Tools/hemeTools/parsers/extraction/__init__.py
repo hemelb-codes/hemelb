@@ -26,7 +26,7 @@ class FieldSpec(object):
 
     def __init__(self):
         # name, XDR dtype, in-memory dtype, length, offset
-        self._filespec = [('grid', '>L', np.uint32, (3,), 0)]
+        self._filespec = [('grid', '>i4', np.uint32, (3,), 0)]
         
         self._memspec = [('id', None, np.uint64, 1, None),
                          ('position', None, np.float32, (3,), None)]
@@ -145,7 +145,7 @@ class ExtractedProperty(object):
         self._totalHeaderLength = MainHeaderLength + self._fieldHeaderLength
         bodysize = filesize - self._totalHeaderLength
         assert bodysize % self._recordLength == 0, \
-            "Extraction file appears to have partial record(s)"
+            "Extraction file appears to have partial record(s), residual %s / %s , bodysize %s"%(bodysize % self._recordLength,self._recordLength,bodysize)
         nTimes = bodysize / self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
