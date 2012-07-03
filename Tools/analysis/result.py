@@ -95,11 +95,13 @@ class ParseError(Exception):
 
 def index_parser(content,pattern):
     return content.get(pattern)
+    
 def regex_parser(content,pattern):
     match=re.search(pattern,content)
     if not match: return None
     return re.search(pattern,content).groups()[0]
 def element_parser(content,pattern):
+
     attribute=None
     if type(pattern)==list:
         # we have a two-tuple in the yaml, the second argument is an attribute name for the element
@@ -115,8 +117,10 @@ def element_parser(content,pattern):
             raise ParseError("No attribute %s on element %s"%attribute,pattern)
     else:
         return element.text
+        
 def identity_parser(content,pattern):
     return pattern
+    
 def eval_parser(content,pattern):
     try:
         # Since the properties are dynamic, they aren't in vars(self), so we have to build the binding.
@@ -125,26 +129,40 @@ def eval_parser(content,pattern):
         return eval(pattern,globals(),content(pattern))
     except Exception as err:
         raise ParseError("Problem handling expression %s: %s"%(pattern,err))
+        
 def attribute_parser(content,pattern):
     return getattr(content,pattern)
+    
 def fncall_parser(content,pattern):
     out= content(pattern)
     return out
+    
 def column_parser(content,pattern):
     return [ResultProperty.parse_value(row[pattern]) for row in content]
 
 def yaml_loader(path):
     return yaml.load(open(path))
+    
 def text_loader(path):
     return open(path).read()
+    
 def xml_loader(path):
     try:
         return ElementTree.parse(path)
     except ElementTree.ParseError:
         raise ParseError("Could not parse file.")
+        
 def stat_loader(path):
     return os.stat(path)
 
+
+def csv_loader(path): 
+  content=csv.reader(open(path)) 
+  return [row for row in content] 
+  
+def ssv_loader(path): 
+  content=csv.reader(open(path),delimiter=' ') 
+  return [row for row in content] 
 
 def geometry_header_loader(path):
     from hemeTools.parsers.geometry.simple import ConfigLoader
@@ -180,8 +198,10 @@ def geometry_header_loader(path):
 
 def null_filter(result):
     return None
+    
 def name_filter(result):
     return result.name
+    
 def binding_filter(result):
     # Return a binding suitable for use in eval, from the result
     # The object so returned must respond to () to generate the binding for an expression to be evaluated
@@ -191,8 +211,10 @@ def binding_filter(result):
         binding={key: getattr(result,key) for key in bindings_needed}
         return binding
     return binder
+    
 def shell_filter(result):
     return functools.partial(subprocess.check_output,cwd=os.path.expanduser(result.path))
+    
 def mercurial_filter(result):
     def generator(template):
         if not result.changeset: raise ParseError("No mercurial revision specified.")
