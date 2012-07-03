@@ -21,6 +21,7 @@ int MPW_NumChannels()
 /* Initialize the Cosmogrid library. */
 void MPW_Init(std::string *url, int *server_side_ports, int num_channels) 
 { //this call omits client-side port binding.
+  printf("Mock MPW_Init() started.\n");
   printf("MPW_Init(): last url = %s\n", url[num_channels-1].c_str()); 
   printf("MPW_Init(): last port = %d\n", server_side_ports[num_channels-1]);
 }
