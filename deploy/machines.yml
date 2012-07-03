@@ -256,6 +256,14 @@ oppenheimer15LbgkReg:
   job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_REG'
 
+oppenheimer15LbgkJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_LBGK_JYG'
 
 oppenheimer15MrtSbb:
   import: oppenheimer
@@ -293,6 +301,14 @@ oppenheimer15MrtReg:
   job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_REG'
 
+oppenheimer15MrtJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_MRT_JYG'
 
 oppenheimer15EntASbb:
   import: oppenheimer
@@ -330,6 +346,14 @@ oppenheimer15EntAReg:
   job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_REG'
 
+oppenheimer15EntAJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntA_JYG'
 
 oppenheimer15EntCSbb:
   import: oppenheimer
@@ -367,7 +391,14 @@ oppenheimer15EntCReg:
   job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_REG'
 
-
+oppenheimer15EntCJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_15_EntC_JYG'
 
 oppenheimer19LbgkSbb:
   import: oppenheimer
@@ -406,7 +437,14 @@ oppenheimer19LbgkReg:
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_REG'
 
 
-
+oppenheimer19LbgkJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_LBGK_JYG'
 
 oppenheimer19MrtSbb:
   import: oppenheimer
@@ -444,6 +482,14 @@ oppenheimer19MrtReg:
   job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_REG'
 
+oppenheimer19MrtJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_MRT_JYG'
 
 oppenheimer19EntASbb:
   import: oppenheimer
@@ -481,6 +527,14 @@ oppenheimer19EntAReg:
   job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_REG'
 
+oppenheimer19EntAJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntA_JYG'
 
 oppenheimer19EntCSbb:
   import: oppenheimer
@@ -518,7 +572,14 @@ oppenheimer19EntCReg:
   job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_REG'
 
-
+oppenheimer19EntCJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_19_EntC_JYG'
 
 oppenheimer27LbgkSbb:
   import: oppenheimer
@@ -556,7 +617,14 @@ oppenheimer27LbgkReg:
   job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_REG'
 
-
+oppenheimer27LbgkJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_LBGK_JYG'
 
 
 # Note: there's not 27 MRT possible
@@ -596,6 +664,14 @@ oppenheimer27EntAReg:
   job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_REG'
 
+oppenheimer27EntAJyg:
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntA_JYG'
 
 oppenheimer27EntCSbb:
   import: oppenheimer
@@ -632,3 +708,12 @@ oppenheimer27EntCReg:
     HEMELB_KERNEL: EntropicChik
   job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_REG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_REG'
+  
+oppenheimer27EntCJyg:
+import: oppenheimer
+cmake_options:
+  HEMELB_LATTICE: D3Q27
+  HEMELB_WALL_BOUNDARY: JUNKYANG
+  HEMELB_KERNEL: EntropicChik
+job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_JYG_$cores'
+install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_JYG'
