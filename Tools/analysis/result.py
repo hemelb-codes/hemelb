@@ -59,6 +59,8 @@ class ResultProperty(object):
         
     @staticmethod
     def parse_value(value):
+        if value in [1,0]:
+          return value
         if value in ['None','none',None]:
             return None
         if value in ['True','true',True]:
