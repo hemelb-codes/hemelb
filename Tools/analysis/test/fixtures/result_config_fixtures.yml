@@ -23,5 +23,11 @@ extraction:
     'results/Extracted/pressure_axial_profile.dat':
       axial_field_count: fieldCount
       axial_pressure: [final,axial_pressure]
+      axial_position: [final,grid]
+      voxel_size: voxelSizeMetres
+    'results/Extracted/velocity_shearstress_2_5_lengths_in.dat':
+      radial_velocity: [final,developed_velocity_profile]
+      radial_position: [final,grid]
   compound_properties:
-    axial_mean_pressure: sum([x[1] for x in axial_pressure])/len(axial_pressure)
+      axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
+    
