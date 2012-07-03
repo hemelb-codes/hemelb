@@ -22,3 +22,6 @@ extraction:
   extraction_files:
     'results/Extracted/pressure_axial_profile.dat':
       axial_field_count: fieldCount
+      axial_pressure: [final,axial_pressure]
+  compound_properties:
+    axial_mean_pressure: sum([x[1] for x in axial_pressure])/len(axial_pressure)
