@@ -145,7 +145,7 @@ class ExtractedProperty(object):
         self._totalHeaderLength = MainHeaderLength + self._fieldHeaderLength
         bodysize = filesize - self._totalHeaderLength
         assert bodysize % self._recordLength == 0, \
-            "Extraction file appears to have partial record(s)"
+            "Extraction file appears to have partial record(s), residual %s / %s "%(bodysize % self._recordLength,self._recordLength)
         nTimes = bodysize / self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
