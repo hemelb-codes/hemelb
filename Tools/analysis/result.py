@@ -14,12 +14,14 @@ import datetime
 import functools
 import subprocess
 import csv
+import numpy
 from xml.etree import ElementTree
 
 import logging
 import environment
 logger=logging.getLogger('parsing')
 
+from helpers import *
 from extraction import *
 
 class FileModel(object):
@@ -59,6 +61,8 @@ class ResultProperty(object):
         
     @staticmethod
     def parse_value(value):
+        if type(value)==numpy.ndarray:
+          return value.tolist()
         if value in [1,0]:
           return value
         if value in ['None','none',None]:
@@ -221,6 +225,7 @@ def binding_filter(result):
         terms=re.split("\W",expression)
         bindings_needed=set(terms).intersection(result.proplist)
         binding={key: getattr(result,key) for key in bindings_needed}
+        binding.update(eval_helpers)
         return binding
     return binder
     
