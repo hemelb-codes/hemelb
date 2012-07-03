@@ -134,6 +134,15 @@ namespace hemelb
       public:
         typedef streamers::SimpleBounceBack<Collision> Type;
     };
+    /**
+     * The Junk & Yang 2005 boundary condition.
+     */
+    template<class Collision>
+    class JUNKYANG
+    {
+      public:
+        typedef streamers::JunkYang<Collision> Type;
+    };
   }
 }
 
