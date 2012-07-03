@@ -9,7 +9,6 @@ from vtk import vtkSTLReader
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
 
 #import pdb
 
@@ -170,6 +169,7 @@ class Profile(Observable):
         return
     
     def Generate(self):
+        from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
         generator = GeometryGenerator(self)
         generator.Execute()
         return

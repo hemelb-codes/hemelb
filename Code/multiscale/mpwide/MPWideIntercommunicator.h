@@ -15,7 +15,7 @@ http://castle.strw.leidenuniv.nl/software/MPWide.html
 #include <vector>
 #include <sstream>
 /* TODO: make a good separation of test and production includes here. */
-#include "unittests/multiscale/MockMPWide.h" /* This is temporary! */
+//#include "unittests/multiscale/MockMPWide.h" /* This is temporary! */
 //#include "MPWide.h"
 
 #include <unistd.h>
@@ -65,6 +65,7 @@ namespace hemelb
       {
         bool mpwide_initialized = false;
         std::string mpwide_config_file = "../../../config_files/MPWSettings.cfg";
+        bool mpwide_comm_proc = false;
       }
 
       class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
@@ -73,10 +74,10 @@ namespace hemelb
           MPWideIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
               doubleContents(buffer), currentTime(0), orchestration(orchestration)
           {
-            if(!hemelb::multiscale::mpwide::mpwide_initialized) {
+           /* if(!hemelb::multiscale::mpwide::mpwide_initialized) {
               hemelb::multiscale::mpwide::mpwide_initialized = true;
               Initialize();
-            }
+            }*/
           }
 
           void Initialize()
@@ -84,13 +85,23 @@ namespace hemelb
             //TODO: This is a temporary hard-code.
             //The MPWide config file should be read from the HemeLB XML config file!
 
-            if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+            if (topology::NetworkTopology::Instance()->GetLocalRank() == 0) { hemelb::multiscale::mpwide::mpwide_comm_proc = true; }
+
+            if (hemelb::multiscale::mpwide::mpwide_comm_proc)
             {
+              fprintf(stdout, "Running MPWide Initialize().\n");
+
               char cwd[1024];
               if (getcwd(cwd, sizeof(cwd)) != NULL) { fprintf(stdout, "Current [head] working dir: %s\n", cwd); }
               else { perror("getcwd() error"); }
 
               num_channels = ReadInputHead(hemelb::multiscale::mpwide::mpwide_config_file.c_str());
+
+              /* Creating channels array */
+              channels = (int *) malloc(num_channels*sizeof(int));
+              for(int i=0; i< num_channels; i++) {
+                channels[i] = i;
+              }
 
               hosts = new std::string[num_channels];
               server_side_ports = (int *) malloc(num_channels*sizeof(int));
@@ -109,23 +120,30 @@ namespace hemelb
           /* This is run at the start of the HemeLB simulation, after Initialize(). */
           void ShareInitialConditions()            
           {
-            // 1. Obtain and exchange shared data sizes.
-            send_icand_data_size = GetRegisteredObjectsSize(registeredObjects);
-            recv_icand_data_size = ExchangeICandDataSize(send_icand_data_size);
-            //recv_icand_data_size = send_icand_data_size; /* TODO: DeMock! */
+            if(!hemelb::multiscale::mpwide::mpwide_initialized) {
+              hemelb::multiscale::mpwide::mpwide_initialized = true;
+              Initialize();
+            }
 
-            //TODO: Add an offset table for the ICand data.
+            if (hemelb::multiscale::mpwide::mpwide_comm_proc) {
+              // 1. Obtain and exchange shared data sizes.
+              send_icand_data_size = GetRegisteredObjectsSize(registeredObjects);
+              recv_icand_data_size = ExchangeICandDataSize(send_icand_data_size);
+              //recv_icand_data_size = send_icand_data_size; /* TODO: DeMock! */
 
-            std::cout << "PRE-MALLOC, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
+              //TODO: Add an offset table for the ICand data.
+ 
+              std::cout << "PRE-MALLOC, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
 
-            // 2. Allocate exchange buffers. We do this once at initialization,
-            //    so that if it goes wrong, the program will crash timely.
-            ICandRecvDataPacked = (char *) malloc(recv_icand_data_size);
-            ICandSendDataPacked = (char *) malloc(send_icand_data_size);
+              // 2. Allocate exchange buffers. We do this once at initialization,
+              //    so that if it goes wrong, the program will crash timely.
+              ICandRecvDataPacked = (char *) malloc(recv_icand_data_size);
+              ICandSendDataPacked = (char *) malloc(send_icand_data_size);
 
-            doubleContents["shared_time"] = 0.0;
+              doubleContents["shared_time"] = 0.0;
 
-            ExchangeWithMultiscale(); //is this correct???                   
+              ExchangeWithMultiscale(); //is this correct???                   
+            }
           }                                        
 
           /* This is run at the start of every time step in the main HemeLB simulation. */                                         
@@ -147,7 +165,7 @@ namespace hemelb
 
           /* TODO: Only public for unit-testing. */
           void UnitTestIncrementSharedTime() {
-            if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+            if (hemelb::multiscale::mpwide::mpwide_comm_proc)
             {
               if(currentTime >= doubleContents["shared_time"]) {
                 doubleContents["shared_time"] += 1.0;
@@ -163,6 +181,7 @@ namespace hemelb
           int64_t send_icand_data_size;
           char *ICandRecvDataPacked;
           char *ICandSendDataPacked;
+
 
           void UpdateSharedTime(double new_time)
           {
@@ -312,7 +331,7 @@ namespace hemelb
           /* Exchange Serialized shared object packages between processes. */
           void ExchangePackages(char *ICandSendDataPacked, char *ICandRecvDataPacked)
           {
-            if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc() && (send_icand_data_size > 0 || recv_icand_data_size > 0))
+            if (hemelb::multiscale::mpwide::mpwide_comm_proc && (send_icand_data_size > 0 || recv_icand_data_size > 0))
             {
               std::cout << "EXCHANGE PACKAGES, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
               MPW_SendRecv(ICandSendDataPacked, (long long int) send_icand_data_size,
@@ -348,6 +367,8 @@ namespace hemelb
 
           bool ExchangeWithMultiscale()
           {
+            std::cout << "ExchangeWithMultiscale" << std::endl;
+
             // 1. Pack/Serialize local shared data.
             PackRegisteredObjects(ICandSendDataPacked, registeredObjects);
 
@@ -364,11 +385,14 @@ namespace hemelb
           int64_t GetRegisteredObjectsSize(ContentsType registeredObjects)
           {
             int64_t size = 0;
+            int count = 0;
 
             for (ContentsType::iterator intercommunicandData = registeredObjects.begin();
                 intercommunicandData != registeredObjects.end(); intercommunicandData++)
             {
               hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
+
+              std::cout << "Number of registered objects is: " << sharedObject.Values().size() << std::endl;
               //std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
@@ -379,9 +403,10 @@ namespace hemelb
                             *sharedObject.Values()[sharedFieldIndex]);
 
               }
+              count++;
             }
 
-            std::cout << "size obtained is: " << size << std::endl;
+            std::cout << "size obtained is: " << size << " (for " << count << " objects)." << std::endl;
 
             return size;
           }
@@ -392,6 +417,7 @@ namespace hemelb
             if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
             {
               std::cout << "BEFORE EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
+
               MPW_SendRecv(((char *) &send_icand_data_size), sizeof(int64_t),
                            ((char *) &rsize), sizeof(int64_t),
                            channels, 1);
