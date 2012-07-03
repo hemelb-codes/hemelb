@@ -1,7 +1,7 @@
 from TriangulatedCylinderSource import TriangulatedCylinderSource
 from vtk import vtkSTLWriter
 
-def CylinderGenerator(radius, length, resolution, outfile):
+def CylinderGenerator(radius, length, resolution, outfile, direction=(0,0,1)):
     """Write an STL file of a triangulated, uncapped, origin-centred cylinder
     of the specified radius, length and resolution to the specified file.
     """
@@ -12,6 +12,7 @@ def CylinderGenerator(radius, length, resolution, outfile):
     tcs.SetRadius(radius)
     tcs.SetResolution(resolution)
     tcs.SetHeight(length)
+    tcs.SetDirection(direction)
     tcs.CappingOff()
     w.SetFileName(outfile)
 
