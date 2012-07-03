@@ -20,26 +20,33 @@ import logging
 import environment
 logger=logging.getLogger('parsing')
 
+from extraction import *
+
 class FileModel(object):
     def __init__(self,relative_path,loader):
         self.loader=loader
         self.path=relative_path
         self.key=relative_path+loader.__name__
+        
     def fullpath(self,result):
         return os.path.expanduser(os.path.join(result.path,self.path))
+        
     def model(self,result):
         if result.files.get(self.key): return result.files.get(self.key)
         result.files[self.key]=result.files.get(self.key) or self.loader(self.fullpath(result))
         self.logger(result).debug("Loaded")
         return result.files[self.key]
+        
     def logger(self,result):
         return logging.LoggerAdapter(logger,dict(context=self.fullpath(result)))
 
 class ResultContent(object):
     def __init__(self,filter):
         self.filter=filter
+        
     def model(self,result):
         return self.filter(result)
+        
     def logger(self,result):
         return logging.LoggerAdapter(logger,dict(context=result.path))
 
@@ -49,6 +56,7 @@ class ResultProperty(object):
         self.file=memoized_file_model
         self.label=label
         self.parser=parser
+        
     @staticmethod
     def parse_value(value):
         if value in ['None','none',None]:
@@ -72,6 +80,7 @@ class ResultProperty(object):
                         return str(value).strip()
                     except AttributeError:
                         return value
+                        
     def get(self,result):
         try:
             model=self.file.model(result)
@@ -83,6 +92,7 @@ class ResultProperty(object):
         except (IOError,ParseError, OSError) as err:
             self.file.logger(result).warning("Problem parsing value: %s"%err)
             return None
+            
     # This defines how, when an instance of this class is a property in a parent object, a value is obtained for it.
     def __get__(self,instance,owner):
         return self.get(instance)
@@ -100,8 +110,8 @@ def regex_parser(content,pattern):
     match=re.search(pattern,content)
     if not match: return None
     return re.search(pattern,content).groups()[0]
+    
 def element_parser(content,pattern):
-
     attribute=None
     if type(pattern)==list:
         # we have a two-tuple in the yaml, the second argument is an attribute name for the element
@@ -294,4 +304,5 @@ def result_model(config):
     Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
     Result.define_file_properties(config.get('ssv_files'),ssv_loader,column_parser)
     Result.define_file_properties(config.get('csv_files'),ssv_loader,column_parser)
+    Result.define_file_properties(config.get('extraction_files'),extraction_loader,extraction_parser)
     return Result
