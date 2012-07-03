@@ -14,7 +14,7 @@ import fixtures
 import result
 Result=result.result_model(fixtures.ResultsConfig('example'))
 
-class TestResultsCollection(unittest.TestCase):
+class TestResult(unittest.TestCase):
 	def setUp(self):
 	    self.rc=Result(fixtures.Results('cylinders').result_path(0))
 	def test_construct(self):
