@@ -19,3 +19,6 @@ example:
 extraction:
   name_properties:
     name: '(.*)'
+  extraction_files:
+    'results/Extracted/pressure_axial_profile.dat':
+      axial_field_count: fieldCount
