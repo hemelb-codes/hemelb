@@ -1,7 +1,6 @@
 from vtk import *
 import numpy as np
 
-
 class TriangulatedCylinderSource(vtkProgrammableSource):
     """VTK style source which outputs a vtkPolyData of an open cylinder, whose
     surface is made up of vtkTriangles. Capping can optionally be enabled.
@@ -16,7 +15,8 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         self.Center = (0,0,0)
         self.Height = 1.
         self.Radius = 0.5
-        
+        self.Direction = (0.,0.,1.)
+       
         # Line down the centre of the tube
         self.Centerline = vtkPolyData()
         # VTK filter to create a tube
@@ -47,7 +47,15 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         return self.Tuber.GetRadius()
     def SetRadius(self, r):
         return self.Tuber.SetRadius(r)
-        
+
+    def GetDirection(self):
+        return self.Direction
+    def SetDirection(self, dir):
+        dirNorm = sum([x*x for x in dir]) ** 0.5        
+        if dirNorm != 0:
+            self.Direction = tuple(map(lambda x: x / dirNorm, dir))
+        return
+
     def GetCapping(self):
         return self.Tuber.GetCapping()
     def SetCapping(self, c):
@@ -69,7 +77,7 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         return 2 * self.GetRadius() * np.sin(np.pi / self.GetResolution())
     
     def _GetNz(self):
-        """Get the number of segments to use in the z-direction to give 
+        """Get the number of segments to use in the cylinder-direction to give 
         near--right-angled triangles. 
         """
         targetDz = self._GetDx()
@@ -89,9 +97,10 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
 
         nSegments = self._GetNz()
         h = self.GetHeight()
-        dz = self._GetDz()
         c = self.GetCenter()
-        
+        direction = self.GetDirection()
+        dz = self._GetDz()
+
         # These points define the line
         points = vtkPoints()
         # nSeg + 1 fence posts for nSeg sections of fence
@@ -102,7 +111,10 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
 
         # Set the coordinates along the line and the ids
         for i in xrange(nSegments + 1):
-            points.SetPoint(i, c[0], c[1], c[2] - 0.5*h + i*dz)
+            # Vector from cylinder centre should start at -h/2 along the cylinder and continue in steps
+            # of dz, both along the normal
+            vectorFromCentre = tuple( [(i * dz - 0.5 * h)*x for x in direction] )
+            points.SetPoint(i, c[0] + vectorFromCentre[0], c[1] + vectorFromCentre[1], c[2] + vectorFromCentre[2])
             line.GetPointIds().SetId(i, i)
             continue
 
