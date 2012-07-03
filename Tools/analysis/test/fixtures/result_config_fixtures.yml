@@ -16,3 +16,6 @@ example:
         'env.yml':
             type: script
             machine: machine_name
+extraction:
+  name_properties:
+    name: '(.*)'
