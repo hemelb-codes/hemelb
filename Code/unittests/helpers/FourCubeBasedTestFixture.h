@@ -38,7 +38,6 @@ namespace hemelb
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
 
             initParams.latDat = latDat;
-            initParams.firstSite = 0u;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
             initParams.lbmParams=lbmParams;
             numSites = initParams.latDat->GetLocalFluidSiteCount();
