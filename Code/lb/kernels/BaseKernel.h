@@ -117,16 +117,12 @@ namespace hemelb
         public:
 
           // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
-          InitParams() :
-              firstSite(0)
+          InitParams()
           {
           }
 
           // The number of sites using this kernel instance.
           site_t siteCount;
-
-          // Contiguous index of the first site using this kernel instance.
-          site_t firstSite;
 
           // The array with the imposed density at each boundary.
           boundaries::BoundaryValues* boundaryObject;

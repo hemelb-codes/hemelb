@@ -59,9 +59,6 @@ namespace hemelb
             // Setting all the wall distances to 0.5 will make Junk&Yang behave like Simple Bounce Back
             LbTestsHelper::SetWallAndIoletDistances<lb::lattices::D3Q15>(*latDat, 0.5);
 
-            // Junk&Yang needs to know the range of sites that it will be dealing with at set up time
-            initParams.firstSite = latDat->GetMidDomainCollisionCount(0) + latDat->GetDomainEdgeCollisionCount(0);
-            initParams.siteCount = latDat->GetMidDomainCollisionCount(1) + latDat->GetDomainEdgeCollisionCount(1);
             junkYang =
                 new lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >(initParams);
           }
