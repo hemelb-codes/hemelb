@@ -65,30 +65,24 @@ namespace hemelb
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager=neighbouringDataManager;
 
-      initParams.firstSite = 0;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
       mWallCollision = new tWallCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletOutletCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tInletOutletCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletOutletWallCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tInletOutletWallCollision(initParams);
@@ -238,7 +232,7 @@ namespace hemelb
       mLatDat->CopyReceived();
 
       // Do any cleanup steps necessary on boundary nodes
-      site_t offset = 0;
+      site_t offset = mLatDat->GetMidDomainSiteCount();
 
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
@@ -259,7 +253,8 @@ namespace hemelb
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
       PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
-      offset += mLatDat->GetDomainEdgeCollisionCount(5);
+
+      offset = 0;
 
       PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
