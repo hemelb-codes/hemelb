@@ -710,10 +710,10 @@ oppenheimer27EntCReg:
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_REG'
   
 oppenheimer27EntCJyg:
-import: oppenheimer
-cmake_options:
-  HEMELB_LATTICE: D3Q27
-  HEMELB_WALL_BOUNDARY: JUNKYANG
-  HEMELB_KERNEL: EntropicChik
-job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_JYG_$cores'
-install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_JYG'
+  import: oppenheimer
+  cmake_options:
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_JYG_$cores'
+  install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_JYG'
