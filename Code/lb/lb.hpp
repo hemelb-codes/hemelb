@@ -65,24 +65,30 @@ namespace hemelb
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager=neighbouringDataManager;
 
+      initParams.firstSite = 0;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
+      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
       mWallCollision = new tWallCollision(initParams);
 
+      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletOutletCollision(initParams);
 
+      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tInletOutletCollision(initParams);
 
+      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletOutletWallCollision(initParams);
 
+      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tInletOutletWallCollision(initParams);
