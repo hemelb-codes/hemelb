@@ -335,8 +335,15 @@ namespace hemelb
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
+        template<typename LatticeType>
+        double GetCutDistance(site_t iSiteIndex, int iDirection) const
+        {
+          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
+        }
+
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
+
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -485,12 +492,6 @@ namespace hemelb
         site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const
         {
           return neighbourIndices[iSiteIndex * LatticeType::NUMVECTORS + iDirectionIndex];
-        }
-
-        template<typename LatticeType>
-        double GetCutDistance(site_t iSiteIndex, int iDirection) const
-        {
-          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
         }
 
         /**
