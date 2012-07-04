@@ -43,6 +43,9 @@ class SimulationMaster
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     virtual void DoTimeStep();
 
+    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    //protected, not private because it is required by MultiscaleSimulationMaster
+
   private:
     // Set the lattice type via a build parameter
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
@@ -99,8 +102,6 @@ class SimulationMaster
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
-
-    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
 
     unsigned int snapshotsPerSimulation;
     unsigned int imagesPerSimulation;
