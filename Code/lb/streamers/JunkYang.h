@@ -27,9 +27,8 @@ namespace hemelb
 
           typedef CollisionImpl CollisionType;
 
-          //! @todo: no default constructor for ublas::permutation_matrix. Rewrite it as a vector of pointers and do the allocation/deallocation
           JunkYang(kernels::InitParams& initParams) :
-              collider(initParams), THETA(1.0), latticeData(*initParams.latDat)
+              collider(initParams), THETA(0.7), latticeData(*initParams.latDat)
           {
             AssembleMatrices();
             FactoriseLMatrices();
@@ -37,6 +36,7 @@ namespace hemelb
 
           ~JunkYang()
           {
+            // Free dynamically allocated permutation matrices.
             for (std::map<site_t, ublas::permutation_matrix<std::size_t>*>::iterator iter =
                 luPermutationMatrices.begin(); iter != luPermutationMatrices.end(); ++iter)
             {
@@ -58,9 +58,7 @@ namespace hemelb
 
               geometry::Site site = latticeData->GetSite(siteIndex);
 
-              distribn_t *distribution = site.GetFOld<LatticeType>();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
@@ -74,8 +72,6 @@ namespace hemelb
               {
                 if (!site.HasBoundary(direction))
                 {
-                  distribution[direction] = hydroVars.GetFPostCollision()[direction];
-
                   * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
                       hydroVars.GetFPostCollision()[direction];
                 }
@@ -92,14 +88,14 @@ namespace hemelb
 
                 fPostCollision[siteIndex](index) = hydroVars.GetFPostCollision()[*incomingVelocityIter];
                 fPostCollisionInverseDir[siteIndex](index) = hydroVars.GetFPostCollision()[inverseDirection];
-                fOld[siteIndex](index) = distribution[*incomingVelocityIter];
+                fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*incomingVelocityIter];
               }
 
               for (std::set<Direction>::const_iterator outgoingVelocityIter = outgoingVelocities[siteIndex].begin();
                   outgoingVelocityIter != outgoingVelocities[siteIndex].end(); ++outgoingVelocityIter, ++index)
               {
                 fPostCollision[siteIndex](index) = hydroVars.GetFPostCollision()[*outgoingVelocityIter];
-                fOld[siteIndex](index) = distribution[*outgoingVelocityIter];
+                fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
               BaseStreamer<JunkYang>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
@@ -126,6 +122,7 @@ namespace hemelb
             {
               assert(latticeData->GetSite(siteIndex).IsEdge());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
+              assert(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
 
               ublas::vector < distribn_t > rVector;
               AssembleRVector(siteIndex, rVector);
@@ -135,7 +132,6 @@ namespace hemelb
 
               // lu_substitue will overwrite the RHS with the solution
               ublas::vector < distribn_t > &systemSolution = systemRHS;
-              assert(luPermutationMatrices[siteIndex]);
               lu_substitute(lMatrices[siteIndex], *luPermutationMatrices[siteIndex], systemSolution);
 
               // Update the distribution function for incoming velocities with the solution of the linear system
@@ -159,8 +155,10 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
           CollisionType collider;
 
-          //! Coordinate index arbitrarily chosen in the paper
-          static const unsigned ALPHA = 3u;
+          //! Problem dimension (2D, 3D)
+          static const unsigned DIMENSION = 3U;
+          //! Vector coordinate arbitrarily chosen in the paper
+          static const unsigned ALPHA = DIMENSION - 1;
           //! theta constant in the theta-method used for interpolation (0 for fully explicit, 1 for fully implicit)
           const distribn_t THETA;
 
@@ -172,18 +170,22 @@ namespace hemelb
           //! Sets of outgoing velocities (the complement of incomingVelocities)
           std::map<site_t, std::set<Direction> > outgoingVelocities;
 
-          //! kernelSiteCount long vector containing the K matrices used to assemble both the left-hand- and the right-hand-side of the linear systems for each site
+          //! Map containing the K matrices used to assemble both the left-hand- and the right-hand-side of the linear systems for each site
           std::map<site_t, ublas::matrix<distribn_t> > kMatrices;
-          //! kernelSiteCount long vector containing the linear system left-hand-sides for each site
+          //! Map containing the linear system left-hand-sides for each site
           std::map<site_t, ublas::matrix<distribn_t> > lMatrices;
-          //! kernelSiteCount long vector containing the permutations generated by the LU factorisation of each linear system
+          /**
+           * Map containing the permutations generated by the LU factorisation of each linear system. The permutaation matrices are dinamically allocated
+           * because there isn't a default constructor for ublas::permutation_matrix (unlike other ublas data structures) and the size is not known until
+           * run time.
+           */
           std::map<site_t, ublas::permutation_matrix<std::size_t>*> luPermutationMatrices;
 
-          //! Postcollision distribution with incoming/outgoing ordering.
+          //! Map of postcollision distributions with incoming/outgoing ordering.
           std::map<site_t, ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> > fPostCollision;
-          //! Postcollision distribution for the inverse of the incoming set of velocities.
+          //! Map of postcollision distributions for the inverse directions of those in the incoming set of velocities.
           std::map<site_t, ublas::vector<distribn_t> > fPostCollisionInverseDir;
-          //! Particle distribution in the previous time step with incoming/outgoing ordering.
+          //! Map of distributions in the previous time step with incoming/outgoing ordering.
           std::map<site_t, ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> > fOld;
 
           /**
@@ -236,9 +238,9 @@ namespace hemelb
            * Assemble the K matrix for site contiguousSiteIndex.
            *
            * K is a rectangular matrix (num_incoming_vels x LatticeType::NUMVECTORS). Our
-           * implementation place the columns corresponding to the set of incoming velocities
-           * first followed by outgoing velocities. This makes easier handling the subblocks
-           * with uBLAS.
+           * implementation places the columns corresponding to the set of incoming velocities
+           * first followed by those corresponding to outgoing velocities. This makes easier
+           * handling the subblocks with uBLAS.
            *
            * @param contiguousSiteIndex Contiguous site index (for this core)
            */
@@ -254,47 +256,48 @@ namespace hemelb
              *  Assemble K(:, 0:num_incoming_velocities-1)
              */
             unsigned rowIndex = 0;
-            for (std::set<Direction>::const_iterator incomingVelocityIter =
+            for (std::set<Direction>::const_iterator rowIndexIncomingVelocity =
                 incomingVelocities[contiguousSiteIndex].begin();
-                incomingVelocityIter != incomingVelocities[contiguousSiteIndex].end();
-                ++incomingVelocityIter, ++rowIndex)
+                rowIndexIncomingVelocity != incomingVelocities[contiguousSiteIndex].end();
+                ++rowIndexIncomingVelocity, ++rowIndex)
             {
               // |c_i|^2, where c_i is the i-th velocity vector
-              const int rowRowdirectionsInnProd = LatticeType::CX[*incomingVelocityIter]
-                  * LatticeType::CX[*incomingVelocityIter]
-                  + LatticeType::CY[*incomingVelocityIter] * LatticeType::CY[*incomingVelocityIter]
-                  + LatticeType::CZ[*incomingVelocityIter] * LatticeType::CZ[*incomingVelocityIter];
+              const int rowRowdirectionsInnProd = LatticeType::CX[*rowIndexIncomingVelocity]
+                  * LatticeType::CX[*rowIndexIncomingVelocity]
+                  + LatticeType::CY[*rowIndexIncomingVelocity] * LatticeType::CY[*rowIndexIncomingVelocity]
+                  + LatticeType::CZ[*rowIndexIncomingVelocity] * LatticeType::CZ[*rowIndexIncomingVelocity];
 
               unsigned columnIndex = 0;
-              for (std::set<Direction>::const_iterator incomingVelocityIter2 =
+              for (std::set<Direction>::const_iterator columnIndexIncomingVelocity =
                   incomingVelocities[contiguousSiteIndex].begin();
-                  incomingVelocityIter2 != incomingVelocities[contiguousSiteIndex].end();
-                  ++incomingVelocityIter2, ++columnIndex)
+                  columnIndexIncomingVelocity != incomingVelocities[contiguousSiteIndex].end();
+                  ++columnIndexIncomingVelocity, ++columnIndex)
               {
                 // |c_i|^2, where c_i is the i-th velocity vector
-                const int colColdirectionsInnProd = LatticeType::CX[*incomingVelocityIter2]
-                    * LatticeType::CX[*incomingVelocityIter2]
-                    + LatticeType::CY[*incomingVelocityIter2] * LatticeType::CY[*incomingVelocityIter2]
-                    + LatticeType::CZ[*incomingVelocityIter2] * LatticeType::CZ[*incomingVelocityIter2];
+                const int colColdirectionsInnProd = LatticeType::CX[*columnIndexIncomingVelocity]
+                    * LatticeType::CX[*columnIndexIncomingVelocity]
+                    + LatticeType::CY[*columnIndexIncomingVelocity] * LatticeType::CY[*columnIndexIncomingVelocity]
+                    + LatticeType::CZ[*columnIndexIncomingVelocity] * LatticeType::CZ[*columnIndexIncomingVelocity];
 
                 // (c_i \dot c_j)^2, where c_{i,j} are the {i,j}-th velocity vectors
-                const int rowColdirectionsInnProd = abs(LatticeType::CX[*incomingVelocityIter]
-                    * LatticeType::CX[*incomingVelocityIter2]
-                    + LatticeType::CY[*incomingVelocityIter] * LatticeType::CY[*incomingVelocityIter2]
-                    + LatticeType::CZ[*incomingVelocityIter] * LatticeType::CZ[*incomingVelocityIter2]);
+                const int rowColdirectionsInnProd = LatticeType::CX[*rowIndexIncomingVelocity]
+                    * LatticeType::CX[*columnIndexIncomingVelocity]
+                    + LatticeType::CY[*rowIndexIncomingVelocity] * LatticeType::CY[*columnIndexIncomingVelocity]
+                    + LatticeType::CZ[*rowIndexIncomingVelocity] * LatticeType::CZ[*columnIndexIncomingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter])>=0);
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter])<1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity])>=0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity])<1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     -3.0 / 2.0
                         * (3.0
                             - 6
-                                * site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter]))
-                        * LatticeType::EQMWEIGHTS[*incomingVelocityIter]
+                                * site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]))
+                        * LatticeType::EQMWEIGHTS[*rowIndexIncomingVelocity]
                         * ( (rowColdirectionsInnProd * rowColdirectionsInnProd) - (rowRowdirectionsInnProd / 3.0)
-                            - LatticeType::discreteVelocityVectors[ALPHA - 1][*incomingVelocityIter]
-                                * (colColdirectionsInnProd - (ALPHA / 3.0)));
+                            - LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                                * LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                                * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
                 assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
               }
@@ -302,35 +305,36 @@ namespace hemelb
               /*
                * Assemble K(:, num_incoming_velocities:num_incoming_velocities+num_outgoing_velocities-1)
                */
-              for (std::set<Direction>::const_iterator outgoingVelocityIter =
+              for (std::set<Direction>::const_iterator columnIndexOutgoingVelocity =
                   outgoingVelocities[contiguousSiteIndex].begin();
-                  outgoingVelocityIter != outgoingVelocities[contiguousSiteIndex].end();
-                  ++outgoingVelocityIter, ++columnIndex)
+                  columnIndexOutgoingVelocity != outgoingVelocities[contiguousSiteIndex].end();
+                  ++columnIndexOutgoingVelocity, ++columnIndex)
               {
                 // |c_i|^2, where c_i is the i-th velocity vector
-                const int colColdirectionsInnProd = LatticeType::CX[*outgoingVelocityIter]
-                    * LatticeType::CX[*outgoingVelocityIter]
-                    + LatticeType::CY[*outgoingVelocityIter] * LatticeType::CY[*outgoingVelocityIter]
-                    + LatticeType::CZ[*outgoingVelocityIter] * LatticeType::CZ[*outgoingVelocityIter];
+                const int colColdirectionsInnProd = LatticeType::CX[*columnIndexOutgoingVelocity]
+                    * LatticeType::CX[*columnIndexOutgoingVelocity]
+                    + LatticeType::CY[*columnIndexOutgoingVelocity] * LatticeType::CY[*columnIndexOutgoingVelocity]
+                    + LatticeType::CZ[*columnIndexOutgoingVelocity] * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
                 // (c_i \dot c_j)^2, where c_{i,j} are the {i,j}-th velocity vectors
-                const int rowColdirectionsInnProd = abs(LatticeType::CX[*incomingVelocityIter]
-                    * LatticeType::CX[*outgoingVelocityIter]
-                    + LatticeType::CY[*incomingVelocityIter] * LatticeType::CY[*outgoingVelocityIter]
-                    + LatticeType::CZ[*incomingVelocityIter] * LatticeType::CZ[*outgoingVelocityIter]);
+                const int rowColdirectionsInnProd = LatticeType::CX[*rowIndexIncomingVelocity]
+                    * LatticeType::CX[*columnIndexOutgoingVelocity]
+                    + LatticeType::CY[*rowIndexIncomingVelocity] * LatticeType::CY[*columnIndexOutgoingVelocity]
+                    + LatticeType::CZ[*rowIndexIncomingVelocity] * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter])>=0);
-                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter])<1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity])>=0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity])<1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     -3.0 / 2.0
                         * (3.0
                             - 6
-                                * site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *incomingVelocityIter]))
-                        * LatticeType::EQMWEIGHTS[*incomingVelocityIter]
+                                * site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]))
+                        * LatticeType::EQMWEIGHTS[*rowIndexIncomingVelocity]
                         * ( (rowColdirectionsInnProd * rowColdirectionsInnProd) - (rowRowdirectionsInnProd / 3.0)
-                            - LatticeType::discreteVelocityVectors[ALPHA - 1][*incomingVelocityIter]
-                                * (colColdirectionsInnProd - (ALPHA / 3.0)));
+                            - LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                                * LatticeType::discreteVelocityVectors[ALPHA][*rowIndexIncomingVelocity]
+                                * (colColdirectionsInnProd - (DIMENSION / 3.0)));
 
                 assert(fabs(kMatrices[contiguousSiteIndex](rowIndex, columnIndex)) < 1e3);
               }
@@ -378,6 +382,8 @@ namespace hemelb
           inline void AssembleSigmaVector(const site_t contiguousSiteIndex,
                                           ublas::c_vector<distribn_t, LatticeType::NUMVECTORS>& sigmaVector) // const
           {
+            assert(fPostCollision.find(contiguousSiteIndex) != fPostCollision.end());
+            assert(fOld.find(contiguousSiteIndex) != fOld.end());
             sigmaVector = fPostCollision[contiguousSiteIndex] - (1 - THETA) * fOld[contiguousSiteIndex];
           }
 
