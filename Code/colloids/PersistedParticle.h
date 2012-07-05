@@ -24,8 +24,6 @@ namespace hemelb
         {
         };
 
-        PersistedParticle(){}
-
         /** system-wide-unique identifier for this particle */
         unsigned long   particleId;
 
@@ -37,7 +35,8 @@ namespace hemelb
 
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;
-        //util::Vector3D<double> globalPosition;
+
+        PersistedParticle() {};
     };
   }
 }

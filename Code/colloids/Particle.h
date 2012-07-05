@@ -22,9 +22,10 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(const geometry::LatticeData* const latDatLBM,
-                 io::xml::XmlAbstractionLayer& xml,
-                 lb::MacroscopicPropertyCache& propertyCache);
+        Particle(const geometry::LatticeData& latDatLBM,
+                 io::xml::XmlAbstractionLayer& xml);
+
+        Particle() {};
 
         /** partial interpolation of fluid velocity - temporary value only */
         // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
@@ -44,7 +45,9 @@ namespace hemelb
         const void CalculateFeedbackForces() const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity();
+        const void InterpolateFluidVelocity(
+                     const geometry::LatticeData& latDatLBM,
+                     const lb::MacroscopicPropertyCache& propertyCache);
 
         /** creates a derived MPI datatype that represents a single particle object
          *  note - this data type uses displacements rather than absolute addresses
@@ -52,10 +55,6 @@ namespace hemelb
          *  when you no longer need this type, remember to call MPI::Datatype::Free 
          */
         const MPI::Datatype CreateMpiDatatype() const;
-
-      private:
-        const geometry::LatticeData* latDatLBM;
-        lb::MacroscopicPropertyCache* propertyCache;
     };
   }
 }

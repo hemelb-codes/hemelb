@@ -89,6 +89,15 @@ namespace hemelb
         }
 
         /**
+         * True if the given site coordinates are within a bounding-box for a block.
+         */
+        bool AreLocalSiteCoordinatesValid(const util::Vector3D<site_t>& siteCoords) const
+        {
+          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 &&
+                 siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
+        }
+
+        /**
          * Get the dimensions of the bounding box in terms of blocks.
          * @return Dimensions of the bounding box in blocks.
          */
