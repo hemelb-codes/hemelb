@@ -2,6 +2,7 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
+#include <assert.h>
 
 namespace hemelb
 {
@@ -15,13 +16,11 @@ namespace hemelb
     }
 
     // constructor - called by SimulationMaster::Initialise()
-    ColloidController::ColloidController(const net::Net* const net,
-                                         const geometry::LatticeData* const latDatLBM,
-                                         const geometry::Geometry* const gmyResult,
+    ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
+                                         const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
                                          lb::MacroscopicPropertyCache& propertyCache) :
-            net(net),
-            localRank(topology::NetworkTopology::Instance()->GetLocalRank())
+      localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -35,17 +34,22 @@ namespace hemelb
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
+      bool allGood = (localRank == 0) || (neighbourProcessors.size() > 0);
+      printf("[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
+             localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
+      //assert((localRank==0) || (neighbourProcessors.size()>0));
+
       bool ok = true;
       xml.ResetToTopLevel();
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
-      particleSet = new ParticleSet(latDatLBM, xml, propertyCache);
+      particleSet = new ParticleSet(latDatLBM, xml, propertyCache, neighbourProcessors);
     }
 
     void ColloidController::InitialiseNeighbourList(
-            const geometry::LatticeData* const latDatLBM,
-            const geometry::Geometry* const gmyResult,
-            const Neighbourhood neighbourhood)
+            const geometry::LatticeData& latDatLBM,
+            const geometry::Geometry& gmyResult,
+            const Neighbourhood& neighbourhood)
     {
       // PLAN
       // foreach block in gmyResult (i.e. each block that may have been read from the input file)
@@ -59,17 +63,26 @@ namespace hemelb
       //                 add the targetProcessor of the neighbour site to our neighbourRanks list
 
       // foreach block in geometry
-      for (geometry::BlockTraverser blockTraverser(*latDatLBM);
+      for (geometry::BlockTraverser blockTraverser(latDatLBM);
            blockTraverser.CurrentLocationValid();
            blockTraverser.TraverseOne())
       {
         util::Vector3D<site_t> globalLocationForBlock =
-              blockTraverser.GetCurrentLocation() * gmyResult->GetBlockSize();
+              blockTraverser.GetCurrentLocation() * gmyResult.GetBlockSize();
 
         // if block has sites
         site_t blockId = blockTraverser.GetCurrentIndex();
-        if (gmyResult->Blocks[blockId].Sites.size() == 0)
+        if (gmyResult.Blocks[blockId].Sites.size() == 0)
+        {
+          if (log::Logger::ShouldDisplay<log::Debug>())
+            log::Logger::Log<log::Info, log::OnePerCore>(
+              "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
+              blockId,
+              blockTraverser.GetCurrentLocation().x,
+              blockTraverser.GetCurrentLocation().y,
+              blockTraverser.GetCurrentLocation().z);
           continue;
+        }
 
         // foreach site in block
         for (geometry::SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser();
@@ -81,8 +94,26 @@ namespace hemelb
 
           // if site is local
           site_t siteId = siteTraverser.GetCurrentIndex();
-          if (gmyResult->Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
+          if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
+          {
+            if (log::Logger::ShouldDisplay<log::Debug>())
+              log::Logger::Log<log::Info, log::OnePerCore>(
+                "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
+                siteId,
+                siteTraverser.GetCurrentLocation().x,
+                siteTraverser.GetCurrentLocation().y,
+                siteTraverser.GetCurrentLocation().z,
+                gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
             continue;
+          }
+
+            if (log::Logger::ShouldDisplay<log::Debug>())
+              log::Logger::Log<log::Info, log::OnePerCore>(
+                "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
+                siteId,
+                siteTraverser.GetCurrentLocation().x,
+                siteTraverser.GetCurrentLocation().y,
+                siteTraverser.GetCurrentLocation().z);
 
           // foreach neighbour of site
           for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
@@ -130,41 +161,66 @@ namespace hemelb
 
     //DJH// this function should probably be in geometry::ReadResult
     bool ColloidController::GetLocalInformationForGlobalSite(
-                                      const geometry::Geometry* const gmyResult,
-                                      const util::Vector3D<site_t> globalLocationForSite,
+                                      const geometry::Geometry& gmyResult,
+                                      const util::Vector3D<site_t>& globalLocationForSite,
                                       site_t* blockIdForSite,
                                       site_t* localSiteIdForSite,
                                       proc_t* ownerRankForSite)
     {
-      // check for global location being outside the simulation entirely
-      if (!gmyResult->AreBlockCoordinatesValid(globalLocationForSite))
-      {
-        return false;
-      }
-
       // obtain block information (3D location vector and 1D id number) for the site
-      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult->GetBlockSize();
-      *blockIdForSite = gmyResult->GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
-                                                                  blockLocationForSite.y,
-                                                                  blockLocationForSite.z);
+      util::Vector3D<site_t> blockLocationForSite = globalLocationForSite / gmyResult.GetBlockSize();
+      // check for global location being outside the simulation entirely
+      if (!gmyResult.AreBlockCoordinatesValid(blockLocationForSite))
+        return false;
+
+      *blockIdForSite = gmyResult.GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
+                                                                 blockLocationForSite.y,
+                                                                 blockLocationForSite.z);
+/*
+      if (*blockIdForSite >= gmyResult.Blocks.size())
+        printf("ERROR: blockIdForSite(%li) >= Blocks.size(%li) : globalCoords(%li,%li,%li) => blockCoords(%li,%li,%li)\n",
+          *blockIdForSite, gmyResult.Blocks.size(),
+          globalLocationForSite.x, globalLocationForSite.y, globalLocationForSite.z,
+          blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z);
+*/
+      assert(0 <= *blockIdForSite && *blockIdForSite < (site_t)gmyResult.Blocks.size());
 
       // if the block does not contain any sites then return invalid
-      if (gmyResult->Blocks[*blockIdForSite].Sites.size() == 0)
+      if (gmyResult.Blocks[*blockIdForSite].Sites.empty())
         return false;
 
       // obtain site information (3D location vector and 1D id number)
       // note: these are both local to the block that contains the site
-      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult->GetBlockSize();
-      *localSiteIdForSite = gmyResult->GetSiteIdFromSiteCoordinates(localSiteLocation.x,
-                                                                    localSiteLocation.y,
-                                                                    localSiteLocation.z);
+      util::Vector3D<site_t> localSiteLocation = globalLocationForSite % gmyResult.GetBlockSize();
+
+      if (!gmyResult.AreLocalSiteCoordinatesValid(localSiteLocation))
+        return false;
+
+      *localSiteIdForSite = gmyResult.GetSiteIdFromSiteCoordinates(localSiteLocation.x,
+                                                                   localSiteLocation.y,
+                                                                   localSiteLocation.z);
+/*
+      if (*localSiteIdForSite >= gmyResult.Blocks[*blockIdForSite].Sites.size())
+        printf("ERROR: localSiteIdForSite(%li) >= Sites.size(%li) : globalCoords(%li,%li,%li) => blockCoords (%li,%li,%li) & siteCoords(%li,%li,%li)\n",
+          *localSiteIdForSite, gmyResult.Blocks[*blockIdForSite].Sites.size(),
+          globalLocationForSite.x, globalLocationForSite.y, globalLocationForSite.z,
+          blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z,
+          localSiteLocation.x, localSiteLocation.y, localSiteLocation.z);
+*/
+      assert(0 <= *localSiteIdForSite && *localSiteIdForSite < (site_t)gmyResult.Blocks[*blockIdForSite].Sites.size());
 
       // obtain the rank of the processor responsible for simulating the fluid at this site
-      *ownerRankForSite = gmyResult->Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
+      *ownerRankForSite = gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
 
       // if the rank is BIG_NUMBER2 then the site is solid not fluid so return invalid
       if (*ownerRankForSite == BIG_NUMBER2)
         return false;
+/*
+      if (*ownerRankForSite > 2)
+        printf("ERROR: ownerRankForSite(%i) >= comm.size(%i)\n",
+          *ownerRankForSite, 3);
+*/
+      assert(0 <= *ownerRankForSite && *ownerRankForSite < 3);
 
       // all requested information obtained and validated so return true
       return true;
