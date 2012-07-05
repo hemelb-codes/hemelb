@@ -142,13 +142,12 @@ void SimulationMaster::Initialise()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::latDatInitialise].Start();
-// Use a reader to read in the file.
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
 
+  // Use a reader to read in the file.
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
                                           timings);
-
   hemelb::geometry::Geometry readGeometryData = reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
   // Create a new lattice based on that info and return it.
@@ -156,7 +155,11 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
-  neighbouringDataManager=new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,latticeData->GetNeighbouringData(),communicationNet);
+  neighbouringDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(
+                                  *latticeData,
+                                  latticeData->GetNeighbouringData(),
+                                  communicationNet);
+
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
@@ -165,14 +168,14 @@ void SimulationMaster::Initialise()
                                                            timings,neighbouringDataManager);
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
   hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
-  colloidController = new hemelb::colloids::ColloidController(&communicationNet,
-                                                              latticeData,
-                                                              &readGeometryData,
+  colloidController = new hemelb::colloids::ColloidController(*latticeData,
+                                                              readGeometryData,
                                                               xml,
                                                               propertyCache);
 

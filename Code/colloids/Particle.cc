@@ -5,20 +5,25 @@
 
 namespace hemelb
 {
+  // boiler-plate template specialisation for colloids Particle object
+  // create a non-empty ParticleSet object before using this data type
+  template<>
+  MPI_Datatype MpiDataTypeTraits<colloids::Particle>::RegisterMpiDataType()
+  {
+    return colloids::Particle().CreateMpiDatatype();
+  }
+
   namespace colloids
   {
-    Particle::Particle(const geometry::LatticeData* const latDatLBM,
-                       io::xml::XmlAbstractionLayer& xml,
-                       lb::MacroscopicPropertyCache& propertyCache) :
-      PersistedParticle(xml),
-      latDatLBM(latDatLBM),
-      propertyCache(&propertyCache)
+    Particle::Particle(const geometry::LatticeData& latDatLBM,
+                       io::xml::XmlAbstractionLayer& xml) :
+      PersistedParticle(xml)
     {
       /** TODO: this conversion should be done in the xml abstraction layer */
-      smallRadius_a0 /= latDatLBM->GetVoxelSize();
-      largeRadius_ah /= latDatLBM->GetVoxelSize();
-      globalPosition -= latDatLBM->GetOrigin();
-      globalPosition /= latDatLBM->GetVoxelSize();
+      smallRadius_a0 /= latDatLBM.GetVoxelSize();
+      largeRadius_ah /= latDatLBM.GetVoxelSize();
+      globalPosition -= latDatLBM.GetOrigin();
+      globalPosition /= latDatLBM.GetVoxelSize();
 
       if (log::Logger::ShouldDisplay<log::Debug>())
         log::Logger::Log<log::Debug, log::OnePerCore>(
@@ -60,10 +65,10 @@ namespace hemelb
 
       // we have chosen to make each block of fields contain a single field
       // so, the number of field blocks is the same as the number of fields
-      int numberOfFieldBlocks = 6;
+      int numberOfFieldBlocks = 4;
 
       // and the length of every field block is one
-      int lengthOfEachFieldBlock[] = {1, 1, 1, 1, 1, 1};
+      int lengthOfEachFieldBlock[] = {1, 1, 1, 1};
 
       // there is no guarantee that the fields will be contiguous, so
       // the displacement of each field must be determined separately
@@ -71,20 +76,39 @@ namespace hemelb
       displacementOfEachFieldBlock[0] = MPI::Get_address(&(temp.particleId)) - baseAddress; 
       displacementOfEachFieldBlock[1] = MPI::Get_address(&(temp.smallRadius_a0)) - baseAddress; 
       displacementOfEachFieldBlock[2] = MPI::Get_address(&(temp.largeRadius_ah)) - baseAddress; 
-      displacementOfEachFieldBlock[3] = MPI::Get_address(&(temp.globalPosition.x)) - baseAddress; 
-      displacementOfEachFieldBlock[4] = MPI::Get_address(&(temp.globalPosition.y)) - baseAddress; 
-      displacementOfEachFieldBlock[5] = MPI::Get_address(&(temp.globalPosition.z)) - baseAddress; 
+      displacementOfEachFieldBlock[3] = MPI::Get_address(&(temp.globalPosition)) - baseAddress; 
 
       // the built-in MPI datatype of each field must match the C++ type
       MPI::Datatype datatypeOfEachFieldBlock[] =
-        {MPI::UNSIGNED_LONG, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE, MPI::DOUBLE};
+        {MPI::UNSIGNED_LONG, MPI::DOUBLE, MPI::DOUBLE, MpiDataType<util::Vector3D<double> >()};
 
+      // create a first draft of the MPI datatype for a Particle
+      // the lower bound and displacements of fields are correct
+      // but the extent may not include the whole derived object
+      // specifically, we aren't sending velocity and bodyForces
       MPI::Datatype particleType = MPI::Datatype::Create_struct(
         numberOfFieldBlocks,
         lengthOfEachFieldBlock,
         displacementOfEachFieldBlock,
         datatypeOfEachFieldBlock);
 
+      // obtain the current lower bound for the MPI datatype
+      MPI::Aint lowerBound, extent;
+      particleType.Get_extent(lowerBound, extent);
+
+      // we can determine the actual extent of a Particle object
+      // by concatenating two of them, using a contiguous vector
+      // and finding the difference between their base addresses
+      std::vector<Particle> tempVectorOfParticle(2, temp);
+      extent = MPI::Get_address(&(tempVectorOfParticle[1]))
+             - MPI::Get_address(&(tempVectorOfParticle[0]));
+
+      // resize the uncommitted first draft MPI datatype
+      // with the current lower bound and the new extent
+      particleType = particleType.Create_resized(lowerBound, extent);
+
+      // commit the MPI datatype and return it
+      particleType.Commit();
       return particleType;
     }
 
@@ -127,7 +151,9 @@ namespace hemelb
       return delta;
     }
 
-    const void Particle::InterpolateFluidVelocity()
+    const void Particle::InterpolateFluidVelocity(
+                           const geometry::LatticeData& latDatLBM,
+                           const lb::MacroscopicPropertyCache& propertyCache)
     {
       /** InterpolateFluidVelocity
        *    For each local neighbour lattice site
@@ -157,24 +183,24 @@ namespace hemelb
             // convert the global coordinates of the site into a local site index
             proc_t procId;
             site_t siteId;
-            bool isValid = latDatLBM->GetContiguousSiteId(siteGlobalPosition, procId, siteId);
+            bool isValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
             bool isLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
 
             if (log::Logger::ShouldDisplay<log::Debug>())
             {
               util::Vector3D<site_t> blockCoords, localSiteCoords;
-              latDatLBM->GetBlockAndLocalSiteCoords(siteGlobalPosition, blockCoords, localSiteCoords);
+              latDatLBM.GetBlockAndLocalSiteCoords(siteGlobalPosition, blockCoords, localSiteCoords);
 
               log::Logger::Log<log::Debug, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i,\nsiteGlobalPosition: {%i,%i,%i}\nblockCoords: {%i,%i,%i} - %s\nlocalSiteCoords: {%i,%i,%i} - %s\nprocId: %i, siteId: %i\n",
                 particleId,
                 siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
                 blockCoords.x, blockCoords.y, blockCoords.z,
-                !latDatLBM->IsValidBlock(blockCoords) ? "INVALID" :
-                (latDatLBM->GetBlock(latDatLBM->GetBlockIdFromBlockCoords(blockCoords)).IsEmpty() ?
+                !latDatLBM.IsValidBlock(blockCoords) ? "INVALID" :
+                (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).IsEmpty() ?
                 "SOLID" : "valid"),
                 localSiteCoords.x, localSiteCoords.y, localSiteCoords.z,
-                !latDatLBM->IsValidLatticeSite(localSiteCoords) ? "INVALID" :
+                !latDatLBM.IsValidLatticeSite(localSiteCoords) ? "INVALID" :
                 (!isValid ? "SOLID" : (!isLocal ? "REMOTE" : "local fluid")),
                 procId, siteId);
             }
@@ -186,7 +212,7 @@ namespace hemelb
 
             // read value of velocity for site index from macroscopic cache
             // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-            util::Vector3D<double> siteFluidVelocity = propertyCache->velocityCache.Get(siteId);
+            util::Vector3D<double> siteFluidVelocity = propertyCache.velocityCache.Get(siteId);
 
             // calculate term of the interpolation sum
             LatticePosition relativePosition(siteGlobalPosition);
@@ -205,7 +231,6 @@ namespace hemelb
                 partialInterpolation.x, partialInterpolation.y, partialInterpolation.z,
                 velocity.x, velocity.y, velocity.z);
           }
-      propertyCache->velocityCache.SetRefreshFlag();
     }
 
   }
