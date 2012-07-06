@@ -323,7 +323,7 @@ namespace hemelb
               for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
               {
                 // -1 means that the a given link does not cross any boundary
-                if (latticeData.template GetCutDistance<Lattice>(siteIndex, direction) != -1)
+                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice>(direction) != (distribn_t) -1)
                 {
                   latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
                 }
