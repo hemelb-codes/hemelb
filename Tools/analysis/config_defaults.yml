@@ -39,6 +39,9 @@ results:
             dbg3: 'timings/timer[name="dbg3"]/mean'
             dbg4: 'timings/timer[name="dbg4"]/mean'
             dbg5: 'timings/timer[name="dbg5"]/mean'
+            lattice_type: build/lattice_type
+            lb_kernel: build/kernel_type
+            wall_boundary_condition: build/wall_boundary_condition
         'config.xml':
             cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
@@ -125,9 +128,13 @@ results:
         axial_velocity: '[x[2] for x in radial_velocity_field]'
         radius: max(radial_position) + voxel_size/2
         theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(radius,2) - pow(d,2)) for d in radial_position]'
-        residual_velocity_rel: '[(a-b)/(a+b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
-        norm_residual_velocity: max(residual_velocity_rel)
-
+        residual_velocity_rel: '[(a-b)/b for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
+        norm_residual_velocity: 'max([abs(x) for x in residual_velocity_rel])'
+        theoretical_axial_pressure: '[inlet_pressure_mean*133.323874 - pressure_diff * (x - min(axial_position))/pipe_length for x in axial_position]'
+        residual_pressure_rel: '[(133.323874*a-b)/b for a,b in zip(axial_pressure,theoretical_axial_pressure)]'
+        norm_residual_pressure: 'max([abs(x) for x in residual_pressure_rel])'
+        actual_reynolds_number: 1000*max(axial_velocity)*2*radius/viscosity
+        theoretical_reynolds_number: 1000*max(theoretical_axial_velocity)*2*radius/viscosity
     yaml_files:
         'env.yml':
             type: script
@@ -143,8 +150,9 @@ results:
         axial_coordinate: grid
         voxel_size: voxelSizeMetres
         origin: originMetres
-      'results/Extracted/velocity_shearstress_2_5_lengths_in.dat':
+      'results/Extracted/velocity_shearstress_line_2_5_lengths_in.dat':
         radial_velocity_field: developed_velocity_profile
+        radial_shear_stress_field: developed_shear_stress_profile
         radial_coordinate: grid
     
 
