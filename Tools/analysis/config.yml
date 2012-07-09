@@ -1,0 +1,146 @@
+# Copy this file as config.yml, and specify your configuration details
+results_path: "~/Desktop/fabric/results"
+reports_path: "~/Desktop/fabric/reports"
+
+graphs:
+  pressure_error_by_re:
+    name: "Max normalised pressure residual along centreline of cylinder with varying Reynolds number"
+    select:
+      type: hemelb
+    dependent:
+      - norm_residual_pressure
+    independent:
+      - theoretical_reynolds_number
+
+  pressure_error_by_lattice:
+    name: "Max normalised pressure residual along centreline of cylinder with different lattices"
+    select:
+      type: hemelb
+    dependent:
+      - norm_residual_pressure
+    independent:
+      - lattice_type
+
+  velocity_error_by_re:
+    name: "Max normalised velocity residual along diameter of cylinder with varying Reynolds number"
+    select:
+      type: hemelb
+    dependent:
+      - norm_residual_velocity
+    independent:
+      - theoretical_reynolds_number
+
+  velocity_error_by_lattice:
+    name: "Max normalised velocity residual along diameter of cylinder with different lattices"
+    select:
+      type: hemelb
+    dependent:
+      - norm_residual_velocity
+    independent:
+      - lattice_type
+
+reports:
+  Re0.1:
+    name: "Re 0.1"
+    defaults:
+      select:
+        cores: 16
+        acceptance: OK
+        theoretical_reynolds_number: '~0.1'
+    graphs:
+      pressure_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+      velocity_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+  Re1:
+    name: "Re 1"
+    defaults:
+      select:
+        cores: 16
+        acceptance: OK
+        theoretical_reynolds_number: '~1'
+    graphs:
+      pressure_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+      velocity_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+  Re10:
+    name: "Re 10"
+    defaults:
+      select:
+        cores: 16
+        acceptance: OK
+        theoretical_reynolds_number: '~10'
+    graphs:
+      pressure_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+      velocity_error_by_lattice:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+  15_lattice:
+    name: "D3Q15 lattice"
+    defaults:
+      select:
+        lattice_type: D3Q15
+        cores: 16
+        acceptance: OK
+    graphs:
+      pressure_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+      velocity_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+  19_lattice:
+    name: "D3Q19 lattice"
+    defaults:
+      select:
+        lattice_type: D3Q19
+        cores: 16
+        acceptance: OK
+    graphs:
+      pressure_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+      velocity_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+
+  27_lattice:
+    name: "D3Q27 lattice"
+    defaults:
+      select:
+        cores: 16
+        acceptance: OK
+        lattice_type: D3Q27
+    graphs:
+      pressure_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
+      velocity_error_by_re:
+        curves:
+          - lb_kernel
+          - wall_boundary_condition
