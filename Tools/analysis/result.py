@@ -293,6 +293,10 @@ def result_model(config):
                     return not prop==ResultProperty.parse_value(value[1:])
                 elif value[0]=='>':
                     return prop>ResultProperty.parse_value(value[1:])
+                elif value[0]=='~':
+                    read_value=ResultProperty.parse_value(value[1:])
+                    norm_error=abs( (read_value-prop)/(read_value+prop) )
+                    return norm_error < 0.03
                 else:
                     return prop==value
             except TypeError:
