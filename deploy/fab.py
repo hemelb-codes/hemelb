@@ -570,12 +570,12 @@ def modify_profile(p):
     #Profiles always get created with 1000 steps and 3 cycles.
     #Can't change it here.
     try:
-        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
-        env.VoxelSize=p.VoxelSizeMetres
-    except AttributeError:
-        # Remain compatible with old setuptool
         p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
         env.VoxelSize=p.VoxelSize
+    except AttributeError:
+        # Remain compatible with old setuptool
+        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+        env.VoxelSize=p.VoxelSizeMetres
     env.Steps=env.Steps or 1000
     env.Cycles=env.Cycles or 3
 
@@ -644,7 +644,7 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        modify_config(profile,VoxelSize,Steps,Cycles,1000,3)
+        modify_config(profile,currentVoxelSize,Steps,Cycles,1000,3)
 
 @task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
