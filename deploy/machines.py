@@ -117,9 +117,9 @@ def complete_environment():
     env.code_build_path=env.pather.join(env.remote_path,'code_build')
     env.repository_path=env.pather.join(env.remote_path,env.repository)
     
-    env.local_results=os.path.expanduser(env.local_results)
-    env.local_configs=os.path.expanduser(env.local_configs)
-    env.local_profiles=os.path.expanduser(env.local_profiles)
+    env.local_results=os.path.expanduser(template(env.local_results))
+    env.local_configs=os.path.expanduser(template(env.local_configs))
+    env.local_profiles=os.path.expanduser(template(env.local_profiles))
 
     env.tools_path=env.pather.join(env.repository_path,"Tools")
     env.regression_test_repo_path=env.pather.join(env.pather.dirname(env.repository_path),"RegressionTests")

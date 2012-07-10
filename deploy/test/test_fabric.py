@@ -15,14 +15,22 @@ from ..fab import *
 class TestFabric(unittest.TestCase):
     def setUp(self):
     	#Update the user config with testing example
+    	env.test_home=os.path.join(env.localroot,'deploy','test')
     	user_config=yaml.load(open(os.path.join(env.localroot,'deploy','test','machines_user.yml')))
+    	env.update(user_config['default'])
     	execute(planck) #Default machine target is assumed as planck.
     	#Monkeypatch the fabric commands to do nothing, but record what they would have done
     	sys.modules['deploy.fab'].run=lambda command: self.commands.append(command)
-    	sys.modules['deploy.fab'].local=lambda command: self.commands.append(command)
+    	def mock_local(command,original=sys.modules['deploy.fab'].local):
+    	  self.commands.append(command)
+    	  original(command)
+    	sys.modules['deploy.fab'].local=mock_local  
     	sys.modules['deploy.fab'].put=lambda source,target: self.commands.append("put "+source+" "+target)
     	sys.modules['deploy.fab'].rsync_project=lambda **args: self.commands.append("rsync "+args['local_dir']+" "+args['remote_dir'])
-    	sys.modules['deploy.fab'].generate=lambda profile: self.commands.append("generate %g %g %g"%(profile.VoxelSize, profile.Steps , profile.Cycles) )
+    	def mock_profile(profile,original=sys.modules['deploy.fab'].generate):
+    	   self.commands.append("generate %g %g %g"%(profile.VoxelSize, profile.Steps , profile.Cycles) )
+    	   original(profile)
+    	sys.modules['deploy.fab'].generate=mock_profile
     	self.commands=[]
     	env.build_number='abcd1234'
     def assertCommandCount(self,should_be):
@@ -51,68 +59,69 @@ class TestFabric(unittest.TestCase):
             self.assertEqual(env.job_results,"banana/fish_swim")
     def test_hemelb(self):
         execute(hemelb,'cylinder',cores=5)
-        self.assertEqual(env.name,"cylinder_abcd1234_planck_5")
+        self.assertEqual(env.name,"cylinder_abcd1234_planck_5_10_10")
         self.assertCommandRegexp('mkdir -p .*config_files/cylinder',0)
         self.assertCommandRegexp('rsync .*config_files/cylinder',1)
-        self.assertCommandRegexp("put .*scripts/cylinder_abcd1234_planck_5.sh",2)
-        self.assertCommandRegexp("mkdir -p .*results/cylinder_abcd1234_planck_5",3)
-        self.assertCommandRegexp("cp .*scripts/cylinder_abcd1234_planck_5.sh .*results/cylinder_abcd1234_planck_5",4)
-        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_abcd1234_planck_5",5)
+        self.assertCommandRegexp("put .*scripts/cylinder_abcd1234_planck_5_10_10.sh",2)
+        self.assertCommandRegexp("mkdir -p .*results/cylinder_abcd1234_planck_5_10_10",3)
+        self.assertCommandRegexp("cp .*scripts/cylinder_abcd1234_planck_5_10_10.sh .*results/cylinder_abcd1234_planck_5_10_10",4)
+        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_abcd1234_planck_5_10_10",5)
         self.assertCommandRegexp("put .*env.yml",6)
-        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_abcd1234_planck_5.sh",7)
-        self.assertCommandRegexp(".*scripts/cylinder_abcd1234_planck_5.sh",8)
+        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_abcd1234_planck_5_10_10.sh",7)
+        self.assertCommandRegexp(".*scripts/cylinder_abcd1234_planck_5_10_10.sh",8)
         self.assertCommandCount(9)
     def test_hemelbs(self):
         execute(hemelbs,'cylinder',cores='[1:6:1]')
         self.assertCommandRegexp('rsync .*config_files/cylinder',1)
-        self.assertCommandRegexp("cylinder_abcd1234_planck_5.sh")
+        self.assertCommandRegexp("cylinder_abcd1234_planck_5_10_10.sh")
         self.assertCommandCount(9*5)
     def test_create_config(self):
-        execute(create_config,'cylinder',VoxelSize=0.001)
-        self.assertEqual(env.config,"cylinder_0_001_1000_3")
-        self.assertCommandRegexp("mkdir -p .*/config_files/cylinder_0_001_1000_3",0)
-        self.assertCommand("generate 0.001 1000 3",1)
+        execute(create_config,'cylinder',VoxelSize=0.1)
+        self.assertEqual(env.config,"cylinder_0_1_1000_3")
+        self.assertCommandRegexp("mkdir -p .*/configs/cylinder_0_1_1000_3",0)
+        self.assertCommand("generate 0.1 1000 3",1)
         self.assertCommandCount(2)
     def test_create_configs(self):
-        execute(create_configs,'cylinder',VoxelSize='[0.001:0.011:0.001]')
-        self.assertEqual(env.config,"cylinder_0_01_1000_3")
-        self.assertCommandRegexp("mkdir -p .*/config_files/cylinder_0_001_1000_3",0)
-        self.assertCommand("generate 0.001 1000 3",1)
-        self.assertCommandCount(2*10)
+        execute(create_configs,'cylinder',VoxelSize='[0.1:0.21:0.01]')
+        self.assertEqual(env.config,"cylinder_0_2_1000_3")
+        self.assertCommandRegexp("mkdir -p .*/configs/cylinder_0_1_1000_3",0)
+        self.assertCommand("generate 0.1 1000 3",1)
+        self.assertCommandCount(2*11)
     def test_hemelb_profile(self):
-        execute(hemelb_profile,'cylinder',VoxelSize='[0.001:0.011:0.001]',cores='[1:6:1]')
-        self.assertEqual(env.name,"cylinder_0_01_1000_3_abcd1234_planck_5")
-        self.assertCommandRegexp("mkdir -p .*/config_files/cylinder_0_001_1000_3",0)
-        self.assertCommand("generate 0.001 1000 3",1)
+        execute(hemelb_profile,'cylinder',VoxelSize='[0.1:0.21:0.01]',cores='[1:6:1]')
+        self.assertEqual(env.name,"cylinder_0_2_1000_3_abcd1234_planck_5_10_10")
+        self.assertCommandRegexp("mkdir -p .*/configs/cylinder_0_1_1000_3",0)
+        self.assertCommand("generate 0.1 1000 3",1)
         self.assertCommandRegexp('mkdir -p .*config_files/cylinder',2)
         self.assertCommandRegexp('rsync .*config_files/cylinder',3)
-        self.assertCommandRegexp("put .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",4)
-        self.assertCommandRegexp("mkdir -p .*results/cylinder_0_001_1000_3_abcd1234_planck_1",5)
-        self.assertCommandRegexp("cp .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh .*results/cylinder_0_001_1000_3_abcd1234_planck_1",6)
-        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_0_001_1000_3_abcd1234_planck_1",7)
+        self.assertCommandRegexp("put .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",4)
+        self.assertCommandRegexp("mkdir -p .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",5)
+        self.assertCommandRegexp("cp .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",6)
+        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",7)
         self.assertCommandRegexp("put .*env.yml",8)
-        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",9)
-        self.assertCommandRegexp(".*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",10)
-        self.assertCommandCount(2*10 + 9*10*5)
+        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",9)
+        self.assertCommandRegexp(".*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",10)
+        self.assertCommandCount(2*11 + 9*11*5)
     def test_hemelb_profile_no_config_generation(self):
-        execute(hemelb_profile,'cylinder',VoxelSize='[0.001:0.011:0.001]',cores='[1:6:1]',create_configs="False")
-        self.assertEqual(env.name,"cylinder_0_01_1000_3_abcd1234_planck_5")
+        execute(hemelb_profile,'cylinder',VoxelSize='[0.1:0.21:0.01]',cores='[1:6:1]',create_configs="False")
+        self.assertEqual(env.name,"cylinder_0_2_1000_3_abcd1234_planck_5_10_10")
         self.assertCommandRegexp('mkdir -p .*config_files/cylinder',0)
         self.assertCommandRegexp('rsync .*config_files/cylinder',1)
-        self.assertCommandRegexp("put .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",2)
-        self.assertCommandRegexp("mkdir -p .*results/cylinder_0_001_1000_3_abcd1234_planck_1",3)
-        self.assertCommandRegexp("cp .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh .*results/cylinder_0_001_1000_3_abcd1234_planck_1",4)
-        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_0_001_1000_3_abcd1234_planck_1",5)
+        self.assertCommandRegexp("put .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",2)
+        self.assertCommandRegexp("mkdir -p .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",3)
+        self.assertCommandRegexp("cp .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",4)
+        self.assertCommandRegexp("cp .*CMakeCache.txt .*results/cylinder_0_1_1000_3_abcd1234_planck_1_10_10",5)
         self.assertCommandRegexp("put .*env.yml",6)
-        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",7)
-        self.assertCommandRegexp(".*scripts/cylinder_0_001_1000_3_abcd1234_planck_1.sh",8)
-        self.assertCommandCount(9*10*5)
+        self.assertCommandRegexp("chmod u\+x .*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",7)
+        self.assertCommandRegexp(".*scripts/cylinder_0_1_1000_3_abcd1234_planck_1_10_10.sh",8)
+        self.assertCommandCount(9*11*5)
     def test_configure_default(self):
         execute(configure)
         target={
             'CMAKE_BUILD_TYPE': "Release",
             'CMAKE_CXX_FLAGS_RELEASE': "-O4",
             'CMAKE_INSTALL_PREFIX': env.install_path,
+            'CPPUNIT_PATCH_LDL' : True,
             "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
         }
@@ -127,6 +136,7 @@ class TestFabric(unittest.TestCase):
             'CMAKE_BUILD_TYPE': "Debug",
             'HEMELB_OPTIMISATION': "",
             'HEMELB_LOG_LEVEL': "debug",
+            'CPPUNIT_PATCH_LDL' : True,
             'CMAKE_INSTALL_PREFIX': env.install_path,
             "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
