@@ -97,7 +97,7 @@ namespace hemelb
                                               util::Vector3D<distribn_t>(velocity_x, velocity_y, velocity_z));
             }
 
-            if (propertyCache.shearStressCache.RequiresRefresh())
+            if (propertyCache.wallShearStressMagnitudeCache.RequiresRefresh())
             {
               distribn_t stress;
 
@@ -107,14 +107,14 @@ namespace hemelb
               }
               else
               {
-                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(density,
-                                                                                        f_neq,
-                                                                                        site.GetWallNormal(),
-                                                                                        stress,
-                                                                                        lbmParams->GetStressParameter());
+                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateWallShearStressMagnitude(density,
+                                                                                                     f_neq,
+                                                                                                     site.GetWallNormal(),
+                                                                                                     stress,
+                                                                                                     lbmParams->GetStressParameter());
               }
 
-              propertyCache.shearStressCache.Put(site.GetIndex(), stress);
+              propertyCache.wallShearStressMagnitudeCache.Put(site.GetIndex(), stress);
             }
 
             if (propertyCache.vonMisesStressCache.RequiresRefresh())

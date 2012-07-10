@@ -46,7 +46,7 @@ namespace hemelb
         /**
          * The cache of shear stresses for each fluid site on this core.
          */
-        util::RefreshableCache<distribn_t> shearStressCache;
+        util::RefreshableCache<distribn_t> wallShearStressMagnitudeCache;
 
         /**
          * The cache of Von Mises stresses for each fluid site on this core.
