@@ -472,7 +472,7 @@ namespace hemelb
           else if (mParams.StressType)
           {
             /// @todo #138, wall normals don't seem to be initialised properly, they appear to be [nan,nan,nan]
-            stress = propertyCache.shearStressCache.Get(my_site_id);
+            stress = propertyCache.wallShearStressMagnitudeCache.Get(my_site_id);
           }
           else
           {
