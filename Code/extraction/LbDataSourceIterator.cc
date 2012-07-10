@@ -41,7 +41,7 @@ namespace hemelb
 
     float LbDataSourceIterator::GetShearStress() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.shearStressCache.Get(position));
+      return converter.ConvertStressToPhysicalUnits(propertyCache.wallShearStressMagnitudeCache.Get(position));
     }
 
     float LbDataSourceIterator::GetVonMisesStress() const

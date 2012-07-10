@@ -561,7 +561,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
     if (simConfig->GetStressType() == hemelb::lb::ShearStress)
     {
-      propertyCache.shearStressCache.SetRefreshFlag();
+      propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
     }
     else if (simConfig->GetStressType() == hemelb::lb::VonMises)
     {
