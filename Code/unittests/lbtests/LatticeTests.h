@@ -266,7 +266,7 @@ namespace hemelb
 
               util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
               util::Vector3D<LatticeStress> stressActingOnAPoint;
-              LatticeType::CalculateNormalStressOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, stressActingOnAPoint);
+              LatticeType::CalculateTractionVectorOnAPoint(density, 1.0, nonEquilibriumF, wallNormal, stressActingOnAPoint);
 
               CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[0], density*Cs2);
               CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[1], 0.0);

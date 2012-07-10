@@ -115,10 +115,10 @@ namespace hemelb
           }
 
           /**
-           * Calculates the normal stress (force per unit area) acting on a point. This is done by multiplying the full
+           * Calculates the traction vector on a surface point (units of stress). This is done by multiplying the full
            * stress tensor by the (outward pointing) surface normal at that point.
            *
-           *    \vec{f} = \sigma \dot \vec{normal}
+           *    \vec{t} = \sigma \dot \vec{normal}
            *
            * The full stress tensor is assembled based on the formula:
            *
@@ -136,14 +136,14 @@ namespace hemelb
            * @param density density at a given site
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
-           * @param wallNormal wall normal at a given site
-           * @param normalStress normal stress acting at a given point
+           * @param wallNormal wall normal at a given point
+           * @param tractionVector normal stress acting at a given point
            */
-          inline static void CalculateNormalStressOnAPoint(const distribn_t density,
-                                                           const distribn_t tau,
-                                                           const distribn_t fNonEquilibrium[],
-                                                           const util::Vector3D<DimensionlessQuantity>& wallNormal,
-                                                           util::Vector3D<LatticeStress>& normalStress)
+          inline static void CalculateTractionVectorOnAPoint(const distribn_t density,
+                                                             const distribn_t tau,
+                                                             const distribn_t fNonEquilibrium[],
+                                                             const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                             util::Vector3D<LatticeStress>& tractionVector)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
             util::Matrix3D sigma = CalculatePiTensor(fNonEquilibrium);
@@ -154,24 +154,24 @@ namespace hemelb
             sigma.addDiagonal(pressure);
 
             // Multiply the stress tensor by the surface normal
-            sigma.timesVector(wallNormal, normalStress);
+            sigma.timesVector(wallNormal, tractionVector);
           }
 
           /**
            * The magnitude of the tangential component of the shear stress acting on the
-           * wall. For this method to make sense f has to be the non equilibrium part of
-           * a distribution function
+           * wall (i.e. tangential component of the traction vector). For this method to
+           * make sense f has to be the non equilibrium part of a distribution function.
            *
-           * The normal stress computed in this method only includes the deviatoric part
-           * and not the component corresponding to the pressure. Do not use this intermediate
-           * value unless you understand the implications (use CalculateNormalStressOnAPoint
+           * The stress tensor computed in this method only includes the deviatoric part
+           * and not the component corresponding to the pressure. Do not use the intermediate
+           * traction value unless you understand the implications (use CalculateTractionVectorOnAPoint
            * instead).
            */
-          inline static void CalculateShearStress(const distribn_t &density,
-                                                  const distribn_t f[],
-                                                  const util::Vector3D<double> nor,
-                                                  distribn_t &stress,
-                                                  const double &iStressParameter)
+          inline static void CalculateWallShearStressMagnitude(const distribn_t &density,
+                                                               const distribn_t f[],
+                                                               const util::Vector3D<double> nor,
+                                                               distribn_t &stress,
+                                                               const double &iStressParameter)
           {
             // sigma_ij is the force
             // per unit area in

@@ -44,7 +44,7 @@ namespace hemelb
                 propertyCache.velocityCache.SetRefreshFlag();
                 break;
               case OutputField::ShearStress:
-                propertyCache.shearStressCache.SetRefreshFlag();
+                propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
                 break;
               case OutputField::VonMisesStress:
                 propertyCache.vonMisesStressCache.SetRefreshFlag();
