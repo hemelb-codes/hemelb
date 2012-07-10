@@ -43,6 +43,7 @@ default:
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
   manual_ssh: false
   stat: qstat
+  build_via_batch: false
 legion: 
   job_dispatch: "qsub"
   # The remote host-name to use.
@@ -96,6 +97,7 @@ hector:
   remote: "login.hector.ac.uk"
   # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
+  build_via_batch: true
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   modules: ["load CMake/2.8.6"]

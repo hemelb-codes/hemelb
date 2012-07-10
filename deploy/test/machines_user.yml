@@ -1,6 +1,7 @@
 default:
-  local_results: "~/devel/ccs/fabric/hemelb/results"
-  local_configs: "~/devel/ccs/fabric/hemelb/config_files"
+  local_results: "$test_home/fixtures/results"
+  local_configs: "$test_home/fixtures/configs"
+  local_profiles: "$test_home/fixtures/profiles"
   username: "test_user"
 legion:
   username: "test_user_legion"
