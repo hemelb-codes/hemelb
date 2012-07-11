@@ -272,10 +272,10 @@ namespace hemelb
             }
 
             /*
-             inline static void CalculateShearStressTensor(const distribn_t density,
+             inline static void CalculateStressTensor(const distribn_t density,
              const distribn_t tau,
              const distribn_t fNonEquilibrium[],
-             util::Matrix3D& shearStressTensor)
+             util::Matrix3D& stressTensor)
              */
             {
               /*
@@ -294,8 +294,8 @@ namespace hemelb
               distribn_t tau = 0.75;
 
               util::Vector3D<DimensionlessQuantity> wallNormal(1.0, 0.0, 0.0);
-              util::Matrix3D shearStressTensor;
-              LatticeType::CalculateShearStressTensor(density, tau, nonEquilibriumF.data(), shearStressTensor);
+              util::Matrix3D stressTensor;
+              LatticeType::CalculateStressTensor(density, tau, nonEquilibriumF.data(), stressTensor);
 
               for (unsigned rowIndex = 0; rowIndex < 3; ++rowIndex)
               {
@@ -305,16 +305,16 @@ namespace hemelb
                   {
                     if (rowIndex != 2)
                     {
-                      CPPUNIT_ASSERT_EQUAL(density*Cs2 + 1 - 1/(2*tau), shearStressTensor[rowIndex][columnIndex]);
+                      CPPUNIT_ASSERT_EQUAL(density*Cs2 + 1 - 1/(2*tau), stressTensor[rowIndex][columnIndex]);
                     }
                     else
                     {
-                      CPPUNIT_ASSERT_EQUAL(density*Cs2, shearStressTensor[rowIndex][columnIndex]);
+                      CPPUNIT_ASSERT_EQUAL(density*Cs2, stressTensor[rowIndex][columnIndex]);
                     }
                   }
                   else
                   {
-                    CPPUNIT_ASSERT_EQUAL(0.0, shearStressTensor[rowIndex][columnIndex]);
+                    CPPUNIT_ASSERT_EQUAL(0.0, stressTensor[rowIndex][columnIndex]);
                   }
                 }
               }
