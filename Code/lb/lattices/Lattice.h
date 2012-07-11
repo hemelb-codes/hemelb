@@ -120,19 +120,6 @@ namespace hemelb
            *
            *    \vec{t} = \sigma \dot \vec{normal}
            *
-           * The full stress tensor is assembled based on the formula:
-           *
-           *    \sigma = p*I + 2*\mu*S = p*I - \Pi^{(neq)}
-           *
-           * where p is hydrostatic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
-           * viscosity. -2*\mu*S can be shown to be equals to the non equilibrium part of the moment flux tensor \Pi^{(neq)}.
-           *
-           * \Pi^{(neq)} is assumed to be defined as in Chen&Doolen 1998:
-           *
-           *    \Pi^{(neq)} = (1 - 1/2*\tau) * \sum_over_i e_i e_i f^{(neq)}_i
-           *
-           * where \tau is the relaxation time and e_i is the i-th direction vector
-           *
            * @param density density at a given site
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
@@ -145,16 +132,47 @@ namespace hemelb
                                                              const util::Vector3D<DimensionlessQuantity>& wallNormal,
                                                              util::Vector3D<LatticeStress>& tractionVector)
           {
-            // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
-            util::Matrix3D sigma = CalculatePiTensor(fNonEquilibrium);
-            sigma *= - (1 - 1 / 2 * tau);
-
-            // Adds the pressure component to the stress tensor
-            LatticePressure pressure = density * Cs2;
-            sigma.addDiagonal(pressure);
+            util::Matrix3D sigma;
+            CalculateShearStressTensor(density, tau, fNonEquilibrium, sigma);
 
             // Multiply the stress tensor by the surface normal
             sigma.timesVector(wallNormal, tractionVector);
+          }
+
+          /**
+           * Calculate the full shear stress tensor at a given fluid site (including
+           * both pressure and deviatoric part)
+           *
+           * The stress tensor is assembled based on the formula:
+           *
+           *    \sigma = p*I + 2*\mu*S = p*I - \Pi^{(neq)}
+           *
+           * where p is hydrostatic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
+           * viscosity. -2*\mu*S can be shown to be equals to the non equilibrium part of the moment flux tensor \Pi^{(neq)}.
+           *
+           * \Pi^{(neq)} is assumed to be defined as in Chen&Doolen 1998:
+           *
+           *    \Pi^{(neq)} = (1 - 1/(2*\tau)) * \sum_over_i e_i e_i f^{(neq)}_i
+           *
+           * where \tau is the relaxation time and e_i is the i-th direction vector
+           *
+           * @param density
+           * @param tau
+           * @param fNonEquilibrium
+           * @param shearStressTensor
+           */
+          inline static void CalculateShearStressTensor(const distribn_t density,
+                                                        const distribn_t tau,
+                                                        const distribn_t fNonEquilibrium[],
+                                                        util::Matrix3D& shearStressTensor)
+          {
+            // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
+            shearStressTensor = CalculatePiTensor(fNonEquilibrium);
+            shearStressTensor *= 1 - 1 / (2 * tau);
+
+            // Adds the pressure component to the stress tensor
+            LatticePressure pressure = density * Cs2;
+            shearStressTensor.addDiagonal(pressure);
           }
 
           /**
