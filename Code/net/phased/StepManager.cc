@@ -6,8 +6,8 @@ namespace hemelb
     namespace phased
     {
 
-      StepManager::StepManager(Phase phases) :
-          registry(phases)
+      StepManager::StepManager(Phase phases, reporting::Timers *timers) :
+          registry(phases),timers(timers)
       {
       }
 
@@ -20,7 +20,7 @@ namespace hemelb
         registry[phase][step].push_back(Action(concern, method));
       }
 
-      void StepManager::RegisterIteratedActorSteps(Concern &concern,Phase phase)
+      void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
       {
         for (int step = steps::BeginPhase; step <= steps::Reset; step++)
         {
@@ -55,7 +55,8 @@ namespace hemelb
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
+                action++)
             {
               concerns.insert(action->concern);
             }
@@ -71,7 +72,8 @@ namespace hemelb
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
+                action++)
             {
               total++;
             }
@@ -82,6 +84,8 @@ namespace hemelb
 
       void StepManager::CallActionsForPhase(Phase phase)
       {
+        // It is assumed, that in the step enum, begin phase begins, and end phase ends, the steps which
+        // must be called for a given phase.
         for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
         {
           CallActionsForStep(static_cast<steps::Step>(step), phase);
@@ -106,10 +110,44 @@ namespace hemelb
 
       void StepManager::CallActionsForStep(steps::Step step, Phase phase)
       {
+        StartTimer(step);
         std::vector<Action> &actionsForStep = registry[phase][step];
         for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
         {
           action->Call();
+        }
+        StopTimer(step);
+      }
+
+      void StepManager::StartTimer(steps::Step step)
+      {
+        if (!timers)
+        {
+          return;
+        }
+        if (step == steps::Wait)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiWait].Start();
+        }
+        if (step == steps::Send)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiSend].Start();
+        }
+      }
+
+      void StepManager::StopTimer(steps::Step step)
+      {
+        if (!timers)
+        {
+          return;
+        }
+        if (step == steps::Wait)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiWait].Stop();
+        }
+        if (step == steps::Send)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiSend].Stop();
         }
       }
     }
