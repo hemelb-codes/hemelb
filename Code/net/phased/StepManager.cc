@@ -1,4 +1,8 @@
 #include "net/phased/StepManager.h"
+
+#include <cstdlib>
+#include <iostream>
+
 namespace hemelb
 {
   namespace net
