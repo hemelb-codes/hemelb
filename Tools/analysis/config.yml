@@ -1,6 +1,6 @@
 # Copy this file as config.yml, and specify your configuration details
-results_path: "~/Desktop/fabric/results"
-reports_path: "~/Desktop/fabric/reports"
+results_path: "/store4/blood/jamespjh/local/results"
+reports_path: "/store4/blood/jamespjh/local/reports"
 
 graphs:
   pressure_error_by_re:
