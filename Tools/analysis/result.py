@@ -245,6 +245,21 @@ def mercurial_filter(result):
             raise ParseError("Problem calling mercurial: %s"%err)
     return generator
 
+def add_properties_to_class(klass,config):
+  klass.define_file_properties(config.get('yaml_files'),yaml_loader,index_parser)
+  klass.define_file_properties(config.get('text_files'),text_loader,regex_parser)
+  klass.define_file_properties(config.get('xml_files'),xml_loader,element_parser)
+  klass.define_properties(ResultContent(name_filter),config.get('name_properties'),regex_parser)
+  klass.define_properties(ResultContent(null_filter),config.get('fixed_properties'),identity_parser)
+  klass.define_properties(ResultContent(binding_filter),config.get('compound_properties'),eval_parser)
+  klass.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
+  klass.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
+  klass.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
+  klass.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
+  klass.define_file_properties(config.get('ssv_files'),ssv_loader,column_parser)
+  klass.define_file_properties(config.get('csv_files'),ssv_loader,column_parser)
+  klass.define_file_properties(config.get('extraction_files'),extraction_loader,extraction_parser)
+
 def result_model(config):
     class Result(object):
         """Model of a result"""
@@ -270,6 +285,16 @@ def result_model(config):
             self.name=os.path.basename(self.path)
             self.properties={key:None for key in self.proplist}
             self.files={}
+            
+        def upgrade(self,optional_config,optional_test):
+          if self.datum(optional_test):
+            class new_model(self.__class__):
+              pass
+            add_properties_to_class(new_model,optional_config)
+            self.__class__=new_model
+            # empty the stored property hash to allow redefinitions
+            self.properties={key:None for key in self.proplist} 
+          return self
 
         def datum(self,property):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
@@ -302,18 +327,5 @@ def result_model(config):
             except TypeError:
                 return prop==value
 
-
-    Result.define_file_properties(config.get('yaml_files'),yaml_loader,index_parser)
-    Result.define_file_properties(config.get('text_files'),text_loader,regex_parser)
-    Result.define_file_properties(config.get('xml_files'),xml_loader,element_parser)
-    Result.define_properties(ResultContent(name_filter),config.get('name_properties'),regex_parser)
-    Result.define_properties(ResultContent(null_filter),config.get('fixed_properties'),identity_parser)
-    Result.define_properties(ResultContent(binding_filter),config.get('compound_properties'),eval_parser)
-    Result.define_file_properties(config.get('stat_properties'),stat_loader,attribute_parser)
-    Result.define_properties(ResultContent(shell_filter),config.get('shell_properties'),fncall_parser)
-    Result.define_properties(ResultContent(mercurial_filter),config.get('mercurial_properties'),fncall_parser)
-    Result.define_file_properties(config.get('gmy_files'),geometry_header_loader,attribute_parser)
-    Result.define_file_properties(config.get('ssv_files'),ssv_loader,column_parser)
-    Result.define_file_properties(config.get('csv_files'),ssv_loader,column_parser)
-    Result.define_file_properties(config.get('extraction_files'),extraction_loader,extraction_parser)
+    add_properties_to_class(Result,config)
     return Result
