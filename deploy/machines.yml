@@ -717,3 +717,887 @@ oppenheimer27EntCJyg:
     HEMELB_KERNEL: EntropicChik
   job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_JYG_$cores'
   install_path_template: '$home_path/$fabric_dir/FabricHemelb_27_EntC_JYG'
+
+
+hector15LbgkSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_LBGK_SBB'
+
+hector15LbgkFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_LBGK_FIN'
+
+hector15LbgkGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_LBGK_GZS'
+
+hector15LbgkReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_LBGK_REG'
+
+hector15LbgkJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_15_LBGK_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_LBGK_JYG'
+
+hector15MrtSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_MRT_SBB'
+
+hector15MrtFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_MRT_FIN'
+
+hector15MrtGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_MRT_GZS'
+
+hector15MrtReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_MRT_REG'
+
+hector15MrtJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_15_MRT_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_MRT_JYG'
+
+hector15EntASbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntA_SBB'
+
+hector15EntAFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntA_FIN'
+
+hector15EntAGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntA_GZS'
+
+hector15EntAReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntA_REG'
+
+hector15EntAJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntA_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntA_JYG'
+
+hector15EntCSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntC_SBB'
+
+hector15EntCFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntC_FIN'
+
+hector15EntCGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntC_GZS'
+
+hector15EntCReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntC_REG'
+
+hector15EntCJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q15
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_15_EntC_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_15_EntC_JYG'
+
+hector19LbgkSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_LBGK_SBB'
+
+hector19LbgkFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_LBGK_FIN'
+
+hector19LbgkGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_LBGK_GZS'
+
+hector19LbgkReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_LBGK_REG'
+
+
+hector19LbgkJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_19_LBGK_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_LBGK_JYG'
+
+hector19MrtSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_MRT_SBB'
+
+hector19MrtFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_MRT_FIN'
+
+hector19MrtGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_MRT_GZS'
+
+hector19MrtReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_MRT_REG'
+
+hector19MrtJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: MRT
+  job_name_template: '${config}_${build_number}_${machine_name}_19_MRT_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_MRT_JYG'
+
+hector19EntASbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntA_SBB'
+
+hector19EntAFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntA_FIN'
+
+hector19EntAGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntA_GZS'
+
+hector19EntAReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntA_REG'
+
+hector19EntAJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntA_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntA_JYG'
+
+hector19EntCSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntC_SBB'
+
+hector19EntCFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntC_FIN'
+
+hector19EntCGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntC_GZS'
+
+hector19EntCReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntC_REG'
+
+hector19EntCJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q19
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_19_EntC_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_19_EntC_JYG'
+
+hector27LbgkSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_LBGK_SBB'
+
+hector27LbgkFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_LBGK_FIN'
+
+hector27LbgkGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_LBGK_GZS'
+
+hector27LbgkReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_LBGK_REG'
+
+hector27LbgkJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: LBGK
+  job_name_template: '${config}_${build_number}_${machine_name}_27_LBGK_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_LBGK_JYG'
+
+
+# Note: there's not 27 MRT possible
+hector27EntASbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntA_SBB'
+
+hector27EntAFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntA_FIN'
+
+hector27EntAGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntA_GZS'
+
+hector27EntAReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntA_REG'
+
+hector27EntAJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicAnsumali
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntA_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntA_JYG'
+
+hector27EntCSbb:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: SIMPLEBOUNCEBACK
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_SBB_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntC_SBB'
+
+hector27EntCFin:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: FINTERPOLATION
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_FIN_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntC_FIN'
+
+hector27EntCGzs:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: GZS
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_GZS_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntC_GZS'
+
+hector27EntCReg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: REGULARISED
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_REG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntC_REG'
+  
+hector27EntCJyg:
+  import: hector
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    HEMELB_LATTICE: D3Q27
+    HEMELB_WALL_BOUNDARY: JUNKYANG
+    HEMELB_KERNEL: EntropicChik
+  job_name_template: '${config}_${build_number}_${machine_name}_27_EntC_JYG_$cores'
+  install_path_template: '$work_path/install/FabricHemelb_27_EntC_JYG'
