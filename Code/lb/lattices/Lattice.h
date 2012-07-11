@@ -124,7 +124,7 @@ namespace hemelb
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
            * @param wallNormal wall normal at a given point
-           * @param tractionVector normal stress acting at a given point
+           * @param tractionVector traction vector at a given point
            */
           inline static void CalculateTractionVectorOnAPoint(const distribn_t density,
                                                              const distribn_t tau,
@@ -133,15 +133,14 @@ namespace hemelb
                                                              util::Vector3D<LatticeStress>& tractionVector)
           {
             util::Matrix3D sigma;
-            CalculateShearStressTensor(density, tau, fNonEquilibrium, sigma);
+            CalculateStressTensor(density, tau, fNonEquilibrium, sigma);
 
             // Multiply the stress tensor by the surface normal
             sigma.timesVector(wallNormal, tractionVector);
           }
 
           /**
-           * Calculate the full shear stress tensor at a given fluid site (including
-           * both pressure and deviatoric part)
+           * Calculate the full stress tensor at a given fluid site (including both pressure and deviatoric part)
            *
            * The stress tensor is assembled based on the formula:
            *
@@ -156,23 +155,23 @@ namespace hemelb
            *
            * where \tau is the relaxation time and e_i is the i-th direction vector
            *
-           * @param density
-           * @param tau
-           * @param fNonEquilibrium
-           * @param shearStressTensor
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param stressTensor full stress tensor at a given site
            */
-          inline static void CalculateShearStressTensor(const distribn_t density,
-                                                        const distribn_t tau,
-                                                        const distribn_t fNonEquilibrium[],
-                                                        util::Matrix3D& shearStressTensor)
+          inline static void CalculateStressTensor(const distribn_t density,
+                                                   const distribn_t tau,
+                                                   const distribn_t fNonEquilibrium[],
+                                                   util::Matrix3D& stressTensor)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
-            shearStressTensor = CalculatePiTensor(fNonEquilibrium);
-            shearStressTensor *= 1 - 1 / (2 * tau);
+            stressTensor = CalculatePiTensor(fNonEquilibrium);
+            stressTensor *= 1 - 1 / (2 * tau);
 
             // Adds the pressure component to the stress tensor
             LatticePressure pressure = density * Cs2;
-            shearStressTensor.addDiagonal(pressure);
+            stressTensor.addDiagonal(pressure);
           }
 
           /**

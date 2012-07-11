@@ -135,6 +135,15 @@ namespace hemelb
 
               propertyCache.shearRateCache.Put(site.GetIndex(), shear_rate);
             }
+
+            if (propertyCache.stressTensorCache.RequiresRefresh())
+            {
+              util::Matrix3D stressTensor;
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(density, tau, f_neq, stressTensor);
+
+              propertyCache.stressTensorCache.Put(site.GetIndex(), stressTensor);
+
+            }
           }
 
       };

@@ -4,6 +4,7 @@
 #include "lb/LbmParameters.h"
 #include "lb/SimulationState.h"
 #include "constants.h"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
@@ -21,6 +22,10 @@ namespace hemelb
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
         PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
+
+        //! @todo: #177 template util::Matrix3D so we can use PhysicalStress and LatticeStress
+        util::Matrix3D ConvertStressToPhysicalUnits(const util::Matrix3D& stress) const;
+
         /**
          * Templated to handle both absolute and directional velocity.
          * @param velocity

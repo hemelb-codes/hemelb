@@ -15,7 +15,9 @@ namespace hemelb
       class Matrix3DTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(Matrix3DTests);
-          CPPUNIT_TEST(TestMatrix3D);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestMatrix3D);
+          CPPUNIT_TEST(TestMatrix3DScalarProduct);
+          CPPUNIT_TEST_SUITE_END();
 
           // Returns the entries of the following 3X3 matrix:
           //     [1 2 3]
@@ -29,10 +31,10 @@ namespace hemelb
           }
 
         public:
-          void TestMatrix3D()
+
+          void setUp()
           {
             // Initialise the matrix with some data
-            Matrix3D matrix;
             for (unsigned row = 0; row < 3; row++)
             {
               for (unsigned column = 0; column < 3; column++)
@@ -40,7 +42,10 @@ namespace hemelb
                 matrix[row][column] = ComputeMatrixElement(row, column);
               }
             }
+          }
 
+          void TestMatrix3D()
+          {
             // Test operator*=
             matrix *= 2;
             for (unsigned row = 0; row < 3; row++)
@@ -66,6 +71,23 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(resultVector[1], 70.0);
             CPPUNIT_ASSERT_EQUAL(resultVector[2], 109.0);
           }
+
+          void TestMatrix3DScalarProduct()
+          {
+            // Test operator*
+            Matrix3D halfMatrix = matrix * 0.5;
+            for (unsigned row = 0; row < 3; row++)
+            {
+              for (unsigned column = 0; column < 3; column++)
+              {
+                CPPUNIT_ASSERT_EQUAL(halfMatrix[row][column], 0.5 * ComputeMatrixElement(row, column));
+              }
+            }
+          }
+
+        private:
+          Matrix3D matrix;
+
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(Matrix3DTests);
