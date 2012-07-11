@@ -5,14 +5,10 @@
 #include "constants.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "geometry/neighbouring/NeighbouringDataManager.h"
 
 namespace hemelb
 {
-  namespace geometry{
-    namespace neighbouring{
-      class NeighbouringDataManager;
-    }
-  }
   namespace lb
   {
     namespace kernels
