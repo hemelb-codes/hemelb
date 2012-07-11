@@ -40,49 +40,49 @@ namespace hemelb
 
             void TestConstruct()
             {
-              CPPUNIT_ASSERT(!requirements->Required(terms::Distribution));
+              CPPUNIT_ASSERT(!requirements->IsRequired(terms::Distribution));
             }
 
             void TestSpecifyRequirement()
             {
               requirements->Require(terms::Distribution);
-              CPPUNIT_ASSERT(requirements->Required(terms::Distribution));
+              CPPUNIT_ASSERT(requirements->IsRequired(terms::Distribution));
             }
 
             void TestAny()
             {
-              CPPUNIT_ASSERT(!requirements->Any());
+              CPPUNIT_ASSERT(!requirements->RequiresAny());
               requirements->Require(terms::Distribution);
-              CPPUNIT_ASSERT(requirements->Any());
+              CPPUNIT_ASSERT(requirements->RequiresAny());
             }
 
             void TestAnyNonFieldDependent()
             {
-              CPPUNIT_ASSERT(!requirements->AnyNonFieldDependent());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyNonFieldDependent());
               requirements->Require(terms::Distribution);
-              CPPUNIT_ASSERT(!requirements->AnyNonFieldDependent());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyNonFieldDependent());
               requirements->Require(terms::SiteData);
-              CPPUNIT_ASSERT(requirements->AnyNonFieldDependent());
+              CPPUNIT_ASSERT(requirements->RequiresAnyNonFieldDependent());
             }
 
             void TestAnyFieldDependent()
             {
-              CPPUNIT_ASSERT(!requirements->AnyFieldDependent());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyFieldDependent());
               requirements->Require(terms::SiteData);
-              CPPUNIT_ASSERT(!requirements->AnyFieldDependent());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyFieldDependent());
               requirements->Require(terms::Distribution);
-              CPPUNIT_ASSERT(requirements->AnyFieldDependent());
+              CPPUNIT_ASSERT(requirements->RequiresAnyFieldDependent());
             }
 
             void TestAnyMacroscopic()
             {
-              CPPUNIT_ASSERT(!requirements->AnyMacroscopic());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyMacroscopic());
               requirements->Require(terms::SiteData);
-              CPPUNIT_ASSERT(!requirements->AnyMacroscopic());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyMacroscopic());
               requirements->Require(terms::Distribution);
-              CPPUNIT_ASSERT(!requirements->AnyMacroscopic());
+              CPPUNIT_ASSERT(!requirements->RequiresAnyMacroscopic());
               requirements->Require(terms::Velocity);
-              CPPUNIT_ASSERT(requirements->AnyMacroscopic());
+              CPPUNIT_ASSERT(requirements->RequiresAnyMacroscopic());
             }
 
           private:
