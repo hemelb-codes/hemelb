@@ -37,6 +37,8 @@ namespace hemelb
 
             void tearDown()
             {
+              delete concern;
+              delete actor;
             }
 
             void TestConstruct()

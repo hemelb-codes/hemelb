@@ -2,6 +2,8 @@
 #define HEMELB_UNITTESTS_HELPERS_CPPUNITCOMPAREVECTORS_H
 #include <cppunit/TestFixture.h>
 
+// Let vectors be output to an ostream, so that CPPUNIT can assert equality on them
+
 namespace CPPUNIT_NS
 {
   template<class T> struct assertion_traits<std::vector<T> >

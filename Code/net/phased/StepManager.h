@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include "reporting/Timers.h"
 #include "net/IteratedAction.h"
 #include "net/phased/Concern.h"
 #include "net/phased/steps.h"
@@ -64,8 +65,9 @@ namespace hemelb
           /***
            * Construct a step manager
            * @param The number of phases, default 1.
+           * @param timers, Record the times for the steps to this timers object, if given
            */
-          StepManager(Phase phases = 1);
+          StepManager(Phase phases = 1, reporting::Timers * timers=NULL);
 
           /***
            * Register an action of a concern
@@ -137,6 +139,9 @@ namespace hemelb
 
         private:
           std::vector<Registry> registry; // one registry for each phase
+          reporting::Timers *timers;
+          void StartTimer(steps::Step step);
+          void StopTimer(steps::Step step);
 
       };
     }
