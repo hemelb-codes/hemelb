@@ -32,15 +32,18 @@ namespace hemelb
       class RequiredSiteInformation
       {
         public:
-          RequiredSiteInformation(bool initial=false);
+          RequiredSiteInformation(bool initial = false);
           void Or(const RequiredSiteInformation& other);
           void And(const RequiredSiteInformation& other);
           void Require(terms::Term term);
-          bool Any();
-          bool AnyFieldDependent();
-          bool AnyNonFieldDependent();
-          bool AnyMacroscopic();
-          bool Required(terms::Term term){return choices[term];}
+          bool RequiresAny();
+          bool RequiresAnyFieldDependent();
+          bool RequiresAnyNonFieldDependent();
+          bool RequiresAnyMacroscopic();
+          bool IsRequired(terms::Term term)
+          {
+            return choices[term];
+          }
         private:
           std::vector<bool> choices;
       };

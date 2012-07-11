@@ -14,7 +14,7 @@ namespace hemelb
       {
         choices[term] = true;
       }
-      bool RequiredSiteInformation::Any()
+      bool RequiredSiteInformation::RequiresAny()
       {
         for (std::vector<bool>::iterator choice = choices.begin(); choice != choices.end(); choice++)
         {
@@ -25,7 +25,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyFieldDependent()
+      bool RequiredSiteInformation::RequiresAnyFieldDependent()
       {
         for (int choice = terms::Distribution; choice < terms::Length; choice++)
         {
@@ -36,7 +36,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyNonFieldDependent()
+      bool RequiredSiteInformation::RequiresAnyNonFieldDependent()
       {
         for (int choice = terms::SiteData; choice <= terms::WallNormal; choice++)
         {
@@ -47,7 +47,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyMacroscopic()
+      bool RequiredSiteInformation::RequiresAnyMacroscopic()
       {
         for (int choice = terms::Velocity; choice < terms::Length; choice++)
         {
