@@ -37,21 +37,42 @@ namespace hemelb
         }
 
         template<class T>
-        void RequestGatherVReceive(std::vector<std::vector<T> > &buffer)
+        void RequestGatherVReceive(std::vector<T>& bigBuffer, const std::vector<int>& countsIn)
         {
+          // It may seem inefficient to go through the list twice (it is), but it avoids any nastiness
+          // in 32 / 64 bit problems, because we can take our displacement as simply the difference
+          // between two addresses (by allocating the bigBuffer before the address calculation).
+
+          int totalCount = 0;
+          for (std::vector<int>::const_iterator count_iterator = countsIn.begin(); count_iterator != countsIn.end();
+              count_iterator++)
+          {
+            totalCount += *count_iterator;
+          }
+
+          // Allocate the large buffer we'll receive all data into.
+          bigBuffer.resize(totalCount);
+          bigBuffer.reserve(1);
+
           std::vector<int> & displacements = this->GetDisplacementsBuffer();
           std::vector<int> &counts = this->GetCountsBuffer();
 
-          for (typename std::vector<std::vector<T> >::iterator buffer_iterator = buffer.begin();
-              buffer_iterator != buffer.end(); buffer_iterator++)
-          {
-            // Ensure each vector has some underlying array, even if it's unused.
-            buffer_iterator->reserve(1);
-            displacements.push_back(&buffer_iterator->front() - &buffer.front().front());
+          // Now store the displacement and count for each sending proc.
+          int countSoFar = 0;
 
-            counts.push_back(buffer_iterator->size());
+          for (std::vector<int>::const_iterator count_iterator = countsIn.begin(); count_iterator != countsIn.end();
+              count_iterator++)
+          {
+            int nextCount = *count_iterator;
+
+            counts.push_back(nextCount);
+            displacements.push_back(&bigBuffer[countSoFar] - &bigBuffer[0]);
+
+            countSoFar += nextCount;
           }
-          RequestGatherVReceive(&buffer.front().front(), &displacements.front(), &counts.front());
+
+          // And store the pointer and culminating arrays.
+          RequestGatherVReceive(&bigBuffer.front(), &displacements.front(), &counts.front());
         }
 
         template<class T>
@@ -146,7 +167,8 @@ namespace hemelb
           RequestAllToAllReceiveImpl(buffer, count, MpiDataType<T>());
         }
 
-    };
+    }
+    ;
   }
 }
 #endif
