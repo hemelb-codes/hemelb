@@ -7,12 +7,13 @@ namespace hemelb
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
       densityCache(simState, latticeData.GetLocalFluidSiteCount()),
-          velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
-          wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
-          vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-          shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
-          simulationState(simState),
-          siteCount(latticeData.GetLocalFluidSiteCount())
+      velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+      wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
+      vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
+      shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
+      stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      simulationState(simState),
+      siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();
     }
@@ -24,6 +25,7 @@ namespace hemelb
       vonMisesStressCache.UnsetRefreshFlag();
       wallShearStressMagnitudeCache.UnsetRefreshFlag();
       shearRateCache.UnsetRefreshFlag();
+      stressTensorCache.UnsetRefreshFlag();
     }
 
     site_t MacroscopicPropertyCache::GetSiteCount() const
