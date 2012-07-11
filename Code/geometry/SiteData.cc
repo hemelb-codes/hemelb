@@ -68,6 +68,11 @@ namespace hemelb
     {
     }
 
+    SiteData::SiteData() :
+        boundaryIntersection(0), data(0)
+    {
+    }
+
     SiteData::~SiteData()
     {
     }
