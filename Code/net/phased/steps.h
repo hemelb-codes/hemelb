@@ -11,6 +11,8 @@ namespace hemelb
       {
         enum Step
         {
+          // Order significant here
+          // BeginPhase must begin and EndPhase must end, those steps which should be called for a given phase.
           BeginAll = -1, // Called only before first phase
           BeginPhase = 0,
           Receive = 1,

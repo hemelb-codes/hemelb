@@ -5,10 +5,6 @@
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include <cppunit/TestFixture.h>
 
-// Let vectors be output to an ostream, so that CPPUNIT can assert equality on them
-
-
-
 namespace hemelb
 {
   namespace unittests
