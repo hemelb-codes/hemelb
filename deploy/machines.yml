@@ -79,7 +79,7 @@ legion_intel:
 planck:
   needs_tarballs: true
   remote: "planck.chem.ucl.ac.uk"
-  python_build: "lib/python2.6"
+  python_build: "lib/python2.7"
   template_key: default
   home_path_template: "/home/$username/.fabric/Remote"
   cmake_options:
