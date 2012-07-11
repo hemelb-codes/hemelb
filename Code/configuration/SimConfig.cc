@@ -501,6 +501,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::ShearRate;
       }
+      else if (type.compare("stresstensor") == 0)
+      {
+        field.type = extraction::OutputField::StressTensor;
+      }
       else
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());

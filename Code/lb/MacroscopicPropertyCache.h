@@ -58,6 +58,11 @@ namespace hemelb
          */
         util::RefreshableCache<distribn_t> shearRateCache;
 
+        /**
+         * The cache of stress tensors for each fluid site on this core.
+         */
+        util::RefreshableCache<util::Matrix3D> stressTensorCache;
+
       private:
         /**
          * The state of the simulation, including the number of timesteps passed.
