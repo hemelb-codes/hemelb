@@ -16,6 +16,7 @@
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "unittests/helpers/MockNetHelper.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -57,10 +58,7 @@ namespace hemelb
           void TestVelocityExtraction()
           {
             TestableIterableDataSource->SetManager(manager);
-            distribn_t *normal = new distribn_t[3];
-            normal[0] = 1.0;
-            normal[1] = 1.0;
-            normal[2] = 1.0;
+            util::Vector3D<float> normal = util::Vector3D<float>(1.0,1.0,1.0);
             float velocity = TestableIterableDataSource->GetVelocityRelativeToNormal(manager, normal);
             std::cout << "Obtained velocity is: " << velocity << std::endl;
           }
