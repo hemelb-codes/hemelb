@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/LatticeData.h"
 
@@ -17,8 +19,15 @@ namespace hemelb
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements)
       {
-        //ignore the requirements, we reqire everying.
-        neededSites.push_back(globalId);
+        //ignore the requirements, we require everying.
+        if (std::find(neededSites.begin(), neededSites.end(), globalId) == neededSites.end())
+        {
+          neededSites.push_back(globalId);
+        }
+        else
+        {
+          // Merge requirements.
+        }
       }
 
       proc_t NeighbouringDataManager::ProcForSite(site_t site)
@@ -36,6 +45,7 @@ namespace hemelb
         {
           proc_t source = ProcForSite(*localNeed);
           NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
+
           net.RequestReceiveR(site.GetSiteData().GetIntersectionData(), source);
           net.RequestReceiveR(site.GetSiteData().GetOtherRawData(), source);
           net.RequestReceive(site.GetWallDistances(), localLatticeData.GetLatticeInfo().GetNumVectors() - 1, source);
@@ -48,6 +58,8 @@ namespace hemelb
           {
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+
+
             Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
             net.RequestSendR(site.GetSiteData().GetIntersectionData(), other);
@@ -78,6 +90,7 @@ namespace hemelb
           net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                              localLatticeData.GetLatticeInfo().GetNumVectors(),
                              source);
+
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
@@ -91,6 +104,7 @@ namespace hemelb
             net.RequestSend(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                             localLatticeData.GetLatticeInfo().GetNumVectors(),
                             other);
+
           }
         }
       }
@@ -104,6 +118,7 @@ namespace hemelb
         {
           needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
           countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
+
         }
         // every proc must send to all procs, how many it needs from that proc
         net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
@@ -115,6 +130,7 @@ namespace hemelb
 
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
+
           // now, for every proc, which I need something from,send the ids of those
           net.RequestSendV(needsIHaveFromEachProc[other], other);
           // and, for every proc, which needs something from me, receive those ids
@@ -126,6 +142,7 @@ namespace hemelb
         }
 
         net.Dispatch();
+
       }
     }
   }
