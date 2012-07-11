@@ -44,7 +44,7 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL)
+                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL), action2(NULL), concern2(NULL)
             {
             }
 
@@ -62,7 +62,9 @@ namespace hemelb
               delete stepManager;
               delete netConcern;
               delete action;
+              delete action2;
               delete concern;
+              delete concern2;
             }
 
             void TestConstruct()
