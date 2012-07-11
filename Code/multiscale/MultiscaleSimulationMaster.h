@@ -26,6 +26,7 @@ namespace hemelb
 
           std::map<unsigned int, site_t> invertedBoundaryList;
 
+          invertedBoundaryList[1] = 1;
           //for (sites){
           //  iBL[site.boundary]=site;
           //}
