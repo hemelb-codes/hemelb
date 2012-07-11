@@ -59,6 +59,10 @@ namespace hemelb
             void tearDown()
             {
               MockNetHelper::tearDown();
+              delete stepManager;
+              delete netConcern;
+              delete action;
+              delete concern;
             }
 
             void TestConstruct()
