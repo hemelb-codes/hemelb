@@ -10,8 +10,9 @@
 
 #include "lb/boundaries/iolets/InOutLetMultiscale.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-#include "extraction/IterableDataSource.h"
+#include "extraction/ArbitrarySiteListIterableDataSource.h"
 #include "log/Logger.h"
+
 namespace hemelb
 {
   namespace lb
@@ -38,7 +39,7 @@ namespace hemelb
                 InOutLetMultiscale(), NDM(NULL)
 
             {
-              /* Single argument constructor... is this an issue? */
+              SiteListIDS = new extraction::ArbitrarySiteListIterableDataSource();
             }
             /***
              * The shared values are registered through the initialiser-list syntactic sugar.
@@ -49,10 +50,20 @@ namespace hemelb
               /* Add a velocity aware exchange here if needed?*/
             }
 
-            void InitialiseNeighbouringSites(hemelb::geometry::neighbouring::NeighbouringDataManager *manager,
-                                             std::map<unsigned int, site_t> invertedBoundaryList)
+            void InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
+                                             std::map<unsigned int, site_t> invBList)
             {
               NDM = manager;
+              invertedBoundaryList = invBList;
+            }
+
+            PhysicalVelocity GetVelocity() const
+            {
+              util::Vector3D<float> thisnormal;
+              thisnormal = const_cast<InOutLetVelocityAware*>(this)->GetNormal();
+              double totalVelocity;
+              SiteListIDS->GetVelocityRelativeToNormal(NDM, thisnormal);
+              return totalVelocity;
             }
 
             virtual ~InOutLetVelocityAware()
@@ -67,7 +78,8 @@ namespace hemelb
               return copy;
             }
           protected:
-            hemelb::geometry::neighbouring::NeighbouringDataManager *NDM;
+            geometry::neighbouring::NeighbouringDataManager *NDM;
+            extraction::ArbitrarySiteListIterableDataSource *SiteListIDS;
         };
       }
     }

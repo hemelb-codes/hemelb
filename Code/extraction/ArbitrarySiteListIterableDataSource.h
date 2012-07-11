@@ -12,8 +12,8 @@
 #include "units.h"
 #include "extraction/IterableDataSource.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-#include "geometry/LatticeData.h"
-#include "geometry/Site.h"
+//#include "geometry/LatticeData.h"
+//#include "geometry/Site.h"
 
 namespace hemelb
 {
@@ -22,6 +22,12 @@ namespace hemelb
     class ArbitrarySiteListIterableDataSource : public IterableDataSource
     {
       public:
+
+        ArbitrarySiteListIterableDataSource() {
+          origin = util::Vector3D<distribn_t>(0,0,0);
+
+        }
+
         /**
          * Virtual destructor. We could declare this as pure virtual but that will cause a fail at
          * link-time (at least with GCC). GCC needs an object file to put the vtable in; by defining
@@ -42,26 +48,26 @@ namespace hemelb
          * Returns the velocity at the site.
          * @return
          */
-        distribn_t GetVelocityRelativeToNormal(geometry::neighbouring::NeighbouringDataManager *NDM, distribn_t *normal)
+        distribn_t GetVelocityRelativeToNormal(util::Vector3D<float> normal)
         {
-//          distribn_t velocity[3];
-//          distribn_t total_velocity[3];
-//          distribn_t density;
-          return 1.0;
+          distribn_t velocity[3];
+          distribn_t total_velocity[3];
+          distribn_t density;
+//          return 1.0;
 
-//          /* Apply CalcDensityAndVelocity to extract velocities and add them all up.
-//           * We're not (yet) using weights or normalisation here. */
-//          for (int i = 0; i < iterableData.size(); i++)
-//          {
-//            std::vector<distribn_t> f_data = NLD->GetDistribution(iterableData[i].GetIndex());
-//            LatticeType::CalculateDensityAndVelocity(f_data, &density, &velocity[0], &velocity[1], &velocity[2]);
-//            total_velocity[0] += velocity[0];
-//            total_velocity[1] += velocity[1];
-//            total_velocity[2] += velocity[2];
-//          }
-//
-//          /* Dot product of the total velocity with the boundary normal. */
-//          return (velocity[0] * normal[0]) + (velocity[1] * normal[1]) + (velocity[2] * normal[2]);
+          /* Apply CalcDensityAndVelocity to extract velocities and add them all up.
+           * We're not (yet) using weights or normalisation here. */
+          for (int i = 0; i < iterableData.size(); i++)
+          {
+            std::vector<distribn_t> f_data = NLD->GetDistribution(iterableData[i].GetIndex());
+            LatticeType::CalculateDensityAndVelocity(f_data, &density, &velocity[0], &velocity[1], &velocity[2]);
+            total_velocity[0] += velocity[0];
+            total_velocity[1] += velocity[1];
+            total_velocity[2] += velocity[2];
+          }
+
+          /* Dot product of the total velocity with the boundary normal. */
+          return (velocity[0] * normal[0]) + (velocity[1] * normal[1]) + (velocity[2] * normal[2]);
         }
 
         /**
@@ -96,7 +102,8 @@ namespace hemelb
          * @return
          */
         util::Vector3D<float> GetVelocity() const {
-          return util::Vector3D<site_t>(0.0, 0.0, 0.0);
+          //TODO: Makes this work properly!
+          return origin;
         }
 
         /**
@@ -162,7 +169,7 @@ namespace hemelb
          * @return
          */
         const util::Vector3D<distribn_t>& GetOrigin() const {
-          return util::Vector3D<site_t>(0, 0, 0);
+          return origin;
         }
 
         /**
@@ -178,6 +185,8 @@ namespace hemelb
 
       protected:
         geometry::neighbouring::NeighbouringDataManager *iterableData;
+        std::map<unsigned int, site_t> invertedBoundaryList;
+        util::Vector3D<distribn_t> origin;
     };
   }
 }
