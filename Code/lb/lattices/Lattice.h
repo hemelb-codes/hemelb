@@ -124,7 +124,7 @@ namespace hemelb
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
            * @param wallNormal wall normal at a given point
-           * @param tractionVector normal stress acting at a given point
+           * @param tractionVector traction vector at a given point
            */
           inline static void CalculateTractionVectorOnAPoint(const distribn_t density,
                                                              const distribn_t tau,
@@ -155,15 +155,15 @@ namespace hemelb
            *
            * where \tau is the relaxation time and e_i is the i-th direction vector
            *
-           * @param density
-           * @param tau
-           * @param fNonEquilibrium
-           * @param stressTensor
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param stressTensor full stress tensor at a given site
            */
           inline static void CalculateStressTensor(const distribn_t density,
-                                                        const distribn_t tau,
-                                                        const distribn_t fNonEquilibrium[],
-                                                        util::Matrix3D& stressTensor)
+                                                   const distribn_t tau,
+                                                   const distribn_t fNonEquilibrium[],
+                                                   util::Matrix3D& stressTensor)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
             stressTensor = CalculatePiTensor(fNonEquilibrium);

@@ -3,6 +3,7 @@
 
 #include "util/Vector3D.h"
 #include "units.h"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
@@ -63,6 +64,12 @@ namespace hemelb
          * @return
          */
         virtual float GetShearRate() const = 0;
+
+        /**
+         * Returns the full stress tensor at the site.
+         * @return stress tensor
+         */
+        virtual util::Matrix3D GetStressTensor() const = 0;
 
         /**
          * Resets the iterator to the beginning again.
