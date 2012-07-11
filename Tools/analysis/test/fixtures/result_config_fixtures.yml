@@ -30,4 +30,17 @@ extraction:
       radial_position: [final,grid]
   compound_properties:
       axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
+optional:
+  name_properties:
+    name: '(.*)'
+    voxelsize: 'cylinder_0_00(.).*'
+    cores: '.*planck_(.)'
+  optional_properties:
+    'cores==1':
+        compound_properties:
+          banana: cores
+          apple: cores
+    'voxelsize!=6':
+        compound_properties:
+          apple: voxelsize
     
