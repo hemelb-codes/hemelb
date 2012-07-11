@@ -139,7 +139,7 @@ results:
         residual_pressure: '[(133.323874*a-b) for a,b in zip(axial_pressure,theoretical_axial_pressure)]'
         max_rel_residual_pressure: 'max([abs(x) for x in residual_pressure])/range_theoretical_axial_pressure'
         ave_rel_residual_pressure: '( sum([x**2 for x in residual_pressure]) / sum([(x - mean_theoretical_axial_pressure)**2 for x in theoretical_axial_pressure])) ** 0.5'
-        theoretical_axial_stress: '[0.5 * (133.323874*pressure_diff/pipe_length) * r for r in radial_position] '
+        theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
         mean_theoretical_stress: 'sum(theoretical_axial_stress) / len(theoretical_axial_stress)'
         range_theoretical_stress: 'max(theoretical_axial_stress) - min(theoretical_axial_stress)'
         residual_stress: '[(a-b) for a,b in zip(radial_shear_stress_field,theoretical_axial_stress)]'
