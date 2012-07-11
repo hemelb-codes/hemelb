@@ -5,6 +5,7 @@
 
 #include "util/Vector3D.h"
 #include "extraction/IterableDataSource.h"
+#include "util/Matrix3D.h"
 
 #include "unittests/helpers/RandomSource.h"
 
@@ -98,6 +99,12 @@ namespace hemelb
           float GetShearRate() const
           {
             return 0.f;
+          }
+          util::Matrix3D GetStressTensor() const
+          {
+            //! @todo: #177 add constructor with initialisation to Matrix3D
+            util::Matrix3D retValue;
+            return retValue;
           }
           bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {

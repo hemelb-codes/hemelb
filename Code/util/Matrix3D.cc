@@ -17,11 +17,6 @@ namespace hemelb
       return matrix[row];
     }
 
-    /**
-     * Multiplies all the entries of the matrix by a given value
-     *
-     * @param value multiplier value
-     */
     void Matrix3D::operator*=(distribn_t value)
     {
       for (unsigned row = 0; row < 3; row++)
@@ -33,13 +28,6 @@ namespace hemelb
       }
     }
 
-    /**
-     * Adds a given value to all the entries along the diagonal:
-     *    matrix = matrix + value*I
-     * where I is the identity matrix.
-     *
-     * @param value value to be added to the matrix diagonal
-     */
     void Matrix3D::addDiagonal(distribn_t value)
     {
       for (unsigned row = 0; row < 3; row++)
@@ -48,14 +36,7 @@ namespace hemelb
       }
     }
 
-    /**
-     * Computes the matrix-vector product:
-     *    result =  matrix*multiplier
-     *
-     * @param multiplier vector to be multiplied by the matrix
-     * @param result matrix-vector product result.
-     */
-    void Matrix3D::timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result)
+    void Matrix3D::timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result) const
     {
       for (unsigned row = 0; row < 3; row++)
       {
@@ -66,6 +47,20 @@ namespace hemelb
         }
       }
     }
+
+    Matrix3D Matrix3D::operator*(distribn_t scalarValue) const
+    {
+      Matrix3D returnMatrix;
+      for (unsigned rowIndex = 0; rowIndex < 3; ++rowIndex)
+      {
+        for (unsigned columnIndex = 0; columnIndex < 3; ++columnIndex)
+        {
+          returnMatrix[rowIndex][columnIndex] = scalarValue * matrix[rowIndex][columnIndex];
+        }
+      }
+      return returnMatrix;
+    }
+
 
   } /* namespace util */
 } /* namespace hemelb */

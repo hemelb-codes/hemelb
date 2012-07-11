@@ -54,6 +54,11 @@ namespace hemelb
       return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
     }
 
+    util::Matrix3D LbDataSourceIterator::GetStressTensor() const
+    {
+      return converter.ConvertStressToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
+    }
+
     void LbDataSourceIterator::Reset()
     {
       position = -1;

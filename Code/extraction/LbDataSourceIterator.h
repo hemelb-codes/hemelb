@@ -68,6 +68,12 @@ namespace hemelb
         float GetShearRate() const;
 
         /**
+         * Returns the full stress tensor at the site.
+         * @return stress tensor
+         */
+        util::Matrix3D GetStressTensor() const;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         void Reset();
