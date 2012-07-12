@@ -36,16 +36,19 @@ default:
   # Normally, the regression test can be run directly out of diffTest, but sometimes needs to be copied to a runtime file area.
   regression_test_path_template: "$regression_test_source_path"
   python_build: "TODO"
-  template_key: false
+  batch_header: no_batch
+  run_command: "mpirun -np $cores"
   temp_path_template: "/tmp"
   cmake_options: {}
   job_name_template: '${config}_${build_number}_${machine_name}_${cores}_${snapshots}_${images}'
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
+  local_templates_path: "$localroot/deploy/templates"
   manual_ssh: false
   stat: qstat
-  build_via_batch: false
 legion: 
   job_dispatch: "qsub"
+  run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"
+  batch_header: sge
   # The remote host-name to use.
   remote: "legion.rc.ucl.ac.uk"
   # The path python disttools use for builds.
@@ -56,7 +59,6 @@ legion:
   node_type: "X"
   corespernode: 12
   temp_path_template: false #Legion sets its own tmpdir
-  template_key: legion
 legion_vampir:
   fabric_dir: "VampirHemeLB"
   import: legion
@@ -80,7 +82,6 @@ planck:
   needs_tarballs: true
   remote: "planck.chem.ucl.ac.uk"
   python_build: "lib/python2.7"
-  template_key: default
   home_path_template: "/home/$username/.fabric/Remote"
   cmake_options:
     CPPUNIT_PATCH_LDL: ON
@@ -88,16 +89,16 @@ entropy:
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   runtime_path_template: "/store4/blood/$username"
-  template_key: default
 hector:
   max_job_name_chars: 15
   make_jobs: 4
   job_dispatch: "qsub"
+  run_command: "aprun -n $cores -N $coresusedpernode"
+  batch_header: pbs
   no_ssh: true # Hector doesn't allow outgoing ssh sessions.
   remote: "login.hector.ac.uk"
   # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
   install_path_template: "$work_path/install"
-  build_via_batch: true
   home_path_template: "/home/$project/$project/$username"
   runtime_path_template: "/work/$project/$project/$username"
   modules: ["load CMake/2.8.6"]
@@ -122,7 +123,6 @@ hector_login: #Hector, compiling for login nodes and serial queues
    job_dispatch: ""
 hector_vampir:
   import: "hector"
-  template_key: hector
   fabric_dir: "FabricHemeLBVampir"
   build_prefix_commands:
     - export CXX=vtCC
@@ -143,9 +143,10 @@ julian:
    home_path_template: "/Users/$username"
    remote: "julian.chem.ucl.ac.uk"
    python_build: "lib/python2.7"
-   template_key: default
 oppenheimer:
    remote: "oppenheimer.chem.ucl.ac.uk"
+   run_command: "/opt/openmpi/gfortran/1.4.3/bin/mpirun -np $cores"
+   batch_header: sge_oppenheimer
    build_prefix_commands: ["export set PATH=$PATH:/home/jamespjh/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/jamespjh/install/lib/python2.6/site-packages"]
    no_hg: true
    job_dispatch: "qsub"
@@ -154,7 +155,6 @@ oppenheimer:
 localhost:
    remote: "localhost"
    python_build: "lib/python2.7"
-   template_key: default
    make_jobs: 4
 huygens:
     remote: "huygens.sara.nl"
@@ -202,7 +202,6 @@ marigold:
    manual_ssh: true
    runtime_path_template: "/data/$username"
    install_path_template: "$work_path/install"
-   template_key: marigold
    build_prefix_commands:
      - export CXX=/opt/FJSVtclang/1.2.0/bin/mpiFCCpx
      - export CC=/opt/FJSVtclang/1.2.0/bin/mpifccpx

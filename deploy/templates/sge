@@ -1,0 +1,17 @@
+#!/bin/bash -l
+
+#$$ -S /bin/bash
+
+#$$ -l h_rt=$wall_time
+
+#$$ -l mem=$memory
+
+#$$ -N $job_name
+
+#$$ -pe openmpi $cores_reserved
+
+#$$ -P $project
+
+#$$ -wd $job_results
+$node_type_restriction
+export TMP=$job_results

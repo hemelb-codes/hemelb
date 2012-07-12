@@ -6,6 +6,3 @@
 #PBS -A $budget
 #PBS -q $queue
 #PBS -m abe
-cd $job_results
-$run_prefix
-aprun -n $cores -N $coresusedpernode $install_path/bin/unittests_hemelb -o 'tests.xml'
