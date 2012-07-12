@@ -1,0 +1,8 @@
+$build_prefix
+rm -rf $build_path
+mkdir -p $build_path
+cd $build_path
+cmake $repository_path $cmake_flags
+make
+make install
+chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb
