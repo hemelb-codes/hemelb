@@ -525,8 +525,8 @@ def job(*option_dictionaries):
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
-        script_name=template("$template_key-$script")
-        env.job_script=script_template(script_name)
+        env.run_command=template(env.run_command)
+        env.job_script=script_templates(env.batch_header,env.script)
 
         env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
         put(env.job_script,env.dest_name)

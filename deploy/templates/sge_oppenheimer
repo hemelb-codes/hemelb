@@ -1,0 +1,7 @@
+#!/bin/bash
+#$$ -wd $job_results
+#$$ -q all.q
+#$$ -pe openmpi $cores_reserved
+#$$ -N $job_name
+#$$ -e $job_results/${name}.error
+#$$ -o $job_results/${name}.output
