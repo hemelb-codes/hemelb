@@ -459,14 +459,14 @@ def unit_test(**args):
 def batch_build_code(*configurations,**extras):
     """Submit a build job to the remote serial queue."""
     configure_cmake(configurations,extras)
-    with settings(batch_header='pbs_serial'):
+    with settings(batch_header=env.batch_header+'_serial'):
       job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
 
 @task
 def batch_build(*configurations,**extras):
     """Submit a build job to the remote serial queue."""
     configure_cmake(configurations,extras)
-    with settings(batch_header='pbs_serial'):
+    with settings(batch_header=env.batch_header+'_serial'):
       job(dict(script='batch_build',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
 
 @task
@@ -519,6 +519,13 @@ def regression_test(**args):
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
             wall_time='0:20:0',memory='2G',images=0, snapshots=1, steering=1111,script='regression'),args)
 
+def calc_nodes():
+  # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
+  env.coresusedpernode=env.corespernode
+  if int(env.coresusedpernode)>int(env.cores):
+    env.coresusedpernode=env.cores
+  env.nodes=int(env.cores)/int(env.coresusedpernode)
+
 def job(*option_dictionaries):
     """Internal low level job launcher.
     Parameters for the job are determined from the prepared fabric environment
@@ -531,14 +538,13 @@ def job(*option_dictionaries):
     # If cores_reserved is not specified, temporarily set it based on the same as the number of cores
     # Needs to be temporary if there's another job with a different number of cores which should also be defaulted to.
     with settings(cores_reserved=env.get('cores_reserved') or env.cores):
-    # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
-        env.coresusedpernode=env.corespernode
-        if int(env.coresusedpernode)>int(env.cores):
-            env.coresusedpernode=env.cores
-        env.nodes=int(env.cores)/int(env.coresusedpernode)
+        calc_nodes()
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
+        with settings(cores=1):
+          calc_nodes()
+          env.run_command_one_proc=template(env.run_command)
         env.run_command=template(env.run_command)
         env.job_script=script_templates(env.batch_header,env.script)
 
