@@ -545,6 +545,7 @@ def job(*option_dictionaries):
         with settings(cores=1):
           calc_nodes()
           env.run_command_one_proc=template(env.run_command)
+        calc_nodes()
         env.run_command=template(env.run_command)
         env.job_script=script_templates(env.batch_header,env.script)
 
