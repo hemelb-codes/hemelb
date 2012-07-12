@@ -9,6 +9,7 @@ Copyright (c) 2012 UCL. All rights reserved.
 import unittest
 import sys
 import copy
+import textwrap
 
 from ..fab import *
 
@@ -141,3 +142,8 @@ class TestFabric(unittest.TestCase):
             "HEMELB_DEPENDENCIES_INSTALL_PATH": env.install_path,
             "HEMELB_SUBPROJECT_MAKE_JOBS": 1
         })
+        
+    def test_script_template(self):
+      script=script_templates('dummy_ge_header','dummy_jobscript',commands=['extra'])
+      content=open(script).read()
+      self.assertEqual(content,"user: test_user\n\nrun bananas\n\nextra")
