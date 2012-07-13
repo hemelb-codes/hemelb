@@ -40,7 +40,7 @@ namespace hemelb
       // Then get add each field's length
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
-        writeLength += 4 * GetFieldLength(outputSpec->fields[outputNumber].type);
+        writeLength += 8 * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
       //  Now multiply by local site count
@@ -216,21 +216,21 @@ namespace hemelb
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << (float) dataSource.GetPressure();
+                xdrWriter << (double) dataSource.GetPressure();
                 break;
               case OutputField::Velocity:
-                xdrWriter << (float) dataSource.GetVelocity().x << (float) dataSource.GetVelocity().y
-                    << (float) dataSource.GetVelocity().z;
+                xdrWriter << (double) dataSource.GetVelocity().x << (double) dataSource.GetVelocity().y
+                    << (double) dataSource.GetVelocity().z;
                 break;
                 //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << (float) dataSource.GetVonMisesStress();
+                xdrWriter << (double) dataSource.GetVonMisesStress();
                 break;
               case OutputField::ShearStress:
-                xdrWriter << (float) dataSource.GetShearStress();
+                xdrWriter << (double) dataSource.GetShearStress();
                 break;
               case OutputField::ShearRate:
-                xdrWriter << (float) dataSource.GetShearRate();
+                xdrWriter << (double) dataSource.GetShearRate();
                 break;
               case OutputField::StressTensor:
               {
