@@ -40,7 +40,7 @@ class FieldSpec(object):
             pass
         
         offset = self.GetRecordLength()
-        self._filespec.append((name, '>f', np.float32, length, offset))
+        self._filespec.append((name, '>f8', np.float64, length, offset))
         return
 
     def GetMem(self):
@@ -70,7 +70,7 @@ class ExtractedProperty(object):
     """Represent the contents of a HemeLB property extraction file.
     
     """
-    VersionNumber = 2
+    VersionNumber = 3
 
     def __init__(self, filename):
         """Read the file's headers and determine how many times and which times
