@@ -63,7 +63,7 @@ class Action(object):
         self.writer=csv.writer(self.stream, delimiter=' ')
         self.pp=PrettyPrinter(stream=self.stream)
     def start(self):
-        if self.action=='display':
+        if self.action in ['display','zip']:
             print("#",end='',file=self.stream)
             print(*self.arguments,file=self.stream)
     def __call__(self,result):
@@ -88,6 +88,11 @@ class Action(object):
         for afile in files:
             content=open(os.path.join(result.path,afile)).read()
             print(content,file=self.stream)
+    def zip(self,result,*cols):
+        self.writer.writerows(
+            zip(*[result.datum(col) for col in cols])
+        )
+        print("\n",file=self.stream)
 
 def main():
     Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
