@@ -133,13 +133,25 @@ def build_python_tools():
 def stat():
     """Check the remote message queue status"""
     #TODO: Respect varying remote machine queue systems.
-    run(template("$stat -u $username"))
+    return run(template("$stat -u $username"))
 
 @task
 def monitor():
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
+        time.sleep(30)
+        
+        
+def check_complete():
+  """Return true if the user has no queued jobs"""
+  return stat()==""
+     
+@task
+def wait_complete():
+  """Wait until all jobs currently qsubbed are complete, then return"""
+  time.sleep(30)
+  while not check_complete():
         time.sleep(30)
 
 def configure_cmake(configurations,extras):
@@ -716,9 +728,9 @@ def manual(cmd):
     
 def run(cmd):
     if env.manual_ssh:
-        manual(cmd)
+        return manual(cmd)
     else:
-        fabric.api.run(cmd)
+        return fabric.api.run(cmd)
         
 def put(src,dest):
     if env.manual_ssh:
