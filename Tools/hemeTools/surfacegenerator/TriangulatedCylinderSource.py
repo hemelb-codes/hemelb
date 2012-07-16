@@ -1,6 +1,7 @@
 from vtk import *
 import numpy as np
 
+
 class TriangulatedCylinderSource(vtkProgrammableSource):
     """VTK style source which outputs a vtkPolyData of an open cylinder, whose
     surface is made up of vtkTriangles. Capping can optionally be enabled.
@@ -12,11 +13,11 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
     (and minimum) is 3.
     """
     def __init__(self):
-        self.Center = (0,0,0)
+        self.Center = np.zeros(3)
         self.Height = 1.
         self.Radius = 0.5
-        self.Direction = (0.,0.,1.)
-       
+        self.Direction = np.array((0., 0., 1.))
+        
         # Line down the centre of the tube
         self.Centerline = vtkPolyData()
         # VTK filter to create a tube
@@ -40,6 +41,8 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
     def GetCenter(self):
         return self.Center
     def SetCenter(self, c):
+        c = np.array(c, dtype=np.float)
+        assert c.shape == (3,)
         self.Center = c
         return
     
@@ -47,15 +50,7 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         return self.Tuber.GetRadius()
     def SetRadius(self, r):
         return self.Tuber.SetRadius(r)
-
-    def GetDirection(self):
-        return self.Direction
-    def SetDirection(self, dir):
-        dirNorm = sum([x*x for x in dir]) ** 0.5        
-        if dirNorm != 0:
-            self.Direction = tuple(map(lambda x: x / dirNorm, dir))
-        return
-
+        
     def GetCapping(self):
         return self.Tuber.GetCapping()
     def SetCapping(self, c):
@@ -71,13 +66,24 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         self.Height = h
         return
 
+    def GetDirection(self):
+        """Note this is a unit vector."""
+        return self.Direction
+    def SetDirection(self, d):
+        """Note this must be a unit vector and hence the vector given will
+        be normalized."""
+        d = np.array(d, dtype=np.float)
+        assert d.shape == (3,)
+        self.Direction = d / np.sqrt(np.dot(d,d))
+        return
+    
     def _GetDx(self):
         """Calculate the circumferential line length of a triangle side.
         """
         return 2 * self.GetRadius() * np.sin(np.pi / self.GetResolution())
     
     def _GetNz(self):
-        """Get the number of segments to use in the cylinder-direction to give 
+        """Get the number of segments to use in the axial-direction to give 
         near--right-angled triangles. 
         """
         targetDz = self._GetDx()
@@ -97,10 +103,10 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
 
         nSegments = self._GetNz()
         h = self.GetHeight()
-        c = self.GetCenter()
-        direction = self.GetDirection()
         dz = self._GetDz()
-
+        c = self.GetCenter()
+        n = self.GetDirection()
+        
         # These points define the line
         points = vtkPoints()
         # nSeg + 1 fence posts for nSeg sections of fence
@@ -111,10 +117,10 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
 
         # Set the coordinates along the line and the ids
         for i in xrange(nSegments + 1):
-            # Vector from cylinder centre should start at -h/2 along the cylinder and continue in steps
-            # of dz, both along the normal
-            vectorFromCentre = tuple( [(i * dz - 0.5 * h)*x for x in direction] )
-            points.SetPoint(i, c[0] + vectorFromCentre[0], c[1] + vectorFromCentre[1], c[2] + vectorFromCentre[2])
+            # Points start at -h/2 along the axis and advance in steps of dz 
+            # along the direction (n, a unit vector)
+            x = c + (i*dz - 0.5*h) * n
+            points.SetPoint(i, x[0], x[1], x[2])
             line.GetPointIds().SetId(i, i)
             continue
 
