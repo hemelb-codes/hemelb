@@ -1,3 +1,12 @@
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
+
 #Jiggery-pokery so that client classes of RemoteHemeLB can write remote.Latitude=50
 # We define a python "descriptor protocol" class
 # See the descriptors discussion in http://docs.python.org/reference/datamodel.html#new-style-and-classic-classes if you never tried these.
