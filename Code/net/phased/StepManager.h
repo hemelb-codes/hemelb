@@ -83,7 +83,7 @@ namespace hemelb
            * @param phase Phase where an action should be called
            * @param step Step where an action should be called
            * @param concern Concern on which the method should be called
-           * @param Integer label, indicating which method of the concern should be registered
+           * @param method label, indicating which method of the concern should be registered
            */
           void Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method);
 
