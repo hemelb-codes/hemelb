@@ -54,6 +54,8 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         dirNorm = sum([x*x for x in dir]) ** 0.5        
         if dirNorm != 0:
             self.Direction = tuple(map(lambda x: x / dirNorm, dir))
+        else:
+            raise ValueError('Attempted to set a direction equal to the zero vector')
         return
 
     def GetCapping(self):
