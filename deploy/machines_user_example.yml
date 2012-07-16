@@ -1,3 +1,12 @@
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
+
 # Copy this file as machines_user.yml, and fill in your details.
 # Details given in the default dictionary will override default settings in machines.yml
 # Details given in per-machine dictionaries will override machine settings in machines.yml
