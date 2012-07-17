@@ -26,23 +26,24 @@ namespace hemelb
 
     void SeparatedPointPoint::ReceivePointToPoint()
     {
-
-      // Make sure the MPI datatypes have been created.
       EnsurePreparedToSendReceive();
       proc_t m = 0;
 
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
           ++it)
       {
+        for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
+        {
 
-        MPI_Irecv(it->second.front().Pointer,
-                  1,
-                  it->second.Type,
-                  it->first,
-                  10,
-                  communicator.GetCommunicator(),
-                  &requests[m]);
-        ++m;
+          MPI_Irecv(request->Pointer,
+                    request->Count,
+                    request->Type,
+                    it->first,
+                    10,
+                    communicator.GetCommunicator(),
+                    &requests[m]);
+          ++m;
+        }
       }
 
     }
@@ -57,16 +58,16 @@ namespace hemelb
 
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
-        it->second.CreateMPIType();
+        count_sends += it->second.size();
       }
 
       for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
           ++it)
       {
-        it->second.CreateMPIType();
+        count_receives += it->second.size();
       }
 
-      EnsureEnoughRequests(receiveProcessorComms.size() + sendProcessorComms.size());
+      EnsureEnoughRequests(count_sends+count_receives);
 
       sendReceivePrepped = true;
     }
@@ -80,20 +81,17 @@ namespace hemelb
 
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
-
-        int TypeSizeStorage = 0; //DTMP:byte size tracking
-        MPI_Type_size(it->second.Type, &TypeSizeStorage); //DTMP:
-        BytesSent += TypeSizeStorage; //DTMP:
-
-        MPI_Isend(it->second.front().Pointer,
-                  1,
-                  it->second.Type,
-                  it->first,
-                  10,
-                  communicator.GetCommunicator(),
-                  &requests[receiveProcessorComms.size() + m]);
-
-        ++m;
+        for (ProcComms::iterator request = it->second.begin(); request != it->second.end(); request++)
+        {
+          MPI_Isend(request->Pointer,
+                    request->Count,
+                    request->Type,
+                    it->first,
+                    10,
+                    communicator.GetCommunicator(),
+                    &requests[count_receives+m]);
+          ++m;
+        }
       }
     }
 
@@ -102,39 +100,13 @@ namespace hemelb
      */
     SeparatedPointPoint::~SeparatedPointPoint()
     {
-      if (sendReceivePrepped)
-      {
-        for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end();
-            ++it)
-        {
-          MPI_Type_free(&it->second.Type);
-        }
-
-        for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin();
-            it != receiveProcessorComms.end(); ++it)
-        {
-          MPI_Type_free(&it->second.Type);
-        }
-
-      }
     }
 
     void SeparatedPointPoint::WaitPointToPoint()
     {
+      MPI_Waitall(static_cast<int>(count_sends+count_receives), &requests[0], &statuses[0]);
 
-      MPI_Waitall((int) (sendProcessorComms.size() + receiveProcessorComms.size()), &requests[0], &statuses[0]);
-
-      for (std::map<proc_t, ProcComms>::iterator it = receiveProcessorComms.begin(); it != receiveProcessorComms.end();
-          ++it)
-      {
-        MPI_Type_free(&it->second.Type);
-      }
       receiveProcessorComms.clear();
-
-      for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
-      {
-        MPI_Type_free(&it->second.Type);
-      }
       sendProcessorComms.clear();
       sendReceivePrepped = false;
 
