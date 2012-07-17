@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/mixins/SeparatedAllToAll.h"
+#include "net/mixins/alltoall/SeparatedAllToAll.h"
 #include <cassert>
 namespace hemelb
 {
