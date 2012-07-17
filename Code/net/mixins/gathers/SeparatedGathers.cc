@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/mixins/SeparatedGathers.h"
+#include "net/mixins/gathers/SeparatedGathers.h"
 namespace hemelb
 {
   namespace net

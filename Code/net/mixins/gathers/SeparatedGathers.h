@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_MIXINS_SEPARATEDGATHERS_H
-#define HEMELB_NET_MIXINS_SEPARATEDGATHERS_H
+#ifndef HEMELB_NET_MIXINS_GATHERS_SEPARATEDGATHERS_H
+#define HEMELB_NET_MIXINS_GATHERS_SEPARATEDGATHERS_H
 
 #include "net/mixins/StoringNet.h"
 
