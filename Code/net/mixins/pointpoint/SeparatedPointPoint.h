@@ -20,7 +20,7 @@ namespace hemelb
 
       public:
       SeparatedPointPoint() :
-            sendReceivePrepped(false)
+            sendReceivePrepped(false),count_sends(0),count_receives(0)
         {
         }
         ~SeparatedPointPoint();
@@ -42,6 +42,8 @@ namespace hemelb
         // on each core, but also to minimise creation / deletion overheads.
         std::vector<MPI_Request> requests;
         std::vector<MPI_Status> statuses;
+        unsigned int count_sends;
+        unsigned int count_receives;
     };
   }
 }

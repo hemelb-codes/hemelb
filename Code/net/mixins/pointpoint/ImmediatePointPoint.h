@@ -15,33 +15,26 @@ namespace hemelb
 {
   namespace net
   {
+    // although ImmediatePointPoint does not use the StoringNet capabilities at all
+    // it needs to inherit it
+    // so that it becomes the unique final overrider
     class ImmediatePointPoint : public virtual StoringNet
     {
 
       public:
-      ImmediatePointPoint() :
-            sendReceivePrepped(false)
+        ImmediatePointPoint()
         {
         }
         ~ImmediatePointPoint();
 
         void WaitPointToPoint();
-
+        // we will *NOT* store the requests, so we must provide RequestSendImpl ourselves.
+        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
       protected:
-        void ReceivePointToPoint();
-        void SendPointToPoint();
+        void ReceivePointToPoint(); //PASS
+        void SendPointToPoint(); //PASS
 
-      private:
-        void EnsureEnoughRequests(size_t count);
-        void EnsurePreparedToSendReceive();
-        bool sendReceivePrepped;
-
-        // Requests and statuses available for general communication within the Net object (both
-        // initialisation and during each iteration). Code using these must make sure
-        // there are enough available. We do this in a way to minimise the number created
-        // on each core, but also to minimise creation / deletion overheads.
-        std::vector<MPI_Request> requests;
-        std::vector<MPI_Status> statuses;
     };
   }
 }
