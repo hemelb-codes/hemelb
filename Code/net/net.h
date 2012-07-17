@@ -12,14 +12,15 @@
 
 #include "net/BaseNet.h"
 #include "net/mixins/mixins.h"
+#include "net/BuildInfo.h"
 namespace hemelb
 {
   namespace net
   {
-    class Net : public CoalescePointPoint,
+    class Net : public PointPointImpl,
                 public InterfaceDelegationNet,
-                public SeparatedGathers,
-                public SeparatedAllToAll
+                public AllToAllImpl,
+                public GatherImpl
     {
       public:
         Net() :
