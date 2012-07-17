@@ -14,8 +14,8 @@ namespace hemelb
   namespace net
   {
     typedef @HEMELB_POINTPOINT_IMPLEMENTATION@PointPoint PointPointImpl ;
-    typedef SeparatedGathers AllToAllImpl ;
-    typedef SeparatedAllToAll GatherImpl ;
+    typedef @HEMELB_GATHERS_IMPLEMENTATION@Gathers GathersImpl ;
+    typedef @HEMELB_ALLTOALL_IMPLEMENTATION@AllToAll AllToAllImpl ;
   }
 }
 #endif // HEMELB_NET_BUILDINFO_H_IN
