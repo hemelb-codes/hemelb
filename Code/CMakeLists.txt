@@ -37,8 +37,10 @@ set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
-	
-	
+set(HEMELB_GATHERS_IMPLEMENTATION Separated
+	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
+	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
