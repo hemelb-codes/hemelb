@@ -20,7 +20,7 @@ namespace hemelb
     class Net : public PointPointImpl,
                 public InterfaceDelegationNet,
                 public AllToAllImpl,
-                public GatherImpl
+                public GathersImpl
     {
       public:
         Net() :
