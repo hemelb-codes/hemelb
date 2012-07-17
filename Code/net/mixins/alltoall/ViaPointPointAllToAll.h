@@ -7,14 +7,20 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_MIXINS_MIXINS_H
-#define HEMELB_NET_MIXINS_MIXINS_H
+#ifndef HEMELB_NET_MIXINS_ALLTOALL_VIAPOINTPOINTALLTOALL_H
+#define HEMELB_NET_MIXINS_ALLTOALL_VIAPOINTPOINTALLTOALL_H
 
-#include "net/mixins/pointpoint/CoalescePointPoint.h"
 #include "net/mixins/StoringNet.h"
-#include "net/mixins/gathers/SeparatedGathers.h"
-#include "net/mixins/InterfaceDelegationNet.h"
-#include "net/mixins/gathers/ViaPointPointGathers.h"
-#include "net/mixins/alltoall/SeparatedAllToAll.h"
-#include "net/mixins/alltoall/ViaPointPointAllToAll.h"
+
+namespace hemelb{
+  namespace net{
+
+    class ViaPointPointAllToAll : public virtual StoringNet
+    {
+      void ReceiveAllToAll();
+      void SendAllToAll();
+      void WaitAllToAll(){}
+    };
+  }
+}
 #endif

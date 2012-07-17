@@ -7,12 +7,12 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/mixins/AllToAllViaPointPoint.h"
+#include "net/mixins/alltoall/ViaPointPointAllToAll.h"
 namespace hemelb
 {
   namespace net
   {
-    void AllToAllViaPointPoint::ReceiveAllToAll()
+    void ViaPointPointAllToAll::ReceiveAllToAll()
     {
 
       for (AllToAllProcComms::iterator receivereq = allToAllReceiveProcComms.begin();
@@ -38,7 +38,7 @@ namespace hemelb
       allToAllReceiveProcComms.clear();
     }
 
-    void AllToAllViaPointPoint::SendAllToAll()
+    void ViaPointPointAllToAll::SendAllToAll()
     {
 
       for (AllToAllProcComms::iterator sendreq = allToAllSendProcComms.begin(); sendreq != allToAllSendProcComms.end();
