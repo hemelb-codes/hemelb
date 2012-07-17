@@ -50,7 +50,7 @@ class TriangulatedCylinderSource(vtkProgrammableSource):
         return self.Tuber.GetRadius()
     def SetRadius(self, r):
         return self.Tuber.SetRadius(r)
-        
+    
     def GetCapping(self):
         return self.Tuber.GetCapping()
     def SetCapping(self, c):
