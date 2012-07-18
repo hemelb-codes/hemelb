@@ -8,6 +8,7 @@
 // 
 
 #include "net/phased/StepManager.h"
+#include <algorithm>
 
 namespace hemelb
 {
@@ -16,8 +17,8 @@ namespace hemelb
     namespace phased
     {
 
-      StepManager::StepManager(Phase phases, reporting::Timers *timers) :
-          registry(phases),timers(timers)
+      StepManager::StepManager(Phase phases, reporting::Timers *timers, bool separate_concerns) :
+          registry(phases), concerns(), timers(timers), separate_concerns(separate_concerns)
       {
       }
 
@@ -28,6 +29,9 @@ namespace hemelb
           phase = 0; // special actions are always recorded in the phase zero registry
         }
         registry[phase][step].push_back(Action(concern, method));
+        if (std::find(concerns.begin(),concerns.end(),&concern)==concerns.end()){
+          concerns.push_back(&concern);
+        }
       }
 
       void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
@@ -60,18 +64,6 @@ namespace hemelb
 
       unsigned int StepManager::ConcernCount() const
       {
-        std::set<Concern *> concerns;
-        for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end(); phase++)
-        {
-          for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
-          {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
-                action++)
-            {
-              concerns.insert(action->concern);
-            }
-          }
-        }
         return concerns.size();
       }
 
@@ -102,14 +94,49 @@ namespace hemelb
         }
       }
 
+      void StepManager::CallActionsForPhaseSeparatedConcerns(Phase phase)
+      {
+        for (std::vector<Concern*>::iterator concern = concerns.begin(); concern != concerns.end(); concern++)
+        {
+          for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
+          {
+            if (step == steps::Receive || step == steps::Send || step == steps::Wait)
+            {
+              // Call ALL comms actions for all concerns
+              CallActionsForStep(static_cast<steps::Step>(step), phase);
+            }
+            else
+            {
+              // Call the actions only for THIS concern
+              CallActionsForStepForConcern(static_cast<steps::Step>(step), *concern, phase);
+            }
+          }
+        }
+      }
+
       void StepManager::CallSpecialAction(steps::Step step)
       {
         // special actions are always recorded in the phase zero registry
         CallActionsForStep(static_cast<steps::Step>(step), 0);
       }
 
+      void StepManager::CallActionsSeparatedConcerns()
+      {
+        CallSpecialAction(steps::BeginAll);
+        for (Phase phase = 0; phase < registry.size(); phase++)
+        {
+          CallActionsForPhaseSeparatedConcerns(phase);
+        }
+        CallSpecialAction(steps::EndAll);
+      }
+
       void StepManager::CallActions()
       {
+        if (separate_concerns)
+        {
+          CallActionsSeparatedConcerns();
+          return;
+        }
         CallSpecialAction(steps::BeginAll);
         for (Phase phase = 0; phase < registry.size(); phase++)
         {
@@ -125,6 +152,20 @@ namespace hemelb
         for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
         {
           action->Call();
+        }
+        StopTimer(step);
+      }
+
+      void StepManager::CallActionsForStepForConcern(steps::Step step,  Concern * concern, Phase phase)
+      {
+        StartTimer(step);
+        std::vector<Action> &actionsForStep = registry[phase][step];
+        for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
+        {
+          if (action->concern == concern)
+          {
+            action->Call();
+          }
         }
         StopTimer(step);
       }
