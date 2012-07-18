@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # 
 # Copyright (C) University College London, 2007-2012, all rights reserved.
 # 
@@ -7,7 +8,6 @@
 # specifically made by you with University College London.
 # 
 
-# -*- coding: utf-8 -*-
 from copy import copy
 from vtk import vtkPlaneSource
 import numpy as np
