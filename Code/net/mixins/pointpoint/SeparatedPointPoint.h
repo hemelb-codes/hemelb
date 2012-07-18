@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_MIXINS_SEPARATEDPOINTPOINT_H
-#define HEMELB_NET_MIXINS_SEPARATEDPOINTPOINT_H
+#ifndef HEMELB_NET_MIXINS_POINTPOINT_SEPARATEDPOINTPOINT_H
+#define HEMELB_NET_MIXINS_POINTPOINT_SEPARATEDPOINTPOINT_H
 #include "net/BaseNet.h"
 #include "net/mixins/StoringNet.h"
 namespace hemelb
