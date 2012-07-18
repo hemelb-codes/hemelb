@@ -19,11 +19,14 @@ namespace hemelb
       {
         data = SOLID_TYPE;
         boundaryIntersection = 0;
+        ioletIntersection = 0;
       }
       else
       {
         int ioletId = 0;
         boundaryIntersection = 0;
+        ioletIntersection = 0;
+
         bool hadInlet = false;
         bool hadOutlet = false;
 
@@ -37,6 +40,11 @@ namespace hemelb
           if (link.type == GeometrySiteLink::WALL_INTERSECTION)
           {
             boundaryIntersection |= 1 << (direction - 1);
+          }
+          else if (link.type == GeometrySiteLink::INLET_INTERSECTION || link.type
+              == GeometrySiteLink::OUTLET_INTERSECTION)
+          {
+            ioletIntersection |= 1 << (direction - 1);
           }
 
           // If it's an inlet, take the IOlet id
@@ -53,18 +61,18 @@ namespace hemelb
           }
         }
 
-        SiteType type = hadInlet ?
-                          INLET_TYPE :
-                        hadOutlet ?
-                          OUTLET_TYPE :
-                          FLUID_TYPE;
+        SiteType type = hadInlet
+          ? INLET_TYPE
+          : hadOutlet
+            ? OUTLET_TYPE
+            : FLUID_TYPE;
 
         data = (ioletId << BOUNDARY_ID_SHIFT) + type;
       }
     }
 
     SiteData::SiteData(const SiteData& other) :
-        boundaryIntersection(other.boundaryIntersection), data(other.data)
+      boundaryIntersection(other.boundaryIntersection), ioletIntersection(other.ioletIntersection), data(other.data)
     {
     }
 
@@ -133,6 +141,12 @@ namespace hemelb
     {
       unsigned mask = 1U << (direction - 1);
       return (boundaryIntersection & mask) != 0;
+    }
+
+    bool SiteData::HasIolet(Direction direction) const
+    {
+      unsigned mask = 1U << (direction - 1);
+      return (ioletIntersection & mask) != 0;
     }
 
     uint32_t SiteData::GetIntersectionData() const
