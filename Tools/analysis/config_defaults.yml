@@ -147,6 +147,15 @@ results:
         ave_rel_residual_stress: '( sum([x**2 for x in residual_stress if not math.isinf(x)]) / sum([(x - mean_theoretical_stress)**2 for x in theoretical_axial_stress])) ** 0.5'
         actual_reynolds_number: 1000*max(axial_velocity)*2*radius/viscosity
         theoretical_reynolds_number: 1000*max(theoretical_axial_velocity)*2*radius/viscosity
+
+        # z-coordinate for all the sites where we sampled values of stress tensor and its theoretical pressure value
+        stress_tensor_sampling_z_coord: '[x[2] for x in space(radial_coordinate_tensors,voxel_size,origin)]' 
+        theoretical_radial_pressure: '[inlet_pressure_mean*133.323874 - pressure_diff * (z - min(axial_position))/pipe_length for z in stress_tensor_sampling_z_coord]'
+        # Theoretical stress tensors 
+        theoretical_stress_tensor: '[poiseuille_stress_tensor(radius, pressure, pressure_diff/pipe_length) for (radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
+        # Frobenius norm of the difference between the extracted tensor and the Poiseuille theoretical
+        norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
+
     yaml_files:
         'env.yml':
             type: script
@@ -166,7 +175,10 @@ results:
         radial_velocity_field: developed_velocity_profile
         radial_shear_stress_field: developed_shear_stress_profile
         radial_coordinate: grid
-    
+      'results/Extracted/stresstensor_line_2_5_lengths_in.dat':
+        radial_stresstensor: developed_stresstensor_profile
+        radial_coordinate_tensors: grid
+
 
 graphs:
     performance_versus_size:
