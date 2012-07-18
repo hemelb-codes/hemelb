@@ -25,6 +25,11 @@ namespace hemelb
     static const std::string lattice_type="@HEMELB_LATTICE@";
     static const std::string kernel_type="@HEMELB_KERNEL@";
     static const std::string wall_boundary_condition="@HEMELB_WALL_BOUNDARY@";
+    static const std::string point_point_impl="@HEMELB_POINTPOINT_IMPLEMENTATION@";
+     static const std::string gathers_impl="@HEMELB_GATHERS_IMPLEMENTATION@" ;
+     static const std::string alltoall_impl="@HEMELB_ALLTOALL_IMPLEMENTATION@" ;
+     static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
+  
     
     class BuildInfo : public Reportable {
       void Report(ctemplate::TemplateDictionary& dictionary){
@@ -40,6 +45,10 @@ namespace hemelb
         build->SetValue("LATTICE_TYPE", lattice_type);
         build->SetValue("KERNEL_TYPE", kernel_type);
         build->SetValue("WALL_BOUNDARY_CONDITION", wall_boundary_condition);
+        build->SetValue("SEPARATE_CONCERNS",separate_concerns);
+        build->SetValue("ALLTOALL_IMPLEMENTATION",alltoall_impl);
+        build->SetValue("GATHERS_IMPLEMENTATION",gathers_impl);
+        build->SetValue("POINTPOINT_IMPLEMENTATION",point_point_impl);
       }
     };
   }
