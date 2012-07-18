@@ -21,7 +21,7 @@
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
-
+#include "net/BuildInfo.h"
 #include "topology/NetworkTopology.h"
 
 #include <map>
@@ -284,7 +284,7 @@ void SimulationMaster::Initialise()
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  stepManager = new hemelb::net::phased::StepManager(2);
+  stepManager = new hemelb::net::phased::StepManager(2,&timings,hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
   stepManager->RegisterIteratedActorSteps(*colloidController, 1);

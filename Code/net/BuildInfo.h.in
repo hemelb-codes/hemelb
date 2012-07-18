@@ -16,6 +16,12 @@ namespace hemelb
     typedef @HEMELB_POINTPOINT_IMPLEMENTATION@PointPoint PointPointImpl ;
     typedef @HEMELB_GATHERS_IMPLEMENTATION@Gathers GathersImpl ;
     typedef @HEMELB_ALLTOALL_IMPLEMENTATION@AllToAll AllToAllImpl ;
+    #cmakedefine HEMELB_SEPARATE_CONCERNS
+    #ifdef HEMELB_SEPARATE_CONCERNS
+    static const bool separate_communications = true;
+    #else
+    static const bool separate_communications = false;
+    #endif
   }
 }
 #endif // HEMELB_NET_BUILDINFO_H_IN
