@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/mixins/CoalescePointPoint.h"
+#include "net/mixins/pointpoint/CoalescePointPoint.h"
 #include "log/Logger.h"
 
 namespace hemelb

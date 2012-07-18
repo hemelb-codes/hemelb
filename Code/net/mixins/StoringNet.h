@@ -20,8 +20,8 @@ namespace hemelb
     {
       public:
 
-        void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
-        void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
 
         void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type);
         void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type);
