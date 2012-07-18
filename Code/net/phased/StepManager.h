@@ -12,7 +12,6 @@
 #include <vector>
 #include <set>
 #include <map>
-#include <set>
 #include <string>
 #include "reporting/Timers.h"
 #include "net/IteratedAction.h"

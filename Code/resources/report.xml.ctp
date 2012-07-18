@@ -20,6 +20,14 @@
 		<lattice_type>{{LATTICE_TYPE}}</lattice_type>
 		<kernel_type>{{KERNEL_TYPE}}</kernel_type>
 		<wall_boundary_condition>{{WALL_BOUNDARY_CONDITION}}</wall_boundary_condition>
+		<communications>
+			<implementations>
+				<pointpoint>{{POINTPOINT_IMPLEMENTATION}}</pointpoint>
+				<alltoall>{{ALLTOALL_IMPLEMENTATION}}</alltoall>
+				<gathers>{{GATHERS_IMPLEMENTATION}}</gathers>
+			</implementations>
+			<separated_concerns>{{SEPARATE_CONCERNS}}</separated_concerns>
+		</communications>
 	</build>
 	{{/BUILD}}
 	<nodes>
