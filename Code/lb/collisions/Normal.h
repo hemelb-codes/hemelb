@@ -41,7 +41,6 @@ namespace hemelb
             kernel.Reset(init);
           }
 
-        private:
           KernelType kernel;
 
       };

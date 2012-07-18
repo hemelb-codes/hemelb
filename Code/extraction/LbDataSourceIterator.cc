@@ -29,27 +29,27 @@ namespace hemelb
       return data.GetSite(position).GetGlobalSiteCoords();
     }
 
-    float LbDataSourceIterator::GetPressure() const
+    ExtractedProperty LbDataSourceIterator::GetPressure() const
     {
       return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position) * Cs2);
     }
 
-    util::Vector3D<float> LbDataSourceIterator::GetVelocity() const
+    util::Vector3D<ExtractedProperty> LbDataSourceIterator::GetVelocity() const
     {
       return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetShearStress() const
+    ExtractedProperty LbDataSourceIterator::GetShearStress() const
     {
       return converter.ConvertStressToPhysicalUnits(propertyCache.wallShearStressMagnitudeCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetVonMisesStress() const
+    ExtractedProperty LbDataSourceIterator::GetVonMisesStress() const
     {
       return converter.ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetShearRate() const
+    ExtractedProperty LbDataSourceIterator::GetShearRate() const
     {
       return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
     }
