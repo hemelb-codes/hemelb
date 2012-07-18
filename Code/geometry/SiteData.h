@@ -22,7 +22,10 @@ namespace hemelb
       public:
         SiteData(const GeometrySite& siteReadResult);
         SiteData(const SiteData& other);
-        SiteData():boundaryIntersection(0),data(0){}//default constructor allows one to use operator[] for maps
+        SiteData() :
+          boundaryIntersection(0), ioletIntersection(0), data(0)
+        {
+        }//default constructor allows one to use operator[] for maps
         virtual ~SiteData();
 
         bool IsEdge() const;
@@ -31,14 +34,21 @@ namespace hemelb
         SiteType GetSiteType() const;
         int GetBoundaryId() const;
         bool HasBoundary(Direction direction) const;
+        bool HasIolet(Direction direction) const;
 
         /**
          * These functions return internal representations and should only be used for debugging.
          */
         uint32_t GetIntersectionData() const;
-        uint32_t &GetIntersectionData(){return boundaryIntersection;}
+        uint32_t &GetIntersectionData()
+        {
+          return boundaryIntersection;
+        }
         uint32_t GetOtherRawData() const;
-        uint32_t &GetOtherRawData(){return data;}
+        uint32_t &GetOtherRawData()
+        {
+          return data;
+        }
         static const uint32_t SITE_TYPE_BITS = 2U;
         /**
          * Arbitrarily set this to 20 bits.
@@ -55,6 +65,11 @@ namespace hemelb
          * This is a bit mask for whether a wall is hit by links in each direction.
          */
         uint32_t boundaryIntersection;
+
+        /**
+         * This is a bit mask for whether an iolet is hit by links in each direction.
+         */
+        uint32_t ioletIntersection;
 
         /**
          * This is a bit field that stores all other data associated with the site:
