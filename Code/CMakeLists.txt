@@ -41,6 +41,7 @@ set(HEMELB_GATHERS_IMPLEMENTATION Separated
 	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
 	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)

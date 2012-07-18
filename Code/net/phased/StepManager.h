@@ -10,6 +10,7 @@
 #ifndef HEMELB_NET_PHASED_STEPMANAGER_H
 #define HEMELB_NET_PHASED_STEPMANAGER_H
 #include <vector>
+#include <set>
 #include <map>
 #include <set>
 #include <string>
@@ -68,7 +69,6 @@ namespace hemelb
               }
           };
 
-
           typedef std::map<steps::Step, std::vector<Action> > Registry;
 
           /***
@@ -76,7 +76,7 @@ namespace hemelb
            * @param The number of phases, default 1.
            * @param timers, Record the times for the steps to this timers object, if given
            */
-          StepManager(Phase phases = 1, reporting::Timers * timers=NULL);
+          StepManager(Phase phases = 1, reporting::Timers * timers = NULL, bool separate_concerns = false);
 
           /***
            * Register an action of a concern
@@ -93,7 +93,7 @@ namespace hemelb
            * @param concern Concern which should be called, typically an IteratedActor
            * @param phase Phase for which this IteratedActor should be called.
            */
-          void RegisterIteratedActorSteps(Concern &concern,Phase phase = 0);
+          void RegisterIteratedActorSteps(Concern &concern, Phase phase = 0);
 
           /***
            * Register a concern for all of the steps typically used to send/receive communications
@@ -110,10 +110,23 @@ namespace hemelb
           void RegisterCommsForAllPhases(Concern &concern);
 
           /***
+           * Call the actions, concern by concern, for the given phase
+           * @param phase
+           */
+          void CallActionsForPhaseSeparatedConcerns(Phase phase = 0);
+
+          /***
            * Call the actions for the given phase
            * @param phase
            */
           void CallActionsForPhase(Phase phase = 0);
+
+          /***
+           * Call all registered actions for a given phase in a given step
+           * @param step
+           * @param phase (Default the first phase)
+           */
+          void CallActionsForStepForConcern(steps::Step step,Concern * concern, Phase phase = 0);
 
           /***
            * Call all registered actions for a given phase in a given step
@@ -126,6 +139,11 @@ namespace hemelb
            * Call all actions for all phases
            */
           void CallActions();
+
+          /***
+           * Call actions in a different order: do all steps for each concerns separately
+           */
+          void CallActionsSeparatedConcerns();
 
           /***
            * Call actions which do not belong to phases:
@@ -148,9 +166,11 @@ namespace hemelb
 
         private:
           std::vector<Registry> registry; // one registry for each phase
+          std::vector<Concern*> concerns; // can't be a set as must be order-stable
           reporting::Timers *timers;
           void StartTimer(steps::Step step);
           void StopTimer(steps::Step step);
+          const bool separate_concerns;
 
       };
     }
