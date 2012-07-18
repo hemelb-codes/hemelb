@@ -34,8 +34,7 @@ namespace hemelb
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
         // Use the wall boundary condition specified through the build system.
         typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
-            tInletOutletCollision;
+        typedef streamers::RegularisedIolet<collisions::Normal<LB_KERNEL> > tInletOutletCollision;
         typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
             tInletOutletWallCollision;
 
@@ -51,8 +50,7 @@ namespace hemelb
             geometry::LatticeData* latDat,
             SimulationState* simState,
             reporting::Timers &atimings,
-            geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager
-            );
+            geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
