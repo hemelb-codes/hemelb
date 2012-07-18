@@ -102,9 +102,16 @@ def CheckSystemIncludePaths(sourceFile):
             errors = True
     return errors
 
+def ignoreCopyright(f):
+  line=f.readline()
+  while line.strip()=='' or line[0:2]=='//':
+    line=f.readline()
+  return line
+
 def GetGuardLines(filename):
     f = file(filename)
-    lines = [f.readline(), f.readline()]
+    lines=[ignoreCopyright(f)]
+    lines.append(f.readline())
     
     for line in f:
         continue
@@ -133,16 +140,16 @@ def CheckGuardErrors(sourceFile):
     line0 = '#ifndef {define}\n'.format(define=define)
     if lines[0] != line0:
         sys.stderr.write(
-                '{file}:1 Bad include guard; must be {required!r}\n'.format(file=sourceFile,
-                                                                            required=line0)
+                '{file}:1 Bad include guard; must be {required!r} but was {actual!r}\n'.format(file=sourceFile,
+                                                                            required=line0,actual=lines[0])
             )
         error = True
 
     line1 = '#define {define}\n'.format(define=define)
     if lines[1] != line1:
         sys.stderr.write(
-                '{file}:2 Bad include guard; must be {required!r}\n'.format(file=sourceFile,
-                                                                            required=line1)
+                '{file}:2 Bad include guard; must be {required!r} but was {actual!r}\n'.format(file=sourceFile,
+                                                                            required=line1,actual=lines[1])
             )
         error = True
         

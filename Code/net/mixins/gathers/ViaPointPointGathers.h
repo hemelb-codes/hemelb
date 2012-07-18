@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_MIXINS_GATHERSVIAPOINTPOINT_H
-#define HEMELB_NET_MIXINS_GATHERSVIAPOINTPOINT_H
+#ifndef HEMELB_NET_MIXINS_GATHERS_VIAPOINTPOINTGATHERS_H
+#define HEMELB_NET_MIXINS_GATHERS_VIAPOINTPOINTGATHERS_H
 
 #include "net/mixins/StoringNet.h"
 
@@ -19,7 +19,7 @@ namespace hemelb{
      * This code is not robust for working with gathers of complex defined datatypes.
      * It is intended for testing and performance measurement use, and should not be used in production.
      */
-    class GathersViaPointPoint : public virtual StoringNet
+    class ViaPointPointGathers : public virtual StoringNet
     {
       void ReceiveGathers();
       void SendGathers();
