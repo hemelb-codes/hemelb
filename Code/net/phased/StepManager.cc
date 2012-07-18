@@ -103,6 +103,13 @@ namespace hemelb
             if (step == steps::Receive || step == steps::Send || step == steps::Wait)
             {
               // Call ALL comms actions for all concerns
+              // Because, these concerns are net::Net objects, that do the actual send/receive/wait MPI calls
+              /**
+               * E.g:
+               * if A is a concern, B is a concern, C is a concern
+               * A is an it actor, B is an it actor,C is a net::Net
+               * You want to go: A C A C A C B C B C B C
+               */
               CallActionsForStep(static_cast<steps::Step>(step), phase);
             }
             else
