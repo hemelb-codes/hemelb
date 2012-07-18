@@ -53,7 +53,7 @@ namespace hemelb
               }
 
               // Let's next fill in the blanks on this site that won't get streamed to.
-              for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+              for (Direction direction = 1; direction < LatticeType::NUMVECTORS; ++direction)
               {
                 if (!site.HasIolet(direction))
                   continue;
@@ -89,7 +89,9 @@ namespace hemelb
 
                 collider.kernel.CalculateFeq(ghostHydrovars, 0);
 
-                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + direction) = ghostHydrovars.GetFEq()[direction];
+                Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
+
+                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamed) = ghostHydrovars.GetFEq()[unstreamed];
               }
 
               ///< @todo #126 It would be nicer if tau is handled in a single place.
