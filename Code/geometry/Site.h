@@ -50,6 +50,11 @@ namespace hemelb
           return GetSiteData().HasBoundary(direction);
         }
 
+        inline bool HasIolet(Direction direction) const
+        {
+          return GetSiteData().HasIolet(direction);
+        }
+
         template<typename LatticeType>
         inline distribn_t GetWallDistance(Direction direction) const
         {
