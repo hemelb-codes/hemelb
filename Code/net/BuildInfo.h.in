@@ -7,20 +7,15 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_MIXINS_SEPARATEDALLTOALL_H
-#define HEMELB_NET_MIXINS_SEPARATEDALLTOALL_H
-
-#include "net/mixins/StoringNet.h"
-
-namespace hemelb{
-  namespace net{
-
-    class SeparatedAllToAll : public virtual StoringNet
-    {
-      void ReceiveAllToAll(){}
-      void SendAllToAll(){}
-      void WaitAllToAll();
-    };
+#ifndef HEMELB_NET_BUILDINFO_H_IN
+#define HEMELB_NET_BUILDINFO_H_IN
+namespace hemelb
+{
+  namespace net
+  {
+    typedef @HEMELB_POINTPOINT_IMPLEMENTATION@PointPoint PointPointImpl ;
+    typedef @HEMELB_GATHERS_IMPLEMENTATION@Gathers GathersImpl ;
+    typedef @HEMELB_ALLTOALL_IMPLEMENTATION@AllToAll AllToAllImpl ;
   }
 }
-#endif
+#endif // HEMELB_NET_BUILDINFO_H_IN

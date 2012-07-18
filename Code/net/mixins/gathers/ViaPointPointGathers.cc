@@ -7,12 +7,12 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/mixins/GathersViaPointPoint.h"
+#include "net/mixins/gathers/ViaPointPointGathers.h"
 namespace hemelb
 {
   namespace net
   {
-    void GathersViaPointPoint::ReceiveGathers()
+    void ViaPointPointGathers::ReceiveGathers()
     {
       for (GatherProcComms::iterator receive_it = gatherReceiveProcessorComms.begin();
           receive_it != gatherReceiveProcessorComms.end(); ++receive_it)
@@ -34,7 +34,7 @@ namespace hemelb
 
       gatherReceiveProcessorComms.clear();
     }
-    void GathersViaPointPoint::SendGathers()
+    void ViaPointPointGathers::SendGathers()
     {
       for (std::map<proc_t, GatherProcComms>::iterator send_it = gatherSendProcessorComms.begin();
           send_it != gatherSendProcessorComms.end(); ++send_it)
@@ -49,7 +49,7 @@ namespace hemelb
 
       gatherSendProcessorComms.clear();
     }
-    void GathersViaPointPoint::ReceiveGatherVs()
+    void ViaPointPointGathers::ReceiveGatherVs()
     {
       for (GatherVReceiveProcComms::iterator receive_it = gatherVReceiveProcessorComms.begin();
           receive_it != gatherVReceiveProcessorComms.end(); ++receive_it)
@@ -75,7 +75,7 @@ namespace hemelb
 
       gatherVReceiveProcessorComms.clear();
     }
-    void GathersViaPointPoint::SendGatherVs()
+    void ViaPointPointGathers::SendGatherVs()
     {
       for (std::map<proc_t, ProcComms>::iterator send_it = gatherVSendProcessorComms.begin();
           send_it != gatherVSendProcessorComms.end(); ++send_it)
