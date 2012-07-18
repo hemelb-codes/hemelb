@@ -11,14 +11,14 @@ namespace hemelb
     namespace collisions
     {
       template<typename KernelType>
-      class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<
-          NonZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
+      class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<NonZeroVelocityEquilibriumFixedDensity<
+          KernelType> , KernelType>
       {
         public:
           typedef KernelType CKernel;
 
           NonZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
-              kernel(initParams), boundaryObject(initParams.boundaryObject)
+            kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
 
           }
@@ -31,8 +31,14 @@ namespace hemelb
                                                               hydroVars.v_y,
                                                               hydroVars.v_z);
 
-            // Externally impose a density.
+            // Externally impose a density. Keep a record of the old one so we can scale the
+            // momentum vector.
+            distribn_t previousDensity = hydroVars.density;
             hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
+
+            hydroVars.v_x *= (hydroVars.density / previousDensity);
+            hydroVars.v_y *= (hydroVars.density / previousDensity);
+            hydroVars.v_z *= (hydroVars.density / previousDensity);
 
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }

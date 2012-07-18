@@ -41,31 +41,31 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        float GetPressure() const;
+        ExtractedProperty GetPressure() const;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        util::Vector3D<float> GetVelocity() const;
+        util::Vector3D<ExtractedProperty> GetVelocity() const;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        float GetShearStress() const;
+        ExtractedProperty GetShearStress() const;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        float GetVonMisesStress() const;
+        ExtractedProperty GetVonMisesStress() const;
 
         /**
          * Returns the shear rate at the site.
          * @return shear rate
          */
-        float GetShearRate() const;
+        ExtractedProperty GetShearRate() const;
 
         /**
          * Returns the full stress tensor at the site.
