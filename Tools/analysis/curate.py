@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
-
 # encoding: utf-8
 """
 curate.py
@@ -72,9 +63,10 @@ class Action(object):
         self.writer=csv.writer(self.stream, delimiter=' ')
         self.pp=PrettyPrinter(stream=self.stream)
     def start(self):
-        if self.action=='display':
+        if self.action in ['display','zip']:
             print("#",end='',file=self.stream)
             print(*self.arguments,file=self.stream)
+            print("",file=self.stream)
     def __call__(self,result):
         getattr(self,self.action)(result,*self.arguments)
     def report(self,result):
@@ -97,6 +89,12 @@ class Action(object):
         for afile in files:
             content=open(os.path.join(result.path,afile)).read()
             print(content,file=self.stream)
+    def zip(self,result,*cols):
+        print("#%s"%result.name, file=self.stream)
+        self.writer.writerows(
+            zip(*[result.datum(col) for col in cols])
+        )
+        print("\n",file=self.stream)
 
 def main():
     Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
