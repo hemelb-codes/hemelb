@@ -488,7 +488,7 @@ def batch_build(*configurations,**extras):
     """Submit a build job to the remote serial queue."""
     configure_cmake(configurations,extras)
     with settings(batch_header=env.batch_header+'_serial'):
-      job(dict(script='batch_build',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
+      job(dict(script='batch_build',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
 
 @task
 def hemelb(config,**args):
