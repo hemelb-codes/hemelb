@@ -572,7 +572,7 @@ def job(*option_dictionaries):
 
         env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
         put(env.job_script,env.dest_name)
-
+        run(template("touch $build_cache"))
         run(template("mkdir -p $job_results"))
         run(template("cp $dest_name $job_results"))
         run(template("cp $build_cache $job_results"))
