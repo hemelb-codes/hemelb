@@ -65,7 +65,7 @@ results:
             gmy_block_count: block_count
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
-        type_by_name: '(regression|unittests)'
+        type_by_name: '(regression|unittests|build)'
         name: '(.*)'
     stat_properties:
         'results/report.txt':
