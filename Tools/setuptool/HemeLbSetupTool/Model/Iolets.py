@@ -26,6 +26,9 @@ class Iolet(Observable):
         
         for k in kwargs:
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
+
+        if not isinstance(self.Name, str):
+            raise TypeError("A string must be passed as argument Name in class Iolet constructor.")
         
         return
     
