@@ -55,7 +55,7 @@ namespace hemelb
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
                 site_t streamingDestination = site.HasBoundary(ii)
                   ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[ii]
-                  : site.GetStreamedIndex<LatticeType>(ii);
+                  : site.GetStreamedIndex<LatticeType> (ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
@@ -63,13 +63,8 @@ namespace hemelb
               }
 
               //TODO: Necessary to specify sub-class?
-              BaseStreamer<SimpleBounceBack>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                         hydroVars.v_y,
-                                                                                         hydroVars.v_z,
-                                                                                         site,
-                                                                                         hydroVars.GetFNeq().f,
-                                                                                         hydroVars.density,
-                                                                                         hydroVars.tau,
+              BaseStreamer<SimpleBounceBack>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                         hydroVars,
                                                                                          lbmParams,
                                                                                          propertyCache);
             }

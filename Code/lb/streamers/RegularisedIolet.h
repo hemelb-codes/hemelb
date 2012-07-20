@@ -91,19 +91,15 @@ namespace hemelb
 
                 Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
 
-                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamed) = ghostHydrovars.GetFEq()[unstreamed];
+                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamed)
+                    = ghostHydrovars.GetFEq()[unstreamed];
               }
 
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<RegularisedIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                         hydroVars.v_y,
-                                                                                         hydroVars.v_z,
-                                                                                         site,
-                                                                                         hydroVars.GetFNeq().f,
-                                                                                         hydroVars.density,
-                                                                                         hydroVars.tau,
+              BaseStreamer<RegularisedIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                         hydroVars,
                                                                                          lbmParams,
                                                                                          propertyCache);
             }
