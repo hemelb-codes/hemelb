@@ -619,14 +619,14 @@ namespace hemelb
                     // This is the first means of estimating from the source paper: only
                     // use the nearest fluid site.
                     util::Vector3D<distribn_t> velocityEstimate1 = streamerHydroVars.momentum * (1. - 1.
-                        / assignedWallDistance);
+                        / assignedWallDistance) / streamerHydroVars.density;
 
                     distribn_t fNeqEstimate1 = streamerHydroVars.GetFNeq()[streamedDirection];
 
                     // This is the second method for estimating: using the next fluid site
                     // away from the wall.
                     util::Vector3D<distribn_t> velocityEstimate2 = nextSiteOutHydroVars.momentum
-                        * (assignedWallDistance - 1.) / (1. + assignedWallDistance);
+                        * (assignedWallDistance - 1.) / ((1. + assignedWallDistance) * nextSiteOutHydroVars.density);
 
                     distribn_t fNeqEstimate2 = nextSiteOutHydroVars.GetFNeq()[streamedDirection];
 
@@ -639,7 +639,7 @@ namespace hemelb
                   }
                   else
                   {
-                    velocityWall = streamerHydroVars.momentum * (1. - 1. / assignedWallDistance);
+                    velocityWall = streamerHydroVars.momentum * (1. - 1. / assignedWallDistance) / streamerHydroVars.density;
 
                     fNeqWall = streamerHydroVars.GetFNeq()[streamedDirection];
                   }
@@ -648,11 +648,13 @@ namespace hemelb
                   distribn_t streamedFNew =
                       latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite)[streamedDirection];
 
+                  util::Vector3D<distribn_t> momentumWall = velocityWall * streamerHydroVars.density;
+
                   distribn_t fEqm[lb::lattices::D3Q15::NUMVECTORS];
                   lb::lattices::D3Q15::CalculateFeq(streamerHydroVars.density,
-                                                    velocityWall.x,
-                                                    velocityWall.y,
-                                                    velocityWall.z,
+                                                    momentumWall.x,
+                                                    momentumWall.y,
+                                                    momentumWall.z,
                                                     fEqm);
 
                   CPPUNIT_ASSERT_DOUBLES_EQUAL(streamedFNew,
