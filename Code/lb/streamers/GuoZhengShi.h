@@ -28,7 +28,7 @@ namespace hemelb
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-              collider(initParams), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
+            collider(initParams), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
           {
             // Go through every site on the local processor.
             for (site_t localIndex = 0; localIndex < initParams.latDat->GetLocalFluidSiteCount(); ++localIndex)
@@ -44,8 +44,9 @@ namespace hemelb
               // Iterate over every neighbouring direction from here.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                const LatticeVector neighbourLocation = localSiteLocation
-                    + LatticeVector(LatticeType::CX[direction], LatticeType::CY[direction], LatticeType::CZ[direction]);
+                const LatticeVector neighbourLocation = localSiteLocation + LatticeVector(LatticeType::CX[direction],
+                                                                                          LatticeType::CY[direction],
+                                                                                          LatticeType::CZ[direction]);
 
                 // Make sure we don't try to get info about off-lattice neighbours.
                 if (!initParams.latDat->IsValidLatticeSite(neighbourLocation))
@@ -55,8 +56,8 @@ namespace hemelb
 
                 // BIG_NUMBER2 means a solid site. We don't want info about solids or
                 // neighbouring sites on this proc.
-                if (neighbourSiteHomeProc == BIG_NUMBER2
-                    || neighbourSiteHomeProc == topology::NetworkTopology::Instance()->GetLocalRank())
+                if (neighbourSiteHomeProc == BIG_NUMBER2 || neighbourSiteHomeProc
+                    == topology::NetworkTopology::Instance()->GetLocalRank())
                   continue;
 
                 // Create a requirements with the info we need.
@@ -83,7 +84,7 @@ namespace hemelb
               geometry::Site site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 
               collider.CalculatePreCollision(hydroVars, site);
               collider.Collide(lbmParams, hydroVars);
@@ -91,8 +92,8 @@ namespace hemelb
               // Perform the streaming of the post-collision distribution.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
-                    hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
+                    = hydroVars.GetFPostCollision()[direction];
               }
 
               // Now fill in the distributions that won't be streamed to
@@ -106,7 +107,7 @@ namespace hemelb
                   Direction unstreamedDirection = LatticeType::INVERSEDIRECTIONS[oppositeDirection];
 
                   // Get the distance to the boundary.
-                  double wallDistance = site.GetWallDistance<LatticeType>(oppositeDirection);
+                  double wallDistance = site.GetWallDistance<LatticeType> (oppositeDirection);
 
                   // Now we work out the hypothetical velocity of the solid site on the other side
                   // of the wall.
@@ -153,14 +154,15 @@ namespace hemelb
                       geometry::Site nextSiteOut =
                           latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
 
-                      neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
+                      neighbourFOld = nextSiteOut.GetFOld<LatticeType> ();
                     }
                     else
                     {
-                      const geometry::neighbouring::ConstNeighbouringSite neighbourSite =
-                          neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
+                      const geometry::neighbouring::ConstNeighbouringSite
+                          neighbourSite =
+                              neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
 
-                      neighbourFOld = neighbourSite.GetFOld<LatticeType>();
+                      neighbourFOld = neighbourSite.GetFOld<LatticeType> ();
                     }
 
                     // Now calculate this field information.
@@ -190,14 +192,13 @@ namespace hemelb
                     // Extrapolate to obtain the velocity at the wall site.
                     for (int dimension = 0; dimension < 3; dimension++)
                     {
-                      velocityWall[dimension] = wallDistance * velocityWall[dimension]
-                          + (1. - wallDistance) * velocityWallSecondEstimate[dimension];
+                      velocityWall[dimension] = wallDistance * velocityWall[dimension] + (1. - wallDistance)
+                          * velocityWallSecondEstimate[dimension];
                     }
 
                     // Interpolate in the same way to get f_neq.
-                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
-                        + (1. - wallDistance)
-                            * (neighbourFOld[unstreamedDirection] - nextNodeOutFEq[unstreamedDirection]);
+                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection + (1. - wallDistance)
+                        * (neighbourFOld[unstreamedDirection] - nextNodeOutFEq[unstreamedDirection]);
                   }
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
@@ -212,20 +213,15 @@ namespace hemelb
                   // Collide and stream!
                   // TODO: It's not clear whether we should defer to the template collision type here
                   // or do a standard LBGK (implemented).
-                  * (latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamedDirection)) =
-                      fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
+                  * (latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamedDirection))
+                      = fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                    hydroVars.v_y,
-                                                                                    hydroVars.v_z,
-                                                                                    site,
-                                                                                    hydroVars.GetFNeq().f,
-                                                                                    hydroVars.density,
-                                                                                    hydroVars.tau,
+              BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                    hydroVars,
                                                                                     lbmParams,
                                                                                     propertyCache);
             }
