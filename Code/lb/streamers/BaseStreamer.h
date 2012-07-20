@@ -6,6 +6,7 @@
 #include "geometry/LatticeData.h"
 #include "vis/Control.h"
 #include "lb/LbmParameters.h"
+#include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
@@ -46,11 +47,11 @@ namespace hemelb
                                        geometry::LatticeData* latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(firstIndex,
-                                                                                         siteCount,
-                                                                                         lbmParams,
-                                                                                         latDat,
-                                                                                         propertyCache);
+            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
+                                                                                           siteCount,
+                                                                                           lbmParams,
+                                                                                           latDat,
+                                                                                           propertyCache);
           }
 
           template<bool tDoRayTracing>
@@ -62,39 +63,35 @@ namespace hemelb
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(firstIndex,
-                                                                                 siteCount,
-                                                                                 lbmParams,
-                                                                                 latDat,
-                                                                                 propertyCache);
+            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (firstIndex,
+                                                                                   siteCount,
+                                                                                   lbmParams,
+                                                                                   latDat,
+                                                                                   propertyCache);
           }
 
           inline void Reset(kernels::InitParams* init)
           {
-            static_cast<StreamerImpl*>(this)->DoReset(init);
+            static_cast<StreamerImpl*> (this)->DoReset(init);
           }
 
         protected:
-          template<bool tDoRayTracing>
-          inline static void UpdateMinsAndMaxes(distribn_t velocity_x,
-                                                distribn_t velocity_y,
-                                                distribn_t velocity_z,
-                                                const geometry::Site& site,
-                                                const distribn_t* f_neq,
-                                                const distribn_t density,
-                                                const distribn_t tau,
+          template<bool tDoRayTracing, class LatticeType>
+          inline static void UpdateMinsAndMaxes(const geometry::Site& site,
+                                                const kernels::HydroVarsBase<LatticeType>& hydroVars,
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)
           {
             if (propertyCache.densityCache.RequiresRefresh())
             {
-              propertyCache.densityCache.Put(site.GetIndex(), density);
+              propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
             }
 
             if (propertyCache.velocityCache.RequiresRefresh())
             {
               propertyCache.velocityCache.Put(site.GetIndex(),
-                                              util::Vector3D<distribn_t>(velocity_x, velocity_y, velocity_z) / density);
+                                              util::Vector3D<distribn_t>(hydroVars.v_x, hydroVars.v_y, hydroVars.v_z)
+                                                  / hydroVars.density);
             }
 
             if (propertyCache.wallShearStressMagnitudeCache.RequiresRefresh())
@@ -107,11 +104,11 @@ namespace hemelb
               }
               else
               {
-                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateWallShearStressMagnitude(density,
-                                                                                                     f_neq,
-                                                                                                     site.GetWallNormal(),
-                                                                                                     stress,
-                                                                                                     lbmParams->GetStressParameter());
+                LatticeType::CalculateWallShearStressMagnitude(hydroVars.density,
+                                                               hydroVars.GetFNeq().f,
+                                                               site.GetWallNormal(),
+                                                               stress,
+                                                               lbmParams->GetStressParameter());
               }
 
               propertyCache.wallShearStressMagnitudeCache.Put(site.GetIndex(), stress);
@@ -120,7 +117,7 @@ namespace hemelb
             if (propertyCache.vonMisesStressCache.RequiresRefresh())
             {
               distribn_t stress;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq().f,
                                                                                          stress,
                                                                                          lbmParams->GetStressParameter());
 
@@ -129,9 +126,10 @@ namespace hemelb
 
             if (propertyCache.shearRateCache.RequiresRefresh())
             {
-              distribn_t shear_rate = StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(tau,
-                                                                                                            f_neq,
-                                                                                                            density);
+              distribn_t shear_rate =
+                  StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(hydroVars.tau,
+                                                                                        hydroVars.GetFNeq().f,
+                                                                                        hydroVars.density);
 
               propertyCache.shearRateCache.Put(site.GetIndex(), shear_rate);
             }
@@ -139,13 +137,15 @@ namespace hemelb
             if (propertyCache.stressTensorCache.RequiresRefresh())
             {
               util::Matrix3D stressTensor;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(density, tau, f_neq, stressTensor);
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(hydroVars.density,
+                                                                                       hydroVars.tau,
+                                                                                       hydroVars.GetFNeq().f,
+                                                                                       stressTensor);
 
               propertyCache.stressTensorCache.Put(site.GetIndex(), stressTensor);
 
             }
           }
-
       };
     }
   }
