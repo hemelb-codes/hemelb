@@ -9,7 +9,7 @@ from HemeLbSetupTool.Model.Vector import Vector
 class Iolet(Observable):
     """Represent boundary across which there can be flow.
     """
-    _Args = {'Name': None,
+    _Args = {'Name': 'Unknown iolet',
              # Initialize to the VTK defaults for now
              'Centre': Vector(0., 0., 0.),
              'Normal': Vector(0., 0., 1.),
@@ -27,9 +27,6 @@ class Iolet(Observable):
         for k in kwargs:
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
 
-        if not isinstance(self.Name, str):
-            raise TypeError("A string must be passed as argument Name in class Iolet constructor.")
-        
         return
     
     def __getstate__(self):
