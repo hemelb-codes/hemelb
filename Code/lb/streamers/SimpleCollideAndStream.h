@@ -58,13 +58,8 @@ namespace hemelb
 
               }
 
-              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                               hydroVars.v_y,
-                                                                                               hydroVars.v_z,
-                                                                                               site,
-                                                                                               hydroVars.GetFNeq().f,
-                                                                                               hydroVars.density,
-                                                                                               hydroVars.tau,
+              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                               hydroVars,
                                                                                                lbmParams,
                                                                                                propertyCache);
             }

@@ -63,12 +63,12 @@ namespace hemelb
           distribn_t density, v_x, v_y, v_z, tau;
           const distribn_t* const f;
 
-          inline const FVector<LatticeType>& GetFEq()
+          inline const FVector<LatticeType>& GetFEq() const
           {
             return f_eq;
           }
 
-          inline const FVector<LatticeType>& GetFNeq()
+          inline const FVector<LatticeType>& GetFNeq() const
           {
             return f_neq;
           }
