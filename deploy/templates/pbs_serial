@@ -9,6 +9,7 @@
 # 
 #PBS -N $job_name
 #PBS -l walltime=$wall_time
+#PBS -l cput=$wall_time
 #PBS -A $budget
 #PBS -q serial
 #PBS -m abe
