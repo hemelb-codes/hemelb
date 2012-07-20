@@ -61,13 +61,13 @@ namespace hemelb
             hydroVars.index = index;
             LatticeType::CalculateDensityAndVelocity(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z);
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z);
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,
-                                                      hydroVars.v_x,
-                                                      hydroVars.v_y,
-                                                      hydroVars.v_z,
+                                                      hydroVars.momentum.x,
+                                                      hydroVars.momentum.y,
+                                                      hydroVars.momentum.z,
                                                       hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -86,9 +86,9 @@ namespace hemelb
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,
-                                                      hydroVars.v_x,
-                                                      hydroVars.v_y,
-                                                      hydroVars.v_z,
+                                                      hydroVars.momentum.x,
+                                                      hydroVars.momentum.y,
+                                                      hydroVars.momentum.z,
                                                       hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)

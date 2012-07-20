@@ -71,10 +71,7 @@ namespace hemelb
 
                 // Note that the division by density compensates for the fact that v_x etc have momentum
                 // not velocity.
-                float component = ioletNormal.Dot(util::Vector3D<float>(hydroVars.v_x, hydroVars.v_y, hydroVars.v_z))
-                    / hydroVars.density;
-
-                util::Vector3D<distribn_t> ghostVelocity = ioletNormal * component * ghostDensity;
+                float component = ioletNormal.Dot(hydroVars.momentum) / hydroVars.density;
 
                 // TODO it's ugly that we have to do this.
                 // TODO having to give 0 as an argument is also ugly.
@@ -83,9 +80,7 @@ namespace hemelb
                 kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(f);
 
                 ghostHydrovars.density = ghostDensity;
-                ghostHydrovars.v_x = ghostVelocity.x;
-                ghostHydrovars.v_y = ghostVelocity.y;
-                ghostHydrovars.v_z = ghostVelocity.z;
+                ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
 
                 collider.kernel.CalculateFeq(ghostHydrovars, 0);
 
