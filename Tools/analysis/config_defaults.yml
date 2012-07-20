@@ -68,6 +68,8 @@ results:
         type_by_name: '(regression|unittests|build)'
         name: '(.*)'
     stat_properties:
+        '':
+            folder_created_timestamp: st_mtime
         'results/report.txt':
             report_created_timestamp: st_mtime
         'tests.xml':
@@ -87,7 +89,7 @@ results:
         
         
     compound_properties:
-        result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp)
+        result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp if test_results_timestamp else folder_created_timestamp)
         snapshots_norm: (snapshots_count if normalised else 1.0)
         images_norm: (images_count if normalised else 1.0)
         steering_wait: (steering_wait_raw if steering_wait_raw else steering_wait_raw_2 if steering_wait_raw_2 else 0)
