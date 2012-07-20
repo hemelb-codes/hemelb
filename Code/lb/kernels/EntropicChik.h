@@ -22,7 +22,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase<LatticeType>(f)
+            HydroVarsBase<LatticeType> (f)
           {
 
           }
@@ -34,8 +34,8 @@ namespace hemelb
        * EntropicChik: This class implements the entropic kernel, as per Chitakamarla et al.
        */
       template<class LatticeType>
-      class EntropicChik : public BaseKernel<EntropicChik<LatticeType>, LatticeType>
-                           , public Entropic<LatticeType>
+      class EntropicChik : public BaseKernel<EntropicChik<LatticeType> , LatticeType> ,
+                           public Entropic<LatticeType>
       {
         public:
           /**
@@ -43,7 +43,7 @@ namespace hemelb
            * @param initParams
            */
           EntropicChik(InitParams& initParams) :
-              Entropic<LatticeType>(&initParams)
+            Entropic<LatticeType> (&initParams)
           {
           }
 
@@ -58,13 +58,13 @@ namespace hemelb
             hydroVars.index = index;
             LatticeType::CalculateDensityAndVelocity(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z);
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z);
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.v_x,
-                                                  hydroVars.v_y,
-                                                  hydroVars.v_z,
+                                                  hydroVars.momentum.x,
+                                                  hydroVars.momentum.y,
+                                                  hydroVars.momentum.z,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -83,9 +83,9 @@ namespace hemelb
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.v_x,
-                                                  hydroVars.v_y,
-                                                  hydroVars.v_z,
+                                                  hydroVars.momentum.x,
+                                                  hydroVars.momentum.y,
+                                                  hydroVars.momentum.z,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
