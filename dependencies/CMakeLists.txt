@@ -153,7 +153,7 @@ endif()
 if(HEMELB_USE_BOOST)
 	# ---------BOOST -----------------------
 	set(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
-	set(BOOST_LIBS mpi regex)
+	set(BOOST_LIBS regex)
 	string(REPLACE ";" "," BOOST_LIBS_COMMA "${BOOST_LIBS}")
 	find_package(Boost 1.48 COMPONENTS ${BOOST_LIBS})
 	if (BOOST_FOUND)
@@ -175,7 +175,7 @@ if(HEMELB_USE_BOOST)
 			URL ${BOOST_TARBALL}
 			BUILD_COMMAND <SOURCE_DIR>/b2
 			INSTALL_COMMAND <SOURCE_DIR>/b2 install
-			CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA}"
+			CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA} --without-mpi"
 			BUILD_IN_SOURCE 1
 		)
 		ExternalProject_Add_Step(
