@@ -115,7 +115,7 @@ namespace hemelb
                   // between the nearest fluid site and the solid site inside the wall.
                   // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
                   // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-                  util::Vector3D<double> velocityWall = hydroVars.momentum * (1. - 1. / wallDistance);
+                  util::Vector3D<double> velocityWall = hydroVars.momentum * (1. - 1. / wallDistance) / hydroVars.density;
 
                   // Find the non-equilibrium distribution in the unstreamed direction.
                   distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq()[unstreamedDirection];
@@ -175,6 +175,7 @@ namespace hemelb
                                                                nextNodeOutVelocity.y,
                                                                nextNodeOutVelocity.z,
                                                                nextNodeOutFEq);
+                      nextNodeOutVelocity /= nextNodeDensity;
                     }
 
                     // Obtain a second estimate, this time ignoring the fluid site closest to
@@ -200,6 +201,8 @@ namespace hemelb
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
+                  velocityWall *= hydroVars.density;
+
                   distribn_t fEqTemp[LatticeType::NUMVECTORS];
                   LatticeType::CalculateFeq(hydroVars.density,
                                             velocityWall[0],
