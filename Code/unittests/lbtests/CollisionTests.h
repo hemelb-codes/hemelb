@@ -99,7 +99,14 @@ namespace hemelb
             distribn_t expectedRho = inletBoundary->GetBoundaryDensity(0);
             distribn_t expectedV[3];
 
-            LbTestsHelper::CalculateVelocity<lb::lattices::D3Q15>(fOld, expectedV);
+            distribn_t originalRho;
+            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q15>(fOld, originalRho, expectedV);
+
+            // Now need to scale the momentum, expectedV, to account for the difference between
+            // original and enforced densities.
+            for(unsigned axis = 0; axis < 3; ++axis)
+              expectedV[axis] *= (expectedRho / originalRho);
+
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
                                                                   expectedV[0],
