@@ -115,10 +115,7 @@ namespace hemelb
                   // between the nearest fluid site and the solid site inside the wall.
                   // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
                   // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-                  util::Vector3D<double> velocityWall = util::Vector3D<double>(hydroVars.v_x,
-                                                                               hydroVars.v_y,
-                                                                               hydroVars.v_z)
-                      * (1. - 1. / wallDistance);
+                  util::Vector3D<double> velocityWall = hydroVars.momentum * (1. - 1. / wallDistance);
 
                   // Find the non-equilibrium distribution in the unstreamed direction.
                   distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq()[unstreamedDirection];

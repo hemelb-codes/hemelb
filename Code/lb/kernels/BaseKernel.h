@@ -60,7 +60,9 @@ namespace hemelb
           }
 
         public:
-          distribn_t density, v_x, v_y, v_z, tau;
+          distribn_t density, tau;
+          util::Vector3D<distribn_t> momentum;
+
           const distribn_t* const f;
 
           inline const FVector<LatticeType>& GetFEq() const

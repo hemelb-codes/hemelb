@@ -89,9 +89,7 @@ namespace hemelb
 
             if (propertyCache.velocityCache.RequiresRefresh())
             {
-              propertyCache.velocityCache.Put(site.GetIndex(),
-                                              util::Vector3D<distribn_t>(hydroVars.v_x, hydroVars.v_y, hydroVars.v_z)
-                                                  / hydroVars.density);
+              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.momentum / hydroVars.density);
             }
 
             if (propertyCache.wallShearStressMagnitudeCache.RequiresRefresh())
