@@ -8,6 +8,7 @@ from HemeLbSetupTool.Model.Vector import Vector
 
 class Iolet(Observable):
     """Represent boundary across which there can be flow.
+    Do not instantiate
     """
     _Args = {'Name': 'Unknown iolet',
              # Initialize to the VTK defaults for now
@@ -91,6 +92,8 @@ class Iolet(Observable):
     pass
 
 class SinusoidalPressureIolet(Iolet):
+    """Do not instantiate
+    """
     _Args = Iolet._Args.copy()
     _Args['Pressure'] = Vector(80., 0., 0.)
     
