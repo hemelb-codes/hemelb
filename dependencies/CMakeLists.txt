@@ -178,13 +178,14 @@ if(HEMELB_USE_BOOST)
 			CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA} --without-mpi"
 			BUILD_IN_SOURCE 1
 		)
-		ExternalProject_Add_Step(
-			boost mpi
-			COMMAND cat ${HEMELB_DEPENDENCIES_PATH}/patches/boost_options.jam >> project-config.jam
-			DEPENDEES configure
-			DEPENDERS build
-			WORKING_DIRECTORY <SOURCE_DIR>
-		)
+  # Removing boost-mpi temporarily to avoid warnings, we're not using it yet
+	#	ExternalProject_Add_Step(
+		#	boost mpi
+		#	COMMAND cat ${HEMELB_DEPENDENCIES_PATH}/patches/boost_options.jam >> project-config.jam
+		#	DEPENDEES configure
+		#	DEPENDERS build
+		#	WORKING_DIRECTORY <SOURCE_DIR>
+	#	)
 	endif()
 endif()
 
