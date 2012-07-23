@@ -52,3 +52,7 @@ regularised:
   HEMELB_WALL_BOUNDARY: "REGULARISED"
 simple_bounce_back:
   HEMELB_WALL_BOUNDARY: "SIMPLEBOUNCEBACK"
+separated_pointpoint:
+  HEMELB_POINTPOINT_IMPLEMENTATION: Separated
+separated_concerns:
+  HEMELB_SEPARATED_CONCERNS: ON
