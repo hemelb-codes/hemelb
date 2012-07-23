@@ -35,9 +35,7 @@ namespace hemelb
               hydroVars.density += hydroVars.f[ii];
             }
 
-            hydroVars.v_x = 0.0;
-            hydroVars.v_y = 0.0;
-            hydroVars.v_z = 0.0;
+            hydroVars.momentum = util::Vector3D<distribn_t>::Zero();
 
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
