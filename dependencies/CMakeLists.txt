@@ -175,7 +175,7 @@ if(HEMELB_USE_BOOST)
 			URL ${BOOST_TARBALL}
 			BUILD_COMMAND <SOURCE_DIR>/b2
 			INSTALL_COMMAND <SOURCE_DIR>/b2 install
-			CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA} --without-mpi"
+			CONFIGURE_COMMAND <SOURCE_DIR>/bootstrap.sh --prefix=<INSTALL_DIR> "--with-libraries=${BOOST_LIBS_COMMA}"
 			BUILD_IN_SOURCE 1
 		)
   # Removing boost-mpi temporarily to avoid warnings, we're not using it yet
