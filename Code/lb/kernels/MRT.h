@@ -55,9 +55,9 @@ namespace hemelb
           {
             MomentBasis::Lattice::CalculateDensityVelocityFEq(hydroVars.f,
                                                               hydroVars.density,
-                                                              hydroVars.v_x,
-                                                              hydroVars.v_y,
-                                                              hydroVars.v_z,
+                                                              hydroVars.momentum.x,
+                                                              hydroVars.momentum.y,
+                                                              hydroVars.momentum.z,
                                                               hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
@@ -72,9 +72,9 @@ namespace hemelb
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
             MomentBasis::Lattice::CalculateFeq(hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
+                                               hydroVars.momentum.x,
+                                               hydroVars.momentum.y,
+                                               hydroVars.momentum.z,
                                                hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)

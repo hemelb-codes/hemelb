@@ -83,8 +83,8 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
-                  + v_z * (float) Lattice::CZ[ii];
+              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
+                  * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
               distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
@@ -146,9 +146,9 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
             // Compare velocity
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id, expectedVx, hydroVars.v_x, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id, expectedVy, hydroVars.v_y, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.v_z, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id, expectedVx, hydroVars.momentum.x, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id, expectedVy, hydroVars.momentum.y, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.momentum.z, allowedError);
 
             // Compare equilibrium f
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
@@ -168,8 +168,8 @@ namespace hemelb
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType>();
-              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
+              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType> ();
+              InitialiseAnisotropicTestData<LatticeType> (site, fOld);
             }
           }
 
@@ -285,7 +285,7 @@ namespace hemelb
               distribn_t density, feq[Lattice::NUMVECTORS];
               util::Vector3D<distribn_t> velocity;
 
-              Lattice::CalculateDensityVelocityFEq(latDat.GetSite(site).GetFOld<Lattice>(),
+              Lattice::CalculateDensityVelocityFEq(latDat.GetSite(site).GetFOld<Lattice> (),
                                                    density,
                                                    velocity[0],
                                                    velocity[1],
@@ -315,15 +315,15 @@ namespace hemelb
           template<typename Lattice>
           static void SetWallAndIoletDistances(FourCubeLatticeData& latticeData, distribn_t wallDistance)
           {
-            assert(wallDistance>=0);
-            assert(wallDistance<1);
+            assert(wallDistance >= 0);
+            assert(wallDistance < 1);
 
             for (site_t siteIndex = 0; siteIndex < latticeData.GetTotalFluidSites(); siteIndex++)
             {
               for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
               {
                 // -1 means that the a given link does not cross any boundary
-                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice>(direction) != (distribn_t) -1)
+                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice> (direction) != (distribn_t) -1)
                 {
                   latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
                 }
