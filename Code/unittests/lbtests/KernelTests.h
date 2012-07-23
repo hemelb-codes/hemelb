@@ -27,13 +27,13 @@ namespace hemelb
        */
       class KernelTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE (KernelTests);
-          CPPUNIT_TEST (TestAnsumaliEntropicCalculationsAndCollision);
-          CPPUNIT_TEST (TestChikatamarlaEntropicCalculationsAndCollision);
-          CPPUNIT_TEST (TestLBGKCalculationsAndCollision);
-          CPPUNIT_TEST (TestLBGKNNCalculationsAndCollision);
-          CPPUNIT_TEST (TestMRTConstantRelaxationTimeEqualsLBGK);
-          CPPUNIT_TEST (TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE ( KernelTests);
+          CPPUNIT_TEST ( TestAnsumaliEntropicCalculationsAndCollision);
+          CPPUNIT_TEST ( TestChikatamarlaEntropicCalculationsAndCollision);
+          CPPUNIT_TEST ( TestLBGKCalculationsAndCollision);
+          CPPUNIT_TEST ( TestLBGKNNCalculationsAndCollision);
+          CPPUNIT_TEST ( TestMRTConstantRelaxationTimeEqualsLBGK);
+          CPPUNIT_TEST ( TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -53,10 +53,10 @@ namespace hemelb
             lbgknn1 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
                 lb::lattices::D3Q15>(initParams);
 
-            mrtLbgkEquivalentKernel =
-                new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
-            mrtLbgkEquivalentKernel19 =
-                new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>(initParams);
+            mrtLbgkEquivalentKernel
+                = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
+            mrtLbgkEquivalentKernel19
+                = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>(initParams);
 
           }
 
@@ -92,9 +92,7 @@ namespace hemelb
 
             // Manually set density and velocity and calculate eqm f.
             hydroVars1.density = 1.0;
-            hydroVars1.v_x = 0.4;
-            hydroVars1.v_y = 0.5;
-            hydroVars1.v_z = 0.6;
+            hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
             entropic->CalculateFeq(hydroVars1, 1);
 
@@ -201,9 +199,7 @@ namespace hemelb
 
             // Manually set density and velocity and calculate eqm f.
             hydroVars1.density = 1.0;
-            hydroVars1.v_x = 0.4;
-            hydroVars1.v_y = 0.5;
-            hydroVars1.v_z = 0.6;
+            hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
             kernel.CalculateFeq(hydroVars1, 1);
 
@@ -309,9 +305,7 @@ namespace hemelb
 
             // Manually set density and velocity and calculate eqm f.
             hydroVars1.density = 1.0;
-            hydroVars1.v_x = 0.4;
-            hydroVars1.v_y = 0.5;
-            hydroVars1.v_z = 0.6;
+            hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
             lbgk->CalculateFeq(hydroVars1, 1);
 
@@ -410,7 +404,8 @@ namespace hemelb
               f_setB[ii] = ((float) (lb::lattices::D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15> LB_KERNEL;
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15>
+                LB_KERNEL;
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -455,9 +450,9 @@ namespace hemelb
 
               // Manually set density and velocity and calculate eqm f.
               hydroVars1->density = 1.0;
-              hydroVars1->v_x = velocities[0];
-              hydroVars1->v_y = velocities[1];
-              hydroVars1->v_z = velocities[2];
+              hydroVars1->momentum.x = velocities[0];
+              hydroVars1->momentum.y = velocities[1];
+              hydroVars1->momentum.z = velocities[2];
 
               lbgknn1->CalculateFeq(*hydroVars1, site_index);
 
@@ -517,9 +512,9 @@ namespace hemelb
               distribn_t computedTau0 = hydroVars0->tau;
               CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0->GetTauValues().size());
 
-              distribn_t expectedTau0 = site_index % 2 ?
-                0.50009134451 :
-                0.50009285237;
+              distribn_t expectedTau0 = site_index % 2
+                ? 0.50009134451
+                : 0.50009285237;
 
               std::stringstream message;
               message << "Tau array [" << site_index << "] for dataset 0";
@@ -528,9 +523,9 @@ namespace hemelb
               distribn_t computedTau1 = hydroVars1->tau;
               CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1->GetTauValues().size());
 
-              distribn_t expectedTau1 = site_index % 2 ?
-                0.50009013551 :
-                0.50009021207;
+              distribn_t expectedTau1 = site_index % 2
+                ? 0.50009013551
+                : 0.50009021207;
 
               message.str("");
               message << "Tau array [" << site_index << "] for dataset 1";
@@ -593,7 +588,8 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> >
+                hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -657,7 +653,8 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q19::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q19>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> >
+                hydroVars0(f_original);
 
             // Calculate density, velocity, equilibrium f.
             mrtLbgkEquivalentKernel19->CalculateDensityVelocityFeq(hydroVars0, 0);
@@ -715,7 +712,7 @@ namespace hemelb
           lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
           lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>* mrtLbgkEquivalentKernel19;
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION (KernelTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION ( KernelTests);
     }
   }
 }
