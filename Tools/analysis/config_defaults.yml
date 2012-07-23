@@ -96,6 +96,7 @@ results:
         snapshots: (snapshots_raw * snapshots_norm)
         visualisation: (visualisation_raw * images_norm)
         lb_calc_rate: (sites*steps*1.0)/((cores-1.0)*lb)
+        total_velocity: (sites*steps*1.0)/(cores*simulation)
         velocity: (sites*steps*1.0/(cores*non_io))
         setup_velocity: (sites*1.0/(cores*setup))
         decomposition_velocity: (sites*1.0/(cores*domain_decomposition))
