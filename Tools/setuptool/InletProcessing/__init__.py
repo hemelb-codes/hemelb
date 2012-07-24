@@ -6,10 +6,22 @@ import vtk
 from vtk.util import numpy_support as convert
 
 import pdb
+def DbgWrite(polyDataOrAlgorithm, filename):
+    w = vtk.vtkXMLPolyDataWriter()
+    if isinstance(polyDataOrAlgorithm, vtk.vtkAlgorithm):
+        w.SetInputConnection(polyDataOrAlgorithm.GetOutputPort())
+    elif isinstance(polyDataOrAlgorithm, vtk.vtkPolyData):
+        w.SetInput(polyDataOrAlgorithm)
+    else:
+        raise ValueError('cannae cope with a "%s"' % str(type(polyDataOrAlgorithm)))
+    
+    w.SetFileName(filename)
+    w.Write()
 
 def Run(profileFile):
     for inletId, (inlet, (ids, positions), intersection) in enumerate(IterInletsData(profileFile)):
         tesselated = TransformAndTesselate(inlet, intersection, positions)
+        DbgWrite(tesselated, 'tess.vtp')
         p = tesselated.GetPoints()
         nPoints = tesselated.GetNumberOfPoints()
         nCells = tesselated.GetNumberOfPolys()
