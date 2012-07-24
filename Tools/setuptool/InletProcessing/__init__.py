@@ -1,6 +1,6 @@
 import numpy as np
 from GatherInletData import IterInletsData
-from TesselateFace import TransformAndTesselate
+from TesselateFace import Tesselator
 from PoiseuilleSolver import PoiseuilleSolver
 import vtk
 from vtk.util import numpy_support as convert
@@ -20,7 +20,8 @@ def DbgWrite(polyDataOrAlgorithm, filename):
 
 def Run(profileFile):
     for inletId, (inlet, (ids, positions), intersection) in enumerate(IterInletsData(profileFile)):
-        tesselated = TransformAndTesselate(inlet, intersection, positions)
+        tesselator = Tesselator(inlet, intersection, positions)
+        tesselated = tesselator()
         DbgWrite(tesselated, 'tess.vtp')
         p = tesselated.GetPoints()
         nPoints = tesselated.GetNumberOfPoints()
