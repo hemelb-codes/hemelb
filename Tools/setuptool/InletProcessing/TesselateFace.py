@@ -1,80 +1,103 @@
 import numpy as np
-from vtk import vtkDelaunay2D, vtkTransformPolyDataFilter, vtkPoints, \
-    vtkPolyData, vtkTransform
+from vtk import vtkDelaunay2D, vtkTransformPolyDataFilter, vtkTransform, \
+    vtkProgrammableFilter, vtkAppendPolyData, vtkIntArray
+
 
 class Tesselator(object):
-    """Object to transform the iolet to the X-Y plane and tesselate the 
-    interior with a triangular mesh.
+    """Object to transform the iolet sites and edge to the X-Y plane and 
+    tesselate the interior with a triangular mesh.
+    
+    Pipeline is:
+    
+    Edge ---------------------------------------------------
+          \                                                 \
+    Sites--> vtkAppendPolyData -> vtkTransformPolyDataFilter -> vtkDelaunay2D
+                              /    
+                            /
+    Iolet -> vtkTransform-/
     """
 
-    def __init__(self, inlet, intersectionPD, positionsNP):
-        """Create the object that will tesselate the face.
+    def __init__(self):
+        self.dummyAdder = DummyPointIdsAdder()
         
-        inlet -- the HemeLbSetupTool.Model.Iolets.Iolet object
+        self.merger = vtkAppendPolyData()
+        self.merger.AddInputConnection(self.dummyAdder.GetOutputPort())
         
-        intersectionPD -- vtkPolyData representing the intersection between the 
-            iolet and the surface
-            
-        positionsNP -- numpy array of the positions of the LB sites that are
-            adjacent to the iolet
-        """
-        self.trans = self._CreateTransformToInletCoords(inlet)
-        mergedPD = self._MergePoints(intersectionPD, positionsNP)
-        
-        tf = vtkTransformPolyDataFilter()
-        tf.SetTransform(self.trans)
-        tf.SetInput(mergedPD)
+        self.transformer = vtkTransformPolyDataFilter()
+        self.transformer.SetInputConnection(self.merger.GetOutputPort())
         
         self.tesselator = vtkDelaunay2D()
-        self.tesselator.SetSource(intersectionPD)
-        self.tesselator.SetInputConnection(tf.GetOutputPort())
+        self.tesselator.SetInputConnection(self.transformer.GetOutputPort())
+        
+        self.GetOutputPort = self.tesselator.GetOutputPort
+        self.GetOutput = self.tesselator.GetOutput
+        self.Update = self.tesselator.Update
+        
         return
     
-    def __call__(self):
-        self.tesselator.Update()
-        return self.tesselator.GetOutput()
-    
-    @staticmethod
-    def _MergePoints(intersectionPD, positionsNP):
-        """Create a vtkPolyData containing all the points, with the ones defining 
-        the perimeter first and in the same order as the input.
-        """
-        nI = intersectionPD.GetNumberOfPoints()
-        nP = len(positionsNP)
-        
-        outPD = vtkPolyData()
-        outPoints = vtkPoints()
-        outPoints.DeepCopy(intersectionPD.GetPoints())
-        
-        outPoints.SetNumberOfPoints(nI + nP)
-        for iPos, iOut in enumerate(xrange(nI, nI + nP)):
-            outPoints.SetPoint(iOut, *positionsNP[iPos])
-            continue
-        
-        outPD.SetPoints(outPoints)
-        return outPD
-    
-    @staticmethod
-    def _CreateTransformToInletCoords(inlet):
+    def SetInlet(self, inlet):
         """Create a vtkTransform which will rotate the coordinates such that
         inlet.Normal is oriented in the z-direction and origin is inlet.Centre
         """
         n = inlet.Normal
         n = np.array([n.x, n.y, n.z])
         
-        z = np.array([0., 0., 1.])
+        minInd = n.argsort()[0]
+        axis = np.zeros(3)
+        axis[minInd] = 1
         
-        theta = np.arccos(np.dot(n,z))
-        axis  = np.cross(n, z)
-        
-        norm = np.sqrt(np.dot(axis, axis))
-        axis /= norm
+        transmat = np.eye(4)
+        transmat[0, 0:3] = np.cross(n, axis)
+        transmat[0, 0:3] /= np.sqrt(np.sum(transmat[0, 0:3]**2))
+        transmat[1, 0:3] = np.cross(n, transmat[0, 0:3])
+        transmat[2, 0:3] = n
         
         trans = vtkTransform()
         trans.Scale(1., 1., 0.)
-        trans.RotateWXYZ(180. * theta / np.pi, axis[0], axis[1], axis[2])
-        
+        trans.Concatenate(transmat.flatten())
         r = inlet.Centre
         trans.Translate(r.x, r.y, r.z)
         
-        return trans
+        self.trans = trans
+        self.transformer.SetTransform(self.trans)
+        return
+    
+    def SetEdgeConnection(self, edgePort):
+        self.dummyAdder.SetInputConnection(edgePort)
+        self.tesselator.SetSourceConnection(edgePort)
+        return
+    
+    def SetSitesConnection(self, sitesPort):
+        self.merger.AddInputConnection(sitesPort)
+        return
+    pass
+
+class DummyPointIdsAdder(vtkProgrammableFilter):
+    """Filter to add PointData with an array of PointIds to the edge 
+    vtkPolyData. This is needed because vtkAppendPolyData only passes through
+    fields that are present in ALL input PolyData.
+    
+    Use (-1,-1,-1) as the dummy value (since (0,0,0) is the lowest expected
+    in a .gmy file).
+    """
+    def __init__(self):
+        self.SetExecuteMethod(self._Execute)
+        return
+    
+    def _Execute(self):
+        input = self.GetPolyDataInput()
+        output = self.GetPolyDataOutput()
+        output.ShallowCopy(input)
+        
+        empty = vtkIntArray()
+        empty.SetNumberOfComponents(3)
+        empty.SetNumberOfTuples(input.GetNumberOfPoints())
+        for i in xrange(3):
+            empty.FillComponent(i, -1)
+        empty.SetName("PointIds")
+            
+        opd = output.GetPointData()
+        opd.AddArray(empty)
+        return
+    
+    pass
