@@ -16,9 +16,16 @@ class PoiseuilleSolver(object):
         return
     
     def Solve(self):
+        """Solve the boundary value problem, such that the volume flux (i.e.
+        the integral of the velocity across the inlet surface) is one.
+        """
         self.equation.solve(var=self.speed, boundaryConditions=self.BCs)
+        # FiPy API doesn't seem to have an integrate method
+        volumeFlux = self.speed.getCellVolumeAverage() * self.speed.mesh.getCellVolumes().sum()
+        # Scale such that the flux will be unity 
+        self.speed /= volumeFlux
         return self.speed
-    
+        
     pass
 
 class FiPyTriangleMesher(object):
