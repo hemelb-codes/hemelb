@@ -51,6 +51,8 @@ namespace hemelb
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void SeparatedPointPoint::EnsurePreparedToSendReceive()
     {
+      count_sends=0;
+      count_receives=0;
       if (sendReceivePrepped)
       {
         return;
