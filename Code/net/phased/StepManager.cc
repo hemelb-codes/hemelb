@@ -24,7 +24,7 @@ namespace hemelb
 
       void StepManager::Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method)
       {
-        if (step == steps::BeginAll || step == steps::EndAll || step == steps::Reset)
+        if (step == steps::BeginAll || step == steps::EndAll)
         {
           phase = 0; // special actions are always recorded in the phase zero registry
         }
@@ -36,7 +36,7 @@ namespace hemelb
 
       void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
       {
-        for (int step = steps::BeginPhase; step <= steps::Reset; step++)
+        for (int step = steps::BeginPhase; step <= steps::EndAll; step++)
         {
           if (step == steps::Receive || step == steps::Send || step == steps::Wait)
           {

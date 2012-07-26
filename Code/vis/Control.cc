@@ -624,22 +624,6 @@ namespace hemelb
       }
     }
 
-    void Control::Reset()
-    {
-      timer.Set(0);
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
-
-      if (myStreaker != NULL)
-      {
-        myStreaker->Restart();
-      }
-
-      base::Reset();
-
-      ClearOut(base::mSimState->GetTimeStep() + 1);
-    }
-
     Control::~Control()
     {
       delete myStreaker;

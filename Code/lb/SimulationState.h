@@ -43,7 +43,6 @@ namespace hemelb
 
         PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
         PhysicalTime GetTimeStepLength() const {return timeStepLength;}
-        void DoubleTimeResolution();
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 
