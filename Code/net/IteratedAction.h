@@ -30,8 +30,7 @@ namespace hemelb
         virtual void PreReceive();
         virtual void PostReceive();
         virtual void EndIteration();
-        virtual void Reset();
-    };
+     };
   }
 }
 
