@@ -76,17 +76,6 @@ namespace hemelb
           }
         }
 
-        virtual void Reset()
-        {
-          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
-          {
-            ClearOut(*it);
-          }
-          startIterations.clear();
-
-          base::Reset();
-        }
-
         /**
          * Function that requests all the communications from the Net object.
          */
