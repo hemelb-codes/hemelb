@@ -330,17 +330,10 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::ResetUnstableSimulation()
 {
-  fileManager->EmptyOutputDirectories();
-  stepManager->CallSpecialAction(hemelb::net::phased::steps::Reset);
-
-#ifndef NO_STREAKLINES
-  visualisationControl->Reset();
-#endif
-
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %i\n",
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
                                                                       simulationState->GetTimeStepLength());
-
-  simulationState->Reset();
+  Finalise();
+  Abort();
 }
 
 void SimulationMaster::WriteLocalImages()
