@@ -38,9 +38,6 @@ namespace hemelb
         case phased::steps::EndAll:
           EndIteration();
           return true;
-        case phased::steps::Reset:
-          Reset();
-          return true;
         default:
           return false;
       }
@@ -67,11 +64,6 @@ namespace hemelb
     }
 
     void IteratedAction::EndIteration()
-    {
-
-    }
-
-    void IteratedAction::Reset()
     {
 
     }

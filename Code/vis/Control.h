@@ -80,7 +80,6 @@ namespace hemelb
         bool MouseIsOverPixel(const PixelSet<ResultPixel>* result, float* density, float* stress);
 
         void ProgressStreaklines(unsigned long time_step, unsigned long period);
-        void Reset();
 
         void UpdateImageSize(int pixels_x, int pixels_y);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);

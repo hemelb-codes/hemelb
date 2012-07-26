@@ -31,7 +31,6 @@ namespace hemelb
           Wait = 5,
           EndPhase = 6,
           EndAll = 7, // Called only after final phase
-          Reset = 8 // Special step, called if simulation must reinitialise
         };
       }
     }

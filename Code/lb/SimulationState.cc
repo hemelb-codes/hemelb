@@ -72,12 +72,6 @@ namespace hemelb
       return stability;
     }
 
-    void SimulationState::DoubleTimeResolution()
-    {
-      totalTimeSteps *= 2;
-      timeStepLength /= 2.0;
-    }
-
     void SimulationState::Report(ctemplate::TemplateDictionary& dictionary)
     {
       dictionary.SetFormattedValue("TIME_STEP_LENGTH", "%lf", GetTimeStepLength());

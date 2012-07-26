@@ -302,45 +302,6 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    // In the case of instability, this function restart the simulation
-    // with twice as many time steps per period and update the parameters
-    // that depends on this change.
-    template<class LatticeType>
-    void LBM<LatticeType>::Reset()
-    {
-      mState->DoubleTimeResolution();
-
-      mParams.Update(mState->GetTimeStepLength(), mLatDat->GetVoxelSize());
-
-      SetInitialConditions();
-
-      kernels::InitParams initParams = kernels::InitParams();
-      initParams.latDat = mLatDat;
-      initParams.lbmParams = &mParams;
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
-      mMidFluidCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
-      mWallCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
-      initParams.boundaryObject = mInletValues;
-      mInletWallCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
-      initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision->Reset(&initParams);
-    }
-
     template<class LatticeType>
     LBM<LatticeType>::~LBM()
     {
