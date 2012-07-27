@@ -20,7 +20,7 @@ class TestExtraction(unittest.TestCase):
     def test_construct(self):
         self.assertEqual(fixtures.Results('extractions').result_path(0),self.rc.path)
     def test_name_property(self):
-        self.assertEqual('cylRe1VxSz8.0e-05_c9b05fda56a0_localhost_4_10_10',self.rc.name)
+        self.assertEqual('cylRe1VxSz8.0e-05_80b9322046ce_localhost_4_10_10',self.rc.name)
     def test_field_count(self):
         self.assertEqual(1,self.rc.axial_field_count)
     def test_field_mean(self):
