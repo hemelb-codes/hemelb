@@ -100,39 +100,39 @@ namespace hemelb
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
             distribn_t expectedDensity1 = 1.0; // Should be unchanged
 
-            distribn_t expectedVelocity0[3];
-            LbTestsHelper::CalculateVelocity<lb::lattices::D3Q15>(hydroVars0.f, expectedVelocity0);
-            distribn_t expectedVelocity1[3] = { 0.4, 0.5, 0.6 };
+            distribn_t expectedMomentum0[3];
+            LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0.f, expectedMomentum0);
+            distribn_t expectedMomentum1[3] = { 0.4, 0.5, 0.6 };
 
             distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateAnsumaliEntropicEqmF<lb::lattices::D3Q15>(expectedDensity0,
-                                                                              expectedVelocity0[0],
-                                                                              expectedVelocity0[1],
-                                                                              expectedVelocity0[2],
+                                                                              expectedMomentum0[0],
+                                                                              expectedMomentum0[1],
+                                                                              expectedMomentum0[2],
                                                                               expectedFEq0);
             distribn_t expectedFEq1[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateAnsumaliEntropicEqmF<lb::lattices::D3Q15>(expectedDensity1,
-                                                                              expectedVelocity1[0],
-                                                                              expectedVelocity1[1],
-                                                                              expectedVelocity1[2],
+                                                                              expectedMomentum1[0],
+                                                                              expectedMomentum1[1],
+                                                                              expectedMomentum1[2],
                                                                               expectedFEq1);
 
             // Now compare the expected and actual values in both cases.
             distribn_t allowedError = 1e-10;
 
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                         expectedVelocity0[0],
-                                         expectedVelocity0[1],
-                                         expectedVelocity0[2],
+                                         expectedMomentum0[0],
+                                         expectedMomentum0[1],
+                                         expectedMomentum0[2],
                                          expectedFEq0,
                                          "Entropic, case 0",
                                          hydroVars0,
                                          allowedError);
 
             LbTestsHelper::CompareHydros(expectedDensity1,
-                                         expectedVelocity1[0],
-                                         expectedVelocity1[1],
-                                         expectedVelocity1[2],
+                                         expectedMomentum1[0],
+                                         expectedMomentum1[1],
+                                         expectedMomentum1[2],
                                          expectedFEq1,
                                          "Entropic, case 1",
                                          hydroVars1,
@@ -207,40 +207,40 @@ namespace hemelb
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
             distribn_t expectedDensity1 = 1.0; // Should be unchanged
 
-            distribn_t expectedVelocity0[3];
-            LbTestsHelper::CalculateVelocity<lb::lattices::D3Q15>(hydroVars0.f, expectedVelocity0);
-            distribn_t expectedVelocity1[3] = { 0.4, 0.5, 0.6 };
+            distribn_t expectedMomentum0[3];
+            LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0.f, expectedMomentum0);
+            distribn_t expectedMomentum1[3] = { 0.4, 0.5, 0.6 };
 
             distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
             lb::lattices::D3Q15::CalculateEntropicFeqChik(expectedDensity0,
-                                                          expectedVelocity0[0],
-                                                          expectedVelocity0[1],
-                                                          expectedVelocity0[2],
+                                                          expectedMomentum0[0],
+                                                          expectedMomentum0[1],
+                                                          expectedMomentum0[2],
                                                           expectedFEq0);
 
             distribn_t expectedFEq1[lb::lattices::D3Q15::NUMVECTORS];
             lb::lattices::D3Q15::CalculateEntropicFeqChik(expectedDensity1,
-                                                          expectedVelocity1[0],
-                                                          expectedVelocity1[1],
-                                                          expectedVelocity1[2],
+                                                          expectedMomentum1[0],
+                                                          expectedMomentum1[1],
+                                                          expectedMomentum1[2],
                                                           expectedFEq1);
 
             // Now compare the expected and actual values in both cases.
             distribn_t allowedError = 1e-10;
 
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                         expectedVelocity0[0],
-                                         expectedVelocity0[1],
-                                         expectedVelocity0[2],
+                                         expectedMomentum0[0],
+                                         expectedMomentum0[1],
+                                         expectedMomentum0[2],
                                          expectedFEq0,
                                          "Chikatamarla Entropic, case 0",
                                          hydroVars0,
                                          allowedError);
 
             LbTestsHelper::CompareHydros(expectedDensity1,
-                                         expectedVelocity1[0],
-                                         expectedVelocity1[1],
-                                         expectedVelocity1[2],
+                                         expectedMomentum1[0],
+                                         expectedMomentum1[1],
+                                         expectedMomentum1[2],
                                          expectedFEq1,
                                          "Chikatamarla Entropic, case 1",
                                          hydroVars1,
@@ -313,38 +313,38 @@ namespace hemelb
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
             distribn_t expectedDensity1 = 1.0; // Unchanged
 
-            distribn_t expectedVelocity0[3];
-            LbTestsHelper::CalculateVelocity<lb::lattices::D3Q15>(hydroVars0.f, expectedVelocity0);
-            distribn_t expectedVelocity1[3] = { 0.4, 0.5, 0.6 };
+            distribn_t expectedMomentum0[3];
+            LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0.f, expectedMomentum0);
+            distribn_t expectedMomentum1[3] = { 0.4, 0.5, 0.6 };
 
             distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity0,
-                                                                  expectedVelocity0[0],
-                                                                  expectedVelocity0[1],
-                                                                  expectedVelocity0[2],
+                                                                  expectedMomentum0[0],
+                                                                  expectedMomentum0[1],
+                                                                  expectedMomentum0[2],
                                                                   expectedFEq0);
             distribn_t expectedFEq1[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity1,
-                                                                  expectedVelocity1[0],
-                                                                  expectedVelocity1[1],
-                                                                  expectedVelocity1[2],
+                                                                  expectedMomentum1[0],
+                                                                  expectedMomentum1[1],
+                                                                  expectedMomentum1[2],
                                                                   expectedFEq1);
 
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
 
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                         expectedVelocity0[0],
-                                         expectedVelocity0[1],
-                                         expectedVelocity0[2],
+                                         expectedMomentum0[0],
+                                         expectedMomentum0[1],
+                                         expectedMomentum0[2],
                                          expectedFEq0,
                                          "LBGK, case 0",
                                          hydroVars0,
                                          allowedError);
             LbTestsHelper::CompareHydros(expectedDensity1,
-                                         expectedVelocity1[0],
-                                         expectedVelocity1[1],
-                                         expectedVelocity1[2],
+                                         expectedMomentum1[0],
+                                         expectedMomentum1[1],
+                                         expectedMomentum1[2],
                                          expectedFEq1,
                                          "LBGK, case 1",
                                          hydroVars1,
@@ -410,9 +410,9 @@ namespace hemelb
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
 
-            distribn_t velocitiesSetA[] = { 0.4, 0.5, 0.6 };
-            distribn_t velocitiesSetB[] = { -0.4, -0.5, -0.6 };
-            distribn_t *velocities;
+            distribn_t momentumSetA[] = { 0.4, 0.5, 0.6 };
+            distribn_t momentumSetB[] = { -0.4, -0.5, -0.6 };
+            distribn_t *momentum;
 
             distribn_t numTolerance = 1e-10;
 
@@ -435,14 +435,14 @@ namespace hemelb
                 f_original = f_setA;
                 hydroVars0 = &hydroVars0SetA;
                 hydroVars1 = &hydroVars1SetA;
-                velocities = velocitiesSetA;
+                momentum = momentumSetA;
               }
               else
               {
                 f_original = f_setB;
                 hydroVars0 = &hydroVars0SetB;
                 hydroVars1 = &hydroVars1SetB;
-                velocities = velocitiesSetB;
+                momentum = momentumSetB;
               }
 
               // Calculate density, velocity, equilibrium f.
@@ -450,9 +450,9 @@ namespace hemelb
 
               // Manually set density and velocity and calculate eqm f.
               hydroVars1->density = 1.0;
-              hydroVars1->momentum.x = velocities[0];
-              hydroVars1->momentum.y = velocities[1];
-              hydroVars1->momentum.z = velocities[2];
+              hydroVars1->momentum.x = momentum[0];
+              hydroVars1->momentum.y = momentum[1];
+              hydroVars1->momentum.z = momentum[2];
 
               lbgknn1->CalculateFeq(*hydroVars1, site_index);
 
@@ -460,36 +460,36 @@ namespace hemelb
               distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
               distribn_t expectedDensity1 = 1.0; // Unchanged
 
-              distribn_t expectedVelocity0[3];
-              LbTestsHelper::CalculateVelocity<lb::lattices::D3Q15>(hydroVars0->f, expectedVelocity0);
-              distribn_t *expectedVelocity1 = velocities;
+              distribn_t expectedMomentum0[3];
+              LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0->f, expectedMomentum0);
+              distribn_t *expectedMomentum1 = momentum;
 
               distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
               LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity0,
-                                                                    expectedVelocity0[0],
-                                                                    expectedVelocity0[1],
-                                                                    expectedVelocity0[2],
+                                                                    expectedMomentum0[0],
+                                                                    expectedMomentum0[1],
+                                                                    expectedMomentum0[2],
                                                                     expectedFEq0);
               distribn_t expectedFEq1[lb::lattices::D3Q15::NUMVECTORS];
               LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity1,
-                                                                    expectedVelocity1[0],
-                                                                    expectedVelocity1[1],
-                                                                    expectedVelocity1[2],
+                                                                    expectedMomentum1[0],
+                                                                    expectedMomentum1[1],
+                                                                    expectedMomentum1[2],
                                                                     expectedFEq1);
 
               // Now compare the expected and actual values.
               LbTestsHelper::CompareHydros(expectedDensity0,
-                                           expectedVelocity0[0],
-                                           expectedVelocity0[1],
-                                           expectedVelocity0[2],
+                                           expectedMomentum0[0],
+                                           expectedMomentum0[1],
+                                           expectedMomentum0[2],
                                            expectedFEq0,
                                            "LBGKNN, case 0",
                                            *hydroVars0,
                                            numTolerance);
               LbTestsHelper::CompareHydros(expectedDensity1,
-                                           expectedVelocity1[0],
-                                           expectedVelocity1[1],
-                                           expectedVelocity1[2],
+                                           expectedMomentum1[0],
+                                           expectedMomentum1[1],
+                                           expectedMomentum1[2],
                                            expectedFEq1,
                                            "LBGKNN, case 1",
                                            *hydroVars1,
@@ -596,21 +596,21 @@ namespace hemelb
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
-            distribn_t expectedVelocity0[3];
+            distribn_t expectedMomentum0[3];
             distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q15>(hydroVars0.f, expectedDensity0, expectedVelocity0);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(hydroVars0.f, expectedDensity0, expectedMomentum0);
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity0,
-                                                                  expectedVelocity0[0],
-                                                                  expectedVelocity0[1],
-                                                                  expectedVelocity0[2],
+                                                                  expectedMomentum0[0],
+                                                                  expectedMomentum0[1],
+                                                                  expectedMomentum0[2],
                                                                   expectedFEq0);
 
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                         expectedVelocity0[0],
-                                         expectedVelocity0[1],
-                                         expectedVelocity0[2],
+                                         expectedMomentum0[0],
+                                         expectedMomentum0[1],
+                                         expectedMomentum0[2],
                                          expectedFEq0,
                                          "MRT against LBGK",
                                          hydroVars0,
@@ -661,21 +661,21 @@ namespace hemelb
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
-            distribn_t expectedVelocity0[3];
+            distribn_t expectedMomentum0[3];
             distribn_t expectedFEq0[lb::lattices::D3Q19::NUMVECTORS];
-            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q19>(hydroVars0.f, expectedDensity0, expectedVelocity0);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q19>(hydroVars0.f, expectedDensity0, expectedMomentum0);
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q19>(expectedDensity0,
-                                                                  expectedVelocity0[0],
-                                                                  expectedVelocity0[1],
-                                                                  expectedVelocity0[2],
+                                                                  expectedMomentum0[0],
+                                                                  expectedMomentum0[1],
+                                                                  expectedMomentum0[2],
                                                                   expectedFEq0);
 
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                         expectedVelocity0[0],
-                                         expectedVelocity0[1],
-                                         expectedVelocity0[2],
+                                         expectedMomentum0[0],
+                                         expectedMomentum0[1],
+                                         expectedMomentum0[2],
                                          expectedFEq0,
                                          "MRT against LBGK",
                                          hydroVars0,
