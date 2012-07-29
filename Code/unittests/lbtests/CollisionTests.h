@@ -97,28 +97,28 @@ namespace hemelb
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = inletBoundary->GetBoundaryDensity(0);
-            distribn_t expectedV[3];
+            distribn_t expectedMomentum[3];
 
             distribn_t originalRho;
-            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q15>(fOld, originalRho, expectedV);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld, originalRho, expectedMomentum);
 
             // Now need to scale the momentum, expectedV, to account for the difference between
             // original and enforced densities.
             for(unsigned axis = 0; axis < 3; ++axis)
-              expectedV[axis] *= (expectedRho / originalRho);
+              expectedMomentum[axis] *= (expectedRho / originalRho);
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
-                                                                  expectedV[0],
-                                                                  expectedV[1],
-                                                                  expectedV[2],
+                                                                  expectedMomentum[0],
+                                                                  expectedMomentum[1],
+                                                                  expectedMomentum[2],
                                                                   expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
-                                         expectedV[0],
-                                         expectedV[1],
-                                         expectedV[2],
+                                         expectedMomentum[0],
+                                         expectedMomentum[1],
+                                         expectedMomentum[2],
                                          expectedFeq,
                                          "Non-0 velocity eqm fixed density, calculate pre collision",
                                          hydroVars,
@@ -154,20 +154,20 @@ namespace hemelb
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = outletBoundary->GetBoundaryDensity(0);
-            distribn_t expectedV[3] = { 0., 0., 0. };
+            distribn_t expectedMomentum[3] = { 0., 0., 0. };
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
-                                                                  expectedV[0],
-                                                                  expectedV[1],
-                                                                  expectedV[2],
+                                                                  expectedMomentum[0],
+                                                                  expectedMomentum[1],
+                                                                  expectedMomentum[2],
                                                                   expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
-                                         expectedV[0],
-                                         expectedV[1],
-                                         expectedV[2],
+                                         expectedMomentum[0],
+                                         expectedMomentum[1],
+                                         expectedMomentum[2],
                                          expectedFeq,
                                          "0 velocity eqm fixed density, calculate pre collision",
                                          hydroVars,
@@ -203,7 +203,7 @@ namespace hemelb
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = 0.0;
-            distribn_t expectedV[3] = { 0., 0., 0. };
+            distribn_t expectedMomentum[3] = { 0., 0., 0. };
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
@@ -212,16 +212,16 @@ namespace hemelb
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
-                                                                  expectedV[0],
-                                                                  expectedV[1],
-                                                                  expectedV[2],
+                                                                  expectedMomentum[0],
+                                                                  expectedMomentum[1],
+                                                                  expectedMomentum[2],
                                                                   expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
-                                         expectedV[0],
-                                         expectedV[1],
-                                         expectedV[2],
+                                         expectedMomentum[0],
+                                         expectedMomentum[1],
+                                         expectedMomentum[2],
                                          expectedFeq,
                                          "0 velocity eqm, calculate pre collision",
                                          hydroVars,
@@ -257,22 +257,22 @@ namespace hemelb
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho;
-            distribn_t expectedV[3];
+            distribn_t expectedMomentum[3];
 
-            LbTestsHelper::CalculateRhoVelocity<lb::lattices::D3Q15>(fOld, expectedRho, expectedV);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld, expectedRho, expectedMomentum);
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
-                                                                  expectedV[0],
-                                                                  expectedV[1],
-                                                                  expectedV[2],
+                                                                  expectedMomentum[0],
+                                                                  expectedMomentum[1],
+                                                                  expectedMomentum[2],
                                                                   expectedFeq);
 
             // Compare.
             LbTestsHelper::CompareHydros(expectedRho,
-                                         expectedV[0],
-                                         expectedV[1],
-                                         expectedV[2],
+                                         expectedMomentum[0],
+                                         expectedMomentum[1],
+                                         expectedMomentum[2],
                                          expectedFeq,
                                          "Normal, calculate pre collision",
                                          hydroVars,
