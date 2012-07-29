@@ -17,7 +17,7 @@ namespace hemelb
       {
         public:
           template<typename Lattice>
-          static void CalculateRhoVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
+          static void CalculateRhoMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
           {
             rho = 0.0;
 
@@ -32,7 +32,7 @@ namespace hemelb
           }
 
           template<typename Lattice>
-          static void CalculateVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t v[3])
+          static void CalculateMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t v[3])
           {
             v[0] = v[1] = v[2] = 0.0;
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
@@ -134,9 +134,9 @@ namespace hemelb
 
           template<typename Kernel>
           static void CompareHydros(distribn_t expectedDensity,
-                                    distribn_t expectedVx,
-                                    distribn_t expectedVy,
-                                    distribn_t expectedVz,
+                                    distribn_t expectedMomentumX,
+                                    distribn_t expectedMomentumY,
+                                    distribn_t expectedMomentumZ,
                                     distribn_t expectedFEq[lb::lattices::D3Q15::NUMVECTORS],
                                     std::string id,
                                     lb::kernels::HydroVars<Kernel> &hydroVars,
@@ -146,9 +146,9 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
             // Compare velocity
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id, expectedVx, hydroVars.momentum.x, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id, expectedVy, hydroVars.momentum.y, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.momentum.z, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id, expectedMomentumX, hydroVars.momentum.x, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum y " + id, expectedMomentumY, hydroVars.momentum.y, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum z " + id, expectedMomentumZ, hydroVars.momentum.z, allowedError);
 
             // Compare equilibrium f
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
