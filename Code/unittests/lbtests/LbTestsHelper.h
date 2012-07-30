@@ -45,22 +45,22 @@ namespace hemelb
 
           template<typename Lattice>
           static void CalculateAnsumaliEntropicEqmF(distribn_t density,
-                                                    distribn_t v_x,
-                                                    distribn_t v_y,
-                                                    distribn_t v_z,
+                                                    distribn_t momentum_x,
+                                                    distribn_t momentum_y,
+                                                    distribn_t momentum_z,
                                                     distribn_t f[Lattice::NUMVECTORS])
           {
             // Calculate velocity.
-            distribn_t u[3] = { v_x / density, v_y / density, v_z / density };
+            distribn_t velocity[3] = { momentum_x / density, momentum_y / density, momentum_z / density };
 
             distribn_t B[3];
             distribn_t term1[3];
             distribn_t term2[3];
             for (int ii = 0; ii < 3; ++ii)
             {
-              B[ii] = sqrt(1.0 + 3.0 * u[ii] * u[ii]);
+              B[ii] = sqrt(1.0 + 3.0 * velocity[ii] * velocity[ii]);
               term1[ii] = 2.0 - B[ii];
-              term2[ii] = (2.0 * u[ii] + B[ii]) / (1.0 - u[ii]);
+              term2[ii] = (2.0 * velocity[ii] + B[ii]) / (1.0 - velocity[ii]);
             }
 
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
@@ -75,25 +75,25 @@ namespace hemelb
 
           template<typename Lattice>
           static void CalculateLBGKEqmF(distribn_t density,
-                                        distribn_t v_x,
-                                        distribn_t v_y,
-                                        distribn_t v_z,
+                                        distribn_t momentum,
+                                        distribn_t momentum_y,
+                                        distribn_t momentum_z,
                                         distribn_t f[Lattice::NUMVECTORS])
           {
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
+              distribn_t vSum = momentum * (float) Lattice::CX[ii] + momentum_y * (float) Lattice::CY[ii] + momentum_z
                   * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
-              distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
+              distribn_t momentum2Sum = momentum * momentum + momentum_y * momentum_y + momentum_z * momentum_z;
 
               // F eqm = density proportional component...
               f[ii] = density;
 
               // ... - v^2 component...
-              f[ii] -= ( (3.0 / 2.0) * v2Sum / density);
+              f[ii] -= ( (3.0 / 2.0) * momentum2Sum / density);
 
               // ... + v^1 component
               f[ii] += 3.0 * vSum + (9.0 / 2.0) * vSum * vSum / density;
@@ -146,9 +146,18 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
             // Compare momentum
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id, expectedMomentumX, hydroVars.momentum.x, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum y " + id, expectedMomentumY, hydroVars.momentum.y, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum z " + id, expectedMomentumZ, hydroVars.momentum.z, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id,
+                                                 expectedMomentumX,
+                                                 hydroVars.momentum.x,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum y " + id,
+                                                 expectedMomentumY,
+                                                 hydroVars.momentum.y,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum z " + id,
+                                                 expectedMomentumZ,
+                                                 hydroVars.momentum.z,
+                                                 allowedError);
 
             // Compare equilibrium f
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)

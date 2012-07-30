@@ -149,6 +149,11 @@ namespace hemelb
       return (ioletIntersection & mask) != 0;
     }
 
+    uint32_t SiteData::GetIoletIntersectionData() const
+    {
+      return ioletIntersection;
+    }
+
     uint32_t SiteData::GetIntersectionData() const
     {
       return boundaryIntersection;
