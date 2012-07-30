@@ -41,7 +41,7 @@ namespace hemelb
     {
       if (!file_exists(filename))
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
+        log::Logger::Log<log::Warning, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
         std::exit(0);
       }
     }
