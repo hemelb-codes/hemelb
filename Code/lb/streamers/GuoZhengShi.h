@@ -166,10 +166,12 @@ namespace hemelb
                     util::Vector3D<LatticeVelocity> nextNodeOutVelocity;
                     distribn_t nextNodeOutFEq[LatticeType::NUMVECTORS];
 
-                    // Go ahead and calculate the density, velocity and eqm distribution.
+                    // Go ahead and calculate the density, momentum and eqm distribution.
                     {
                       distribn_t nextNodeDensity;
-                      LatticeType::CalculateDensityVelocityFEq(neighbourFOld,
+                      // Note that nextNodeOutVelocity is passed as the momentum argument, this
+                      // is because it is immediately divided by density when the function returns.
+                      LatticeType::CalculateDensityMomentumFEq(neighbourFOld,
                                                                nextNodeDensity,
                                                                nextNodeOutVelocity.x,
                                                                nextNodeOutVelocity.y,
@@ -201,13 +203,13 @@ namespace hemelb
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
-                  velocityWall *= hydroVars.density;
+                  util::Vector3D<distribn_t> momentumWall = velocityWall * hydroVars.density;
 
                   distribn_t fEqTemp[LatticeType::NUMVECTORS];
                   LatticeType::CalculateFeq(hydroVars.density,
-                                            velocityWall[0],
-                                            velocityWall[1],
-                                            velocityWall[2],
+                                            momentumWall[0],
+                                            momentumWall[1],
+                                            momentumWall[2],
                                             fEqTemp);
 
                   // Collide and stream!

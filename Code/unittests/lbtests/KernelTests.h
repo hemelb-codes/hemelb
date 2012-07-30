@@ -46,7 +46,7 @@ namespace hemelb
 
             /*
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
-             *  values of tau consistent). One to be used with CalculateDensityVelocityFeq and another with CalculateFeq.
+             *  values of tau consistent). One to be used with CalculateDensityMomentumFeq and another with CalculateFeq.
              */
             lbgknn0 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
                 lb::lattices::D3Q15>(initParams);
@@ -79,18 +79,18 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
 
             /*
-             * Case 0: use the function that calculates density, velocity and
+             * Case 0: use the function that calculates density, momentum and
              * f_eq.
-             * Case 1: use the function that leaves density and velocity and
+             * Case 1: use the function that leaves density and momentum and
              * calculates f_eq.
              */
             lb::kernels::HydroVars<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15> > hydroVars0(f_original);
             lb::kernels::HydroVars<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15> > hydroVars1(f_original);
 
-            // Calculate density, velocity, equilibrium f.
-            entropic->CalculateDensityVelocityFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            entropic->CalculateDensityMomentumFeq(hydroVars0, 0);
 
-            // Manually set density and velocity and calculate eqm f.
+            // Manually set density and momentum and calculate eqm f.
             hydroVars1.density = 1.0;
             hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
@@ -186,18 +186,18 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
 
             /*
-             * Case 0: use the function that calculates density, velocity and
+             * Case 0: use the function that calculates density, momentum and
              * f_eq.
-             * Case 1: use the function that leaves density and velocity and
+             * Case 1: use the function that leaves density and momentum and
              * calculates f_eq.
              */
             lb::kernels::HydroVars<lb::kernels::EntropicChik<lb::lattices::D3Q15> > hydroVars0(f_original);
             lb::kernels::HydroVars<lb::kernels::EntropicChik<lb::lattices::D3Q15> > hydroVars1(f_original);
 
-            // Calculate density, velocity, equilibrium f.
-            kernel.CalculateDensityVelocityFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            kernel.CalculateDensityMomentumFeq(hydroVars0, 0);
 
-            // Manually set density and velocity and calculate eqm f.
+            // Manually set density and momentum and calculate eqm f.
             hydroVars1.density = 1.0;
             hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
@@ -292,18 +292,18 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
 
             /*
-             * Case 0: test the kernel function for calculating density, velocity
+             * Case 0: test the kernel function for calculating density, momentum
              * and f_eq.
-             * Case 1: test the function that uses a given density and velocity, and
+             * Case 1: test the function that uses a given density and momentum, and
              * calculates f_eq.
              */
             lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars0(f_original);
             lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars1(f_original);
 
-            // Calculate density, velocity, equilibrium f.
-            lbgk->CalculateDensityVelocityFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            lbgk->CalculateDensityMomentumFeq(hydroVars0, 0);
 
-            // Manually set density and velocity and calculate eqm f.
+            // Manually set density and momentum and calculate eqm f.
             hydroVars1.density = 1.0;
             hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
@@ -419,15 +419,15 @@ namespace hemelb
             for (site_t site_index = 0; site_index < numSites; site_index++)
             {
               /*
-               * Test part 1: Equilibrium function, density, and velocity are computed
+               * Test part 1: Equilibrium function, density, and momentum are computed
                * identically to the standard LBGK. Local relaxation times are implicitely
-               * computed by CalculateDensityVelocityFeq
+               * computed by CalculateDensityMomentumFeq
                */
 
               /*
-               * Case 0: test the kernel function for calculating density, velocity
+               * Case 0: test the kernel function for calculating density, momentum
                * and f_eq.
-               * Case 1: test the function that uses a given density and velocity, and
+               * Case 1: test the function that uses a given density and momentum, and
                * calculates f_eq.
                */
               if (site_index % 2)
@@ -445,10 +445,10 @@ namespace hemelb
                 momentum = momentumSetB;
               }
 
-              // Calculate density, velocity, equilibrium f.
-              lbgknn0->CalculateDensityVelocityFeq(*hydroVars0, site_index);
+              // Calculate density, momentum, equilibrium f.
+              lbgknn0->CalculateDensityMomentumFeq(*hydroVars0, site_index);
 
-              // Manually set density and velocity and calculate eqm f.
+              // Manually set density and momentum and calculate eqm f.
               hydroVars1->density = 1.0;
               hydroVars1->momentum.x = momentum[0];
               hydroVars1->momentum.y = momentum[1];
@@ -506,7 +506,7 @@ namespace hemelb
                * tau is used in DoCollide as opposite to the default Newtonian tau used during the
                * first time step.
                */
-              lbgknn0->CalculateDensityVelocityFeq(*hydroVars0, site_index);
+              lbgknn0->CalculateDensityMomentumFeq(*hydroVars0, site_index);
               lbgknn1->CalculateFeq(*hydroVars1, site_index);
 
               distribn_t computedTau0 = hydroVars0->tau;
@@ -591,8 +591,8 @@ namespace hemelb
             lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> >
                 hydroVars0(f_original);
 
-            // Calculate density, velocity, equilibrium f.
-            mrtLbgkEquivalentKernel->CalculateDensityVelocityFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            mrtLbgkEquivalentKernel->CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
@@ -656,8 +656,8 @@ namespace hemelb
             lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> >
                 hydroVars0(f_original);
 
-            // Calculate density, velocity, equilibrium f.
-            mrtLbgkEquivalentKernel19->CalculateDensityVelocityFeq(hydroVars0, 0);
+            // Calculate density, momentum, equilibrium f.
+            mrtLbgkEquivalentKernel19->CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
