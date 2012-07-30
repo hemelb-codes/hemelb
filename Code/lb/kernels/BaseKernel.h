@@ -145,15 +145,15 @@ namespace hemelb
        *  - Constructor(InitParams&)
        *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
        *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
-       *  - CalculateDensityVelocityFeq(KHydroVars&, site_t) for calculating
-       *      the density, velocity and equilibrium distribution
+       *  - CalculateDensityMomentumFeq(KHydroVars&, site_t) for calculating
+       *      the density, momentum and equilibrium distribution
        *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
        *  - Reset(InitParams*)
        *
        * The following must be implemented must be kernels (which derive from this class
        * using the CRTP).
        *  - Constructor(InitParams&)
-       *  - DoCalculateDensityVelocityFeq(KHydroVars&, site_t)
+       *  - DoCalculateDensityMomentumFeq(KHydroVars&, site_t)
        *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
        *  - DoReset(InitParams*)
        */
@@ -164,9 +164,9 @@ namespace hemelb
           typedef HydroVars<KernelImpl> KHydroVars;
           typedef LatticeImpl LatticeType;
 
-          inline void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateDensityVelocityFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateDensityMomentumFeq(hydroVars, index);
           }
 
           inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
