@@ -41,55 +41,33 @@ namespace hemelb
 
             FourCubeBasedTestFixture::setUp();
             propertyCache = new lb::MacroscopicPropertyCache(*simState, *latDat);
-
             normalCollision = new lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> >(initParams);
-
-            simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<
-                lb::kernels::LBGK<lb::lattices::D3Q15> > >(initParams);
-            simpleBounceBack = new lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<
-                lb::lattices::D3Q15> > >(initParams);
-            regularised = new lb::streamers::Regularised<
-                lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >(initParams);
-            fInterpolation = new lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK<
-                lb::lattices::D3Q15> > >(initParams);
-            guoZhengShi = new lb::streamers::GuoZhengShi<
-                lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >(initParams);
-
-            // Setting all the wall distances to 0.5 will make Junk&Yang behave like Simple Bounce Back
-            LbTestsHelper::SetWallAndIoletDistances<lb::lattices::D3Q15>(*latDat, 0.5);
-
-            junkYang
-                = new lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >(initParams);
           }
 
           void tearDown()
           {
             delete propertyCache;
-
             delete normalCollision;
 
-            delete simpleCollideAndStream;
-            delete simpleBounceBack;
-            delete regularised;
-            delete fInterpolation;
-            delete guoZhengShi;
-            delete junkYang;
             FourCubeBasedTestFixture::tearDown();
           }
 
           void TestSimpleCollideAndStream()
           {
+            lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                simpleCollideAndStream(initParams);
+
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
 
             // Use the streaming operator on the entire lattice.
-            simpleCollideAndStream->StreamAndCollide<false> (0,
-                                                             latDat->GetLocalFluidSiteCount(),
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            simpleCollideAndStream.StreamAndCollide<false> (0,
+                                                            latDat->GetLocalFluidSiteCount(),
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
 
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
@@ -138,12 +116,15 @@ namespace hemelb
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
-            fInterpolation->StreamAndCollide<false> (0,
-                                                     latDat->GetLocalFluidSiteCount(),
-                                                     lbmParams,
-                                                     latDat,
-                                                     *propertyCache);
-            fInterpolation->PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
+            lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                fInterpolation(initParams);
+
+            fInterpolation.StreamAndCollide<false> (0,
+                                                    latDat->GetLocalFluidSiteCount(),
+                                                    lbmParams,
+                                                    latDat,
+                                                    *propertyCache);
+            fInterpolation.PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
 
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
@@ -298,27 +279,33 @@ namespace hemelb
             site_t offset = 0;
 
             // Mid-Fluid sites use simple collide and stream
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetMidDomainCollisionCount(0),
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                simpleCollideAndStream(initParams);
+
+            simpleCollideAndStream.StreamAndCollide<false> (offset,
+                                                            latDat->GetMidDomainCollisionCount(0),
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use simple bounce back
-            simpleBounceBack->StreamAndCollide<false> (offset,
-                                                       latDat->GetMidDomainCollisionCount(1),
-                                                       lbmParams,
-                                                       latDat,
-                                                       *propertyCache);
+            lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                simpleBounceBack(initParams);
+
+            simpleBounceBack.StreamAndCollide<false> (offset,
+                                                      latDat->GetMidDomainCollisionCount(1),
+                                                      lbmParams,
+                                                      latDat,
+                                                      *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(1);
 
             // Consider inlet/outlets and their walls as mid-fluid sites
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetLocalFluidSiteCount() - offset,
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            simpleCollideAndStream.StreamAndCollide<false> (offset,
+                                                            latDat->GetLocalFluidSiteCount() - offset,
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
             offset += latDat->GetLocalFluidSiteCount() - offset;
 
             // Sanity check
@@ -409,27 +396,33 @@ namespace hemelb
             site_t offset = 0;
 
             // Mid-Fluid sites use simple collide and stream
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetMidDomainCollisionCount(0),
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                simpleCollideAndStream(initParams);
+
+            simpleCollideAndStream.StreamAndCollide<false> (offset,
+                                                            latDat->GetMidDomainCollisionCount(0),
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use regularised BC
-            regularised->StreamAndCollide<false> (offset,
-                                                  latDat->GetMidDomainCollisionCount(1),
-                                                  lbmParams,
-                                                  latDat,
-                                                  *propertyCache);
+            lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                regularised(initParams);
+
+            regularised.StreamAndCollide<false> (offset,
+                                                 latDat->GetMidDomainCollisionCount(1),
+                                                 lbmParams,
+                                                 latDat,
+                                                 *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(1);
 
             // Inlet/outlets and their walls use regularised BC
-            regularised->StreamAndCollide<false> (offset,
-                                                  latDat->GetLocalFluidSiteCount() - offset,
-                                                  lbmParams,
-                                                  latDat,
-                                                  *propertyCache);
+            regularised.StreamAndCollide<false> (offset,
+                                                 latDat->GetLocalFluidSiteCount() - offset,
+                                                 lbmParams,
+                                                 latDat,
+                                                 *propertyCache);
             offset += latDat->GetLocalFluidSiteCount() - offset;
 
             // Sanity check
@@ -526,6 +519,9 @@ namespace hemelb
 
           void TestGuoZhengShi()
           {
+            lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                guoZhengShi(initParams);
+
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)
             {
               // Initialise fOld in the lattice data. We choose values so that each site has
@@ -557,7 +553,7 @@ namespace hemelb
               latDat->SetBoundaryDistance(chosenSite, chosenDoubleWallDirection2, assignedWallDistance);
 
               // Perform the collision and streaming.
-              guoZhengShi->StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+              guoZhengShi.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -626,7 +622,7 @@ namespace hemelb
                     // This is the second method for estimating: using the next fluid site
                     // away from the wall.
                     util::Vector3D<distribn_t> velocityEstimate2 = nextSiteOutHydroVars.momentum
-                        * (assignedWallDistance - 1.) / ((1. + assignedWallDistance) * nextSiteOutHydroVars.density);
+                        * (assignedWallDistance - 1.) / ( (1. + assignedWallDistance) * nextSiteOutHydroVars.density);
 
                     distribn_t fNeqEstimate2 = nextSiteOutHydroVars.GetFNeq()[streamedDirection];
 
@@ -639,7 +635,8 @@ namespace hemelb
                   }
                   else
                   {
-                    velocityWall = streamerHydroVars.momentum * (1. - 1. / assignedWallDistance) / streamerHydroVars.density;
+                    velocityWall = streamerHydroVars.momentum * (1. - 1. / assignedWallDistance)
+                        / streamerHydroVars.density;
 
                     fNeqWall = streamerHydroVars.GetFNeq()[streamedDirection];
                   }
@@ -675,6 +672,8 @@ namespace hemelb
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
+            // Setting all the wall distances to 0.5 will make Junk&Yang behave like Simple Bounce Back
+            LbTestsHelper::SetWallAndIoletDistances<lb::lattices::D3Q15>(*latDat, 0.5);
 
             site_t firstWallSite = latDat->GetMidDomainCollisionCount(0);
             site_t wallSitesCount = latDat->GetMidDomainCollisionCount(1) - firstWallSite;
@@ -685,30 +684,36 @@ namespace hemelb
             site_t offset = 0;
 
             // Mid-Fluid sites use simple collide and stream
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetMidDomainCollisionCount(0),
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                simpleCollideAndStream(initParams);
+
+            simpleCollideAndStream.StreamAndCollide<false> (offset,
+                                                            latDat->GetMidDomainCollisionCount(0),
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use junk and yang
-            junkYang->StreamAndCollide<false> (offset,
-                                               latDat->GetMidDomainCollisionCount(1),
-                                               lbmParams,
-                                               latDat,
-                                               *propertyCache);
+            lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                junkYang(initParams);
 
-            junkYang->PostStep<false> (offset, latDat->GetMidDomainCollisionCount(1), lbmParams, latDat, *propertyCache);
+            junkYang.StreamAndCollide<false> (offset,
+                                              latDat->GetMidDomainCollisionCount(1),
+                                              lbmParams,
+                                              latDat,
+                                              *propertyCache);
+
+            junkYang.PostStep<false> (offset, latDat->GetMidDomainCollisionCount(1), lbmParams, latDat, *propertyCache);
 
             offset += latDat->GetMidDomainCollisionCount(1);
 
             // Consider inlet/outlets and their walls as mid-fluid sites
-            simpleCollideAndStream->StreamAndCollide<false> (offset,
-                                                             latDat->GetLocalFluidSiteCount() - offset,
-                                                             lbmParams,
-                                                             latDat,
-                                                             *propertyCache);
+            simpleCollideAndStream.StreamAndCollide<false> (offset,
+                                                            latDat->GetLocalFluidSiteCount() - offset,
+                                                            lbmParams,
+                                                            latDat,
+                                                            *propertyCache);
             offset += latDat->GetLocalFluidSiteCount() - offset;
 
             // Sanity check
@@ -786,24 +791,7 @@ namespace hemelb
 
         private:
           lb::MacroscopicPropertyCache* propertyCache;
-
           lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> >* normalCollision;
-
-          lb::streamers::SimpleCollideAndStream<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-              * simpleCollideAndStream;
-
-          lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-              * simpleBounceBack;
-
-          lb::streamers::Regularised<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > > * regularised;
-
-          lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-              * fInterpolation;
-
-          lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >* guoZhengShi;
-
-          lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >* junkYang;
-
       };
       CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests);
     }
