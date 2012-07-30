@@ -39,7 +39,7 @@ namespace hemelb
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
-          log::Logger::Log<log::Info, log::OnePerCore>("LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
+          log::Logger::Log<log::Warning, log::OnePerCore>("LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
                                                        localRank,
                                                        itNeighProc->Rank,
                                                        itNeighProc->SharedDistributionCount);
@@ -291,7 +291,7 @@ namespace hemelb
     void LatticeData::CollectFluidSiteDistribution()
     {
       fluidSitesOnEachProcessor.resize(topology::NetworkTopology::Instance()->GetProcessorCount());
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
                     MpiDataType<site_t>(),
