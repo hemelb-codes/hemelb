@@ -10,8 +10,8 @@ namespace hemelb
   {
     enum LogLevel
     {
-      Info = 0,
-      Warning = 1,
+      Warning = 0,
+      Info = 1,
       Debug = 2
     };
 

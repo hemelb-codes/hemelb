@@ -100,7 +100,7 @@ namespace hemelb
             break;
 
           default:
-            log::Logger::Log<log::Info, log::OnePerCore>("Failed while using hue in HslToRgbConvertor.");
+            log::Logger::Log<log::Warning, log::OnePerCore>("Failed while using hue in HslToRgbConvertor.");
         }
 
         // A value to divide the results by to map them 

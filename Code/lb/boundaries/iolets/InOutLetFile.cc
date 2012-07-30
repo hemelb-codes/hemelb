@@ -82,7 +82,7 @@ namespace hemelb
           // Check if last point's value matches the first
           if (values.back()!= values.front())
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
                                                          pressureFilePath.c_str());
             exit(0);
           }
