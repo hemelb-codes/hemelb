@@ -3,7 +3,6 @@
 
 #include <cppunit/TestFixture.h>
 
-
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "util/UnitConverter.h"
 
@@ -32,55 +31,27 @@ namespace hemelb
         public:
           void setUp()
           {
-
             FourCubeBasedTestFixture::setUp();
-            // Create the inlet and outlet boundary objects.
-            inletBoundary = new lb::boundaries::BoundaryValues(geometry::INLET_TYPE,
-                                                               latDat,
-                                                               simConfig->GetInlets(),
-                                                               simState,
-                                                               unitConverter);
-            outletBoundary = new lb::boundaries::BoundaryValues(geometry::OUTLET_TYPE,
-                                                                latDat,
-                                                                simConfig->GetOutlets(),
-                                                                simState,
-                                                                unitConverter);
-
-
-
-            lbgk = new lb::kernels::LBGK<lb::lattices::D3Q15>(initParams);
-
-            // Initialise all 4 types of conditions, using boundary objects for the collision types
-            // that will need them.
-            initParams.boundaryObject = inletBoundary;
-            nonZeroVFixedDensityILet = new lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<
-                lb::lattices::D3Q15> >(initParams);
-
-            initParams.boundaryObject = outletBoundary;
-            zeroVFixedDensityOLet = new lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<
-                lb::lattices::D3Q15> >(initParams);
-            zeroVEqm = new lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<lb::lattices::D3Q15> >(initParams);
-            normal = new lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> >(initParams);
           }
 
           void tearDown()
           {
-
-
-            delete inletBoundary;
-            delete outletBoundary;
-
-            delete lbgk;
-
-            delete nonZeroVFixedDensityILet;
-            delete zeroVFixedDensityOLet;
-            delete zeroVEqm;
-            delete normal;
             FourCubeBasedTestFixture::tearDown();
           }
 
           void TestNonZeroVelocityEquilibriumFixedDensity()
           {
+            lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
+                                                         latDat,
+                                                         simConfig->GetInlets(),
+                                                         simState,
+                                                         unitConverter);
+
+            initParams.boundaryObject = &inletBoundary;
+
+            lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
+                nonZeroVFixedDensityILet(initParams);
+
             distribn_t allowedError = 1e-10;
 
             // Initialise the fOld and the hydro vars.
@@ -93,10 +64,10 @@ namespace hemelb
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
             geometry::Site dummySite(0, *latDat);
-            nonZeroVFixedDensityILet->CalculatePreCollision(hydroVars, dummySite);
+            nonZeroVFixedDensityILet.CalculatePreCollision(hydroVars, dummySite);
 
             // Calculate the expected density, velocity and f_eq.
-            distribn_t expectedRho = inletBoundary->GetBoundaryDensity(0);
+            distribn_t expectedRho = inletBoundary.GetBoundaryDensity(0);
             distribn_t expectedMomentum[3];
 
             distribn_t originalRho;
@@ -104,7 +75,7 @@ namespace hemelb
 
             // Now need to scale the momentum, expectedV, to account for the difference between
             // original and enforced densities.
-            for(unsigned axis = 0; axis < 3; ++axis)
+            for (unsigned axis = 0; axis < 3; ++axis)
               expectedMomentum[axis] *= (expectedRho / originalRho);
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
@@ -126,7 +97,7 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
-            nonZeroVFixedDensityILet->Collide(lbmParams, hydroVars);
+            nonZeroVFixedDensityILet.Collide(lbmParams, hydroVars);
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
@@ -139,6 +110,16 @@ namespace hemelb
 
           void TestZeroVelocityEquilibriumFixedDensity()
           {
+            lb::boundaries::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
+                                                          latDat,
+                                                          simConfig->GetOutlets(),
+                                                          simState,
+                                                          unitConverter);
+            initParams.boundaryObject = &outletBoundary;
+
+            lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
+                zeroVFixedDensityOLet(initParams);
+
             distribn_t allowedError = 1e-10;
 
             // Initialise the fOld and the hydro vars.
@@ -150,10 +131,10 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            zeroVFixedDensityOLet->CalculatePreCollision(hydroVars, latDat->GetSite(0));
+            zeroVFixedDensityOLet.CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
-            distribn_t expectedRho = outletBoundary->GetBoundaryDensity(0);
+            distribn_t expectedRho = outletBoundary.GetBoundaryDensity(0);
             distribn_t expectedMomentum[3] = { 0., 0., 0. };
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
@@ -175,7 +156,7 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
-            zeroVFixedDensityOLet->Collide(lbmParams, hydroVars);
+            zeroVFixedDensityOLet.Collide(lbmParams, hydroVars);
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
@@ -188,6 +169,8 @@ namespace hemelb
 
           void TestZeroVelocityEquilibrium()
           {
+            lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<lb::lattices::D3Q15> > zeroVEqm(initParams);
+
             distribn_t allowedError = 1e-10;
 
             // Initialise the fOld and the hydro vars.
@@ -199,7 +182,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            zeroVEqm->CalculatePreCollision(hydroVars, latDat->GetSite(0));
+            zeroVEqm.CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho = 0.0;
@@ -229,7 +212,7 @@ namespace hemelb
 
             // Next, compare the collision function itself. The result should be the equilibrium
             // distribution.
-            zeroVEqm->Collide(lbmParams, hydroVars);
+            zeroVEqm.Collide(lbmParams, hydroVars);
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
@@ -242,6 +225,8 @@ namespace hemelb
 
           void TestNormal()
           {
+            lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > normal(initParams);
+
             distribn_t allowedError = 1e-10;
 
             // Initialise the fOld and the hydro vars.
@@ -253,7 +238,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
-            normal->CalculatePreCollision(hydroVars, latDat->GetSite(0));
+            normal.CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.
             distribn_t expectedRho;
@@ -283,8 +268,9 @@ namespace hemelb
             // Make a copy for the second collision to compare against.
             lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVarsCopy(hydroVars);
 
-            lbgk->Collide(lbmParams, hydroVars);
-            normal->Collide(lbmParams, hydroVarsCopy);
+            lb::kernels::LBGK<lb::lattices::D3Q15> lbgk(initParams);
+            lbgk.Collide(lbmParams, hydroVars);
+            normal.Collide(lbmParams, hydroVarsCopy);
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
             {
@@ -294,20 +280,6 @@ namespace hemelb
                                                    allowedError);
             }
           }
-
-        private:
-
-          lb::boundaries::BoundaryValues* inletBoundary;
-          lb::boundaries::BoundaryValues* outletBoundary;
-
-          lb::kernels::LBGK<lb::lattices::D3Q15>* lbgk;
-
-          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
-              * nonZeroVFixedDensityILet;
-          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
-              * zeroVFixedDensityOLet;
-          lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK<lb::lattices::D3Q15> >* zeroVEqm;
-          lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> >* normal;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests);
     }
