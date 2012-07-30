@@ -41,38 +41,17 @@ namespace hemelb
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
 
             FourCubeBasedTestFixture::setUp();
-            entropic = new lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>(initParams);
-            lbgk = new lb::kernels::LBGK<lb::lattices::D3Q15>(initParams);
-
-            /*
-             *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
-             *  values of tau consistent). One to be used with CalculateDensityMomentumFeq and another with CalculateFeq.
-             */
-            lbgknn0 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
-                lb::lattices::D3Q15>(initParams);
-            lbgknn1 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel,
-                lb::lattices::D3Q15>(initParams);
-
-            mrtLbgkEquivalentKernel
-                = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>(initParams);
-            mrtLbgkEquivalentKernel19
-                = new lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>(initParams);
-
           }
 
           void tearDown()
           {
-            delete entropic;
-            delete lbgk;
-            delete lbgknn0;
-            delete lbgknn1;
-            delete mrtLbgkEquivalentKernel;
-            delete mrtLbgkEquivalentKernel19;
             FourCubeBasedTestFixture::tearDown();
           }
 
           void TestAnsumaliEntropicCalculationsAndCollision()
           {
+            lb::kernels::EntropicAnsumali<lb::lattices::D3Q15> entropic(initParams);
+
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
 
@@ -88,13 +67,13 @@ namespace hemelb
             lb::kernels::HydroVars<lb::kernels::EntropicAnsumali<lb::lattices::D3Q15> > hydroVars1(f_original);
 
             // Calculate density, momentum, equilibrium f.
-            entropic->CalculateDensityMomentumFeq(hydroVars0, 0);
+            entropic.CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Manually set density and momentum and calculate eqm f.
             hydroVars1.density = 1.0;
             hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
-            entropic->CalculateFeq(hydroVars1, 1);
+            entropic.CalculateFeq(hydroVars1, 1);
 
             // Calculate expected values in both cases.
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
@@ -139,8 +118,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            entropic->DoCollide(lbmParams, hydroVars0);
-            entropic->DoCollide(lbmParams, hydroVars1);
+            entropic.DoCollide(lbmParams, hydroVars0);
+            entropic.DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[lb::lattices::D3Q15::NUMVECTORS];
@@ -286,6 +265,8 @@ namespace hemelb
 
           void TestLBGKCalculationsAndCollision()
           {
+            lb::kernels::LBGK<lb::lattices::D3Q15> lbgk(initParams);
+
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
 
@@ -301,13 +282,13 @@ namespace hemelb
             lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars1(f_original);
 
             // Calculate density, momentum, equilibrium f.
-            lbgk->CalculateDensityMomentumFeq(hydroVars0, 0);
+            lbgk.CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Manually set density and momentum and calculate eqm f.
             hydroVars1.density = 1.0;
             hydroVars1.momentum = util::Vector3D<distribn_t>(0.4, 0.5, 0.6);
 
-            lbgk->CalculateFeq(hydroVars1, 1);
+            lbgk.CalculateFeq(hydroVars1, 1);
 
             // Calculate expected values.
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
@@ -351,8 +332,8 @@ namespace hemelb
                                          allowedError);
 
             // Do the collision and test the result.
-            lbgk->DoCollide(lbmParams, hydroVars0);
-            lbgk->DoCollide(lbmParams, hydroVars1);
+            lbgk.DoCollide(lbmParams, hydroVars0);
+            lbgk.DoCollide(lbmParams, hydroVars1);
 
             // Get the expected post-collision densities.
             distribn_t expectedPostCollision0[lb::lattices::D3Q15::NUMVECTORS];
@@ -388,6 +369,15 @@ namespace hemelb
 
           void TestLBGKNNCalculationsAndCollision()
           {
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15>
+                LB_KERNEL;
+
+            /*
+             *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
+             *  values of tau consistent). One to be used with CalculateDensityMomentumFeq and another with CalculateFeq.
+             */
+            LB_KERNEL lbgknn0(initParams), lbgknn1(initParams);
+
             /*
              * When testing this streamer, it is important to consider that tau is defined per site.
              * Use two different sets of initial conditions across the domain to check that different
@@ -404,8 +394,7 @@ namespace hemelb
               f_setB[ii] = ((float) (lb::lattices::D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15>
-                LB_KERNEL;
+
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -446,7 +435,7 @@ namespace hemelb
               }
 
               // Calculate density, momentum, equilibrium f.
-              lbgknn0->CalculateDensityMomentumFeq(*hydroVars0, site_index);
+              lbgknn0.CalculateDensityMomentumFeq(*hydroVars0, site_index);
 
               // Manually set density and momentum and calculate eqm f.
               hydroVars1->density = 1.0;
@@ -454,7 +443,7 @@ namespace hemelb
               hydroVars1->momentum.y = momentum[1];
               hydroVars1->momentum.z = momentum[2];
 
-              lbgknn1->CalculateFeq(*hydroVars1, site_index);
+              lbgknn1.CalculateFeq(*hydroVars1, site_index);
 
               // Calculate expected values.
               distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
@@ -506,11 +495,11 @@ namespace hemelb
                * tau is used in DoCollide as opposite to the default Newtonian tau used during the
                * first time step.
                */
-              lbgknn0->CalculateDensityMomentumFeq(*hydroVars0, site_index);
-              lbgknn1->CalculateFeq(*hydroVars1, site_index);
+              lbgknn0.CalculateDensityMomentumFeq(*hydroVars0, site_index);
+              lbgknn1.CalculateFeq(*hydroVars1, site_index);
 
               distribn_t computedTau0 = hydroVars0->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0.GetTauValues().size());
 
               distribn_t expectedTau0 = site_index % 2
                 ? 0.50009134451
@@ -521,7 +510,7 @@ namespace hemelb
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), expectedTau0, computedTau0, numTolerance);
 
               distribn_t computedTau1 = hydroVars1->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1.GetTauValues().size());
 
               distribn_t expectedTau1 = site_index % 2
                 ? 0.50009013551
@@ -535,8 +524,8 @@ namespace hemelb
                * Test part 3: Collision depends on the local relaxation time
                */
               // Do the collision and test the result.
-              lbgknn0->DoCollide(lbmParams, *hydroVars0);
-              lbgknn1->DoCollide(lbmParams, *hydroVars1);
+              lbgknn0.DoCollide(lbmParams, *hydroVars0);
+              lbgknn1.DoCollide(lbmParams, *hydroVars1);
 
               // Get the expected post-collision densities.
               distribn_t expectedPostCollision0[lb::lattices::D3Q15::NUMVECTORS];
@@ -576,6 +565,8 @@ namespace hemelb
 
           void TestMRTConstantRelaxationTimeEqualsLBGK()
           {
+            lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> mrtLbgkEquivalentKernel(initParams);
+
             /*
              *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
              */
@@ -583,7 +574,7 @@ namespace hemelb
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
             relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q15MRTBasis::NUM_KINETIC_MOMENTS,
                                         oneOverTau);
-            mrtLbgkEquivalentKernel->SetMrtRelaxationParameters(relaxationParameters);
+            mrtLbgkEquivalentKernel.SetMrtRelaxationParameters(relaxationParameters);
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
@@ -592,7 +583,7 @@ namespace hemelb
                 hydroVars0(f_original);
 
             // Calculate density, momentum, equilibrium f.
-            mrtLbgkEquivalentKernel->CalculateDensityMomentumFeq(hydroVars0, 0);
+            mrtLbgkEquivalentKernel.CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
@@ -617,7 +608,7 @@ namespace hemelb
                                          allowedError);
 
             // Do the MRT collision.
-            mrtLbgkEquivalentKernel->DoCollide(lbmParams, hydroVars0);
+            mrtLbgkEquivalentKernel.DoCollide(lbmParams, hydroVars0);
 
             // Get the expected post-collision velocity distributions with LBGK.
             distribn_t expectedPostCollision0[lb::lattices::D3Q15::NUMVECTORS];
@@ -641,6 +632,8 @@ namespace hemelb
 
           void TestD3Q19MRTConstantRelaxationTimeEqualsLBGK()
           {
+            lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> mrtLbgkEquivalentKernel19(initParams);
+
             /*
              *  Simulate LBGK by relaxing all the MRT modes to equilibrium with the same time constant.
              */
@@ -648,7 +641,7 @@ namespace hemelb
             distribn_t oneOverTau = 1.0 / lbmParams->GetTau();
             relaxationParameters.resize(lb::kernels::momentBasis::DHumieresD3Q19MRTBasis::NUM_KINETIC_MOMENTS,
                                         oneOverTau);
-            mrtLbgkEquivalentKernel19->SetMrtRelaxationParameters(relaxationParameters);
+            mrtLbgkEquivalentKernel19.SetMrtRelaxationParameters(relaxationParameters);
 
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q19::NUMVECTORS];
@@ -657,7 +650,7 @@ namespace hemelb
                 hydroVars0(f_original);
 
             // Calculate density, momentum, equilibrium f.
-            mrtLbgkEquivalentKernel19->CalculateDensityMomentumFeq(hydroVars0, 0);
+            mrtLbgkEquivalentKernel19.CalculateDensityMomentumFeq(hydroVars0, 0);
 
             // Calculate expected values for the configuration of the MRT kernel equivalent to LBGK.
             distribn_t expectedDensity0;
@@ -682,7 +675,7 @@ namespace hemelb
                                          allowedError);
 
             // Do the MRT collision.
-            mrtLbgkEquivalentKernel19->DoCollide(lbmParams, hydroVars0);
+            mrtLbgkEquivalentKernel19.DoCollide(lbmParams, hydroVars0);
 
             // Get the expected post-collision velocity distributions with LBGK.
             distribn_t expectedPostCollision0[lb::lattices::D3Q19::NUMVECTORS];
@@ -703,14 +696,6 @@ namespace hemelb
                                                    allowedError);
             }
           }
-
-        private:
-          lb::kernels::EntropicAnsumali<lb::lattices::D3Q15>* entropic;
-          lb::kernels::LBGK<lb::lattices::D3Q15>* lbgk;
-          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15> *lbgknn0,
-              *lbgknn1;
-          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis>* mrtLbgkEquivalentKernel;
-          lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis>* mrtLbgkEquivalentKernel19;
       };
       CPPUNIT_TEST_SUITE_REGISTRATION ( KernelTests);
     }
