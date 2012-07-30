@@ -330,21 +330,21 @@ namespace hemelb
             {
               if (procForEachBlock[fluidSiteBlock] < 0)
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
                                                              fluidSiteBlock,
                                                              localFluidSiteId,
                                                              procForEachBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
                                                              fluidSiteBlock,
                                                              localFluidSiteId,
                                                              firstSiteIndexPerBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock] - 1 < localFluidSiteId)
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
                                                              fluidSiteBlock,
                                                              localFluidSiteId,
                                                              fluidSitesPerBlock[fluidSiteBlock],
@@ -381,7 +381,7 @@ namespace hemelb
               // inform the user.
               if (fluidSiteBlock >= geometry.GetBlockCount() || procForEachBlock[fluidSiteBlock] != comms.GetRank())
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
                                                              ii,
                                                              fluidSiteBlock,
                                                              geometry.GetBlockCount(),
@@ -392,7 +392,7 @@ namespace hemelb
               if (siteIndex >= geometry.GetSitesPerBlock()
                   || geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor == BIG_NUMBER2)
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
                                                              ii,
                                                              siteIndex,
                                                              fluidSitesPerBlock[fluidSiteBlock],
@@ -822,7 +822,7 @@ namespace hemelb
         {
           if (vtxDistribn[rank] != vtxDistribnRecv[rank])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
                                                          rank,
                                                          vtxDistribn[rank],
                                                          vtxDistribnRecv[rank]);
@@ -864,7 +864,7 @@ namespace hemelb
               // If it doesn't appear to belong to any proc, something's wrong.
               if (adjacentProc == -1)
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
+                log::Logger::Log<log::Warning, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
                                                              vertex,
                                                              adjacentVertex);
                 continue;
@@ -994,7 +994,7 @@ namespace hemelb
           // No neighbour data on this proc matched the data received.
           if (!found)
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
                                                          neighbouringProc,
                                                          neighboursAdjacencyData[ii],
                                                          neighboursAdjacencyData[ii + 1]);
@@ -1009,7 +1009,7 @@ namespace hemelb
           idx_t adj2 = it->second;
           ++it;
           // We had neighbour-data on this proc that didn't match that received.
-          log::Logger::Log<log::Info, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
+          log::Logger::Log<log::Warning, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
                                                        adj1,
                                                        adj2,
                                                        neighbouringProc);
@@ -1034,7 +1034,7 @@ namespace hemelb
         {
           if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block] != firstSiteIndexPerBlockRecv[block])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
                                                          block,
                                                          firstSiteIndexPerBlock[block],
                                                          firstSiteIndexPerBlockRecv[block]);
