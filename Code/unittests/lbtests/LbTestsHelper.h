@@ -145,7 +145,7 @@ namespace hemelb
             // Compare density
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
-            // Compare velocity
+            // Compare momentum
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id, expectedMomentumX, hydroVars.momentum.x, allowedError);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum y " + id, expectedMomentumY, hydroVars.momentum.y, allowedError);
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum z " + id, expectedMomentumZ, hydroVars.momentum.z, allowedError);
@@ -283,13 +283,13 @@ namespace hemelb
             for (site_t site = 0; site < latDat.GetLocalFluidSiteCount(); ++site)
             {
               distribn_t density, feq[Lattice::NUMVECTORS];
-              util::Vector3D<distribn_t> velocity;
+              util::Vector3D<distribn_t> momentum;
 
-              Lattice::CalculateDensityVelocityFEq(latDat.GetSite(site).GetFOld<Lattice> (),
+              Lattice::CalculateDensityMomentumFEq(latDat.GetSite(site).GetFOld<Lattice> (),
                                                    density,
-                                                   velocity[0],
-                                                   velocity[1],
-                                                   velocity[2],
+                                                   momentum[0],
+                                                   momentum[1],
+                                                   momentum[2],
                                                    feq);
 
               if (cache.densityCache.RequiresRefresh())
@@ -298,7 +298,7 @@ namespace hemelb
               }
               if (cache.velocityCache.RequiresRefresh())
               {
-                cache.velocityCache.Put(site, velocity / density);
+                cache.velocityCache.Put(site, momentum / density);
               }
 
               // TODO stress cache filling not yet implemented.

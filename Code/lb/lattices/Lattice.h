@@ -18,7 +18,7 @@ namespace hemelb
       class Lattice
       {
         public:
-          inline static void CalculateDensityAndVelocity(const distribn_t f[],
+          inline static void CalculateDensityAndMomentum(const distribn_t f[],
                                                          distribn_t &density,
                                                          distribn_t &momentum_x,
                                                          distribn_t &momentum_y,
@@ -56,18 +56,18 @@ namespace hemelb
             }
           }
 
-          // Calculate density, velocity and the equilibrium distribution
+          // Calculate density, momentum and the equilibrium distribution
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
-          inline static void CalculateDensityVelocityFEq(const distribn_t f[],
+          inline static void CalculateDensityMomentumFEq(const distribn_t f[],
                                                          distribn_t &density,
                                                          distribn_t &momentum_x,
                                                          distribn_t &momentum_y,
                                                          distribn_t &momentum_z,
                                                          distribn_t f_eq[])
           {
-            CalculateDensityAndVelocity(f, density, momentum_x, momentum_y, momentum_z);
+            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
 
             CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
           }
