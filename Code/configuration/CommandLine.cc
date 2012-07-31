@@ -20,7 +20,7 @@ namespace hemelb
 
       if (!topologySuccess)
       {
-        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
+        hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
         PrintUsage();
         return;
       }

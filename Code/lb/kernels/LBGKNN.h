@@ -27,9 +27,9 @@ namespace hemelb
             InitState(initParams);
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
                                                      hydroVars.momentum.x,
                                                      hydroVars.momentum.y,
@@ -87,7 +87,7 @@ namespace hemelb
 
           /*
            *  Helper method used in testing in order to access the mTau array after
-           *  being set by DoCalculateDensityVelocityFeq
+           *  being set by DoCalculateDensityMomentumFeq
            */
           const std::vector<distribn_t>& GetTauValues() const
           {

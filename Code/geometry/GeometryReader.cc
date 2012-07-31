@@ -101,7 +101,7 @@ namespace hemelb
 
       if (error != MPI_SUCCESS)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s, exiting", dataFilePath.c_str());
+        log::Logger::Log<log::Warning, log::OnePerCore>("Unable to open file %s, exiting", dataFilePath.c_str());
         fflush(0x0);
         exit(0x0);
       }
@@ -172,7 +172,7 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::fileRead].Stop();
 
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
       timings[hemelb::reporting::Timers::domainDecomposition].Start();
 
       // Having done an initial decomposition of the geometry, and read in the data, we optimise the
@@ -234,7 +234,7 @@ namespace hemelb
       // Check the value of the HemeLB magic number.
       if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("This file starts with %d, not the HemeLB magic number %d.",
+        log::Logger::Log<log::Warning, log::OnePerCore>("This file starts with %d, not the HemeLB magic number %d.",
                                                      hlbMagicNumber,
                                                      io::formats::HemeLbMagicNumber);
         exit(1);
@@ -243,13 +243,13 @@ namespace hemelb
       // Check the value of the geometry file magic number.
       if (gmyMagicNumber != io::formats::geometry::MagicNumber)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("This file is not a geometry file: had %d, not the geometry magic number %d.",
+        log::Logger::Log<log::Warning, log::OnePerCore>("This file is not a geometry file: had %d, not the geometry magic number %d.",
                                                      gmyMagicNumber,
                                                      io::formats::geometry::MagicNumber);
         exit(1);
       }
 
-      log::Logger::Log<log::Warning, log::OnePerCore>("Geometry file version: %d", version);
+      log::Logger::Log<log::Info, log::OnePerCore>("Geometry file version: %d", version);
 
       // Variables we'll read.
       // We use temporary vars here, as they must be the same size as the type in the file
@@ -344,7 +344,7 @@ namespace hemelb
           if (bytesPerUncompressedBlock[block]
               > io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(), fluidSitesOnEachBlock[block]))
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
+            log::Logger::Log<log::Warning, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes",
                                                          block,
                                                          bytesPerUncompressedBlock[block],
                                                          io::formats::geometry::GetMaxBlockRecordLength(geometry.GetBlockSize(),
@@ -465,7 +465,7 @@ namespace hemelb
           // Compare with the sites we expected to read.
           if (numSitesRead != fluidSitesOnEachBlock[blockNumber])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
+            log::Logger::Log<log::Warning, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
                                                          fluidSitesOnEachBlock[blockNumber],
                                                          blockNumber,
                                                          numSitesRead);
@@ -500,7 +500,7 @@ namespace hemelb
       ret = inflateInit(&stream);
       if (ret != Z_OK)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Warning, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
       stream.avail_out = uncompressed.size();
@@ -509,7 +509,7 @@ namespace hemelb
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Warning, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
 
@@ -517,7 +517,7 @@ namespace hemelb
       ret = inflateEnd(&stream);
       if (ret != Z_OK)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Decompression error for block");
+        log::Logger::Log<log::Warning, log::OnePerCore>("Decompression error for block");
         std::exit(1);
       }
       timings[hemelb::reporting::Timers::unzip].Stop();
@@ -544,7 +544,7 @@ namespace hemelb
 
       if (!success)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Error reading site type");
+        log::Logger::Log<log::Warning, log::OnePerCore>("Error reading site type");
       }
 
       GeometrySite readInSite(isFluid != 0);
@@ -691,13 +691,13 @@ namespace hemelb
           if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyComms.GetRank())
               && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyComms.GetRank())))
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                          site,
                                                          block);
           }
           else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site] != myProcForSite[site])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
+            log::Logger::Log<log::Warning, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                          myProcForSite[site],
                                                          site,
                                                          block,
@@ -708,7 +708,7 @@ namespace hemelb
           {
             if (dummySiteData[site * latticeInfo.GetNumVectors()] != siteDataRecv[site * latticeInfo.GetNumVectors()])
             {
-              log::Logger::Log<log::Info, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
+              log::Logger::Log<log::Warning, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
                                                            site,
                                                            block,
                                                            dummySiteData[site * latticeInfo.GetNumVectors()],
@@ -720,7 +720,7 @@ namespace hemelb
               if (dummySiteData[site * latticeInfo.GetNumVectors() + direction]
                   != siteDataRecv[site * latticeInfo.GetNumVectors() + direction])
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
                                                              site,
                                                              direction,
                                                              block,
@@ -895,7 +895,7 @@ namespace hemelb
               if (geometry.Blocks[block].Sites[site].targetProcessor
                   != ConvertTopologyRankToGlobalRank((proc_t) fromProc))
               {
-                log::Logger::Log<log::Info, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
+                log::Logger::Log<log::Warning, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
                                                              block,
                                                              site,
                                                              moveIndex,
