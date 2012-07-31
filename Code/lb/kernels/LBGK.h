@@ -23,9 +23,9 @@ namespace hemelb
           {
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
                                                      hydroVars.momentum.x,
                                                      hydroVars.momentum.y,

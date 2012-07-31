@@ -56,7 +56,7 @@ namespace hemelb
         {
           if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+            log::Logger::Log<log::Warning, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
                                                          block,
                                                          procAssignedToEachBlock[block],
                                                          procForEachBlockRecv[block]);
