@@ -101,7 +101,7 @@ namespace hemelb
             }
 
             /*
-             static void CalculateDensityAndVelocity(const distribn_t f[],
+             static void CalculateDensityAndMomentum(const distribn_t f[],
              distribn_t &density,
              distribn_t &v_x,
              distribn_t &v_y,
@@ -114,7 +114,7 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
 
             distribn_t density, momentum[3], expectedDensity, expectedMomentum[3];
-            LatticeType::CalculateDensityAndVelocity(f_data, density, momentum[0], momentum[1], momentum[2]);
+            LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
 
             LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
 
@@ -184,19 +184,19 @@ namespace hemelb
                 entropicCalculatedDensityChikatamarla, entropicCalculatedMomentumChikatamarla[3], calculatedDensity,
                 calculatedMomentum[3];
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumF,
+            LatticeType::CalculateDensityAndMomentum(equilibriumF,
                                                      calculatedDensity,
                                                      calculatedMomentum[0],
                                                      calculatedMomentum[1],
                                                      calculatedMomentum[2]);
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFAnsumali,
+            LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFAnsumali,
                                                      entropicCalculatedDensityAnsumali,
                                                      entropicCalculatedMomentumAnsumali[0],
                                                      entropicCalculatedMomentumAnsumali[1],
                                                      entropicCalculatedMomentumAnsumali[2]);
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFChikatamarla,
+            LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFChikatamarla,
                                                      entropicCalculatedDensityChikatamarla,
                                                      entropicCalculatedMomentumChikatamarla[0],
                                                      entropicCalculatedMomentumChikatamarla[1],
@@ -238,8 +238,8 @@ namespace hemelb
 
             /**
              * @todo: Currently untested
-             * * CalculateDensityVelocityFEq (it should just call other functions that *are* tested)
-             * * CalculateEntropicDensityVelocityFEq (as above)
+             * * CalculateDensityMomentumFEq (it should just call other functions that *are* tested)
+             * * CalculateEntropicDensityMomentumFEq (as above)
              * * CalculateVonMisesStress (probably needs a manually calculated test)
              * * CalculateShearStress (as above)
              * * CalculatePiTensor(as above)

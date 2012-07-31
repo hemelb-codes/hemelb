@@ -71,7 +71,7 @@ namespace hemelb
 
                 // Note that the division by density compensates for the fact that v_x etc have momentum
                 // not velocity.
-                float component = ioletNormal.Dot(hydroVars.momentum) / hydroVars.density;
+                distribn_t component = (hydroVars.momentum / hydroVars.density).Dot(ioletNormal);
 
                 // TODO it's ugly that we have to do this.
                 // TODO having to give 0 as an argument is also ugly.
