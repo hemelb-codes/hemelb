@@ -21,6 +21,7 @@ namespace hemelb
       public:
         /** constructor - currently only initialises the neighbour list */
         ColloidController(const geometry::LatticeData& latDatLBM,
+                          const lb::SimulationState& simulationState,
                           const geometry::Geometry& gmyResult,
                           io::xml::XmlAbstractionLayer& xml,
                           lb::MacroscopicPropertyCache& propertyCache);
@@ -37,6 +38,8 @@ namespace hemelb
       private:
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
+
+        const lb::SimulationState& simulationState;
 
         /** holds the set of Particles that this processor knows about */
         ParticleSet* particleSet;

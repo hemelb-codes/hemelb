@@ -651,16 +651,21 @@ namespace hemelb
 
       // get the local site id, i.e. its index within the block
       site_t localSiteIndex = GetLocalSiteIdFromLocalSiteCoords(localSiteCoords);
-      if (block.SiteIsSolid(localSiteIndex))
-        return false;
 
       // get the rank of the processor that owns the site
       procId = block.GetProcessorRankForSite(localSiteIndex);
       if (procId != topology::NetworkTopology::Instance()->GetLocalRank())
         return false;
+      if (procId == BIG_NUMBER2) // means that the site is solid
+        return false;
 
+      // we only know enough information to determine solid/fluid for local sites
       // get the local contiguous index of the fluid site
-      siteId = block.GetLocalContiguousIndexForSite(localSiteIndex);
+      if (block.SiteIsSolid(localSiteIndex))
+        return false;
+      else
+        siteId = block.GetLocalContiguousIndexForSite(localSiteIndex);
+
       return true;
     }
 
