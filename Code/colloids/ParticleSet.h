@@ -21,22 +21,22 @@ namespace hemelb
         ParticleSet(const geometry::LatticeData& latDatLBM,
                     io::xml::XmlAbstractionLayer& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
-                    const std::vector<proc_t>& neighbourProcessors);
+                    std::vector<proc_t>& neighbourProcessors);
 
         /** destructor - de-allocates all Particle objects created by this Set */
         ~ParticleSet();
 
         /** updates the position of each particle using body forces and fluid velocity */
-        const void UpdatePositions() const;
+        const void UpdatePositions();
 
         /** calculates the effect of all body forces on each particle */
-        const void CalculateBodyForces() const;
+        const void CalculateBodyForces();
 
         /** calculates the effects of all particles on each lattice site */
-        const void CalculateFeedbackForces() const;
+        const void CalculateFeedbackForces();
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity() const;
+        const void InterpolateFluidVelocity();
 
         /** communicates the positions of all particles to&from all neighbours */
         const void CommunicateParticlePositions();
@@ -44,12 +44,18 @@ namespace hemelb
         /** communicates the partial fluid interpolations to&from all neighbours */
         const void CommunicateFluidVelocities();
 
+        const void OutputInformation() const;
+
       private:
         /** all particles whose position is within the local domain */
-        std::vector<Particle> localParticles;
+        //std::vector<Particle> localParticles;
 
         /** temporary copy of all particles from neighbouring domains */
-        std::vector<Particle> remoteParticles;
+        //std::vector<Particle> remoteParticles;
+
+        const proc_t localRank;
+        std::vector<Particle> particles;
+        std::map<proc_t, unsigned int> scanMap;
 
         /** contains useful geometry manipulation functions */
         const geometry::LatticeData& latDatLBM;
@@ -65,7 +71,7 @@ namespace hemelb
          * a vector of the processors that might be interested in
          * particles near the edge of this processor's sub-domain
          */
-        const std::vector<proc_t>& neighbourProcessors;
+        //const std::vector<proc_t>& neighbourProcessors;
 
         net::Net net;
     };

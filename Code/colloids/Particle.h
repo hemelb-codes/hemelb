@@ -27,6 +27,10 @@ namespace hemelb
 
         Particle() {};
 
+        const bool operator<(const Particle& other) const;
+        const bool IsOwnerRankKnown(std::map<proc_t, unsigned int> map) const;
+        const void OutputInformation() const;
+
         /** partial interpolation of fluid velocity - temporary value only */
         // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> velocity;
@@ -35,8 +39,11 @@ namespace hemelb
         // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
         util::Vector3D<double> bodyForces;
 
+        proc_t ownerRank;
+        bool isValid;
+
         /** updates the position of this particle using body forces and fluid velocity */
-        const void UpdatePosition();
+        const void UpdatePosition(const geometry::LatticeData& latDatLBM);
 
         /** */
         const void CalculateBodyForces();
