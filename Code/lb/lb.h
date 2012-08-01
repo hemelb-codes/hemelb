@@ -35,7 +35,7 @@ namespace hemelb
         // Use the wall boundary condition specified through the build system.
         typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
         typedef streamers::RegularisedIolet<collisions::Normal<LB_KERNEL> > tInletOutletCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
+        typedef streamers::NashBB<collisions::Normal<LB_KERNEL> >
             tInletOutletWallCollision;
 
       public:
