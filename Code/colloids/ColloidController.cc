@@ -17,10 +17,12 @@ namespace hemelb
 
     // constructor - called by SimulationMaster::Initialise()
     ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
+                                         const lb::SimulationState& simulationState,
                                          const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
                                          lb::MacroscopicPropertyCache& propertyCache) :
-      localRank(topology::NetworkTopology::Instance()->GetLocalRank())
+      localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
+      simulationState(simulationState)
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -44,6 +46,7 @@ namespace hemelb
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
       particleSet = new ParticleSet(latDatLBM, xml, propertyCache, neighbourProcessors);
+      particleSet->OutputInformation();
     }
 
     void ColloidController::InitialiseNeighbourList(
@@ -246,11 +249,22 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
-      // step 3
-      particleSet->CalculateBodyForces();
+      int limit = 3;
+
+      if (simulationState.GetTimeStep() % 1000 == 0)
+        particleSet->OutputInformation();
 
       // communication from step 2
       particleSet->CommunicateParticlePositions();
+
+      if (simulationState.GetTimeStep() < limit)
+      {
+        printf("FIRST ParticlePosition comms done\n");
+        particleSet->OutputInformation();
+      }
+
+      // step 3
+      particleSet->CalculateBodyForces();
 
       // steps 1 & 4 combined
       particleSet->CalculateFeedbackForces();
@@ -260,14 +274,34 @@ namespace hemelb
 
     void ColloidController::EndIteration()
     {
+      int limit = 3;
+
       // step 6
       particleSet->InterpolateFluidVelocity();
+
+      if (simulationState.GetTimeStep() < limit)
+      {
+        printf("FIRST Interpolation done\n");
+        particleSet->OutputInformation();
+      }
 
       // communication from step 6
       particleSet->CommunicateFluidVelocities();
 
+      if (simulationState.GetTimeStep() < limit)
+      {
+        printf("FIRST velocity comms done\n");
+        particleSet->OutputInformation();
+      }
+
       // steps 7 & 2 combined
       particleSet->UpdatePositions();
+
+      if (simulationState.GetTimeStep() < limit)
+      {
+        printf("FIRST position update done\n");
+        particleSet->OutputInformation();
+      }
     }
 
   }

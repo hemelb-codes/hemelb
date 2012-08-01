@@ -175,6 +175,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(*latticeData,
+                                                              *simulationState,
                                                               readGeometryData,
                                                               xml,
                                                               propertyCache);
