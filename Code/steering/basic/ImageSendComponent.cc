@@ -100,7 +100,7 @@ namespace hemelb
         }
         else
         {
-          log::Logger::Log<log::Debug, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
+          log::Logger::Log<log::Trace, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
                                                         deltaTime, mSimState->GetTimeStep(), MaxFramerate);
           lastRender = frameTimeStart;
           return true;

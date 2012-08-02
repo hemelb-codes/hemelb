@@ -165,7 +165,7 @@ namespace hemelb
         {
           if (mUpwardsValue == DISOBEYED)
           {
-            log::Logger::Log<log::Warning, log::Singleton>("H Theorem violated.");
+            log::Logger::Log<log::Error, log::Singleton>("H Theorem violated.");
           }
         }
 

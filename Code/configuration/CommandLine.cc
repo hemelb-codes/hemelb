@@ -6,7 +6,8 @@ namespace hemelb
   namespace configuration
   {
     CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-        inputFile("input.xml"), outputDir(""), snapshots(10), images(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
+      inputFile("input.xml"), outputDir(""), snapshots(10), images(10), steeringSessionId(1), argc(aargc), argv(aargv),
+          ok(false)
     {
 
       // Initialise the network discovery. If this fails, abort.
@@ -14,13 +15,11 @@ namespace hemelb
 
       bool topologySuccess = true;
       // MPI C doesn't provide const-correct interface, so cast away the const on argv.
-      hemelb::topology::NetworkTopology::Instance()->Init(argc,
-                                                          const_cast<char**>(argv),
-                                                          &topologySuccess);
+      hemelb::topology::NetworkTopology::Instance()->Init(argc, const_cast<char**> (argv), &topologySuccess);
 
       if (!topologySuccess)
       {
-        hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
+        hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
         PrintUsage();
         return;
       }

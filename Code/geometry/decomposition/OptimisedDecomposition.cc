@@ -15,7 +15,8 @@ namespace hemelb
                                                      const lb::lattices::LatticeInfo& latticeInfo,
                                                      const std::vector<proc_t>& procForEachBlock,
                                                      const std::vector<site_t>& fluidSitesOnEachBlock) :
-          timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo), procForEachBlock(procForEachBlock), fluidSitesPerBlock(fluidSitesOnEachBlock)
+        timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo), procForEachBlock(procForEachBlock),
+            fluidSitesPerBlock(fluidSitesOnEachBlock)
       {
         timers[hemelb::reporting::Timers::dbg5].Start(); //overall dbg timing
 
@@ -45,24 +46,24 @@ namespace hemelb
           ValidateAdjacencyData(localVertexCount);
         }
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Adj length %i", localAdjacencies.size());
+        log::Logger::Log<log::Trace, log::OnePerCore>("Adj length %i", localAdjacencies.size());
 
         timers[hemelb::reporting::Timers::dbg5].Stop();
 
         // Call parmetis.
         timers[hemelb::reporting::Timers::parmetis].Start();
-        log::Logger::Log<log::Info, log::OnePerCore>("Making the call to Parmetis");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Making the call to Parmetis");
 
         CallParmetis(localVertexCount);
 
         timers[hemelb::reporting::Timers::parmetis].Stop();
-        log::Logger::Log<log::Info, log::OnePerCore>("Parmetis has finished.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
 
         // Convert the ParMetis results into a nice format.
         timers[hemelb::reporting::Timers::dbg4].Start();
-        log::Logger::Log<log::Info, log::OnePerCore>("Getting moves lists for this core.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Getting moves lists for this core.");
         PopulateMovesList();
-        log::Logger::Log<log::Info, log::OnePerCore>("Done getting moves lists for this core");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Done getting moves lists for this core");
         timers[hemelb::reporting::Timers::dbg4].Stop();
       }
 
@@ -94,12 +95,12 @@ namespace hemelb
         partitionVector = std::vector<idx_t>(localVertexCount, comms.GetRank());
 
         // Weight all vertices evenly.
-        std::vector<idx_t> vertexWeight(localVertexCount, 1);
+        std::vector < idx_t > vertexWeight(localVertexCount, 1);
 
         // Set the weights of each partition to be even, and to sum to 1.
         idx_t desiredPartitionSize = comms.GetSize();
 
-        std::vector<real_t> domainWeights(desiredPartitionSize, (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
+        std::vector < real_t > domainWeights(desiredPartitionSize, (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
         // A bunch of values ParMetis needs.
         idx_t noConstraints = 1;
         idx_t weightFlag = 2;
@@ -123,7 +124,7 @@ namespace hemelb
           options[1] = 1 | 2 | 4 | 8 | 32 | 64;
         }
         real_t tolerance = 1.001F;
-        log::Logger::Log<log::Info, log::OnePerCore>("Calling ParMetis");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
         // Reserve 1 on these vectors so that the reference to their first element
         // exists (even if it's unused).
         // Reserve on the vectors to be certain they're at least 1 in capacity (so &vector[0] works)
@@ -148,7 +149,7 @@ namespace hemelb
                              &edgesCut,
                              &partitionVector[0],
                              &communicator);
-        log::Logger::Log<log::Info, log::OnePerCore>("ParMetis returned.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()
@@ -174,7 +175,7 @@ namespace hemelb
       void OptimisedDecomposition::PopulateFirstSiteIndexOnEachBlock()
       {
         // First calculate the lowest site index on each proc - relatively easy.
-        std::vector<idx_t> firstSiteOnProc(vtxDistribn);
+        std::vector < idx_t > firstSiteOnProc(vtxDistribn);
         // Now for each block (in ascending order), the smallest site index is the smallest site
         // index on its processor, incremented by the number of sites observed from that processor
         // so far.
@@ -234,10 +235,10 @@ namespace hemelb
                       site_t neighbourI = blockI * geometry.GetBlockSize() + localSiteI + latticeInfo.GetVector(l).x;
                       site_t neighbourJ = blockJ * geometry.GetBlockSize() + localSiteJ + latticeInfo.GetVector(l).y;
                       site_t neighbourK = blockK * geometry.GetBlockSize() + localSiteK + latticeInfo.GetVector(l).z;
-                      if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
-                          || neighbourI >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().x)
-                          || neighbourJ >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().y)
-                          || neighbourK >= (geometry.GetBlockSize() * geometry.GetBlockDimensions().z))
+                      if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0 || neighbourI >= (geometry.GetBlockSize()
+                          * geometry.GetBlockDimensions().x) || neighbourJ >= (geometry.GetBlockSize()
+                          * geometry.GetBlockDimensions().y) || neighbourK >= (geometry.GetBlockSize()
+                          * geometry.GetBlockDimensions().z))
                       {
                         continue;
                       }
@@ -255,8 +256,8 @@ namespace hemelb
                       site_t neighbourSiteId = geometry.GetSiteIdFromSiteCoordinates(neighbourSiteI,
                                                                                      neighbourSiteJ,
                                                                                      neighbourSiteK);
-                      if (neighbourBlock.Sites.size() == 0
-                          || neighbourBlock.Sites[neighbourSiteId].targetProcessor == BIG_NUMBER2)
+                      if (neighbourBlock.Sites.size() == 0 || neighbourBlock.Sites[neighbourSiteId].targetProcessor
+                          == BIG_NUMBER2)
                       {
                         continue;
                       }
@@ -301,7 +302,7 @@ namespace hemelb
       {
         // Right. Let's count how many sites we're going to have to move. Count the local number of
         // sites to be moved, and collect the site id and the destination processor.
-        std::vector<idx_t> moveData;
+        std::vector < idx_t > moveData;
         const idx_t myLowest = vtxDistribn[comms.GetRank()];
         const idx_t myHighest = vtxDistribn[comms.GetRank() + 1] - 1;
 
@@ -320,8 +321,8 @@ namespace hemelb
             // A feature of std::map::equal_range is that if there's no equal key, both iterators
             // returned will point to the entry with the next greatest key. Since we store block
             // ids by last fluid site number, this immediately gives us the block id.
-            std::pair<std::map<site_t, site_t>::iterator, std::map<site_t, site_t>::iterator> rangeMatch =
-                blockIdLookupByLastSiteIndex.equal_range(localFluidSiteId);
+            std::pair < std::map<site_t, site_t>::iterator, std::map<site_t, site_t>::iterator > rangeMatch
+                = blockIdLookupByLastSiteIndex.equal_range(localFluidSiteId);
 
             idx_t fluidSiteBlock = rangeMatch.first->second;
 
@@ -330,25 +331,25 @@ namespace hemelb
             {
               if (procForEachBlock[fluidSiteBlock] < 0)
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
-                                                             fluidSiteBlock,
-                                                             localFluidSiteId,
-                                                             procForEachBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Critical, log::OnePerCore>("Found block %i for site %i but this block has a processor of %i assigned",
+                                                              fluidSiteBlock,
+                                                              localFluidSiteId,
+                                                              procForEachBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] > localFluidSiteId)
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
-                                                             fluidSiteBlock,
-                                                             localFluidSiteId,
-                                                             firstSiteIndexPerBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Critical, log::OnePerCore>("Found block %i for site %i but sites on this block start at number %i",
+                                                              fluidSiteBlock,
+                                                              localFluidSiteId,
+                                                              firstSiteIndexPerBlock[fluidSiteBlock]);
               }
               if (firstSiteIndexPerBlock[fluidSiteBlock] + fluidSitesPerBlock[fluidSiteBlock] - 1 < localFluidSiteId)
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
-                                                             fluidSiteBlock,
-                                                             localFluidSiteId,
-                                                             fluidSitesPerBlock[fluidSiteBlock],
-                                                             firstSiteIndexPerBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Critical, log::OnePerCore>("Found block %i for site %i but there are %i sites on this block starting at %i",
+                                                              fluidSiteBlock,
+                                                              localFluidSiteId,
+                                                              fluidSitesPerBlock[fluidSiteBlock],
+                                                              firstSiteIndexPerBlock[fluidSiteBlock]);
               }
             }
 
@@ -381,26 +382,26 @@ namespace hemelb
               // inform the user.
               if (fluidSiteBlock >= geometry.GetBlockCount() || procForEachBlock[fluidSiteBlock] != comms.GetRank())
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
-                                                             ii,
-                                                             fluidSiteBlock,
-                                                             geometry.GetBlockCount(),
-                                                             procForEachBlock[fluidSiteBlock]);
+                log::Logger::Log<log::Critical, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
+                                                              ii,
+                                                              fluidSiteBlock,
+                                                              geometry.GetBlockCount(),
+                                                              procForEachBlock[fluidSiteBlock]);
               }
               // Similarly, if we've ended up with an impossible site index, or a solid site,
               // print an error message.
               if (siteIndex >= geometry.GetSitesPerBlock()
                   || geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor == BIG_NUMBER2)
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
-                                                             ii,
-                                                             siteIndex,
-                                                             fluidSitesPerBlock[fluidSiteBlock],
-                                                             fluidSiteBlock,
-                                                             geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
-                                                                 == BIG_NUMBER2 ?
-                                                               " and site is solid" :
-                                                               "");
+                log::Logger::Log<log::Critical, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
+                                                              ii,
+                                                              siteIndex,
+                                                              fluidSitesPerBlock[fluidSiteBlock],
+                                                              fluidSiteBlock,
+                                                              geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor
+                                                                  == BIG_NUMBER2
+                                                                ? " and site is solid"
+                                                                : "");
               }
             }
 
@@ -434,7 +435,7 @@ namespace hemelb
           {
             blockForcedUponX[target_proc].push_back(blockId);
             ++numberOfBlocksIForceUponX[target_proc];
-            log::Logger::Log<log::Debug, log::OnePerCore>("I'm ensuring proc %i takes data about block %i",
+            log::Logger::Log<log::Trace, log::OnePerCore>("I'm ensuring proc %i takes data about block %i",
                                                           target_proc,
                                                           blockId);
           }
@@ -442,13 +443,13 @@ namespace hemelb
 
         // Now find how many blocks are being forced upon us from every other core.
         std::vector<proc_t> blocksForcedOnMe(comms.GetSize(), 0);
-        log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block numbers");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
         MPI_Alltoall(&numberOfBlocksIForceUponX[0],
                      1,
-                     MpiDataType<proc_t>(),
+                     MpiDataType<proc_t> (),
                      &blocksForcedOnMe[0],
                      1,
-                     MpiDataType<proc_t>(),
+                     MpiDataType<proc_t> (),
                      comms.GetCommunicator());
         timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
         timers[hemelb::reporting::Timers::moveForcingData].Start();
@@ -465,26 +466,26 @@ namespace hemelb
           {
             netForMoveSending.RequestSendV(blockForcedUponX[otherProc], otherProc);
           }
-          log::Logger::Log<log::Debug, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
+          log::Logger::Log<log::Trace, log::OnePerCore>("I'm forcing %i blocks on proc %i.",
                                                         numberOfBlocksIForceUponX[otherProc],
                                                         otherProc);
         }
 
-        log::Logger::Log<log::Info, log::OnePerCore>("Moving forcing block ids");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block ids");
         netForMoveSending.Dispatch();
         // Now go through every block forced upon me and add it to the list of ones I want.
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
-            for (std::vector<site_t>::iterator it = blocksForcedOnMeByEachProc[otherProc].begin();
-                it != blocksForcedOnMeByEachProc[otherProc].end(); ++it)
+            for (std::vector<site_t>::iterator it = blocksForcedOnMeByEachProc[otherProc].begin(); it
+                != blocksForcedOnMeByEachProc[otherProc].end(); ++it)
             {
               if (std::count(blockIdsIRequireFromX[otherProc].begin(), blockIdsIRequireFromX[otherProc].end(), *it)
                   == 0)
               {
                 blockIdsIRequireFromX[otherProc].push_back(*it);
-                log::Logger::Log<log::Debug, log::OnePerCore>("I'm being forced to take block %i from proc %i",
+                log::Logger::Log<log::Trace, log::OnePerCore>("I'm being forced to take block %i from proc %i",
                                                               *it,
                                                               otherProc);
               }
@@ -495,10 +496,9 @@ namespace hemelb
               for (Direction direction = 1; direction < lb::lattices::D3Q27::NUMVECTORS; ++direction)
               {
                 // Calculate the putative neighbour's coordinates...
-                BlockLocation neighbourCoords = blockCoords
-                    + BlockLocation(lb::lattices::D3Q27::CX[direction],
-                                    lb::lattices::D3Q27::CY[direction],
-                                    lb::lattices::D3Q27::CZ[direction]);
+                BlockLocation neighbourCoords = blockCoords + BlockLocation(lb::lattices::D3Q27::CX[direction],
+                                                                            lb::lattices::D3Q27::CY[direction],
+                                                                            lb::lattices::D3Q27::CZ[direction]);
                 // If the neighbour is a real block...
                 if (geometry.AreBlockCoordinatesValid(neighbourCoords))
                 {
@@ -516,7 +516,7 @@ namespace hemelb
                     {
                       // Then add it to the list of blocks we're getting from that neighbour.
                       blockIdsIRequireFromX[neighbourBlockProc].push_back(neighbourBlockId);
-                      log::Logger::Log<log::Debug, log::OnePerCore>("I need to also take block %i from proc %i",
+                      log::Logger::Log<log::Trace, log::OnePerCore>("I need to also take block %i from proc %i",
                                                                     neighbourBlockId,
                                                                     neighbourBlockProc);
                     }
@@ -540,15 +540,15 @@ namespace hemelb
                                                         std::vector<site_t>& numberOfBlocksXRequiresFromMe,
                                                         std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Calculating block requirements");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Calculating block requirements");
         timers[hemelb::reporting::Timers::blockRequirements].Start();
         // Populate numberOfBlocksRequiredFrom
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
-          numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0 ?
-            0 :
-            blockIdsIRequireFromX[otherProc].size();
-          log::Logger::Log<log::Debug, log::OnePerCore>("I require a total of %i blocks from proc %i",
+          numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0
+            ? 0
+            : blockIdsIRequireFromX[otherProc].size();
+          log::Logger::Log<log::Trace, log::OnePerCore>("I require a total of %i blocks from proc %i",
                                                         numberOfBlocksRequiredFrom[otherProc],
                                                         otherProc);
         }
@@ -556,10 +556,10 @@ namespace hemelb
         // each other core.
         MPI_Alltoall(&numberOfBlocksRequiredFrom[0],
                      1,
-                     MpiDataType<site_t>(),
+                     MpiDataType<site_t> (),
                      &numberOfBlocksXRequiresFromMe[0],
                      1,
-                     MpiDataType<site_t>(),
+                     MpiDataType<site_t> (),
                      comms.GetCommunicator());
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
@@ -567,7 +567,7 @@ namespace hemelb
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
           blockIdsXRequiresFromMe[otherProc] = std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
-          log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires %i blocks from me",
+          log::Logger::Log<log::Trace, log::OnePerCore>("Proc %i requires %i blocks from me",
                                                         otherProc,
                                                         blockIdsXRequiresFromMe[otherProc].size());
           netForMoveSending.RequestReceiveV(blockIdsXRequiresFromMe[otherProc], otherProc);
@@ -598,11 +598,10 @@ namespace hemelb
 
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
-          for (site_t blockNum = 0; blockNum < (site_t) ( ( ( ( (blockIdsXRequiresFromMe[otherProc].size())))));
-              ++blockNum)
+          for (site_t blockNum = 0; blockNum < (site_t) ( ( ( ( (blockIdsXRequiresFromMe[otherProc].size()))))); ++blockNum)
           {
             site_t blockId = blockIdsXRequiresFromMe[otherProc][blockNum];
-            log::Logger::Log<log::Debug, log::OnePerCore>("Proc %i requires block %i from me", otherProc, blockId);
+            log::Logger::Log<log::Trace, log::OnePerCore>("Proc %i requires block %i from me", otherProc, blockId);
             if (coresInterestedInEachBlock.count(blockId) == 0)
             {
               coresInterestedInEachBlock[blockId] = std::vector<proc_t>();
@@ -628,25 +627,25 @@ namespace hemelb
         net::Net netForMoveSending(comms);
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
-          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
-              it != blockIdsIRequireFromX[otherProc].end(); ++it)
+          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin(); it
+              != blockIdsIRequireFromX[otherProc].end(); ++it)
           {
             netForMoveSending.RequestReceiveR(movesForEachBlockWeCareAbout[*it], otherProc);
-            log::Logger::Log<log::Debug, log::OnePerCore>("I want the move count for block %i from proc %i",
+            log::Logger::Log<log::Trace, log::OnePerCore>("I want the move count for block %i from proc %i",
                                                           *it,
                                                           otherProc);
           }
-          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
-              it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
+          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin(); it
+              != blockIdsXRequiresFromMe[otherProc].end(); ++it)
           {
             netForMoveSending.RequestSendR(movesForEachLocalBlock[*it], otherProc);
-            log::Logger::Log<log::Debug, log::OnePerCore>("I'm sending move count for block %i to proc %i",
+            log::Logger::Log<log::Trace, log::OnePerCore>("I'm sending move count for block %i to proc %i",
                                                           *it,
                                                           otherProc);
           }
         }
 
-        log::Logger::Log<log::Info, log::OnePerCore>("Sending move counts");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending move counts");
         netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::moveCountsSending].Stop();
       }
@@ -662,7 +661,7 @@ namespace hemelb
         {
           totalMovesToReceive += movesForEachBlockWeCareAbout[blockId];
         }
-        log::Logger::Log<log::Debug, log::OnePerCore>("I'm expecting a total of %i moves", totalMovesToReceive);
+        log::Logger::Log<log::Trace, log::OnePerCore>("I'm expecting a total of %i moves", totalMovesToReceive);
         // Gather the moves to the places they need to go to.
         // Moves list has block, site id, destination proc
         movesList.resize(totalMovesToReceive * 3);
@@ -673,8 +672,8 @@ namespace hemelb
         for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.GetSize()))))); ++otherProc)
         {
           allMoves[otherProc] = 0;
-          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
-              it != blockIdsIRequireFromX[otherProc].end(); ++it)
+          for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin(); it
+              != blockIdsIRequireFromX[otherProc].end(); ++it)
           {
             if (movesForEachBlockWeCareAbout[*it] > 0)
             {
@@ -683,30 +682,30 @@ namespace hemelb
                                                otherProc);
               localMoveId += movesForEachBlockWeCareAbout[*it];
               allMoves[otherProc] += movesForEachBlockWeCareAbout[*it];
-              log::Logger::Log<log::Debug, log::OnePerCore>("Expect %i moves from from proc %i about block %i",
+              log::Logger::Log<log::Trace, log::OnePerCore>("Expect %i moves from from proc %i about block %i",
                                                             movesForEachBlockWeCareAbout[*it],
                                                             otherProc,
                                                             *it);
             }
           }
 
-          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin();
-              it != blockIdsXRequiresFromMe[otherProc].end(); ++it)
+          for (std::vector<site_t>::iterator it = blockIdsXRequiresFromMe[otherProc].begin(); it
+              != blockIdsXRequiresFromMe[otherProc].end(); ++it)
           {
             if (moveDataForEachBlock[*it].size() > 0)
             {
               netForMoveSending.RequestSendV(moveDataForEachBlock[*it], otherProc);
-              log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
+              log::Logger::Log<log::Trace, log::OnePerCore>("Sending %i moves from to proc %i about block %i",
                                                             moveDataForEachBlock[*it].size() / 3,
                                                             otherProc,
                                                             *it);
             }
           }
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("%i moves from proc %i", allMoves[otherProc], otherProc);
+          log::Logger::Log<log::Trace, log::OnePerCore>("%i moves from proc %i", allMoves[otherProc], otherProc);
         }
 
-        log::Logger::Log<log::Info, log::OnePerCore>("Sending move data");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending move data");
         netForMoveSending.Dispatch();
         timers[hemelb::reporting::Timers::moveDataSending].Stop();
       }
@@ -740,10 +739,10 @@ namespace hemelb
 
         // Right. Let's count how many sites we're going to have to move. Count the local number of
         // sites to be moved, and collect the site id and the destination processor.
-        std::vector<idx_t> moveData = CompileMoveData(blockIdLookupByLastSiteIndex);
+        std::vector < idx_t > moveData = CompileMoveData(blockIdLookupByLastSiteIndex);
         timers[hemelb::reporting::Timers::dbg1].Stop();
         // Spread the move data around
-        log::Logger::Log<log::Info, log::OnePerCore>("Starting to spread move data");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Starting to spread move data");
         timers[hemelb::reporting::Timers::dbg2].Start();
         // First, for each core, gather a list of which blocks the current core wants to
         // know more data about.
@@ -756,10 +755,10 @@ namespace hemelb
           {
             proc_t residentProc = procForEachBlock[block];
             blockIdsIRequireFromX[residentProc].push_back(block);
-            log::Logger::Log<log::Debug, log::OnePerCore>("I require block %i from proc %i (running total %i)",
-                                                         block,
-                                                         residentProc,
-                                                         blockIdsIRequireFromX[residentProc].size());
+            log::Logger::Log<log::Trace, log::OnePerCore>("I require block %i from proc %i (running total %i)",
+                                                          block,
+                                                          residentProc,
+                                                          blockIdsIRequireFromX[residentProc].size());
           }
         }
 
@@ -781,7 +780,7 @@ namespace hemelb
         std::map<site_t, std::vector<idx_t> > moveDataForEachBlock;
         std::map<site_t, idx_t> movesForEachLocalBlock;
         // And it'll also be super-handy to know how many moves we're going to have locally.
-        std::vector<idx_t> movesForEachBlockWeCareAbout(geometry.GetBlockCount(), 0);
+        std::vector < idx_t > movesForEachBlockWeCareAbout(geometry.GetBlockCount(), 0);
         ShareMoveCounts(movesForEachLocalBlock,
                         blockIdsXRequiresFromMe,
                         coresInterestedInEachBlock,
@@ -809,9 +808,9 @@ namespace hemelb
 
       void OptimisedDecomposition::ValidateVertexDistribution()
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Validating the vertex distribution.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
         // vtxDistribn should be the same on all cores.
-        std::vector<idx_t> vtxDistribnRecv(comms.GetSize() + 1);
+        std::vector < idx_t > vtxDistribnRecv(comms.GetSize() + 1);
         MPI_Allreduce(&vtxDistribn[0],
                       &vtxDistribnRecv[0],
                       comms.GetSize() + 1,
@@ -822,10 +821,10 @@ namespace hemelb
         {
           if (vtxDistribn[rank] != vtxDistribnRecv[rank])
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
-                                                         rank,
-                                                         vtxDistribn[rank],
-                                                         vtxDistribnRecv[rank]);
+            log::Logger::Log<log::Critical, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
+                                                          rank,
+                                                          vtxDistribn[rank],
+                                                          vtxDistribnRecv[rank]);
           }
         }
 
@@ -837,17 +836,16 @@ namespace hemelb
         // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
         if (ShouldValidate())
         {
-          log::Logger::Log<log::Info, log::OnePerCore>("Validating the graph adjacency structure");
+          log::Logger::Log<log::Debug, log::OnePerCore>("Validating the graph adjacency structure");
           // Create an array of lists to store all of this node's adjacencies, arranged by the
           // proc the adjacent vertex is on.
-          std::vector<std::multimap<idx_t, idx_t> > adjByNeighProc(comms.GetSize(), std::multimap<idx_t, idx_t>());
+          std::vector < std::multimap<idx_t, idx_t> > adjByNeighProc(comms.GetSize(), std::multimap<idx_t, idx_t>());
           // The adjacency data should correspond across all cores.
           for (idx_t index = 0; index < localVertexCount; ++index)
           {
             idx_t vertex = vtxDistribn[comms.GetRank()] + index;
             // Iterate over each adjacency (of each vertex).
-            for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]);
-                ++adjNumber)
+            for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1] - adjacenciesPerVertex[index]); ++adjNumber)
             {
               idx_t adjacentVertex = localAdjacencies[adjacenciesPerVertex[index] + adjNumber];
               proc_t adjacentProc = -1;
@@ -864,9 +862,9 @@ namespace hemelb
               // If it doesn't appear to belong to any proc, something's wrong.
               if (adjacentProc == -1)
               {
-                log::Logger::Log<log::Warning, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
-                                                             vertex,
-                                                             adjacentVertex);
+                log::Logger::Log<log::Critical, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
+                                                              vertex,
+                                                              adjacentVertex);
                 continue;
               }
               // Store the data if it does belong to a proc.
@@ -876,9 +874,9 @@ namespace hemelb
           }
 
           // Create variables for the neighbour data to go into.
-          std::vector<idx_t> counts(comms.GetSize());
-          std::vector<std::vector<idx_t> > data(comms.GetSize());
-          log::Logger::Log<log::Info, log::OnePerCore>("Validating neighbour data");
+          std::vector < idx_t > counts(comms.GetSize());
+          std::vector < std::vector<idx_t> > data(comms.GetSize());
+          log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
           // Now spread and compare the adjacency information. Larger ranks send data to smaller
           // ranks which receive the data and compare it.
           for (proc_t neigh = 0; neigh < (proc_t) ( ( ( ( (comms.GetSize()))))); ++neigh)
@@ -914,8 +912,8 @@ namespace hemelb
           // Create a sendable array (std::lists aren't organised in a sendable format).
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           unsigned int adjacencyIndex = 0;
-          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin();
-              it != expectedAdjacencyData.end(); ++it)
+          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin(); it
+              != expectedAdjacencyData.end(); ++it)
           {
             neighboursAdjacencyData[2 * adjacencyIndex] = it->first;
             neighboursAdjacencyData[2 * adjacencyIndex + 1] = it->second;
@@ -924,7 +922,7 @@ namespace hemelb
           // Send the data to the neighbouringProc.
           MPI_Send(&neighboursAdjacencyData[0],
                    (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   MpiDataType<idx_t>(),
+                   MpiDataType<idx_t> (),
                    neighbouringProc,
                    43,
                    comms.GetCommunicator());
@@ -943,7 +941,7 @@ namespace hemelb
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           MPI_Recv(&neighboursAdjacencyData[0],
                    (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   MpiDataType<idx_t>(),
+                   MpiDataType<idx_t> (),
                    neighbouringProc,
                    43,
                    comms.GetCommunicator(),
@@ -955,8 +953,8 @@ namespace hemelb
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           int adjacencyIndex = 0;
-          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin();
-              it != expectedAdjacencyData.end(); ++it)
+          for (std::multimap<idx_t, idx_t>::const_iterator it = expectedAdjacencyData.begin(); it
+              != expectedAdjacencyData.end(); ++it)
           {
             neighboursAdjacencyData[2 * adjacencyIndex] = it->first;
             neighboursAdjacencyData[2 * adjacencyIndex + 1] = it->second;
@@ -978,8 +976,8 @@ namespace hemelb
           bool found = false;
           // Go through each neighbour we know about on this proc, and check whether it
           // matches the current received neighbour-data.
-          for (std::multimap<idx_t, idx_t>::iterator it = expectedAdjacencyData.find(neighboursAdjacencyData[ii + 1]);
-              it != expectedAdjacencyData.end(); ++it)
+          for (std::multimap<idx_t, idx_t>::iterator it = expectedAdjacencyData.find(neighboursAdjacencyData[ii + 1]); it
+              != expectedAdjacencyData.end(); ++it)
           {
             idx_t recvAdj = it->first;
             idx_t recvAdj2 = it->second;
@@ -994,10 +992,10 @@ namespace hemelb
           // No neighbour data on this proc matched the data received.
           if (!found)
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
-                                                         neighbouringProc,
-                                                         neighboursAdjacencyData[ii],
-                                                         neighboursAdjacencyData[ii + 1]);
+            log::Logger::Log<log::Critical, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
+                                                          neighbouringProc,
+                                                          neighboursAdjacencyData[ii],
+                                                          neighboursAdjacencyData[ii + 1]);
           }
         }
 
@@ -1009,17 +1007,17 @@ namespace hemelb
           idx_t adj2 = it->second;
           ++it;
           // We had neighbour-data on this proc that didn't match that received.
-          log::Logger::Log<log::Warning, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
-                                                       adj1,
-                                                       adj2,
-                                                       neighbouringProc);
+          log::Logger::Log<log::Critical, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
+                                                        adj1,
+                                                        adj2,
+                                                        neighbouringProc);
         }
       }
 
       void OptimisedDecomposition::ValidateFirstSiteIndexOnEachBlock()
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
-        std::vector<idx_t> firstSiteIndexPerBlockRecv(geometry.GetBlockCount());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
+        std::vector < idx_t > firstSiteIndexPerBlockRecv(geometry.GetBlockCount());
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
@@ -1034,10 +1032,10 @@ namespace hemelb
         {
           if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block] != firstSiteIndexPerBlockRecv[block])
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
-                                                         block,
-                                                         firstSiteIndexPerBlock[block],
-                                                         firstSiteIndexPerBlockRecv[block]);
+            log::Logger::Log<log::Critical, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
+                                                          block,
+                                                          firstSiteIndexPerBlock[block],
+                                                          firstSiteIndexPerBlockRecv[block]);
           }
         }
       }
