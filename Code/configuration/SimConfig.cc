@@ -381,7 +381,7 @@ namespace hemelb
           }
           else
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
+            log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
             exit(1);
           }
 
@@ -507,7 +507,7 @@ namespace hemelb
       }
       else
       {
-        log::Logger::Log<log::Warning, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
+        log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
         exit(1);
       }
     }

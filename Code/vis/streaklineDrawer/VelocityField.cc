@@ -282,7 +282,7 @@ namespace hemelb
         {
           if (topology::NetworkTopology::Instance()->GetLocalRank() != localVelocitySiteData->proc_id)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Got a request for velocity data "
+            log::Logger::Log<log::Warning, log::OnePerCore>("Got a request for velocity data "
                                                           "that actually seems to be on rank %i",
                                                           localVelocitySiteData->proc_id);
           }

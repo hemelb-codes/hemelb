@@ -290,7 +290,7 @@ namespace hemelb
         {
           Rendering& received = (*renderings).second;
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data (from it %li).",
+          log::Logger::Log<log::Trace, log::OnePerCore>("Receiving child image pixel data (from it %li).",
                                                         startIteration);
 
           received.ReceivePixelData(net, GetChildren()[ii]);
@@ -309,13 +309,13 @@ namespace hemelb
       Rendering& rendering = (*localResultsByStartIt.find(startIteration)).second;
       if (splayNumber == 0)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li).", startIteration);
+        log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel count (from it %li).", startIteration);
 
         rendering.SendPixelCounts(net, GetParent());
       }
       else if (splayNumber == 1)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li).", startIteration);
+        log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel data (from it %li).", startIteration);
 
         rendering.SendPixelData(net, GetParent());
       }
@@ -393,7 +393,7 @@ namespace hemelb
           mapType::iterator it = localResultsByStartIt.begin();
           if (it->first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", it->first);
+            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", it->first);
 
             (*it).second.ReleaseAll();
 
@@ -413,7 +413,7 @@ namespace hemelb
           multimapType::iterator it = childrenResultsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
+            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second.ReleaseAll();
 
@@ -433,7 +433,7 @@ namespace hemelb
           std::multimap<unsigned long, PixelSet<ResultPixel>*>::iterator it = renderingsByStartIt.begin();
           if ( (*it).first <= startIt)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
+            log::Logger::Log<log::Trace, log::OnePerCore>("Clearing out image cache from it %lu", (*it).first);
 
             (*it).second->Release();
             renderingsByStartIt.erase(it);
@@ -448,7 +448,7 @@ namespace hemelb
 
     const PixelSet<ResultPixel>* Control::GetResult(unsigned long startIt)
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("Getting image results from it %lu", startIt);
+      log::Logger::Log<log::Trace, log::OnePerCore>("Getting image results from it %lu", startIt);
 
       if (renderingsByStartIt.count(startIt) != 0)
       {
@@ -565,7 +565,7 @@ namespace hemelb
         localResultsByStartIt.erase(startIteration);
         localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration, Rendering(receiveBuffer)));
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.", startIteration);
+        log::Logger::Log<log::Trace, log::OnePerCore>("Inserting image at it %lu.", startIteration);
       }
 
       if (netTop->GetLocalRank() != 0)

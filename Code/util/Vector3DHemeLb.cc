@@ -48,7 +48,7 @@ namespace hemelb
       void DefaultHandlerFunction(int direction)
       {
         // TODO need to find a way of handling this case better.
-        log::Logger::Log<log::Warning, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+        log::Logger::Log<log::Error, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
         assert(false);
       }
     }
