@@ -17,7 +17,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetFile::InOutLetFile() :
-          InOutLet(),densityTable(0)
+          InOutLet(), densityTable(0)
         {
 
         }
@@ -57,8 +57,8 @@ namespace hemelb
           while (datafile.good())
           {
             datafile >> timeTemp >> valueTemp;
-            log::Logger::Log<log::Debug, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
-            timeValuePairs[timeTemp]=valueTemp;
+            log::Logger::Log<log::Trace, log::OnePerCore>("Time: %f Value: %f", timeTemp, valueTemp);
+            timeValuePairs[timeTemp] = valueTemp;
           }
 
           datafile.close();
@@ -71,7 +71,8 @@ namespace hemelb
           // Determine min and max pressure on the way
           pressureMinPhysical = timeValuePairs.begin()->second;
           pressureMaxPhysical = timeValuePairs.begin()->second;
-          for (std::map<PhysicalTime, PhysicalPressure>::iterator entry=timeValuePairs.begin(); entry!=timeValuePairs.end(); entry++)
+          for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin(); entry
+              != timeValuePairs.end(); entry++)
           {
             pressureMinPhysical = util::NumericalFunctions::min(pressureMinPhysical, entry->second);
             pressureMaxPhysical = util::NumericalFunctions::max(pressureMaxPhysical, entry->second);
@@ -80,19 +81,19 @@ namespace hemelb
           }
 
           // Check if last point's value matches the first
-          if (values.back()!= values.front())
+          if (values.back() != values.front())
           {
-            log::Logger::Log<log::Warning, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
-                                                         pressureFilePath.c_str());
+            log::Logger::Log<log::Critical, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
+                                                             pressureFilePath.c_str());
             exit(0);
           }
           // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
-          densityTable.resize(totalTimeSteps+1);
+          densityTable.resize(totalTimeSteps + 1);
           // Now convert these vectors into arrays using linear interpolation
           for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
           {
-            double point = times.front() + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps)) * (times.back()
-                - times.front());
+            double point = times.front() + (static_cast<double> (timeStep) / static_cast<double> (totalTimeSteps))
+                * (times.back() - times.front());
 
             double pressure = util::NumericalFunctions::LinearInterpolate(times, values, point);
 
