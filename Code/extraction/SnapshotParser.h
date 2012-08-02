@@ -39,25 +39,25 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        ExtractedProperty GetPressure() const;
+        FloatingType GetPressure() const;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        util::Vector3D<ExtractedProperty> GetVelocity() const;
+        util::Vector3D<FloatingType> GetVelocity() const;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        ExtractedProperty GetShearStress() const;
+        FloatingType GetShearStress() const;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        ExtractedProperty GetVonMisesStress() const;
+        FloatingType GetVonMisesStress() const;
 
         /**
          * Returns true if the site at the given location is marked as an edge site

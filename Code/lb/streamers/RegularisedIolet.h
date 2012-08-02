@@ -67,7 +67,7 @@ namespace hemelb
                     * hydroVars.density) / wall_distance;
 
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
-                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal().GetNormalised();
+                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
 
                 // Note that the division by density compensates for the fact that v_x etc have momentum
                 // not velocity.
