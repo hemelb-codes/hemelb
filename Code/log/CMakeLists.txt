@@ -1,1 +1,1 @@
-add_library(hemelb_log LoggerCommon.cc ${logger})
+add_library(hemelb_log Logger.cc ${logger})
