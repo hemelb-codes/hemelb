@@ -10,9 +10,19 @@ namespace hemelb
   {
     enum LogLevel
     {
-      Warning = 0,
-      Info = 1,
-      Debug = 2
+      //! Unrecoverable error
+      Critical = 0,
+      //! Recoverable error or unexpected state
+      Error = 1,
+      //! Undesirable but not necessarily wrong states
+      Warning = 2,
+      //! A conservative set of interesting run time events
+      Info = 3,
+      //! Detailed information on runtime flow
+      //! This level should also be used for any non-essential computation.
+      Debug = 4,
+      //! Low-level trace information, including actual data.
+      Trace = 5
     };
 
     enum LogType
