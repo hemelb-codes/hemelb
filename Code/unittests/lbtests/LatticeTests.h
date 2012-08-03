@@ -101,7 +101,7 @@ namespace hemelb
             }
 
             /*
-             static void CalculateDensityAndVelocity(const distribn_t f[],
+             static void CalculateDensityAndMomentum(const distribn_t f[],
              distribn_t &density,
              distribn_t &v_x,
              distribn_t &v_y,
@@ -113,16 +113,16 @@ namespace hemelb
             // The 3 here is essentially a seed that relates to the magnitude of the density.
             LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
 
-            distribn_t density, velocity[3], expectedDensity, expectedVelocity[3];
-            LatticeType::CalculateDensityAndVelocity(f_data, density, velocity[0], velocity[1], velocity[2]);
+            distribn_t density, momentum[3], expectedDensity, expectedMomentum[3];
+            LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
 
-            LbTestsHelper::CalculateRhoVelocity<LatticeType>(f_data, expectedDensity, expectedVelocity);
+            LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
 
             CPPUNIT_ASSERT(density == expectedDensity);
 
-            CPPUNIT_ASSERT(velocity[0] == expectedVelocity[0]);
-            CPPUNIT_ASSERT(velocity[1] == expectedVelocity[1]);
-            CPPUNIT_ASSERT(velocity[2] == expectedVelocity[2]);
+            CPPUNIT_ASSERT(momentum[0] == expectedMomentum[0]);
+            CPPUNIT_ASSERT(momentum[1] == expectedMomentum[1]);
+            CPPUNIT_ASSERT(momentum[2] == expectedMomentum[2]);
 
             /*
              static void CalculateFeq(const distribn_t &density,
@@ -180,27 +180,27 @@ namespace hemelb
             /*
              * It's also the case that these should be invertible (i.e. the density and velocity should be what we started with).
              */
-            distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedVelocityAnsumali[3],
-                entropicCalculatedDensityChikatamarla, entropicCalculatedVelocityChikatamarla[3], calculatedDensity,
-                calculatedVelocity[3];
+            distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedMomentumAnsumali[3],
+                entropicCalculatedDensityChikatamarla, entropicCalculatedMomentumChikatamarla[3], calculatedDensity,
+                calculatedMomentum[3];
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumF,
+            LatticeType::CalculateDensityAndMomentum(equilibriumF,
                                                      calculatedDensity,
-                                                     calculatedVelocity[0],
-                                                     calculatedVelocity[1],
-                                                     calculatedVelocity[2]);
+                                                     calculatedMomentum[0],
+                                                     calculatedMomentum[1],
+                                                     calculatedMomentum[2]);
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFAnsumali,
+            LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFAnsumali,
                                                      entropicCalculatedDensityAnsumali,
-                                                     entropicCalculatedVelocityAnsumali[0],
-                                                     entropicCalculatedVelocityAnsumali[1],
-                                                     entropicCalculatedVelocityAnsumali[2]);
+                                                     entropicCalculatedMomentumAnsumali[0],
+                                                     entropicCalculatedMomentumAnsumali[1],
+                                                     entropicCalculatedMomentumAnsumali[2]);
 
-            LatticeType::CalculateDensityAndVelocity(equilibriumEntropicFChikatamarla,
+            LatticeType::CalculateDensityAndMomentum(equilibriumEntropicFChikatamarla,
                                                      entropicCalculatedDensityChikatamarla,
-                                                     entropicCalculatedVelocityChikatamarla[0],
-                                                     entropicCalculatedVelocityChikatamarla[1],
-                                                     entropicCalculatedVelocityChikatamarla[2]);
+                                                     entropicCalculatedMomentumChikatamarla[0],
+                                                     entropicCalculatedMomentumChikatamarla[1],
+                                                     entropicCalculatedMomentumChikatamarla[2]);
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityAnsumali, targetDensity, epsilon);
@@ -208,9 +208,9 @@ namespace hemelb
 
             for (Direction direction = 0; direction < 3; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedVelocity[direction], targetH[direction], epsilon);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityAnsumali[direction], targetH[direction], epsilon);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedVelocityChikatamarla[direction],
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedMomentum[direction], targetH[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedMomentumAnsumali[direction], targetH[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedMomentumChikatamarla[direction],
                                            targetH[direction],
                                            epsilon);
             }
@@ -238,8 +238,8 @@ namespace hemelb
 
             /**
              * @todo: Currently untested
-             * * CalculateDensityVelocityFEq (it should just call other functions that *are* tested)
-             * * CalculateEntropicDensityVelocityFEq (as above)
+             * * CalculateDensityMomentumFEq (it should just call other functions that *are* tested)
+             * * CalculateEntropicDensityMomentumFEq (as above)
              * * CalculateVonMisesStress (probably needs a manually calculated test)
              * * CalculateShearStress (as above)
              * * CalculatePiTensor(as above)

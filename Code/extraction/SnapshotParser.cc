@@ -75,22 +75,22 @@ namespace hemelb
       return readPosition;
     }
 
-    ExtractedProperty SnapshotParser::GetPressure() const
+    FloatingType SnapshotParser::GetPressure() const
     {
       return readPressure;
     }
 
-    util::Vector3D<ExtractedProperty> SnapshotParser::GetVelocity() const
+    util::Vector3D<FloatingType> SnapshotParser::GetVelocity() const
     {
       return readVelocity;
     }
 
-    ExtractedProperty SnapshotParser::GetShearStress() const
+    FloatingType SnapshotParser::GetShearStress() const
     {
       return readShearStress;
     }
 
-    ExtractedProperty SnapshotParser::GetVonMisesStress() const
+    FloatingType SnapshotParser::GetVonMisesStress() const
     {
       return readVonMisesStress;
     }

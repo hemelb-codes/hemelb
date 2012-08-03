@@ -132,6 +132,16 @@ namespace hemelb
             {
               return position;
             }
+
+            /**
+             * Set the normal of the InOutlet
+             * @param newNormal
+             */
+            void SetNormal(util::Vector3D<float> newNormal)
+            {
+              normal = newNormal.Normalise();
+            }
+
             // TODO I do not like returning non-const references, this method should be const and we should have a setter.
             // but, the way the IO code in SimConfig is currently set up prevents this for now.
             util::Vector3D<float> &GetNormal()

@@ -51,23 +51,23 @@ namespace hemelb
           }
 
           /**
-           * Calculates the density and velocity for the given f. Then calculates the
+           * Calculates the density and momentum for the given f. Then calculates the
            * equilibrium distribution as described by Ansumali.
            * @param hydroVars
            * @param index The current lattice site index.
            */
-          inline void DoCalculateDensityVelocityFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<EntropicAnsumali<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
-            LatticeType::CalculateDensityAndVelocity(hydroVars.f,
+            LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z);
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z);
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,
-                                                      hydroVars.v_x,
-                                                      hydroVars.v_y,
-                                                      hydroVars.v_z,
+                                                      hydroVars.momentum.x,
+                                                      hydroVars.momentum.y,
+                                                      hydroVars.momentum.z,
                                                       hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -77,7 +77,7 @@ namespace hemelb
           }
 
           /**
-           * Calculates the equilibrium f distribution for the given density and velocity, as
+           * Calculates the equilibrium f distribution for the given density and momentum, as
            * described by Ansumali.
            * @param hydroVars
            * @param index The current lattice site index.
@@ -86,9 +86,9 @@ namespace hemelb
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqAnsumali(hydroVars.density,
-                                                      hydroVars.v_x,
-                                                      hydroVars.v_y,
-                                                      hydroVars.v_z,
+                                                      hydroVars.momentum.x,
+                                                      hydroVars.momentum.y,
+                                                      hydroVars.momentum.z,
                                                       hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
