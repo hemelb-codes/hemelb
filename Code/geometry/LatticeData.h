@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_GEOMETRY_LATTICEDATA_H
 #define HEMELB_GEOMETRY_LATTICEDATA_H
 
@@ -221,8 +230,7 @@ namespace hemelb
          * @param siteId (out) the index of the site for the property cache
          * @return true when globalLocation is local fluid, false otherwise
          */
-        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
-                                 proc_t& procId, site_t& siteId) const;
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation, proc_t& procId, site_t& siteId) const;
 
         /**
          * Get the global site coordinates from block coordinates and the site's local coordinates
@@ -337,6 +345,7 @@ namespace hemelb
 
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
+
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
@@ -444,11 +453,19 @@ namespace hemelb
 
         void GetBlockIJK(site_t block, util::Vector3D<site_t>& blockCoords) const;
 
+        // Method should remain protected, intent is to access this information via Site
+        template<typename LatticeType>
+        double GetCutDistance(site_t iSiteIndex, int iDirection) const
+        {
+          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
+        }
+
         /**
          * Get the wall normal at the given site
          * @param iSiteIndex
          * @return
          */
+        // Method should remain protected, intent is to access this information via Site
         inline const util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex) const
         {
           return wallNormalAtSite[iSiteIndex];
@@ -459,6 +476,7 @@ namespace hemelb
          * @param distributionIndex
          * @return
          */
+        // Method should remain protected, intent is to access this information via Site
         distribn_t* GetFOld(site_t distributionIndex)
         {
           return &oldDistributions[distributionIndex];
@@ -471,6 +489,7 @@ namespace hemelb
          * @param distributionIndex
          * @return
          */
+        // Method should remain protected, intent is to access this information via Site
         const distribn_t* GetFOld(site_t distributionIndex) const
         {
           return &oldDistributions[distributionIndex];
@@ -489,17 +508,12 @@ namespace hemelb
           return neighbourIndices[iSiteIndex * LatticeType::NUMVECTORS + iDirectionIndex];
         }
 
-        template<typename LatticeType>
-        double GetCutDistance(site_t iSiteIndex, int iDirection) const
-        {
-          return distanceToWall[iSiteIndex * (LatticeType::NUMVECTORS - 1) + iDirection - 1];
-        }
-
         /**
          * Get the site data object for the given index.
          * @param iSiteIndex
          * @return
          */
+        // Method should remain protected, intent is to access this information via Site
         inline const SiteData &GetSiteData(site_t iSiteIndex) const
         {
           return siteData[iSiteIndex];
@@ -511,20 +525,24 @@ namespace hemelb
          * @param iSiteIndex
          * @return
          */
+        // Method should remain protected, intent is to access this information via Site
         inline SiteData &GetSiteData(site_t iSiteIndex)
         {
           return siteData[iSiteIndex];
         }
 
+        // Method should remain protected, intent is to access this information via Site
         distribn_t * GetCutDistances(site_t iSiteIndex)
         {
           return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
         }
 
+        // Method should remain protected, intent is to access this information via Site
         util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
         {
           return wallNormalAtSite[iSiteIndex];
         }
+
         /**
          * Get the global site coordinates from a contiguous site id.
          * @param siteIndex

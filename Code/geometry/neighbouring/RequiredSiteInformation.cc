@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "mpiInclude.h"
 namespace hemelb
@@ -14,7 +23,7 @@ namespace hemelb
       {
         choices[term] = true;
       }
-      bool RequiredSiteInformation::Any()
+      bool RequiredSiteInformation::RequiresAny()
       {
         for (std::vector<bool>::iterator choice = choices.begin(); choice != choices.end(); choice++)
         {
@@ -25,7 +34,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyFieldDependent()
+      bool RequiredSiteInformation::RequiresAnyFieldDependent()
       {
         for (int choice = terms::Distribution; choice < terms::Length; choice++)
         {
@@ -36,7 +45,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyNonFieldDependent()
+      bool RequiredSiteInformation::RequiresAnyNonFieldDependent()
       {
         for (int choice = terms::SiteData; choice <= terms::WallNormal; choice++)
         {
@@ -47,7 +56,7 @@ namespace hemelb
         }
         return false;
       }
-      bool RequiredSiteInformation::AnyMacroscopic()
+      bool RequiredSiteInformation::RequiresAnyMacroscopic()
       {
         for (int choice = terms::Velocity; choice < terms::Length; choice++)
         {
