@@ -80,23 +80,23 @@ namespace hemelb
           {
             return origin;
           }
-          hemelb::extraction::ExtractedProperty GetPressure() const
+          hemelb::extraction::FloatingType GetPressure() const
           {
             return pressures[location];
           }
-          hemelb::util::Vector3D<hemelb::extraction::ExtractedProperty> GetVelocity() const
+          hemelb::util::Vector3D<hemelb::extraction::FloatingType> GetVelocity() const
           {
             return velocities[location];
           }
-          hemelb::extraction::ExtractedProperty GetShearStress() const
+          hemelb::extraction::FloatingType GetShearStress() const
           {
             return 0.f;
           }
-          hemelb::extraction::ExtractedProperty GetVonMisesStress() const
+          hemelb::extraction::FloatingType GetVonMisesStress() const
           {
             return 0.f;
           }
-          hemelb::extraction::ExtractedProperty GetShearRate() const
+          hemelb::extraction::FloatingType GetShearRate() const
           {
             return 0.f;
           }

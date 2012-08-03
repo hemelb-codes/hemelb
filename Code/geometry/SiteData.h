@@ -39,6 +39,11 @@ namespace hemelb
         /**
          * These functions return internal representations and should only be used for debugging.
          */
+        uint32_t GetIoletIntersectionData() const;
+        uint32_t &GetIoletIntersectionData()
+        {
+          return ioletIntersection;
+        }
         uint32_t GetIntersectionData() const;
         uint32_t &GetIntersectionData()
         {

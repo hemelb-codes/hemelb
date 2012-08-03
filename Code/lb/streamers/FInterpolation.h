@@ -60,13 +60,8 @@ namespace hemelb
                 * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction))) = distribution[direction];
               }
 
-              BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                       hydroVars.v_y,
-                                                                                       hydroVars.v_z,
-                                                                                       site,
-                                                                                       hydroVars.GetFNeq().f,
-                                                                                       hydroVars.density,
-                                                                                       hydroVars.tau,
+              BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                       hydroVars,
                                                                                        lbmParams,
                                                                                        propertyCache);
             }

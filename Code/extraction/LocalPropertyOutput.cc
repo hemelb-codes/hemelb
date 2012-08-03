@@ -236,8 +236,8 @@ namespace hemelb
               {
                 util::Matrix3D tensor = dataSource.GetStressTensor();
                 // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                xdrWriter << (float) tensor[0][0] << (float) tensor[0][1] << (float) tensor[0][2]
-                    << (float) tensor[1][1] << (float) tensor[1][2] << (float) tensor[2][2];
+                xdrWriter << static_cast<double>(tensor[0][0]) << static_cast<double>(tensor[0][1]) << static_cast<double>(tensor[0][2])
+                    << static_cast<double>(tensor[1][1]) << static_cast<double>(tensor[1][2]) << static_cast<double>(tensor[2][2]);
                 break;
               }
               default:

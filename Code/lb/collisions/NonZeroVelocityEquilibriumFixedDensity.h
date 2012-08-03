@@ -25,20 +25,18 @@ namespace hemelb
 
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
           {
-            CKernel::LatticeType::CalculateDensityAndVelocity(hydroVars.f,
+            CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                               hydroVars.density,
-                                                              hydroVars.v_x,
-                                                              hydroVars.v_y,
-                                                              hydroVars.v_z);
+                                                              hydroVars.momentum.x,
+                                                              hydroVars.momentum.y,
+                                                              hydroVars.momentum.z);
 
             // Externally impose a density. Keep a record of the old one so we can scale the
             // momentum vector.
             distribn_t previousDensity = hydroVars.density;
             hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
 
-            hydroVars.v_x *= (hydroVars.density / previousDensity);
-            hydroVars.v_y *= (hydroVars.density / previousDensity);
-            hydroVars.v_z *= (hydroVars.density / previousDensity);
+            hydroVars.momentum *= (hydroVars.density / previousDensity);
 
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
