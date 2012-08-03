@@ -16,20 +16,20 @@ namespace hemelb
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
       template<class LatticeType>
-      class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
+      class LBGK : public BaseKernel<LBGK<LatticeType> , LatticeType>
       {
         public:
           LBGK(InitParams& initParams)
           {
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z,
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z,
                                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -40,7 +40,11 @@ namespace hemelb
 
           inline void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
           {
-            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density,
+                                      hydroVars.momentum.x,
+                                      hydroVars.momentum.y,
+                                      hydroVars.momentum.z,
+                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
@@ -53,8 +57,7 @@ namespace hemelb
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.SetFPostCollision(direction,
-                                          hydroVars.f[direction]
-                                              + hydroVars.f_neq.f[direction] * lbmParams->GetOmega());
+                                          hydroVars.f[direction] + hydroVars.f_neq.f[direction] * lbmParams->GetOmega());
             }
           }
 

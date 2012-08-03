@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STREAMERS_REGULARISEDIOLET_H
-#define HEMELB_LB_STREAMERS_REGULARISEDIOLET_H
+#ifndef HEMELB_LB_STREAMERS_NASHBB_H
+#define HEMELB_LB_STREAMERS_NASHBB_H
 
 #include "lb/streamers/BaseStreamer.h"
 
@@ -10,7 +10,7 @@ namespace hemelb
     namespace streamers
     {
       template<typename CollisionImpl>
-      class RegularisedIolet : public BaseStreamer<RegularisedIolet<CollisionImpl> >
+      class NashBB : public BaseStreamer<NashBB<CollisionImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -20,7 +20,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          RegularisedIolet(kernels::InitParams& initParams) :
+          NashBB(kernels::InitParams& initParams) :
             collider(initParams), iolet(initParams.boundaryObject)
           {
           }
@@ -48,11 +48,18 @@ namespace hemelb
               // Start by doing the normal stream and collide operation.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
-                    = hydroVars.GetFPostCollision()[direction];
+                // The actual bounce-back lines, including streaming and collision. Basically swap
+                // the non-equilibrium components of f in each of the opposing pairs of directions.
+                site_t streamingDestination = site.HasBoundary(direction)
+                  ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction]
+                  : site.GetStreamedIndex<LatticeType> (direction);
+
+                // Remember, oFNeq currently hold the equilibrium distribution. We
+                // simultaneously use this and correct it, here.
+                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[direction];
               }
 
-              // Let's next fill in the blanks on this site that won't get streamed to.
+              // Let's next fill in the blanks on this site that won't get streamed to because of Iolets
               for (Direction direction = 1; direction < LatticeType::NUMVECTORS; ++direction)
               {
                 if (!site.HasIolet(direction))
@@ -67,7 +74,7 @@ namespace hemelb
                     * hydroVars.density) / wall_distance;
 
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
-                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
+                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal().GetNormalised();
 
                 // Note that the division by density compensates for the fact that v_x etc have momentum
                 // not velocity.
@@ -93,7 +100,7 @@ namespace hemelb
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<RegularisedIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+              BaseStreamer<NashBB>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
                                                                                          hydroVars,
                                                                                          lbmParams,
                                                                                          propertyCache);
@@ -122,4 +129,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_STREAMERS_REGULARISED_H */
+#endif /* HEMELB_LB_STREAMERS_NASHBB_H */

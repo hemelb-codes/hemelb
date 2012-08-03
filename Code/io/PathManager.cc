@@ -7,7 +7,7 @@ namespace hemelb
     PathManager::PathManager(const configuration::CommandLine & commandLine,
                              const bool & io,
                              const int & processorCount) :
-        options(commandLine), ok(false), doIo(io)
+      options(commandLine), ok(false), doIo(io)
     {
 
       inputFile = options.GetInputFile();
@@ -23,8 +23,8 @@ namespace hemelb
       {
         if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
-                                                                              outputDir.c_str());
+          hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
+                                                                                  outputDir.c_str());
           return;
         }
 

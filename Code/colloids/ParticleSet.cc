@@ -1,6 +1,6 @@
 #include "colloids/ParticleSet.h"
 #include "log/Logger.h"
- 
+
 namespace hemelb
 {
   namespace colloids
@@ -11,19 +11,19 @@ namespace hemelb
     {
       // assume we are at the <Particles> node
       bool found = xml.MoveToChild("subgridParticle");
-      if (found) propertyCache.velocityCache.SetRefreshFlag();
+      if (found)
+        propertyCache.velocityCache.SetRefreshFlag();
       while (found)
       {
         particles.push_back(new Particle(latDatLBM, xml, propertyCache));
         found = xml.NextSibling("subgridParticle");
       }
-    };
+    }
+    ;
 
     ParticleSet::~ParticleSet()
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         delete *iter;
       }
@@ -32,15 +32,11 @@ namespace hemelb
 
     const void ParticleSet::UpdatePositions() const
     {
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "[Rank: %i] In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
-          topology::NetworkTopology::Instance()->GetLocalRank(),
-          particles.size());
+      log::Logger::Log<log::Trace, log::OnePerCore>("[Rank: %i] In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
+                                                    topology::NetworkTopology::Instance()->GetLocalRank(),
+                                                    particles.size());
 
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
         particle->UpdatePosition();
@@ -49,9 +45,7 @@ namespace hemelb
 
     const void ParticleSet::CalculateBodyForces() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
         particle->CalculateBodyForces();
@@ -60,9 +54,7 @@ namespace hemelb
 
     const void ParticleSet::CalculateFeedbackForces() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
         particle->CalculateFeedbackForces();
@@ -71,9 +63,7 @@ namespace hemelb
 
     const void ParticleSet::InterpolateFluidVelocity() const
     {
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
         particle->InterpolateFluidVelocity();
@@ -90,9 +80,7 @@ namespace hemelb
        *    - MPI_ISEND( list_of_local_particles )
        *    MPI_WAITALL()
        */
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
       }
@@ -108,9 +96,7 @@ namespace hemelb
        *    - MPI_ISEND( list_of_local_velocities )
        *    MPI_WAITALL()
        */
-      for (std::vector<Particle*>::const_iterator iter = particles.begin();
-           iter != particles.end();
-           iter++)
+      for (std::vector<Particle*>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         Particle* particle = *iter;
       }
