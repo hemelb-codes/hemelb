@@ -1,3 +1,11 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
 
 #include "geometry/needs/Needs.h"
 #include "log/Logger.h"
@@ -40,36 +48,32 @@ namespace hemelb
       }
       net.Dispatch();
       // Communicate the arrays of needed blocks
-      std::vector<std::vector<site_t> > blocksNeededOn(communicator.GetSize());
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
-
-        if (readingCore == communicator.GetRank())
-        {
-          for (proc_t sendingCore = 0; sendingCore < communicator.GetSize(); sendingCore++)
-          {
-            blocksNeededOn[sendingCore].resize(blocksNeededSizes[sendingCore]);
-          }
-
-        }
         net.RequestGatherVSend(blocksNeededHere[readingCore], readingCore);
       }
+
+      std::vector<site_t> blocksNeededOn;
+
       if (communicator.GetRank() < readingGroupSize)
       {
-        net.RequestGatherVReceive(blocksNeededOn);
+        net.RequestGatherVReceive(blocksNeededOn, blocksNeededSizes);
       }
       net.Dispatch();
       if (communicator.GetRank() < readingGroupSize)
       {
+        int needsPassed = 0;
         // Transpose the blocks needed on cores matrix
         for (proc_t sendingCore = 0; sendingCore < communicator.GetSize(); sendingCore++)
         {
-          for (std::vector<site_t>::iterator need = blocksNeededOn[sendingCore].begin();
-              need != blocksNeededOn[sendingCore].end(); need++)
+          for (int needForThisSendingCore = 0; needForThisSendingCore < blocksNeededSizes[sendingCore];
+              ++needForThisSendingCore)
           {
-            procsWantingBlocksBuffer[*need].push_back(sendingCore);
-          } //for need
+            procsWantingBlocksBuffer[blocksNeededOn[needsPassed]].push_back(sendingCore);
+
+            ++needsPassed;
+          }
         } //for sendingCore
       } //if a reading core
 

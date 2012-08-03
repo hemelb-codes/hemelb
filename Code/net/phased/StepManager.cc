@@ -1,4 +1,15 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #include "net/phased/StepManager.h"
+#include <algorithm>
+
 namespace hemelb
 {
   namespace net
@@ -6,23 +17,26 @@ namespace hemelb
     namespace phased
     {
 
-      StepManager::StepManager(Phase phases) :
-          registry(phases)
+      StepManager::StepManager(Phase phases, reporting::Timers *timers, bool separate_concerns) :
+          registry(phases), concerns(), timers(timers), separate_concerns(separate_concerns)
       {
       }
 
       void StepManager::Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method)
       {
-        if (step == steps::BeginAll || step == steps::EndAll || step == steps::Reset)
+        if (step == steps::BeginAll || step == steps::EndAll)
         {
           phase = 0; // special actions are always recorded in the phase zero registry
         }
         registry[phase][step].push_back(Action(concern, method));
+        if (std::find(concerns.begin(),concerns.end(),&concern)==concerns.end()){
+          concerns.push_back(&concern);
+        }
       }
 
-      void StepManager::RegisterIteratedActorSteps(Concern &concern,Phase phase)
+      void StepManager::RegisterIteratedActorSteps(Concern &concern, Phase phase)
       {
-        for (int step = steps::BeginPhase; step <= steps::Reset; step++)
+        for (int step = steps::BeginPhase; step <= steps::EndAll; step++)
         {
           if (step == steps::Receive || step == steps::Send || step == steps::Wait)
           {
@@ -50,17 +64,6 @@ namespace hemelb
 
       unsigned int StepManager::ConcernCount() const
       {
-        std::set<Concern *> concerns;
-        for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end(); phase++)
-        {
-          for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
-          {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
-            {
-              concerns.insert(action->concern);
-            }
-          }
-        }
         return concerns.size();
       }
 
@@ -71,7 +74,8 @@ namespace hemelb
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end(); action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
+                action++)
             {
               total++;
             }
@@ -82,9 +86,38 @@ namespace hemelb
 
       void StepManager::CallActionsForPhase(Phase phase)
       {
+        // It is assumed, that in the step enum, begin phase begins, and end phase ends, the steps which
+        // must be called for a given phase.
         for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
         {
           CallActionsForStep(static_cast<steps::Step>(step), phase);
+        }
+      }
+
+      void StepManager::CallActionsForPhaseSeparatedConcerns(Phase phase)
+      {
+        for (std::vector<Concern*>::iterator concern = concerns.begin(); concern != concerns.end(); concern++)
+        {
+          for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
+          {
+            if (step == steps::Receive || step == steps::Send || step == steps::Wait)
+            {
+              // Call ALL comms actions for all concerns
+              // Because, these concerns are net::Net objects, that do the actual send/receive/wait MPI calls
+              /**
+               * E.g:
+               * if A is a concern, B is a concern, C is a concern
+               * A is an it actor, B is an it actor,C is a net::Net
+               * You want to go: A C A C A C B C B C B C
+               */
+              CallActionsForStep(static_cast<steps::Step>(step), phase);
+            }
+            else
+            {
+              // Call the actions only for THIS concern
+              CallActionsForStepForConcern(static_cast<steps::Step>(step), *concern, phase);
+            }
+          }
         }
       }
 
@@ -94,8 +127,23 @@ namespace hemelb
         CallActionsForStep(static_cast<steps::Step>(step), 0);
       }
 
+      void StepManager::CallActionsSeparatedConcerns()
+      {
+        CallSpecialAction(steps::BeginAll);
+        for (Phase phase = 0; phase < registry.size(); phase++)
+        {
+          CallActionsForPhaseSeparatedConcerns(phase);
+        }
+        CallSpecialAction(steps::EndAll);
+      }
+
       void StepManager::CallActions()
       {
+        if (separate_concerns)
+        {
+          CallActionsSeparatedConcerns();
+          return;
+        }
         CallSpecialAction(steps::BeginAll);
         for (Phase phase = 0; phase < registry.size(); phase++)
         {
@@ -106,10 +154,58 @@ namespace hemelb
 
       void StepManager::CallActionsForStep(steps::Step step, Phase phase)
       {
+        StartTimer(step);
         std::vector<Action> &actionsForStep = registry[phase][step];
         for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
         {
           action->Call();
+        }
+        StopTimer(step);
+      }
+
+      void StepManager::CallActionsForStepForConcern(steps::Step step,  Concern * concern, Phase phase)
+      {
+        StartTimer(step);
+        std::vector<Action> &actionsForStep = registry[phase][step];
+        for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
+        {
+          if (action->concern == concern)
+          {
+            action->Call();
+          }
+        }
+        StopTimer(step);
+      }
+
+      void StepManager::StartTimer(steps::Step step)
+      {
+        if (!timers)
+        {
+          return;
+        }
+        if (step == steps::Wait)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiWait].Start();
+        }
+        if (step == steps::Send)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiSend].Start();
+        }
+      }
+
+      void StepManager::StopTimer(steps::Step step)
+      {
+        if (!timers)
+        {
+          return;
+        }
+        if (step == steps::Wait)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiWait].Stop();
+        }
+        if (step == steps::Send)
+        {
+          (*timers)[hemelb::reporting::Timers::mpiSend].Stop();
         }
       }
     }

@@ -16,3 +16,31 @@ example:
         'env.yml':
             type: script
             machine: machine_name
+extraction:
+  name_properties:
+    name: '(.*)'
+  extraction_files:
+    'results/Extracted/pressure_axial_profile.dat':
+      axial_field_count: fieldCount
+      axial_pressure: [final,axial_pressure]
+      axial_position: [final,grid]
+      voxel_size: voxelSizeMetres
+    'results/Extracted/velocity_shearstress_2_5_lengths_in.dat':
+      radial_velocity: [final,developed_velocity_profile]
+      radial_position: [final,grid]
+  compound_properties:
+      axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
+optional:
+  name_properties:
+    name: '(.*)'
+    voxelsize: 'cylinder_0_00(.).*'
+    cores: '.*planck_(.)'
+  optional_properties:
+    'cores==1':
+        compound_properties:
+          banana: cores
+          apple: cores
+    'voxelsize!=6':
+        compound_properties:
+          apple: voxelsize
+    

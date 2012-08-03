@@ -39,9 +39,14 @@ results:
             dbg3: 'timings/timer[name="dbg3"]/mean'
             dbg4: 'timings/timer[name="dbg4"]/mean'
             dbg5: 'timings/timer[name="dbg5"]/mean'
+            lattice_type: build/lattice_type
+            lb_kernel: build/kernel_type
+            wall_boundary_condition: build/wall_boundary_condition
         'config.xml':
             cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
+            inlet_pressure_mean: ['inlets/inlet/pressure','mean']
+            outlet_pressure_mean: ['outlets/outlet/pressure','mean']
         'tests.xml':
             total_tests: 'Statistics/Tests'
             failing_tests: 'Statistics/FailuresTotal'
@@ -60,9 +65,11 @@ results:
             gmy_block_count: block_count
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
-        type_by_name: '(regression|unittests)'
+        type_by_name: '(regression|unittests|build)'
         name: '(.*)'
     stat_properties:
+        '':
+            folder_created_timestamp: st_mtime
         'results/report.txt':
             report_created_timestamp: st_mtime
         'tests.xml':
@@ -82,13 +89,14 @@ results:
         
         
     compound_properties:
-        result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp)
+        result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp if test_results_timestamp else folder_created_timestamp)
         snapshots_norm: (snapshots_count if normalised else 1.0)
         images_norm: (images_count if normalised else 1.0)
         steering_wait: (steering_wait_raw if steering_wait_raw else steering_wait_raw_2 if steering_wait_raw_2 else 0)
         snapshots: (snapshots_raw * snapshots_norm)
         visualisation: (visualisation_raw * images_norm)
         lb_calc_rate: (sites*steps*1.0)/((cores-1.0)*lb)
+        total_velocity: (sites*steps*1.0)/(cores*simulation)
         velocity: (sites*steps*1.0/(cores*non_io))
         setup_velocity: (sites*1.0/(cores*setup))
         decomposition_velocity: (sites*1.0/(cores*domain_decomposition))
@@ -114,6 +122,52 @@ results:
         reading_group: reading_group_raw if reading_group_raw else 5
         steering_frame_rate: float(len(steering_elapsed_time))/sum(steering_elapsed_time)
         steering_steps_per_frame: sum(steering_elapsed_steps)/float(len(steering_elapsed_steps))
+        viscosity: 4e-3
+        pressure_diff: (inlet_pressure_mean-outlet_pressure_mean) * 133.3223874
+        pipe_length: max(axial_position)-min(axial_position)+voxel_size/2
+        axial_pressure: '[133.323874 * x for x in axial_pressure_torr]'
+        axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
+        axial_position: '[x[2] for x in space(axial_coordinate,voxel_size,origin)]'
+        radial_position: '[x[0] for x in aligned_cylindrical(radial_coordinate,voxel_size,origin)]'
+        axial_velocity: '[x[2] for x in radial_velocity_field]'
+        radius: max(radial_position) + voxel_size/2
+        theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(radius,2) - pow(d,2)) for d in radial_position]'
+        mean_theoretical_axial_velocity: ' sum(theoretical_axial_velocity) / len(theoretical_axial_velocity)'
+        range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
+        residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
+        max_rel_residual_velocity: 'max([abs(x) for x in residual_velocity])/range_theoretical_axial_velocity'
+        ave_rel_residual_velocity: '( sum([x**2 for x in residual_velocity]) / sum([(x - mean_theoretical_axial_velocity)**2 for x in theoretical_axial_velocity])) ** 0.5'
+        theoretical_axial_pressure: '[inlet_pressure_mean*133.323874 - pressure_diff * (x - min(axial_position))/pipe_length for x in axial_position]'
+        mean_theoretical_axial_pressure: 'sum(theoretical_axial_pressure) / len(theoretical_axial_pressure)'
+        range_theoretical_axial_pressure: 'max(theoretical_axial_pressure) - min(theoretical_axial_pressure)'
+        residual_pressure: '[(a-b) for a,b in zip(axial_pressure,theoretical_axial_pressure)]'
+        max_rel_residual_pressure: 'max([abs(x) for x in residual_pressure])/range_theoretical_axial_pressure'
+        ave_rel_residual_pressure: '( sum([x**2 for x in residual_pressure]) / sum([(x - mean_theoretical_axial_pressure)**2 for x in theoretical_axial_pressure])) ** 0.5'
+        mean_actual_pressure: '133.323874*sum(axial_pressure)/len(axial_pressure)'
+        mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
+        filtered_theoretical_shear_stress: '[a for (a,b) in zip(theoretical_axial_stress,radial_shear_stress_field) if not math.isinf(b)]'
+        filtered_shear_stress: '[x for x in radial_shear_stress_field if not math.isinf(x)]'
+        mean_actual_stress: 'sum(filtered_shear_stress)/len(filtered_shear_stress)'
+        mean_filtered_theoretical_stress: 'sum(filtered_theoretical_shear_stress)/len(filtered_theoretical_shear_stress)'
+        inlet_pressure: '[133.323874 * x for x in inlet_pressure_torr]'
+        inlet_radius: '[ ((x[0]*voxel_size + origin[0])**2 + (x[1]*voxel_size + origin[1])**2)**0.5 for x in inlet_coordinate  ]'
+        inlet_V: '[ (x[0]**2 + x[1]**2 + x[2]**2) ** 0.5 for x in inlet_velocity  ]'
+        theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
+        mean_theoretical_stress: 'sum(theoretical_axial_stress) / len(theoretical_axial_stress)'
+        range_theoretical_stress: 'max(theoretical_axial_stress) - min(theoretical_axial_stress)'
+        residual_stress: '[(a-b) for a,b in zip(radial_shear_stress_field,theoretical_axial_stress)]'
+        max_rel_residual_stress: 'max([abs(x) for x in residual_stress if not math.isinf(x)])/range_theoretical_stress'
+        ave_rel_residual_stress: '( sum([x**2 for x in residual_stress if not math.isinf(x)]) / sum([(x - mean_theoretical_stress)**2 for x in theoretical_axial_stress])) ** 0.5'
+        actual_reynolds_number: 1000*max(axial_velocity)*2*radius/viscosity
+        theoretical_reynolds_number: 1000*max(theoretical_axial_velocity)*2*radius/viscosity
+
+        # z-coordinate for all the sites where we sampled values of stress tensor and its theoretical pressure value
+        stress_tensor_sampling_z_coord: '[x[2] for x in space(radial_coordinate_tensors,voxel_size,origin)]' 
+        theoretical_radial_pressure: '[inlet_pressure_mean*133.323874 - pressure_diff * (z - min(axial_position))/pipe_length for z in stress_tensor_sampling_z_coord]'
+        # Theoretical stress tensors 
+        theoretical_stress_tensor: '[poiseuille_stress_tensor(radius, pressure, pressure_diff/pipe_length) for (radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
+        # Frobenius norm of the difference between the extracted tensor and the Poiseuille theoretical
+        norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
 
     yaml_files:
         'env.yml':
@@ -122,6 +176,26 @@ results:
             size: VoxelSize
             profile: profile
             node_type: node_type
+            
+    extraction_files:
+      'results/Extracted/pressure_axial_profile.dat':
+        axial_field_count: fieldCount
+        axial_pressure_torr: axial_pressure
+        axial_coordinate: grid
+        voxel_size: voxelSizeMetres
+        origin: originMetres
+      'results/Extracted/velocity_shearstress_line_2_5_lengths_in.dat':
+        radial_velocity_field: developed_velocity_profile
+        radial_shear_stress_field: developed_shear_stress_profile
+        radial_coordinate: grid
+      'results/Extracted/inlet_profile.dat':
+        inlet_pressure_torr: inlet_pressure
+        inlet_velocity: inlet_velocity
+        inlet_coordinate: grid
+      'results/Extracted/stresstensor_line_2_5_lengths_in.dat':
+        radial_stresstensor: developed_stresstensor_profile
+        radial_coordinate_tensors: grid
+
 
 graphs:
     performance_versus_size:
