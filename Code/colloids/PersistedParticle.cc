@@ -14,6 +14,5 @@ namespace hemelb
       ok &= xml.GetDoubleValue("HydrostaticRadiusAh", largeRadius_ah);
       ok &= xml.GetDoubleVector("initialPosition", globalPosition);
     };
-
   }
 }

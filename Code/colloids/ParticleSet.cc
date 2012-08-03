@@ -15,14 +15,13 @@ namespace hemelb
       localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
       latDatLBM(latDatLBM),
       propertyCache(propertyCache)
-      //, neighbourProcessors(neighbourProcessors)
     {
       std::sort(neighbourProcessors.begin(), neighbourProcessors.end());
       for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin();
            iter != neighbourProcessors.end();
            iter++)
-        scanMap.insert(scanMap.end(), std::pair<proc_t, unsigned int>(*iter, 0));
-      scanMap.insert(std::pair<proc_t, unsigned int>(localRank, 0));
+        scanMap.insert(scanMap.end(), scanMapContentType(*iter, scanMapElementType(0, 0)));
+      scanMap.insert(scanMapContentType(localRank, scanMapElementType(0, 0)));
 
       // assume we are at the <Particles> node
       bool found = xml.MoveToChild("subgridParticle");
@@ -30,11 +29,10 @@ namespace hemelb
       while (found)
       {
         Particle nextParticle(latDatLBM, xml);
-        //localParticles.push_back(nextParticle);
         if (nextParticle.isValid && nextParticle.ownerRank == localRank)
         {
           particles.push_back(nextParticle);
-          scanMap[localRank]++;
+          scanMap[localRank].first++;
         }
         found = xml.NextSibling("subgridParticle");
       }
@@ -42,8 +40,6 @@ namespace hemelb
 
     ParticleSet::~ParticleSet()
     {
-      //localParticles.clear();
-      //remoteParticles.clear();
       particles.clear();
     }
 
@@ -56,15 +52,15 @@ namespace hemelb
         const Particle& particle = *iter;
         particle.OutputInformation();
       }
-      std::map<proc_t, unsigned int>::const_iterator iterMap = scanMap.begin();
-      for (iterMap = scanMap.begin();
+      for (scanMapConstIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
       {
-        const proc_t& neighbourRank = (*iterMap).first;
-        const unsigned int& numberOfParticles = (*iterMap).second;
+        const proc_t& neighbourRank = iterMap->first;
+        const unsigned int& numberOfParticles = iterMap->second.first;
+        const unsigned int& numberOfVelocities = iterMap->second.second;
         log::Logger::Log<log::Debug, log::OnePerCore>(
-          "ScanMap[%i] = %i\n", neighbourRank, numberOfParticles);
+          "ScanMap[%i] = {%i, %i}\n", neighbourRank, numberOfParticles, numberOfVelocities);
       }
     }
 
@@ -117,12 +113,14 @@ namespace hemelb
       {
         Particle& particle = *iter;
         particle.InterpolateFluidVelocity(latDatLBM, propertyCache);
-        if (particle.velocity.z != 0.0)
-          isBoring = false;
-        if (!isBoring)
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("NON-BORING velocity interpolation");
-          particle.OutputInformation();
+          if (particle.velocity.z != 0.0)
+            isBoring = false;
+          if (!isBoring)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("NON-BORING velocity interpolation");
+            particle.OutputInformation();
+          }
         }
       }
       propertyCache.velocityCache.SetRefreshFlag();
@@ -130,7 +128,7 @@ namespace hemelb
 
     const void ParticleSet::CommunicateParticlePositions()
     {
-      /** todo: CommunicateParticlePositions
+      /** CommunicateParticlePositions
        *    For each neighbour rank p
        *    - MPI_IRECV( number_of_remote_particles )
        *    - MPI_IRECV( list_of_remote_particles )
@@ -144,18 +142,17 @@ namespace hemelb
        *  
        */
 
-      std::map<proc_t, unsigned int>::iterator iterMap = scanMap.begin();
-      unsigned int& numberOfParticlesToSend = scanMap[localRank];
+      unsigned int& numberOfParticlesToSend = scanMap[localRank].first;
       if (scanMap.size() < 2) { return; }
 
-      for (iterMap = scanMap.begin();
+      for (scanMapIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
       {
-        const proc_t& neighbourRank = (*iterMap).first;
+        const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          unsigned int& numberOfParticlesToRecv = (*iterMap).second;
+          unsigned int& numberOfParticlesToRecv = iterMap->second.first;
           net.RequestSendR(numberOfParticlesToSend, neighbourRank);
           net.RequestReceiveR(numberOfParticlesToRecv, neighbourRank);
         }
@@ -163,24 +160,24 @@ namespace hemelb
       net.Dispatch();
 
       unsigned int numberOfParticles = 0;
-      for (iterMap = scanMap.begin();
+      for (scanMapConstIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
-        numberOfParticles += (*iterMap).second;
+        numberOfParticles += iterMap->second.first;
       particles.resize(numberOfParticles);
 
       std::vector<Particle>::iterator iterSendBegin = particles.begin();
       std::vector<Particle>::iterator iterRecvBegin = particles.begin() + numberOfParticlesToSend;
-      for (iterMap = scanMap.begin();
+      for (scanMapConstIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
       {
-        const proc_t& neighbourRank = (*iterMap).first;
+        const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          const unsigned int& numberOfParticlesToRecv = (*iterMap).second;
-          net.RequestSend(&(*iterSendBegin), numberOfParticlesToSend, neighbourRank);
-          net.RequestReceive(&(*(iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
+          const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
+          net.RequestSend(&((PersistedParticle&)*iterSendBegin), numberOfParticlesToSend, neighbourRank);
+          net.RequestReceive(&((PersistedParticle&)*(iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
           iterRecvBegin += numberOfParticlesToRecv;
         }
       }
@@ -196,113 +193,96 @@ namespace hemelb
       std::sort(particles.begin(), particles.end());
 
       // re-build the scanMap
-      for (iterMap = scanMap.begin();
+      for (scanMapIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
-        (*iterMap).second = 0;
+        iterMap->second.first = 0;
       for (std::vector<Particle>::const_iterator iterParticles = particles.begin();
            iterParticles != particles.end();
            iterParticles++)
-      {
-        scanMap[(*iterParticles).ownerRank]++;
-      }
-
-/*
-      unsigned int numberOfParticlesToSend = localParticles.size();
-      unsigned int numberOfParticlesToReceive[55];//neighbourProcessors.size() + 1];
-      numberOfParticlesToReceive[0] = 0;
-
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "In colloids::ParticleSet::CommunicateParticlePositions #particles == %i, #neighbours == %i ...\n",
-          numberOfParticlesToSend, 55);//neighbourProcessors.size());
-
-      //if (neighbourProcessors.empty()) { return; }
-
-      unsigned int iterNeighbourIndex = 0;
-      for (std::vector<proc_t>::const_iterator iterNeighbourRank = neighbourProcessors.begin();
-           iterNeighbourRank != neighbourProcessors.end();
-           iterNeighbourRank++)
-      {
-        if (log::Logger::ShouldDisplay<log::Debug>())
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "In colloids::ParticleSet::CommunicateParticlePositions sending (int) %i to rank %i\n",
-            numberOfParticlesToSend, *iterNeighbourRank);
-
-        net.RequestSendR(numberOfParticlesToSend, *iterNeighbourRank);
-        iterNeighbourIndex++;
-        net.RequestReceive(&numberOfParticlesToReceive[iterNeighbourIndex], 1, *iterNeighbourRank);
-
-        if (log::Logger::ShouldDisplay<log::Debug>())
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "In colloids::ParticleSet::CommunicateParticlePositions recving (int) [%i,1] from rank %i\n",
-            iterNeighbourIndex, *iterNeighbourRank);
-      }
-      net.Dispatch();
-
-      unsigned int numberOfRemoteParticles = 0;
-      for (iterNeighbourIndex = 0;
-           iterNeighbourIndex < neighbourProcessors.size();
-           iterNeighbourIndex++)
-      {
-        numberOfRemoteParticles += numberOfParticlesToReceive[iterNeighbourIndex + 1];
-      }
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "In colloids::ParticleSet::CommunicateParticlePositions #remoteParticles == %i ...\n",
-          numberOfRemoteParticles);
-
-      if (remoteParticles.size() < numberOfRemoteParticles)
-        remoteParticles.resize(numberOfRemoteParticles);
-
-      iterNeighbourIndex = 0;
-      for (std::vector<proc_t>::const_iterator iterNeighbourRank = neighbourProcessors.begin();
-           iterNeighbourRank != neighbourProcessors.end();
-           iterNeighbourRank++)
-      {
-        if (log::Logger::ShouldDisplay<log::Debug>())
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "In colloids::ParticleSet::CommunicateParticlePositions sending (Particle) [%i] to rank %i\n",
-            localParticles.size(), *iterNeighbourRank);
-
-        net.RequestSendV(localParticles, *iterNeighbourRank);
-        net.RequestReceive(&(remoteParticles[numberOfParticlesToReceive[iterNeighbourIndex]]),
-                           numberOfParticlesToReceive[iterNeighbourIndex + 1],
-                           *iterNeighbourRank);
-
-        if (log::Logger::ShouldDisplay<log::Debug>())
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "In colloids::ParticleSet::CommunicateParticlePositions recving (Particle) [%i,%i] from rank %i\n",
-            numberOfParticlesToReceive[iterNeighbourIndex],
-            numberOfParticlesToReceive[iterNeighbourIndex + 1],
-            *iterNeighbourRank);
-
-        numberOfParticlesToReceive[iterNeighbourIndex + 1] +=
-          numberOfParticlesToReceive[iterNeighbourIndex];
-        iterNeighbourIndex++;
-      }
-      net.Dispatch();
-
-      std::sort(remoteParticles.begin(), remoteParticles.end());
-*/
+        scanMap[iterParticles->ownerRank].first++;
     }
 
     const void ParticleSet::CommunicateFluidVelocities()
     {
       /** todo: CommunicateFluidVelocities
        *    For each neighbour rank p
-       *    - MPI_IRECV( number_of_remote_particles )
-       *    - MPI_IRECV( list_of_remote_velocities )
-       *    - MPI_ISEND( number_of_local_particles )
-       *    - MPI_ISEND( list_of_local_velocities )
+       *    - MPI_IRECV( number_of_incoming_velocities )
+       *    - MPI_IRECV( list_of_incoming_velocities )
+       *    - MPI_ISEND( number_of_outgoing_velocities )
+       *    - MPI_ISEND( list_of_outgoing_velocities )
        *    MPI_WAITALL()
        */
+
+      if (scanMap.size() < 2) { return; }
+
+      // exchange counts
+      for (scanMapIterType iterMap = scanMap.begin();
+           iterMap != scanMap.end();
+           iterMap++)
+      {
+        const proc_t& neighbourRank = iterMap->first;
+        if (neighbourRank != localRank)
+        {
+          unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
+          unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
+          net.RequestSendR(numberOfVelocitiesToSend, neighbourRank);
+          net.RequestReceiveR(numberOfVelocitiesToRecv, neighbourRank);
+        }
+      }
+      net.Dispatch();
+
+      // sum counts
+      unsigned int numberOfIncomingVelocities = 0;
+      for (scanMapConstIterType iterMap = scanMap.begin();
+           iterMap != scanMap.end();
+           iterMap++)
+        numberOfIncomingVelocities += iterMap->second.second;
+      velocityBuffer.resize(numberOfIncomingVelocities);
+
+      // exchange velocities
+      std::vector<Particle>::iterator iterSendBegin = particles.begin();
+      std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator
+        iterRecvBegin = velocityBuffer.begin();
+      for (scanMapConstIterType iterMap = scanMap.begin();
+           iterMap != scanMap.end();
+           iterMap++)
+      {
+        const proc_t& neighbourRank = iterMap->first;
+        if (neighbourRank != localRank)
+        {
+          //const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
+          const unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
+          const unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
+          net.RequestSend(&((Particle&)*iterSendBegin), numberOfVelocitiesToSend, neighbourRank);
+          net.RequestReceive(&(*(iterRecvBegin)), numberOfVelocitiesToRecv, neighbourRank);
+          iterRecvBegin += numberOfVelocitiesToRecv;
+        }
+      }
+      net.Dispatch();
+
+      // sum velocities
+      velocityMap.clear();
+      for (std::vector<std::pair<unsigned long, util::Vector3D<double> > >::const_iterator
+           iterVelocityBuffer = velocityBuffer.begin();
+           iterVelocityBuffer != velocityBuffer.end();
+           iterVelocityBuffer++)
+      {
+        const unsigned long& particleId = iterVelocityBuffer->first;
+        const util::Vector3D<double>& partialVelocity = iterVelocityBuffer->second;
+        velocityMap[particleId] += partialVelocity;
+      }
+
+      // update particles
       for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         Particle& particle = *iter;
+        if (particle.ownerRank == localRank)
+          particle.velocity += velocityMap[particle.GetParticleId()];
       }
+
     }
 
   }
