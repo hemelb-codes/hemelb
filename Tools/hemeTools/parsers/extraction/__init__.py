@@ -178,6 +178,11 @@ class ExtractedProperty(object):
             raise IndexError("Timestep {0} not in extraction file {1}".format(t, self.filename))
         return self._LoadByIndex(idx)
 
+    def GetFieldSpec(self):
+        """Get the specification of all the fields we have
+        """
+        return self._fieldSpec
+
     def _MemMap(self, idx):
         """Use numpy.memmap to make a single timestep's worth of data
         accessible through a numpy array.
