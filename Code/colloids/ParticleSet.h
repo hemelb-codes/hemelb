@@ -47,15 +47,22 @@ namespace hemelb
         const void OutputInformation() const;
 
       private:
-        /** all particles whose position is within the local domain */
-        //std::vector<Particle> localParticles;
-
-        /** temporary copy of all particles from neighbouring domains */
-        //std::vector<Particle> remoteParticles;
-
         const proc_t localRank;
+
         std::vector<Particle> particles;
-        std::map<proc_t, unsigned int> scanMap;
+
+        // map neighbourRank -> {numberOfParticlesFromThere, numberOfVelocitiesFromThere}
+        typedef std::pair<unsigned int, unsigned int> scanMapElementType;
+        std::map<proc_t, scanMapElementType> scanMap;
+        typedef std::map<proc_t, scanMapElementType>::const_iterator scanMapConstIterType;
+        typedef std::map<proc_t, scanMapElementType>::iterator scanMapIterType;
+        typedef std::pair<proc_t, scanMapElementType> scanMapContentType;
+        
+        // a contiguous buffer into which MPI can write all the velocities from neighbours
+        std::vector<std::pair<unsigned long, util::Vector3D<double> > > velocityBuffer;
+
+        // map particleId -> sumOfvelocityContributionsFromNeighbours
+        std::map<unsigned long, util::Vector3D<double> > velocityMap;
 
         /** contains useful geometry manipulation functions */
         const geometry::LatticeData& latDatLBM;

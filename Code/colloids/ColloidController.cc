@@ -37,9 +37,9 @@ namespace hemelb
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
       bool allGood = (localRank == 0) || (neighbourProcessors.size() > 0);
-      printf("[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
-             localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
-      //assert((localRank==0) || (neighbourProcessors.size()>0));
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
+        localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
 
       bool ok = true;
       xml.ResetToTopLevel();
@@ -77,13 +77,12 @@ namespace hemelb
         site_t blockId = blockTraverser.GetCurrentIndex();
         if (gmyResult.Blocks[blockId].Sites.size() == 0)
         {
-          if (log::Logger::ShouldDisplay<log::Debug>())
-            log::Logger::Log<log::Info, log::OnePerCore>(
-              "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
-              blockId,
-              blockTraverser.GetCurrentLocation().x,
-              blockTraverser.GetCurrentLocation().y,
-              blockTraverser.GetCurrentLocation().z);
+          log::Logger::Log<log::Debug, log::OnePerCore>(
+            "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
+            blockId,
+            blockTraverser.GetCurrentLocation().x,
+            blockTraverser.GetCurrentLocation().y,
+            blockTraverser.GetCurrentLocation().z);
           continue;
         }
 
@@ -99,24 +98,22 @@ namespace hemelb
           site_t siteId = siteTraverser.GetCurrentIndex();
           if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
           {
-            if (log::Logger::ShouldDisplay<log::Debug>())
-              log::Logger::Log<log::Info, log::OnePerCore>(
-                "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
-                siteId,
-                siteTraverser.GetCurrentLocation().x,
-                siteTraverser.GetCurrentLocation().y,
-                siteTraverser.GetCurrentLocation().z,
-                gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
+              siteId,
+              siteTraverser.GetCurrentLocation().x,
+              siteTraverser.GetCurrentLocation().y,
+              siteTraverser.GetCurrentLocation().z,
+              gmyResult.Blocks[blockId].Sites[siteId].targetProcessor);
             continue;
           }
 
-            if (log::Logger::ShouldDisplay<log::Debug>())
-              log::Logger::Log<log::Info, log::OnePerCore>(
-                "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
-                siteId,
-                siteTraverser.GetCurrentLocation().x,
-                siteTraverser.GetCurrentLocation().y,
-                siteTraverser.GetCurrentLocation().z);
+          log::Logger::Log<log::Debug, log::OnePerCore>(
+            "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
+            siteId,
+            siteTraverser.GetCurrentLocation().x,
+            siteTraverser.GetCurrentLocation().y,
+            siteTraverser.GetCurrentLocation().z);
 
           // foreach neighbour of site
           for (Neighbourhood::const_iterator itDirectionVector = neighbourhood.begin();
@@ -148,13 +145,12 @@ namespace hemelb
             this->neighbourProcessors.push_back(neighbourRank);
 
             // debug message so this neighbour list can be compared to the LatticeData one
-            if (log::Logger::ShouldDisplay<log::Debug>())
-              log::Logger::Log<log::Info, log::OnePerCore>(
-                  "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                  (int)neighbourRank, (int)(this->localRank),
-                  (int)neighbourSiteId, (int)neighbourBlockId,
-                  (int)siteId, (int)blockId,
-                  (*itDirectionVector).x, (*itDirectionVector).y, (*itDirectionVector).z);
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+                "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                (int)neighbourRank, (int)(this->localRank),
+                (int)neighbourSiteId, (int)neighbourBlockId,
+                (int)siteId, (int)blockId,
+                (*itDirectionVector).x, (*itDirectionVector).y, (*itDirectionVector).z);
 
           } // end for itDirectionVector
         } // end for siteTraverser
@@ -218,12 +214,6 @@ namespace hemelb
       // if the rank is BIG_NUMBER2 then the site is solid not fluid so return invalid
       if (*ownerRankForSite == BIG_NUMBER2)
         return false;
-/*
-      if (*ownerRankForSite > 2)
-        printf("ERROR: ownerRankForSite(%i) >= comm.size(%i)\n",
-          *ownerRankForSite, 3);
-*/
-      assert(0 <= *ownerRankForSite && *ownerRankForSite < 3);
 
       // all requested information obtained and validated so return true
       return true;
@@ -249,19 +239,8 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
-      int limit = 3;
-
-      if (simulationState.GetTimeStep() % 1000 == 0)
-        particleSet->OutputInformation();
-
       // communication from step 2
       particleSet->CommunicateParticlePositions();
-
-      if (simulationState.GetTimeStep() < limit)
-      {
-        printf("FIRST ParticlePosition comms done\n");
-        particleSet->OutputInformation();
-      }
 
       // step 3
       particleSet->CalculateBodyForces();
@@ -274,34 +253,14 @@ namespace hemelb
 
     void ColloidController::EndIteration()
     {
-      int limit = 3;
-
       // step 6
       particleSet->InterpolateFluidVelocity();
-
-      if (simulationState.GetTimeStep() < limit)
-      {
-        printf("FIRST Interpolation done\n");
-        particleSet->OutputInformation();
-      }
 
       // communication from step 6
       particleSet->CommunicateFluidVelocities();
 
-      if (simulationState.GetTimeStep() < limit)
-      {
-        printf("FIRST velocity comms done\n");
-        particleSet->OutputInformation();
-      }
-
       // steps 7 & 2 combined
       particleSet->UpdatePositions();
-
-      if (simulationState.GetTimeStep() < limit)
-      {
-        printf("FIRST position update done\n");
-        particleSet->OutputInformation();
-      }
     }
 
   }

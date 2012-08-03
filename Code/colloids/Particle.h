@@ -27,8 +27,10 @@ namespace hemelb
 
         Particle() {};
 
+        const unsigned long GetParticleId() const { return particleId; }
+
         const bool operator<(const Particle& other) const;
-        const bool IsOwnerRankKnown(std::map<proc_t, unsigned int> map) const;
+        const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
         const void OutputInformation() const;
 
         /** partial interpolation of fluid velocity - temporary value only */
@@ -61,7 +63,8 @@ namespace hemelb
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
          *  when you no longer need this type, remember to call MPI::Datatype::Free 
          */
-        const MPI::Datatype CreateMpiDatatype() const;
+        const MPI::Datatype CreateMpiDatatypeWithPosition() const;
+        const MPI::Datatype CreateMpiDatatypeWithVelocity() const;
     };
   }
 }
