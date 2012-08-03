@@ -1,3 +1,12 @@
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
+
 """
 Module defining how we configure the fabric environment for target machines.
 Environment is loaded from YAML dictionaries machines.yml and machines_user.yml
@@ -117,16 +126,17 @@ def complete_environment():
     env.code_build_path=env.pather.join(env.remote_path,'code_build')
     env.repository_path=env.pather.join(env.remote_path,env.repository)
     
-    env.local_results=os.path.expanduser(env.local_results)
-    env.local_configs=os.path.expanduser(env.local_configs)
-    env.local_profiles=os.path.expanduser(env.local_profiles)
-
+    env.local_results=os.path.expanduser(template(env.local_results))
+    env.local_configs=os.path.expanduser(template(env.local_configs))
+    env.local_profiles=os.path.expanduser(template(env.local_profiles))
+  
+    env.local_templates_path=os.path.expanduser(template(env.local_templates_path))
+  
     env.tools_path=env.pather.join(env.repository_path,"Tools")
     env.regression_test_repo_path=env.pather.join(env.pather.dirname(env.repository_path),"RegressionTests")
     env.regression_test_source_path=env.pather.join(env.regression_test_repo_path,"diffTest")
     env.regression_test_path=template(env.regression_test_path_template)
     env.tools_build_path=env.pather.join(env.install_path,env.python_build,'site-packages')
-
     module_commands=["module %s"%module for module in env.modules]
     env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'
     run_prefix_commands=env.run_prefix_commands[:]
@@ -137,7 +147,6 @@ def complete_environment():
         run_prefix_commands.append(template("export TMPDIR=$temp_path"))
 
     env.run_prefix=" && ".join(module_commands+map(template,run_prefix_commands)) or 'echo Running...'
-    env.template_key = env.template_key or env.machine_name
     #env.build_number=subprocess.check_output(['hg','id','-q'.'-i']).strip()
     # check_output is 2.7 python and later only. Revert to oldfashioned popen.
     cmd=os.popen(template("hg id -q -i"))

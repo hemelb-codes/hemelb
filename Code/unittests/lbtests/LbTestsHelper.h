@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITTESTS_LBTESTS_LBTESTSHELPER_H
 #define HEMELB_UNITTESTS_LBTESTS_LBTESTSHELPER_H
 
@@ -5,6 +14,7 @@
 #include "constants.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
+#include "unittests/FourCubeLatticeData.h"
 
 namespace hemelb
 {
@@ -303,6 +313,33 @@ namespace hemelb
               // TODO stress cache filling not yet implemented.
             }
           }
+
+          /**
+           * For every site in latticeData and every link crossing a boundary, set the distance to the
+           * boundary to be wallDistance lattice length units
+           *
+           * @param latticeData Lattice object
+           * @param wallDistance Distance to the wall in lattice units and in [0,1)
+           */
+          template<typename Lattice>
+          static void SetWallAndIoletDistances(FourCubeLatticeData& latticeData, distribn_t wallDistance)
+          {
+            assert(wallDistance>=0);
+            assert(wallDistance<1);
+
+            for (site_t siteIndex = 0; siteIndex < latticeData.GetTotalFluidSites(); siteIndex++)
+            {
+              for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
+              {
+                // -1 means that the a given link does not cross any boundary
+                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice>(direction) != -1)
+                {
+                  latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
+                }
+              }
+            }
+          }
+
       };
     }
   }

@@ -34,4 +34,10 @@ Reading group size: {{READING_GROUP_SIZE}}
 Lattice: {{LATTICE_TYPE}}
 Kernel: {{KERNEL_TYPE}}
 Wall boundary condition: {{WALL_BOUNDARY_CONDITION}}
+
+Communications options:
+Point to point implementation: {{POINTPOINT_IMPLEMENTATION}}
+All to all implementation: {{ALLTOALL_IMPLEMENTATION}}
+Gathers implementation: {{GATHERS_IMPLEMENTATION}}
+Separated concerns: {{SEPARATE_CONCERNS}}
 {{/BUILD}}

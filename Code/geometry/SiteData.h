@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_GEOMETRY_SITEDATA_H
 #define HEMELB_GEOMETRY_SITEDATA_H
 
@@ -22,7 +31,7 @@ namespace hemelb
       public:
         SiteData(const GeometrySite& siteReadResult);
         SiteData(const SiteData& other);
-        SiteData():boundaryIntersection(0),data(0){}//default constructor allows one to use operator[] for maps
+        SiteData(); //default constructor allows one to use operator[] for maps
         virtual ~SiteData();
 
         bool IsEdge() const;
@@ -36,9 +45,15 @@ namespace hemelb
          * These functions return internal representations and should only be used for debugging.
          */
         uint32_t GetIntersectionData() const;
-        uint32_t &GetIntersectionData(){return boundaryIntersection;}
+        uint32_t &GetIntersectionData()
+        {
+          return boundaryIntersection;
+        }
         uint32_t GetOtherRawData() const;
-        uint32_t &GetOtherRawData(){return data;}
+        uint32_t &GetOtherRawData()
+        {
+          return data;
+        }
         static const uint32_t SITE_TYPE_BITS = 2U;
         /**
          * Arbitrarily set this to 20 bits.
