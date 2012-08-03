@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
+
 import os.path
 import cPickle
 from copy import copy
@@ -9,7 +18,6 @@ from vtk import vtkSTLReader
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
 
 #import pdb
 
@@ -170,6 +178,7 @@ class Profile(Observable):
         return
     
     def Generate(self):
+        from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
         generator = GeometryGenerator(self)
         generator.Execute()
         return

@@ -12,7 +12,7 @@ option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL tak
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
-option(HEMELB_USE_BOOST "Use Boost" OFF)
+option(HEMELB_USE_BOOST "Use Boost" ON)
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
@@ -34,7 +34,14 @@ set(HEMELB_LATTICE "D3Q15"
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
-  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK)")
+  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK,JUNKYANG)")
+set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
+	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
+set(HEMELB_GATHERS_IMPLEMENTATION Separated
+	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
+	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -205,7 +212,7 @@ target_link_libraries(hemelb
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
-  ${MPWide_LIBRARIES}
+    ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

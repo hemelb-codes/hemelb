@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #define HEMELB_UNITTESTS_NET_PHASED_STEPMANAGERTESTS_H
 #include "net/phased/StepManager.h"
@@ -44,7 +53,7 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL)
+                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL), action2(NULL), concern2(NULL)
             {
             }
 
@@ -59,6 +68,12 @@ namespace hemelb
             void tearDown()
             {
               MockNetHelper::tearDown();
+              delete stepManager;
+              delete netConcern;
+              delete action;
+              delete action2;
+              delete concern;
+              delete concern2;
             }
 
             void TestConstruct()
@@ -71,7 +86,7 @@ namespace hemelb
               action = new MockIteratedAction("mockOne");
               stepManager->RegisterIteratedActorSteps(*action);
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 1u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 6u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 5u);
             }
 
             void TestRegisterAction()
@@ -95,7 +110,7 @@ namespace hemelb
               stepManager->Register(0, steps::EndPhase, *concern, 1);
 
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 2u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 8u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 7u);
             }
 
             void TestRegisterCommsConcern()
@@ -118,7 +133,7 @@ namespace hemelb
               stepManager->Register(0, steps::EndPhase, *concern, 1);
 
               CPPUNIT_ASSERT_EQUAL(stepManager->ConcernCount(), 3u);
-              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 11u);
+              CPPUNIT_ASSERT_EQUAL(stepManager->ActionCount(), 10u);
             }
 
             void TestCallCommsActions()
@@ -170,7 +185,6 @@ namespace hemelb
 
               stepManager->RegisterIteratedActorSteps(*action);
               stepManager->Register(0, steps::BeginAll, *concern, 37);
-              stepManager->Register(0, steps::Reset, *concern, 19);
 
               stepManager->CallSpecialAction(steps::BeginAll);
 
@@ -180,15 +194,9 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
               CPPUNIT_ASSERT_EQUAL(std::string(""), action->CallsSoFar());
 
-              stepManager->CallSpecialAction(steps::Reset);
-              shouldHaveCalled.push_back(19);
-
-              CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
-              CPPUNIT_ASSERT_EQUAL(std::string("Reset, "), action->CallsSoFar());
-
               stepManager->CallSpecialAction(steps::EndAll);
               CPPUNIT_ASSERT_EQUAL(shouldHaveCalled, concern->ActionsCalled());
-              CPPUNIT_ASSERT_EQUAL(std::string("Reset, EndIteration, "), action->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("EndIteration, "), action->CallsSoFar());
             }
 
             void TestCallPhaseActions()

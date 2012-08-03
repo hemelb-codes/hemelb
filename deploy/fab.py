@@ -1,3 +1,12 @@
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
+
 """
 Fabric definitions for HemeLB
 Usage:
@@ -124,13 +133,25 @@ def build_python_tools():
 def stat():
     """Check the remote message queue status"""
     #TODO: Respect varying remote machine queue systems.
-    run(template("$stat -u $username"))
+    return run(template("$stat -u $username"))
 
 @task
 def monitor():
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
+        time.sleep(30)
+        
+        
+def check_complete():
+  """Return true if the user has no queued jobs"""
+  return stat()==""
+     
+@task
+def wait_complete():
+  """Wait until all jobs currently qsubbed are complete, then return"""
+  time.sleep(30)
+  while not check_complete():
         time.sleep(30)
 
 def configure_cmake(configurations,extras):
@@ -245,10 +266,10 @@ def fetch_distributions():
 @task
 def clone_regression_tests():
     """Delete and checkout the repository afresh."""
-    run(template("mkdir -p $regression_test_source_path"))
+    # run(template("mkdir -p $regression_test_repo_path"))
     if env.no_ssh or env.no_hg:
         with cd(env.remote_path):
-            run(template("rm -rf $regression_test_source_path"))
+            run(template("rm -rf $regression_test_repo_path"))
         # Some machines do not allow outgoing connections back to the mercurial server
         # so the data must be sent by a project sync instead.
         execute(sync_regression_tests)
@@ -260,7 +281,7 @@ def clone_regression_tests():
 @task
 def copy_regression_tests():
     if env.regression_test_source_path != env.regression_test_path:
-        run(template("cp -r $regression_test_source_path $regression_test_path"))
+        run(template("cp -r $regression_test_source_path/* $regression_test_path"))
 
 @task
 def sync():
@@ -290,7 +311,7 @@ def sync_regression_tests():
     Respects the local .hgignore files to avoid sending unnecessary information.
     """
     rsync_project(
-            remote_dir=env.regression_test_source_path,
+            remote_dir=env.regression_test_repo_path,
             local_dir=env.regression_tests_root+'/',
             exclude=map(lambda x: x.replace('\n',''),
             list(open(os.path.join(env.localroot,'.hgignore')))+
@@ -456,6 +477,20 @@ def unit_test(**args):
     job(dict(script='unittests',job_name_template='unittests_${build_number}_${machine_name}',cores=1,wall_time='0:1:0',memory='2G'),args)
 
 @task
+def batch_build_code(*configurations,**extras):
+    """Submit a build job to the remote serial queue."""
+    configure_cmake(configurations,extras)
+    with settings(batch_header=env.batch_header+'_serial'):
+      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
+
+@task
+def batch_build(*configurations,**extras):
+    """Submit a build job to the remote serial queue."""
+    configure_cmake(configurations,extras)
+    with settings(batch_header=env.batch_header+'_serial'):
+      job(dict(script='batch_build',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
+
+@task
 def hemelb(config,**args):
     """Submit a HemeLB job to the remote queue.
     The job results will be stored with a name pattern as defined in the environment,
@@ -505,6 +540,13 @@ def regression_test(**args):
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
             wall_time='0:20:0',memory='2G',images=0, snapshots=1, steering=1111,script='regression'),args)
 
+def calc_nodes():
+  # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
+  env.coresusedpernode=env.corespernode
+  if int(env.coresusedpernode)>int(env.cores):
+    env.coresusedpernode=env.cores
+  env.nodes=int(env.cores)/int(env.coresusedpernode)
+
 def job(*option_dictionaries):
     """Internal low level job launcher.
     Parameters for the job are determined from the prepared fabric environment
@@ -517,20 +559,20 @@ def job(*option_dictionaries):
     # If cores_reserved is not specified, temporarily set it based on the same as the number of cores
     # Needs to be temporary if there's another job with a different number of cores which should also be defaulted to.
     with settings(cores_reserved=env.get('cores_reserved') or env.cores):
-    # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
-        env.coresusedpernode=env.corespernode
-        if int(env.coresusedpernode)>int(env.cores):
-            env.coresusedpernode=env.cores
-        env.nodes=int(env.cores)/int(env.coresusedpernode)
+        calc_nodes()
         if env.node_type:
             env.node_type_restriction=template(env.node_type_restriction_template)
         env['job_name']=env.name[0:env.max_job_name_chars]
-        script_name=template("$template_key-$script")
-        env.job_script=script_template(script_name)
+        with settings(cores=1):
+          calc_nodes()
+          env.run_command_one_proc=template(env.run_command)
+        calc_nodes()
+        env.run_command=template(env.run_command)
+        env.job_script=script_templates(env.batch_header,env.script)
 
         env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
         put(env.job_script,env.dest_name)
-
+        run(template("touch $build_cache"))
         run(template("mkdir -p $job_results"))
         run(template("cp $dest_name $job_results"))
         run(template("cp $build_cache $job_results"))
@@ -570,12 +612,12 @@ def modify_profile(p):
     #Profiles always get created with 1000 steps and 3 cycles.
     #Can't change it here.
     try:
-        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
-        env.VoxelSize=p.VoxelSizeMetres
-    except AttributeError:
-        # Remain compatible with old setuptool
         p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
         env.VoxelSize=p.VoxelSize
+    except AttributeError:
+        # Remain compatible with old setuptool
+        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+        env.VoxelSize=p.VoxelSizeMetres
     env.Steps=env.Steps or 1000
     env.Cycles=env.Cycles or 3
 
@@ -644,7 +686,7 @@ def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
         profile_environment(profile,currentVoxelSize,1000,3)
         create_config_impl(p)
-        modify_config(profile,VoxelSize,Steps,Cycles,1000,3)
+        modify_config(profile,currentVoxelSize,Steps,Cycles,1000,3)
 
 @task
 def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
@@ -686,9 +728,9 @@ def manual(cmd):
     
 def run(cmd):
     if env.manual_ssh:
-        manual(cmd)
+        return manual(cmd)
     else:
-        fabric.api.run(cmd)
+        return fabric.api.run(cmd)
         
 def put(src,dest):
     if env.manual_ssh:

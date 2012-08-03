@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_NET_MIXINS_STORINGNET_H
 #define HEMELB_NET_MIXINS_STORINGNET_H
 #include "net/BaseNet.h"
@@ -11,8 +20,8 @@ namespace hemelb
     {
       public:
 
-        void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
-        void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
+        virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type);
 
         void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type);
         void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type);
