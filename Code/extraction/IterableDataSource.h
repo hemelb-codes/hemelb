@@ -10,7 +10,7 @@ namespace hemelb
   namespace extraction
   {
 
-    typedef double ExtractedProperty;
+    typedef double FloatingType;
 
     class IterableDataSource
     {
@@ -42,31 +42,31 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        virtual ExtractedProperty GetPressure() const = 0;
+        virtual FloatingType GetPressure() const = 0;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        virtual util::Vector3D<ExtractedProperty> GetVelocity() const = 0;
+        virtual util::Vector3D<FloatingType> GetVelocity() const = 0;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        virtual ExtractedProperty GetShearStress() const = 0;
+        virtual FloatingType GetShearStress() const = 0;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        virtual ExtractedProperty GetVonMisesStress() const = 0;
+        virtual FloatingType GetVonMisesStress() const = 0;
 
         /**
          * Returns the shear rate at the site.
          * @return
          */
-        virtual ExtractedProperty GetShearRate() const = 0;
+        virtual FloatingType GetShearRate() const = 0;
 
         /**
          * Returns the full stress tensor at the site.

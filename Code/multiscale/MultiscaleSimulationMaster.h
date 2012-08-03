@@ -49,12 +49,12 @@ namespace hemelb
           if (intercomms.DoMultiscale(GetState()->GetTime()))
           {
             SimulationMaster::DoTimeStep();
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("HemeLB advanced to time %f.",
                                                                            GetState()->GetTime());
           }
           else
           {
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB waiting pending multiscale siblings.");
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("HemeLB waiting pending multiscale siblings.");
             return;
           };
         }

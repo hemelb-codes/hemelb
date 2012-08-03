@@ -27,13 +27,13 @@ namespace hemelb
             InitState(initParams);
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            LatticeType::CalculateDensityVelocityFEq(hydroVars.f,
+            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z,
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z,
                                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -51,7 +51,11 @@ namespace hemelb
 
           inline void DoCalculateFeq(HydroVars<LBGKNN>& hydroVars, site_t index)
           {
-            LatticeType::CalculateFeq(hydroVars.density, hydroVars.v_x, hydroVars.v_y, hydroVars.v_z, hydroVars.f_eq.f);
+            LatticeType::CalculateFeq(hydroVars.density,
+                                      hydroVars.momentum.x,
+                                      hydroVars.momentum.y,
+                                      hydroVars.momentum.z,
+                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
             {
@@ -83,7 +87,7 @@ namespace hemelb
 
           /*
            *  Helper method used in testing in order to access the mTau array after
-           *  being set by DoCalculateDensityVelocityFeq
+           *  being set by DoCalculateDensityMomentumFeq
            */
           const std::vector<distribn_t>& GetTauValues() const
           {
