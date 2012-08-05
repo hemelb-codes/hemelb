@@ -10,8 +10,7 @@
 #include "colloids/ParticleSet.h"
 #include <algorithm>
 #include "log/Logger.h"
-#undef NDEBUG
-#include <assert.h>
+//#include <assert.h>
 
 namespace hemelb
 {
