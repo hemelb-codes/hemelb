@@ -11,7 +11,7 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
-#include <assert.h>
+//#include <assert.h>
 
 namespace hemelb
 {
@@ -191,7 +191,7 @@ namespace hemelb
           globalLocationForSite.x, globalLocationForSite.y, globalLocationForSite.z,
           blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z);
 */
-      assert(0 <= *blockIdForSite && *blockIdForSite < (site_t)gmyResult.Blocks.size());
+      //assert(0 <= *blockIdForSite && *blockIdForSite < (site_t)gmyResult.Blocks.size());
 
       // if the block does not contain any sites then return invalid
       if (gmyResult.Blocks[*blockIdForSite].Sites.empty())
@@ -215,7 +215,7 @@ namespace hemelb
           blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z,
           localSiteLocation.x, localSiteLocation.y, localSiteLocation.z);
 */
-      assert(0 <= *localSiteIdForSite && *localSiteIdForSite < (site_t)gmyResult.Blocks[*blockIdForSite].Sites.size());
+      //assert(0 <= *localSiteIdForSite && *localSiteIdForSite < (site_t)gmyResult.Blocks[*blockIdForSite].Sites.size());
 
       // obtain the rank of the processor responsible for simulating the fluid at this site
       *ownerRankForSite = gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;
