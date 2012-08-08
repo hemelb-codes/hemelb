@@ -56,21 +56,26 @@ namespace hemelb
         const void OutputInformation() const;
 
       private:
+        /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
+        /**
+         * conatins all particles known to this process
+         * they are sorted using the less than operator
+         */
         std::vector<Particle> particles;
 
-        // map neighbourRank -> {numberOfParticlesFromThere, numberOfVelocitiesFromThere}
+        /** map neighbourRank -> {numberOfParticlesFromThere, numberOfVelocitiesFromThere} */
         typedef std::pair<unsigned int, unsigned int> scanMapElementType;
         std::map<proc_t, scanMapElementType> scanMap;
         typedef std::map<proc_t, scanMapElementType>::const_iterator scanMapConstIterType;
         typedef std::map<proc_t, scanMapElementType>::iterator scanMapIterType;
         typedef std::pair<proc_t, scanMapElementType> scanMapContentType;
         
-        // a contiguous buffer into which MPI can write all the velocities from neighbours
+        /** contiguous buffer into which MPI can write all the velocities from neighbours */
         std::vector<std::pair<unsigned long, util::Vector3D<double> > > velocityBuffer;
 
-        // map particleId -> sumOfvelocityContributionsFromNeighbours
+        /** map particleId -> sumOfvelocityContributionsFromNeighbours */
         std::map<unsigned long, util::Vector3D<double> > velocityMap;
 
         /** contains useful geometry manipulation functions */
@@ -78,17 +83,12 @@ namespace hemelb
 
         /**
          * primary mechanism for interacting with the LB simulation
-         * - the velocity cache: is used for velocity interpolation
-         * - the forces cache  : stores the colloid feedback forces
+         * - the velocity cache  : is used for velocity interpolation
+         * - the bodyForce cache : stores the colloid feedback forces
          */
         lb::MacroscopicPropertyCache& propertyCache;
 
-        /**
-         * a vector of the processors that might be interested in
-         * particles near the edge of this processor's sub-domain
-         */
-        //const std::vector<proc_t>& neighbourProcessors;
-
+        /** abstracts communication via MPI */
         net::Net net;
     };
   }

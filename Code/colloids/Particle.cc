@@ -14,79 +14,6 @@
 
 namespace hemelb
 {
-  // boiler-plate template specialisation for colloids Particle object
-  template<>
-  MPI_Datatype MpiDataTypeTraits<colloids::Particle>::RegisterMpiDataType()
-  {
-    return colloids::Particle().CreateMpiDatatypeWithVelocity();
-  }
-
-  // boiler-plate template specialisation for colloids PersistedParticle object
-  template<>
-  MPI_Datatype MpiDataTypeTraits<colloids::PersistedParticle>::RegisterMpiDataType()
-  {
-    return colloids::Particle().CreateMpiDatatypeWithPosition();
-  }
-
-  // boiler-plate template specialisation for incoming particle velocity
-  template<>
-  MPI_Datatype MpiDataTypeTraits<std::pair<unsigned long, util::Vector3D<double> > >::RegisterMpiDataType()
-  {
-    // MPI::Get_address specifies non-const pointers
-    // so need to create a non-const std::pair object
-    std::pair<unsigned long, util::Vector3D<double> > temp;
-
-    // we want a re-usable MPI data type
-    // so we need relative displacements
-    MPI::Aint baseAddress = MPI::Get_address(&temp);
-
-    // we have chosen to make each block of fields contain a single field
-    // so, the number of field blocks is the same as the number of fields
-    int numberOfFieldBlocks = 2;
-
-    // and the length of every field block is one
-    int lengthOfEachFieldBlock[] = {1, 1};
-
-    // there is no guarantee that the fields will be contiguous, so
-    // the displacement of each field must be determined separately
-    MPI::Aint displacementOfEachFieldBlock[numberOfFieldBlocks];
-    displacementOfEachFieldBlock[0] = MPI::Get_address(&(temp.first)) - baseAddress;
-    displacementOfEachFieldBlock[1] = MPI::Get_address(&(temp.second)) - baseAddress;
-
-    // the built-in MPI datatype of each field must match the C++ type
-    MPI::Datatype datatypeOfEachFieldBlock[] =
-      {MPI::UNSIGNED_LONG, MpiDataType<util::Vector3D<double> >()};
-
-    // create a first draft of the MPI datatype for a Particle
-    // the lower bound and displacements of fields are correct
-    // but the extent may not include the whole derived object
-    // specifically, we aren't sending velocity and bodyForces
-    MPI::Datatype pairType = MPI::Datatype::Create_struct(
-      numberOfFieldBlocks,
-      lengthOfEachFieldBlock,
-      displacementOfEachFieldBlock,
-      datatypeOfEachFieldBlock);
-
-    // obtain the current lower bound for the MPI datatype
-    MPI::Aint lowerBound, extent;
-    pairType.Get_extent(lowerBound, extent);
-
-    // we can determine the actual extent of a Particle object
-    // by concatenating two of them, using a contiguous vector
-    // and finding the difference between their base addresses
-    std::vector<std::pair<unsigned long, util::Vector3D<double> > > tempVectorOfPair(2, temp);
-    extent = MPI::Get_address(&(tempVectorOfPair[1]))
-           - MPI::Get_address(&(tempVectorOfPair[0]));
-
-    // resize the uncommitted first draft MPI datatype
-    // with the current lower bound and the new extent
-    pairType = pairType.Create_resized(lowerBound, extent);
-
-    // commit the MPI datatype and return it
-    pairType.Commit();
-    return pairType;
-  }
-
   namespace colloids
   {
     Particle::Particle(const geometry::LatticeData& latDatLBM,
@@ -173,133 +100,6 @@ namespace hemelb
           particleId, globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
-    /** creates a derived MPI datatype that represents a single particle object
-     *  note - this data type uses displacements rather than absolute addresses
-     *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-     *  when you no longer need this type, remember to call MPI::Datatype::Free
-     */
-    const MPI::Datatype Particle::CreateMpiDatatypeWithPosition() const
-    {
-      // MPI::Get_address specifies non-const pointers
-      // so need a non-const copy of a particle object
-      Particle temp(*this);
-
-      // we want a re-usable MPI data type
-      // so we need relative displacements
-      MPI::Aint baseAddress = MPI::Get_address(&temp);
-
-      // we have chosen to make each block of fields contain a single field
-      // so, the number of field blocks is the same as the number of fields
-      int numberOfFieldBlocks = 5;
-
-      // and the length of every field block is one
-      int lengthOfEachFieldBlock[] = {1, 1, 1, 1, 1};
-
-      // there is no guarantee that the fields will be contiguous, so
-      // the displacement of each field must be determined separately
-      MPI::Aint displacementOfEachFieldBlock[numberOfFieldBlocks];
-      displacementOfEachFieldBlock[0] = MPI::Get_address(&(temp.particleId)) - baseAddress; 
-      displacementOfEachFieldBlock[1] = MPI::Get_address(&(temp.ownerRank)) - baseAddress; 
-      displacementOfEachFieldBlock[2] = MPI::Get_address(&(temp.smallRadius_a0)) - baseAddress; 
-      displacementOfEachFieldBlock[3] = MPI::Get_address(&(temp.largeRadius_ah)) - baseAddress; 
-      displacementOfEachFieldBlock[4] = MPI::Get_address(&(temp.globalPosition)) - baseAddress; 
-
-      // the built-in MPI datatype of each field must match the C++ type
-      MPI::Datatype datatypeOfEachFieldBlock[] =
-        {MPI::UNSIGNED_LONG, MPI::INT, MPI::DOUBLE, MPI::DOUBLE, MpiDataType<util::Vector3D<double> >()};
-
-      // create a first draft of the MPI datatype for a Particle
-      // the lower bound and displacements of fields are correct
-      // but the extent may not include the whole derived object
-      // specifically, we aren't sending velocity and bodyForces
-      MPI::Datatype particleType = MPI::Datatype::Create_struct(
-        numberOfFieldBlocks,
-        lengthOfEachFieldBlock,
-        displacementOfEachFieldBlock,
-        datatypeOfEachFieldBlock);
-
-      // obtain the current lower bound for the MPI datatype
-      MPI::Aint lowerBound, extent;
-      particleType.Get_extent(lowerBound, extent);
-
-      // we can determine the actual extent of a Particle object
-      // by concatenating two of them, using a contiguous vector
-      // and finding the difference between their base addresses
-      std::vector<Particle> tempVectorOfParticle(2, temp);
-      extent = MPI::Get_address(&(tempVectorOfParticle[1]))
-             - MPI::Get_address(&(tempVectorOfParticle[0]));
-
-      // resize the uncommitted first draft MPI datatype
-      // with the current lower bound and the new extent
-      particleType = particleType.Create_resized(lowerBound, extent);
-
-      // commit the MPI datatype and return it
-      particleType.Commit();
-      return particleType;
-    }
-
-    /** creates a derived MPI datatype that represents a single particle object
-     *  note - this data type uses displacements rather than absolute addresses
-     *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-     *  when you no longer need this type, remember to call MPI::Datatype::Free
-     */
-    const MPI::Datatype Particle::CreateMpiDatatypeWithVelocity() const
-    {
-      // MPI::Get_address specifies non-const pointers
-      // so need a non-const copy of a particle object
-      Particle temp(*this);
-
-      // we want a re-usable MPI data type
-      // so we need relative displacements
-      MPI::Aint baseAddress = MPI::Get_address(&temp);
-
-      // we have chosen to make each block of fields contain a single field
-      // so, the number of field blocks is the same as the number of fields
-      int numberOfFieldBlocks = 2;
-
-      // and the length of every field block is one
-      int lengthOfEachFieldBlock[] = {1, 1};
-
-      // there is no guarantee that the fields will be contiguous, so
-      // the displacement of each field must be determined separately
-      MPI::Aint displacementOfEachFieldBlock[numberOfFieldBlocks];
-      displacementOfEachFieldBlock[0] = MPI::Get_address(&(temp.particleId)) - baseAddress; 
-      displacementOfEachFieldBlock[1] = MPI::Get_address(&(temp.velocity)) - baseAddress; 
-
-      // the built-in MPI datatype of each field must match the C++ type
-      MPI::Datatype datatypeOfEachFieldBlock[] =
-        {MPI::UNSIGNED_LONG, MpiDataType<util::Vector3D<double> >()};
-
-      // create a first draft of the MPI datatype for a Particle
-      // the lower bound and displacements of fields are correct
-      // but the extent may not include the whole derived object
-      // specifically, we aren't sending velocity and bodyForces
-      MPI::Datatype particleType = MPI::Datatype::Create_struct(
-        numberOfFieldBlocks,
-        lengthOfEachFieldBlock,
-        displacementOfEachFieldBlock,
-        datatypeOfEachFieldBlock);
-
-      // obtain the current lower bound for the MPI datatype
-      MPI::Aint lowerBound, extent;
-      particleType.Get_extent(lowerBound, extent);
-
-      // we can determine the actual extent of a Particle object
-      // by concatenating two of them, using a contiguous vector
-      // and finding the difference between their base addresses
-      std::vector<Particle> tempVectorOfParticle(2, temp);
-      extent = MPI::Get_address(&(tempVectorOfParticle[1]))
-             - MPI::Get_address(&(tempVectorOfParticle[0]));
-
-      // resize the uncommitted first draft MPI datatype
-      // with the current lower bound and the new extent
-      particleType = particleType.Create_resized(lowerBound, extent);
-
-      // commit the MPI datatype and return it
-      particleType.Commit();
-      return particleType;
-    }
-
     const void Particle::CalculateBodyForces()
     {
       /** todo: CalculateBodyForces
@@ -320,7 +120,6 @@ namespace hemelb
     }
 
     /** modified dirac delta function according to Peskin */
-    //double diracOperation(util::Vector3D<double> relativePosition)
     DimensionlessQuantity diracOperation(LatticePosition relativePosition)
     {
       DimensionlessQuantity delta = 1.0;
@@ -413,25 +212,6 @@ namespace hemelb
                 globalStatus = 3; // remote fluid
 
               log::Logger::Log<log::Debug, log::OnePerCore>("ABOUT TO DO STUFF\n");
-/*
-              log::Logger::Log<log::Debug, log::OnePerCore>(
-                "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteGlobalPosition: {%i,%i,%i} - %s, blockCoords: {%i,%i,%i} - %s, localSiteCoords: {%i,%i,%i} - %s\n",
-                particleId, siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
-                globalStatus == 0 ? "valid && local fluid" :
-                (globalStatus == 1 ? "invalid - out-of-range" :
-                (globalStatus == 2 ? "solid" :
-                (globalStatus == 3 ? "remote fluid" : "unknown status"))),
-                particleId, blockCoords.x, blockCoords.y, blockCoords.z,
-                blockStatus == 0 ? "valid && non-empty" :
-                (blockStatus == 1 ? "invalid - out-of-range" :
-                (blockStatus == 2 ? "empty - entire block is solid" : "unknown status")),
-                particleId, localSiteCoords.x, localSiteCoords.y, localSiteCoords.z,
-                siteStatus == 0 ? "valid && fluid" :
-                (siteStatus == 1 ? "invalid - out of range" :
-                (siteStatus == 2 ? "deemed solid because block is empty" :
-                (siteStatus == 3 ? "individual site is solid" : "unknown status"))));
-*/
-//*
               log::Logger::Log<log::Debug, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteGlobalPosition: {%i,%i,%i} - %s \n",
                 particleId, siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
@@ -473,7 +253,6 @@ namespace hemelb
                 }
             }
 
-            /** TODO: implement communication for remote fluid sites */
             /** TODO: implement boundary conditions for invalid/solid sites */
             if (!isSiteValid || !isSiteLocal)
               continue;

@@ -11,7 +11,6 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
-//#include <assert.h>
 
 namespace hemelb
 {
@@ -30,8 +29,7 @@ namespace hemelb
                                          const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
                                          lb::MacroscopicPropertyCache& propertyCache) :
-      localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
-      simulationState(simulationState)
+      localRank(topology::NetworkTopology::Instance()->GetLocalRank())
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -184,14 +182,6 @@ namespace hemelb
       *blockIdForSite = gmyResult.GetBlockIdFromBlockCoordinates(blockLocationForSite.x,
                                                                  blockLocationForSite.y,
                                                                  blockLocationForSite.z);
-/*
-      if (*blockIdForSite >= gmyResult.Blocks.size())
-        printf("ERROR: blockIdForSite(%li) >= Blocks.size(%li) : globalCoords(%li,%li,%li) => blockCoords(%li,%li,%li)\n",
-          *blockIdForSite, gmyResult.Blocks.size(),
-          globalLocationForSite.x, globalLocationForSite.y, globalLocationForSite.z,
-          blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z);
-*/
-      //assert(0 <= *blockIdForSite && *blockIdForSite < (site_t)gmyResult.Blocks.size());
 
       // if the block does not contain any sites then return invalid
       if (gmyResult.Blocks[*blockIdForSite].Sites.empty())
@@ -207,15 +197,6 @@ namespace hemelb
       *localSiteIdForSite = gmyResult.GetSiteIdFromSiteCoordinates(localSiteLocation.x,
                                                                    localSiteLocation.y,
                                                                    localSiteLocation.z);
-/*
-      if (*localSiteIdForSite >= gmyResult.Blocks[*blockIdForSite].Sites.size())
-        printf("ERROR: localSiteIdForSite(%li) >= Sites.size(%li) : globalCoords(%li,%li,%li) => blockCoords (%li,%li,%li) & siteCoords(%li,%li,%li)\n",
-          *localSiteIdForSite, gmyResult.Blocks[*blockIdForSite].Sites.size(),
-          globalLocationForSite.x, globalLocationForSite.y, globalLocationForSite.z,
-          blockLocationForSite.x, blockLocationForSite.y, blockLocationForSite.z,
-          localSiteLocation.x, localSiteLocation.y, localSiteLocation.z);
-*/
-      //assert(0 <= *localSiteIdForSite && *localSiteIdForSite < (site_t)gmyResult.Blocks[*blockIdForSite].Sites.size());
 
       // obtain the rank of the processor responsible for simulating the fluid at this site
       *ownerRankForSite = gmyResult.Blocks[*blockIdForSite].Sites[*localSiteIdForSite].targetProcessor;

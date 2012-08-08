@@ -1,4 +1,5 @@
 add_library(hemelb_colloids
+            ParticleMpiDatatypes.cc
             ParticleSet.cc
             Particle.cc
             PersistedParticle.cc
