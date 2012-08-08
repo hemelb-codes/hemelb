@@ -56,6 +56,11 @@ namespace hemelb
       return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
     }
 
+    util::Vector3D<PhysicalStress> UnitConverter::ConvertStressToPhysicalUnits(const util::Vector3D<LatticeStress>& stress) const
+    {
+      return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+    }
+
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
     {
       return shearRate / simulationState->GetTimeStepLength();

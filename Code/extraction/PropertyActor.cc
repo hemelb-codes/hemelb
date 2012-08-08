@@ -55,6 +55,9 @@ namespace hemelb
               case OutputField::StressTensor:
                 propertyCache.stressTensorCache.SetRefreshFlag();
                 break;
+              case OutputField::TractionVector:
+                propertyCache.tractionVectorCache.SetRefreshFlag();
+                break;
               default:
                 // This assert should never trip. It only occurs when someone adds a new field to OutputField
                 // and forgets adding a new case to the switch

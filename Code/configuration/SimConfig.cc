@@ -505,6 +505,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::StressTensor;
       }
+      else if (type.compare("tractionvector") == 0)
+      {
+        field.type = extraction::OutputField::TractionVector;
+      }
       else
       {
         log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
