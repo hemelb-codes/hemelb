@@ -16,36 +16,33 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
     as output by GmyUnstructuredGridReader (e.g. no scaling), as this class 
     uses the positions to match points.
     
-    The vtkUnstructuredGrid will have the same points and cells as the input
-    but it will have cell data corresponding to the extraction. The fields take
+    The vtkUnstructuredGrid will have a subset of the points and cells as the input
+    with cell data corresponding to the extraction. The fields take
     the names given in the extracted property file with the same units.
     Position units are metres. The object has no point data.
     """
     def __init__(self):
-        self.FileName = ""
         self.SetExecuteMethod(self._Execute)
         
         return
     
-    def SetFileName(self, path):
-        """The file to read.
+    def SetExtraction(self, extracted):
+        """The parsed extracted property file.
         """
-        self.FileName = path
+        self.Extracted = extracted
         return
-    
-    def GetFileName(self):
-        """The file to read.
+
+    def SetTime(self, time):
+        """The timestamp to read properties for.
         """
-        return self.FileName
-    
+        self.Time = time
+        return    
+
     def _Execute(self):
         """Private method that actually does the reading. Called by the VTK
         API.
         """
         input = self.GetUnstructuredGridInput()
-        
-        # Load the snapshot data
-        extraction = ExtractedProperty(self.FileName)
         
         # Get the centres as these should match the extracted property positions
         centers = vtk.vtkCellCenters()
@@ -63,7 +60,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
 
         # Get the data we want to visualise, Note that this is likely to 
         # involve a subset of the points in the geometry
-        extracted_data = extraction.GetByTimeStep(extraction.times[-1])
+        extracted_data = self.Extracted.GetByTimeStep(self.Time)
 
         # Make a list of the cell ids to keep
         cellIds=vtk.vtkIdTypeArray()
@@ -105,7 +102,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         # Create the field datasets to write into
         field_dict = {}
   
-        for name, xdrType, memType, length, offset in extraction.GetFieldSpec():
+        for name, xdrType, memType, length, offset in self.Extracted.GetFieldSpec():
             # Skip the grid.
             if name == 'grid':
                 continue
@@ -187,15 +184,24 @@ if __name__ == '__main__':
          raise SystemExit()
     
     reader.SetFileName(geometry)
-    
+
+    # For each extracted file given, parse the file...    
     for extractedFile in args.extracted:
-        converter = ExtractedPropertyUnstructuredGridReader()
-        converter.SetInputConnection(reader.GetOutputPort())
-        converter.SetFileName(extractedFile)
+        extraction=ExtractedProperty(extractedFile)
+
+        # For each timestamp in that file, create a reader...
+        for time in extraction.times:
+            converter = ExtractedPropertyUnstructuredGridReader()
+            converter.SetInputConnection(reader.GetOutputPort())
+            converter.SetExtraction(extraction)
+            converter.SetTime(time)
     
-        writer = vtk.vtkXMLUnstructuredGridWriter()
-        writer.SetInputConnection(converter.GetOutputPort())
+            # And a writer...
+            writer = vtk.vtkXMLUnstructuredGridWriter()
+            writer.SetInputConnection(converter.GetOutputPort())
         
-        base, ext = os.path.splitext(extractedFile)
-        writer.SetFileName(base + '.vtu')
-        writer.Write()
+            # And give the output a unique filename based on the extracted
+            # property file name and the timestamp.
+            base, ext = os.path.splitext(extractedFile)
+            writer.SetFileName('%s_%s.vtu' % (base, str(time)))
+            writer.Write()
