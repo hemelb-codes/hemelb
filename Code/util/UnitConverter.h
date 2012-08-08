@@ -21,10 +21,12 @@ namespace hemelb
         LatticeStress ConvertStressToLatticeUnits(PhysicalStress stress) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
-        PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
 
-        //! @todo: #177 template util::Matrix3D so we can use PhysicalStress and LatticeStress
+        //! @todo: #510 It should be possible to have a single ConvertStressToPhysicalUnits method using template metaprogramming. Implementations are identical.
+        PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
+        //! @todo: #510 template util::Matrix3D so we can enforce PhysicalStress and LatticeStress
         util::Matrix3D ConvertStressToPhysicalUnits(const util::Matrix3D& stress) const;
+        util::Vector3D<PhysicalStress> ConvertStressToPhysicalUnits(const util::Vector3D<LatticeStress>& stress) const;
 
         /**
          * Templated to handle both absolute and directional velocity.

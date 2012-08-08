@@ -63,6 +63,11 @@ namespace hemelb
          */
         util::RefreshableCache<util::Matrix3D> stressTensorCache;
 
+        /**
+         * The cache of traction vectors for each fluid site on this core.
+         */
+        util::RefreshableCache<util::Vector3D<LatticeStress> > tractionVectorCache;
+
       private:
         /**
          * The state of the simulation, including the number of timesteps passed.
