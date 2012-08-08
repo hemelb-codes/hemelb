@@ -106,6 +106,13 @@ namespace hemelb
             util::Matrix3D retValue;
             return retValue;
           }
+
+          util::Vector3D<LatticeStress> GetTractionVector() const
+          {
+            util::Vector3D<LatticeStress> retValue(0);
+            return retValue;
+          }
+
           bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {
             return true;

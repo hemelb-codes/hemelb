@@ -47,11 +47,11 @@ namespace hemelb
                                        geometry::LatticeData* latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
-                                                                                           siteCount,
-                                                                                           lbmParams,
-                                                                                           latDat,
-                                                                                           propertyCache);
+            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(firstIndex,
+                                                                                         siteCount,
+                                                                                         lbmParams,
+                                                                                         latDat,
+                                                                                         propertyCache);
           }
 
           template<bool tDoRayTracing>
@@ -63,16 +63,16 @@ namespace hemelb
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (firstIndex,
-                                                                                   siteCount,
-                                                                                   lbmParams,
-                                                                                   latDat,
-                                                                                   propertyCache);
+            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(firstIndex,
+                                                                                 siteCount,
+                                                                                 lbmParams,
+                                                                                 latDat,
+                                                                                 propertyCache);
           }
 
           inline void Reset(kernels::InitParams* init)
           {
-            static_cast<StreamerImpl*> (this)->DoReset(init);
+            static_cast<StreamerImpl*>(this)->DoReset(init);
           }
 
         protected:
@@ -141,6 +141,27 @@ namespace hemelb
                                                                                        stressTensor);
 
               propertyCache.stressTensorCache.Put(site.GetIndex(), stressTensor);
+
+            }
+
+            if (propertyCache.tractionVectorCache.RequiresRefresh())
+            {
+              util::Vector3D<LatticeStress> tractionOnAPoint(0);
+
+              /*
+               * Wall normals are only available at the sites marked as being at the domain edge.
+               * For the sites in the fluid bulk, the traction vector will be 0.
+               */
+              if (site.IsEdge())
+              {
+                LatticeType::CalculateTractionVectorOnAPoint(hydroVars.density,
+                                                             hydroVars.tau,
+                                                             hydroVars.GetFNeq().f,
+                                                             site.GetWallNormal(),
+                                                             tractionOnAPoint);
+              }
+
+              propertyCache.tractionVectorCache.Put(site.GetIndex(), tractionOnAPoint);
 
             }
           }

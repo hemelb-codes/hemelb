@@ -12,6 +12,7 @@ namespace hemelb
       vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
       shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
       stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
       simulationState(simState),
       siteCount(latticeData.GetLocalFluidSiteCount())
     {
