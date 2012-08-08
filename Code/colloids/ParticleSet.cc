@@ -10,7 +10,6 @@
 #include "colloids/ParticleSet.h"
 #include <algorithm>
 #include "log/Logger.h"
-//#include <assert.h>
 
 namespace hemelb
 {
@@ -24,6 +23,10 @@ namespace hemelb
       latDatLBM(latDatLBM),
       propertyCache(propertyCache)
     {
+      // add an element into scanMap for each neighbour rank with zero for both counts
+      // sorting the list of neighbours allows the position in the map to be predicted
+      // & giving the correct position in the map makes insertion significantly faster
+      // the local rank is added last, because its position cannot be easily predicted
       std::sort(neighbourProcessors.begin(), neighbourProcessors.end());
       for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin();
            iter != neighbourProcessors.end();
@@ -36,10 +39,14 @@ namespace hemelb
       if (found) propertyCache.velocityCache.SetRefreshFlag();
       while (found)
       {
+        // create the particle object from the settings in the config file
         Particle nextParticle(latDatLBM, xml);
-        if (nextParticle.isValid && nextParticle.ownerRank == localRank)
+        // check the particle is valid, i.e. in fluid, and is locally owned
+        if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {
+          // add the particle to the list of known particles ...
           particles.push_back(nextParticle);
+          // ... and keep the count of local particles up-to-date
           scanMap[localRank].first++;
         }
         found = xml.NextSibling("subgridParticle");
@@ -80,12 +87,14 @@ namespace hemelb
           topology::NetworkTopology::Instance()->GetLocalRank(),
           particles.size());
 
+      // only update the position for particles that are locally owned because
+      // only the owner has velocity contributions from all neighbouring ranks
       for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         Particle& particle = *iter;
-        if (particle.ownerRank == localRank)
+        if (particle.GetOwnerRank() == localRank)
           particle.UpdatePosition(latDatLBM);
       }
     }
@@ -114,22 +123,18 @@ namespace hemelb
 
     const void ParticleSet::InterpolateFluidVelocity()
     {
-      bool isBoring = true;
       for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         Particle& particle = *iter;
         particle.InterpolateFluidVelocity(latDatLBM, propertyCache);
-        {
+        if (log::Logger::ShouldDisplay<log::Debug>())
           if (particle.velocity.z != 0.0)
-            isBoring = false;
-          if (!isBoring)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("NON-BORING velocity interpolation");
             particle.OutputInformation();
           }
-        }
       }
       propertyCache.velocityCache.SetRefreshFlag();
     }
@@ -208,7 +213,7 @@ namespace hemelb
       for (std::vector<Particle>::const_iterator iterParticles = particles.begin();
            iterParticles != particles.end();
            iterParticles++)
-        scanMap[iterParticles->ownerRank].first++;
+        scanMap[iterParticles->GetOwnerRank()].first++;
     }
 
     const void ParticleSet::CommunicateFluidVelocities()
@@ -259,7 +264,6 @@ namespace hemelb
         const proc_t& neighbourRank = iterMap->first;
         if (neighbourRank != localRank)
         {
-          //const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
           const unsigned int& numberOfVelocitiesToSend = iterMap->second.first;
           const unsigned int& numberOfVelocitiesToRecv = iterMap->second.second;
           net.RequestSend(&((Particle&)*iterSendBegin), numberOfVelocitiesToSend, neighbourRank);
@@ -281,13 +285,13 @@ namespace hemelb
         velocityMap[particleId] += partialVelocity;
       }
 
-      // update particles
+      // update local particles
       for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         Particle& particle = *iter;
-        if (particle.ownerRank == localRank)
+        if (particle.GetOwnerRank() == localRank)
           particle.velocity += velocityMap[particle.GetParticleId()];
       }
 

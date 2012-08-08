@@ -30,8 +30,10 @@ namespace hemelb
                           LatticePosition globalPosition) :
           particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah),
           globalPosition(globalPosition)
-        {
-        };
+        {};
+
+        /** constructor - uses default values for each field */
+        PersistedParticle() {};
 
         /** system-wide-unique identifier for this particle */
         unsigned long   particleId;
@@ -45,7 +47,6 @@ namespace hemelb
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;
 
-        PersistedParticle() {};
     };
   }
 }
