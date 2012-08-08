@@ -16,36 +16,33 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
     as output by GmyUnstructuredGridReader (e.g. no scaling), as this class 
     uses the positions to match points.
     
-    The vtkUnstructuredGrid will have the same points and cells as the input
-    but it will have cell data corresponding to the extraction. The fields take
+    The vtkUnstructuredGrid will have a subset of the points and cells as the input
+    with cell data corresponding to the extraction. The fields take
     the names given in the extracted property file with the same units.
     Position units are metres. The object has no point data.
     """
     def __init__(self):
-        self.FileName = ""
         self.SetExecuteMethod(self._Execute)
         
         return
     
-    def SetFileName(self, path):
-        """The file to read.
+    def SetExtraction(self, extracted):
+        """The parsed extracted property file.
         """
-        self.FileName = path
+        self.Extracted = extracted
         return
-    
-    def GetFileName(self):
-        """The file to read.
+
+    def SetTime(self, time):
+        """The timestamp to read properties for.
         """
-        return self.FileName
-    
+        self.Time = time
+        return    
+
     def _Execute(self):
         """Private method that actually does the reading. Called by the VTK
         API.
         """
         input = self.GetUnstructuredGridInput()
-        
-        # Load the snapshot data
-        extraction = ExtractedProperty(self.FileName)
         
         # Get the centres as these should match the extracted property positions
         centers = vtk.vtkCellCenters()
@@ -60,43 +57,100 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         
         # Copy the structure to output.
         grid = self.GetUnstructuredGridOutput()
-        grid.ShallowCopy(input)
 
-        extracted_data = extraction.GetByTimeStep(-1)        
+        # Get the data we want to visualise, Note that this is likely to 
+        # involve a subset of the points in the geometry
+        extracted_data = self.Extracted.GetByTimeStep(self.Time)
 
-        nCells = len(extracted_data.position)
+        # Make a list of the cell ids to keep
+        cellIds=vtk.vtkIdTypeArray()
+        cellIds.SetNumberOfComponents(1)
+ 
+        for point in extracted_data:
+            # Get cell in geometry corresponding to the point
+            cellId = locator.FindClosestPoint(point.position)
+
+            if cellId == -1:
+                raise ValueError("Can't find cell for point at " + str(point.position))
+
+            cellIds.InsertNextValue(cellId)
+
+        # Make an object to select only the cell ids we want
+        selector=vtk.vtkSelectionNode()
+        selector.SetFieldType(vtk.vtkSelectionNode.CELL)
+        selector.SetContentType(vtk.vtkSelectionNode.INDICES)
+        selector.SetSelectionList(cellIds)
+
+        # Make an object to hold the selector
+        selectors=vtk.vtkSelection()
+        selectors.AddNode(selector)
+
+        # Perform the selection
+        extractSelection=vtk.vtkExtractSelectedIds()
+        extractSelection.SetInput(0, input)
+        extractSelection.SetInput(1, selectors)
+        extractSelection.Update()
+
+        # Copy the result into our grid, and get the lookup array from the new cell ids
+        # to the old cell ids.
+        grid.ShallowCopy(extractSelection.GetOutput())
+
+        originalCellIdLookup=grid.GetCellData().GetArray('vtkOriginalCellIds')
+
+        nCells = grid.GetNumberOfCells()
 
         # Create the field datasets to write into
         field_dict = {}
   
-        for read_field in extraction.GetFieldSpec():
-            field_name = read_field.name
+        for name, xdrType, memType, length, offset in self.Extracted.GetFieldSpec():
+            # Skip the grid.
+            if name == 'grid':
+                continue
 
+            # Create a VTK object for storing the data.
             field = vtk.vtkDoubleArray()
-            field.SetNumberOfComponents(read_field.length)
+            if isinstance(length, tuple):
+                length=length[0]
+            field.SetNumberOfComponents(length)
             field.SetNumberOfTuples(nCells)
-            field.SetName(field_name)
+            field.SetName(name)
 
-            field_dict[field_name]=field
+            # Insert it into the dictionary
+            field_dict[name]=field
 
         # The hard work bit.
         for point in extracted_data:
             # Get cell in geometry corresponding to the point
-            cellId = locator.FindClosestPoint(point.position)
-            if cellId == -1:
+            oldCellId = locator.FindClosestPoint(point.position)
+            if oldCellId == -1:
                 raise ValueError("Can't find cell for point at " + str(point.position))
 
-            for field_name,field in field_dict:
+            cellId = -1
+
+            # Translate to new grid.
+            for i in range(0, originalCellIdLookup.GetSize()):
+                if originalCellIdLookup.GetComponent(0, i) == oldCellId:
+                    cellId = i
+                    break
+
+            if cellId == -1:
+                raise ValueError("Can't translate old cellId %i to new grid for point at %s" % (oldCellId, str(point.position)))
+
+            # For each field considered, set the property in the associated VTK array.
+            for field_name,field in field_dict.items():
                 if field.GetNumberOfComponents() == 3:
-                    field.SetTuple3(cellId, *GetAttr(point, field_name))
+                    field.SetTuple3(cellId, *getattr(point, field_name))
                 else:
-                    field.SetTuple1(cellId, GetAttr(point, field_name))
-            continue
+                    field.SetTuple1(cellId, getattr(point, field_name))
         
         # Add the arrays to the output
         for field in field_dict:
             grid.GetCellData().AddArray(field_dict[field])
-        
+
+        # Remove the arrays added during the translation of the grid.
+        grid.GetCellData().RemoveArray('vtkOriginalCellIds')
+        grid.GetPointData().RemoveArray('vtkOriginalPointIds')
+
         return
     pass
 
@@ -110,7 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('geometry', nargs=1,
                         help='the geometry, either a HemeLB .gmy file '
                         'or a derived VTK unstructured grid')
-    parser.add_argument('extracted', nargs=1,
+    parser.add_argument('extracted', nargs=argparse.ONE_OR_MORE,
                         help='extracted property file to convert to VTK, output will'
                         ' be put in the input basename + ".vtu"')
     
@@ -130,15 +184,24 @@ if __name__ == '__main__':
          raise SystemExit()
     
     reader.SetFileName(geometry)
+
+    # For each extracted file given, parse the file...    
+    for extractedFile in args.extracted:
+        extraction=ExtractedProperty(extractedFile)
+
+        # For each timestamp in that file, create a reader...
+        for time in extraction.times:
+            converter = ExtractedPropertyUnstructuredGridReader()
+            converter.SetInputConnection(reader.GetOutputPort())
+            converter.SetExtraction(extraction)
+            converter.SetTime(time)
     
-    converter = ExtractedPropertyUnstructuredGridReader()
-    converter.SetInputConnection(reader.GetOutputPort())
-    
-    writer = vtk.vtkXMLUnstructuredGridWriter()
-    writer.SetInputConnection(converter.GetOutputPort())
-    
-    converter.SetFileName(args.extracted[0])
+            # And a writer...
+            writer = vtk.vtkXMLUnstructuredGridWriter()
+            writer.SetInputConnection(converter.GetOutputPort())
         
-    base, ext = os.path.splitext(args.extracted[0])
-    writer.SetFileName(base + '.vtu')
-    writer.Write()    
+            # And give the output a unique filename based on the extracted
+            # property file name and the timestamp.
+            base, ext = os.path.splitext(extractedFile)
+            writer.SetFileName('%s_%s.vtu' % (base, str(time)))
+            writer.Write()
