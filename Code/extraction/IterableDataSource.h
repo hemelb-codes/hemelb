@@ -75,6 +75,12 @@ namespace hemelb
         virtual util::Matrix3D GetStressTensor() const = 0;
 
         /**
+         * Returns the traction vector at an edge site (i.e. stress tensor times surface normal).
+         * @return traction vector
+         */
+        virtual util::Vector3D<PhysicalStress> GetTractionVector() const = 0;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         virtual void Reset() = 0;

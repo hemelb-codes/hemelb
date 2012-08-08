@@ -240,6 +240,10 @@ namespace hemelb
                     << static_cast<double>(tensor[1][1]) << static_cast<double>(tensor[1][2]) << static_cast<double>(tensor[2][2]);
                 break;
               }
+              case OutputField::TractionVector:
+                xdrWriter << (double) dataSource.GetTractionVector().x << (double) dataSource.GetTractionVector().y
+                    << (double) dataSource.GetTractionVector().z;
+                break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
                 // implementation is provided for its serialisation.
@@ -266,6 +270,7 @@ namespace hemelb
         case OutputField::ShearRate:
           return 1;
         case OutputField::Velocity:
+        case OutputField::TractionVector:
           return 3;
         case OutputField::StressTensor:
           return 6; // We only store the upper triangular part of the symmetric tensor

@@ -59,6 +59,11 @@ namespace hemelb
       return converter.ConvertStressToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
     }
 
+    util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTractionVector() const
+    {
+      return converter.ConvertStressToPhysicalUnits(propertyCache.tractionVectorCache.Get(position));
+    }
+
     void LbDataSourceIterator::Reset()
     {
       position = -1;
