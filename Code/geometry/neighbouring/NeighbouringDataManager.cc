@@ -101,7 +101,7 @@ namespace hemelb
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
             Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSend(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
+            net.RequestSend(const_cast<distribn_t*>(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors())),
                             localLatticeData.GetLatticeInfo().GetNumVectors(),
                             other);
 

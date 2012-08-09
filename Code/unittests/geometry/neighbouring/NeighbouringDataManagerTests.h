@@ -183,11 +183,12 @@ namespace hemelb
               Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
-              netMock->RequireSend(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+              netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
                                    lb::lattices::D3Q15::NUMVECTORS,
                                    0,
                                    "IntersectionDataToSelf");
-              netMock->RequireReceive(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+              distribn_t receivedFOld[lb::lattices::D3Q15::NUMVECTORS];
+              netMock->RequireReceive(receivedFOld,
                                       lb::lattices::D3Q15::NUMVECTORS,
                                       0,
                                       "IntersectionDataFromSelf");
@@ -198,7 +199,7 @@ namespace hemelb
               NeighbouringSite transferredSite = data->GetSite(43);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
               {
-                CPPUNIT_ASSERT_EQUAL(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction],
+                CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
                                      transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }
             }
@@ -228,11 +229,12 @@ namespace hemelb
               Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
-              netMock->RequireSend(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+              netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
                                    lb::lattices::D3Q15::NUMVECTORS,
                                    0,
                                    "IntersectionDataToSelf");
-              netMock->RequireReceive(exampleSite.GetFOld<lb::lattices::D3Q15>(),
+              distribn_t receivedFOld[lb::lattices::D3Q15::NUMVECTORS];
+              netMock->RequireReceive(receivedFOld,
                                       lb::lattices::D3Q15::NUMVECTORS,
                                       0,
                                       "IntersectionDataFromSelf");
@@ -247,7 +249,7 @@ namespace hemelb
               NeighbouringSite transferredSite = data->GetSite(43);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
               {
-                CPPUNIT_ASSERT_EQUAL(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction],
+                CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
                                      transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }
             }
