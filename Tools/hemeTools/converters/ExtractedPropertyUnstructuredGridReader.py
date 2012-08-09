@@ -10,32 +10,37 @@ import vtk
 from hemeTools.parsers.extraction import ExtractedProperty
 
 class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
-    """VTK-style filter for reading HemeLB extracted property files as VTK data into the
-    geometry provided as input. This input must be that derived from the HemeLB
-    geometry file used by the simulation from which the extraction file comes and be 
-    as output by GmyUnstructuredGridReader (e.g. no scaling), as this class 
-    uses the positions to match points.
+    """VTK-style filter for reading HemeLB extracted property files as VTK 
+    data into the geometry provided as input. This input must be that derived 
+    from the HemeLB geometry file used by the simulation from which the 
+    extraction file comes and be as output by GmyUnstructuredGridReader (e.g. 
+    no scaling), as this class uses the positions to match points.
     
-    The vtkUnstructuredGrid will have a subset of the points and cells as the input
-    with cell data corresponding to the extraction. The fields take
-    the names given in the extracted property file with the same units.
+    The vtkUnstructuredGrid will have that subset of the points and cells from
+    the input that contain data. Cell data will be as in the extraction file. 
+    The fields take the names and units given in the extracted property file.
     Position units are metres. The object has no point data.
     """
     def __init__(self):
         self.SetExecuteMethod(self._Execute)
-        
+        self.Extracted = None
+        self.Time = None
         return
     
     def SetExtraction(self, extracted):
         """The parsed extracted property file.
         """
         self.Extracted = extracted
+        self.Modified() 
         return
 
     def SetTime(self, time):
         """The timestamp to read properties for.
         """
-        self.Time = time
+        time = int(time)
+        if self.Time != time:
+            self.Time = time
+            self.Modified()
         return    
 
     def _Execute(self):
@@ -63,7 +68,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         extracted_data = self.Extracted.GetByTimeStep(self.Time)
 
         # Make a list of the cell ids to keep
-        cellIds=vtk.vtkIdTypeArray()
+        cellIds = vtk.vtkIdTypeArray()
         cellIds.SetNumberOfComponents(1)
  
         for point in extracted_data:
@@ -76,17 +81,17 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             cellIds.InsertNextValue(cellId)
 
         # Make an object to select only the cell ids we want
-        selector=vtk.vtkSelectionNode()
+        selector = vtk.vtkSelectionNode()
         selector.SetFieldType(vtk.vtkSelectionNode.CELL)
         selector.SetContentType(vtk.vtkSelectionNode.INDICES)
         selector.SetSelectionList(cellIds)
 
         # Make an object to hold the selector
-        selectors=vtk.vtkSelection()
+        selectors = vtk.vtkSelection()
         selectors.AddNode(selector)
 
         # Perform the selection
-        extractSelection=vtk.vtkExtractSelectedIds()
+        extractSelection = vtk.vtkExtractSelectedIds()
         extractSelection.SetInput(0, input)
         extractSelection.SetInput(1, selectors)
         extractSelection.Update()
@@ -95,7 +100,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         # to the old cell ids.
         grid.ShallowCopy(extractSelection.GetOutput())
 
-        originalCellIdLookup=grid.GetCellData().GetArray('vtkOriginalCellIds')
+        originalCellIdLookup = grid.GetCellData().GetArray('vtkOriginalCellIds')
 
         nCells = grid.GetNumberOfCells()
 
@@ -110,13 +115,13 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             # Create a VTK object for storing the data.
             field = vtk.vtkDoubleArray()
             if isinstance(length, tuple):
-                length=length[0]
+                length = length[0]
             field.SetNumberOfComponents(length)
             field.SetNumberOfTuples(nCells)
             field.SetName(name)
 
             # Insert it into the dictionary
-            field_dict[name]=field
+            field_dict[name] = field
 
         # The hard work bit.
         for point in extracted_data:
