@@ -38,7 +38,7 @@ namespace hemelb
             {
               geometry::Site site = latticeData->GetSite(index);
 
-              distribn_t* distribution = site.GetFOld<LatticeType> ();
+              const distribn_t* distribution = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
 
@@ -53,11 +53,8 @@ namespace hemelb
 
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                // Note that the post-step of this boundary condition relies on the post-collsion
-                // value being written over f_old.
-                distribution[direction] = hydroVars.GetFPostCollision()[direction];
-
-                * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction))) = distribution[direction];
+                * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
+                    = hydroVars.GetFPostCollision()[direction];
               }
 
               BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
@@ -78,6 +75,17 @@ namespace hemelb
             {
               geometry::Site site = latticeData->GetSite(siteIndex);
 
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
+
+              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
+              hydroVars.tau = lbmParameters->GetTau();
+
+              // In the first step, we stream and collide as we would for the SimpleCollideAndStream
+              // streamer.
+              collider.CalculatePreCollision(hydroVars, site);
+
+              collider.Collide(lbmParameters, hydroVars);
+
               // Iterate over the direction indices.
               for (unsigned int direction = 1; direction < LatticeType::NUMVECTORS; direction++)
               {
@@ -94,8 +102,8 @@ namespace hemelb
 
                     distribn_t thisDirectionNew = *latticeData->GetFNew(siteIndex
                         * CollisionType::CKernel::LatticeType::NUMVECTORS + direction);
-                    distribn_t thisDirectionOld = site.GetFOld<LatticeType> ()[direction];
-                    distribn_t oppDirectionOld = site.GetFOld<LatticeType> ()[inverseDirection];
+                    distribn_t thisDirectionOld = hydroVars.GetFPostCollision()[direction];
+                    distribn_t oppDirectionOld = hydroVars.GetFPostCollision()[inverseDirection];
 
                     // Interpolate between the values of the f direction to work out a new streamed value.
                     distribn_t streamed = (twoQ < 1.0)
@@ -108,10 +116,11 @@ namespace hemelb
                   }
                   // If there are boundaries in both directions perform simple bounce-back using the
                   // post-collision values in f_old.
+
                   else
                   {
-                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection)) = site.GetFOld<
-                        LatticeType> ()[direction];
+                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection))
+                        = hydroVars.GetFPostCollision()[direction];
                   }
                 }
               }
