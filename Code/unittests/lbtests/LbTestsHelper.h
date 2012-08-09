@@ -173,12 +173,13 @@ namespace hemelb
           }
 
           template<typename LatticeType>
-          static void InitialiseAnisotropicTestData(hemelb::geometry::LatticeData* latticeData)
+          static void InitialiseAnisotropicTestData(FourCubeLatticeData* latticeData)
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType> ();
+              distribn_t fOld[LatticeType::NUMVECTORS];
               InitialiseAnisotropicTestData<LatticeType> (site, fOld);
+              latticeData->SetFOld<LatticeType>(site, fOld);
             }
           }
 

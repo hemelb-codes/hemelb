@@ -152,7 +152,7 @@ namespace hemelb
           IncompressibilityCheckerMock *incompChecker;
 
           net::Net *net;
-          hemelb::geometry::LatticeData *latticeData;
+          hemelb::unittests::FourCubeLatticeData* latticeData;
           reporting::BuildInfo *buildInfo;
       };
 
