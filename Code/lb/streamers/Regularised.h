@@ -38,7 +38,7 @@ namespace hemelb
             {
               geometry::Site site = latDat->GetSite(siteIndex);
 
-              distribn_t* f = site.GetFOld<LatticeType> ();
+              const distribn_t* f = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 

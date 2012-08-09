@@ -123,9 +123,7 @@ namespace hemelb
 
         LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        geometry::Site site = mLatDat->GetSite(i);
-
-        distribn_t* f_old_p = site.GetFOld<LatticeType>();
+        distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
         distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
 
         for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)

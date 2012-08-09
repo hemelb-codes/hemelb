@@ -1,8 +1,8 @@
 #ifndef HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGLATTICEDATA_H
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGLATTICEDATA_H
 #include <map>
+#include "geometry/Site.h"
 #include "geometry/SiteData.h"
-#include "geometry/neighbouring/NeighbouringSite.h"
 #include "lb/lattices/LatticeInfo.h"
 namespace hemelb
 {
@@ -10,6 +10,9 @@ namespace hemelb
   {
     namespace neighbouring
     {
+      class NeighbouringSite;
+      class ConstNeighbouringSite;
+
       // Here, all site indices are GLOBAL index.
       // Local users must determine the global index of the site they are interested in.
 

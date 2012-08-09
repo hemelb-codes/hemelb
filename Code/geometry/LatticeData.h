@@ -19,13 +19,19 @@
 
 namespace hemelb
 {
+  namespace lb
+  {
+    // Ugly forward definition is currently necessary.
+    template<class LatticeType> class LBM;
+  }
+
   namespace geometry
   {
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class BaseSite<LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
-        friend class BaseSite<const LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
+        template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        template<class LatticeData> friend class BaseSite; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
@@ -221,8 +227,7 @@ namespace hemelb
          * @param siteId (out) the index of the site for the property cache
          * @return true when globalLocation is local fluid, false otherwise
          */
-        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
-                                 proc_t& procId, site_t& siteId) const;
+        bool GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation, proc_t& procId, site_t& siteId) const;
 
         /**
          * Get the global site coordinates from block coordinates and the site's local coordinates

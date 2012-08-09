@@ -1,4 +1,5 @@
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
+#include "geometry/neighbouring/NeighbouringSite.h"
 #include "log/Logger.h"
 namespace hemelb
 {

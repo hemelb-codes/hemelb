@@ -173,6 +173,21 @@ namespace hemelb
           wallNormalAtSite[site] = boundaryNormal;
         }
 
+        /**
+         * Used in unit tests for setting the fOld array, in a way that isn't possible in the main
+         * part of the codebase.
+         * @param site
+         * @param fOldIn
+         */
+        template<class LatticeType>
+        void SetFOld(site_t site, distribn_t* fOldIn)
+        {
+          for(Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+          {
+            *GetFOld(site * LatticeType::NUMVECTORS + direction) = fOldIn[direction];
+          }
+        }
+
       protected:
         FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
           hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
