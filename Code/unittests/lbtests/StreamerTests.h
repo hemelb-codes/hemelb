@@ -34,6 +34,7 @@ namespace hemelb
           CPPUNIT_TEST( TestRegularised);
           CPPUNIT_TEST( TestGuoZhengShi);
           CPPUNIT_TEST( TestRegularisedIolet);
+          CPPUNIT_TEST( TestNashBB);
           CPPUNIT_TEST( TestJunkYangEquivalentToBounceBack);CPPUNIT_TEST_SUITE_END();
         public:
 
@@ -864,15 +865,144 @@ namespace hemelb
                 {
                   // The streamer works by assuming the presence of a 'ghost' site, just beyond the
                   // iolet. The density of the ghost site is extrapolated from the iolet density
-                  // and the density of the fluid site. Confirm the calculation by interpolating the
-                  // extrapolated value to the wall.
+                  // and the density of the fluid site.
                   distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
                       - assignedWallDistance) * streamerHydroVars.density) / assignedWallDistance;
 
-                  CPPUNIT_ASSERT_DOUBLES_EQUAL(inletBoundary.GetBoundaryDensity(chosenBoundaryId),
-                                               assignedWallDistance * ghostSiteDensity + (1 - assignedWallDistance)
-                                                   * streamerHydroVars.density,
+                  distribn_t latticeVectorLengthSquared = lb::lattices::D3Q15::CX[chosenUnstreamedDirection]
+                      + lb::lattices::D3Q15::CY[chosenUnstreamedDirection]
+                      + lb::lattices::D3Q15::CZ[chosenUnstreamedDirection];
+
+                  distribn_t maxDensityDifference = initParams.maximumDensityGradient
+                      * std::pow(latticeVectorLengthSquared, 0.5);
+
+                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density + maxDensityDifference);
+                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density - maxDensityDifference);
+
+                  // The velocity of the ghost site is the component of the fluid site's velocity
+                  // along the iolet normal.
+                  util::Vector3D<distribn_t> ghostSiteVelocity = ioletNormal * (streamerHydroVars.momentum
+                      / streamerHydroVars.density).Dot(ioletNormal);
+
+                  util::Vector3D<distribn_t> ghostSiteMomentum = ghostSiteVelocity * ghostSiteDensity;
+
+                  distribn_t ghostPostCollision[lb::lattices::D3Q15::NUMVECTORS];
+
+                  LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(ghostSiteDensity,
+                                                                        ghostSiteMomentum.x,
+                                                                        ghostSiteMomentum.y,
+                                                                        ghostSiteMomentum.z,
+                                                                        ghostPostCollision);
+
+                  CPPUNIT_ASSERT_DOUBLES_EQUAL(latDat->GetFNew(chosenSite * lb::lattices::D3Q15::NUMVECTORS)[chosenUnstreamedDirection],
+                                               ghostPostCollision[chosenUnstreamedDirection],
                                                allowedError);
+                }
+              }
+            }
+          }
+
+          void TestNashBB()
+          {
+            lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
+                                                         latDat,
+                                                         simConfig->GetInlets(),
+                                                         simState,
+                                                         unitConverter);
+
+            initParams.boundaryObject = &inletBoundary;
+
+            lb::streamers::NashBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                regularisedIolet(initParams);
+
+            for (double assignedIoletDistance = 0.4; assignedIoletDistance < 1.0; assignedIoletDistance += 0.5)
+            {
+              // Initialise fOld in the lattice data. We choose values so that each site has
+              // an anisotropic distribution function, and that each site's function is
+              // distinguishable.
+              LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
+
+              // Make some fairly arbitrary choices early on.
+              const site_t chosenSite = 0;
+              const int chosenBoundaryId = 0;
+              const geometry::Site& streamer = latDat->GetSite(chosenSite);
+
+              const Direction chosenWallDirection = 11;
+              const Direction chosenUnstreamedDirection = 5;
+              const Direction chosenIoletDirection = lb::lattices::D3Q15::INVERSEDIRECTIONS[chosenUnstreamedDirection];
+              const util::Vector3D<distribn_t> ioletNormal = inletBoundary.GetLocalIolet(chosenBoundaryId)->GetNormal();
+
+              // Enforce that there's a boundary in the iolet direction.
+              latDat->SetHasIolet(chosenSite, chosenIoletDirection);
+              latDat->SetHasBoundary(chosenSite, chosenWallDirection);
+              latDat->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedIoletDistance);
+              latDat->SetBoundaryNormal(chosenSite, ioletNormal);
+              latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
+
+              // Perform the collision and streaming.
+              regularisedIolet.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+
+              // Check each streamed direction.
+              for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
+              {
+                // Calculate the distributions at the chosen site up to post-collision.
+                distribn_t streamerFOld[lb::lattices::D3Q15::NUMVECTORS];
+                LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(chosenSite, streamerFOld);
+
+                lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > streamerHydroVars(streamerFOld);
+                normalCollision->CalculatePreCollision(streamerHydroVars, streamer);
+                normalCollision->Collide(lbmParams, streamerHydroVars);
+
+                // Calculate the streamed-to index.
+                const site_t streamedIndex = streamer.GetStreamedIndex<lb::lattices::D3Q15> (streamedDirection);
+
+                // Check that simple collide and stream has happened when appropriate.
+                // Is streamerIndex a valid index? (And is it not in one of the directions
+                // that has been meddled with for the test)?
+                if (!streamer.HasIolet(streamedDirection) && !streamer.HasBoundary(streamedDirection) && streamedIndex
+                    >= 0 && streamedIndex < (lb::lattices::D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
+                {
+                  distribn_t streamedToFNew = *latDat->GetFNew(streamedIndex);
+
+                  // F_new should be equal to the value that was streamed from this other site
+                  // in the same direction as we're streaming from.
+                  CPPUNIT_ASSERT_DOUBLES_EQUAL(streamerHydroVars.GetFPostCollision()[streamedDirection],
+                                               streamedToFNew,
+                                               allowedError);
+                }
+
+                Direction inverseDirection = lb::lattices::D3Q15::INVERSEDIRECTIONS[streamedDirection];
+
+                // Check the case by a wall.
+                if (streamer.HasBoundary(streamedDirection))
+                {
+                  distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite + inverseDirection);
+
+                  CPPUNIT_ASSERT_DOUBLES_EQUAL(streamerHydroVars.GetFPostCollision()[streamedDirection],
+                                               streamedToFNew,
+                                               allowedError);
+                }
+
+                // Next, handle the case where this is the direction where we're checking for
+                // behaviour with a iolet. I.e. are we correctly filling distributions that aren't
+                // streamed-to by simple streaming?
+                if (streamedDirection == chosenUnstreamedDirection)
+                {
+                  // The streamer works by assuming the presence of a 'ghost' site, just beyond the
+                  // iolet. The density of the ghost site is extrapolated from the iolet density
+                  // and the density of the fluid site.
+                  distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
+                      - assignedIoletDistance) * streamerHydroVars.density) / assignedIoletDistance;
+
+                  distribn_t latticeVectorLengthSquared = lb::lattices::D3Q15::CX[chosenUnstreamedDirection]
+                      + lb::lattices::D3Q15::CY[chosenUnstreamedDirection]
+                      + lb::lattices::D3Q15::CZ[chosenUnstreamedDirection];
+
+                  distribn_t maxDensityDifference = initParams.maximumDensityGradient
+                      * std::pow(latticeVectorLengthSquared, 0.5);
+
+                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density + maxDensityDifference);
+                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density - maxDensityDifference);
 
                   // The velocity of the ghost site is the component of the fluid site's velocity
                   // along the iolet normal.

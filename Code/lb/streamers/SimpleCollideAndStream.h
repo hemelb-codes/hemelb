@@ -54,7 +54,6 @@ namespace hemelb
               for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
                 * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (ii))) = hydroVars.GetFPostCollision()[ii];
-
               }
 
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,

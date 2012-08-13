@@ -37,6 +37,7 @@ namespace hemelb
                                               latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
 
+            initParams.maximumDensityGradient = 0.5;
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
             initParams.lbmParams=lbmParams;

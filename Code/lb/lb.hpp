@@ -29,9 +29,9 @@ namespace hemelb
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
-                                                                                             latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
-                                                                                                                                                       *latDat), neighbouringDataManager(neighbouringDataManager)
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+          mParams(mState->GetTimeStepLength(), latDat->GetVoxelSize()), timings(atimings),
+          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
@@ -60,10 +60,54 @@ namespace hemelb
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
+      // First of all, calculate the maximum allowable density difference between two
+      // neighbouring sites. We'll also store the locations of the iolets, to be used
+      // in a second.
+      distribn_t maxIoletDensity = std::numeric_limits<distribn_t>::min(), minIoletDensity = std::numeric_limits<
+          distribn_t>::max();
+      std::vector<util::Vector3D<float> > ioletLocations;
+
+      for (unsigned inletNumber = 0; inletNumber < mInletValues->GetLocalIoletCount(); ++inletNumber)
+      {
+        maxIoletDensity = std::max(maxIoletDensity, mInletValues->GetLocalIolet(inletNumber)->GetDensityMax());
+        minIoletDensity = std::min(minIoletDensity, mInletValues->GetLocalIolet(inletNumber)->GetDensityMin());
+        ioletLocations.push_back(mInletValues->GetLocalIolet(inletNumber)->GetPosition());
+      }
+
+      for (unsigned outletNumber = 0; outletNumber < mOutletValues->GetLocalIoletCount(); ++outletNumber)
+      {
+        maxIoletDensity = std::max(maxIoletDensity, mOutletValues->GetLocalIolet(outletNumber)->GetDensityMax());
+
+        minIoletDensity = std::min(minIoletDensity, mOutletValues->GetLocalIolet(outletNumber)->GetDensityMin());
+        ioletLocations.push_back(mOutletValues->GetLocalIolet(outletNumber)->GetPosition());
+      }
+
+      // Now calculate the minimum distance between iolets.
+      float minIoletDistanceSquared = std::numeric_limits<float>::max();
+
+      for (std::vector<util::Vector3D<float> >::const_iterator ioletLocation = ioletLocations.begin(); ioletLocation
+          != ioletLocations.end(); ++ioletLocation)
+      {
+        for (std::vector<util::Vector3D<float> >::const_iterator otherIolet = ioletLocation + 1; otherIolet
+            != ioletLocations.end(); ++otherIolet)
+        {
+          util::Vector3D<float> separation = *ioletLocation - *otherIolet;
+
+          float distanceSquared = separation.Dot(separation);
+
+          minIoletDistanceSquared = std::min(minIoletDistanceSquared, distanceSquared);
+        }
+      }
+
+      // Now calculate the max density gradient
+      float maxDensityGradient = (maxIoletDensity - minIoletDensity) / (std::pow(minIoletDistanceSquared, 0.5)
+          / mLatDat->GetVoxelSize());
+
       kernels::InitParams initParams = kernels::InitParams();
+      initParams.maximumDensityGradient = maxDensityGradient;
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
-      initParams.neighbouringDataManager=neighbouringDataManager;
+      initParams.neighbouringDataManager = neighbouringDataManager;
 
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision = new tMidFluidCollision(initParams);
@@ -348,8 +392,7 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::WriteConfigParallel(hemelb::lb::Stability const stability,
-                                               std::string output_file_name) const
+    void LBM<LatticeType>::WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -373,7 +416,7 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_Datatype viewType = MpiDataType<char>();
+      MPI_Datatype viewType = MpiDataType<char> ();
       MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -437,8 +480,7 @@ namespace hemelb
           continue;
         }
 
-        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser(); siteTrav.CurrentLocationValid();
-            siteTrav.TraverseOne())
+        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser(); siteTrav.CurrentLocationValid(); siteTrav.TraverseOne())
         {
           if (netTop->GetLocalRank() != block.GetProcessorRankForSite(siteTrav.GetCurrentIndex()))
           {
@@ -478,8 +520,8 @@ namespace hemelb
           }
 
           // conversion from lattice to physical units
-          distribn_t pressure = mUnits->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(my_site_id)
-              * Cs2);
+          distribn_t pressure =
+              mUnits->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(my_site_id) * Cs2);
 
           const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(my_site_id);
 
