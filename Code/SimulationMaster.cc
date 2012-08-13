@@ -351,7 +351,7 @@ void SimulationMaster::WriteLocalImages()
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
-      hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
+      hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
           + ( (it->second - 1) % simulationState->GetTimeStep()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);

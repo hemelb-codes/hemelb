@@ -70,11 +70,15 @@ namespace hemelb
       hemelb::util::DeleteDirContents(imageDirectory);
     }
 
-    hemelb::io::writers::xdr::XdrFileWriter * PathManager::XdrImageWriter(const long int time) const
+    hemelb::io::writers::Writer * PathManager::XdrImageWriter(const long int time) const
     {
       char filename[255];
       snprintf(filename, 255, "%08li.dat", time);
+#ifdef HEMELB_IMAGES_TO_NULL
+      return (new hemelb::io::writers::null::NullWriter());
+#else
       return (new hemelb::io::writers::xdr::XdrFileWriter(imageDirectory + std::string(filename)));
+#endif
     }
 
     const std::string PathManager::SnapshotPath(unsigned long time) const
