@@ -37,18 +37,6 @@ namespace hemelb
           }
 
           /**
-           * Initialises the value of alpha to 2.0 for every site.
-           * @param initParams
-           */
-          inline void DoReset(InitParams* init)
-          {
-            for (site_t i = 0; i < init->latDat->GetLocalFluidSiteCount(); i++)
-            {
-              oldAlpha[i] = 2.0;
-            }
-          }
-
-          /**
            * Performs the Entropic LB collision (using alpha as a relaxation parameter)
            * @param lbmParams
            * @param hydroVars
@@ -75,7 +63,11 @@ namespace hemelb
           Entropic(InitParams* initParams)
           {
             oldAlpha = new distribn_t[initParams->latDat->GetLocalFluidSiteCount()];
-            DoReset(initParams);
+            // Initialises the value of alpha to 2.0 for every site.
+            for (site_t i = 0; i < initParams->latDat->GetLocalFluidSiteCount(); i++)
+            {
+              oldAlpha[i] = 2.0;
+            }
           }
 
           /**

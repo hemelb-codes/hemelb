@@ -67,10 +67,6 @@ namespace hemelb
             }
           }
 
-          inline void DoReset(InitParams* init)
-          {
-
-          }
       };
 
     }

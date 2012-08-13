@@ -78,11 +78,6 @@ namespace hemelb
                                                                                  propertyCache);
           }
 
-          inline void Reset(kernels::InitParams* init)
-          {
-            static_cast<StreamerImpl*>(this)->DoReset(init);
-          }
-
         protected:
           template<bool tDoRayTracing>
           inline static void UpdateMinsAndMaxes(distribn_t velocity_x,
