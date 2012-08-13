@@ -2,6 +2,7 @@
 #define HEMELB_LB_STREAMERS_NASHBB_H
 
 #include "lb/streamers/BaseStreamer.h"
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -21,7 +22,8 @@ namespace hemelb
 
         public:
           NashBB(kernels::InitParams& initParams) :
-            collider(initParams), iolet(initParams.boundaryObject)
+            collider(initParams), iolet(initParams.boundaryObject),
+                maxDensityGradient(initParams.maximumDensityGradient)
           {
           }
 
@@ -73,6 +75,26 @@ namespace hemelb
                 distribn_t ghostDensity = (iolet->GetBoundaryDensity(boundaryId) + (wall_distance - 1.)
                     * hydroVars.density) / wall_distance;
 
+                // Calculate the length of the vector passed along.
+                distribn_t latticeVectorLengthSquared = 0;
+
+                for (Direction axis = 0; axis < 3; ++axis)
+                {
+                  if (LatticeType::discreteVelocityVectors[axis][direction] != 0)
+                  {
+                    latticeVectorLengthSquared += 1.;
+                  }
+                }
+
+                // Calculate the max difference between two fluid sites along this link.
+                distribn_t maxAllowableDensityDifference = maxDensityGradient * std::pow(latticeVectorLengthSquared, 0.5);
+
+                ghostDensity = util::NumericalFunctions::enforceBounds(ghostDensity,
+                                                                       hydroVars.density
+                                                                           - maxAllowableDensityDifference,
+                                                                       hydroVars.density
+                                                                           + maxAllowableDensityDifference);
+
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
                 util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal().GetNormalised();
 
@@ -101,9 +123,9 @@ namespace hemelb
               hydroVars.tau = lbmParams->GetTau();
 
               BaseStreamer<NashBB>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                         hydroVars,
-                                                                                         lbmParams,
-                                                                                         propertyCache);
+                                                                               hydroVars,
+                                                                               lbmParams,
+                                                                               propertyCache);
             }
           }
 
@@ -124,6 +146,7 @@ namespace hemelb
 
         private:
           boundaries::BoundaryValues* iolet;
+          distribn_t maxDensityGradient;
       };
     }
   }
