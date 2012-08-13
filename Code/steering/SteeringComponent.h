@@ -73,7 +73,7 @@ namespace hemelb
          * Although this appears to be part of the removed post-unstable reset functionality, it is also used during initialisation
          * so is retained #244
          */
-        void Reset();
+        void ClearValues();
 
         bool readyForNextImage;
         bool updatedMouseCoords;
