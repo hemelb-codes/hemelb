@@ -329,7 +329,7 @@ void SimulationMaster::HandleActors()
   stepManager->CallActions();
 }
 
-void SimulationMaster::ResetUnstableSimulation()
+void SimulationMaster::OnUnstableSimulation()
 {
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
                                                                       simulationState->GetTimeStepLength());
@@ -508,8 +508,7 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetStability() == hemelb::lb::Unstable)
   {
-    ResetUnstableSimulation();
-    imagesPeriod = OutputPeriod(imagesPerSimulation);
+    OnUnstableSimulation();
     return;
   }
 

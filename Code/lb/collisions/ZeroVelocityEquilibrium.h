@@ -59,10 +59,6 @@ namespace hemelb
             }
           }
 
-          inline void DoReset(kernels::InitParams* init)
-          {
-            kernel.Reset(init);
-          }
 
         private:
           KernelType kernel;

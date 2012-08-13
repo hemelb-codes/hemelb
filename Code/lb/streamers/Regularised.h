@@ -167,10 +167,6 @@ namespace hemelb
 
           }
 
-          void DoReset(kernels::InitParams* init)
-          {
-            collider.Reset(init);
-          }
       };
     }
   }
