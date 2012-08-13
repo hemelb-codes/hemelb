@@ -16,6 +16,7 @@
 #include "log/Logger.h"
 #include "configuration/SimConfig.h"
 #include "io/writers/xdr/XdrFileWriter.h"
+#include "io/writers/null/NullWriter.h"
 namespace hemelb
 {
   namespace io
@@ -81,7 +82,7 @@ namespace hemelb
          * @param time The current time, used to generate a unique filename.
          * @return Pointer to an XDR file writer -- this is allocated on free store, and should be deleted by the client code.
          */
-        hemelb::io::writers::xdr::XdrFileWriter * XdrImageWriter(const long int time) const;
+        hemelb::io::writers::Writer * XdrImageWriter(const long int time) const;
         /**
          * Returns the file path that should be used for writing a snapshot file
          * @param time The current time, used to generate a unique filename.
