@@ -52,10 +52,6 @@ namespace hemelb
             static_cast<CollisionImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          inline void Reset(kernels::InitParams* init)
-          {
-            static_cast<CollisionImpl*>(this)->DoReset(init);
-          }
       };
 
     }

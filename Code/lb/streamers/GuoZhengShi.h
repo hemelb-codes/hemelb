@@ -250,15 +250,6 @@ namespace hemelb
 
           }
 
-          /**
-           * The DoReset member function must be implemented but doesn't need to do anything
-           * for this boundary condition.
-           * @param init
-           */
-          inline void DoReset(kernels::InitParams* init)
-          {
-          }
-
         private:
           const geometry::neighbouring::NeighbouringLatticeData& neighbouringLatticeData;
       };

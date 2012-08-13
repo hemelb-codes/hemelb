@@ -34,7 +34,7 @@ namespace hemelb
         net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
         mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent), mUnits(iUnits), simConfig(iSimConfig)
     {
-      Reset();
+      ClearValues();
       AssignValues();
     }
 
