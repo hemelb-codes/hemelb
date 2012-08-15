@@ -60,51 +60,7 @@ namespace hemelb
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      // First of all, calculate the maximum allowable density difference between two
-      // neighbouring sites. We'll also store the locations of the iolets, to be used
-      // in a second.
-      distribn_t maxIoletDensity = std::numeric_limits<distribn_t>::min(), minIoletDensity = std::numeric_limits<
-          distribn_t>::max();
-      std::vector<util::Vector3D<float> > ioletLocations;
-
-      for (unsigned inletNumber = 0; inletNumber < mInletValues->GetLocalIoletCount(); ++inletNumber)
-      {
-        maxIoletDensity = std::max(maxIoletDensity, mInletValues->GetLocalIolet(inletNumber)->GetDensityMax());
-        minIoletDensity = std::min(minIoletDensity, mInletValues->GetLocalIolet(inletNumber)->GetDensityMin());
-        ioletLocations.push_back(mInletValues->GetLocalIolet(inletNumber)->GetPosition());
-      }
-
-      for (unsigned outletNumber = 0; outletNumber < mOutletValues->GetLocalIoletCount(); ++outletNumber)
-      {
-        maxIoletDensity = std::max(maxIoletDensity, mOutletValues->GetLocalIolet(outletNumber)->GetDensityMax());
-
-        minIoletDensity = std::min(minIoletDensity, mOutletValues->GetLocalIolet(outletNumber)->GetDensityMin());
-        ioletLocations.push_back(mOutletValues->GetLocalIolet(outletNumber)->GetPosition());
-      }
-
-      // Now calculate the minimum distance between iolets.
-      float minIoletDistanceSquared = std::numeric_limits<float>::max();
-
-      for (std::vector<util::Vector3D<float> >::const_iterator ioletLocation = ioletLocations.begin(); ioletLocation
-          != ioletLocations.end(); ++ioletLocation)
-      {
-        for (std::vector<util::Vector3D<float> >::const_iterator otherIolet = ioletLocation + 1; otherIolet
-            != ioletLocations.end(); ++otherIolet)
-        {
-          util::Vector3D<float> separation = *ioletLocation - *otherIolet;
-
-          float distanceSquared = separation.Dot(separation);
-
-          minIoletDistanceSquared = std::min(minIoletDistanceSquared, distanceSquared);
-        }
-      }
-
-      // Now calculate the max density gradient
-      float maxDensityGradient = (maxIoletDensity - minIoletDensity) / (std::pow(minIoletDistanceSquared, 0.5)
-          / mLatDat->GetVoxelSize());
-
       kernels::InitParams initParams = kernels::InitParams();
-      initParams.maximumDensityGradient = maxDensityGradient;
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager = neighbouringDataManager;
