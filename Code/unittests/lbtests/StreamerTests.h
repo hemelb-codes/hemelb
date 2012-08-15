@@ -869,15 +869,8 @@ namespace hemelb
                   distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
                       - assignedWallDistance) * streamerHydroVars.density) / assignedWallDistance;
 
-                  distribn_t latticeVectorLengthSquared = lb::lattices::D3Q15::CX[chosenUnstreamedDirection]
-                      + lb::lattices::D3Q15::CY[chosenUnstreamedDirection]
-                      + lb::lattices::D3Q15::CZ[chosenUnstreamedDirection];
-
-                  distribn_t maxDensityDifference = initParams.maximumDensityGradient
-                      * std::pow(latticeVectorLengthSquared, 0.5);
-
-                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density + maxDensityDifference);
-                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density - maxDensityDifference);
+                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density * 1.02);
+                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density * 0.98);
 
                   // The velocity of the ghost site is the component of the fluid site's velocity
                   // along the iolet normal.
@@ -994,15 +987,8 @@ namespace hemelb
                   distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
                       - assignedIoletDistance) * streamerHydroVars.density) / assignedIoletDistance;
 
-                  distribn_t latticeVectorLengthSquared = lb::lattices::D3Q15::CX[chosenUnstreamedDirection]
-                      + lb::lattices::D3Q15::CY[chosenUnstreamedDirection]
-                      + lb::lattices::D3Q15::CZ[chosenUnstreamedDirection];
-
-                  distribn_t maxDensityDifference = initParams.maximumDensityGradient
-                      * std::pow(latticeVectorLengthSquared, 0.5);
-
-                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density + maxDensityDifference);
-                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density - maxDensityDifference);
+                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density * 1.02);
+                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density * 0.98);
 
                   // The velocity of the ghost site is the component of the fluid site's velocity
                   // along the iolet normal.
