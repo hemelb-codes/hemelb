@@ -23,8 +23,7 @@ namespace hemelb
 
         public:
           RegularisedIolet(kernels::InitParams& initParams) :
-            collider(initParams), iolet(initParams.boundaryObject),
-                maxDensityGradient(initParams.maximumDensityGradient)
+            collider(initParams), iolet(initParams.boundaryObject)
           {
           }
 
@@ -69,25 +68,10 @@ namespace hemelb
                 distribn_t ghostDensity = (iolet->GetBoundaryDensity(boundaryId) + (wall_distance - 1.)
                     * hydroVars.density) / wall_distance;
 
-                // Calculate the length of the vector passed along.
-                distribn_t latticeVectorLength = 0;
-
-                for (Direction axis = 0; axis < 3; ++axis)
-                {
-                  if (LatticeType::discreteVelocityVectors[axis][direction] != 0)
-                  {
-                    latticeVectorLength += 1.;
-                  }
-                }
-
-                // Calculate the max difference between two fluid sites along this link.
-                distribn_t maxAllowableDensityDifference = maxDensityGradient * std::pow(latticeVectorLength, 0.5);
-
+                // Enforce a maximum 2% difference from the fluid site.
                 ghostDensity = util::NumericalFunctions::enforceBounds(ghostDensity,
-                                                                       hydroVars.density
-                                                                           - maxAllowableDensityDifference,
-                                                                       hydroVars.density
-                                                                           + maxAllowableDensityDifference);
+                                                                       hydroVars.density * 0.98,
+                                                                       hydroVars.density * 1.02);
 
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
                 util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
@@ -140,7 +124,6 @@ namespace hemelb
 
         private:
           boundaries::BoundaryValues* iolet;
-          distribn_t maxDensityGradient;
       };
     }
   }
