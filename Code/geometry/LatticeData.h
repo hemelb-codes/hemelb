@@ -179,6 +179,15 @@ namespace hemelb
           return &newDistributions[siteNumber];
         }
 
+        /**
+         * Set the force at the fluid site to zero.
+         * @param siteNumber
+         */
+        inline void ZeroForceField()
+        {
+          // TODO: implement force zeroing of entire field
+        }
+
         proc_t GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
         /**
@@ -493,6 +502,37 @@ namespace hemelb
         const distribn_t* GetFOld(site_t distributionIndex) const
         {
           return &oldDistributions[distributionIndex];
+        }
+
+        /**
+         * Get the force applied to a fluid site
+         * @param siteNumber
+         * @return
+         */
+        inline const util::Vector3D<LatticeForce>& GetForce(site_t siteNumber) const
+        {
+          // TODO: return something non-zero
+          return util::Vector3D<LatticeForce>();
+        }
+
+        /**
+         * Set the force applied to a fluid site
+         * @param siteNumber
+         * @param force
+         */
+        inline void SetForce(site_t siteNumber, const util::Vector3D<LatticeForce>& force)
+        {
+          // TODO: implement setting of LB force
+        }
+
+        /**
+         * Add the supplied force to the current force at the fluid site
+         * @param siteNumber
+         * @param force
+         */
+        inline void AddToForce(site_t siteNumber, const util::Vector3D<LatticeForce>& force)
+        {
+          // TODO: implement force += argument
         }
 
         /*
