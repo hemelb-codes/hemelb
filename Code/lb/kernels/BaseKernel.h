@@ -133,9 +133,6 @@ namespace hemelb
           // of each site next to an inlet or an outlet.
           const geometry::LatticeData* latDat;
 
-          // The maximum density gradient that should be possible, in lattice units.
-          float maximumDensityGradient;
-
           // The LB parameters object. Currently only used in LBGKNN to access the current
           // time step.
           const LbmParameters* lbmParams;
