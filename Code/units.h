@@ -66,6 +66,9 @@ namespace hemelb
   typedef double PhysicalVelocity;
   typedef distribn_t LatticeVelocity;
 
+  typedef double LatticeForce;
+  typedef double PhysicalForce;
+
   typedef double DimensionlessQuantity;
 }
 #endif //HEMELB_UNITS_H
