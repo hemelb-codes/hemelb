@@ -85,16 +85,16 @@ namespace hemelb
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
               MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration);
-              //std::cout << "Spawning HemeLB..." << std::endl;
+              std::cout << "Spawning HemeLB..." << std::endl;
 
               MultiscaleSimulationMaster<MPWideIntercommunicator> *heme;
               heme = new MultiscaleSimulationMaster<MPWideIntercommunicator>(options, intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
-              //std::cout << "HemeLB about to be run..." << std::endl;
+              std::cout << "HemeLB about to be run..." << std::endl;
               while (heme->GetState()->GetTime() < 20.0)
               {
                 heme->DoTimeStep();
-                //std::cout << "Step taken, going to incrementSharedTime." << std::endl;
+                std::cout << "Step taken, going to incrementSharedTime." << std::endl;
                 intercomms.UnitTestIncrementSharedTime(); //simple hack func that mocks a 1.0 increase in the 'other' simulation.
               }
               heme->Finalise();

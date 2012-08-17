@@ -88,6 +88,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
  */
 SimulationMaster::~SimulationMaster()
 {
+
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     delete imageSendCpt;
