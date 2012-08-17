@@ -308,7 +308,7 @@ namespace hemelb
           }
           else if (MultiscaleLabel != "")
           {
-            newIolet = new lb::boundaries::iolets::InOutLetMultiscale();
+            newIolet = new lb::boundaries::iolets::InOutLetVelocityAware();
           }
           else
           {
