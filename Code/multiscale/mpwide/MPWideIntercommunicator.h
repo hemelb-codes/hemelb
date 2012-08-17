@@ -45,12 +45,6 @@ as flexible vessel walls.
   different in size however if they contain vectors individually.
 + We currently think this limitation actually encourages writing proper ICands.
 
-
-== MALLOC VS NEW ==
-The use of malloc in this class looks unusual because we use new and delete everywhere else,
-but in this instance it's necessary because some compilers might have different padding usage when
-'new' is used, leading to erroneous data transfers when the coupling is performed across platforms.
-
 */
 
 
@@ -148,7 +142,7 @@ namespace hemelb
 
               //TODO: Add an offset table for the ICand data.
  
-              //std::cout << "PRE-MALLOC, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
+              std::cout << "PRE-MALLOC, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
 
               // 2. Allocate exchange buffers. We do this once at initialization,
               //    so that if it goes wrong, the program will crash timely.
@@ -224,9 +218,7 @@ namespace hemelb
               return sizeof(int64_t);
             }
 
-            std::cerr << "Error in GetTypeSize(): The RuntimeType is not recognized." << std::endl;
-            exit(-1);
-            return -1;
+
           }
           
           FILE *my_fopen(const char *path, const char *mode){
@@ -253,9 +245,7 @@ namespace hemelb
             /* in the sockets_file, nstream indicates the total number of streams. */
             int d = fscanf( fin, "%d%d", &nstream, &nhost);
             
-            if(d>-1000) {
-              std::cerr << "nhost: " << nhost << ", nstream_total: " << nstream << std::endl;
-            }
+            std::cerr << "nhost: " << nhost << ", nstream_total: " << nstream << std::endl;
             
             fclose(fin);
             
@@ -299,21 +289,21 @@ namespace hemelb
                 
                 for(int i=0; i<nstream_host[j]; i++){
                   int ii = offset + i;
-                  //std::cerr << "ii defined: " << ii << std::endl;
+                  std::cerr << "ii defined: " << ii << std::endl;
                   url[ii] = (std::string)host;
-                  //std::cerr << "hosts defined: " << url[ii] << std::endl;
+                  std::cerr << "hosts defined: " << url[ii] << std::endl;
                   int p = base_port[j] + i;
-                  //std::cerr << "p defined. Nstream is " << nstream << std::endl;
+                  std::cerr << "p defined. Nstream is " << nstream << std::endl;
                   server_side_ports[ii] = p;
                   //cports[ii] = ports[ii] + nstream_host[j];
-                  //std::cerr << url[ii] << "\t" << server_side_ports[ii] << std::endl;
+                  std::cerr << url[ii] << "\t" << server_side_ports[ii] << std::endl;
                 }
                 offset += nstream_host[j];
               }
               
               fclose(fin);
               
-              //std::cout << "MPWide Settings File has been processed... " << std::endl;
+              std::cout << "MPWide Settings File has been processed... " << std::endl;             
           }
 
           /* Pack/Serialize local shared data (this may include Endian conversion in the future) */
@@ -352,7 +342,7 @@ namespace hemelb
           {
             if (hemelb::multiscale::mpwide::mpwide_comm_proc && (send_icand_data_size > 0 || recv_icand_data_size > 0))
             {
-              //std::cout << "EXCHANGE PACKAGES, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
+              std::cout << "EXCHANGE PACKAGES, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size << std::endl;
               MPW_SendRecv(ICandSendDataPacked, (long long int) send_icand_data_size,
                            ICandRecvDataPacked, (long long int) recv_icand_data_size,
                            channels, num_channels);
@@ -411,7 +401,7 @@ namespace hemelb
             {
               hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
 
-              //std::cout << "Number of registered objects is: " << sharedObject.Values().size() << std::endl;
+              std::cout << "Number of registered objects is: " << sharedObject.Values().size() << std::endl;
               //std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
@@ -435,13 +425,13 @@ namespace hemelb
             int64_t rsize = 0;
             if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
             {
-              //std::cout << "BEFORE EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
+              std::cout << "BEFORE EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
 
               MPW_SendRecv(((char *) &send_icand_data_size), sizeof(int64_t),
                            ((char *) &rsize), sizeof(int64_t),
                            channels, 1);
 
-              //std::cout << "EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
+              std::cout << "EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
             }
 
             return rsize;
