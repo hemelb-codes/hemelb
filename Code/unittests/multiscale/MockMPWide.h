@@ -13,7 +13,7 @@
 #include <cassert>
 
 char* MPW_DNSResolve(char* host) {
-  return host;
+  return "localhost";
 }
 
 /* Print all connections. */
@@ -38,7 +38,6 @@ void MPW_Init(std::string *url, int *server_side_ports, int num_channels)
 /* Close all sockets and free data structures related to the library. */
 int MPW_Finalize() {
   printf("MPW_Finalize(): MPWide finalized.\n");
-  return 0;
 }
 
 /* Exchanges buffers between the two machines. */

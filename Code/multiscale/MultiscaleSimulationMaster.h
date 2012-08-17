@@ -11,7 +11,6 @@
 #define HEMELB_MULTISCALE_MULTISCALESIMULATIONMASTER_H
 #include <vector>
 #include "multiscale/Intercommunicator.h"
-#include "lb/boundaries/iolets/InOutLetVelocityAware.h"
 #include "SimulationMaster.h"
 
 namespace hemelb
@@ -29,16 +28,7 @@ namespace hemelb
             SimulationMaster(options), intercomms(aintercomms), multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
-
-          lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
-          ///TODO: Generate invertedBoundaryList.
-
-          std::map<unsigned int, site_t> invertedBoundaryList;
-
-          invertedBoundaryList[1] = 1;
-          //for (sites){
-          //  iBL[site.boundary]=site;
-          //}
+          lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
           // we only want to register those iolets which are needed on this process.
           // Fortunately, the BoundaryValues instance has worked this out for us.
@@ -48,24 +38,17 @@ namespace hemelb
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
-                                                                                                                  multiscaleIoletType);
-
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                      invertedBoundaryList);
+                                                                                                                multiscaleIoletType);
             }
           }
-
           for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
           {
             if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
-                                                                                                                    multiscaleIoletType);
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                                    invertedBoundaryList);
+                                                                                                                 multiscaleIoletType);
             }
           }
-
           intercomms.ShareInitialConditions();
         }
 
@@ -76,7 +59,7 @@ namespace hemelb
           {
             SimulationMaster::DoTimeStep();
             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
-                                                                                GetState()->GetTime());
+                                                                           GetState()->GetTime());
           }
           else
           {

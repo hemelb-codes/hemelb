@@ -66,8 +66,8 @@ namespace hemelb
 
             MockIntercommunicand inlet;
             MockIntercommunicand outlet;
-            typename IntercommuniatorImplementation::IntercommunicandTypeT inOutLetType;
             IntercommuniatorImplementation intercomms;
+            typename IntercommuniatorImplementation::IntercommunicandTypeT inOutLetType;
             double timeResolution;
             double spaceResolution;
             double currentTime;
