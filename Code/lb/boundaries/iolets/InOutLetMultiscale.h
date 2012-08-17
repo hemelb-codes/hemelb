@@ -121,7 +121,7 @@ namespace hemelb
             {
               return label;
             }
-          protected:
+          private:
             std::string label;
 
             multiscale::SharedValue<PhysicalPressure> pressure;

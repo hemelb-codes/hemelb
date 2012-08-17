@@ -15,6 +15,5 @@
 #include "lb/boundaries/iolets/InOutLetFile.h"
 #include "lb/boundaries/iolets/InOutLetCycle.h"
 #include "lb/boundaries/iolets/InOutLetMultiscale.h"
-#include "lb/boundaries/iolets/InOutLetVelocityAware.h"
 
 #endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H */
