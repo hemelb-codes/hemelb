@@ -8,6 +8,7 @@
 // 
 
 #include "colloids/Particle.h"
+#include "colloids/BodyForces.h"
 #include "geometry/LatticeData.h"
 #include "log/Logger.h"
 #include "units.h"
@@ -20,12 +21,6 @@ namespace hemelb
                        io::xml::XmlAbstractionLayer& xml) :
       PersistedParticle(xml)
     {
-      /** TODO: this conversion should be done in the xml abstraction layer */
-      smallRadius_a0 /= latDatLBM.GetVoxelSize();
-      largeRadius_ah /= latDatLBM.GetVoxelSize();
-      globalPosition -= latDatLBM.GetOrigin();
-      globalPosition /= latDatLBM.GetVoxelSize();
-
       // updating position with zero velocity and zero body force is necessary
       // because of the side-effect that sets owner rank from the new position
       ownerRank = BIG_NUMBER2;
@@ -62,20 +57,24 @@ namespace hemelb
     const void Particle::OutputInformation() const
     {
         log::Logger::Log<log::Info, log::OnePerCore>(
-          "In colloids::Particle::OutputInformation, id: %i, owner: %i, position: {%g,%g,%g}, velocity: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
-          particleId, ownerRank, globalPosition.x, globalPosition.y, globalPosition.z,
+          "In colloids::Particle::OutputInformation, id: %i, owner: %i, drag %g, mass %g, position: {%g,%g,%g}, velocity: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
+          particleId, ownerRank, drag, mass,
+          globalPosition.x, globalPosition.y, globalPosition.z,
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
     }
 
     const void Particle::UpdatePosition(const geometry::LatticeData& latDatLBM)
     {
+      // first, update the position: newPosition = oldPosition + velocity + bodyForces * drag
+      // then,  update the owner rank for the particle based on its new position
+
       if (log::Logger::ShouldDisplay<log::Debug>())
         log::Logger::Log<log::Debug, log::OnePerCore>(
           "In colloids::Particle::UpdatePosition, id: %i,\nposition: {%g,%g,%g}\nvelocity: {%g,%g,%g}\nbodyForces: {%g,%g,%g}\n",
           particleId, globalPosition.x, globalPosition.y, globalPosition.z,
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
 
-      globalPosition += velocity + bodyForces;
+      globalPosition += velocity + bodyForces * CalculateDrag();
 
       // round the global position of the particle to the nearest site coordinates
       const util::Vector3D<site_t> siteGlobalPosition(
@@ -100,32 +99,43 @@ namespace hemelb
           particleId, globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
-    const void Particle::CalculateBodyForces()
+    const DimensionlessQuantity Particle::GetViscosity() const
     {
-      /** todo: CalculateBodyForces
-       *    - create new BodyForces::GetBodyForcesAtGlobalPosition method
-       *    - set bodyForces property to value from the BodyForces object
-       *    - will require communicaiton to transmit remote contributions
-       */
-      bodyForces *= 0.0;
+      // get fluid viscosity
+      return BLOOD_VISCOSITY_Pa_s;
     }
 
-    const void Particle::CalculateFeedbackForces() const
+    const DimensionlessQuantity Particle::CalculateDrag()
     {
-      /** todo: CalculateFeedbackForces
-       *    - calculate the feedback force on each neighbour lattice site
-       *    - set feedback force values into the macroscopic cache object
-       *    - will require communication to transmit remote contributions
-       */
+      // calculate the drag due to the fluid for this particle
+      drag = (largeRadius_ah - smallRadius_a0)
+           / (6.0 * PI * GetViscosity() * smallRadius_a0 * largeRadius_ah);
+
+      return drag;
+    }
+
+    const void Particle::CalculateBodyForces()
+    {
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}\n",
+        particleId, globalPosition.x, globalPosition.y, globalPosition.z);
+
+      // delegate the calculation of body forces to the BodyForces class
+      bodyForces = BodyForces::GetBodyForcesForParticle(*this);
+
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
+        particleId, globalPosition.x, globalPosition.y, globalPosition.z,
+        bodyForces.x, bodyForces.y, bodyForces.z);
     }
 
     /** modified dirac delta function according to Peskin */
-    DimensionlessQuantity diracOperation(LatticePosition relativePosition)
+    const DimensionlessQuantity diracOperation(const LatticePosition& relativePosition)
     {
       DimensionlessQuantity delta = 1.0;
       for (int xyz=0;xyz<3;xyz++)
       {
-        LatticeDistance rmod = fabs(relativePosition[xyz]);
+        const LatticeDistance rmod = fabs(relativePosition[xyz]);
 
         if (rmod <= 1.0)
           delta *= 0.125*(3.0 - 2.0*rmod + sqrt(1.0 + 4.0*rmod - 4.0*rmod*rmod));
@@ -136,6 +146,83 @@ namespace hemelb
 
       }
       return delta;
+    }
+
+    const void Particle::CalculateFeedbackForces(
+                           const geometry::LatticeData& latDatLBM) const
+                           //lb::MacroscopicPropertyCache& propertyCache) const
+    {
+      /** CalculateFeedbackForces
+       *    For each local neighbour lattice site
+       *    - calculate the feedback force on each neighbour lattice site
+       *    - set feedback force values into the body forces cache object
+       */
+
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "In colloids::Particle::CalculateFeedbackForces, id: %i, position: {%g,%g,%g}\n",
+        particleId, globalPosition.x, globalPosition.y, globalPosition.z);
+
+      // determine the global coordinates of the next neighbour site:
+      // nested loop - x, y, z directions semi-open interval [-2, +2)
+      for (site_t x = ((site_t)globalPosition.x)-1;
+                  x < ((site_t)globalPosition.x)+3; x++)
+        for (site_t y = ((site_t)globalPosition.y)-1;
+                    y < ((site_t)globalPosition.y)+3; y++)
+          for (site_t z = ((site_t)globalPosition.z)-1;
+                      z < ((site_t)globalPosition.z)+3; z++)
+          {
+            const util::Vector3D<site_t> siteGlobalPosition(x, y, z);
+
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, getting siteId ...\n",
+              particleId, globalPosition.x, globalPosition.y, globalPosition.z,
+              siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z);
+
+            // convert the global coordinates of the site into a local site index
+            proc_t procId;
+            site_t siteId;
+            bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
+            bool isSiteLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
+
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, got siteId: %i, isSiteValid: %s, isSiteLocal: %s, procId: %i\n",
+              particleId, globalPosition.x, globalPosition.y, globalPosition.z,
+              siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
+              siteId, isSiteValid ? "TRUE" : "FALSE", isSiteLocal ? "TRUE" : "FALSE", procId);
+
+            /** TODO: implement boundary conditions for invalid/solid sites */
+            if (!isSiteValid || !isSiteLocal)
+              continue;
+
+            // calculate term of the interpolation sum
+            LatticePosition relativePosition(siteGlobalPosition);
+            relativePosition -= globalPosition;
+            LatticeForceVector contribution = bodyForces * diracOperation(relativePosition);
+
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "In colloids::Particle::CalculateFeedbackForces, particleId: %i, siteIndex: %i, bodyForces: {%g,%g,%g}, contribution: {%g,%g,%g}, reading cache ...\n",
+              particleId, siteId, bodyForces.x, bodyForces.y, bodyForces.z,
+              contribution.x, contribution.y, contribution.z);
+
+            // read value of force for site index from macroscopic cache
+            //LatticeForceVector partialInterpolation = propertyCache.bodyForcesCache.Get(siteId) +
+            LatticeForceVector partialInterpolation = BodyForces::GetBodyForcesForSiteId(siteId) +
+                                                      contribution;
+
+            // read value of force for site index from macroscopic cache
+            //propertyCache.bodyForcesCache.Put(siteId, partialInterpolation);
+            BodyForces::SetBodyForcesForSiteId(siteId, partialInterpolation);
+
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "In colloids::Particle::CalculateFeedbackForces, particleId: %i, siteIndex: %i, bodyForces: {%g,%g,%g}, contribution: {%g,%g,%g}, forceOnSiteSoFar: {%g,%g,%g}\n",
+              particleId, siteId, bodyForces.x, bodyForces.y, bodyForces.z,
+              contribution.x, contribution.y, contribution.z,
+              partialInterpolation.x, partialInterpolation.y, partialInterpolation.z);
+          }
+
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "In colloids::Particle::CalculateFeedbackForces, particleId: %i, bodyForces: {%g,%g,%g}, finished\n",
+        particleId, bodyForces.x, bodyForces.y, bodyForces.z);
     }
 
     const void Particle::InterpolateFluidVelocity(
@@ -150,10 +237,9 @@ namespace hemelb
        *    - will require communication to transmit remote contributions
        */
 
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "In colloids::Particle::InterpolateFluidVelocity, id: %i, position: {%g,%g,%g}\n",
-          particleId, globalPosition.x, globalPosition.y, globalPosition.z);
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "In colloids::Particle::InterpolateFluidVelocity, id: %i, position: {%g,%g,%g}\n",
+        particleId, globalPosition.x, globalPosition.y, globalPosition.z);
 
       velocity *= 0.0;
       // determine the global coordinates of the next neighbour site:
@@ -271,12 +357,11 @@ namespace hemelb
             // accumulate each term of the interpolation
             velocity += partialInterpolation;
 
-            if (log::Logger::ShouldDisplay<log::Debug>())
-              log::Logger::Log<log::Debug, log::OnePerCore>(
-                "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteIndex: %i, fluidVelocity: {%g,%g,%g}, partialInterpolation: {%g,%g,%g}, velocitySoFar: {%g,%g,%g}\n",
-                particleId, siteId, siteFluidVelocity.x, siteFluidVelocity.y, siteFluidVelocity.z,
-                partialInterpolation.x, partialInterpolation.y, partialInterpolation.z,
-                velocity.x, velocity.y, velocity.z);
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+              "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteIndex: %i, fluidVelocity: {%g,%g,%g}, partialInterpolation: {%g,%g,%g}, velocitySoFar: {%g,%g,%g}\n",
+              particleId, siteId, siteFluidVelocity.x, siteFluidVelocity.y, siteFluidVelocity.z,
+              partialInterpolation.x, partialInterpolation.y, partialInterpolation.z,
+              velocity.x, velocity.y, velocity.z);
           }
     }
 

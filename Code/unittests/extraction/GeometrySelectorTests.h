@@ -52,7 +52,7 @@ namespace hemelb
             simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             lbmParams = new lb::LbmParameters(0.1, VoxelSize);
-            unitConverter = new hemelb::util::UnitConverter(lbmParams, simState, VoxelSize);
+            unitConverter = new hemelb::util::UnitConverter(lbmParams, simState, VoxelSize, latticeData->GetOrigin());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,
                                                                               *unitConverter);

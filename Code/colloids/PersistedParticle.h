@@ -26,10 +26,12 @@ namespace hemelb
 
       protected:
         /** constructor - uses explicitly supplied values */
-        PersistedParticle(unsigned long particleId, LatticeDistance a0, LatticeDistance ah,
+        PersistedParticle(unsigned long particleId,
+                          LatticeDistance a0, LatticeDistance ah,
+                          PhysicalMass mass,
                           LatticePosition globalPosition) :
           particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah),
-          globalPosition(globalPosition)
+          mass(mass), globalPosition(globalPosition)
         {};
 
         /** constructor - uses default values for each field */
@@ -44,9 +46,11 @@ namespace hemelb
         /** the hydro-static radius of the particle */
         LatticeDistance largeRadius_ah;
 
+        /** the mass of the particle */
+        PhysicalMass    mass;
+
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;
-
     };
   }
 }
