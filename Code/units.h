@@ -50,6 +50,8 @@ namespace hemelb
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
 
+  typedef double PhysicalMass; // kilograms
+
   typedef double RadianAngle;
 
   // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
@@ -61,6 +63,11 @@ namespace hemelb
 
   typedef util::Vector3D<LatticeDistance> LatticePosition; // origin of lattice is at {0.0,0.0,0.0}
   typedef util::Vector3D<LatticeCoordinate> LatticeVector; // origin of lattice is at {0,0,0}
+
+  typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
+
+  typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
   typedef double PhysicalVelocity;

@@ -15,9 +15,14 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(lb::LbmParameters* params, lb::SimulationState* state, double voxelSize) :
-        lbmParameters(params), simulationState(state), voxelSize(voxelSize), latticeSpeed(voxelSize
-            / simulationState->GetTimeStepLength())
+    UnitConverter::UnitConverter(lb::LbmParameters* params,
+                                 lb::SimulationState* state,
+                                 PhysicalDistance voxelSize,
+                                 PhysicalPosition latticeOrigin) :
+      lbmParameters(params), simulationState(state),
+      voxelSize(voxelSize), timestepTime(simulationState->GetTimeStepLength()),
+      latticeSpeed(voxelSize / timestepTime),
+      latticeOrigin(latticeOrigin)
     {
 
     }
@@ -63,6 +68,20 @@ namespace hemelb
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
     {
       return shearRate / simulationState->GetTimeStepLength();
+    }
+
+    bool UnitConverter::Convert(std::string units, double& value) const
+    {
+      if (units == "metres" || units == "m")
+        value /= voxelSize;
+      else if (units == "si_acceleration" || units == "m/s/s" || units == "ms-2")
+        value *= timestepTime * timestepTime / voxelSize;
+      else if (units == "Newtons" || units == "N")
+        // F = ma so Force = mass * length / time / time and Newton = Kg * metre / second / second
+        value *= voxelSize * voxelSize * latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3;
+      else
+        return false;
+      return true;
     }
   }
 }
