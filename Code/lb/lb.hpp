@@ -55,29 +55,10 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::InitCollisions()
     {
-      // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
-      distribn_t minDensity = std::numeric_limits<distribn_t>::max();
-
-      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
-      {
-        minDensity = std::min(minDensity, mInletValues->GetLocalIolet(inlet)->GetDensityMin());
-      }
-
-      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
-      {
-        minDensity = std::min(minDensity, mOutletValues->GetLocalIolet(outlet)->GetDensityMin());
-      }
-
-      // Now go through them again, informing them of the minimum density.
-      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
-      {
-        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(minDensity);
-      }
-
-      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
-      {
-        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(minDensity);
-      }
+      /**
+       * Ensure the boundary objects have all info necessary.
+       */
+      PrepareBoundaryObjects();
 
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
@@ -127,6 +108,34 @@ namespace hemelb
       SetInitialConditions();
 
       mVisControl = iControl;
+    }
+
+    template<class LatticeType>
+    void LBM<LatticeType>::PrepareBoundaryObjects()
+    {
+      // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
+      distribn_t minDensity = std::numeric_limits<distribn_t>::max();
+
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        minDensity = std::min(minDensity, mInletValues->GetLocalIolet(inlet)->GetDensityMin());
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        minDensity = std::min(minDensity, mOutletValues->GetLocalIolet(outlet)->GetDensityMin());
+      }
+
+      // Now go through them again, informing them of the minimum density.
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(minDensity);
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(minDensity);
+      }
     }
 
     template<class LatticeType>

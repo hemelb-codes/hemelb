@@ -11,7 +11,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-            InOutLet(), pressureMeanPhysical(0.0), pressureAmpPhysical(0.0), phase(0.0), period(1.0)
+            InOutLet(), pressureMeanPhysical(0.0), pressureAmpPhysical(0.0), phase(0.0), period(1.0), warmUpLength(0)
         {
 
         }

@@ -17,7 +17,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig() :
-        LEGACY_PULSATILE_PERIOD(60.0 / 70.0)
+        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), warmUpSteps(0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
