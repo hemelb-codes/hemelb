@@ -1,3 +1,9 @@
+add_library(hemelb_colloidsForces
+            BodyForces.cc
+           )
+target_link_libraries(hemelb_colloidsForces
+                      hemelb_io
+                     )
 add_library(hemelb_colloids
             ParticleMpiDatatypes.cc
             ParticleSet.cc
@@ -8,4 +14,5 @@ add_library(hemelb_colloids
 target_link_libraries(hemelb_colloids
                       hemelb_io
                       hemelb_lb
+                      hemelb_colloidsForces
                      )

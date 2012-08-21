@@ -19,9 +19,10 @@ namespace hemelb
 
       bool ok = true;
       ok &= xml.GetUnsignedLongValue("ParticleId", particleId);
-      ok &= xml.GetDoubleValue("InputRadiusA0", smallRadius_a0);
-      ok &= xml.GetDoubleValue("HydrostaticRadiusAh", largeRadius_ah);
-      ok &= xml.GetDoubleVector("initialPosition", globalPosition);
+      ok &= xml.GetDoubleValueAndConvert("InputRadiusA0", smallRadius_a0);
+      ok &= xml.GetDoubleValueAndConvert("HydrostaticRadiusAh", largeRadius_ah);
+      ok &= xml.GetDoubleValue("Mass", mass);
+      ok &= xml.GetLatticePosition("initialPosition", globalPosition);
     };
   }
 }
