@@ -13,6 +13,8 @@
 #include "lb/LbmParameters.h"
 #include "lb/SimulationState.h"
 #include "constants.h"
+#include "units.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -22,7 +24,10 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(lb::LbmParameters* params, lb::SimulationState* state, double voxelSize);
+        UnitConverter(lb::LbmParameters* params,
+                      lb::SimulationState* state,
+                      PhysicalDistance voxelSize,
+                      PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeVelocity ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const;
@@ -55,11 +60,21 @@ namespace hemelb
          */
         PhysicalReciprocalTime ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const;
 
+        bool Convert(std::string units, double& value) const;
+
+        PhysicalPosition GetLatticeOrigin() const { return latticeOrigin; }
+        LatticePosition GetPhysicalOrigin() const
+        {
+          return LatticePosition() - (latticeOrigin / voxelSize);
+        }
+
       private:
         lb::LbmParameters* lbmParameters;
         lb::SimulationState* simulationState;
-        PhysicalLength voxelSize; //!< Lattice displacement in physical units.
+        PhysicalDistance voxelSize; //!< Lattice displacement in physical units.
+        PhysicalTime timestepTime;
         PhysicalVelocity latticeSpeed; //!< Lattice displacement length divided by time step.
+        PhysicalPosition latticeOrigin;
     };
 
   }

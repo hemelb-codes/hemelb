@@ -29,10 +29,6 @@ namespace hemelb
      */
     class Particle : PersistedParticle
     {
-      private:
-        proc_t ownerRank;
-        bool isValid;
-
       public:
         /** constructor - gets initial values from an xml configuration file */
         Particle(const geometry::LatticeData& latDatLBM,
@@ -43,6 +39,8 @@ namespace hemelb
 
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
+        const LatticePosition& GetGlobalPosition() const { return globalPosition; }
+        const PhysicalMass GetMass() const {return mass; }
 
         /** property getter for ownerRank */
         const proc_t GetOwnerRank() const { return ownerRank; }
@@ -67,13 +65,12 @@ namespace hemelb
         /** for debug purposes only - outputs all properties to info log */
         const void OutputInformation() const;
 
-        /** partial interpolation of fluid velocity - temporary value only */
-        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-        util::Vector3D<double> velocity;
+        /** obtains the fluid viscosity at the position of this particle */
+        // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
+        const DimensionlessQuantity GetViscosity() const;
 
-        /** the effect of all body forces on this particle - this is NOT a force vector */
-        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-        util::Vector3D<double> bodyForces;
+        /** calculates the drag coefficient = 1/(6*pi*viscosity*radius) */
+        const DimensionlessQuantity CalculateDrag();
 
         /** updates the position of this particle using body forces and fluid velocity */
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);
@@ -82,12 +79,18 @@ namespace hemelb
         const void CalculateBodyForces();
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces() const;
+        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity(
                      const geometry::LatticeData& latDatLBM,
                      const lb::MacroscopicPropertyCache& propertyCache);
+
+        /** accumulate contributions to velocity from remote processes */
+        const void AccumulateVelocity(util::Vector3D<double>& contribution)
+        {
+          velocity += contribution;
+        };
 
         /** creates a derived MPI datatype that represents a single particle object
          *  the fields included are all those from the PersistedParticle base class
@@ -105,6 +108,20 @@ namespace hemelb
          */
         const MPI::Datatype CreateMpiDatatypeWithVelocity() const;
 
+      private:
+        /** partial interpolation of fluid velocity - temporary value only */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
+        util::Vector3D<double> velocity;
+
+        /** the effect of all body forces on this particle - this is NOT a force vector */
+        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
+        util::Vector3D<double> bodyForces;
+
+        DimensionlessQuantity drag;
+
+        proc_t ownerRank;
+
+        bool isValid;
     };
   }
 }
