@@ -104,6 +104,11 @@ namespace hemelb
 
         void InitCollisions();
 
+        /**
+         * Ensure that the BoundaryValues objects have all necessary fields populated.
+         */
+        void PrepareBoundaryObjects();
+
         void ReadParameters();
 
         void handleIOError(int iError);
