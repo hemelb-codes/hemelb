@@ -148,7 +148,17 @@ namespace hemelb
             {
               return normal;
             }
+
+            /**
+             * Set the minimum density throughout the simulation.
+             * @param minSimDensity
+             */
+            void SetMinimumSimulationDensity(LatticeDensity minSimDensity){
+              minimumSimulationDensity = minSimDensity;
+            }
+
           protected:
+            LatticeDensity minimumSimulationDensity;
             util::Vector3D<float> position;
             util::Vector3D<float> normal;
             const util::UnitConverter* units;

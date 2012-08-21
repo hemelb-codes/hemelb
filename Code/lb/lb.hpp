@@ -29,9 +29,9 @@ namespace hemelb
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
-          mParams(mState->GetTimeStepLength(), latDat->GetVoxelSize()), timings(atimings),
-          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
+                                                                                             latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
+                                                                                                                                                       *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
@@ -55,6 +55,30 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::InitCollisions()
     {
+      // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
+      distribn_t minDensity = std::numeric_limits<distribn_t>::max();
+
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        minDensity = std::min(minDensity, mInletValues->GetLocalIolet(inlet)->GetDensityMin());
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        minDensity = std::min(minDensity, mOutletValues->GetLocalIolet(outlet)->GetDensityMin());
+      }
+
+      // Now go through them again, informing them of the minimum density.
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(minDensity);
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(minDensity);
+      }
+
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
@@ -348,7 +372,8 @@ namespace hemelb
     }
 
     template<class LatticeType>
-    void LBM<LatticeType>::WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const
+    void LBM<LatticeType>::WriteConfigParallel(hemelb::lb::Stability const stability,
+                                               std::string output_file_name) const
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -372,7 +397,7 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_Datatype viewType = MpiDataType<char> ();
+      MPI_Datatype viewType = MpiDataType<char>();
       MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -436,7 +461,8 @@ namespace hemelb
           continue;
         }
 
-        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser(); siteTrav.CurrentLocationValid(); siteTrav.TraverseOne())
+        for (geometry::SiteTraverser siteTrav = blockTrav.GetSiteTraverser(); siteTrav.CurrentLocationValid();
+            siteTrav.TraverseOne())
         {
           if (netTop->GetLocalRank() != block.GetProcessorRankForSite(siteTrav.GetCurrentIndex()))
           {
@@ -476,8 +502,8 @@ namespace hemelb
           }
 
           // conversion from lattice to physical units
-          distribn_t pressure =
-              mUnits->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(my_site_id) * Cs2);
+          distribn_t pressure = mUnits->ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(my_site_id)
+              * Cs2);
 
           const util::Vector3D<distribn_t>& velocity = propertyCache.velocityCache.Get(my_site_id);
 
