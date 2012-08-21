@@ -75,6 +75,9 @@ namespace hemelb
       else
       {
         DoIOForULong(simulationElement, "steps", isLoading, totalTimeSteps);
+        DoIOForULong(simulationElement, "extra_warmup_steps", isLoading, warmUpSteps);
+        if(isLoading)
+            totalTimeSteps += warmUpSteps;
       }
 
       if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength)) && isLoading)
@@ -226,7 +229,7 @@ namespace hemelb
         const std::string *read_result = parent->Attribute(attributeName);
         if (read_result == NULL)
         {
-          value = 0.0;
+          value = 0;
           return false;
         }
         char *dummy;
@@ -536,6 +539,11 @@ namespace hemelb
       DoIOForDouble(lPressureElement, "mean", isLoading, value->GetPressureMean());
       DoIOForDouble(lPressureElement, "amplitude", isLoading, value->GetPressureAmp());
       DoIOForDouble(lPressureElement, "phase", isLoading, value->GetPhase());
+
+      if (warmUpSteps != 0)
+      {
+        value->SetWarmup(warmUpSteps);
+      }
 
       if (!DoIOForDouble(lPressureElement, "period", isLoading, value->GetPeriod()) && isLoading)
       {

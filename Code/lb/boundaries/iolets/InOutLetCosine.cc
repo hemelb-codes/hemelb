@@ -36,7 +36,21 @@ namespace hemelb
         LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step) const
         {
           double w = 2.0 * PI / period;
-          return GetDensityMean() + GetDensityAmp() * cos(w * units->ConvertTimeStepToPhysicalUnits(time_step) + phase);
+
+          // Calculate the target
+          LatticeDensity target = GetDensityMean()
+              + GetDensityAmp() * cos(w * units->ConvertTimeStepToPhysicalUnits(time_step) + phase);
+
+          // If we're past the warm-up phase, just use the target.
+          if (time_step >= warmUpLength)
+          {
+            return target;
+          }
+
+          // Otherwise, interpolate between the minimum in the simulation and the target.
+          double interpolationFactor = ((double) time_step) / ((double) warmUpLength);
+
+          return interpolationFactor * target + (1. - interpolationFactor) * minimumSimulationDensity;
         }
 
         LatticeDensity InOutLetCosine::GetDensityMean() const
