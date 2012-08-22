@@ -51,13 +51,13 @@ namespace hemelb
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void SeparatedPointPoint::EnsurePreparedToSendReceive()
     {
-      count_sends=0;
-      count_receives=0;
       if (sendReceivePrepped)
       {
         return;
       }
 
+      count_sends=0;
+      count_receives=0;
       for (std::map<proc_t, ProcComms>::iterator it = sendProcessorComms.begin(); it != sendProcessorComms.end(); ++it)
       {
         count_sends += it->second.size();

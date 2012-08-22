@@ -59,7 +59,7 @@ class SimulationMaster
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
     void HandleActors();
-    void ResetUnstableSimulation();
+    void OnUnstableSimulation();
     void WriteLocalImages();
     void GenerateNetworkImages();
     /**

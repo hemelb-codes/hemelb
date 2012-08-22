@@ -69,7 +69,6 @@ namespace hemelb
         void PreReceive(); ///< part of IteratedAction interface.
         void PostReceive(); ///< part of IteratedAction interface.
         void EndIteration(); ///< part of IteratedAction interface.
-        void Reset(); ///< part of IteratedAction interface.
 
         site_t TotalFluidSiteCount() const;
         void SetTotalFluidSiteCount(site_t);
