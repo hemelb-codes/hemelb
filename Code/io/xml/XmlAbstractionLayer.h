@@ -13,6 +13,8 @@
 #include <cstdlib>
 #include <stack>
 #include "tinyxml.h"
+#include "units.h"
+#include "util/UnitConverter.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -34,7 +36,7 @@ namespace hemelb
            * @param $path
            *   the path to the XML file to be read by this object
            */
-          XmlAbstractionLayer(std::string path);
+          XmlAbstractionLayer(const std::string path, const util::UnitConverter& converter);
         
           /** destructor */
           ~XmlAbstractionLayer();
@@ -71,7 +73,7 @@ namespace hemelb
            *   returns true if a suitable child element was found
            *   or false if the internal position pointer was not moved
            */
-          bool MoveToChild(std::string name);
+          bool MoveToChild(const std::string name);
 
           /**
            * moves to the next sibling element irrespective of name
@@ -102,7 +104,7 @@ namespace hemelb
            *   returns true if a suitable child element was found
            *   or false if the internal position pointer was not moved
            */
-          bool NextSibling(std::string name);
+          bool NextSibling(const std::string name);
 
           /**
            * moves to the parent element irrespective of name
@@ -133,7 +135,7 @@ namespace hemelb
            *   returns true if the attribute was found and converted successfully
            *   or false if the attribute was not found or could not be converted
            */
-          bool GetUnsignedLongValue(std::string name, unsigned long& value);
+          bool GetUnsignedLongValue(const std::string name, unsigned long& value);
 
           /**
            * reads a floating-point valued attribute from the current element
@@ -150,7 +152,8 @@ namespace hemelb
            *   returns true if the attribute was found and converted successfully
            *   or false if the attribute was not found or could not be converted
            */
-          bool GetDoubleValue(std::string name, double& value);
+          bool GetDoubleValue(const std::string name, double& value);
+          bool GetDoubleValueAndConvert(const std::string name, double& value);
 
           /**
            * reads a 3D vector of double values from the current element
@@ -172,7 +175,11 @@ namespace hemelb
            *   returns true if the vector was found and converted successfully
            *   or false if the vector was not found or could not be converted
            */
-          bool GetDoubleVector(std::string name, util::Vector3D<double>& vector);
+          bool GetDoubleVector(const std::string name, util::Vector3D<double>& vector);
+          bool GetDoubleVectorAndConvert(const std::string name, util::Vector3D<double>& vector);
+          bool GetLatticePosition(const std::string name, LatticePosition& vector);
+
+          bool GetString(const std::string name, std::string& value);
 
         private:
           /** a pointer to the xml file being abstracted by this object */
@@ -183,6 +190,9 @@ namespace hemelb
 
           /** a stack containing pointers to all parents of the current node */
           std::stack<TiXmlElement*> parentNodes;
+
+          /** a converter that can convert from physical units to lattice units */
+          const util::UnitConverter& converter;
       };
     }
   }
