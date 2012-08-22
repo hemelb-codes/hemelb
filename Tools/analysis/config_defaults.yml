@@ -184,7 +184,7 @@ results:
         axial_coordinate: grid
         voxel_size: voxelSizeMetres
         origin: originMetres
-      'results/Extracted/velocity_shearstress_2_5_lengths_in.dat':
+      'results/Extracted/velocity_shearstress_line_2_5_lengths_in.dat':
         radial_velocity_field: developed_velocity_profile
         radial_shear_stress_field: developed_shear_stress_profile
         radial_coordinate: grid
