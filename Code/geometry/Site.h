@@ -130,6 +130,31 @@ namespace hemelb
           return latticeData.GetGlobalSiteCoords(index);
         }
 
+        /**
+         * Get the force applied to this site
+         * @return
+         */
+        inline const util::Vector3D<LatticeForce>& GetForce() const
+        {
+          return latticeData.GetForce(index);
+        }
+        /**
+         * Set the force applied to this site
+         * @param force
+         */
+        inline void SetForce(const util::Vector3D<LatticeForce>& force)
+        {
+          return latticeData.SetForce(index, force);
+        }
+        /**
+         * Add the supplied force to the current force at this site
+         * @param force
+         */
+        inline void AddToForce(const util::Vector3D<LatticeForce>& force)
+        {
+          return latticeData.AddToForce(index, force);
+        }
+
       private:
         site_t index;
         DataSource & latticeData;

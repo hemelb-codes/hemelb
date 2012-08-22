@@ -85,11 +85,6 @@ namespace hemelb
             }
           }
 
-          inline void DoReset(InitParams* initParams)
-          {
-            InitState(*initParams);
-          }
-
           /*
            *  Helper method used in testing in order to access the mTau array after
            *  being set by DoCalculateDensityVelocityFeq

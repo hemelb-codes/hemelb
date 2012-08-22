@@ -17,6 +17,7 @@ option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
+option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -72,6 +73,10 @@ endif()
 
 if (NOT HEMELB_STATIC_ASSERT)
 	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
+endif()
+
+if (HEMELB_IMAGES_TO_NULL)
+	add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
 
 #------Capture build environment -------------

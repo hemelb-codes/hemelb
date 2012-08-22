@@ -29,7 +29,7 @@ namespace hemelb
         mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
         mUnits(iUnits),simConfig(iSimConfig)
     {
-      Reset();
+      ClearValues();
       AssignValues();
     }
 

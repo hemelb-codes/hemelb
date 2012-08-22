@@ -43,9 +43,9 @@ namespace hemelb
           // Function to get the current position of writing in the stream.
           virtual unsigned int getCurrentStreamPosition() const = 0;
 
+          virtual ~Writer() =0;
         protected:
           Writer();
-          virtual ~Writer() =0;
 
           // Functions for formatting control
           virtual void writeFieldSeparator() = 0;
