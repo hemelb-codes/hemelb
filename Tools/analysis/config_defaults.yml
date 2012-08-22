@@ -137,7 +137,7 @@ results:
         residual_velocity: 'axial_velocity-theoretical_axial_velocity'
         max_rel_residual_velocity: 'max(abs(residual_velocity))/range_theoretical_axial_velocity'
         ave_rel_residual_velocity: '( sum(residual_velocity**2) / sum((theoretical_axial_velocity - mean_theoretical_axial_velocity)**2 )) ** 0.5'
-        theoretical_axial_pressure: 'inlet_pressure_mean*133.323874 - pressure_diff * (axial_position- min(axial_position))'
+        theoretical_axial_pressure: 'inlet_pressure_mean*133.323874 - pressure_diff * (axial_position- min(axial_position))/pipe_length'
         mean_theoretical_axial_pressure: 'sum(theoretical_axial_pressure) / len(theoretical_axial_pressure)'
         range_theoretical_axial_pressure: 'max(theoretical_axial_pressure) - min(theoretical_axial_pressure)'
         residual_pressure: 'axial_pressure - theoretical_axial_pressure'
