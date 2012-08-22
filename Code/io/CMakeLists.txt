@@ -9,3 +9,5 @@ add_library(hemelb_io
 	formats/geometry.cc
 	xml/XmlAbstractionLayer.cc
 	)
+target_link_libraries(hemelb_io
+                      hemelb_util)
