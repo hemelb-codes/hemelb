@@ -186,10 +186,6 @@ namespace hemelb
             static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          inline void Reset(InitParams* init)
-          {
-            static_cast<KernelImpl*>(this)->DoReset(init);
-          }
       };
 
     }

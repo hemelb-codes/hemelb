@@ -155,11 +155,6 @@ namespace hemelb
             }
           }
 
-          inline void DoReset(kernels::InitParams* init)
-          {
-            collider.Reset(init);
-          }
-
         private:
 
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
