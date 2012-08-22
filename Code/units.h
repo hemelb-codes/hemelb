@@ -67,14 +67,13 @@ namespace hemelb
   typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
 
   typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef double PhysicalForce;
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
   typedef double PhysicalVelocity;
   typedef distribn_t LatticeVelocity;
 
-  typedef double LatticeForce;
-  typedef double PhysicalForce;
 
   typedef double DimensionlessQuantity;
 }
