@@ -8,6 +8,7 @@
 // 
 
 #include "colloids/ParticleSet.h"
+#include "colloids/BodyForces.h"
 #include <algorithm>
 #include "log/Logger.h"
 
@@ -65,7 +66,8 @@ namespace hemelb
            iter++)
       {
         const Particle& particle = *iter;
-        particle.OutputInformation();
+        if (particle.GetOwnerRank() == localRank)
+          particle.OutputInformation();
       }
       for (scanMapConstIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
@@ -106,18 +108,21 @@ namespace hemelb
            iter++)
       {
         Particle& particle = *iter;
-        particle.CalculateBodyForces();
+        if (particle.GetOwnerRank() == localRank)
+          particle.CalculateBodyForces();
       }
     }
 
     const void ParticleSet::CalculateFeedbackForces()
     {
+      BodyForces::ClearBodyForcesForAllSiteIds();
       for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         const Particle& particle = *iter;
-        particle.CalculateFeedbackForces();
+        if (particle.GetOwnerRank() == localRank)
+          particle.CalculateFeedbackForces(latDatLBM);
       }
     }
 
@@ -129,12 +134,6 @@ namespace hemelb
       {
         Particle& particle = *iter;
         particle.InterpolateFluidVelocity(latDatLBM, propertyCache);
-        if (log::Logger::ShouldDisplay<log::Debug>())
-          if (particle.velocity.z != 0.0)
-          {
-            log::Logger::Log<log::Debug, log::OnePerCore>("NON-BORING velocity interpolation");
-            particle.OutputInformation();
-          }
       }
       propertyCache.velocityCache.SetRefreshFlag();
     }
@@ -292,7 +291,7 @@ namespace hemelb
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
-          particle.velocity += velocityMap[particle.GetParticleId()];
+          particle.AccumulateVelocity(velocityMap[particle.GetParticleId()]);
       }
 
     }

@@ -23,6 +23,7 @@
 #include "colloids/ColloidController.h"
 #include "net/BuildInfo.h"
 #include "topology/NetworkTopology.h"
+#include "colloids/BodyForces.h"
 
 #include <map>
 #include <limits>
@@ -179,9 +180,17 @@ void SimulationMaster::Initialise()
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
+  unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
+                                                  simulationState,
+                                                  latticeData->GetVoxelSize(),
+                                                  latticeData->GetOrigin());
+
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
+  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath, *unitConvertor);
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Creating Body Forces.");
+  hemelb::colloids::BodyForces::InitBodyForces(xml);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(*latticeData,
@@ -233,10 +242,6 @@ void SimulationMaster::Initialise()
   {
     imageSendCpt = NULL;
   }
-
-  unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
-                                                  simulationState,
-                                                  latticeData->GetVoxelSize());
 
   inletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::INLET_TYPE,
                                                            latticeData,
@@ -499,7 +504,6 @@ void SimulationMaster::DoTimeStep()
                                                                         renderForNetworkStream,
                                                                         writeSnapshotImage,
                                                                         simulationState->IsRendering());
-
   }
 
   RecalculatePropertyRequirements();
@@ -511,6 +515,9 @@ void SimulationMaster::DoTimeStep()
     OnUnstableSimulation();
     return;
   }
+
+  if (simulationState->GetTimeStep() % 500 == 0)
+    colloidController->OutputInformation();
 
 #ifndef NO_STREAKLINES
   visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());

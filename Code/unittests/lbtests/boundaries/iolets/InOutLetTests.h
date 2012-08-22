@@ -60,7 +60,7 @@ namespace hemelb
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
                 cosine->Reset(state);
@@ -106,7 +106,7 @@ namespace hemelb
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
                 file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);

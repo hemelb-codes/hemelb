@@ -16,6 +16,10 @@ namespace hemelb
 {
   namespace colloids
   {
+    const void ColloidController::OutputInformation() const
+    {
+      particleSet->OutputInformation();
+    }
 
     // destructor
     ColloidController::~ColloidController()
@@ -53,7 +57,6 @@ namespace hemelb
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
       particleSet = new ParticleSet(latDatLBM, xml, propertyCache, neighbourProcessors);
-      particleSet->OutputInformation();
     }
 
     void ColloidController::InitialiseNeighbourList(
@@ -229,28 +232,44 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CommunicateParticlePositions\n");
+
       // communication from step 2
       particleSet->CommunicateParticlePositions();
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CalculateBodyForces\n");
 
       // step 3
       particleSet->CalculateBodyForces();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CalculateFeedbackForces\n");
+
       // steps 1 & 4 combined
       particleSet->CalculateFeedbackForces();
-      
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do LBM\n");
+
       // steps 5 and 8 performed by LBM actor
     }
 
     void ColloidController::EndIteration()
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do InterpolateFluidVelocity\n");
+
       // step 6
       particleSet->InterpolateFluidVelocity();
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CommunicateFluidVelocities\n");
 
       // communication from step 6
       particleSet->CommunicateFluidVelocities();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do UpdatePositions\n");
+
       // steps 7 & 2 combined
       particleSet->UpdatePositions();
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do next timestep\n");
     }
 
   }
