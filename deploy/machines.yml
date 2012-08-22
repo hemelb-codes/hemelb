@@ -125,6 +125,32 @@ hector:
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     CTEMPLATE_PATCH_ALIGN: "ON"
+hermit:
+  max_job_name_chars: 15
+  make_jobs: 4
+  job_dispatch: "qsub"
+  run_command: "aprun -n $cores -N $coresusedpernode"
+  batch_header: pbs_barebone
+  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
+  remote: "hermit1.hww.de"
+  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
+  install_path_template: "$work_path/install"
+  home_path_template: "/zhome/academic/HLRS/pri/$username"
+  runtime_path_template: "/zhome/academic/HLRS/pri/$username"
+  modules: ["load tools/cmake/2.8.7"]
+  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
+  temp_path_template: "$work_path/tmp"
+  regression_test_path_template: "$work_path/regression"
+  python_build: "lib64/python2.6"
+  corespernode: 32
+  cmake_options:
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
 hector_login: #Hector, compiling for login nodes and serial queues
    import: "hector"
    fabric_dir: "FabricHemeLbLogin"
