@@ -1,4 +1,4 @@
-#include "GeometryGenerator.h"
+#include "CylinderGenerator.h"
 #include "GeometryWriter.h"
 
 #include "Neighbours.h"
@@ -12,48 +12,50 @@
 #include "io/formats/geometry.h"
 
 #include "vtkPolyDataAlgorithm.h"
-#include "vtkOBBTree.h"
 #include "vtkPolyData.h"
 #include "vtkPoints.h"
 #include "vtkIdList.h"
 #include "vtkCellData.h"
 #include "vtkDataSet.h"
 
+#include <sstream>
+#include <cmath>
+
 using namespace hemelb::io::formats;
 
-GeometryGenerator::GeometryGenerator() :
+CylinderGenerator::CylinderGenerator() :
 	ClippedSurface(NULL) {
 	Neighbours::Init();
-	this->Locator = vtkOBBTree::New();
-	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
+	this->Cylinder = new CylinderData;
 }
 
-GeometryGenerator::~GeometryGenerator() {
-	this->Locator->Delete();
+CylinderGenerator::~CylinderGenerator() {
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
+	delete this->Cylinder;
 }
 
-void GeometryGenerator::Execute() throw (GenerationError) {
-	// Build our locator.
-	this->Locator->SetDataSet(this->ClippedSurface);
-	this->Locator->BuildLocator();
-
+void CylinderGenerator::Execute() throw (GenerationError) {
 	/*
-	 * Get the scalars associated with the surface polygons. The scalars hold
-	 * the index of the Iolet which they represent, -1 meaning they aren't an
-	 * Iolet.
+	 * Compute the approximate bounds of the cylinder
 	 */
-	this->IoletIdArray = vtkIntArray::SafeDownCast(
-			this->ClippedSurface->GetCellData()->GetScalars());
-	if (this->IoletIdArray == NULL) {
-		throw GenerationErrorMessage(
-				"Error getting Iolet ID array from clipped surface");
-	}
+	double* bounds = new double[6];
+	{
+		Vector& c = this->Cylinder->Centre;
+		Vector& n = this->Cylinder->Axis;
+		double& r = this->Cylinder->Radius;
+		double& h = this->Cylinder->Length;
 
-	Domain domain(this->VoxelSizeMetres, this->ClippedSurface->GetBounds());
+		for (int i = 0; i < 3; ++i) {
+			double n_i = n[i] > 0. ? n[i] : -n[i];
+			bounds[2 * i] = c[i] - 0.5 * h * n_i - r;
+			bounds[2 * i + 1] = c[i] + 0.5 * h * n_i + r;
+		}
+	}
+	Domain domain(this->VoxelSizeMetres, bounds);
+	delete[] bounds;
 
 	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
 			domain.GetBlockCounts(), domain.GetVoxelSizeMetres(),
@@ -90,12 +92,12 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 	writer.Close();
 }
 
-void GeometryGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
+void CylinderGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int> (geometry::SOLID);
 	// That's all in this case.
 }
 
-void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
+void CylinderGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int> (geometry::FLUID);
 
 	// Iterate over the displacements of the neighbourhood
@@ -130,7 +132,7 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
  * from neighbour => site as well as site => neighbour
  *
  */
-void GeometryGenerator::ClassifySite(Site& site) {
+void CylinderGenerator::ClassifySite(Site& site) {
 
 	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
 		Site& neigh = *neighIt;
@@ -208,10 +210,8 @@ void GeometryGenerator::ClassifySite(Site& site) {
 			// the lattice vector. Scale it.
 			link.Distance /= Neighbours::norms[iSolid];
 
-			// The index of the cell in the vtkPolyData that was hit
-			int hitCellId = this->hitCellIds->GetId(iHit);
 			// The value associated with that cell, which identifies what was hit.
-			int ioletId = this->IoletIdArray->GetValue(hitCellId);
+			int ioletId = this->hitCellIds->GetId(iHit);
 
 			if (ioletId < 0) {
 				// -1 => we hit a wall
@@ -232,8 +232,102 @@ void GeometryGenerator::ClassifySite(Site& site) {
 	}
 }
 
-int GeometryGenerator::ComputeIntersections(Site& from, Site& to) {
-	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
-			this->hitPoints, this->hitCellIds);
-	return this->hitPoints->GetNumberOfPoints();
+int CylinderGenerator::ComputeIntersections(Site& from, Site& to) {
+	int nHits = 0;
+	this->hitPoints->SetNumberOfPoints(0);
+	this->hitCellIds->SetNumberOfIds(0);
+
+	/*
+	 * The equation of the line segment is:
+	 * x(t) = a + t (b - a)		t E (0, 1)
+	 */
+	Vector& n = this->Cylinder->Axis;
+	double& r = this->Cylinder->Radius;
+	Vector& c = this->Cylinder->Centre;
+	double& h = this->Cylinder->Length;
+
+	{
+		/*
+		 * The equation determining intersection with an INFINITE cylinder of
+		 * radius r is:
+		 * [(b-a)^2 - ((b-a).n)^2] t^2 + [2 a.(b - a) - 2 (a.n)((b-a).n)] t + [a^2 - (a.n)^2 - r^2] = 0
+		 * So first compute the coefficients and then the discriminant of the eqn
+		 */
+		Vector a = from.Position - c;
+		Vector b = to.Position - c;
+		Vector b_a = b - a;
+
+		double b_aDOTn = Vector::Dot(b_a, n);
+		double aDOTn = Vector::Dot(a, n);
+
+		double A = (b_a.GetMagnitudeSquared() - b_aDOTn);
+		double B = 2 * Vector::Dot(a, b_a) - 2 * aDOTn * b_aDOTn;
+		double C = a.GetMagnitudeSquared() - aDOTn * aDOTn - r * r;
+
+		double discriminant = B * B - 4 * A * C;
+
+		if (discriminant < 0.) {
+			// No real solutions.
+		} else if (discriminant == 0) {
+			// Exactly one solution, i.e. line segment just brushes the cylinder.
+			// This means the line must be outside the cylinder everywhere else,
+			// so we will count this as no intersection.
+		} else {
+			// Two real solutions. So we have two intersections between the
+			// infinite line and infinite cylinder.
+			// If t outside (0,1), then the intersection isn't on the line segment
+			// we care about.
+			std::vector<double> ts(2);
+			ts[0] = (-B + std::sqrt(discriminant)) / (2 * A);
+			ts[1] = (-B - std::sqrt(discriminant)) / (2 * A);
+			for (std::vector<double>::iterator tIt = ts.begin(); tIt
+					!= ts.end(); ++tIt) {
+				double t = *tIt;
+				if (t > 0. && t < 1.) {
+					// Hit in part of line we care about.
+					// Now check if it's on the finite cylinder. This requires that
+					// x.n E (-h/2, h/2)
+					double xDOTn = aDOTn + t * b_aDOTn;
+					if (xDOTn >= -0.5 * h && xDOTn <= 0.5 * h) {
+						// Real cylinder hit!
+						Vector hit = a + b_a * t;
+						++nHits;
+						this->hitPoints->InsertNextPoint(hit.x, hit.y, hit.z);
+						this->hitCellIds->InsertNextId(-1);
+					}
+				}
+			}
+		}
+	}
+	/*
+	 * Now we want to look for intersections with the capping planes.
+	 */
+	Vector& a = from.Position;
+	Vector& b = to.Position;
+	Vector b_a = b - a;
+	for (std::vector<Iolet*>::iterator iIt = this->Iolets.begin(); iIt
+			!= this->Iolets.end(); ++iIt) {
+		Iolet* iolet = *iIt;
+		/*
+		 * Plane equation is x.p = q.p (p = plane normal, q = point on plane)
+		 * Line is x = a + t(b-a)
+		 */
+		Vector& q = iolet->Centre;
+		Vector& p = iolet->Normal;
+
+		double t = Vector::Dot(q - a, p) / Vector::Dot(b_a, p);
+		if (t > 0. && t < 1.) {
+			// Intersection within the line segment. Now check within cap.
+			Vector x = a + b_a * t;
+			Vector x_c = x - c;
+			double x_cDOTn = Vector::Dot(x_c, n);
+			Vector radial = x_c - n * x_cDOTn;
+			if (radial.GetMagnitudeSquared() < r * r) {
+				// Within the cap
+				++nHits;
+				this->hitPoints->InsertNextPoint(x.x, x.y, x.z);
+				this->hitCellIds->InsertNextId(iIt - this->Iolets.begin());
+			}
+		}
+	}
 }
