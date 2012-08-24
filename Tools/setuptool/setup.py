@@ -147,7 +147,7 @@ if __name__ == "__main__":
     include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
-    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
+    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags() + ['-g', '-O0']
     extra_link_args = []
 
     # Create the list of extension modules
@@ -161,7 +161,9 @@ if __name__ == "__main__":
                                   'GeometryWriter.cpp',
                                   'Domain.cpp',
                                   'Site.cpp',
+                                  'InconsistentFluidnessError.cpp',
                                   'Index.cpp',
+                                  'CylinderGenerator.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)

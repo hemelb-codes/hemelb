@@ -1,16 +1,16 @@
-#ifndef HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
-#define HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
+#ifndef HEMELBSETUPTOOL_CYLINDERGENERATOR_H
+#define HEMELBSETUPTOOL_CYLINDERGENERATOR_H
 
 #include <string>
 #include <vector>
 
 // VTK bits we need
 class vtkPolyData;
-class vtkOBBTree;
 class vtkPoints;
 class vtkIdList;
 class vtkIntArray;
 
+#include "Index.h"
 #include "GetSet.h"
 #include "Iolet.h"
 #include "GenerationError.h"
@@ -19,10 +19,10 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-class GeometryGenerator {
+class CylinderGenerator {
 public:
-	GeometryGenerator();
-	~GeometryGenerator();
+	CylinderGenerator();
+	~CylinderGenerator();
 	void Execute() throw (GenerationError);
 
 	inline double GetVoxelSizeMetres(void) {
@@ -72,6 +72,19 @@ public:
 		this->ClippedSurface = val;
 	}
 
+	inline void SetCylinderCentre(Vector v) {
+		this->Cylinder->Centre = v;
+	}
+	inline void SetCylinderAxis(Vector n) {
+		this->Cylinder->Axis = n;
+	}
+	inline void SetCylinderRadius(double r) {
+		this->Cylinder->Radius = r;
+	}
+	inline void SetCylinderLength(double l) {
+		this->Cylinder->Length = l;
+	}
+
 private:
 	void ClassifySite(Site& site);
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
@@ -83,12 +96,19 @@ private:
 	std::vector<Iolet*> Iolets;
 	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
-	vtkOBBTree* Locator;
 
+	struct CylinderData {
+		// Cylinder parameters
+		Vector Centre;
+		Vector Axis;
+		double Radius;
+		double Length;
+	};
+	CylinderData* Cylinder;
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
 	vtkIntArray* IoletIdArray;
 };
 
-#endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
+#endif // HEMELBSETUPTOOL_CYLINDERGENERATOR_H
