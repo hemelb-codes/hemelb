@@ -11,6 +11,7 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
 from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
 
 from .Iolets import Inlet, Outlet, Iolet
+from .Vector import Vector
 import Generation
 import pdb
 
@@ -96,6 +97,87 @@ class GeometryGenerator(object):
         print "Setup time: %f s" % t.GetTime()
         return
     pass
+
+class Namespace(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+        
+class CylinderGenerator(object):
+    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres, Axis, LengthMetres, RadiusMetres):
+        """Clip the STL and set attributes on the SWIG-proxied C++ 
+        GeometryGenerator object.
+        """
+        self.OutputGeometryFile = OutputGeometryFile
+        self.OutputXmlFile = OutputXmlFile
+        self.VoxelSize = VoxelSizeMetres
+        self.StlFileUnit = Namespace(SizeInMetres=1.)
+        self.Cycles = 0
+        self.Steps = 0
+        
+        profile = self
+        self.generator = Generation.CylinderGenerator()
+        self.generator.SetOutputGeometryFile(str(profile.OutputGeometryFile))
+
+        # Construct the Iolet structs
+        normal = Generation.DoubleVector(*Axis)
+        
+        self.Iolets = []
+        outlet = Outlet()
+        outlet.Centre = Vector(*(0.5 * LengthMetres * n for n in Axis))
+        outlet.Normal = Vector(*(-n for n in Axis))
+        outlet.Radius = RadiusMetres
+        
+        inlet = Inlet()
+        inlet.Centre = Vector(*(-0.5 * LengthMetres * n for n in Axis))
+        inlet.Normal = Vector(*Axis)
+        inlet.Radius = RadiusMetres
+        self.Iolets = [inlet, outlet]
+        
+        nIn = 0
+        nOut = 0
+        ioletProxies = []
+        for io in self.Iolets:
+            proxy = Generation.Iolet()
+
+            proxy.Centre = DVfromV(io.Centre) / profile.VoxelSize
+            proxy.Normal = DVfromV(io.Normal) 
+            proxy.Radius = io.Radius / profile.VoxelSize
+
+            if isinstance(io, Inlet):
+                io.Id = proxy.Id = nIn
+                proxy.IsInlet = True
+                nIn += 1
+            elif isinstance(io, Outlet):
+                io.Id = proxy.Id = nOut
+                proxy.IsInlet = False
+                nOut += 1
+                pass
+            ioletProxies.append(proxy)
+            continue
+        # We need to keep a reference to this to make sure it's not GC'ed
+        self.ioletProxies = ioletProxies
+        self.generator.SetIolets(ioletProxies)
+
+        self.generator.SetVoxelSizeMetres(VoxelSizeMetres)
+
+        self.generator.SetCylinderLength(LengthMetres/VoxelSizeMetres)
+        self.generator.SetCylinderRadius(RadiusMetres/VoxelSizeMetres)
+        self.generator.SetCylinderCentre(Generation.DoubleVector(0.,0.,0.))
+        self.generator.SetCylinderAxis(normal)
+        return
+
+    def Execute(self):
+        """Forward this to the C++ implementation.
+        """
+        t = Timer()
+        t.Start()
+        self.generator.Execute()
+        XmlWriter(self).Write()
+        t.Stop()
+        print "Setup time: %f s" % t.GetTime()
+        return
+    pass
+
 # TODO: organise this timer
 import time
 class Timer(object):
