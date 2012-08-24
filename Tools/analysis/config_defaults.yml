@@ -84,8 +84,8 @@ results:
         steering_longitude: 3
         steering_elapsed_time: 4
         steering_pixels: 5
-        
-        
+
+
     compound_properties:
         result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp)
         snapshots_norm: (snapshots_count if normalised else 1.0)
@@ -173,6 +173,14 @@ results:
             size: VoxelSize
             profile: profile
             node_type: node_type
+        'config.smy':
+            flow_type: flow_type
+
+    optional_properties:
+        # If no flow type was defined in config.smy, we assume it's Poiseuille flow (for backwards compatibility reasons)
+        'flow_type==None':
+            compound_properties:
+                flow_type: '"poiseuille"'
             
     extraction_files:
       'results/Extracted/pressure_axial_profile.dat':
@@ -192,7 +200,6 @@ results:
       'results/Extracted/stresstensor_line_2_5_lengths_in.dat':
         radial_stresstensor: developed_stresstensor_profile
         radial_coordinate_tensors: grid
-
 
 graphs:
     performance_versus_size:
