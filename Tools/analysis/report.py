@@ -25,7 +25,9 @@ class Report(object):
         except OSError:
             pass
         for label,graph in self.graphs.iteritems():
-            graph.write_data(open(os.path.join(data_files_path,label)+'.csv','w'))
+            out_file = open(os.path.join(data_files_path,label)+'.csv','w')
+            graph.write_data(out_file)
+            out_file.close()
     
     def write(self,report_path):
         self.path=report_path
