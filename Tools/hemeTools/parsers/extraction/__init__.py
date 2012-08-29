@@ -83,6 +83,9 @@ class ExtractedProperty(object):
         self._ReadMainHeader()
         self._ReadFieldHeader()
         self._DetermineTimes()
+
+        # At this point, we can close the file. All external access uses memory maps.
+        self._file.close()
         return
 
     def _ReadMainHeader(self):
