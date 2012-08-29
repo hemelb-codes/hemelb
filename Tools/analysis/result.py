@@ -157,10 +157,16 @@ def column_parser(content,pattern):
     return [ResultProperty.parse_value(row[pattern]) for row in content]
 
 def yaml_loader(path):
-    return yaml.load(open(path))
+    file = open(path)
+    result = yaml.load(file)
+    file.close()
+    return result
     
 def text_loader(path):
-    return open(path).read()
+    file = open(path)
+    result = file.read()
+    file.close()
+    return result
     
 def xml_loader(path):
     try:
@@ -173,12 +179,16 @@ def stat_loader(path):
 
 
 def csv_loader(path): 
-  content=csv.reader(open(path)) 
-  return [row for row in content] 
+    file = open(path)
+    content=csv.reader(file) 
+    file.close()
+    return [row for row in content] 
   
 def ssv_loader(path): 
-  content=csv.reader(open(path),delimiter=' ') 
-  return [row for row in content] 
+    file = open(path)
+    content = csv.reader(file,delimiter=' ')
+    file.close()
+    return [row for row in content] 
 
 def geometry_header_loader(path):
     from hemeTools.parsers.geometry.simple import ConfigLoader
