@@ -50,28 +50,6 @@ public:
 		this->Iolets = std::vector<Iolet*>(iv);
 	}
 
-	inline void GetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			out[i] = this->SeedPointWorking[i];
-		return;
-	}
-	inline void SetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			this->SeedPointWorking[i] = out[i];
-	}
-	inline void SetSeedPointWorking(double x, double y, double z) {
-		this->SeedPointWorking[0] = x;
-		this->SeedPointWorking[1] = y;
-		this->SeedPointWorking[2] = z;
-	}
-
-	inline vtkPolyData* GetClippedSurface(void) {
-		return this->ClippedSurface;
-	}
-	inline void SetClippedSurface(vtkPolyData* val) {
-		this->ClippedSurface = val;
-	}
-
 	inline void SetCylinderCentre(Vector v) {
 		this->Cylinder->Centre = v;
 	}
@@ -94,8 +72,6 @@ private:
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
-	double SeedPointWorking[3];
-	vtkPolyData* ClippedSurface;
 
 	struct CylinderData {
 		// Cylinder parameters
