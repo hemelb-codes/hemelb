@@ -147,7 +147,7 @@ if __name__ == "__main__":
     include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
-    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags() + ['-g', '-O0']
+    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
     extra_link_args = []
 
     # Create the list of extension modules
