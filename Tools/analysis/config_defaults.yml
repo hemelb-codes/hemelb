@@ -45,8 +45,12 @@ results:
         'config.xml':
             cyclesteps: ['simulation','cyclesteps']
             cycles: ['simulation','cycles']
+            step_length: ['simulation','step_length']
             inlet_pressure_mean: ['inlets/inlet/pressure','mean']
+            inlet_pressure_amplitude: ['inlets/inlet/pressure','amplitude']
+            inlet_pressure_period: ['inlets/inlet/pressure','period']
             outlet_pressure_mean: ['outlets/outlet/pressure','mean']
+            sampling_frequency: ['properties/propertyoutput','frequency']
         'tests.xml':
             total_tests: 'Statistics/Tests'
             failing_tests: 'Statistics/FailuresTotal'
@@ -119,11 +123,11 @@ results:
         reading_group: reading_group_raw if reading_group_raw else 5
         steering_frame_rate: float(len(steering_elapsed_time))/sum(steering_elapsed_time)
         steering_steps_per_frame: sum(steering_elapsed_steps)/float(len(steering_elapsed_steps))
-        viscosity: 4e-3
+        viscosity: (4e-3)
+        blood_density: (1000.0)
         
         # Geometry stats
-        pipe_length: max(axial_position)-min(axial_position)+voxel_size/2
-        radius: max(radial_position) + voxel_size/2
+        pipe_length: 'math.sqrt(sum((x - y)**2 for x, y in zip(pipe_ends[0], pipe_ends[1])))' # todo: #493 numpyfy expression when possible: np.linalg.norm(pipe_ends[0] - pipe_ends[1])
         axial_position: '[x[2] for x in space(axial_coordinate,voxel_size,origin)]'
         radial_position: '[x[0] for x in aligned_cylindrical(radial_coordinate,voxel_size,origin)]'
 
@@ -164,8 +168,8 @@ results:
         ave_rel_residual_stress: '( sum([x**2 for x in residual_stress if not math.isinf(x)]) / sum([(x - mean_theoretical_stress)**2 for x in theoretical_axial_stress])) ** 0.5'
 
         # Reynolds number stats
-        actual_reynolds_number: 1000*max(axial_velocity)*2*radius/viscosity
-        theoretical_reynolds_number: 1000*max(theoretical_axial_velocity)*2*radius/viscosity
+        actual_reynolds_number: 1000*max(axial_velocity)*2*pipe_radius/viscosity
+        theoretical_reynolds_number: 1000*max(theoretical_axial_velocity)*2*pipe_radius/viscosity
 
         # Full stress tensor stats
         # z-coordinate for all the sites where we sampled values of stress tensor and its theoretical pressure value
@@ -182,6 +186,8 @@ results:
             node_type: node_type
         'config.smy':
             flow_type: flow_type
+            pipe_radius: radius
+            pipe_ends: ends
 
     optional_properties:
         # If no flow type was defined in config.smy, we assume it's Poiseuille flow (for backwards compatibility reasons)
@@ -191,15 +197,16 @@ results:
 
         'flow_type=="poiseuille"':
             compound_properties:
-                theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(radius,2) - pow(d,2)) for d in radial_position]'
+                theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(pipe_radius,2) - pow(d,2)) for d in radial_position]'
                 theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x - min(axial_position))/pipe_length for x in axial_position]'
                 theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
                 theoretical_radial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (z - min(axial_position))/pipe_length for z in stress_tensor_sampling_z_coord]'
-                theoretical_stress_tensor: '[poiseuille_stress_tensor(radius, pressure, pressure_diff/pipe_length) for (radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
+                theoretical_stress_tensor: '[poiseuille_stress_tensor(pipe_radius, pressure, pressure_diff/pipe_length) for (pipe_radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
 
-        # To be implemented next
-        # 'flow_type=="womersley"':
-        #     compound_properties:
+        'flow_type=="womersley"':
+            compound_properties:
+                womersley_number: 'pipe_radius * math.sqrt((2.0 * numpy.pi * blood_density) / (viscosity * inlet_pressure_period))'
+                theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
 
             
     extraction_files:
@@ -213,6 +220,7 @@ results:
         radial_velocity_field: developed_velocity_profile
         radial_shear_stress_field: developed_shear_stress_profile
         radial_coordinate: grid
+        
       'results/Extracted/inlet_profile.dat':
         inlet_pressure_torr: inlet_pressure
         inlet_velocity: inlet_velocity
