@@ -153,7 +153,6 @@ results:
 
         # Inlet stats
         inlet_pressure: '[133.3223874 * x for x in inlet_pressure_torr]'
-        inlet_radius: '[ ((x[0]*voxel_size + origin[0])**2 + (x[1]*voxel_size + origin[1])**2)**0.5 for x in inlet_coordinate  ]'
         inlet_V: '[ (x[0]**2 + x[1]**2 + x[2]**2) ** 0.5 for x in inlet_velocity  ]'
 
         # Scalar shear stress stats
