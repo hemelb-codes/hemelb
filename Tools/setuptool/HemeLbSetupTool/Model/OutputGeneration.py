@@ -103,7 +103,7 @@ class Namespace(object):
         self.__dict__.update(kwargs)
         
 class CylinderGenerator(object):
-    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres, Axis, LengthMetres, RadiusMetres):
+    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres, Axis, LengthMetres, RadiusMetres, InletPressure=None, OutletPressure=None):
         """Clip the STL and set attributes on the SWIG-proxied C++ 
         GeometryGenerator object.
         """
@@ -126,11 +126,16 @@ class CylinderGenerator(object):
         outlet.Centre = Vector(*(0.5 * LengthMetres * n for n in Axis))
         outlet.Normal = Vector(*(-n for n in Axis))
         outlet.Radius = RadiusMetres
+        if OutletPressure is not None:
+            outlet.Pressure = OutletPressure
         
         inlet = Inlet()
         inlet.Centre = Vector(*(-0.5 * LengthMetres * n for n in Axis))
         inlet.Normal = Vector(*Axis)
         inlet.Radius = RadiusMetres
+        if InletPressure is not None:
+            inlet.Pressure = InletPressure
+        
         self.Iolets = [inlet, outlet]
         
         nIn = 0

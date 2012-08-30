@@ -19,6 +19,14 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
+struct CylinderData {
+	// Cylinder parameters
+	Vector Centre;
+	Vector Axis;
+	double Radius;
+	double Length;
+};
+
 class CylinderGenerator {
 public:
 	CylinderGenerator();
@@ -67,19 +75,11 @@ private:
 	void ClassifySite(Site& site);
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
-	int ComputeIntersections(Site& from, Site& to);
 	// Members set from outside to initialise
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
 
-	struct CylinderData {
-		// Cylinder parameters
-		Vector Centre;
-		Vector Axis;
-		double Radius;
-		double Length;
-	};
 	CylinderData* Cylinder;
 	// Members used internally
 	vtkPoints* hitPoints;
