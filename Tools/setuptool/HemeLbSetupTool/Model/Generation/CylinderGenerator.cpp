@@ -23,8 +23,7 @@
 
 using namespace hemelb::io::formats;
 
-CylinderGenerator::CylinderGenerator() :
-	ClippedSurface(NULL) {
+CylinderGenerator::CylinderGenerator() {
 	Neighbours::Init();
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
@@ -260,8 +259,8 @@ int CylinderGenerator::ComputeIntersections(Site& from, Site& to) {
 		double b_aDOTn = Vector::Dot(b_a, n);
 		double aDOTn = Vector::Dot(a, n);
 
-		double A = (b_a.GetMagnitudeSquared() - b_aDOTn);
-		double B = 2 * Vector::Dot(a, b_a) - 2 * aDOTn * b_aDOTn;
+		double A = (b_a.GetMagnitudeSquared() - b_aDOTn*b_aDOTn);
+		double B = 2. * (Vector::Dot(a, b_a) - aDOTn * b_aDOTn);
 		double C = a.GetMagnitudeSquared() - aDOTn * aDOTn - r * r;
 
 		double discriminant = B * B - 4 * A * C;
@@ -290,7 +289,7 @@ int CylinderGenerator::ComputeIntersections(Site& from, Site& to) {
 					double xDOTn = aDOTn + t * b_aDOTn;
 					if (xDOTn >= -0.5 * h && xDOTn <= 0.5 * h) {
 						// Real cylinder hit!
-						Vector hit = a + b_a * t;
+						Vector hit = from.Position + b_a * t;
 						++nHits;
 						this->hitPoints->InsertNextPoint(hit.x, hit.y, hit.z);
 						this->hitCellIds->InsertNextId(-1);
@@ -322,7 +321,7 @@ int CylinderGenerator::ComputeIntersections(Site& from, Site& to) {
 			Vector x_c = x - c;
 			double x_cDOTn = Vector::Dot(x_c, n);
 			Vector radial = x_c - n * x_cDOTn;
-			if (radial.GetMagnitudeSquared() < r * r) {
+			if (radial.GetMagnitudeSquared() <= r * r) {
 				// Within the cap
 				++nHits;
 				this->hitPoints->InsertNextPoint(x.x, x.y, x.z);
@@ -330,4 +329,5 @@ int CylinderGenerator::ComputeIntersections(Site& from, Site& to) {
 			}
 		}
 	}
+	return nHits;
 }
