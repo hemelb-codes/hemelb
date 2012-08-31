@@ -48,9 +48,16 @@ void CylinderGenerator::Execute() throw (GenerationError) {
 		double& h = this->Cylinder->Length;
 
 		for (int i = 0; i < 3; ++i) {
+			double sinTheta;
 			double n_i = n[i] > 0. ? n[i] : -n[i];
-			bounds[2 * i] = c[i] - 0.5 * h * n_i - r;
-			bounds[2 * i + 1] = c[i] + 0.5 * h * n_i + r;
+			double n_i2 = n_i * n_i;
+			if (n_i2 > 1.) {
+				sinTheta = 0.;
+			} else {
+				sinTheta = std::sqrt(1. - n_i2);
+			}
+			bounds[2 * i] = c[i] - 0.5 * h * n_i - r * sinTheta;
+			bounds[2 * i + 1] = c[i] + 0.5 * h * n_i + r * sinTheta;
 		}
 	}
 	Domain domain(this->VoxelSizeMetres, bounds);
@@ -127,7 +134,7 @@ bool IsInsideCylinder(CylinderData* cyl, Vector& pt) {
 	Vector x = pt - cyl->Centre;
 	double z = Vector::Dot(x, cyl->Axis);
 	if (z > -0.5 * cyl->Length && z < 0.5 * cyl->Length) {
-		double rsq = Vector::Dot(x, x) - z*z;
+		double rsq = Vector::Dot(x, x) - z * z;
 		if (rsq < cyl->Radius * cyl->Radius) {
 			return true;
 		} else {
@@ -164,7 +171,8 @@ typedef std::priority_queue<Hit> HitList;
  * parametic line coordinate t. We use a priority_queue to keep the hits in
  * order.
  */
-Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets, Site& from, Site& to) {
+Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
+		Site& from, Site& to) {
 	HitList hitList = HitList();
 	/*
 	 * The equation of the line segment is:
@@ -189,7 +197,7 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets, Site& fr
 		double b_aDOTn = Vector::Dot(b_a, n);
 		double aDOTn = Vector::Dot(a, n);
 
-		double A = (b_a.GetMagnitudeSquared() - b_aDOTn*b_aDOTn);
+		double A = (b_a.GetMagnitudeSquared() - b_aDOTn * b_aDOTn);
 		double B = 2. * (Vector::Dot(a, b_a) - aDOTn * b_aDOTn);
 		double C = a.GetMagnitudeSquared() - aDOTn * aDOTn - r * r;
 
@@ -322,7 +330,8 @@ void CylinderGenerator::ClassifySite(Site& site) {
 			// This uses special knowledge about the fact that we're working
 			// on a cylinder. Since the first point is always fluid, and the
 			// second always solid, we must get exactly one hit.
-			Hit hit = ComputeIntersection(this->Cylinder, this->Iolets, *fluid, *solid);
+			Hit hit = ComputeIntersection(this->Cylinder, this->Iolets, *fluid,
+					*solid);
 
 			LinkData& link = fluid->Links[iSolid];
 
