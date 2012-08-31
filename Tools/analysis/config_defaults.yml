@@ -205,7 +205,7 @@ results:
         'flow_type=="womersley"':
             compound_properties:
                 womersley_number: 'pipe_radius * math.sqrt((2.0 * numpy.pi * blood_density) / (viscosity * inlet_pressure_period))'
-                theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
+                theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
 
             
     extraction_files:
