@@ -723,6 +723,7 @@ hector15LbgkSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -739,6 +740,7 @@ hector15LbgkFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -755,6 +757,7 @@ hector15LbgkGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -771,6 +774,7 @@ hector15LbgkReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -787,6 +791,7 @@ hector15LbgkJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -803,6 +808,7 @@ hector15MrtSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -819,6 +825,7 @@ hector15MrtFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -835,6 +842,7 @@ hector15MrtGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -851,6 +859,7 @@ hector15MrtReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -867,6 +876,7 @@ hector15MrtJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -883,6 +893,7 @@ hector15EntASbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -899,6 +910,7 @@ hector15EntAFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -915,6 +927,7 @@ hector15EntAGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -931,6 +944,7 @@ hector15EntAReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -947,6 +961,7 @@ hector15EntAJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -963,6 +978,7 @@ hector15EntCSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -979,6 +995,7 @@ hector15EntCFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -995,6 +1012,7 @@ hector15EntCGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1011,6 +1029,7 @@ hector15EntCReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1027,6 +1046,7 @@ hector15EntCJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1043,6 +1063,7 @@ hector19LbgkSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1059,6 +1080,7 @@ hector19LbgkFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1075,6 +1097,7 @@ hector19LbgkGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1091,6 +1114,7 @@ hector19LbgkReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1108,6 +1132,7 @@ hector19LbgkJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1124,6 +1149,7 @@ hector19MrtSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1140,6 +1166,7 @@ hector19MrtFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1156,6 +1183,7 @@ hector19MrtGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1172,6 +1200,7 @@ hector19MrtReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1188,6 +1217,7 @@ hector19MrtJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1204,6 +1234,7 @@ hector19EntASbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1220,6 +1251,7 @@ hector19EntAFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1236,6 +1268,7 @@ hector19EntAGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1252,6 +1285,7 @@ hector19EntAReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1268,6 +1302,7 @@ hector19EntAJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1284,6 +1319,7 @@ hector19EntCSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1300,6 +1336,7 @@ hector19EntCFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1316,6 +1353,7 @@ hector19EntCGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1332,6 +1370,7 @@ hector19EntCReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1348,6 +1387,7 @@ hector19EntCJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1364,6 +1404,7 @@ hector27LbgkSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1380,6 +1421,7 @@ hector27LbgkFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1396,6 +1438,7 @@ hector27LbgkGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1412,6 +1455,7 @@ hector27LbgkReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1428,6 +1472,7 @@ hector27LbgkJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1446,6 +1491,7 @@ hector27EntASbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1462,6 +1508,7 @@ hector27EntAFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1478,6 +1525,7 @@ hector27EntAGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1494,6 +1542,7 @@ hector27EntAReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1510,6 +1559,7 @@ hector27EntAJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1526,6 +1576,7 @@ hector27EntCSbb:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1542,6 +1593,7 @@ hector27EntCFin:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1558,6 +1610,7 @@ hector27EntCGzs:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1574,6 +1627,7 @@ hector27EntCReg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
@@ -1590,6 +1644,7 @@ hector27EntCJyg:
   import: hector
   cmake_options: 
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_STREAKLINES: "OFF"
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
