@@ -7,7 +7,7 @@ namespace hemelb
 {
   namespace net
   {
-    class Net : public CoalescePointPoint,
+    class Net : public SeparatedPointPoint,
                 public InterfaceDelegationNet,
                 public SeparatedGathers,
                 public SeparatedAllToAll
