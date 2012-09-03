@@ -72,7 +72,6 @@ def update_build():
 @task
 def require_recopy():
     """Notify the build system that the code has changed."""
-    run(template("touch $build_path/hemelb-prefix/src/hemelb-stamp/hemelb-mkdir"))
     run(template("rm -rf $build_path/hemelb-prefix"))
 
 @task
