@@ -6,7 +6,7 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 // 
-
+// Multiscale branch created 5/9/12
 #ifndef HEMELB_MULTISCALE_INTERCOMMUNICATOR_H
 #define HEMELB_MULTISCALE_INTERCOMMUNICATOR_H
 
