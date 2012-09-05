@@ -4,8 +4,8 @@
 
 # Append '-g' and '-O0' to the compile flags and build the extension
 # in place (i.e. $ python setup.py build_ext --inplace)
-# Then treat this script just like hemelb-setup-nogui
-# (e.g. ./debug.sh /path/to/profile.pro)
+# Then treat this script just like the python executable
+# (e.g. ./debug.sh scripts/hemelb-setup-nogui /path/to/profile.pro)
 
 # Create a file break.gdb and add a series of GDB break statements.
 # They will be set before execution starts.
@@ -15,7 +15,7 @@ set breakpoint pending on
 EOF
 
 cat > run.gdb <<EOF
-run scripts/hemelb-setup-nogui $@
+run $@
 continue
 EOF
 
