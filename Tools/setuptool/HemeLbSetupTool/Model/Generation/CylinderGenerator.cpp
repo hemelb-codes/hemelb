@@ -1,132 +1,45 @@
 #include "CylinderGenerator.h"
-#include "GeometryWriter.h"
 
 #include "Neighbours.h"
 #include "Site.h"
-#include "Block.h"
-#include "Domain.h"
 #include "InconsistentFluidnessError.h"
 
 #include "Debug.h"
 
 #include "io/formats/geometry.h"
 
-#include "vtkPolyDataAlgorithm.h"
-#include "vtkPolyData.h"
-#include "vtkPoints.h"
-#include "vtkIdList.h"
-#include "vtkCellData.h"
-#include "vtkDataSet.h"
-
-#include <sstream>
 #include <cmath>
 
 using namespace hemelb::io::formats;
 
-CylinderGenerator::CylinderGenerator() {
-	Neighbours::Init();
-	this->hitPoints = vtkPoints::New();
-	this->hitCellIds = vtkIdList::New();
+CylinderGenerator::CylinderGenerator() :
+	GeometryGenerator() {
 	this->Cylinder = new CylinderData;
 }
 
 CylinderGenerator::~CylinderGenerator() {
-	this->hitPoints->Delete();
-	this->hitCellIds->Delete();
 	delete this->Cylinder;
 }
-
-void CylinderGenerator::Execute() throw (GenerationError) {
+void CylinderGenerator::ComputeBounds(double bounds[6]) const {
 	/*
 	 * Compute the approximate bounds of the cylinder
 	 */
-	double* bounds = new double[6];
-	{
-		Vector& c = this->Cylinder->Centre;
-		Vector& n = this->Cylinder->Axis;
-		double& r = this->Cylinder->Radius;
-		double& h = this->Cylinder->Length;
+	Vector& c = this->Cylinder->Centre;
+	Vector& n = this->Cylinder->Axis;
+	double& r = this->Cylinder->Radius;
+	double& h = this->Cylinder->Length;
 
-		for (int i = 0; i < 3; ++i) {
-			double sinTheta;
-			double n_i = n[i] > 0. ? n[i] : -n[i];
-			double n_i2 = n_i * n_i;
-			if (n_i2 > 1.) {
-				sinTheta = 0.;
-			} else {
-				sinTheta = std::sqrt(1. - n_i2);
-			}
-			bounds[2 * i] = c[i] - 0.5 * h * n_i - r * sinTheta;
-			bounds[2 * i + 1] = c[i] + 0.5 * h * n_i + r * sinTheta;
-		}
-	}
-	Domain domain(this->VoxelSizeMetres, bounds);
-	delete[] bounds;
-
-	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
-			domain.GetBlockCounts(), domain.GetVoxelSizeMetres(),
-			domain.GetOriginMetres());
-
-	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
-		// Open the BlockStarted context of the writer; this will
-		// deal with flushing the state to the file (or not, in the
-		// case where there are no fluid sites).
-		BlockWriter* blockWriterPtr = writer.StartNextBlock();
-		Block& block = *blockIt;
-
-		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
-			Site& site = **siteIt;
-			/*
-			 * ClassifySite expects to be given a site of known fluidness.
-			 * The constructor of Block will ensure that all sites at the edge
-			 * of the Domain will be set to solid. The iterators here ensure
-			 * that we start with the site at (0,0,0).
-			 */
-			this->ClassifySite(site);
-
-			if (site.IsFluid) {
-				blockWriterPtr->IncrementFluidSitesCount();
-				WriteFluidSite(*blockWriterPtr, site);
-			} else {
-				WriteSolidSite(*blockWriterPtr, site);
-			}
-		}
-		blockWriterPtr->Finish();
-		blockWriterPtr->Write(writer);
-		delete blockWriterPtr;
-	}
-	writer.Close();
-}
-
-void CylinderGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
-	blockWriter << static_cast<unsigned int> (geometry::SOLID);
-	// That's all in this case.
-}
-
-void CylinderGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
-	blockWriter << static_cast<unsigned int> (geometry::FLUID);
-
-	// Iterate over the displacements of the neighbourhood
-	for (unsigned int i = 0; i < Neighbours::n; ++i) {
-		unsigned int cutType = site.Links[i].Type;
-
-		if (cutType == geometry::CUT_NONE) {
-			blockWriter << static_cast<unsigned int> (geometry::CUT_NONE);
-		} else if (cutType == geometry::CUT_WALL || cutType
-				== geometry::CUT_INLET || cutType == geometry::CUT_OUTLET) {
-			blockWriter << static_cast<unsigned int> (cutType);
-			if (cutType == geometry::CUT_INLET || cutType
-					== geometry::CUT_OUTLET) {
-				blockWriter
-						<< static_cast<unsigned int> (site.Links[i].IoletId);
-			}
-			blockWriter << static_cast<float> (site.Links[i].Distance);
+	for (int i = 0; i < 3; ++i) {
+		double sinTheta;
+		double n_i = n[i] > 0. ? n[i] : -n[i];
+		double n_i2 = n_i * n_i;
+		if (n_i2 > 1.) {
+			sinTheta = 0.;
 		} else {
-			// TODO: throw some exception
-			std::cout << "Unknown cut type "
-					<< static_cast<unsigned int> (cutType) << " for site "
-					<< site.GetIndex() << std::endl;
+			sinTheta = std::sqrt(1. - n_i2);
 		}
+		bounds[2 * i] = c[i] - 0.5 * h * n_i - r * sinTheta;
+		bounds[2 * i + 1] = c[i] + 0.5 * h * n_i + r * sinTheta;
 	}
 }
 
@@ -296,7 +209,7 @@ void CylinderGenerator::ClassifySite(Site& site) {
 	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
-		vtkIdType nHits;
+		int nHits;
 
 		if (!neigh.IsFluidKnown) {
 			neigh.IsFluidKnown = true;
