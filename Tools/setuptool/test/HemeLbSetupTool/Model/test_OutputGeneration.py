@@ -1,3 +1,5 @@
+import pytest
+
 import os.path
 import numpy as np
 
@@ -30,17 +32,20 @@ class TestPolyDataGenerator:
         assert filecmp.cmp(outXmlFileName, os.path.join(dataDir, 'test.xml'))
 
 class TestCylinderGenerator:
-    def test_regression(self, tmpdir):
+    
+    @pytest.mark.parametrize(("randSeed",), [(828,), (341,), (1432,)])
+    def test_regression(self, tmpdir, randSeed):
         """Generate a small cylinder GMY with a random orientation. Then check 
         that the output is correct by running it through a custom subclass of 
         a ConfigLoader. 
         """
-        rng = np.random.RandomState()
         
         basename = tmpdir.join('cyl')
         OutputGeometryFile = basename.strpath + '.gmy' 
         OutputXmlFile = basename.strpath + '.xml'
         VoxelSizeMetres = 0.1
+        
+        rng = np.random.RandomState(randSeed)
         Axis = rng.normal(size=(3,))
         Axis /= np.sqrt(np.dot(Axis,Axis))
         
