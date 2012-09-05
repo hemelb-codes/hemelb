@@ -10,7 +10,6 @@
 
 #include "lb/boundaries/iolets/InOutLetMultiscale.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-#include "extraction/ArbitrarySiteListIterableDataSource.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -39,7 +38,6 @@ namespace hemelb
                 InOutLetMultiscale(), NDM(NULL)
 
             {
-              SiteListIDS = new extraction::ArbitrarySiteListIterableDataSource();
             }
             /***
              * The shared values are registered through the initialiser-list syntactic sugar.
@@ -51,21 +49,20 @@ namespace hemelb
             }
 
             void InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
-                                             std::map<unsigned int, site_t> invBList)
+                                             geometry::LatticeData * latDat,
+                                             std::vector<site_t> &invBList)
             {
               NDM = manager;
-              invertedBoundaryList = invBList;
+              latticeData = latDat;
+              std::copy(invBList.begin(),invBList.end(),sitesWhichNeighbourThisBoundary.begin());
+              for (std::vector<site_t>::iterator site_iterator = sitesWhichNeighbourThisBoundary.begin();
+                  site_iterator != sitesWhichNeighbourThisBoundary.end(); site_iterator++)
+              {
+                manager->RegisterNeededSite(*site_iterator);
+              }
             }
 
-            PhysicalVelocity GetVelocity() const
-            {
-              util::Vector3D<float> thisnormal;
-              thisnormal = const_cast<InOutLetVelocityAware*>(this)->GetNormal();
-              double totalVelocity;
-              SiteListIDS->GetVelocityRelativeToNormal(NDM, thisnormal);
-              return totalVelocity;
-            }
-
+            PhysicalVelocity GetVelocity() const;
             virtual ~InOutLetVelocityAware()
             {
             }
@@ -79,8 +76,11 @@ namespace hemelb
             }
           protected:
             geometry::neighbouring::NeighbouringDataManager *NDM;
-            extraction::ArbitrarySiteListIterableDataSource *SiteListIDS;
-        };
+            std::vector<site_t> sitesWhichNeighbourThisBoundary;
+            geometry::LatticeData * latticeData;
+
+        }
+        ;
       }
     }
   }
