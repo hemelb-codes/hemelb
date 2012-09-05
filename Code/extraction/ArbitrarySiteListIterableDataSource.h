@@ -36,39 +36,9 @@ namespace hemelb
          */
         ~ArbitrarySiteListIterableDataSource();
 
-        void SetManager(geometry::neighbouring::NeighbouringDataManager *manager)
-        {
-          /* NeighbouringLatticeData is an instance of BaseSite. Do we want to store sites or indices here?
-           * Doing full sites for now, may speed up computation as the iteration pattern is more
-           * predictable? */
-          iterableData = manager;
-        }
 
-        /**
-         * Returns the velocity at the site.
-         * @return
-         */
-        distribn_t GetVelocityRelativeToNormal(util::Vector3D<float> normal)
-        {
-          distribn_t velocity[3];
-          distribn_t total_velocity[3];
-          distribn_t density;
-//          return 1.0;
 
-          /* Apply CalcDensityAndVelocity to extract velocities and add them all up.
-           * We're not (yet) using weights or normalisation here. */
-          for (int i = 0; i < iterableData.size(); i++)
-          {
-            std::vector<distribn_t> f_data = NLD->GetDistribution(iterableData[i].GetIndex());
-            LatticeType::CalculateDensityAndVelocity(f_data, &density, &velocity[0], &velocity[1], &velocity[2]);
-            total_velocity[0] += velocity[0];
-            total_velocity[1] += velocity[1];
-            total_velocity[2] += velocity[2];
-          }
 
-          /* Dot product of the total velocity with the boundary normal. */
-          return (velocity[0] * normal[0]) + (velocity[1] * normal[1]) + (velocity[2] * normal[2]);
-        }
 
         /**
          * Reads the next fluid site from the data source. Its position,
@@ -184,8 +154,7 @@ namespace hemelb
         }
 
       protected:
-        geometry::neighbouring::NeighbouringDataManager *iterableData;
-        std::map<unsigned int, site_t> invertedBoundaryList;
+        std::vector<site_t> sitesWhichAreIteratedOver;
         util::Vector3D<distribn_t> origin;
     };
   }
