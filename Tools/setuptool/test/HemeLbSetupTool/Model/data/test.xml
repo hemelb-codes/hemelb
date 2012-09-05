@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<hemelbsettings>
+  <simulation cycles="3" cyclesteps="1000" stresstype="1" />
+  <geometry>
+    <datafile path="test.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <pressure amplitude="0.0" mean="80.0" phase="0.0" />
+      <normal x="0.571490683385" y="0.246911638329" z="-0.782581012843" />
+      <position x="-0.000717508783523" y="-0.000351761187458" z="0.000848702777352" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <pressure amplitude="0.0" mean="80.0" phase="0.0" />
+      <normal x="-0.583800592647" y="-0.241788117106" z="0.775058303904" />
+      <position x="0.000681397691515" y="0.000293539312786" z="-0.000883567218537" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre x="0.0" y="0.0" z="0.0" />
+    <orientation latitude="45.0" longitude="45.0" />
+    <display brightness="0.03" zoom="1.0" />
+    <range maxstress="0.1" maxvelocity="0.1" />
+  </visualisation>
+</hemelbsettings>
