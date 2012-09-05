@@ -6,4 +6,12 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
-Folder to keep jobscripts for deployment
+$build_prefix
+rm -rf $code_build_path
+mkdir -p $code_build_path
+cd $code_build_path
+cmake $repository_path/Code $cmake_flags
+make
+make install
+chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb
+cp $code_build_cache $build_cache
