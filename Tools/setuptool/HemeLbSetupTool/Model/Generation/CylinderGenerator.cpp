@@ -145,7 +145,7 @@ bool IsInsideCylinder(CylinderData* cyl, Vector& pt) {
 	}
 }
 
-#define TOL 1e-6
+#define TOL 1e-10
 
 struct Hit {
 	double t;
@@ -220,7 +220,7 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 			for (std::vector<double>::iterator tIt = ts.begin(); tIt
 					!= ts.end(); ++tIt) {
 				double t = *tIt;
-				if (t > 0. && t < 1.) {
+				if (t > 0. && t < 1. + TOL) {
 					// Hit in part of line we care about.
 					// Now check if it's on the finite cylinder. This requires that
 					// x.n E (-h/2, h/2)
@@ -254,7 +254,7 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 		Vector& p = iolet->Normal;
 
 		double t = Vector::Dot(q - a, p) / Vector::Dot(b_a, p);
-		if (t > 0. && t < 1.) {
+		if (t > 0. && t < 1. + TOL) {
 			// Intersection within the line segment. Now check within cap.
 			Vector x = a + b_a * t;
 			Vector x_c = x - c;
@@ -273,7 +273,14 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 	// We know there SHOULD be exactly one intersection. Take the closest.
 	if (hitList.size() == 0)
 		throw InconsistentFluidnessError(from, to, hitList.size());
-	return hitList.top();
+
+	// Ensure that the hit lies on the link
+	Hit ans = hitList.top();
+	if (ans.t > 1.) {
+		ans.t = 1.;
+		ans.pt = b;
+	}
+	return ans;
 }
 
 /*
