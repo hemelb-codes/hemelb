@@ -169,8 +169,8 @@ class Profile(Observable):
         return
     
     def Generate(self):
-        from HemeLbSetupTool.Model.OutputGeneration import GeometryGenerator
-        generator = GeometryGenerator(self)
+        from HemeLbSetupTool.Model.OutputGeneration import PolyDataGenerator
+        generator = PolyDataGenerator(self)
         generator.Execute()
         return
     
