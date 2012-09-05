@@ -33,11 +33,10 @@ namespace hemelb
           lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
           ///TODO: Generate invertedBoundaryList.
 
-          std::map<unsigned int, site_t> invertedBoundaryList;
-
-          invertedBoundaryList[1] = 1;
+          std::vector<std::vector<site_t> > invertedBoundaryList;
+          invertedBoundaryList[1].push_back(1);
           //for (sites){
-          //  iBL[site.boundary]=site;
+          //  iBL[site.boundary].push_back(site);
           //}
 
           // we only want to register those iolets which are needed on this process.
@@ -48,10 +47,11 @@ namespace hemelb
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
-                                                                                                                  multiscaleIoletType);
+                                                                                                                multiscaleIoletType);
 
               static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                      invertedBoundaryList);
+                                                                                                                                      latticeData,
+                                                                                                                                      invertedBoundaryList[i]);
             }
           }
 
@@ -60,9 +60,10 @@ namespace hemelb
             if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
-                                                                                                                    multiscaleIoletType);
+                                                                                                                 multiscaleIoletType);
               static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                                    invertedBoundaryList);
+                                                                                                                                       latticeData,
+                                                                                                                                       invertedBoundaryList[i]);
             }
           }
 

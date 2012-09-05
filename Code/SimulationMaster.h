@@ -55,6 +55,7 @@ class SimulationMaster
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     //protected, not private because it is required by MultiscaleSimulationMaster
 
+    hemelb::geometry::LatticeData* latticeData;
   private:
     // Set the lattice type via a build parameter
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
@@ -78,7 +79,6 @@ class SimulationMaster
     bool ShouldWriteSnapshot();
 
     hemelb::configuration::SimConfig *simConfig;
-    hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
