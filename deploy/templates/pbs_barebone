@@ -1,3 +1,4 @@
+#!/bin/bash --login
 # 
 # Copyright (C) University College London, 2007-2012, all rights reserved.
 # 
@@ -6,4 +7,8 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
-Folder to keep jobscripts for deployment
+#PBS -N $job_name
+#PBS -l mppwidth=$cores_reserved
+#PBS -l mppnppn=$corespernode
+#PBS -l walltime=$wall_time
+#PBS -m abe

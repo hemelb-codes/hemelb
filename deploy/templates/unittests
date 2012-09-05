@@ -6,4 +6,6 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
-Folder to keep jobscripts for deployment
+cd $job_results
+$run_prefix
+$run_command $install_path/bin/unittests_hemelb -o 'tests.xml'

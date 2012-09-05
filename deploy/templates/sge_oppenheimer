@@ -1,3 +1,4 @@
+#!/bin/bash
 # 
 # Copyright (C) University College London, 2007-2012, all rights reserved.
 # 
@@ -6,4 +7,9 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
-Folder to keep jobscripts for deployment
+#$$ -wd $job_results
+#$$ -q all.q
+#$$ -pe openmpi $cores_reserved
+#$$ -N $job_name
+#$$ -e $job_results/${name}.error
+#$$ -o $job_results/${name}.output
