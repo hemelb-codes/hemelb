@@ -16,9 +16,9 @@ namespace hemelb
 {
   namespace colloids
   {
-    const void ColloidController::OutputInformation() const
+    const void ColloidController::OutputInformation(const LatticeTime timestep) const
     {
-      particleSet->OutputInformation();
+      particleSet->OutputInformation(timestep);
     }
 
     // destructor

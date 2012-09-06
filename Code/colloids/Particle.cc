@@ -63,6 +63,21 @@ namespace hemelb
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
     }
 
+    // this is the exact size that the xdr data produced for this particle will occupy
+    // 10 fields * 8 bytes-per-field = 80 bytes, if velocity is included in the output
+    // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
+    const unsigned int Particle::XdrDataSize = 56;
+
+    const void Particle::WriteToStream(io::writers::Writer& writer) const
+    {
+      writer << (uint64_t)ownerRank;
+      writer << (uint64_t)particleId;
+      writer << smallRadius_a0 << largeRadius_ah;
+      writer << globalPosition.x << globalPosition.y << globalPosition.z;
+      // change Particle::XdrDataSize to 80 if the following line is ever uncommented
+      //writer << velocity.x << velocity.y << velocity.z;
+    }
+
     const void Particle::UpdatePosition(const geometry::LatticeData& latDatLBM)
     {
       // first, update the position: newPosition = oldPosition + velocity + bodyForces * drag
