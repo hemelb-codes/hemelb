@@ -517,7 +517,7 @@ void SimulationMaster::DoTimeStep()
   }
 
   if (simulationState->GetTimeStep() % 500 == 0)
-    colloidController->OutputInformation();
+    colloidController->OutputInformation(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
   visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());

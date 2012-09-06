@@ -17,6 +17,7 @@
 #include "mpiInclude.h"
 #include "colloids/Particle.h"
 #include "topology/NetworkTopology.h"
+#include "units.h"
 
 namespace hemelb
 {
@@ -53,7 +54,7 @@ namespace hemelb
         /** communicates the partial fluid interpolations to&from all neighbours */
         const void CommunicateFluidVelocities();
 
-        const void OutputInformation() const;
+        const void OutputInformation(const LatticeTime timestep) const;
 
       private:
         /** cached copy of local rank (obtained from topology) */

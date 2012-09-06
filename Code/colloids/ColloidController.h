@@ -19,6 +19,7 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
 #include "util/Vector3D.h"
+#include "units.h"
 
 namespace hemelb
 {
@@ -44,7 +45,7 @@ namespace hemelb
         /** overloaded from IteratedAction */
         void EndIteration();
 
-        const void OutputInformation() const;
+        const void OutputInformation(const LatticeTime timestep) const;
 
       private:
         /** cached copy of local rank (obtained from topology) */
