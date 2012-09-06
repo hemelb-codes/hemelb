@@ -12,7 +12,6 @@
 #include <algorithm>
 #include "log/Logger.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "mpio.h"
 
 namespace hemelb
 {
