@@ -128,11 +128,14 @@ results:
         
         # Geometry stats
         pipe_length: 'math.sqrt(sum((x - y)**2 for x, y in zip(pipe_ends[0], pipe_ends[1])))' # todo: #493 numpyfy expression when possible: np.linalg.norm(pipe_ends[0] - pipe_ends[1])
-        axial_position: '[x[2] for x in space(axial_coordinate,voxel_size,origin)]'
-        radial_position: '[x[0] for x in aligned_cylindrical(radial_coordinate,voxel_size,origin)]'
+        axis: '[(x-y) / pipe_length for x, y in zip(pipe_ends[1], pipe_ends[0])]'
+        axial_position: '[x[2] for x in  aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)]'
+        axial_radius: '[x[0] for x in  aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)]'
+        radial_position: '[x[0] for x in aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)]'
+        radial_z: '[x[2] for x in aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)]'
 
         # Velocity stats
-        axial_velocity: '[x[2] for x in radial_velocity_field]'
+        axial_velocity: '[sum([x*y for x,y in zip(axis, velocity)]) for velocity in radial_velocity_field]'
         mean_theoretical_axial_velocity: ' sum(theoretical_axial_velocity) / len(theoretical_axial_velocity)'
         range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
         residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
@@ -197,9 +200,9 @@ results:
         'flow_type=="poiseuille"':
             compound_properties:
                 theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(pipe_radius,2) - pow(d,2)) for d in radial_position]'
-                theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x - min(axial_position))/pipe_length for x in axial_position]'
+                theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x + pipe_length/2)/pipe_length for x in axial_position]'
                 theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
-                theoretical_radial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (z - min(axial_position))/pipe_length for z in stress_tensor_sampling_z_coord]'
+                theoretical_radial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (z + pipe_length/2)/pipe_length for z in stress_tensor_sampling_z_coord]'
                 theoretical_stress_tensor: '[poiseuille_stress_tensor(pipe_radius, pressure, pressure_diff/pipe_length) for (pipe_radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
 
         'flow_type=="womersley"':
@@ -212,13 +215,13 @@ results:
       'results/Extracted/pressure_axial_profile.dat':
         axial_field_count: fieldCount
         axial_pressure_torr: axial_pressure
-        axial_coordinate: grid
+        raw_axial_coordinate: grid
         voxel_size: voxelSizeMetres
         origin: originMetres
       'results/Extracted/velocity_shearstress_line_2_5_lengths_in.dat':
         radial_velocity_field: developed_velocity_profile
         radial_shear_stress_field: developed_shear_stress_profile
-        radial_coordinate: grid
+        raw_radial_coordinate: grid
         
       'results/Extracted/inlet_profile.dat':
         inlet_pressure_torr: inlet_pressure
