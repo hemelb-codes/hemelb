@@ -46,7 +46,7 @@ namespace hemelb
            * ASCII for 'gmy', then EOF
            * Combined magic number is:
            * hex    68 6c 62 21 67 6d 79 04
-           * ascii:  h  l  b  !  s  n  p EOF
+           * ascii:  h  l  b  !  g  m  y EOF
            */
           enum
           {
