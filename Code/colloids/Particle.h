@@ -16,6 +16,7 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
+#include "io/writers/Writer.h"
 
 namespace hemelb
 {
@@ -36,6 +37,8 @@ namespace hemelb
 
         /** constructor - gets an invalid particle for making MPI data types */
         Particle() {};
+
+        static const unsigned int XdrDataSize;
 
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
@@ -64,6 +67,9 @@ namespace hemelb
 
         /** for debug purposes only - outputs all properties to info log */
         const void OutputInformation() const;
+
+        /** for serialisation into output file */
+        const void WriteToStream(io::writers::Writer& writer) const;
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units

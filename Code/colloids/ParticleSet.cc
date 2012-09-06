@@ -11,6 +11,8 @@
 #include "colloids/BodyForces.h"
 #include <algorithm>
 #include "log/Logger.h"
+#include "io/writers/xdr/XdrMemWriter.h"
+#include "mpio.h"
 
 namespace hemelb
 {
@@ -59,16 +61,112 @@ namespace hemelb
       particles.clear();
     }
 
-    const void ParticleSet::OutputInformation() const
+    const void ParticleSet::OutputInformation(const LatticeTime timestep) const
     {
+      char * const outputFilenameCstr = "ColloidOutput.xdr\0";
+      const uint16_t sizeOfHeader = 24;
+      
+      const unsigned int maxSize = Particle::XdrDataSize * particles.size() + sizeOfHeader;
+      char * const xdrBuffer = new char[maxSize];
+      io::writers::xdr::XdrMemWriter writer(xdrBuffer, maxSize);
+
       for (std::vector<Particle>::const_iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
         const Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
+        {
           particle.OutputInformation();
+          particle.WriteToStream(*((io::writers::Writer*)&writer));
+        }
       }
+      const unsigned int count = writer.getCurrentStreamPosition();
+
+      // use MPI-IO to write xdrBuffer to colloid output file
+      MPI_File fh;
+      MPI_File_open(MPI_COMM_WORLD,
+                    outputFilenameCstr,
+                    MPI_MODE_APPEND | MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                    MPI_INFO_NULL,
+                    &fh);
+
+      // work-around: the shared file pointer may not be set correctly
+      //              on all ranks immediately after opening the file,
+      //              or indeed after any shared/collective operation.
+      //              In particular this happens on martensite at EPCC
+      //              using MPICH2-1.4.1p1 on 64bit linux 2.6.18 SL5.0
+      //              Issuing "sync;barrier;sync" enforces consistency
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      MPI_Offset offsetEOF;
+      MPI_File_get_position_shared(fh, &offsetEOF);
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      MPI_Offset dispStartOfHeader;
+      MPI_File_get_byte_offset(fh, offsetEOF, &dispStartOfHeader);
+
+      log::Logger::Log<log::Info, log::OnePerCore>(
+        "dispStartOfHeader: %i (from offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
+
+      MPI_File_set_view(fh, dispStartOfHeader + sizeOfHeader,
+                        MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
+
+      log::Logger::Log<log::Debug, log::OnePerCore>(
+        "SetView for data - disp: %i\n", dispStartOfHeader + sizeOfHeader);
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      // collective write: the effect is as though all writes are done
+      // in serialised order, i.e. as if rank 0 writes first, followed
+      // by rank 1, and so on, until all ranks have written their data
+      MPI_File_write_ordered(fh, xdrBuffer, count, MPI_CHAR, MPI_STATUS_IGNORE);
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      // the collective ordered write modifies the shared file pointer
+      // it should point to the byte following the highest rank's data
+      // (should be true for all ranks but) we only need it for rank 0
+      MPI_File_get_position_shared(fh, &offsetEOF);
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      // only rank 0 uses this view but this is a collective operation
+      MPI_File_set_view(fh, dispStartOfHeader,
+                        MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
+
+      log::Logger::Log<log::Info, log::OnePerCore>(
+        "dispStartOfHeader: %i (new offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
+
+      MPI_File_sync(fh);
+      MPI_Barrier(MPI_COMM_WORLD);
+      MPI_File_sync(fh);
+
+      if (localRank == 0)
+      {
+        writer << (uint32_t)sizeOfHeader;
+        writer << (uint32_t)Particle::XdrDataSize;
+        writer << (uint64_t)offsetEOF;
+        writer << (uint64_t)timestep;
+        MPI_File_write(fh, &xdrBuffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
+      }
+
+      MPI_File_close(&fh);
+
+      delete[] xdrBuffer;
+
       for (scanMapConstIterType iterMap = scanMap.begin();
            iterMap != scanMap.end();
            iterMap++)
