@@ -62,7 +62,7 @@ class ResultProperty(object):
     @staticmethod
     def parse_value(value):
         if type(value)==numpy.ndarray:
-          return value.tolist()
+          return value
         if value in [1,0]:
           return value
         if value in ['None','none',None]:
@@ -93,8 +93,9 @@ class ResultProperty(object):
             if not model:
                 raise ParseError("Bad file.")
             value=self.parser(model,self.pattern)
-            result.properties[self.label]=result.properties.get(self.label) or self.parse_value(value)
-            return result.properties.get(self.label)
+            if result.properties.get(self.label) == None:
+              result.properties[self.label] = self.parse_value(value)
+            return result.properties[self.label]
         except (IOError,ParseError, OSError) as err:
             self.file.logger(result).warning("Problem parsing value: %s"%err)
             return None
