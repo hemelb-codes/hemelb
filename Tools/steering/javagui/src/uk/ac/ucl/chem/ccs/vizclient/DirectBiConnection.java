@@ -241,6 +241,7 @@ public class DirectBiConnection implements SteeringConnection {
 			dos.writeFloat(sd.getVis_mode()*1.f);
 			dos.writeFloat(sd.getVis_streaklines_per_pulsatile_period());
 			dos.writeFloat(sd.getVis_streakline_length());
+			dos.writeFloat(10.0f); // Max framerate
 			return true;
 		} catch (Exception e) {
 

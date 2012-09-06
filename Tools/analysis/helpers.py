@@ -2,11 +2,16 @@ import math
 import numpy as np
 
 def space(grid_coords,voxel_size,origin):
-  return [grid_coord*voxel_size+origin for grid_coord in grid_coords] 
+  return grid_coords*voxel_size+origin 
 
 def aligned_cylindrical(grid_coords,voxel_size,origin):
   cartesian=space(grid_coords,voxel_size,origin)
-  return [[pow(pow(x,2)+pow(y,2),0.5),math.atan2(y,x),z] for x,y,z in cartesian]
+  x,y,z=cartesian.transpose()
+  ans=np.empty_like(cartesian)
+  ans[:,0]=np.sqrt(x**2+y**2)
+  ans[:,1]=np.arctan2(y,x)
+  ans[:,2]=z
+  return ans
 
 eval_helpers=globals()
 
