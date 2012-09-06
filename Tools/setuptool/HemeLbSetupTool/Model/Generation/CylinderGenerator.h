@@ -1,14 +1,7 @@
 #ifndef HEMELBSETUPTOOL_CYLINDERGENERATOR_H
 #define HEMELBSETUPTOOL_CYLINDERGENERATOR_H
 
-#include <string>
-#include <vector>
-
-// VTK bits we need
-class vtkPolyData;
-class vtkPoints;
-class vtkIdList;
-class vtkIntArray;
+#include "GeometryGenerator.h"
 
 #include "Index.h"
 #include "GetSet.h"
@@ -27,36 +20,10 @@ struct CylinderData {
 	double Length;
 };
 
-class CylinderGenerator {
+class CylinderGenerator : public GeometryGenerator {
 public:
 	CylinderGenerator();
-	~CylinderGenerator();
-	void Execute() throw (GenerationError);
-
-	inline double GetVoxelSizeMetres(void) {
-		return this->VoxelSizeMetres;
-	}
-	inline void SetVoxelSizeMetres(double val) {
-		this->VoxelSizeMetres = val;
-	}
-
-	inline double GetVoxelSizeWorking(void) {
-		return 1;
-	}
-
-	inline std::string GetOutputGeometryFile(void) {
-		return this->OutputGeometryFile;
-	}
-	inline void SetOutputGeometryFile(std::string val) {
-		this->OutputGeometryFile = val;
-	}
-
-	inline std::vector<Iolet*>& GetIolets() {
-		return this->Iolets;
-	}
-	inline void SetIolets(std::vector<Iolet*> iv) {
-		this->Iolets = std::vector<Iolet*>(iv);
-	}
+	virtual ~CylinderGenerator();
 
 	inline void SetCylinderCentre(Vector v) {
 		this->Cylinder->Centre = v;
@@ -72,19 +39,9 @@ public:
 	}
 
 private:
+	virtual void ComputeBounds(double []) const;
 	void ClassifySite(Site& site);
-	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
-	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
-	// Members set from outside to initialise
-	double VoxelSizeMetres;
-	std::string OutputGeometryFile;
-	std::vector<Iolet*> Iolets;
-
 	CylinderData* Cylinder;
-	// Members used internally
-	vtkPoints* hitPoints;
-	vtkIdList* hitCellIds;
-	vtkIntArray* IoletIdArray;
 };
 
 #endif // HEMELBSETUPTOOL_CYLINDERGENERATOR_H
