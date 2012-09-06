@@ -5,9 +5,25 @@ import scipy.special
 def space(grid_coords,voxel_size,origin):
   return [grid_coord*voxel_size+origin for grid_coord in grid_coords] 
 
-def aligned_cylindrical(grid_coords,voxel_size,origin):
-  cartesian=space(grid_coords,voxel_size,origin)
-  return [[pow(pow(x,2)+pow(y,2),0.5),math.atan2(y,x),z] for x,y,z in cartesian]
+def aligned_cylindrical(grid_coords, voxel_size, origin, axis):
+    cartesian=space(grid_coords,voxel_size,origin)
+
+    # To get theta, we have to construct an 'up', i.e. theta = 0 direction.
+    # We make this up = (0,1,0) - q * axis, with up.axis = 0.
+    # I.e. it's a unit in the y-direction, moved along axis until we're perpendicular
+    # to the axis.
+    # Some straightforward maths gives q = axis_y, if axis is normalised.
+    up = [-axis[1] * axis[0], 1 - axis[1] * axis[1], -axis[1] * axis[2]]
+    up = [val / math.sqrt(sum([x*x for x in up])) for val in up]
+    result =[]
+    for cart in cartesian:
+        aligned_z = sum([x*y for x,y in zip(cart,axis)])
+        off_axis = [x - aligned_z * y for x,y in zip(cart,axis)]
+        r = sum([x*x for x in off_axis]) ** 0.5
+        theta = math.acos(
+            sum([x*y for x,y in zip(up, off_axis)]) / r)
+        result.append([r, theta, aligned_z])
+    return result
 
 eval_helpers=globals()
 
