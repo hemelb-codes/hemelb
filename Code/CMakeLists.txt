@@ -177,6 +177,12 @@ include_directories("${PROJECT_BINARY_DIR}")
 # ----------- HemeLB ------------------
 if (APPLE)
 	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+	option(HEMELB_HAVE_SCANDIR_POSIX "Have POSIX scandir" OFF)
+else()
+	option(HEMELB_HAVE_SCANDIR_POSIX "Have POSIX scandir" ON)
+endif()
+if (HEMELB_HAVE_SCANDIR_POSIX)
+	add_definitions(-DHEMELB_HAVE_SCANDIR_POSIX)
 endif()
 if (HEMELB_USE_DEBUGGER)
 	# Force a debug build, because the debugger makes no sense without debug symbols
