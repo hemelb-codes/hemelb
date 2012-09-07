@@ -20,7 +20,7 @@ namespace hemelb
 {
   namespace util
   {
-#ifdef HEMELB_CFG_ON_BSD
+#ifdef HEMELB_HAVE_SCANDIR_POSIX
     typedef struct direct direct_t;
 #else // HEMELB_CFG_ON_BSD
     typedef const struct direct direct_t;
