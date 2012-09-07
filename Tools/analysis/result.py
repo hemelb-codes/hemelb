@@ -284,7 +284,8 @@ def result_model(config):
         def define_properties(klass,file_model,data,parser):
             if not data: return
             for prop,pattern in data.iteritems():
-                klass.proplist.append(prop)
+                if prop not in klass.proplist:
+                    klass.proplist.append(prop)
                 setattr(klass,prop,ResultProperty(prop,file_model,parser,pattern))
 
         def __init__(self,path):
@@ -309,7 +310,10 @@ def result_model(config):
         def datum(self,property):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
             if property in self.proplist:
-                return getattr(self,property)
+                if hasattr(self, property):
+                    return getattr(self,property)
+                else:
+                    return None
             return ResultProperty(property,ResultContent(binding_filter),eval_parser,property).get(self)
 
         def __str__(self):

@@ -145,7 +145,7 @@ results:
 
         # Pressure stats
         pressure_diff: (inlet_pressure_mean-outlet_pressure_mean) * 133.3223874
-        axial_pressure: '[133.3223874 * x for x in axial_pressure_torr]'
+        axial_pressure: '[133.3223874 * x for x,y in zip(axial_pressure_torr, axial_position) if abs(y) < pipe_length/4]'
         axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
         mean_theoretical_axial_pressure: 'sum(theoretical_axial_pressure) / len(theoretical_axial_pressure)'
         range_theoretical_axial_pressure: 'max(theoretical_axial_pressure) - min(theoretical_axial_pressure)'
@@ -200,7 +200,7 @@ results:
         'flow_type=="poiseuille"':
             compound_properties:
                 theoretical_axial_velocity:  '[ (1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(pipe_radius,2) - pow(d,2)) for d in radial_position]'
-                theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x + pipe_length/2)/pipe_length for x in axial_position]'
+                theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x + pipe_length/2)/pipe_length for x in axial_position if abs(x) < pipe_length/4]'
                 theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
                 theoretical_radial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (z + pipe_length/2)/pipe_length for z in stress_tensor_sampling_z_coord]'
                 theoretical_stress_tensor: '[poiseuille_stress_tensor(pipe_radius, pressure, pressure_diff/pipe_length) for (pipe_radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
