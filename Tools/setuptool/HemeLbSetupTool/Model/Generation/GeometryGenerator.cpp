@@ -25,7 +25,7 @@ void GeometryGenerator::PreExecute() {
 
 void GeometryGenerator::Execute() throw (GenerationError) {
 	this->PreExecute();
-	double* bounds = new double[6];
+	double bounds[6];
 	this->ComputeBounds(bounds);
 	Domain domain(this->VoxelSizeMetres, bounds);
 
