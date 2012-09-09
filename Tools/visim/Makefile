@@ -11,7 +11,7 @@ objects = visualize_images.o
 
 src =  visualize_images.cc
 $(target) : $(src)
-	$(CC) $(CFLAGS)  $< -o $@ -lglut -lGLU -lGL 
+	$(CC) $(CFLAGS)  $< -o $@ 
 
 
 .PHONY : clean
