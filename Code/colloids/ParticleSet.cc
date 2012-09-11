@@ -122,7 +122,7 @@ namespace hemelb
         sizeOfHeader += io::formats::colloids::MagicLength;
       }
 
-      log::Logger::Log<log::Info, log::OnePerCore>(
+      log::Logger::Log<log::Debug, log::OnePerCore>(
         "dispStartOfHeader: %i (from offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
 
       MPI_File_set_view(fh, dispStartOfHeader + sizeOfHeader,
@@ -157,7 +157,7 @@ namespace hemelb
       MPI_File_set_view(fh, dispStartOfHeader,
                         MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
 
-      log::Logger::Log<log::Info, log::OnePerCore>(
+      log::Logger::Log<log::Debug, log::OnePerCore>(
         "dispStartOfHeader: %i (new offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
 
       MPI_File_sync(fh);
