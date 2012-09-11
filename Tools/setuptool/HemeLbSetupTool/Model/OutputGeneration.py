@@ -6,7 +6,7 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
     vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
-    vtkXMLPolyDataWriter, vtkAlgorithm
+    vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere
     
 from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
 
@@ -298,14 +298,31 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         return self.Iolet
 
     def _Clip(self, pd):
-        # TODO: switch from this simple ImplicitPlane (i.e. infinite plane) 
-        # clipping to excising a thin cuboid from the Iolet.
+        # The plane implicit function will be >0 for all the points in the positive side
+        # of the plane (i.e. x s.t. n.(x-o)>0, where n is the plane normal and o is the 
+        # plane origin).
         plane = vtkPlane()
         plane.SetOrigin(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
         plane.SetNormal(self.Iolet.Normal.x, self.Iolet.Normal.y, self.Iolet.Normal.z)
+        
+        # The sphere implicit function will be >0 for all the points outside the sphere.
+        sphere = vtkSphere()
+        sphere.SetCenter(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
+        sphere.SetRadius(self.Iolet.Radius)
+        
+        # The VTK_INTERSECTION operator takes the maximum value of all the registered 
+        # implicit functions. This will result in the function evaluating to >0 for all 
+        # the points outside the sphere plus those inside the sphere in the positive 
+        # side of the plane.
+        clippingFunction = vtkImplicitBoolean()
+        clippingFunction.AddFunction(plane)
+        clippingFunction.AddFunction(sphere)
+        clippingFunction.SetOperationTypeToIntersection() 
+        
         clipper = vtkClipPolyData()
         clipper.SetInput(pd)
-        clipper.SetClipFunction(plane)
+        clipper.SetClipFunction(clippingFunction)
+
         # Filter to get part closest to seed point
         connectedRegionGetter = vtkPolyDataConnectivityFilter()
         connectedRegionGetter.SetExtractionModeToClosestPointRegion()
