@@ -66,7 +66,6 @@ namespace hemelb
     // this is the exact size that the xdr data produced for this particle will occupy
     // 10 fields * 8 bytes-per-field = 80 bytes, if velocity is included in the output
     // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
-    const unsigned int Particle::XdrDataSize = 56;
 
     const void Particle::WriteToStream(io::writers::Writer& writer) const
     {
@@ -74,7 +73,9 @@ namespace hemelb
       writer << (uint64_t)particleId;
       writer << smallRadius_a0 << largeRadius_ah;
       writer << globalPosition.x << globalPosition.y << globalPosition.z;
-      // change Particle::XdrDataSize to 80 if the following line is ever uncommented
+
+      // if the following code line is ever uncommented
+      // change io::formats::colloids::RecordLength to 80
       //writer << velocity.x << velocity.y << velocity.z;
     }
 

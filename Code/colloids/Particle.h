@@ -38,8 +38,6 @@ namespace hemelb
         /** constructor - gets an invalid particle for making MPI data types */
         Particle() {};
 
-        static const unsigned int XdrDataSize;
-
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
