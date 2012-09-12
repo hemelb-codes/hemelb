@@ -28,7 +28,8 @@ namespace hemelb
         class MPWideIntercommunicatorTests : public FolderTestFixture
         {
             CPPUNIT_TEST_SUITE (MPWideIntercommunicatorTests);
-            CPPUNIT_TEST (testMPWideApplication);CPPUNIT_TEST_SUITE_END();
+            //CPPUNIT_TEST (testMPWideApplication);
+            CPPUNIT_TEST_SUITE_END();
 
           public:
             void setUp()

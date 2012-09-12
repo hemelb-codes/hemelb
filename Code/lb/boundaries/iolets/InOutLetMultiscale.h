@@ -73,6 +73,7 @@ namespace hemelb
             }
             LatticeDensity GetDensity(unsigned long timeStep) const
             {
+              velocity=GetVelocity();
               return units->ConvertPressureToLatticeUnits(pressure) / Cs2;
             }
             PhysicalPressure GetPressureMin() const
@@ -83,7 +84,7 @@ namespace hemelb
             {
               return maxPressure;
             }
-            PhysicalVelocity GetVelocity() const
+            virtual PhysicalVelocity GetVelocity() const
             {
               return velocity;
             }
