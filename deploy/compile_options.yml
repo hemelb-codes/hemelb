@@ -56,3 +56,6 @@ separated_pointpoint:
   HEMELB_POINTPOINT_IMPLEMENTATION: Separated
 separated_concerns:
   HEMELB_SEPARATED_CONCERNS: ON
+no_debug:
+  CMAKE_CXX_FLAGS: "-DNDEBUG"
+  CMAKE_C_FLAGS: "-DNDEBUG"
