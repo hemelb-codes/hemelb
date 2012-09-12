@@ -127,6 +127,8 @@ namespace hemelb
               // 1. Read the file with MPWide settings.
               ReadInputFile(hemelb::multiscale::mpwide::mpwide_config_file.c_str(), hosts, server_side_ports, &num_channels);
 
+              std::cout << "MPWide input file read: base port = " << server_side_ports << std::endl;
+
               // 2. Initializa MPWide.
               MPW_Init(hosts, server_side_ports, num_channels);
             }
