@@ -35,15 +35,15 @@ namespace hemelb
         {
           public:
             InOutLetVelocityAware() :
-                InOutLetMultiscale(), NDM(NULL)
+                InOutLetMultiscale(), NDM(NULL), sitesWhichNeighbourThisBoundary()
 
             {
             }
-            /***
+            /***ss
              * The shared values are registered through the initialiser-list syntactic sugar.
              */
             InOutLetVelocityAware(const InOutLetVelocityAware &other) :
-                InOutLetMultiscale(other), NDM(other.NDM)
+                InOutLetMultiscale(other), NDM(other.NDM), sitesWhichNeighbourThisBoundary()
             {
               /* Add a velocity aware exchange here if needed?*/
             }
@@ -54,7 +54,14 @@ namespace hemelb
             {
               NDM = manager;
               latticeData = latDat;
-              std::copy(invBList.begin(),invBList.end(),sitesWhichNeighbourThisBoundary.begin());
+              sitesWhichNeighbourThisBoundary.reserve(1);
+
+              std::cout << "invBList size: " << invBList.size() << std::endl;
+
+             sitesWhichNeighbourThisBoundary=invBList;
+
+              std::cout << "sitesWhichNeighbourThisBoundary size: " << sitesWhichNeighbourThisBoundary.size() << std::endl;
+
               for (std::vector<site_t>::iterator site_iterator = sitesWhichNeighbourThisBoundary.begin();
                   site_iterator != sitesWhichNeighbourThisBoundary.end(); site_iterator++)
               {
