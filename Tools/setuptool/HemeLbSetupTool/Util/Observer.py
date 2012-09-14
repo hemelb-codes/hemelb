@@ -402,7 +402,10 @@ class ObservableList(Observable, collections.MutableSequence):
         self.AddDependency('length', '@INSERTION')
         self.AddDependency('length', '@REMOVAL')
         return
-
+    
+    def __copy__(self):
+        return type(self)(self.__contents)
+    
     def __len__(self):
         return self.__contents.__len__()
     
