@@ -193,8 +193,8 @@ set(package_subdirs
 	reporting
 	steering
 	vis
-	geometry
 	lb
+	geometry
 	net
 	debug
 	topology
@@ -241,8 +241,8 @@ if (HEMELB_BUILD_MULTISCALE)
 		reporting
 		steering
 		vis
-		geometry
 		lb
+		geometry
 		net
 		debug
 		topology

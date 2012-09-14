@@ -59,6 +59,9 @@ class SimulationMaster
   private:
     // Set the lattice type via a build parameter
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
+  protected:
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+  private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -100,7 +103,6 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
     hemelb::colloids::ColloidController* colloidController;
-    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::net::Net communicationNet;
 
     hemelb::util::UnitConverter* unitConvertor;
