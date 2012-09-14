@@ -23,7 +23,7 @@ namespace hemelb
       NeighbouringDataManager::NeighbouringDataManager(const LatticeData & localLatticeData,
                                                        NeighbouringLatticeData & neighbouringLatticeData,
                                                        net::InterfaceDelegationNet & net) :
-          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize())
+          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize()), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements)
@@ -68,7 +68,6 @@ namespace hemelb
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
 
-
             Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
             net.RequestSendR(site.GetSiteData().GetIntersectionData(), other);
@@ -88,6 +87,11 @@ namespace hemelb
 
       void NeighbouringDataManager::RequestComms()
       {
+        if (needsHaveBeenShared == false)
+        {
+         ShareNeeds();
+        }
+
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
@@ -99,10 +103,13 @@ namespace hemelb
           net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                              localLatticeData.GetLatticeInfo().GetNumVectors(),
                              source);
+          std::cout << "Receive Requested" << localLatticeData.GetLatticeInfo().GetNumVectors() << ", proc: " << source << std::endl;
 
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
+          std::cout << "NEEDS:" << needsEachProcHasFromMe[other].size() << std::endl;
+
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
           {
@@ -114,44 +121,54 @@ namespace hemelb
                             localLatticeData.GetLatticeInfo().GetNumVectors(),
                             other);
 
+            std::cout << "Send Requested" << localLatticeData.GetLatticeInfo().GetNumVectors() << std::endl;
+
           }
         }
+        std::cout << "End of RequestComms" << std::endl;
       }
 
       void NeighbouringDataManager::ShareNeeds()
       {
-        // build a table of which procs needs can be achieved from which proc
-        std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
-        std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
-        for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
+        if (needsHaveBeenShared == false)
         {
-          needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
-          countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
+          // build a table of which procs needs can be achieved from which proc
+          std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
+          std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
+          for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end();
+              localNeed++)
+          {
+            needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
+            countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
 
+          }
+
+          // every proc must send to all procs, how many it needs from that proc
+          net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
+
+          // every proc must receive from all procs, how many it needs to give that proc
+          std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().GetSize(), 0);
+          net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
+          net.Dispatch();
+
+          for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
+          {
+
+            // now, for every proc, which I need something from,send the ids of those
+            net.RequestSendV(needsIHaveFromEachProc[other], other);
+            // and, for every proc, which needs something from me, receive those ids
+            needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
+            net.RequestReceiveV(needsEachProcHasFromMe[other], other);
+            // In principle, this bit could have been implemented as a separate GatherV onto every proc
+            // However, in practice, we expect the needs to be basically local
+            // so using point-to-point will be more efficient.
+            std::cout << "needsIHaveFromEachProc[other].size(): " << needsIHaveFromEachProc[other].size() << std::endl;
+            std::cout << "needsEachProcHasFromMe[other].size(): " << needsEachProcHasFromMe[other].size() << std::endl;
+          }
+
+          net.Dispatch();
+          needsHaveBeenShared = true;
         }
-        // every proc must send to all procs, how many it needs from that proc
-        net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
-
-        // every proc must receive from all procs, how many it needs to give that proc
-        std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().GetSize(), 0);
-        net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
-        net.Dispatch();
-
-        for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
-        {
-
-          // now, for every proc, which I need something from,send the ids of those
-          net.RequestSendV(needsIHaveFromEachProc[other], other);
-          // and, for every proc, which needs something from me, receive those ids
-          needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
-          net.RequestReceiveV(needsEachProcHasFromMe[other], other);
-          // In principle, this bit could have been implemented as a separate GatherV onto every proc
-          // However, in practice, we expect the needs to be basically local
-          // so using point-to-point will be more efficient.
-        }
-
-        net.Dispatch();
-
       }
     }
   }
