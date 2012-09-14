@@ -56,6 +56,8 @@ namespace hemelb
           std::vector<site_t> neededSites;
           std::vector<std::vector<site_t> > needsEachProcHasFromMe;
 
+          bool needsHaveBeenShared;
+
       };
 
     }

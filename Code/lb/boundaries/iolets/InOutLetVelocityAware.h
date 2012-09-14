@@ -9,13 +9,17 @@
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H
 
 #include "lb/boundaries/iolets/InOutLetMultiscale.h"
+#include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "log/Logger.h"
+//#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
   namespace lb
   {
+    class MacroscopicPropertyCache;
+
     namespace boundaries
     {
       namespace iolets
@@ -35,7 +39,7 @@ namespace hemelb
         {
           public:
             InOutLetVelocityAware() :
-                InOutLetMultiscale(), NDM(NULL), sitesWhichNeighbourThisBoundary()
+                InOutLetMultiscale(), NDM(NULL), propertyCache(NULL), sitesWhichNeighbourThisBoundary()
 
             {
             }
@@ -43,31 +47,15 @@ namespace hemelb
              * The shared values are registered through the initialiser-list syntactic sugar.
              */
             InOutLetVelocityAware(const InOutLetVelocityAware &other) :
-                InOutLetMultiscale(other), NDM(other.NDM), sitesWhichNeighbourThisBoundary()
+                InOutLetMultiscale(other), NDM(other.NDM), propertyCache(other.propertyCache), sitesWhichNeighbourThisBoundary()
             {
               /* Add a velocity aware exchange here if needed?*/
             }
 
             void InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
                                              geometry::LatticeData * latDat,
-                                             std::vector<site_t> &invBList)
-            {
-              NDM = manager;
-              latticeData = latDat;
-              sitesWhichNeighbourThisBoundary.reserve(1);
-
-              std::cout << "invBList size: " << invBList.size() << std::endl;
-
-             sitesWhichNeighbourThisBoundary=invBList;
-
-              std::cout << "sitesWhichNeighbourThisBoundary size: " << sitesWhichNeighbourThisBoundary.size() << std::endl;
-
-              for (std::vector<site_t>::iterator site_iterator = sitesWhichNeighbourThisBoundary.begin();
-                  site_iterator != sitesWhichNeighbourThisBoundary.end(); site_iterator++)
-              {
-                manager->RegisterNeededSite(*site_iterator);
-              }
-            }
+                                             hemelb::lb::MacroscopicPropertyCache* globalPropertyCache,
+                                             std::vector<site_t> invBList);
 
             PhysicalVelocity GetVelocity() const;
             virtual ~InOutLetVelocityAware()
@@ -85,7 +73,7 @@ namespace hemelb
             geometry::neighbouring::NeighbouringDataManager *NDM;
             std::vector<site_t> sitesWhichNeighbourThisBoundary;
             geometry::LatticeData * latticeData;
-
+            hemelb::lb::MacroscopicPropertyCache* propertyCache;
         }
         ;
       }
