@@ -88,15 +88,15 @@ namespace hemelb
                   latticeData->GetNeighbouringData().GetSite(*site_iterator).GetFOld(latticeData->GetLatticeInfo().GetNumVectors());
               //latticeData->CalculateDensityAndVelocity(f_data, &density, &velocity[0], &velocity[1], &velocity[2]);
 
-              std::cout << "IoletVA NumVectors: " << latticeData->GetLatticeInfo().GetNumVectors() << std::endl;
+              //std::cout << "IoletVA NumVectors: " << latticeData->GetLatticeInfo().GetNumVectors() << std::endl;
 
               for (Direction direction = 0; direction < latticeData->GetLatticeInfo().GetNumVectors(); ++direction)
               {
-                std::cout << "Write out Vector directions and fs: " << std::endl;
-                std::cout << "Vectors: " << latticeData->GetLatticeInfo().GetVector(direction)[0] << " "
-                    << latticeData->GetLatticeInfo().GetVector(direction)[1] << " "
-                    << latticeData->GetLatticeInfo().GetVector(direction)[2] << " " << std::endl;
-                std::cout << "f[direction] = " << f[direction] << std::endl;
+                //std::cout << "Write out Vector directions and fs: " << std::endl;
+                //std::cout << "Vectors: " << latticeData->GetLatticeInfo().GetVector(direction)[0] << " "
+                //    << latticeData->GetLatticeInfo().GetVector(direction)[1] << " "
+                //    << latticeData->GetLatticeInfo().GetVector(direction)[2] << " " << std::endl;
+                //std::cout << "f[direction] = " << f[direction] << std::endl;
                 total_velocity[0] += latticeData->GetLatticeInfo().GetVector(direction)[0] * f[direction];
                 total_velocity[1] += latticeData->GetLatticeInfo().GetVector(direction)[1] * f[direction];
                 total_velocity[2] += latticeData->GetLatticeInfo().GetVector(direction)[2] * f[direction];
