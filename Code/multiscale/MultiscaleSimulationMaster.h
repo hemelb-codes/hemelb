@@ -33,7 +33,8 @@ namespace hemelb
         {
           // We only have one shared object type so far, an iolet.
 
-          lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
+          //lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
+          lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(inletValues->GetLocalIoletCount());
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(outletValues->GetLocalIoletCount());
@@ -90,14 +91,14 @@ namespace hemelb
           std::cout << "outlets: " << invertedOutletBoundaryList.size() << " " << invertedOutletBoundaryList[0].size()
               << std::endl;
 
-          PrintVectorList(invertedInletBoundaryList);
-          PrintVectorList(invertedOutletBoundaryList);
+          //PrintVectorList(invertedInletBoundaryList);
+          //PrintVectorList(invertedOutletBoundaryList);
 
-          invertedInletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
-          invertedOutletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
+          //invertedInletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
+          //invertedOutletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
 
-          PrintVectorList(invertedInletBoundaryList);
-          PrintVectorList(invertedOutletBoundaryList);
+          //PrintVectorList(invertedInletBoundaryList);
+          //PrintVectorList(invertedOutletBoundaryList);
 
           //std::cout << "1) inlets: " << invertedInletBoundaryList.size() << " " << invertedInletBoundaryList[0].size()
           //    << std::endl;
@@ -115,10 +116,10 @@ namespace hemelb
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                 multiscaleIoletType);
               std::cout << "3) inlets: " << invertedInletBoundaryList.size() << " " << invertedInletBoundaryList[i].size() << std::endl;
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                      latticeData,
-                                                                                                                                      static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
-                                                                                                                                      invertedInletBoundaryList[i]);
+              //static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              //                                                                                                                        latticeData,
+              //                                                                                                                       static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
+              //                                                                                                                        invertedInletBoundaryList[i]);
             }
           }
 
@@ -128,10 +129,10 @@ namespace hemelb
             {
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                  multiscaleIoletType);
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
-                                                                                                                                       latticeData,
-                                                                                                                                       static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
-                                                                                                                                       invertedOutletBoundaryList[i]);
+              //static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              //                                                                                                                         latticeData,
+              //                                                                                                                         static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
+              //                                                                                                                         invertedOutletBoundaryList[i]);
             }
           }
 
@@ -155,6 +156,9 @@ namespace hemelb
 
           if (intercomms.DoMultiscale(GetState()->GetTime()))
           {
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Measured Density is %f. Pressure is %f.",
+                                                                                inletValues->GetLocalIolet(0)->GetDensity(GetState()->GetTimeStep()),
+                                                                                inletValues->GetLocalIolet(0)->GetPressureMax());
             SimulationMaster::DoTimeStep(); //This one hangs!
             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
                                                                                 GetState()->GetTime());
@@ -238,20 +242,24 @@ namespace hemelb
             int64_t totalSize = 0;
 
             int np = 0;
+            int rank = 0;
             MPI_Comm_size(hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator(), &np);
+            MPI_Comm_rank(hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator(), &rank);
             int64_t offset = 0;
 
-            std::cout << "Size (np = " << np << "):" << std::endl;
+            //std::cout << "rank = " << rank << " np = " << np << "):" << std::endl;
 
             for (int j = 0; j < np; j++)
             {
               totalSize += recvSizes[j];
               recvDispls[j] = offset;
               offset += recvSizes[j];
-              std::cout << recvSizes[j] << " " << recvDispls[j] << std::endl;
+              std::cout << "rank = " << rank << ":" << recvSizes[j] << "/" << recvDispls[j] << std::endl;
             }
 
-            site_t *recvList = new site_t[inList[i].size()];
+            site_t *recvList = new site_t[totalSize]; //inList[i].size()
+
+            //std::cout << "rank = " << rank << ", AllGatherv" << std::endl;
 
             MPI_Allgatherv(sendList,
                            inList[i].size(),
@@ -261,6 +269,8 @@ namespace hemelb
                            recvDispls,
                            MPI_LONG_LONG,
                            hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator());
+
+            std::cout << "done." << std::endl;
 
             std::vector<site_t> subList(totalSize);
             for (int j = 0; j < totalSize; j++)
