@@ -140,7 +140,7 @@ results:
         range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
         residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
         max_rel_residual_velocity: 'max([abs(x) for x in residual_velocity])/range_theoretical_axial_velocity'
-        ave_rel_residual_velocity: '( sum([x**2 for x in residual_velocity]) / sum([(x - mean_theoretical_axial_velocity)**2 for x in theoretical_axial_velocity])) ** 0.5'
+        ave_rel_residual_velocity: '((sum([x**2 for x in residual_velocity])/len(residual_velocity))**0.5) / range_theoretical_axial_velocity'
         mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
 
         # Pressure stats
