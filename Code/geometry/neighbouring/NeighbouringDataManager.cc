@@ -89,7 +89,8 @@ namespace hemelb
       {
         if (needsHaveBeenShared == false)
         {
-         ShareNeeds();
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("NDM needs are shared now.");
+          ShareNeeds();
         }
 
         // Ordering is important here, to ensure the requests are registered in the same order
@@ -162,8 +163,8 @@ namespace hemelb
             // In principle, this bit could have been implemented as a separate GatherV onto every proc
             // However, in practice, we expect the needs to be basically local
             // so using point-to-point will be more efficient.
-            std::cout << "needsIHaveFromEachProc[other].size(): " << needsIHaveFromEachProc[other].size() << std::endl;
-            std::cout << "needsEachProcHasFromMe[other].size(): " << needsEachProcHasFromMe[other].size() << std::endl;
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("needsIHaveFromEachProc[other].size(): %d", needsIHaveFromEachProc[other].size());
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("needsEachProcHasFromMe[other].size(): %d", needsEachProcHasFromMe[other].size());
           }
 
           net.Dispatch();
