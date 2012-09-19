@@ -140,7 +140,7 @@ results:
         range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
         residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
         max_rel_residual_velocity: 'max([abs(x) for x in residual_velocity])/range_theoretical_axial_velocity'
-        ave_rel_residual_velocity: '( sum([x**2 for x in residual_velocity]) / sum([(x - mean_theoretical_axial_velocity)**2 for x in theoretical_axial_velocity])) ** 0.5'
+        ave_rel_residual_velocity: '(( sum([x**2 for x in residual_velocity]) / len(residual_velocity) ) ** 0.5) / range_theoretical_axial_velocity'
         mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
 
         # Pressure stats
@@ -153,6 +153,7 @@ results:
         max_rel_residual_pressure: 'max([abs(x) for x in residual_pressure])/range_theoretical_axial_pressure'
         ave_rel_residual_pressure: '( sum([x**2 for x in residual_pressure]) / sum([(x - mean_theoretical_axial_pressure)**2 for x in theoretical_axial_pressure])) ** 0.5'
         mean_actual_pressure: '133.3223874*sum(axial_pressure)/len(axial_pressure)'
+        pressure_comparison_axial_position: '[x for x in axial_position if abs(x) < pipe_length/4]'
 
         # Inlet stats
         inlet_pressure: '[133.3223874 * x for x in inlet_pressure_torr]'
@@ -258,38 +259,22 @@ graphs:
           - sites
       independent:
           - size
-            
-reports:
-  performance_on_planck:
-    name: "Performance report for Planck"
-    defaults:
+    velocity_comparison:
+      name: "Simulated vs. theoretical velocity profile for Reynolds number ${theoretical_reynolds_number}"
       select:
-        machine: planck
-        acceptance: OK
-      curves:
-        - build_number
-    graphs:
-      performance_versus_cores:
-        curves:
-          - sites
-      performance_versus_size:
-        curves:
-          - cores
-  performance_on_oppenheimer:
-    name: "Performance report for Oppenheimer"
-    defaults:
+        type: hemelb
+      dependent:
+        - theoretical_axial_velocity
+        - axial_velocity
+      independent:
+        - radial_position
+
+    pressure_comparison:
+      name: "Simulated vs. theoretical pressure profile for Reynolds number ${theoretical_reynolds_number}"
       select:
-        machine: oppenheimer
-        acceptance: OK
-      curves:
-        - build_number
-    graphs:
-      performance_versus_cores:
-        curves:
-          - sites
-      performance_versus_size:
-        curves:
-          - cores
-      sites_versus_voxel_size:
-        curves:
-          - cores
+        type: hemelb
+      dependent:
+        - theoretical_axial_pressure
+        - axial_pressure
+      independent:
+        - pressure_comparison_axial_position            
