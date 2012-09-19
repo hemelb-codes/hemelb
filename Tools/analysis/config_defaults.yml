@@ -259,6 +259,7 @@ graphs:
           - sites
       independent:
           - size
+
     velocity_comparison:
       name: "Simulated vs. theoretical velocity profile for Reynolds number ${theoretical_reynolds_number}"
       select:
@@ -278,3 +279,39 @@ graphs:
         - axial_pressure
       independent:
         - pressure_comparison_axial_position            
+
+    max_pressure_error_by_re:
+      name: "Max normalised pressure residual along centreline of cylinder with varying Reynolds number"
+      select:
+        type: hemelb
+      dependent:
+        - max_rel_residual_pressure
+      independent:
+        - theoretical_reynolds_number
+
+    ave_pressure_error_by_re:
+      name: "Average normalised pressure residual along centreline of cylinder with varying Reynolds number"
+      select:
+        type: hemelb
+      dependent:
+        - ave_rel_residual_pressure
+      independent:
+        - theoretical_reynolds_number
+
+    max_velocity_error_by_re:
+      name: "Max normalised velocity residual along diameter of cylinder with varying Reynolds number"
+      select:
+        type: hemelb
+      dependent:
+        - max_rel_residual_velocity
+      independent:
+        - theoretical_reynolds_number
+
+    ave_velocity_error_by_re:
+      name: "Average normalised velocity residual along diameter of cylinder with varying Reynolds number"
+      select:
+        type: hemelb
+      dependent:
+        - ave_rel_residual_velocity
+      independent:
+        - theoretical_reynolds_number
