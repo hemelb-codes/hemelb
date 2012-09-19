@@ -153,8 +153,10 @@ namespace hemelb
 
         void DoTimeStep()
         {
+          bool advance=intercomms.DoMultiscale(GetState()->GetTime());
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("At time step %i, should advance %i", GetState()->GetTimeStep(), static_cast<int>(advance));
 
-          if (intercomms.DoMultiscale(GetState()->GetTime()))
+          if (advance)
           {
             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Measured Density is %f. Pressure is %f.",
                                                                                 inletValues->GetLocalIolet(0)->GetDensity(GetState()->GetTimeStep()),

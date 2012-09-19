@@ -175,16 +175,16 @@ namespace hemelb
             //    so that if it goes wrong, the program will crash timely.
             ICandRecvDataPacked = (char *) malloc(recv_icand_data_size);
             ICandSendDataPacked = (char *) malloc(send_icand_data_size);
-
-            doubleContents["shared_time"] = 0.0;
-
-            ExchangeWithMultiscale(); //is this correct???
           }
+            doubleContents["shared_time"] = 0.0;
+            ExchangeWithMultiscale(); //is this correct???
+
         }
 
         /* This is run at the start of every time step in the main HemeLB simulation. */
         bool DoMultiscale(double new_time)
         {
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Entering DM");
           // 1. check whether this HemeLB instance was supposed to take a time step.
           if (ShouldAdvance())
           {
@@ -192,7 +192,7 @@ namespace hemelb
             // 2. Update the shared time.
             UpdateSharedTime(new_time);
           }
-
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Calling EWM");
           // 3. Exchange ICands with the other code.
           ExchangeWithMultiscale();
 
@@ -398,7 +398,7 @@ namespace hemelb
 
         void UnpackAndMergeRegisteredObjects(ContentsType registeredObjects, char *ICandRecvDataPacked)
         {
-
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Entering UAMRO");
           long long int offset = 0;
 
           if (hemelb::multiscale::mpwide::mpwide_comm_proc)
@@ -433,6 +433,9 @@ namespace hemelb
             }
           }
 
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("PreMPI_Bcast...%d",
+                                                                                             registeredObjects.size());
+
           /* Over all Processes. */
           for (ContentsType::iterator intercommunicandData = registeredObjects.begin();
               intercommunicandData != registeredObjects.end(); intercommunicandData++)
@@ -443,12 +446,12 @@ namespace hemelb
 
             if (hemelb::multiscale::mpwide::mpwide_comm_proc)
             {
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Broadcasting...%lf",
-                                                                                   sharedPressure);
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Broadcasting...%lf %d",
+                                                                                   sharedPressure, registeredObjects.size());
             }
             else
             {
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Receiving...%lf", sharedPressure);
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Receiving...%lf %d", sharedPressure, registeredObjects.size());
             }
             MPI_Bcast(&sharedPressure, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             static_cast<double*>((void *) & (*sharedObject.Values()[0]))[0] = sharedPressure;
@@ -467,14 +470,14 @@ namespace hemelb
 
         bool ExchangeWithMultiscale()
         {
-          std::cout << "ExchangeWithMultiscale" << std::endl;
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Entering EWM");
 
           // 1. Pack/Serialize local shared data.
           PackRegisteredObjects(ICandSendDataPacked, registeredObjects);
 
           // 2. Exchange serialized shared data.
           ExchangePackages(ICandSendDataPacked, ICandRecvDataPacked);
-
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Calling UAMRO");
           // 3. Unpack and merged the two serialized shared data copies.
           UnpackAndMergeRegisteredObjects(registeredObjects, ICandRecvDataPacked);
 
