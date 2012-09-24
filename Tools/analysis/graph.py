@@ -36,10 +36,12 @@ class Graph(object):
         
     def prepare(self,results):
         self.filtered_results=results.filter(self.select)
+        def tuplify_lists(arg):
+            return tuple(arg) if hasattr(arg, '__iter__') else arg
         def curve_key(result):
-            return tuple([result.datum(prop) for prop in self.curves])
+            return tuple([tuplify_lists(result.datum(prop)) for prop in self.curves])
         def sort_key(result):
-            return tuple([result.datum(prop) for prop in self.independent])
+            return tuple([tuplify_lists(result.datum(prop)) for prop in self.independent])
         self.curve_results={key:list(group) for key,group in itertools.groupby(sorted(self.filtered_results,key=curve_key),curve_key)}
         # for now, support only a single dependent and a single independent variable on each curve
         self.curve_data={
