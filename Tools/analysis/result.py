@@ -336,6 +336,10 @@ def result_model(config):
                     read_value=ResultProperty.parse_value(value[1:])
                     norm_error=abs( (read_value-prop)/(read_value+prop) )
                     return norm_error < 0.03
+                elif type(prop) == list:
+                    # Ignore the '[' and ']'. Split on a string, parse each to float.
+                    parsed_value = [float(x) for x in  value[1:-1].split(',')]
+                    return prop == parsed_value
                 else:
                     return prop==value
             except TypeError:
