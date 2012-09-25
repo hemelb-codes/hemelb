@@ -210,7 +210,8 @@ results:
             compound_properties:
                 womersley_number: 'pipe_radius * math.sqrt((2.0 * numpy.pi * blood_density) / (viscosity * inlet_pressure_period))'
                 theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
-
+                theoretical_axial_poiseuille_velocity: '(1/(4*viscosity)) * (133.3223874*inlet_pressure_amplitude/pipe_length) * (pow(pipe_radius,2))'
+                theoretical_reynolds_number: 1000*theoretical_axial_poiseuille_velocity*2*pipe_radius/viscosity
             
     extraction_files:
       'results/Extracted/pressure_axial_profile.dat':
@@ -333,3 +334,22 @@ graphs:
         - ave_rel_residual_velocity
       independent:
         - womersley_number
+
+
+    max_velocity_error_by_resolution:
+      name: "Max normalised velocity residual along diameter of cylinder with varying resolution"
+      select:
+        type: hemelb
+      dependent:
+        - max_rel_residual_velocity
+      independent:
+        - voxel_size
+
+    ave_velocity_error_by_resolution:
+      name: "Average normalised velocity residual along diameter of cylinder with varying resolution"
+      select:
+        type: hemelb
+      dependent:
+        - ave_rel_residual_velocity
+      independent:
+        - voxel_size
