@@ -37,9 +37,13 @@ class Analysis(object):
             print "Report %s written to %s" % (report.name,report.path)
 
 def main():
+    print 'Loading environment'
     analysis=Analysis(environment.config)
+    print 'Loading data'
     analysis.load_data()
+    print 'Preparing data'
     analysis.prepare()
+    print 'Writing reports'
     analysis.write()
 
 if __name__ == '__main__':
