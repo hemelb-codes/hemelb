@@ -344,6 +344,7 @@ graphs:
         - max_rel_residual_velocity
       independent:
         - voxel_size
+        - theoretical_reynolds_number
 
     ave_velocity_error_by_resolution:
       name: "Average normalised velocity residual along diameter of cylinder with varying resolution"
@@ -353,3 +354,4 @@ graphs:
         - ave_rel_residual_velocity
       independent:
         - voxel_size
+        - theoretical_reynolds_number
