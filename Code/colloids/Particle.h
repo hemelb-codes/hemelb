@@ -38,8 +38,6 @@ namespace hemelb
         /** constructor - gets an invalid particle for making MPI data types */
         Particle() {};
 
-        static const unsigned int XdrDataSize;
-
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
@@ -102,17 +100,17 @@ namespace hemelb
          *  the fields included are all those from the PersistedParticle base class
          *  note - this data type uses displacements rather than absolute addresses
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-         *  when you no longer need this type, remember to call MPI::Datatype::Free 
+         *  when you no longer need this type, remember to call MPI_Datatype_free 
          */
-        const MPI::Datatype CreateMpiDatatypeWithPosition() const;
+        const MPI_Datatype CreateMpiDatatypeWithPosition() const;
 
         /** creates a derived MPI datatype that represents a single particle object
          *  the fields included in this type are: particleId and velocity(xyz) only
          *  note - this data type uses displacements rather than absolute addresses
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-         *  when you no longer need this type, remember to call MPI::Datatype::Free 
+         *  when you no longer need this type, remember to call MPI_Datatype_free 
          */
-        const MPI::Datatype CreateMpiDatatypeWithVelocity() const;
+        const MPI_Datatype CreateMpiDatatypeWithVelocity() const;
 
       private:
         /** partial interpolation of fluid velocity - temporary value only */
