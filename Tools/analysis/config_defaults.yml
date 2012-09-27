@@ -67,6 +67,7 @@ results:
             gmy_fluid_site_count: site_count
             gmy_block_size: block_size
             gmy_block_count: block_count
+            voxel_size: voxel_size 
     name_properties:
         machine_by_name: '(legion|hector|oppenheimer|planck|julian|localhost)'
         type_by_name: '(regression|unittests)'
@@ -125,7 +126,15 @@ results:
         steering_steps_per_frame: sum(steering_elapsed_steps)/float(len(steering_elapsed_steps))
         viscosity: (4e-3)
         blood_density: (1000.0)
-        
+        cs2: 1./3.
+
+        # LB parameters
+        tau: 0.5 + step_length * (viscosity / blood_density) / (cs2 * voxel_size * voxel_size)
+        lattice_speed: voxel_size / step_length
+        mach_number: max(theoretical_axial_velocity) / (cs2 * lattice_speed)
+        mean_density_difference: pressure_diff / (lattice_speed * lattice_speed * blood_density * cs2)
+        momentum_diffusion_time_count: (steps * step_length) / (pipe_radius**2 * blood_density / viscosity)
+
         # Geometry stats
         pipe_length: 'math.sqrt(sum((x - y)**2 for x, y in zip(pipe_ends[0], pipe_ends[1])))' # todo: #493 numpyfy expression when possible: np.linalg.norm(pipe_ends[0] - pipe_ends[1])
         axis: '[(x-y) / pipe_length for x, y in zip(pipe_ends[1], pipe_ends[0])]'
@@ -212,13 +221,13 @@ results:
                 theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
                 theoretical_axial_poiseuille_velocity: '(1/(4*viscosity)) * (133.3223874*inlet_pressure_amplitude/pipe_length) * (pow(pipe_radius,2))'
                 theoretical_reynolds_number: 1000*theoretical_axial_poiseuille_velocity*2*pipe_radius/viscosity
+                sound_waves_per_oscillation: (inlet_pressure_period / step_length) / (pipe_length / voxel_size)
             
     extraction_files:
       'results/Extracted/pressure_axial_profile.dat':
         axial_field_count: fieldCount
         axial_pressure_torr: axial_pressure
         raw_axial_coordinate: grid
-        voxel_size: voxelSizeMetres
         origin: originMetres
       'results/Extracted/velocity_shearstress_line_2_5_lengths_in.dat':
         radial_velocity_field: developed_velocity_profile
