@@ -12,6 +12,8 @@
 #include <algorithm>
 #include "log/Logger.h"
 #include "io/writers/xdr/XdrMemWriter.h"
+#include "io/formats/formats.h"
+#include "io/formats/colloids.h"
 
 namespace hemelb
 {
@@ -63,9 +65,10 @@ namespace hemelb
     const void ParticleSet::OutputInformation(const LatticeTime timestep) const
     {
       char * const outputFilenameCstr = "ColloidOutput.xdr\0";
-      const uint16_t sizeOfHeader = 24;
       
-      const unsigned int maxSize = Particle::XdrDataSize * particles.size() + sizeOfHeader;
+      const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
+                                 + io::formats::colloids::HeaderLength
+                                 + io::formats::colloids::MagicLength;
       char * const xdrBuffer = new char[maxSize];
       io::writers::xdr::XdrMemWriter writer(xdrBuffer, maxSize);
 
@@ -111,7 +114,15 @@ namespace hemelb
       MPI_Offset dispStartOfHeader;
       MPI_File_get_byte_offset(fh, offsetEOF, &dispStartOfHeader);
 
-      log::Logger::Log<log::Info, log::OnePerCore>(
+      unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
+      if (dispStartOfHeader == 0)
+      {
+        // the header starts at the begining of a new file, so we
+        // write the magic numbers that identify the type of file
+        sizeOfHeader += io::formats::colloids::MagicLength;
+      }
+
+      log::Logger::Log<log::Debug, log::OnePerCore>(
         "dispStartOfHeader: %i (from offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
 
       MPI_File_set_view(fh, dispStartOfHeader + sizeOfHeader,
@@ -146,7 +157,7 @@ namespace hemelb
       MPI_File_set_view(fh, dispStartOfHeader,
                         MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
 
-      log::Logger::Log<log::Info, log::OnePerCore>(
+      log::Logger::Log<log::Debug, log::OnePerCore>(
         "dispStartOfHeader: %i (new offsetEOF: %i)\n", dispStartOfHeader, offsetEOF);
 
       MPI_File_sync(fh);
@@ -155,8 +166,14 @@ namespace hemelb
 
       if (localRank == 0)
       {
-        writer << (uint32_t)sizeOfHeader;
-        writer << (uint32_t)Particle::XdrDataSize;
+        if (dispStartOfHeader == 0)
+        {
+          writer << (uint32_t)io::formats::HemeLbMagicNumber;
+          writer << (uint32_t)io::formats::colloids::MagicNumber;
+          writer << (uint32_t)io::formats::colloids::VersionNumber;
+        }
+        writer << (uint32_t)io::formats::colloids::HeaderLength;
+        writer << (uint32_t)io::formats::colloids::RecordLength;
         writer << (uint64_t)offsetEOF;
         writer << (uint64_t)timestep;
         MPI_File_write(fh, &xdrBuffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
