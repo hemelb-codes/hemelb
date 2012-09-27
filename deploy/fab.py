@@ -518,6 +518,16 @@ def resubmit(name):
 	with cd(env.job_results):
 		with prefix(env.run_prefix):
 			run(template("$job_dispatch ${name}.sh"))
+			
+@task
+def multijob(*names,**args):
+    # We need to put together a job script to submit all the jobs in turn
+    # This we do, by just calling the pre-written jobscripts in existing prepared but not run jobs
+    jobscriptpaths=["bash "+env.pather.join(env.scripts_path,name)+".sh" for name in names]
+    env.jobstorun="\n".join(jobscriptpaths)
+    # And then, submit it
+    job(dict(script='multijob',job_name_template='multijob',
+            cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
 
 @task
 def hemelbs(config,**args):
