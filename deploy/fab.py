@@ -511,6 +511,14 @@ def hemelb(config,**args):
     if args.get('steer',False):
         execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
+
+@task
+def resubmit(name):
+	with_job(name)
+	with cd(env.job_results):
+		with prefix(env.run_prefix):
+			run(template("$job_dispatch ${name}.sh"))
+
 @task
 def hemelbs(config,**args):
     """Submit multiple HemeLB jobs to the remote queue.
@@ -581,9 +589,11 @@ def job(*option_dictionaries):
             tempf.flush() #Flush the file before we copy it.
             put(tempf.name,env.pather.join(env.job_results,'env.yml'))
         run(template("chmod u+x $dest_name"))
-        with cd(env.job_results):
-            with prefix(env.run_prefix):
-                run(template("$job_dispatch $dest_name"))
+        # Allow option to submit all preparations, but not actually submit the job
+        if not env.get("noexec",False):
+		    with cd(env.job_results):
+		        with prefix(env.run_prefix):
+		            run(template("$job_dispatch $dest_name"))
 
 def input_to_range(arg,default):
     ttype=type(default)
