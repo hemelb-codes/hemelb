@@ -217,6 +217,9 @@ def geometry_header_loader(path):
         @property
         def block_count(self):
             return len(self.Domain.Blocks)
+        @property
+        def voxel_size(self):
+            return self.Domain.VoxelSize
         pass
     gh = GeometryHeader(path)
     gh.Load()
