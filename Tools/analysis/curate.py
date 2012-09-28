@@ -75,6 +75,7 @@ class Action(object):
         self.pp.pprint(result.hash())
     def display(self,result,*cols):
         self.writer.writerow(map(lambda x: x if not x==None else 'None',[result.datum(col) for col in cols]))
+        results.files.clear()
     def name(self,result):
         print(result.name,file=self.stream)
     def accept(self,result):
