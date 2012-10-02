@@ -58,3 +58,11 @@ def womersley_velocity(radial_position, time, womersley, pipe_radius, pipe_lengt
          * (1 - bessel_numerator/bessel_denominator)
          * np.exp(2j * np.pi * (time/pressure_period))).real
   return sol
+
+def vector_magnitude(vector):
+  return np.linalg.norm(vector)
+
+def has_converged(field_1, field_2, max_rel_epsilon, norm=lambda x,y: (x-y)/x):
+  diff_field = [abs(norm(x,y)) for (x,y) in zip(field_1, field_2) ]
+  index = diff_field.index(max(diff_field))
+  return max(diff_field) < max_rel_epsilon
