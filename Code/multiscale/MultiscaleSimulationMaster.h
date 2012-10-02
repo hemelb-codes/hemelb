@@ -36,18 +36,30 @@ namespace hemelb
           //lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
           lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
-          std::vector<std::vector<site_t> > invertedInletBoundaryList(inletValues->GetLocalIoletCount());
-          std::vector<std::vector<site_t> > invertedOutletBoundaryList(outletValues->GetLocalIoletCount());
+          int GlobalIoletCount[] = {inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount()};
+
+          MPI_Bcast(GlobalIoletCount, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+          std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
+          std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
+
+
+
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("inlets start %i/%i",inletValues->GetLocalIoletCount(), GlobalIoletCount[0]);
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("outlets start %i/%i",outletValues->GetLocalIoletCount(), GlobalIoletCount[1]);
+
+          //TODO: Propagate IoletCounts from process 0 to others to get this completely straight!
+          //Throw a warning when process 0 count mismatches with the aggregate of the others.
 
           std::vector<site_t> dummy;
 
           /* Populate with dummy entries for testing... */
-          for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
+          for (unsigned int i = 0; i < GlobalIoletCount[0]; i++)
           {
             invertedInletBoundaryList[i] = dummy;
           }
 
-          for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
+          for (unsigned int i = 0; i < GlobalIoletCount[1]; i++)
           {
             invertedOutletBoundaryList[i] = dummy;
           }
@@ -86,16 +98,15 @@ namespace hemelb
                                                                     offset,
                                                                     ioletsSiteCount);
 
-          std::cout << "inlets: " << invertedInletBoundaryList.size() << " " << invertedInletBoundaryList[0].size()
-              << std::endl;
-          std::cout << "outlets: " << invertedOutletBoundaryList.size() << " " << invertedOutletBoundaryList[0].size()
-              << std::endl;
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Populated inlets: %i %i", invertedInletBoundaryList.size(), invertedInletBoundaryList[0].size());
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Populated outlets: %i %i", invertedOutletBoundaryList.size(), invertedOutletBoundaryList[0].size());
 
           //PrintVectorList(invertedInletBoundaryList);
           //PrintVectorList(invertedOutletBoundaryList);
 
-          //invertedInletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
-          //invertedOutletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
+          //TODO: Debug
+          invertedInletBoundaryList  = ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
+          invertedOutletBoundaryList = ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
 
           //PrintVectorList(invertedInletBoundaryList);
           //PrintVectorList(invertedOutletBoundaryList);
@@ -109,26 +120,30 @@ namespace hemelb
           // Fortunately, the BoundaryValues instance has worked this out for us.
           for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
           {
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("1) %i %i", i, GlobalIoletCount[0]);
             // could be a if dynamic_cast<> rather than using a castable? virtual method pattern, if we prefer.
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              std::cout << "2) inlets: " << invertedInletBoundaryList.size() << " " << invertedInletBoundaryList[0].size() << " " << i << std::endl;
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("2) inlets: %i %i %i", invertedInletBoundaryList.size(), invertedInletBoundaryList[0].size(), i);
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                 multiscaleIoletType);
-              std::cout << "3) inlets: " << invertedInletBoundaryList.size() << " " << invertedInletBoundaryList[i].size() << std::endl;
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("3) inlets: %i %i", invertedInletBoundaryList.size(), invertedInletBoundaryList[i].size());
               //static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
               //                                                                                                                        latticeData,
-              //                                                                                                                       static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
+              //                                                                                                                        static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
               //                                                                                                                        invertedInletBoundaryList[i]);
             }
           }
 
           for (unsigned int i = 0; i < outletValues->GetLocalIoletCount(); i++)
           {
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("1) %i %i", i, GlobalIoletCount[1]);
             if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("2) outlets: %i %i %i", invertedOutletBoundaryList.size(), invertedOutletBoundaryList[0].size(), i);
               static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                  multiscaleIoletType);
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("3) outlets: %i %i", invertedOutletBoundaryList.size(), invertedOutletBoundaryList[i].size());
               //static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
               //                                                                                                                         latticeData,
               //                                                                                                                         static_cast<hemelb::lb::MacroscopicPropertyCache*>(&latticeBoltzmannModel->GetPropertyCache()),
@@ -136,17 +151,19 @@ namespace hemelb
             }
           }
 
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("MSMaster ShareICs started...");
           intercomms.ShareInitialConditions();
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("MSMaster Init finished!");
         }
 
         void PrintVectorList(std::vector<std::vector<site_t> > v)
         {
-          std::cout << "Printing Vector List:" << std::endl;
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Printing Vector List:");
           for (unsigned int i = 0; i < v.size(); i++)
           {
             for (unsigned int j = 0; j < v[i].size(); j++)
             {
-              std::cout << "Boundary: " << i << " " << j << " " << v[i][j] << std::endl;
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Boundary: %i % i %i", i, j, v[i][j]);
             }
           }
         }
@@ -194,13 +211,12 @@ namespace hemelb
             /* 2. Grow the list to an appropriate size if needed. */
             while ( ((int) invertedBoundaryList.size()) <= boundaryID)
             {
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("WARNING: Growing the invertedBoundaryList, because we created in wrongly in MultiscaleSimulation Master.");
               std::vector<site_t> a(0);
               invertedBoundaryList.push_back(a);
               if (invertedBoundaryList.size() > 100000)
               {
-                std::cerr
-                    << "ERROR: invertedBoundaryList is growing to ridiculous proportions due to a faulty boundaryID."
-                    << std::endl;
+                hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("ERROR: invertedBoundaryList is growing to ridiculous proportions due to a faulty boundaryID.");
                 exit(-1);
               }
             }
@@ -223,6 +239,8 @@ namespace hemelb
            * inList.size() is equal everywhere. This is not necessarily the case.
            * Use an AllReduce MAX and resize inList accordingly to make the remnant
            * of the code work here for unequal inList sizes. */
+
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Starting IBL Exchange... size = %i", inList.size());
 
           for (unsigned int i = 0; i < inList.size(); i++)
           {
@@ -281,6 +299,7 @@ namespace hemelb
             }
             outList.push_back(subList);
           }
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Finishing IBL Exchange...");
           return outList;
         }
     }

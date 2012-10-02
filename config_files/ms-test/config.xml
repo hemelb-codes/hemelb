@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <hemelbsettings>
-  <simulation cycles="3" cyclesteps="1000" stresstype="1" />
+  <simulation cycles="10" cyclesteps="20000" stresstype="1" />
   <geometry>
     <datafile path="network_0_125mm.gmy" />
   </geometry>
