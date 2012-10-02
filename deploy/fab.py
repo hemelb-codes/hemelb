@@ -425,7 +425,7 @@ def put_results(name=''):
     rsync_project(local_dir=env.job_results_local+'/',remote_dir=env.job_results)
 
 @task
-def fetch_results(name=''):
+def fetch_results(name='',regex=''):
     """
     Fetch results of remote jobs to local result store.
     Specify a job name to transfer just one job.
@@ -434,7 +434,7 @@ def fetch_results(name=''):
     If you can't mount entropy, 'put results' can be useful,  via 'fab legion fetch_results; fab entropy put_results'
     """
     with_job(name)
-    local(template("rsync -pthrvz $username@$remote:$job_results/ $job_results_local"))
+    local(template("rsync -pthrvz $username@$remote:$job_results/%s $job_results_local" % regex))
 
 @task
 def clear_results(name=''):
@@ -480,7 +480,7 @@ def batch_build_code(*configurations,**extras):
     """Submit a build job to the remote serial queue."""
     configure_cmake(configurations,extras)
     with settings(batch_header=env.batch_header+'_serial'):
-      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
+      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
 
 @task
 def batch_build(*configurations,**extras):
