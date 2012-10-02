@@ -15,6 +15,8 @@ def extraction_parser(content,pattern):
     name=pattern
   else:
     time,name=pattern
+    if type(time) == str and time[0] == 'i':
+      time = content.times[int(time[1:])]
   if time=='final':
     time=content.times[-1]
   fields=content.GetByTimeStep(time)

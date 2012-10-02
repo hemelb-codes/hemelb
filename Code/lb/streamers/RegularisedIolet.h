@@ -63,15 +63,8 @@ namespace hemelb
                 distribn_t wall_distance = site.GetWallDistance<LatticeType> (direction);
                 int boundaryId = site.GetBoundaryId();
 
-                // Extrapolate from this site across the iolet to get the density at the
-                // "ghost" site, which would be streaming to this one.
-                distribn_t ghostDensity = (iolet->GetBoundaryDensity(boundaryId) + (wall_distance - 1.)
-                    * hydroVars.density) / wall_distance;
-
-                // Enforce a maximum 2% difference from the fluid site.
-                ghostDensity = util::NumericalFunctions::enforceBounds(ghostDensity,
-                                                                       hydroVars.density * 0.98,
-                                                                       hydroVars.density * 1.02);
+                // Set the density at the "ghost" site to be the density of the iolet.
+                distribn_t ghostDensity = iolet->GetBoundaryDensity(boundaryId);
 
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
                 util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
