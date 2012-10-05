@@ -321,25 +321,10 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::ResetUnstableSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i tau %.6f max_press_diff %.3f Ma %.3f max_vel_phys %e",
-                                                                      simulationState->GetTimeStep(),
-                                                                      latticeBoltzmannModel->GetLbmParams()->GetTau(),
-                                                                      incompressibilityChecker->GetMaxRelativeDensityDifference(),
-                                                                      unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
-                                                                          / hemelb::Cs,
-                                                                      incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
-
-  fileManager->EmptyOutputDirectories();
-  stepManager->CallSpecialAction(hemelb::net::phased::steps::Reset);
-
-#ifndef NO_STREAKLINES
-  visualisationControl->Reset();
-#endif
-
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %f\n",
-                                                                      simulationState->GetTimeStepLength());
-
-  simulationState->Reset();
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
+                                                                       simulationState->GetTimeStepLength());
+  Finalise();
+  Abort();
 }
 
 void SimulationMaster::WriteLocalImages()
