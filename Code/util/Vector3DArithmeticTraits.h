@@ -60,6 +60,13 @@ namespace hemelb
         typedef float operatorReturnType;
     };
 
+    // The result must be stored as a double-precision floating-point number.
+    template<>
+    struct Vector3DArithmeticTraits<int, double>
+    {
+        typedef double operatorReturnType;
+    };
+
     // Keep the most precise type.
     template<>
     struct Vector3DArithmeticTraits<float, double>

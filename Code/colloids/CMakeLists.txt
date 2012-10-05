@@ -1,3 +1,9 @@
+add_library(hemelb_colloidsBCs
+            BoundaryConditions.cc
+           )
+target_link_libraries(hemelb_colloidsBCs
+                      hemelb_io
+                     )
 add_library(hemelb_colloidsForces
             BodyForces.cc
            )
@@ -15,4 +21,5 @@ target_link_libraries(hemelb_colloids
                       hemelb_io
                       hemelb_lb
                       hemelb_colloidsForces
+                      hemelb_colloidsBCs
                      )

@@ -264,6 +264,10 @@ namespace hemelb
       // communication from step 6
       particleSet->CommunicateFluidVelocities();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("About to do ApplyBoundaryConditions\n");
+
+      particleSet->ApplyBoundaryConditions();
+
       log::Logger::Log<log::Debug, log::OnePerCore>("About to do UpdatePositions\n");
 
       // steps 7 & 2 combined

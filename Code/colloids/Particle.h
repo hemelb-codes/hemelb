@@ -41,6 +41,7 @@ namespace hemelb
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
+        const LatticeVelocity& GetVelocity() const { return velocity; }
         const PhysicalMass GetMass() const {return mass; }
 
         /** property getter for ownerRank */

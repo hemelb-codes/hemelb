@@ -9,6 +9,7 @@
 
 #include "colloids/ParticleSet.h"
 #include "colloids/BodyForces.h"
+#include "colloids/BoundaryConditions.h"
 #include <algorithm>
 #include "log/Logger.h"
 #include "io/writers/xdr/XdrMemWriter.h"
@@ -224,6 +225,18 @@ namespace hemelb
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
           particle.CalculateBodyForces();
+      }
+    }
+
+    const void ParticleSet::ApplyBoundaryConditions()
+    {
+      for (std::vector<Particle>::iterator iter = particles.begin();
+           iter != particles.end();
+           iter++)
+      {
+        Particle& particle = *iter;
+        if (particle.GetOwnerRank() == localRank)
+          BoundaryConditions::DoSomeThingsToParticle(particle);
       }
     }
 
