@@ -30,7 +30,7 @@ namespace hemelb
                       PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
-        LatticeVelocity ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const;
+        LatticeSpeed ConvertSpeedToLatticeUnits(PhysicalSpeed speed) const;
         LatticeStress ConvertStressToLatticeUnits(PhysicalStress stress) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
@@ -73,7 +73,7 @@ namespace hemelb
         lb::SimulationState* simulationState;
         PhysicalDistance voxelSize; //!< Lattice displacement in physical units.
         PhysicalTime timestepTime;
-        PhysicalVelocity latticeSpeed; //!< Lattice displacement length divided by time step.
+        PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
         PhysicalPosition latticeOrigin;
     };
 

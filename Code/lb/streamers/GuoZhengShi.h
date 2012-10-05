@@ -173,7 +173,7 @@ namespace hemelb
                     }
 
                     // Now calculate this field information.
-                    util::Vector3D<LatticeVelocity> nextNodeOutVelocity;
+                    LatticeVelocity nextNodeOutVelocity;
                     distribn_t nextNodeOutFEq[LatticeType::NUMVECTORS];
 
                     // Go ahead and calculate the density, velocity and eqm distribution.

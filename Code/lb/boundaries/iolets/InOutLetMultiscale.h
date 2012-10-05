@@ -83,7 +83,7 @@ namespace hemelb
             {
               return maxPressure;
             }
-            PhysicalVelocity GetVelocity() const
+            PhysicalVelocity_deprecated GetVelocity() const
             {
               return velocity;
             }
@@ -97,7 +97,7 @@ namespace hemelb
               return pressure;
             }
 
-            multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference()
+            multiscale::SharedValue<PhysicalVelocity_deprecated> & GetVelocityReference()
             {
               return velocity;
             }
@@ -127,7 +127,7 @@ namespace hemelb
             multiscale::SharedValue<PhysicalPressure> pressure;
             multiscale::SharedValue<PhysicalPressure> minPressure;
             multiscale::SharedValue<PhysicalPressure> maxPressure;
-            mutable multiscale::SharedValue<PhysicalVelocity> velocity;
+            mutable multiscale::SharedValue<PhysicalVelocity_deprecated> velocity;
         };
       }
     }

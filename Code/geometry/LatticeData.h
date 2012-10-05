@@ -532,6 +532,11 @@ namespace hemelb
         }
 
         // Method should remain protected, intent is to access this information via Site
+        const distribn_t * GetCutDistances(site_t iSiteIndex) const
+        {
+          return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];
+        }
+
         distribn_t * GetCutDistances(site_t iSiteIndex)
         {
           return &distanceToWall[iSiteIndex * (latticeInfo.GetNumVectors() - 1)];

@@ -45,6 +45,9 @@ namespace hemelb
         /** calculates the effects of all particles on each lattice site */
         const void CalculateFeedbackForces();
 
+        /** applies boundary conditions to all particles **/
+        const void ApplyBoundaryConditions();
+
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
 
