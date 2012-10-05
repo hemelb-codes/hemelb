@@ -26,7 +26,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options) :
-  timings(), build_info()
+    timings(), build_info()
 {
   if (options.HasProblems())
   {
@@ -156,10 +156,10 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
-  neighbouringDataManager
-      = new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
-                                                                    latticeData->GetNeighbouringData(),
-                                                                    communicationNet);
+  neighbouringDataManager =
+      new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
+                                                                  latticeData->GetNeighbouringData(),
+                                                                  communicationNet);
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
@@ -195,12 +195,12 @@ void SimulationMaster::Initialise()
                                                                  simulationState,
                                                                  timings);
   entropyTester = NULL;
-  incompressibilityChecker
-      = new hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >(latticeData,
-                                                                                         &communicationNet,
-                                                                                         simulationState,
-                                                                                         latticeBoltzmannModel->GetPropertyCache(),
-                                                                                         timings);
+  incompressibilityChecker =
+      new hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >(latticeData,
+                                                                                       &communicationNet,
+                                                                                       simulationState,
+                                                                                       latticeBoltzmannModel->GetPropertyCache(),
+                                                                                       timings);
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
@@ -321,6 +321,14 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::ResetUnstableSimulation()
 {
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i tau %.6f max_press_diff %.3f Ma %.3f max_vel_phys %e",
+                                                                      simulationState->GetTimeStep(),
+                                                                      latticeBoltzmannModel->GetLbmParams()->GetTau(),
+                                                                      incompressibilityChecker->GetMaxRelativeDensityDifference(),
+                                                                      unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
+                                                                          / hemelb::Cs,
+                                                                      incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
+
   fileManager->EmptyOutputDirectories();
   stepManager->CallSpecialAction(hemelb::net::phased::steps::Reset);
 
@@ -328,7 +336,7 @@ void SimulationMaster::ResetUnstableSimulation()
   visualisationControl->Reset();
 #endif
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %i\n",
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: time step length: %f\n",
                                                                       simulationState->GetTimeStepLength());
 
   simulationState->Reset();
@@ -341,15 +349,15 @@ void SimulationMaster::WriteLocalImages()
    * The map key (it->first) is the completion time step number.
    * The map value (it->second) is the initiation time step number.
    */
-  for (MapType::const_iterator it = snapshotsCompleted.find(simulationState->GetTimeStep()); it
-      != snapshotsCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
+  for (MapType::const_iterator it = snapshotsCompleted.find(simulationState->GetTimeStep());
+      it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
-      hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1 + ( (it->second - 1)
-          % simulationState->GetTimeStep()));
+      hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
+          + ( (it->second - 1) % simulationState->GetTimeStep()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);
 
@@ -368,8 +376,8 @@ void SimulationMaster::WriteLocalImages()
 void SimulationMaster::GenerateNetworkImages()
 {
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      networkImagesCompleted.find(simulationState->GetTimeStep()); it != networkImagesCompleted.end() && it->first
-      == simulationState->GetTimeStep(); ++it)
+      networkImagesCompleted.find(simulationState->GetTimeStep());
+      it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
@@ -444,9 +452,9 @@ void SimulationMaster::Finalise()
 
 void SimulationMaster::DoTimeStep()
 {
-  bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0)
-    ? true
-    : false;
+  bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
+    true :
+    false;
 
   // Make sure we're rendering if we're writing this iteration.
   if (writeSnapshotImage)
@@ -492,6 +500,16 @@ void SimulationMaster::DoTimeStep()
                                                                         writeSnapshotImage,
                                                                         simulationState->IsRendering());
 
+    if (incompressibilityChecker->AreDensitiesAvailable())
+    {
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i tau %.6f max_press_diff %.3f Ma %.3f max_vel_phys %e",
+                                                                          simulationState->GetTimeStep(),
+                                                                          latticeBoltzmannModel->GetLbmParams()->GetTau(),
+                                                                          incompressibilityChecker->GetMaxRelativeDensityDifference(),
+                                                                          unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
+                                                                              / hemelb::Cs,
+                                                                          incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
+    }
   }
 
   RecalculatePropertyRequirements();
@@ -536,7 +554,7 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
   {
-    fflush( NULL);
+    fflush(NULL);
   }
   simulationState->Increment();
 }
@@ -567,6 +585,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
   if (incompressibilityChecker != NULL)
   {
     propertyCache.densityCache.SetRefreshFlag();
+    propertyCache.velocityCache.SetRefreshFlag();
   }
 
   // If extracting property results, check what's required by them.
