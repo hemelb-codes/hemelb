@@ -24,6 +24,7 @@
 #include "net/BuildInfo.h"
 #include "topology/NetworkTopology.h"
 #include "colloids/BodyForces.h"
+#include "colloids/BoundaryConditions.h"
 
 #include <map>
 #include <limits>
@@ -191,6 +192,9 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Creating Body Forces.");
   hemelb::colloids::BodyForces::InitBodyForces(xml);
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Creating Boundary Conditions.");
+  hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(*latticeData,

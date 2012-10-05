@@ -53,7 +53,7 @@ namespace hemelb
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
                                                 sitesPerBlockUnit,
                                                 0.01,
-                                                util::Vector3D<PhysicalLength>::Zero());
+                                                util::Vector3D<PhysicalLength_deprecated>::Zero());
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
           block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));

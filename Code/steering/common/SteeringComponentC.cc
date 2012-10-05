@@ -75,7 +75,7 @@ namespace hemelb
       distribn_t lattice_density_max =
           mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_max) / Cs2;
       distribn_t lattice_velocity_max =
-          mUnits->ConvertVelocityToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
+          mUnits->ConvertSpeedToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
       distribn_t lattice_stress_max =
           mUnits->ConvertStressToLatticeUnits(mVisControl->domainStats.physical_stress_threshold_max);
 
