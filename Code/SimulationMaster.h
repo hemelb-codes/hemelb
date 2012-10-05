@@ -107,7 +107,6 @@ class SimulationMaster
     int steeringSessionId;
     unsigned int imagesPeriod;
     static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
-    static const hemelb::LatticeTime MAX_TIME_STEPS=400000;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */
