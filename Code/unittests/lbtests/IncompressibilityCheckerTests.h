@@ -20,7 +20,8 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (IncompressibilityCheckerTests);
           CPPUNIT_TEST (TestIncompressibilityCheckerRootNode);
-          CPPUNIT_TEST (TestIncompressibilityCheckerLeafNode);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (TestIncompressibilityCheckerLeafNode);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -30,6 +31,7 @@ namespace hemelb
             cache = new lb::MacroscopicPropertyCache(*simState, *latDat);
 
             cache->densityCache.SetRefreshFlag();
+            cache->velocityCache.SetRefreshFlag();
             lbtests::LbTestsHelper::UpdatePropertyCache<lb::lattices::D3Q15>(*latDat, *cache, *simState);
 
             // These are the smallest and largest density values in FourCubeLatticeData by default
@@ -39,6 +41,7 @@ namespace hemelb
             smallestDefaultDensity = numDirections * (numDirections + 1) / 20; // = sum_{j=1}^{numDirections} j/10 = 12 with current configuration of FourCubeLatticeData
             largestDefaultDensity = (numDirections * (numDirections + 1) / 20)
                 + ( (numSites - 1) * numDirections / 100); // = sum_{j=1}^{numDirections} j/10 + (numSites-1)/100 = 21.45 with current configuration of FourCubeLatticeData
+            largestDefaultVelocityMagnitude = 0.0433012701892219; // with current configuration of FourCubeLatticeData
 
             eps = 1e-9;
           }
@@ -80,6 +83,9 @@ namespace hemelb
                                          incompChecker.GetMaxRelativeDensityDifference(),
                                          eps);
             CPPUNIT_ASSERT(incompChecker.IsDensityDiffWithinRange());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultVelocityMagnitude,
+                                         incompChecker.GetGlobalLargestVelocityMagnitude(),
+                                         eps);
 
             // The broadcast mock injects some smaller and larger densities (1,100) coming from one of the children
             CPPUNIT_ASSERT(incompChecker.AreDensitiesAvailable());
@@ -89,6 +95,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, incompChecker.GetGlobalLargestDensity(), eps);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxRelativeDensityDifference(), eps);
             CPPUNIT_ASSERT(!incompChecker.IsDensityDiffWithinRange());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0, incompChecker.GetGlobalLargestVelocityMagnitude(), eps);
 
             // The previous values are not reported by any children anymore. Testing that the checker remembers them
             CPPUNIT_ASSERT(incompChecker.AreDensitiesAvailable());
@@ -98,6 +105,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, incompChecker.GetGlobalLargestDensity(), eps);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxRelativeDensityDifference(), eps);
             CPPUNIT_ASSERT(!incompChecker.IsDensityDiffWithinRange());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0, incompChecker.GetGlobalLargestVelocityMagnitude(), eps);
           }
 
           void TestIncompressibilityCheckerLeafNode()
@@ -126,6 +134,9 @@ namespace hemelb
                                          incompChecker.GetMaxRelativeDensityDifference(),
                                          eps);
             CPPUNIT_ASSERT(incompChecker.IsDensityDiffWithinRange());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultVelocityMagnitude,
+                                         incompChecker.GetGlobalLargestVelocityMagnitude(),
+                                         eps);
 
             // Second pass up. The broadcast mock injects some smaller and larger densities (1,100) coming from another hypothetical leaf node.
             AdvanceActorOneTimeStep(incompChecker);
@@ -137,12 +148,14 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, incompChecker.GetGlobalLargestDensity(), eps);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxRelativeDensityDifference(), eps);
             CPPUNIT_ASSERT(!incompChecker.IsDensityDiffWithinRange());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0, incompChecker.GetGlobalLargestVelocityMagnitude(), eps);
           }
 
         private:
           lb::MacroscopicPropertyCache* cache;
           distribn_t smallestDefaultDensity;
           distribn_t largestDefaultDensity;
+          distribn_t largestDefaultVelocityMagnitude;
           hemelb::reporting::Timers timings;
           net::Net net;
           distribn_t eps;
