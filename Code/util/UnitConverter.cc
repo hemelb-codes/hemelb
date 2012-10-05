@@ -47,9 +47,9 @@ namespace hemelb
       return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * latticeSpeed * latticeSpeed / mmHg_TO_PASCAL;
     }
 
-    LatticeVelocity UnitConverter::ConvertVelocityToLatticeUnits(PhysicalVelocity velocity) const
+    LatticeSpeed UnitConverter::ConvertSpeedToLatticeUnits(PhysicalSpeed speed) const
     {
-      return velocity / latticeSpeed;
+      return speed / latticeSpeed;
     }
 
     LatticeStress UnitConverter::ConvertStressToLatticeUnits(PhysicalStress stress) const

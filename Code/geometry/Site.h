@@ -70,6 +70,11 @@ namespace hemelb
           return latticeData.GetCutDistances(index);
         }
 
+        inline const distribn_t* GetWallDistances() const
+        {
+          return latticeData.GetCutDistances(index);
+        }
+
         inline const util::Vector3D<distribn_t>& GetWallNormal() const
         {
           return latticeData.GetNormalToWall(index);

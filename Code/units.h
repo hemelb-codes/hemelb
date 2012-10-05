@@ -55,7 +55,7 @@ namespace hemelb
   typedef double RadianAngle;
 
   // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
-  typedef double PhysicalLength;
+  typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
@@ -66,13 +66,17 @@ namespace hemelb
 
   typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
 
+  typedef double PhysicalForce; // continuous scalar force in physical units
   typedef double LatticeForce; // continuous scalar force in lattice units
-  typedef double PhysicalForce;
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
-  typedef double PhysicalVelocity;
-  typedef distribn_t LatticeVelocity;
+  typedef double PhysicalVelocity_deprecated;
+
+  typedef double PhysicalSpeed;
+  typedef double LatticeSpeed;
+  typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
+  typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 
 
   typedef double DimensionlessQuantity;
