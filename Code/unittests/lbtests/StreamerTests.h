@@ -866,11 +866,7 @@ namespace hemelb
                   // The streamer works by assuming the presence of a 'ghost' site, just beyond the
                   // iolet. The density of the ghost site is extrapolated from the iolet density
                   // and the density of the fluid site.
-                  distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
-                      - assignedWallDistance) * streamerHydroVars.density) / assignedWallDistance;
-
-                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density * 1.02);
-                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density * 0.98);
+                  distribn_t ghostSiteDensity = inletBoundary.GetBoundaryDensity(chosenBoundaryId);
 
                   // The velocity of the ghost site is the component of the fluid site's velocity
                   // along the iolet normal.
@@ -984,11 +980,7 @@ namespace hemelb
                   // The streamer works by assuming the presence of a 'ghost' site, just beyond the
                   // iolet. The density of the ghost site is extrapolated from the iolet density
                   // and the density of the fluid site.
-                  distribn_t ghostSiteDensity = (inletBoundary.GetBoundaryDensity(chosenBoundaryId) - (1
-                      - assignedIoletDistance) * streamerHydroVars.density) / assignedIoletDistance;
-
-                  ghostSiteDensity = std::min(ghostSiteDensity, streamerHydroVars.density * 1.02);
-                  ghostSiteDensity = std::max(ghostSiteDensity, streamerHydroVars.density * 0.98);
+                  distribn_t ghostSiteDensity = inletBoundary.GetBoundaryDensity(chosenBoundaryId);
 
                   // The velocity of the ghost site is the component of the fluid site's velocity
                   // along the iolet normal.
