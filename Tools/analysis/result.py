@@ -35,9 +35,7 @@ class FileModel(object):
         
     def model(self,result):
         if result.files.get(self.key): return result.files.get(self.key)
-        result.files[self.key]=result.files.get(self.key) or self.loader(self.fullpath(result))
-        self.logger(result).debug("Loaded")
-        return result.files[self.key]
+        return self.loader(self.fullpath(result))
         
     def logger(self,result):
         return logging.LoggerAdapter(logger,dict(context=self.fullpath(result)))
@@ -93,8 +91,10 @@ class ResultProperty(object):
             if not model:
                 raise ParseError("Bad file.")
             value=self.parser(model,self.pattern)
-            result.properties[self.label]=result.properties.get(self.label) or self.parse_value(value)
-            return result.properties.get(self.label)
+            parsed_value = result.properties.get(self.label) or self.parse_value(value)
+            if sys.getsizeof(parsed_value) < 1024:
+                result.properties[self.label]=parsed_value
+            return parsed_value
         except (IOError,ParseError, OSError) as err:
             self.file.logger(result).warning("Problem parsing value: %s"%err)
             return None
