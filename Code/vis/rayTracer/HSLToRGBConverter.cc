@@ -55,48 +55,46 @@ namespace hemelb
         //remain between 0 and the maximum value of a 16-bit interger 
         uint32_t lIntermediate = (lChroma * (DegreesScalar - abs(lTemp))) / DegreesScalar;
 
-        uint32_t lRed;
-        uint32_t lGreen;
-        uint32_t lBlue;
+        uint32_t red=0, green=0, blue=0;
 
         //Map the hue to value to six cases 
         uint32_t lHueInt = lHuePrime / DegreesScalar;
         switch (lHueInt)
         {
           case 0:
-            lRed = lChroma;
-            lGreen = lIntermediate;
-            lBlue = 0.0F;
+            red = lChroma;
+            green = lIntermediate;
+            blue = 0.0F;
             break;
 
           case 1:
-            lRed = lIntermediate;
-            lGreen = lChroma;
-            lBlue = 0.0F;
+            red = lIntermediate;
+            green = lChroma;
+            blue = 0.0F;
             break;
 
           case 2:
-            lRed = 0.0F;
-            lGreen = lChroma;
-            lBlue = lIntermediate;
+            red = 0.0F;
+            green = lChroma;
+            blue = lIntermediate;
             break;
 
           case 3:
-            lRed = 0.0F;
-            lGreen = lIntermediate;
-            lBlue = lChroma;
+            red = 0.0F;
+            green = lIntermediate;
+            blue = lChroma;
             break;
 
           case 4:
-            lRed = lIntermediate;
-            lGreen = 0.0F;
-            lBlue = lChroma;
+            red = lIntermediate;
+            green = 0.0F;
+            blue = lChroma;
             break;
 
           case 5:
-            lRed = lChroma;
-            lGreen = 0.0F;
-            lBlue = lIntermediate;
+            red = lChroma;
+            green = 0.0F;
+            blue = lIntermediate;
             break;
 
           default:
@@ -110,9 +108,9 @@ namespace hemelb
 
         int32_t lMatcher = (int) (lLightness) - (int) (lChroma) / 2;
 
-        oRGBColour[0] = (unsigned char) ( (lRed + lMatcher) / CharScalar);
-        oRGBColour[1] = (unsigned char) ( (lGreen + lMatcher) / CharScalar);
-        oRGBColour[2] = (unsigned char) ( (lBlue + lMatcher) / CharScalar);
+        oRGBColour[0] = (unsigned char) ( (red + lMatcher) / CharScalar);
+        oRGBColour[1] = (unsigned char) ( (green + lMatcher) / CharScalar);
+        oRGBColour[2] = (unsigned char) ( (blue + lMatcher) / CharScalar);
       }
     }
   }

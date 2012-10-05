@@ -60,7 +60,6 @@ namespace hemelb
                 if (!site.HasIolet(direction))
                   continue;
 
-                distribn_t wall_distance = site.GetWallDistance<LatticeType> (direction);
                 int boundaryId = site.GetBoundaryId();
 
                 // Set the density at the "ghost" site to be the density of the iolet.
