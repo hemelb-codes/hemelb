@@ -25,7 +25,7 @@ class SimulationMaster
 {
   public:
     SimulationMaster(hemelb::configuration::CommandLine &options);
-    ~SimulationMaster();
+    virtual ~SimulationMaster();
 
     void Abort();
 
