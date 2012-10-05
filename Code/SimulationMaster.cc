@@ -423,11 +423,6 @@ void SimulationMaster::RunSimulation()
   while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
   {
     DoTimeStep();
-    if (simulationState->GetTimeStep() > MAX_TIME_STEPS)
-    {
-      simulationState->SetStability(hemelb::lb::Unstable);
-      break;
-    }
     if (simulationState->IsTerminating())
     {
       break;
