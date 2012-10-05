@@ -35,13 +35,14 @@ namespace hemelb
              */
           public:
             /** Number of densities being tracked. Needs to be exposed for send/receive. */
-            static const unsigned DENSITY_TRACKER_SIZE = 2;
+            static const unsigned DENSITY_TRACKER_SIZE = 3;
 
             /** Identifiers of the densities being tracked. Cardinality must be kept consistent with DENSITY_TRACKER_SIZE */
             typedef enum
             {
               MIN_DENSITY = 0u,
-              MAX_DENSITY
+              MAX_DENSITY,
+              MAX_VELOCITY_MAGNITUDE
             } DensityTrackerIndices;
 
             /**
@@ -94,9 +95,10 @@ namespace hemelb
             /**
              * Updates min/max densities with value newValue if it is smaller/larger
              *
-             * @param newValues new value to be considered for an update
+             * @param newDensity new density value to be considered for an update
+             * @param newVelocityMagnitude new velocity magnitude to be considered for an update
              */
-            void UpdateDensityTracker(distribn_t newValue);
+            void UpdateDensityTracker(distribn_t newDensity, distribn_t newVelocityMagnitude);
 
           private:
             /** Array storing all the densities being tracked */
@@ -170,6 +172,13 @@ namespace hemelb
          * @return whether the maximum density difference is smaller that the maximum allowed
          */
         bool IsDensityDiffWithinRange() const;
+
+        /**
+         * Return largest velocity magnitude in the domain as agreed by all the processes.
+         *
+         * @return largest velocity magnitude
+         */
+        double GetGlobalLargestVelocityMagnitude() const;
 
       protected:
         /**
