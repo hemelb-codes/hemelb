@@ -191,9 +191,10 @@ results:
         norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
 
         # Convergence properties
+        sample_steps: 'momentum_diffusion_time/step_length if flow_type=="poiseuille" else sampling_frequency'
         velocity_field_samples: '[velocity_sample_0, velocity_sample_1, velocity_sample_2, velocity_sample_3, velocity_sample_4, velocity_sample_5]'
         transformed_grid: aligned_cylindrical(whole_grid,voxel_size,origin,axis)
-        converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * momentum_diffusion_time / step_length, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
+        converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * sample_steps, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
 
     yaml_files:
         'env.yml':
@@ -252,22 +253,22 @@ results:
           - i0
           - grid
         velocity_sample_0:
-          - i0
+          - i41
           - velocity
         velocity_sample_1: 
-          - i1
+          - i42
           - velocity
         velocity_sample_2: 
-          - i2 
+          - i43
           - velocity
         velocity_sample_3: 
-          - i3 
+          - i44
           - velocity
         velocity_sample_4: 
-          - i4 
+          - i45
           - velocity
         velocity_sample_5: 
-          - i5 
+          - i46
           - velocity
 
 graphs:
