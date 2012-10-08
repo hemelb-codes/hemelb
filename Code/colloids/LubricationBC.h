@@ -34,7 +34,17 @@ namespace hemelb
           // TODO: code lubrication formula, force = velocity.wallNormal / wallNormal.wallNormal
           // TODO: combine (add) lubrication force into particle force
           //particle.bodyForces += wallNormal;
-printf("*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***", particle.GetParticleId());
+          log::Logger::Log<log::Info, log::OnePerCore>(
+            "*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***\n",
+            particle.GetParticleId());
+          for (std::vector<LatticePosition>::const_iterator iter = particleToWallVectors.begin();
+               iter != particleToWallVectors.end();
+               iter++)
+          {
+            log::Logger::Log<log::Info, log::OnePerCore>(
+              "*** In LubricationBC::DoSomethingToParticle - wall vector: {%g,%g,%g}\n",
+              iter->x, iter->y, iter->z);
+          }
 
           return keep;
         }

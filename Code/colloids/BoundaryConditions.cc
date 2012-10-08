@@ -30,8 +30,8 @@ namespace hemelb
       BoundaryConditions::latticeData = latticeData;
 
       std::map<std::string, BoundaryConditionFactory_Create> mapBCGenerators;
-      mapBCGenerators["LubricationBC"] = &(LubricationBoundaryConditionFactory::Create);
-      mapBCGenerators["DeletionBC"] = &(DeletionBoundaryConditionFactory::Create);
+      mapBCGenerators["lubricationBC"] = &(LubricationBoundaryConditionFactory::Create);
+      mapBCGenerators["deletionBC"] = &(DeletionBoundaryConditionFactory::Create);
 
       bool ok = true;
       xml.ResetToTopLevel();
@@ -46,9 +46,14 @@ namespace hemelb
       {
         const std::string boundaryConditionClass = iter->first;
         const BoundaryConditionFactory_Create createFunction = iter->second;
+        log::Logger::Log<log::Info, log::OnePerCore>(
+          "*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
+          boundaryConditionClass.c_str());
         bool found = xml.MoveToChild(boundaryConditionClass);
         if (found)
         {
+          log::Logger::Log<log::Info, log::OnePerCore>(
+            "*** In BoundaryConditions::InitBoundaryConditions - found BC in XML\n");
           while (found)
           {
             std::string appliesTo;
@@ -63,6 +68,9 @@ namespace hemelb
             found = xml.NextSibling(boundaryConditionClass);
           }
           xml.MoveToParent();
+        } else {
+          log::Logger::Log<log::Info, log::OnePerCore>(
+            "*** In BoundaryConditions::InitBoundaryConditions - no BCs in XML !!\n");
         }
       }
       xml.ResetToTopLevel();
@@ -82,7 +90,8 @@ namespace hemelb
       const bool isLocalFluid = latticeData->GetContiguousSiteId(
         siteGlobalPosition, procId, localContiguousId);
       if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
-        printf("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.y=%g, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
+        log::Logger::Log<log::Info, log::OnePerCore>(
+          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.y=%g, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
           particle.GetParticleId(),
           particle.GetGlobalPosition().y,
           isLocalFluid ? "TRUE" : "FALSE",
@@ -92,7 +101,7 @@ namespace hemelb
           siteGlobalPosition.z,
           particle.GetOwnerRank());
 
-      if (!isLocalFluid) return !keep;
+      if (!isLocalFluid) return keep;
 
       const lb::lattices::LatticeInfo latticeInfo = BoundaryConditions::latticeData->GetLatticeInfo();
       const geometry::ConstSite site = latticeData->GetSite(localContiguousId);
@@ -107,7 +116,8 @@ namespace hemelb
       // if the particle is not near a boundary then simply keep it
       if (!isNearWall && !isNearInlet && !isNearOutlet) return keep;
       else
-        printf("*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, isNearWall: %s, isNearInlet: %s, isNearOutlet: %s ***\n",
+        log::Logger::Log<log::Info, log::OnePerCore>(
+          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, isNearWall: %s, isNearInlet: %s, isNearOutlet: %s ***\n",
           particle.GetParticleId(),
           isNearWall ? "TRUE" : "FALSE",
           isNearInlet ? "TRUE" : "FALSE",
@@ -132,12 +142,22 @@ namespace hemelb
         // solid site so that the particle never becomes nearest to a solid site
         if (thisDistance > 0.5) thisDistance = 0.5;
 
+        // conversion from LatticeCoordinate to LatticePosition is done
+        // auto-magically by the multiplication & its arithmetic traits
         const LatticePosition siteToWall = latticeInfo.GetVector(direction) * thisDistance;
-        const LatticePosition particleToSite = siteGlobalPosition - particle.GetGlobalPosition();
+        const LatticePosition particleToSite = (LatticePosition)siteGlobalPosition
+                                             - particle.GetGlobalPosition();
 
         // particleToWall = siteToWall + projection of particleToSite in the siteToWall direction
         const LatticePosition particleToWallVector = siteToWall +
           siteToWall.GetNormalised() * siteToWall.GetNormalised().Dot(particleToSite);
+
+        log::Logger::Log<log::Info, log::OnePerCore>(
+          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, siteToWall: {%g,%g,%g}, particleToSite: {%g,%g,%g}, particleToWall: {%g,%g,%g}\n",
+          particle.GetParticleId(),
+          siteToWall.x, siteToWall.y, siteToWall.z,
+          particleToSite.x, particleToSite.y, particleToSite.z,
+          particleToWallVector.x, particleToWallVector.y, particleToWallVector.z);
 
         particleToWallVectors.push_back(particleToWallVector);
       }
