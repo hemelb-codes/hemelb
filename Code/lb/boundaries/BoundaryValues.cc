@@ -77,6 +77,8 @@ namespace hemelb
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId)
       {
+        return true;
+        
         for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
           const geometry::Site site = latticeData->GetSite(i);
