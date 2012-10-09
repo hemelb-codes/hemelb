@@ -335,8 +335,17 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::OnUnstableSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
+  //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %f\n",
+  //                                                                    simulationState->GetTimeStepLength());
+
+
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: tau, space step, time step, and max pressure diff were: %.9f, %.9f, %.9f, %.9f ,\t time step length: %f\n",
+                                                                      latticeBoltzmannModel->GetLbmParams()->GetTau(),
+                                                                      latticeData->GetVoxelSize(),
+                                                                      simulationState->GetTimeStepLength(),
+                                                                      incompressibilityChecker->GetMaxRelativeDensityDifference(),
                                                                       simulationState->GetTimeStepLength());
+
   Finalise();
   Abort();
 }
