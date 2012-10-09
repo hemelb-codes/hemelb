@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
 
   lbOrchestration=new std::map<std::string,bool>();
   std::map<std::string,bool> &rorchestrationLB=*lbOrchestration;
-  rorchestrationLB["boundary1_pressure"] = false;
-  rorchestrationLB["boundary2_pressure"] = false;
+  rorchestrationLB["boundary1_pressure"] = true;
+  rorchestrationLB["boundary2_pressure"] = true;
   rorchestrationLB["boundary1_velocity"] = true;
   rorchestrationLB["boundary2_velocity"] = true;
 

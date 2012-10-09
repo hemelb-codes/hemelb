@@ -97,6 +97,9 @@ namespace hemelb
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
         // by the same order, as the neededSites, so this should be OK.
+
+        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("I NEED: %i", neededSites.size());
+
         for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
@@ -104,12 +107,12 @@ namespace hemelb
           net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                              localLatticeData.GetLatticeInfo().GetNumVectors(),
                              source);
-          std::cout << "Receive Requested" << localLatticeData.GetLatticeInfo().GetNumVectors() << ", proc: " << source << std::endl;
+          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Receive Requested %i , proc: %i", localLatticeData.GetLatticeInfo().GetNumVectors(), source);
 
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
-          std::cout << "NEEDS:" << needsEachProcHasFromMe[other].size() << std::endl;
+          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("OTHER PROC %i NEED: %i", other, needsEachProcHasFromMe[other].size());
 
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
@@ -122,11 +125,11 @@ namespace hemelb
                             localLatticeData.GetLatticeInfo().GetNumVectors(),
                             other);
 
-            std::cout << "Send Requested" << localLatticeData.GetLatticeInfo().GetNumVectors() << std::endl;
+            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Send Requested %i", localLatticeData.GetLatticeInfo().GetNumVectors());
 
           }
         }
-        std::cout << "End of RequestComms" << std::endl;
+        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("End of RequestComms");
       }
 
       void NeighbouringDataManager::ShareNeeds()

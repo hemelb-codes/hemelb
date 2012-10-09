@@ -23,6 +23,12 @@ namespace hemelb
       namespace iolets
       {
 
+        namespace multiscale_constants
+        {
+          const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 80.0;
+          const PhysicalVelocity HEMELB_MULTISCALE_REFERENCE_VELOCITY = 0.0;
+        }
+
         /***
          * An inlet/outlet whose density is obtained from the multiscale intercommunicator
          * We envisage communication of velocity information outwards to other processes
@@ -38,20 +44,35 @@ namespace hemelb
         {
           public:
             InOutLetMultiscale() :
-                multiscale::Intercommunicand(), InOutLet(), pressure(this), minPressure(this), maxPressure(this), velocity(this)
+                multiscale::Intercommunicand(), InOutLet(), pressure(this,
+                                                                     multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), minPressure(this,
+                                                                                                                                              multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), maxPressure(this,
+                                                                                                                                                                                                                       multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), velocity(this,
+                                                                                                                                                                                                                                                                                             multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
             {
-
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
+                                                                                   GetVelocity(),
+                                                                                   GetPressure(),
+                                                                                   GetPressureMax());
             }
             /***
              * The shared values are registered through the initialiser-list syntactic sugar.
+             * pressure is initialized using other.GetPressureMax() for now, because GetPressure() is not present in the
+             * parent Iolet object, which is being cloned in BoundaryValues.h. This is a somewhat ugly workaround, but it does
+             * preserve the single-scale code.
              */
             InOutLetMultiscale(const InOutLetMultiscale &other) :
-                Intercommunicand(other), label(other.label), pressure(this, other.GetPressure()), minPressure(this,
-                                                                                                              other.GetPressureMin()), maxPressure(this,
-                                                                                                                                                   other.GetPressureMax()), velocity(this,
-                                                                                                                                                                                     other.GetVelocity())
+                Intercommunicand(other), label(other.label), pressure(this, other.GetPressureMax()), minPressure(this,
+                                                                                                                 other.GetPressureMin()), maxPressure(this,
+                                                                                                                                                      other.GetPressureMax()), velocity(this,
+                                                                                                                                                                                        other.GetVelocity())
             {
-
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("On Clone: IoletMS, GetDensity(): velocity is %f, pressure is %f/%f or %f/%f",
+                                                                                   GetVelocity(),
+                                                                                   GetPressure(),
+                                                                                   other.GetPressure(),
+                                                                                   GetPressureMax(),
+                                                                                   other.GetPressureMax());
             }
             virtual ~InOutLetMultiscale()
             {
@@ -73,8 +94,15 @@ namespace hemelb
             }
             LatticeDensity GetDensity(unsigned long timeStep) const
             {
-              velocity=GetVelocity();
-              return units->ConvertPressureToLatticeUnits(pressure) / Cs2;
+              velocity = GetVelocity();
+              //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("IoletMS, GetDensity(): density is %f, velocity is %f, pressure is %f or %f",
+              //                                                                     units->ConvertPressureToLatticeUnits(maxPressure)
+              //                                                                         / Cs2,
+              //                                                                     GetVelocity(),
+              //                                                                     GetPressure(),
+              //                                                                     GetPressureMax());
+              /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
+              return units->ConvertPressureToLatticeUnits(maxPressure) / Cs2;
             }
             PhysicalPressure GetPressureMin() const
             {
@@ -114,7 +142,7 @@ namespace hemelb
               type.template RegisterSharedValue<PhysicalPressure>("pressure");
               type.template RegisterSharedValue<PhysicalPressure>("minPressure");
               type.template RegisterSharedValue<PhysicalPressure>("maxPressure");
-              type.template RegisterSharedValue<PhysicalPressure>("velocity");
+              type.template RegisterSharedValue<PhysicalVelocity>("velocity");
             }
             // This should be const, and we should have a setter.
             // But the way SimConfig is set up prevents this.
@@ -129,6 +157,7 @@ namespace hemelb
             multiscale::SharedValue<PhysicalPressure> minPressure;
             multiscale::SharedValue<PhysicalPressure> maxPressure;
             mutable multiscale::SharedValue<PhysicalVelocity> velocity;
+
         };
       }
     }
