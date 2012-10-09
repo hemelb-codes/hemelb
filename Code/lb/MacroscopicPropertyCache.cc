@@ -23,6 +23,7 @@ namespace hemelb
           simulationState(simState),
           siteCount(latticeData.GetLocalFluidSiteCount())
     {
+      std::cout << "MacroscopicPropertyCache created of size " << latticeData.GetLocalFluidSiteCount() << std::endl;
       ResetRequirements();
     }
 

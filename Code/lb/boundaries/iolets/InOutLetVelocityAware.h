@@ -1,9 +1,11 @@
-/*
- * InOutLetVelocityAware.h
- *
- *  Created on: 26 Jun 2012
- *      Author: derek
- */
+//
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
 
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H
@@ -49,7 +51,8 @@ namespace hemelb
             InOutLetVelocityAware(const InOutLetVelocityAware &other) :
                 InOutLetMultiscale(other), NDM(other.NDM), propertyCache(other.propertyCache), sitesWhichNeighbourThisBoundary()
             {
-              /* Add a velocity aware exchange here if needed?*/
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("On Clone: IoletVA.");
+              /* Add a velocity aware exchange here if needed? */
             }
 
             void InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
@@ -71,9 +74,9 @@ namespace hemelb
             }
           protected:
             geometry::neighbouring::NeighbouringDataManager *NDM;
+            hemelb::lb::MacroscopicPropertyCache* propertyCache;
             std::vector<site_t> sitesWhichNeighbourThisBoundary;
             geometry::LatticeData * latticeData;
-            hemelb::lb::MacroscopicPropertyCache* propertyCache;
         }
         ;
       }

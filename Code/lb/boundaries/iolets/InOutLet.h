@@ -147,6 +147,12 @@ namespace hemelb
             {
               return normal;
             }
+
+            /* Derek: This general notion should be present in InOutlets
+             * TODO I am not making this pure virtual yet, do we want it to be?*/
+            virtual PhysicalVelocity GetVelocity() {
+              return NULL;
+            }
           protected:
             util::Vector3D<float> position;
             util::Vector3D<float> normal;
