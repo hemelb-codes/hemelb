@@ -2,7 +2,7 @@ import xdrlib
 import sys
 from hemeTools.parsers.extraction import ExtractedProperty
 
-header_fields=['siteCount','fieldCount','voxelSizeMetres','originMetres']
+header_fields=['siteCount','fieldCount','voxelSizeMetres','originMetres', 'times']
 
 def extraction_loader(filename):
   return ExtractedProperty(filename)
