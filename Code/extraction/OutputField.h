@@ -15,7 +15,8 @@ namespace hemelb
           VonMisesStress,
           ShearRate,
           StressTensor,
-          TractionVector
+          TractionVector,
+          TangentialProjectionTractionVector
         };
 
         std::string name;

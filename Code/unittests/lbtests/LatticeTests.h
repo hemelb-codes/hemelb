@@ -84,7 +84,9 @@ namespace hemelb
                   continue;
                 }
 
-                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection] || LatticeType::CY[direction] != LatticeType::CY[otherDirection] || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
+                CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
+                    || LatticeType::CY[direction] != LatticeType::CY[otherDirection]
+                    || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
               }
             }
 
@@ -111,12 +113,12 @@ namespace hemelb
             distribn_t f_data[LatticeType::NUMVECTORS];
 
             // The 3 here is essentially a seed that relates to the magnitude of the density.
-            LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
+            LbTestsHelper::InitialiseAnisotropicTestData < LatticeType > (3, f_data);
 
             distribn_t density, momentum[3], expectedDensity, expectedMomentum[3];
             LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
 
-            LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
+            LbTestsHelper::CalculateRhoMomentum < LatticeType > (f_data, expectedDensity, expectedMomentum);
 
             CPPUNIT_ASSERT(density == expectedDensity);
 
@@ -157,17 +159,11 @@ namespace hemelb
                                                   targetH[2],
                                                   equilibriumEntropicFChikatamarla);
 
-            LbTestsHelper::CalculateLBGKEqmF<LatticeType>(targetDensity,
-                                                          targetH[0],
-                                                          targetH[1],
-                                                          targetH[2],
-                                                          expectedEquilibriumF);
+            LbTestsHelper::CalculateLBGKEqmF < LatticeType
+                > (targetDensity, targetH[0], targetH[1], targetH[2], expectedEquilibriumF);
 
-            LbTestsHelper::CalculateAnsumaliEntropicEqmF<LatticeType>(targetDensity,
-                                                                      targetH[0],
-                                                                      targetH[1],
-                                                                      targetH[2],
-                                                                      expectedEquilibriumEntropicFAnsumali);
+            LbTestsHelper::CalculateAnsumaliEntropicEqmF < LatticeType
+                > (targetDensity, targetH[0], targetH[1], targetH[2], expectedEquilibriumEntropicFAnsumali);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
@@ -259,16 +255,24 @@ namespace hemelb
               std::vector<distribn_t> nonEquilibriumF(LatticeType::NUMVECTORS, 0.0);
               LatticeDensity density = 3.0;
               util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
-              util::Vector3D<LatticeStress> stressActingOnAPoint;
-              LatticeType::CalculateTractionVectorOnAPoint(density,
-                                                           1.0,
-                                                           nonEquilibriumF.data(),
-                                                           wallNormal,
-                                                           stressActingOnAPoint);
+              util::Vector3D<LatticeStress> traction;
+              LatticeType::CalculateTractionVectorOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
 
-              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[0], density*Cs2);
-              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[1], 0.0);
-              CPPUNIT_ASSERT_EQUAL(stressActingOnAPoint[2], 0.0);
+              CPPUNIT_ASSERT_EQUAL(traction[0], density * Cs2);
+              CPPUNIT_ASSERT_EQUAL(traction[1], 0.0);
+              CPPUNIT_ASSERT_EQUAL(traction[2], 0.0);
+
+              util::Vector3D<LatticeStress> tangentialComponentTraction;
+              LatticeType::CalculateTangentialProjectionTractionVector(density,
+                                                                       1.0,
+                                                                       nonEquilibriumF.data(),
+                                                                       wallNormal,
+                                                                       tangentialComponentTraction);
+
+              CPPUNIT_ASSERT_EQUAL(tangentialComponentTraction[0], 0.0);
+              CPPUNIT_ASSERT_EQUAL(tangentialComponentTraction[1], 0.0);
+              CPPUNIT_ASSERT_EQUAL(tangentialComponentTraction[2], 0.0);
+
             }
 
             /*
@@ -305,11 +309,11 @@ namespace hemelb
                   {
                     if (rowIndex != 2)
                     {
-                      CPPUNIT_ASSERT_EQUAL(density*Cs2 + 1 - 1/(2*tau), stressTensor[rowIndex][columnIndex]);
+                      CPPUNIT_ASSERT_EQUAL(density * Cs2 + 1 - 1 / (2 * tau), stressTensor[rowIndex][columnIndex]);
                     }
                     else
                     {
-                      CPPUNIT_ASSERT_EQUAL(density*Cs2, stressTensor[rowIndex][columnIndex]);
+                      CPPUNIT_ASSERT_EQUAL(density * Cs2, stressTensor[rowIndex][columnIndex]);
                     }
                   }
                   else

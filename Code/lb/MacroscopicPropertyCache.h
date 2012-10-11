@@ -68,6 +68,11 @@ namespace hemelb
          */
         util::RefreshableCache<util::Vector3D<LatticeStress> > tractionVectorCache;
 
+        /**
+         * The cache of projections of the traction vectors on the tangential plane of each fluid site on this core.
+         */
+        util::RefreshableCache<util::Vector3D<LatticeStress> > tangentialProjectionTractionVectorCache;
+
       private:
         /**
          * The state of the simulation, including the number of timesteps passed.
