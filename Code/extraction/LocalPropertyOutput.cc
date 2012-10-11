@@ -244,6 +244,11 @@ namespace hemelb
                 xdrWriter << (double) dataSource.GetTractionVector().x << (double) dataSource.GetTractionVector().y
                     << (double) dataSource.GetTractionVector().z;
                 break;
+              case OutputField::TangentialProjectionTractionVector:
+                xdrWriter << (double) dataSource.GetTangentialProjectionTractionVector().x << (double) dataSource.GetTangentialProjectionTractionVector().y
+                    << (double) dataSource.GetTangentialProjectionTractionVector().z;
+                break;
+
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
                 // implementation is provided for its serialisation.
@@ -271,6 +276,7 @@ namespace hemelb
           return 1;
         case OutputField::Velocity:
         case OutputField::TractionVector:
+        case OutputField::TangentialProjectionTractionVector:
           return 3;
         case OutputField::StressTensor:
           return 6; // We only store the upper triangular part of the symmetric tensor
