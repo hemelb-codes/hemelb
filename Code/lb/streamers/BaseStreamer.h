@@ -164,6 +164,27 @@ namespace hemelb
               propertyCache.tractionVectorCache.Put(site.GetIndex(), tractionOnAPoint);
 
             }
+
+            if (propertyCache.tangentialProjectionTractionVectorCache.RequiresRefresh())
+            {
+              util::Vector3D<LatticeStress> tangentialProjectionTractionOnAPoint(0);
+
+              /*
+               * Wall normals are only available at the sites marked as being at the domain edge.
+               * For the sites in the fluid bulk, the traction vector will be 0.
+               */
+              if (site.IsEdge())
+              {
+                LatticeType::CalculateTangentialProjectionTractionVector(hydroVars.density,
+                                                                         hydroVars.tau,
+                                                                         hydroVars.GetFNeq().f,
+                                                                         site.GetWallNormal(),
+                                                                         tangentialProjectionTractionOnAPoint);
+              }
+
+              propertyCache.tangentialProjectionTractionVectorCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);
+
+            }
           }
       };
     }

@@ -58,6 +58,9 @@ namespace hemelb
               case OutputField::TractionVector:
                 propertyCache.tractionVectorCache.SetRefreshFlag();
                 break;
+              case OutputField::TangentialProjectionTractionVector:
+                propertyCache.tangentialProjectionTractionVectorCache.SetRefreshFlag();
+                break;
               default:
                 // This assert should never trip. It only occurs when someone adds a new field to OutputField
                 // and forgets adding a new case to the switch
