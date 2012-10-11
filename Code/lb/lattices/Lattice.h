@@ -42,17 +42,18 @@ namespace hemelb
                                           distribn_t f_eq[])
           {
             const distribn_t density_1 = 1. / density;
-            const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y + momentum_z
-                * momentum_z;
+            const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
+                + momentum_z * momentum_z;
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
               const distribn_t momentumComponentInThisDirection = DmQn::CX[direction] * momentum_x
                   + DmQn::CY[direction] * momentum_y + DmQn::CZ[direction] * momentum_z;
 
-              f_eq[direction] = DmQn::EQMWEIGHTS[direction] * (density - (3. / 2.) * momentumMagnitudeSquared
-                  * density_1 + (9. / 2.) * density_1 * momentumComponentInThisDirection
-                  * momentumComponentInThisDirection + 3. * momentumComponentInThisDirection);
+              f_eq[direction] = DmQn::EQMWEIGHTS[direction]
+                  * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
+                      + (9. / 2.) * density_1 * momentumComponentInThisDirection * momentumComponentInThisDirection
+                      + 3. * momentumComponentInThisDirection);
             }
           }
 
@@ -96,12 +97,12 @@ namespace hemelb
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
-              sigma_xx_yy += f[direction] * (DmQn::CX[direction] * DmQn::CX[direction] - DmQn::CY[direction]
-                  * DmQn::CY[direction]);
-              sigma_yy_zz += f[direction] * (DmQn::CY[direction] * DmQn::CY[direction] - DmQn::CZ[direction]
-                  * DmQn::CZ[direction]);
-              sigma_xx_zz += f[direction] * (DmQn::CX[direction] * DmQn::CX[direction] - DmQn::CZ[direction]
-                  * DmQn::CZ[direction]);
+              sigma_xx_yy += f[direction]
+                  * (DmQn::CX[direction] * DmQn::CX[direction] - DmQn::CY[direction] * DmQn::CY[direction]);
+              sigma_yy_zz += f[direction]
+                  * (DmQn::CY[direction] * DmQn::CY[direction] - DmQn::CZ[direction] * DmQn::CZ[direction]);
+              sigma_xx_zz += f[direction]
+                  * (DmQn::CX[direction] * DmQn::CX[direction] - DmQn::CZ[direction] * DmQn::CZ[direction]);
 
               sigma_xy += f[direction] * DmQn::CX[direction] * DmQn::CY[direction];
               sigma_xz += f[direction] * DmQn::CX[direction] * DmQn::CZ[direction];
@@ -137,6 +138,34 @@ namespace hemelb
 
             // Multiply the stress tensor by the surface normal
             sigma.timesVector(wallNormal, tractionVector);
+          }
+
+          /**
+           * Calculates the projection of the traction vector on the plane tangential to the geometry surface (defined by current surface
+           * point and the normal vector provided). This is done with the following formula:
+           *
+           *    \vec{t_tan} = \vec{t} - dot(\vec{t}, \vec{n})*\vec{n}
+           *
+           * where t is the traction vector (see CalculateTractionVectorOnAPoint for definition) and n is the normal
+           *
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param wallNormal wall normal at a given point
+           * @param tractionTangentialComponent tangential projection of the traction vector
+           */
+          inline static void CalculateTangentialProjectionTractionVector(const distribn_t density,
+                                                                         const distribn_t tau,
+                                                                         const distribn_t fNonEquilibrium[],
+                                                                         const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                                         util::Vector3D<LatticeStress>& tractionTangentialComponent)
+          {
+            util::Vector3D<LatticeStress> tractionVector;
+            CalculateTractionVectorOnAPoint(density, tau, fNonEquilibrium, wallNormal, tractionVector);
+
+            LatticeStress magnitudeNormalProjectionTraction = tractionVector.Dot(wallNormal);
+
+            tractionTangentialComponent = tractionVector - wallNormal * magnitudeNormalProjectionTraction;
           }
 
           /**
@@ -307,8 +336,8 @@ namespace hemelb
             util::Vector3D<distribn_t> term1 = util::Vector3D<distribn_t>(2.0) - B;
 
             // term2_i is (2*u_i + B)/(1 - u_i)
-            util::Vector3D<distribn_t> term2 =
-                (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones() - velocity);
+            util::Vector3D<distribn_t> term2 = (velocity * 2.0 + B).PointwiseDivision(util::Vector3D<distribn_t>::Ones()
+                - velocity);
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
@@ -351,25 +380,30 @@ namespace hemelb
             distribn_t chi = 1.0 + (-3.0 * velocityMagnitudeSquared / 2.0) + 9.0 * velocityMagnitudeFour / 8.0;
 
             // Add in the (6) term.
-            chi += 27.0 * ( (-velocityMagnitudeSix) + 2.0 * (velocitySquared.y + velocitySquared.z)
-                * (velocityMagnitudeSquared * velocitySquared.x + velocitySquared.y * velocitySquared.z) + 20.
-                * velocitySquared.x * velocitySquared.y * velocitySquared.z) / 16.0;
+            chi += 27.0
+                * ( (-velocityMagnitudeSix)
+                    + 2.0 * (velocitySquared.y + velocitySquared.z)
+                        * (velocityMagnitudeSquared * velocitySquared.x + velocitySquared.y * velocitySquared.z)
+                    + 20. * velocitySquared.x * velocitySquared.y * velocitySquared.z) / 16.0;
 
             // Add in the (8) term.
-            chi += 81.0 * velocityMagnitudeEight / 128.0 + 81.0 * (velocityEight.x + velocityEight.y + velocityEight.z
-                - (36.0 * velocitySquared.x * velocitySquared.y * velocitySquared.z * velocityMagnitudeSquared
-                    + velocityFour.x * velocityFour.y + velocityFour.x * velocityFour.z + velocityFour.y
-                    * velocityFour.z)) / 32.0;
+            chi += 81.0 * velocityMagnitudeEight / 128.0
+                + 81.0
+                    * (velocityEight.x + velocityEight.y + velocityEight.z
+                        - (36.0 * velocitySquared.x * velocitySquared.y * velocitySquared.z * velocityMagnitudeSquared
+                            + velocityFour.x * velocityFour.y + velocityFour.x * velocityFour.z
+                            + velocityFour.y * velocityFour.z)) / 32.0;
 
             // Multiple whole expression by the density.
             chi *= density;
 
-            util::Vector3D<distribn_t> zeta = util::Vector3D<distribn_t>::Ones() + velocity * 3.0 + velocitySquared
-                * 9.0 / 2.0 + velocitySquared.PointwiseMultiplication(velocity) * 9.0 / 2.0 + velocityFour * 27.0 / 8.0;
+            util::Vector3D<distribn_t> zeta = util::Vector3D<distribn_t>::Ones() + velocity * 3.0
+                + velocitySquared * 9.0 / 2.0 + velocitySquared.PointwiseMultiplication(velocity) * 9.0 / 2.0
+                + velocityFour * 27.0 / 8.0;
 
-            zeta.x += CalculateHighOrdersOfZeta<0, 1, 2> (velocity, velocityMagnitudeSquared);
-            zeta.y += CalculateHighOrdersOfZeta<1, 2, 0> (velocity, velocityMagnitudeSquared);
-            zeta.z += CalculateHighOrdersOfZeta<2, 0, 1> (velocity, velocityMagnitudeSquared);
+            zeta.x += CalculateHighOrdersOfZeta<0, 1, 2>(velocity, velocityMagnitudeSquared);
+            zeta.y += CalculateHighOrdersOfZeta<1, 2, 0>(velocity, velocityMagnitudeSquared);
+            zeta.z += CalculateHighOrdersOfZeta<2, 0, 1>(velocity, velocityMagnitudeSquared);
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
@@ -410,8 +444,10 @@ namespace hemelb
 
             for (Direction vec_index = 0; vec_index < DmQn::NUMVECTORS; vec_index++)
             {
-              strain_rate_tensor_i_j += iFNeq[vec_index] * (DmQn::discreteVelocityVectors[iRow][vec_index]
-                  * DmQn::discreteVelocityVectors[iColumn][vec_index]);
+              strain_rate_tensor_i_j +=
+                  iFNeq[vec_index]
+                      * (DmQn::discreteVelocityVectors[iRow][vec_index]
+                          * DmQn::discreteVelocityVectors[iColumn][vec_index]);
             }
 
             strain_rate_tensor_i_j *= -1.0 / (2.0 * iTau * iDensity * Cs2);
@@ -435,20 +471,23 @@ namespace hemelb
             distribn_t ux = velocity[thisIndex], uy = velocity[otherIndex1], uz = velocity[otherIndex2];
 
             // The 5th order term.
-            distribn_t zetaHighOrders = 27.0 * (util::NumericalFunctions::IntegerPower(ux, 5) - 4. * ux * uy * uy * uz
-                * uz) / 8.0;
+            distribn_t zetaHighOrders = 27.0
+                * (util::NumericalFunctions::IntegerPower(ux, 5) - 4. * ux * uy * uy * uz * uz) / 8.0;
 
             // The 6th order term.
             zetaHighOrders += 81.0 * (util::NumericalFunctions::IntegerPower(ux, 6) - 8. * ux * ux * uy * uy * uz * uz)
                 / 16.0;
 
             // The 7th order term.
-            zetaHighOrders += 81.0 * (util::NumericalFunctions::IntegerPower(ux, 7) + 2. * ux * uy * uy * uz * uz
-                * velocityMagnitudeSquared - 10. * ux * ux * ux * uy * uy * uz * uz) / 16.0;
+            zetaHighOrders += 81.0
+                * (util::NumericalFunctions::IntegerPower(ux, 7)
+                    + 2. * ux * uy * uy * uz * uz * velocityMagnitudeSquared - 10. * ux * ux * ux * uy * uy * uz * uz)
+                / 16.0;
 
             // The 8th order term.
-            zetaHighOrders += 243.0 * (util::NumericalFunctions::IntegerPower(ux, 8) + 16.0 * ux * ux * uy * uy * uz
-                * uz * (uy * uy + uz * uz)) / 128.0;
+            zetaHighOrders += 243.0
+                * (util::NumericalFunctions::IntegerPower(ux, 8)
+                    + 16.0 * ux * ux * uy * uy * uz * uz * (uy * uy + uz * uz)) / 128.0;
 
             return zetaHighOrders;
           }

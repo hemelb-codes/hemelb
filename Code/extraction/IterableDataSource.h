@@ -81,6 +81,12 @@ namespace hemelb
         virtual util::Vector3D<PhysicalStress> GetTractionVector() const = 0;
 
         /**
+         * Returns the projection of the traction vector on the tangential plane of an edge site.
+         * @return projected traction vector
+         */
+        virtual util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const = 0;
+
+        /**
          * Resets the iterator to the beginning again.
          */
         virtual void Reset() = 0;
