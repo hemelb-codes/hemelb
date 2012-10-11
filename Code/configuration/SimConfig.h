@@ -22,7 +22,7 @@ namespace hemelb
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
         void
-            DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetCosine* value);
+        DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetCosine* value);
         void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetFile* value);
         void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
                                        bool isLoading,
@@ -106,8 +106,10 @@ namespace hemelb
       private:
         void DoIO(TiXmlElement *xmlNode, bool isLoading);
         bool DoIOForLong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, long &value);
-        void
-            DoIOForStressType(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, lb::StressTypes &value);
+        void DoIOForStressType(TiXmlElement* xmlNode,
+                               std::string attributeName,
+                               bool isLoading,
+                               lb::StressTypes &value);
         bool DoIOForULong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, unsigned long &value);
         void DoIOForFloat(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, float &value);
         bool DoIOForDouble(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, double &value);
@@ -120,9 +122,11 @@ namespace hemelb
         void DoIOForProperty(TiXmlElement *xmlNode, bool isLoading);
         void DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field);
         void DoIOForPropertyOutputFile(TiXmlElement *xmlNode, bool isLoading, extraction::PropertyOutputFile* file);
-        void
-            DoIOForLineGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::StraightLineGeometrySelector*& line);
+        void DoIOForLineGeometry(TiXmlElement *xmlNode,
+                                 bool isLoading,
+                                 extraction::StraightLineGeometrySelector*& line);
         void DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::PlaneGeometrySelector*& plane);
+        void DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading, extraction::SurfacePointSelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
         void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::boundaries::iolets::InOutLet* const value);
