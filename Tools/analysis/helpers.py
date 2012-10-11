@@ -56,7 +56,7 @@ def womersley_velocity(radial_position, time, womersley, pipe_radius, pipe_lengt
   bessel_denominator = scipy.special.jn(0, pow(1j, 3.0/2.0)*womersley)
   sol = (((pressure_amplitude/pipe_length * pressure_period) / (2j * np.pi * density))
          * (1 - bessel_numerator/bessel_denominator)
-         * np.exp(2j * np.pi * (time/pressure_period))).real
+         * np.exp(2j * np.pi * (time/pressure_period + 0.25))).real
   return sol
 
 def vector_magnitude(vector):
@@ -66,3 +66,32 @@ def has_converged(field_1, field_2, max_rel_epsilon, norm=lambda x,y: (x-y)/x):
   diff_field = [abs(norm(x,y)) for (x,y) in zip(field_1, field_2) ]
   index = diff_field.index(max(diff_field))
   return max(diff_field) < max_rel_epsilon
+
+def map_velocity_pair(vel_1, vel_2):
+  return sum((pow(x-y,2) for (x,y) in zip(vel_1, vel_2)))**0.5
+
+def max_vector_magnitude(set):
+  return max(map(vector_magnitude, set))
+
+def rms(set):
+  return (sum(x*x for x in set) / len(set)) ** 0.5
+
+def ave(set):
+  return sum(set) / float(len(set))
+
+# Takes two sets of fields (which are themselves sets of points) zips them, maps them reduces them.
+def zip_map_reduce(field_set_set_1, field_set_set_2, inner_map, inner_reduction, norm, reduction):
+  zipped_together = zip(field_set_set_1, field_set_set_2)
+
+  # Calculate the normalisation
+  normalisation = [norm(set_1, set_2) for (set_1, set_2) in zipped_together]
+
+  # Map each point pair to, e.g., the vector magnitude of the difference
+  mapped = [ [inner_map(point_1, point_2) for (point_1, point_2) in zip(set_1, set_2)] for (set_1, set_2) in zipped_together ]
+
+  # Reduce the sets to, e.g., their max / rms
+  reductions = [inner_reduction(x) for x in mapped]
+
+  # Take each reduced set, multiply by its normalisation then reduce that with the outer reduction function.
+  result = reduction( [x*y for (x,y) in zip(reductions, normalisation)])
+  return result
