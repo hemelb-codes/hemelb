@@ -382,6 +382,12 @@ namespace hemelb
             extraction::GeometrySurfaceSelector* surface = new extraction::GeometrySurfaceSelector();
             file->geometry = surface;
           }
+          else if (propertyElement->ValueStr().compare("surfacepoint") == 0)
+          {
+            extraction::SurfacePointSelector* surfacePoint = NULL;
+            DoIOForSurfacePoint(propertyElement, isLoading, surfacePoint);
+            file->geometry = surfacePoint;
+          }
           else
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
@@ -471,6 +477,28 @@ namespace hemelb
         xmlNode->SetAttribute("radius", radius);
       }
     }
+
+    void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode,
+                                        bool isLoading,
+                                        extraction::SurfacePointSelector*& surfacePoint)
+   {
+      TiXmlElement* point = GetChild(xmlNode, "point", isLoading);
+
+      util::Vector3D<float> mutableVector;
+
+      if (isLoading)
+      {
+        DoIOForFloatVector(point, isLoading, mutableVector);
+
+        surfacePoint = new extraction::SurfacePointSelector(mutableVector);
+      }
+      else
+      {
+        mutableVector = surfacePoint->GetPoint();
+
+        DoIOForFloatVector(point, isLoading, mutableVector);
+      }
+   }
 
     void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field)
     {

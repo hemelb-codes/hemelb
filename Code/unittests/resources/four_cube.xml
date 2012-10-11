@@ -51,9 +51,10 @@
       </geometrysurface>    
     </propertyoutput>    
     <propertyoutput frequency="10" file="surfacetractionvector.dat">
-      <geometrysurface>
+      <surfacepoint>
+        <point x="2.5" y="2.5" z="0"/>
         <field type="tractionvector"/>
-      </geometrysurface>    
+      </surfacepoint>    
     </propertyoutput>    
   </properties>
 </hemelbsettings>
