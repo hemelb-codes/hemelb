@@ -321,8 +321,9 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::ResetUnstableSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
-                                                                       simulationState->GetTimeStepLength());
+  LogStabilityReport();
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %f\n",
+                                                                      simulationState->GetTimeStepLength());
   Finalise();
   Abort();
 }
@@ -484,17 +485,7 @@ void SimulationMaster::DoTimeStep()
                                                                         renderForNetworkStream,
                                                                         writeSnapshotImage,
                                                                         simulationState->IsRendering());
-
-    if (incompressibilityChecker->AreDensitiesAvailable())
-    {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i tau %.6f max_press_diff %.3f Ma %.3f max_vel_phys %e",
-                                                                          simulationState->GetTimeStep(),
-                                                                          latticeBoltzmannModel->GetLbmParams()->GetTau(),
-                                                                          incompressibilityChecker->GetMaxRelativeDensityDifference(),
-                                                                          unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
-                                                                              / hemelb::Cs,
-                                                                          incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
-    }
+    LogStabilityReport();
   }
 
   RecalculatePropertyRequirements();
@@ -601,5 +592,19 @@ void SimulationMaster::Abort()
   // that calls abort, and we get a stack-trace from the exception having been thrown.
   hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
   exit(1);
+}
+
+void SimulationMaster::LogStabilityReport()
+{
+  if (incompressibilityChecker->AreDensitiesAvailable())
+  {
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
+                                                                        simulationState->GetTimeStep(),
+                                                                        latticeBoltzmannModel->GetLbmParams()->GetTau(),
+                                                                        incompressibilityChecker->GetMaxRelativeDensityDifference(),
+                                                                        unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
+                                                                            / hemelb::Cs,
+                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
+  }
 }
 
