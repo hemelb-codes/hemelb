@@ -131,7 +131,7 @@ results:
         # LB parameters
         tau: 0.5 + step_length * (viscosity / blood_density) / (cs2 * voxel_size * voxel_size)
         lattice_speed: voxel_size / step_length
-        mach_number: max(theoretical_axial_velocity) / (cs2 * lattice_speed)
+        mach_number: max(theoretical_axial_velocity) / (cs2**0.5 * lattice_speed)
         mean_density_difference: pressure_diff / (lattice_speed * lattice_speed * blood_density * cs2)
         momentum_diffusion_time: pipe_radius**2 * blood_density / viscosity
         momentum_diffusion_time_count: (steps * step_length) / momentum_diffusion_time
@@ -150,16 +150,16 @@ results:
         range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
         range_theoretical_axial_velocity_obs: 'max(theoretical_axial_velocity_obs) - min(theoretical_axial_velocity_obs)'
         residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
-        residual_velocity_obs: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity_obs)]'       
-        max_rel_residual_velocity: 'max([abs(x) for x in residual_velocity])/range_theoretical_axial_velocity'
-        ave_rel_residual_velocity: '(( sum([x**2 for x in residual_velocity]) / len(residual_velocity) ) ** 0.5) / range_theoretical_axial_velocity'
+        residual_velocity_obs: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity_obs)]'
+        max_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, max, lambda x,y: 1./ max_vector_magnitude(y), max)'
+        ave_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, rms, lambda x,y: 1./ max_vector_magnitude(y), ave)'
         ave_rel_residual_velocity_obs: '(( sum([x**2 for x in residual_velocity_obs]) / len(residual_velocity_obs) ) ** 0.5) / range_theoretical_axial_velocity_obs'
         mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
 
         # Pressure stats
         pressure_diff: (inlet_pressure_mean-outlet_pressure_mean) * 133.3223874
-        non_iolet_pressure_field: '[x for (x,y) in zip(axial_pressure,axial_position) if abs(y) < pipe_length / 2 - voxel_size]'
-        non_iolet_positions: '[x for x in axial_position if abs(x) < pipe_length / 2 - voxel_size]'
+        non_iolet_pressure_field: '[x for (x,y) in zip(axial_pressure,axial_position) if abs(y) < pipe_length * 0.45]'
+        non_iolet_positions: '[x for x in axial_position if abs(x) < pipe_length * 0.45]'
         observed_pressure_grad: '(max(non_iolet_pressure_field) - min(non_iolet_pressure_field)) / (max(non_iolet_positions) - min(non_iolet_positions))'
         axial_pressure: '[133.3223874 * x for x in axial_pressure_torr]'
         axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
@@ -199,10 +199,9 @@ results:
         norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
 
         # Convergence properties
-        sample_steps: 'momentum_diffusion_time/step_length if flow_type=="poiseuille" else sampling_frequency'
-        velocity_field_samples: '[velocity_sample_0, velocity_sample_1, velocity_sample_2, velocity_sample_3, velocity_sample_4, velocity_sample_5]'
-        transformed_grid: aligned_cylindrical(whole_grid,voxel_size,origin,axis)
-        converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * sample_steps, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
+        transformed_plane_grid: 'aligned_cylindrical(plane_coords,voxel_size,origin,axis)'
+        convergence: 'zip_map_reduce(sample_set_1, sample_set_2, map_velocity_pair, max, lambda x,y: 1. / max_vector_magnitude(x+y), max)'
+        
 
     yaml_files:
         'env.yml':
@@ -228,17 +227,31 @@ results:
                 theoretical_axial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (x + pipe_length/2)/pipe_length for x in axial_position]'
                 theoretical_axial_stress: '[0.5 * (pressure_diff/pipe_length) * r for r in radial_position] '
                 theoretical_axial_velocity_obs: '[ (1/(4*viscosity)) * observed_pressure_grad * (pow(pipe_radius,2) -pow(d,2)) for d in radial_position]'
-                theoretical_axial_pressure_obs: '[inlet_pressure_mean*133.3223874 - observed_pressure_grad * (x + pipe_length/2) for x in axial_position]'
+                theoretical_axial_pressure_obs: '[max(non_iolet_pressure_field) - observed_pressure_grad * (x + pipe_length/2) for x in axial_position]'
                 theoretical_radial_pressure: '[inlet_pressure_mean*133.3223874 - pressure_diff * (z + pipe_length/2)/pipe_length for z in stress_tensor_sampling_z_coord]'
                 theoretical_stress_tensor: '[poiseuille_stress_tensor(pipe_radius, pressure, pressure_diff/pipe_length) for (pipe_radius, pressure) in zip(radial_position, theoretical_radial_pressure)]'
+                sample_steps: 'momentum_diffusion_time/step_length'
+                sample_set_1: '[plane_velocity_1]'
+                sample_set_2: '[plane_velocity_2]'
+                theoretical_plane_velocities: '[[(0,0,(1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(pipe_radius,2) - pow(r,2))) for (r,theta,z) in transformed_plane_grid]]'
+      
+                converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * sample_steps, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
 
         'flow_type=="womersley"':
             compound_properties:
                 womersley_number: 'pipe_radius * math.sqrt((2.0 * numpy.pi * blood_density) / (viscosity * inlet_pressure_period))'
-                theoretical_axial_velocity:  '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
+                theoretical_axial_velocity: '[womersley_velocity(r, sampling_frequency * step_length, womersley_number, 
+pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density) for r in 
+radial_position]' # todo: #493 call womersley_velocity with radial_position once it becomes a numpy array
                 theoretical_axial_poiseuille_velocity: '(1/(4*viscosity)) * (133.3223874*inlet_pressure_amplitude/pipe_length) * (pow(pipe_radius,2))'
                 theoretical_reynolds_number: 1000*theoretical_axial_poiseuille_velocity*2*pipe_radius/viscosity
                 sound_waves_per_oscillation: (inlet_pressure_period / step_length) / (pipe_length / voxel_size)
+                sample_steps: 'sampling_frequency'
+                sample_set_1: '[plane_velocity_1, plane_velocity_2, plane_velocity_3, plane_velocity_4]'
+                sample_set_2: '[plane_velocity_5, plane_velocity_6, plane_velocity_7, plane_velocity_8]'
+                theoretical_plane_velocities: '[[(0,0,womersley_velocity(r, plane_times[t]*step_length, womersley_number, pipe_radius, pipe_length, inlet_pressure_amplitude * 133.3223874, inlet_pressure_period, blood_density)) for (r,theta,z) in transformed_plane_grid] for t in (-1,-2,-3,-4)]'
+
+                converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * sample_steps, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
             
     extraction_files:
       'results/Extracted/pressure_axial_profile.dat':
@@ -258,28 +271,33 @@ results:
       'results/Extracted/stresstensor_line_2_5_lengths_in.dat':
         radial_stresstensor: developed_stresstensor_profile
         radial_coordinate_tensors: grid
-      'results/Extracted/whole_p_v_fields.dat':
-        whole_grid:
-          - i0
-          - grid
-        velocity_sample_0:
-          - i41
-          - velocity
-        velocity_sample_1: 
-          - i42
-          - velocity
-        velocity_sample_2: 
-          - i43
-          - velocity
-        velocity_sample_3: 
-          - i44
-          - velocity
-        velocity_sample_4: 
-          - i45
-          - velocity
-        velocity_sample_5: 
-          - i46
-          - velocity
+      'results/Extracted/velocity_shearstress_plane_2_5_lengths_in.dat':
+        plane_coords: grid
+        plane_times: times
+        plane_velocity_1: 
+          - 'i-1'
+          - developed_velocity_profile
+        plane_velocity_2: 
+          - 'i-2'
+          - developed_velocity_profile
+        plane_velocity_3: 
+          - 'i-3'
+          - developed_velocity_profile
+        plane_velocity_4: 
+          - 'i-4'
+          - developed_velocity_profile
+        plane_velocity_5: 
+          - 'i-5'
+          - developed_velocity_profile
+        plane_velocity_6: 
+          - 'i-6'
+          - developed_velocity_profile
+        plane_velocity_7: 
+          - 'i-7'
+          - developed_velocity_profile
+        plane_velocity_8: 
+          - 'i-8'
+          - developed_velocity_profile
 
 graphs:
     performance_versus_size:
