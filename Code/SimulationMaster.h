@@ -65,6 +65,11 @@ class SimulationMaster
      */
     bool ShouldWriteSnapshot();
 
+    /**
+     * Helper method to log simulation parameters related to stability and accuracy
+     */
+    void LogStabilityReport();
+
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
