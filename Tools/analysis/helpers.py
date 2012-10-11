@@ -95,3 +95,6 @@ def zip_map_reduce(field_set_set_1, field_set_set_2, inner_map, inner_reduction,
   # Take each reduced set, multiply by its normalisation then reduce that with the outer reduction function.
   result = reduction( [x*y for (x,y) in zip(reductions, normalisation)])
   return result
+
+def rotate_to_axis(z_vel, axis):
+  return [z_vel*x for x in axis]
