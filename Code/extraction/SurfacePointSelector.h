@@ -28,7 +28,7 @@ namespace hemelb
          * Get the surface point.
          * @return surface point
          */
-        util::Vector3D<float> GetPoint() const;
+        const util::Vector3D<float>& GetPoint() const;
 
       protected:
         /**
@@ -42,8 +42,8 @@ namespace hemelb
       private:
         /** Coordinates of the surface point to be selected. */
         const util::Vector3D<float> surfacePoint;
-        /** Maximum distance between two sites in lattice units squared. */
-        const float maxDistanceBetweenSitesLatticeUnits;
+        /** Maximum distance between two sites in lattice units. */
+        static const float maxDistanceBetweenSitesLatticeUnits;
     };
 
   } /* namespace extraction */
