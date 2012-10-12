@@ -1,17 +1,17 @@
 #include "SurfacePointSelector.h"
 
-#include <iostream>
-
 namespace hemelb
 {
   namespace extraction
   {
+    const float SurfacePointSelector::maxDistanceBetweenSitesLatticeUnits = sqrt(3.0);
+
     SurfacePointSelector::SurfacePointSelector(const util::Vector3D<float>& surfacePoint) :
-        surfacePoint(surfacePoint), maxDistanceBetweenSitesLatticeUnits(sqrt(3.0))
+        surfacePoint(surfacePoint)
     {
     }
 
-    util::Vector3D<float> SurfacePointSelector::GetPoint() const
+    const util::Vector3D<float>& SurfacePointSelector::GetPoint() const
     {
       return surfacePoint;
     }
