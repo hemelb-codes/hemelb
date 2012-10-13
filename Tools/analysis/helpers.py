@@ -98,3 +98,99 @@ def zip_map_reduce(field_set_set_1, field_set_set_2, inner_map, inner_reduction,
 
 def rotate_to_axis(z_vel, axis):
   return [z_vel*x for x in axis]
+
+class TBDAlgorithm(object):
+  """
+  This class implements the three-band decomposition (TBD) algorithm
+  as described in Gizzi et al. 2011. A TBDAlgorithm object can
+  be used to compute the TBD of a given wall shear stress signal and
+  multiple risk factors (via multiple calls to compute_tbd_for_threshold()).
+  """
+  # Identifiers of the different bands in the algorithm
+  negative_band, zero_band, positive_band, undefined_band = range(4)
+
+  def __init__(self, signed_wss_magnitude):
+    """
+    Constructor.
+
+    signed_wss_magnitude -- Iterable with the signed magnitude
+    of the wall shear stress (wss) vector at a given surface point
+    over time. The sign is given by the dot product of a given wss
+    vector and the average of all of them.
+    """
+    self.signed_wss_magnitude = signed_wss_magnitude
+
+  def compute_tbd_for_threshold(self, threshold):
+    """
+    Compute the TBD for a given threshold. Returns a numpy array with
+    the number of negative, zero, and positive intervals resulting from
+    the TBD analysis of the signal provided in the constructor and
+    threshold.
+
+    threshold -- risk factor of the TBD. In the same units of force
+    per area as the signed_wss_magnitude argument of the constructor
+    """
+    self._init_tbd(threshold)
+    
+    for wss_signal_value in self.signed_wss_magnitude:
+      self._update_tbd(wss_signal_value)
+
+    return self._get_tbd_result()
+
+  def _init_tbd(self, threshold):
+    """
+    Initialise the TBD for a given risk factor.
+
+    threshold -- risk factor of the TBD. In the same units of force
+    per area as the signed_wss_magnitude argument of the constructor
+    """    
+    self.threshold = threshold
+    self.current_state = self.undefined_band
+    self.num_intervals = np.array([0, 0, 0])
+
+  def _update_tbd(self, new_wss):
+    """
+    Updates the TBD by processing a value of wss.
+
+    new_wss -- signed magnitude of the wss vector at a given time
+    """
+    old_state = self.current_state
+    self.current_state = self._get_band_for_value(new_wss)
+    if (old_state != self.current_state):
+      self.num_intervals[self.current_state] += 1
+
+  def _get_band_for_value(self, wss_value):
+    """
+    Returns to which band a given value of wss belongs.
+
+    wss_value -- signed magnitude of the wss vector at a given time
+    """
+    if (wss_value > self.threshold):
+      return self.positive_band
+    elif (wss_value < -self.threshold):
+      return self.negative_band
+    else:
+      return self.zero_band
+
+  def _get_tbd_result(self):
+    """
+    Returns a numpy array with the number of negative, zero, and positive
+    intervals resulting from the TBD
+    """
+    return (self.threshold, self.num_intervals[0], self.num_intervals[1], self.num_intervals[2])
+
+def compute_tbd(signed_wss_magnitude):
+  """
+  Computes the TBD decomposition of a signed wss signal. Returns a list of
+  numpy arrays. The cardinality of the list is the number risk factors considered.
+  Each numpy array has the number of negative, zero, and positive intervals
+  resulting from the TBD.
+  """
+  tbd_list = []
+  tbd_algorithm = TBDAlgorithm(signed_wss_magnitude)
+
+  for risk_factor in np.arange(0.05, max(signed_wss_magnitude), 0.01):
+    tbd = tbd_algorithm.compute_tbd_for_threshold(risk_factor)
+    tbd_list.append(tbd)
+
+  return tbd_list

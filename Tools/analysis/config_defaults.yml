@@ -198,6 +198,12 @@ results:
         # Frobenius norm of the difference between the extracted tensor and the Poiseuille theoretical
         norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
 
+        # TBD analysis rheology paper
+        rh_wss: '[rh_wss_0[0], rh_wss_1[0], rh_wss_2[0], rh_wss_3[0], rh_wss_4[0], rh_wss_5[0], rh_wss_6[0], rh_wss_7[0], rh_wss_8[0], rh_wss_9[0]]'
+        ave_rh_wss: 'numpy.mean(rh_wss,axis=0)'
+        signed_wss_magnitude: '[numpy.sign(numpy.dot(x,ave_rh_wss))*numpy.linalg.norm(x) for x in rh_wss]'
+        compute_tbd: 'compute_tbd(signed_wss_magnitude)'
+
         # Convergence properties
         transformed_plane_grid: 'aligned_cylindrical(plane_coords,voxel_size,origin,axis)'
         convergence: 'zip_map_reduce(sample_set_1, sample_set_2, map_velocity_pair, max, lambda x,y: 1. / max_vector_magnitude(x+y), max)'
@@ -297,6 +303,39 @@ radial_position]' # todo: #493 call womersley_velocity with radial_position once
         plane_velocity_8: 
           - 'i-8'
           - developed_velocity_profile
+
+      'results/Extracted/point_pres_stress.dat':
+        rh_grid: grid
+        rh_wss_0:
+          - i0
+          - tangentialprojectiontractionvector
+        rh_wss_1:
+          - i1
+          - tangentialprojectiontractionvector
+        rh_wss_2:
+          - i2
+          - tangentialprojectiontractionvector
+        rh_wss_3:
+          - i3
+          - tangentialprojectiontractionvector
+        rh_wss_4:
+          - i4
+          - tangentialprojectiontractionvector
+        rh_wss_5:
+          - i5
+          - tangentialprojectiontractionvector
+        rh_wss_6:
+          - i6
+          - tangentialprojectiontractionvector
+        rh_wss_7:
+          - i7
+          - tangentialprojectiontractionvector
+        rh_wss_8:
+          - i8
+          - tangentialprojectiontractionvector
+        rh_wss_9:
+          - i9
+          - tangentialprojectiontractionvector
 
 graphs:
     performance_versus_size:
