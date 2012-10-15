@@ -41,8 +41,36 @@ namespace hemelb
         /** property getter for particleId */
         const unsigned long GetParticleId() const { return particleId; }
         const LatticePosition& GetGlobalPosition() const { return globalPosition; }
-        const LatticeVelocity& GetVelocity() const { return velocity; }
-        const PhysicalMass GetMass() const {return mass; }
+
+        const LatticeVelocity GetVelocity() const
+        {
+          return velocity + bodyForces * CalculateDrag() + lubricationVelocityAdjustment;
+        }
+
+        const PhysicalMass GetMass() const { return mass; }
+        const LatticeDistance GetRadius() const { return smallRadius_a0; }
+
+        /**
+         * normalised particle radius
+         *
+         * a = 1/(1/a0 - 1/ah) = 1/((ah-a0)/(a0*ah)) = (a0*ah)/(ah-a0)
+         */
+        const LatticeDistance GetNormalisedRadius() const
+        {
+          return ( smallRadius_a0 * largeRadius_ah )
+               / ( largeRadius_ah - smallRadius_a0 );
+        }
+
+        /**
+         * inverse of normalised particle radius
+         *
+         * 1/a = (1/a0 - 1/ah) = (ah-a0)/(a0*ah)
+         */
+        const LatticeDistance GetInverseNormalisedRadius() const
+        {
+          return ( largeRadius_ah - smallRadius_a0 )
+               / ( smallRadius_a0 * largeRadius_ah );
+        }
 
         /** property getter for ownerRank */
         const proc_t GetOwnerRank() const { return ownerRank; }
@@ -75,7 +103,7 @@ namespace hemelb
         const DimensionlessQuantity GetViscosity() const;
 
         /** calculates the drag coefficient = 1/(6*pi*viscosity*radius) */
-        const DimensionlessQuantity CalculateDrag();
+        const DimensionlessQuantity CalculateDrag() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);
@@ -97,6 +125,12 @@ namespace hemelb
           velocity += contribution;
         };
 
+        /** sets the value for the velocity adjustment due to the lubrication BC */
+        const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)
+        {
+          lubricationVelocityAdjustment = adjustment;
+        }
+
         /** creates a derived MPI datatype that represents a single particle object
          *  the fields included are all those from the PersistedParticle base class
          *  note - this data type uses displacements rather than absolute addresses
@@ -115,14 +149,15 @@ namespace hemelb
 
       private:
         /** partial interpolation of fluid velocity - temporary value only */
-        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-        util::Vector3D<double> velocity;
+        LatticeVelocity velocity;
 
         /** the effect of all body forces on this particle - this is NOT a force vector */
-        // TODO: should be LatticeVelocity == Vector3D<LatticeSpeed> (fix as part of #437)
-        util::Vector3D<double> bodyForces;
+        LatticeVelocity bodyForces;
 
-        DimensionlessQuantity drag;
+        //DEPRECATED//DimensionlessQuantity drag;
+
+        /* an adjustment to the velocity from the LubricationBC boundary condition */
+        LatticeVelocity lubricationVelocityAdjustment;
 
         proc_t ownerRank;
 
