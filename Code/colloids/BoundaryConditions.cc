@@ -80,6 +80,8 @@ namespace hemelb
     {
       bool keep = true;
 
+      particle.SetLubricationVelocityAdjustment(LatticeVelocity());
+
       // detect collision(s)
       const util::Vector3D<site_t> siteGlobalPosition(
         (site_t)(0.5+particle.GetGlobalPosition().x),
@@ -91,9 +93,14 @@ namespace hemelb
         siteGlobalPosition, procId, localContiguousId);
       if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
         log::Logger::Log<log::Info, log::OnePerCore>(
-          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.y=%g, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
+          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.pos: {%g,%g,%g}, p.vel: {%g,%g,%g}, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
           particle.GetParticleId(),
+          particle.GetGlobalPosition().x,
           particle.GetGlobalPosition().y,
+          particle.GetGlobalPosition().z,
+          particle.GetVelocity().x,
+          particle.GetVelocity().y,
+          particle.GetVelocity().z,
           isLocalFluid ? "TRUE" : "FALSE",
           procId, localContiguousId,
           siteGlobalPosition.x,
