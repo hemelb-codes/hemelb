@@ -16,6 +16,14 @@ namespace hemelb
 {
   namespace colloids
   {
+    /** THIS CLASS SHOULD NOT BE USED IN ITS CURRENT FORM
+     *
+     *  It is intended to approximate the external force of gravity on colloid particles.
+     *  However, the calculation should take into account the boyancy caused by the fluid
+     *  so the "mass" of the particle should really be the difference between its density
+     *  and the density of the surrounding fluid, which can be calculated from viscosity?
+     *  This needs changes to PersistedParticle, config.xml and MPI types (mass->density)
+     */
     class GraviticBodyForce : public BodyForce
     {
       public:
