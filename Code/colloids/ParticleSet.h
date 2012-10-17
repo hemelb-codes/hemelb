@@ -46,7 +46,8 @@ namespace hemelb
         const void CalculateFeedbackForces();
 
         /** applies boundary conditions to all particles **/
-        const void ApplyBoundaryConditions();
+        const void ApplyBoundaryConditions(
+                     const LatticeTime currentTimestep);
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
@@ -57,7 +58,7 @@ namespace hemelb
         /** communicates the partial fluid interpolations to&from all neighbours */
         const void CommunicateFluidVelocities();
 
-        const void OutputInformation(const LatticeTime timestep) const;
+        const void OutputInformation(const LatticeTime timestep);
 
       private:
         /** cached copy of local rank (obtained from topology) */

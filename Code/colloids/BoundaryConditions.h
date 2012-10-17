@@ -62,7 +62,9 @@ namespace hemelb
         /** allows all registered boundary conditions to do something to this particle
             returns false if the particle should be deleted, true otherwise
          */
-        static const bool DoSomeThingsToParticle(Particle& particle);
+        static const bool DoSomeThingsToParticle(
+                            const LatticeTime currentTimestep,
+                            Particle& particle);
 
         /** allows all registered boundary conditions to create new particles */
         static const std::vector<Particle> CreateNewParticles();

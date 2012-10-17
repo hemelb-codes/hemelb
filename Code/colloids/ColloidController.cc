@@ -33,7 +33,8 @@ namespace hemelb
                                          const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
                                          lb::MacroscopicPropertyCache& propertyCache) :
-      localRank(topology::NetworkTopology::Instance()->GetLocalRank())
+      localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
+      simulationState(simulationState)
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -254,6 +255,8 @@ namespace hemelb
 
     void ColloidController::EndIteration()
     {
+      const LatticeTime currentTimestep = simulationState.GetTimeStep();
+
       log::Logger::Log<log::Debug, log::OnePerCore>("About to do InterpolateFluidVelocity\n");
 
       // step 6
@@ -266,7 +269,8 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("About to do ApplyBoundaryConditions\n");
 
-      particleSet->ApplyBoundaryConditions();
+      // extra step (not in original design)
+      particleSet->ApplyBoundaryConditions(currentTimestep);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("About to do UpdatePositions\n");
 

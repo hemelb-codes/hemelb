@@ -51,6 +51,8 @@ namespace hemelb
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
+        const lb::SimulationState& simulationState;
+
         /** holds the set of Particles that this processor knows about */
         ParticleSet* particleSet;
 
