@@ -44,7 +44,7 @@ namespace hemelb
 
         const LatticeVelocity GetVelocity() const
         {
-          return velocity + bodyForces * CalculateDrag() + lubricationVelocityAdjustment;
+          return velocity + bodyForces * CalculateDragCoefficient() + lubricationVelocityAdjustment;
         }
 
         const PhysicalMass GetMass() const { return mass; }
@@ -131,7 +131,7 @@ namespace hemelb
         const DimensionlessQuantity GetViscosity() const;
 
         /** calculates the drag coefficient = 1/(6*pi*viscosity*radius) */
-        const DimensionlessQuantity CalculateDrag() const;
+        const DimensionlessQuantity CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);
