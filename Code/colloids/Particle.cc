@@ -63,7 +63,7 @@ namespace hemelb
     {
         log::Logger::Log<log::Info, log::OnePerCore>(
           "In colloids::Particle::OutputInformation, id: %i, owner: %i, drag %g, mass %g, position: {%g,%g,%g}, velocity: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
-          particleId, ownerRank, CalculateDrag(), mass,
+          particleId, ownerRank, CalculateDragCoefficient(), mass,
           globalPosition.x, globalPosition.y, globalPosition.z,
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
     }
@@ -100,7 +100,6 @@ namespace hemelb
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
 
       globalPosition += GetVelocity();
-      //globalPosition += velocity + bodyForces * CalculateDrag();
 
       // round the global position of the particle to the nearest site coordinates
       const util::Vector3D<site_t> siteGlobalPosition(
@@ -131,7 +130,7 @@ namespace hemelb
       return BLOOD_VISCOSITY_Pa_s;
     }
 
-    const DimensionlessQuantity Particle::CalculateDrag() const
+    const DimensionlessQuantity Particle::CalculateDragCoefficient() const
     {
       // calculate the drag due to the fluid for this particle
       return (largeRadius_ah - smallRadius_a0)

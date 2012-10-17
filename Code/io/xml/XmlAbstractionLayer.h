@@ -153,6 +153,22 @@ namespace hemelb
            *   or false if the attribute was not found or could not be converted
            */
           bool GetDoubleValue(const std::string name, double& value);
+
+          /**
+           * reads a floating-point valued attribute from the current element
+           *
+           * reads the value of the attribute with the specified name
+           * and converts it to a double in lattice units before returning it
+           *
+           * @param $name
+           *   the name of the attribute within the current element
+           * @param $value
+           *   the converted value of the attribute (output)
+           *
+           * @return
+           *   returns true if the attribute was found and converted successfully
+           *   or false if the attribute was not found or could not be converted
+           */
           bool GetDoubleValueAndConvert(const std::string name, double& value);
 
           /**
@@ -168,7 +184,7 @@ namespace hemelb
            *
            * @param $name
            *   the name of the child vector element within the current element
-           * @param $value
+           * @param $vector
            *   the converted value of the child vector element (output)
            *
            * @return
@@ -176,7 +192,49 @@ namespace hemelb
            *   or false if the vector was not found or could not be converted
            */
           bool GetDoubleVector(const std::string name, util::Vector3D<double>& vector);
+
+          /**
+           * reads a 3D vector of double values from the current element
+           *
+           * reads the value of the vector with the specified name
+           * the name specifies the name of a child element
+           * that contains attributes for each co-ordinate value
+           * the attributes are named: xValue, yValue, and zValue
+           * each co-ordinate attribute value is converted to a double in lattice units
+           * before setting the x, y, and z properties of the vector parameter
+           * if this function returns false then no change was made to vector
+           *
+           * @param $name
+           *   the name of the child vector element within the current element
+           * @param $vector
+           *   the converted value of the child vector element (output)
+           *
+           * @return
+           *   returns true if the vector was found and converted successfully
+           *   or false if the vector was not found or could not be converted
+           */
           bool GetDoubleVectorAndConvert(const std::string name, util::Vector3D<double>& vector);
+
+          /**
+           * reads a 3D vector representing a LatticePosition from the current element
+           *
+           * reads the value of the vector with the specified name
+           * the name specifies the name of a child element
+           * that contains attributes for each co-ordinate value
+           * the attributes are named: xValue, yValue, and zValue
+           * each co-ordinate attribute value is converted to a double in lattice units
+           * before setting the x, y, and z properties of the vector parameter
+           * if this function returns false then no change was made to vector
+           *
+           * @param $name
+           *   the name of the child vector element within the current element
+           * @param $vector
+           *   the converted value of the child vector element (output)
+           *
+           * @return
+           *   returns true if the vector was found and converted successfully
+           *   or false if the vector was not found or could not be converted
+           */
           bool GetLatticePosition(const std::string name, LatticePosition& vector);
 
           bool GetString(const std::string name, std::string& value);
