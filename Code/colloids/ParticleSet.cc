@@ -63,7 +63,7 @@ namespace hemelb
       particles.clear();
     }
 
-    const void ParticleSet::OutputInformation(const LatticeTime timestep) const
+    const void ParticleSet::OutputInformation(const LatticeTime timestep)
     {
       char * const outputFilenameCstr = "ColloidOutput.xdr\0";
       
@@ -73,15 +73,15 @@ namespace hemelb
       char * const xdrBuffer = new char[maxSize];
       io::writers::xdr::XdrMemWriter writer(xdrBuffer, maxSize);
 
-      for (std::vector<Particle>::const_iterator iter = particles.begin();
+      for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
            iter++)
       {
-        const Particle& particle = *iter;
+        Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
         {
           particle.OutputInformation();
-          particle.WriteToStream(*((io::writers::Writer*)&writer));
+          particle.WriteToStream(timestep, *((io::writers::Writer*)&writer));
         }
       }
       const unsigned int count = writer.getCurrentStreamPosition();
@@ -228,7 +228,8 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::ApplyBoundaryConditions()
+    const void ParticleSet::ApplyBoundaryConditions(
+                 const LatticeTime currentTimestep)
     {
       for (std::vector<Particle>::iterator iter = particles.begin();
            iter != particles.end();
@@ -236,8 +237,42 @@ namespace hemelb
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
-          BoundaryConditions::DoSomeThingsToParticle(particle);
+        {
+          BoundaryConditions::DoSomeThingsToParticle(
+                                currentTimestep,
+                                particle);
+          if (particle.IsReadyToBeDeleted())
+          log::Logger::Log<log::Info, log::OnePerCore>(
+            "In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
+            currentTimestep,
+            particle.GetParticleId(),
+            particle.IsReadyToBeDeleted() ? "YES" : "NO",
+            particle.GetDeletionMarker(),
+            particle.GetLastCheckpointTimestep());
+        }
       }
+
+      // shuffle (or partition) the particles in our vector containing all particles
+      // so the first partition contains all the local particles that should be kept
+      // and the other contains all the deletable-local plus the non-local particles
+      std::vector<Particle>::iterator bound = std::partition(
+        particles.begin(),
+        particles.begin() + scanMap[localRank].first,
+        std::not1(std::mem_fun_ref(&Particle::IsReadyToBeDeleted)));
+
+      if (scanMap[localRank].first > (bound-particles.begin()))
+      log::Logger::Log<log::Info, log::OnePerCore>(
+        "In ParticleSet::ApplyBoundaryConditions - timestep: %lu, scanMap[localRank].first: %lu, bound-particles.begin(): %lu\n",
+        currentTimestep,
+        scanMap[localRank].first,
+        bound-particles.begin());
+
+
+      // the partitioning above may invalidate the scanMap used by the communication
+      // the next communication function called is CommunicatePositions, which needs
+      // the number of local particles to be correct - i.e. scanMap[localRank].first
+      // - the rest of scanMap will be re-built by the CommunicatePositions function
+      scanMap[localRank].first = bound - particles.begin();
     }
 
     const void ParticleSet::CalculateFeedbackForces()
@@ -344,7 +379,7 @@ namespace hemelb
 
     const void ParticleSet::CommunicateFluidVelocities()
     {
-      /** todo: CommunicateFluidVelocities
+      /** CommunicateFluidVelocities
        *    For each neighbour rank p
        *    - MPI_IRECV( number_of_incoming_velocities )
        *    - MPI_IRECV( list_of_incoming_velocities )
