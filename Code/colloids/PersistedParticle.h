@@ -46,6 +46,16 @@ namespace hemelb
         /** the hydro-static radius of the particle */
         LatticeDistance largeRadius_ah;
 
+        /** the number of the most recent timestep during which
+         *  information about this particle was written to disk
+         */
+        LatticeTime     lastCheckpointTimestep;
+
+        /** the number of the most recent timestep during which
+         *  this particle first entered the region of an outlet
+         */
+        LatticeTime     markedForDeletionTimestep;
+
         /** the mass of the particle */
         PhysicalMass    mass;
 

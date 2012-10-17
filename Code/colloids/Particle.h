@@ -72,6 +72,30 @@ namespace hemelb
                / ( smallRadius_a0 * largeRadius_ah );
         }
 
+        const LatticeTime& GetLastCheckpointTimestep() const
+        {
+          return lastCheckpointTimestep;
+        }
+        const LatticeTime& GetDeletionMarker() const
+        {
+          return markedForDeletionTimestep;
+        }
+
+        /** unsets the deletion marker - the particle will not be deleted */
+        const void SetDeletionMarker()
+        {
+          markedForDeletionTimestep = BIG_NUMBER2;
+        }
+
+        /** sets the deletion marker to the current timestep
+         *  the particle will be deleted after the next checkpoint
+         */
+        const void SetDeletionMarker(LatticeTime timestep)
+        {
+          if (timestep < markedForDeletionTimestep)
+            markedForDeletionTimestep = timestep;
+        }
+
         /** property getter for ownerRank */
         const proc_t GetOwnerRank() const { return ownerRank; }
 
@@ -92,11 +116,15 @@ namespace hemelb
         /** determines if the owner rank of this particle is an existing key in map */
         const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
 
+        const bool IsReadyToBeDeleted() const;
+
         /** for debug purposes only - outputs all properties to info log */
         const void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(io::writers::Writer& writer) const;
+        const void WriteToStream(
+                     const LatticeTime currentTimestep,
+                     io::writers::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
@@ -153,8 +181,6 @@ namespace hemelb
 
         /** the effect of all body forces on this particle - this is NOT a force vector */
         LatticeVelocity bodyForces;
-
-        //DEPRECATED//DimensionlessQuantity drag;
 
         /* an adjustment to the velocity from the LubricationBC boundary condition */
         LatticeVelocity lubricationVelocityAdjustment;

@@ -23,6 +23,8 @@ namespace hemelb
       ok &= xml.GetDoubleValueAndConvert("HydrostaticRadiusAh", largeRadius_ah);
       ok &= xml.GetDoubleValue("Mass", mass);
       ok &= xml.GetLatticePosition("initialPosition", globalPosition);
+      lastCheckpointTimestep = 0;
+      markedForDeletionTimestep = BIG_NUMBER2;
     };
   }
 }

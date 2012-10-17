@@ -54,6 +54,11 @@ namespace hemelb
       return map.count(ownerRank)>0;
     }
 
+    const bool Particle::IsReadyToBeDeleted() const
+    {
+      return markedForDeletionTimestep < lastCheckpointTimestep;
+    }
+
     const void Particle::OutputInformation() const
     {
         log::Logger::Log<log::Info, log::OnePerCore>(
@@ -67,8 +72,12 @@ namespace hemelb
     // 10 fields * 8 bytes-per-field = 80 bytes, if velocity is included in the output
     // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
 
-    const void Particle::WriteToStream(io::writers::Writer& writer) const
+    const void Particle::WriteToStream(
+                 const LatticeTime currentTimestep,
+                 io::writers::Writer& writer)
     {
+      lastCheckpointTimestep = currentTimestep;
+
       writer << (uint64_t)ownerRank;
       writer << (uint64_t)particleId;
       writer << smallRadius_a0 << largeRadius_ah;
