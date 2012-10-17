@@ -113,10 +113,10 @@ namespace hemelb
 
       // we have chosen to make each block of fields contain a single field
       // so, the number of field blocks is the same as the number of fields
-      int numberOfFieldBlocks = 6;
+      int numberOfFieldBlocks = 8;
 
       // and the length of every field block is one
-      int lengthOfEachFieldBlock[] = {1, 1, 1, 1, 1, 1};
+      int lengthOfEachFieldBlock[] = {1, 1, 1, 1, 1, 1, 1, 1};
 
       // there is no guarantee that the fields will be contiguous, so
       // the displacement of each field must be determined separately
@@ -126,14 +126,17 @@ namespace hemelb
       MPI_Get_address(&(temp.smallRadius_a0), &(displacementOfEachFieldBlock[2]));
       MPI_Get_address(&(temp.largeRadius_ah), &(displacementOfEachFieldBlock[3]));
       MPI_Get_address(&(temp.mass), &(displacementOfEachFieldBlock[4]));
-      MPI_Get_address(&(temp.globalPosition), &(displacementOfEachFieldBlock[5]));
+      MPI_Get_address(&(temp.lastCheckpointTimestep), &(displacementOfEachFieldBlock[5]));
+      MPI_Get_address(&(temp.markedForDeletionTimestep), &(displacementOfEachFieldBlock[6]));
+      MPI_Get_address(&(temp.globalPosition), &(displacementOfEachFieldBlock[7]));
       for (int ndx = 0; ndx < numberOfFieldBlocks; ndx++)
         displacementOfEachFieldBlock[ndx] -= baseAddress; 
 
       // the built-in MPI datatype of each field must match the C++ type
       MPI_Datatype datatypeOfEachFieldBlock[] =
-        {MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE, MPI_DOUBLE,
-         MPI_DOUBLE, MpiDataType<util::Vector3D<double> >()};
+        {MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+          MPI_UNSIGNED_LONG, MPI_UNSIGNED_LONG,
+          MpiDataType<util::Vector3D<double> >()};
 
       // create a first draft of the MPI datatype for a Particle
       // the lower bound and displacements of fields are correct

@@ -46,13 +46,13 @@ namespace hemelb
       {
         const std::string boundaryConditionClass = iter->first;
         const BoundaryConditionFactory_Create createFunction = iter->second;
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Debug, log::OnePerCore>(
           "*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
           boundaryConditionClass.c_str());
         bool found = xml.MoveToChild(boundaryConditionClass);
         if (found)
         {
-          log::Logger::Log<log::Info, log::OnePerCore>(
+          log::Logger::Log<log::Debug, log::OnePerCore>(
             "*** In BoundaryConditions::InitBoundaryConditions - found BC in XML\n");
           while (found)
           {
@@ -69,14 +69,16 @@ namespace hemelb
           }
           xml.MoveToParent();
         } else {
-          log::Logger::Log<log::Info, log::OnePerCore>(
+          log::Logger::Log<log::Debug, log::OnePerCore>(
             "*** In BoundaryConditions::InitBoundaryConditions - no BCs in XML !!\n");
         }
       }
       xml.ResetToTopLevel();
     }
 
-    const bool BoundaryConditions::DoSomeThingsToParticle(Particle& particle)
+    const bool BoundaryConditions::DoSomeThingsToParticle(
+                 const LatticeTime currentTimestep,
+                 Particle& particle)
     {
       bool keep = true;
 
@@ -108,7 +110,7 @@ namespace hemelb
           siteGlobalPosition.z,
           particle.GetOwnerRank());
 
-      if (!isLocalFluid) return keep;
+      if (!isLocalFluid) { return keep; }
 
       const lb::lattices::LatticeInfo latticeInfo = BoundaryConditions::latticeData->GetLatticeInfo();
       const geometry::ConstSite site = latticeData->GetSite(localContiguousId);
@@ -121,8 +123,12 @@ namespace hemelb
       const bool isNearOutlet = (siteType == geometry::OUTLET_TYPE);
 
       // if the particle is not near a boundary then simply keep it
-      if (!isNearWall && !isNearInlet && !isNearOutlet) return keep;
-      else
+      if (!isNearWall && !isNearInlet && !isNearOutlet)
+      {
+        particle.SetDeletionMarker();
+        return keep;
+      }
+      ////else
         log::Logger::Log<log::Info, log::OnePerCore>(
           "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, isNearWall: %s, isNearInlet: %s, isNearOutlet: %s ***\n",
           particle.GetParticleId(),
@@ -192,6 +198,18 @@ namespace hemelb
           BoundaryCondition& boundaryCondition = **(iter);
           keep &= boundaryCondition.DoSomethingToParticle(particle, particleToWallVectors);
         }
+
+      if (keep)
+        particle.SetDeletionMarker();
+      else
+      {
+        particle.SetDeletionMarker(currentTimestep);
+        log::Logger::Log<log::Info, log::OnePerCore>(
+          "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu - attempting to set markedForDeletion to %lu (value actually becomes: %lu)\n",
+          particle.GetParticleId(),
+          currentTimestep,
+          particle.GetDeletionMarker());
+      }
 
       return keep;
     }
