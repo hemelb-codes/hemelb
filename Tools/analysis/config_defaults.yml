@@ -153,7 +153,7 @@ results:
         residual_velocity_obs: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity_obs)]'
         max_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, max, lambda x,y: 1./ max_vector_magnitude(y), max)'
         ave_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, rms, lambda x,y: 1./ max_vector_magnitude(y), ave)'
-        ave_rel_residual_velocity_obs: '(( sum([x**2 for x in residual_velocity_obs]) / len(residual_velocity_obs) ) ** 0.5) / range_theoretical_axial_velocity_obs'
+        ave_rel_residual_velocity_obs: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities_obs, map_velocity_pair, rms, lambda x,y: 1./ max_vector_magnitude(y), ave)'
         mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
 
         # Pressure stats
@@ -239,6 +239,7 @@ results:
                 sample_set_1: '[plane_velocity_1]'
                 sample_set_2: '[plane_velocity_2]'
                 theoretical_plane_velocities: '[[rotate_to_axis((1/(4*viscosity)) * (pressure_diff/pipe_length) * (pow(pipe_radius,2) - pow(r,2)), axis) for (r,theta,z) in transformed_plane_grid]]'
+                theoretical_plane_velocities_obs: '[[rotate_to_axis((1/(4*viscosity)) * observed_pressure_grad * (pow(pipe_radius,2) - pow(r,2)), axis) for (r,theta,z) in transformed_plane_grid]]'
       
                 converged_at: '[has_converged(velocity_field_samples[index], velocity_field_samples[index+1], 1e-7 * sample_steps, norm = lambda x,y: (vector_magnitude(x) - vector_magnitude(y))/vector_magnitude(x) ) for index in range(0, len(velocity_field_samples)-1)]'
 
