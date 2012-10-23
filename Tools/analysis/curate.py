@@ -76,14 +76,17 @@ class Action(object):
         self.pp.pprint(result.hash())
     def display(self,result,*cols):
         self.writer.writerow(map(lambda x: x if not x==None else 'None',[result.datum(col) for col in cols]))
+        result.files.clear()
     def name(self,result):
         print(result.name,file=self.stream)
     def accept(self,result):
         acceptance=open(os.path.join(result.path,'acceptance.txt'),'w')
         acceptance.write("Accepted: OK")
+        acceptance.close()
     def reject(self,result):
         acceptance=open(os.path.join(result.path,'acceptance.txt'),'w')
         acceptance.write("Accepted: NO")
+        acceptance.close()
     def delete(self,result):
         shutil.rmtree(result.path,ignore_errors=True)
     def cat(self,result,*files):
@@ -91,6 +94,7 @@ class Action(object):
         for afile in files:
             content=open(afile).read()
             print(content,file=self.stream)
+            content.close()
     def zip(self,result,*cols):
         print("#%s"%result.name, file=self.stream)
         self.writer.writerows(

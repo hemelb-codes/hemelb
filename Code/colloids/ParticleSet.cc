@@ -242,7 +242,7 @@ namespace hemelb
                                 currentTimestep,
                                 particle);
           if (particle.IsReadyToBeDeleted())
-          log::Logger::Log<log::Info, log::OnePerCore>(
+          log::Logger::Log<log::Trace, log::OnePerCore>(
             "In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
             currentTimestep,
             particle.GetParticleId(),
@@ -261,7 +261,7 @@ namespace hemelb
         std::not1(std::mem_fun_ref(&Particle::IsReadyToBeDeleted)));
 
       if (scanMap[localRank].first > (bound-particles.begin()))
-      log::Logger::Log<log::Info, log::OnePerCore>(
+      log::Logger::Log<log::Debug, log::OnePerCore>(
         "In ParticleSet::ApplyBoundaryConditions - timestep: %lu, scanMap[localRank].first: %lu, bound-particles.begin(): %lu\n",
         currentTimestep,
         scanMap[localRank].first,

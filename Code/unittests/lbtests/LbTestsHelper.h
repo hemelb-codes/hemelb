@@ -26,7 +26,7 @@ namespace hemelb
       {
         public:
           template<typename Lattice>
-          static void CalculateRhoVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
+          static void CalculateRhoMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
           {
             rho = 0.0;
 
@@ -41,7 +41,7 @@ namespace hemelb
           }
 
           template<typename Lattice>
-          static void CalculateVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t v[3])
+          static void CalculateMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t v[3])
           {
             v[0] = v[1] = v[2] = 0.0;
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
@@ -54,22 +54,22 @@ namespace hemelb
 
           template<typename Lattice>
           static void CalculateAnsumaliEntropicEqmF(distribn_t density,
-                                                    distribn_t v_x,
-                                                    distribn_t v_y,
-                                                    distribn_t v_z,
+                                                    distribn_t momentum_x,
+                                                    distribn_t momentum_y,
+                                                    distribn_t momentum_z,
                                                     distribn_t f[Lattice::NUMVECTORS])
           {
             // Calculate velocity.
-            distribn_t u[3] = { v_x / density, v_y / density, v_z / density };
+            distribn_t velocity[3] = { momentum_x / density, momentum_y / density, momentum_z / density };
 
             distribn_t B[3];
             distribn_t term1[3];
             distribn_t term2[3];
             for (int ii = 0; ii < 3; ++ii)
             {
-              B[ii] = sqrt(1.0 + 3.0 * u[ii] * u[ii]);
+              B[ii] = sqrt(1.0 + 3.0 * velocity[ii] * velocity[ii]);
               term1[ii] = 2.0 - B[ii];
-              term2[ii] = (2.0 * u[ii] + B[ii]) / (1.0 - u[ii]);
+              term2[ii] = (2.0 * velocity[ii] + B[ii]) / (1.0 - velocity[ii]);
             }
 
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
@@ -84,25 +84,25 @@ namespace hemelb
 
           template<typename Lattice>
           static void CalculateLBGKEqmF(distribn_t density,
-                                        distribn_t v_x,
-                                        distribn_t v_y,
-                                        distribn_t v_z,
+                                        distribn_t momentum,
+                                        distribn_t momentum_y,
+                                        distribn_t momentum_z,
                                         distribn_t f[Lattice::NUMVECTORS])
           {
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
-                  + v_z * (float) Lattice::CZ[ii];
+              distribn_t vSum = momentum * (float) Lattice::CX[ii] + momentum_y * (float) Lattice::CY[ii] + momentum_z
+                  * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
-              distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
+              distribn_t momentum2Sum = momentum * momentum + momentum_y * momentum_y + momentum_z * momentum_z;
 
               // F eqm = density proportional component...
               f[ii] = density;
 
               // ... - v^2 component...
-              f[ii] -= ( (3.0 / 2.0) * v2Sum / density);
+              f[ii] -= ( (3.0 / 2.0) * momentum2Sum / density);
 
               // ... + v^1 component
               f[ii] += 3.0 * vSum + (9.0 / 2.0) * vSum * vSum / density;
@@ -143,9 +143,9 @@ namespace hemelb
 
           template<typename Kernel>
           static void CompareHydros(distribn_t expectedDensity,
-                                    distribn_t expectedVx,
-                                    distribn_t expectedVy,
-                                    distribn_t expectedVz,
+                                    distribn_t expectedMomentumX,
+                                    distribn_t expectedMomentumY,
+                                    distribn_t expectedMomentumZ,
                                     distribn_t expectedFEq[lb::lattices::D3Q15::NUMVECTORS],
                                     std::string id,
                                     lb::kernels::HydroVars<Kernel> &hydroVars,
@@ -154,10 +154,19 @@ namespace hemelb
             // Compare density
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
 
-            // Compare velocity
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id, expectedVx, hydroVars.v_x, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id, expectedVy, hydroVars.v_y, allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id, expectedVz, hydroVars.v_z, allowedError);
+            // Compare momentum
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id,
+                                                 expectedMomentumX,
+                                                 hydroVars.momentum.x,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum y " + id,
+                                                 expectedMomentumY,
+                                                 hydroVars.momentum.y,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum z " + id,
+                                                 expectedMomentumZ,
+                                                 hydroVars.momentum.z,
+                                                 allowedError);
 
             // Compare equilibrium f
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
@@ -173,12 +182,13 @@ namespace hemelb
           }
 
           template<typename LatticeType>
-          static void InitialiseAnisotropicTestData(hemelb::geometry::LatticeData* latticeData)
+          static void InitialiseAnisotropicTestData(FourCubeLatticeData* latticeData)
           {
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
-              distribn_t* fOld = latticeData->GetSite(site).GetFOld<LatticeType>();
-              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
+              distribn_t fOld[LatticeType::NUMVECTORS];
+              InitialiseAnisotropicTestData<LatticeType> (site, fOld);
+              latticeData->SetFOld<LatticeType>(site, fOld);
             }
           }
 
@@ -292,13 +302,13 @@ namespace hemelb
             for (site_t site = 0; site < latDat.GetLocalFluidSiteCount(); ++site)
             {
               distribn_t density, feq[Lattice::NUMVECTORS];
-              util::Vector3D<distribn_t> velocity;
+              util::Vector3D<distribn_t> momentum;
 
-              Lattice::CalculateDensityVelocityFEq(latDat.GetSite(site).GetFOld<Lattice>(),
+              Lattice::CalculateDensityMomentumFEq(latDat.GetSite(site).GetFOld<Lattice> (),
                                                    density,
-                                                   velocity[0],
-                                                   velocity[1],
-                                                   velocity[2],
+                                                   momentum[0],
+                                                   momentum[1],
+                                                   momentum[2],
                                                    feq);
 
               if (cache.densityCache.RequiresRefresh())
@@ -307,7 +317,7 @@ namespace hemelb
               }
               if (cache.velocityCache.RequiresRefresh())
               {
-                cache.velocityCache.Put(site, velocity / density);
+                cache.velocityCache.Put(site, momentum / density);
               }
 
               // TODO stress cache filling not yet implemented.
@@ -324,15 +334,15 @@ namespace hemelb
           template<typename Lattice>
           static void SetWallAndIoletDistances(FourCubeLatticeData& latticeData, distribn_t wallDistance)
           {
-            assert(wallDistance>=0);
-            assert(wallDistance<1);
+            assert(wallDistance >= 0);
+            assert(wallDistance < 1);
 
             for (site_t siteIndex = 0; siteIndex < latticeData.GetTotalFluidSites(); siteIndex++)
             {
               for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
               {
                 // -1 means that the a given link does not cross any boundary
-                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice>(direction) != -1)
+                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice> (direction) != (distribn_t) -1)
                 {
                   latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
                 }

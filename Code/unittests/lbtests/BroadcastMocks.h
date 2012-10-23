@@ -106,7 +106,7 @@ namespace hemelb
     template<class T>
     void BroadcastMockRootNode::ReceiveFromChildren(T* dataStart, int countPerChild)
     {
-      assert(countPerChild == 2);
+      assert(countPerChild == 3);
 
       switch (callCounter++)
       {
@@ -115,6 +115,7 @@ namespace hemelb
           {
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
+            dataStart[childIndex * countPerChild + 2] = 0.01;
           }
           break;
 
@@ -123,9 +124,11 @@ namespace hemelb
           {
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
+            dataStart[childIndex * countPerChild + 2] = 1.0;
           }
           dataStart[ (spreadFactor - 1) * countPerChild] = 1.0;
           dataStart[ (spreadFactor - 1) * countPerChild + 1] = 100.0;
+          dataStart[ (spreadFactor - 1) * countPerChild + 2] = 10.0;
           break;
 
         case 2:
@@ -133,6 +136,7 @@ namespace hemelb
           {
             dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
+            dataStart[childIndex * countPerChild + 2] = 0.01;
           }
           break;
 
@@ -194,7 +198,7 @@ namespace hemelb
         unsigned iterationCounter;
 
         /** Minimum and maximum values sent up by the leaf node */
-        distribn_t minSentUp, maxSentUp;
+        distribn_t minSentUp, maxSentUp, maxVelSentUp;
 
         /**
          * Helper method to find out whether we are in a downward pass
@@ -247,7 +251,7 @@ namespace hemelb
     template<class T>
     void BroadcastMockLeafNode::ReceiveFromParent(T* dataStart, int countPerChild)
     {
-      assert(countPerChild == 2);
+      assert(countPerChild == 3);
 
       switch (iterationCounter)
       {
@@ -255,16 +259,19 @@ namespace hemelb
           // The first pass down contains rubbish
           dataStart[0] = DBL_MAX;
           dataStart[1] = -DBL_MAX;
+          dataStart[1] = 0;
           break;
 
         case 2:
           dataStart[0] = minSentUp;
           dataStart[1] = maxSentUp;
+          dataStart[2] = maxVelSentUp;
           break;
 
         case 4:
           dataStart[0] = 1.0;
           dataStart[1] = 100.0;
+          dataStart[2] = 10.0;
           break;
 
         default:
@@ -277,9 +284,10 @@ namespace hemelb
     template<class T>
     void BroadcastMockLeafNode::SendToParent(T* data, int count)
     {
-      assert(count == 2);
+      assert(count == 3);
       minSentUp = data[0];
       maxSentUp = data[1];
+      maxVelSentUp = data[2];
     }
 
     bool BroadcastMockLeafNode::DownwardPass(unsigned iterationCounter)

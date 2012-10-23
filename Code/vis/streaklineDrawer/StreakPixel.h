@@ -28,7 +28,7 @@ namespace hemelb
           }
 
           StreakPixel(int i, int j, float particleVelocity, float particleZ, int particleInlet) :
-              BasicPixel(i, j), particle_vel(particleVelocity), particle_z(particleZ), particle_inlet_id(particleInlet)
+            BasicPixel(i, j), particle_vel(particleVelocity), particle_z(particleZ), particle_inlet_id(particleInlet)
           {
 
           }
@@ -83,13 +83,8 @@ namespace hemelb
 
           void LogDebuggingInformation() const
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Streak pixel at (%i,%i) with "
-                                                         "(source inlet, velocity, z) = (%d, %f, %f)",
-                                                         GetI(),
-                                                         GetJ(),
-                                                         particle_inlet_id,
-                                                         particle_vel,
-                                                         particle_z);
+            log::Logger::Log<log::Trace, log::OnePerCore>("Streak pixel at (%i,%i) with "
+              "(source inlet, velocity, z) = (%d, %f, %f)", GetI(), GetJ(), particle_inlet_id, particle_vel, particle_z);
           }
 
         private:

@@ -89,7 +89,7 @@ namespace hemelb
         void SendQuantity(net::Net* net, proc_t destination)
         {
           count = (int) pixels.size();
-          log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count of %i", count);
+          log::Logger::Log<log::Trace, log::OnePerCore>("Sending pixel count of %i", count);
           net->RequestSendR(count, destination);
         }
 
@@ -102,7 +102,7 @@ namespace hemelb
         {
           if (pixels.size() > 0)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>("Sending %i pixels to proc %i",
+            log::Logger::Log<log::Trace, log::OnePerCore>("Sending %i pixels to proc %i",
                                                           (int) pixels.size(),
                                                           (int) destination);
             net->RequestSendV(pixels, destination);
@@ -114,7 +114,7 @@ namespace hemelb
           if (count > 0)
           {
             // First make sure the vector will be large enough to hold the incoming pixels.
-            log::Logger::Log<log::Debug, log::OnePerCore>("Receiving %i pixels from proc %i",
+            log::Logger::Log<log::Trace, log::OnePerCore>("Receiving %i pixels from proc %i",
                                                           count,
                                                           (int) source);
             pixels.resize(count);

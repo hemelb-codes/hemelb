@@ -49,7 +49,7 @@ namespace hemelb
             {
               geometry::Site site = latDat->GetSite(siteIndex);
 
-              distribn_t* lFOld = site.GetFOld<LatticeType> ();
+              const distribn_t* lFOld = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(lFOld);
 
@@ -62,18 +62,11 @@ namespace hemelb
 
               for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (ii))) = lFOld[ii]
-                    = hydroVars.GetFPostCollision()[ii];
-
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (ii))) = hydroVars.GetFPostCollision()[ii];
               }
 
-              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                               hydroVars.v_y,
-                                                                                               hydroVars.v_z,
-                                                                                               site,
-                                                                                               hydroVars.GetFNeq().f,
-                                                                                               hydroVars.density,
-                                                                                               hydroVars.tau,
+              BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                               hydroVars,
                                                                                                lbmParams,
                                                                                                propertyCache);
             }

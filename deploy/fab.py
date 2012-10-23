@@ -81,7 +81,6 @@ def update_build():
 @task
 def require_recopy():
     """Notify the build system that the code has changed."""
-    run(template("touch $build_path/hemelb-prefix/src/hemelb-stamp/hemelb-mkdir"))
     run(template("rm -rf $build_path/hemelb-prefix"))
 
 @task
@@ -426,7 +425,7 @@ def put_results(name=''):
     rsync_project(local_dir=env.job_results_local+'/',remote_dir=env.job_results)
 
 @task
-def fetch_results(name=''):
+def fetch_results(name='',regex=''):
     """
     Fetch results of remote jobs to local result store.
     Specify a job name to transfer just one job.
@@ -435,7 +434,7 @@ def fetch_results(name=''):
     If you can't mount entropy, 'put results' can be useful,  via 'fab legion fetch_results; fab entropy put_results'
     """
     with_job(name)
-    local(template("rsync -pthrvz $username@$remote:$job_results/ $job_results_local"))
+    local(template("rsync -pthrvz $username@$remote:$job_results/%s $job_results_local" % regex))
 
 @task
 def clear_results(name=''):
@@ -481,7 +480,7 @@ def batch_build_code(*configurations,**extras):
     """Submit a build job to the remote serial queue."""
     configure_cmake(configurations,extras)
     with settings(batch_header=env.batch_header+'_serial'):
-      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='0:20:0',memory='2G'),extras)
+      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
 
 @task
 def batch_build(*configurations,**extras):
@@ -511,14 +510,13 @@ def hemelb(config,**args):
     if args.get('steer',False):
         execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
-
 @task
 def resubmit(name):
-	with_job(name)
-	with cd(env.job_results):
-		with prefix(env.run_prefix):
-			run(template("$job_dispatch ${name}.sh"))
-			
+    with_job(name)
+    with cd(env.job_results):
+        with prefix(env.run_prefix):
+            run(template("$job_dispatch ${name}.sh"))
+
 @task
 def multijob(*names,**args):
     # We need to put together a job script to submit all the jobs in turn
@@ -601,9 +599,9 @@ def job(*option_dictionaries):
         run(template("chmod u+x $dest_name"))
         # Allow option to submit all preparations, but not actually submit the job
         if not env.get("noexec",False):
-		    with cd(env.job_results):
-		        with prefix(env.run_prefix):
-		            run(template("$job_dispatch $dest_name"))
+                   with cd(env.job_results):
+                       with prefix(env.run_prefix):
+                           run(template("$job_dispatch $dest_name"))
 
 def input_to_range(arg,default):
     ttype=type(default)

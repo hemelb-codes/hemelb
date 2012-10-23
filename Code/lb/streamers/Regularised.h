@@ -47,7 +47,7 @@ namespace hemelb
             {
               geometry::Site site = latDat->GetSite(siteIndex);
 
-              distribn_t* f = site.GetFOld<LatticeType> ();
+              const distribn_t* f = site.GetFOld<LatticeType> ();
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
@@ -124,7 +124,7 @@ namespace hemelb
                 {
                   for (int bb = 0; bb < 3; ++bb)
                   {
-                    f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                    f_neq[ii] += (float(Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
                   }
                 }
 
@@ -145,13 +145,8 @@ namespace hemelb
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                    hydroVars.v_y,
-                                                                                    hydroVars.v_z,
-                                                                                    site,
-                                                                                    hydroVars.GetFNeq().f,
-                                                                                    hydroVars.density,
-                                                                                    hydroVars.tau,
+              BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                    hydroVars,
                                                                                     lbmParams,
                                                                                     propertyCache);
             }

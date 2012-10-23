@@ -40,10 +40,16 @@ namespace hemelb
         SiteType GetSiteType() const;
         int GetBoundaryId() const;
         bool HasBoundary(Direction direction) const;
+        bool HasIolet(Direction direction) const;
 
         /**
          * These functions return internal representations and should only be used for debugging.
          */
+        uint32_t GetIoletIntersectionData() const;
+        uint32_t &GetIoletIntersectionData()
+        {
+          return ioletIntersection;
+        }
         uint32_t GetIntersectionData() const;
         uint32_t &GetIntersectionData()
         {
@@ -70,6 +76,11 @@ namespace hemelb
          * This is a bit mask for whether a wall is hit by links in each direction.
          */
         uint32_t boundaryIntersection;
+
+        /**
+         * This is a bit mask for whether an iolet is hit by links in each direction.
+         */
+        uint32_t ioletIntersection;
 
         /**
          * This is a bit field that stores all other data associated with the site:

@@ -21,7 +21,8 @@ namespace hemelb
                                              const lb::lattices::LatticeInfo& latticeInfo,
                                              const topology::Communicator& communicator,
                                              const std::vector<site_t>& fluidSitesOnEachBlock) :
-          geometry(geometry), latticeInfo(latticeInfo), communicator(communicator), fluidSitesOnEachBlock(fluidSitesOnEachBlock)
+        geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
+            fluidSitesOnEachBlock(fluidSitesOnEachBlock)
       {
       }
 
@@ -50,14 +51,14 @@ namespace hemelb
 
       void BasicDecomposition::Validate(std::vector<proc_t>& procAssignedToEachBlock)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Validating procForEachBlock");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
         std::vector<proc_t> procForEachBlockRecv(geometry.GetBlockCount());
 
         MPI_Allreduce(&procAssignedToEachBlock[0],
                       &procForEachBlockRecv[0],
                       (int) geometry.GetBlockCount(),
-                      MpiDataType<proc_t>(),
+                      MpiDataType<proc_t> (),
                       MPI_MAX,
                       communicator.GetCommunicator());
 
@@ -65,10 +66,10 @@ namespace hemelb
         {
           if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
-                                                         block,
-                                                         procAssignedToEachBlock[block],
-                                                         procForEachBlockRecv[block]);
+            log::Logger::Log<log::Critical, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+                                                          block,
+                                                          procAssignedToEachBlock[block],
+                                                          procForEachBlockRecv[block]);
           }
         }
       }
@@ -190,13 +191,11 @@ namespace hemelb
         bool regionExpanded = false;
 
         // For sites on the edge of the domain (sites_a), deal with the neighbours.
-        for (unsigned int edgeBlockId = 0; (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit);
-            edgeBlockId++)
+        for (unsigned int edgeBlockId = 0; (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit); edgeBlockId++)
         {
           const BlockLocation& edgeBlockCoords = edgeBlocks[edgeBlockId];
 
-          for (Direction direction = 1; direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit;
-              direction++)
+          for (Direction direction = 1; direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit; direction++)
           {
             // Record neighbour location.
             BlockLocation neighbourCoords = edgeBlockCoords + latticeInfo.GetVector(direction);

@@ -65,15 +65,17 @@ namespace hemelb
           }
 
         public:
-          distribn_t density, v_x, v_y, v_z, tau;
+          distribn_t density, tau;
+          util::Vector3D<distribn_t> momentum;
+
           const distribn_t* const f;
 
-          inline const FVector<LatticeType>& GetFEq()
+          inline const FVector<LatticeType>& GetFEq() const
           {
             return f_eq;
           }
 
-          inline const FVector<LatticeType>& GetFNeq()
+          inline const FVector<LatticeType>& GetFNeq() const
           {
             return f_neq;
           }
@@ -122,16 +124,12 @@ namespace hemelb
         public:
 
           // Assume the first site to be used in the kernel is the first site in the core, unless otherwise specified
-          InitParams() :
-              firstSite(0)
+          InitParams()
           {
           }
 
           // The number of sites using this kernel instance.
           site_t siteCount;
-
-          // Contiguous index of the first site using this kernel instance.
-          site_t firstSite;
 
           // The array with the imposed density at each boundary.
           boundaries::BoundaryValues* boundaryObject;
@@ -152,15 +150,15 @@ namespace hemelb
        *  - Constructor(InitParams&)
        *  - KHydroVars, the type name for the kernel's hydrodynamic variable object.
        *  - LatticeType, the type of lattice being used (D3Q15, D3Q19 etc)
-       *  - CalculateDensityVelocityFeq(KHydroVars&, site_t) for calculating
-       *      the density, velocity and equilibrium distribution
+       *  - CalculateDensityMomentumFeq(KHydroVars&, site_t) for calculating
+       *      the density, momentum and equilibrium distribution
        *  - Collide(const LbmParameters*, KHydroVars& hydroVars, unsigned int directionIndex)
        *  - Reset(InitParams*)
        *
        * The following must be implemented must be kernels (which derive from this class
        * using the CRTP).
        *  - Constructor(InitParams&)
-       *  - DoCalculateDensityVelocityFeq(KHydroVars&, site_t)
+       *  - DoCalculateDensityMomentumFeq(KHydroVars&, site_t)
        *  - DoCollide(const LbmParameters*, KHydroVars&, unsigned int) returns distibn_t
        *  - DoReset(InitParams*)
        */
@@ -171,9 +169,9 @@ namespace hemelb
           typedef HydroVars<KernelImpl> KHydroVars;
           typedef LatticeImpl LatticeType;
 
-          inline void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
+          inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateDensityVelocityFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateDensityMomentumFeq(hydroVars, index);
           }
 
           inline void CalculateFeq(KHydroVars& hydroVars, site_t index)

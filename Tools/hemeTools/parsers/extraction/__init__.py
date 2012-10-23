@@ -35,7 +35,7 @@ class FieldSpec(object):
 
     def __init__(self):
         # name, XDR dtype, in-memory dtype, length, offset
-        self._filespec = [('grid', '>L', np.uint32, (3,), 0)]
+        self._filespec = [('grid', '>i4', np.uint32, (3,), 0)]
         
         self._memspec = [('id', None, np.uint64, 1, None),
                          ('position', None, np.float32, (3,), None)]
@@ -49,7 +49,7 @@ class FieldSpec(object):
             pass
         
         offset = self.GetRecordLength()
-        self._filespec.append((name, '>f', np.float32, length, offset))
+        self._filespec.append((name, '>f8', np.float64, length, offset))
         return
 
     def GetMem(self):
@@ -79,7 +79,7 @@ class ExtractedProperty(object):
     """Represent the contents of a HemeLB property extraction file.
     
     """
-    VersionNumber = 2
+    VersionNumber = 3
 
     def __init__(self, filename):
         """Read the file's headers and determine how many times and which times
@@ -92,6 +92,9 @@ class ExtractedProperty(object):
         self._ReadMainHeader()
         self._ReadFieldHeader()
         self._DetermineTimes()
+
+        # At this point, we can close the file. All external access uses memory maps.
+        self._file.close()
         return
 
     def _ReadMainHeader(self):
@@ -154,7 +157,7 @@ class ExtractedProperty(object):
         self._totalHeaderLength = MainHeaderLength + self._fieldHeaderLength
         bodysize = filesize - self._totalHeaderLength
         assert bodysize % self._recordLength == 0, \
-            "Extraction file appears to have partial record(s)"
+            "Extraction file appears to have partial record(s), residual %s / %s , bodysize %s"%(bodysize % self._recordLength,self._recordLength,bodysize)
         nTimes = bodysize / self._recordLength
 
         times = np.zeros(nTimes, dtype=int)
@@ -186,6 +189,11 @@ class ExtractedProperty(object):
         if self.times[idx] != t:
             raise IndexError("Timestep {0} not in extraction file {1}".format(t, self.filename))
         return self._LoadByIndex(idx)
+
+    def GetFieldSpec(self):
+        """Get the specification of all the fields we have
+        """
+        return self._fieldSpec
 
     def _MemMap(self, idx):
         """Use numpy.memmap to make a single timestep's worth of data

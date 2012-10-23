@@ -32,7 +32,7 @@ namespace hemelb
          */
         enum
         {
-          VersionNumber = 2
+          VersionNumber = 3
         };
 
         /**

@@ -120,7 +120,7 @@ namespace hemelb
             // Check it matches
             const char expectedMainHeader[] = "\x68\x6C\x62\x21"
               "\x78\x74\x72\x04"
-              "\x00\x00\x00\x02"
+              "\x00\x00\x00\x03"
               "\x3F\x33\xA9\x2A"
               "\x30\x55\x32\x61"
               "\x3F\xA1\x68\x72"

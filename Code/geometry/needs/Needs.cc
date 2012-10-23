@@ -116,13 +116,13 @@ namespace hemelb
             }
             if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
+              log::Logger::Log<log::Critical, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
                                                             block,
                                                             needingProcOld);
             }
             if ( (!found) && procsWantingThisBlockBuffer[needingProcOld] && (needingProcOld != readingCore))
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
+              log::Logger::Log<log::Critical, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
                                                             block,
                                                             needingProcOld);
             } //if problem

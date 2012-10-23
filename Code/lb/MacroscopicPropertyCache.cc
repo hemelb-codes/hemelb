@@ -16,12 +16,15 @@ namespace hemelb
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
       densityCache(simState, latticeData.GetLocalFluidSiteCount()),
-          velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
-          shearStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-          vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-          shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
-          simulationState(simState),
-          siteCount(latticeData.GetLocalFluidSiteCount())
+      velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+      wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
+      vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
+      shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
+      stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tangentialProjectionTractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      simulationState(simState),
+      siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();
     }
@@ -31,8 +34,11 @@ namespace hemelb
       densityCache.UnsetRefreshFlag();
       velocityCache.UnsetRefreshFlag();
       vonMisesStressCache.UnsetRefreshFlag();
-      shearStressCache.UnsetRefreshFlag();
+      wallShearStressMagnitudeCache.UnsetRefreshFlag();
       shearRateCache.UnsetRefreshFlag();
+      stressTensorCache.UnsetRefreshFlag();
+      tractionVectorCache.UnsetRefreshFlag();
+      tangentialProjectionTractionVectorCache.UnsetRefreshFlag();
     }
 
     site_t MacroscopicPropertyCache::GetSiteCount() const

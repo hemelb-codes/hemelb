@@ -53,6 +53,7 @@ default:
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
   local_templates_path: "$localroot/deploy/templates"
   manual_ssh: false
+  local_templates_path: "$localroot/deploy/templates"
   stat: qstat
 legion: 
   job_dispatch: "qsub"
@@ -251,7 +252,7 @@ marigold:
      PARMETIS_CC: /opt/FJSVtclang/1.2.0/bin/mpifccpx
      CTEMPLATE_PATCH_VACOPY: ON
      CTEMPLATE_PATCH_ALIGN: ON
+
 marigold_run:
   import: marigold
   remote: marigold_run
-  
