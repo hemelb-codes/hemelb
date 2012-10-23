@@ -59,6 +59,11 @@ namespace hemelb
           return GetSiteData().HasBoundary(direction);
         }
 
+        inline bool HasIolet(Direction direction) const
+        {
+          return GetSiteData().HasIolet(direction);
+        }
+
         template<typename LatticeType>
         inline distribn_t GetWallDistance(Direction direction) const
         {
@@ -108,16 +113,10 @@ namespace hemelb
           return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
-        // Non-templated version of GetFOld, for when you haven't got a constant lattice type handy
-        inline distribn_t* GetFOld(int numvectors)
+        // Non-templated version of GetFOld, for when you haven't got a lattice type handy
+        inline const distribn_t* GetFOld(int numvectors) const
         {
           return latticeData.GetFOld(index * numvectors);
-        }
-
-        template<typename LatticeType>
-        inline distribn_t* GetFOld()
-        {
-          return latticeData.GetFOld(index * LatticeType::NUMVECTORS);
         }
 
         inline const SiteData& GetSiteData() const
@@ -135,7 +134,7 @@ namespace hemelb
           return latticeData.GetGlobalSiteCoords(index);
         }
 
-      private:
+      protected:
         site_t index;
         DataSource & latticeData;
     };

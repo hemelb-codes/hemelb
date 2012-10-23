@@ -27,58 +27,59 @@ namespace hemelb
       class Lattice
       {
         public:
-          inline static void CalculateDensityAndVelocity(const distribn_t f[],
+          inline static void CalculateDensityAndMomentum(const distribn_t f[],
                                                          distribn_t &density,
-                                                         distribn_t &v_x,
-                                                         distribn_t &v_y,
-                                                         distribn_t &v_z)
+                                                         distribn_t &momentum_x,
+                                                         distribn_t &momentum_y,
+                                                         distribn_t &momentum_z)
           {
-            density = v_x = v_y = v_z = 0.0;
+            density = momentum_x = momentum_y = momentum_z = 0.0;
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
               density += f[direction];
-              v_x += DmQn::CX[direction] * f[direction];
-              v_y += DmQn::CY[direction] * f[direction];
-              v_z += DmQn::CZ[direction] * f[direction];
+              momentum_x += DmQn::CX[direction] * f[direction];
+              momentum_y += DmQn::CY[direction] * f[direction];
+              momentum_z += DmQn::CZ[direction] * f[direction];
             }
           }
 
           inline static void CalculateFeq(const distribn_t &density,
-                                          const distribn_t &v_x,
-                                          const distribn_t &v_y,
-                                          const distribn_t &v_z,
+                                          const distribn_t &momentum_x,
+                                          const distribn_t &momentum_y,
+                                          const distribn_t &momentum_z,
                                           distribn_t f_eq[])
           {
             const distribn_t density_1 = 1. / density;
-            const distribn_t velocityMagnitudeSquared = v_x * v_x + v_y * v_y + v_z * v_z;
+            const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
+                + momentum_z * momentum_z;
 
             for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
             {
-              const distribn_t velocityComponentInThisDirection = DmQn::CX[direction] * v_x + DmQn::CY[direction] * v_y
-                  + DmQn::CZ[direction] * v_z;
+              const distribn_t momentumComponentInThisDirection = DmQn::CX[direction] * momentum_x
+                  + DmQn::CY[direction] * momentum_y + DmQn::CZ[direction] * momentum_z;
 
               f_eq[direction] = DmQn::EQMWEIGHTS[direction]
-                  * (density - (3. / 2.) * velocityMagnitudeSquared * density_1
-                      + (9. / 2.) * density_1 * velocityComponentInThisDirection * velocityComponentInThisDirection
-                      + 3. * velocityComponentInThisDirection);
+                  * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
+                      + (9. / 2.) * density_1 * momentumComponentInThisDirection * momentumComponentInThisDirection
+                      + 3. * momentumComponentInThisDirection);
             }
           }
 
-          // Calculate density, velocity and the equilibrium distribution
-          // functions according to the D3Q15 model.  The calculated v_x, v_y
-          // and v_z are actually density * velocity, because we are using the
+          // Calculate density, momentum and the equilibrium distribution
+          // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
+          // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
-          inline static void CalculateDensityVelocityFEq(const distribn_t f[],
+          inline static void CalculateDensityMomentumFEq(const distribn_t f[],
                                                          distribn_t &density,
-                                                         distribn_t &v_x,
-                                                         distribn_t &v_y,
-                                                         distribn_t &v_z,
+                                                         distribn_t &momentum_x,
+                                                         distribn_t &momentum_y,
+                                                         distribn_t &momentum_z,
                                                          distribn_t f_eq[])
           {
-            CalculateDensityAndVelocity(f, density, v_x, v_y, v_z);
+            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z);
 
-            CalculateFeq(density, v_x, v_y, v_z, f_eq);
+            CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
           }
 
           // von Mises stress computation given the non-equilibrium distribution functions.
@@ -124,12 +125,62 @@ namespace hemelb
           }
 
           /**
-           * Calculates the normal stress (force per unit area) acting on a point. This is done by multiplying the full
+           * Calculates the traction vector on a surface point (units of stress). This is done by multiplying the full
            * stress tensor by the (outward pointing) surface normal at that point.
            *
-           *    \vec{f} = \sigma \dot \vec{normal}
+           *    \vec{t} = \sigma \dot \vec{normal}
            *
-           * The full stress tensor is assembled based on the formula:
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param wallNormal wall normal at a given point
+           * @param tractionVector traction vector at a given point
+           */
+          inline static void CalculateTractionVectorOnAPoint(const distribn_t density,
+                                                             const distribn_t tau,
+                                                             const distribn_t fNonEquilibrium[],
+                                                             const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                             util::Vector3D<LatticeStress>& tractionVector)
+          {
+            util::Matrix3D sigma;
+            CalculateStressTensor(density, tau, fNonEquilibrium, sigma);
+
+            // Multiply the stress tensor by the surface normal
+            sigma.timesVector(wallNormal, tractionVector);
+          }
+
+          /**
+           * Calculates the projection of the traction vector on the plane tangential to the geometry surface (defined by current surface
+           * point and the normal vector provided). This is done with the following formula:
+           *
+           *    \vec{t_tan} = \vec{t} - dot(\vec{t}, \vec{n})*\vec{n}
+           *
+           * where t is the traction vector (see CalculateTractionVectorOnAPoint for definition) and n is the normal
+           *
+           * @param density density at a given site
+           * @param tau relaxation time
+           * @param fNonEquilibrium non equilibrium part of the distribution function
+           * @param wallNormal wall normal at a given point
+           * @param tractionTangentialComponent tangential projection of the traction vector
+           */
+          inline static void CalculateTangentialProjectionTractionVector(const distribn_t density,
+                                                                         const distribn_t tau,
+                                                                         const distribn_t fNonEquilibrium[],
+                                                                         const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                                         util::Vector3D<LatticeStress>& tractionTangentialComponent)
+          {
+            util::Vector3D<LatticeStress> tractionVector;
+            CalculateTractionVectorOnAPoint(density, tau, fNonEquilibrium, wallNormal, tractionVector);
+
+            LatticeStress magnitudeNormalProjectionTraction = tractionVector.Dot(wallNormal);
+
+            tractionTangentialComponent = tractionVector - wallNormal * magnitudeNormalProjectionTraction;
+          }
+
+          /**
+           * Calculate the full stress tensor at a given fluid site (including both pressure and deviatoric part)
+           *
+           * The stress tensor is assembled based on the formula:
            *
            *    \sigma = p*I + 2*\mu*S = p*I - \Pi^{(neq)}
            *
@@ -138,49 +189,44 @@ namespace hemelb
            *
            * \Pi^{(neq)} is assumed to be defined as in Chen&Doolen 1998:
            *
-           *    \Pi^{(neq)} = (1 - 1/2*\tau) * \sum_over_i e_i e_i f^{(neq)}_i
+           *    \Pi^{(neq)} = (1 - 1/(2*\tau)) * \sum_over_i e_i e_i f^{(neq)}_i
            *
            * where \tau is the relaxation time and e_i is the i-th direction vector
            *
            * @param density density at a given site
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
-           * @param wallNormal wall normal at a given site
-           * @param normalStress normal stress acting at a given point
+           * @param stressTensor full stress tensor at a given site
            */
-          inline static void CalculateNormalStressOnAPoint(const distribn_t density,
-                                                           const distribn_t tau,
-                                                           const distribn_t fNonEquilibrium[],
-                                                           const util::Vector3D<DimensionlessQuantity>& wallNormal,
-                                                           util::Vector3D<LatticeStress>& normalStress)
+          inline static void CalculateStressTensor(const distribn_t density,
+                                                   const distribn_t tau,
+                                                   const distribn_t fNonEquilibrium[],
+                                                   util::Matrix3D& stressTensor)
           {
             // Initialises the stress tensor to the deviatoric part, i.e. -\Pi^{(neq)}
-            util::Matrix3D sigma = CalculatePiTensor(fNonEquilibrium);
-            sigma *= - (1 - 1 / 2 * tau);
+            stressTensor = CalculatePiTensor(fNonEquilibrium);
+            stressTensor *= 1 - 1 / (2 * tau);
 
             // Adds the pressure component to the stress tensor
             LatticePressure pressure = density * Cs2;
-            sigma.addDiagonal(pressure);
-
-            // Multiply the stress tensor by the surface normal
-            sigma.timesVector(wallNormal, normalStress);
+            stressTensor.addDiagonal(pressure);
           }
 
           /**
            * The magnitude of the tangential component of the shear stress acting on the
-           * wall. For this method to make sense f has to be the non equilibrium part of
-           * a distribution function
+           * wall (i.e. tangential component of the traction vector). For this method to
+           * make sense f has to be the non equilibrium part of a distribution function.
            *
-           * The normal stress computed in this method only includes the deviatoric part
-           * and not the component corresponding to the pressure. Do not use this intermediate
-           * value unless you understand the implications (use CalculateNormalStressOnAPoint
+           * The stress tensor computed in this method only includes the deviatoric part
+           * and not the component corresponding to the pressure. Do not use the intermediate
+           * traction value unless you understand the implications (use CalculateTractionVectorOnAPoint
            * instead).
            */
-          inline static void CalculateShearStress(const distribn_t &density,
-                                                  const distribn_t f[],
-                                                  const util::Vector3D<double> nor,
-                                                  distribn_t &stress,
-                                                  const double &iStressParameter)
+          inline static void CalculateWallShearStressMagnitude(const distribn_t &density,
+                                                               const distribn_t f[],
+                                                               const util::Vector3D<double> nor,
+                                                               distribn_t &stress,
+                                                               const double &iStressParameter)
           {
             // sigma_ij is the force
             // per unit area in
@@ -279,13 +325,14 @@ namespace hemelb
           // Originally Ansumali, S., Karlin, I. V., and Ottinger, H.C. (2003) Minimal entropic kinetic models
           // for hydrodynamics. Europhys. Lett. 63(6), 798–804
           inline static void CalculateEntropicFeqAnsumali(const distribn_t &density,
-                                                          const distribn_t &v_x,
-                                                          const distribn_t &v_y,
-                                                          const distribn_t &v_z,
+                                                          const distribn_t &momentum_x,
+                                                          const distribn_t &momentum_y,
+                                                          const distribn_t &momentum_z,
                                                           distribn_t f_eq[])
           {
             // Get velocity
-            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(v_x, v_y, v_z) / density;
+            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(momentum_x, momentum_y, momentum_z)
+                / density;
 
             // Combining some terms for use in evaluating the next few terms
             // B_i = sqrt(1 + 3 * u_i^2)
@@ -314,19 +361,20 @@ namespace hemelb
            * Calculate entropic equilibrium distribution, as in Chikatamarla et al (PRL, 97, 010201 (2006)
            *
            * @param density
-           * @param v_x
-           * @param v_y
-           * @param v_z
+           * @param momentum_x
+           * @param momentum_y
+           * @param momentum_z
            * @param f_eq
            */
           inline static void CalculateEntropicFeqChik(const distribn_t &density,
-                                                      const distribn_t &v_x,
-                                                      const distribn_t &v_y,
-                                                      const distribn_t &v_z,
+                                                      const distribn_t &momentum_x,
+                                                      const distribn_t &momentum_y,
+                                                      const distribn_t &momentum_z,
                                                       distribn_t f_eq[])
           {
             // Get velocity and the vector with velocity components squared.
-            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(v_x, v_y, v_z) / (density);
+            util::Vector3D<distribn_t> velocity = util::Vector3D<distribn_t>(momentum_x, momentum_y, momentum_z)
+                / (density);
             util::Vector3D<distribn_t> velocitySquared = velocity.PointwiseMultiplication(velocity);
             util::Vector3D<distribn_t> velocityFour = velocitySquared.PointwiseMultiplication(velocitySquared);
             util::Vector3D<distribn_t> velocityEight = velocityFour.PointwiseMultiplication(velocityFour);

@@ -15,6 +15,7 @@
 #include "geometry/LatticeData.h"
 #include "vis/Control.h"
 #include "lb/LbmParameters.h"
+#include "lb/kernels/BaseKernel.h"
 #include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
@@ -79,29 +80,23 @@ namespace hemelb
           }
 
         protected:
-          template<bool tDoRayTracing>
-          inline static void UpdateMinsAndMaxes(distribn_t velocity_x,
-                                                distribn_t velocity_y,
-                                                distribn_t velocity_z,
-                                                const geometry::Site& site,
-                                                const distribn_t* f_neq,
-                                                const distribn_t density,
-                                                const distribn_t tau,
+          template<bool tDoRayTracing, class LatticeType>
+          inline static void UpdateMinsAndMaxes(const geometry::Site& site,
+                                                const kernels::HydroVarsBase<LatticeType>& hydroVars,
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)
           {
             if (propertyCache.densityCache.RequiresRefresh())
             {
-              propertyCache.densityCache.Put(site.GetIndex(), density);
+              propertyCache.densityCache.Put(site.GetIndex(), hydroVars.density);
             }
 
             if (propertyCache.velocityCache.RequiresRefresh())
             {
-              propertyCache.velocityCache.Put(site.GetIndex(),
-                                              util::Vector3D<distribn_t>(velocity_x, velocity_y, velocity_z));
+              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.momentum / hydroVars.density);
             }
 
-            if (propertyCache.shearStressCache.RequiresRefresh())
+            if (propertyCache.wallShearStressMagnitudeCache.RequiresRefresh())
             {
               distribn_t stress;
 
@@ -111,20 +106,20 @@ namespace hemelb
               }
               else
               {
-                StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearStress(density,
-                                                                                        f_neq,
-                                                                                        site.GetWallNormal(),
-                                                                                        stress,
-                                                                                        lbmParams->GetStressParameter());
+                LatticeType::CalculateWallShearStressMagnitude(hydroVars.density,
+                                                               hydroVars.GetFNeq().f,
+                                                               site.GetWallNormal(),
+                                                               stress,
+                                                               lbmParams->GetStressParameter());
               }
 
-              propertyCache.shearStressCache.Put(site.GetIndex(), stress);
+              propertyCache.wallShearStressMagnitudeCache.Put(site.GetIndex(), stress);
             }
 
             if (propertyCache.vonMisesStressCache.RequiresRefresh())
             {
               distribn_t stress;
-              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(f_neq,
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateVonMisesStress(hydroVars.GetFNeq().f,
                                                                                          stress,
                                                                                          lbmParams->GetStressParameter());
 
@@ -133,14 +128,68 @@ namespace hemelb
 
             if (propertyCache.shearRateCache.RequiresRefresh())
             {
-              distribn_t shear_rate = StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(tau,
-                                                                                                            f_neq,
-                                                                                                            density);
+              distribn_t shear_rate =
+                  StreamerImpl::CollisionType::CKernel::LatticeType::CalculateShearRate(hydroVars.tau,
+                                                                                        hydroVars.GetFNeq().f,
+                                                                                        hydroVars.density);
 
               propertyCache.shearRateCache.Put(site.GetIndex(), shear_rate);
             }
-          }
 
+            if (propertyCache.stressTensorCache.RequiresRefresh())
+            {
+              util::Matrix3D stressTensor;
+              StreamerImpl::CollisionType::CKernel::LatticeType::CalculateStressTensor(hydroVars.density,
+                                                                                       hydroVars.tau,
+                                                                                       hydroVars.GetFNeq().f,
+                                                                                       stressTensor);
+
+              propertyCache.stressTensorCache.Put(site.GetIndex(), stressTensor);
+
+            }
+
+            if (propertyCache.tractionVectorCache.RequiresRefresh())
+            {
+              util::Vector3D<LatticeStress> tractionOnAPoint(0);
+
+              /*
+               * Wall normals are only available at the sites marked as being at the domain edge.
+               * For the sites in the fluid bulk, the traction vector will be 0.
+               */
+              if (site.IsEdge())
+              {
+                LatticeType::CalculateTractionVectorOnAPoint(hydroVars.density,
+                                                             hydroVars.tau,
+                                                             hydroVars.GetFNeq().f,
+                                                             site.GetWallNormal(),
+                                                             tractionOnAPoint);
+              }
+
+              propertyCache.tractionVectorCache.Put(site.GetIndex(), tractionOnAPoint);
+
+            }
+
+            if (propertyCache.tangentialProjectionTractionVectorCache.RequiresRefresh())
+            {
+              util::Vector3D<LatticeStress> tangentialProjectionTractionOnAPoint(0);
+
+              /*
+               * Wall normals are only available at the sites marked as being at the domain edge.
+               * For the sites in the fluid bulk, the traction vector will be 0.
+               */
+              if (site.IsEdge())
+              {
+                LatticeType::CalculateTangentialProjectionTractionVector(hydroVars.density,
+                                                                         hydroVars.tau,
+                                                                         hydroVars.GetFNeq().f,
+                                                                         site.GetWallNormal(),
+                                                                         tangentialProjectionTractionOnAPoint);
+              }
+
+              propertyCache.tangentialProjectionTractionVectorCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);
+
+            }
+          }
       };
     }
   }

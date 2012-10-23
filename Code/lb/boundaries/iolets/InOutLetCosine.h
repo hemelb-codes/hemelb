@@ -73,6 +73,9 @@ namespace hemelb
             void SetPeriod(PhysicalTime aPeriod) {
               period=aPeriod;
             }
+            void SetWarmup(PhysicalTime warmup) {
+              warmUpLength = warmup;
+            }
           private:
 
             PhysicalPressure pressureMeanPhysical;
@@ -80,8 +83,7 @@ namespace hemelb
 
             double phase;
             PhysicalTime period;
-
-
+            PhysicalTime warmUpLength;
         };
 
       }

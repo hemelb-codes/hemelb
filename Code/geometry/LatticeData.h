@@ -28,13 +28,19 @@
 
 namespace hemelb
 {
+  namespace lb
+  {
+    // Ugly forward definition is currently necessary.
+    template<class LatticeType> class LBM;
+  }
+
   namespace geometry
   {
     class LatticeData : public reporting::Reportable
     {
       public:
-        friend class BaseSite<LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
-        friend class BaseSite<const LatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
+        template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        template<class LatticeData> friend class BaseSite; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
@@ -426,8 +432,6 @@ namespace hemelb
         }
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
-
-        void CleanEmptyBlocks();
 
         void InitialiseNeighbourLookups();
 

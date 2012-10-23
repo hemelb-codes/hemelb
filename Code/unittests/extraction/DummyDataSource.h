@@ -14,6 +14,7 @@
 
 #include "util/Vector3D.h"
 #include "extraction/IterableDataSource.h"
+#include "util/Matrix3D.h"
 
 #include "unittests/helpers/RandomSource.h"
 
@@ -27,8 +28,9 @@ namespace hemelb
       {
         public:
           DummyDataSource() :
-            randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount),
-                velocities(siteCount), voxelSize(0.3e-3), origin(0.034, 0.001, 0.074)
+              randomNumberGenerator(1358), siteCount(64), location(0), gridPositions(siteCount), pressures(siteCount), velocities(siteCount), voxelSize(0.3e-3), origin(0.034,
+                                                                                                                                                                        0.001,
+                                                                                                                                                                        0.074)
           {
             unsigned ijk = 0;
 
@@ -88,26 +90,45 @@ namespace hemelb
           {
             return origin;
           }
-          float GetPressure() const
+          hemelb::extraction::FloatingType GetPressure() const
           {
             return pressures[location];
           }
-          hemelb::util::Vector3D<float> GetVelocity() const
+          hemelb::util::Vector3D<hemelb::extraction::FloatingType> GetVelocity() const
           {
             return velocities[location];
           }
-          float GetShearStress() const
+          hemelb::extraction::FloatingType GetShearStress() const
           {
             return 0.f;
           }
-          float GetVonMisesStress() const
+          hemelb::extraction::FloatingType GetVonMisesStress() const
           {
             return 0.f;
           }
-          float GetShearRate() const
+          hemelb::extraction::FloatingType GetShearRate() const
           {
             return 0.f;
           }
+          util::Matrix3D GetStressTensor() const
+          {
+            //! @todo: #177 add constructor with initialisation to Matrix3D
+            util::Matrix3D retValue;
+            return retValue;
+          }
+
+          util::Vector3D<PhysicalStress> GetTractionVector() const
+          {
+            util::Vector3D<PhysicalStress> retValue(0);
+            return retValue;
+          }
+
+          util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const
+          {
+            util::Vector3D<PhysicalStress> retValue(0);
+            return retValue;
+          }
+
           bool IsValidLatticeSite(const hemelb::util::Vector3D<site_t>&) const
           {
             return true;

@@ -24,6 +24,7 @@ namespace hemelb
 {
   namespace log
   {
+    const LogLevel Logger::currentLogLevel = HEMELB_LOG_LEVEL;
     int Logger::thisRank = -1;
     double Logger::startTime = -1.0;
 

@@ -27,6 +27,8 @@ namespace std {
 %{
 #include "Index.h"
 #include "GeometryGenerator.h"
+#include "CylinderGenerator.h"
+#include "PolyDataGenerator.h"
 #include "vtkPolyData.h"
 #include "vtkOBBTree.h"
 #include <sstream>
@@ -103,8 +105,11 @@ namespace std {
   PyErr_SetString(PyExc_RuntimeError, $1.what());
   SWIG_fail;
 %}
-%ignore GeometryGenerator::ClassifySite(Site&);
 %include GeometryGenerator.h
+//%ignore PolyDataGenerator::ClassifySite(Site&);
+%include PolyDataGenerator.h
+//%ignore CylinderGenerator::ClassifySite(Site&);
+%include CylinderGenerator.h
 %include Iolet.h
 
 // Raise a python IndexError when we get a C++ IndexError

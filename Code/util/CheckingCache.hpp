@@ -28,7 +28,7 @@ namespace hemelb
     template<typename CacheType>
     const CacheType& CheckingCache<CacheType>::Get(unsigned long index) const
     {
-      if (log::Logger::ShouldDisplay<log::Warning>())
+      if (log::Logger::ShouldDisplay<log::Debug>())
       {
         if (lastUpdate[index] != simulationState.GetTimeStep())
         {

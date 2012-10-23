@@ -13,14 +13,6 @@
 #include <string>
 #include <vector>
 
-// VTK bits we need
-class vtkPolyData;
-class vtkOBBTree;
-class vtkPoints;
-class vtkIdList;
-class vtkIntArray;
-
-#include "GetSet.h"
 #include "Iolet.h"
 #include "GenerationError.h"
 
@@ -28,22 +20,10 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-struct InconsistentFluidnessError: public GenerationError {
-	InconsistentFluidnessError(const Site& s1, const Site& s2, const int nHits);
-	~InconsistentFluidnessError() throw () {
-	}
-	virtual const char* what() const throw ();
-	const Site& s1;
-	const Site& s2;
-	const int nHits;
-private:
-	std::string msg;
-};
-
 class GeometryGenerator {
 public:
 	GeometryGenerator();
-	~GeometryGenerator();
+	virtual ~GeometryGenerator();
 	void Execute() throw (GenerationError);
 
 	inline double GetVoxelSizeMetres(void) {
@@ -71,45 +51,16 @@ public:
 		this->Iolets = std::vector<Iolet*>(iv);
 	}
 
-	inline void GetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			out[i] = this->SeedPointWorking[i];
-		return;
-	}
-	inline void SetSeedPointWorking(double out[3]) {
-		for (unsigned int i = 0; i < 3; ++i)
-			this->SeedPointWorking[i] = out[i];
-	}
-	inline void SetSeedPointWorking(double x, double y, double z) {
-		this->SeedPointWorking[0] = x;
-		this->SeedPointWorking[1] = y;
-		this->SeedPointWorking[2] = z;
-	}
-
-	inline vtkPolyData* GetClippedSurface(void) {
-		return this->ClippedSurface;
-	}
-	inline void SetClippedSurface(vtkPolyData* val) {
-		this->ClippedSurface = val;
-	}
-
-private:
-	void ClassifySite(Site& site);
+protected:
+	virtual void ComputeBounds(double []) const = 0;
+	virtual void PreExecute(void);
+	virtual void ClassifySite(Site& site) = 0;
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
-	int ComputeIntersections(Site& from, Site& to);
 	// Members set from outside to initialise
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
-	double SeedPointWorking[3];
-	vtkPolyData* ClippedSurface;
-	vtkOBBTree* Locator;
-
-	// Members used internally
-	vtkPoints* hitPoints;
-	vtkIdList* hitCellIds;
-	vtkIntArray* IoletIdArray;
 };
 
 #endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H

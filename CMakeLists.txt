@@ -13,8 +13,8 @@ option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
 option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
-set(HEMELB_LOG_LEVEL info
-	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
+set(HEMELB_LOG_LEVEL Info
+	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
 set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)

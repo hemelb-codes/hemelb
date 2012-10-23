@@ -29,8 +29,8 @@ namespace hemelb
       UpdatePosition(latDatLBM);
 
       OutputInformation();
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
+      if (log::Logger::ShouldDisplay<log::Trace>())
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "In colloids::Particle::ctor, id: %i, a0: %g, ah: %g, position: {%g,%g,%g}\n",
           particleId, smallRadius_a0, largeRadius_ah,
           globalPosition.x, globalPosition.y, globalPosition.z);
@@ -61,7 +61,7 @@ namespace hemelb
 
     const void Particle::OutputInformation() const
     {
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "In colloids::Particle::OutputInformation, id: %i, owner: %i, drag %g, mass %g, position: {%g,%g,%g}, velocity: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
           particleId, ownerRank, CalculateDragCoefficient(), mass,
           globalPosition.x, globalPosition.y, globalPosition.z,
@@ -93,8 +93,8 @@ namespace hemelb
       // first, update the position: newPosition = oldPosition + velocity + bodyForces * drag
       // then,  update the owner rank for the particle based on its new position
 
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
+      if (log::Logger::ShouldDisplay<log::Trace>())
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "In colloids::Particle::UpdatePosition, id: %i,\nposition: {%g,%g,%g}\nvelocity: {%g,%g,%g}\nbodyForces: {%g,%g,%g}\n",
           particleId, globalPosition.x, globalPosition.y, globalPosition.z,
           velocity.x, velocity.y, velocity.z, bodyForces.x, bodyForces.y, bodyForces.z);
@@ -112,14 +112,14 @@ namespace hemelb
       isValid = (procId != BIG_NUMBER2);
       if (isValid && (ownerRank != procId))
       {
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Debug, log::OnePerCore>(
           "Changing owner of particle %i from %i to %i - %s\n",
           particleId, ownerRank, procId, isValid ? "valid" : "INVALID");
         ownerRank = procId;
       }
 
-      if (log::Logger::ShouldDisplay<log::Debug>())
-        log::Logger::Log<log::Debug, log::OnePerCore>(
+      if (log::Logger::ShouldDisplay<log::Trace>())
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "In colloids::Particle::UpdatePosition, id: %i, position is now: {%g,%g,%g}\n",
           particleId, globalPosition.x, globalPosition.y, globalPosition.z);
     }
@@ -139,14 +139,14 @@ namespace hemelb
 
     const void Particle::CalculateBodyForces()
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>(
+      log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}\n",
         particleId, globalPosition.x, globalPosition.y, globalPosition.z);
 
       // delegate the calculation of body forces to the BodyForces class
       bodyForces = BodyForces::GetBodyForcesForParticle(*this);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>(
+      log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
         particleId, globalPosition.x, globalPosition.y, globalPosition.z,
         bodyForces.x, bodyForces.y, bodyForces.z);
@@ -196,7 +196,7 @@ namespace hemelb
           {
             const util::Vector3D<site_t> siteGlobalPosition(x, y, z);
 
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, getting siteId ...\n",
               particleId, globalPosition.x, globalPosition.y, globalPosition.z,
               siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z);
@@ -207,7 +207,7 @@ namespace hemelb
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
             bool isSiteLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
 
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, got siteId: %i, isSiteValid: %s, isSiteLocal: %s, procId: %i\n",
               particleId, globalPosition.x, globalPosition.y, globalPosition.z,
               siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
@@ -222,7 +222,7 @@ namespace hemelb
             relativePosition -= globalPosition;
             LatticeForceVector contribution = bodyForces * diracOperation(relativePosition);
 
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, siteIndex: %i, bodyForces: {%g,%g,%g}, contribution: {%g,%g,%g}, reading cache ...\n",
               particleId, siteId, bodyForces.x, bodyForces.y, bodyForces.z,
               contribution.x, contribution.y, contribution.z);
@@ -236,14 +236,14 @@ namespace hemelb
             //propertyCache.bodyForcesCache.Put(siteId, partialInterpolation);
             BodyForces::SetBodyForcesForSiteId(siteId, partialInterpolation);
 
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, siteIndex: %i, bodyForces: {%g,%g,%g}, contribution: {%g,%g,%g}, forceOnSiteSoFar: {%g,%g,%g}\n",
               particleId, siteId, bodyForces.x, bodyForces.y, bodyForces.z,
               contribution.x, contribution.y, contribution.z,
               partialInterpolation.x, partialInterpolation.y, partialInterpolation.z);
           }
 
-      log::Logger::Log<log::Debug, log::OnePerCore>(
+      log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateFeedbackForces, particleId: %i, bodyForces: {%g,%g,%g}, finished\n",
         particleId, bodyForces.x, bodyForces.y, bodyForces.z);
     }
@@ -282,9 +282,9 @@ namespace hemelb
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
             bool isSiteLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
 
-            if (log::Logger::ShouldDisplay<log::Debug>())
+            if (log::Logger::ShouldDisplay<log::Trace>())
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("WAIT A MINUTE 1 ...\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 1 ...\n");
 
               int globalStatus = 0; // valid && local fluid
               int blockStatus = 0; // valid && non-empty
@@ -292,13 +292,13 @@ namespace hemelb
 
               util::Vector3D<site_t> blockCoords, localSiteCoords;
               latDatLBM.GetBlockAndLocalSiteCoords(siteGlobalPosition, blockCoords, localSiteCoords);
-              log::Logger::Log<log::Debug, log::OnePerCore>("WAIT A MINUTE 2 ...\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 2 ...\n");
               if (!latDatLBM.IsValidBlock(blockCoords))
                 blockStatus = 1; // invalid - out of range
               else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).IsEmpty())
                 blockStatus = 2; // empty - entire block is solid
 
-              log::Logger::Log<log::Debug, log::OnePerCore>("WAIT A MINUTE 3 ...\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 3 ...\n");
 
               if (!latDatLBM.IsValidLatticeSite(localSiteCoords))
                 siteStatus = 1; // invalid - out of range
@@ -311,7 +311,7 @@ namespace hemelb
                   if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
                   siteStatus = 4; // individual site is local but solid (should not happen?)
 
-              log::Logger::Log<log::Debug, log::OnePerCore>("WAIT A MINUTE 4 ...\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 4 ...\n");
 
               if (blockStatus == 1 || (siteStatus == 1))
                 globalStatus = 1; // invalid - out of range
@@ -320,23 +320,23 @@ namespace hemelb
               else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) != topology::NetworkTopology::Instance()->GetLocalRank())
                 globalStatus = 3; // remote fluid
 
-              log::Logger::Log<log::Debug, log::OnePerCore>("ABOUT TO DO STUFF\n");
-              log::Logger::Log<log::Debug, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO STUFF\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteGlobalPosition: {%i,%i,%i} - %s \n",
                 particleId, siteGlobalPosition.x, siteGlobalPosition.y, siteGlobalPosition.z,
                 globalStatus == 0 ? "valid && local fluid" :
                 (globalStatus == 1 ? "invalid - out-of-range" :
                 (globalStatus == 2 ? "solid" :
                 (globalStatus == 3 ? "remote fluid" : "unknown status"))));
-              log::Logger::Log<log::Debug, log::OnePerCore>("ABOUT TO DO MORE STUFF\n");
-              log::Logger::Log<log::Debug, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO MORE STUFF\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, blockCoords: {%i,%i,%i} - %s\n",
                 particleId, blockCoords.x, blockCoords.y, blockCoords.z,
                 blockStatus == 0 ? "valid && non-empty" :
                 (blockStatus == 1 ? "invalid - out-of-range" :
                 (blockStatus == 2 ? "empty - entire block is solid" : "unknown status")));
-              log::Logger::Log<log::Debug, log::OnePerCore>("ABOUT TO DO EVEN MORE STUFF\n");
-              log::Logger::Log<log::Debug, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO EVEN MORE STUFF\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, localSiteCoords: {%i,%i,%i} - %s\n",
                 particleId, localSiteCoords.x, localSiteCoords.y, localSiteCoords.z,
                 siteStatus == 0 ? "valid && fluid" :
@@ -346,17 +346,17 @@ namespace hemelb
                 (siteStatus == 4 ? "local but solid (should not happen?)" : "unknown status")))));
 //*/
               if (siteStatus == 0)
-              log::Logger::Log<log::Debug, log::OnePerCore>("ABOUT TO DO ONE LAST THING\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO ONE LAST THING\n");
               if (siteStatus == 0)
-              log::Logger::Log<log::Debug, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, procIdForSite: %i\n",
                 particleId, latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)));
-              log::Logger::Log<log::Debug, log::OnePerCore>("DONE LOTS OF STUFF\n");
+              log::Logger::Log<log::Trace, log::OnePerCore>("DONE LOTS OF STUFF\n");
 
               if (!isSiteValid || !isSiteLocal)
                 if (globalStatus == 0)
                 {
-                  log::Logger::Log<log::Debug, log::OnePerCore>("MAJOR PROBLEM! isValid: %s, isLocal: %s, procIdForSite: %i, localRank: %i\n", isSiteValid ? "T": "F", isSiteLocal ? "T" : "F",
+                  log::Logger::Log<log::Trace, log::OnePerCore>("MAJOR PROBLEM! isValid: %s, isLocal: %s, procIdForSite: %i, localRank: %i\n", isSiteValid ? "T": "F", isSiteLocal ? "T" : "F",
                     latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)),
                     topology::NetworkTopology::Instance()->GetLocalRank());
                 }
@@ -380,7 +380,7 @@ namespace hemelb
             // accumulate each term of the interpolation
             velocity += partialInterpolation;
 
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::InterpolateFluidVelocity, particleId: %i, siteIndex: %i, fluidVelocity: {%g,%g,%g}, partialInterpolation: {%g,%g,%g}, velocitySoFar: {%g,%g,%g}\n",
               particleId, siteId, siteFluidVelocity.x, siteFluidVelocity.y, siteFluidVelocity.z,
               partialInterpolation.x, partialInterpolation.y, partialInterpolation.z,

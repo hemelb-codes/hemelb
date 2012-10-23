@@ -59,7 +59,9 @@ namespace hemelb
         bytesGot += recvBuf.length();
       }
 
-      log::Logger::Log<log::Debug, log::Singleton>("Steering component will try to receive %d bytes, has %d so far",length,bytesGot);
+      log::Logger::Log<log::Trace, log::Singleton>("Steering component will try to receive %d bytes, has %d so far",
+                                                   length,
+                                                   bytesGot);
       // While some data left to be received...
       while (bytesGot < length)
       {
@@ -87,18 +89,17 @@ namespace hemelb
               // of the buffer.
               long int numNewBytes = bytesGot - recvBuf.length();
               recvBuf.append(buf + recvBuf.length(), numNewBytes);
-              log::Logger::Log<log::Debug, log::Singleton>("Steering component: blocked socket");
+              log::Logger::Log<log::Trace, log::Singleton>("Steering component: blocked socket");
             }
           }
-          log::Logger::Log<log::Debug, log::Singleton>("Steering component exiting after incomplete reception");
+          log::Logger::Log<log::Trace, log::Singleton>("Steering component exiting after incomplete reception");
           // We didn't fully receive.
           return false;
         }
         else
         {
           bytesGot += n;
-          log::Logger::Log<log::Debug, log::Singleton>("Steering component: received bytes... (New total %d)",
-                                                                     bytesGot);
+          log::Logger::Log<log::Trace, log::Singleton>("Steering component: received bytes... (New total %d)", bytesGot);
         }
       }
       log::Logger::Log<log::Debug, log::Singleton>("Steering component is happy with what it has received");
@@ -127,7 +128,7 @@ namespace hemelb
 
     bool Network::IsConnected()
     {
-      int res=clientConnection.GetWorkingSocket();
+      int res = clientConnection.GetWorkingSocket();
       return res > 0;
     }
 
@@ -149,7 +150,9 @@ namespace hemelb
       {
         return false;
       }
-      log::Logger::Log<log::Debug, log::Singleton>("Steering component will try to send %d new bytes and a buffer of %d",length,sendBuf.length());
+      log::Logger::Log<log::Trace, log::Singleton>("Steering component will try to send %d new bytes and a buffer of %d",
+                                                   length,
+                                                   sendBuf.length());
       // If we have buffered strings to be sent, send those first.
       if (sendBuf.length() > 0)
       {
@@ -171,7 +174,8 @@ namespace hemelb
           // to the client.
           // What we *would* do is sendBuf.append(buf, length);
 
-          log::Logger::Log<log::Debug, log::Singleton>("Steering component could not send all buffer, managed %d bytes",sent);
+          log::Logger::Log<log::Trace, log::Singleton>("Steering component could not send all buffer, managed %d bytes",
+                                                       sent);
           return true;
         }
         // If not, we sent the whole buffer.
@@ -180,21 +184,22 @@ namespace hemelb
           sendBuf.clear();
         }
       }
-      log::Logger::Log<log::Debug, log::Singleton>("Steering component sent all the buffer, sending new data");
+      log::Logger::Log<log::Trace, log::Singleton>("Steering component sent all the buffer, sending new data");
       // If we sent the whole buffer, try to send the new data.
       long sent_bytes = sendInternal(buf, length, socketToClient);
 
       // Is the socket broken?
       if (sent_bytes < 0)
       {
-        log::Logger::Log<log::Debug, log::Singleton>("Steering component socket broke sending new bytes");
+        log::Logger::Log<log::Trace, log::Singleton>("Steering component socket broke sending new bytes");
         return false;
       }
       // Did the socket block? Still return true, because we'll try again next time.
       else if (sent_bytes < length)
       {
-        log::Logger::Log<log::Debug, log::Singleton>(
-            "Steering component socket blocked after sending %d bytes, adding %d bytes to buffer",sent_bytes,length - sent_bytes);
+        log::Logger::Log<log::Trace, log::Singleton>("Steering component socket blocked after sending %d bytes, adding %d bytes to buffer",
+                                                     sent_bytes,
+                                                     length - sent_bytes);
         sendBuf.append(buf + sent_bytes, length - sent_bytes);
       }
 
@@ -236,8 +241,7 @@ namespace hemelb
           }
           else
           {
-            log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
-                                                           strerror(errno));
+            log::Logger::Log<log::Info, log::Singleton>("Network send had broken pipe... (%s)", strerror(errno));
             Break(socket);
 
             return -1;

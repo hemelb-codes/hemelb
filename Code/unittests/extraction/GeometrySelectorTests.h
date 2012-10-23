@@ -34,14 +34,18 @@ namespace hemelb
           CPPUNIT_TEST (TestStraightLineGeometrySelector);
           CPPUNIT_TEST (TestPlaneGeometrySelector);
           CPPUNIT_TEST (TestWholeGeometrySelector);
-          CPPUNIT_TEST (TestGeometrySurfaceSelector);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (TestGeometrySurfaceSelector);
+          CPPUNIT_TEST (TestSurfacePointSelector);
+          CPPUNIT_TEST (TestSurfacePointSelectorMultipleHits);CPPUNIT_TEST_SUITE_END();
 
         public:
           GeometrySelectorTests() :
               VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
 
               planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0), lineEndPoint1(CentreCoordinate
-                  * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize)
+                  * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize), surfacePoint(CubeSize * VoxelSize),
+
+              surfacePointMultipleHits(CubeSize * VoxelSize, (CubeSize - 1) * VoxelSize, (CubeSize - 1) * VoxelSize)
           {
 
           }
@@ -66,6 +70,9 @@ namespace hemelb
             wholeGeometrySelector = new hemelb::extraction::WholeGeometrySelector();
 
             geometrySurfaceSelector = new hemelb::extraction::GeometrySurfaceSelector();
+
+            surfacePointSelector = new hemelb::extraction::SurfacePointSelector(surfacePoint);
+            surfacePointSelectorMultipleHits = new hemelb::extraction::SurfacePointSelector(surfacePointMultipleHits);
           }
 
           void tearDown()
@@ -181,7 +188,7 @@ namespace hemelb
               {
                 for (site_t zCoord = 0; zCoord < CubeSize; ++zCoord)
                 {
-                  if (xCoord==0 || xCoord==CubeSize-1 || yCoord==0 || yCoord==CubeSize-1)
+                  if (xCoord == 0 || xCoord == CubeSize - 1 || yCoord == 0 || yCoord == CubeSize - 1)
                   {
                     includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(xCoord, yCoord, zCoord));
                   }
@@ -190,6 +197,32 @@ namespace hemelb
             }
 
             TestExpectedIncludedSites(geometrySurfaceSelector, includedCoordsOnTheSurface);
+          }
+
+          void TestSurfacePointSelector()
+          {
+            TestOutOfGeometrySites(surfacePointSelector);
+
+            // The only site we expect to be included is the cube corner (CubeSize-1, CubeSize-1, CubeSize-1) which is
+            // exactly sqrt(3) times voxel size away from surfacePoint
+            std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1));
+
+            TestExpectedIncludedSites(surfacePointSelector, includedCoordsOnTheSurface);
+          }
+
+          void TestSurfacePointSelectorMultipleHits()
+          {
+            TestOutOfGeometrySites(surfacePointSelectorMultipleHits);
+
+            // surfacePointMultipleHits is one voxel away from the cube corner (CubeSize-1, CubeSize-1, CubeSize-1) in
+            // the x direction, the geometry selector will pick three sites in a sqrt(3) times voxel size radius.
+            std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1, CubeSize - 1, CubeSize - 2));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1, CubeSize - 2, CubeSize - 1));
+
+            TestExpectedIncludedSites(surfacePointSelectorMultipleHits, includedCoordsOnTheSurface);
           }
 
         private:
@@ -249,6 +282,8 @@ namespace hemelb
           const distribn_t planeRadius;
           const util::Vector3D<distribn_t> lineEndPoint1;
           const util::Vector3D<distribn_t> lineEndPoint2;
+          const util::Vector3D<distribn_t> surfacePoint;
+          const util::Vector3D<distribn_t> surfacePointMultipleHits;
 
           unittests::FourCubeLatticeData* latticeData;
           lb::SimulationState* simState;
@@ -262,6 +297,8 @@ namespace hemelb
           hemelb::extraction::StraightLineGeometrySelector* straightLineGeometrySelector;
           hemelb::extraction::WholeGeometrySelector* wholeGeometrySelector;
           hemelb::extraction::GeometrySurfaceSelector* geometrySurfaceSelector;
+          hemelb::extraction::SurfacePointSelector* surfacePointSelector;
+          hemelb::extraction::SurfacePointSelector* surfacePointSelectorMultipleHits;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (GeometrySelectorTests);

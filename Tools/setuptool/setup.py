@@ -170,7 +170,10 @@ if __name__ == "__main__":
                                   'GeometryWriter.cpp',
                                   'Domain.cpp',
                                   'Site.cpp',
+                                  'InconsistentFluidnessError.cpp',
                                   'Index.cpp',
+                                  'CylinderGenerator.cpp',
+                                  'PolyDataGenerator.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
