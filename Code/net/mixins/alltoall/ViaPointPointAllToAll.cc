@@ -1,9 +1,18 @@
-#include "net/mixins/AllToAllViaPointPoint.h"
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
+#include "net/mixins/alltoall/ViaPointPointAllToAll.h"
 namespace hemelb
 {
   namespace net
   {
-    void AllToAllViaPointPoint::ReceiveAllToAll()
+    void ViaPointPointAllToAll::ReceiveAllToAll()
     {
 
       for (AllToAllProcComms::iterator receivereq = allToAllReceiveProcComms.begin();
@@ -29,7 +38,7 @@ namespace hemelb
       allToAllReceiveProcComms.clear();
     }
 
-    void AllToAllViaPointPoint::SendAllToAll()
+    void ViaPointPointAllToAll::SendAllToAll()
     {
 
       for (AllToAllProcComms::iterator sendreq = allToAllSendProcComms.begin(); sendreq != allToAllSendProcComms.end();

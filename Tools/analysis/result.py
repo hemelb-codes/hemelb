@@ -34,7 +34,6 @@ class FileModel(object):
         return os.path.expanduser(os.path.join(result.path,self.path))
         
     def model(self,result):
-        if result.files.get(self.key): return result.files.get(self.key)
         return self.loader(self.fullpath(result))
         
     def logger(self,result):

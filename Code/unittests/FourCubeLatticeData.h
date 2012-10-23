@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
@@ -58,7 +67,7 @@ namespace hemelb
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
                                                 sitesPerBlockUnit,
                                                 0.01,
-                                                util::Vector3D<PhysicalLength>::Zero());
+                                                util::Vector3D<PhysicalLength_deprecated>::Zero());
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
           block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));

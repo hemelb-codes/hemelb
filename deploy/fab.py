@@ -512,10 +512,10 @@ def hemelb(config,**args):
 
 @task
 def resubmit(name):
-       with_job(name)
-       with cd(env.job_results):
-               with prefix(env.run_prefix):
-                       run(template("$job_dispatch ${name}.sh"))
+    with_job(name)
+    with cd(env.job_results):
+        with prefix(env.run_prefix):
+            run(template("$job_dispatch ${name}.sh"))
 
 @task
 def multijob(*names,**args):

@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
@@ -61,8 +70,10 @@ namespace hemelb
 
         /*
          * This function initialises all of the steering parameters, on all nodes.
+         * Although this appears to be part of the removed post-unstable reset functionality, it is also used during initialisation
+         * so is retained #244
          */
-        void Reset();
+        void ClearValues();
 
         bool readyForNextImage;
         bool updatedMouseCoords;

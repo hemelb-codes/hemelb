@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #include "steering/SteeringComponent.h"
 
 namespace hemelb
@@ -66,7 +75,7 @@ namespace hemelb
       distribn_t lattice_density_max =
           mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_max) / Cs2;
       distribn_t lattice_velocity_max =
-          mUnits->ConvertVelocityToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
+          mUnits->ConvertSpeedToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
       distribn_t lattice_stress_max =
           mUnits->ConvertStressToLatticeUnits(mVisControl->domainStats.physical_stress_threshold_max);
 
@@ -88,7 +97,7 @@ namespace hemelb
       mVisControl->domainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
-    void SteeringComponent::Reset()
+    void SteeringComponent::ClearValues()
     {
       readyForNextImage = false;
       isConnected = false;

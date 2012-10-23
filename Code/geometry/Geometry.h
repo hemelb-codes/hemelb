@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_GEOMETRY_GEOMETRY_H
 #define HEMELB_GEOMETRY_GEOMETRY_H
 
@@ -23,8 +32,8 @@ namespace hemelb
          */
         Geometry(const util::Vector3D<site_t>& dimensionsInBlocks,
                  site_t blockSize,
-                 PhysicalLength voxelSize,
-                 const util::Vector3D<PhysicalLength>& origin) :
+                 PhysicalLength_deprecated voxelSize,
+                 const util::Vector3D<PhysicalLength_deprecated>& origin) :
             dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), voxelSize(voxelSize), origin(origin), blockCount(dimensionsInBlocks.x
                 * dimensionsInBlocks.y * dimensionsInBlocks.z), sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize,
                                                                                                                      3)), Blocks(blockCount)
@@ -89,6 +98,15 @@ namespace hemelb
         }
 
         /**
+         * True if the given site coordinates are within a bounding-box for a block.
+         */
+        bool AreLocalSiteCoordinatesValid(const util::Vector3D<site_t>& siteCoords) const
+        {
+          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 &&
+                 siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
+        }
+
+        /**
          * Get the dimensions of the bounding box in terms of blocks.
          * @return Dimensions of the bounding box in blocks.
          */
@@ -110,7 +128,7 @@ namespace hemelb
          * Get voxel size (real-life length of one site length)
          * @return Voxel size.
          */
-        PhysicalLength GetVoxelSize() const
+        PhysicalLength_deprecated GetVoxelSize() const
         {
           return voxelSize;
         }
@@ -119,7 +137,7 @@ namespace hemelb
          * Get the origin of the geometry in real-world coordinates.
          * @return Origin of the geometry.
          */
-        const util::Vector3D<PhysicalLength>& GetOrigin() const
+        const util::Vector3D<PhysicalLength_deprecated>& GetOrigin() const
         {
           return origin;
         }
@@ -127,8 +145,8 @@ namespace hemelb
       private:
         const util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
         const site_t blockSize; //! Size of a block, in sites.
-        const PhysicalLength voxelSize; //! Size of a block, in real-world units.
-        const util::Vector3D<PhysicalLength> origin;
+        const PhysicalLength_deprecated voxelSize; //! Size of a block, in real-world units.
+        const util::Vector3D<PhysicalLength_deprecated> origin;
 
         const site_t blockCount;
         const site_t sitesPerBlock;
