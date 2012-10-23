@@ -17,6 +17,7 @@ option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
+option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -35,6 +36,13 @@ set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK,JUNKYANG)")
+set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
+	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
+set(HEMELB_GATHERS_IMPLEMENTATION Separated
+	CACHE STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
+	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
+option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -66,6 +74,10 @@ endif()
 
 if (NOT HEMELB_STATIC_ASSERT)
 	add_definitions(-DHEMELB_NO_STATIC_ASSERT)
+endif()
+
+if (HEMELB_IMAGES_TO_NULL)
+	add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
 
 #------Capture build environment -------------

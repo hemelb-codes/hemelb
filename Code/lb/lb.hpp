@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_LB_LB_HPP
 #define HEMELB_LB_LB_HPP
 
@@ -319,45 +328,6 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    // In the case of instability, this function restart the simulation
-    // with twice as many time steps per period and update the parameters
-    // that depends on this change.
-    template<class LatticeType>
-    void LBM<LatticeType>::Reset()
-    {
-      mState->DoubleTimeResolution();
-
-      mParams.Update(mState->GetTimeStepLength(), mLatDat->GetVoxelSize());
-
-      SetInitialConditions();
-
-      kernels::InitParams initParams = kernels::InitParams();
-      initParams.latDat = mLatDat;
-      initParams.lbmParams = &mParams;
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
-      mMidFluidCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
-      mWallCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
-      initParams.boundaryObject = mInletValues;
-      mInletCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
-      initParams.boundaryObject = mOutletValues;
-      mOutletCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
-      initParams.boundaryObject = mInletValues;
-      mInletWallCollision->Reset(&initParams);
-
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
-      initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision->Reset(&initParams);
-    }
-
     template<class LatticeType>
     LBM<LatticeType>::~LBM()
     {
@@ -564,7 +534,7 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->GetMaximumVelocity());
+      distribn_t velocity_max = mUnits->ConvertSpeedToLatticeUnits(mSimConfig->GetMaximumVelocity());
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->GetMaximumStress());
 
       for (int i = 0; i < InletCount(); i++)
