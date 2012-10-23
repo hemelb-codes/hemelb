@@ -5,19 +5,30 @@
 # with, install, use, duplicate, modify, redistribute or share this
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
-# 
+#
 
-from vtk import vtkSTLReader, vtkCutter, vtkPlane, vtkPolyDataConnectivityFilter, vtkTransformPolyDataFilter, vtkTransform
+from vtk import vtkSTLReader, vtkCutter, vtkPlane, \
+    vtkPolyDataConnectivityFilter, vtkTransformPolyDataFilter, vtkTransform
 
 class SurfaceIntersectionFinder(object):
-    """Compute the edge of the surface at the inlet.
+    """Contains a VTK pipeline to find the intersection of a Iolet plane with
+    the contents of an STL file, and return this data in SI units.
+    
+    Pipeline is:
+    
+    FileUnitLength ----------------> vtkTransform ------------------------
+                                                                          \
+    FileName -> vtkSTLReader -> vtkCutter -> vtkPolyDataConnectivityFilter -> vtkTransformPolyDataFilter
+                            /            /
+    Iolet -----> vtkPlane -            /
+            \-------- Centre ---------
+    
     """
-    def __init__(self, surfaceFile, fileUnitLength):
-        """surfaceFile - the path of the STL file containing the surface
-        fileUnitLength - the length, in metres, of 1 in the STL file
+    
+    def __init__(self):
+        """Setup the pipeline.
         """
         self.reader = vtkSTLReader()
-        self.reader.SetFileName(surfaceFile)
         
         self.cutter = vtkCutter()
         self.cutter.SetInputConnection(self.reader.GetOutputPort())
@@ -28,27 +39,44 @@ class SurfaceIntersectionFinder(object):
         
         self.scaler = vtkTransformPolyDataFilter()
         self.scaler.SetInputConnection(self.regionPicker.GetOutputPort())
-        trans = vtkTransform()
+        
+        self.GetFileName = self.reader.GetFileName
+        self.SetFileName = self.reader.SetFileName
+        
+        self.GetOutputPort = self.scaler.GetOutputPort
+        self.GetOutput = self.scaler.GetOutput
+        self.Update = self.scaler.Update
+        
+        self.iolet = None
+        self.fileUnitLength = None
+        
+        return
+        
+    def SetFileUnitLength(self, fileUnitLength):
+        """Set the length, in metres, of 1 in the STL file.
+        """
         self.fileUnitLength = fileUnitLength
+        trans = vtkTransform()
         trans.Scale(fileUnitLength,fileUnitLength,fileUnitLength)
         self.scaler.SetTransform(trans)
+        return
+    def GetFileUnitLength(self):
+        return self.fileUnitLength
+    
+    
+    def SetIolet(self, iolet):
+        self.iolet = iolet
         
-    def IntersectWithInlet(self, inlet):
-        """Return the intersection of the surface with the supplied inlet. 
-        """
         plane = vtkPlane()
-        r = inlet.Centre
+        r = iolet.Centre
         plane.SetOrigin(r.x, r.y, r.z)
-        n = inlet.Normal
+        n = iolet.Normal
         plane.SetNormal(n.x, n.y, n.z)
         self.cutter.SetCutFunction(plane)
         
         self.regionPicker.SetClosestPoint(r.x, r.y, r.z)
-        
-        self.scaler.Update()
-        r.x *= self.fileUnitLength
-        r.y *= self.fileUnitLength
-        r.z *= self.fileUnitLength
-        
-        return self.scaler.GetOutput()
+        return
     
+    def GetIolet(self):
+        return self.iolet
+    pass

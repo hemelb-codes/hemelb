@@ -21,8 +21,8 @@ option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
-set(HEMELB_LOG_LEVEL info
-	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
+set(HEMELB_LOG_LEVEL Info
+	CACHE STRING "Log level, choose 'Critical', 'Error', 'Warning', 'Info', 'Debug' or 'Trace'" )
 set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(HEMELB_DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
@@ -58,6 +58,7 @@ add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
 add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
+add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)

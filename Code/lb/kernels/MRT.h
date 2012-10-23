@@ -29,7 +29,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase<typename MomentBasis::Lattice>(f)
+            HydroVarsBase<typename MomentBasis::Lattice> (f)
           {
           }
 
@@ -51,7 +51,7 @@ namespace hemelb
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
       template<class MomentBasis>
-      class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
+      class MRT : public BaseKernel<MRT<MomentBasis> , typename MomentBasis::Lattice>
       {
         public:
 
@@ -60,13 +60,13 @@ namespace hemelb
             InitState(initParams);
           }
 
-          inline void DoCalculateDensityVelocityFeq(HydroVars<MRT>& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
-            MomentBasis::Lattice::CalculateDensityVelocityFEq(hydroVars.f,
+            MomentBasis::Lattice::CalculateDensityMomentumFEq(hydroVars.f,
                                                               hydroVars.density,
-                                                              hydroVars.v_x,
-                                                              hydroVars.v_y,
-                                                              hydroVars.v_z,
+                                                              hydroVars.momentum.x,
+                                                              hydroVars.momentum.y,
+                                                              hydroVars.momentum.z,
                                                               hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
@@ -81,9 +81,9 @@ namespace hemelb
           inline void DoCalculateFeq(HydroVars<MRT>& hydroVars, site_t index)
           {
             MomentBasis::Lattice::CalculateFeq(hydroVars.density,
-                                               hydroVars.v_x,
-                                               hydroVars.v_y,
-                                               hydroVars.v_z,
+                                               hydroVars.momentum.x,
+                                               hydroVars.momentum.y,
+                                               hydroVars.momentum.z,
                                                hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)

@@ -37,7 +37,7 @@ namespace hemelb
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-              collider(initParams), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
+            collider(initParams), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
           {
             // Go through every site on the local processor.
             for (site_t localIndex = 0; localIndex < initParams.latDat->GetLocalFluidSiteCount(); ++localIndex)
@@ -53,8 +53,9 @@ namespace hemelb
               // Iterate over every neighbouring direction from here.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                const LatticeVector neighbourLocation = localSiteLocation
-                    + LatticeVector(LatticeType::CX[direction], LatticeType::CY[direction], LatticeType::CZ[direction]);
+                const LatticeVector neighbourLocation = localSiteLocation + LatticeVector(LatticeType::CX[direction],
+                                                                                          LatticeType::CY[direction],
+                                                                                          LatticeType::CZ[direction]);
 
                 // Make sure we don't try to get info about off-lattice neighbours.
                 if (!initParams.latDat->IsValidLatticeSite(neighbourLocation))
@@ -64,8 +65,8 @@ namespace hemelb
 
                 // BIG_NUMBER2 means a solid site. We don't want info about solids or
                 // neighbouring sites on this proc.
-                if (neighbourSiteHomeProc == BIG_NUMBER2
-                    || neighbourSiteHomeProc == topology::NetworkTopology::Instance()->GetLocalRank())
+                if (neighbourSiteHomeProc == BIG_NUMBER2 || neighbourSiteHomeProc
+                    == topology::NetworkTopology::Instance()->GetLocalRank())
                   continue;
 
                 // Create a requirements with the info we need.
@@ -115,7 +116,7 @@ namespace hemelb
                   Direction unstreamedDirection = LatticeType::INVERSEDIRECTIONS[oppositeDirection];
 
                   // Get the distance to the boundary.
-                  double wallDistance = site.GetWallDistance<LatticeType>(oppositeDirection);
+                  double wallDistance = site.GetWallDistance<LatticeType> (oppositeDirection);
 
                   // Now we work out the hypothetical velocity of the solid site on the other side
                   // of the wall.
@@ -123,10 +124,7 @@ namespace hemelb
                   // between the nearest fluid site and the solid site inside the wall.
                   // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
                   // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-                  util::Vector3D<double> velocityWall = util::Vector3D<double>(hydroVars.v_x,
-                                                                               hydroVars.v_y,
-                                                                               hydroVars.v_z)
-                      * (1. - 1. / wallDistance);
+                  LatticeVelocity velocityWall = hydroVars.momentum * (1. - 1. / wallDistance) / hydroVars.density;
 
                   // Find the non-equilibrium distribution in the unstreamed direction.
                   distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq()[unstreamedDirection];
@@ -146,10 +144,10 @@ namespace hemelb
                     // Need some info about the next node away from the wall in this direction...
 
                     // Find the neighbour's global location and which proc it's on.
-                    util::Vector3D<LatticeCoordinate> neighbourGlobalLocation = site.GetGlobalSiteCoords()
-                        + util::Vector3D<LatticeCoordinate>(LatticeType::CX[unstreamedDirection],
-                                                            LatticeType::CY[unstreamedDirection],
-                                                            LatticeType::CZ[unstreamedDirection]);
+                    LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
+                        + LatticeVector(LatticeType::CX[unstreamedDirection],
+                                        LatticeType::CY[unstreamedDirection],
+                                        LatticeType::CZ[unstreamedDirection]);
 
                     proc_t neighbourProcessor = latDat->GetProcIdFromGlobalCoords(neighbourGlobalLocation);
 
@@ -162,29 +160,33 @@ namespace hemelb
                       geometry::Site nextSiteOut =
                           latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
 
-                      neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
+                      neighbourFOld = nextSiteOut.GetFOld<LatticeType> ();
                     }
                     else
                     {
-                      const geometry::neighbouring::ConstNeighbouringSite neighbourSite =
-                          neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
+                      const geometry::neighbouring::ConstNeighbouringSite
+                          neighbourSite =
+                              neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
 
-                      neighbourFOld = neighbourSite.GetFOld<LatticeType>();
+                      neighbourFOld = neighbourSite.GetFOld<LatticeType> ();
                     }
 
                     // Now calculate this field information.
                     LatticeVelocity nextNodeOutVelocity;
                     distribn_t nextNodeOutFEq[LatticeType::NUMVECTORS];
 
-                    // Go ahead and calculate the density, velocity and eqm distribution.
+                    // Go ahead and calculate the density, momentum and eqm distribution.
                     {
                       distribn_t nextNodeDensity;
-                      LatticeType::CalculateDensityVelocityFEq(neighbourFOld,
+                      // Note that nextNodeOutVelocity is passed as the momentum argument, this
+                      // is because it is immediately divided by density when the function returns.
+                      LatticeType::CalculateDensityMomentumFEq(neighbourFOld,
                                                                nextNodeDensity,
                                                                nextNodeOutVelocity.x,
                                                                nextNodeOutVelocity.y,
                                                                nextNodeOutVelocity.z,
                                                                nextNodeOutFEq);
+                      nextNodeOutVelocity /= nextNodeDensity;
                     }
 
                     // Obtain a second estimate, this time ignoring the fluid site closest to
@@ -192,49 +194,45 @@ namespace hemelb
                     // to the point on the wall itself (velocity 0):
                     // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
                     // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-                    util::Vector3D<double> velocityWallSecondEstimate = nextNodeOutVelocity * (wallDistance - 1)
+                    LatticeVelocity velocityWallSecondEstimate = nextNodeOutVelocity * (wallDistance - 1)
                         / (wallDistance + 1);
 
                     // Next, we interpolate between the first and second estimates to improve the estimate.
                     // Extrapolate to obtain the velocity at the wall site.
                     for (int dimension = 0; dimension < 3; dimension++)
                     {
-                      velocityWall[dimension] = wallDistance * velocityWall[dimension]
-                          + (1. - wallDistance) * velocityWallSecondEstimate[dimension];
+                      velocityWall[dimension] = wallDistance * velocityWall[dimension] + (1. - wallDistance)
+                          * velocityWallSecondEstimate[dimension];
                     }
 
                     // Interpolate in the same way to get f_neq.
-                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection
-                        + (1. - wallDistance)
-                            * (neighbourFOld[unstreamedDirection] - nextNodeOutFEq[unstreamedDirection]);
+                    fNeqInUnstreamedDirection = wallDistance * fNeqInUnstreamedDirection + (1. - wallDistance)
+                        * (neighbourFOld[unstreamedDirection] - nextNodeOutFEq[unstreamedDirection]);
                   }
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
+                  LatticeVelocity momentumWall = velocityWall * hydroVars.density;
+
                   distribn_t fEqTemp[LatticeType::NUMVECTORS];
                   LatticeType::CalculateFeq(hydroVars.density,
-                                            velocityWall[0],
-                                            velocityWall[1],
-                                            velocityWall[2],
+                                            momentumWall[0],
+                                            momentumWall[1],
+                                            momentumWall[2],
                                             fEqTemp);
 
                   // Collide and stream!
                   // TODO: It's not clear whether we should defer to the template collision type here
                   // or do a standard LBGK (implemented).
-                  * (latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamedDirection)) =
-                      fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
+                  * (latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamedDirection))
+                      = fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
 
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
-                                                                                    hydroVars.v_y,
-                                                                                    hydroVars.v_z,
-                                                                                    site,
-                                                                                    hydroVars.GetFNeq().f,
-                                                                                    hydroVars.density,
-                                                                                    hydroVars.tau,
+              BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                    hydroVars,
                                                                                     lbmParams,
                                                                                     propertyCache);
             }

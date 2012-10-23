@@ -326,7 +326,7 @@ namespace hemelb
 
                   if (visSettings.mStressType == lb::ShearStress)
                   {
-                    siteData.stress = propertyCache.shearStressCache.Get(localContiguousId);
+                    siteData.stress = propertyCache.wallShearStressMagnitudeCache.Get(localContiguousId);
                   }
                   else
                   {

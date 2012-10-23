@@ -87,7 +87,7 @@ namespace hemelb
           }
         }
 
-        return false;
+        return true;
       }
 
       std::vector<int> BoundaryValues::GatherProcList(bool hasBoundary)

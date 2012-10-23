@@ -98,7 +98,7 @@ namespace hemelb
           {
             if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
+              log::Logger::Log<log::Warning, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
                                                             targetX,
                                                             xVector[0],
                                                             xVector[xVector.size() - 1]);
@@ -115,8 +115,8 @@ namespace hemelb
           {
             if (xVector[lowerIndex] == xVector[lowerIndex + 1])
             {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
-              log::Logger::Log<log::Debug, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
+              log::Logger::Log<log::Warning, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
+              log::Logger::Log<log::Warning, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
                                                             xVector[lowerIndex],
                                                             yVector[lowerIndex],
                                                             xVector[lowerIndex + 1],

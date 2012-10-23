@@ -26,7 +26,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig() :
-        LEGACY_PULSATILE_PERIOD(60.0 / 70.0)
+        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), warmUpSteps(0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -84,6 +84,9 @@ namespace hemelb
       else
       {
         DoIOForULong(simulationElement, "steps", isLoading, totalTimeSteps);
+        DoIOForULong(simulationElement, "extra_warmup_steps", isLoading, warmUpSteps);
+        if(isLoading)
+            totalTimeSteps += warmUpSteps;
       }
 
       if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength)) && isLoading)
@@ -235,7 +238,7 @@ namespace hemelb
         const std::string *read_result = parent->Attribute(attributeName);
         if (read_result == NULL)
         {
-          value = 0.0;
+          value = 0;
           return false;
         }
         char *dummy;
@@ -388,9 +391,15 @@ namespace hemelb
             extraction::GeometrySurfaceSelector* surface = new extraction::GeometrySurfaceSelector();
             file->geometry = surface;
           }
+          else if (propertyElement->ValueStr().compare("surfacepoint") == 0)
+          {
+            extraction::SurfacePointSelector* surfacePoint = NULL;
+            DoIOForSurfacePoint(propertyElement, isLoading, surfacePoint);
+            file->geometry = surfacePoint;
+          }
           else
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
+            log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
             exit(1);
           }
 
@@ -478,6 +487,28 @@ namespace hemelb
       }
     }
 
+    void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode,
+                                        bool isLoading,
+                                        extraction::SurfacePointSelector*& surfacePoint)
+   {
+      TiXmlElement* point = GetChild(xmlNode, "point", isLoading);
+
+      util::Vector3D<float> mutableVector;
+
+      if (isLoading)
+      {
+        DoIOForFloatVector(point, isLoading, mutableVector);
+
+        surfacePoint = new extraction::SurfacePointSelector(mutableVector);
+      }
+      else
+      {
+        mutableVector = surfacePoint->GetPoint();
+
+        DoIOForFloatVector(point, isLoading, mutableVector);
+      }
+   }
+
     void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field)
     {
       std::string type;
@@ -510,9 +541,21 @@ namespace hemelb
       {
         field.type = extraction::OutputField::ShearRate;
       }
+      else if (type.compare("stresstensor") == 0)
+      {
+        field.type = extraction::OutputField::StressTensor;
+      }
+      else if (type.compare("tractionvector") == 0)
+      {
+        field.type = extraction::OutputField::TractionVector;
+      }
+      else if (type.compare("tangentialprojectiontractionvector") == 0)
+      {
+        field.type = extraction::OutputField::TangentialProjectionTractionVector;
+      }
       else
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
+        log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
         exit(1);
       }
     }
@@ -537,6 +580,11 @@ namespace hemelb
       DoIOForDouble(lPressureElement, "mean", isLoading, value->GetPressureMean());
       DoIOForDouble(lPressureElement, "amplitude", isLoading, value->GetPressureAmp());
       DoIOForDouble(lPressureElement, "phase", isLoading, value->GetPhase());
+
+      if (warmUpSteps != 0)
+      {
+        value->SetWarmup(warmUpSteps);
+      }
 
       if (!DoIOForDouble(lPressureElement, "period", isLoading, value->GetPeriod()) && isLoading)
       {

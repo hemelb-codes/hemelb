@@ -88,7 +88,7 @@ namespace hemelb
         site_t blockId = blockTraverser.GetCurrentIndex();
         if (gmyResult.Blocks[blockId].Sites.size() == 0)
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>(
+          log::Logger::Log<log::Trace, log::OnePerCore>(
             "ColloidController: block with id %i and coords (%i,%i,%i) is solid.\n",
             blockId,
             blockTraverser.GetCurrentLocation().x,
@@ -109,7 +109,7 @@ namespace hemelb
           site_t siteId = siteTraverser.GetCurrentIndex();
           if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
           {
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
               siteId,
               siteTraverser.GetCurrentLocation().x,
@@ -119,7 +119,7 @@ namespace hemelb
             continue;
           }
 
-          log::Logger::Log<log::Debug, log::OnePerCore>(
+          log::Logger::Log<log::Trace, log::OnePerCore>(
             "ColloidController: site with id %i and coords (%i,%i,%i) is local.\n",
             siteId,
             siteTraverser.GetCurrentLocation().x,
@@ -156,7 +156,7 @@ namespace hemelb
             this->neighbourProcessors.push_back(neighbourRank);
 
             // debug message so this neighbour list can be compared to the LatticeData one
-            log::Logger::Log<log::Debug, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
                 "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
                 (int)neighbourRank, (int)(this->localRank),
                 (int)neighbourSiteId, (int)neighbourBlockId,

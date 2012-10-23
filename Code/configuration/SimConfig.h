@@ -30,30 +30,84 @@ namespace hemelb
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
-        void DoIOForCosineInOutlet(TiXmlElement *xmlNode,
-                                   bool isLoading,
-                                   lb::boundaries::iolets::InOutLetCosine* value);
+        void
+        DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetCosine* value);
         void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetFile* value);
         void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
                                        bool isLoading,
                                        lb::boundaries::iolets::InOutLetMultiscale* value);
-        const util::Vector3D<float> & GetVisualisationCentre() const {return visualisationCentre;}
-        const std::vector<lb::boundaries::iolets::InOutLet*> & GetInlets() const {return inlets;}
-        const std::vector<lb::boundaries::iolets::InOutLet*> & GetOutlets() const {return outlets;}
-        lb::StressTypes GetStressType() const {return stressType;}
-        float GetVisualisationLongitude() const {return visualisationLongitude;}
-        float GetVisualisationLatitude() const {return visualisationLatitude;}
-        float GetVisualisationZoom() const {return visualisationZoom;}
-        float GetVisualisationBrightness() const {return visualisationBrightness;}
-        float GetMaximumVelocity() const {return maxVelocity;}
-        float GetMaximumStress() const {return maxStress;}
-        const std::string & GetDataFilePath() const {return dataFilePath;}
-        LatticeTime GetTotalTimeSteps() const {return totalTimeSteps;}
-        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
-        unsigned int PropertyOutputCount() const {return propertyOutputs.size();}
-        extraction::PropertyOutputFile * GetPropertyOutput(unsigned int index) const {return propertyOutputs[index];}
-        std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const {return propertyOutputs;}
-        const std::string GetColloidConfigPath() const {return colloidConfigPath;}
+        const util::Vector3D<float> & GetVisualisationCentre() const
+        {
+          return visualisationCentre;
+        }
+        const std::vector<lb::boundaries::iolets::InOutLet*> & GetInlets() const
+        {
+          return inlets;
+        }
+        const std::vector<lb::boundaries::iolets::InOutLet*> & GetOutlets() const
+        {
+          return outlets;
+        }
+        lb::StressTypes GetStressType() const
+        {
+          return stressType;
+        }
+        float GetVisualisationLongitude() const
+        {
+          return visualisationLongitude;
+        }
+        float GetVisualisationLatitude() const
+        {
+          return visualisationLatitude;
+        }
+        float GetVisualisationZoom() const
+        {
+          return visualisationZoom;
+        }
+        float GetVisualisationBrightness() const
+        {
+          return visualisationBrightness;
+        }
+        float GetMaximumVelocity() const
+        {
+          return maxVelocity;
+        }
+        float GetMaximumStress() const
+        {
+          return maxStress;
+        }
+        const std::string & GetDataFilePath() const
+        {
+          return dataFilePath;
+        }
+        LatticeTime GetTotalTimeSteps() const
+        {
+          return totalTimeSteps;
+        }
+        LatticeTime GetWarmUpSteps() const
+        {
+          return warmUpSteps;
+        }
+        PhysicalTime GetTimeStepLength() const
+        {
+          return timeStepLength;
+        }
+        unsigned int PropertyOutputCount() const
+        {
+          return propertyOutputs.size();
+        }
+        extraction::PropertyOutputFile * GetPropertyOutput(unsigned int index) const
+        {
+          return propertyOutputs[index];
+        }
+        std::vector<extraction::PropertyOutputFile*> const GetPropertyOutputs() const
+        {
+          return propertyOutputs;
+        }
+        const std::string GetColloidConfigPath() const
+        {
+          return colloidConfigPath;
+        }
 
       protected:
         SimConfig();
@@ -81,11 +135,10 @@ namespace hemelb
                                  bool isLoading,
                                  extraction::StraightLineGeometrySelector*& line);
         void DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::PlaneGeometrySelector*& plane);
+        void DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading, extraction::SurfacePointSelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
-        void DoIOForBaseInOutlet(TiXmlElement *parent,
-                                                bool isLoading,
-                                                lb::boundaries::iolets::InOutLet* const value);
+        void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::boundaries::iolets::InOutLet* const value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
         const double LEGACY_PULSATILE_PERIOD;
         std::string dataFilePath;
@@ -108,6 +161,7 @@ namespace hemelb
         std::vector<lb::boundaries::iolets::InOutLet*> outlets;
         double timeStepLength;
         unsigned long totalTimeSteps;
+        unsigned long warmUpSteps;
 
     };
   }

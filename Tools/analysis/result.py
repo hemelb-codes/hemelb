@@ -34,10 +34,7 @@ class FileModel(object):
         return os.path.expanduser(os.path.join(result.path,self.path))
         
     def model(self,result):
-        if result.files.get(self.key): return result.files.get(self.key)
-        result.files[self.key]=result.files.get(self.key) or self.loader(self.fullpath(result))
-        self.logger(result).debug("Loaded")
-        return result.files[self.key]
+        return self.loader(self.fullpath(result))
         
     def logger(self,result):
         return logging.LoggerAdapter(logger,dict(context=self.fullpath(result)))
@@ -62,7 +59,7 @@ class ResultProperty(object):
     @staticmethod
     def parse_value(value):
         if type(value)==numpy.ndarray:
-          return value
+          return value.tolist()
         if value in [1,0]:
           return value
         if value in ['None','none',None]:
@@ -93,9 +90,10 @@ class ResultProperty(object):
             if not model:
                 raise ParseError("Bad file.")
             value=self.parser(model,self.pattern)
-            if result.properties.get(self.label) == None:
-              result.properties[self.label] = self.parse_value(value)
-            return result.properties[self.label]
+            parsed_value = result.properties.get(self.label) or self.parse_value(value)
+            if sys.getsizeof(parsed_value) < 1024:
+                result.properties[self.label]=parsed_value
+            return parsed_value
         except (IOError,ParseError, OSError) as err:
             self.file.logger(result).warning("Problem parsing value: %s"%err)
             return None
@@ -158,10 +156,16 @@ def column_parser(content,pattern):
     return [ResultProperty.parse_value(row[pattern]) for row in content]
 
 def yaml_loader(path):
-    return yaml.load(open(path))
+    file = open(path)
+    result = yaml.load(file)
+    file.close()
+    return result
     
 def text_loader(path):
-    return open(path).read()
+    file = open(path)
+    result = file.read()
+    file.close()
+    return result
     
 def xml_loader(path):
     try:
@@ -174,12 +178,16 @@ def stat_loader(path):
 
 
 def csv_loader(path): 
-  content=csv.reader(open(path)) 
-  return [row for row in content] 
+    file = open(path)
+    content=csv.reader(file) 
+    file.close()
+    return [row for row in content] 
   
 def ssv_loader(path): 
-  content=csv.reader(open(path),delimiter=' ') 
-  return [row for row in content] 
+    file = open(path)
+    content = csv.reader(file,delimiter=' ')
+    file.close()
+    return [row for row in content] 
 
 def geometry_header_loader(path):
     from hemeTools.parsers.geometry.simple import ConfigLoader
@@ -208,6 +216,9 @@ def geometry_header_loader(path):
         @property
         def block_count(self):
             return len(self.Domain.Blocks)
+        @property
+        def voxel_size(self):
+            return self.Domain.VoxelSize
         pass
     gh = GeometryHeader(path)
     gh.Load()
@@ -275,7 +286,8 @@ def result_model(config):
         def define_properties(klass,file_model,data,parser):
             if not data: return
             for prop,pattern in data.iteritems():
-                klass.proplist.append(prop)
+                if prop not in klass.proplist:
+                    klass.proplist.append(prop)
                 setattr(klass,prop,ResultProperty(prop,file_model,parser,pattern))
 
         def __init__(self,path):
@@ -300,7 +312,10 @@ def result_model(config):
         def datum(self,property):
             """Return a property. If it is an unknown property, assume it is an anonymous compound property which wasn't stated beforehand."""
             if property in self.proplist:
-                return getattr(self,property)
+                if hasattr(self, property):
+                    return getattr(self,property)
+                else:
+                    return None
             return ResultProperty(property,ResultContent(binding_filter),eval_parser,property).get(self)
 
         def __str__(self):
@@ -323,6 +338,10 @@ def result_model(config):
                     read_value=ResultProperty.parse_value(value[1:])
                     norm_error=abs( (read_value-prop)/(read_value+prop) )
                     return norm_error < 0.03
+                elif type(prop) == list:
+                    # Ignore the '[' and ']'. Split on a string, parse each to float.
+                    parsed_value = [float(x) for x in  value[1:-1].split(',')]
+                    return prop == parsed_value
                 else:
                     return prop==value
             except TypeError:

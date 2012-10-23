@@ -36,7 +36,7 @@ namespace hemelb
       {
         public:
           RayData(int i, int j) :
-              BasicPixel(i, j)
+            BasicPixel(i, j)
           {
             // A cheap way of indicating no ray data
             mCumulativeLengthInFluid = 0.0F;
@@ -168,14 +168,14 @@ namespace hemelb
 
           void LogDebuggingInformation() const
           {
-            log::Logger::Log<log::Info, log::OnePerCore>("Ray data at (%i,%i) with "
-                                                         "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
-                                                         GetI(),
-                                                         GetJ(),
-                                                         GetLengthBeforeRayFirstCluster(),
-                                                         GetCumulativeLengthInFluid(),
-                                                         GetNearestDensity(),
-                                                         GetNearestStress());
+            log::Logger::Log<log::Trace, log::OnePerCore>("Ray data at (%i,%i) with "
+                                                            "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
+                                                          GetI(),
+                                                          GetJ(),
+                                                          GetLengthBeforeRayFirstCluster(),
+                                                          GetCumulativeLengthInFluid(),
+                                                          GetNearestDensity(),
+                                                          GetNearestStress());
           }
 
         protected:
@@ -184,9 +184,8 @@ namespace hemelb
           static void PickColour(float value, float colour[3])
           {
             colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
-            colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * (float) fabs(value - 0.5F),
-                                                                       0.F,
-                                                                       1.F);
+            colour[1]
+                = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * (float) fabs(value - 0.5F), 0.F, 1.F);
             colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
           }
 

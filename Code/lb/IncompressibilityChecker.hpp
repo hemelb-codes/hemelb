@@ -25,6 +25,7 @@ namespace hemelb
       //! @todo #23 do we have a policy on floating point constants?
       densitiesArray[MIN_DENSITY] = DBL_MAX;
       densitiesArray[MAX_DENSITY] = -DBL_MAX;
+      densitiesArray[MAX_VELOCITY_MAGNITUDE] = 0.0;
     }
 
     template<class BroadcastPolicy>
@@ -74,18 +75,27 @@ namespace hemelb
       {
         densitiesArray[MAX_DENSITY] = newValues[MAX_DENSITY];
       }
+      if (newValues[MAX_VELOCITY_MAGNITUDE] > densitiesArray[MAX_VELOCITY_MAGNITUDE])
+      {
+        densitiesArray[MAX_VELOCITY_MAGNITUDE] = newValues[MAX_VELOCITY_MAGNITUDE];
+      }
     }
 
     template<class BroadcastPolicy>
-    void IncompressibilityChecker<BroadcastPolicy>::DensityTracker::UpdateDensityTracker(distribn_t newValue)
+    void IncompressibilityChecker<BroadcastPolicy>::DensityTracker::UpdateDensityTracker(distribn_t newDensity,
+                                                                                         distribn_t newVelocityMagnitude)
     {
-      if (newValue < densitiesArray[MIN_DENSITY])
+      if (newDensity < densitiesArray[MIN_DENSITY])
       {
-        densitiesArray[MIN_DENSITY] = newValue;
+        densitiesArray[MIN_DENSITY] = newDensity;
       }
-      if (newValue > densitiesArray[MAX_DENSITY])
+      if (newDensity > densitiesArray[MAX_DENSITY])
       {
-        densitiesArray[MAX_DENSITY] = newValue;
+        densitiesArray[MAX_DENSITY] = newDensity;
+      }
+      if (newVelocityMagnitude > densitiesArray[MAX_VELOCITY_MAGNITUDE])
+      {
+        densitiesArray[MAX_VELOCITY_MAGNITUDE] = newVelocityMagnitude;
       }
     }
 
@@ -102,9 +112,26 @@ namespace hemelb
        *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
        *  fill it in completely unless the logarithm base SPREADFACTOR of the number of processes is an integer.
        */
-      for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE; index++)
+      for (unsigned leaf_index = 0; leaf_index < SPREADFACTOR; leaf_index++)
       {
-        childrenDensitiesSerialised[index] = REFERENCE_DENSITY;
+        unsigned offset = leaf_index * DensityTracker::DENSITY_TRACKER_SIZE;
+        for (unsigned tracker_index = 0; tracker_index < DensityTracker::DENSITY_TRACKER_SIZE; tracker_index++)
+        {
+          switch (tracker_index)
+          {
+            case DensityTracker::MIN_DENSITY:
+            case DensityTracker::MAX_DENSITY:
+              childrenDensitiesSerialised[offset + tracker_index] = REFERENCE_DENSITY;
+              break;
+            case DensityTracker::MAX_VELOCITY_MAGNITUDE:
+              childrenDensitiesSerialised[offset + tracker_index] = 0.0;
+              break;
+            default:
+              // This should never trip. It only occurs when a new entry is added to the density tracker and
+              // no suitable initialisation is provided.
+              assert(false);
+          }
+        }
       }
 
     }
@@ -164,7 +191,8 @@ namespace hemelb
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
-        upwardsDensityTracker.UpdateDensityTracker(propertyCache.densityCache.Get(i));
+        upwardsDensityTracker.UpdateDensityTracker(propertyCache.densityCache.Get(i),
+                                                   propertyCache.velocityCache.Get(i).GetMagnitude());
       }
 
       timings[hemelb::reporting::Timers::monitoring].Stop();
@@ -227,6 +255,13 @@ namespace hemelb
         incomp->SetFormattedValue("ALLOWED", "%.1f%%", GetMaxRelativeDensityDifferenceAllowed() * 100);
         incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
       }
+    }
+
+    template<class BroadcastPolicy>
+    double IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestVelocityMagnitude() const
+    {
+      assert(AreDensitiesAvailable());
+      return (*globalDensityTracker)[DensityTracker::MAX_VELOCITY_MAGNITUDE];
     }
   }
 }

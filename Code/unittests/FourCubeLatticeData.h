@@ -23,7 +23,7 @@ namespace hemelb
     {
       public:
         TestSiteData(geometry::SiteData& siteData) :
-            geometry::SiteData(siteData)
+          geometry::SiteData(siteData)
         {
 
         }
@@ -33,6 +33,20 @@ namespace hemelb
           unsigned newValue = geometry::SiteData::GetIntersectionData();
           newValue |= 1U << (direction - 1);
           boundaryIntersection = newValue;
+        }
+
+        void SetHasIolet(Direction direction)
+        {
+          unsigned newValue = geometry::SiteData::GetIoletIntersectionData();
+          newValue |= 1U << (direction - 1);
+          ioletIntersection = newValue;
+        }
+
+        void SetBoundaryId(int boundaryId)
+        {
+          unsigned newValue = geometry::SiteData::GetOtherRawData();
+          newValue |= boundaryId << BOUNDARY_ID_SHIFT;
+          data = newValue;
         }
     };
 
@@ -135,20 +149,63 @@ namespace hemelb
         /***
          Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
          **/
+        void SetHasIolet(site_t site, Direction direction)
+        {
+          TestSiteData mutableSiteData(siteData[site]);
+          mutableSiteData.SetHasIolet(direction);
+          siteData[site] = geometry::SiteData(mutableSiteData);
+        }
+
+        /***
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
+        void SetBoundaryId(site_t site, int id)
+        {
+          TestSiteData mutableSiteData(siteData[site]);
+          mutableSiteData.SetBoundaryId(id);
+          siteData[site] = geometry::SiteData(mutableSiteData);
+        }
+
+        /***
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
         void SetBoundaryDistance(site_t site, Direction direction, distribn_t distance)
         {
           distanceToWall[ (lb::lattices::D3Q15::NUMVECTORS - 1) * site + direction - 1] = distance;
         }
 
+        /***
+         Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
+         **/
+        void SetBoundaryNormal(site_t site, util::Vector3D<distribn_t> boundaryNormal)
+        {
+          wallNormalAtSite[site] = boundaryNormal;
+        }
+
+        /**
+         * Used in unit tests for setting the fOld array, in a way that isn't possible in the main
+         * part of the codebase.
+         * @param site
+         * @param fOldIn
+         */
+        template<class LatticeType>
+        void SetFOld(site_t site, distribn_t* fOldIn)
+        {
+          for(Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+          {
+            *GetFOld(site * LatticeType::NUMVECTORS + direction) = fOldIn[direction];
+          }
+        }
+
       protected:
         FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
         }
 
         FourCubeLatticeData() :
-            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
         {
 
         }
