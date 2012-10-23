@@ -12,6 +12,7 @@ import os
 import argparse
 import shutil
 import csv
+import glob
 import cProfile
 from pprint import PrettyPrinter
 
@@ -89,8 +90,9 @@ class Action(object):
     def delete(self,result):
         shutil.rmtree(result.path,ignore_errors=True)
     def cat(self,result,*files):
+        files=sum([glob.glob(os.path.join(result.path, afile)) for afile in files], [])
         for afile in files:
-            content=open(os.path.join(result.path,afile)).read()
+            content=open(afile).read()
             print(content,file=self.stream)
             content.close()
     def zip(self,result,*cols):

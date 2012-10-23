@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_LB_STREAMERS_GUOZHENGSHI_H
 #define HEMELB_LB_STREAMERS_GUOZHENGSHI_H
 
@@ -84,7 +93,7 @@ namespace hemelb
               geometry::Site site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
 
               collider.CalculatePreCollision(hydroVars, site);
               collider.Collide(lbmParams, hydroVars);
@@ -92,8 +101,8 @@ namespace hemelb
               // Perform the streaming of the post-collision distribution.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
-                    = hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
+                    hydroVars.GetFPostCollision()[direction];
               }
 
               // Now fill in the distributions that won't be streamed to
@@ -115,7 +124,7 @@ namespace hemelb
                   // between the nearest fluid site and the solid site inside the wall.
                   // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
                   // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
-                  util::Vector3D<double> velocityWall = hydroVars.momentum * (1. - 1. / wallDistance) / hydroVars.density;
+                  LatticeVelocity velocityWall = hydroVars.momentum * (1. - 1. / wallDistance) / hydroVars.density;
 
                   // Find the non-equilibrium distribution in the unstreamed direction.
                   distribn_t fNeqInUnstreamedDirection = hydroVars.GetFNeq()[unstreamedDirection];
@@ -135,10 +144,10 @@ namespace hemelb
                     // Need some info about the next node away from the wall in this direction...
 
                     // Find the neighbour's global location and which proc it's on.
-                    util::Vector3D<LatticeCoordinate> neighbourGlobalLocation = site.GetGlobalSiteCoords()
-                        + util::Vector3D<LatticeCoordinate>(LatticeType::CX[unstreamedDirection],
-                                                            LatticeType::CY[unstreamedDirection],
-                                                            LatticeType::CZ[unstreamedDirection]);
+                    LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
+                        + LatticeVector(LatticeType::CX[unstreamedDirection],
+                                        LatticeType::CY[unstreamedDirection],
+                                        LatticeType::CZ[unstreamedDirection]);
 
                     proc_t neighbourProcessor = latDat->GetProcIdFromGlobalCoords(neighbourGlobalLocation);
 
@@ -163,7 +172,7 @@ namespace hemelb
                     }
 
                     // Now calculate this field information.
-                    util::Vector3D<LatticeVelocity> nextNodeOutVelocity;
+                    LatticeVelocity nextNodeOutVelocity;
                     distribn_t nextNodeOutFEq[LatticeType::NUMVECTORS];
 
                     // Go ahead and calculate the density, momentum and eqm distribution.
@@ -185,7 +194,7 @@ namespace hemelb
                     // to the point on the wall itself (velocity 0):
                     // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
                     // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-                    util::Vector3D<double> velocityWallSecondEstimate = nextNodeOutVelocity * (wallDistance - 1)
+                    LatticeVelocity velocityWallSecondEstimate = nextNodeOutVelocity * (wallDistance - 1)
                         / (wallDistance + 1);
 
                     // Next, we interpolate between the first and second estimates to improve the estimate.
@@ -203,7 +212,7 @@ namespace hemelb
 
                   // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
                   // Note that we assume that the density is the same as at this node
-                  util::Vector3D<distribn_t> momentumWall = velocityWall * hydroVars.density;
+                  LatticeVelocity momentumWall = velocityWall * hydroVars.density;
 
                   distribn_t fEqTemp[LatticeType::NUMVECTORS];
                   LatticeType::CalculateFeq(hydroVars.density,
@@ -237,15 +246,6 @@ namespace hemelb
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
 
-          }
-
-          /**
-           * The DoReset member function must be implemented but doesn't need to do anything
-           * for this boundary condition.
-           * @param init
-           */
-          inline void DoReset(kernels::InitParams* init)
-          {
           }
 
         private:

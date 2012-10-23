@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_COLLOIDS_COLLOIDCONTROLLER_H
 #define HEMELB_COLLOIDS_COLLOIDCONTROLLER_H
 
@@ -5,11 +14,12 @@
 #include "net/net.h"
 #include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
-#include "util/Vector3D.h"
 #include "geometry/Geometry.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
+#include "util/Vector3D.h"
+#include "units.h"
 
 namespace hemelb
 {
@@ -20,9 +30,9 @@ namespace hemelb
     {
       public:
         /** constructor - currently only initialises the neighbour list */
-        ColloidController(const net::Net* const net,
-                          const geometry::LatticeData* const latDatLBM,
-                          const geometry::Geometry* const gmyResult,
+        ColloidController(const geometry::LatticeData& latDatLBM,
+                          const lb::SimulationState& simulationState,
+                          const geometry::Geometry& gmyResult,
                           io::xml::XmlAbstractionLayer& xml,
                           lb::MacroscopicPropertyCache& propertyCache);
 
@@ -32,18 +42,19 @@ namespace hemelb
         /** overloaded from IteratedAction */
         void RequestComms();
 
+        /** overloaded from IteratedAction */
+        void EndIteration();
+
+        const void OutputInformation(const LatticeTime timestep) const;
+
       private:
-        /** enables simplified general point-to-point communication via MPI */
-        const net::Net* const net;
-
-        /** holds fluid information for local sites, i.e. the velocity distribution values */
-        //const geometry::LatticeData* const latDat;
-
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
+        const lb::SimulationState& simulationState;
+
         /** holds the set of Particles that this processor knows about */
-        const ParticleSet* particleSet;
+        ParticleSet* particleSet;
 
         /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
         const static site_t REGION_OF_INFLUENCE = (site_t)2;
@@ -61,13 +72,13 @@ namespace hemelb
         /** determines the list of neighbour processors
             i.e. processors that are within the region of influence of the local domain's edge
             i.e. processors that own at least one site in the neighbourhood of a local site */
-        void InitialiseNeighbourList(const geometry::LatticeData* const latDatLBM,
-                                     const geometry::Geometry* const gmyResult,
-                                     const Neighbourhood neighbourhood);
+        void InitialiseNeighbourList(const geometry::LatticeData& latDatLBM,
+                                     const geometry::Geometry& gmyResult,
+                                     const Neighbourhood& neighbourhood);
 
         /** get local coordinates and the owner rank for a site from its global coordinates */
-        bool GetLocalInformationForGlobalSite(const geometry::Geometry* const gmyResult,
-                                              const util::Vector3D<site_t> globalLocationForSite,
+        bool GetLocalInformationForGlobalSite(const geometry::Geometry& gmyResult,
+                                              const util::Vector3D<site_t>& globalLocationForSite,
                                               site_t* blockIdForSite,
                                               site_t* localSiteIdForSite,
                                               proc_t* ownerRankForSite);

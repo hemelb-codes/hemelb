@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITS_H
 #define HEMELB_UNITS_H
 
@@ -41,10 +50,12 @@ namespace hemelb
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
 
+  typedef double PhysicalMass; // kilograms
+
   typedef double RadianAngle;
 
   // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
-  typedef double PhysicalLength;
+  typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
@@ -53,9 +64,20 @@ namespace hemelb
   typedef util::Vector3D<LatticeDistance> LatticePosition; // origin of lattice is at {0.0,0.0,0.0}
   typedef util::Vector3D<LatticeCoordinate> LatticeVector; // origin of lattice is at {0,0,0}
 
+  typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
+
+  typedef double PhysicalForce; // continuous scalar force in physical units
+  typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
+
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437
-  typedef double PhysicalVelocity;
-  typedef distribn_t LatticeVelocity;
+  typedef double PhysicalVelocity_deprecated;
+
+  typedef double PhysicalSpeed;
+  typedef double LatticeSpeed;
+  typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
+  typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
+
 
   typedef double DimensionlessQuantity;
 }

@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_IO_FORMATS_GEOMETRY_H
 #define HEMELB_IO_FORMATS_GEOMETRY_H
 
@@ -37,7 +46,7 @@ namespace hemelb
            * ASCII for 'gmy', then EOF
            * Combined magic number is:
            * hex    68 6c 62 21 67 6d 79 04
-           * ascii:  h  l  b  !  s  n  p EOF
+           * ascii:  h  l  b  !  g  m  y EOF
            */
           enum
           {

@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 #define HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 
@@ -49,6 +58,13 @@ namespace hemelb
     struct Vector3DArithmeticTraits<int, float>
     {
         typedef float operatorReturnType;
+    };
+
+    // The result must be stored as a double-precision floating-point number.
+    template<>
+    struct Vector3DArithmeticTraits<int, double>
+    {
+        typedef double operatorReturnType;
     };
 
     // Keep the most precise type.

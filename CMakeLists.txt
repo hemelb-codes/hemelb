@@ -35,6 +35,7 @@ set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steer
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
+option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF) 
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
@@ -76,6 +77,7 @@ ExternalProject_Add(
         -DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY}
 	-DHEMELB_WAIT_ON_CONNECT=${HEMELB_WAIT_ON_CONNECT}
 	-DHEMELB_BUILD_MULTISCALE=${HEMELB_BUILD_MULTISCALE}
+	-DHEMELB_IMAGES_TO_NULL=${HEMELB_IMAGES_TO_NULL}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 

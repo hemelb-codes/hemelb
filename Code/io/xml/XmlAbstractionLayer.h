@@ -1,9 +1,20 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
 #define HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
 
 #include <cstdlib>
 #include <stack>
 #include "tinyxml.h"
+#include "units.h"
+#include "util/UnitConverter.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -25,7 +36,7 @@ namespace hemelb
            * @param $path
            *   the path to the XML file to be read by this object
            */
-          XmlAbstractionLayer(std::string path);
+          XmlAbstractionLayer(const std::string path, const util::UnitConverter& converter);
         
           /** destructor */
           ~XmlAbstractionLayer();
@@ -62,7 +73,7 @@ namespace hemelb
            *   returns true if a suitable child element was found
            *   or false if the internal position pointer was not moved
            */
-          bool MoveToChild(std::string name);
+          bool MoveToChild(const std::string name);
 
           /**
            * moves to the next sibling element irrespective of name
@@ -93,7 +104,7 @@ namespace hemelb
            *   returns true if a suitable child element was found
            *   or false if the internal position pointer was not moved
            */
-          bool NextSibling(std::string name);
+          bool NextSibling(const std::string name);
 
           /**
            * moves to the parent element irrespective of name
@@ -124,7 +135,7 @@ namespace hemelb
            *   returns true if the attribute was found and converted successfully
            *   or false if the attribute was not found or could not be converted
            */
-          bool GetUnsignedLongValue(std::string name, unsigned long& value);
+          bool GetUnsignedLongValue(const std::string name, unsigned long& value);
 
           /**
            * reads a floating-point valued attribute from the current element
@@ -141,7 +152,24 @@ namespace hemelb
            *   returns true if the attribute was found and converted successfully
            *   or false if the attribute was not found or could not be converted
            */
-          bool GetDoubleValue(std::string name, double& value);
+          bool GetDoubleValue(const std::string name, double& value);
+
+          /**
+           * reads a floating-point valued attribute from the current element
+           *
+           * reads the value of the attribute with the specified name
+           * and converts it to a double in lattice units before returning it
+           *
+           * @param $name
+           *   the name of the attribute within the current element
+           * @param $value
+           *   the converted value of the attribute (output)
+           *
+           * @return
+           *   returns true if the attribute was found and converted successfully
+           *   or false if the attribute was not found or could not be converted
+           */
+          bool GetDoubleValueAndConvert(const std::string name, double& value);
 
           /**
            * reads a 3D vector of double values from the current element
@@ -156,14 +184,60 @@ namespace hemelb
            *
            * @param $name
            *   the name of the child vector element within the current element
-           * @param $value
+           * @param $vector
            *   the converted value of the child vector element (output)
            *
            * @return
            *   returns true if the vector was found and converted successfully
            *   or false if the vector was not found or could not be converted
            */
-          bool GetDoubleVector(std::string name, util::Vector3D<double>& vector);
+          bool GetDoubleVector(const std::string name, util::Vector3D<double>& vector);
+
+          /**
+           * reads a 3D vector of double values from the current element
+           *
+           * reads the value of the vector with the specified name
+           * the name specifies the name of a child element
+           * that contains attributes for each co-ordinate value
+           * the attributes are named: xValue, yValue, and zValue
+           * each co-ordinate attribute value is converted to a double in lattice units
+           * before setting the x, y, and z properties of the vector parameter
+           * if this function returns false then no change was made to vector
+           *
+           * @param $name
+           *   the name of the child vector element within the current element
+           * @param $vector
+           *   the converted value of the child vector element (output)
+           *
+           * @return
+           *   returns true if the vector was found and converted successfully
+           *   or false if the vector was not found or could not be converted
+           */
+          bool GetDoubleVectorAndConvert(const std::string name, util::Vector3D<double>& vector);
+
+          /**
+           * reads a 3D vector representing a LatticePosition from the current element
+           *
+           * reads the value of the vector with the specified name
+           * the name specifies the name of a child element
+           * that contains attributes for each co-ordinate value
+           * the attributes are named: xValue, yValue, and zValue
+           * each co-ordinate attribute value is converted to a double in lattice units
+           * before setting the x, y, and z properties of the vector parameter
+           * if this function returns false then no change was made to vector
+           *
+           * @param $name
+           *   the name of the child vector element within the current element
+           * @param $vector
+           *   the converted value of the child vector element (output)
+           *
+           * @return
+           *   returns true if the vector was found and converted successfully
+           *   or false if the vector was not found or could not be converted
+           */
+          bool GetLatticePosition(const std::string name, LatticePosition& vector);
+
+          bool GetString(const std::string name, std::string& value);
 
         private:
           /** a pointer to the xml file being abstracted by this object */
@@ -174,6 +248,9 @@ namespace hemelb
 
           /** a stack containing pointers to all parents of the current node */
           std::stack<TiXmlElement*> parentNodes;
+
+          /** a converter that can convert from physical units to lattice units */
+          const util::UnitConverter& converter;
       };
     }
   }

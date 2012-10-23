@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITTESTS_LBTESTS_BOUNDARIES_IOLETS_INOUTLETTESTS_H
 #define HEMELB_UNITTESTS_LBTESTS_BOUNDARIES_IOLETS_INOUTLETTESTS_H
 #include <cppunit/TestFixture.h>
@@ -51,7 +60,7 @@ namespace hemelb
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
                 cosine->Reset(state);
@@ -97,7 +106,7 @@ namespace hemelb
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
                 lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize);
+                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
                 file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);
