@@ -31,7 +31,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase<LatticeType>(f)
+            HydroVarsBase<LatticeType> (f)
           {
 
           }
@@ -43,8 +43,8 @@ namespace hemelb
        * EntropicChik: This class implements the entropic kernel, as per Chitakamarla et al.
        */
       template<class LatticeType>
-      class EntropicChik : public BaseKernel<EntropicChik<LatticeType>, LatticeType>
-                           , public Entropic<LatticeType>
+      class EntropicChik : public BaseKernel<EntropicChik<LatticeType> , LatticeType> ,
+                           public Entropic<LatticeType>
       {
         public:
           /**
@@ -52,28 +52,28 @@ namespace hemelb
            * @param initParams
            */
           EntropicChik(InitParams& initParams) :
-              Entropic<LatticeType>(&initParams)
+            Entropic<LatticeType> (&initParams)
           {
           }
 
           /**
-           * Calculates the density and velocity for the given f. Then calculates the
+           * Calculates the density and momentum for the given f. Then calculates the
            * equilibrium distribution as described by Chikatamarla.
            * @param hydroVars
            * @param index, the current lattice site index.
            */
-          inline void DoCalculateDensityVelocityFeq(HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(HydroVars<EntropicChik<LatticeType> >& hydroVars, site_t index)
           {
             hydroVars.index = index;
-            LatticeType::CalculateDensityAndVelocity(hydroVars.f,
+            LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                      hydroVars.density,
-                                                     hydroVars.v_x,
-                                                     hydroVars.v_y,
-                                                     hydroVars.v_z);
+                                                     hydroVars.momentum.x,
+                                                     hydroVars.momentum.y,
+                                                     hydroVars.momentum.z);
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.v_x,
-                                                  hydroVars.v_y,
-                                                  hydroVars.v_z,
+                                                  hydroVars.momentum.x,
+                                                  hydroVars.momentum.y,
+                                                  hydroVars.momentum.z,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -83,7 +83,7 @@ namespace hemelb
           }
 
           /**
-           * Calculates the equilibrium f distribution for the given density and velocity, as
+           * Calculates the equilibrium f distribution for the given density and momentum, as
            * described by Chikatamarla.
            * @param hydroVars
            * @param index The current lattice site index.
@@ -92,9 +92,9 @@ namespace hemelb
           {
             hydroVars.index = index;
             LatticeType::CalculateEntropicFeqChik(hydroVars.density,
-                                                  hydroVars.v_x,
-                                                  hydroVars.v_y,
-                                                  hydroVars.v_z,
+                                                  hydroVars.momentum.x,
+                                                  hydroVars.momentum.y,
+                                                  hydroVars.momentum.z,
                                                   hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)

@@ -17,8 +17,9 @@ from HemeLbSetupTool.Model.Vector import Vector
 
 class Iolet(Observable):
     """Represent boundary across which there can be flow.
+    Do not instantiate
     """
-    _Args = {'Name': None,
+    _Args = {'Name': 'Unknown iolet',
              # Initialize to the VTK defaults for now
              'Centre': Vector(0., 0., 0.),
              'Normal': Vector(0., 0., 1.),
@@ -35,7 +36,7 @@ class Iolet(Observable):
         
         for k in kwargs:
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
-        
+
         return
     
     def __getstate__(self):
@@ -100,6 +101,8 @@ class Iolet(Observable):
     pass
 
 class SinusoidalPressureIolet(Iolet):
+    """Do not instantiate
+    """
     _Args = Iolet._Args.copy()
     _Args['Pressure'] = Vector(80., 0., 0.)
     

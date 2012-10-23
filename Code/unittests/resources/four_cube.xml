@@ -50,5 +50,11 @@
         <field type="shearstress"/>
       </geometrysurface>    
     </propertyoutput>    
+    <propertyoutput frequency="10" file="surfacetractionvector.dat">
+      <surfacepoint>
+        <point x="2.5" y="2.5" z="0"/>
+        <field type="tractionvector"/>
+      </surfacepoint>    
+    </propertyoutput>    
   </properties>
 </hemelbsettings>

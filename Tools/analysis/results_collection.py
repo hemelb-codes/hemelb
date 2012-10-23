@@ -23,6 +23,7 @@ class ResultsCollection(object):
     def filter(self,selection,invert=False,latest=False):
         def filtration(result):
             ok=all([result.query(prop,value) for prop,value in selection.iteritems()])
+            result.files.clear()
             return ok if not invert else not ok
         results=filter(filtration,self.results)
         if latest:

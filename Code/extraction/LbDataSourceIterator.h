@@ -50,31 +50,49 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        float GetPressure() const;
+        FloatingType GetPressure() const;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        util::Vector3D<float> GetVelocity() const;
+        util::Vector3D<FloatingType> GetVelocity() const;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        float GetShearStress() const;
+        FloatingType GetShearStress() const;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        float GetVonMisesStress() const;
+        FloatingType GetVonMisesStress() const;
 
         /**
          * Returns the shear rate at the site.
          * @return shear rate
          */
-        float GetShearRate() const;
+        FloatingType GetShearRate() const;
+
+        /**
+         * Returns the full stress tensor at the site.
+         * @return stress tensor
+         */
+        util::Matrix3D GetStressTensor() const;
+
+        /**
+         * Returns the traction vector at an edge site (i.e. stress tensor times surface normal).
+         * @return traction vector
+         */
+        util::Vector3D<PhysicalStress> GetTractionVector() const;
+
+        /**
+         * Returns the projection of the traction vector on the tangential plane of an edge site.
+         * @return projected traction vector
+         */
+        util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const;
 
         /**
          * Resets the iterator to the beginning again.

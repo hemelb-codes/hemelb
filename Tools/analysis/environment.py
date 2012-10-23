@@ -14,9 +14,16 @@ import logging.config
 
 localroot=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #Load and invoke the default non-machine specific config JSON dictionaries.
-config=yaml.load(open(os.path.join(localroot,'Tools','analysis','config_defaults.yml')))
-config.update(yaml.load(open(os.path.join(localroot,'Tools','analysis','config.yml'))))
+defaults_file = open(os.path.join(localroot,'Tools','analysis','config_defaults.yml'))
+config=yaml.load(defaults_file)
+defaults_file.close()
 
-dc=yaml.load(open(os.path.join(localroot,'Tools','analysis','logging.yml')))
+user_file = open(os.path.join(localroot,'Tools','analysis','config.yml'))
+config.update(yaml.load(user_file))
+user_file.close()
+
+logging_settings_file = open(os.path.join(localroot,'Tools','analysis','logging.yml'))
+dc=yaml.load(logging_settings_file)
+logging_settings_file.close()
 dc['handlers']['parsing']['filename']=os.path.expanduser(os.path.join(config['reports_path'],'parsing.log'))
 logging.config.dictConfig(dc)

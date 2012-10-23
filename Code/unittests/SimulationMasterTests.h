@@ -63,6 +63,7 @@ namespace hemelb
           AssertPresent("results/Extracted/centrelinepressure.dat");
           AssertPresent("results/Extracted/centrelineshearrate.dat");
           AssertPresent("results/Extracted/surfaceshearstress.dat");
+          AssertPresent("results/Extracted/surfacetractionvector.dat");
         }
 
       private:

@@ -53,9 +53,9 @@ namespace hemelb
         util::RefreshableCache<util::Vector3D<distribn_t> > velocityCache;
 
         /**
-         * The cache of shear stresses for each fluid site on this core.
+         * The cache of wall shear stress magnitudes for each fluid site on this core.
          */
-        util::RefreshableCache<distribn_t> shearStressCache;
+        util::RefreshableCache<distribn_t> wallShearStressMagnitudeCache;
 
         /**
          * The cache of Von Mises stresses for each fluid site on this core.
@@ -66,6 +66,21 @@ namespace hemelb
          * The cache of shear rates for each fluid site on this core.
          */
         util::RefreshableCache<distribn_t> shearRateCache;
+
+        /**
+         * The cache of stress tensors for each fluid site on this core.
+         */
+        util::RefreshableCache<util::Matrix3D> stressTensorCache;
+
+        /**
+         * The cache of traction vectors for each fluid site on this core.
+         */
+        util::RefreshableCache<util::Vector3D<LatticeStress> > tractionVectorCache;
+
+        /**
+         * The cache of projections of the traction vectors on the tangential plane of each fluid site on this core.
+         */
+        util::RefreshableCache<util::Vector3D<LatticeStress> > tangentialProjectionTractionVectorCache;
 
       private:
         /**

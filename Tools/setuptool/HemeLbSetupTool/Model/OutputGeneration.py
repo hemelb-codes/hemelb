@@ -15,11 +15,14 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
     vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
-    vtkXMLPolyDataWriter, vtkAlgorithm
+    vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere
     
 from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
 
 from .Iolets import Inlet, Outlet, Iolet
+from .Vector import Vector
+from .Profile import Profile, metre
+
 import Generation
 import pdb
 
@@ -28,27 +31,19 @@ def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
-
 class GeometryGenerator(object):
-    def __init__(self, profile):
-        """Clip the STL and set attributes on the SWIG-proxied C++ 
-        GeometryGenerator object.
-        """
-        self.profile = profile
-
-        self.generator = Generation.GeometryGenerator()
-        self.generator.SetOutputGeometryFile(str(profile.OutputGeometryFile))
-
+    
+    def _MakeIoletProxies(self):
         # Construct the Iolet structs
         nIn = 0
         nOut = 0
         ioletProxies = []
-        for io in profile.Iolets:
+        for io in self.profile.Iolets:
             proxy = Generation.Iolet()
 
-            proxy.Centre = DVfromV(io.Centre) / profile.VoxelSize
+            proxy.Centre = DVfromV(io.Centre) / self.profile.VoxelSize
             proxy.Normal = DVfromV(io.Normal) 
-            proxy.Radius = io.Radius / profile.VoxelSize
+            proxy.Radius = io.Radius / self.profile.VoxelSize
 
             if isinstance(io, Inlet):
                 io.Id = proxy.Id = nIn
@@ -61,10 +56,38 @@ class GeometryGenerator(object):
                 pass
             ioletProxies.append(proxy)
             continue
+        return ioletProxies
+    
+    def _SetCommonGeneratorProperties(self):
+        self.generator.SetOutputGeometryFile(str(self.profile.OutputGeometryFile))
         # We need to keep a reference to this to make sure it's not GC'ed
-        self.ioletProxies = ioletProxies
-        self.generator.SetIolets(ioletProxies)
+        self.ioletProxies = self._MakeIoletProxies()
+        self.generator.SetIolets(self.ioletProxies)
+        self.generator.SetVoxelSizeMetres(self.profile.VoxelSizeMetres)
+        return
+    
+    def Execute(self):
+        """Forward this to the C++ implementation.
+        """
+        t = Timer()
+        t.Start()
+        self.generator.Execute()
+        XmlWriter(self.profile).Write()
+        t.Stop()
+        print "Setup time: %f s" % t.GetTime()
+        return
 
+    pass
+
+class PolyDataGenerator(GeometryGenerator):
+    def __init__(self, profile):
+        """Clip the STL and set attributes on the SWIG-proxied C++ 
+        GeometryGenerator object.
+        """
+        self.profile = profile
+        self.generator = Generation.PolyDataGenerator()
+        self._SetCommonGeneratorProperties()
+        
         self.generator.SetSeedPointWorking(profile.SeedPoint.x / profile.VoxelSize,
                                            profile.SeedPoint.y / profile.VoxelSize,
                                            profile.SeedPoint.z / profile.VoxelSize)
@@ -90,21 +113,59 @@ class GeometryGenerator(object):
         self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
         
-        self.generator.SetVoxelSizeMetres(profile.VoxelSizeMetres)
-
         return
 
-    def Execute(self):
-        """Forward this to the C++ implementation.
-        """
-        t = Timer()
-        t.Start()
-        self.generator.Execute()
-        XmlWriter(self.profile).Write()
-        t.Stop()
-        print "Setup time: %f s" % t.GetTime()
-        return
     pass
+    
+class CylinderGenerator(GeometryGenerator):
+    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres, Axis, LengthMetres, RadiusMetres, InletPressure=None, OutletPressure=None):
+        """Clip the STL and set attributes on the SWIG-proxied C++ 
+        GeometryGenerator object.
+        """
+        self.Axis = Axis
+        self.LengthMetres = LengthMetres
+        self.RadiusMetres = RadiusMetres
+        self.InletPressure = InletPressure
+        self.OutletPressure = OutletPressure
+        
+        self.profile = Profile()
+        self.profile.StlFileUnitId = Profile._UnitChoices.index(metre)
+        self.profile.VoxelSize = VoxelSizeMetres
+        self.profile.OutputGeometryFile = OutputGeometryFile
+        self.profile.OutputXmlFile = OutputXmlFile
+        self._MakeIolets()
+        
+        self.generator = Generation.CylinderGenerator()
+        self._SetCommonGeneratorProperties()
+        
+        self.generator.SetCylinderLength(LengthMetres/VoxelSizeMetres)
+        self.generator.SetCylinderRadius(RadiusMetres/VoxelSizeMetres)
+        self.generator.SetCylinderCentre(Generation.DoubleVector(0.,0.,0.))
+        self.generator.SetCylinderAxis(Generation.DoubleVector(*self.Axis))
+        return
+    
+    def _MakeIolets(self):
+        # Construct the Iolet structs
+        inlet = Inlet()
+        inlet.Centre = Vector(*(-0.5 * self.LengthMetres * n for n in self.Axis))
+        inlet.Normal = Vector(*self.Axis)
+        inlet.Radius = self.RadiusMetres
+        if self.InletPressure is not None:
+            inlet.Pressure = self.InletPressure
+        self.profile.Iolets.append(inlet)
+        
+        outlet = Outlet()
+        outlet.Centre = Vector(*(0.5 * self.LengthMetres * n for n in self.Axis))
+        outlet.Normal = Vector(*(-n for n in self.Axis))
+        outlet.Radius = self.RadiusMetres
+        if self.OutletPressure is not None:
+            outlet.Pressure = self.OutletPressure
+        self.profile.Iolets.append(outlet)    
+        
+        return
+
+    pass
+
 # TODO: organise this timer
 import time
 class Timer(object):
@@ -246,14 +307,31 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         return self.Iolet
 
     def _Clip(self, pd):
-        # TODO: switch from this simple ImplicitPlane (i.e. infinite plane) 
-        # clipping to excising a thin cuboid from the Iolet.
+        # The plane implicit function will be >0 for all the points in the positive side
+        # of the plane (i.e. x s.t. n.(x-o)>0, where n is the plane normal and o is the 
+        # plane origin).
         plane = vtkPlane()
         plane.SetOrigin(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
         plane.SetNormal(self.Iolet.Normal.x, self.Iolet.Normal.y, self.Iolet.Normal.z)
+        
+        # The sphere implicit function will be >0 for all the points outside the sphere.
+        sphere = vtkSphere()
+        sphere.SetCenter(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
+        sphere.SetRadius(self.Iolet.Radius)
+        
+        # The VTK_INTERSECTION operator takes the maximum value of all the registered 
+        # implicit functions. This will result in the function evaluating to >0 for all 
+        # the points outside the sphere plus those inside the sphere in the positive 
+        # side of the plane.
+        clippingFunction = vtkImplicitBoolean()
+        clippingFunction.AddFunction(plane)
+        clippingFunction.AddFunction(sphere)
+        clippingFunction.SetOperationTypeToIntersection() 
+        
         clipper = vtkClipPolyData()
         clipper.SetInput(pd)
-        clipper.SetClipFunction(plane)
+        clipper.SetClipFunction(clippingFunction)
+
         # Filter to get part closest to seed point
         connectedRegionGetter = vtkPolyDataConnectivityFilter()
         connectedRegionGetter.SetExtractionModeToClosestPointRegion()

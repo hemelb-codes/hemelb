@@ -38,29 +38,44 @@ namespace hemelb
       return data.GetSite(position).GetGlobalSiteCoords();
     }
 
-    float LbDataSourceIterator::GetPressure() const
+    FloatingType LbDataSourceIterator::GetPressure() const
     {
       return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position) * Cs2);
     }
 
-    util::Vector3D<float> LbDataSourceIterator::GetVelocity() const
+    util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const
     {
       return converter.ConvertVelocityToPhysicalUnits(propertyCache.velocityCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetShearStress() const
+    FloatingType LbDataSourceIterator::GetShearStress() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.shearStressCache.Get(position));
+      return converter.ConvertStressToPhysicalUnits(propertyCache.wallShearStressMagnitudeCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetVonMisesStress() const
+    FloatingType LbDataSourceIterator::GetVonMisesStress() const
     {
       return converter.ConvertStressToPhysicalUnits(propertyCache.vonMisesStressCache.Get(position));
     }
 
-    float LbDataSourceIterator::GetShearRate() const
+    FloatingType LbDataSourceIterator::GetShearRate() const
     {
       return converter.ConvertShearRateToPhysicalUnits(propertyCache.shearRateCache.Get(position));
+    }
+
+    util::Matrix3D LbDataSourceIterator::GetStressTensor() const
+    {
+      return converter.ConvertStressToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
+    }
+
+    util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTractionVector() const
+    {
+      return converter.ConvertStressToPhysicalUnits(propertyCache.tractionVectorCache.Get(position));
+    }
+
+    util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTangentialProjectionTractionVector() const
+    {
+      return converter.ConvertStressToPhysicalUnits(propertyCache.tangentialProjectionTractionVectorCache.Get(position));
     }
 
     void LbDataSourceIterator::Reset()

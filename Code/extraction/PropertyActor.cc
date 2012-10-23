@@ -53,7 +53,7 @@ namespace hemelb
                 propertyCache.velocityCache.SetRefreshFlag();
                 break;
               case OutputField::ShearStress:
-                propertyCache.shearStressCache.SetRefreshFlag();
+                propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
                 break;
               case OutputField::VonMisesStress:
                 propertyCache.vonMisesStressCache.SetRefreshFlag();
@@ -61,6 +61,19 @@ namespace hemelb
               case OutputField::ShearRate:
                 propertyCache.shearRateCache.SetRefreshFlag();
                 break;
+              case OutputField::StressTensor:
+                propertyCache.stressTensorCache.SetRefreshFlag();
+                break;
+              case OutputField::TractionVector:
+                propertyCache.tractionVectorCache.SetRefreshFlag();
+                break;
+              case OutputField::TangentialProjectionTractionVector:
+                propertyCache.tangentialProjectionTractionVectorCache.SetRefreshFlag();
+                break;
+              default:
+                // This assert should never trip. It only occurs when someone adds a new field to OutputField
+                // and forgets adding a new case to the switch
+                assert(false);
             }
           }
         }

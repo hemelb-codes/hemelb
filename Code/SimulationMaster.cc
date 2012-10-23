@@ -146,16 +146,16 @@ int SimulationMaster::GetProcessorCount()
 void SimulationMaster::Initialise()
 {
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning Initialisation.");
 
   simulationState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(), simConfig->GetTotalTimeSteps());
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LatticeData.");
 
   timings[hemelb::reporting::Timers::latDatInitialise].Start();
-
   // Use a reader to read in the file.
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading file and decomposing geometry.");
+
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
                                           timings);
@@ -166,12 +166,11 @@ void SimulationMaster::Initialise()
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
-  neighbouringDataManager = new hemelb::geometry::neighbouring::NeighbouringDataManager(
-                                  *latticeData,
-                                  latticeData->GetNeighbouringData(),
-                                  communicationNet);
-
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
+  neighbouringDataManager =
+      new hemelb::geometry::neighbouring::NeighbouringDataManager(*latticeData,
+                                                                  latticeData->GetNeighbouringData(),
+                                                                  communicationNet);
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
@@ -186,17 +185,17 @@ void SimulationMaster::Initialise()
                                                   latticeData->GetVoxelSize(),
                                                   latticeData->GetOrigin());
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading Colloid config.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
   hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath, *unitConvertor);
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Creating Body Forces.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
   hemelb::colloids::BodyForces::InitBodyForces(xml);
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Creating Boundary Conditions.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
   hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising Colloids.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
   colloidController = new hemelb::colloids::ColloidController(*latticeData,
                                                               *simulationState,
                                                               readGeometryData,
@@ -225,7 +224,7 @@ void SimulationMaster::Initialise()
                                                                                        latticeBoltzmannModel->GetPropertyCache(),
                                                                                        timings);
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
                                                   &communicationNet,
                                                   simulationState,
@@ -340,7 +339,8 @@ void SimulationMaster::HandleActors()
 
 void SimulationMaster::OnUnstableSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %i\n",
+  LogStabilityReport();
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Aborting: time step length: %f\n",
                                                                       simulationState->GetTimeStepLength());
   Finalise();
   Abort();
@@ -421,17 +421,12 @@ void SimulationMaster::GenerateNetworkImages()
  */
 void SimulationMaster::RunSimulation()
 {
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Beginning to run simulation.");
   timings[hemelb::reporting::Timers::simulation].Start();
 
   while (simulationState->GetTimeStep() <= simulationState->GetTotalTimeSteps())
   {
     DoTimeStep();
-    if (simulationState->GetTimeStep() > MAX_TIME_STEPS)
-    {
-      simulationState->SetStability(hemelb::lb::Unstable);
-      break;
-    }
     if (simulationState->IsTerminating())
     {
       break;
@@ -456,7 +451,7 @@ void SimulationMaster::Finalise()
                                                                         communicationNet.SyncPointsCounted,
                                                                         communicationNet.BytesSent);
 
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Finish running simulation.");
 }
 
 void SimulationMaster::DoTimeStep()
@@ -508,6 +503,7 @@ void SimulationMaster::DoTimeStep()
                                                                         renderForNetworkStream,
                                                                         writeSnapshotImage,
                                                                         simulationState->IsRendering());
+    LogStabilityReport();
   }
 
   RecalculatePropertyRequirements();
@@ -574,7 +570,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
     if (simConfig->GetStressType() == hemelb::lb::ShearStress)
     {
-      propertyCache.shearStressCache.SetRefreshFlag();
+      propertyCache.wallShearStressMagnitudeCache.SetRefreshFlag();
     }
     else if (simConfig->GetStressType() == hemelb::lb::VonMises)
     {
@@ -585,6 +581,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
   if (incompressibilityChecker != NULL)
   {
     propertyCache.densityCache.SetRefreshFlag();
+    propertyCache.velocityCache.SetRefreshFlag();
   }
 
   // If extracting property results, check what's required by them.
@@ -613,7 +610,21 @@ void SimulationMaster::Abort()
 
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
+  hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
   exit(1);
+}
+
+void SimulationMaster::LogStabilityReport()
+{
+  if (incompressibilityChecker->AreDensitiesAvailable())
+  {
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
+                                                                        simulationState->GetTimeStep(),
+                                                                        latticeBoltzmannModel->GetLbmParams()->GetTau(),
+                                                                        incompressibilityChecker->GetMaxRelativeDensityDifference(),
+                                                                        unitConvertor->ConvertSpeedToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
+                                                                            / hemelb::Cs,
+                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
+  }
 }
 

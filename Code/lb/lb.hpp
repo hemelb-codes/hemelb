@@ -64,6 +64,11 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::InitCollisions()
     {
+      /**
+       * Ensure the boundary objects have all info necessary.
+       */
+      PrepareBoundaryObjects();
+
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
@@ -72,32 +77,26 @@ namespace hemelb
       kernels::InitParams initParams = kernels::InitParams();
       initParams.latDat = mLatDat;
       initParams.lbmParams = &mParams;
-      initParams.neighbouringDataManager=neighbouringDataManager;
+      initParams.neighbouringDataManager = neighbouringDataManager;
 
-      initParams.firstSite = 0;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
       mWallCollision = new tWallCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletOutletCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tInletOutletCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletOutletWallCollision(initParams);
 
-      initParams.firstSite += initParams.siteCount;
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tInletOutletWallCollision(initParams);
@@ -121,6 +120,34 @@ namespace hemelb
     }
 
     template<class LatticeType>
+    void LBM<LatticeType>::PrepareBoundaryObjects()
+    {
+      // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
+      distribn_t minDensity = std::numeric_limits<distribn_t>::max();
+
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        minDensity = std::min(minDensity, mInletValues->GetLocalIolet(inlet)->GetDensityMin());
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        minDensity = std::min(minDensity, mOutletValues->GetLocalIolet(outlet)->GetDensityMin());
+      }
+
+      // Now go through them again, informing them of the minimum density.
+      for (unsigned inlet = 0; inlet < mInletValues->GetLocalIoletCount(); ++inlet)
+      {
+        mInletValues->GetLocalIolet(inlet)->SetMinimumSimulationDensity(minDensity);
+      }
+
+      for (unsigned outlet = 0; outlet < mOutletValues->GetLocalIoletCount(); ++outlet)
+      {
+        mOutletValues->GetLocalIolet(outlet)->SetMinimumSimulationDensity(minDensity);
+      }
+    }
+
+    template<class LatticeType>
     void LBM<LatticeType>::SetInitialConditions()
     {
       distribn_t density = 0.0;
@@ -138,9 +165,7 @@ namespace hemelb
 
         LatticeType::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        geometry::Site site = mLatDat->GetSite(i);
-
-        distribn_t* f_old_p = site.GetFOld<LatticeType>();
+        distribn_t* f_old_p = mLatDat->GetFOld(i * LatticeType::NUMVECTORS);
         distribn_t* f_new_p = mLatDat->GetFNew(i * LatticeType::NUMVECTORS);
 
         for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
@@ -247,7 +272,7 @@ namespace hemelb
       mLatDat->CopyReceived();
 
       // Do any cleanup steps necessary on boundary nodes
-      site_t offset = 0;
+      site_t offset = mLatDat->GetMidDomainSiteCount();
 
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
@@ -268,7 +293,8 @@ namespace hemelb
       offset += mLatDat->GetDomainEdgeCollisionCount(4);
 
       PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
-      offset += mLatDat->GetDomainEdgeCollisionCount(5);
+
+      offset = 0;
 
       PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
@@ -447,7 +473,7 @@ namespace hemelb
           else if (mParams.StressType)
           {
             /// @todo #138, wall normals don't seem to be initialised properly, they appear to be [nan,nan,nan]
-            stress = propertyCache.shearStressCache.Get(my_site_id);
+            stress = propertyCache.wallShearStressMagnitudeCache.Get(my_site_id);
           }
           else
           {

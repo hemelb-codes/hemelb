@@ -11,6 +11,7 @@
 #define HEMELB_CONSTANTS_H
 
 #include <limits>
+#include <cmath>
 #include "units.h"
 
 namespace hemelb
@@ -45,6 +46,8 @@ namespace hemelb
 
   // square of the speed of sound
   const double Cs2 = 1.0 / 3.0;
+  // speed of the sound
+  const double Cs = 1.0 / sqrt(3.0);
 
   // TODO almost certainly filth.
   const distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();

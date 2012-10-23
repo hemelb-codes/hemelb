@@ -8,13 +8,14 @@
 # 
 
 import numpy as np
-
+import vtk
 from hemeTools.parsers.geometry.simple import ConfigLoader
 from hemeTools.parsers.geometry.generic import Site
 
-class InletPointFinder(ConfigLoader):
+class GeometryInletPointFinder(ConfigLoader):
     """Class to find all the INLET points contained within a geometry file 
-    (.gmy).
+    (.gmy). Data is returned as a vtkPolyData, with the 3D index of the points
+    supplied as CellData in an array named "PointsIds".
     
     It's based on the hemeTools.parsers.geometry classes.
     """
@@ -23,23 +24,37 @@ class InletPointFinder(ConfigLoader):
         """filename = name of geometry file to examine
         """
         ConfigLoader.__init__(self, filename)
+        self.InletData = {}
         self.InletPointIndices = {}
         self.InletPointPositions = {}
         
-    def Run(self):
         self.Load()
+        
+    def GetInletData(self):
         ids = self.InletPointIndices.keys()
         ids.sort()
         ans = []
         for i, inletId in enumerate(ids):
             assert i == inletId
-            ids = np.array(self.InletPointIndices[inletId])
-            pos = np.array(self.InletPointPositions[inletId])
-            ans.append((ids, pos))
+            pd = vtk.vtkPolyData()
+            pd.SetPoints(self.InletPointPositions[inletId])
+            
+            self.InletPointIndices[inletId].SetName("PointIds")
+            pd.GetPointData().AddArray(self.InletPointIndices[inletId])
+            ans.append(pd)
             continue
         
         return ans
-        
+    
+    @staticmethod
+    def _MakeArray(input, arrayType):
+        output = arrayType()
+        output.SetNumberOfComponents(3)
+        output.SetNumberOfTuples(len(input))
+        for i, line in enumerate(input):
+            output.SetTuple3(i, line)
+        return output
+    
     def _AddPointForInletId(self, inletId, site):
         """Private method. Adds the point specified by 'site' to the output 
         for the inlet with ID 'inletId'
@@ -48,12 +63,15 @@ class InletPointFinder(ConfigLoader):
             ids = self.InletPointIndices[inletId]
             pos = self.InletPointPositions[inletId]
         except KeyError:
-            ids = self.InletPointIndices[inletId] = []
-            pos = self.InletPointPositions[inletId] = []
+            ids = self.InletPointIndices[inletId] = vtk.vtkIntArray()
+            ids.SetNumberOfComponents(3)
+            pos = self.InletPointPositions[inletId] = vtk.vtkPoints()
             pass
         
-        ids.append(site.Index)
-        pos.append(site.Position)
+        #ids.append(site.Index)
+        #pos.append(site.Position)
+        ids.InsertNextTuple3(*site.Index)
+        pos.InsertNextPoint(*site.Position)
         return
     
     def OnEndSite(self, block, site):

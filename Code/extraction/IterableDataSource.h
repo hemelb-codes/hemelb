@@ -12,11 +12,15 @@
 
 #include "util/Vector3D.h"
 #include "units.h"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
   namespace extraction
   {
+
+    typedef double FloatingType;
+
     class IterableDataSource
     {
       public:
@@ -47,31 +51,49 @@ namespace hemelb
          * Returns the pressure at the site.
          * @return
          */
-        virtual float GetPressure() const = 0;
+        virtual FloatingType GetPressure() const = 0;
 
         /**
          * Returns the velocity at the site.
          * @return
          */
-        virtual util::Vector3D<float> GetVelocity() const = 0;
+        virtual util::Vector3D<FloatingType> GetVelocity() const = 0;
 
         /**
          * Returns the shear stress at the site.
          * @return
          */
-        virtual float GetShearStress() const = 0;
+        virtual FloatingType GetShearStress() const = 0;
 
         /**
          * Returns the Von Mises stress at the site.
          * @return
          */
-        virtual float GetVonMisesStress() const = 0;
+        virtual FloatingType GetVonMisesStress() const = 0;
 
         /**
          * Returns the shear rate at the site.
          * @return
          */
-        virtual float GetShearRate() const = 0;
+        virtual FloatingType GetShearRate() const = 0;
+
+        /**
+         * Returns the full stress tensor at the site.
+         * @return stress tensor
+         */
+        virtual util::Matrix3D GetStressTensor() const = 0;
+
+        /**
+         * Returns the traction vector at an edge site (i.e. stress tensor times surface normal).
+         * @return traction vector
+         */
+        virtual util::Vector3D<PhysicalStress> GetTractionVector() const = 0;
+
+        /**
+         * Returns the projection of the traction vector on the tangential plane of an edge site.
+         * @return projected traction vector
+         */
+        virtual util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const = 0;
 
         /**
          * Resets the iterator to the beginning again.
