@@ -94,7 +94,7 @@ namespace hemelb
       const bool isLocalFluid = latticeData->GetContiguousSiteId(
         siteGlobalPosition, procId, localContiguousId);
       if (particle.GetGlobalPosition().y < 1.5 && particle.GetGlobalPosition().y >= 0.5)
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, p.pos: {%g,%g,%g}, p.vel: {%g,%g,%g}, isLocalFluid: %s, procId: %u, localContiguousId: %lu, siteCoords: {%lu,%lu,%lu}, ownerRank: %u\n",
           particle.GetParticleId(),
           particle.GetGlobalPosition().x,
@@ -129,7 +129,7 @@ namespace hemelb
         return keep;
       }
       ////else
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, isNearWall: %s, isNearInlet: %s, isNearOutlet: %s ***\n",
           particle.GetParticleId(),
           isNearWall ? "TRUE" : "FALSE",
@@ -165,7 +165,7 @@ namespace hemelb
         const LatticePosition particleToWallVector = siteToWall +
           siteToWall.GetNormalised() * siteToWall.GetNormalised().Dot(particleToSite);
 
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu, siteToWall: {%g,%g,%g}, particleToSite: {%g,%g,%g}, particleToWall: {%g,%g,%g}\n",
           particle.GetParticleId(),
           siteToWall.x, siteToWall.y, siteToWall.z,
@@ -204,7 +204,7 @@ namespace hemelb
       else
       {
         particle.SetDeletionMarker(currentTimestep);
-        log::Logger::Log<log::Info, log::OnePerCore>(
+        log::Logger::Log<log::Trace, log::OnePerCore>(
           "*** In BoundaryConditions::DoSomeThingsToParticle for id: %lu - attempting to set markedForDeletion to %lu (value actually becomes: %lu)\n",
           particle.GetParticleId(),
           currentTimestep,
