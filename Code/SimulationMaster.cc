@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #include "SimulationMaster.h"
 #include "configuration/SimConfig.h"
 #include "extraction/PropertyActor.h"
@@ -12,8 +21,10 @@
 #include "lb/HFunction.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
-
+#include "net/BuildInfo.h"
 #include "topology/NetworkTopology.h"
+#include "colloids/BodyForces.h"
+#include "colloids/BoundaryConditions.h"
 
 #include <map>
 #include <limits>
@@ -148,7 +159,6 @@ void SimulationMaster::Initialise()
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
                                           timings);
-
   hemelb::geometry::Geometry readGeometryData = reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
   // Create a new lattice based on that info and return it.
@@ -169,14 +179,26 @@ void SimulationMaster::Initialise()
                                                            neighbouringDataManager);
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
+
+  unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
+                                                  simulationState,
+                                                  latticeData->GetVoxelSize(),
+                                                  latticeData->GetOrigin());
+
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath);
+  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath, *unitConvertor);
+
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
+  hemelb::colloids::BodyForces::InitBodyForces(xml);
+
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
+  hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
-  colloidController = new hemelb::colloids::ColloidController(&communicationNet,
-                                                              latticeData,
-                                                              &readGeometryData,
+  colloidController = new hemelb::colloids::ColloidController(*latticeData,
+                                                              *simulationState,
+                                                              readGeometryData,
                                                               xml,
                                                               propertyCache);
 
@@ -223,10 +245,6 @@ void SimulationMaster::Initialise()
   {
     imageSendCpt = NULL;
   }
-
-  unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
-                                                  simulationState,
-                                                  latticeData->GetVoxelSize());
 
   inletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::INLET_TYPE,
                                                            latticeData,
@@ -275,7 +293,7 @@ void SimulationMaster::Initialise()
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  stepManager = new hemelb::net::phased::StepManager(2);
+  stepManager = new hemelb::net::phased::StepManager(2,&timings,hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
   stepManager->RegisterIteratedActorSteps(*colloidController, 1);
@@ -319,10 +337,10 @@ void SimulationMaster::HandleActors()
   stepManager->CallActions();
 }
 
-void SimulationMaster::ResetUnstableSimulation()
+void SimulationMaster::OnUnstableSimulation()
 {
   LogStabilityReport();
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Aborting: time step length: %f\n",
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Aborting: time step length: %f\n",
                                                                       simulationState->GetTimeStepLength());
   Finalise();
   Abort();
@@ -342,7 +360,7 @@ void SimulationMaster::WriteLocalImages()
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
-      hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
+      hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
           + ( (it->second - 1) % simulationState->GetTimeStep()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);
@@ -494,10 +512,12 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetStability() == hemelb::lb::Unstable)
   {
-    ResetUnstableSimulation();
-    imagesPeriod = OutputPeriod(imagesPerSimulation);
+    OnUnstableSimulation();
     return;
   }
+
+  if (simulationState->GetTimeStep() % 500 == 0)
+    colloidController->OutputInformation(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
   visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
@@ -602,7 +622,7 @@ void SimulationMaster::LogStabilityReport()
                                                                         simulationState->GetTimeStep(),
                                                                         latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                         incompressibilityChecker->GetMaxRelativeDensityDifference(),
-                                                                        unitConvertor->ConvertVelocityToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
+                                                                        unitConvertor->ConvertSpeedToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
                                                                             / hemelb::Cs,
                                                                         incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
   }

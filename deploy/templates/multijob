@@ -9,5 +9,3 @@
 cd $job_results
 $run_prefix
 $jobstorun
-
-

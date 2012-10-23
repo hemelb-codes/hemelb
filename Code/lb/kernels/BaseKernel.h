@@ -1,3 +1,12 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_LB_KERNELS_BASEKERNEL_H
 #define HEMELB_LB_KERNELS_BASEKERNEL_H
 
@@ -5,14 +14,10 @@
 #include "constants.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
+#include "geometry/neighbouring/NeighbouringDataManager.h"
 
 namespace hemelb
 {
-  namespace geometry{
-    namespace neighbouring{
-      class NeighbouringDataManager;
-    }
-  }
   namespace lb
   {
     namespace kernels
@@ -179,10 +184,6 @@ namespace hemelb
             static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
-          inline void Reset(InitParams* init)
-          {
-            static_cast<KernelImpl*>(this)->DoReset(init);
-          }
       };
 
     }

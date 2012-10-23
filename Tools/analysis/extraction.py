@@ -20,4 +20,4 @@ def extraction_parser(content,pattern):
   if time=='final':
     time=content.times[-1]
   fields=content.GetByTimeStep(time)
-  return [getattr(row,name) for row in fields]
+  return fields.field(name)

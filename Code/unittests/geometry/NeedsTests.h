@@ -1,13 +1,18 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
 #ifndef HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #define HEMELB_UNITTESTS_GEOMETRY_NEEDSTESTS_H
 #include "geometry/needs/Needs.h"
 #include "unittests/helpers/MockNetHelper.h"
 #include "unittests/helpers/CppUnitCompareVectors.h"
 #include <cppunit/TestFixture.h>
-
-// Let vectors be output to an ostream, so that CPPUNIT can assert equality on them
-
-
 
 namespace hemelb
 {
