@@ -9,6 +9,7 @@ script with no arguments.
 import vtk
 from vtk.util import numpy_support
 import numpy as np
+from hemeTools.utils import *
 from hemeTools.parsers.extraction import ExtractedProperty
 
 # Work around limitations of the VTK bindings support (enum wrapping added in 5.8)
@@ -74,7 +75,11 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         
         # Get the centres as these should match the extracted property positions
         centers = vtk.vtkCellCenters()
-        centers.SetInput(input)
+        if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+          centers.SetInput( input );
+        else:
+          centers.SetInputData( input );
+        #centers.SetInput(input)
         centers.Update()
         # Use this to find the cell ID for each point.
         locator = vtk.vtkOctreePointLocator()
@@ -94,6 +99,7 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         gmyCellIdsByInput = vtk.vtkIdTypeArray()
         gmyCellIdsByInput.SetNumberOfComponents(1)
         gmyCellIdsByInput.SetNumberOfTuples(nExtractedPoints)
+        
         
         gmyCellIdsByInputNp = numpy_support.vtk_to_numpy(gmyCellIdsByInput)
          
@@ -118,22 +124,20 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
         
         # Perform the selection
         extractSelection = vtk.vtkExtractSelectedIds()
-        extractSelection.SetInput(0, input)
-        extractSelection.SetInput(1, selectors)
+        if vtk.vtkVersion().GetVTKMajorVersion() <= 5:        
+            extractSelection.SetInput(0, input)
+            extractSelection.SetInput(1, selectors)
+        else:
+            extractSelection.SetInputData(0, input)
+            extractSelection.SetInputData(1, selectors)
         extractSelection.Update()
         
         gmyCellIdsByOutput = extractSelection.GetOutput().GetCellData().GetArray('vtkOriginalCellIds')
+        
+        
         gmyCellIdsByOutputNp = numpy_support.vtk_to_numpy(gmyCellIdsByOutput)
         
-        outCellIdsByInputNp = np.empty_like(gmyCellIdsByOutputNp)
-        
-        for iExtracted in xrange(nExtractedPoints):
-            for iSearch in xrange(nExtractedPoints):
-                if gmyCellIdsByOutputNp[iSearch] == gmyCellIdsByInputNp[iExtracted]:
-                    outCellIdsByInputNp[iExtracted] = iSearch
-                    break
-        
-        self.OutputCellIdsByInputIndex = outCellIdsByInputNp
+        self.OutputCellIdsByInputIndex = MatchCorresponding(gmyCellIdsByOutputNp,gmyCellIdsByInputNp)
         
         # Create the skeleton data object and only copy in the structure.
         self.Skeleton = vtk.vtkUnstructuredGrid()
