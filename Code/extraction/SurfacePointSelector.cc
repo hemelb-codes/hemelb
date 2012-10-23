@@ -1,4 +1,4 @@
-#include "SurfacePointSelector.h"
+#include "extraction/SurfacePointSelector.h"
 
 namespace hemelb
 {
