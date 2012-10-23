@@ -622,9 +622,8 @@ void SimulationMaster::LogStabilityReport()
                                                                         simulationState->GetTimeStep(),
                                                                         latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                         incompressibilityChecker->GetMaxRelativeDensityDifference(),
-                                                                        unitConvertor->ConvertSpeedToLatticeUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude())
-                                                                            / hemelb::Cs,
-                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude());
+                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude() / hemelb::Cs,
+                                                                        unitConvertor->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
   }
 }
 
