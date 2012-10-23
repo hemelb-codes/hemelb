@@ -33,7 +33,7 @@ namespace hemelb
         {
           const bool keep = true;
 
-          log::Logger::Log<log::Info, log::OnePerCore>(
+          log::Logger::Log<log::Trace, log::OnePerCore>(
             "*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***\n",
             particle.GetParticleId());
 
@@ -48,7 +48,7 @@ namespace hemelb
             const LatticeDistance separation_h = particleToWallVector.GetMagnitude()
                                                - particle.GetRadius();
 
-            log::Logger::Log<log::Info, log::OnePerCore>(
+            log::Logger::Log<log::Trace, log::OnePerCore>(
               "*** In LubricationBC::DoSomethingToParticle - wall vector: {%g,%g,%g}, mag: %g, particle radius: %g, separation_h: %g\n",
               particleToWallVector.x,
               particleToWallVector.y,
@@ -66,7 +66,7 @@ namespace hemelb
                 * particle.GetRadius() * particle.GetRadius()
                 * particle.GetInverseNormalisedRadius();
 
-              log::Logger::Log<log::Info, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "*** In LubricationBC::DoSomethingToParticle - radius: %g, separation: %g, adj: {%g,%g,%g}\n",
                 particle.GetInverseNormalisedRadius(),
                 ( (effectiveRange - separation_h) / (separation_h * effectiveRange) ),
@@ -74,14 +74,14 @@ namespace hemelb
                 lubricationVelocityAdjustment.y,
                 lubricationVelocityAdjustment.z);
             } else {
-              log::Logger::Log<log::Info, log::OnePerCore>(
+              log::Logger::Log<log::Trace, log::OnePerCore>(
                 "*** In LubricationBC::DoSomethingToParticle - separation: %g, range: %g\n",
                 separation_h, effectiveRange);
             }
           }
           particle.SetLubricationVelocityAdjustment(lubricationVelocityAdjustment);
 
-          log::Logger::Log<log::Info, log::OnePerCore>(
+          log::Logger::Log<log::Trace, log::OnePerCore>(
             "*** In LubricationBC::DoSomethingToParticle - particleId: %lu, vel before: {%g,%g,%g}, total adj: {%g,%g,%g}, vel after: {%g,%g,%g}\n",
             particle.GetParticleId(),
             particle.GetVelocity().x - lubricationVelocityAdjustment.x,
