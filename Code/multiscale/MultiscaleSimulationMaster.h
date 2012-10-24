@@ -32,10 +32,12 @@ namespace hemelb
             SimulationMaster(options), intercomms(aintercomms), multiscaleIoletType("inoutlet")
         {
 
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("SIMULATION SETTINGS: tau and space step were: %.9f, %.9f ,\t time step length: %f\n",
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("SIMULATION SETTINGS: tau and space step were: %.9f, %.9f ,\t time step length: %f, ioletcounts: %i %i\n",
                                                                                             latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                                             latticeData->GetVoxelSize(),
-                                                                                            GetState()->GetTimeStepLength());
+                                                                                            GetState()->GetTimeStepLength(),
+                                                                                            inletValues->GetLocalIoletCount(),
+                                                                                            outletValues->GetLocalIoletCount());
 
           //incompressibilityChecker->GetMaxRelativeDensityDifference(),
 
@@ -53,7 +55,7 @@ namespace hemelb
             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("START: Outlet[%i]: Measured Density is %f. Pressure is %f/%f. Velocity is %f",
                                                                                 i,
                                                                                 outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
-                                                                                static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->GetPressure(),
+                                                                                static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->GetPressure(),
                                                                                 outletValues->GetLocalIolet(i)->GetPressureMax(),
                                                                                 outletValues->GetLocalIolet(i)->GetVelocity());
           }
@@ -130,7 +132,7 @@ namespace hemelb
           hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Populated inlets (numinlets/sizeinlet0): %i/%i",
                                                                                invertedInletBoundaryList.size(),
                                                                                invertedInletBoundaryList[0].size());
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Populated outlets (numinlets/sizeinlet0): %i/%i",
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Populated outlets (numinlets/sizeoutlet0): %i/%i",
                                                                                invertedOutletBoundaryList.size(),
                                                                                invertedOutletBoundaryList[0].size());
 
@@ -235,9 +237,9 @@ namespace hemelb
             {
               hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Outlet[%i]: Measured Density is %f. Pressure is %f. Velocity is %f",
                                                                                   i,
-                                                                                  inletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
-                                                                                  inletValues->GetLocalIolet(i)->GetPressureMax(),
-                                                                                  inletValues->GetLocalIolet(i)->GetVelocity());
+                                                                                  outletValues->GetLocalIolet(i)->GetDensity(GetState()->GetTimeStep()),
+                                                                                  outletValues->GetLocalIolet(i)->GetPressureMax(),
+                                                                                  outletValues->GetLocalIolet(i)->GetVelocity());
             }
 
             SimulationMaster::DoTimeStep();

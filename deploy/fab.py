@@ -512,6 +512,28 @@ def hemelb(config,**args):
         execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
 
 @task
+def hemelb_multiscale(config,**args):
+    """Submit a HemeLB multiscale job to the remote queue.
+    The job results will be stored with a name pattern as defined in the environment,
+    e.g. cylinder-abcd1234-legion-256
+    config : config directory to use to define geometry, e.g. config=cylinder
+    Keyword arguments:
+            cores : number of compute cores to request
+            images : number of images to take
+            snapshots : number of snapshots to take
+            steering : steering session i.d.
+            wall_time : wall-time job limit
+            memory : memory per node
+    """
+    with_config(config)
+    execute(put_configs,config)
+    job(dict(script='hemelb_multiscale',
+            cores=4,images=10, snapshots=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
+    if args.get('steer',False):
+        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
+
+
+@task
 def hemelbs(config,**args):
     """Submit multiple HemeLB jobs to the remote queue.
     This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
