@@ -17,10 +17,10 @@ class utilsTests(unittest.TestCase):
 	def setUp(self):
 		pass
 	def testMatchCorresponding(self):
-	    x=np.array([1,2,3,3,5])
-	    y=np.array([2,3,5,5,1,])
-	    result=MatchCorrespondingB(x,y)
-	    self.assertSequenceEqual(list(result),[1,2,4,4,0])
+	    x=np.array([1,2,7,3,28])
+	    y=np.array([2,28,7,3,1])
+	    result=MatchCorresponding(x,y)
+	    self.assertSequenceEqual(list(result),[1,4,2,3,0])
 
 if __name__ == '__main__':
 	unittest.main()
