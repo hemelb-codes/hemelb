@@ -9,6 +9,7 @@
 
 import numpy as np
 import xdrlib
+from ...utils import xdr
 import zlib
 
 from .generic import Domain, Block, AllSolidBlock, Site
@@ -169,7 +170,7 @@ class ConfigLoader(object):
             
             compressed = self.File.read(self.BlockDataLength[bIjk])
             uncompressed = zlib.decompress(compressed)
-            blockLoader = xdrlib.Unpacker(uncompressed)
+            blockLoader = xdr.Unpacker(uncompressed)
             
             # sl = site local
             for slIjk, slIdx in domain.BlockSiteIndexer.IterBoth():
@@ -190,24 +191,7 @@ class ConfigLoader(object):
         self.OnBeginSite(block, sgIdx)
         
         s = Site(block, sgIdx)
-        
-        s.Type = loader.unpack_uint()
-        # Solid and simple fluid, we are done loading
-        if s.IsFluid == Site.FLUID:
-            # Initialise arrays
-            s.IntersectionType = np.empty(Site.DIRECTIONS, dtype=np.uint)
-            s.IntersectionType[:] = Site.NO_INTERSECTION
-            s.IntersectionDistance = np.zeros(Site.DIRECTIONS)
-            s.IOletIndex = np.empty(Site.DIRECTIONS, dtype=np.int)
-            s.IOletIndex[:] = Site.NO_IOLET
-           
-            for i in xrange(Site.DIRECTIONS):
-                s.IntersectionType[i] = loader.unpack_uint()
-                if s.IntersectionType[i] in [Site.INLET_INTERSECTION, Site.OUTLET_INTERSECTION]:
-                    s.IOletIndex[i] = loader.unpack_uint()
-                if s.IntersectionType[i] != Site.NO_INTERSECTION:
-                    s.IntersectionDistance[i] = loader.unpack_float()
-        
+        s.LoadFrom(loader)
         self.OnEndSite(block, s)
         return s
     
