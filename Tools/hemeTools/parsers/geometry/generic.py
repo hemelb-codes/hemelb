@@ -10,7 +10,7 @@
 import itertools
 import numpy as np
 import weakref
-
+from . import BaseSite
 class NdIndexConverter(object):
     """Help for converting between 1d and Nd indices into arrays and
     iterating over them. This assumes that the arrays have a
@@ -216,63 +216,12 @@ class NotYetLoadedBlock(Block):
         raise ValueError('Cannot get sites from NotYetLoadedBlock')
     pass
 
-class Site(object):
-    DIRECTIONS = 26
-
-    SOLID = 0
-    FLUID = 1
-
-    NO_IOLET = -1
-
-    NO_INTERSECTION = 0
-    WALL_INTERSECTION = 1
-    INLET_INTERSECTION = 2
-    OUTLET_INTERSECTION = 3
-    INTERSECTION_TYPES = (NO_INTERSECTION,
-                          WALL_INTERSECTION,
-                          INLET_INTERSECTION,
-                          OUTLET_INTERSECTION)
-    def __init__(self, block, sgIdx):
-        self.GetBlock = weakref.ref(block)
-        self.Index = sgIdx
-        self.Type = Site.SOLID
-        
-        self.IntersectionType = None
-        self.IntersectionDistance = None
-        self.IOletIndex = None
-
-        dom = block.GetDomain()
-        self.Position = dom.Origin + dom.VoxelSize * sgIdx
-        
-        return
-    
-    def __getstate__(self):
-        picdic = self.__dict__.copy()
-        picdic['Block'] = self.GetBlock()
-        assert picdic['Block'] is not None
-        del picdic['GetBlock']
-        return picdic
-    
-    def __setstate__(self, picdic):
-        picdic['GetBlock'] = weakref.ref(picdic['Block'])
-        del picdic['Block']
-        self.__dict__.update(picdic)
-        return
-    
-
-    @property
-    def IsEdge(self):
-        return bool(self.IsFluid and 
-                    np.any(self.IntersectionType == self.WALL_INTERSECTION))
-
-    @property
-    def IsFluid(self):
-        return self.Type == Site.FLUID
-    
-    @property
-    def IsSolid(self):
-        return self.Type == Site.SOLID
-    
+class Site(BaseSite.BaseSite):
+    INTERSECTION_TYPES = (BaseSite.NO_INTERSECTION,
+                          BaseSite.WALL_INTERSECTION,
+                          BaseSite.INLET_INTERSECTION,
+                          BaseSite.OUTLET_INTERSECTION)
+                        
     _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
     def __format__(self, format_spec):
@@ -293,11 +242,6 @@ class OutOfDomainBlock(Block):
     pass
 
 class OutOfDomainSite(Site):
-    def __init__(self, block, sgIdx):
-        self.IsFluid = False
-        self.GetBlock = weakref.ref(block)
-        self.Index = sgIdx
-        return
     pass
 
 
@@ -308,10 +252,5 @@ class AllSolidBlock(Block):
     pass
 
 class AllSolidSite(Site):
-    def __init__(self, block, sgIdx):
-        self.GetBlock = weakref.ref(block)
-        self.Index = sgIdx
-        self.Type = Site.SOLID
-        return
     pass
 
