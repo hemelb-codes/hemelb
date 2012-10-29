@@ -12,6 +12,7 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/DoubleOffsetWriter.h"
 #include "topology/NetworkTopology.h"
 
 namespace hemelb
@@ -49,7 +50,7 @@ namespace hemelb
       // Then get add each field's length
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
-        writeLength += 8 * GetFieldLength(outputSpec->fields[outputNumber].type);
+        writeLength += sizeof(WrittenDataType) * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
       //  Now multiply by local site count
@@ -83,6 +84,8 @@ namespace hemelb
           fieldHeaderLength += io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
           // Uint32 for number of fields
           fieldHeaderLength += 4;
+          // Double for the offset in each field
+          fieldHeaderLength += 8;
         }
 
         // Create a header buffer
@@ -114,7 +117,8 @@ namespace hemelb
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
             fieldHeaderWriter << outputSpec->fields[outputNumber].name
-                << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type));
+                << uint32_t(GetFieldLength(outputSpec->fields[outputNumber].type))
+                << GetOffset(outputSpec->fields[outputNumber].type);
           }
           //Exiting the block cleans up the writer
         }
@@ -222,40 +226,43 @@ namespace hemelb
           // Write for each field.
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
+            io::writers::DoubleOffsetWriter<WrittenDataType> offsetWriter(GetOffset(outputSpec->fields[outputNumber].type),
+                                                                          xdrWriter);
+
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << (double) dataSource.GetPressure();
+                offsetWriter << dataSource.GetPressure();
                 break;
               case OutputField::Velocity:
-                xdrWriter << (double) dataSource.GetVelocity().x << (double) dataSource.GetVelocity().y
-                    << (double) dataSource.GetVelocity().z;
+                offsetWriter << dataSource.GetVelocity().x << dataSource.GetVelocity().y << dataSource.GetVelocity().z;
                 break;
                 //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << (double) dataSource.GetVonMisesStress();
+                offsetWriter << dataSource.GetVonMisesStress();
                 break;
               case OutputField::ShearStress:
-                xdrWriter << (double) dataSource.GetShearStress();
+                offsetWriter << dataSource.GetShearStress();
                 break;
               case OutputField::ShearRate:
-                xdrWriter << (double) dataSource.GetShearRate();
+                offsetWriter << dataSource.GetShearRate();
                 break;
               case OutputField::StressTensor:
               {
                 util::Matrix3D tensor = dataSource.GetStressTensor();
                 // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                xdrWriter << static_cast<double>(tensor[0][0]) << static_cast<double>(tensor[0][1]) << static_cast<double>(tensor[0][2])
-                    << static_cast<double>(tensor[1][1]) << static_cast<double>(tensor[1][2]) << static_cast<double>(tensor[2][2]);
+                offsetWriter << tensor[0][0] << tensor[0][1] << tensor[0][2] << tensor[1][1] << tensor[1][2]
+                    << tensor[2][2];
                 break;
               }
               case OutputField::TractionVector:
-                xdrWriter << (double) dataSource.GetTractionVector().x << (double) dataSource.GetTractionVector().y
-                    << (double) dataSource.GetTractionVector().z;
+                offsetWriter << dataSource.GetTractionVector().x << dataSource.GetTractionVector().y
+                    << dataSource.GetTractionVector().z;
                 break;
               case OutputField::TangentialProjectionTractionVector:
-                xdrWriter << (double) dataSource.GetTangentialProjectionTractionVector().x << (double) dataSource.GetTangentialProjectionTractionVector().y
-                    << (double) dataSource.GetTangentialProjectionTractionVector().z;
+                offsetWriter << dataSource.GetTangentialProjectionTractionVector().x
+                    << dataSource.GetTangentialProjectionTractionVector().y
+                    << dataSource.GetTangentialProjectionTractionVector().z;
                 break;
 
               default:
@@ -294,6 +301,17 @@ namespace hemelb
           // to add to this method.
           assert(false);
           return 0;
+      }
+    }
+
+    double LocalPropertyOutput::GetOffset(OutputField::FieldType field) const
+    {
+      switch (field)
+      {
+        case OutputField::Pressure:
+          return REFERENCE_PRESSURE_mmHg;
+        default:
+          return 0.;
       }
     }
   }

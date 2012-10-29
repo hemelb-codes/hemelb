@@ -33,15 +33,14 @@ class FieldSpec(object):
          
     """
 
-    def __init__(self):
+    def __init__(self, memspec):
         # name, XDR dtype, in-memory dtype, length, offset
         self._filespec = [('grid', '>i4', np.uint32, (3,), 0)]
         
-        self._memspec = [('id', None, np.uint64, 1, None),
-                         ('position', None, np.float32, (3,), None)]
+        self._memspec = memspec
         return
 
-    def Append(self, name, length):
+    def Append(self, name, length, pyType, datatype):
         """Add a new field to the specification.
         """
         if length > 1:
@@ -49,7 +48,7 @@ class FieldSpec(object):
             pass
         
         offset = self.GetRecordLength()
-        self._filespec.append((name, '>f8', np.float64, length, offset))
+        self._filespec.append((name, pyType, datatype, length, offset))
         return
 
     def GetMem(self):
@@ -75,11 +74,74 @@ class FieldSpec(object):
         return iter(self._filespec)
     pass
 
+class ExtractedPropertyV3Parser(object):
+    def __init__(self, fieldCount, siteCount):
+        self._fieldCount = fieldCount
+        self._siteCount = siteCount
+
+    def parse(self, memoryMappedData):
+        result = np.recarray(self._siteCount, dtype=self._fieldSpec.GetMem())
+        
+        for name, xdrType, memType, length, offset in self._fieldSpec:
+            setattr(result, name, memoryMappedData.getfield((xdrType, length), offset))
+            continue
+        return result
+
+    def ParseFieldHeader(self, decoder):
+        self._fieldSpec = FieldSpec([('id', None, np.uint64, 1, None),
+                               ('position', None, np.float32, (3,), None)])
+
+        for iField in xrange(self._fieldCount):
+            name = decoder.unpack_string()
+            length = decoder.unpack_uint()
+            self._fieldSpec.Append(name, length, '>f8', np.float64)
+            continue
+        return self._fieldSpec
+
+    def GetRecordLength(self):
+        return self._fieldSpec.GetRecordLength()
+
+class ExtractedPropertyV4Parser(object):
+    def __init__(self, fieldCount, siteCount):
+        self._fieldCount = fieldCount
+        self._siteCount = siteCount
+
+    def parse(self, memoryMappedData):
+        result = np.recarray(self._siteCount, dtype=self._fieldSpec.GetMem())
+        
+        for ((name, xdrType, memType, length, offset),dataOffset) in zip(self._fieldSpec, self._dataOffset):
+            data = memoryMappedData.getfield((xdrType, length), offset)
+            setattr(result, name, self._recursiveAdd(data, dataOffset))
+            continue
+        return result
+
+    def ParseFieldHeader(self, decoder):
+        self._fieldSpec = FieldSpec([('id', None, np.uint64, 1, None),
+                               ('position', None, np.float32, (3,), None)])
+        self._dataOffset = [0]
+
+        print self._fieldCount, 'fields'
+
+        for iField in xrange(self._fieldCount):
+            name = decoder.unpack_string()
+            length = decoder.unpack_uint()
+            self._dataOffset.append(decoder.unpack_double())
+            self._fieldSpec.Append(name, length, '>f4', np.float32)
+            continue
+        return self._fieldSpec
+
+    def _recursiveAdd(self, data, operand):
+        try:
+            return [self._recursiveAdd(datum, operand) for datum in data]
+        except TypeError:
+            return data + operand
+        pass
+
 class ExtractedProperty(object):
     """Represent the contents of a HemeLB property extraction file.
     
     """
-    VersionNumber = 3
+    HandledVersions = [3,4]
 
     def __init__(self, filename):
         """Read the file's headers and determine how many times and which times
@@ -111,7 +173,8 @@ class ExtractedProperty(object):
         decoder = xdrlib.Unpacker(mainHeader)
         assert decoder.unpack_uint() == HemeLbMagicNumber, "Incorrect HemeLB magic number"
         assert decoder.unpack_uint() == ExtractionMagicNumber, "Incorrect extraction magic number"
-        assert decoder.unpack_uint() == self.VersionNumber, "Incorrect extraction format version number"
+        version = decoder.unpack_uint()
+        assert version in self.HandledVersions, "Incorrect extraction format version number"
 
         self.voxelSizeMetres = decoder.unpack_double()
         self.originMetres = np.array([decoder.unpack_double() for i in xrange(3)])
@@ -119,6 +182,11 @@ class ExtractedProperty(object):
         self.siteCount = decoder.unpack_uhyper()
         self.fieldCount = decoder.unpack_uint()
         self._fieldHeaderLength = decoder.unpack_uint()
+
+        if version == 3:
+            self.parser = ExtractedPropertyV3Parser(self.fieldCount, self.siteCount)
+        elif version == 4:
+            self.parser = ExtractedPropertyV4Parser(self.fieldCount, self.siteCount)
         return
 
     def _ReadFieldHeader(self):
@@ -136,13 +204,7 @@ class ExtractedProperty(object):
 
         decoder = xdrlib.Unpacker(fieldHeader)
 
-        self._fieldSpec = FieldSpec()
-
-        for iField in xrange(self.fieldCount):
-            name = decoder.unpack_string()
-            length = decoder.unpack_uint()
-            self._fieldSpec.Append(name, length)
-            continue
+        self._fieldSpec = self.parser.ParseFieldHeader(decoder)
 
         self._rowLength = self._fieldSpec.GetRecordLength()
         self._recordLength = TimeStepDataLength + self._rowLength * self.siteCount
@@ -215,12 +277,9 @@ class ExtractedProperty(object):
         
         Fields are as specified in the file with the addition of 
         """
-        answer = np.recarray(self.siteCount, dtype=self._fieldSpec.GetMem())
         mapped = self._MemMap(idx)
-        
-        for name, xdrType, memType, length, offset in self._fieldSpec:
-            setattr(answer, name, mapped.getfield((xdrType, length), offset))
-            continue
+
+        answer = self.parser.parse(mapped)
         
         answer.id = np.arange(self.siteCount)
         answer.position = self.voxelSizeMetres * answer.grid + self.originMetres
