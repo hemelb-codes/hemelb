@@ -64,6 +64,13 @@ namespace hemelb
         unsigned GetFieldLength(OutputField::FieldType field);
 
         /**
+         * Returns the offset to the field, as it should be written to file.
+         * @param field
+         * @return
+         */
+        double GetOffset(OutputField::FieldType field) const;
+
+        /**
          * The MPI file to write into.
          */
         MPI_File outputFile;
@@ -97,6 +104,11 @@ namespace hemelb
          * Buffer to write into before writing to disk.
          */
         char* buffer;
+
+        /**
+         * Type of written values
+         */
+        typedef float WrittenDataType;
     };
   }
 }
