@@ -62,8 +62,8 @@ legion:
   # The remote host-name to use.
   remote: "legion.rc.ucl.ac.uk"
   # The path python disttools use for builds.
-  python_build: "python2.6"
-  modules: ["remove mpi/qlogic/1.2.7/intel","remove compilers/intel/11.1/072","add compilers/gnu/4.1.2", "add mpi/openmpi/1.4.1/gnu", "add cmake/2.8.3", "add python/2.6.6/gnu"]
+  python_build: "python2.7"
+  modules: ["remove mpi/qlogic/1.2.7/intel","remove compilers/intel/11.1/072","add compilers/gnu/4.1.2", "add mpi/openmpi/1.4.1/gnu", "add cmake/2.8.3", "add python/enthought/7.2-2"]
   runtime_path_template: "$home_path/Scratch"
   node_type_restriction_template: '#$$ -ac allow="${node_type}"'
   node_type: "X"

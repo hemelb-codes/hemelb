@@ -30,9 +30,9 @@ namespace hemelb
     {
       class LocalPropertyOutputTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE ( LocalPropertyOutputTests);
-          CPPUNIT_TEST ( TestStringWrittenLength);
-          CPPUNIT_TEST ( TestWrite);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (LocalPropertyOutputTests);
+          CPPUNIT_TEST (TestStringWrittenLength);
+          CPPUNIT_TEST (TestWrite);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -61,7 +61,7 @@ namespace hemelb
             propertyWriter = NULL;
             writtenMainHeader = new char[hemelb::io::formats::extraction::MainHeaderLength];
 
-            fieldHeaderLength = 0x20;
+            fieldHeaderLength = 0x30;
             writtenFieldHeader = new char[fieldHeaderLength];
 
           }
@@ -119,20 +119,20 @@ namespace hemelb
 
             // Check it matches
             const char expectedMainHeader[] = "\x68\x6C\x62\x21"
-              "\x78\x74\x72\x04"
-              "\x00\x00\x00\x03"
-              "\x3F\x33\xA9\x2A"
-              "\x30\x55\x32\x61"
-              "\x3F\xA1\x68\x72"
-              "\xB0\x20\xC4\x9C"
-              "\x3F\x50\x62\x4D"
-              "\xD2\xF1\xA9\xFC"
-              "\x3F\xB2\xF1\xA9"
-              "\xFB\xE7\x6C\x8B"
-              "\x00\x00\x00\x00"
-              "\x00\x00\x00\x40"
-              "\x00\x00\x00\x02"
-              "\x00\x00\x00\x20";
+                "\x78\x74\x72\x04"
+                "\x00\x00\x00\x04"
+                "\x3F\x33\xA9\x2A"
+                "\x30\x55\x32\x61"
+                "\x3F\xA1\x68\x72"
+                "\xB0\x20\xC4\x9C"
+                "\x3F\x50\x62\x4D"
+                "\xD2\xF1\xA9\xFC"
+                "\x3F\xB2\xF1\xA9"
+                "\xFB\xE7\x6C\x8B"
+                "\x00\x00\x00\x00"
+                "\x00\x00\x00\x40"
+                "\x00\x00\x00\x02"
+                "\x00\x00\x00\x30";
             for (int i = 0; i < hemelb::io::formats::extraction::MainHeaderLength; ++i)
             {
               CPPUNIT_ASSERT_EQUAL(expectedMainHeader[i], writtenMainHeader[i]);
@@ -145,13 +145,18 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(fieldHeaderLength, nRead);
 
             const char expectedFieldHeader[] = "\x00\x00\x00\x08"
-              "\x50\x72\x65\x73"
-              "\x73\x75\x72\x65"
-              "\x00\x00\x00\x01"
-              "\x00\x00\x00\x08"
-              "\x56\x65\x6C\x6F"
-              "\x63\x69\x74\x79"
-              "\x00\x00\x00\x03";
+                "\x50\x72\x65\x73"
+                "\x73\x75\x72\x65"
+                "\x00\x00\x00\x01"
+                "\x40\x54\x00\x00"
+                "\x00\x00\x00\x00"
+                "\x00\x00\x00\x08"
+                "\x56\x65\x6C\x6F"
+                "\x63\x69\x74\x79"
+                "\x00\x00\x00\x03"
+                "\x00\x00\x00\x00"
+                "\x00\x00\x00\x00";
+
             for (size_t i = 0; i < fieldHeaderLength; ++i)
             {
               CPPUNIT_ASSERT_EQUAL(expectedFieldHeader[i], writtenFieldHeader[i]);
@@ -184,7 +189,7 @@ namespace hemelb
           static const char* tempOutFileName;
       };
       const char* LocalPropertyOutputTests::tempOutFileName = "simple.xtr";
-      CPPUNIT_TEST_SUITE_REGISTRATION( LocalPropertyOutputTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (LocalPropertyOutputTests);
     }
   }
 }
