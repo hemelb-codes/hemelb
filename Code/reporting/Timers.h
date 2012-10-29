@@ -98,7 +98,6 @@ namespace hemelb
           monitoring, //!< Time spent monitoring for stability, compressibility, etc.
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
-          snapshot, //!< Time spent producing snapshots
           simulation, //!< Total time for running the simulation,
           readNet,
           readParse,
@@ -122,6 +121,7 @@ namespace hemelb
           colloidCalculateForces,
           colloidUpdateCalculations,
           colloidOutput,
+          extractionWriting,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -220,11 +220,11 @@ namespace hemelb
 
     { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
       "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation", "Monitoring", "MPI Send",
-      "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
+      "MPI Wait", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
       "Read blocks all", "Steering Client Wait", "dbg1", "dbg2", "Move Forcing Counts", "Move Forcing Data",
       "Block Requirements", "Move Counts Sending", "Move Data Sending", "dbg3", "dbg4", "dbg5",
       "Colloid initialisation", "Colloid position communication", "Colloid velocity communication",
-      "Colloid force calculations", "Colloid calculations for updating", "Colloid outputting" };
+      "Colloid force calculations", "Colloid calculations for updating", "Colloid outputting", "Extraction writing" };
   }
 
 }

@@ -85,10 +85,6 @@ namespace hemelb
               }
             }
             mockTimers->Reduce(); // invoke the Timers MPI mock
-            reporter->Snapshot();
-            reporter->Snapshot();
-            reporter->Snapshot();
-            reporter->Snapshot();
             reporter->Image();
             reporter->Image();
             reporter->Image();
@@ -106,7 +102,6 @@ namespace hemelb
             AssertTemplate(hemelb::reporting::mercurial_revision_number, "{{#BUILD}}{{REVISION}}{{/BUILD}}");
             AssertTemplate(hemelb::reporting::build_time, "{{#BUILD}}{{TIME}}{{/BUILD}}");
             AssertValue("3", "IMAGES");
-            AssertValue("4", "SNAPSHOTS");
             AssertValue("0.000100", "TIME_STEP_LENGTH");
             AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");

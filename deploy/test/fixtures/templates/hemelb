@@ -2,4 +2,4 @@ cd $job_results
 $run_prefix
 rm -rf results
 cp $job_config_path/* .
-mpirun -np $cores $install_path/bin/hemelb -in config.xml -i $images -s $snapshots -ss $steering
+mpirun -np $cores $install_path/bin/hemelb -in config.xml -i $images -ss $steering
