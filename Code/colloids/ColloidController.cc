@@ -18,7 +18,9 @@ namespace hemelb
   {
     const void ColloidController::OutputInformation(const LatticeTime timestep) const
     {
+      timers[reporting::Timers::colloidOutput].Start();
       particleSet->OutputInformation(timestep);
+      timers[reporting::Timers::colloidOutput].Stop();
     }
 
     // destructor
@@ -32,9 +34,10 @@ namespace hemelb
                                          const lb::SimulationState& simulationState,
                                          const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
-                                         lb::MacroscopicPropertyCache& propertyCache) :
+                                         lb::MacroscopicPropertyCache& propertyCache,
+                                         reporting::Timers& timers) :
       localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
-      simulationState(simulationState)
+      simulationState(simulationState), timers(timers)
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -233,23 +236,21 @@ namespace hemelb
 
     void ColloidController::RequestComms()
     {
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CommunicateParticlePositions\n");
-
       // communication from step 2
+      log::Logger::Log<log::Debug, log::OnePerCore>("Communicating colloid particle positions");
+      timers[reporting::Timers::colloidCommunicatePositions].Start();
       particleSet->CommunicateParticlePositions();
+      timers[reporting::Timers::colloidCommunicatePositions].Stop();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CalculateBodyForces\n");
-
+      timers[reporting::Timers::colloidCalculateForces].Start();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calculating colloid body forces");
       // step 3
       particleSet->CalculateBodyForces();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CalculateFeedbackForces\n");
-
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calculating feedback forces for colloids");
       // steps 1 & 4 combined
       particleSet->CalculateFeedbackForces();
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do LBM\n");
-
+      timers[reporting::Timers::colloidCalculateForces].Stop();
       // steps 5 and 8 performed by LBM actor
     }
 
@@ -257,27 +258,28 @@ namespace hemelb
     {
       const LatticeTime currentTimestep = simulationState.GetTimeStep();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do InterpolateFluidVelocity\n");
-
       // step 6
+      timers[reporting::Timers::colloidUpdateCalculations].Start();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Interpolating fluid velocities for colloids");
       particleSet->InterpolateFluidVelocity();
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do CommunicateFluidVelocities\n");
+      timers[reporting::Timers::colloidUpdateCalculations].Stop();
 
       // communication from step 6
+      log::Logger::Log<log::Debug, log::OnePerCore>("Communicating fluid velocities for colloids");
+      timers[reporting::Timers::colloidCommunicateVelocities].Start();
       particleSet->CommunicateFluidVelocities();
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do ApplyBoundaryConditions\n");
+      timers[reporting::Timers::colloidCommunicateVelocities].Stop();
 
       // extra step (not in original design)
+      log::Logger::Log<log::Debug, log::OnePerCore>("Apply boundary conditions for colloids");
+      timers[reporting::Timers::colloidUpdateCalculations].Start();
       particleSet->ApplyBoundaryConditions(currentTimestep);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do UpdatePositions\n");
-
       // steps 7 & 2 combined
+      log::Logger::Log<log::Debug, log::OnePerCore>("Updating colloid positions");
       particleSet->UpdatePositions();
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("About to do next timestep\n");
+      timers[reporting::Timers::colloidUpdateCalculations].Stop();
     }
 
   }

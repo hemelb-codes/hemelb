@@ -34,7 +34,8 @@ namespace hemelb
                           const lb::SimulationState& simulationState,
                           const geometry::Geometry& gmyResult,
                           io::xml::XmlAbstractionLayer& xml,
-                          lb::MacroscopicPropertyCache& propertyCache);
+                          lb::MacroscopicPropertyCache& propertyCache,
+                          reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
@@ -55,6 +56,9 @@ namespace hemelb
 
         /** holds the set of Particles that this processor knows about */
         ParticleSet* particleSet;
+
+        /** Timers object, for generating timing data for reports.*/
+        reporting::Timers& timers;
 
         /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
         const static site_t REGION_OF_INFLUENCE = (site_t)2;
