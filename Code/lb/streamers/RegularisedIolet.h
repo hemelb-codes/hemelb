@@ -121,4 +121,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_STREAMERS_REGULARISED_H */
+#endif /* HEMELB_LB_STREAMERS_REGULARISEDIOLET_H */
