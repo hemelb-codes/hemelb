@@ -185,6 +185,7 @@ void SimulationMaster::Initialise()
                                                   latticeData->GetVoxelSize(),
                                                   latticeData->GetOrigin());
 
+  timings[hemelb::reporting::Timers::colloidInitialisation].Start();
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
   std::string colloidConfigPath = simConfig->GetColloidConfigPath();
   hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath, *unitConvertor);
@@ -200,7 +201,9 @@ void SimulationMaster::Initialise()
                                                               *simulationState,
                                                               readGeometryData,
                                                               xml,
-                                                              propertyCache);
+                                                              propertyCache,
+                                                              timings);
+  timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())

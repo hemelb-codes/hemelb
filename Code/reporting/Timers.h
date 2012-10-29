@@ -116,6 +116,12 @@ namespace hemelb
           dbg3,
           dbg4,
           dbg5,
+          colloidInitialisation,
+          colloidCommunicatePositions,
+          colloidCommunicateVelocities,
+          colloidCalculateForces,
+          colloidUpdateCalculations,
+          colloidOutput,
           last
         //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
@@ -216,7 +222,9 @@ namespace hemelb
       "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation", "Monitoring", "MPI Send",
       "MPI Wait", "Snapshots", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
       "Read blocks all", "Steering Client Wait", "dbg1", "dbg2", "Move Forcing Counts", "Move Forcing Data",
-      "Block Requirements", "Move Counts Sending", "Move Data Sending", "dbg3", "dbg4", "dbg5" };
+      "Block Requirements", "Move Counts Sending", "Move Data Sending", "dbg3", "dbg4", "dbg5",
+      "Colloid initialisation", "Colloid position communication", "Colloid velocity communication",
+      "Colloid force calculations", "Colloid calculations for updating", "Colloid outputting" };
   }
 
 }
