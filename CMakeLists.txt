@@ -30,7 +30,7 @@ set(HEMELB_LATTICE "D3Q15"
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
-  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,REGULARISED,SIMPLEBOUNCEBACK)")
+  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")
 option(HEMELB_DEPENDENCIES_SET_RPATH "Set runtime RPATH" ON)
 set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subproject build steps")

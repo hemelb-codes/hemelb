@@ -14,7 +14,6 @@
 #include "lb/streamers/SimpleCollideAndStream.h"
 #include "lb/streamers/FInterpolation.h"
 #include "lb/streamers/GuoZhengShi.h"
-#include "lb/streamers/Regularised.h"
 #include "lb/streamers/JunkYang.h"
 #include "lb/streamers/RegularisedIolet.h"
 #include "lb/streamers/NashBB.h"
