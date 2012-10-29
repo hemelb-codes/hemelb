@@ -47,7 +47,6 @@
 	</geometry>
 	<results>
 		<images>{{IMAGES}}</images>
-		<snapshots>{{SNAPSHOTS}}</snapshots>
 		<steps>
 			<total>{{STEPS}}</total>
 		</steps>

@@ -24,7 +24,6 @@ namespace hemelb
      * - -in input xml configuration file (default input.xml)
      * - -out output folder (empty default, but the hemelb::io::PathManager will guess a value from the input file if not given.)
      * - -i number of images (default 10)
-     * - -s number of snapshots (default 10)
      * - -ss steering session i.d. (default 1)
      */
     class CommandLine
@@ -41,13 +40,6 @@ namespace hemelb
          * Report to standard output an error message describing the usage
          */
         void PrintUsage();
-        /**
-         * @return Number of snapshots that should be produced
-         */
-        unsigned int NumberOfSnapshots() const
-        {
-          return (snapshots);
-        }
         /**
          * @return Number of images that should be produced
          */
@@ -106,7 +98,6 @@ namespace hemelb
       private:
         std::string inputFile; //! local or full path to input file
         std::string outputDir; //! local or full path to input file
-        unsigned int snapshots; //! snapshots to produce
         unsigned int images; //! images to produce
         int steeringSessionId; //! unique identifier for steering session
         int argc; //! count of command line arguments, including program name

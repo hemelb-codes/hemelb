@@ -15,8 +15,9 @@ namespace hemelb
   {
     PropertyActor::PropertyActor(const lb::SimulationState& simulationState,
                                  const std::vector<PropertyOutputFile*>& propertyOutputs,
-                                 IterableDataSource& dataSource) :
-        simulationState(simulationState)
+                                 IterableDataSource& dataSource,
+                                 reporting::Timers& timers) :
+        simulationState(simulationState), timers(timers)
     {
       propertyWriter = new PropertyWriter(dataSource, propertyOutputs);
     }
@@ -82,7 +83,9 @@ namespace hemelb
 
     void PropertyActor::EndIteration()
     {
+      timers[reporting::Timers::extractionWriting].Start();
       propertyWriter->Write(simulationState.GetTimeStep());
+      timers[reporting::Timers::extractionWriting].Stop();
     }
 
   }

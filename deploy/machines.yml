@@ -49,7 +49,7 @@ default:
   run_command: "mpirun -np $cores"
   temp_path_template: "/tmp"
   cmake_options: {}
-  job_name_template: '${config}_${build_number}_${machine_name}_${cores}_${snapshots}_${images}'
+  job_name_template: '${config}_${build_number}_${machine_name}_${cores}_${images}'
   config_name_template: "${profile}_${StringVoxelSize}_${Steps}_${Cycles}"
   local_templates_path: "$localroot/deploy/templates"
   manual_ssh: false

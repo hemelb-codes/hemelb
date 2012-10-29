@@ -60,7 +60,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   stepManager = NULL;
   netConcern = NULL;
   neighbouringDataManager = NULL;
-  snapshotsPerSimulation = options.NumberOfSnapshots();
   imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
 
@@ -291,12 +290,13 @@ void SimulationMaster::Initialise()
 
     propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
                                                               simConfig->GetPropertyOutputs(),
-                                                              *propertyDataSource);
+                                                              *propertyDataSource,
+                                                              timings);
   }
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);
 
-  stepManager = new hemelb::net::phased::StepManager(2,&timings,hemelb::net::separate_communications);
+  stepManager = new hemelb::net::phased::StepManager(2, &timings, hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
   stepManager->RegisterIteratedActorSteps(*colloidController, 1);
@@ -344,7 +344,7 @@ void SimulationMaster::OnUnstableSimulation()
 {
   LogStabilityReport();
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Aborting: time step length: %f\n",
-                                                                      simulationState->GetTimeStepLength());
+                                                                         simulationState->GetTimeStepLength());
   Finalise();
   Abort();
 }
@@ -356,8 +356,8 @@ void SimulationMaster::WriteLocalImages()
    * The map key (it->first) is the completion time step number.
    * The map value (it->second) is the initiation time step number.
    */
-  for (MapType::const_iterator it = snapshotsCompleted.find(simulationState->GetTimeStep());
-      it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
+  for (MapType::const_iterator it = writtenImagesCompleted.find(simulationState->GetTimeStep());
+      it != writtenImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -377,7 +377,7 @@ void SimulationMaster::WriteLocalImages()
     }
   }
 
-  snapshotsCompleted.erase(simulationState->GetTimeStep());
+  writtenImagesCompleted.erase(simulationState->GetTimeStep());
 }
 
 void SimulationMaster::GenerateNetworkImages()
@@ -459,20 +459,20 @@ void SimulationMaster::Finalise()
 
 void SimulationMaster::DoTimeStep()
 {
-  bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
+  bool writeImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
     true :
     false;
 
   // Make sure we're rendering if we're writing this iteration.
-  if (writeSnapshotImage)
+  if (writeImage)
   {
     /***
-     * snapShotsCompleted and networkImagesCompleted are multimaps.
+     * writtenImagesCompleted and networkImagesCompleted are multimaps.
      * The keys are the iterations on which production of an image will complete, and should be written or sent over the network.
      * The values are the iterations on which the image creation began.
      */
-    snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                      simulationState->GetTimeStep()));
+    writtenImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
+                                                                          simulationState->GetTimeStep()));
   }
 
   if (simulationState->IsRendering())
@@ -501,10 +501,10 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetTimeStep() % 100 == 0)
   {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_image_to_disk %i rendering %i",
                                                                         simulationState->GetTimeStep(),
                                                                         renderForNetworkStream,
-                                                                        writeSnapshotImage,
+                                                                        writeImage,
                                                                         simulationState->IsRendering());
     LogStabilityReport();
   }
@@ -526,7 +526,7 @@ void SimulationMaster::DoTimeStep()
   visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(), simulationState->GetTotalTimeSteps());
 #endif
 
-  if (snapshotsCompleted.count(simulationState->GetTimeStep()) > 0)
+  if (writtenImagesCompleted.count(simulationState->GetTimeStep()) > 0)
   {
     WriteLocalImages();
 
@@ -536,20 +536,6 @@ void SimulationMaster::DoTimeStep()
   {
     GenerateNetworkImages();
   }
-
-  timings[hemelb::reporting::Timers::snapshot].Start();
-
-  if (ShouldWriteSnapshot())
-  {
-    if (IsCurrentProcTheIOProc())
-    {
-      reporter->Snapshot();
-    }
-    latticeBoltzmannModel->WriteConfigParallel(simulationState->GetStability(),
-                                               fileManager->SnapshotPath(simulationState->GetTimeStep()));
-  }
-
-  timings[hemelb::reporting::Timers::snapshot].Stop();
 
   if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
   {
@@ -565,8 +551,8 @@ void SimulationMaster::RecalculatePropertyRequirements()
 
   propertyCache.ResetRequirements();
 
-  // Check whether we're rendering images or snapshotting on this iteration.
-  if (visualisationControl->IsRendering() || ShouldWriteSnapshot())
+  // Check whether we're rendering images on this iteration.
+  if (visualisationControl->IsRendering())
   {
     propertyCache.densityCache.SetRefreshFlag();
     propertyCache.velocityCache.SetRefreshFlag();
@@ -599,11 +585,6 @@ void SimulationMaster::RecalculatePropertyRequirements()
 #endif
 }
 
-bool SimulationMaster::ShouldWriteSnapshot()
-{
-  return simulationState->GetTimeStep() % OutputPeriod(snapshotsPerSimulation) == 0;
-}
-
 /**
  * Called on error to abort the simulation and pull-down the MPI environment.
  */
@@ -625,7 +606,8 @@ void SimulationMaster::LogStabilityReport()
                                                                         simulationState->GetTimeStep(),
                                                                         latticeBoltzmannModel->GetLbmParams()->GetTau(),
                                                                         incompressibilityChecker->GetMaxRelativeDensityDifference(),
-                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude() / hemelb::Cs,
+                                                                        incompressibilityChecker->GetGlobalLargestVelocityMagnitude()
+                                                                            / hemelb::Cs,
                                                                         unitConvertor->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
   }
 }
