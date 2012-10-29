@@ -242,6 +242,7 @@ namespace hemelb
                                                                                   outletValues->GetLocalIolet(i)->GetVelocity());
             }
 
+            //TODO: Extract Shared Values here!
             SimulationMaster::DoTimeStep();
 
             //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",

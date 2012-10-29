@@ -32,7 +32,9 @@ namespace hemelb
     {
       public:
        
-        IntercommunicandType(const std::string & alabel): fields(), label(alabel){}
+        IntercommunicandType(const std::string & alabel): fields(), label(alabel){
+ hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Icand created with label %s", alabel.c_str());
+}
         
         /***
          * The order of the fields in the intercommunicand type corresponds to the order they are registered in the intercommunicand.
@@ -43,6 +45,7 @@ namespace hemelb
         void RegisterSharedValue(const std::string &label,typename RuntimeTypeImplementation::RuntimeType type)
          {
             fields.push_back(std::make_pair(label,type));
+             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s", label.c_str());
          }
          template<class T> void RegisterSharedValue(const std::string &label){
             fields.push_back(std::make_pair(label,RuntimeTypeImplementation::template GetType<T>()));

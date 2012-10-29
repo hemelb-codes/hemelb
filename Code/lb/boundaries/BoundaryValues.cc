@@ -46,8 +46,10 @@ namespace hemelb
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
           // on the BC task we can create the comms
-          if (isIOletOnThisProc || IsCurrentProcTheBCProc())
-          {
+
+          /* TODO: MODIFIED BY DEREK: MAKE ALL IOLETS AVAILABLE ON ALL PROCS! */
+          //if (isIOletOnThisProc || IsCurrentProcTheBCProc())
+          //{
             localIoletCount++;
 
             localIoletIDs.push_back(ioletIndex);
@@ -55,7 +57,7 @@ namespace hemelb
             {
               iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
             }
-          }
+          //}
         }
 
         // Send out initial values
