@@ -25,7 +25,6 @@ namespace hemelb
       GuessOutputDir();
 
       imageDirectory = outputDir + "/Images/";
-      snapshotDirectory = outputDir + "/Snapshots/";
       dataPath = outputDir + "/Extracted/";
 
       if (doIo)
@@ -39,7 +38,6 @@ namespace hemelb
 
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
-        hemelb::util::MakeDirAllRXW(snapshotDirectory);
         hemelb::util::MakeDirAllRXW(dataPath);
         reportName = outputDir;
       }
@@ -50,10 +48,6 @@ namespace hemelb
     const std::string & PathManager::GetInputFile() const
     {
       return inputFile;
-    }
-    const std::string & PathManager::GetSnapshotDirectory() const
-    {
-      return snapshotDirectory;
     }
     const std::string & PathManager::GetImageDirectory() const
     {
@@ -66,7 +60,6 @@ namespace hemelb
 
     void PathManager::EmptyOutputDirectories() const
     {
-      hemelb::util::DeleteDirContents(snapshotDirectory);
       hemelb::util::DeleteDirContents(imageDirectory);
     }
 
@@ -79,13 +72,6 @@ namespace hemelb
 #else
       return (new hemelb::io::writers::xdr::XdrFileWriter(imageDirectory + std::string(filename)));
 #endif
-    }
-
-    const std::string PathManager::SnapshotPath(unsigned long time) const
-    {
-      char snapshotFilename[255];
-      snprintf(snapshotFilename, 255, "snapshot_%06li.dat", time);
-      return (snapshotDirectory + std::string(snapshotFilename)); // by copy
     }
 
     const std::string& PathManager::GetDataExtractionPath() const

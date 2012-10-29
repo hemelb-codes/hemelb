@@ -32,7 +32,8 @@ namespace hemelb
          */
         PropertyActor(const lb::SimulationState& simulationState,
                       const std::vector<PropertyOutputFile*>& propertyOutputs,
-                      IterableDataSource& dataSource);
+                      IterableDataSource& dataSource,
+                      reporting::Timers& timers);
 
         ~PropertyActor();
 
@@ -50,6 +51,7 @@ namespace hemelb
       private:
         const lb::SimulationState& simulationState;
         PropertyWriter* propertyWriter;
+        reporting::Timers& timers;
     };
   }
 }

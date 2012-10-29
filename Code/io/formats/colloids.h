@@ -23,7 +23,7 @@ namespace hemelb
         /* The format comprises a header and then a body.
          * Header is made up of (hex file position, type, description)
          * 00   uint       HemeLB magic number (see formats.h)
-         * 04   uint       Snapshot magic number (see below)
+         * 04   uint       Colloids magic number (see below)
          * 08   uint       Version number
          * 12   uint       Offset of the body start into the file (bytes)
          * 16   uint       Flag for simulation stability
@@ -45,7 +45,7 @@ namespace hemelb
 
         enum
         {
-          /* Identify snapshot files
+          /* Identify colloid files
            * ASCII for 'col', then EOF
            * Combined magic number is
            * hex    68 6c 62 21 63 6f 6c 04

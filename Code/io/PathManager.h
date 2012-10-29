@@ -22,7 +22,7 @@ namespace hemelb
   namespace io
   {
     /**
-     * Manage the input and output file system locations for HemeLB images, snapshots, reports, and input xml and dat files.
+     * Manage the input and output file system locations for HemeLB images, reports, and input xml and dat files.
      */
     class PathManager
     {
@@ -52,11 +52,6 @@ namespace hemelb
          */
         const std::string & GetInputFile() const;
         /**
-         * Path to the directory where snapshot files should be written.
-         * @return Reference to path to the directory where snapshot files should be written.
-         */
-        const std::string & GetSnapshotDirectory() const;
-        /**
          * Path to the directory where image files should be written.
          * @return Reference to path to the directory where image files should be written.
          */
@@ -73,7 +68,7 @@ namespace hemelb
         void SaveConfiguration(configuration::SimConfig * const simConfig) const;
         /**
          * Delete the output data.
-         * This deletes snapshots, images, config files, and the report.
+         * This deletes images, config files, and the report.
          * It is used if the simulation needs to reset.
          */
         void EmptyOutputDirectories() const;
@@ -83,12 +78,6 @@ namespace hemelb
          * @return Pointer to an XDR file writer -- this is allocated on free store, and should be deleted by the client code.
          */
         hemelb::io::writers::Writer * XdrImageWriter(const long int time) const;
-        /**
-         * Returns the file path that should be used for writing a snapshot file
-         * @param time The current time, used to generate a unique filename.
-         * @return The string path to use for writing a snapshot file, returned by copy.
-         */
-        const std::string SnapshotPath(unsigned long time) const;
 
         /**
          * Return the path that property extraction output should go to.
@@ -99,7 +88,6 @@ namespace hemelb
         void GuessOutputDir(); //! String processing to generate an appropriate outptu folder name.
         std::string outputDir;
         std::string inputFile;
-        std::string snapshotDirectory;
         std::string imageDirectory;
         std::string configLeafName;
         std::string reportName;
