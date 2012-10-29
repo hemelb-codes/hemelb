@@ -126,15 +126,6 @@ namespace hemelb
         typedef streamers::GuoZhengShi<Collision> Type;
     };
     /**
-     * The regularised boundary condition by Latt and Chopard.
-     */
-    template<class Collision>
-    class REGULARISED
-    {
-      public:
-        typedef streamers::Regularised<Collision> Type;
-    };
-    /**
      * The simple bounce back boundary condition.
      */
     template<class Collision>
