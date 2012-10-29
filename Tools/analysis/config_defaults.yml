@@ -4,7 +4,6 @@ results:
             total_raw: 'timings/timer[name="Total"]/mean'
             sites: 'geometry/sites'
             images_count: 'results/images'
-            snapshots_count: results/snapshots
             domain_decomposition: 'timings/timer[name="Domain Decomposition"]/mean'
             file_read: 'timings/timer[name="File Read"]/mean'
             net: 'timings/timer[name="Net initialisation"]/mean'
@@ -14,10 +13,9 @@ results:
             monitoring: 'timings/timer[name="Monitoring"]/mean'
             send: 'timings/timer[name="MPI Send"]/mean'
             wait: 'timings/timer[name="MPI Wait"]/mean'
-            snapshots_raw: 'timings/timer[name="Snapshots"]/mean'
             simulation_raw: 'timings/timer[name="Simulation total"]/mean'
             steps: results/steps/total
-            snapshot_normalisation: 'timings/timer[name="Snapshots"]/normalisation'
+            image_normalisation: 'timings/timer[name="Images"]/normalisation'
             changeset: build/revision
             reading_group_raw: build/reading_group
             seed_decomposition: 'timings/timer[name="Seed Decomposition"]/mean'
@@ -31,6 +29,7 @@ results:
             steering_wait_raw: 'timings/timer[name="Steering Client Wait"]/local'
             steering_wait_raw_2: 'timings/timer[name="Steering Client Wait Time"]/local'
             parsing: 'timings/timer[name="Parsing"]/mean'
+            extraction: 'timings/timer[name="Extraction writing"]/mean'
             read_io: 'timings/timer[name="Read IO"]/mean'
             block_count: 'geometry/blocks'
             sites_per_block: 'geometry/sites_per_block'
@@ -95,10 +94,8 @@ results:
 
     compound_properties:
         result_timestamp: (report_created_timestamp if report_created_timestamp else test_results_timestamp if test_results_timestamp else folder_created_timestamp)
-        snapshots_norm: (snapshots_count if normalised else 1.0)
         images_norm: (images_count if normalised else 1.0)
         steering_wait: (steering_wait_raw if steering_wait_raw else steering_wait_raw_2 if steering_wait_raw_2 else 0)
-        snapshots: (snapshots_raw * snapshots_norm)
         visualisation: (visualisation_raw * images_norm)
         lb_calc_rate: (sites*steps*1.0)/((cores-1.0)*lb)
         total_velocity: (sites*steps*1.0)/(cores*simulation)
@@ -107,9 +104,8 @@ results:
         decomposition_velocity: (sites*1.0/(cores*domain_decomposition))
         need_strategy: ('list' if revision>1738 else 'deal')
         read_velocity: (sites*1.0/(cores*file_read))
-        snapshot_velocity: (sites*snapshots_count*1.0/(cores*snapshots))
         visualisation_velocity: (sites*images_count*1.0/(cores*visualisation))
-        non_io: (simulation- snapshots - visualisation)
+        non_io: (simulation- (extraction if extraction != None else 0.) - visualisation)
         simulation: (simulation_raw-steering_wait)
         total: (total_raw-steering_wait)
         setup: total-simulation
@@ -119,7 +115,7 @@ results:
         cost: (5.78*kau)
         report_created: (datetime.datetime.fromtimestamp(result_timestamp))
         geometry_type: ('old' if normalised else 'new')
-        normalised: (True if snapshot_normalisation else False)
+        normalised: (True if image_normalisation else False)
         solid_and_fluid_sites: block_count*sites_per_block
         fluid_fraction: sites*1.0/solid_and_fluid_sites
         gmy_sites_per_block: gmy_block_size**3

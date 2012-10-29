@@ -32,17 +32,15 @@ namespace hemelb
           void setUp()
           {
             FolderTestFixture::setUp();
-            argc = 9;
+            argc = 7;
             processorCount = 5;
             argv[0] = "hemelb";
             argv[2] = "config.xml";
             argv[1] = "-in";
             argv[3] = "-i";
             argv[4] = "1";
-            argv[5] = "-s";
-            argv[6] = "1";
-            argv[7] = "-ss";
-            argv[8] = "1111";
+            argv[5] = "-ss";
+            argv[6] = "1111";
           }
 
           void tearDown()
@@ -56,7 +54,6 @@ namespace hemelb
             ConstructManager();
             AssertPresent("results");
             AssertPresent("results/Images");
-            AssertPresent("results/Snapshots");
           }
 
           void TestNameInventionLocalConfig()
@@ -71,7 +68,6 @@ namespace hemelb
             ConstructPathConfigManager();
             AssertPresent("results");
             AssertPresent("results/Images");
-            AssertPresent("results/Snapshots");
           }
 
           void TestNameInventionPathConfig()
@@ -100,7 +96,7 @@ namespace hemelb
 
           int argc;
           int processorCount;
-          const char* argv[9];
+          const char* argv[7];
           PathManager *fileManager;
       };
 

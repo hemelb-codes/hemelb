@@ -88,12 +88,6 @@ namespace hemelb
                         boundaries::BoundaryValues* iOutletValues,
                         util::UnitConverter* iUnits);
 
-        /**
-         * This routine writes the flow field on file, using MPIO to coordinate
-         * the writing. The format is detailed in io/formats/snapshot.h
-         */
-        // TODO filename argument should be const, but cannot be due to MPI constness issue #30
-        void WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const;
         void ReadVisParameters();
 
         void CalculateMouseFlowField(const ScreenDensity densityIn,

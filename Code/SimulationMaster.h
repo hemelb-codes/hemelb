@@ -69,12 +69,6 @@ class SimulationMaster
     void RecalculatePropertyRequirements();
 
     /**
-     * True if we are to create a snapshot on this iteration.
-     * @return
-     */
-    bool ShouldWriteSnapshot();
-
-    /**
      * Helper method to log simulation parameters related to stability and accuracy
      */
     void LogStabilityReport();
@@ -87,7 +81,7 @@ class SimulationMaster
     hemelb::reporting::BuildInfo build_info;
     typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    MapType snapshotsCompleted;
+    MapType writtenImagesCompleted;
     MapType networkImagesCompleted;
 
     hemelb::steering::Network* network;
@@ -116,7 +110,6 @@ class SimulationMaster
 
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
 
-    unsigned int snapshotsPerSimulation;
     unsigned int imagesPerSimulation;
     int steeringSessionId;
     unsigned int imagesPeriod;

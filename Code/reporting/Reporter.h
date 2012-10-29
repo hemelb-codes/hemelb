@@ -44,7 +44,6 @@ namespace hemelb
          */
         Reporter(const std::string &path, const std::string &inputFile);
         void Image(); //! Inform the reporter that an image has been saved.
-        void Snapshot(); //! Inform the reporter that a simulation snapshot has been taken.
 
         void AddReportable(Reportable* reportable);
 
@@ -70,7 +69,6 @@ namespace hemelb
         const std::string &path;
         void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
         bool doIo; //! Is this the processor which should write the report.
-        unsigned int snapshotCount; //! Number of snapshots taken.
         unsigned int imageCount; //! Number of images written.
         bool stability; //! Stability of the simulation.
         ctemplate::TemplateDictionary dictionary;

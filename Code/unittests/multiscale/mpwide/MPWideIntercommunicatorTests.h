@@ -68,17 +68,15 @@ namespace hemelb
             void testMPWideApplication()
             {
               int argc;
-              const char* argv[9];
-              argc = 9;
+              const char* argv[7];
+              argc = 7;
               argv[0] = "hemelb";
               argv[2] = "four_cube_multiscale.xml";
               argv[1] = "-in";
               argv[3] = "-i";
               argv[4] = "1";
-              argv[5] = "-s";
-              argv[6] = "1";
-              argv[7] = "-ss";
-              argv[8] = "1111";
+              argv[5] = "-ss";
+              argv[6] = "1111";
 
               FolderTestFixture::setUp();
               CopyResourceToTempdir("four_cube_multiscale.xml");

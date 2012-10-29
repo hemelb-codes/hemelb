@@ -34,16 +34,14 @@ namespace hemelb
         void setUp()
         {
           configFile = Resource("four_cube.xml").Path();
-          argc = 9;
+          argc = 7;
           argv[0] = "hemelb";
           argv[2] = configFile.c_str();
           argv[1] = "-in";
           argv[3] = "-i";
           argv[4] = "1";
-          argv[5] = "-s";
-          argv[6] = "1";
-          argv[7] = "-ss";
-          argv[8] = "1111";
+          argv[5] = "-ss";
+          argv[6] = "1111";
           FolderTestFixture::setUp();
           options = new hemelb::configuration::CommandLine(argc, argv);
         }
@@ -63,7 +61,7 @@ namespace hemelb
         int argc;
         std::string configFile;
         hemelb::configuration::CommandLine *options;
-        const char* argv[9];
+        const char* argv[7];
 
     };
     CPPUNIT_TEST_SUITE_REGISTRATION(CommandLineTests);
