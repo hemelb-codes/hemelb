@@ -294,11 +294,11 @@ namespace hemelb
           // This is done by checking if a path is specified
           std::string PFilePath;
           std::string MultiscaleLabel;
-          DoIOForString(GetChild(GetChild(parent, childNodeName, isLoading), "pressure", isLoading),
+          DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
                         "path",
                         isLoading,
                         PFilePath);
-          DoIOForString(GetChild(GetChild(parent, childNodeName, isLoading), "pressure", isLoading),
+          DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
                         "label",
                         isLoading,
                         MultiscaleLabel);
@@ -319,7 +319,7 @@ namespace hemelb
             newIolet = new lb::boundaries::iolets::InOutLetCosine();
           }
 
-          newIolet->DoIO(GetChild(parent, childNodeName, isLoading), isLoading, this);
+          newIolet->DoIO(currentIoletNode, isLoading, this);
           bResult.push_back(newIolet);
           currentIoletNode = currentIoletNode->NextSiblingElement(childNodeName);
         }
