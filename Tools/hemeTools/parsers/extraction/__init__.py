@@ -120,8 +120,6 @@ class ExtractedPropertyV4Parser(object):
                                ('position', None, np.float32, (3,), None)])
         self._dataOffset = [0]
 
-        print self._fieldCount, 'fields'
-
         for iField in xrange(self._fieldCount):
             name = decoder.unpack_string()
             length = decoder.unpack_uint()
