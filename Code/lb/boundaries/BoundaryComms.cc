@@ -19,11 +19,11 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryComms::BoundaryComms(SimulationState* iSimState,
-                                   std::vector<int> &iProcsList,
-                                   bool iHasBoundary) :
-        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
+      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary) :
+          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
       {
+        /* iProcsList contains the procs containing said Boundary/iolet, but NOT proc 0 (the BoundaryControlling/BC proc)! */
+
         // Only BC proc sends
         if (BoundaryValues::IsCurrentProcTheBCProc())
         {
@@ -99,6 +99,48 @@ namespace hemelb
                     MPI_COMM_WORLD,
                     &receiveRequest);
         }
+      }
+
+      void BoundaryComms::SendDoubles(double* double_array, int size)
+      {
+        for (int proc = 0; proc < nProcs; proc++)
+        {
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("SendDoubles() to rank = %i, double array is %e %e %e, size %i",
+                                                                               procsList[proc],
+                                                                               double_array[0],
+                                                                               double_array[1],
+                                                                               double_array[2],
+                                                                               size);
+          MPI_Isend(double_array, size, MPI_DOUBLE, procsList[proc], 101, MPI_COMM_WORLD, &sendRequest[proc]);
+
+        }
+        MPI_Waitall(nProcs, sendRequest, sendStatus);
+      }
+
+      void BoundaryComms::ReceiveDoubles(double* double_array, int size)
+      {
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("RecvDoubles() bcprocrank = %i, double array is %e %e %e",
+                                                                             BoundaryValues::GetBCProcRank(),
+                                                                             double_array[0],
+                                                                             double_array[1],
+                                                                             double_array[2]);
+
+        MPI_Irecv(double_array,
+                               size,
+                               MPI_DOUBLE,
+                               BoundaryValues::GetBCProcRank(),
+                               101,
+                               MPI_COMM_WORLD,
+                               &receiveRequest);
+
+
+        MPI_Wait(&receiveRequest, &receiveStatus);
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("After recv: bcprocrank = %i, double array is %e %e %e",
+                                                                                     BoundaryValues::GetBCProcRank(),
+                                                                                     double_array[0],
+                                                                                     double_array[1],
+                                                                                     double_array[2]);
+        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("End of ReceiveDoubles()");
       }
 
       void BoundaryComms::FinishSend()
