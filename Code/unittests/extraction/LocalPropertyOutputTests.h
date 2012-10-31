@@ -16,6 +16,7 @@
 #include <cppunit/TestFixture.h>
 
 #include "io/formats/extraction.h"
+#include "io/writers/xdr/XdrMemReader.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/OutputField.h"
 #include "extraction/WholeGeometrySelector.h"
@@ -37,6 +38,8 @@ namespace hemelb
         public:
           void setUp()
           {
+            epsilon = 1e-6;
+
             simpleOutFile.filename = tempOutFileName;
             // The code won't overwrite any existing file
             std::remove(tempOutFileName);
@@ -108,8 +111,7 @@ namespace hemelb
             // Assert that the file is there
             CPPUNIT_ASSERT(writtenFile != NULL);
 
-            // Read the main header
-
+            // Read the main header.
             size_t nRead = std::fread(writtenMainHeader,
                                       1,
                                       hemelb::io::formats::extraction::MainHeaderLength,
@@ -138,7 +140,7 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(expectedMainHeader[i], writtenMainHeader[i]);
             }
 
-            // Read the field header
+            // Read the field header.
             nRead = std::fread(writtenFieldHeader, 1, fieldHeaderLength, writtenFile);
 
             // Check we read enough
@@ -167,21 +169,91 @@ namespace hemelb
             simpleDataSource->FillFields();
             // Write it
             propertyWriter->Write(0);
+
+            CheckDataWriting(simpleDataSource, 0, writtenFile);
+
             // Get some new data
             simpleDataSource->FillFields();
             // This should NOT write
             propertyWriter->Write(10);
             // This SHOULD write
             propertyWriter->Write(100);
-
-            // TODO: Check this data is correct!
+            CheckDataWriting(simpleDataSource, 100, writtenFile);
           }
 
         private:
+          void CheckDataWriting(DummyDataSource* datasource, unsigned long timestep, FILE* file)
+          {
+            // The file should have an entry for each lattice point, consisting
+            // of 3D grid coords, pressure (with an offset of 80) and 3D velocity.
+            // This gives 3*4 + 4 + 3*4 = 28 bytes per site.
+            long siteCount = 0;
+            datasource->Reset();
+            while (datasource->ReadNext())
+            {
+              ++siteCount;
+            }
+
+            // We also have the iteration number, a long
+            size_t expectedSize = 8 + 28 * siteCount;
+
+            // Attempt to read one extra byte, to make sure we aren't under-reading
+            char* contentsBuffer = new char[expectedSize];
+            size_t nRead = std::fread(contentsBuffer, 1, expectedSize + 1, writtenFile);
+
+            CPPUNIT_ASSERT_EQUAL(expectedSize, nRead);
+
+            // Create an XDR buffer reader to process the file for comparison
+            io::writers::xdr::XdrMemReader reader(contentsBuffer, expectedSize);
+
+            // The timestep should be correct
+            unsigned long readTimestep;
+            reader.readUnsignedLong(readTimestep);
+
+            CPPUNIT_ASSERT_EQUAL(timestep, readTimestep);
+
+            // Now iterate over the sites.
+            datasource->Reset();
+            while (datasource->ReadNext())
+            {
+              // Read the grid, which should be the same
+              LatticeVector grid = datasource->GetPosition();
+              unsigned x, y, z;
+              reader.readUnsignedInt(x);
+              reader.readUnsignedInt(y);
+              reader.readUnsignedInt(z);
+
+              CPPUNIT_ASSERT_EQUAL((unsigned) grid.x, x);
+              CPPUNIT_ASSERT_EQUAL((unsigned) grid.y, y);
+              CPPUNIT_ASSERT_EQUAL((unsigned) grid.z, z);
+
+              // Read the pressure, which should be an offset of the
+              // reference pressure away.
+              float pressure;
+              reader.readFloat(pressure);
+
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(), (REFERENCE_PRESSURE_mmHg + (double) pressure), epsilon);
+
+              // Read the velocity and compare
+              PhysicalVelocity velocity = datasource->GetVelocity();
+              float vx, vy, vz;
+              reader.readFloat(vx);
+              reader.readFloat(vy);
+              reader.readFloat(vz);
+
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(velocity.x, (double) vx, epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(velocity.y, (double) vy, epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(velocity.z, (double) vz, epsilon);
+            }
+
+            delete[] contentsBuffer;
+          }
+
           hemelb::extraction::PropertyOutputFile simpleOutFile;
           DummyDataSource* simpleDataSource;
 
           hemelb::extraction::LocalPropertyOutput* propertyWriter;
+          double epsilon;
           FILE* writtenFile;
           char* writtenMainHeader;
           size_t fieldHeaderLength;
