@@ -195,15 +195,18 @@ void SimulationMaster::Initialise()
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
   hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
 
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
-  colloidController = new hemelb::colloids::ColloidController(*latticeData,
-                                                              *simulationState,
-                                                              readGeometryData,
-                                                              xml,
-                                                              propertyCache,
-                                                              fileManager->GetColloidPath(),
-                                                              timings);
-  timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
+  if (simConfig->HasColloidSection())
+  {
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
+    colloidController = new hemelb::colloids::ColloidController(*latticeData,
+                                                                *simulationState,
+                                                                readGeometryData,
+                                                                xml,
+                                                                propertyCache,
+                                                                fileManager->GetColloidPath(),
+                                                                timings);
+    timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
+  }
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -300,7 +303,10 @@ void SimulationMaster::Initialise()
   stepManager = new hemelb::net::phased::StepManager(2, &timings, hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
-  stepManager->RegisterIteratedActorSteps(*colloidController, 1);
+  if (colloidController != NULL)
+  {
+    stepManager->RegisterIteratedActorSteps(*colloidController, 1);
+  }
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
 
   stepManager->RegisterIteratedActorSteps(*inletValues, 1);
@@ -520,7 +526,7 @@ void SimulationMaster::DoTimeStep()
     return;
   }
 
-  if (simulationState->GetTimeStep() % 500 == 0)
+  if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != NULL)
     colloidController->OutputInformation(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
