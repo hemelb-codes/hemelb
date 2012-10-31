@@ -30,7 +30,7 @@ namespace hemelb
           NDM = manager;
           latticeData = latDat;
 
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("InitialiseNeighbouringSites: invBList size = %i",
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("InitialiseNeighbouringSites: invBList size = %i",
                                                                                invBList.size());
 
           sitesWhichNeighbourThisBoundary = invBList;
@@ -50,7 +50,9 @@ namespace hemelb
                 && neighbourSiteHomeProc != topology::NetworkTopology::Instance()->GetLocalRank())
             {
               //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Site Needed (InitialiseNeighbouringSites)");
-              manager->RegisterNeededSite(*site_iterator, geometry::neighbouring::RequiredSiteInformation(true));
+
+              /* Derek: Temporarily commented out for IFocus paper. This does not work yet beyond 5 procs in multiscale! */
+              //manager->RegisterNeededSite(*site_iterator, geometry::neighbouring::RequiredSiteInformation(true));
             }
           }
         }

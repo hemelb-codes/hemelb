@@ -47,17 +47,17 @@ namespace hemelb
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
           // on the BC task we can create the comms
 
-          /* TODO: MODIFIED BY DEREK: MAKE ALL IOLETS AVAILABLE ON ALL PROCS! */
-          //if (isIOletOnThisProc || IsCurrentProcTheBCProc())
-          //{
+          /* TODO: MODIFIED BY DEREK: MAKE ALL IOLETS REQUIRE COMMS! */
+          if (isIOletOnThisProc || IsCurrentProcTheBCProc())
+          {
             localIoletCount++;
 
             localIoletIDs.push_back(ioletIndex);
-            if (iolet->IsCommsRequired())
-            {
+            //if (iolet->IsCommsRequired())
+            //{
               iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
-            }
-          //}
+            //}
+          }
         }
 
         // Send out initial values
@@ -150,8 +150,10 @@ namespace hemelb
 
       void BoundaryValues::RequestComms()
       {
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Requesting Comms in BoundaryValues");
         for (int i = 0; i < localIoletCount; i++)
         {
+          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Req. Comms: %i",i);
           HandleComms(GetLocalIolet(i));
         }
       }
@@ -161,6 +163,7 @@ namespace hemelb
 
         if (iolet->IsCommsRequired())
         {
+          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Actually DoComms-ing now.");
           iolet->DoComms(IsCurrentProcTheBCProc(),state->GetTimeStep());
         }
 
