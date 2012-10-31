@@ -101,9 +101,13 @@ namespace hemelb
          */
         std::vector<char> buffer;
         /**
-         * Path to write to
+         * Path to write to.
          */
         const std::string& path;
+        /**
+         * MPI File handle to write with
+         */
+        MPI_File file;
     };
   }
 }
