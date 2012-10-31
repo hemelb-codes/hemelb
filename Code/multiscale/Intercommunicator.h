@@ -86,6 +86,7 @@ namespace hemelb
                                       const std::string &label)
         {
           registeredObjects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
+
         }
 
 
