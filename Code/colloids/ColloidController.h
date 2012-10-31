@@ -35,6 +35,7 @@ namespace hemelb
                           const geometry::Geometry& gmyResult,
                           io::xml::XmlAbstractionLayer& xml,
                           lb::MacroscopicPropertyCache& propertyCache,
+                          const std::string& outputPath,
                           reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */
