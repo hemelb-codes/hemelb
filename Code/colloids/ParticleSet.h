@@ -31,7 +31,8 @@ namespace hemelb
         ParticleSet(const geometry::LatticeData& latDatLBM,
                     io::xml::XmlAbstractionLayer& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
-                    std::vector<proc_t>& neighbourProcessors);
+                    std::vector<proc_t>& neighbourProcessors,
+                    const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
         ~ParticleSet();
@@ -95,6 +96,10 @@ namespace hemelb
 
         /** abstracts communication via MPI */
         net::Net net;
+        /**
+         * Path to write to
+         */
+        const std::string& path;
     };
   }
 }
