@@ -26,7 +26,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig() :
-        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), warmUpSteps(0)
+        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), warmUpSteps(0), hasColloidSection(false)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -100,6 +100,11 @@ namespace hemelb
       if (geometryElement != NULL)
       {
         DoIOForString(GetChild(geometryElement, "datafile", isLoading), "path", isLoading, dataFilePath);
+      }
+
+      if (GetChild(topNode, "colloids", true) != NULL)
+      {
+        hasColloidSection = true;
       }
 
       DoIOForInOutlets(GetChild(topNode, "inlets", isLoading), isLoading, inlets, "inlet");
@@ -635,6 +640,11 @@ namespace hemelb
         parent->LinkEndChild(newChild);
         return newChild;
       }
+    }
+
+    bool SimConfig::HasColloidSection() const
+    {
+      return hasColloidSection;
     }
   }
 }

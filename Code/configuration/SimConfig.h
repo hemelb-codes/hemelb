@@ -108,6 +108,11 @@ namespace hemelb
         {
           return colloidConfigPath;
         }
+        /**
+         * True if the XML file has a section specifying colloids.
+         * @return
+         */
+        bool HasColloidSection() const;
 
       protected:
         SimConfig();
@@ -140,6 +145,7 @@ namespace hemelb
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
         void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::boundaries::iolets::InOutLet* const value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
+
         const double LEGACY_PULSATILE_PERIOD;
         std::string dataFilePath;
 
@@ -153,6 +159,10 @@ namespace hemelb
         lb::StressTypes stressType;
         std::vector<extraction::PropertyOutputFile*> propertyOutputs;
         std::string colloidConfigPath;
+        /**
+         * True if the file has a colloids section.
+         */
+        bool hasColloidSection;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
