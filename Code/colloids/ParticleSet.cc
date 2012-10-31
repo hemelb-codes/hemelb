@@ -27,6 +27,26 @@ namespace hemelb
                              const std::string& outputPath) :
         localRank(topology::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
     {
+      /**
+       * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
+       */
+      MPI_File_open(MPI_COMM_WORLD,
+                    const_cast<char*>(path.c_str()),
+                    MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                    MPI_INFO_NULL,
+                    &file);
+
+      if (localRank == 0)
+      {
+        // Write out the header information from core 0
+        buffer.resize(io::formats::colloids::MagicLength);
+        io::writers::xdr::XdrMemWriter writer(&buffer[0], io::formats::colloids::MagicLength);
+        writer << (uint32_t) io::formats::HemeLbMagicNumber;
+        writer << (uint32_t) io::formats::colloids::MagicNumber;
+        writer << (uint32_t) io::formats::colloids::VersionNumber;
+        MPI_File_write(file, &buffer.front(), io::formats::colloids::MagicLength, MPI_CHAR, MPI_STATUS_IGNORE);
+      }
+
       // add an element into scanMap for each neighbour rank with zero for both counts
       // sorting the list of neighbours allows the position in the map to be predicted
       // & giving the correct position in the map makes insertion significantly faster
@@ -60,13 +80,14 @@ namespace hemelb
 
     ParticleSet::~ParticleSet()
     {
+      MPI_File_close(&file);
       particles.clear();
     }
 
     const void ParticleSet::OutputInformation(const LatticeTime timestep)
     {
       const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
-          + io::formats::colloids::HeaderLength + io::formats::colloids::MagicLength;
+          + io::formats::colloids::HeaderLength;
       if (buffer.size() < maxSize)
       {
         buffer.resize(maxSize);
@@ -85,14 +106,6 @@ namespace hemelb
       }
       const unsigned int count = writer.getCurrentStreamPosition();
 
-      // use MPI-IO to write the buffer to colloid output file
-      MPI_File fh;
-      MPI_File_open(MPI_COMM_WORLD,
-                    const_cast<char*>(path.c_str()),
-                    MPI_MODE_APPEND | MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                    MPI_INFO_NULL,
-                    &fh);
-
       // work-around: the shared file pointer may not be set correctly
       //              on all ranks immediately after opening the file,
       //              or indeed after any shared/collective operation.
@@ -100,85 +113,73 @@ namespace hemelb
       //              using MPICH2-1.4.1p1 on 64bit linux 2.6.18 SL5.0
       //              Issuing "sync;barrier;sync" enforces consistency
 
-      MPI_File_sync(fh);
+      MPI_File_seek_shared(file, 0, MPI_SEEK_END);
+
+      MPI_File_sync (file);
       MPI_Barrier (MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       MPI_Offset offsetEOF;
-      MPI_File_get_position_shared(fh, &offsetEOF);
+      MPI_File_get_position_shared(file, &offsetEOF);
 
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       MPI_Offset dispStartOfHeader;
-      MPI_File_get_byte_offset(fh, offsetEOF, &dispStartOfHeader);
+      MPI_File_get_byte_offset(file, offsetEOF, &dispStartOfHeader);
 
       unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
-      if (dispStartOfHeader == 0)
-      {
-        // the header starts at the begining of a new file, so we
-        // write the magic numbers that identify the type of file
-        sizeOfHeader += io::formats::colloids::MagicLength;
-      }
 
       log::Logger::Log<log::Debug, log::OnePerCore>("dispStartOfHeader: %i (from offsetEOF: %i)\n",
                                                     dispStartOfHeader,
                                                     offsetEOF);
 
-      MPI_File_set_view(fh, dispStartOfHeader + sizeOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
+      MPI_File_set_view(file, dispStartOfHeader + sizeOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("SetView for data - disp: %i\n", dispStartOfHeader + sizeOfHeader);
 
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       // collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
-      MPI_File_write_ordered(fh, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE);
+      MPI_File_write_ordered(file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE);
 
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
       // (should be true for all ranks but) we only need it for rank 0
-      MPI_File_get_position_shared(fh, &offsetEOF);
+      MPI_File_get_position_shared(file, &offsetEOF);
 
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       // only rank 0 uses this view but this is a collective operation
-      MPI_File_set_view(fh, dispStartOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
+      MPI_File_set_view(file, dispStartOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("dispStartOfHeader: %i (new offsetEOF: %i)\n",
                                                     dispStartOfHeader,
                                                     offsetEOF);
 
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
       MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(fh);
+      MPI_File_sync(file);
 
       if (localRank == 0)
       {
-        if (dispStartOfHeader == 0)
-        {
-          writer << (uint32_t) io::formats::HemeLbMagicNumber;
-          writer << (uint32_t) io::formats::colloids::MagicNumber;
-          writer << (uint32_t) io::formats::colloids::VersionNumber;
-        }
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
         writer << (uint64_t) offsetEOF;
         writer << (uint64_t) timestep;
-        MPI_File_write(fh, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
+        MPI_File_write(file, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
       }
-
-      MPI_File_close(&fh);
 
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
