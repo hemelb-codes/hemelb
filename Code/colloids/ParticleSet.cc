@@ -47,6 +47,8 @@ namespace hemelb
         MPI_File_write(file, &buffer.front(), io::formats::colloids::MagicLength, MPI_CHAR, MPI_STATUS_IGNORE);
       }
 
+      MPI_File_seek_shared(file, 0, MPI_SEEK_END);
+
       // add an element into scanMap for each neighbour rank with zero for both counts
       // sorting the list of neighbours allows the position in the map to be predicted
       // & giving the correct position in the map makes insertion significantly faster
@@ -110,32 +112,17 @@ namespace hemelb
       // And get the number of bytes written.
       const unsigned int count = writer.getCurrentStreamPosition();
 
-      // work-around: the shared file pointer may not be set correctly
-      //              on all ranks immediately after opening the file,
-      //              or indeed after any shared/collective operation.
-      //              In particular this happens on martensite at EPCC
-      //              using MPICH2-1.4.1p1 on 64bit linux 2.6.18 SL5.0
-      //              Issuing "sync;barrier;sync" enforces consistency
+      // Find how far we currently are into the file.
+      MPI_Offset positionBeforeWriting;
+      MPI_File_get_position_shared(file, &positionBeforeWriting);
 
-      MPI_File_seek_shared(file, 0, MPI_SEEK_END);
+      log::Logger::Log<log::Debug, log::OnePerCore>("from offsetEOF: %i\n", positionBeforeWriting);
 
-      MPI_Offset offsetEOF;
-      MPI_File_get_position_shared(file, &offsetEOF);
-
-      MPI_Offset dispStartOfHeader;
-      MPI_File_get_byte_offset(file, offsetEOF, &dispStartOfHeader);
-
+      // Go past the header (which we'll write at the end)
       unsigned int sizeOfHeader = io::formats::colloids::HeaderLength;
+      MPI_File_seek_shared(file, sizeOfHeader, MPI_SEEK_END);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("dispStartOfHeader: %i (from offsetEOF: %i)\n",
-                                                    dispStartOfHeader,
-                                                    offsetEOF);
-
-      MPI_File_set_view(file, dispStartOfHeader + sizeOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("SetView for data - disp: %i\n", dispStartOfHeader + sizeOfHeader);
-
-      // collective write: the effect is as though all writes are done
+      // Collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
       MPI_File_write_ordered(file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE);
@@ -143,22 +130,19 @@ namespace hemelb
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
       // (should be true for all ranks but) we only need it for rank 0
-      MPI_File_get_position_shared(file, &offsetEOF);
+      MPI_Offset positionAferWriting;
+      MPI_File_get_position_shared(file, &positionAferWriting);
 
-      // only rank 0 uses this view but this is a collective operation
-      MPI_File_set_view(file, dispStartOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
+      log::Logger::Log<log::Debug, log::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("dispStartOfHeader: %i (new offsetEOF: %i)\n",
-                                                    dispStartOfHeader,
-                                                    offsetEOF);
-
+      // Now write the header section, only on rank 0.
       if (localRank == 0)
       {
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
-        writer << (uint64_t) offsetEOF;
+        writer << (uint64_t) (positionAferWriting - positionBeforeWriting - io::formats::colloids::HeaderLength);
         writer << (uint64_t) timestep;
-        MPI_File_write(file, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
+        MPI_File_write_at(file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE);
       }
 
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
