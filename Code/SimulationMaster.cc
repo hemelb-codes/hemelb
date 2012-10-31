@@ -201,6 +201,7 @@ void SimulationMaster::Initialise()
                                                               readGeometryData,
                                                               xml,
                                                               propertyCache,
+                                                              fileManager->GetColloidPath(),
                                                               timings);
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 

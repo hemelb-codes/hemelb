@@ -26,6 +26,7 @@ namespace hemelb
 
       imageDirectory = outputDir + "/Images/";
       dataPath = outputDir + "/Extracted/";
+      colloidFile = outputDir + "/ColloidOutput.xdr";
 
       if (doIo)
       {
@@ -52,6 +53,10 @@ namespace hemelb
     const std::string & PathManager::GetImageDirectory() const
     {
       return imageDirectory;
+    }
+    const std::string & PathManager::GetColloidPath() const
+    {
+      return colloidFile;
     }
     const std::string & PathManager::GetReportPath() const
     {
