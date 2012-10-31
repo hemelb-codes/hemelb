@@ -51,7 +51,7 @@ namespace hemelb
             InOutLetVelocityAware(const InOutLetVelocityAware &other) :
                 InOutLetMultiscale(other), NDM(other.NDM), propertyCache(other.propertyCache), sitesWhichNeighbourThisBoundary()
             {
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("On Clone: IoletVA.");
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletVA.");
               /* Add a velocity aware exchange here if needed? */
             }
 

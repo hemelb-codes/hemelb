@@ -89,7 +89,7 @@ namespace hemelb
       {
         if (needsHaveBeenShared == false)
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("NDM needs are shared now.");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
           ShareNeeds();
         }
 
@@ -98,7 +98,7 @@ namespace hemelb
         // But, the needsEachProcHasFromMe is always ordered,
         // by the same order, as the neededSites, so this should be OK.
 
-        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("I NEED: %i", neededSites.size());
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("I NEED: %i", neededSites.size());
 
         for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
@@ -112,7 +112,9 @@ namespace hemelb
         }
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
-          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("OTHER PROC %i NEED: %i", other, needsEachProcHasFromMe[other].size());
+          if(needsEachProcHasFromMe[other].size()>0) {
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("OTHER PROC %i NEED: %i", other, needsEachProcHasFromMe[other].size());
+          }
 
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
@@ -142,6 +144,7 @@ namespace hemelb
           for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end();
               localNeed++)
           {
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Need registered at %i", ProcForSite(*localNeed));
             needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
             countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
 
@@ -166,12 +169,13 @@ namespace hemelb
             // In principle, this bit could have been implemented as a separate GatherV onto every proc
             // However, in practice, we expect the needs to be basically local
             // so using point-to-point will be more efficient.
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("needsIHaveFromEachProc[other].size(): %d", needsIHaveFromEachProc[other].size());
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("needsEachProcHasFromMe[other].size(): %d", needsEachProcHasFromMe[other].size());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsIHaveFromEachProc[other].size(): %d", needsIHaveFromEachProc[other].size());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsEachProcHasFromMe[other].size(): %d", needsEachProcHasFromMe[other].size());
           }
 
           net.Dispatch();
           needsHaveBeenShared = true;
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs have been shared...");
         }
       }
     }

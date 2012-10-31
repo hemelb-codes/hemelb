@@ -34,6 +34,8 @@ namespace hemelb
           // It is up to the caller to make sure only BCproc calls send
           void Send(distribn_t* density);
           void Receive(distribn_t* density);
+          void SendDoubles(double* double_array, int size);
+          void ReceiveDoubles(double* double_array, int size);
           void WaitAllComms();
           void FinishSend();
 

@@ -43,10 +43,10 @@ namespace hemelb
             return velocity;
           }
           void SetPressure(double aPressure){
-            pressure=aPressure;
+            pressure.SetPayload(aPressure);
           }
           void SetVelocity(double aVelocity){
-            velocity=aVelocity;
+            velocity.SetPayload(aVelocity);
           }
         private:
           SharedValue<double> pressure;

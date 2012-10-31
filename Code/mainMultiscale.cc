@@ -49,8 +49,11 @@ int main(int argc, char *argv[])
   hemelb::multiscale::MPWideIntercommunicator intercomms(*sharedValueBuffer,*lbOrchestration);
   //TODO: Add an IntercommunicatorImplementation?
 
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Constructing MultiscaleSimulationMaster()");
   lMaster = new hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator>(options, intercomms);
 
+
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("RunSimulation()");
   lMaster->RunSimulation();
 
   delete sharedValueBuffer;

@@ -89,14 +89,14 @@ namespace hemelb
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.Values().size();
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
                   sharedFieldIndex++)
               {
 
                 Receive(resolver.Fields()[sharedFieldIndex].first,
                         resolver.Fields()[sharedFieldIndex].second,
                         label,
-                        *sharedObject.Values()[sharedFieldIndex]);
+                        *sharedObject.SharedValues()[sharedFieldIndex]);
               }
             }
             return true;
@@ -109,13 +109,13 @@ namespace hemelb
               hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.Values().size();
+              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
                   sharedFieldIndex++)
               {
                 Send(resolver.Fields()[sharedFieldIndex].first,
                      resolver.Fields()[sharedFieldIndex].second,
                      label,
-                     *sharedObject.Values()[sharedFieldIndex]);
+                     *sharedObject.SharedValues()[sharedFieldIndex]);
               }
             }
           }
@@ -129,8 +129,7 @@ namespace hemelb
             if (orchestration[label]) return;
             if (type == RuntimeTypeTraits::GetType<double>())
             {
-              static_cast<hemelb::multiscale::SharedValue<double> &>(value) = doubleContents[label];
-
+              (static_cast<hemelb::multiscale::SharedValue<double> &>(value)).SetPayload(doubleContents[label]);
             }
 
           }
