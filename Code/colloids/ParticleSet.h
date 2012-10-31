@@ -97,6 +97,10 @@ namespace hemelb
         /** abstracts communication via MPI */
         net::Net net;
         /**
+         * Reusable output buffer.
+         */
+        std::vector<char> buffer;
+        /**
          * Path to write to
          */
         const std::string& path;
