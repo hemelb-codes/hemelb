@@ -35,6 +35,7 @@ namespace hemelb
                                          const geometry::Geometry& gmyResult,
                                          io::xml::XmlAbstractionLayer& xml,
                                          lb::MacroscopicPropertyCache& propertyCache,
+                                         const std::string& outputPath,
                                          reporting::Timers& timers) :
       localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
       simulationState(simulationState), timers(timers)
@@ -60,7 +61,7 @@ namespace hemelb
       xml.ResetToTopLevel();
       ok &= xml.MoveToChild("colloids");
       ok &= xml.MoveToChild("particles");
-      particleSet = new ParticleSet(latDatLBM, xml, propertyCache, neighbourProcessors);
+      particleSet = new ParticleSet(latDatLBM, xml, propertyCache, neighbourProcessors, outputPath);
     }
 
     void ColloidController::InitialiseNeighbourList(

@@ -23,10 +23,12 @@ namespace hemelb
     ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
                              io::xml::XmlAbstractionLayer& xml,
                              lb::MacroscopicPropertyCache& propertyCache,
-                             std::vector<proc_t>& neighbourProcessors) :
+                             std::vector<proc_t>& neighbourProcessors,
+                             const std::string& outputPath) :
       localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
       latDatLBM(latDatLBM),
-      propertyCache(propertyCache)
+      propertyCache(propertyCache),
+      path(outputPath)
     {
       // add an element into scanMap for each neighbour rank with zero for both counts
       // sorting the list of neighbours allows the position in the map to be predicted
@@ -65,8 +67,6 @@ namespace hemelb
 
     const void ParticleSet::OutputInformation(const LatticeTime timestep)
     {
-      char * const outputFilenameCstr = "ColloidOutput.xdr\0";
-      
       const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
                                  + io::formats::colloids::HeaderLength
                                  + io::formats::colloids::MagicLength;
@@ -89,7 +89,7 @@ namespace hemelb
       // use MPI-IO to write xdrBuffer to colloid output file
       MPI_File fh;
       MPI_File_open(MPI_COMM_WORLD,
-                    outputFilenameCstr,
+                    const_cast<char*>(path.c_str()),
                     MPI_MODE_APPEND | MPI_MODE_WRONLY | MPI_MODE_CREATE,
                     MPI_INFO_NULL,
                     &fh);

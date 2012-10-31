@@ -57,6 +57,11 @@ namespace hemelb
          */
         const std::string & GetImageDirectory() const;
         /**
+         * Gets the path to the file where colloid output should be written
+         * @return
+         */
+        const std::string & GetColloidPath() const;
+        /**
          * Path to where a run report file should be created.
          * @return Reference to path to where a run report file should be created.
          */
@@ -89,6 +94,7 @@ namespace hemelb
         std::string outputDir;
         std::string inputFile;
         std::string imageDirectory;
+        std::string colloidFile;
         std::string configLeafName;
         std::string reportName;
         std::string dataPath;
