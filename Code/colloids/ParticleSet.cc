@@ -86,6 +86,7 @@ namespace hemelb
 
     const void ParticleSet::OutputInformation(const LatticeTime timestep)
     {
+      // Ensure the buffer is large enough.
       const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
           + io::formats::colloids::HeaderLength;
       if (buffer.size() < maxSize)
@@ -93,6 +94,7 @@ namespace hemelb
         buffer.resize(maxSize);
       }
 
+      // Create an XDR writer and write all the particles for this processor.
       io::writers::xdr::XdrMemWriter writer(&buffer.front(), maxSize);
 
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
@@ -104,6 +106,8 @@ namespace hemelb
           particle.WriteToStream(timestep, * ((io::writers::Writer*) &writer));
         }
       }
+
+      // And get the number of bytes written.
       const unsigned int count = writer.getCurrentStreamPosition();
 
       // work-around: the shared file pointer may not be set correctly
@@ -115,16 +119,8 @@ namespace hemelb
 
       MPI_File_seek_shared(file, 0, MPI_SEEK_END);
 
-      MPI_File_sync (file);
-      MPI_Barrier (MPI_COMM_WORLD);
-      MPI_File_sync(file);
-
       MPI_Offset offsetEOF;
       MPI_File_get_position_shared(file, &offsetEOF);
-
-      MPI_File_sync(file);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(file);
 
       MPI_Offset dispStartOfHeader;
       MPI_File_get_byte_offset(file, offsetEOF, &dispStartOfHeader);
@@ -139,27 +135,15 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("SetView for data - disp: %i\n", dispStartOfHeader + sizeOfHeader);
 
-      MPI_File_sync(file);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(file);
-
       // collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
       MPI_File_write_ordered(file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE);
 
-      MPI_File_sync(file);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(file);
-
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
       // (should be true for all ranks but) we only need it for rank 0
       MPI_File_get_position_shared(file, &offsetEOF);
-
-      MPI_File_sync(file);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(file);
 
       // only rank 0 uses this view but this is a collective operation
       MPI_File_set_view(file, dispStartOfHeader, MPI_CHAR, MPI_CHAR, "native\0", MPI_INFO_NULL);
@@ -167,10 +151,6 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("dispStartOfHeader: %i (new offsetEOF: %i)\n",
                                                     dispStartOfHeader,
                                                     offsetEOF);
-
-      MPI_File_sync(file);
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_File_sync(file);
 
       if (localRank == 0)
       {
