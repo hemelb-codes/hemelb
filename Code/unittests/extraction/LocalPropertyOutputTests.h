@@ -182,7 +182,7 @@ namespace hemelb
           }
 
         private:
-          void CheckDataWriting(DummyDataSource* datasource, unsigned long timestep, FILE* file)
+          void CheckDataWriting(DummyDataSource* datasource, uint64_t timestep, FILE* file)
           {
             // The file should have an entry for each lattice point, consisting
             // of 3D grid coords, pressure (with an offset of 80) and 3D velocity.
@@ -207,7 +207,7 @@ namespace hemelb
             io::writers::xdr::XdrMemReader reader(contentsBuffer, expectedSize);
 
             // The timestep should be correct
-            unsigned long readTimestep;
+            uint64_t readTimestep;
             reader.readUnsignedLong(readTimestep);
 
             CPPUNIT_ASSERT_EQUAL(timestep, readTimestep);
