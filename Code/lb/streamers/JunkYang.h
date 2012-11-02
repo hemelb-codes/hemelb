@@ -65,7 +65,7 @@ namespace hemelb
               assert(latticeData->GetSite(siteIndex).IsEdge());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
 
-              geometry::Site site = latticeData->GetSite(siteIndex);
+              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 
@@ -194,7 +194,7 @@ namespace hemelb
           {
             for (site_t contiguousSiteIndex = 0; contiguousSiteIndex < latticeData.GetLocalFluidSiteCount(); ++contiguousSiteIndex)
             {
-              geometry::ConstSite localSite = latticeData.GetSite(contiguousSiteIndex);
+              geometry::Site<const geometry::LatticeData> localSite = latticeData.GetSite(contiguousSiteIndex);
 
               // Ignore ones that aren't edges;
               //! @todo: We should also be ignoring iolets
@@ -216,7 +216,7 @@ namespace hemelb
            */
           inline void ConstructVelocitySets(site_t contiguousSiteIndex)
           {
-            geometry::ConstSite site = latticeData.GetSite(contiguousSiteIndex);
+            geometry::Site<const geometry::LatticeData> site = latticeData.GetSite(contiguousSiteIndex);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
@@ -244,7 +244,7 @@ namespace hemelb
            */
           inline void AssembleKMatrix(site_t contiguousSiteIndex)
           {
-            geometry::ConstSite site = latticeData.GetSite(contiguousSiteIndex);
+            geometry::Site<const geometry::LatticeData> site = latticeData.GetSite(contiguousSiteIndex);
 
             unsigned incomingVelsSetSize = incomingVelocities[contiguousSiteIndex].size();
 
