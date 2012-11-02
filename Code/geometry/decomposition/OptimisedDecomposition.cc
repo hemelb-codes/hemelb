@@ -27,7 +27,7 @@ namespace hemelb
         timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo), procForEachBlock(procForEachBlock),
             fluidSitesPerBlock(fluidSitesOnEachBlock)
       {
-        timers[hemelb::reporting::Timers::dbg5].Start(); //overall dbg timing
+        timers[hemelb::reporting::Timers::InitialGeometryRead].Start(); //overall dbg timing
 
         // Calculate the site distribution and validate if appropriate.
         PopulateSiteDistribution();
@@ -57,7 +57,7 @@ namespace hemelb
 
         log::Logger::Log<log::Trace, log::OnePerCore>("Adj length %i", localAdjacencies.size());
 
-        timers[hemelb::reporting::Timers::dbg5].Stop();
+        timers[hemelb::reporting::Timers::InitialGeometryRead].Stop();
 
         // Call parmetis.
         timers[hemelb::reporting::Timers::parmetis].Start();
@@ -69,11 +69,11 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
 
         // Convert the ParMetis results into a nice format.
-        timers[hemelb::reporting::Timers::dbg4].Start();
+        timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Start();
         log::Logger::Log<log::Debug, log::OnePerCore>("Getting moves lists for this core.");
         PopulateMovesList();
         log::Logger::Log<log::Debug, log::OnePerCore>("Done getting moves lists for this core");
-        timers[hemelb::reporting::Timers::dbg4].Stop();
+        timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Stop();
       }
 
       void OptimisedDecomposition::CallParmetis(idx_t localVertexCount)
@@ -323,7 +323,6 @@ namespace hemelb
           {
             // ... get its id on the local processor...
             idx_t localFluidSiteId = myLowest + ii;
-            timers[hemelb::reporting::Timers::dbg3].Start();
 
             // ... find out which block it's on, using our lookup map...
 
@@ -361,8 +360,6 @@ namespace hemelb
                                                               firstSiteIndexPerBlock[fluidSiteBlock]);
               }
             }
-
-            timers[hemelb::reporting::Timers::dbg3].Stop();
 
             // ... and find its site id within that block. Start by working out how many fluid sites
             // we have to pass before we arrive at the fluid site we're after...
@@ -732,7 +729,6 @@ namespace hemelb
       void OptimisedDecomposition::PopulateMovesList()
       {
         allMoves = std::vector<idx_t>(comms.GetSize());
-        timers[hemelb::reporting::Timers::dbg1].Start();
 
         // Create a map for looking up block Ids: the map is from the contiguous site index
         // of the last fluid site on the block, to the block id.
@@ -749,10 +745,8 @@ namespace hemelb
         // Right. Let's count how many sites we're going to have to move. Count the local number of
         // sites to be moved, and collect the site id and the destination processor.
         std::vector < idx_t > moveData = CompileMoveData(blockIdLookupByLastSiteIndex);
-        timers[hemelb::reporting::Timers::dbg1].Stop();
         // Spread the move data around
         log::Logger::Log<log::Debug, log::OnePerCore>("Starting to spread move data");
-        timers[hemelb::reporting::Timers::dbg2].Start();
         // First, for each core, gather a list of which blocks the current core wants to
         // know more data about.
         // Handily, the blocks we want to know about are exactly those for which we already
@@ -774,6 +768,7 @@ namespace hemelb
         // We also need to force some data upon blocks, i.e. when they're receiving data from a new
         // block they didn't previously want to know about.
         ForceSomeBlocksOnOtherCores(moveData, blockIdsIRequireFromX);
+
         // Now we want to spread this info around so that each core knows which blocks each other
         // requires from it.
         std::vector<site_t> numberOfBlocksRequiredFrom(comms.GetSize(), 0);
@@ -783,6 +778,7 @@ namespace hemelb
                              blockIdsIRequireFromX,
                              numberOfBlocksXRequiresFromMe,
                              blockIdsXRequiresFromMe);
+
         // OK, now to get on with the actual sending of the data...
         // Except first, it'll be helpful to organise things by blocks.
         std::map<site_t, std::vector<proc_t> > coresInterestedInEachBlock;
@@ -802,8 +798,6 @@ namespace hemelb
                       blockIdsIRequireFromX,
                       blockIdsXRequiresFromMe,
                       moveDataForEachBlock);
-
-        timers[hemelb::reporting::Timers::dbg2].Stop();
       }
 
       bool OptimisedDecomposition::ShouldValidate() const
