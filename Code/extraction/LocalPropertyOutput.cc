@@ -12,7 +12,6 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "io/writers/DoubleOffsetWriter.h"
 #include "topology/NetworkTopology.h"
 
 namespace hemelb
@@ -226,43 +225,44 @@ namespace hemelb
           // Write for each field.
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
-            io::writers::DoubleOffsetWriter<WrittenDataType> offsetWriter(GetOffset(outputSpec->fields[outputNumber].type),
-                                                                          xdrWriter);
-
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                offsetWriter << dataSource.GetPressure();
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetPressure() - REFERENCE_PRESSURE_mmHg);
                 break;
               case OutputField::Velocity:
-                offsetWriter << dataSource.GetVelocity().x << dataSource.GetVelocity().y << dataSource.GetVelocity().z;
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVelocity().x)
+                    << static_cast<WrittenDataType>(dataSource.GetVelocity().y)
+                    << static_cast<WrittenDataType>(dataSource.GetVelocity().z);
                 break;
                 //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                offsetWriter << dataSource.GetVonMisesStress();
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVonMisesStress());
                 break;
               case OutputField::ShearStress:
-                offsetWriter << dataSource.GetShearStress();
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearStress());
                 break;
               case OutputField::ShearRate:
-                offsetWriter << dataSource.GetShearRate();
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearRate());
                 break;
               case OutputField::StressTensor:
               {
                 util::Matrix3D tensor = dataSource.GetStressTensor();
                 // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                offsetWriter << tensor[0][0] << tensor[0][1] << tensor[0][2] << tensor[1][1] << tensor[1][2]
-                    << tensor[2][2];
+                xdrWriter << static_cast<WrittenDataType>(tensor[0][0]) << static_cast<WrittenDataType>(tensor[0][1])
+                    << static_cast<WrittenDataType>(tensor[0][2]) << static_cast<WrittenDataType>(tensor[1][1])
+                    << static_cast<WrittenDataType>(tensor[1][2]) << static_cast<WrittenDataType>(tensor[2][2]);
                 break;
               }
               case OutputField::TractionVector:
-                offsetWriter << dataSource.GetTractionVector().x << dataSource.GetTractionVector().y
-                    << dataSource.GetTractionVector().z;
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTractionVector().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTractionVector().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTractionVector().z);
                 break;
               case OutputField::TangentialProjectionTractionVector:
-                offsetWriter << dataSource.GetTangentialProjectionTractionVector().x
-                    << dataSource.GetTangentialProjectionTractionVector().y
-                    << dataSource.GetTangentialProjectionTractionVector().z;
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().z);
                 break;
 
               default:
