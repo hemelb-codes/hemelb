@@ -22,11 +22,11 @@ namespace hemelb
     {
 
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
-                                      geometry::LatticeData* latticeData,
-                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
-                                      SimulationState* simulationState,
-                                      util::UnitConverter* units):
-          net::IteratedAction(),totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState),  unitConverter(units)
+                                     geometry::LatticeData* latticeData,
+                                     const std::vector<iolets::InOutLet*> &incoming_iolets,
+                                     SimulationState* simulationState,
+                                     util::UnitConverter* units) :
+          net::IteratedAction(), totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState), unitConverter(units)
       {
 
         std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
@@ -69,17 +69,19 @@ namespace hemelb
       BoundaryValues::~BoundaryValues()
       {
 
-        for (int i = 0; i <totalIoletCount; i++)
+        for (int i = 0; i < totalIoletCount; i++)
         {
           delete iolets[i];
         }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId)
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType,
+                                             geometry::LatticeData* latticeData,
+                                             int boundaryId)
       {
         for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
-          const geometry::Site site = latticeData->GetSite(i);
+          const geometry::Site<geometry::LatticeData> site = latticeData->GetSite(i);
 
           if (site.GetSiteType() == ioletType && site.GetBoundaryId() == boundaryId)
           {
@@ -157,7 +159,7 @@ namespace hemelb
 
         if (iolet->IsCommsRequired())
         {
-          iolet->DoComms(IsCurrentProcTheBCProc(),state->GetTimeStep());
+          iolet->DoComms(IsCurrentProcTheBCProc(), state->GetTimeStep());
         }
 
       }

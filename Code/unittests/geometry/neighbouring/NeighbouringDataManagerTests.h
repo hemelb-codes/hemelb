@@ -134,7 +134,7 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
-              Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              Site<LatticeData> exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
               // We should send/receive the site data
@@ -189,7 +189,7 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
-              Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              Site<LatticeData> exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
               netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
@@ -235,7 +235,7 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
-              Site exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              Site<LatticeData> exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
               netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),

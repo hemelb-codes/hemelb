@@ -45,7 +45,7 @@ namespace hemelb
           {
             for (site_t index = firstIndex; index < (firstIndex + siteCount); index++)
             {
-              geometry::Site site = latticeData->GetSite(index);
+              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(index);
 
               const distribn_t* distribution = site.GetFOld<LatticeType> ();
 
@@ -82,7 +82,7 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site site = latticeData->GetSite(siteIndex);
+              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
 
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 

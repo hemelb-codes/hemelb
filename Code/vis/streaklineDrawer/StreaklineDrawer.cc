@@ -145,7 +145,7 @@ namespace hemelb
               continue;
             }
 
-            const geometry::ConstSite site =
+            const geometry::Site<const geometry::LatticeData> site =
                 latDat.GetSite(block.GetLocalContiguousIndexForSite(siteTraverser.GetCurrentIndex()));
 
             // if the lattice site is not an inlet

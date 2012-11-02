@@ -13,7 +13,6 @@
 #include "units.h"
 #include "geometry/SiteData.h"
 #include "util/Vector3D.h"
-#include "util/ConstSelector.h"
 
 namespace hemelb
 {
@@ -21,10 +20,10 @@ namespace hemelb
   {
 
     template<class DataSource>
-    class BaseSite
+    class Site
     {
       public:
-        BaseSite(site_t localContiguousIndex, DataSource &latticeData) :
+        Site(site_t localContiguousIndex, DataSource &latticeData) :
             index(localContiguousIndex), latticeData(latticeData)
         {
         }
@@ -138,11 +137,6 @@ namespace hemelb
         site_t index;
         DataSource & latticeData;
     };
-
-    class LatticeData;
-    typedef BaseSite<LatticeData> Site;
-
-    typedef BaseSite<const LatticeData> ConstSite;
   }
 }
 

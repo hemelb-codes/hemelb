@@ -21,7 +21,7 @@ namespace hemelb
     {
       class NeighbouringLatticeData;
 
-      class NeighbouringSite : public BaseSite<NeighbouringLatticeData>
+      class NeighbouringSite : public Site<NeighbouringLatticeData>
       {
         public:
           /**
@@ -30,7 +30,7 @@ namespace hemelb
            * @param latticeData
            */
           NeighbouringSite(site_t localContiguousIndex, NeighbouringLatticeData& latticeData) :
-            BaseSite<NeighbouringLatticeData> (localContiguousIndex, latticeData)
+              Site<NeighbouringLatticeData>(localContiguousIndex, latticeData)
           {
           }
 
@@ -48,7 +48,7 @@ namespace hemelb
 
       };
 
-      class ConstNeighbouringSite : public BaseSite<const NeighbouringLatticeData>
+      class ConstNeighbouringSite : public Site<const NeighbouringLatticeData>
       {
         public:
           /**
@@ -57,7 +57,7 @@ namespace hemelb
            * @param latticeData
            */
           ConstNeighbouringSite(site_t localContiguousIndex, const NeighbouringLatticeData& latticeData) :
-            BaseSite<const NeighbouringLatticeData> (localContiguousIndex, latticeData)
+              Site<const NeighbouringLatticeData>(localContiguousIndex, latticeData)
           {
           }
       };
