@@ -47,34 +47,6 @@ namespace hemelb
       return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * latticeSpeed * latticeSpeed / mmHg_TO_PASCAL;
     }
 
-    LatticeSpeed UnitConverter::ConvertSpeedToLatticeUnits(PhysicalSpeed speed) const
-    {
-      return speed / latticeSpeed;
-    }
-
-    LatticeStress UnitConverter::ConvertStressToLatticeUnits(PhysicalStress stress) const
-    {
-      return stress / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
-    }
-
-    PhysicalStress UnitConverter::ConvertStressToPhysicalUnits(PhysicalStress stress) const
-    {
-      // convert stress from lattice units to physical units (Pa)
-      return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
-      // stress=Force per unit area=mass * length / time^2 / length^2=mass / length * time^2
-      // = mass * (length/time)^2 / length^3
-    }
-
-    util::Matrix3D UnitConverter::ConvertStressToPhysicalUnits(const util::Matrix3D& stress) const
-    {
-      return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
-    }
-
-    util::Vector3D<PhysicalStress> UnitConverter::ConvertStressToPhysicalUnits(const util::Vector3D<LatticeStress>& stress) const
-    {
-      return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
-    }
-
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
     {
       return shearRate / simulationState->GetTimeStepLength();
