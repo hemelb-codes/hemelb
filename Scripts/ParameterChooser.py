@@ -84,7 +84,9 @@ class ParameterPlay(object):
         frame = wx.Frame(None, -1, self.title)
         self.frame = frame
 
-        self.master_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.master_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.all_fields_sizer = wx.BoxSizer(wx.VERTICAL)
 
         # Create components for the physical quantities
         self.mu_label = wx.StaticText(frame, label=u'\u03bc')
@@ -114,7 +116,7 @@ class ParameterPlay(object):
         self.phys_grid.Add(self.rho_textbox, pos=(2,1))
         self.phys_grid.Add(self.rho_latt, pos=(2,2))
 
-        self.master_sizer.Add(self.phys_grid)
+        self.all_fields_sizer.Add(self.phys_grid)
 
         # Create components for the flow, rather than the fluid
         self.deltaP_label = wx.StaticText(frame, label=u'\u0394 P')
@@ -135,7 +137,7 @@ class ParameterPlay(object):
         self.flow_grid.Add(self.UMax_textbox, pos=(1,1))
         self.flow_grid.Add(self.UMax_latt, pos=(1,2))
 
-        self.master_sizer.Add(self.flow_grid)
+        self.all_fields_sizer.Add(self.flow_grid)
 
         # Create components for the phys / latt translation
         self.deltaX_label = wx.StaticText(frame, label=u'\u0394 x')
@@ -151,7 +153,7 @@ class ParameterPlay(object):
         self.trans_grid.Add(self.deltaT_label, pos=(1,0))
         self.trans_grid.Add(self.deltaT_textbox, pos=(1,1))
 
-        self.master_sizer.Add(self.trans_grid)
+        self.all_fields_sizer.Add(self.trans_grid)
 
         # Create components for the critical values
         self.tau_label = wx.StaticText(frame, label=u'\u03c4')
@@ -174,7 +176,7 @@ class ParameterPlay(object):
         self.computed_grid.Add(self.rho_diff_label, pos=(2,0))
         self.computed_grid.Add(self.rho_diff_text, pos=(2,1)) 
 
-        self.master_sizer.Add(self.computed_grid)
+        self.all_fields_sizer.Add(self.computed_grid)
 
         # Now we go through and bind all the values
         trans = FloatTranslator()
@@ -197,6 +199,15 @@ class ParameterPlay(object):
         self.controller.BindValue('tau', WxWidgetMapper(self.tau_text, 'Label', wx.EVT_TEXT,translator=trans))
         self.controller.BindValue('Mach_number', WxWidgetMapper(self.Mach_number_text, 'Label', wx.EVT_TEXT,translator=trans))
         self.controller.BindValue('rho_diff', WxWidgetMapper(self.rho_diff_text, 'Label', wx.EVT_TEXT,translator=trans))
+
+        # Add the logo to the left
+        logo = wx.EmptyBitmap( 1, 1 )
+        logo.LoadFile('logo.png', wx.BITMAP_TYPE_ANY)
+        self.logo = wx.StaticBitmap(self.frame, bitmap=logo)       
+        self.master_sizer.Add(self.logo)
+
+        # Add the fields stuff, and tell the frame to use the master sizer
+        self.master_sizer.Add(self.all_fields_sizer)
 
         frame.SetSizer(self.master_sizer)
         self.frame.Show()
