@@ -19,7 +19,7 @@ set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
-option(HEMELB_USE_STREAKLINES "Calculate streakline images" ON)
+option(HEMELB_USE_STREAKLINES "Calculate streakline images" OFF)
 option(HEMELB_USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(HEMELB_USE_BOOST "Use Boost" ON)
 option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
