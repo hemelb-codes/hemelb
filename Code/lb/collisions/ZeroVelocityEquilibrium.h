@@ -35,7 +35,8 @@ namespace hemelb
 
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+                                              const geometry::Site<geometry::LatticeData>& site)
           {
             hydroVars.density = 0.0;
 
@@ -56,7 +57,6 @@ namespace hemelb
               iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
             }
           }
-
 
         private:
           KernelType kernel;

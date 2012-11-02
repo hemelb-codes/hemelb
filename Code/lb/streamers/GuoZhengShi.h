@@ -42,7 +42,7 @@ namespace hemelb
             // Go through every site on the local processor.
             for (site_t localIndex = 0; localIndex < initParams.latDat->GetLocalFluidSiteCount(); ++localIndex)
             {
-              geometry::ConstSite localSite = initParams.latDat->GetSite(localIndex);
+              geometry::Site<const geometry::LatticeData> localSite = initParams.latDat->GetSite(localIndex);
 
               // Ignore ones that aren't edges;
               if (!localSite.IsEdge())
@@ -90,7 +90,7 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              geometry::Site site = latDat->GetSite(siteIndex);
+              geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
               kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
@@ -157,7 +157,7 @@ namespace hemelb
                     if (neighbourProcessor == topology::NetworkTopology::Instance()->GetLocalRank())
                     {
                       // If it's local, get a Site object for it.
-                      geometry::Site nextSiteOut =
+                      geometry::Site<geometry::LatticeData> nextSiteOut =
                           latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
 
                       neighbourFOld = nextSiteOut.GetFOld<LatticeType> ();

@@ -40,7 +40,7 @@ namespace hemelb
     {
       public:
         template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
-        template<class LatticeData> friend class BaseSite; //! Let the inner classes have access to site-related data that's otherwise private.
+        template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
 
@@ -71,9 +71,9 @@ namespace hemelb
          * @param localIndex
          * @return
          */
-        inline Site GetSite(site_t localIndex)
+        inline Site<LatticeData> GetSite(site_t localIndex)
         {
-          return Site(localIndex, *this);
+          return Site<LatticeData>(localIndex, *this);
         }
 
         /**
@@ -81,9 +81,9 @@ namespace hemelb
          * @param localIndex
          * @return
          */
-        inline ConstSite GetSite(site_t localIndex) const
+        inline Site<const LatticeData> GetSite(site_t localIndex) const
         {
-          return ConstSite(localIndex, *this);
+          return Site<const LatticeData>(localIndex, *this);
         }
 
         /**

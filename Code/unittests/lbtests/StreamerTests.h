@@ -82,7 +82,7 @@ namespace hemelb
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
             {
-              geometry::Site streamedSite = latDat->GetSite(streamedToSite);
+              geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
 
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
@@ -139,7 +139,7 @@ namespace hemelb
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
             {
-              const geometry::Site streamedSite = latDat->GetSite(streamedToSite);
+              const geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
 
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
@@ -149,7 +149,7 @@ namespace hemelb
 
                 site_t streamerIndex = streamedSite.GetStreamedIndex<lb::lattices::D3Q15> (oppDirection);
 
-                geometry::Site streamerSite = latDat->GetSite(streamerIndex);
+                geometry::Site<geometry::LatticeData> streamerSite = latDat->GetSite(streamerIndex);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
                 if (streamerIndex >= 0 && streamerIndex < (lb::lattices::D3Q15::NUMVECTORS
@@ -219,7 +219,7 @@ namespace hemelb
                   // If there's a valid index in that direction, use f-interpolation
                   if (awayFromWallIndex >= 0 && awayFromWallIndex < latDat->GetLocalFluidSiteCount())
                   {
-                    const geometry::Site awayFromWallSite = latDat->GetSite(awayFromWallIndex);
+                    const geometry::Site<geometry::LatticeData> awayFromWallSite = latDat->GetSite(awayFromWallIndex);
 
                     // (initialise it to f_old).
                     LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(awayFromWallIndex,
@@ -329,7 +329,7 @@ namespace hemelb
             for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
             {
               site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
-              const geometry::Site streamedSite = latDat->GetSite(streamedToSite);
+              const geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
               for (unsigned int streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -404,7 +404,7 @@ namespace hemelb
 
               // Make some fairly arbitrary choices early on.
               const site_t chosenSite = 0;
-              const geometry::Site& streamer = latDat->GetSite(chosenSite);
+              const geometry::Site<geometry::LatticeData>& streamer = latDat->GetSite(chosenSite);
 
               const Direction chosenUnstreamedDirection = 5;
               const Direction chosenWallDirection = lb::lattices::D3Q15::INVERSEDIRECTIONS[chosenUnstreamedDirection];
@@ -415,7 +415,7 @@ namespace hemelb
               const site_t nextSiteAwayFromWall =
                   streamer.GetStreamedIndex<lb::lattices::D3Q15> (chosenUnstreamedDirection)
                       / lb::lattices::D3Q15::NUMVECTORS;
-              const geometry::Site& nextSiteAway = latDat->GetSite(nextSiteAwayFromWall);
+              const geometry::Site<geometry::LatticeData>& nextSiteAway = latDat->GetSite(nextSiteAwayFromWall);
 
               // Enforce that there's a boundary in the wall direction.
               latDat->SetHasBoundary(chosenSite, chosenWallDirection);
@@ -600,7 +600,7 @@ namespace hemelb
             for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
             {
               site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
-              const geometry::Site streamedSite = latDat->GetSite(streamedToSite);
+              const geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
               for (unsigned int streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -685,7 +685,7 @@ namespace hemelb
               // Make some fairly arbitrary choices early on.
               const site_t chosenSite = 0;
               const int chosenBoundaryId = 0;
-              const geometry::Site& streamer = latDat->GetSite(chosenSite);
+              const geometry::Site<geometry::LatticeData>& streamer = latDat->GetSite(chosenSite);
 
               const Direction chosenUnstreamedDirection = 5;
               const Direction chosenIoletDirection = lb::lattices::D3Q15::INVERSEDIRECTIONS[chosenUnstreamedDirection];
@@ -785,7 +785,7 @@ namespace hemelb
               // Make some fairly arbitrary choices early on.
               const site_t chosenSite = 0;
               const int chosenBoundaryId = 0;
-              const geometry::Site& streamer = latDat->GetSite(chosenSite);
+              const geometry::Site<geometry::LatticeData>& streamer = latDat->GetSite(chosenSite);
 
               const Direction chosenWallDirection = 11;
               const Direction chosenUnstreamedDirection = 5;

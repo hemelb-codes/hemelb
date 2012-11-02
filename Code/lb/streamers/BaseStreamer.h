@@ -81,7 +81,7 @@ namespace hemelb
 
         protected:
           template<bool tDoRayTracing, class LatticeType>
-          inline static void UpdateMinsAndMaxes(const geometry::Site& site,
+          inline static void UpdateMinsAndMaxes(const geometry::Site<geometry::LatticeData>& site,
                                                 const kernels::HydroVarsBase<LatticeType>& hydroVars,
                                                 const LbmParameters* lbmParams,
                                                 lb::MacroscopicPropertyCache& propertyCache)

@@ -10,6 +10,7 @@
 #ifndef HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 #define HEMELB_GEOMETRY_NEIGHBOURING_NEIGHBOURINGDATAMANAGER_H
 
+#include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "net/net.h"
