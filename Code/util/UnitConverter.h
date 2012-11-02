@@ -31,16 +31,37 @@ namespace hemelb
                       PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
-        LatticeSpeed ConvertSpeedToLatticeUnits(PhysicalSpeed speed) const;
-        LatticeStress ConvertStressToLatticeUnits(PhysicalStress stress) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
 
-        //! @todo: #510 It should be possible to have a single ConvertStressToPhysicalUnits method using template metaprogramming. Implementations are identical.
-        PhysicalStress ConvertStressToPhysicalUnits(LatticeStress stress) const;
-        //! @todo: #510 template util::Matrix3D so we can enforce PhysicalStress and LatticeStress
-        util::Matrix3D ConvertStressToPhysicalUnits(const util::Matrix3D& stress) const;
-        util::Vector3D<PhysicalStress> ConvertStressToPhysicalUnits(const util::Vector3D<LatticeStress>& stress) const;
+        /**
+         * Convert stress from physical to lattice units, using any rank of tensor
+         */
+        template<class InputType>
+        InputType ConvertStressToLatticeUnits(InputType stress) const
+        {
+          return stress / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+        }
+
+        /**
+         * Convert stress from lattice to physical units, using any rank of tensor
+         */
+        template<class InputType>
+        InputType ConvertStressToPhysicalUnits(InputType stress) const
+        {
+          return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+        }
+
+        /**
+         * Templated to handle both absolute and directional velocity.
+         * @param velocity
+         * @return
+         */
+        template<class InputType>
+        InputType ConvertVelocityToLatticeUnits(InputType velocity) const
+        {
+          return velocity / latticeSpeed;
+        }
 
         /**
          * Templated to handle both absolute and directional velocity.
@@ -69,7 +90,10 @@ namespace hemelb
 
         bool Convert(std::string units, double& value) const;
 
-        PhysicalPosition GetLatticeOrigin() const { return latticeOrigin; }
+        PhysicalPosition GetLatticeOrigin() const
+        {
+          return latticeOrigin;
+        }
         LatticePosition GetPhysicalOrigin() const
         {
           return LatticePosition() - (latticeOrigin / voxelSize);
