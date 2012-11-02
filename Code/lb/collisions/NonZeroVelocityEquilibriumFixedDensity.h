@@ -20,19 +20,20 @@ namespace hemelb
     namespace collisions
     {
       template<typename KernelType>
-      class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<NonZeroVelocityEquilibriumFixedDensity<
-          KernelType> , KernelType>
+      class NonZeroVelocityEquilibriumFixedDensity : public BaseCollision<
+          NonZeroVelocityEquilibriumFixedDensity<KernelType>, KernelType>
       {
         public:
           typedef KernelType CKernel;
 
           NonZeroVelocityEquilibriumFixedDensity(kernels::InitParams& initParams) :
-            kernel(initParams), boundaryObject(initParams.boundaryObject)
+              kernel(initParams), boundaryObject(initParams.boundaryObject)
           {
 
           }
 
-          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars, const geometry::Site& site)
+          inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
+                                              const geometry::Site<geometry::LatticeData>& site)
           {
             CKernel::LatticeType::CalculateDensityAndMomentum(hydroVars.f,
                                                               hydroVars.density,
@@ -57,7 +58,6 @@ namespace hemelb
               iHydroVars.SetFPostCollision(direction, iHydroVars.GetFEq()[direction]);
             }
           }
-
 
         private:
           KernelType kernel;

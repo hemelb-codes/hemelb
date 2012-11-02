@@ -29,7 +29,7 @@ namespace hemelb
       {
 
         public:
-          friend class BaseSite<NeighbouringLatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
+          friend class Site<NeighbouringLatticeData> ; //! Let the inner classes have access to site-related data that's otherwise private.
 
           NeighbouringLatticeData(const lb::lattices::LatticeInfo& latticeInfo);
           virtual ~NeighbouringLatticeData()

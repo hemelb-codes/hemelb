@@ -113,7 +113,7 @@ namespace hemelb
       if (!isLocalFluid) { return keep; }
 
       const lb::lattices::LatticeInfo latticeInfo = BoundaryConditions::latticeData->GetLatticeInfo();
-      const geometry::ConstSite site = latticeData->GetSite(localContiguousId);
+      const geometry::Site<const geometry::LatticeData> site = latticeData->GetSite(localContiguousId);
       const geometry::SiteData siteData = site.GetSiteData();
       const geometry::SiteType siteType = siteData.GetSiteType();
       const distribn_t* siteWallDistances = site.GetWallDistances();

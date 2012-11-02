@@ -69,7 +69,7 @@ namespace hemelb
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
 
 
-            Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
+            Site<LatticeData> site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
             net.RequestSendR(site.GetSiteData().GetIntersectionData(), other);
             net.RequestSendR(site.GetSiteData().GetOtherRawData(), other);
@@ -108,7 +108,7 @@ namespace hemelb
           {
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
-            Site site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
+            Site<LatticeData> site = const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
             net.RequestSend(const_cast<distribn_t*>(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors())),
                             localLatticeData.GetLatticeInfo().GetNumVectors(),

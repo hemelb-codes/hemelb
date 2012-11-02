@@ -289,7 +289,7 @@ namespace hemelb
           {
             site_t localIndex = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 
-            const geometry::ConstSite site = mLatticeData->GetSite(localIndex);
+            const geometry::Site<const geometry::LatticeData> site = mLatticeData->GetSite(localIndex);
 
             if (site.IsEdge())
             {

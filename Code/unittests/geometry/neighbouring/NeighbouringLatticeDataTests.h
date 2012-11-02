@@ -44,7 +44,7 @@ namespace hemelb
             {
               FourCubeBasedTestFixture::setUp();
               data = &latDat->GetNeighbouringData();
-              exampleSite = new Site(latDat->GetSite(0));
+              exampleSite = new Site<LatticeData>(latDat->GetSite(0));
             }
 
             void tearDown()
@@ -139,7 +139,7 @@ namespace hemelb
 
           private:
             NeighbouringLatticeData *data;
-            Site *exampleSite;
+            Site<LatticeData> *exampleSite;
             site_t dummyId;
         };
         // CPPUNIT USES LINENUMBER TO REGISTER MACRO
