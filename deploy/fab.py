@@ -264,18 +264,17 @@ def fetch_distributions():
 
 @task
 def clone_regression_tests():
-    """Delete and checkout the repository afresh."""
-    # run(template("mkdir -p $regression_test_repo_path"))
+    """Get the latest data from the repo."""
+    run(template("mkdir -p $regression_test_repo_path"))
     if env.no_ssh or env.no_hg:
-        with cd(env.remote_path):
-            run(template("rm -rf $regression_test_repo_path"))
         # Some machines do not allow outgoing connections back to the mercurial server
         # so the data must be sent by a project sync instead.
         execute(sync_regression_tests)
     else:
-        with cd(env.remote_path):
-            run(template("rm -rf $regression_test_repo_path"))
-            run(template("hg clone $hg/$regression_tests_repository $regression_test_repo_path"))
+        with cd(env.regression_test_repo_path):
+            # Pull and update
+            run(template("hg pull $hg/$regression_tests_repository"))
+            run("hg update")
 
 @task
 def copy_regression_tests():
