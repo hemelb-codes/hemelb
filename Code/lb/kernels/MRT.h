@@ -29,7 +29,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-            HydroVarsBase<typename MomentBasis::Lattice> (f)
+              HydroVarsBase<typename MomentBasis::Lattice>(f)
           {
           }
 
@@ -51,13 +51,24 @@ namespace hemelb
        *  (M * M^T)^{-1} and \hat{S} are diagonal matrices.
        */
       template<class MomentBasis>
-      class MRT : public BaseKernel<MRT<MomentBasis> , typename MomentBasis::Lattice>
+      class MRT : public BaseKernel<MRT<MomentBasis>, typename MomentBasis::Lattice>
       {
         public:
 
           MRT(InitParams& initParams)
           {
             InitState(initParams);
+
+            // Pre-compute the reduced moment basis divided by the basis times basis transposed.
+            for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
+            {
+              for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS; momentIndex++)
+              {
+                normalisedReducedMomentBasis[momentIndex][direction] =
+                    MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction]
+                        / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex];
+              }
+            }
           }
 
           inline void DoCalculateDensityMomentumFeq(HydroVars<MRT>& hydroVars, site_t index)
@@ -100,14 +111,13 @@ namespace hemelb
             for (Direction direction = 0; direction < MomentBasis::Lattice::NUMVECTORS; ++direction)
             {
               /** @todo #222 many optimisations possible (and necessary!).
-               *  - Store the product of REDUCED_MOMENT_BASIS and 1/BASIS_TIMES_BASIS_TRANSPOSED instead of REDUCED_MOMENT_BASIS
                *  - Compute the loop below as a matrix product in DoCalculate*, alternatively we could consider reimplementing DoCollide to work with whole arrays (consider libraries boost::ublas or Armadillo)
                */
               distribn_t collision = 0.;
               for (unsigned momentIndex = 0; momentIndex < MomentBasis::NUM_KINETIC_MOMENTS; momentIndex++)
               {
-                collision += (collisionMatrix[momentIndex] / MomentBasis::BASIS_TIMES_BASIS_TRANSPOSED[momentIndex])
-                    * MomentBasis::REDUCED_MOMENT_BASIS[momentIndex][direction] * hydroVars.m_neq[momentIndex];
+                collision += collisionMatrix[momentIndex] * normalisedReducedMomentBasis[momentIndex][direction]
+                    * hydroVars.m_neq[momentIndex];
               }
               hydroVars.SetFPostCollision(direction, hydroVars.f[direction] - collision);
             }
@@ -131,6 +141,8 @@ namespace hemelb
         private:
           /** MRT collision matrix (\hat{S}, diagonal). It corresponds to the inverse of the relaxation time for each mode. */
           std::vector<distribn_t> collisionMatrix;
+
+          double normalisedReducedMomentBasis[MomentBasis::NUM_KINETIC_MOMENTS][MomentBasis::Lattice::NUMVECTORS];
 
           /**
            *  Helper method to set/update member variables. Called from the constructor and Reset()
