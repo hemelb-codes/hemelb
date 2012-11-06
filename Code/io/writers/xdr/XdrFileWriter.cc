@@ -8,7 +8,6 @@
 // 
 
 #include <cstdio>
-#include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 
 namespace hemelb

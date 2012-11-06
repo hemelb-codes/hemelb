@@ -7,7 +7,6 @@
 // specifically made by you with University College London.
 // 
 
-#include "io/writers/xdr/xdr.h"
 #include "io/writers/xdr/XdrWriter.h"
 
 namespace hemelb

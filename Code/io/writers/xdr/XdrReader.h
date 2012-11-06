@@ -10,8 +10,8 @@
 #ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
 #define HEMELB_IO_WRITERS_XDR_XDRREADER_H
 #include <stdint.h>
-
-#include <io/writers/xdr/xdr.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 
 namespace hemelb
 {
