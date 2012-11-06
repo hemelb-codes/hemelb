@@ -140,7 +140,7 @@ def monitor():
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
-        time.sleep(30)
+        time.sleep(60)
         
         
 def check_complete():
