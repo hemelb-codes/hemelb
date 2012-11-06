@@ -273,7 +273,7 @@ def clone_regression_tests():
     else:
         with cd(env.regression_test_repo_path):
             # Pull and update
-            run(template("hg pull $hg/$regression_tests_repository"))
+            run(template("hg pull $hg/$regression_tests_repository || hg clone $hg/$regression_tests_repository ."))
             run("hg update")
 
 @task
