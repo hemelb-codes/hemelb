@@ -167,9 +167,9 @@ namespace hemelb
 
             //TODO: Add an offset table for the ICand data.
 
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
-                                                                                 send_icand_data_size,
-                                                                                 recv_icand_data_size);
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
+                                                                                  send_icand_data_size,
+                                                                                  recv_icand_data_size);
 
             // 2. Allocate exchange buffers. We do this once at initialization,
             //    so that if it goes wrong, the program will crash timely.
@@ -372,8 +372,8 @@ namespace hemelb
           int64_t offset = 0;
 
           /*TODO Remove this debug commenting for value diagnostics. */
-          //if (hemelb::multiscale::mpwide::mpwide_comm_proc)
-          //{
+          if (hemelb::multiscale::mpwide::mpwide_comm_proc)
+          {
             for (ContentsType::iterator icandProperties = registeredIcands.begin();
                 icandProperties != registeredIcands.end(); icandProperties++)
             {
@@ -381,26 +381,40 @@ namespace hemelb
               IntercommunicandTypeT &icandType = *icandProperties->second.first; //type of Icand
               std::string &icandLabel = icandProperties->second.second; //name of Icand
 
-
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s", icandLabel.c_str());
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s",
+                                                                                    icandLabel.c_str());
 
               for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < icandContained.SharedValues().size();
                   sharedFieldIndex++)
               {
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Iterating over shared values %d",
+                                                                                      sharedFieldIndex);
                 std::string &sharedValueLabel = icandType.Fields()[sharedFieldIndex].first;
                 int64_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
+                //RuntimeType pt = (static_cast<hemelb::multiscale::SharedValue>(*(icandContained.SharedValues()[sharedFieldIndex]))).PayloadType;
+
                 void *buf1 = (void *) & (ICandSendDataPacked[offset]);
-                void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
-                //std::cout << "memcpy in PackObj: size = " << size << std::endl;
+                double pl =
+                    (* (static_cast<hemelb::multiscale::SharedValue<double>*>(icandContained.SharedValues()[sharedFieldIndex]))).GetPayload();
+                void *buf2 = (void *) &pl;
+                //void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("memcpy in PackObj: size = %d",
+                                                                                      SharedValueSize);
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("buf1 %f", * ((double*) buf1));
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("buf2 %f", pl);
                 memcpy(buf1, buf2, SharedValueSize);
-                //std::cout << "done." << std::endl;
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done.");
                 offset += SharedValueSize;
 
-                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f", sharedValueLabel.c_str(), sharedFieldIndex, *(static_cast<double*>(buf2)));
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value:");
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%s", sharedValueLabel.c_str());
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%i", sharedFieldIndex);
+                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%f",
+                                                                                      * (static_cast<double*>(buf2)));
                 /* Unable to read out SharedValues directlyin this file, due to the data encapsulation (only BaseSharedValue is exposed here, the SharedValues are in the Iolets). */
               }
             }
-          //}
+          }
 
         }
 
@@ -453,8 +467,9 @@ namespace hemelb
                 {
                   cp = 1;
                 }
-                //std::cout << "Shared value [" << sharedFieldIndex << "] = "
-                //    << static_cast<double*>(buf2)[sharedFieldIndex] << std::endl;
+                hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Shared value [%d] = %f",
+                                                                                     sharedFieldIndex,
+                                                                                     static_cast<double*>(buf2)[sharedFieldIndex]);
               }
             }
           }
@@ -474,7 +489,8 @@ namespace hemelb
             //std::string &label = intercommunicandData->second.second;
             IntercommunicandTypeT &icandType = *intercommunicandData->second.first;
 
-            for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size(); sharedFieldIndex++)
+            for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
+                sharedFieldIndex++)
             {
               size += GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
 
