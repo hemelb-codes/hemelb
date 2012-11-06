@@ -107,6 +107,22 @@ include(CheckCXXSourceCompiles)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return isnan(1.0); }" HAVE_ISNAN)
 CHECK_CXX_SOURCE_COMPILES("#include <cmath>\n int main(int c,char** v){ return std::isnan(1.0); }" HAVE_STD_ISNAN)
 CHECK_CXX_SOURCE_COMPILES("#include <sys/time.h>\n#include <sys/resource.h>\nint main(int c,char** v){ rusage usage;\ngetrusage(RUSAGE_SELF, &usage);\nreturn usage.ru_maxrss; }" HAVE_RUSAGE)
+CHECK_CXX_SOURCE_COMPILES("
+#include <stdint.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+int main(int count, char** v){
+  char buffer[15] = \"aaaaaaaaaaaaa\";
+  XDR xdr;
+  xdrmem_create(&xdr, buffer, 32, XDR_ENCODE);
+  int16_t a;
+  int32_t b;
+  int64_t c;
+  xdr_int16_t(&xdr, &a);
+  xdr_int32_t(&xdr, &b);
+  xdr_int64_t(&xdr, &c);
+  return b;
+}" HAVE_XDRUINTXX_T)
 
 if(HAVE_ISNAN)
   add_definitions(-DHAVE_ISNAN)
@@ -118,6 +134,13 @@ endif()
 
 if(HAVE_RUSAGE)
   add_definitions(-DHAVE_RUSAGE)
+endif()
+
+if(NOT HAVE_XDRUINTXX_T)
+  #Without the standard names for the xdr functions, create aliases for the existing ones.
+  add_definitions(-Dxdr_uint16_t=xdr_u_int16_t)
+  add_definitions(-Dxdr_uint32_t=xdr_u_int32_t)
+  add_definitions(-Dxdr_uint64_t=xdr_u_int64_t)
 endif()
 
 # ------MPI------------------
