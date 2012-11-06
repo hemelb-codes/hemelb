@@ -620,15 +620,15 @@ def load_profile():
     from HemeLbSetupTool.Model.Profile import Profile
     p = Profile()
     p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,env.profile)+'.pro'))
-    p.StlFile=os.path.expanduser(os.path.join(env.job_profile_path_local,env.profile)+'.stl')
     return p
 
 def modify_profile(p):
     #Profiles always get created with 1000 steps and 3 cycles.
     #Can't change it here.
     try:
-        p.VoxelSize=type(p.VoxelSize)(env.VoxelSize) or p.VoxelSize
+        p.VoxelSize=type(p.VoxelSize)((env.VoxelSize) or p.VoxelSize)
         env.VoxelSize=p.VoxelSize
+        env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     except AttributeError:
         # Remain compatible with old setuptool
         p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
@@ -642,6 +642,8 @@ def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
     try:
         env.VoxelSize=float(env.VoxelSize)
     except ValueError:
+        pass
+    except TypeError:
         pass
     env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
     env.Steps=Steps or env.get('Steps')
@@ -660,7 +662,7 @@ def create_config_impl(p):
     p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
     local(template("mkdir -p $job_config_path_local"))
     generate(p)
-
+ 
 @task
 def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
     """Create a config file
