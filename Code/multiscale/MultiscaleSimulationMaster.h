@@ -95,6 +95,8 @@ namespace hemelb
             invertedOutletBoundaryList[i] = dummy;
           }
 
+          bool velocity = false;
+          if(velocity == true) {
           /* Do not include the non-iolet adjacent sites (resp. MidFluid and Wall-adjacent). */
           long long int offset = latticeData->GetMidDomainCollisionCount(0)
               + latticeData->GetMidDomainCollisionCount(1);
@@ -135,7 +137,7 @@ namespace hemelb
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Populated outlets (numoutlets/sizeoutlet0): %i/%i",
                                                                                invertedOutletBoundaryList.size(),
                                                                                invertedOutletBoundaryList[0].size());
-
+          }
           //PrintVectorList(invertedInletBoundaryList);
           //PrintVectorList(invertedOutletBoundaryList);
 
@@ -255,7 +257,12 @@ namespace hemelb
                                                                                    outletValues->GetLocalIolet(i)->GetVelocity());
             }
 
-            SimulationMaster::DoTimeStep();
+            /* Temporary Orchestration hardcode for testing */
+            for(int i=0; i<100; i++) {
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Step: HemeLB advanced to time %f.",
+                                                                                              GetState()->GetTime());
+              SimulationMaster::DoTimeStep();
+            }
 
             //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("HemeLB advanced to time %f.",
             //                                                                    GetState()->GetTime());
