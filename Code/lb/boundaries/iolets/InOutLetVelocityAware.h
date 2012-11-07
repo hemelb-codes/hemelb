@@ -20,8 +20,6 @@ namespace hemelb
 {
   namespace lb
   {
-//    class MacroscopicPropertyCache;
-
     namespace boundaries
     {
       namespace iolets
@@ -40,20 +38,12 @@ namespace hemelb
         class InOutLetVelocityAware : public InOutLetMultiscale
         {
           public:
-            InOutLetVelocityAware() :
-                InOutLetMultiscale(), NDM(NULL), propertyCache(NULL), sitesWhichNeighbourThisBoundary()
-
-            {
-            }
-            /***ss
-             * The shared values are registered through the initialiser-list syntactic sugar.
+            InOutLetVelocityAware();
+            /**
+             * Copy constructor
              */
-            InOutLetVelocityAware(const InOutLetVelocityAware &other) :
-                InOutLetMultiscale(other), NDM(other.NDM), propertyCache(other.propertyCache), sitesWhichNeighbourThisBoundary()
-            {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletVA.");
-              /* Add a velocity aware exchange here if needed? */
-            }
+            InOutLetVelocityAware(const InOutLetVelocityAware &other);
+            virtual ~InOutLetVelocityAware();
 
             void InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
                                              geometry::LatticeData * latDat,
@@ -61,17 +51,8 @@ namespace hemelb
                                              std::vector<site_t> invBList);
 
             PhysicalVelocity GetVelocity() const;
-            virtual ~InOutLetVelocityAware()
-            {
-            }
+            virtual InOutLet* Clone() const;
 
-            //virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
-
-            virtual InOutLet* Clone() const
-            {
-              InOutLetVelocityAware* copy = new InOutLetVelocityAware(*this);
-              return copy;
-            }
           protected:
             geometry::neighbouring::NeighbouringDataManager *NDM;
             hemelb::lb::MacroscopicPropertyCache* propertyCache;
