@@ -328,7 +328,7 @@ namespace hemelb
           FILE *fin = my_fopen(sockets_file, "r");
 
           /* in the sockets_file, nstream indicates the total number of streams. */
-          int d = fscanf(fin, "%d%d", &nstream, &nhost);
+          fscanf(fin, "%d%d", &nstream, &nhost);
 
           /* for n sites, every site has two neighbours, and will establish
            * links with these neighbours. */
@@ -343,7 +343,7 @@ namespace hemelb
 
           for (int j = 0; j < nhost; j++)
           {
-            d = fscanf(fin, "%s%d%d", host, & (base_port[j]), & (nstream_host[j]));
+            fscanf(fin, "%s%d%d", host, & (base_port[j]), & (nstream_host[j]));
             base_host_channel[j] = streamcount_tmp;
             streamcount_tmp += nstream_host[j];
             std::cerr << "host: " << j << ", base channel: " << base_host_channel[j] << ", num_streams: "
@@ -447,14 +447,6 @@ namespace hemelb
 
                 memcpy(buf2, buf1, SharedValueSize);
                 offset += SharedValueSize;
-                /* Temporary diagnostic DEBUG */
-                int cp = 0;
-                if (hemelb::multiscale::mpwide::mpwide_comm_proc)
-                {
-                  cp = 1;
-                }
-                //std::cout << "Shared value [" << sharedFieldIndex << "] = "
-                //    << static_cast<double*>(buf2)[sharedFieldIndex] << std::endl;
               }
             }
           }

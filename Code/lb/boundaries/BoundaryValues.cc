@@ -22,15 +22,12 @@ namespace hemelb
     {
 
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
-                                      geometry::LatticeData* latticeData,
-                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
-                                      SimulationState* simulationState,
-                                      util::UnitConverter* units):
-          net::IteratedAction(),totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState),  unitConverter(units)
+                                     geometry::LatticeData* latticeData,
+                                     const std::vector<iolets::InOutLet*> &incoming_iolets,
+                                     SimulationState* simulationState,
+                                     util::UnitConverter* units) :
+          net::IteratedAction(), totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState), unitConverter(units)
       {
-
-        std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
-
         // Determine which iolets need comms and create them
         for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
@@ -42,45 +39,39 @@ namespace hemelb
           iolets.push_back(iolet);
 
           bool isIOletOnThisProc = IsIOletOnThisProc(ioletType, latticeData, ioletIndex);
-          procsList[ioletIndex] = GatherProcList(isIOletOnThisProc);
+          std::vector<int> procList = GatherProcList(isIOletOnThisProc);
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
           // on the BC task we can create the comms
 
-          /* TODO: MODIFIED BY DEREK: MAKE ALL IOLETS REQUIRE COMMS! */
+          /* TODO: At the moment, all iolets require communication. This will eventually lead to inefficiency
+           * so we should only communicate for iolets that need it. The overhead of this may be very small though. */
           if (isIOletOnThisProc || IsCurrentProcTheBCProc())
           {
             localIoletCount++;
-
             localIoletIDs.push_back(ioletIndex);
-            //if (iolet->IsCommsRequired())
-            //{
-              iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
-            //}
+            iolet->SetComms(new BoundaryComms(state, procList, isIOletOnThisProc));
           }
         }
 
         // Send out initial values
         Reset();
-
-        // Clear up
-        delete[] procsList;
-
       }
 
       BoundaryValues::~BoundaryValues()
       {
-
-        for (int i = 0; i <totalIoletCount; i++)
+        for (int i = 0; i < totalIoletCount; i++)
         {
           delete iolets[i];
         }
       }
 
-      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId)
+      bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType,
+                                             geometry::LatticeData* latticeData,
+                                             int boundaryId)
       {
         //return true; //TODO: resolve this??
-        
+
         for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
           const geometry::Site site = latticeData->GetSite(i);
@@ -153,7 +144,6 @@ namespace hemelb
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Requesting Comms in BoundaryValues");
         for (int i = 0; i < localIoletCount; i++)
         {
-          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Req. Comms: %i",i);
           HandleComms(GetLocalIolet(i));
         }
       }
@@ -163,8 +153,7 @@ namespace hemelb
 
         if (iolet->IsCommsRequired())
         {
-          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Actually DoComms-ing now.");
-          iolet->DoComms(IsCurrentProcTheBCProc(),state->GetTimeStep());
+          iolet->DoComms(IsCurrentProcTheBCProc(), state->GetTimeStep());
         }
 
       }

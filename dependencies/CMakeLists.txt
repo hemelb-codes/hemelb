@@ -57,7 +57,7 @@ if (HEMELB_BUILD_MULTISCALE)
 	    )
 	    if(NOT MPWIDE_TARBALL)
 		    message("No MPWide source found, will download.")
-		    set(MPWIDE_TARBALL http://castle.strw.leidenuniv.nl/~derek/MPWide-1.2.1.tar.gz
+		    set(MPWIDE_TARBALL http://castle.strw.leidenuniv.nl/~derek/MPWide-1.2b.tar.gz
 			    CACHE STRING "Path to download MPWide (can be local file://)" FORCE)
 	    endif()
 	    ExternalProject_Add(
