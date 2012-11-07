@@ -28,30 +28,32 @@ namespace hemelb
         class MPWideIntercommunicatorTests : public FolderTestFixture
         {
             CPPUNIT_TEST_SUITE (MPWideIntercommunicatorTests);
-            //CPPUNIT_TEST (testMPWideApplication);
+            // TODO The below test is v important and is not currently being run.
+            // CPPUNIT_TEST (testMPWideApplication);
+            // CPPUNIT_TEST(testMPWidePresent);
             CPPUNIT_TEST_SUITE_END();
 
           public:
             void setUp()
             {
               pbuffer = new std::map<std::string, double>();
-              std::map<std::string, double> &buffer = *pbuffer;
 
               LBorchestration = new std::map<std::string, bool>();
-              std::map<std::string, bool> &LBorchestrationInstance = *LBorchestration;
-              LBorchestrationInstance["boundary1_pressure"] = false;
-              LBorchestrationInstance["boundary2_pressure"] = false;
-              LBorchestrationInstance["boundary1_velocity"] = true;
-              LBorchestrationInstance["boundary2_velocity"] = true;
+              (*LBorchestration)["boundary1_pressure"] = false;
+              (*LBorchestration)["boundary2_pressure"] = false;
+              (*LBorchestration)["boundary1_velocity"] = true;
+              (*LBorchestration)["boundary2_velocity"] = true;
 
-              mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0, 0.2, buffer, LBorchestrationInstance);
+              mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0, 0.2, *pbuffer, *LBorchestration);
             }
+
             void tearDown()
             {
               delete mockheme;
               delete pbuffer;
               delete LBorchestration;
             }
+
           private:
             InterCommunicatingHemeLB<MPWideIntercommunicator> *mockheme;
             std::map<std::string, double> *pbuffer;
@@ -60,12 +62,13 @@ namespace hemelb
             void testMPWidePresent()
             {
               std::string host = "localhost";
-              std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str())) << std::endl;
+              std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str()))
+                  << std::endl;
               std::cout << "MPWide is present." << std::endl;
             }
             void testMPWideInit()
             {
-
+              // TODO This test needs writing.
             }
             void testMPWideApplication()
             {
@@ -87,22 +90,20 @@ namespace hemelb
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
               MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration);
-              //std::cout << "Spawning HemeLB..." << std::endl;
 
-              MultiscaleSimulationMaster<MPWideIntercommunicator> *heme;
-              heme = new MultiscaleSimulationMaster<MPWideIntercommunicator>(options, intercomms);
+              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
               //std::cout << "HemeLB about to be run..." << std::endl;
-              while (heme->GetState()->GetTime() < 20.0)
+              while (heme.GetState()->GetTime() < 20.0)
               {
-                heme->DoTimeStep();
+                heme.DoTimeStep();
                 //std::cout << "Step taken, going to incrementSharedTime." << std::endl;
                 intercomms.UnitTestIncrementSharedTime(); //simple hack func that mocks a 1.0 increase in the 'other' simulation.
               }
-              heme->Finalise();
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), 20.0, 1e-6);
+              heme.Finalise();
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(heme.GetState()->GetTime(), 20.0, 1e-6);
               //CPPUNIT_ASSERT_DOUBLES_EQUAL(zerod->currentTime, 20.5, 1e-6); // does one more step, where it sets the shared time.
-              delete heme;
+              FolderTestFixture::tearDown();
             }
 
         };
