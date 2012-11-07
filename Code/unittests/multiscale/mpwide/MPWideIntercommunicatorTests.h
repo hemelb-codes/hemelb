@@ -44,7 +44,12 @@ namespace hemelb
               (*LBorchestration)["boundary1_velocity"] = true;
               (*LBorchestration)["boundary2_velocity"] = true;
 
-              mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0, 0.2, *pbuffer, *LBorchestration);
+              std::string configPath = "../../../config_files/MPWSettings.cfg";
+              mockheme = new InterCommunicatingHemeLB<MPWideIntercommunicator>(25.0,
+                                                                               0.2,
+                                                                               *pbuffer,
+                                                                               *LBorchestration,
+                                                                               configPath);
             }
 
             void tearDown()
@@ -89,7 +94,8 @@ namespace hemelb
               CopyResourceToTempdir("four_cube_multiscale.xml");
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
-              MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration);
+              std::string configPath = "../../../config_files/MPWSettings.cfg";
+              MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration, configPath);
 
               MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
