@@ -25,118 +25,103 @@ namespace hemelb
         void InOutLetVelocityAware::InitialiseNeighbouringSites(geometry::neighbouring::NeighbouringDataManager *manager,
                                                                 geometry::LatticeData* latDat,
                                                                 hemelb::lb::MacroscopicPropertyCache* globalPropertyCache,
-                                                                std::vector<site_t> invBList)
+                                                                std::vector<site_t> invertedBoundaryList)
         {
           NDM = manager;
           latticeData = latDat;
 
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("InitialiseNeighbouringSites: invBList size = %i",
-                                                                               invBList.size());
+                                                                                invertedBoundaryList.size());
 
-          sitesWhichNeighbourThisBoundary = invBList;
+          sitesWhichNeighbourThisBoundary = invertedBoundaryList;
 
           /* We retrieve the local velocities from the PropertyCache. */
           propertyCache = globalPropertyCache;
 
+          // For each site neighbouring this boundary...
           for (std::vector<site_t>::iterator site_iterator = sitesWhichNeighbourThisBoundary.begin();
               site_iterator != sitesWhichNeighbourThisBoundary.end(); site_iterator++)
           {
+            // ... find its home proc.
             hemelb::util::Vector3D<site_t> gc;
 
             latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(*site_iterator, gc);
             const proc_t neighbourSiteHomeProc = latDat->GetProcIdFromGlobalCoords(gc);
 
+            // If this is a real proc, register the site as needed with the neighbouring data manager.
             if (neighbourSiteHomeProc != BIG_NUMBER2
                 && neighbourSiteHomeProc != topology::NetworkTopology::Instance()->GetLocalRank())
             {
-              //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Site Needed (InitialiseNeighbouringSites)");
-
-              /* Derek: Temporarily commented out for IFocus paper. This does not work yet beyond 5 procs in multiscale! */
-              //manager->RegisterNeededSite(*site_iterator, geometry::neighbouring::RequiredSiteInformation(true));
+              manager->RegisterNeededSite(*site_iterator, geometry::neighbouring::RequiredSiteInformation(true));
             }
           }
         }
 
-        PhysicalVelocity InOutLetVelocityAware::GetVelocity() const
+        InOutLetVelocityAware::InOutLetVelocityAware() :
+            InOutLetMultiscale(), NDM(NULL), propertyCache(NULL), sitesWhichNeighbourThisBoundary(), latticeData(NULL)
+
+        {
+        }
+
+        InOutLetVelocityAware::InOutLetVelocityAware(const InOutLetVelocityAware &other) :
+            InOutLetMultiscale(other), NDM(other.NDM), propertyCache(other.propertyCache), latticeData(other.latticeData)
+        {
+        }
+
+        InOutLetVelocityAware::~InOutLetVelocityAware()
+        {
+        }
+
+        InOutLet* InOutLetVelocityAware::Clone() const
+        {
+          InOutLetVelocityAware* copy = new InOutLetVelocityAware(*this);
+          return copy;
+        }
+
+        PhysicalVelocity InOutLetVelocityAware::InOutLetVelocityAware::GetVelocity() const
         {
           util::Vector3D<float> thisnormal;
           thisnormal = const_cast<InOutLetVelocityAware*>(this)->GetNormal();
 
-          distribn_t total_velocity[3] = { 0.0, 0.0, 0.0 };
-          //          return 1.0;
-
-          //std::cout << "IoletVA siteloop starts:" << std::endl;
+          util::Vector3D<distribn_t> totalVelocity(0.);
 
           int MyProcNumber = topology::NetworkTopology::Instance()->GetLocalRank();
-
-          int i = 0;
 
           /* Apply CalcDensityAndVelocity to extract velocities and add them all up.
            * We're not (yet) using weights or normalisation here, or conversion to physical units */
           for (std::vector<site_t>::const_iterator site_iterator = sitesWhichNeighbourThisBoundary.begin();
               site_iterator != sitesWhichNeighbourThisBoundary.end(); site_iterator++)
           {
-
             ///TODO: Get the velocities from sites on this core too... right now we're only getting neighbouring data.
             hemelb::util::Vector3D<site_t> gc;
             latticeData->GetGlobalCoordsFromGlobalNoncontiguousSiteId(*site_iterator, gc);
 
             const proc_t neighbourSiteHomeProc = latticeData->GetProcIdFromGlobalCoords(gc);
 
-            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Fluid site count: %i", latticeData->GetFluidSiteCountOnProc(1));
-
             if (neighbourSiteHomeProc != BIG_NUMBER2 && neighbourSiteHomeProc == MyProcNumber && MyProcNumber > 0)
             {
-              /*hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("1. GetVel from PropertyCache for site %i, local id: %i, size: %i",
-                                                                                   *site_iterator,
-                                                                                   latticeData->GetLocalContiguousIdFromGlobalNoncontiguousId(*site_iterator),
-                                                                                   propertyCache->GetSiteCount());
-              */
-
               const util::Vector3D<distribn_t> v =
                   propertyCache->velocityCache.Get(latticeData->GetLocalContiguousIdFromGlobalNoncontiguousId(*site_iterator));
 
-              /*hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("2. velocities are %f %f %f",
-                                                                                   v[0],
-                                                                                   v[1],
-                                                                                   v[2]);*/
-              total_velocity[0] += v[0];
-              total_velocity[1] += v[1];
-              total_velocity[2] += v[2];
-
-              //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("3. totalvel.%f", total_velocity[0]);
+              totalVelocity += v;
             }
-
-            /*distribn_t* f;
-             f = latticeData->GetSite(*site_iterator).GetFOld(latticeData->GetLatticeInfo().GetNumVectors()); */
-
-            if (neighbourSiteHomeProc != MyProcNumber)
+            else if (neighbourSiteHomeProc != MyProcNumber)
             {
               distribn_t* f;
               f =
                   latticeData->GetNeighbouringData().GetSite(*site_iterator).GetFOld(latticeData->GetLatticeInfo().GetNumVectors());
 
-              //latticeData->CalculateDensityAndVelocity(f_data, &density, &velocity[0], &velocity[1], &velocity[2]);
-
               for (Direction direction = 0; direction < latticeData->GetLatticeInfo().GetNumVectors(); ++direction)
               {
-                //std::cout << "Write out Vector directions and fs: " << std::endl;
-                //std::cout << "Vectors: " << latticeData->GetLatticeInfo().GetVector(direction)[0] << " "
-                //    << latticeData->GetLatticeInfo().GetVector(direction)[1] << " "
-                //    << latticeData->GetLatticeInfo().GetVector(direction)[2] << " " << std::endl;
-                //std::cout << "f[direction] = " << f[direction] << std::endl;
-                total_velocity[0] += latticeData->GetLatticeInfo().GetVector(direction)[0] * f[direction];
-                total_velocity[1] += latticeData->GetLatticeInfo().GetVector(direction)[1] * f[direction];
-                total_velocity[2] += latticeData->GetLatticeInfo().GetVector(direction)[2] * f[direction];
+                // TODO This is currently getting momentum, not velocity. We'd
+                // need to divide by density if we wanted to sum just the velocity.
+                totalVelocity += latticeData->GetLatticeInfo().GetVector(direction) * f[direction];
               }
             }
-            i++;
           }
           /* Dot product of the total velocity with the boundary normal. */
-          // Should this dot product not be taken inside the loop for a surface integral?
-          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("IOletVA GetVelocity(): Total velocity = %f", (total_velocity[0] * normal[0]) + (total_velocity[1] * normal[1]) + (total_velocity[2] * normal[2]));
-
-          return (total_velocity[0] * normal[0]) + (total_velocity[1] * normal[1]) + (total_velocity[2] * normal[2]);
+          // TODO Should this dot product not be taken inside the loop for a surface integral?
+          return totalVelocity.Dot(normal);
         }
       }
     }
