@@ -16,6 +16,7 @@
 #include "net/IteratedAction.h"
 #include <vector>
 #include <map>
+
 namespace hemelb
 {
   namespace geometry
@@ -45,7 +46,8 @@ namespace hemelb
           }
           void TransferNonFieldDependentInformation();
           void TransferFieldDependentInformation();
-          virtual proc_t ProcForSite(site_t site); // virtual to make this class testable
+          // NB this is virtual so that the class can be tested.
+          virtual proc_t ProcForSite(site_t site);
         protected:
           void RequestComms();
         private:
