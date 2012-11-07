@@ -76,15 +76,16 @@ namespace hemelb
     namespace mpwide
     {
       bool mpwide_initialized = false;
-      std::string mpwide_config_file = "../../../config_files/MPWSettings.cfg";
       bool mpwide_comm_proc = false;
     }
 
     class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
     {
       public:
-        MPWideIntercommunicator(std::map<std::string, double> & buffer, std::map<std::string, bool> &orchestration) :
-            doubleContents(buffer), currentTime(0), orchestration(orchestration)
+        MPWideIntercommunicator(std::map<std::string, double> & buffer,
+                                std::map<std::string, bool> &orchestration,
+                                std::string configFilePathIn) :
+            configFilePath(configFilePathIn), doubleContents(buffer), currentTime(0), orchestration(orchestration)
         {
           /* if(!hemelb::multiscale::mpwide::mpwide_initialized) {
            hemelb::multiscale::mpwide::mpwide_initialized = true;
@@ -116,7 +117,7 @@ namespace hemelb
               perror("getcwd() error");
             }
 
-            num_channels = ReadInputHead(hemelb::multiscale::mpwide::mpwide_config_file.c_str());
+            num_channels = ReadInputHead(configFilePath.c_str());
 
             /* Creating channels array */
             channels = (int *) malloc(num_channels * sizeof(int));
@@ -138,10 +139,7 @@ namespace hemelb
             }
 
             // 1. Read the file with MPWide settings.
-            ReadInputFile(hemelb::multiscale::mpwide::mpwide_config_file.c_str(),
-                          hosts,
-                          server_side_ports,
-                          &num_channels);
+            ReadInputFile(configFilePath.c_str(), hosts, server_side_ports, &num_channels);
 
             std::cout << "MPWide input file read: base port = " << server_side_ports << std::endl;
 
@@ -168,8 +166,8 @@ namespace hemelb
             //TODO: Add an offset table for the ICand data.
 
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
-                                                                                 send_icand_data_size,
-                                                                                 recv_icand_data_size);
+                                                                                  send_icand_data_size,
+                                                                                  recv_icand_data_size);
 
             // 2. Allocate exchange buffers. We do this once at initialization,
             //    so that if it goes wrong, the program will crash timely.
@@ -244,6 +242,7 @@ namespace hemelb
         }
 
       private:
+        std::string configFilePath;
 
         // Data sizes and pointers of shared data recv and send buffers.
         int64_t recv_icand_data_size;
@@ -374,32 +373,35 @@ namespace hemelb
           /*TODO Remove this debug commenting for value diagnostics. */
           //if (hemelb::multiscale::mpwide::mpwide_comm_proc)
           //{
-            for (ContentsType::iterator icandProperties = registeredIcands.begin();
-                icandProperties != registeredIcands.end(); icandProperties++)
+          for (ContentsType::iterator icandProperties = registeredIcands.begin();
+              icandProperties != registeredIcands.end(); icandProperties++)
+          {
+            hemelb::multiscale::Intercommunicand &icandContained = *icandProperties->first; //link to Icand
+            IntercommunicandTypeT &icandType = *icandProperties->second.first; //type of Icand
+            std::string &icandLabel = icandProperties->second.second; //name of Icand
+
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s",
+                                                                                  icandLabel.c_str());
+
+            for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < icandContained.SharedValues().size();
+                sharedFieldIndex++)
             {
-              hemelb::multiscale::Intercommunicand &icandContained = *icandProperties->first; //link to Icand
-              IntercommunicandTypeT &icandType = *icandProperties->second.first; //type of Icand
-              std::string &icandLabel = icandProperties->second.second; //name of Icand
+              std::string &sharedValueLabel = icandType.Fields()[sharedFieldIndex].first;
+              int64_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
+              void *buf1 = (void *) & (ICandSendDataPacked[offset]);
+              void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
+              //std::cout << "memcpy in PackObj: size = " << size << std::endl;
+              memcpy(buf1, buf2, SharedValueSize);
+              //std::cout << "done." << std::endl;
+              offset += SharedValueSize;
 
-
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s", icandLabel.c_str());
-
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < icandContained.SharedValues().size();
-                  sharedFieldIndex++)
-              {
-                std::string &sharedValueLabel = icandType.Fields()[sharedFieldIndex].first;
-                int64_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
-                void *buf1 = (void *) & (ICandSendDataPacked[offset]);
-                void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
-                //std::cout << "memcpy in PackObj: size = " << size << std::endl;
-                memcpy(buf1, buf2, SharedValueSize);
-                //std::cout << "done." << std::endl;
-                offset += SharedValueSize;
-
-                hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f", sharedValueLabel.c_str(), sharedFieldIndex, *(static_cast<double*>(buf2)));
-                /* Unable to read out SharedValues directlyin this file, due to the data encapsulation (only BaseSharedValue is exposed here, the SharedValues are in the Iolets). */
-              }
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f",
+                                                                                    sharedValueLabel.c_str(),
+                                                                                    sharedFieldIndex,
+                                                                                    * (static_cast<double*>(buf2)));
+              /* Unable to read out SharedValues directlyin this file, due to the data encapsulation (only BaseSharedValue is exposed here, the SharedValues are in the Iolets). */
             }
+          }
           //}
 
         }
@@ -466,7 +468,8 @@ namespace hemelb
             //std::string &label = intercommunicandData->second.second;
             IntercommunicandTypeT &icandType = *intercommunicandData->second.first;
 
-            for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size(); sharedFieldIndex++)
+            for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
+                sharedFieldIndex++)
             {
               size += GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
 

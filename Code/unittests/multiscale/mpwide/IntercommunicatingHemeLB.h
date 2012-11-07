@@ -37,8 +37,11 @@ namespace hemelb
             InterCommunicatingHemeLB(double spaceResolution,
                                      double timeResolution,
                                      std::map<std::string, double> & buffer,
-                                     std::map<std::string, bool> &orchestration) :
-                inlet(81.0, 0.1), outlet(79.0, 0.1), inOutLetType("inoutlet"), intercomms(buffer, orchestration), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
+                                     std::map<std::string, bool> &orchestration,
+                                     std::string configPath) :
+                inlet(81.0, 0.1), outlet(79.0, 0.1), inOutLetType("inoutlet"), intercomms(buffer,
+                                                                                          orchestration,
+                                                                                          configPath), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
             {
               // The intercommunicators have a shared buffer which represents imaginary communication
               inOutLetType.template RegisterSharedValue<double>("pressure");
