@@ -50,6 +50,7 @@ namespace hemelb
          template<class T> void RegisterSharedValue(const std::string &label){
             fields.push_back(std::make_pair(label,RuntimeTypeImplementation::template GetType<T>()));
          } 
+
       private:
         std::vector<std::pair<std::string, typename RuntimeTypeImplementation::RuntimeType> >fields;
         std::string label;
