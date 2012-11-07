@@ -59,7 +59,8 @@ namespace hemelb
 
             void testMPWidePresent()
             {
-              std::cout << "IP address for localhost is: " << MPW_DNSResolve("localhost") << std::endl;
+              std::string host = "localhost";
+              std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str())) << std::endl;
               std::cout << "MPWide is present." << std::endl;
             }
             void testMPWideInit()
