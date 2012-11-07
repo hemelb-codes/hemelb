@@ -17,6 +17,8 @@
  *      Author: derek
  */
 
+#include <map>
+
 namespace hemelb
 {
   namespace unittests

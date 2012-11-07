@@ -115,7 +115,7 @@ namespace hemelb
               {
                 // TODO This is currently getting momentum, not velocity. We'd
                 // need to divide by density if we wanted to sum just the velocity.
-                totalVelocity += latticeData->GetLatticeInfo().GetVector(direction) * f[direction];
+                totalVelocity += util::Vector3D<distribn_t>(latticeData->GetLatticeInfo().GetVector(direction)) * f[direction];
               }
             }
           }
