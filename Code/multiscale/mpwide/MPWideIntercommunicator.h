@@ -9,47 +9,16 @@
 
 #ifndef HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H
 #define HEMELB_MULTISCALE_MPWIDE_MPWIDEINTERCOMMUNICATOR_H
-#include "multiscale/Intercommunicator.h"
-#include "mpiInclude.h"
-#include "tinyxml.h"
 
-/**
- MPWide Intercommunicator class.
- This class provides an abstraction for the MPWide Communication Library in HemeLB.
- http://castle.strw.leidenuniv.nl/software/MPWide.html
- **/
-
+#include <unistd.h>
+#include <cstdio>
 #include <algorithm>
 #include <functional>
 #include <vector>
 #include <sstream>
-/* TODO: make a good separation of test and production includes here. */
-//#include "unittests/multiscale/MockMPWide.h" /* This is temporary! */
-//#include "MPWide.h"
-#include <unistd.h>
-#include <cstdio>
 
-/*
- Dictionary:
- ICand = Intercommunicand
-
-
- Architectural Assumptions in this Intercommunicator:
- - We assume that shared value collections are constant in size throughout the simulation.
- + This will need to be changed if we introduce adaptive elements in the boundaries such
- as flexible vessel walls.
-
- - We assume that both HemeLB end points use the same type of ICand. These ICands can be
- different in size however if they contain vectors individually.
- + We currently think this limitation actually encourages writing proper ICands.
-
-
- == MALLOC VS NEW ==
- The use of malloc in this class looks unusual because we use new and delete everywhere else,
- but in this instance it's necessary because some compilers might have different padding usage when
- 'new' is used, leading to erroneous data transfers when the coupling is performed across platforms.
-
- */
+#include "multiscale/Intercommunicator.h"
+#include "mpiInclude.h"
 
 namespace hemelb
 {
@@ -58,7 +27,6 @@ namespace hemelb
     /***
      * Example type traits structure, using the HemeLB implementation of MPI_TYPE traits.
      */
-
     struct MPWideRuntimeType
     {
         typedef MPI_Datatype RuntimeType;
@@ -68,17 +36,39 @@ namespace hemelb
         }
     };
 
-    /***
-     * This is a very dumb example of an intercommunicator
-     * It stores communicated examples in a string-keyed buffer
-     * By sharing the same buffer between multiple intercommunicator interfaces, one can mock the behaviour of interprocess communication.
-     */
     namespace mpwide
     {
       bool mpwide_initialized = false;
       bool mpwide_comm_proc = false;
     }
 
+    /**
+     MPWide Intercommunicator class.
+     This class provides an abstraction for the MPWide Communication Library in HemeLB.
+     http://castle.strw.leidenuniv.nl/software/MPWide.html
+
+     Dictionary:
+     ICand = Intercommunicand
+
+     Architectural Assumptions in this Intercommunicator:
+     - We assume that shared value collections are constant in size throughout the simulation.
+     + This will need to be changed if we introduce adaptive elements in the boundaries such
+     as flexible vessel walls.
+
+     - We assume that both HemeLB end points use the same type of ICand. These ICands can be
+     different in size however if they contain vectors individually.
+     + We currently think this limitation actually encourages writing proper ICands.
+
+     == MALLOC VS NEW ==
+     The use of malloc in this class looks unusual because we use new and delete everywhere else,
+     but in this instance it's necessary because some compilers might have different padding usage when
+     'new' is used, leading to erroneous data transfers when the coupling is performed across platforms.
+
+
+     This is a very dumb example of an intercommunicator. It stores communicated examples in a string-keyed buffer
+     By sharing the same buffer between multiple intercommunicator interfaces, one can mock the behaviour of
+     interprocess communication.
+     */
     class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
     {
       public:
