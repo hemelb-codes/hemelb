@@ -249,14 +249,12 @@ if (HEMELB_BUILD_MULTISCALE)
 		util
 		io
 		log
-	    colloids
+                colloids
 		)
 	foreach(subdir ${package_subdirs})
 		set(lib "hemelb_${subdir}")
 		list(APPEND heme_libraries ${lib})
-#		add_subdirectory(${subdir})
 	endforeach()
-#	add_subdirectory(resources)
 	target_link_libraries(hemelb_multiscale 
 		${heme_libraries}
 		${MPI_LIBRARIES}
@@ -265,7 +263,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
-	    ${MPWide_LIBRARIES}
+                ${MPWide_LIBRARIES}
 		)
 	INSTALL(TARGETS hemelb_multiscale RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)

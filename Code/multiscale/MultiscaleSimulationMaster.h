@@ -67,8 +67,8 @@ namespace hemelb
 
           /* Process 0 has a list of all the Iolets. The count of all this is highly useful to presize all the
            * needed arrays later on, so we are broadcasting this to all the other processes. */
-          int GlobalIoletCount[] = { inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount() };
-          MPI_Bcast(GlobalIoletCount, 2, MPI_INT, 0, MPI_COMM_WORLD);
+          unsigned GlobalIoletCount[] = { inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount() };
+          MPI_Bcast(GlobalIoletCount, 2, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -85,12 +85,12 @@ namespace hemelb
           std::vector<site_t> dummy;
 
           /* Populate with dummy entries for testing... */
-          for (int i = 0; i < GlobalIoletCount[0]; i++)
+          for (unsigned i = 0; i < GlobalIoletCount[0]; i++)
           {
             invertedInletBoundaryList[i] = dummy;
           }
 
-          for (int i = 0; i < GlobalIoletCount[1]; i++)
+          for (unsigned i = 0; i < GlobalIoletCount[1]; i++)
           {
             invertedOutletBoundaryList[i] = dummy;
           }

@@ -14,13 +14,13 @@
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "log/Logger.h"
-//#include "lb/MacroscopicPropertyCache.h"
+#include "lb/MacroscopicPropertyCache.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    class MacroscopicPropertyCache;
+//    class MacroscopicPropertyCache;
 
     namespace boundaries
     {

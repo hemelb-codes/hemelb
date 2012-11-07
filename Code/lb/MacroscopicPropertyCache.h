@@ -11,7 +11,6 @@
 #define HEMELB_LB_MACROSCOPICPROPERTYCACHE_H
 
 #include <vector>
-#include "geometry/LatticeData.h"
 #include "lb/SimulationState.h"
 #include "units.h"
 #include "util/RefreshableCache.hpp"
@@ -26,10 +25,10 @@ namespace hemelb
         /**
          * Constructor, the only way to create this object.
          * @param simState The simulation state, so that the cache knows when it is out of date.
-         * @param latticeData Data about the lattice, so the cache knows how big it needs to be.
+         * @param fluidSiteCount Number of fluid sites, so the cache knows how big it needs to be.
          * @return
          */
-        MacroscopicPropertyCache(const SimulationState& simState, const geometry::LatticeData& latticeData);
+        MacroscopicPropertyCache(const SimulationState& simState, site_t fluidSiteCount);
 
         /**
          * Reset the list of cache types required to be none of them.
