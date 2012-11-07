@@ -50,7 +50,7 @@ namespace hemelb
           {
 
             FourCubeBasedTestFixture::setUp();
-            propertyCache = new lb::MacroscopicPropertyCache(*simState, *latDat);
+            propertyCache = new lb::MacroscopicPropertyCache(*simState, latDat->GetLocalFluidSiteCount());
 
             normalCollision = new lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> >(initParams);
 

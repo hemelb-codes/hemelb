@@ -23,6 +23,10 @@ namespace hemelb
     {
       public:
         virtual void Report(ctemplate::TemplateDictionary& dictionary) = 0;
+        virtual ~Reportable()
+        {
+
+        }
     };
   }
 }

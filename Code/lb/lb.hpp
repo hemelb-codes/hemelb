@@ -40,7 +40,7 @@ namespace hemelb
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
                                                                                              latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
-                                                                                                                                                       *latDat), neighbouringDataManager(neighbouringDataManager)
+                                                                                                                                                       latDat->GetLocalFluidSiteCount()), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
