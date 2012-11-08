@@ -41,7 +41,7 @@ namespace hemelb
         log::Logger::Log<log::Info, log::Singleton>("Initializing MPWide.");
 
         // 1. Read the file with MPWide settings.
-        std::vector<std::string> hosts;
+        std::vector < std::string > hosts;
         std::vector<int> server_side_ports;
 
         ReadInputFile(configFilePath.c_str(), hosts, server_side_ports);
@@ -243,6 +243,10 @@ namespace hemelb
                                                              ContentsType registeredIcands)
     {
       // REMINDER: ContentsType = std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> >
+      if (!isCommsProc)
+      {
+        return;
+      }
 
       // Iterate over registered intercommunicands
       for (ContentsType::iterator icandProperties = registeredIcands.begin();
@@ -269,6 +273,13 @@ namespace hemelb
           void* localBufferOfDataToSend =
               (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
 
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("memcpy in PackObj: size = %d",
+                                                                                SharedValueSize);
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("sendingDataBuffer %f",
+                                                                                * (static_cast<double*>(sendingDataBuffer)));
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("localBufferOfDataToSend %f",
+                                                                                localBufferOfDataToSend);
+
           // Copy the local data into the buffer to be sent, and advance the pointer into the send buffer.
           memcpy(sendingDataBuffer, localBufferOfDataToSend, SharedValueSize);
           sendDataPointer += SharedValueSize;
@@ -276,6 +287,15 @@ namespace hemelb
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f",
                                                                                 sharedValueLabel.c_str(),
                                                                                 sharedFieldIndex,
+                                                                                * (static_cast<double*>(localBufferOfDataToSend)));
+
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done.");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value:");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%s",
+                                                                                sharedValueLabel.c_str());
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%i",
+                                                                                sharedFieldIndex);
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("%f",
                                                                                 * (static_cast<double*>(localBufferOfDataToSend)));
         }
       }
@@ -325,6 +345,10 @@ namespace hemelb
             // Copy the data across, and update our position into the data.
             memcpy(sharedValueBuffer, receivedBuffer, SharedValueSize);
             receivedDataPointer += SharedValueSize;
+
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value [%d] = %f",
+                                                                                  sharedFieldIndex,
+                                                                                  static_cast<double*>(sharedValueBuffer)[sharedFieldIndex]);
           }
         }
       }
