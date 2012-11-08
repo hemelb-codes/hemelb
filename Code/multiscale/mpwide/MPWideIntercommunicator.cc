@@ -1,8 +1,17 @@
+//
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
+
 /*
  * MPWideIntercommunicator.cc
  *
  *  Created on: 7 Nov 2012
- *      Author: hywel
+ *      Author: Derek
  */
 
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
@@ -13,77 +22,44 @@ namespace hemelb
 {
   namespace multiscale
   {
-    namespace mpwide
-    {
-      bool mpwide_initialize = false;
-    }
+    // Initialize the static initialized variable to false.
+    bool MPWideIntercommunicator::mpwideInitialized = false;
 
     MPWideIntercommunicator::MPWideIntercommunicator(std::map<std::string, double> & buffer,
                                                      std::map<std::string, bool> &orchestration,
                                                      std::string configFilePathIn) :
-        isCommsProc(topology::NetworkTopology::Instance()->GetLocalRank() == 0), configFilePath(configFilePathIn), doubleContents(buffer), currentTime(0), orchestration(orchestration)
+        isCommsProc(topology::NetworkTopology::Instance()->GetLocalRank() == 0),
+            configFilePath(configFilePathIn), recv_icand_data_size(0), send_icand_data_size(0),
+            doubleContents(buffer), currentTime(0), orchestration(orchestration), channelCount(0)
     {
-      /* if(!hemelb::multiscale::mpwide::mpwide_initialized) {
-       hemelb::multiscale::mpwide::mpwide_initialized = true;
-       Initialize();
-       }*/
     }
 
     void MPWideIntercommunicator::Initialize()
     {
-      //TODO: This is a temporary hard-code.
-      //The MPWide config file should be read from the HemeLB XML config file!
       if (isCommsProc)
       {
-        fprintf(stdout, "Running MPWide Initialize().\n");
-
-        char cwd[1024];
-        if (getcwd(cwd, sizeof (cwd)) != NULL)
-        {
-          fprintf(stdout, "Current [head] working dir: %s\n", cwd);
-        }
-        else
-        {
-          perror("getcwd() error");
-        }
-
-        num_channels = ReadInputHead(configFilePath.c_str());
-
-        /* Creating channels array */
-        channels = (int *) malloc(num_channels * sizeof(int));
-        for (int i = 0; i < num_channels; i++)
-        {
-          channels[i] = i;
-        }
-
-        hosts = new std::string[num_channels];
-        server_side_ports = (int *) malloc(num_channels * sizeof(int));
-
-        if (getcwd(cwd, sizeof (cwd)) != NULL)
-        {
-          fprintf(stdout, "Current working dir: %s\n", cwd);
-        }
-        else
-        {
-          perror("getcwd() error");
-        }
+        log::Logger::Log<log::Info, log::Singleton>("Initializing MPWide.");
 
         // 1. Read the file with MPWide settings.
-        ReadInputFile(configFilePath.c_str(), hosts, server_side_ports, &num_channels);
+        std::vector<std::string> hosts;
+        std::vector<int> server_side_ports;
 
-        std::cout << "MPWide input file read: base port = " << server_side_ports << std::endl;
+        ReadInputFile(configFilePath.c_str(), hosts, server_side_ports);
 
-        // 2. Initializa MPWide.
-        MPW_Init(hosts, server_side_ports, num_channels);
+        log::Logger::Log<log::Debug, log::Singleton>("MPWide input file read: base port is %i",
+                                                     server_side_ports[0]);
+
+        // 2. Initialize MPWide.
+        MPW_Init(&hosts.front(), &server_side_ports.front(), channelCount);
       }
     }
 
-    /* This is run at the start of the HemeLB simulation, after Initialize(). */
     void MPWideIntercommunicator::ShareInitialConditions()
     {
-      if (!hemelb::multiscale::mpwide::mpwide_initialized)
+      // If not yet initialized, initialize MPWide.
+      if (!mpwideInitialized)
       {
-        hemelb::multiscale::mpwide::mpwide_initialized = true;
+        mpwideInitialized = true;
         Initialize();
       }
 
@@ -93,69 +69,52 @@ namespace hemelb
         send_icand_data_size = GetRegisteredObjectsSize(registeredObjects);
         recv_icand_data_size = ExchangeICandDataSize(send_icand_data_size);
 
-        //TODO: Add an offset table for the ICand data.
-
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("PRE-MALLOC, icand sizes are: %i (send) %i (recv)",
                                                                               send_icand_data_size,
                                                                               recv_icand_data_size);
 
-        // 2. Allocate exchange buffers. We do this once at initialization,
-        //    so that if it goes wrong, the program will crash timely.
-        ICandRecvDataPacked = (char *) malloc(recv_icand_data_size);
-        ICandSendDataPacked = (char *) malloc(send_icand_data_size);
-
-        //numRegisteredObjects = send_icand_data_size;
-        //registeredObjectsIdList =
+        // 2. Allocate exchange buffers. We do this only once at initialization.
+        ICandRecvDataPacked.resize(recv_icand_data_size);
+        ICandSendDataPacked.resize(send_icand_data_size);
       }
 
-      /* sync num of registered objects with other processes. */
-
-      //MPI_Bcast(&numRegisteredObjects, 1, MPI_INT, 0, MPI_COMM_WORLD);
-      //MPI_Bcast(registeredObjectsIdList, numRegisteredObjects, MPI_INT, 0, MPI_COMM_WORLD);
-      /* We're going to need sensible exchangable IDs, not just string labels! */
-
+      // Update the time and perform an initial exchange with the multiscale.
       doubleContents["shared_time"] = 0.0;
-      ExchangeWithMultiscale(); //is this correct???
-
+      ExchangeWithMultiscale();
     }
 
     /* This is run at the start of every time step in the main HemeLB simulation. */
     bool MPWideIntercommunicator::DoMultiscale(double new_time)
     {
-      //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Entering DM");
-      // 1. check whether this HemeLB instance was supposed to take a time step.
-      if (ShouldAdvance())
+      // 1. Update the shared time, if we should take a time step.
+      bool shouldAdvance = ShouldAdvance();
+      if (shouldAdvance)
       {
-
-        // 2. Update the shared time.
         UpdateSharedTime(new_time);
       }
 
-      //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Calling EWM");
-      // 3. Exchange ICands with the other code.
+      // 2. Exchange ICands with the other code.
       ExchangeWithMultiscale();
 
-      // 4. Return the bool telling HemeLB whether to perform a timestep.
-      return ShouldAdvance();
+      // 3. Return the bool telling HemeLB whether to perform a timestep.
+      return shouldAdvance;
     }
 
-    bool MPWideIntercommunicator::ExchangeWithMultiscale()
+    void MPWideIntercommunicator::ExchangeWithMultiscale()
     {
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Entering EWM");
-
       // 1. Pack/Serialize local shared data.
-      PackRegisteredObjects(ICandSendDataPacked, registeredObjects);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Beginning exchange with multiscale");
+      SerializeRegisteredObjects(&ICandSendDataPacked.front(), registeredObjects);
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Calling ExchPackages");
       // 2. Exchange serialized shared data.
-      ExchangePackages(ICandSendDataPacked, ICandRecvDataPacked);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Exchanging packaged data");
+      ExchangePackages(&ICandSendDataPacked.front(), &ICandRecvDataPacked.front());
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Calling UnpackAndMergeRegObj");
       // 3. Unpack and merged the two serialized shared data copies.
-      UnpackAndMergeRegisteredObjects(registeredObjects, ICandRecvDataPacked);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Unpacking and merging received data");
+      UnpackReceivedData(registeredObjects, &ICandRecvDataPacked.front());
 
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Leaving EWM");
-      return true;
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Exchange with multiscale completed");
     }
 
     /* TODO: Only public for unit-testing. */
@@ -182,7 +141,7 @@ namespace hemelb
       return doubleContents["shared_time"] >= currentTime;
     }
 
-    long long int MPWideIntercommunicator::GetTypeSize(RuntimeType type)
+    size_t MPWideIntercommunicator::GetTypeSize(RuntimeType type)
     {
       if (type == RuntimeTypeTraits::GetType<double>())
       {
@@ -202,205 +161,195 @@ namespace hemelb
       return -1;
     }
 
-    FILE *MPWideIntercommunicator::my_fopen(const char *path, const char *mode)
+    FILE *MPWideIntercommunicator::checkingFileOpen(const char *path, const char *mode)
     {
+      // Open the file
+      FILE *fp = fopen(path, mode);
 
-      FILE *fp;
-      fp = fopen(path, mode);
-
+      // If there was a problem, print the error and exit
       if (fp == NULL)
       {
         perror(path);
         exit(EXIT_FAILURE);
       }
 
+      // If there wasn't a problem, return the file handle.
       return fp;
-
     }
 
-    int MPWideIntercommunicator::ReadInputHead(const char* sockets_file)
+    void MPWideIntercommunicator::ReadInputFile(const char* socketsFilePath,
+                                                std::vector<std::string>& url,
+                                                std::vector<int>& serverSidePorts)
     {
-      int nstream;
-      int nhost;
+      // Open the file
+      FILE* socketsFile = checkingFileOpen(socketsFilePath, "r");
 
-      FILE *fin = my_fopen(sockets_file, "r");
-
-      /* in the sockets_file, nstream indicates the total number of streams. */
-      int d = fscanf(fin, "%d%d", &nstream, &nhost);
+      /**
+       * Read the number of channels and the number of hosts.
+       */
+      int numberOfHosts;
+      int d = fscanf(socketsFile, "%d%d", &channelCount, &numberOfHosts);
 
       if (d > -1000)
       {
-        std::cerr << "nhost: " << nhost << ", nstream_total: " << nstream << std::endl;
+        log::Logger::Log<log::Warning, log::OnePerCore>("number of hosts: %i, number of channels: %i",
+                                                        numberOfHosts,
+                                                        channelCount);
       }
 
-      fclose(fin);
-
-      return nstream;
-    }
-
-    void MPWideIntercommunicator::ReadInputFile(const char* sockets_file,
-                                                std::string* url,
-                                                int* server_side_ports,
-                                                int* num_channels)
-    {
-
-      int nstream;
-      int nhost;
-      char host[256];
-
-      FILE *fin = my_fopen(sockets_file, "r");
-
-      /* in the sockets_file, nstream indicates the total number of streams. */
-      fscanf(fin, "%d%d", &nstream, &nhost);
-
-      /* for n sites, every site has two neighbours, and will establish
-       * links with these neighbours. */
-      num_channels[0] = nstream;
-
-      int nstream_host[nhost];
-      int base_host_channel[nhost];
-      int base_port[nhost];
-
-      int streamcount_tmp = 0;
-      int offset = 0;
-
-      for (int j = 0; j < nhost; j++)
+      /* Creating channels array */
+      channels.resize(channelCount);
+      for (int i = 0; i < channelCount; i++)
       {
-        fscanf(fin, "%s%d%d", host, & (base_port[j]), & (nstream_host[j]));
-        base_host_channel[j] = streamcount_tmp;
-        streamcount_tmp += nstream_host[j];
-        std::cerr << "host: " << j << ", base channel: " << base_host_channel[j] << ", num_streams: " << nstream_host[j]
-            << std::endl;
+        channels[i] = i;
+      }
 
-        for (int i = 0; i < nstream_host[j]; i++)
+      // Track how many streams have so far been encountering (for setting port numbers)
+      int streamsSeenSoFar = 0;
+
+      // For each host
+      for (int j = 0; j < numberOfHosts; j++)
+      {
+        // Read in the host name, how many streams it has, and its base port number.
+        char host[256];
+        int basePort;
+        int numberOfStreamsOnHost;
+
+        fscanf(socketsFile, "%s%d%d", host, &basePort, &numberOfStreamsOnHost);
+        log::Logger::Log<log::Warning, log::OnePerCore>("host: %i, base channel: %i, num_streams: %i",
+                                                        j,
+                                                        streamsSeenSoFar,
+                                                        numberOfStreamsOnHost);
+        streamsSeenSoFar += numberOfStreamsOnHost;
+
+        // For every stream from the host, add the host and port to the list of urls and ports.
+        for (int i = 0; i < numberOfStreamsOnHost; i++)
         {
-          int ii = offset + i;
-          url[ii] = (std::string) host;
-          int p = base_port[j] + i;
-          server_side_ports[ii] = p;
+          url.push_back((std::string) host);
+          int port = basePort + i;
+          serverSidePorts.push_back(port);
         }
-        offset += nstream_host[j];
       }
 
-      fclose(fin);
+      // Close the file.
+      fclose(socketsFile);
     }
 
-    /* Pack/Serialize local shared data (this may include Endian conversion in the future) */
-    void MPWideIntercommunicator::PackRegisteredObjects(char *ICandSendDataPacked, ContentsType registeredIcands)
+    /**
+     *  Pack/Serialize local shared data
+     *  TODO: include Endian conversion in the future
+     **/
+    void MPWideIntercommunicator::SerializeRegisteredObjects(char *sendDataPointer,
+                                                             ContentsType registeredIcands)
     {
-      /* REMINDER:
-       ContentsType = std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> >
-       */
+      // REMINDER: ContentsType = std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> >
 
-      int64_t offset = 0;
-
-      /*TODO Remove this debug commenting for value diagnostics. */
-      //if (hemelb::multiscale::mpwide::mpwide_comm_proc)
-      //{
-      for (ContentsType::iterator icandProperties = registeredIcands.begin(); icandProperties != registeredIcands.end();
-          icandProperties++)
+      // Iterate over registered intercommunicands
+      for (ContentsType::iterator icandProperties = registeredIcands.begin();
+          icandProperties != registeredIcands.end(); icandProperties++)
       {
-        hemelb::multiscale::Intercommunicand &icandContained = *icandProperties->first; //link to Icand
-        IntercommunicandTypeT &icandType = *icandProperties->second.first; //type of Icand
-        std::string &icandLabel = icandProperties->second.second; //name of Icand
+        // Dereference the iterator
+        hemelb::multiscale::Intercommunicand &icandContained = *icandProperties->first;
+        IntercommunicandTypeT &icandType = *icandProperties->second.first;
+        std::string &icandLabel = icandProperties->second.second;
 
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s", icandLabel.c_str());
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Name of Icand = %s",
+                                                                              icandLabel.c_str());
 
-        for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < icandContained.SharedValues().size();
-            sharedFieldIndex++)
+        // For every field on the current intercommunicand...
+        for (unsigned int sharedFieldIndex = 0;
+            sharedFieldIndex < icandContained.SharedValues().size(); sharedFieldIndex++)
         {
+          // Get info about it.
           std::string &sharedValueLabel = icandType.Fields()[sharedFieldIndex].first;
-          int64_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
-          void *buf1 = (void *) & (ICandSendDataPacked[offset]);
-          void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
-          //std::cout << "memcpy in PackObj: size = " << size << std::endl;
-          memcpy(buf1, buf2, SharedValueSize);
-          //std::cout << "done." << std::endl;
-          offset += SharedValueSize;
+          size_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
+
+          // Get the buffers
+          void* sendingDataBuffer = (void *) sendDataPointer;
+          void* localBufferOfDataToSend =
+              (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
+
+          // Copy the local data into the buffer to be sent, and advance the pointer into the send buffer.
+          memcpy(sendingDataBuffer, localBufferOfDataToSend, SharedValueSize);
+          sendDataPointer += SharedValueSize;
 
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Shared value: %s %i %f",
                                                                                 sharedValueLabel.c_str(),
                                                                                 sharedFieldIndex,
-                                                                                * (static_cast<double*>(buf2)));
-          /* Unable to read out SharedValues directlyin this file, due to the data encapsulation (only BaseSharedValue is exposed here, the SharedValues are in the Iolets). */
+                                                                                * (static_cast<double*>(localBufferOfDataToSend)));
         }
       }
-      //}
-
     }
 
     /* Exchange Serialized shared object packages between processes. */
-    void MPWideIntercommunicator::ExchangePackages(char* ICandSendDataPacked, char* ICandRecvDataPacked)
+    void MPWideIntercommunicator::ExchangePackages(char* ICandSendDataPacked,
+                                                   char* ICandRecvDataPacked)
     {
       if (isCommsProc && (send_icand_data_size > 0 || recv_icand_data_size > 0))
       {
-        //std::cout << "EXCHANGE PACKAGES, icand sizes are: " << send_icand_data_size << "/" << recv_icand_data_size
-        //    << std::endl;
+        // If this is the comms proc and we're expecting to send or receive some data, communicate it over MPWide
         MPW_SendRecv(ICandSendDataPacked,
                      (long long int) send_icand_data_size,
                      ICandRecvDataPacked,
                      (long long int) recv_icand_data_size,
-                     channels,
-                     num_channels);
-
-        //std::cout << "Value #0 received (CHEAP DEBUG!): " << ((double*) ICandRecvDataPacked)[0] << std::endl;
+                     &channels.front(),
+                     channelCount);
       }
     }
 
-    void MPWideIntercommunicator::UnpackAndMergeRegisteredObjects(ContentsType registeredIcands,
-                                                                  char *ICandRecvDataPacked)
+    void MPWideIntercommunicator::UnpackReceivedData(ContentsType registeredIcands,
+                                                     char *receivedDataPointer)
     {
-      //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Entering UAMRO");
-      long long int offset = 0;
-
+      // Only the comms proc performs unpacking
       if (isCommsProc)
       {
+        // Iterated over the intercommunicands
         for (ContentsType::iterator intercommunicandData = registeredIcands.begin();
             intercommunicandData != registeredIcands.end(); intercommunicandData++)
         {
-
+          // Get the contents of the iterator.
           hemelb::multiscale::Intercommunicand &icandContained = *intercommunicandData->first;
           IntercommunicandTypeT &icandType = *intercommunicandData->second.first;
-          //std::string &icandLabel = intercommunicandData->second.second;
 
-          for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < icandContained.SharedValues().size();
-              sharedFieldIndex++)
+          // For every shared field...
+          for (unsigned int sharedFieldIndex = 0;
+              sharedFieldIndex < icandContained.SharedValues().size(); sharedFieldIndex++)
           {
-            long long int SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
-            void *buf1 = (void *) & (ICandRecvDataPacked[offset]);
-            void *buf2 = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
+            // Get the size of the current field
+            size_t SharedValueSize = GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
 
-            memcpy(buf2, buf1, SharedValueSize);
-            offset += SharedValueSize;
+            // Get the buffers from the received data (at the current position) and the local variables to copy into
+            void* receivedBuffer = (void *) receivedDataPointer;
+            void* sharedValueBuffer = (void *) & (*icandContained.SharedValues()[sharedFieldIndex]);
+
+            // Copy the data across, and update our position into the data.
+            memcpy(sharedValueBuffer, receivedBuffer, SharedValueSize);
+            receivedDataPointer += SharedValueSize;
           }
         }
       }
     }
 
-    int64_t MPWideIntercommunicator::GetRegisteredObjectsSize(ContentsType registeredObjects)
+    size_t MPWideIntercommunicator::GetRegisteredObjectsSize(ContentsType registeredObjects)
     {
-      int64_t size = 0;
-      int count = 0;
+      size_t size = 0;
 
+      // Iterate over all registered objects
       for (ContentsType::iterator intercommunicandData = registeredObjects.begin();
           intercommunicandData != registeredObjects.end(); intercommunicandData++)
       {
+        // Get the contents of the iterator
         hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
-
-        //std::cout << "Number of registered objects is: " << sharedObject.Values().size() << std::endl;
-        //std::string &label = intercommunicandData->second.second;
         IntercommunicandTypeT &icandType = *intercommunicandData->second.first;
 
-        for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
-            sharedFieldIndex++)
+        // For every field that's shared,
+        for (unsigned int sharedFieldIndex = 0;
+            sharedFieldIndex < sharedObject.SharedValues().size(); sharedFieldIndex++)
         {
+          // add the fields size to the total
           size += GetTypeSize(icandType.Fields()[sharedFieldIndex].second);
-
         }
-        count++;
       }
-
-      //std::cout << "size obtained is: " << size << " (for " << count << " objects)." << std::endl;
 
       return size;
     }
@@ -408,18 +357,16 @@ namespace hemelb
     int64_t MPWideIntercommunicator::ExchangeICandDataSize(int64_t send_icand_data_size)
     {
       int64_t rsize = 0;
-      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (isCommsProc)
       {
-        //std::cout << "BEFORE EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
-
+        // Only the comms proc uses MPWide to exchange the sizes of data.
+        // MPWide only supports char buffers, hence the casts here.
         MPW_SendRecv( ((char *) &send_icand_data_size),
                      sizeof(int64_t),
                      ((char *) &rsize),
                      sizeof(int64_t),
-                     channels,
+                     &channels.front(),
                      1);
-
-        //std::cout << "EXCHANGE, icand sizes are: " << send_icand_data_size << "/" << rsize << std::endl;
       }
 
       return rsize;

@@ -257,7 +257,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		list(APPEND heme_libraries ${lib})
 	endforeach()
         add_subdirectory(multiscale)
-	target_link_libraries(hemelb_multiscale 
+	target_link_libraries(multiscale_hemelb
 		${heme_libraries}
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}
