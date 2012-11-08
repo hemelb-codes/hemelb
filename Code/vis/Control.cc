@@ -560,8 +560,7 @@ namespace hemelb
         tempNet.Dispatch();
       }
       // Receive the final image on proc 0.
-
-      else if (netTop->GetLocalRank() == 0)
+      else if (netTop->GetLocalRank() == 0 && netTop->GetProcessorCount() > 1)
       {
         receiveBuffer.ReceivePixelCounts(&tempNet, 1);
 
