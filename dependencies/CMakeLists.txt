@@ -60,14 +60,15 @@ if (HEMELB_BUILD_MULTISCALE)
 		    set(MPWIDE_TARBALL http://castle.strw.leidenuniv.nl/~derek/MPWide-1.2b.tar.gz
 			    CACHE STRING "Path to download MPWide (can be local file://)" FORCE)
 	    endif()
+            set(PATCH_COMMAND_MPWIDE patch -p1 < ${HEMELB_DEPENDENCIES_PATH}/patches/mpwide_include.diff )
 	    ExternalProject_Add(
 	       MPWide
-		    INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		    URL ${MPWIDE_TARBALL}
 		    BUILD_IN_SOURCE 1
             CONFIGURE_COMMAND echo "No configure step for MPWIDE"
 		    BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} 
-            INSTALL_COMMAND make install INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH} ${MWIDE_BUILD_OPTIONS}
+                    PATCH_COMMAND ${PATCH_COMMAND_MPWIDE}
+                    INSTALL_COMMAND cp <SOURCE_DIR>/libMPW.a ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib && cp <SOURCE_DIR>/MPWide.h ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include
 	    )
     endif()
 endif()
