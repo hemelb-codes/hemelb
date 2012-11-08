@@ -125,8 +125,6 @@ hector:
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     CTEMPLATE_PATCH_ALIGN: "ON"
-    MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
-    MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
 hermit:
   max_job_name_chars: 15
   make_jobs: 4
