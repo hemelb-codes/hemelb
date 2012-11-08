@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "log/Logger.h"
+
 namespace hemelb
 {
   namespace multiscale
@@ -31,28 +33,36 @@ namespace hemelb
     template<class RuntimeTypeImplementation> class IntercommunicandType
     {
       public:
-       
-        IntercommunicandType(const std::string & alabel): fields(), label(alabel){
- hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Icand created with label %s", alabel.c_str());
-}
-        
+
+        IntercommunicandType(const std::string & alabel) :
+            fields(), label(alabel)
+        {
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Icand created with label %s",
+                                                                               alabel.c_str());
+        }
+
         /***
          * The order of the fields in the intercommunicand type corresponds to the order they are registered in the intercommunicand.
          * @return vector of pairs of string labels and runtime type values.
          */
-        std::vector<std::pair<std::string, typename RuntimeTypeImplementation::RuntimeType> > &Fields(){return fields;}
-        
-        void RegisterSharedValue(const std::string &label,typename RuntimeTypeImplementation::RuntimeType type)
-         {
-            fields.push_back(std::make_pair(label,type));
-             hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s", label.c_str());
-         }
-         template<class T> void RegisterSharedValue(const std::string &label){
-            fields.push_back(std::make_pair(label,RuntimeTypeImplementation::template GetType<T>()));
-         } 
+        std::vector<std::pair<std::string, typename RuntimeTypeImplementation::RuntimeType> > &Fields()
+        {
+          return fields;
+        }
+
+        void RegisterSharedValue(const std::string &label, typename RuntimeTypeImplementation::RuntimeType type)
+        {
+          fields.push_back(std::make_pair(label, type));
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s",
+                                                                               label.c_str());
+        }
+        template<class T> void RegisterSharedValue(const std::string &label)
+        {
+          fields.push_back(std::make_pair(label, RuntimeTypeImplementation::template GetType<T>()));
+        }
 
       private:
-        std::vector<std::pair<std::string, typename RuntimeTypeImplementation::RuntimeType> >fields;
+        std::vector<std::pair<std::string, typename RuntimeTypeImplementation::RuntimeType> > fields;
         std::string label;
     };
   }
