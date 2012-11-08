@@ -115,12 +115,12 @@ int main(int count, char** v){
   char buffer[15] = \"aaaaaaaaaaaaa\";
   XDR xdr;
   xdrmem_create(&xdr, buffer, 32, XDR_ENCODE);
-  int16_t a;
-  int32_t b;
-  int64_t c;
-  xdr_int16_t(&xdr, &a);
-  xdr_int32_t(&xdr, &b);
-  xdr_int64_t(&xdr, &c);
+  uint16_t a;
+  uint32_t b;
+  uint64_t c;
+  xdr_uint16_t(&xdr, &a);
+  xdr_uint32_t(&xdr, &b);
+  xdr_uint64_t(&xdr, &c);
   return b;
 }" HAVE_XDRUINTXX_T)
 
