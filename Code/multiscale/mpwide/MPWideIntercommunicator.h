@@ -36,11 +36,6 @@ namespace hemelb
         }
     };
 
-    namespace mpwide
-    {
-      bool mpwide_initialized;
-    }
-
     /**
      MPWide Intercommunicator class.
      This class provides an abstraction for the MPWide Communication Library in HemeLB.
@@ -58,12 +53,6 @@ namespace hemelb
      different in size however if they contain vectors individually.
      + We currently think this limitation actually encourages writing proper ICands.
 
-     == MALLOC VS NEW ==
-     The use of malloc in this class looks unusual because we use new and delete everywhere else,
-     but in this instance it's necessary because some compilers might have different padding usage when
-     'new' is used, leading to erroneous data transfers when the coupling is performed across platforms.
-
-
      This is a very dumb example of an intercommunicator. It stores communicated examples in a string-keyed buffer
      By sharing the same buffer between multiple intercommunicator interfaces, one can mock the behaviour of
      interprocess communication.
@@ -74,62 +63,142 @@ namespace hemelb
         MPWideIntercommunicator(std::map<std::string, double> & buffer,
                                 std::map<std::string, bool> &orchestration,
                                 std::string configFilePathIn);
-        void Initialize();
-
-        /* This is run at the start of the HemeLB simulation, after Initialize(). */
+        /** This is run at the start of the HemeLB simulation. */
         void ShareInitialConditions();
-        /* This is run at the start of every time step in the main HemeLB simulation. */
+        /** This is run at the start of every time step in the main HemeLB simulation. */
         bool DoMultiscale(double new_time);
 
-        /* TODO: Only public for unit-testing. */
+        /** TODO: Only public for unit-testing. */
         void UnitTestIncrementSharedTime();
 
       private:
-        std::string configFilePath;
 
-        // Data sizes and pointers of shared data recv and send buffers.
-        int64_t recv_icand_data_size;
-        int64_t send_icand_data_size;
-        char *ICandRecvDataPacked;
-        char *ICandSendDataPacked;
+        /**
+         *  Initialises MPWide.
+         */
+        void Initialize();
 
+        /**
+         * Updates the shared value of time to a new value.
+         * @param new_time
+         */
         void UpdateSharedTime(double new_time);
 
-        bool ExchangeWithMultiscale();
+        /**
+         * Performs the multiscale exchange over MPWide.
+         */
+        void ExchangeWithMultiscale();
 
+        /**
+         * True if we should advance the current time.
+         * @return
+         */
         bool ShouldAdvance();
-        long long int GetTypeSize(RuntimeType type);
-        FILE *my_fopen(const char *path, const char *mode);
-        int ReadInputHead(const char* sockets_file);
-        void ReadInputFile(const char* sockets_file, std::string* url, int* server_side_ports, int* num_channels);
 
-        /* Pack/Serialize local shared data (this may include Endian conversion in the future) */
-        void PackRegisteredObjects(char *ICandSendDataPacked, ContentsType registeredIcands);
+        /**
+         * Get the size of the C++ type associated.
+         * @param type
+         * @return
+         */
+        size_t GetTypeSize(RuntimeType type);
 
-        /* Exchange Serialized shared object packages between processes. */
+        /**
+         * Open file, checking for problems.
+         * @param path
+         * @param mode
+         * @return
+         */
+        FILE *checkingFileOpen(const char *path, const char *mode);
+
+        /**
+         * Read the entirety of the MPWide config file
+         * @param sockets_file
+         * @param url
+         * @param server_side_ports
+         */
+        void ReadInputFile(const char* sockets_file,
+                           std::vector<std::string>& url,
+                           std::vector<int>& server_side_ports);
+
+        /**
+         *  Serialize local shared data (this may include Endian conversion in the future)
+         **/
+        void SerializeRegisteredObjects(char *ICandSendDataPacked, ContentsType registeredIcands);
+
+        /**
+         *  Exchange Serialized shared object packages between processes.
+         **/
         void ExchangePackages(char* ICandSendDataPacked, char* ICandRecvDataPacked);
 
-        void UnpackAndMergeRegisteredObjects(ContentsType registeredIcands, char *ICandRecvDataPacked);
-        int64_t GetRegisteredObjectsSize(ContentsType registeredObjects);
+        /**
+         * Unpack the received data from the intercommunicand
+         * @param registeredIcands
+         * @param ICandRecvDataPacked
+         */
+        void UnpackReceivedData(ContentsType registeredIcands, char *ICandRecvDataPacked);
+
+        /**
+         * Get the total size of the objects registered with the intercommunicand
+         * @param registeredObjects
+         * @return
+         */
+        size_t GetRegisteredObjectsSize(ContentsType registeredObjects);
+
+        /**
+         * Exchange data size of intercommunicand
+         *
+         * @param send_icand_data_size
+         * @return Received data size
+         */
         int64_t ExchangeICandDataSize(int64_t send_icand_data_size);
 
+        /**
+         * True if this is the proc that does all the communication over MPWide.
+         */
         bool isCommsProc;
 
+        /**
+         *  The path to the MPWide config file.
+         */
+        std::string configFilePath;
+
+        /**
+         * Data sizes and pointers of shared data recv and send buffers.
+         */
+        int64_t recv_icand_data_size;
+        int64_t send_icand_data_size;
+        std::vector<char> ICandRecvDataPacked;
+        std::vector<char> ICandSendDataPacked;
+
+        /**
+         * Map of string to double for the shared time over the intercommunicand
+         */
         std::map<std::string, double> &doubleContents;
+
+        /**
+         * Current time.
+         */
         double currentTime;
+
+        /**
+         * Map telling what things should be orchestrated.
+         */
         std::map<std::string, bool> & orchestration;
 
-        /* MPWide specific parameters */
-        std::string *hosts;
-        int* server_side_ports;
-        int* channels;
-        int num_channels;
+        /**
+         * Number of MPIWide channels.
+         **/
+        int channelCount;
+        /**
+         * The ids of the MPWide channels.
+         */
+        std::vector<int> channels;
 
-        /* Shared values administration. */
-        //int  numRegisteredObjects;
-        //int* registeredObjectsIdList;
-    }
-    ;
+        /**
+         * True if MPWide has been initialised.
+         */
+        static bool mpwideInitialized;
+    };
   }
 }
 
