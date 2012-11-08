@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 
   std::map<std::string, double> sharedValueBuffer;
 
+  // TODO The MPWide config file should be read from the HemeLB XML config file!
   // Create the intercommunicator
   hemelb::multiscale::MPWideIntercommunicator intercomms(sharedValueBuffer,
                                                          lbOrchestration,
