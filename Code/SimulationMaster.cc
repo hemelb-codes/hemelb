@@ -198,15 +198,17 @@ void SimulationMaster::Initialise()
   if (simConfig->HasColloidSection())
   {
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
-    colloidController = new hemelb::colloids::ColloidController(*latticeData,
-                                                                *simulationState,
-                                                                readGeometryData,
-                                                                xml,
-                                                                propertyCache,
-                                                                fileManager->GetColloidPath(),
-                                                                timings);
-    timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
+    colloidController = new hemelb::colloids::ColloidController(
+                              *latticeData,
+                              *simulationState,
+                              readGeometryData,
+                              xml,
+                              propertyCache,
+                              latticeBoltzmannModel->GetLbmParams(),
+                              fileManager->GetColloidPath(),
+                              timings);
   }
+  timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
