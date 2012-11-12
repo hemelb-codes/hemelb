@@ -31,6 +31,7 @@ namespace hemelb
         ParticleSet(const geometry::LatticeData& latDatLBM,
                     io::xml::XmlAbstractionLayer& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
+                    const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,
                     const std::string& outputPath);
 
