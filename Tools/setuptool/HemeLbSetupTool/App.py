@@ -10,6 +10,8 @@
 try:
     import wxversion
     wxversion.select('2.8')
+except wxversion.VersionError:
+    wxversion.select('2.9')
 except ImportError:
     pass
 import wx
