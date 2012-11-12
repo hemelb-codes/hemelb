@@ -33,6 +33,7 @@ namespace hemelb
       public:
         /** constructor - gets initial values from an xml configuration file */
         Particle(const geometry::LatticeData& latDatLBM,
+                 const hemelb::lb::LbmParameters *lbmParams,
                  io::xml::XmlAbstractionLayer& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
@@ -184,6 +185,9 @@ namespace hemelb
 
         /* an adjustment to the velocity from the LubricationBC boundary condition */
         LatticeVelocity lubricationVelocityAdjustment;
+
+        /* supplies the value of tau for calculating viscosity */
+        const hemelb::lb::LbmParameters *lbmParams;
 
         proc_t ownerRank;
 
