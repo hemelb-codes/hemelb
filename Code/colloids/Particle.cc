@@ -18,8 +18,10 @@ namespace hemelb
   namespace colloids
   {
     Particle::Particle(const geometry::LatticeData& latDatLBM,
+                       const hemelb::lb::LbmParameters *lbmParams,
                        io::xml::XmlAbstractionLayer& xml) :
-      PersistedParticle(xml)
+      PersistedParticle(xml),
+      lbmParams(lbmParams)
     {
       // updating position with zero velocity and zero body force is necessary
       // because of the side-effect that sets owner rank from the new position
@@ -127,7 +129,8 @@ namespace hemelb
     const DimensionlessQuantity Particle::GetViscosity() const
     {
       // get fluid viscosity
-      return BLOOD_VISCOSITY_Pa_s;
+      //return BLOOD_VISCOSITY_Pa_s;
+      return (lbmParams->GetTau() - 0.5) * Cs2 * 1.0/*timestep*/ * 1.0/*density*/;
     }
 
     const DimensionlessQuantity Particle::CalculateDragCoefficient() const
