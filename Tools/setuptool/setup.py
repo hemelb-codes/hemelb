@@ -17,6 +17,8 @@ import vtk
 try:
     import wxversion
     wxversion.select('2.8')
+except wxversion.VersionError:
+    wxversion.select('2.9')
 except ImportError:
     pass
 
@@ -53,8 +55,8 @@ def DarwinGrep(results):
             
             # Do a string split rather than os.path.splitext as the latter splits on the last dot
             base, rest = base.split('.', 1)
-            
-            if base == 'libvtkCommon':
+            print dir,base," ",rest
+            if base.find('libvtkCommon') != -1:
                 return dir
             
         except ValueError:
@@ -105,7 +107,10 @@ def GetVtkLibDir():
     try:
         aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
     except:
-        aVtkSharedLibrary=vtk.vtkCommonPython.__file__
+        try:
+            aVtkSharedLibrary=vtk.vtkCommonPython.__file__
+        except:
+            aVtkSharedLibrary=vtk.vtkCommonCorePython.__file__ # Separated in the VTK "modularisation"
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
@@ -150,10 +155,15 @@ def GetHemeLbCompileFlags():
     
 if __name__ == "__main__":
     # numpy, vtk
-    vtkLibDir = GetVtkLibDir()
+    
     HemeLbDir = os.path.abspath('../../Code')
     BoostDir = GetBoostDir(HemeLbDir)
-    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir, BoostDir]
+    vtkLibDir = GetVtkLibDir()
+    if os.getenv('VTKINCLUDE'):
+        vtkIncludeDir=os.getenv('VTKINCLUDE')
+    else:
+        vtkIncludeDir=LibToInclude(vtkLibDir)
+    include_dirs = [ vtkIncludeDir, HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
