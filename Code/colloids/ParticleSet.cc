@@ -23,6 +23,7 @@ namespace hemelb
     ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
                              io::xml::XmlAbstractionLayer& xml,
                              lb::MacroscopicPropertyCache& propertyCache,
+                             const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
                              const std::string& outputPath) :
         localRank(topology::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
@@ -66,7 +67,7 @@ namespace hemelb
       while (found)
       {
         // create the particle object from the settings in the config file
-        Particle nextParticle(latDatLBM, xml);
+        Particle nextParticle(latDatLBM, lbmParams, xml);
         // check the particle is valid, i.e. in fluid, and is locally owned
         if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {
