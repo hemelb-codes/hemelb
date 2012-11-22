@@ -265,14 +265,14 @@ namespace hemelb
               LatticeDensity density = 3.0;
               util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
               util::Vector3D<LatticeStress> traction;
-              LatticeType::CalculateTractionVectorOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
+              LatticeType::CalculateTractionOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
 
               CPPUNIT_ASSERT_EQUAL(traction[0], density * Cs2);
               CPPUNIT_ASSERT_EQUAL(traction[1], 0.0);
               CPPUNIT_ASSERT_EQUAL(traction[2], 0.0);
 
               util::Vector3D<LatticeStress> tangentialComponentTraction;
-              LatticeType::CalculateTangentialProjectionTractionVector(density,
+              LatticeType::CalculateTangentialProjectionTraction(density,
                                                                        1.0,
                                                                        nonEquilibriumF.data(),
                                                                        wallNormal,
