@@ -198,7 +198,9 @@ results:
         norm_residual_stress_tensor: '[frobenius_norm(theoretical-computed) for (theoretical, computed) in zip(theoretical_stress_tensor, radial_stresstensor)]'
 
         # TBD analysis rheology paper
-        rh_wss: '[rh_wss_0[0], rh_wss_1[0], rh_wss_2[0], rh_wss_3[0], rh_wss_4[0], rh_wss_5[0], rh_wss_6[0], rh_wss_7[0], rh_wss_8[0], rh_wss_9[0]]'
+        rh_wss: '[rh_wss_0[0], rh_wss_1[0], rh_wss_2[0], rh_wss_3[0], rh_wss_4[0], rh_wss_5[0], rh_wss_6[0], rh_wss_7[0], rh_wss_8[0], rh_wss_9[0],
+                  rh_wss_10[0], rh_wss_11[0], rh_wss_12[0], rh_wss_13[0], rh_wss_14[0], rh_wss_15[0], rh_wss_16[0], rh_wss_17[0], rh_wss_18[0], rh_wss_19[0],
+                  rh_wss_20[0], rh_wss_21[0], rh_wss_22[0], rh_wss_23[0], rh_wss_24[0], rh_wss_25[0], rh_wss_26[0], rh_wss_27[0], rh_wss_28[0], rh_wss_29[0]]'
         ave_rh_wss: 'numpy.mean(rh_wss,axis=0)'
         signed_wss_magnitude: '[numpy.sign(numpy.dot(x,ave_rh_wss))*numpy.linalg.norm(x) for x in rh_wss]'
         compute_tbd: 'compute_tbd(signed_wss_magnitude)'
@@ -304,37 +306,97 @@ radial_position]' # todo: #493 call womersley_velocity with radial_position once
           - 'i-8'
           - developed_velocity_profile
 
-      'results/Extracted/point_pres_stress.dat':
+      'results/Extracted/point_4.dat':
         rh_grid: grid
         rh_wss_0:
-          - i0
+          - i60
           - tangentialprojectiontractionvector
         rh_wss_1:
-          - i1
+          - i61
           - tangentialprojectiontractionvector
         rh_wss_2:
-          - i2
+          - i62
           - tangentialprojectiontractionvector
         rh_wss_3:
-          - i3
+          - i63
           - tangentialprojectiontractionvector
         rh_wss_4:
-          - i4
+          - i64
           - tangentialprojectiontractionvector
         rh_wss_5:
-          - i5
+          - i65
           - tangentialprojectiontractionvector
         rh_wss_6:
-          - i6
+          - i66
           - tangentialprojectiontractionvector
         rh_wss_7:
-          - i7
+          - i67
           - tangentialprojectiontractionvector
         rh_wss_8:
-          - i8
+          - i68
           - tangentialprojectiontractionvector
         rh_wss_9:
-          - i9
+          - i69
+          - tangentialprojectiontractionvector
+        rh_wss_10:
+          - i70
+          - tangentialprojectiontractionvector
+        rh_wss_11:
+          - i71
+          - tangentialprojectiontractionvector
+        rh_wss_12:
+          - i72
+          - tangentialprojectiontractionvector
+        rh_wss_13:
+          - i73
+          - tangentialprojectiontractionvector
+        rh_wss_14:
+          - i74
+          - tangentialprojectiontractionvector
+        rh_wss_15:
+          - i75
+          - tangentialprojectiontractionvector
+        rh_wss_16:
+          - i76
+          - tangentialprojectiontractionvector
+        rh_wss_17:
+          - i77
+          - tangentialprojectiontractionvector
+        rh_wss_18:
+          - i78
+          - tangentialprojectiontractionvector
+        rh_wss_19:
+          - i79
+          - tangentialprojectiontractionvector
+        rh_wss_20:
+          - i80
+          - tangentialprojectiontractionvector
+        rh_wss_21:
+          - i81
+          - tangentialprojectiontractionvector
+        rh_wss_22:
+          - i82
+          - tangentialprojectiontractionvector
+        rh_wss_23:
+          - i83
+          - tangentialprojectiontractionvector
+        rh_wss_24:
+          - i84
+          - tangentialprojectiontractionvector
+        rh_wss_25:
+          - i85
+          - tangentialprojectiontractionvector
+        rh_wss_26:
+          - i86
+          - tangentialprojectiontractionvector
+        rh_wss_27:
+          - i87
+          - tangentialprojectiontractionvector
+        rh_wss_28:
+          - i88
+          - tangentialprojectiontractionvector
+        rh_wss_29:
+          - i89
           - tangentialprojectiontractionvector
 
 graphs:
