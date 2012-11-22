@@ -148,7 +148,7 @@ namespace hemelb
 
             }
 
-            if (propertyCache.tractionVectorCache.RequiresRefresh())
+            if (propertyCache.tractionCache.RequiresRefresh())
             {
               util::Vector3D<LatticeStress> tractionOnAPoint(0);
 
@@ -165,7 +165,7 @@ namespace hemelb
                                                              tractionOnAPoint);
               }
 
-              propertyCache.tractionVectorCache.Put(site.GetIndex(), tractionOnAPoint);
+              propertyCache.tractionCache.Put(site.GetIndex(), tractionOnAPoint);
 
             }
 
