@@ -134,19 +134,19 @@ namespace hemelb
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
            * @param wallNormal wall normal at a given point
-           * @param tractionVector traction vector at a given point
+           * @param traction traction vector at a given point
            */
           inline static void CalculateTractionOnAPoint(const distribn_t density,
                                                              const distribn_t tau,
                                                              const distribn_t fNonEquilibrium[],
                                                              const util::Vector3D<DimensionlessQuantity>& wallNormal,
-                                                             util::Vector3D<LatticeStress>& tractionVector)
+                                                             util::Vector3D<LatticeStress>& traction)
           {
             util::Matrix3D sigma;
             CalculateStressTensor(density, tau, fNonEquilibrium, sigma);
 
             // Multiply the stress tensor by the surface normal
-            sigma.timesVector(wallNormal, tractionVector);
+            sigma.timesVector(wallNormal, traction);
           }
 
           /**
@@ -169,12 +169,12 @@ namespace hemelb
                                                                          const util::Vector3D<DimensionlessQuantity>& wallNormal,
                                                                          util::Vector3D<LatticeStress>& tractionTangentialComponent)
           {
-            util::Vector3D<LatticeStress> tractionVector;
-            CalculateTractionOnAPoint(density, tau, fNonEquilibrium, wallNormal, tractionVector);
+            util::Vector3D<LatticeStress> traction;
+            CalculateTractionOnAPoint(density, tau, fNonEquilibrium, wallNormal, traction);
 
-            LatticeStress magnitudeNormalProjectionTraction = tractionVector.Dot(wallNormal);
+            LatticeStress magnitudeNormalProjectionTraction = traction.Dot(wallNormal);
 
-            tractionTangentialComponent = tractionVector - wallNormal * magnitudeNormalProjectionTraction;
+            tractionTangentialComponent = traction - wallNormal * magnitudeNormalProjectionTraction;
           }
 
           /**
