@@ -550,11 +550,11 @@ namespace hemelb
       {
         field.type = extraction::OutputField::StressTensor;
       }
-      else if (type.compare("tractionvector") == 0)
+      else if (type.compare("traction") == 0)
       {
         field.type = extraction::OutputField::Traction;
       }
-      else if (type.compare("tangentialprojectiontractionvector") == 0)
+      else if (type.compare("tangentialprojectiontraction") == 0)
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
