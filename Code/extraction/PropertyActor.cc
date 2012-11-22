@@ -66,7 +66,7 @@ namespace hemelb
                 propertyCache.stressTensorCache.SetRefreshFlag();
                 break;
               case OutputField::Traction:
-                propertyCache.tractionVectorCache.SetRefreshFlag();
+                propertyCache.tractionCache.SetRefreshFlag();
                 break;
               case OutputField::TangentialProjectionTraction:
                 propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
