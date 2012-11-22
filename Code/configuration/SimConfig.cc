@@ -552,11 +552,11 @@ namespace hemelb
       }
       else if (type.compare("tractionvector") == 0)
       {
-        field.type = extraction::OutputField::TractionVector;
+        field.type = extraction::OutputField::Traction;
       }
       else if (type.compare("tangentialprojectiontractionvector") == 0)
       {
-        field.type = extraction::OutputField::TangentialProjectionTractionVector;
+        field.type = extraction::OutputField::TangentialProjectionTraction;
       }
       else
       {

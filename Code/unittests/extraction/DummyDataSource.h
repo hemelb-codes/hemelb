@@ -117,13 +117,13 @@ namespace hemelb
             return retValue;
           }
 
-          util::Vector3D<PhysicalStress> GetTractionVector() const
+          util::Vector3D<PhysicalStress> GetTraction() const
           {
             util::Vector3D<PhysicalStress> retValue(0);
             return retValue;
           }
 
-          util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const
+          util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const
           {
             util::Vector3D<PhysicalStress> retValue(0);
             return retValue;

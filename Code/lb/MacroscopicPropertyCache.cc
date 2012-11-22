@@ -22,7 +22,7 @@ namespace hemelb
       shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
       stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
       tractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tangentialProjectionTractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
       simulationState(simState),
       siteCount(latticeData.GetLocalFluidSiteCount())
     {
@@ -38,7 +38,7 @@ namespace hemelb
       shearRateCache.UnsetRefreshFlag();
       stressTensorCache.UnsetRefreshFlag();
       tractionVectorCache.UnsetRefreshFlag();
-      tangentialProjectionTractionVectorCache.UnsetRefreshFlag();
+      tangentialProjectionTractionCache.UnsetRefreshFlag();
     }
 
     site_t MacroscopicPropertyCache::GetSiteCount() const
