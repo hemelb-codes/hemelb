@@ -86,13 +86,13 @@ namespace hemelb
          * Returns the traction vector at an edge site (i.e. stress tensor times surface normal).
          * @return traction vector
          */
-        util::Vector3D<PhysicalStress> GetTractionVector() const;
+        util::Vector3D<PhysicalStress> GetTraction() const;
 
         /**
          * Returns the projection of the traction vector on the tangential plane of an edge site.
          * @return projected traction vector
          */
-        util::Vector3D<PhysicalStress> GetTangentialProjectionTractionVector() const;
+        util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const;
 
         /**
          * Resets the iterator to the beginning again.
