@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-# encoding: utf-8
-"""
-curate.py
-
-Created by James Hetherington on 2012-01-27.
-Copyright (c) 2012 UCL. All rights reserved.
-"""
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
 from __future__ import print_function
 import sys
 import os
