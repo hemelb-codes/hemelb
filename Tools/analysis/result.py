@@ -58,9 +58,9 @@ class ResultProperty(object):
         
     @staticmethod
     def parse_value(value):
-        if isinstance(value, np.ndarray):
-          return value.tolist()
-      
+        if isinstance(value, (list, float, np.ndarray)):
+            return value
+        
         if value in [1, 0]:
             return value
       
@@ -72,10 +72,7 @@ class ResultProperty(object):
         
         if value in ['False', 'false', False]:
             return False
-        
-        if isinstance(value, (list, float)):
-            return value
-        
+                
         try:
             return int(str(value))
         except (TypeError, ValueError):
