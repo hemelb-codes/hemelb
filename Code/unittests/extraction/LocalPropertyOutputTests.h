@@ -178,6 +178,12 @@ namespace hemelb
             propertyWriter->Write(10);
             // This SHOULD write
             propertyWriter->Write(100);
+
+            // The previous call to CheckDataWriting() sets the EOF indicator in writtenFile,
+            // the previous call to Write() ought to unset it but it isn't working properly in
+            // my current version of libc.
+            std::clearerr(writtenFile);
+
             CheckDataWriting(simpleDataSource, 100, writtenFile);
           }
 
@@ -199,7 +205,7 @@ namespace hemelb
 
             // Attempt to read one extra byte, to make sure we aren't under-reading
             char* contentsBuffer = new char[expectedSize];
-            size_t nRead = std::fread(contentsBuffer, 1, expectedSize + 1, writtenFile);
+            size_t nRead = std::fread(contentsBuffer, 1, expectedSize + 1, file);
 
             CPPUNIT_ASSERT_EQUAL(expectedSize, nRead);
 
