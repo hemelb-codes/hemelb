@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-# encoding: utf-8
-"""
-curate.py
-
-Created by James Hetherington on 2012-01-27.
-Copyright (c) 2012 UCL. All rights reserved.
-"""
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
 from __future__ import print_function
 import sys
 import os
@@ -22,9 +23,9 @@ import environment
 
 class Curation(ResultsCollection):
     """Gather a group of results, and manipulate them in some way"""
-    def __init__(self,source_path,results_config,clargs,stream=sys.stdout):
+    def __init__(self, source_path, results_config,clargs, stream=sys.stdout):
         # Prepare to parse the arguments
-        super(Curation,self).__init__(source_path,results_config)
+        super(Curation, self).__init__(source_path, results_config)
         # By default, an unsupplied argument does not create a result property
         parser = argparse.ArgumentParser(argument_default=argparse.SUPPRESS)
 
@@ -35,20 +36,20 @@ class Curation(ResultsCollection):
 
         # Every property of a result is a potential command line argument argument
         for prop in self.results[0].properties:
-            parser.add_argument("--"+prop,action=ParseAction)
+            parser.add_argument("--" + prop, action=ParseAction)
 
         # Additional possible argument, to invert the selection
-        parser.add_argument("--invert",action='store_true',default=False)
-        parser.add_argument("--latest",type=int)
-        options,action=parser.parse_known_args(clargs)
+        parser.add_argument("--invert", action='store_true', default=False)
+        parser.add_argument("--latest", type=int)
+        options, action = parser.parse_known_args(clargs)
 
         # Ok, we have the results of argument parsing, get a dictionary of them and use it to filter the results
-        filtration=vars(options)
-        filter_opts={}
-        filter_opts['invert']=filtration.pop('invert',False)
-        filter_opts['latest']=filtration.pop('latest',False)
-        self.filtered_results=self.filter(filtration,**filter_opts)
-        self.action=Action(action,stream)
+        filtration = vars(options)
+        filter_opts = {}
+        filter_opts['invert'] = filtration.pop('invert', False)
+        filter_opts['latest'] = filtration.pop('latest', False)
+        self.filtered_results = self.filter(filtration, **filter_opts)
+        self.action = Action(action, stream)
 
     def act(self):
         self.action.start()
@@ -56,54 +57,67 @@ class Curation(ResultsCollection):
             self.action(result)
 
 class Action(object):
-    def __init__(self,config,stream):
-        self.program=config.pop(0)
-        self.action=config.pop(0)
-        self.arguments=config
-        self.stream=stream
-        self.writer=csv.writer(self.stream, delimiter=' ')
-        self.pp=PrettyPrinter(stream=self.stream)
+    def __init__(self, config, stream):
+        self.program = config.pop(0)
+        self.action = config.pop(0)
+        self.arguments = config
+        self.stream = stream
+        self.writer = csv.writer(self.stream, delimiter=' ')
+        self.pp = PrettyPrinter(stream=self.stream)
+        
     def start(self):
-        if self.action in ['display','zip']:
-            print("#",end='',file=self.stream)
-            print(*self.arguments,file=self.stream)
-            print("",file=self.stream)
-    def __call__(self,result):
-        getattr(self,self.action)(result,*self.arguments)
-    def report(self,result):
-        print(result,file=self.stream)
-    def inspect(self,result):
+        if self.action in ['display', 'zip']:
+            print("#" ,end='', file=self.stream)
+            print(*self.arguments, file=self.stream)
+            print("", file=self.stream)
+            
+    def __call__(self, result):
+        getattr(self, self.action)(result, *self.arguments)
+        
+    def report(self, result):
+        print(result, file=self.stream)
+        
+    def inspect(self, result):
         self.pp.pprint(result.hash())
-    def display(self,result,*cols):
-        self.writer.writerow(map(lambda x: x if not x==None else 'None',[result.datum(col) for col in cols]))
+        
+    def display(self, result, *cols):
+        self.writer.writerow(map(lambda x: x if x is not None else 'None',
+                                 [result.datum(col) for col in cols]))
         result.files.clear()
-    def name(self,result):
-        print(result.name,file=self.stream)
-    def accept(self,result):
-        acceptance=open(os.path.join(result.path,'acceptance.txt'),'w')
+        
+    def name(self, result):
+        print(result.name, file=self.stream)
+        
+    def accept(self, result):
+        acceptance = open(os.path.join(result.path, 'acceptance.txt'), 'w')
         acceptance.write("Accepted: OK")
         acceptance.close()
-    def reject(self,result):
-        acceptance=open(os.path.join(result.path,'acceptance.txt'),'w')
+        
+    def reject(self, result):
+        acceptance = open(os.path.join(result.path,'acceptance.txt'), 'w')
         acceptance.write("Accepted: NO")
         acceptance.close()
-    def delete(self,result):
-        shutil.rmtree(result.path,ignore_errors=True)
-    def cat(self,result,*files):
-        files=sum([glob.glob(os.path.join(result.path, afile)) for afile in files], [])
+        
+    def delete(self, result):
+        shutil.rmtree(result.path, ignore_errors=True)
+        
+    def cat(self, result, *files):
+        files = sum([glob.glob(os.path.join(result.path, afile)) for afile in files],
+                    [])
         for afile in files:
-            content=open(afile).read()
-            print(content,file=self.stream)
+            content = open(afile).read()
+            print(content, file=self.stream)
             content.close()
-    def zip(self,result,*cols):
-        print("#%s"%result.name, file=self.stream)
+            
+    def zip(self, result, *cols):
+        print("#%s" % result.name, file=self.stream)
         self.writer.writerows(
             zip(*[result.datum(col) for col in cols])
         )
-        print("\n",file=self.stream)
+        print("\n", file=self.stream)
 
 def main():
-    Curation(environment.config['results_path'],environment.config['results'],sys.argv).act()
+    Curation(environment.config['results_path'], environment.config['results'], sys.argv).act()
 
 if __name__ == '__main__':
     main()
