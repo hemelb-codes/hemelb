@@ -1,3 +1,11 @@
+# 
+# Copyright (C) University College London, 2007-2012, all rights reserved.
+# 
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+# with, install, use, duplicate, modify, redistribute or share this
+# file, or any part thereof, other than as allowed by any agreement
+# specifically made by you with University College London.
+# 
 results:
     xml_files:
         'results/report.xml':
@@ -136,45 +144,45 @@ results:
         momentum_diffusion_time_count: (steps * step_length) / momentum_diffusion_time
 
         # Geometry stats
-        pipe_length: 'math.sqrt(sum((x - y)**2 for x, y in zip(pipe_ends[0], pipe_ends[1])))' # todo: #493 numpyfy expression when possible: np.linalg.norm(pipe_ends[0] - pipe_ends[1])
+        pipe_length: 'np.linalg.norm(pipe_ends[0] - pipe_ends[1])'
         axis: '[(x-y) / pipe_length for x, y in zip(pipe_ends[1], pipe_ends[0])]'
-        axial_position: '[x[2] for x in  aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)]'
-        axial_radius: '[x[0] for x in  aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)]'
-        radial_position: '[x[0] for x in aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)]'
-        radial_z: '[x[2] for x in aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)]'
+        axial_position: 'aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)[2]'
+        axial_radius: 'aligned_cylindrical(raw_axial_coordinate,voxel_size,origin, axis)[0]'
+        radial_position: 'aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)[0]'
+        radial_z: 'aligned_cylindrical(raw_radial_coordinate,voxel_size,origin, axis)[2]'
 
         # Velocity stats
-        axial_velocity: '[sum([x*y for x,y in zip(axis, velocity)]) for velocity in radial_velocity_field]'
-        mean_theoretical_axial_velocity: ' sum(theoretical_axial_velocity) / len(theoretical_axial_velocity)'
-        range_theoretical_axial_velocity: 'max(theoretical_axial_velocity) - min(theoretical_axial_velocity)'
-        range_theoretical_axial_velocity_obs: 'max(theoretical_axial_velocity_obs) - min(theoretical_axial_velocity_obs)'
-        residual_velocity: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity)]'
-        residual_velocity_obs: '[(a-b) for a,b in zip(axial_velocity,theoretical_axial_velocity_obs)]'
-        max_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, max, lambda x,y: 1./ max_vector_magnitude(y), max)'
+        axial_velocity: 'np.tensordot(radial_velocity_field, axis, axes=1)'
+        mean_theoretical_axial_velocity: 'np.mean(theoretical_axial_velocity)'
+        range_theoretical_axial_velocity: 'np.ptp(theoretical_axial_velocity)'
+        range_theoretical_axial_velocity_obs: 'np.ptp(theoretical_axial_velocity_obs)'
+        residual_velocity: 'axial_velocity - theoretical_axial_velocity'
+        residual_velocity_obs: 'axial_velocity -theoretical_axial_velocity_obs'
+        max_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, np.max, lambda x,y: 1./ max_vector_magnitude(y), np.max)'
         ave_rel_residual_velocity: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities, map_velocity_pair, rms, lambda x,y: 1./ max_vector_magnitude(y), ave)'
         ave_rel_residual_velocity_obs: 'zip_map_reduce(sample_set_1, theoretical_plane_velocities_obs, map_velocity_pair, rms, lambda x,y: 1./ max_vector_magnitude(y), ave)'
-        mean_actual_velocity: 'sum(axial_velocity)/len(axial_velocity)'
+        mean_actual_velocity: 'np.mean(axial_velocity)'
 
         # Pressure stats
-        pressure_diff: (inlet_pressure_mean-outlet_pressure_mean) * 133.3223874
-        non_iolet_pressure_field: '[x for (x,y) in zip(axial_pressure,axial_position) if abs(y) < pipe_length * 0.45]'
-        non_iolet_positions: '[x for x in axial_position if abs(x) < pipe_length * 0.45]'
-        observed_pressure_grad: '(max(non_iolet_pressure_field) - min(non_iolet_pressure_field)) / (max(non_iolet_positions) - min(non_iolet_positions))'
-        axial_pressure: '[133.3223874 * x for x in axial_pressure_torr]'
-        axial_mean_pressure: sum(axial_pressure)/len(axial_pressure)
-        mean_theoretical_axial_pressure: 'sum(theoretical_axial_pressure) / len(theoretical_axial_pressure)'
-        range_theoretical_axial_pressure: 'max(theoretical_axial_pressure) - min(theoretical_axial_pressure)'
-        range_theoretical_axial_pressure_obs: 'max(theoretical_axial_pressure_obs) - min(theoretical_axial_pressure_obs)'
-        residual_pressure: '[(a-b) for a,b in zip(axial_pressure,theoretical_axial_pressure)]'
-        residual_pressure_obs: '[(a-b) for a,b in zip(axial_pressure,theoretical_axial_pressure_obs)]'
-        max_rel_residual_pressure: 'max([abs(x) for x in residual_pressure])/range_theoretical_axial_pressure'
-        ave_rel_residual_pressure: '( sum([x**2 for x in residual_pressure]) / sum([(x - mean_theoretical_axial_pressure)**2 for x in theoretical_axial_pressure])) ** 0.5'
-        ave_rel_residual_pressure_obs: '(( sum([x**2 for x in residual_pressure_obs]) / len(residual_pressure_obs) ) ** 0.5) / range_theoretical_axial_pressure_obs'
-        pressure_comparison_axial_position: '[x for x in axial_position]'
+        pressure_diff: (inlet_pressure_mean - outlet_pressure_mean) * 133.3223874
+        non_iolet_pressure_field: 'axial_pressure[np.where(abs(axial_position) < pipe_length * 0.45)]'
+        non_iolet_positions: 'axial_position[np.where(abs(axial_position) < pipe_length * 0.45)]'
+        observed_pressure_grad: '(np.max(non_iolet_pressure_field) - np.min(non_iolet_pressure_field)) / (np.max(non_iolet_positions) - np.min(non_iolet_positions))'
+        axial_pressure: '133.3223874 * axial_pressure_torr'
+        axial_mean_pressure: 'np.mean(axial_pressure)'
+        mean_theoretical_axial_pressure: 'np.mean(theoretical_axial_pressure)'
+        range_theoretical_axial_pressure: 'np.ptp(theoretical_axial_pressure)'
+        range_theoretical_axial_pressure_obs: 'np.ptp(theoretical_axial_pressure_obs)'
+        residual_pressure: 'axial_pressure -theoretical_axial_pressure'
+        residual_pressure_obs: 'axial_pressure - theoretical_axial_pressure_obs'
+        max_rel_residual_pressure: 'np.max(np.abs(residual_pressure))/range_theoretical_axial_pressure'
+        ave_rel_residual_pressure: 'np.sqrt( np.sum(residual_pressure**2) / np.sum((theoretical_axial_pressure - mean_theoretical_axial_pressure)**2))'
+        ave_rel_residual_pressure_obs: 'np.sqrt(np.mean(residual_pressure_obs)) / range_theoretical_axial_pressure_obs'
+        pressure_comparison_axial_position: 'axial_position'
 
         # Inlet stats
-        inlet_pressure: '[133.3223874 * x for x in inlet_pressure_torr]'
-        inlet_V: '[ (x[0]**2 + x[1]**2 + x[2]**2) ** 0.5 for x in inlet_velocity  ]'
+        inlet_pressure: '133.3223874 * inlet_pressure_torr'
+        inlet_V: 'np.sqrt(np.sum(inlet_velocity**2, axis=-1))'
 
         # Scalar shear stress stats
         filtered_theoretical_shear_stress: '[a for (a,b) in zip(theoretical_axial_stress,radial_shear_stress_field) if not math.isinf(b)]'
@@ -207,7 +215,7 @@ results:
 
         # Convergence properties
         transformed_plane_grid: 'aligned_cylindrical(plane_coords,voxel_size,origin,axis)'
-        convergence: 'zip_map_reduce(sample_set_1, sample_set_2, map_velocity_pair, max, lambda x,y: 1. / max_vector_magnitude(x+y), max)'
+        convergence: 'zip_map_reduce(sample_set_1, sample_set_2, map_velocity_pair, np.max, lambda x,y: 1. / max_vector_magnitude(x+y), np.max)'
 
     yaml_files:
         'env.yml':
