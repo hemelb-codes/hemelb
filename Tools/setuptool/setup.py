@@ -110,7 +110,11 @@ def GetVtkLibDir():
         try:
             aVtkSharedLibrary=vtk.vtkCommonPython.__file__
         except:
-            aVtkSharedLibrary=vtk.vtkCommonCorePython.__file__ # Separated in the VTK "modularisation"
+            try:
+                aVtkSharedLibrary=vtk.vtkCommonCorePython.__file__ # Separated in the VTK "modularisation"
+            except:
+                import vtkCommonPython
+                aVtkSharedLibrary=vtkCommonPython.__file__
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
@@ -148,10 +152,14 @@ def GetVtkCompileFlags(vtkLibDir):
 
 def GetHemeLbCompileFlags():
     osName = platform.system()
+    flags=[]
     if osName == 'Darwin':
-        return ['-DHEMELB_CFG_ON_BSD']
-    
-    return []
+        flags.append('-DHEMELB_CFG_ON_BSD')
+    if False: #Need to add autodetect capability for this option
+        flags.append('-Dxdr_uint16_t=xdr_u_int16_t')
+        flags.append('-Dxdr_uint32_t=xdr_u_int32_t')
+        flags.append('-Dxdr_uint64_t=xdr_u_int64_t')
+    return flags
     
 if __name__ == "__main__":
     # numpy, vtk
