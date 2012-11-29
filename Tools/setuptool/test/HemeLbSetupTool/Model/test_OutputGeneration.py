@@ -6,6 +6,7 @@ import numpy as np
 from HemeLbSetupTool.Model import OutputGeneration
 from HemeLbSetupTool.Model.Profile import Profile
 from hemeTools.parsers.geometry.simple import ConfigLoader
+import fixtures
 
 class TestPolyDataGenerator:
     def test_regression(self, tmpdir):
@@ -30,6 +31,9 @@ class TestPolyDataGenerator:
         import filecmp
         assert filecmp.cmp(outGmyFileName, os.path.join(dataDir, 'test.gmy'))
         assert filecmp.cmp(outXmlFileName, os.path.join(dataDir, 'test.xml'))
+        
+    def test_cube(self,tmpdir):
+        """Generate a gmy from a simple cubic profile and check the output"""
 
 class TestCylinderGenerator:
     

@@ -148,7 +148,7 @@ namespace hemelb
 
             }
 
-            if (propertyCache.tractionVectorCache.RequiresRefresh())
+            if (propertyCache.tractionCache.RequiresRefresh())
             {
               util::Vector3D<LatticeStress> tractionOnAPoint(0);
 
@@ -158,18 +158,18 @@ namespace hemelb
                */
               if (site.IsEdge())
               {
-                LatticeType::CalculateTractionVectorOnAPoint(hydroVars.density,
+                LatticeType::CalculateTractionOnAPoint(hydroVars.density,
                                                              hydroVars.tau,
                                                              hydroVars.GetFNeq().f,
                                                              site.GetWallNormal(),
                                                              tractionOnAPoint);
               }
 
-              propertyCache.tractionVectorCache.Put(site.GetIndex(), tractionOnAPoint);
+              propertyCache.tractionCache.Put(site.GetIndex(), tractionOnAPoint);
 
             }
 
-            if (propertyCache.tangentialProjectionTractionVectorCache.RequiresRefresh())
+            if (propertyCache.tangentialProjectionTractionCache.RequiresRefresh())
             {
               util::Vector3D<LatticeStress> tangentialProjectionTractionOnAPoint(0);
 
@@ -179,14 +179,14 @@ namespace hemelb
                */
               if (site.IsEdge())
               {
-                LatticeType::CalculateTangentialProjectionTractionVector(hydroVars.density,
+                LatticeType::CalculateTangentialProjectionTraction(hydroVars.density,
                                                                          hydroVars.tau,
                                                                          hydroVars.GetFNeq().f,
                                                                          site.GetWallNormal(),
                                                                          tangentialProjectionTractionOnAPoint);
               }
 
-              propertyCache.tangentialProjectionTractionVectorCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);
+              propertyCache.tangentialProjectionTractionCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);
 
             }
           }

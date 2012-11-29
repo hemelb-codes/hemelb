@@ -21,8 +21,8 @@ namespace hemelb
       vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
       shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
       stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tangentialProjectionTractionVectorCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+      tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
       simulationState(simState),
       siteCount(latticeData.GetLocalFluidSiteCount())
     {
@@ -37,8 +37,8 @@ namespace hemelb
       wallShearStressMagnitudeCache.UnsetRefreshFlag();
       shearRateCache.UnsetRefreshFlag();
       stressTensorCache.UnsetRefreshFlag();
-      tractionVectorCache.UnsetRefreshFlag();
-      tangentialProjectionTractionVectorCache.UnsetRefreshFlag();
+      tractionCache.UnsetRefreshFlag();
+      tangentialProjectionTractionCache.UnsetRefreshFlag();
     }
 
     site_t MacroscopicPropertyCache::GetSiteCount() const
