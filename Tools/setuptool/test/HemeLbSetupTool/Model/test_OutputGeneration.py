@@ -35,13 +35,40 @@ class TestPolyDataGenerator:
     def test_cube(self,tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
         cube=fixtures.cube(tmpdir)
-        cube.VoxelSize=0.036
+        cube.VoxelSize=0.11
         cube.StlFileUnitId=0
         generator=OutputGeneration.PolyDataGenerator(cube)
         generator.Execute()
         # Load back the resulting geometry file and assert things are as expected
         checker=CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
         checker.Load()
+        
+        fluid_sites=sum(checker.Domain.BlockFluidSiteCounts)
+        block_count=len(checker.Domain.Blocks)
+        block_size=checker.Domain.BlockSize
+        sites=block_count*block_size**3
+        assert(sites==4096)
+        assert(fluid_sites==729)
+        assert(sites!=fluid_sites)
+        
+    def test_cylinder(self,tmpdir):
+        """Generate a gmy from a simple cubic profile and check the output"""
+        cylinder=fixtures.cylinder(tmpdir)
+        cylinder.VoxelSize=0.11
+        cylinder.StlFileUnitId=0
+        generator=OutputGeneration.PolyDataGenerator(cylinder)
+        generator.Execute()
+        # Load back the resulting geometry file and assert things are as expected
+        checker=CylinderTestingGmyParser(cylinder.OutputGeometryFile,cylinder.VoxelSize,np.array([0.0,1.0,0.0]),1.0,0.5)
+        checker.Load()
+        
+        fluid_sites=sum(checker.Domain.BlockFluidSiteCounts)
+        block_count=len(checker.Domain.Blocks)
+        block_size=checker.Domain.BlockSize
+        sites=block_count*block_size**3
+        assert(sites==4096)
+        assert(fluid_sites==621)
+        assert(sites!=fluid_sites)
 
 
 class TestCylinderGenerator:
@@ -113,12 +140,12 @@ class CylinderTestingGmyParser(TestingGmyParser):
         perp = x - xDOTn * self.Axis
         if np.dot(perp, perp) > self.Radius**2:
             return False
-        
         return True
         
 class CubeTestingGmyParser(TestingGmyParser):
     def IsInside(self, position):
-        return (
+        result= (
             all(component<0.5 and component>-0.5 for component in position)
-        )        
+        )      
+        return result  
 
