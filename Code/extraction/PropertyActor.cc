@@ -65,11 +65,11 @@ namespace hemelb
               case OutputField::StressTensor:
                 propertyCache.stressTensorCache.SetRefreshFlag();
                 break;
-              case OutputField::TractionVector:
-                propertyCache.tractionVectorCache.SetRefreshFlag();
+              case OutputField::Traction:
+                propertyCache.tractionCache.SetRefreshFlag();
                 break;
-              case OutputField::TangentialProjectionTractionVector:
-                propertyCache.tangentialProjectionTractionVectorCache.SetRefreshFlag();
+              case OutputField::TangentialProjectionTraction:
+                propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
                 break;
               default:
                 // This assert should never trip. It only occurs when someone adds a new field to OutputField
