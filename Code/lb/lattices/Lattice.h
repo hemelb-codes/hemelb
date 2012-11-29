@@ -134,19 +134,19 @@ namespace hemelb
            * @param tau relaxation time
            * @param fNonEquilibrium non equilibrium part of the distribution function
            * @param wallNormal wall normal at a given point
-           * @param tractionVector traction vector at a given point
+           * @param traction traction vector at a given point
            */
-          inline static void CalculateTractionVectorOnAPoint(const distribn_t density,
+          inline static void CalculateTractionOnAPoint(const distribn_t density,
                                                              const distribn_t tau,
                                                              const distribn_t fNonEquilibrium[],
                                                              const util::Vector3D<DimensionlessQuantity>& wallNormal,
-                                                             util::Vector3D<LatticeStress>& tractionVector)
+                                                             util::Vector3D<LatticeStress>& traction)
           {
             util::Matrix3D sigma;
             CalculateStressTensor(density, tau, fNonEquilibrium, sigma);
 
             // Multiply the stress tensor by the surface normal
-            sigma.timesVector(wallNormal, tractionVector);
+            sigma.timesVector(wallNormal, traction);
           }
 
           /**
@@ -155,7 +155,7 @@ namespace hemelb
            *
            *    \vec{t_tan} = \vec{t} - dot(\vec{t}, \vec{n})*\vec{n}
            *
-           * where t is the traction vector (see CalculateTractionVectorOnAPoint for definition) and n is the normal
+           * where t is the traction vector (see CalculateTractionOnAPoint for definition) and n is the normal
            *
            * @param density density at a given site
            * @param tau relaxation time
@@ -163,18 +163,18 @@ namespace hemelb
            * @param wallNormal wall normal at a given point
            * @param tractionTangentialComponent tangential projection of the traction vector
            */
-          inline static void CalculateTangentialProjectionTractionVector(const distribn_t density,
+          inline static void CalculateTangentialProjectionTraction(const distribn_t density,
                                                                          const distribn_t tau,
                                                                          const distribn_t fNonEquilibrium[],
                                                                          const util::Vector3D<DimensionlessQuantity>& wallNormal,
                                                                          util::Vector3D<LatticeStress>& tractionTangentialComponent)
           {
-            util::Vector3D<LatticeStress> tractionVector;
-            CalculateTractionVectorOnAPoint(density, tau, fNonEquilibrium, wallNormal, tractionVector);
+            util::Vector3D<LatticeStress> traction;
+            CalculateTractionOnAPoint(density, tau, fNonEquilibrium, wallNormal, traction);
 
-            LatticeStress magnitudeNormalProjectionTraction = tractionVector.Dot(wallNormal);
+            LatticeStress magnitudeNormalProjectionTraction = traction.Dot(wallNormal);
 
-            tractionTangentialComponent = tractionVector - wallNormal * magnitudeNormalProjectionTraction;
+            tractionTangentialComponent = traction - wallNormal * magnitudeNormalProjectionTraction;
           }
 
           /**
@@ -219,7 +219,7 @@ namespace hemelb
            *
            * The stress tensor computed in this method only includes the deviatoric part
            * and not the component corresponding to the pressure. Do not use the intermediate
-           * traction value unless you understand the implications (use CalculateTractionVectorOnAPoint
+           * traction value unless you understand the implications (use CalculateTractionOnAPoint
            * instead).
            */
           inline static void CalculateWallShearStressMagnitude(const distribn_t &density,

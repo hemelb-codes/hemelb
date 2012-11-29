@@ -254,15 +254,15 @@ namespace hemelb
                     << static_cast<WrittenDataType>(tensor[1][2]) << static_cast<WrittenDataType>(tensor[2][2]);
                 break;
               }
-              case OutputField::TractionVector:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTractionVector().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTractionVector().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTractionVector().z);
+              case OutputField::Traction:
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTraction().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTraction().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTraction().z);
                 break;
-              case OutputField::TangentialProjectionTractionVector:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTractionVector().z);
+              case OutputField::TangentialProjectionTraction:
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().z);
                 break;
 
               default:
@@ -291,8 +291,8 @@ namespace hemelb
         case OutputField::ShearRate:
           return 1;
         case OutputField::Velocity:
-        case OutputField::TractionVector:
-        case OutputField::TangentialProjectionTractionVector:
+        case OutputField::Traction:
+        case OutputField::TangentialProjectionTraction:
           return 3;
         case OutputField::StressTensor:
           return 6; // We only store the upper triangular part of the symmetric tensor
