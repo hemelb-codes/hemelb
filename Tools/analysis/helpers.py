@@ -7,7 +7,6 @@
 # specifically made by you with University College London.
 # 
 import numpy as np
-import scipy.special
 
 def space(grid_coords, voxel_size, origin):
     return grid_coord * voxel_size + origin
@@ -56,6 +55,7 @@ def frobenius_norm(symmetric_matrix):
     return norm
 
 def womersley_velocity(radial_position, time, womersley, pipe_radius, pipe_length, pressure_amplitude, pressure_period, density):
+    import scipy.special
     # Eq. (5.1) in Formaggia et al. "Cardiovascular Mathematics"
     bessel_numerator = scipy.special.jn(0, pow(1j, 3.0/2.0) * womersley * radial_position / pipe_radius)
     bessel_denominator = scipy.special.jn(0, pow(1j, 3.0/2.0) * womersley)
