@@ -1,0 +1,2 @@
+import generate
+generate.cube()
