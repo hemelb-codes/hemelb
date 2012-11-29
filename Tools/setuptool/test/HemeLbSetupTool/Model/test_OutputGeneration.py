@@ -34,6 +34,15 @@ class TestPolyDataGenerator:
         
     def test_cube(self,tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
+        cube=fixtures.cube(tmpdir)
+        cube.VoxelSize=0.036
+        cube.StlFileUnitId=0
+        generator=OutputGeneration.PolyDataGenerator(cube)
+        generator.Execute()
+        # Load back the resulting geometry file and assert things are as expected
+        checker=CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
+        checker.Load()
+
 
 class TestCylinderGenerator:
     
@@ -68,24 +77,10 @@ class TestCylinderGenerator:
     
     pass
 
-class CylinderTestingGmyParser(ConfigLoader):
-    def __init__(self, filename, VoxelSize, Axis, Length, Radius):
-        ConfigLoader.__init__(self, filename)
-        self.VoxelSize = VoxelSize
-        self.Axis = Axis
-        self.Length = Length
-        self.Radius = Radius
-        return
-    
-    def IsInside(self, x):
-        xDOTn = np.dot(x, self.Axis)
-        if xDOTn < -0.5 * self.Length or xDOTn > 0.5 * self.Length:
-            return False
-        perp = x - xDOTn * self.Axis
-        if np.dot(perp, perp) > self.Radius**2:
-            return False
-        
-        return True
+class TestingGmyParser(ConfigLoader):
+    def __init__(self,filename,VoxelSize):
+        ConfigLoader.__init__(self,filename)
+        self.VoxelSize=VoxelSize
         
     def OnEndHeader(self):
         assert self.Domain.VoxelSize == self.VoxelSize
@@ -102,3 +97,28 @@ class CylinderTestingGmyParser(ConfigLoader):
         return
     
     pass
+
+class CylinderTestingGmyParser(TestingGmyParser):
+    def __init__(self, filename, VoxelSize, Axis, Length, Radius):
+        TestingGmyParser.__init__(self, filename,VoxelSize)
+        self.Axis = Axis
+        self.Length = Length
+        self.Radius = Radius
+        return
+    
+    def IsInside(self, x):
+        xDOTn = np.dot(x, self.Axis)
+        if xDOTn < -0.5 * self.Length or xDOTn > 0.5 * self.Length:
+            return False
+        perp = x - xDOTn * self.Axis
+        if np.dot(perp, perp) > self.Radius**2:
+            return False
+        
+        return True
+        
+class CubeTestingGmyParser(TestingGmyParser):
+    def IsInside(self, position):
+        return (
+            all(component<0.5 and component>-0.5 for component in position)
+        )        
+
