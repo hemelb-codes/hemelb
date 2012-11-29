@@ -102,12 +102,11 @@ class Action(object):
         shutil.rmtree(result.path, ignore_errors=True)
         
     def cat(self, result, *files):
-        filenames = sum(glob.glob(os.path.join(result.path, afile)) for afile in files,
-                        [])
-        for fn in filenames:
-            with file(fn) as f:
-                content = f.read()
-                print(content, file=self.stream)
+        for pattern in files:
+            for fn in glob.iglob(os.path.join(result.path, pattern)):
+                with file(fn) as f:
+                    content = f.read()
+                    print(content, file=self.stream)
 
             
     def zip(self, result, *cols):
