@@ -14,8 +14,15 @@ def temporary_profile(tmpdir,name):
     result.OutputXmlFile = outXmlFileName
     return result
 
-def cube(tmpdir):
+def file_fixture(tmpdir,label):
     # Create a profile which is a simple cube
-    result=temporary_profile(tmpdir,'cube')
-    result.StlFile=fixture_path('cube')
+    result=temporary_profile(tmpdir,label)
+    result.StlFile=fixture_path(label)
     return result
+
+def cube(tmpdir):
+    return file_fixture(tmpdir,'cube')
+    
+def cylinder(tmpdir):
+    return file_fixture(tmpdir,'cylinder')
+    
