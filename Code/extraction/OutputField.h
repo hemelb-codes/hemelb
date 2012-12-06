@@ -25,7 +25,8 @@ namespace hemelb
           ShearRate,
           StressTensor,
           Traction,
-          TangentialProjectionTraction
+          TangentialProjectionTraction,
+          MpiRank
         };
 
         std::string name;
