@@ -15,6 +15,8 @@
 #include "vtkIdList.h"
 #include "vtkCellData.h"
 #include "vtkDataSet.h"
+#include "vtkMatrix4x4.h"
+#include "Block.h"
 
 using namespace hemelb::io::formats;
 
@@ -168,4 +170,29 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
 			this->hitPoints, this->hitCellIds);
 	return this->hitPoints->GetNumberOfPoints();
+}
+
+static unsigned int intersection_count=0;
+int counter(vtkOBBNode *polyNode,vtkOBBNode*cubeNode,vtkMatrix4x4 * trasnform,void *arg){
+    intersection_count++;
+}
+
+bool PolyDataGenerator::BlockIntersectsSurface(const Block &block,int & side){
+    // Create an OBB tree for the block
+    vtkOBBTree *blockSlightlyLargerOBBTree=block.CreateOBBTreeModel(this->VoxelSizeMetres);
+    intersection_count=0; // TOTALLY NON REENTRANT
+    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,vtkMatrix4x4::New(),counter,NULL);
+    blockSlightlyLargerOBBTree->Delete();
+    std::cout << "Intersection count: " << intersection_count << std::endl;
+    if (intersection_count==0){
+        // either entirely inside or entirely outside
+        double middlePosition[3];
+        middlePosition[0]=block.Middle().Position[0];
+        middlePosition[1]=block.Middle().Position[1];
+        middlePosition[2]=block.Middle().Position[2];
+        side=Locator->InsideOrOutside(middlePosition);
+        return true;
+    }
+    side=0;
+    return false;
 }

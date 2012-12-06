@@ -50,6 +50,13 @@ class TestPolyDataGenerator:
         assert(sites==4096)
         assert(fluid_sites==729)
         assert(sites!=fluid_sites)
+        # Now, turn on the skip-non-intersecting-blocks optimisation, and assert same result
+        generator.skipNonIntersectingBlocks=True
+        generator.Execute()
+        checker_skip_nonintersecting=CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
+        checker_skip_nonintersecting.Load()
+        fluid_sites_nonintersecting=sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
+        assert(fluid_sites_nonintersecting==fluid_sites)
         
     def test_cylinder(self,tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
@@ -69,6 +76,14 @@ class TestPolyDataGenerator:
         assert(sites==4096)
         assert(fluid_sites==621)
         assert(sites!=fluid_sites)
+        # Now, turn on the skip-non-intersecting-blocks optimisation, and assert same result
+        generator.skipNonIntersectingBlocks=True
+        generator.Execute()
+        checker_skip_nonintersecting=CylinderTestingGmyParser(
+            cylinder.OutputGeometryFile,cylinder.VoxelSize,np.array([0.0,1.0,0.0]),1.0,0.5)
+        checker_skip_nonintersecting.Load()
+        fluid_sites_nonintersecting=sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
+        assert(fluid_sites_nonintersecting==fluid_sites)
 
 
 class TestCylinderGenerator:

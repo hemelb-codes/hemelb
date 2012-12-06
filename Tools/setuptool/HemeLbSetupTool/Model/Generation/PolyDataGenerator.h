@@ -50,6 +50,7 @@ private:
 	virtual void PreExecute(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
+	virtual bool BlockIntersectsSurface(const Block &block,int & side);
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;

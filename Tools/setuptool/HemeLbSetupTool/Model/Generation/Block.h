@@ -14,7 +14,7 @@
 
 #include "Index.h"
 class Site;
-
+class vtkOBBTree;
 #include "Domain.h"
 
 typedef std::vector<Site*> SiteVec;
@@ -43,7 +43,11 @@ public:
 	inline const Index& GetIndex() const {
 		return this->index;
 	}
-
+    vtkOBBTree * CreateOBBTreeModel(double extraSize) const;
+    
+    const Site & Middle() const {
+        return *sites[sites.size()/2];
+    }
 protected:
 	unsigned int size;
 	const Index index;

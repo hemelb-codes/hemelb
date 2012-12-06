@@ -19,12 +19,13 @@
 class GeometryWriter;
 class Site;
 class BlockWriter;
+class Block;
 
 class GeometryGenerator {
 public:
 	GeometryGenerator();
 	virtual ~GeometryGenerator();
-	void Execute() throw (GenerationError);
+	void Execute(bool skipNonIntersectingBlocks) throw (GenerationError);
 
 	inline double GetVoxelSizeMetres(void) {
 		return this->VoxelSizeMetres;
@@ -61,6 +62,7 @@ protected:
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
+    virtual bool BlockIntersectsSurface(const Block &block,int & side)=0;
 };
 
 #endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H
