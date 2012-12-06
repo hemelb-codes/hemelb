@@ -23,7 +23,7 @@ void GeometryGenerator::PreExecute() {
 
 }
 
-void GeometryGenerator::Execute() throw (GenerationError) {
+void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (GenerationError) {
 	this->PreExecute();
 	double bounds[6];
 	this->ComputeBounds(bounds);
@@ -39,7 +39,8 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 		// case where there are no fluid sites).
 		BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		Block& block = *blockIt;
-
+        int side;
+        bool intersecting=this->BlockIntersectsSurface(block,side);
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
 			Site& site = **siteIt;
 			/*
@@ -48,7 +49,22 @@ void GeometryGenerator::Execute() throw (GenerationError) {
 			 * of the Domain will be set to solid. The iterators here ensure
 			 * that we start with the site at (0,0,0).
 			 */
-			this->ClassifySite(site);
+			if (intersecting&&side!=0){
+			    this->ClassifySite(site);
+		    }
+			else
+			{
+			    if (side==-1) { // inside
+			        site.IsFluidKnown=true;
+                    site.IsFluid=true;
+                    site.CreateLinksVector();
+                    for(unsigned int link_index=0;link_index<site.Links.size();link_index++){
+                        site.Links[link_index].Type = geometry::CUT_NONE;
+                    }
+			    } else { //outside
+			        site.IsFluidKnown=true;
+			    }
+			}
 
 			if (site.IsFluid) {
 				blockWriterPtr->IncrementFluidSitesCount();
