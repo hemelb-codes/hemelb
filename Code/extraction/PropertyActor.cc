@@ -71,6 +71,9 @@ namespace hemelb
               case OutputField::TangentialProjectionTraction:
                 propertyCache.tangentialProjectionTractionCache.SetRefreshFlag();
                 break;
+              case OutputField::MpiRank:
+                // We don't actually have to cache anything to get the rank.
+                break;
               default:
                 // This assert should never trip. It only occurs when someone adds a new field to OutputField
                 // and forgets adding a new case to the switch
