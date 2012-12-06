@@ -6,6 +6,8 @@
 
 #include "vtkOBBTree.h"
 #include "vtkCubeSource.h"
+#include "vtkXMLPolyDataWriter.h"
+#include "vtkTriangleFilter.h"
 
 /*
  * Helper functions to check if sites are on the edge of the Domain.
@@ -74,15 +76,16 @@ vtkOBBTree * Block::CreateOBBTreeModel(double extraSize) const {
     
     cubeSource->SetBounds(
         sites.front()->Position[0]-extraSize,
-        sites.front()->Position[1]-extraSize,
-        sites.front()->Position[2]-extraSize,
         sites.back()->Position[0]+extraSize,
+        sites.front()->Position[1]-extraSize,
         sites.back()->Position[1]+extraSize,
+        sites.front()->Position[2]-extraSize,
         sites.back()->Position[2]+extraSize);
 
     vtkPolyData * cubePolyData=vtkPolyData::New();
     cubeSource->SetOutput(cubePolyData);
     cubeSource->Update();
+
     result->SetDataSet(cubePolyData);
 	result->BuildLocator();
     return result;
