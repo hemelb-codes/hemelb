@@ -46,7 +46,6 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
         } else {
             intersecting = true; // don't use the optimisation -- check every site
         }
-        int count_fluid=0;
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
 			Site& site = **siteIt;
 			/*
@@ -73,7 +72,6 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 			}
 
 			if (site.IsFluid) {
-                count_fluid++;
 				blockWriterPtr->IncrementFluidSitesCount();
 				WriteFluidSite(*blockWriterPtr, site);
 			} else {
