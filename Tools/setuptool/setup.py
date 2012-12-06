@@ -155,7 +155,7 @@ def GetHemeLbCompileFlags():
     flags=[]
     if osName == 'Darwin':
         flags.append('-DHEMELB_CFG_ON_BSD')
-    if True: #Need to add autodetect capability for this option
+    if False: #Need to add autodetect capability for this option
         flags.append('-Dxdr_uint16_t=xdr_u_int16_t')
         flags.append('-Dxdr_uint32_t=xdr_u_int32_t')
         flags.append('-Dxdr_uint64_t=xdr_u_int64_t')
