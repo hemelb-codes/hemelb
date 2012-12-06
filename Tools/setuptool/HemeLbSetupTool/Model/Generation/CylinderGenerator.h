@@ -51,6 +51,8 @@ private:
 	virtual void ComputeBounds(double []) const;
 	void ClassifySite(Site& site);
 	CylinderData* Cylinder;
+protected:
+    virtual bool BlockIntersectsSurface(const Block &block,int & side){side=-1;return true;};
 };
 
 #endif // HEMELBSETUPTOOL_CYLINDERGENERATOR_H
