@@ -9,6 +9,7 @@
 
 import numpy as np
 import os.path
+import yep
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
@@ -32,7 +33,9 @@ def DVfromV(v):
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
 class GeometryGenerator(object):
-    
+    def __init__(self):
+        self.skipNonIntersectingBlocks=False
+        
     def _MakeIoletProxies(self):
         # Construct the Iolet structs
         nIn = 0
@@ -71,7 +74,9 @@ class GeometryGenerator(object):
         """
         t = Timer()
         t.Start()
-        self.generator.Execute()
+        #yep.start(self.profile.StlFile+".prof")
+        self.generator.Execute(self.skipNonIntersectingBlocks)
+        #yep.stop()
         XmlWriter(self.profile).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
@@ -84,10 +89,10 @@ class PolyDataGenerator(GeometryGenerator):
         """Clip the STL and set attributes on the SWIG-proxied C++ 
         GeometryGenerator object.
         """
+        GeometryGenerator.__init__(self)
         self.profile = profile
         self.generator = Generation.PolyDataGenerator()
         self._SetCommonGeneratorProperties()
-        
         self.generator.SetSeedPointWorking(profile.SeedPoint.x / profile.VoxelSize,
                                            profile.SeedPoint.y / profile.VoxelSize,
                                            profile.SeedPoint.z / profile.VoxelSize)
@@ -122,6 +127,7 @@ class CylinderGenerator(GeometryGenerator):
         """Clip the STL and set attributes on the SWIG-proxied C++ 
         GeometryGenerator object.
         """
+        GeometryGenerator.__init__(self)
         self.Axis = Axis
         self.LengthMetres = LengthMetres
         self.RadiusMetres = RadiusMetres
