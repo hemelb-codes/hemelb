@@ -558,6 +558,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
+      else if (type.compare("mpirank") == 0)
+      {
+        field.type = extraction::OutputField::MpiRank;
+      }
       else
       {
         log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
