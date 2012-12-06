@@ -264,7 +264,9 @@ namespace hemelb
                     << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().y)
                     << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().z);
                 break;
-
+              case OutputField::MpiRank:
+                xdrWriter << static_cast<WrittenDataType>(topology::NetworkTopology::Instance()->GetLocalRank());
+                break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
                 // implementation is provided for its serialisation.
@@ -289,6 +291,7 @@ namespace hemelb
         case OutputField::VonMisesStress:
         case OutputField::ShearStress:
         case OutputField::ShearRate:
+        case OutputField::MpiRank:
           return 1;
         case OutputField::Velocity:
         case OutputField::Traction:
