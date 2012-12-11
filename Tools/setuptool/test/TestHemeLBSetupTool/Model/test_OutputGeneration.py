@@ -34,56 +34,56 @@ class TestPolyDataGenerator:
         
     def test_cube(self,tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
-        cube=fixtures.cube(tmpdir)
-        cube.VoxelSize=0.23
-        cube.StlFileUnitId=0
-        generator=OutputGeneration.PolyDataGenerator(cube)
+        cube = fixtures.cube(tmpdir)
+        cube.VoxelSize = 0.23
+        cube.StlFileUnitId = 0
+        generator = OutputGeneration.PolyDataGenerator(cube)
         generator.Execute()
         # Load back the resulting geometry file and assert things are as expected
-        checker=CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
+        checker = CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
         checker.Load()
         
-        fluid_sites=sum(checker.Domain.BlockFluidSiteCounts)
-        block_count=len(checker.Domain.Blocks)
-        block_size=checker.Domain.BlockSize
-        sites=block_count*block_size**3
+        fluid_sites = sum(checker.Domain.BlockFluidSiteCounts)
+        block_count = len(checker.Domain.Blocks)
+        block_size = checker.Domain.BlockSize
+        sites = block_count * block_size**3
         #assert(sites==4096)
         #assert(fluid_sites==729)
-        assert(sites!=fluid_sites)
+        assert(sites != fluid_sites)
         # Now, turn on the skip-non-intersecting-blocks optimisation, and assert same result
-        generator.skipNonIntersectingBlocks=True
+        generator.skipNonIntersectingBlocks = True
         generator.Execute()
-        checker_skip_nonintersecting=CubeTestingGmyParser(cube.OutputGeometryFile,cube.VoxelSize)
+        checker_skip_nonintersecting = CubeTestingGmyParser(cube.OutputGeometryFile, cube.VoxelSize)
         checker_skip_nonintersecting.Load()
-        fluid_sites_nonintersecting=sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
-        assert(fluid_sites_nonintersecting==fluid_sites)
+        fluid_sites_nonintersecting = sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
+        assert(fluid_sites_nonintersecting == fluid_sites)
         
     def test_cylinder(self,tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
-        cylinder=fixtures.cylinder(tmpdir)
-        cylinder.VoxelSize=0.23
-        cylinder.StlFileUnitId=0
-        generator=OutputGeneration.PolyDataGenerator(cylinder)
+        cylinder = fixtures.cylinder(tmpdir)
+        cylinder.VoxelSize = 0.23
+        cylinder.StlFileUnitId = 0
+        generator = OutputGeneration.PolyDataGenerator(cylinder)
         generator.Execute()
         # Load back the resulting geometry file and assert things are as expected
-        checker=CylinderTestingGmyParser(cylinder.OutputGeometryFile,cylinder.VoxelSize,np.array([0.0,1.0,0.0]),1.0,0.5)
+        checker = CylinderTestingGmyParser(cylinder.OutputGeometryFile,cylinder.VoxelSize,np.array([0.0,1.0,0.0]),1.0,0.5)
         checker.Load()
         
-        fluid_sites=sum(checker.Domain.BlockFluidSiteCounts)
-        block_count=len(checker.Domain.Blocks)
-        block_size=checker.Domain.BlockSize
-        sites=block_count*block_size**3
+        fluid_sites = sum(checker.Domain.BlockFluidSiteCounts)
+        block_count = len(checker.Domain.Blocks)
+        block_size = checker.Domain.BlockSize
+        sites=block_count * block_size**3
         #assert(sites==4096)
         #assert(fluid_sites==621)
-        assert(sites!=fluid_sites)
+        assert(sites != fluid_sites)
         # Now, turn on the skip-non-intersecting-blocks optimisation, and assert same result
-        generator.skipNonIntersectingBlocks=True
+        generator.skipNonIntersectingBlocks = True
         generator.Execute()
         checker_skip_nonintersecting=CylinderTestingGmyParser(
-            cylinder.OutputGeometryFile,cylinder.VoxelSize,np.array([0.0,1.0,0.0]),1.0,0.5)
+            cylinder.OutputGeometryFile, cylinder.VoxelSize,np.array( [0.0, 1.0, 0.0] ), 1.0, 0.5)
         checker_skip_nonintersecting.Load()
-        fluid_sites_nonintersecting=sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
-        assert(fluid_sites_nonintersecting==fluid_sites)
+        fluid_sites_nonintersecting = sum(checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
+        assert(fluid_sites_nonintersecting == fluid_sites)
 
 
 class TestCylinderGenerator:
