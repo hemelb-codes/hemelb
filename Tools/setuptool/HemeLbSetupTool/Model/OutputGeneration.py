@@ -9,7 +9,6 @@
 
 import numpy as np
 import os.path
-import yep
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
@@ -74,6 +73,7 @@ class GeometryGenerator(object):
         """
         t = Timer()
         t.Start()
+        #import yep
         #yep.start(self.profile.StlFile+".prof")
         self.generator.Execute(self.skipNonIntersectingBlocks)
         #yep.stop()
