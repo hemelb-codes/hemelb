@@ -62,7 +62,7 @@ protected:
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
-    virtual bool BlockIntersectsSurface(const Block &block,int & side)=0;
+    virtual bool BlockIntersectsSurface(const Block &block,int & side) = 0;
 };
 
 #endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H

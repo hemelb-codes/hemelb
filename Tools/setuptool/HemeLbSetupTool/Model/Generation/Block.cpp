@@ -69,20 +69,21 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	}
 }
 
-vtkOBBTree * Block::CreateOBBTreeModel(double extraSize) const {
+vtkOBBTree * Block::CreateOBBTreeModel(double extraSize) const
+{
     // Create an OBB Tree which is a cube slightly bigger than this block
     vtkOBBTree * result = vtkOBBTree::New();
     vtkCubeSource * cubeSource = vtkCubeSource::New();
     
     cubeSource->SetBounds(
-        sites.front()->Position[0]-extraSize,
-        sites.back()->Position[0]+extraSize,
-        sites.front()->Position[1]-extraSize,
-        sites.back()->Position[1]+extraSize,
-        sites.front()->Position[2]-extraSize,
-        sites.back()->Position[2]+extraSize);
+        sites.front()->Position[0] - extraSize,
+        sites.back()->Position[0]  + extraSize,
+        sites.front()->Position[1] - extraSize,
+        sites.back()->Position[1]  +extraSize,
+        sites.front()->Position[2] -extraSize,
+        sites.back()->Position[2]  +extraSize);
 
-    vtkPolyData * cubePolyData=vtkPolyData::New();
+    vtkPolyData * cubePolyData = vtkPolyData::New();
     cubeSource->SetOutput(cubePolyData);
     cubeSource->Update();
 
