@@ -179,16 +179,17 @@ int counter(vtkOBBNode *polyNode,vtkOBBNode*cubeNode,vtkMatrix4x4 * trasnform,vo
     intersection_count++;
 }
 
-bool PolyDataGenerator::BlockIntersectsSurface(const Block &block,int & side){
+bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
+{
     // Create an OBB tree for the block
-    vtkOBBTree *blockSlightlyLargerOBBTree=block.CreateOBBTreeModel(1.0);
-    intersection_count=0; // TOTALLY NON REENTRANT
-    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,vtkMatrix4x4::New(),counter,NULL);
+    vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
+    intersection_count = 0; // TOTALLY NON REENTRANT
+    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,v tkMatrix4x4::New(), counter, NULL);
     
     // visualise
-    vtkXMLPolyDataWriter * writer=vtkXMLPolyDataWriter::New();
-    vtkPolyData * blockOBBPD=vtkPolyData::New();
-    blockSlightlyLargerOBBTree->GenerateRepresentation(-1,blockOBBPD);
+    vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
+    vtkPolyData * blockOBBPD = vtkPolyData::New();
+    blockSlightlyLargerOBBTree->GenerateRepresentation(-1, blockOBBPD);
     /*
     writer->SetInput(blockOBBPD);
     writer->SetFileName("blockOBB.vtp");
@@ -201,15 +202,16 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block,int & side){
     */
     blockSlightlyLargerOBBTree->GetDataSet()->Delete();
     blockSlightlyLargerOBBTree->Delete();
-    if (intersection_count==0){
+    if (intersection_count == 0)
+    {
         // either entirely inside or entirely outside
         double middlePosition[3];
-        middlePosition[0]=block.Middle().Position[0];
-        middlePosition[1]=block.Middle().Position[1];
-        middlePosition[2]=block.Middle().Position[2];
-        side=Locator->InsideOrOutside(middlePosition);
+        middlePosition[0] = block.Middle().Position[0];
+        middlePosition[1] = block.Middle().Position[1];
+        middlePosition[2] = block.Middle().Position[2];
+        side = Locator->InsideOrOutside(middlePosition);
         return false;
     }
-    side=0;
+    side = 0;
     return true;
 }
