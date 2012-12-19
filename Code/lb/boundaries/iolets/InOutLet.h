@@ -10,6 +10,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLET_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLET_H
 
+#include "log/Logger.h"
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "tinyxml.h"
@@ -151,7 +152,8 @@ namespace hemelb
             /* Derek: This general notion should be present in InOutlets
              * TODO I am not making this pure virtual yet, do we want it to be?*/
             virtual PhysicalVelocity GetVelocity() {
-              return NULL;
+              log::Logger::Log<log::Info, log::OnePerCore>("Unimplemented method InOutlet::GetVelocity has been reached.");
+              return 0.;
             }
           protected:
             util::Vector3D<float> position;

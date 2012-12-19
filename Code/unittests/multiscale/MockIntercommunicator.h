@@ -9,14 +9,15 @@
 
 #ifndef HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
 #define HEMELB_UNITTESTS_MULTISCALE_MOCKINTERCOMMUNICATOR_H
-#include "multiscale/Intercommunicator.h"
-#include "mpiInclude.h"
-#include "tinyxml.h"
 
 #include <algorithm>
 #include <functional>
 #include <vector>
 #include <sstream>
+
+#include "multiscale/Intercommunicator.h"
+#include "mpiInclude.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -45,7 +46,7 @@ namespace hemelb
       class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
       {
         public:
-          MockIntercommunicator(std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
+          MockIntercommunicator(std::map<std::string, double> & buffer, std::map<std::string, bool> &orchestration) :
               doubleContents(buffer), currentTime(0), orchestration(orchestration)
           {
 
@@ -57,12 +58,14 @@ namespace hemelb
             SendToMultiscale();
           }
 
-          bool DoMultiscale(double new_time){
-            if (ShouldAdvance()){
+          bool DoMultiscale(double new_time)
+          {
+            if (ShouldAdvance())
+            {
               AdvanceTime(new_time);
               SendToMultiscale();
             }
-            bool should_advance=ShouldAdvance();
+            bool should_advance = ShouldAdvance();
             if (should_advance)
             {
               GetFromMultiscale();
@@ -92,7 +95,6 @@ namespace hemelb
               for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
                   sharedFieldIndex++)
               {
-
                 Receive(resolver.Fields()[sharedFieldIndex].first,
                         resolver.Fields()[sharedFieldIndex].second,
                         label,
@@ -125,8 +127,9 @@ namespace hemelb
                        hemelb::multiscale::BaseSharedValue & value)
           {
 
-            std::string label(objectLabel+ "_" + fieldLabel);
-            if (orchestration[label]) return;
+            std::string label(objectLabel + "_" + fieldLabel);
+            if (orchestration[label])
+              return;
             if (type == RuntimeTypeTraits::GetType<double>())
             {
               (static_cast<hemelb::multiscale::SharedValue<double> &>(value)).SetPayload(doubleContents[label]);
@@ -138,18 +141,18 @@ namespace hemelb
                     const std::string objectLabel,
                     hemelb::multiscale::BaseSharedValue & value)
           {
-            std::string label(objectLabel+ "_" + fieldLabel);
-            if (!orchestration[label]) return;
+            std::string label(objectLabel + "_" + fieldLabel);
+            if (!orchestration[label])
+              return;
             if (type == RuntimeTypeTraits::GetType<double>())
             {
-              doubleContents[label] =
-                  static_cast<hemelb::multiscale::SharedValue<double> &>(value);
+              doubleContents[label] = static_cast<hemelb::multiscale::SharedValue<double> &>(value);
             }
 
           }
           std::map<std::string, double> &doubleContents;
           double currentTime;
-          std::map<std::string,bool> & orchestration;
+          std::map<std::string, bool> & orchestration;
       };
     }
   }

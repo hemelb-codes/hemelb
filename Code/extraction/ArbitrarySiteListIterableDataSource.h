@@ -12,8 +12,6 @@
 #include "units.h"
 #include "extraction/IterableDataSource.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
-//#include "geometry/LatticeData.h"
-//#include "geometry/Site.h"
 
 namespace hemelb
 {
@@ -22,23 +20,15 @@ namespace hemelb
     class ArbitrarySiteListIterableDataSource : public IterableDataSource
     {
       public:
-
         ArbitrarySiteListIterableDataSource() {
           origin = util::Vector3D<distribn_t>(0,0,0);
-
         }
 
         /**
-         * Virtual destructor. We could declare this as pure virtual but that will cause a fail at
-         * link-time (at least with GCC). GCC needs an object file to put the vtable in; by defining
-         * this function in IterableDataSource.cc, we give it one.
+         * Destructor, clears up.
          * @return
          */
         ~ArbitrarySiteListIterableDataSource();
-
-
-
-
 
         /**
          * Reads the next fluid site from the data source. Its position,
