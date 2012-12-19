@@ -127,6 +127,35 @@ hector:
     CTEMPLATE_PATCH_ALIGN: "ON"
     MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
     MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
+supermuc:
+  max_job_name_chars: 15
+  make_jobs: 4
+  job_dispatch: "llsubmit"
+  run_command: "mpiexec -n $cores"
+  batch_header: ll
+  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
+  remote: "supermuc.lrz.de"
+  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
+  install_path_template: "/home/hpc/pr45su/lu64bap/install"
+  home_path_template: "/home/hpc/$project/$username"
+  runtime_path_template: "/home/hpc/$project/$username"
+  modules: ["load cmake/2.8","load mpi.ibm"]
+  build_prefix_commands: ["export CXX=mpiCC","export CC=mpicc", "export LD=mpiCC"] #Tell autoconf for dependencies where the hector compilers are
+  temp_path_template: "$work_path/tmp"
+  regression_test_path_template: "$work_path/regression"
+  queue: "parallel"
+  python_build: "lib64/python2.6"
+  corespernode: 16
+  cmake_options:
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "CC"
+    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    MPWide_INCLUDE_DIR: "/home/hpc/pr45su/lu64bap/mpwide"
+    MPWide_LIBRARIES: "/home/hpc/pr45su/lu64bap/mpwide/libMPW.a"
 hermit:
   max_job_name_chars: 15
   make_jobs: 4
