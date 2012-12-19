@@ -11,6 +11,7 @@
 #define HEMELB_LB_SIMULATIONSTATE_H
 
 #include "reporting/Reportable.h"
+#include "units.h"
 
 namespace hemelb
 {

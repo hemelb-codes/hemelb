@@ -7,57 +7,47 @@
 // specifically made by you with University College London.
 // 
 
-#include "configuration/CommandLine.h"
-#include "SimulationMaster.h"
-#include "multiscale/MultiscaleSimulationMaster.h"
-#include "resources/Resource.h"
-#include "multiscale/Intercommunicator.h"
+/* Specifying the use of 'real' MPWide */
+#include <MPWide.h>
 
-#include "MPWide.h" /* Specifying the use of 'real' MPWide */
+#include "configuration/CommandLine.h"
+#include "multiscale/MultiscaleSimulationMaster.h"
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 
 int main(int argc, char *argv[])
 {
-  // main function needed to perform the entire simulation. Some
-  // simulation paramenters and performance statistics are outputted on
-  // standard output
+  // Main function for performing an entire multiscale simulation.
+  hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
 
-  std::map<std::string,double> *sharedValueBuffer;
-  std::map<std::string,bool> *lbOrchestration;
+  // Work out the location of the input file.
+  std::string inputFile = options.GetInputFile();
+  int sl = inputFile.find_last_of("/");
+  std::string mpwideConfigDir = inputFile.substr(0, sl + 1);
 
-  hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc,argv);
+  std::cout << inputFile << " " << mpwideConfigDir << " " << sl << std::endl;
 
-  string test = options.GetInputFile();
-  string s("/");
-  int sl = test.find_last_of(s);
-  string mpw_config_dir = test.substr(0,sl+1);
+  // Create some necessary buffers.
+  std::map<std::string, bool> lbOrchestration;
+  lbOrchestration["boundary1_pressure"] = true;
+  lbOrchestration["boundary2_pressure"] = true;
+  lbOrchestration["boundary1_velocity"] = true;
+  lbOrchestration["boundary2_velocity"] = true;
 
-  std::cout << test << " " << mpw_config_dir << " " << sl << endl;
-  
-  hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> *lMaster;
+  std::map<std::string, double> sharedValueBuffer;
 
-  sharedValueBuffer = new std::map<std::string, double>();
+  // TODO The MPWide config file should be read from the HemeLB XML config file!
+  // Create the intercommunicator
+  hemelb::multiscale::MPWideIntercommunicator intercomms(sharedValueBuffer,
+                                                         lbOrchestration,
+                                                         mpwideConfigDir.append("MPWSettings.cfg"));
 
-  lbOrchestration=new std::map<std::string,bool>();
-  std::map<std::string,bool> &rorchestrationLB=*lbOrchestration;
-  rorchestrationLB["boundary1_pressure"] = true;
-  rorchestrationLB["boundary2_pressure"] = true;
-  rorchestrationLB["boundary1_velocity"] = true;
-  rorchestrationLB["boundary2_velocity"] = true;
-
-  hemelb::multiscale::mpwide::mpwide_config_file = mpw_config_dir.append("MPWSettings.cfg");
-  hemelb::multiscale::MPWideIntercommunicator intercomms(*sharedValueBuffer,*lbOrchestration);
   //TODO: Add an IntercommunicatorImplementation?
-
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Constructing MultiscaleSimulationMaster()");
-  lMaster = new hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator>(options, intercomms);
+  hemelb::multiscale::MultiscaleSimulationMaster<hemelb::multiscale::MPWideIntercommunicator> lMaster(options,
+                                                                                                      intercomms);
 
-
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("RunSimulation()");
-  lMaster->RunSimulation();
-
-  delete sharedValueBuffer;
-  delete lbOrchestration;
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Runing simulation()");
+  lMaster.RunSimulation();
 
   return (0);
 }
