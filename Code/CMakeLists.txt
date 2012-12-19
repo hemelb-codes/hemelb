@@ -233,7 +233,7 @@ if (HEMELB_BUILD_MULTISCALE)
 	endif()
 	
 	set(root_sources SimulationMaster.cc mpiInclude.cc multiscale/MultiscaleSimulationMaster.h)
-	add_executable(hemelb_multiscale mainMultiscale.cc ${root_sources})
+	add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
 	include_directories(${PROJECT_SOURCE_DIR})
 	set(package_subdirs
 		configuration
@@ -249,15 +249,15 @@ if (HEMELB_BUILD_MULTISCALE)
 		util
 		io
 		log
-	    colloids
+                colloids
+                multiscale
 		)
 	foreach(subdir ${package_subdirs})
 		set(lib "hemelb_${subdir}")
 		list(APPEND heme_libraries ${lib})
-#		add_subdirectory(${subdir})
 	endforeach()
-#	add_subdirectory(resources)
-	target_link_libraries(hemelb_multiscale 
+        add_subdirectory(multiscale)
+	target_link_libraries(multiscale_hemelb
 		${heme_libraries}
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}
@@ -265,9 +265,9 @@ if (HEMELB_BUILD_MULTISCALE)
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
-	    ${MPWide_LIBRARIES}
+                ${MPWide_LIBRARIES}
 		)
-	INSTALL(TARGETS hemelb_multiscale RUNTIME DESTINATION bin)
+	INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 endif()
 

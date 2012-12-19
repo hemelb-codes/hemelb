@@ -11,12 +11,11 @@
 #define HEMELB_UNITS_H
 
 #include <stdint.h>
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
   // Basic types for use in HemeLB.
-
-  namespace util { template<typename T> class Vector3D; } // forward declaration of Vector3D
 
   // ------ OLD POLICY:  ---------
   //Any variable which scales as a function of the number of sites

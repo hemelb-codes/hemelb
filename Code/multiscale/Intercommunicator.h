@@ -33,6 +33,11 @@ namespace hemelb
     template<class RuntimeTypeImplementation> class Intercommunicator
     {
       public:
+        virtual ~Intercommunicator()
+        {
+
+        }
+
         /***
          * The RuntimeTypeImplementation template parameter must have a typedef field RuntimeType, corresponding to the used for the RTT
          * And a GetType method giving the RTT value for a given type.
@@ -68,7 +73,6 @@ namespace hemelb
          */
         typedef IntercommunicandType<RuntimeTypeImplementation> IntercommunicandTypeT;
 
-
         /***
          * Share multiscale information.
          * @param newtime time advanced to last step.
@@ -88,7 +92,6 @@ namespace hemelb
           registeredObjects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
 
         }
-
 
       protected:
         typedef std::map<Intercommunicand *, std::pair<IntercommunicandTypeT *, std::string> > ContentsType;
