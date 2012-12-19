@@ -43,125 +43,54 @@ namespace hemelb
                                    public InOutLet
         {
           public:
-            InOutLetMultiscale() :
-                multiscale::Intercommunicand(), InOutLet(), pressure(this,
-                                                                     multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), minPressure(this,
-                                                                                                                                              multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), maxPressure(this,
-                                                                                                                                                                                                                       multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), velocity(multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
-            {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
-                                                                                   GetVelocity(),
-                                                                                   GetPressure(),
-                                                                                   GetPressureMax());
-            }
+            InOutLetMultiscale();
             /***
-             * The shared values are registered through the initialiser-list syntactic sugar.
+             * The shared values are registered through the initialiser-list.
              * pressure is initialized using other.GetPressureMax() for now, because GetPressure() is not present in the
              * parent Iolet object, which is being cloned in BoundaryValues.h. This is a somewhat ugly workaround, but it does
              * preserve the single-scale code.
              */
-            InOutLetMultiscale(const InOutLetMultiscale &other) :
-                Intercommunicand(other), label(other.label), commsRequired(false), pressure(this, other.GetPressureMax()), minPressure(this,
-                                                                                                                 other.GetPressureMin()), maxPressure(this,
-                                                                                                                                                      other.GetPressureMax()), velocity(other.GetVelocity())
-            {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletMS, GetDensity(): velocity is %f, pressure is %f/%f or %f/%f",
-                                                                                   GetVelocity(),
-                                                                                   GetPressure(),
-                                                                                   other.GetPressure(),
-                                                                                   GetPressureMax(),
-                                                                                   other.GetPressureMax());
-            }
-            virtual ~InOutLetMultiscale()
-            {
-            }
+            InOutLetMultiscale(const InOutLetMultiscale &other);
+            virtual ~InOutLetMultiscale();
+
             virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
 
-            virtual InOutLet* Clone() const
-            {
-              InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
-              return copy;
-            }
-            virtual void Reset(SimulationState &state)
-            {
-              //pass;
-            }
-            virtual bool IsRegistrationRequired() const
-            {
-              return true;
-            }
-            LatticeDensity GetDensity(unsigned long timeStep) const
-            {
-              velocity = GetVelocity();
-              //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("IoletMS, GetDensity(): density is %f, velocity is %f, pressure is %f or %f",
-              //                                                                     units->ConvertPressureToLatticeUnits(maxPressure)
-              //                                                                         / Cs2,
-              //                                                                     GetVelocity(),
-              //                                                                     GetPressure(),
-              //                                                                     GetPressureMax());
-              /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
-              return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
-            }
-            PhysicalPressure GetPressureMin() const
-            {
-              return minPressure.GetPayload();
-            }
-            PhysicalPressure GetPressureMax() const
-            {
-              return maxPressure.GetPayload();
-            }
-            virtual PhysicalVelocity GetVelocity() const
-            {
-              return velocity;
-            }
-            PhysicalPressure GetPressure() const
-            {
-              return pressure.GetPayload();
-            }
+            virtual InOutLet* Clone() const;
+            virtual void Reset(SimulationState &state);
+            virtual bool IsRegistrationRequired() const;
 
-            multiscale::SharedValue<PhysicalPressure> & GetPressureReference()
-            {
-              return pressure;
-            }
+            LatticeDensity GetDensity(unsigned long timeStep) const;
+            PhysicalPressure GetPressureMin() const;
+            PhysicalPressure GetPressureMax() const;
+            PhysicalVelocity GetVelocity() const;
+            PhysicalPressure GetPressure() const;
 
-            //multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference()
-            PhysicalVelocity & GetVelocityReference()
-            {
-              return velocity;
-            }
+            multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
+            PhysicalVelocity & GetVelocityReference();
 
             template<class Intercommunicator> void Register(Intercommunicator &intercomms,
                                                             typename Intercommunicator::IntercommunicandTypeT &type)
             {
               intercomms.RegisterIntercommunicand(type, *this, label);
             }
+
             template<class IntercommunicandType> static void DefineType(IntercommunicandType &type)
             {
               // The intercommunicators have a shared buffer which represents imaginary communication
               type.template RegisterSharedValue<PhysicalPressure>("pressure");
               type.template RegisterSharedValue<PhysicalPressure>("minPressure");
               type.template RegisterSharedValue<PhysicalPressure>("maxPressure");
-              //type.template RegisterSharedValue<PhysicalVelocity>("velocity"); //leave vel out of this. Should put in IOLetVA...
             }
+
             // This should be const, and we should have a setter.
             // But the way SimConfig is set up prevents this.
-            std::string & GetLabel()
-            {
-              return label;
-            }
+            std::string & GetLabel();
 
             /* TODO: Be a bit smarter about this. IoletMS might not *always* require communications, but it's better now to be
              * inefficient than to end up with an inconsistent state. */
-            virtual bool IsCommsRequired() const
-            {
-              return commsRequired;
-            }
-
-            virtual void SetCommsRequired(bool b) {
-              commsRequired = b;
-            }
-
-            void DoComms(bool isIoProcess,const LatticeTime timeStep);
+            virtual bool IsCommsRequired() const;
+            virtual void SetCommsRequired(bool b);
+            void DoComms(bool isIoProcess, const LatticeTime timeStep);
 
           protected:
             std::string label;
@@ -171,7 +100,6 @@ namespace hemelb
             multiscale::SharedValue<PhysicalPressure> minPressure;
             multiscale::SharedValue<PhysicalPressure> maxPressure;
             mutable PhysicalVelocity velocity;
-            //mutable multiscale::SharedValue<PhysicalVelocity> velocity;
 
         };
       }

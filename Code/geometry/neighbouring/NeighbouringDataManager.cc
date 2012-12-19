@@ -28,7 +28,7 @@ namespace hemelb
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements)
       {
-        //ignore the requirements, we require everying.
+        // For now, ignore the requirements, we require everying.
         if (std::find(neededSites.begin(), neededSites.end(), globalId) == neededSites.end())
         {
           neededSites.push_back(globalId);
@@ -60,6 +60,7 @@ namespace hemelb
           net.RequestReceive(site.GetWallDistances(), localLatticeData.GetLatticeInfo().GetNumVectors() - 1, source);
           net.RequestReceiveR(site.GetWallNormal(), source);
         }
+
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
@@ -100,6 +101,7 @@ namespace hemelb
 
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("I NEED: %i", neededSites.size());
 
+        // For each locally needed site, request it from its home proc.
         for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
@@ -107,15 +109,19 @@ namespace hemelb
           net.RequestReceive(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors()),
                              localLatticeData.GetLatticeInfo().GetNumVectors(),
                              source);
-          //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Receive Requested %i , proc: %i", localLatticeData.GetLatticeInfo().GetNumVectors(), source);
-
         }
+
+        // For every other core...
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
-          if(needsEachProcHasFromMe[other].size()>0) {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("OTHER PROC %i NEED: %i", other, needsEachProcHasFromMe[other].size());
+          if (needsEachProcHasFromMe[other].size() > 0)
+          {
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("OTHER PROC %i NEED: %i",
+                                                                                  other,
+                                                                                  needsEachProcHasFromMe[other].size());
           }
 
+          // ... send all site details required by that core.
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
               needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
           {
@@ -127,56 +133,52 @@ namespace hemelb
                             localLatticeData.GetLatticeInfo().GetNumVectors(),
                             other);
 
-            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Send Requested %i", localLatticeData.GetLatticeInfo().GetNumVectors());
-
           }
         }
-        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("End of RequestComms");
       }
 
       void NeighbouringDataManager::ShareNeeds()
       {
-        if (needsHaveBeenShared == false)
+        if (needsHaveBeenShared)
+          return;
+
+        // Build a table of which sites are required from each other proc
+        std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
+        std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
+
+        for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end(); localNeed++)
         {
-          // build a table of which procs needs can be achieved from which proc
-          std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
-          std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
-          for (std::vector<site_t>::iterator localNeed = neededSites.begin(); localNeed != neededSites.end();
-              localNeed++)
-          {
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Need registered at %i", ProcForSite(*localNeed));
-            needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
-            countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
-
-          }
-
-          // every proc must send to all procs, how many it needs from that proc
-          net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
-
-          // every proc must receive from all procs, how many it needs to give that proc
-          std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().GetSize(), 0);
-          net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
-          net.Dispatch();
-
-          for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
-          {
-
-            // now, for every proc, which I need something from,send the ids of those
-            net.RequestSendV(needsIHaveFromEachProc[other], other);
-            // and, for every proc, which needs something from me, receive those ids
-            needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
-            net.RequestReceiveV(needsEachProcHasFromMe[other], other);
-            // In principle, this bit could have been implemented as a separate GatherV onto every proc
-            // However, in practice, we expect the needs to be basically local
-            // so using point-to-point will be more efficient.
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsIHaveFromEachProc[other].size(): %d", needsIHaveFromEachProc[other].size());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsEachProcHasFromMe[other].size(): %d", needsEachProcHasFromMe[other].size());
-          }
-
-          net.Dispatch();
-          needsHaveBeenShared = true;
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs have been shared...");
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Need registered at %i",
+                                                                               ProcForSite(*localNeed));
+          needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
+          countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
         }
+
+        // Spread around the number of requirements each proc has from each other proc.
+        net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
+        std::vector<int> countOfNeedsOnEachProcFromMe(net.GetCommunicator().GetSize(), 0);
+        net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
+        net.Dispatch();
+
+        // For each other proc, send and receive the needs list.
+        for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
+        {
+          // now, for every proc, which I need something from,send the ids of those
+          net.RequestSendV(needsIHaveFromEachProc[other], other);
+          // and, for every proc, which needs something from me, receive those ids
+          needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
+          net.RequestReceiveV(needsEachProcHasFromMe[other], other);
+          // In principle, this bit could have been implemented as a separate GatherV onto every proc
+          // However, in practice, we expect the needs to be basically local
+          // so using point-to-point will be more efficient.
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsIHaveFromEachProc[other].size(): %d",
+                                                                                needsIHaveFromEachProc[other].size());
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("needsEachProcHasFromMe[other].size(): %d",
+                                                                                needsEachProcHasFromMe[other].size());
+        }
+        net.Dispatch();
+        needsHaveBeenShared = true;
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs have been shared...");
       }
     }
   }

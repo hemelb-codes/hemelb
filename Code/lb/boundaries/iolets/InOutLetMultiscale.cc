@@ -11,6 +11,7 @@
 #include "configuration/SimConfig.h"
 #include "topology/NetworkTopology.h"
 #include "lb/boundaries/BoundaryComms.h"
+#include "lb/boundaries/BoundaryValues.h"
 
 namespace hemelb
 {
@@ -20,35 +21,154 @@ namespace hemelb
     {
       namespace iolets
       {
+
+        InOutLetMultiscale::InOutLetMultiscale() :
+            multiscale::Intercommunicand(), InOutLet(), pressure(this,
+                                                                 multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), minPressure(this,
+                                                                                                                                          multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), maxPressure(this,
+                                                                                                                                                                                                                   multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE), velocity(multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
+        {
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
+                                                                                GetVelocity(),
+                                                                                GetPressure(),
+                                                                                GetPressureMax());
+        }
+        /***
+         * The shared values are registered through the initialiser-list syntactic sugar.
+         * pressure is initialized using other.GetPressureMax() for now, because GetPressure() is not present in the
+         * parent Iolet object, which is being cloned in BoundaryValues.h. This is a somewhat ugly workaround, but it does
+         * preserve the single-scale code.
+         */
+        InOutLetMultiscale::InOutLetMultiscale(const InOutLetMultiscale &other) :
+            Intercommunicand(other), label(other.label), commsRequired(false), pressure(this, other.GetPressureMax()), minPressure(this,
+                                                                                                                                   other.GetPressureMin()), maxPressure(this,
+                                                                                                                                                                        other.GetPressureMax()), velocity(other.GetVelocity())
+        {
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletMS, GetDensity(): velocity is %f, pressure is %f/%f or %f/%f",
+                                                                                GetVelocity(),
+                                                                                GetPressure(),
+                                                                                other.GetPressure(),
+                                                                                GetPressureMax(),
+                                                                                other.GetPressureMax());
+        }
+
+        InOutLetMultiscale::~InOutLetMultiscale()
+        {
+        }
+
+        InOutLet* InOutLetMultiscale::Clone() const
+        {
+          InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
+          return copy;
+        }
+        void InOutLetMultiscale::Reset(SimulationState &state)
+        {
+          //pass;
+        }
+        bool InOutLetMultiscale::IsRegistrationRequired() const
+        {
+          return true;
+        }
+        LatticeDensity InOutLetMultiscale::GetDensity(unsigned long timeStep) const
+        {
+          velocity = GetVelocity();
+          /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
+          return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
+        }
+        PhysicalPressure InOutLetMultiscale::GetPressureMin() const
+        {
+          return minPressure.GetPayload();
+        }
+        PhysicalPressure InOutLetMultiscale::GetPressureMax() const
+        {
+          return maxPressure.GetPayload();
+        }
+        PhysicalVelocity InOutLetMultiscale::GetVelocity() const
+        {
+          return velocity;
+        }
+        PhysicalPressure InOutLetMultiscale::GetPressure() const
+        {
+          return pressure.GetPayload();
+        }
+
+        multiscale::SharedValue<PhysicalPressure> & InOutLetMultiscale::GetPressureReference()
+        {
+          return pressure;
+        }
+
+        PhysicalVelocity & InOutLetMultiscale::GetVelocityReference()
+        {
+          return velocity;
+        }
+
+        // This should be const, and we should have a setter.
+        // But the way SimConfig is set up prevents this.
+        std::string & InOutLetMultiscale::GetLabel()
+        {
+          return label;
+        }
+
+        /* TODO: Be a bit smarter about this. IoletMS might not *always* require communications, but it's better now to be
+         * inefficient than to end up with an inconsistent state. */
+        bool InOutLetMultiscale::IsCommsRequired() const
+        {
+          return commsRequired;
+        }
+
+        void InOutLetMultiscale::SetCommsRequired(bool b)
+        {
+          commsRequired = b;
+        }
+
         void InOutLetMultiscale::DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig)
         {
           simConfig->DoIOForMultiscaleInOutlet(parent, isLoading, this);
         }
 
         /* Distribution of internal pressure values */
-        void InOutLetMultiscale::DoComms(bool is_io_proc, LatticeTime time_step)
+        void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTime time_step)
         {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s", is_io_proc ? "true" : "false");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
+                                                                                isIoProc ?
+                                                                                  "true" :
+                                                                                  "false");
           double pressure_array[3];
           //TODO: Change these operators on SharedValue.
           pressure_array[0] = pressure.GetPayload();
           pressure_array[1] = minPressure.GetPayload();
           pressure_array[2] = maxPressure.GetPayload();
 
-          if (is_io_proc)
+          net::Net commsNet;
+
+          // If this proc is to do IO, send the pressure array list to all cores that require it.
+          if (isIoProc)
           {
-            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("comms->SendDoubles().");
-            comms->SendDoubles(pressure_array,3);
-            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("comms->FinishSend().");
+            const std::vector<int>& procList = comms->GetListOfProcs();
+
+            for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
+            {
+              commsNet.RequestSend(pressure_array, 3, *it);
             }
+          }
+          // Otherwise, receive the pressure array list from the core.
           else
           {
-            //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("comms->ReceiveDoubles().");
-            comms->ReceiveDoubles(pressure_array,3);
+            commsNet.RequestReceive(pressure_array, 3, BoundaryValues::GetBCProcRank());
+          }
+
+          // Perform the send / receive.
+          commsNet.Dispatch();
+
+          if (!isIoProc)
+          {
             pressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[0]));
             minPressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[1]));
             maxPressure.SetPayload(static_cast<PhysicalPressure>(pressure_array[2]));
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Received: %f %f %f", pressure.GetPayload(), minPressure.GetPayload(), maxPressure.GetPayload());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Received: %f %f %f",
+                                                                                  pressure.GetPayload(),
+                                                                                  minPressure.GetPayload(),
+                                                                                  maxPressure.GetPayload());
           }
         }
       }

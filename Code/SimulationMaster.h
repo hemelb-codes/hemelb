@@ -34,7 +34,7 @@ class SimulationMaster
 {
   public:
     SimulationMaster(hemelb::configuration::CommandLine &options);
-    ~SimulationMaster();
+    virtual ~SimulationMaster();
 
     void Abort();
 
@@ -43,24 +43,25 @@ class SimulationMaster
     int GetProcessorCount();
 
     void RunSimulation();
-    hemelb::lb::SimulationState const * GetState() const {
+    hemelb::lb::SimulationState const * GetState() const
+    {
       return simulationState;
     }
     void Finalise();
+
   protected:
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     virtual void DoTimeStep();
 
-    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-    //protected, not private because it is required by MultiscaleSimulationMaster
-
-    hemelb::geometry::LatticeData* latticeData;
-  private:
     // Set the lattice type via a build parameter
-    typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
-  protected:
+    typedef hemelb::lb::lattices::HEMELB_LATTICE latticeType;
+
+    //This is required by MultiscaleSimulationMaster
+    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+
   private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
@@ -118,8 +119,8 @@ class SimulationMaster
     unsigned int imagesPerSimulation;
     int steeringSessionId;
     unsigned int imagesPeriod;
-    static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
-    static const hemelb::LatticeTime MAX_TIME_STEPS=400000;
+    static const hemelb::LatticeTime FORCE_FLUSH_PERIOD = 1000;
+    static const hemelb::LatticeTime MAX_TIME_STEPS = 400000;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */
