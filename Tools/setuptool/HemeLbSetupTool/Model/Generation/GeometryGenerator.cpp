@@ -39,13 +39,16 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 		// case where there are no fluid sites).
 		BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		Block& block = *blockIt;
+		
         int side = 0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
         bool intersecting; // represents whether the block crosses the boundary
+
         if (skipNonIntersectingBlocks) {
             intersecting = this->BlockIntersectsSurface(block, side);
         } else {
             intersecting = true; // don't use the optimisation -- check every site
         }
+
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
 			Site& site = **siteIt;
 			/*
@@ -59,15 +62,15 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 		    }
 			else
 			{
-			    if (side==-1) { // inside
-			        site.IsFluidKnown=true;
-                    site.IsFluid=true;
+			    if (side == -1) { // inside
+			        site.IsFluidKnown = true;
+                    site.IsFluid = true;
                     site.CreateLinksVector();
-                    for(unsigned int link_index=0;link_index<site.Links.size();link_index++){
+                    for(unsigned int link_index=0; link_index < site.Links.size(); link_index++){
                         site.Links[link_index].Type = geometry::CUT_NONE;
                     }
 			    } else { //outside
-			        site.IsFluidKnown=true;
+			        site.IsFluidKnown = true;
 			    }
 			}
 
