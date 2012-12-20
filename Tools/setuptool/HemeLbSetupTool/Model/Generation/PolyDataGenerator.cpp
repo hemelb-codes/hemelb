@@ -24,7 +24,7 @@ using namespace hemelb::io::formats;
 PolyDataGenerator::PolyDataGenerator() :
 	GeometryGenerator(), ClippedSurface(NULL) {
 	this->Locator = vtkOBBTree::New();
-    this->Locator->SetNumberOfCellsPerNode(2);
+    //this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
@@ -188,9 +188,9 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
     Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL, counter, static_cast<void *>(&intersection_count));
     
     // visualise
-    vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
-    vtkPolyData * blockOBBPD = vtkPolyData::New();
-    blockSlightlyLargerOBBTree->GenerateRepresentation(-1, blockOBBPD);
+    // vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
+    //vtkPolyData * blockOBBPD = vtkPolyData::New();
+    //blockSlightlyLargerOBBTree->GenerateRepresentation(-1, blockOBBPD);
     /*
     writer->SetInput(blockOBBPD);
     writer->SetFileName("blockOBB.vtp");
