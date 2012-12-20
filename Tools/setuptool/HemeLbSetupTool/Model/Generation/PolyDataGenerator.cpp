@@ -185,7 +185,7 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
     // Create an OBB tree for the block
     vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
     int intersection_count = 0; // TOTALLY NON REENTRANT
-    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,vtkMatrix4x4::New(), counter, static_cast<void *>(&intersection_count));
+    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL, counter, static_cast<void *>(&intersection_count));
     
     // visualise
     vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
