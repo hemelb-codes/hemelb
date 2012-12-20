@@ -174,8 +174,9 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	return this->hitPoints->GetNumberOfPoints();
 }
 
-static unsigned int intersection_count=0;
-int counter(vtkOBBNode *polyNode,vtkOBBNode*cubeNode,vtkMatrix4x4 * trasnform,void *arg){
+
+int counter(vtkOBBNode *polyNode, vtkOBBNode*cubeNode, vtkMatrix4x4 * transform, void *ptr_to_intersection_count){
+    int &intersection_count = *static_cast<int*>(ptr_to_intersection_count);
     intersection_count++;
 }
 
@@ -183,8 +184,8 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
 {
     // Create an OBB tree for the block
     vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
-    intersection_count = 0; // TOTALLY NON REENTRANT
-    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,v tkMatrix4x4::New(), counter, NULL);
+    int intersection_count = 0; // TOTALLY NON REENTRANT
+    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree,vtkMatrix4x4::New(), counter, static_cast<void *>(&intersection_count));
     
     // visualise
     vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
