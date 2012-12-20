@@ -39,10 +39,10 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 		// case where there are no fluid sites).
 		BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		Block& block = *blockIt;
-        int side=0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
+        int side = 0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
         bool intersecting; // represents whether the block crosses the boundary
         if (skipNonIntersectingBlocks) {
-            intersecting=this->BlockIntersectsSurface(block,side);
+            intersecting = this->BlockIntersectsSurface(block, side);
         } else {
             intersecting = true; // don't use the optimisation -- check every site
         }
@@ -54,7 +54,7 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 			 * of the Domain will be set to solid. The iterators here ensure
 			 * that we start with the site at (0,0,0).
 			 */
-			if (intersecting||side==0){
+			if (intersecting || side == 0){
 			    this->ClassifySite(site);
 		    }
 			else
