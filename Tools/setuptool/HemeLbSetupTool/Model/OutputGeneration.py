@@ -1,11 +1,11 @@
-# 
+#
 # Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+#
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work
 # with, install, use, duplicate, modify, redistribute or share this
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
-# 
+#
 
 import numpy as np
 import os.path
@@ -16,8 +16,9 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
     vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
     vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere
-    
-from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor, vtkvmtkBoundaryReferenceSystems
+
+from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor
+from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
 
 from .Iolets import Inlet, Outlet, Iolet
 from .Vector import Vector
@@ -27,14 +28,19 @@ import Generation
 import pdb
 
 np.seterr(divide='ignore')
+
+
 def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
     return Generation.DoubleVector(v.x, v.y, v.z)
+
+
 class GeometryGenerator(object):
+
     def __init__(self):
-        self.skipNonIntersectingBlocks=False
-        
+        self.skipNonIntersectingBlocks = False
+
     def _MakeIoletProxies(self):
         # Construct the Iolet structs
         nIn = 0
@@ -44,7 +50,7 @@ class GeometryGenerator(object):
             proxy = Generation.Iolet()
 
             proxy.Centre = DVfromV(io.Centre) / self.profile.VoxelSize
-            proxy.Normal = DVfromV(io.Normal) 
+            proxy.Normal = DVfromV(io.Normal)
             proxy.Radius = io.Radius / self.profile.VoxelSize
 
             if isinstance(io, Inlet):
@@ -59,24 +65,25 @@ class GeometryGenerator(object):
             ioletProxies.append(proxy)
             continue
         return ioletProxies
-    
+
     def _SetCommonGeneratorProperties(self):
-        self.generator.SetOutputGeometryFile(str(self.profile.OutputGeometryFile))
+        self.generator.SetOutputGeometryFile(
+            str(self.profile.OutputGeometryFile))
         # We need to keep a reference to this to make sure it's not GC'ed
         self.ioletProxies = self._MakeIoletProxies()
         self.generator.SetIolets(self.ioletProxies)
         self.generator.SetVoxelSizeMetres(self.profile.VoxelSizeMetres)
         return
-    
+
     def Execute(self):
         """Forward this to the C++ implementation.
         """
         t = Timer()
         t.Start()
-        #import yep
-        #yep.start(self.profile.StlFile+".prof")
+        # import yep
+        # yep.start(self.profile.StlFile+".prof")
         self.generator.Execute(self.skipNonIntersectingBlocks)
-        #yep.stop()
+        # yep.stop()
         XmlWriter(self.profile).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
@@ -84,18 +91,22 @@ class GeometryGenerator(object):
 
     pass
 
+
 class PolyDataGenerator(GeometryGenerator):
+
     def __init__(self, profile):
-        """Clip the STL and set attributes on the SWIG-proxied C++ 
+        """Clip the STL and set attributes on the SWIG-proxied C++
         GeometryGenerator object.
         """
         GeometryGenerator.__init__(self)
         self.profile = profile
         self.generator = Generation.PolyDataGenerator()
         self._SetCommonGeneratorProperties()
-        self.generator.SetSeedPointWorking(profile.SeedPoint.x / profile.VoxelSize,
-                                           profile.SeedPoint.y / profile.VoxelSize,
-                                           profile.SeedPoint.z / profile.VoxelSize)
+        self.generator.SetSeedPointWorking(
+            profile.SeedPoint.x / profile.VoxelSize,
+            profile.SeedPoint.y /
+            profile.VoxelSize,
+            profile.SeedPoint.z / profile.VoxelSize)
 
         # This will create the pipeline for the clipped surface
         clipper = Clipper(profile)
@@ -104,11 +115,12 @@ class PolyDataGenerator(GeometryGenerator):
         trans = vtkTransform()
         scale = 1. / profile.VoxelSize
         trans.Scale(scale, scale, scale)
-        
+
         transformer = vtkTransformFilter()
         transformer.SetTransform(trans)
-        transformer.SetInputConnection(clipper.ClippedSurfaceSource.GetOutputPort())
-        
+        transformer.SetInputConnection(
+            clipper.ClippedSurfaceSource.GetOutputPort())
+
         # Uncomment this an insert the output path to debug pipeline construction
         # write = StageWriter('/path/to/stage/output/directory').WriteOutput
         # for alg in getpipeline(transformer):
@@ -117,14 +129,18 @@ class PolyDataGenerator(GeometryGenerator):
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
-        
+
         return
 
     pass
-    
+
+
 class CylinderGenerator(GeometryGenerator):
-    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres, Axis, LengthMetres, RadiusMetres, InletPressure=None, OutletPressure=None):
-        """Clip the STL and set attributes on the SWIG-proxied C++ 
+
+    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres,
+                 Axis, LengthMetres, RadiusMetres,
+                 InletPressure=None, OutletPressure=None):
+        """Clip the STL and set attributes on the SWIG-proxied C++
         GeometryGenerator object.
         """
         GeometryGenerator.__init__(self)
@@ -133,48 +149,53 @@ class CylinderGenerator(GeometryGenerator):
         self.RadiusMetres = RadiusMetres
         self.InletPressure = InletPressure
         self.OutletPressure = OutletPressure
-        
+
         self.profile = Profile()
         self.profile.StlFileUnitId = Profile._UnitChoices.index(metre)
         self.profile.VoxelSize = VoxelSizeMetres
         self.profile.OutputGeometryFile = OutputGeometryFile
         self.profile.OutputXmlFile = OutputXmlFile
         self._MakeIolets()
-        
+
         self.generator = Generation.CylinderGenerator()
         self._SetCommonGeneratorProperties()
-        
-        self.generator.SetCylinderLength(LengthMetres/VoxelSizeMetres)
-        self.generator.SetCylinderRadius(RadiusMetres/VoxelSizeMetres)
-        self.generator.SetCylinderCentre(Generation.DoubleVector(0.,0.,0.))
+
+        self.generator.SetCylinderLength(LengthMetres / VoxelSizeMetres)
+        self.generator.SetCylinderRadius(RadiusMetres / VoxelSizeMetres)
+        self.generator.SetCylinderCentre(Generation.DoubleVector(0., 0., 0.))
         self.generator.SetCylinderAxis(Generation.DoubleVector(*self.Axis))
         return
-    
+
     def _MakeIolets(self):
         # Construct the Iolet structs
         inlet = Inlet()
-        inlet.Centre = Vector(*(-0.5 * self.LengthMetres * n for n in self.Axis))
+        inlet.Centre = Vector(
+            *(-0.5 * self.LengthMetres * n for n in self.Axis))
         inlet.Normal = Vector(*self.Axis)
         inlet.Radius = self.RadiusMetres
         if self.InletPressure is not None:
             inlet.Pressure = self.InletPressure
         self.profile.Iolets.append(inlet)
-        
+
         outlet = Outlet()
-        outlet.Centre = Vector(*(0.5 * self.LengthMetres * n for n in self.Axis))
+        outlet.Centre = Vector(
+            *(0.5 * self.LengthMetres * n for n in self.Axis))
         outlet.Normal = Vector(*(-n for n in self.Axis))
         outlet.Radius = self.RadiusMetres
         if self.OutletPressure is not None:
             outlet.Pressure = self.OutletPressure
-        self.profile.Iolets.append(outlet)    
-        
+        self.profile.Iolets.append(outlet)
+
         return
 
     pass
 
 # TODO: organise this timer
 import time
+
+
 class Timer(object):
+
     def __init__(self):
         self._running = False
 
@@ -183,11 +204,13 @@ class Timer(object):
         self._running = True
         self._startTime = time.clock()
         return
+
     def Stop(self):
         assert self._running
         self._stopTime = time.clock()
         self._running = False
         return
+
     def GetTime(self):
         if self._running:
             return time.clock() - self._startTime
@@ -195,13 +218,14 @@ class Timer(object):
 
     pass
 
+
 class Clipper(object):
-    """Clips the input STL file to the ROI and caps it. 
+    """Clips the input STL file to the ROI and caps it.
     """
 
     def __init__(self, profile):
         """Create the generator for the supplied Model.Profile object.
-        
+
         profile - the HemeLbSetupTool.Model.Profile object to use
         """
         # Copy the profile's _Args
@@ -215,18 +239,18 @@ class Clipper(object):
         return
 
     def ConstructClipPipeline(self):
-        """This constructs a VTK pipeline to clip the vtkPolyData read from 
-        the STL file against the Iolets. It also adds a scalar value to each 
-        polygon indicating which Iolet it represents, or -1 if it is just a 
+        """This constructs a VTK pipeline to clip the vtkPolyData read from
+        the STL file against the Iolets. It also adds a scalar value to each
+        polygon indicating which Iolet it represents, or -1 if it is just a
         wall, and computes polygon normals.
-        
+
         Note that this does NOT EXECUTE the pipeline.
         """
         # seal any leaks first.
         closer = PolyDataCloser()
         closer.SetInputConnection(self.SurfaceSource.GetOutputPort())
         # Add the Iolet id -1 to all cells
-        adder = IntegerAdder(Value= -1)
+        adder = IntegerAdder(Value=-1)
         adder.SetInputConnection(closer.GetOutputPort())
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
@@ -250,17 +274,19 @@ class Clipper(object):
         # normer.ConsistencyOn()
         # normer.AutoOrientNormalsOn()
         # normer.NonManifoldTraversalOff()
-                 
+
         return pdSource
 
     pass
 
+
 class IntegerAdder(vtkProgrammableFilter):
-    """vtkFilter for adding an integer value to vtkPolyData's CellData. Use 
-    SetValue to set the value to be added, or supply the optional argument 
+    """vtkFilter for adding an integer value to vtkPolyData's CellData. Use
+    SetValue to set the value to be added, or supply the optional argument
     'Value' to the constructor.
     """
-    def __init__(self, Value= -1):
+
+    def __init__(self, Value=-1):
         self.SetExecuteMethod(self._Execute)
         self.Value = Value
         return
@@ -268,6 +294,7 @@ class IntegerAdder(vtkProgrammableFilter):
     def SetValue(self, val):
         self.Value = val
         return
+
     def GetValue(self):
         return self.Value
 
@@ -289,8 +316,9 @@ class IntegerAdder(vtkProgrammableFilter):
 
     pass
 
+
 class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
-    """vtkFilter for clipping and capping a vtkPolyData surface, and labeling 
+    """vtkFilter for clipping and capping a vtkPolyData surface, and labeling
     the cap with an integer cell data value.
     """
     def __init__(self, Value=None, Iolet=None, SeedPoint=None):
@@ -303,37 +331,43 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
     def SetValue(self, val):
         self.Value = val
         return
+
     def GetValue(self):
         return self.Value
 
     def SetIolet(self, val):
         self.Iolet = val
         return
+
     def GetIolet(self):
         return self.Iolet
 
     def _Clip(self, pd):
         # The plane implicit function will be >0 for all the points in the positive side
-        # of the plane (i.e. x s.t. n.(x-o)>0, where n is the plane normal and o is the 
+        # of the plane (i.e. x s.t. n.(x-o)>0, where n is the plane normal and o is the
         # plane origin).
         plane = vtkPlane()
-        plane.SetOrigin(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
-        plane.SetNormal(self.Iolet.Normal.x, self.Iolet.Normal.y, self.Iolet.Normal.z)
-        
-        # The sphere implicit function will be >0 for all the points outside the sphere.
+        plane.SetOrigin(
+            self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
+        plane.SetNormal(
+            self.Iolet.Normal.x, self.Iolet.Normal.y, self.Iolet.Normal.z)
+
+        # The sphere implicit function will be >0 for all the points outside
+        # the sphere.
         sphere = vtkSphere()
-        sphere.SetCenter(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
+        sphere.SetCenter(
+            self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
         sphere.SetRadius(self.Iolet.Radius)
-        
-        # The VTK_INTERSECTION operator takes the maximum value of all the registered 
-        # implicit functions. This will result in the function evaluating to >0 for all 
-        # the points outside the sphere plus those inside the sphere in the positive 
+
+        # The VTK_INTERSECTION operator takes the maximum value of all the registered
+        # implicit functions. This will result in the function evaluating to >0 for all
+        # the points outside the sphere plus those inside the sphere in the positive
         # side of the plane.
         clippingFunction = vtkImplicitBoolean()
         clippingFunction.AddFunction(plane)
         clippingFunction.AddFunction(sphere)
-        clippingFunction.SetOperationTypeToIntersection() 
-        
+        clippingFunction.SetOperationTypeToIntersection()
+
         clipper = vtkClipPolyData()
         clipper.SetInput(pd)
         clipper.SetClipFunction(clippingFunction)
@@ -376,28 +410,29 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         boundariesPointIdMap = boundaries.GetPointData().GetScalars()
         for i in xrange(boundaries.GetNumberOfCells()):
             boundary = vtkPolyLine.SafeDownCast(boundaries.GetCell(i))
-            
+
             barycentre = [0., 0., 0.]
-            vtkvmtkBoundaryReferenceSystems.ComputeBoundaryBarycenter(boundary.GetPoints(),
-                                                                      barycentre)
-            
-            barycentreId = newPoints.InsertNextPoint(barycentre);
-            
+            vtkvmtkBoundaryReferenceSystems.ComputeBoundaryBarycenter(
+                boundary.GetPoints(),
+                barycentre)
+
+            barycentreId = newPoints.InsertNextPoint(barycentre)
+
             numberOfBoundaryPoints = boundary.GetNumberOfPoints()
             trianglePoints = vtkIdList()
             trianglePoints.SetNumberOfIds(3)
-            
+
             for j in xrange(numberOfBoundaryPoints):
                 trianglePoints.SetId(0,
                                      boundariesPointIdMap.GetValue(boundary.GetPointId(j)))
                 trianglePoints.SetId(1, barycentreId)
                 trianglePoints.SetId(2,
-                                     boundariesPointIdMap.GetValue(boundary.GetPointId((j+1)%numberOfBoundaryPoints))
+                                     boundariesPointIdMap.GetValue(boundary.GetPointId((j + 1) % numberOfBoundaryPoints))
                                      )
                 newPolys.InsertNextCell(trianglePoints)
                 newData.InsertNextValue(self.Value)
                 continue
-            
+
             continue
 
         output = self.GetPolyDataOutput()
@@ -409,9 +444,11 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
 
     pass
 
+
 class PolyDataCloser(vtkProgrammableFilter):
-    """Given an input vtkPolyData object, close any holes in the surface.   
+    """Given an input vtkPolyData object, close any holes in the surface.
     """
+
     def __init__(self):
         self.SetExecuteMethod(self._Execute)
 
@@ -457,7 +494,9 @@ class PolyDataCloser(vtkProgrammableFilter):
         return
     pass
 
+
 class XmlWriter(object):
+
     def __init__(self, profile):
         self.profile = profile
         return
@@ -530,9 +569,12 @@ class XmlWriter(object):
             normal.set('z', str(io.Normal.z))
 
             position = SubElement(iolet, 'position')
-            position.set('x', str(io.Centre.x * self.profile.StlFileUnit.SizeInMetres))
-            position.set('y', str(io.Centre.y * self.profile.StlFileUnit.SizeInMetres))
-            position.set('z', str(io.Centre.z * self.profile.StlFileUnit.SizeInMetres))
+            position.set(
+                'x', str(io.Centre.x * self.profile.StlFileUnit.SizeInMetres))
+            position.set(
+                'y', str(io.Centre.y * self.profile.StlFileUnit.SizeInMetres))
+            position.set(
+                'z', str(io.Centre.z * self.profile.StlFileUnit.SizeInMetres))
             continue
         return
 
@@ -561,10 +603,13 @@ class XmlWriter(object):
     pass
 
 # Debugging helpers
+
+
 def getpreviousstage(algo):
     """Given a vtkAlgorithm, get the previous algorithm in its pipeline.
     """
-    return algo.GetInputConnection(0,0).GetProducer()
+    return algo.GetInputConnection(0, 0).GetProducer()
+
 
 def getpipeline(last):
     """Return a list of all the algorithms in a pipeline, given the last one.
@@ -577,12 +622,14 @@ def getpipeline(last):
         except:
             break
         continue
-    
+
     return pipe
+
 
 class StageWriter(object):
     """For debugging, will easily let one write polydata.
     """
+
     def __init__(self, dir):
         if os.path.exists(dir):
             assert os.path.isdir(dir)
@@ -603,7 +650,8 @@ class StageWriter(object):
         elif isinstance(stage, vtkPolyData):
             writer.SetInput(stage)
         else:
-            raise ValueError('Cannot cope with instances of "%s"' % type(stage))
+            raise ValueError(
+                'Cannot cope with instances of "%s"' % type(stage))
 
         if name is None:
             fnPattern = '%02d.vtp'
