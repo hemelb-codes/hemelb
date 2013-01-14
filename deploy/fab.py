@@ -773,7 +773,6 @@ def steer(job,orbit=False,view=False,retry=False,framerate=None):
     with_job(job)
     if view:
         env.steering_client='steering.py'
-        manual(template(command+client+" ${running_node}"))
     else:
         env.steering_client='timing_client.py'
     if orbit:

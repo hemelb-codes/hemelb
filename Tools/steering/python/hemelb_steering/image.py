@@ -34,7 +34,10 @@ class Image(object):
         """ 
         Transform the data to python image library format
         """
-        from PIL import Image as PILImage
+        try:
+            from PIL import Image as PILImage
+        except ImportError:
+            import Image as PILImage
         pil_string_data = bytearray([255] * 3 * self.full_pixel_count)
         fields_wanted = ["%s_%s" % (component,color) for color in Image.colors]
         for pixel in self.data:
