@@ -174,8 +174,11 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	return this->hitPoints->GetNumberOfPoints();
 }
 
-
-int counter(vtkOBBNode *polyNode, vtkOBBNode*cubeNode, vtkMatrix4x4 * transform, void *ptr_to_intersection_count){
+// Function to be called on intersecting leaf nodes of the two OBB trees.
+// Final void pointer is a pointer to an int, namely the count of the number
+// of intersections found so far, which is incremented.
+int IntersectingLeafCounter(vtkOBBNode* polyNode, vtkOBBNode* cubeNode,
+		vtkMatrix4x4* transform, void *ptr_to_intersection_count) {
     int &intersection_count = *static_cast<int*>(ptr_to_intersection_count);
     intersection_count++;
 }
@@ -184,27 +187,18 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
 {
     // Create an OBB tree for the block
     vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
-    int intersection_count = 0; // TOTALLY NON REENTRANT
-    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL, counter, static_cast<void *>(&intersection_count));
     
-    // visualise
-    // vtkXMLPolyDataWriter * writer = vtkXMLPolyDataWriter::New();
-    //vtkPolyData * blockOBBPD = vtkPolyData::New();
-    //blockSlightlyLargerOBBTree->GenerateRepresentation(-1, blockOBBPD);
-    /*
-    writer->SetInput(blockOBBPD);
-    writer->SetFileName("blockOBB.vtp");
-    writer->Write();
-    vtkPolyData * thisSurfaceOBBPD=vtkPolyData::New();
-    Locator->GenerateRepresentation(-1,thisSurfaceOBBPD);
-    writer->SetInput(thisSurfaceOBBPD);
-    writer->SetFileName("surfaceOBB.vtp");
-    writer->Write();
-    */
+    // Count the number of domain OBB leaf nodes that intersect the single
+    // node created for the block.
+    int intersection_count = 0;
+    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL,
+    		IntersectingLeafCounter, static_cast<void*>(&intersection_count));
+    // Delete the underlying polydata
     blockSlightlyLargerOBBTree->GetDataSet()->Delete();
+    // And the OBBTree itself
     blockSlightlyLargerOBBTree->Delete();
-    if (intersection_count == 0)
-    {
+
+    if (intersection_count == 0) {
         // either entirely inside or entirely outside
         double middlePosition[3];
         middlePosition[0] = block.Middle().Position[0];

@@ -62,14 +62,16 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 		    }
 			else
 			{
-			    if (side == -1) { // inside
+			    if (side == -1) {
+			    	// Block is entirely inside the domain
 			        site.IsFluidKnown = true;
                     site.IsFluid = true;
                     site.CreateLinksVector();
                     for(unsigned int link_index=0; link_index < site.Links.size(); link_index++){
                         site.Links[link_index].Type = geometry::CUT_NONE;
                     }
-			    } else { //outside
+			    } else {
+			    	// Block is entirely outside the domain.
 			        site.IsFluidKnown = true;
 			    }
 			}
