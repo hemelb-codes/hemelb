@@ -19,6 +19,7 @@
 using hemelb::io::writers::xdr::XdrWriter;
 
 class BlockWriter;
+class BufferPool;
 
 class GeometryWriter {
 public:
@@ -44,6 +45,7 @@ protected:
 
 	int bodyStart;
 	FILE* bodyFile;
+	BufferPool* BlockBufferPool;
 	friend class BlockWriter;
 };
 

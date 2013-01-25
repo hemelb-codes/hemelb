@@ -15,6 +15,7 @@
 #include "io/writers/xdr/XdrMemWriter.h"
 
 class GeometryWriter;
+class BufferPool;
 /*
  * Extension of a hemelb::io::XdrWriter that notes how many fluid sites, in how
  * much space, have been written. It then pushes this to the GeometryWriter's
@@ -23,7 +24,7 @@ class GeometryWriter;
 
 class BlockWriter {
 public:
-	BlockWriter(int blocksize);
+	BlockWriter(BufferPool* bp);
 	void Reset();
 
 	~BlockWriter();
@@ -41,9 +42,9 @@ public:
 	}
 
 protected:
-	unsigned int maxBufferSize;
 	char* buffer;
 	hemelb::io::writers::xdr::XdrMemWriter* writer;
+	BufferPool* bufferPool;
 	unsigned int nFluidSites;
 	unsigned int CompressedBlockLength;
 	unsigned int UncompressedBlockLength;
