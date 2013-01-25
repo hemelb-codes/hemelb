@@ -183,7 +183,7 @@ int IntersectingLeafCounter(vtkOBBNode* polyNode, vtkOBBNode* cubeNode,
     intersection_count++;
 }
 
-bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
+int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block)
 {
     // Create an OBB tree for the block
     vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
@@ -204,9 +204,7 @@ bool PolyDataGenerator::BlockIntersectsSurface(const Block &block, int & side)
         middlePosition[0] = block.Middle().Position[0];
         middlePosition[1] = block.Middle().Position[1];
         middlePosition[2] = block.Middle().Position[2];
-        side = Locator->InsideOrOutside(middlePosition);
-        return false;
+        return Locator->InsideOrOutside(middlePosition);
     }
-    side = 0;
-    return true;
+    return 0;
 }
