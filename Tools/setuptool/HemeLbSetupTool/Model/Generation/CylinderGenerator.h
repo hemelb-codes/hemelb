@@ -52,10 +52,8 @@ private:
 	void ClassifySite(Site& site);
 	CylinderData* Cylinder;
 protected:
-    virtual bool BlockIntersectsSurface(const Block &block, int & side)
-    {
-        side = -1;
-        return true;
+	virtual int BlockInsideOrOutsideSurface(const Block &block) {
+        return 0;
     }
 };
 
