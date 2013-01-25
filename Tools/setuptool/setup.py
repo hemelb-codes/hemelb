@@ -220,6 +220,7 @@ if __name__ == "__main__":
                       for cpp in ['Neighbours.cpp',
                                   'Block.cpp',
                                   'BlockWriter.cpp',
+                                  'BufferPool.cpp',
                                   'GeometryGenerator.cpp',
                                   'GeometryWriter.cpp',
                                   'Domain.cpp',

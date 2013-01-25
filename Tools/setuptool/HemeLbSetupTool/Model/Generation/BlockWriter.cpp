@@ -6,10 +6,10 @@
 #include "GeometryWriter.h"
 #include "Neighbours.h"
 #include "GenerationError.h"
+#include "BufferPool.h"
 
-BlockWriter::BlockWriter(int blocksize) :
-	writer(NULL), buffer(NULL), maxBufferSize(
-			geometry::GetMaxBlockRecordLength(blocksize)) {
+BlockWriter::BlockWriter(BufferPool* bp) :
+	writer(NULL), buffer(NULL), bufferPool(bp) {
 	this->Reset();
 }
 
@@ -20,17 +20,17 @@ void BlockWriter::Reset() {
 
 	this->IsFinished = false;
 
-	delete[] this->buffer;
-	this->buffer = new char[this->maxBufferSize];
+	this->bufferPool->Free(this->buffer);
+	this->buffer = this->bufferPool->New();
 
 	delete this->writer;
 	this->writer = new hemelb::io::writers::xdr::XdrMemWriter(this->buffer,
-			this->maxBufferSize);
+			this->bufferPool->GetSize());
 }
 
 BlockWriter::~BlockWriter() {
 	delete this->writer;
-	delete[] this->buffer;
+	this->bufferPool->Free(this->buffer);
 }
 
 void BlockWriter::IncrementFluidSitesCount() {
@@ -58,10 +58,10 @@ void BlockWriter::Finish() {
 		if (ret != Z_OK)
 			throw GenerationErrorMessage("Cannot init zlib structures");
 
-		// Compute upper bound for how much space we'll need.
-		int maxDeflatedLength = deflateBound(&stream,
-				this->UncompressedBlockLength);
-		char* compressedBuffer = new char[maxDeflatedLength];
+//		// Compute upper bound for how much space we'll need.
+//		int maxDeflatedLength = deflateBound(&stream,
+//				this->UncompressedBlockLength);
+		char* compressedBuffer = this->bufferPool->New();
 
 		// Set input. The XDR buffer has to be char but zlib only works with
 		// unsigned char. Just cast for now...
@@ -69,7 +69,7 @@ void BlockWriter::Finish() {
 		stream.avail_in = this->UncompressedBlockLength;
 		// Set output
 		stream.next_out = reinterpret_cast<unsigned char*> (compressedBuffer);
-		stream.avail_out = maxDeflatedLength;
+		stream.avail_out = this->bufferPool->GetSize();
 
 		// Deflate. This should be it, if not their was an error.
 		ret = deflate(&stream, Z_FINISH);
@@ -87,9 +87,9 @@ void BlockWriter::Finish() {
 
 
 		std::swap(this->buffer, compressedBuffer);
-		delete[] compressedBuffer;
+		this->bufferPool->Free(compressedBuffer);
 	} else {
-		delete[] this->buffer;
+		this->bufferPool->Free(this->buffer);
 		this->buffer = NULL;
 	}
 	delete this->writer;

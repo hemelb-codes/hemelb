@@ -1,19 +1,19 @@
 #include "GeometryWriter.h"
 #include "BlockWriter.h"
+#include "BufferPool.h"
 
 #include "io/formats/formats.h"
 #include "io/formats/geometry.h"
 #include "io/writers/xdr/XdrFileWriter.h"
 #include "io/writers/xdr/XdrMemWriter.h"
 
+using hemelb::io::formats::geometry;
 
 GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		int BlockSize, Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres) :
-	OutputGeometryFile(OutputGeometryFile) {
+	OutputGeometryFile(OutputGeometryFile), BlockSize(BlockSize), VoxelSizeMetres(VoxelSizeMetres) {
 
-	// Copy in key data
-	this->BlockSize = BlockSize;
-	this->VoxelSizeMetres = VoxelSizeMetres;
+	this->BlockBufferPool = new BufferPool(geometry::GetMaxBlockRecordLength(BlockSize));
 
 	for (unsigned int i = 0; i < 3; ++i) {
 		this->BlockCounts[i] = BlockCounts[i];
@@ -87,6 +87,7 @@ GeometryWriter::~GeometryWriter() {
 	// Check this is still here as Close() will delete this
 	if (this->bodyFile != NULL)
 		std::fclose(this->bodyFile);
+	delete this->BlockBufferPool;
 }
 
 void GeometryWriter::Close() {
@@ -103,6 +104,6 @@ void GeometryWriter::Close() {
 }
 
 BlockWriter* GeometryWriter::StartNextBlock() {
-	return new BlockWriter(this->BlockSize);
+	return new BlockWriter(this->BlockBufferPool);
 }
 
