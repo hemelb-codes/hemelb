@@ -41,48 +41,51 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks) throw (Generatio
 		Block& block = *blockIt;
 		
         int side = 0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
-        bool intersecting; // represents whether the block crosses the boundary
 
         if (skipNonIntersectingBlocks) {
-            intersecting = this->BlockIntersectsSurface(block, side);
+            side = this->BlockInsideOrOutsideSurface(block);
         } else {
-            intersecting = true; // don't use the optimisation -- check every site
+        	 // don't use the optimisation -- check every site
+            side = 0;
         }
 
-		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
-			Site& site = **siteIt;
-			/*
-			 * ClassifySite expects to be given a site of known fluidness.
-			 * The constructor of Block will ensure that all sites at the edge
-			 * of the Domain will be set to solid. The iterators here ensure
-			 * that we start with the site at (0,0,0).
-			 */
-			if (intersecting || side == 0){
-			    this->ClassifySite(site);
-		    }
-			else
-			{
-			    if (side == -1) {
-			    	// Block is entirely inside the domain
-			        site.IsFluidKnown = true;
-                    site.IsFluid = true;
-                    site.CreateLinksVector();
-                    for(unsigned int link_index=0; link_index < site.Links.size(); link_index++){
-                        site.Links[link_index].Type = geometry::CUT_NONE;
-                    }
-			    } else {
-			    	// Block is entirely outside the domain.
-			        site.IsFluidKnown = true;
-			    }
-			}
+        switch (side) {
+        case 1:
+        	// Block is entirely outside the domain.
+        	// We don't have to do anything.
+        	break;
+        case 0:
+        	// Block has some surface within it.
+        	for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
+        		Site& site = **siteIt;
+        		this->ClassifySite(site);
 
-			if (site.IsFluid) {
-				blockWriterPtr->IncrementFluidSitesCount();
-				WriteFluidSite(*blockWriterPtr, site);
-			} else {
-				WriteSolidSite(*blockWriterPtr, site);
-			}
-		}
+    			if (site.IsFluid) {
+    				blockWriterPtr->IncrementFluidSitesCount();
+    				WriteFluidSite(*blockWriterPtr, site);
+    			} else {
+    				WriteSolidSite(*blockWriterPtr, site);
+    			}
+
+        	}
+        	break;
+        case -1:
+        	// Block is entirely inside the domain
+        	for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
+        		Site& site = **siteIt;
+        		site.IsFluidKnown = true;
+        		site.IsFluid = true;
+        		site.CreateLinksVector();
+        		for(unsigned int link_index = 0; link_index < site.Links.size(); ++link_index) {
+        			site.Links[link_index].Type = geometry::CUT_NONE;
+        		}
+        		blockWriterPtr->IncrementFluidSitesCount();
+        		WriteFluidSite(*blockWriterPtr, site);
+        	}
+        	break;
+        default:
+        	break;
+        }
 		blockWriterPtr->Finish();
 		blockWriterPtr->Write(writer);
 		delete blockWriterPtr;
