@@ -55,7 +55,7 @@ def DarwinGrep(results):
             
             # Do a string split rather than os.path.splitext as the latter splits on the last dot
             base, rest = base.split('.', 1)
-            print dir,base," ",rest
+            print dir, base, " ", rest
             if base.find('libvtkCommon') != -1:
                 return dir
             
@@ -108,13 +108,13 @@ def GetVtkLibDir():
         aVtkSharedLibrary = vtk.libvtkCommonPython.__file__
     except:
         try:
-            aVtkSharedLibrary=vtk.vtkCommonPython.__file__
+            aVtkSharedLibrary = vtk.vtkCommonPython.__file__
         except:
             try:
-                aVtkSharedLibrary=vtk.vtkCommonCorePython.__file__ # Separated in the VTK "modularisation"
+                aVtkSharedLibrary = vtk.vtkCommonCorePython.__file__ # Separated in the VTK "modularisation"
             except:
                 import vtkCommonPython
-                aVtkSharedLibrary=vtkCommonPython.__file__
+                aVtkSharedLibrary = vtkCommonPython.__file__
     osName = platform.system()
     if osName == 'Darwin':
         sharedLibCmd = 'otool -L %s'
@@ -150,12 +150,48 @@ def GetVtkCompileFlags(vtkLibDir):
     
     return []
 
+def HaveXdrUint():
+    import tempfile
+    import shutil
+    import subprocess
+    prog = '''
+#include <stdint.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+int main(int count, char** v){
+  char buffer[15] = \"aaaaaaaaaaaaa\";
+  XDR xdr;
+  xdrmem_create(&xdr, buffer, 32, XDR_ENCODE);
+  uint16_t a;
+  uint32_t b;
+  uint64_t c;
+  xdr_uint16_t(&xdr, &a);
+  xdr_uint32_t(&xdr, &b);
+  xdr_uint64_t(&xdr, &c);
+  return b;
+}
+'''
+    tDir = tempfile.mkdtemp()
+    try:
+        curDir = os.getcwd()
+        os.chdir(tDir)
+        try:
+            with file('test.cpp', 'w') as cSrc:
+                cSrc.write(prog)
+            compile = 'g++ -c test.cpp'
+            returnCode = subprocess.call(compile, shell=True)
+        finally:
+            os.chdir(curDir)
+    finally:
+        shutil.rmtree(tDir)
+    return (returnCode == 0)
+    
 def GetHemeLbCompileFlags():
     osName = platform.system()
-    flags=[]
+    flags = []
     if osName == 'Darwin':
         flags.append('-DHEMELB_CFG_ON_BSD')
-    if True: #Need to add autodetect capability for this option
+    if not HaveXdrUint():
         flags.append('-Dxdr_uint16_t=xdr_u_int16_t')
         flags.append('-Dxdr_uint32_t=xdr_u_int32_t')
         flags.append('-Dxdr_uint64_t=xdr_u_int64_t')
@@ -168,10 +204,10 @@ if __name__ == "__main__":
     BoostDir = GetBoostDir(HemeLbDir)
     vtkLibDir = GetVtkLibDir()
     if os.getenv('VTKINCLUDE'):
-        vtkIncludeDir=os.getenv('VTKINCLUDE')
+        vtkIncludeDir = os.getenv('VTKINCLUDE')
     else:
-        vtkIncludeDir=LibToInclude(vtkLibDir)
-    include_dirs = [ vtkIncludeDir, HemeLbDir, BoostDir]
+        vtkIncludeDir = LibToInclude(vtkLibDir)
+    include_dirs = [vtkIncludeDir, HemeLbDir, BoostDir]
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()

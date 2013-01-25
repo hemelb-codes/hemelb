@@ -80,10 +80,7 @@ class GeometryGenerator(object):
         """
         t = Timer()
         t.Start()
-        # import yep
-        # yep.start(self.profile.StlFile+".prof")
         self.generator.Execute(self.skipNonIntersectingBlocks)
-        # yep.stop()
         XmlWriter(self.profile).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
