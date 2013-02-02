@@ -229,6 +229,7 @@ if __name__ == "__main__":
                                   'Index.cpp',
                                   'CylinderGenerator.cpp',
                                   'PolyDataGenerator.cpp',
+                                  'SquareDuctGenerator.cpp',
                                   'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
