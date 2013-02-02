@@ -28,6 +28,7 @@ namespace std {
 #include "Index.h"
 #include "GeometryGenerator.h"
 #include "CylinderGenerator.h"
+#include "SquareDuctGenerator.h"
 #include "PolyDataGenerator.h"
 #include "vtkPolyData.h"
 #include "vtkOBBTree.h"
@@ -110,6 +111,7 @@ namespace std {
 %include PolyDataGenerator.h
 //%ignore CylinderGenerator::ClassifySite(Site&);
 %include CylinderGenerator.h
+%include SquareDuctGenerator.h
 %include Iolet.h
 
 // Raise a python IndexError when we get a C++ IndexError
