@@ -15,7 +15,7 @@ cdef class BaseSite:
         np.ndarray Index
         np.ndarray IntersectionType
         np.ndarray IntersectionDistance
-        np.ndarray IoletIndex
+        np.ndarray IOletIndex
         object GetBlock
 
     cdef bint _IsFluid(self)
