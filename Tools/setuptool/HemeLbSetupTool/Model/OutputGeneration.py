@@ -187,6 +187,78 @@ class CylinderGenerator(GeometryGenerator):
 
     pass
 
+class SquareDuctGenerator(GeometryGenerator):
+
+    def __init__(self, OutputGeometryFile, OutputXmlFile, VoxelSizeMetres,
+                 OpenAxis, LengthVoxels, SideVoxels,
+                 InletPressure=None, OutletPressure=None):
+        """Clip the STL and set attributes on the SWIG-proxied C++
+        GeometryGenerator object.
+        """
+        GeometryGenerator.__init__(self)
+        assert OpenAxis in (0, 1, 2)
+        self.OpenAxis = OpenAxis
+        self.LengthVoxels = LengthVoxels
+        self.SideVoxels = SideVoxels
+        self.Sizes = Generation.DoubleVector(SideVoxels, SideVoxels, SideVoxels)
+        self.Sizes[OpenAxis] = LengthVoxels
+        
+        self.InletPressure = InletPressure
+        self.OutletPressure = OutletPressure
+
+        self.profile = Profile()
+        self.profile.StlFileUnitId = Profile._UnitChoices.index(metre)
+        self.profile.VoxelSize = VoxelSizeMetres
+        self.profile.OutputGeometryFile = OutputGeometryFile
+        self.profile.OutputXmlFile = OutputXmlFile
+        self._MakeIolets()
+
+        self.generator = Generation.SquareDuctGenerator()
+        self._SetCommonGeneratorProperties()
+
+        self.generator.SetOpenAxis(self.OpenAxis)
+        self.generator.SetLowerBound = Generation.DoubleVector(0., 0., 0.)
+        ub = Generation.DoubleVector(self.SideVoxels,
+                                     self.SideVoxels,
+                                     self.SideVoxels)
+        ub[self.OpenAxis] = self.LengthVoxels
+        self.generator.SetUpperBound(ub)
+        return
+
+    def _MakeIolets(self):
+        # Construct the Iolet structs
+        inlet = Inlet()
+        c = self.Sizes / 2.
+        c[self.OpenAxis] = 0.
+        inlet.Centre = Vector(c.x, c.y, c.z)
+        
+        n = Generation.DoubleVector()
+        n[self.OpenAxis] = 1.
+        inlet.Normal = Vector(n.x, n.y, n.z)
+        
+        inlet.Radius = self.SideVoxels * self.profile.VoxelSizeMetres
+        if self.InletPressure is not None:
+            inlet.Pressure = self.InletPressure
+        self.profile.Iolets.append(inlet)
+
+        outlet = Outlet()
+        c = self.Sizes / 2.
+        c[self.OpenAxis] = self.LengthVoxels
+        outlet.Centre = Vector(c.x, c.y, c.z)
+        
+        n = Generation.DoubleVector()
+        n[self.OpenAxis] = -1.
+        outlet.Normal = Vector(n.x, n.y, n.z)
+        
+        outlet.Radius = self.SideVoxels * self.profile.VoxelSizeMetres
+        if self.OutletPressure is not None:
+            outlet.Pressure = self.OutletPressure
+        self.profile.Iolets.append(outlet)
+
+        return
+
+    pass
+
 # TODO: organise this timer
 import time
 
