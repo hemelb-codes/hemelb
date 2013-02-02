@@ -66,7 +66,7 @@ cdef class BaseSite:
             'Index': self.Index,
             'IntersectionType': self.IntersectionType,
             'IntersectionDistance': self.IntersectionDistance,
-            'IoletIndex': self.IoletIndex,
+            'IOletIndex': self.IOletIndex,
             'Block': self.GetBlock()
             }
         return picdic
@@ -76,7 +76,7 @@ cdef class BaseSite:
         self.Index = picdic['Index']
         self.IntersectionType = picdic['IntersectionType']
         self.IntersectionDistance = picdic['IntersectionDistance']
-        self.IoletIndex = picdic['IoletIndex']
+        self.IOletIndex = picdic['IOletIndex']
         self.GetBlock = weakref.ref(picdic['Block'])
 
     cpdef LoadFrom(self, xdr.Unpacker loader):
