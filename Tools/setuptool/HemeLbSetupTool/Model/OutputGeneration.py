@@ -217,11 +217,12 @@ class SquareDuctGenerator(GeometryGenerator):
         self._SetCommonGeneratorProperties()
 
         self.generator.SetOpenAxis(self.OpenAxis)
-        self.generator.SetLowerBound = Generation.DoubleVector(0., 0., 0.)
-        ub = Generation.DoubleVector(self.SideVoxels,
-                                     self.SideVoxels,
-                                     self.SideVoxels)
-        ub[self.OpenAxis] = self.LengthVoxels
+        lb = Generation.DoubleVector(-0.5 * self.SideVoxels,
+                                     -0.5 * self.SideVoxels,
+                                     -0.5 * self.SideVoxels)
+        lb[self.OpenAxis] = -0.5 * self.LengthVoxels
+        self.generator.SetLowerBound = lb
+        ub = lb * -1.0
         self.generator.SetUpperBound(ub)
         return
 
