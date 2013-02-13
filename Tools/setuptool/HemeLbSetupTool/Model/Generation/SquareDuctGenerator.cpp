@@ -128,7 +128,7 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 					link.IoletId = 0;
 				} else {
 					link.Type = geometry::CUT_OUTLET;
-					link.IoletId = 1;
+					link.IoletId = 0;
 				}
 
 				for (i = 0; i < 3; ++i) {
