@@ -217,21 +217,18 @@ class SquareDuctGenerator(GeometryGenerator):
         self._SetCommonGeneratorProperties()
 
         self.generator.SetOpenAxis(self.OpenAxis)
-        lb = Generation.DoubleVector(-0.5 * self.SideVoxels,
-                                     -0.5 * self.SideVoxels,
-                                     -0.5 * self.SideVoxels)
-        lb[self.OpenAxis] = -0.5 * self.LengthVoxels
-        self.generator.SetLowerBound = lb
-        ub = lb * -1.0
+        lb = self.Sizes * -0.5
+        self.generator.SetLowerBound(lb)
+        ub = self.Sizes * 0.5
         self.generator.SetUpperBound(ub)
         return
 
     def _MakeIolets(self):
         # Construct the Iolet structs
         inlet = Inlet()
-        c = self.Sizes / 2.
-        c[self.OpenAxis] = 0.
-        inlet.Centre = Vector(c.x, c.y, c.z)
+        c = [0., 0., 0.]
+        c[self.OpenAxis] = -0.5 * self.LengthVoxels * self.profile.VoxelSize
+        inlet.Centre = Vector(*c)
         
         n = Generation.DoubleVector()
         n[self.OpenAxis] = 1.
@@ -243,9 +240,9 @@ class SquareDuctGenerator(GeometryGenerator):
         self.profile.Iolets.append(inlet)
 
         outlet = Outlet()
-        c = self.Sizes / 2.
-        c[self.OpenAxis] = self.LengthVoxels
-        outlet.Centre = Vector(c.x, c.y, c.z)
+        c = [0., 0., 0.]
+        c[self.OpenAxis] = 0.5 * self.LengthVoxels * self.profile.VoxelSize
+        outlet.Centre = Vector(*c)
         
         n = Generation.DoubleVector()
         n[self.OpenAxis] = -1.
