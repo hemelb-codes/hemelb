@@ -19,16 +19,16 @@
 
 // C'tor
 Site::Site(Block& block, Index& index) :
-	IsFluidKnown(false), IsFluid(false),
-			Position(block.GetDomain().CalcPositionWorkingFromIndex(index)),
-			block(block), index(index) {
+		IsFluidKnown(false), IsFluid(false), Position(
+				block.GetDomain().CalcPositionWorkingFromIndex(index)), block(
+				block), index(index), WallNormalAvailable(false) {
 }
 
 // C'tor with index constructed in-place
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
-	IsFluidKnown(false), IsFluid(false),
-			block(block), index(i, j, k) {
-	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(this->index);
+		IsFluidKnown(false), IsFluid(false), block(block), index(i, j, k) {
+	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(
+			this->index);
 }
 
 const Index Site::GetDomainBlockCount() {
@@ -60,7 +60,7 @@ NeighbourIterator Site::endall() {
  */
 
 NeighbourIteratorBase::NeighbourIteratorBase(Site& site, unsigned int startpos) :
-	site(&site), domain(&site.block.domain), i(startpos) {
+		site(&site), domain(&site.block.domain), i(startpos) {
 	/* Should advance to the first valid neighbour
 	 * HOWEVER, we can't do that here, in the abstract class's c'tor
 	 * since the subclass c'tors haven't yet executed. The virtual
@@ -77,7 +77,7 @@ void NeighbourIteratorBase::AdvanceToValid() {
 
 // copy c'tor
 NeighbourIteratorBase::NeighbourIteratorBase(const NeighbourIteratorBase& other) :
-	site(other.site), domain(other.domain), i(other.i) {
+		site(other.site), domain(other.domain), i(other.i) {
 }
 
 // assignment operator
@@ -116,11 +116,13 @@ NeighbourIteratorBase& NeighbourIteratorBase::operator++() {
 }
 
 // Test for equality with another
-bool NeighbourIteratorBase::operator==(const NeighbourIteratorBase& other) const {
+bool NeighbourIteratorBase::operator==(
+		const NeighbourIteratorBase& other) const {
 	return (other.site == this->site) && (other.i == this->i);
 }
 // Inequality
-bool NeighbourIteratorBase::operator!=(const NeighbourIteratorBase& other) const {
+bool NeighbourIteratorBase::operator!=(
+		const NeighbourIteratorBase& other) const {
 	return !(*this == other);
 }
 
@@ -154,8 +156,8 @@ bool LaterNeighbourIterator::IsCurrentValid() {
 
 	if (this->IsCurrentInDomain()) {
 		// neighbour's in the domain, check it's block
-		int siteBlockIjk =
-				this->domain->TranslateIndex(this->site->block.index);
+		int siteBlockIjk = this->domain->TranslateIndex(
+				this->site->block.index);
 		int neighBlockIjk = this->domain->TranslateIndex(
 				neighIndex / this->domain->GetBlockSize());
 		if (neighBlockIjk != siteBlockIjk) {

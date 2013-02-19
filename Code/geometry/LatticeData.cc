@@ -23,7 +23,7 @@ namespace hemelb
   namespace geometry
   {
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-      latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
+        latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
     {
     }
 
@@ -33,7 +33,7 @@ namespace hemelb
     }
 
     LatticeData::LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult) :
-      latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
+        latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
     {
       SetBasicDetails(readResult.GetBlockDimensions(),
                       readResult.GetBlockSize(),
@@ -45,8 +45,8 @@ namespace hemelb
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
         proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
-        for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin(); itNeighProc
-            != neighbouringProcs.end(); ++itNeighProc)
+        for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
+            itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
           log::Logger::Log<log::Trace, log::OnePerCore>("LatticeData: Rank %i thinks that rank %i is a neighbour with %i shared edges\n",
                                                         localRank,
@@ -104,7 +104,8 @@ namespace hemelb
         }
 
         // Iterate over all sites within the current block.
-        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
+        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid();
+            siteTraverser.TraverseOne())
         {
           site_t localSiteId = siteTraverser.GetCurrentIndex();
 
@@ -198,16 +199,16 @@ namespace hemelb
               neighbouringProcs.push_back(lNewNeighbour);
 
               // if debugging then output decisions with reasoning for all neighbour processors
-                log::Logger::Log<log::Trace, log::OnePerCore>("LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                                                             (int) neighbourProc,
-                                                             (int) localRank,
-                                                             (int) neighbourSiteId,
-                                                             (int) neighbourBlockId,
-                                                             (int) localSiteId,
-                                                             (int) blockId,
-                                                             latticeInfo.GetVector(l).x,
-                                                             latticeInfo.GetVector(l).y,
-                                                             latticeInfo.GetVector(l).z);
+              log::Logger::Log<log::Trace, log::OnePerCore>("LatticeData: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
+                                                            (int) neighbourProc,
+                                                            (int) localRank,
+                                                            (int) neighbourSiteId,
+                                                            (int) neighbourBlockId,
+                                                            (int) localSiteId,
+                                                            (int) blockId,
+                                                            latticeInfo.GetVector(l).x,
+                                                            latticeInfo.GetVector(l).y,
+                                                            latticeInfo.GetVector(l).z);
             }
           }
 
@@ -236,25 +237,10 @@ namespace hemelb
               l = 5;
               break;
           }
-          // We approximate the wall normal at a point by iterating through each wall intersection
-          // link and seeing which one is closest.
-          util::Vector3D<float> normal(NO_VALUE);
-          // NB. initialised to absurdly large distance (normal scale is (0, root(3)))
-          float shortestDistance = 100.0;
-          for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
-          {
-            if (blockReadIn.Sites[localSiteId].links[direction - 1].type == GeometrySiteLink::WALL_INTERSECTION)
-            {
-              util::Vector3D<float> distance = latticeInfo.GetVector(direction)
-                  * blockReadIn.Sites[localSiteId].links[direction - 1].distanceToIntersection;
-              if (distance.GetMagnitude() < shortestDistance)
-              {
-                shortestDistance = distance.GetMagnitude();
-                normal = distance.Normalise();
-              }
-            }
 
-          }
+          const util::Vector3D<float>& normal = blockReadIn.Sites[localSiteId].wallNormalAvailable ?
+            blockReadIn.Sites[localSiteId].wallNormal :
+            util::Vector3D<float>(NO_VALUE);
 
           if (lIsInnerSite)
           {
@@ -301,10 +287,10 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     &fluidSitesOnEachProcessor[0],
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     MPI_COMM_WORLD);
       totalFluidSites = 0;
       for (proc_t ii = 0; ii < topology::NetworkTopology::Instance()->GetProcessorCount(); ++ii)
@@ -331,7 +317,8 @@ namespace hemelb
         {
           continue;
         }
-        for (geometry::SiteTraverser siteSet = blockSet.GetSiteTraverser(); siteSet.CurrentLocationValid(); siteSet.TraverseOne())
+        for (geometry::SiteTraverser siteSet = blockSet.GetSiteTraverser(); siteSet.CurrentLocationValid();
+            siteSet.TraverseOne())
         {
           if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex())
               == topology::NetworkTopology::Instance()->GetLocalRank())
@@ -350,8 +337,8 @@ namespace hemelb
       }
 
       site_t siteMins[3], siteMaxes[3];
-      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
       for (unsigned ii = 0; ii < 3; ++ii)
       {
         globalSiteMins[ii] = siteMins[ii];
@@ -363,8 +350,8 @@ namespace hemelb
     {
       // Allocate the index in which to put the distribution functions received from the other
       // process.
-      std::vector < std::vector<site_t> > sharedDistributionLocationForEachProc
-          = std::vector<std::vector<site_t> >(topology::NetworkTopology::Instance()->GetProcessorCount());
+      std::vector<std::vector<site_t> > sharedDistributionLocationForEachProc =
+          std::vector<std::vector<site_t> >(topology::NetworkTopology::Instance()->GetProcessorCount());
       site_t totalSharedDistributionsSoFar = 0;
       // Set the remaining neighbouring processor data.
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
@@ -375,7 +362,7 @@ namespace hemelb
             + 1 + totalSharedDistributionsSoFar;
         totalSharedDistributionsSoFar += neighbouringProcs[neighbourId].SharedDistributionCount;
       }
-      InitialiseNeighbourLookup( sharedDistributionLocationForEachProc);
+      InitialiseNeighbourLookup(sharedDistributionLocationForEachProc);
       InitialisePointToPointComms(sharedDistributionLocationForEachProc);
       InitialiseReceiveLookup(sharedDistributionLocationForEachProc);
     }
@@ -391,7 +378,8 @@ namespace hemelb
         {
           continue;
         }
-        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid(); siteTraverser.TraverseOne())
+        for (SiteTraverser siteTraverser = blockTraverser.GetSiteTraverser(); siteTraverser.CurrentLocationValid();
+            siteTraverser.TraverseOne())
         {
           if (localRank != map_block_p.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
           {
@@ -500,7 +488,8 @@ namespace hemelb
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
       {
         NeighbouringProcessor* neigh_proc_p = &neighbouringProcs[neighbourId];
-        for (site_t sharedDistributionId = 0; sharedDistributionId < neigh_proc_p->SharedDistributionCount; sharedDistributionId++)
+        for (site_t sharedDistributionId = 0; sharedDistributionId < neigh_proc_p->SharedDistributionCount;
+            sharedDistributionId++)
         {
           // Get coordinates and direction of the distribution function to be sent to another process.
           site_t* f_data_p = &sharedFLocationForEachProc[neigh_proc_p->Rank][sharedDistributionId * 4];
@@ -600,7 +589,9 @@ namespace hemelb
       return lBlock.GetLocalContiguousIndexForSite(GetLocalSiteIdFromLocalSiteCoords(localSiteCoords));
     }
 
-    bool LatticeData::GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation, proc_t& procId, site_t& siteId) const
+    bool LatticeData::GetContiguousSiteId(const util::Vector3D<site_t>& globalLocation,
+                                          proc_t& procId,
+                                          site_t& siteId) const
     {
       // convert global coordinates to local coordinates - i.e.
       // to location of block and location of site within block
@@ -684,13 +675,13 @@ namespace hemelb
           it != neighbouringProcs.end(); ++it)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<distribn_t> (GetFOld( (*it).FirstSharedDistribution),
-                                         (int) ( ( (*it).SharedDistributionCount)),
-                                          (*it).Rank);
+        net->RequestReceive<distribn_t>(GetFOld( (*it).FirstSharedDistribution),
+                                        (int) ( ( (*it).SharedDistributionCount)),
+                                        (*it).Rank);
         // Request the send from the right bit of FNew.
-        net->RequestSend<distribn_t> (GetFNew( (*it).FirstSharedDistribution),
-                                      (int) ( ( (*it).SharedDistributionCount)),
-                                       (*it).Rank);
+        net->RequestSend<distribn_t>(GetFNew( (*it).FirstSharedDistribution),
+                                     (int) ( ( (*it).SharedDistributionCount)),
+                                     (*it).Rank);
 
       }
     }
