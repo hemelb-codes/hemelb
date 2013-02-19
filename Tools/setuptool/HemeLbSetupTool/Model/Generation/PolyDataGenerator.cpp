@@ -27,13 +27,14 @@
 #include "vtkMatrix4x4.h"
 #include "Block.h"
 #include "vtkXMLPolyDataWriter.h"
+#include <cassert>
 
 using namespace hemelb::io::formats;
 
 PolyDataGenerator::PolyDataGenerator() :
-	GeometryGenerator(), ClippedSurface(NULL) {
+		GeometryGenerator(), ClippedSurface(NULL) {
 	this->Locator = vtkOBBTree::New();
-    //this->Locator->SetNumberOfCellsPerNode(32); // the default
+	//this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
@@ -76,8 +77,19 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
+	// We store the normals of all the cells intersected by one of the site
+	// links and the distance to the cut.
+	std::vector<double*> intersectedCellsNormal;
+	std::vector<float> intersectedCellsDistance;
 
-	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
+	/**
+	 *  @todo Using NeighbourIterator instead of LaterNeighbourIterator introduces a significant
+	 *  slow down since many operations get duplicated (i.e. from either side of the link). Consider
+	 *  splitting the loop in two: the original looping over LaterNeighbourIterator and a new one
+	 *  looping over NeighbourIterator to collect the data about surface intersections.
+	 */
+	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall();
+			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		vtkIdType nHits;
@@ -115,8 +127,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			if (site.IsFluid) {
 				// Fluid-fluid, must set CUT_NONE for both
 				site.Links[iNeigh].Type = geometry::CUT_NONE;
-				neigh.Links[Neighbours::inverses[iNeigh]].Type
-						= geometry::CUT_NONE;
+				neigh.Links[Neighbours::inverses[iNeigh]].Type =
+						geometry::CUT_NONE;
 			} else {
 				// solid-solid, nothing to do.
 			}
@@ -148,10 +160,11 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			LinkData& link = fluid->Links[iSolid];
 
 			// This is set in any solid case
-			link.Distance = (hitPoint - fluid->Position).GetMagnitude();
+			float distanceInVoxels =
+					(hitPoint - fluid->Position).GetMagnitude();
 			// The distance is in voxels but must be output as a fraction of
 			// the lattice vector. Scale it.
-			link.Distance /= Neighbours::norms[iSolid];
+			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 
 			// The index of the cell in the vtkPolyData that was hit
 			int hitCellId = this->hitCellIds->GetId(iHit);
@@ -172,8 +185,46 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				// Set the Id
 				link.IoletId = iolet->Id;
 			}
-		}
 
+			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
+			if (link.Type == geometry::CUT_WALL) {
+				intersectedCellsNormal.push_back(
+						this->Locator->GetDataSet()->GetCellData()->GetNormals()->GetTuple3(
+								hitCellId));
+				intersectedCellsDistance.push_back(distanceInVoxels);
+			}
+		}
+	}
+
+	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
+	site.WallNormalAvailable = ComputeAveragedNormal(site.WallNormal,
+			intersectedCellsNormal, intersectedCellsDistance);
+}
+
+bool PolyDataGenerator::ComputeAveragedNormal(Vector& normal,
+		std::vector<double*>& intersectedCellsNormal,
+		std::vector<float>& intersectedCellsDistance) const {
+	assert(intersectedCellsNormal.size() == intersectedCellsDistance.size());
+	assert(normal == Vector(0));
+
+	if (intersectedCellsNormal.size() == 0) {
+		return false;
+	} else {
+		// Compute a weighted sum of the wall normals available and normalise it.
+		std::vector<double*>::const_iterator normals_iter =
+				intersectedCellsNormal.begin();
+		std::vector<float>::const_iterator distances_iter =
+				intersectedCellsDistance.begin();
+		for (; normals_iter != intersectedCellsNormal.end();
+				++normals_iter, ++distances_iter) {
+			assert(*distances_iter != 0);
+			double weight = 1 / *distances_iter;
+			normal[0] = weight * (*normals_iter)[0];
+			normal[1] = weight * (*normals_iter)[1];
+			normal[2] = weight * (*normals_iter)[2];
+		}
+		normal.Normalise();
+		return true;
 	}
 }
 
@@ -188,32 +239,31 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 // of intersections found so far, which is incremented.
 int IntersectingLeafCounter(vtkOBBNode* polyNode, vtkOBBNode* cubeNode,
 		vtkMatrix4x4* transform, void *ptr_to_intersection_count) {
-    int &intersection_count = *static_cast<int*>(ptr_to_intersection_count);
-    intersection_count++;
+	int &intersection_count = *static_cast<int*>(ptr_to_intersection_count);
+	intersection_count++;
 }
 
-int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block)
-{
-    // Create an OBB tree for the block
-    vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
-    
-    // Count the number of domain OBB leaf nodes that intersect the single
-    // node created for the block.
-    int intersection_count = 0;
-    Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL,
-    		IntersectingLeafCounter, static_cast<void*>(&intersection_count));
-    // Delete the underlying polydata
-    blockSlightlyLargerOBBTree->GetDataSet()->Delete();
-    // And the OBBTree itself
-    blockSlightlyLargerOBBTree->Delete();
+int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block) {
+	// Create an OBB tree for the block
+	vtkOBBTree *blockSlightlyLargerOBBTree = block.CreateOBBTreeModel(1.0);
 
-    if (intersection_count == 0) {
-        // either entirely inside or entirely outside
-        double middlePosition[3];
-        middlePosition[0] = block.Middle().Position[0];
-        middlePosition[1] = block.Middle().Position[1];
-        middlePosition[2] = block.Middle().Position[2];
-        return Locator->InsideOrOutside(middlePosition);
-    }
-    return 0;
+	// Count the number of domain OBB leaf nodes that intersect the single
+	// node created for the block.
+	int intersection_count = 0;
+	Locator->IntersectWithOBBTree(blockSlightlyLargerOBBTree, NULL,
+			IntersectingLeafCounter, static_cast<void*>(&intersection_count));
+	// Delete the underlying polydata
+	blockSlightlyLargerOBBTree->GetDataSet()->Delete();
+	// And the OBBTree itself
+	blockSlightlyLargerOBBTree->Delete();
+
+	if (intersection_count == 0) {
+		// either entirely inside or entirely outside
+		double middlePosition[3];
+		middlePosition[0] = block.Middle().Position[0];
+		middlePosition[1] = block.Middle().Position[1];
+		middlePosition[2] = block.Middle().Position[2];
+		return Locator->InsideOrOutside(middlePosition);
+	}
+	return 0;
 }

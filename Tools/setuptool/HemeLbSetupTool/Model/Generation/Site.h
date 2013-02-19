@@ -39,6 +39,8 @@ public:
 	bool IsFluid;
 	std::vector<LinkData> Links;
 	Vector Position;
+	bool WallNormalAvailable; ///< Whether an approximation of the wall normal is available
+	Vector WallNormal; ///< Approximation of the wall normal on this site
 
 	inline void CreateLinksVector() {
 		Links.resize(geometry::NumberOfDisplacements);
