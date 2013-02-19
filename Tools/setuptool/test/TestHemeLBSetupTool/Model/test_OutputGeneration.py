@@ -5,6 +5,8 @@ import numpy as np
 
 from HemeLbSetupTool.Model import OutputGeneration
 from HemeLbSetupTool.Model.Profile import Profile
+from HemeLbSetupTool.Model.Vector import Vector
+from HemeLbSetupTool.Model.Iolets import Iolet
 from hemeTools.parsers.geometry.simple import ConfigLoader
 import fixtures
 
@@ -63,6 +65,33 @@ class TestPolyDataGenerator:
         fluid_sites_nonintersecting = sum(
             checker_skip_nonintersecting.Domain.BlockFluidSiteCounts)
         assert(fluid_sites_nonintersecting == fluid_sites)
+
+    def test_cube_normals(self, tmpdir):
+        """Generate a gmy from a simple cubic profile and check the computed normals"""
+        cube = fixtures.cube(tmpdir)
+        cube.VoxelSize = 0.23
+        cube.StlFileUnitId = 0
+        
+        """ The default VTK cube has 1m edges and it is centred at the origin of
+            coordinates. We place the inlet and the outlet at the faces perpendicular
+            to the z axis"""
+        inlet = Iolet(Name='inlet',
+                      Centre=Vector(0., 0., -0.5),
+                      Normal=Vector(0., 0., -1.),
+                      Radius=np.sqrt(2) / 2)
+        outlet = Iolet(Name='outlet',
+                       Centre=Vector(0., 0., 0.5),
+                       Normal=Vector(0., 0., 1.),
+                       Radius=np.sqrt(2) / 2)
+        cube.Iolets = [inlet, outlet]
+         
+        generator = OutputGeneration.PolyDataGenerator(cube)
+        generator.skipNonIntersectingBlocks = True
+        generator.Execute()
+        
+        """ Load back the resulting geometry file and assert things are as expected """
+        checker = CubeNormalsTestingGmyParser(cube.OutputGeometryFile, cube.VoxelSize)
+        checker.Load()
 
     def test_cylinder(self, tmpdir):
         """Generate a gmy from a simple cubic profile and check the output"""
@@ -144,7 +173,6 @@ class TestingGmyParser(ConfigLoader):
         assert self.Domain.VoxelSize == self.VoxelSize
 
     def OnEndSite(self, block, site):
-        return
         if site.IsFluid:
             assert self.IsInside(site.Position)
         else:
@@ -184,3 +212,15 @@ class CubeTestingGmyParser(TestingGmyParser):
             all(component < 0.5 and component > -0.5 for component in position)
         )
         return result
+
+
+class CubeNormalsTestingGmyParser(CubeTestingGmyParser):
+
+    ValidNormals = np.array([(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)], dtype=np.float)
+
+    def OnEndSite(self, block, site):
+        CubeTestingGmyParser.OnEndSite(self, block, site)
+        assert (site.IsEdge == site.WallNormalAvailable)
+        if site.IsEdge:
+            assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
+            assert np.any(np.all(self.ValidNormals == site.WallNormal, axis=1))

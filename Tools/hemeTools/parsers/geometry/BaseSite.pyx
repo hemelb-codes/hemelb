@@ -26,6 +26,10 @@ cdef public enum:
 cdef public enum:
     NO_IOLET = -1
 
+cdef public enum:
+    WALL_NORMAL_NOT_AVAILABLE = 0
+    WALL_NORMAL_AVAILABLE = 1
+
 cdef class BaseSite:
     def __init__(self, block, np.ndarray[np.int_t] sgIdx):
         self.GetBlock = weakref.ref(block)
@@ -34,6 +38,8 @@ cdef class BaseSite:
         self.IntersectionDistance = None
         self.IOletIndex = None
         self.Type = SOLID
+        self.WallNormalAvailable = False
+        self.WallNormal = None
 
     cdef bint _IsFluid(self):
         return self.Type == FLUID
@@ -101,6 +107,7 @@ cdef class BaseSite:
                     ioind[i] = loader.unpack_uint()
                 if itype[i] != NO_INTERSECTION:
                     idist[i] = loader.unpack_float()
-                    
-    pass
-    
+            
+            self.WallNormalAvailable = (loader.unpack_uint() == WALL_NORMAL_AVAILABLE)
+            if self.WallNormalAvailable:
+                self.WallNormal = np.array([loader.unpack_float(), loader.unpack_float(), loader.unpack_float()], dtype=np.float32)

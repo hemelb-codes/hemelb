@@ -14,6 +14,7 @@
 #include "constants.h"
 #include "units.h"
 #include "geometry/GeometrySiteLink.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -53,6 +54,12 @@ namespace hemelb
         //! A vector of the link data for each direction in the lattice currently being used
         //! (NOT necessarily the same as the lattice used by the geometry file).
         std::vector<GeometrySiteLink> links;
+
+        //! Whether there's a approximation of the wall normal available in this fluid site.
+        bool wallNormalAvailable;
+
+        //! Wall normal approximation at the current fluid site.
+        util::Vector3D<float> wallNormal;
     };
   }
 }
