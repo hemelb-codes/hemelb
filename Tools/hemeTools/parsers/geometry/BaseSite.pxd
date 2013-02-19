@@ -8,6 +8,7 @@
 # 
 cimport numpy as np
 from hemeTools.utils cimport xdr
+from cpython cimport bool
 
 cdef class BaseSite:
     cdef public:
@@ -16,6 +17,8 @@ cdef class BaseSite:
         np.ndarray IntersectionType
         np.ndarray IntersectionDistance
         np.ndarray IOletIndex
+        bool WallNormalAvailable
+        np.ndarray WallNormal
         object GetBlock
 
     cdef bint _IsFluid(self)
