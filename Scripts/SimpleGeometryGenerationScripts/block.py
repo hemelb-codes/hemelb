@@ -7,7 +7,6 @@
 # specifically made by you with University College London.
 # 
 
-from functools import reduce
 from Site import Site
 
 class Block(object):

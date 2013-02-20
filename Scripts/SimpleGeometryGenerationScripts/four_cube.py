@@ -31,6 +31,7 @@ class FourCube(LatticeFixture):
         for index in np.ndindex(3 * (self.sites_along_block,)):
             x_index, y_index, z_index = index
             links = []
+            normal = None
             for direction in self.lattice_directions:
                 link_type = Link.no_boundary
 
@@ -40,12 +41,16 @@ class FourCube(LatticeFixture):
                 # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered non-wall because of the ordering of the if statements below        
                 if x_index == x_min and direction[0] == -1:
                     link_type = Link.wall
+                    normal = np.array([-1, 0, 0])
                 if x_index == x_max and direction[0] == 1:
                     link_type = Link.wall
+                    normal = np.array([1, 0, 0])
                 if y_index == y_min and direction[1] == -1:
                     link_type = Link.wall
+                    normal = np.array([0, -1, 0])
                 if y_index == y_max and direction[1] == 1:
                     link_type = Link.wall
+                    normal = np.array([0, 1, 0])
                 if z_index == z_min and direction[2] == -1:
                     link_type = Link.inlet
                 if z_index == z_max and direction[2] == 1:
@@ -57,7 +62,7 @@ class FourCube(LatticeFixture):
                 # iolet_index and wall_distance will be ignored when meaningless
                 links.append(Link(link_type, wall_distance, iolet_index))
 
-            sites.append(Site(Site.fluid_site, links))
+            sites.append(Site(Site.fluid_site, links, normal))
 
         # Requirement: Blocks are striped with the z coordinate changing most frequently (i.e. the z coordinate represents the least significant part of the block index) then y and x slowest.
         # This geometry is made of a single block with the sites defined above
