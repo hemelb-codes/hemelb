@@ -26,7 +26,8 @@ Site::Site(Block& block, Index& index) :
 
 // C'tor with index constructed in-place
 Site::Site(Block& block, unsigned int i, unsigned int j, unsigned int k) :
-		IsFluidKnown(false), IsFluid(false), block(block), index(i, j, k) {
+		IsFluidKnown(false), IsFluid(false), block(block), index(i, j, k), WallNormalAvailable(
+				false) {
 	this->Position = this->block.GetDomain().CalcPositionWorkingFromIndex(
 			this->index);
 }
