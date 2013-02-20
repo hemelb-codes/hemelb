@@ -9,16 +9,16 @@
 
 class Site(object):
     # Type of site identifier
-    solid_site,fluid_site=range(2)
+    solid_site, fluid_site = range(2)
 
     # Bytes stored per link type:
     #   none:   link type (uint)
     #   wall:   link type and distance to boundary (uint+float),
     #   inlet:  link type and inlet index and distance to boundary (uint+uint+float)
     #   outlet: link type and inlet index and distance to boundary (uint+uint+float)
-    link_extra_bytes_required = [4,4+4,4+4+4,4+4+4]
+    link_extra_bytes_required = [4, 4 + 4, 4 + 4 + 4, 4 + 4 + 4]
     
-    def __init__(self,site_type,links):
+    def __init__(self, site_type, links):
         self.site_type = site_type
         self.links = links
 
