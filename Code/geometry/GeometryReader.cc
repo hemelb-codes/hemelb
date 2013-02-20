@@ -575,6 +575,8 @@ namespace hemelb
       // Prepare the links array to have enough space.
       readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
 
+      bool isEdgeSite = false;
+
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
       {
@@ -588,6 +590,7 @@ namespace hemelb
         // walls have a floating-point distance to the wall...
         if (link.type == GeometrySiteLink::WALL_INTERSECTION)
         {
+          isEdgeSite = true;
           float distance;
           reader.readFloat(distance);
           link.distanceToIntersection = distance;
@@ -623,6 +626,17 @@ namespace hemelb
       unsigned normalAvailable;
       reader.readUnsignedInt(normalAvailable);
       readInSite.wallNormalAvailable = (normalAvailable == io::formats::geometry::WALL_NORMAL_AVAILABLE);
+
+      if (readInSite.wallNormalAvailable != isEdgeSite)
+      {
+        std::string msg = isEdgeSite ?
+          "edge fluid site without" :
+          "bulk fluid site with";
+
+        log::Logger::Log<log::Critical, log::OnePerCore>("Malformed GMY file, " + msg
+            + " a defined wall normal currently not allowed.");
+        exit(1);
+      }
 
       if (readInSite.wallNormalAvailable)
       {
