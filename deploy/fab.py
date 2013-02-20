@@ -550,6 +550,7 @@ def regression_test(**args):
     """Submit a regression-testing job to the remote queue."""
     execute(clone_regression_tests)
     execute(copy_regression_tests)
+    execute(build_python_tools)
     job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
             wall_time='0:20:0',memory='2G',images=0, steering=1111,script='regression'),args)
 
