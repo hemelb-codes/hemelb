@@ -18,7 +18,7 @@ class LatticeFixture(object):
     # Versioning constants
     hemelb_magic_number = 0x686c6221
     geometry_magic_number = 0x676d7904
-    hemelb_geometry_file_format_version_number = 2
+    hemelb_geometry_file_format_version_number = 3
 
     def __init__(self):
         # Assuming zero lattice site is at the origin of coordinates (0,0,0)
@@ -102,6 +102,13 @@ class LatticeFixture(object):
         if site.site_type == Site.fluid_site:
             for link in site.links:
                 self.pack_link(link, block_encoder)
+            if site.normal is None:
+                block_encoder.pack_uint(0)
+            else:
+                block_encoder.pack_uint(1)
+                block_encoder.pack_float(site.normal[0])
+                block_encoder.pack_float(site.normal[1])
+                block_encoder.pack_float(site.normal[2])
 
     def pack_link(self, link, block_encoder):
         # Pack the link type and depending on it, extra information

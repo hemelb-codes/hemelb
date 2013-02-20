@@ -18,11 +18,18 @@ class Site(object):
     #   outlet: link type and inlet index and distance to boundary (uint+uint+float)
     link_extra_bytes_required = [4, 4 + 4, 4 + 4 + 4, 4 + 4 + 4]
     
-    def __init__(self, site_type, links):
+    def __init__(self, site_type, links, normal):
         self.site_type = site_type
         self.links = links
+        self.normal = normal
 
     def bytes(self):
         # unsigned site identifier (solid vs fluid) plus the data required to represent each link
-        size = 4 + sum(self.link_extra_bytes_required[link.link_type] for link in self.links)
+        # plus an unsigned telling whether there's a normal available
+        size = 4 + sum(self.link_extra_bytes_required[link.link_type] for link in self.links) + 4
+        
+        # if there's a wall normal available, we need 3 floats to store them
+        if self.normal is not None:
+            size += 3 * 4
+            
         return size
