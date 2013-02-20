@@ -24,7 +24,7 @@ setup(name='HemeTools',
       description='HemeLB tools',
       author='Rupert Nash',
       author_email='rupert.nash@ucl.ac.uk',
-      packages=['hemeTools', 'hemeTools.converters', 'hemeTools.parsers', 'hemeTools.parsers.snapshot', 'hemeTools.parsers.geometry', 'hemeTools.surfacegenerator', 'hemeTools.utils'],
+      packages=['hemeTools', 'hemeTools.converters', 'hemeTools.parsers', 'hemeTools.parsers.snapshot', 'hemeTools.parsers.geometry', 'hemeTools.parsers.extraction', 'hemeTools.surfacegenerator', 'hemeTools.utils'],
       cmdclass = {'build_ext': build_ext},
       ext_modules=ext_modules
      )
