@@ -31,7 +31,6 @@ class FourCube(LatticeFixture):
         for index in np.ndindex(3 * (self.sites_along_block,)):
             x_index, y_index, z_index = index
             links = []
-            normal = None
             for direction in self.lattice_directions:
                 link_type = Link.no_boundary
 
@@ -41,16 +40,12 @@ class FourCube(LatticeFixture):
                 # In this example, links that cross both wall and inlet/outlet (like the 8 corners of the cube) will be considered non-wall because of the ordering of the if statements below        
                 if x_index == x_min and direction[0] == -1:
                     link_type = Link.wall
-                    normal = np.array([-1, 0, 0])
                 if x_index == x_max and direction[0] == 1:
                     link_type = Link.wall
-                    normal = np.array([1, 0, 0])
                 if y_index == y_min and direction[1] == -1:
                     link_type = Link.wall
-                    normal = np.array([0, -1, 0])
                 if y_index == y_max and direction[1] == 1:
                     link_type = Link.wall
-                    normal = np.array([0, 1, 0])
                 if z_index == z_min and direction[2] == -1:
                     link_type = Link.inlet
                 if z_index == z_max and direction[2] == 1:
@@ -61,6 +56,19 @@ class FourCube(LatticeFixture):
 
                 # iolet_index and wall_distance will be ignored when meaningless
                 links.append(Link(link_type, wall_distance, iolet_index))
+
+            # For sites at the intersection of two cube faces considered wall (i.e. perpendicular to the x or y
+            # axes), we arbitrarily choose the normal to lie along the y axis. The logic below must be consistent
+            # with Code/unittests/FourCubeLatticeData.h
+            normal = None
+            if x_index == x_min:
+                normal = np.array([-1, 0, 0])
+            if x_index == x_max:
+                normal = np.array([1, 0, 0])
+            if y_index == y_min:
+                normal = np.array([0, -1, 0])
+            if y_index == y_max:
+                normal = np.array([0, 1, 0])
 
             sites.append(Site(Site.fluid_site, links, normal))
 
