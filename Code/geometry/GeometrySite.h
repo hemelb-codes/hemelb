@@ -34,14 +34,8 @@ namespace hemelb
         GeometrySite(bool siteIsFluid) :
             targetProcessor(siteIsFluid ?
               -1 :
-              BIG_NUMBER2), isFluid(siteIsFluid)
+              BIG_NUMBER2), isFluid(siteIsFluid), wallNormalAvailable(false)
         {
-        }
-
-        GeometrySite(const GeometrySite& other) :
-            targetProcessor(other.targetProcessor), isFluid(other.isFluid), links(other.links)
-        {
-
         }
 
         //! Processor on which to perform lattice-Boltzmann for the site.
