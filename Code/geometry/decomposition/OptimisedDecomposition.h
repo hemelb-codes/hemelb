@@ -13,7 +13,7 @@
 #include <vector>
 #include "geometry/Geometry.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "parmetis.h"
+#include "geometry/ParmetisHeader.h"
 #include "reporting/Timers.h"
 #include "topology/Communicator.h"
 
