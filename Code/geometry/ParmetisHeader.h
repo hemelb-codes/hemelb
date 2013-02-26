@@ -12,8 +12,8 @@
 
 #include "parmetis.h"
 #if (PARMETIS_MAJOR_VERSION < 4)
-typedef idxtype idx_t
-typedef float real_t
+typedef idxtype idx_t;
+typedef float real_t;
 #endif
 
 
