@@ -11,6 +11,8 @@ from hemeTools.utils cimport xdr
 
 cdef class BaseSite:
     cdef public:
+        # BEWARE: Adding attributes to this class requires programming
+        # their pickling/unpickling in __getstate__ and __setstate__
         int Type
         np.ndarray Index
         np.ndarray IntersectionType

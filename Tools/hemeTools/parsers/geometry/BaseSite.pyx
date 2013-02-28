@@ -73,7 +73,9 @@ cdef class BaseSite:
             'IntersectionType': self.IntersectionType,
             'IntersectionDistance': self.IntersectionDistance,
             'IOletIndex': self.IOletIndex,
-            'Block': self.GetBlock()
+            'Block': self.GetBlock(),
+            'WallNormalAvailable': self.WallNormalAvailable,
+            'WallNormal': self.WallNormal
             }
         return picdic
 
@@ -84,6 +86,8 @@ cdef class BaseSite:
         self.IntersectionDistance = picdic['IntersectionDistance']
         self.IOletIndex = picdic['IOletIndex']
         self.GetBlock = weakref.ref(picdic['Block'])
+        self.WallNormalAvailable =  picdic['WallNormalAvailable']
+        self.WallNormal = picdic['WallNormal']
 
     cpdef LoadFrom(self, xdr.Unpacker loader):
         cdef np.ndarray[np.uint_t] itype
