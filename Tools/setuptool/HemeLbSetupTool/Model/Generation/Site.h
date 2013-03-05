@@ -27,7 +27,9 @@ struct LinkData {
 	geometry::CutType Type;
 	float Distance;
 	unsigned int IoletId;
-	inline LinkData() : Type(geometry::CUT_NONE), Distance(0.) {};
+	float DistanceInVoxels;
+	std::vector<double> WallNormalAtWallCut;
+	inline LinkData() : Type(geometry::CUT_NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(0) {};
 };
 
 // A single lattice site

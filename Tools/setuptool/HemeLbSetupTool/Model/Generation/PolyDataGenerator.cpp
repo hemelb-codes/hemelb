@@ -77,18 +77,8 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
-	// We store the normals of all the cells intersected by one of the site
-	// links and the distance to the cut.
-	std::vector<double*> intersectedCellsNormal;
-	std::vector<float> intersectedCellsDistance;
 
-	/**
-	 *  @todo Using NeighbourIterator instead of LaterNeighbourIterator introduces a significant
-	 *  slow down since many operations get duplicated (i.e. from either side of the link). Consider
-	 *  splitting the loop in two: the original looping over LaterNeighbourIterator and a new one
-	 *  looping over NeighbourIterator to collect the data about surface intersections.
-	 */
-	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall();
+	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
 			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
@@ -188,10 +178,27 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
 			if (link.Type == geometry::CUT_WALL) {
-				intersectedCellsNormal.push_back(
+				double* normal =
 						this->Locator->GetDataSet()->GetCellData()->GetNormals()->GetTuple3(
-								hitCellId));
-				intersectedCellsDistance.push_back(distanceInVoxels);
+								hitCellId);
+				link.WallNormalAtWallCut.resize(3);
+				std::copy(normal, normal + 3, link.WallNormalAtWallCut.begin());
+				link.DistanceInVoxels = distanceInVoxels;
+			}
+		}
+	}
+
+	// Put together the normals of all the cells intersected by one of the site
+	// links and the distance to the cut.
+	std::vector<double*> intersectedCellsNormal;
+	std::vector<float> intersectedCellsDistance;
+
+	if (site.IsFluid) {
+		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
+			LinkData& link = site.Links[neighId];
+			if (link.Type == geometry::CUT_WALL) {
+				intersectedCellsNormal.push_back(link.WallNormalAtWallCut.data());
+				intersectedCellsDistance.push_back(link.DistanceInVoxels);
 			}
 		}
 	}
