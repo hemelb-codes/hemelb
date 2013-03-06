@@ -40,6 +40,18 @@ namespace hemelb
         Geometry LoadAndDecompose(const std::string& dataFilePath);
 
       private:
+        /**
+         * Read from the file into a buffer. We read this on a single core then broadcast it.
+         * This has proven to be more efficient than reading in on every core (even using a collective
+         * read).
+         *
+         * Note this allocates memory and returns the pointer to you.
+         *
+         * @param nBytes
+         * @return
+         */
+        char* ReadOnAllTasks(unsigned nBytes);
+
         Geometry ReadPreamble();
 
         void ReadHeader(site_t blockCount);
