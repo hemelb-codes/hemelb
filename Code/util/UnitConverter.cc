@@ -16,8 +16,8 @@ namespace hemelb
   {
 
     UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize, PhysicalPosition latticeOrigin) :
-        voxelSize(voxelSize), timestepTime(timeStep),
-        latticeSpeed(voxelSize / timestepTime), latticeOrigin(latticeOrigin)
+      voxelSize(voxelSize), timestepTime(timeStep), latticeSpeed(voxelSize / timestepTime),
+          latticeOrigin(latticeOrigin)
     {
 
     }
@@ -45,6 +45,31 @@ namespace hemelb
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
     {
       return shearRate / timestepTime;
+    }
+    LatticeDistance UnitConverter::ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const
+    {
+      return x / voxelSize;
+    }
+    PhysicalDistance UnitConverter::ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const
+    {
+      return x * voxelSize;
+    }
+    LatticePosition UnitConverter::ConvertPositionToLatticeUnits(const PhysicalPosition& x) const
+    {
+      return (x - latticeOrigin) / voxelSize;
+    }
+    PhysicalPosition UnitConverter::ConvertPositionToPhysicalUnits(const LatticePosition& x) const
+    {
+      return x * voxelSize + latticeOrigin;
+    }
+
+    LatticeSpeed UnitConverter::ConvertSpeedToLatticeUnits(const PhysicalSpeed& v) const
+    {
+      return v / latticeSpeed;
+    }
+    PhysicalSpeed UnitConverter::ConvertSpeedToPhysicalUnits(const LatticeSpeed& v) const
+    {
+      return v * latticeSpeed;
     }
 
     bool UnitConverter::Convert(std::string units, double& value) const
