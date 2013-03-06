@@ -80,6 +80,42 @@ if (HEMELB_IMAGES_TO_NULL)
 	add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
 
+# Check for a serious compiler bug in GCC
+# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
+if(CMAKE_COMPILER_IS_GNUXX)
+  include(CheckCXXSourceRuns)
+  CHECK_CXX_SOURCE_RUNS("struct Base {
+  const int text;
+  Base() : text(1) {}
+  Base(int aText) : text(aText) {}
+};
+struct SubA : public virtual Base {
+protected:
+  int x;
+public:
+  SubA(int aX) : x(aX) {}
+};
+class SubB : public virtual Base {};
+struct Diamond : public SubA, public SubB {
+    Diamond(int text) : Base(text), SubA(5), SubB() {}
+    void printText() {
+        if(text != 2)
+          __builtin_abort();
+        if(x!=5)
+          __builtin_abort();
+    }
+};
+
+int main(int, char**) {
+    Diamond x(2);
+    x.printText();
+}" HAVE_GCC_WITHOUT_DIAMOND_BUG)
+  
+  if (NOT HAVE_GCC_WITHOUT_DIAMOND_BUG)
+    message(SEND_ERROR "Your version of GCC has this bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618. HemeLB requires a working implementation of virtual base classes. Please use a different compiler.")
+  endif()
+endif()
+
 #------Capture build environment -------------
 
 execute_process(COMMAND hg id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
