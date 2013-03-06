@@ -15,14 +15,9 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(lb::LbmParameters* params,
-                                 lb::SimulationState* state,
-                                 PhysicalDistance voxelSize,
-                                 PhysicalPosition latticeOrigin) :
-      lbmParameters(params), simulationState(state),
-      voxelSize(voxelSize), timestepTime(simulationState->GetTimeStepLength()),
-      latticeSpeed(voxelSize / timestepTime),
-      latticeOrigin(latticeOrigin)
+    UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize, PhysicalPosition latticeOrigin) :
+        voxelSize(voxelSize), timestepTime(timeStep),
+        latticeSpeed(voxelSize / timestepTime), latticeOrigin(latticeOrigin)
     {
 
     }
@@ -49,7 +44,7 @@ namespace hemelb
 
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
     {
-      return shearRate / simulationState->GetTimeStepLength();
+      return shearRate / timestepTime;
     }
 
     bool UnitConverter::Convert(std::string units, double& value) const

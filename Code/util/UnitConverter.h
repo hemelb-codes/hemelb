@@ -10,8 +10,6 @@
 #ifndef HEMELB_UTIL_UNITCONVERTER_H
 #define HEMELB_UTIL_UNITCONVERTER_H
 
-#include "lb/LbmParameters.h"
-#include "lb/SimulationState.h"
 #include "constants.h"
 #include "units.h"
 #include "util/Vector3D.h"
@@ -25,8 +23,7 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(lb::LbmParameters* params,
-                      lb::SimulationState* state,
+        UnitConverter(PhysicalTime timeStep,
                       PhysicalDistance voxelSize,
                       PhysicalPosition latticeOrigin);
 
@@ -78,7 +75,7 @@ namespace hemelb
 
         PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
         {
-          return static_cast<double>(time_step) * simulationState->GetTimeStepLength();
+          return static_cast<double>(time_step) * timestepTime;
         }
 
         /**
@@ -100,8 +97,6 @@ namespace hemelb
         }
 
       private:
-        lb::LbmParameters* lbmParameters;
-        lb::SimulationState* simulationState;
         PhysicalDistance voxelSize; //!< Lattice displacement in physical units.
         PhysicalTime timestepTime;
         PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
