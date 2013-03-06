@@ -12,6 +12,7 @@
 
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
+#include "lb/SimulationState.h"
 #include "tinyxml.h"
 
 namespace hemelb

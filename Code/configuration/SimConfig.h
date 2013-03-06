@@ -13,6 +13,7 @@
 #include <vector>
 #include "tinyxml.h"
 #include "util/Vector3D.h"
+#include "lb/LbmParameters.h"
 #include "lb/boundaries/iolets/InOutLets.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
