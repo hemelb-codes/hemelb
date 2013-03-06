@@ -55,8 +55,7 @@ namespace hemelb
             latticeData = FourCubeLatticeData::Create(CubeSize, 1);
             simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
-            lbmParams = new lb::LbmParameters(0.1, VoxelSize);
-            unitConverter = new hemelb::util::UnitConverter(lbmParams, simState, VoxelSize, latticeData->GetOrigin());
+            unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(), VoxelSize, latticeData->GetOrigin());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,
                                                                               *unitConverter);
@@ -85,7 +84,6 @@ namespace hemelb
 
             delete dataSourceIterator;
             delete unitConverter;
-            delete lbmParams;
             delete propertyCache;
             delete simState;
             delete latticeData;
@@ -288,7 +286,6 @@ namespace hemelb
           unittests::FourCubeLatticeData* latticeData;
           lb::SimulationState* simState;
           hemelb::lb::MacroscopicPropertyCache* propertyCache;
-          hemelb::lb::LbmParameters* lbmParams;
           hemelb::util::UnitConverter* unitConverter;
           hemelb::extraction::LbDataSourceIterator* dataSourceIterator;
 
