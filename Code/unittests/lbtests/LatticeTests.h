@@ -263,7 +263,7 @@ namespace hemelb
               // Test 1: non equilibrium distribution function equals to 0 and wall normal (1,0,0). Result should be (pressure, 0, 0)
               std::vector<distribn_t> nonEquilibriumF(LatticeType::NUMVECTORS, 0.0);
               LatticeDensity density = 3.0;
-              util::Vector3D<DimensionlessQuantity> wallNormal(1, 0, 0);
+              util::Vector3D<Dimensionless> wallNormal(1, 0, 0);
               util::Vector3D<LatticeStress> traction;
               LatticeType::CalculateTractionOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
 
@@ -306,7 +306,7 @@ namespace hemelb
               LatticeDensity density = 6.0;
               distribn_t tau = 0.75;
 
-              util::Vector3D<DimensionlessQuantity> wallNormal(1.0, 0.0, 0.0);
+              util::Vector3D<Dimensionless> wallNormal(1.0, 0.0, 0.0);
               util::Matrix3D stressTensor;
               LatticeType::CalculateStressTensor(density, tau, nonEquilibriumF.data(), stressTensor);
 

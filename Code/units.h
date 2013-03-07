@@ -79,6 +79,6 @@ namespace hemelb
   typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 
 
-  typedef double DimensionlessQuantity;
+  typedef double Dimensionless;
 }
 #endif //HEMELB_UNITS_H
