@@ -129,10 +129,10 @@ namespace hemelb
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
-        const DimensionlessQuantity GetViscosity() const;
+        const Dimensionless GetViscosity() const;
 
         /** calculates the drag coefficient = 1/(6*pi*viscosity*radius) */
-        const DimensionlessQuantity CalculateDragCoefficient() const;
+        const Dimensionless CalculateDragCoefficient() const;
 
         /** updates the position of this particle using body forces and fluid velocity */
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);

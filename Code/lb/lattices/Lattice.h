@@ -139,7 +139,7 @@ namespace hemelb
           inline static void CalculateTractionOnAPoint(const distribn_t density,
                                                              const distribn_t tau,
                                                              const distribn_t fNonEquilibrium[],
-                                                             const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                             const util::Vector3D<Dimensionless>& wallNormal,
                                                              util::Vector3D<LatticeStress>& traction)
           {
             util::Matrix3D sigma;
@@ -166,7 +166,7 @@ namespace hemelb
           inline static void CalculateTangentialProjectionTraction(const distribn_t density,
                                                                          const distribn_t tau,
                                                                          const distribn_t fNonEquilibrium[],
-                                                                         const util::Vector3D<DimensionlessQuantity>& wallNormal,
+                                                                         const util::Vector3D<Dimensionless>& wallNormal,
                                                                          util::Vector3D<LatticeStress>& tractionTangentialComponent)
           {
             util::Vector3D<LatticeStress> traction;
