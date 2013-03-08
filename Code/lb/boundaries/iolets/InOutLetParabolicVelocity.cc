@@ -44,7 +44,7 @@ namespace hemelb
         {
           return 1.0;
         }
-        LatticeVelocity InOutLetParabolicVelocity::GetVelocityAtPosition(LatticePosition x)
+        LatticeVelocity InOutLetParabolicVelocity::GetVelocityAtPosition(const LatticePosition& x) const
         {
           // v(r) = vMax (1 - r**2 / a**2)
           // where r is the distance from the centreline
@@ -52,7 +52,7 @@ namespace hemelb
           LatticePosition displ = x - posLat;
           LatticeDistance z = displ.Dot(normal);
           Dimensionless rSq = (displ.GetMagnitudeSquared() - z*z) / (radius * radius);
-          return maxSpeed * (1. - rSq);
+          return normal * (maxSpeed * (1. - rSq));
         }
       }
     }
