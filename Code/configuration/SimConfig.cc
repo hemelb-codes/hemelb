@@ -26,7 +26,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig() :
-        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), warmUpSteps(0), hasColloidSection(false)
+      LEGACY_PULSATILE_PERIOD(60.0 / 70.0), hasColloidSection(false), warmUpSteps(0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -85,8 +85,8 @@ namespace hemelb
       {
         DoIOForULong(simulationElement, "steps", isLoading, totalTimeSteps);
         DoIOForULong(simulationElement, "extra_warmup_steps", isLoading, warmUpSteps);
-        if(isLoading)
-            totalTimeSteps += warmUpSteps;
+        if (isLoading)
+          totalTimeSteps += warmUpSteps;
       }
 
       if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength)) && isLoading)
@@ -284,10 +284,8 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForInOutlets(TiXmlElement *parent,
-                                     bool isLoading,
-                                     std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
-                                     std::string childNodeName)
+    void SimConfig::DoIOForInOutlets(TiXmlElement *parent, bool isLoading, std::vector<
+        lb::boundaries::iolets::InOutLet*> &bResult, std::string childNodeName)
     {
       if (isLoading)
       {
@@ -296,37 +294,50 @@ namespace hemelb
         while (currentIoletNode != NULL)
         {
           // Determine which InOutlet to create
-          // This is done by checking if a path is specified
-          std::string PFilePath;
-          std::string MultiscaleLabel;
-          DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-                        "path",
-                        isLoading,
-                        PFilePath);
-          DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-                        "label",
-                        isLoading,
-                        MultiscaleLabel);
-          lb::boundaries::iolets::InOutLet *newIolet;
-          if (PFilePath != "")
-          {
-            // If there is a file specified we use it
-            newIolet = new lb::boundaries::iolets::InOutLetFile();
 
-          }
-          else if (MultiscaleLabel != "")
+          // First, work out if it's pressure or velocity based
+          TiXmlElement* velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
+          TiXmlElement* pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
+
+          lb::boundaries::iolets::InOutLet *newIolet;
+
+          if (pressureEl != NULL && velocityEl == NULL)
           {
-            newIolet = new lb::boundaries::iolets::InOutLetMultiscale();
+            // Pressure
+            // This is done by checking if a path is specified
+            std::string PFilePath;
+            std::string MultiscaleLabel;
+            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading), "path", isLoading, PFilePath);
+            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading), "label", isLoading, MultiscaleLabel);
+            if (PFilePath != "")
+            {
+              // If there is a file specified we use it
+              newIolet = new lb::boundaries::iolets::InOutLetFile();
+
+            }
+            else if (MultiscaleLabel != "")
+            {
+              newIolet = new lb::boundaries::iolets::InOutLetMultiscale();
+            }
+            else
+            {
+              // If no file is specified we use a cosine trace
+              newIolet = new lb::boundaries::iolets::InOutLetCosine();
+            }
+          }
+          else if (pressureEl == NULL && velocityEl != NULL)
+          {
+            // Velocity
+            newIolet = new lb::boundaries::iolets::InOutLetParabolicVelocity();
           }
           else
           {
-            // If no file is specified we use a cosine trace
-            newIolet = new lb::boundaries::iolets::InOutLetCosine();
+            // Error!
           }
-
           newIolet->DoIO(currentIoletNode, isLoading, this);
           bResult.push_back(newIolet);
           currentIoletNode = currentIoletNode->NextSiblingElement(childNodeName);
+
         }
       }
       else
@@ -428,9 +439,9 @@ namespace hemelb
                                         extraction::StraightLineGeometrySelector*& line)
     {
       TiXmlElement* point1 = GetChild(xmlNode, "point", isLoading);
-      TiXmlElement* point2 = isLoading ?
-        point1->NextSiblingElement("point") :
-        GetChild(xmlNode, "point", isLoading);
+      TiXmlElement* point2 = isLoading
+        ? point1->NextSiblingElement("point")
+        : GetChild(xmlNode, "point", isLoading);
 
       util::Vector3D<float> mutableVector;
       util::Vector3D<float> mutableVector2;
@@ -495,7 +506,7 @@ namespace hemelb
     void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode,
                                         bool isLoading,
                                         extraction::SurfacePointSelector*& surfacePoint)
-   {
+    {
       TiXmlElement* point = GetChild(xmlNode, "point", isLoading);
 
       util::Vector3D<float> mutableVector;
@@ -512,7 +523,7 @@ namespace hemelb
 
         DoIOForFloatVector(point, isLoading, mutableVector);
       }
-   }
+    }
 
     void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field)
     {
@@ -575,15 +586,18 @@ namespace hemelb
     {
       TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
       TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
-      DoIOForFloatVector(lPositionElement, isLoading, value->GetPosition());
-      DoIOForFloatVector(lNormalElement, isLoading, value->GetNormal());
+      util::Vector3D<double> temp;
+      DoIOForDoubleVector(lPositionElement, isLoading, temp);
+      value->SetPosition(temp);
+      DoIOForDoubleVector(lNormalElement, isLoading, temp);
+      value->SetNormal(temp);
     }
 
     void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent,
                                           bool isLoading,
                                           lb::boundaries::iolets::InOutLetCosine* const value)
     {
-      DoIOForBaseInOutlet(parent,isLoading,value);
+      DoIOForBaseInOutlet(parent, isLoading, value);
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
       DoIOForDouble(lPressureElement, "mean", isLoading, value->GetPressureMean());
@@ -605,7 +619,7 @@ namespace hemelb
                                         bool isLoading,
                                         lb::boundaries::iolets::InOutLetFile* const value)
     {
-      DoIOForBaseInOutlet(parent,isLoading,value);
+      DoIOForBaseInOutlet(parent, isLoading, value);
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
 
@@ -617,12 +631,25 @@ namespace hemelb
                                               bool isLoading,
                                               lb::boundaries::iolets::InOutLetMultiscale* const value)
     {
-      DoIOForBaseInOutlet(parent,isLoading,value);
+      DoIOForBaseInOutlet(parent, isLoading, value);
 
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
-      DoIOForDouble(lPressureElement,"pressure",isLoading,value->GetPressureReference());
-      DoIOForDouble(lPressureElement,"velocity",isLoading,value->GetVelocityReference());
+      DoIOForDouble(lPressureElement, "pressure", isLoading, value->GetPressureReference());
+      DoIOForDouble(lPressureElement, "velocity", isLoading, value->GetVelocityReference());
       DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
+    }
+
+    void SimConfig::DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
+                                                     bool isLoading,
+                                                     lb::boundaries::iolets::InOutLetParabolicVelocity* const value)
+    {
+      DoIOForBaseInOutlet(parent, isLoading, value);
+      TiXmlElement* velocityEl = GetChild(parent, "velocity", isLoading);
+      double temp;
+      DoIOForDouble(velocityEl, "radius", isLoading, temp);
+      value->SetRadius(temp);
+      DoIOForDouble(velocityEl, "maximum", isLoading, temp);
+      value->SetMaxSpeed(temp);
     }
 
     void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading, util::Vector3D<float> &value)
@@ -631,7 +658,12 @@ namespace hemelb
       DoIOForFloat(parent, "y", isLoading, value.y);
       DoIOForFloat(parent, "z", isLoading, value.z);
     }
-
+    void SimConfig::DoIOForDoubleVector(TiXmlElement *parent, bool isLoading, util::Vector3D<double> &value)
+    {
+      DoIOForDouble(parent, "x", isLoading, value.x);
+      DoIOForDouble(parent, "y", isLoading, value.y);
+      DoIOForDouble(parent, "z", isLoading, value.z);
+    }
     TiXmlElement *SimConfig::GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading)
     {
       if (isLoading)
