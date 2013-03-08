@@ -31,7 +31,7 @@ namespace hemelb
 
         public:
           LaddIolet(kernels::InitParams& initParams) :
-            collider(initParams)
+            collider(initParams), boundaries(initParams.boundaryObject)
           {
 
           }
@@ -59,6 +59,9 @@ namespace hemelb
               collider.Collide(lbmParams, hydroVars);
 
               int boundaryId = site.GetBoundaryId();
+              boundaries::iolets::InOutLetParabolicVelocity* iolet =
+                  dynamic_cast<boundaries::iolets::InOutLetParabolicVelocity*> (boundaries->GetLocalIolet(boundaryId));
+              LatticePosition sitePos(site.GetGlobalSiteCoords());
 
               for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
@@ -85,7 +88,7 @@ namespace hemelb
                 distribn_t correction = 0.;
                 if (site.HasIolet(ii))
                 {
-                  util::Vector3D<distribn_t> wallVel(0., 0., 0.);
+                  LatticeVelocity wallVel = iolet->GetVelocityAtPosition(sitePos);
                   correction = 2. * LatticeType::EQMWEIGHTS[ii] * hydroVars.density * (wallVel.x * LatticeType::CX[ii]
                       + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]);
                 }
@@ -113,6 +116,8 @@ namespace hemelb
 
           }
 
+        private:
+          boundaries::BoundaryValues* boundaries;
       };
     }
   }
