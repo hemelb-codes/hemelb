@@ -37,6 +37,10 @@ namespace hemelb
         void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
                                        bool isLoading,
                                        lb::boundaries::iolets::InOutLetMultiscale* value);
+        void DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
+                                              bool isLoading,
+                                              lb::boundaries::iolets::InOutLetParabolicVelocity* const value);
+
         const util::Vector3D<float> & GetVisualisationCentre() const
         {
           return visualisationCentre;
@@ -144,6 +148,7 @@ namespace hemelb
         void DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading, extraction::SurfacePointSelector*& plane);
 
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
+        void DoIOForDoubleVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<double> &value);
         void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::boundaries::iolets::InOutLet* const value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
 

@@ -143,6 +143,43 @@ namespace hemelb
       public:
         typedef streamers::JunkYang<Collision> Type;
     };
+
+    /**
+     * The following classes have names corresponding to the options given in the build system for
+     * HEMELB_IOLET_BOUNDARY
+     */
+
+    /**
+     * Our zero-order phantom site BC for iolets
+     */
+    template<class Collision>
+    class REGULARISEDIOLET
+    {
+      public:
+        typedef streamers::RegularisedIolet<Collision> Type;
+    };
+    /**
+     * The inlet/outlet condition based on Ladd's modified bounce-back on
+     * links. Note that this also works for WALL_IOLET sites
+     */
+    template<class Collision>
+    class LADDIOLET
+    {
+      public:
+        typedef streamers::LaddIolet<Collision> Type;
+    };
+
+    /**
+     * The following classes have names corresponding to the options given in the build system for
+     * HEMELB_WALL_IOLET_BOUNDARY
+     */
+    template<class Collision>
+    class NASHBB
+    {
+      public:
+        typedef streamers::NashBB<Collision> Type;
+    };
+
   }
 }
 
