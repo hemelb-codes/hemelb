@@ -36,6 +36,10 @@ set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
+set(HEMELB_IOLET_BOUNDARY "REGULARISEDIOLET"
+  CACHE STRING "Select the boundary conditions to be used at the inlets/outlets (REGULARISEDIOLET,LADDIOLET)")
+set(HEMELB_WALL_IOLET_BOUNDARY "NASHBB"
+  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets/outlets (NASHBB,LADDIOLET)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 set(HEMELB_GATHERS_IMPLEMENTATION Separated
@@ -58,6 +62,8 @@ add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
 add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
+add_definitions(-DHEMELB_IOLET_BOUNDARY=${HEMELB_IOLET_BOUNDARY})
+add_definitions(-DHEMELB_WALL_IOLET_BOUNDARY=${HEMELB_WALL_IOLET_BOUNDARY})
 add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
 
 if(HEMELB_VALIDATE_GEOMETRY)

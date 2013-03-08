@@ -18,4 +18,6 @@
 #include "lb/streamers/RegularisedIolet.h"
 #include "lb/streamers/NashBB.h"
 
+#include "lb/streamers/LaddIolet.h"
+
 #endif /* HEMELB_LB_STREAMERS_STREAMERS_H */
