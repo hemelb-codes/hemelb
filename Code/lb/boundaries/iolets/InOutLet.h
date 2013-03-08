@@ -40,7 +40,7 @@ namespace hemelb
         {
           public:
             InOutLet() :
-                comms(NULL)
+              comms(NULL)
             {
             }
             virtual ~InOutLet()
@@ -92,7 +92,7 @@ namespace hemelb
              * Carry out communication necessary
              * @param isIoProcess Is the process the master process?
              */
-            virtual void DoComms(bool isIoProcess,const LatticeTime timeStep)
+            virtual void DoComms(bool isIoProcess, const LatticeTime timeStep)
             {
               // pass
             }
@@ -133,28 +133,30 @@ namespace hemelb
              * Get the maximum pressure, in physical units
              * @return
              */
-            virtual PhysicalPressure GetPressureMax() const =0;
-            virtual LatticeDensity GetDensity(LatticeTime time_step) const =0;
-            virtual void Reset(SimulationState &state)=0;
-            // TODO I do not like returning non-const references, this method should be const and we should have a setter.
-            // but, the way the IO code in SimConfig is currently set up prevents this for now.
-            util::Vector3D<float> &GetPosition()
+            virtual PhysicalPressure GetPressureMax() const = 0;
+            virtual LatticeDensity GetDensity(LatticeTime time_step) const = 0;
+            virtual void Reset(SimulationState& state) = 0;
+
+            const PhysicalPosition& GetPosition() const
             {
               return position;
+            }
+
+            void SetPosition(PhysicalPosition& x)
+            {
+              position= x;
             }
 
             /**
              * Set the normal of the InOutlet
              * @param newNormal
              */
-            void SetNormal(util::Vector3D<float> newNormal)
+            void SetNormal(const util::Vector3D<Dimensionless>& newNormal)
             {
-              normal = newNormal.Normalise();
+              normal = newNormal.GetNormalised();
             }
 
-            // TODO I do not like returning non-const references, this method should be const and we should have a setter.
-            // but, the way the IO code in SimConfig is currently set up prevents this for now.
-            util::Vector3D<float> &GetNormal()
+            const util::Vector3D<Dimensionless>& GetNormal()
             {
               return normal;
             }
@@ -163,14 +165,15 @@ namespace hemelb
              * Set the minimum density throughout the simulation.
              * @param minSimDensity
              */
-            void SetMinimumSimulationDensity(LatticeDensity minSimDensity){
+            void SetMinimumSimulationDensity(LatticeDensity minSimDensity)
+            {
               minimumSimulationDensity = minSimDensity;
             }
 
           protected:
             LatticeDensity minimumSimulationDensity;
-            util::Vector3D<float> position;
-            util::Vector3D<float> normal;
+            PhysicalPosition position;
+            util::Vector3D<Dimensionless> normal;
             const util::UnitConverter* units;
             BoundaryComms * comms;
         };
