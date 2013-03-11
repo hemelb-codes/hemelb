@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "SimulationMaster.h"
 #include "unittests/helpers/FolderTestFixture.h"
+#include "unittests/helpers/LaddFail.h"
 
 namespace hemelb
 {
@@ -24,9 +25,8 @@ namespace hemelb
     using namespace helpers;
     class SimulationMasterTests : public FolderTestFixture
     {
-        CPPUNIT_TEST_SUITE(SimulationMasterTests);
-        CPPUNIT_TEST(TestRun);
-        CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE( SimulationMasterTests);
+        CPPUNIT_TEST( TestRun);CPPUNIT_TEST_SUITE_END();
       public:
         void setUp()
         {
@@ -54,6 +54,8 @@ namespace hemelb
 
         void TestRun()
         {
+          // TODO: This test is fatal if run with LADDIOLET. See ticket #605.
+          LADD_FAIL();
           master->RunSimulation();
           AssertPresent("results/report.txt");
           AssertPresent("results/report.xml");
@@ -72,7 +74,7 @@ namespace hemelb
 
     };
 
-    CPPUNIT_TEST_SUITE_REGISTRATION(SimulationMasterTests);
+    CPPUNIT_TEST_SUITE_REGISTRATION( SimulationMasterTests);
   }
 }
 
