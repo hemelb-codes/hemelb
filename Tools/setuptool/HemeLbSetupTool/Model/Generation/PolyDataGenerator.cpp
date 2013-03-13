@@ -197,6 +197,7 @@ void PolyDataGenerator::ComputeAveragedNormal(Site& site) const {
 
 	if (site.IsFluid) {
 		site.WallNormal = 0.0;
+
 		// Compute a weighted sum of the wall normals available and normalise it.
 		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
 			LinkData& link = site.Links[neighId];
@@ -210,7 +211,11 @@ void PolyDataGenerator::ComputeAveragedNormal(Site& site) const {
 				site.WallNormalAvailable = true;
 			}
 		}
-		site.WallNormal.Normalise();
+
+		// Avoid dividing by 0
+		if (site.WallNormalAvailable) {
+			site.WallNormal.Normalise();
+		}
 	}
 }
 
