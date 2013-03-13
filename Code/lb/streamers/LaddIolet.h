@@ -29,6 +29,11 @@ namespace hemelb
           CollisionType collider;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
+          static inline site_t GetBBIndex(site_t siteIndex, int direction)
+          {
+            return (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction];
+          }
+
         public:
           LaddIolet(kernels::InitParams& initParams) :
             collider(initParams), boundaries(initParams.boundaryObject)
@@ -79,8 +84,10 @@ namespace hemelb
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
                 // We always bounce back into the same component of f, irrespective of whether it's
                 // wall or iolet.
+                // NOTE: site.HasBoundary only returns true if that link intersects a wall, not an
+                // iolet, so we have to call GetBBIndex below if it is an iolet.
                 site_t streamingDestination = site.HasBoundary(ii)
-                  ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[ii]
+                  ? GetBBIndex(siteIndex, ii)
                   : site.GetStreamedIndex<LatticeType> (ii);
 
                 // We now must compute the Ladd correction, which is zero in
@@ -88,14 +95,21 @@ namespace hemelb
                 distribn_t correction = 0.;
                 if (site.HasIolet(ii))
                 {
-                  LatticeVelocity wallVel = iolet->GetVelocityAtPosition(sitePos);
+                  streamingDestination = GetBBIndex(siteIndex, ii);
+                  LatticePosition halfWay(sitePos);
+                  halfWay.x += 0.5 * LatticeType::CX[ii];
+                  halfWay.y += 0.5 * LatticeType::CY[ii];
+                  halfWay.z += 0.5 * LatticeType::CZ[ii];
+
+                  LatticeVelocity wallVel(iolet->GetVelocityAtPosition(halfWay));
+
                   correction = 2. * LatticeType::EQMWEIGHTS[ii] * hydroVars.density * (wallVel.x * LatticeType::CX[ii]
                       + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]);
                 }
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
                 // simultaneously use this and correct it, here.
-                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[ii];
+                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[ii] - correction;
               }
 
               //TODO: Necessary to specify sub-class?
