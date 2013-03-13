@@ -101,6 +101,9 @@ namespace hemelb
                              source);
 
         }
+
+        //int neighbourCount = 0;
+
         for (proc_t other = 0; other < net.GetCommunicator().GetSize(); other++)
         {
           for (std::vector<site_t>::iterator needOnProcFromMe = needsEachProcHasFromMe[other].begin();
@@ -115,7 +118,13 @@ namespace hemelb
                             other);
 
           }
+
+          //if(needsEachProcHasFromMe[other].size() > 0) {
+          //  neighbourCount++;
+          //}
         }
+
+        //hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Neighbouring proc count: %d", neighbourCount);
       }
 
       void NeighbouringDataManager::ShareNeeds()
@@ -129,6 +138,7 @@ namespace hemelb
           countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
 
         }
+
         // every proc must send to all procs, how many it needs from that proc
         net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
 
