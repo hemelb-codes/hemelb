@@ -62,20 +62,14 @@ private:
 	/**
 	 * This method implements the algorithm used to approximate the wall normal at a given
 	 * fluid site. This is done based on the normal of the triangles intersected by
-	 * each lattice link and the distance to those intersections. The method will return
-	 * whether it was possible to compute such normal (i.e. any intersecting link?).
+	 * each lattice link and the distance to those intersections.
 	 *
 	 * Current implementation does a weighted sum of the wall normals. The weights are the
 	 * reciprocal of cut distances along each link.
 	 *
-	 * @param normal Computed normal.
-	 * @param intersectedCellsNormals Vector with the normals of all the triangles intersected by a link.
-	 * @param intersectedCellsDistance Vector with the distances to the intersections along a link.
-	 * @return Whether it was possible to compute a wall normal.
+	 * @param site Site object with the data required by the algorithm.
 	 */
-	bool ComputeAveragedNormal(Vector& normal,
-			std::vector<double*>& intersectedCellsNormals,
-			std::vector<float>& intersectedCellsDistance) const;
+	void ComputeAveragedNormal(Site& site) const;
 
 	int ComputeIntersections(Site& from, Site& to);
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
