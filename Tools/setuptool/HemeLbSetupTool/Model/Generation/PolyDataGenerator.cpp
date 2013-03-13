@@ -188,50 +188,29 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		}
 	}
 
-	// Put together the normals of all the cells intersected by one of the site
-	// links and the distance to the cut.
-	std::vector<double*> intersectedCellsNormal;
-	std::vector<float> intersectedCellsDistance;
+	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
+	ComputeAveragedNormal(site);
+}
+
+void PolyDataGenerator::ComputeAveragedNormal(Site& site) const {
+	site.WallNormalAvailable = false;
 
 	if (site.IsFluid) {
+		site.WallNormal = 0.0;
+		// Compute a weighted sum of the wall normals available and normalise it.
 		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
 			LinkData& link = site.Links[neighId];
 			if (link.Type == geometry::CUT_WALL) {
-				intersectedCellsNormal.push_back(link.WallNormalAtWallCut.data());
-				intersectedCellsDistance.push_back(link.DistanceInVoxels);
+
+				assert(link.DistanceInVoxels != 0);
+				double weight = 1 / link.DistanceInVoxels;
+				site.WallNormal[0] += weight * link.WallNormalAtWallCut[0];
+				site.WallNormal[1] += weight * link.WallNormalAtWallCut[1];
+				site.WallNormal[2] += weight * link.WallNormalAtWallCut[2];
+				site.WallNormalAvailable = true;
 			}
 		}
-	}
-
-	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
-	site.WallNormalAvailable = ComputeAveragedNormal(site.WallNormal,
-			intersectedCellsNormal, intersectedCellsDistance);
-}
-
-bool PolyDataGenerator::ComputeAveragedNormal(Vector& normal,
-		std::vector<double*>& intersectedCellsNormal,
-		std::vector<float>& intersectedCellsDistance) const {
-	assert(intersectedCellsNormal.size() == intersectedCellsDistance.size());
-	normal = 0.0;
-
-	if (intersectedCellsNormal.size() == 0) {
-		return false;
-	} else {
-		// Compute a weighted sum of the wall normals available and normalise it.
-		std::vector<double*>::const_iterator normals_iter =
-				intersectedCellsNormal.begin();
-		std::vector<float>::const_iterator distances_iter =
-				intersectedCellsDistance.begin();
-		for (; normals_iter != intersectedCellsNormal.end();
-				++normals_iter, ++distances_iter) {
-			assert(*distances_iter != 0);
-			double weight = 1 / *distances_iter;
-			normal[0] += weight * (*normals_iter)[0];
-			normal[1] += weight * (*normals_iter)[1];
-			normal[2] += weight * (*normals_iter)[2];
-		}
-		normal.Normalise();
-		return true;
+		site.WallNormal.Normalise();
 	}
 }
 
