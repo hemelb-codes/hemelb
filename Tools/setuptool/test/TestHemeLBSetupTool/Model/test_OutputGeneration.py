@@ -221,6 +221,7 @@ class CubeNormalsTestingGmyParser(CubeTestingGmyParser):
     def OnEndSite(self, block, site):
         CubeTestingGmyParser.OnEndSite(self, block, site)
         assert (site.IsEdge == site.WallNormalAvailable)
-        if site.IsEdge:
+        IsCubeEdge = (site.Index[0] in [1, 4]) and (site.Index[1] in [1, 4]) 
+        if site.IsEdge and not IsCubeEdge:
             assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
             assert np.any(np.all(self.ValidNormals == site.WallNormal, axis=1))

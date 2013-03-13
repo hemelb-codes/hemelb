@@ -212,7 +212,7 @@ bool PolyDataGenerator::ComputeAveragedNormal(Vector& normal,
 		std::vector<double*>& intersectedCellsNormal,
 		std::vector<float>& intersectedCellsDistance) const {
 	assert(intersectedCellsNormal.size() == intersectedCellsDistance.size());
-	assert(normal == Vector(0));
+	normal = 0.0;
 
 	if (intersectedCellsNormal.size() == 0) {
 		return false;
@@ -226,9 +226,9 @@ bool PolyDataGenerator::ComputeAveragedNormal(Vector& normal,
 				++normals_iter, ++distances_iter) {
 			assert(*distances_iter != 0);
 			double weight = 1 / *distances_iter;
-			normal[0] = weight * (*normals_iter)[0];
-			normal[1] = weight * (*normals_iter)[1];
-			normal[2] = weight * (*normals_iter)[2];
+			normal[0] += weight * (*normals_iter)[0];
+			normal[1] += weight * (*normals_iter)[1];
+			normal[2] += weight * (*normals_iter)[2];
 		}
 		normal.Normalise();
 		return true;
