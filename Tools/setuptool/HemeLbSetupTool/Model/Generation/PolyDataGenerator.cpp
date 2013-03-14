@@ -27,7 +27,6 @@
 #include "vtkMatrix4x4.h"
 #include "Block.h"
 #include "vtkXMLPolyDataWriter.h"
-#include <cassert>
 
 using namespace hemelb::io::formats;
 
@@ -181,8 +180,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				double* normal =
 						this->Locator->GetDataSet()->GetCellData()->GetNormals()->GetTuple3(
 								hitCellId);
-				link.WallNormalAtWallCut.resize(3);
-				std::copy(normal, normal + 3, link.WallNormalAtWallCut.begin());
+				link.WallNormalAtWallCut = Vector(normal[0], normal[1],
+						normal[2]);
 				link.DistanceInVoxels = distanceInVoxels;
 			}
 		}
@@ -190,33 +189,6 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
 	ComputeAveragedNormal(site);
-}
-
-void PolyDataGenerator::ComputeAveragedNormal(Site& site) const {
-	site.WallNormalAvailable = false;
-
-	if (site.IsFluid) {
-		site.WallNormal = 0.0;
-
-		// Compute a weighted sum of the wall normals available and normalise it.
-		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
-			LinkData& link = site.Links[neighId];
-			if (link.Type == geometry::CUT_WALL) {
-
-				assert(link.DistanceInVoxels != 0);
-				double weight = 1 / link.DistanceInVoxels;
-				site.WallNormal[0] += weight * link.WallNormalAtWallCut[0];
-				site.WallNormal[1] += weight * link.WallNormalAtWallCut[1];
-				site.WallNormal[2] += weight * link.WallNormalAtWallCut[2];
-				site.WallNormalAvailable = true;
-			}
-		}
-
-		// Avoid dividing by 0
-		if (site.WallNormalAvailable) {
-			site.WallNormal.Normalise();
-		}
-	}
 }
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {

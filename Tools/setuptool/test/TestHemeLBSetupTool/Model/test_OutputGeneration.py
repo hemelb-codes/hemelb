@@ -94,10 +94,23 @@ class TestPolyDataGenerator:
         checker.Load()
 
     def test_cylinder(self, tmpdir):
-        """Generate a gmy from a simple cubic profile and check the output"""
+        """Generate a gmy from a simple cylinder profile and check the output"""
         cylinder = fixtures.cylinder(tmpdir)
         cylinder.VoxelSize = 0.23
         cylinder.StlFileUnitId = 0
+
+        """ The default VTK cylinder is 1 length unit long, aligned with the y-axis,
+            and centred at the origin of coordinates. """
+        inlet = Iolet(Name='inlet',
+                      Centre=Vector(0., -0.5, 0.),
+                      Normal=Vector(0., -1., 0.),
+                      Radius=1)
+        outlet = Iolet(Name='outlet',
+                       Centre=Vector(0., 0.5, 0.),
+                       Normal=Vector(0., 1., 0.),
+                       Radius=1)
+        cylinder.Iolets = [inlet, outlet]
+        
         generator = OutputGeneration.PolyDataGenerator(cylinder)
         generator.Execute()
         # Load back the resulting geometry file and assert things are as
@@ -204,6 +217,17 @@ class CylinderTestingGmyParser(TestingGmyParser):
             return False
         return True
 
+    def OnEndSite(self, block, site):
+        TestingGmyParser.OnEndSite(self, block, site)
+        assert (site.IsEdge == site.WallNormalAvailable)
+        is_cylinder_end = np.any(site.IntersectionType == site.INLET_INTERSECTION) or np.any(site.IntersectionType == site.OUTLET_INTERSECTION)
+        if site.IsEdge and not is_cylinder_end:
+            assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
+            axis_perpendicular_at_site = site.Position - np.dot(site.Position, self.Axis) * self.Axis
+            axis_perpendicular_at_site /= np.linalg.norm(axis_perpendicular_at_site)
+            # (ticket #597) 0.02 is an arbitrary tolerance for how accurate the wall normal estimates are. 
+            assert np.absolute(1 - np.dot(site.WallNormal, axis_perpendicular_at_site)) < 0.02
+
 
 class CubeTestingGmyParser(TestingGmyParser):
 
@@ -221,7 +245,7 @@ class CubeNormalsTestingGmyParser(CubeTestingGmyParser):
     def OnEndSite(self, block, site):
         CubeTestingGmyParser.OnEndSite(self, block, site)
         assert (site.IsEdge == site.WallNormalAvailable)
-        IsCubeEdge = (site.Index[0] in [1, 4]) and (site.Index[1] in [1, 4]) 
-        if site.IsEdge and not IsCubeEdge:
+        is_cube_edge = (site.Index[0] in [1, 4]) and (site.Index[1] in [1, 4])
+        if site.IsEdge and not is_cube_edge:
             assert np.any(site.IntersectionType == site.WALL_INTERSECTION)
             assert np.any(np.all(self.ValidNormals == site.WallNormal, axis=1))
