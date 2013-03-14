@@ -28,8 +28,12 @@ struct LinkData {
 	float Distance;
 	unsigned int IoletId;
 	float DistanceInVoxels;
-	std::vector<double> WallNormalAtWallCut;
-	inline LinkData() : Type(geometry::CUT_NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(0) {};
+	Vector WallNormalAtWallCut;
+	inline LinkData() :
+			Type(geometry::CUT_NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(
+					0) {
+	}
+	;
 };
 
 // A single lattice site
@@ -56,7 +60,7 @@ public:
 		return this->index;
 	}
 	inline const Block& GetBlock() const {
-			return this->block;
+		return this->block;
 	}
 	const Index GetDomainBlockCount();
 	const int GetDomainBlockSize();
@@ -99,7 +103,7 @@ protected:
 class LaterNeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline LaterNeighbourIterator(Site& site, unsigned int startpos = 0) :
-		NeighbourIteratorBase(site, startpos) {
+			NeighbourIteratorBase(site, startpos) {
 		this->AdvanceToValid();
 	}
 protected:
@@ -110,7 +114,7 @@ protected:
 class NeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline NeighbourIterator(Site& site, unsigned int startpos = 0) :
-		NeighbourIteratorBase(site, startpos) {
+			NeighbourIteratorBase(site, startpos) {
 		this->AdvanceToValid();
 	}
 protected:
