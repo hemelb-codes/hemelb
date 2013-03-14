@@ -18,6 +18,7 @@
 #include "Debug.h"
 
 #include "io/formats/geometry.h"
+#include <cassert>
 
 using namespace hemelb::io::formats;
 
@@ -149,5 +150,32 @@ void GeometryGenerator::WriteFluidSite(BlockWriter& blockWriter, Site& site) {
 	} else {
 		blockWriter
 				<< static_cast<unsigned int>(geometry::WALL_NORMAL_NOT_AVAILABLE);
+	}
+}
+
+void GeometryGenerator::ComputeAveragedNormal(Site& site) const {
+	site.WallNormalAvailable = false;
+
+	if (site.IsFluid) {
+		site.WallNormal = 0.0;
+
+		// Compute a weighted sum of the wall normals available and normalise it.
+		for (unsigned neighId = 0; neighId < Neighbours::n; ++neighId) {
+			LinkData& link = site.Links[neighId];
+			if (link.Type == geometry::CUT_WALL) {
+
+				assert(link.DistanceInVoxels != 0);
+				double weight = 1 / link.DistanceInVoxels;
+				site.WallNormal[0] += weight * link.WallNormalAtWallCut[0];
+				site.WallNormal[1] += weight * link.WallNormalAtWallCut[1];
+				site.WallNormal[2] += weight * link.WallNormalAtWallCut[2];
+				site.WallNormalAvailable = true;
+			}
+		}
+
+		// Avoid dividing by 0
+		if (site.WallNormalAvailable) {
+			site.WallNormal.Normalise();
+		}
 	}
 }

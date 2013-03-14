@@ -22,7 +22,7 @@
 using namespace hemelb::io::formats;
 
 CylinderGenerator::CylinderGenerator() :
-	GeometryGenerator() {
+		GeometryGenerator() {
 	this->Cylinder = new CylinderData;
 }
 
@@ -139,8 +139,8 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 			std::vector<double> ts(2);
 			ts[0] = (-B + std::sqrt(discriminant)) / (2 * A);
 			ts[1] = (-B - std::sqrt(discriminant)) / (2 * A);
-			for (std::vector<double>::iterator tIt = ts.begin(); tIt
-					!= ts.end(); ++tIt) {
+			for (std::vector<double>::iterator tIt = ts.begin();
+					tIt != ts.end(); ++tIt) {
 				double t = *tIt;
 				if (t > 0. && t < 1. + TOL) {
 					// Hit in part of line we care about.
@@ -165,8 +165,8 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
 	Vector& a = from.Position;
 	Vector& b = to.Position;
 	Vector b_a = b - a;
-	for (std::vector<Iolet*>::iterator iIt = iolets.begin(); iIt
-			!= iolets.end(); ++iIt) {
+	for (std::vector<Iolet*>::iterator iIt = iolets.begin();
+			iIt != iolets.end(); ++iIt) {
 		Iolet* iolet = *iIt;
 		/*
 		 * Plane equation is x.p = q.p (p = plane normal, q = point on plane)
@@ -215,7 +215,8 @@ Hit ComputeIntersection(CylinderData* cyl, std::vector<Iolet*>& iolets,
  */
 void CylinderGenerator::ClassifySite(Site& site) {
 
-	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
+	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
+			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		int nHits;
@@ -233,8 +234,8 @@ void CylinderGenerator::ClassifySite(Site& site) {
 			if (site.IsFluid) {
 				// Fluid-fluid, must set CUT_NONE for both
 				site.Links[iNeigh].Type = geometry::CUT_NONE;
-				neigh.Links[Neighbours::inverses[iNeigh]].Type
-						= geometry::CUT_NONE;
+				neigh.Links[Neighbours::inverses[iNeigh]].Type =
+						geometry::CUT_NONE;
 			} else {
 				// solid-solid, nothing to do.
 			}
@@ -265,10 +266,10 @@ void CylinderGenerator::ClassifySite(Site& site) {
 			LinkData& link = fluid->Links[iSolid];
 
 			// This is set in any solid case
-			link.Distance = (hit.pt - fluid->Position).GetMagnitude();
+			float distanceInVoxels = (hit.pt - fluid->Position).GetMagnitude();
 			// The distance is in voxels but must be output as a fraction of
 			// the lattice vector. Scale it.
-			link.Distance /= Neighbours::norms[iSolid];
+			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 
 			if (hit.cellId < 0) {
 				// -1 => we hit a wall
@@ -284,7 +285,21 @@ void CylinderGenerator::ClassifySite(Site& site) {
 				// Set the Id
 				link.IoletId = iolet->Id;
 			}
-		}
 
+			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
+			if (link.Type == geometry::CUT_WALL) {
+				ComputeCylinderNormalAtAPoint(link.WallNormalAtWallCut, hit.pt,
+						this->Cylinder->Axis);
+				link.DistanceInVoxels = distanceInVoxels;
+			}
+		}
 	}
+
+	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
+	ComputeAveragedNormal(site);
+}
+
+void CylinderGenerator::ComputeCylinderNormalAtAPoint(Vector& wallNormal, const Vector& surfacePoint, const Vector& cylinderAxis) const{
+	wallNormal = surfacePoint - cylinderAxis * surfacePoint.Dot(cylinderAxis);
+	wallNormal.Normalise();
 }

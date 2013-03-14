@@ -58,19 +58,6 @@ private:
 	virtual void ComputeBounds(double[]) const;
 	virtual void PreExecute(void);
 	void ClassifySite(Site& site);
-
-	/**
-	 * This method implements the algorithm used to approximate the wall normal at a given
-	 * fluid site. This is done based on the normal of the triangles intersected by
-	 * each lattice link and the distance to those intersections.
-	 *
-	 * Current implementation does a weighted sum of the wall normals. The weights are the
-	 * reciprocal of cut distances along each link.
-	 *
-	 * @param site Site object with the data required by the algorithm.
-	 */
-	void ComputeAveragedNormal(Site& site) const;
-
 	int ComputeIntersections(Site& from, Site& to);
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
