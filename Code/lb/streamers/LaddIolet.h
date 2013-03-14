@@ -76,9 +76,9 @@ namespace hemelb
                 // Eq (3.2) -- simple bounce-back -- becomes:
                 //   f_i'(r, t+1) = f_i(r, t*)
                 // Eq (3.3) --- modified BB -- becomes:
-                //   f_i'(r, t+1) = f_i(r, t*) - 2 w_i \rho u . c_i
+                //   f_i'(r, t+1) = f_i(r, t*) - 2 a1_i \rho u . c_i
                 // where u is the velocity of the boundary half way along the
-                // link.
+                // link and a1_i = w_1 / cs2
 
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
@@ -104,7 +104,7 @@ namespace hemelb
                   LatticeVelocity wallVel(iolet->GetVelocityAtPosition(halfWay));
 
                   correction = 2. * LatticeType::EQMWEIGHTS[ii] * hydroVars.density * (wallVel.x * LatticeType::CX[ii]
-                      + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]);
+                      + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]) / Cs2;
                 }
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
