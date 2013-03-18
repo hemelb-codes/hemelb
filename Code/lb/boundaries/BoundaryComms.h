@@ -24,9 +24,7 @@ namespace hemelb
       class BoundaryComms
       {
         public:
-          BoundaryComms(SimulationState* iSimState,
-                        std::vector<int> &iProcsList,
-                        bool iHasBoundary);
+          BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary);
           ~BoundaryComms();
 
           void Wait();
@@ -34,6 +32,13 @@ namespace hemelb
           // It is up to the caller to make sure only BCproc calls send
           void Send(distribn_t* density);
           void Receive(distribn_t* density);
+
+          const std::vector<int>& GetListOfProcs() const
+          {
+            return procsList;
+          }
+
+          void ReceiveDoubles(double* double_array, int size);
           void WaitAllComms();
           void FinishSend();
 

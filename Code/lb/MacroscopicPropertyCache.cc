@@ -14,17 +14,17 @@ namespace hemelb
   namespace lb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
-                                                       const geometry::LatticeData& latticeData) :
-      densityCache(simState, latticeData.GetLocalFluidSiteCount()),
-      velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
-      wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
-      vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-      shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
-      stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+                                                       site_t fluidSiteCount) :
+      densityCache(simState, fluidSiteCount),
+      velocityCache(simState, fluidSiteCount),
+      wallShearStressMagnitudeCache(simState, fluidSiteCount),
+      vonMisesStressCache(simState, fluidSiteCount),
+      shearRateCache(simState, fluidSiteCount),
+      stressTensorCache(simState, fluidSiteCount),
+      tractionCache(simState, fluidSiteCount),
+      tangentialProjectionTractionCache(simState, fluidSiteCount),
       simulationState(simState),
-      siteCount(latticeData.GetLocalFluidSiteCount())
+      siteCount(fluidSiteCount)
     {
       ResetRequirements();
     }
