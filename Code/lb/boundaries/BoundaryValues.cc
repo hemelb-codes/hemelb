@@ -51,7 +51,7 @@ namespace hemelb
             localIoletCount++;
 
             localIoletIDs.push_back(ioletIndex);
-            if (iolet->IsCommsRequired())
+            if (iolet->IsCommsRequired()) //DEREK: POTENTIAL MULTISCALE ISSUE (this if-statement)
             {
               iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
             }

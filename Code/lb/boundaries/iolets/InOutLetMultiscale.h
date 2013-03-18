@@ -23,6 +23,12 @@ namespace hemelb
       namespace iolets
       {
 
+        namespace multiscale_constants
+        {
+          const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 80.0;
+          const PhysicalVelocity_deprecated HEMELB_MULTISCALE_REFERENCE_VELOCITY = 0.0;
+        }
+
         /***
          * An inlet/outlet whose density is obtained from the multiscale intercommunicator
          * We envisage communication of velocity information outwards to other processes
@@ -37,93 +43,49 @@ namespace hemelb
                                    public InOutLet
         {
           public:
-            InOutLetMultiscale() :
-                multiscale::Intercommunicand(), InOutLet(), pressure(this), minPressure(this), maxPressure(this), velocity(this)
-            {
-
-            }
-            /***
-             * The shared values are registered through the initialiser-list syntactic sugar.
-             */
-            InOutLetMultiscale(const InOutLetMultiscale &other) :
-                Intercommunicand(other), label(other.label), pressure(this, other.GetPressure()), minPressure(this,
-                                                                                                              other.GetPressureMin()), maxPressure(this,
-                                                                                                                                                   other.GetPressureMax()), velocity(this,
-                                                                                                                                                                                     other.GetVelocity())
-            {
-
-            }
-            virtual ~InOutLetMultiscale()
-            {
-            }
+            InOutLetMultiscale();
+            InOutLetMultiscale(const InOutLetMultiscale &other);
+            virtual ~InOutLetMultiscale();
             virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig);
+            virtual InOutLet* Clone() const;
+            virtual void Reset(SimulationState &state);
+            virtual bool IsRegistrationRequired() const;
 
-            virtual InOutLet* Clone() const
-            {
-              InOutLetMultiscale* copy = new InOutLetMultiscale(*this);
-              return copy;
-            }
-            virtual void Reset(SimulationState &state)
-            {
-              //pass;
-            }
-            virtual bool IsRegistrationRequired() const
-            {
-              return true;
-            }
-            LatticeDensity GetDensity(unsigned long timeStep) const
-            {
-              return units->ConvertPressureToLatticeUnits(pressure) / Cs2;
-            }
-            PhysicalPressure GetPressureMin() const
-            {
-              return minPressure;
-            }
-            PhysicalPressure GetPressureMax() const
-            {
-              return maxPressure;
-            }
-            PhysicalVelocity_deprecated GetVelocity() const
-            {
-              return velocity;
-            }
-            PhysicalPressure GetPressure() const
-            {
-              return pressure;
-            }
+            LatticeDensity GetDensity(unsigned long timeStep) const;
+            PhysicalPressure GetPressureMin() const;
+            PhysicalPressure GetPressureMax() const;
+            PhysicalVelocity_deprecated GetVelocity() const;
+            PhysicalPressure GetPressure() const;
 
-            multiscale::SharedValue<PhysicalPressure> & GetPressureReference()
-            {
-              return pressure;
-            }
-
-            multiscale::SharedValue<PhysicalVelocity_deprecated> & GetVelocityReference()
-            {
-              return velocity;
-            }
+            multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
+            multiscale::SharedValue<PhysicalVelocity_deprecated> & GetVelocityReference();
 
             template<class Intercommunicator> void Register(Intercommunicator &intercomms,
                                                             typename Intercommunicator::IntercommunicandTypeT &type)
             {
               intercomms.RegisterIntercommunicand(type, *this, label);
             }
+
             template<class IntercommunicandType> static void DefineType(IntercommunicandType &type)
             {
               // The intercommunicators have a shared buffer which represents imaginary communication
               type.template RegisterSharedValue<PhysicalPressure>("pressure");
               type.template RegisterSharedValue<PhysicalPressure>("minPressure");
               type.template RegisterSharedValue<PhysicalPressure>("maxPressure");
-              type.template RegisterSharedValue<PhysicalPressure>("velocity");
+              //type.template RegisterSharedValue<PhysicalPressure>("velocity");
             }
             // This should be const, and we should have a setter.
             // But the way SimConfig is set up prevents this.
-            std::string & GetLabel()
-            {
-              return label;
-            }
+            std::string & GetLabel();
+       
+            virtual bool IsCommsRequired() const;
+            virtual void SetCommsRequired(bool b);
+            void DoComms(bool isIoProcess, const LatticeTime timeStep);
+
           private:
             std::string label;
 
+            bool commsRequired;
             multiscale::SharedValue<PhysicalPressure> pressure;
             multiscale::SharedValue<PhysicalPressure> minPressure;
             multiscale::SharedValue<PhysicalPressure> maxPressure;

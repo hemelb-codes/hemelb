@@ -129,6 +129,8 @@ namespace hemelb
 
       void NeighbouringDataManager::ShareNeeds()
       {
+        if (needsHaveBeenShared)
+          return;
         // build a table of which procs needs can be achieved from which proc
         std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
         std::vector<int> countOfNeedsIHaveFromEachProc(net.GetCommunicator().GetSize(), 0);
@@ -161,7 +163,7 @@ namespace hemelb
         }
 
         net.Dispatch();
-
+        needsHaveBeenShared = true;
       }
     }
   }

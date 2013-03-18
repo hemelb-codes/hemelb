@@ -51,10 +51,15 @@ class SimulationMaster
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
     virtual void DoTimeStep();
-
-  private:
+    
+    /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
     // Set the lattice type via a build parameter
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
+    hemelb::geometry::LatticeData* latticeData;
+    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+
+  private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
     unsigned int OutputPeriod(unsigned int frequency);
@@ -74,7 +79,6 @@ class SimulationMaster
     void LogStabilityReport();
 
     hemelb::configuration::SimConfig *simConfig;
-    hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
@@ -96,7 +100,6 @@ class SimulationMaster
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
     hemelb::colloids::ColloidController* colloidController;
-    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::net::Net communicationNet;
 
     hemelb::util::UnitConverter* unitConvertor;
@@ -107,8 +110,6 @@ class SimulationMaster
 
     hemelb::net::phased::StepManager* stepManager;
     hemelb::net::phased::NetConcern* netConcern;
-
-    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
 
     unsigned int imagesPerSimulation;
     int steeringSessionId;
