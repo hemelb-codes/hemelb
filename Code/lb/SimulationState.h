@@ -12,6 +12,7 @@
 
 #include "units.h"
 #include "reporting/Reportable.h"
+#include "units.h"
 
 namespace hemelb
 {
