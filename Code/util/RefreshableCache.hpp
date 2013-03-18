@@ -24,7 +24,7 @@ namespace hemelb
      */
     template<typename CacheType>
     RefreshableCache<CacheType>::RefreshableCache(const lb::SimulationState& simulationState, unsigned long size) :
-        CheckingCache<CacheType>(simulationState, 0), requiresRefreshing(false), cacheSize(size)
+        CheckingCache<CacheType>(simulationState, size), requiresRefreshing(false), cacheSize(size)
     {
 
     }

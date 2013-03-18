@@ -20,6 +20,8 @@ debug:
   HEMELB_OPTIMISATION: ""
 gdb:
   HEMELB_USE_DEBUGGER: "ON"
+multiscale:
+  HEMELB_BUILD_MULTISCALE: "ON"
 no_streaklines:
   HEMELB_USE_STREAKLINES: "OFF"
 wait_on_connect:
