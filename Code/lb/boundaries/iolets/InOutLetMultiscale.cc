@@ -140,18 +140,18 @@ namespace hemelb
 
           net::Net commsNet;
 
-          // If this proc is to do IO, send the pressure array list to all cores that require it.
-          if (isIoProc)
-          {
-            const std::vector<int>& procList = comms->GetListOfProcs();
+          const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
 
+          // If this proc is to do IO, send the pressure array list to all cores that require it.
+          if (isIoProc && procList[0] != BoundaryValues::GetBCProcRank())
+          {
             for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
             {
               commsNet.RequestSend(pressure_array, 3, *it);
             }
           }
           // Otherwise, receive the pressure array list from the core.
-          else
+          else if(procList[0] != BoundaryValues::GetBCProcRank())
           {
             commsNet.RequestReceive(pressure_array, 3, BoundaryValues::GetBCProcRank());
           }
