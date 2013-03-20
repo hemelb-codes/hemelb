@@ -23,7 +23,7 @@ namespace hemelb
       NeighbouringDataManager::NeighbouringDataManager(const LatticeData & localLatticeData,
                                                        NeighbouringLatticeData & neighbouringLatticeData,
                                                        net::InterfaceDelegationNet & net) :
-          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize())
+          localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData), net(net), needsEachProcHasFromMe(net.GetCommunicator().GetSize()), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId, RequiredSiteInformation requirements)
@@ -88,6 +88,12 @@ namespace hemelb
 
       void NeighbouringDataManager::RequestComms()
       {
+        if (needsHaveBeenShared == false)
+        {
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
+          ShareNeeds();
+        }
+
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
@@ -129,7 +135,7 @@ namespace hemelb
 
       void NeighbouringDataManager::ShareNeeds()
       {
-        if (needsHaveBeenShared)
+        if (needsHaveBeenShared == true)
           return;
         // build a table of which procs needs can be achieved from which proc
         std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
