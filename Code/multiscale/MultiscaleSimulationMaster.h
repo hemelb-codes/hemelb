@@ -30,6 +30,11 @@ namespace hemelb
           // We only have one shared object type so far, an iolet.
           lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("CONSTRUCTOR: inlet and outlet count: %d and %d", inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount());
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d", inletValues->GetLocalIolet(0)->IsCommsRequired(), inletValues->GetLocalIolet(0)->GetDensityMax(), inletValues->GetLocalIolet(0)->GetPressureMax());
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("outlets: %d", outletValues->GetLocalIolet(0)->IsCommsRequired(), outletValues->GetLocalIolet(0)->GetDensityMax(), outletValues->GetLocalIolet(0)->GetPressureMax());
+
+
           // we only want to register those iolets which are needed on this process.
           // Fortunately, the BoundaryValues instance has worked this out for us.
           for (unsigned int i = 0; i < inletValues->GetLocalIoletCount(); i++)
@@ -50,7 +55,7 @@ namespace hemelb
             }
           }
           // We only have one shared object type so far, an iolet.
-          lb::boundaries::iolets::InOutLetVelocityAware::DefineType(multiscaleIoletType);
+          lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
           /* Process 0 has a list of all the Iolets. The count of all this is highly useful to pre-size all the
            * needed arrays later on, so we are broadcasting this to all the other processes. */
@@ -116,10 +121,10 @@ namespace hemelb
           }
 
           //TODO: Debug
-          invertedInletBoundaryList =
-              ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
-          invertedOutletBoundaryList =
-              ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
+          //invertedInletBoundaryList =
+          //    ExchangeAndCompleteInverseBoundaryList(invertedInletBoundaryList);
+          //invertedOutletBoundaryList =
+          //    ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
 
           hemelb::lb::MacroscopicPropertyCache& propertyCache =
               latticeBoltzmannModel->GetPropertyCache();
@@ -148,10 +153,10 @@ namespace hemelb
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) inlets: %i %i",
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[i].size());
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              /*static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
                                                                                                                                       latticeData,
                                                                                                                                       &propertyCache,
-                                                                                                                                      invertedInletBoundaryList[i]);
+                                                                                                                                      invertedInletBoundaryList[i]);*/
             }
           }
 
@@ -171,10 +176,10 @@ namespace hemelb
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) outlets: %i %i",
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[i].size());
-              static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              /*static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
                                                                                                                                        latticeData,
                                                                                                                                        &propertyCache,
-                                                                                                                                       invertedOutletBoundaryList[i]);
+                                                                                                                                       invertedOutletBoundaryList[i]);*/
             }
           }
 
@@ -213,6 +218,11 @@ namespace hemelb
              * This is to prevent any inconsistent state in the coupling
              * (it's hard enough to get the physics right with a consistent
              * state ;)). */
+
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d", inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount());
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d", inletValues->GetLocalIolet(0)->IsCommsRequired(), inletValues->GetLocalIolet(0)->GetDensityMax(), inletValues->GetLocalIolet(0)->GetPressureMax());
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("outlets: %d", outletValues->GetLocalIolet(0)->IsCommsRequired(), outletValues->GetLocalIolet(0)->GetDensityMax(), outletValues->GetLocalIolet(0)->GetPressureMax());
+
             SetCommsRequired(inletValues, true);
             SetCommsRequired(outletValues, true);
 
@@ -254,13 +264,21 @@ namespace hemelb
         typename Intercommunicator::IntercommunicandTypeT multiscaleIoletType;
 
       private:
+
         /* Loops over iolets to set the need for communications. */
         void SetCommsRequired(hemelb::lb::boundaries::BoundaryValues* ioletValues, bool b)
         {
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Starting SetCommsRequired.");
           for (unsigned int i = 0; i < ioletValues->GetLocalIoletCount(); i++)
           {
-            static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("In loop: %d", ioletValues->GetLocalIoletCount());
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("A: iolet %d %d", i, (ioletValues->GetLocalIolet(i))->IsCommsRequired());
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("B: iolet %d %d", i, static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
+            dynamic_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
+            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("done with SetCommsRequired iteration.");
+
           }
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Finishing SetCommsRequired.");
         }
 
         //Populate an invertedBoundaryList
