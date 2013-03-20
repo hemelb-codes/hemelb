@@ -17,6 +17,7 @@
 #include "multiscale/mpwide/MPWideIntercommunicator.h"
 #include "topology/NetworkTopology.h"
 #include <MPWide.h>
+#include <cstring>
 
 namespace hemelb
 {
