@@ -108,13 +108,13 @@ namespace hemelb
      * HEMELB_WALL_BOUNDARY
      */
     /**
-     * The f-interpolation boundary condition.
+     * The Bouzidi-Firdaous-Lallemand interpolation-based boundary condition.
      */
     template<class Collision>
-    class FINTERPOLATION
+    class BFL
     {
       public:
-        typedef streamers::FInterpolation<Collision> Type;
+        typedef streamers::BouzidiFirdaousLallemand<Collision> Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.

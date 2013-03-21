@@ -12,7 +12,7 @@
 
 #include "lb/streamers/SimpleBounceBack.h"
 #include "lb/streamers/SimpleCollideAndStream.h"
-#include "lb/streamers/FInterpolation.h"
+#include "lb/streamers/BouzidiFirdaousLallemand.h"
 #include "lb/streamers/GuoZhengShi.h"
 #include "lb/streamers/JunkYang.h"
 #include "lb/streamers/RegularisedIolet.h"
