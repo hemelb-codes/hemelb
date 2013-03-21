@@ -41,8 +41,8 @@ namespace hemelb
           CPPUNIT_TEST( TestBouzidiFirdaousLallemand);
           CPPUNIT_TEST( TestSimpleBounceBack);
           CPPUNIT_TEST( TestGuoZhengShi);
-          CPPUNIT_TEST( TestRegularisedIolet);
-          CPPUNIT_TEST( TestNashBB);
+          CPPUNIT_TEST( TestNashZerothOrderPressureIolet);
+          CPPUNIT_TEST( TestNashZerothOrderPressureBB);
           CPPUNIT_TEST( TestJunkYangEquivalentToBounceBack);CPPUNIT_TEST_SUITE_END();
         public:
 
@@ -659,7 +659,7 @@ namespace hemelb
             }
           }
 
-          void TestRegularisedIolet()
+          void TestNashZerothOrderPressureIolet()
           {
             lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
@@ -669,8 +669,8 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::RegularisedIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                regularisedIolet(initParams);
+            lb::streamers::NashZerothOrderPressureIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                ioletCollider(initParams);
 
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)
             {
@@ -695,7 +695,7 @@ namespace hemelb
               latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
-              regularisedIolet.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+              ioletCollider.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -759,7 +759,7 @@ namespace hemelb
             }
           }
 
-          void TestNashBB()
+          void TestNashZerothOrderPressureBB()
           {
             lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
@@ -769,8 +769,8 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::NashBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                regularisedIolet(initParams);
+            lb::streamers::NashZerothOrderPressureBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                ioletCollider(initParams);
 
             for (double assignedIoletDistance = 0.4; assignedIoletDistance < 1.0; assignedIoletDistance += 0.5)
             {
@@ -797,7 +797,7 @@ namespace hemelb
               latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
-              regularisedIolet.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+              ioletCollider.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
