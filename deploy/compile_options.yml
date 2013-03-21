@@ -45,7 +45,7 @@ non_newtonian_c:
 non_newtonian_tpl:
   HEMELB_KERNEL: "NNTPL"
 f_interpolation:
-  HEMELB_WALL_BOUNDARY: "FINTERPOLATION"
+  HEMELB_WALL_BOUNDARY: "BFL"
 guo_zheng_shi:
   HEMELB_WALL_BOUNDARY: "GZS"
 regularised:
