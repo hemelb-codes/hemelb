@@ -132,7 +132,7 @@ namespace hemelb
     class SIMPLEBOUNCEBACK
     {
       public:
-        typedef streamers::SimpleBounceBack<Collision> Type;
+        typedef typename streamers::SimpleBounceBack<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -156,7 +156,7 @@ namespace hemelb
     class NASHZEROTHORDERPRESSUREIOLET
     {
       public:
-        typedef streamers::NashZerothOrderPressureIolet<Collision> Type;
+        typedef typename streamers::NashZerothOrderPressureIolet<Collision>::Type Type;
     };
     /**
      * The inlet/outlet condition based on Ladd's modified bounce-back on
@@ -165,18 +165,21 @@ namespace hemelb
     template<class Collision>
     struct LADDIOLET
     {
-        typedef streamers::LaddIolet<Collision> Type;
+        typedef typename streamers::LaddIolet<Collision>::Type Type;
     };
 
     /**
      * The following classes have names corresponding to the options given in the build system for
      * HEMELB_WALL_IOLET_BOUNDARY
      */
+    /**
+     * Nash in/outlet + SBB
+     */
     template<class Collision>
-    class NASHZEROTHORDERPRESSUREBB
+    class NASHZEROTHORDERPRESSURESBB
     {
       public:
-        typedef streamers::NashZerothOrderPressureBB<Collision> Type;
+        typedef typename streamers::NashZerothOrderPressureIoletSBB<Collision>::Type Type;
     };
 
     /**
@@ -188,6 +191,24 @@ namespace hemelb
         typedef typename streamers::LaddIoletSBB<Collision>::Type Type;
     };
 
+    /**
+     * Nash in/outlet + SBB
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREBFL
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletBFL<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + SBB
+     */
+    template<class Collision>
+    struct LADDIOLETBFL
+    {
+        typedef typename streamers::LaddIoletBFL<Collision>::Type Type;
+    };
   }
 }
 
