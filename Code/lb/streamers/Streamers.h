@@ -15,8 +15,8 @@
 #include "lb/streamers/BouzidiFirdaousLallemand.h"
 #include "lb/streamers/GuoZhengShi.h"
 #include "lb/streamers/JunkYang.h"
-#include "lb/streamers/RegularisedIolet.h"
-#include "lb/streamers/NashBB.h"
+#include "lb/streamers/NashZerothOrderPressureIolet.h"
+#include "lb/streamers/NashZerothOrderPressureBB.h"
 
 #include "lb/streamers/LaddIolet.h"
 

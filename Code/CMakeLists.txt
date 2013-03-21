@@ -36,10 +36,10 @@ set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
-set(HEMELB_IOLET_BOUNDARY "REGULARISEDIOLET"
-  CACHE STRING "Select the boundary conditions to be used at the inlets/outlets (REGULARISEDIOLET,LADDIOLET)")
-set(HEMELB_WALL_IOLET_BOUNDARY "NASHBB"
-  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets/outlets (NASHBB,LADDIOLET)")
+set(HEMELB_IOLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
+  CACHE STRING "Select the boundary conditions to be used at the inlets/outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
+set(HEMELB_WALL_IOLET_BOUNDARY "NASHZEROTHORDERPRESSUREBB"
+  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets/outlets (NASHZEROTHORDERPRESSUREBB,LADDIOLET)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 set(HEMELB_GATHERS_IMPLEMENTATION Separated

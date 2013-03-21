@@ -150,13 +150,13 @@ namespace hemelb
      */
 
     /**
-     * Our zero-order phantom site BC for iolets
+     * Our zeroth-order phantom site BC for iolets
      */
     template<class Collision>
-    class REGULARISEDIOLET
+    class NASHZEROTHORDERPRESSUREIOLET
     {
       public:
-        typedef streamers::RegularisedIolet<Collision> Type;
+        typedef streamers::NashZerothOrderPressureIolet<Collision> Type;
     };
     /**
      * The inlet/outlet condition based on Ladd's modified bounce-back on
@@ -174,10 +174,10 @@ namespace hemelb
      * HEMELB_WALL_IOLET_BOUNDARY
      */
     template<class Collision>
-    class NASHBB
+    class NASHZEROTHORDERPRESSUREBB
     {
       public:
-        typedef streamers::NashBB<Collision> Type;
+        typedef streamers::NashZerothOrderPressureBB<Collision> Type;
     };
 
   }
