@@ -160,12 +160,11 @@ namespace hemelb
     };
     /**
      * The inlet/outlet condition based on Ladd's modified bounce-back on
-     * links. Note that this also works for WALL_IOLET sites
+     * links.
      */
     template<class Collision>
-    class LADDIOLET
+    struct LADDIOLET
     {
-      public:
         typedef streamers::LaddIolet<Collision> Type;
     };
 
@@ -178,6 +177,15 @@ namespace hemelb
     {
       public:
         typedef streamers::NashZerothOrderPressureBB<Collision> Type;
+    };
+
+    /**
+     * Ladd in/outlet + SBB
+     */
+    template<class Collision>
+    struct LADDIOLETSBB
+    {
+        typedef typename streamers::LaddIoletSBB<Collision>::Type Type;
     };
 
   }

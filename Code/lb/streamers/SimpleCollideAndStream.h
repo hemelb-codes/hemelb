@@ -11,6 +11,7 @@
 #define HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAM_H
 
 #include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/SimpleCollideAndStreamDelegate.h"
 #include "lb/kernels/BaseKernel.h"
 #include "lb/HFunction.h"
 
@@ -29,11 +30,12 @@ namespace hemelb
 
         private:
           CollisionType collider;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-            collider(initParams)
+            collider(initParams), bulkLinkDelegate(collider, initParams)
           {
 
           }
@@ -62,7 +64,7 @@ namespace hemelb
 
               for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (ii))) = hydroVars.GetFPostCollision()[ii];
+                bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
               }
 
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
@@ -81,7 +83,6 @@ namespace hemelb
           {
 
           }
-
 
       };
     }

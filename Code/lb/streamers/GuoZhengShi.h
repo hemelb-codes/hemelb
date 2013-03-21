@@ -33,11 +33,13 @@ namespace hemelb
 
         private:
           CollisionType collider;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
           GuoZhengShi(kernels::InitParams& initParams) :
-            collider(initParams), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
+            collider(initParams), bulkLinkDelegate(collider, initParams),
+                neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
           {
             // Go through every site on the local processor.
             for (site_t localIndex = 0; localIndex < initParams.latDat->GetLocalFluidSiteCount(); ++localIndex)
@@ -86,14 +88,14 @@ namespace hemelb
                                          const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
-                                         lb::MacroscopicPropertyCache& propertyCache)
+                                         MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
               // First do a normal collision & streaming step, as if we were mid-fluid.
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType>());
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 
               collider.CalculatePreCollision(hydroVars, site);
               collider.Collide(lbmParams, hydroVars);
@@ -101,8 +103,7 @@ namespace hemelb
               // Perform the streaming of the post-collision distribution.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
-                    hydroVars.GetFPostCollision()[direction];
+                bulkLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
               }
 
               // Now fill in the distributions that won't be streamed to
@@ -228,7 +229,7 @@ namespace hemelb
                       = fEqTemp[unstreamedDirection] + (1.0 + lbmParams->GetOmega()) * fNeqInUnstreamedDirection;
                 }
               }
-
+              ///< @todo #126 Ensure we are consistent with behaviour of tau
               hydroVars.tau = lbmParams->GetTau();
 
               BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
@@ -243,7 +244,7 @@ namespace hemelb
                                  const site_t siteCount,
                                  const LbmParameters* lbmParams,
                                  geometry::LatticeData* latDat,
-                                 lb::MacroscopicPropertyCache& propertyCache)
+                                 MacroscopicPropertyCache& propertyCache)
           {
 
           }
