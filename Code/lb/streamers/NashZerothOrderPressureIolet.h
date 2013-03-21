@@ -1,8 +1,9 @@
-#ifndef HEMELB_LB_STREAMERS_NASHBB_H
-#define HEMELB_LB_STREAMERS_NASHBB_H
+#ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREIOLET_H
+#define HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREIOLET_H
 
 #include "lb/streamers/BaseStreamer.h"
 #include "util/utilityFunctions.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -11,7 +12,7 @@ namespace hemelb
     namespace streamers
     {
       template<typename CollisionImpl>
-      class NashBB : public BaseStreamer<NashBB<CollisionImpl> >
+      class NashZerothOrderPressureIolet : public BaseStreamer<NashZerothOrderPressureIolet<CollisionImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -21,7 +22,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          NashBB(kernels::InitParams& initParams) :
+          NashZerothOrderPressureIolet(kernels::InitParams& initParams) :
             collider(initParams), iolet(initParams.boundaryObject)
           {
           }
@@ -49,18 +50,11 @@ namespace hemelb
               // Start by doing the normal stream and collide operation.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                // The actual bounce-back lines, including streaming and collision. Basically swap
-                // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t streamingDestination = site.HasBoundary(direction)
-                  ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction]
-                  : site.GetStreamedIndex<LatticeType> (direction);
-
-                // Remember, oFNeq currently hold the equilibrium distribution. We
-                // simultaneously use this and correct it, here.
-                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[direction];
+                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
+                    = hydroVars.GetFPostCollision()[direction];
               }
 
-              // Let's next fill in the blanks on this site that won't get streamed to because of Iolets
+              // Let's next fill in the blanks on this site that won't get streamed to.
               for (Direction direction = 1; direction < LatticeType::NUMVECTORS; ++direction)
               {
                 if (!site.HasIolet(direction))
@@ -68,11 +62,11 @@ namespace hemelb
 
                 int boundaryId = site.GetBoundaryId();
 
-                // Set the the density at the "ghost" site to be the same as the iolet itself.
+                // Set the density at the "ghost" site to be the density of the iolet.
                 distribn_t ghostDensity = iolet->GetBoundaryDensity(boundaryId);
 
                 // Calculate the velocity at the ghost site, as the component normal to the iolet.
-                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal().GetNormalised();
+                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
 
                 // Note that the division by density compensates for the fact that v_x etc have momentum
                 // not velocity.
@@ -98,10 +92,10 @@ namespace hemelb
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
-              BaseStreamer<NashBB>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                               hydroVars,
-                                                                               lbmParams,
-                                                                               propertyCache);
+              BaseStreamer<NashZerothOrderPressureIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                                   hydroVars,
+                                                                                                   lbmParams,
+                                                                                                   propertyCache);
             }
           }
 
@@ -127,4 +121,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_STREAMERS_NASHBB_H */
+#endif /* HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREIOLET_H */
