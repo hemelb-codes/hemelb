@@ -126,7 +126,7 @@ namespace hemelb
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
-            lb::streamers::BouzidiFirdaousLallemand<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::BouzidiFirdaousLallemand<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 bfl(initParams);
 
             bfl.StreamAndCollide<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
@@ -297,7 +297,7 @@ namespace hemelb
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use simple bounce back
-            lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 simpleBounceBack(initParams);
 
             simpleBounceBack.StreamAndCollide<false> (offset,
@@ -669,7 +669,7 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::NashZerothOrderPressureIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::NashZerothOrderPressureIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 ioletCollider(initParams);
 
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)
@@ -769,7 +769,7 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::NashZerothOrderPressureBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::NashZerothOrderPressureIoletSBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 ioletCollider(initParams);
 
             for (double assignedIoletDistance = 0.4; assignedIoletDistance < 1.0; assignedIoletDistance += 0.5)

@@ -10,6 +10,7 @@
 #ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
 #define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMANDDELEGATE_H
 
+#include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 
 namespace hemelb
@@ -29,7 +30,7 @@ namespace hemelb
        * some circumstances), it has a DoPostStep method.
        */
       template<typename CollisionImpl>
-      class BouzidiFirdaousLallemandDelegate
+      class BouzidiFirdaousLallemandDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
           typedef CollisionImpl CollisionType;
