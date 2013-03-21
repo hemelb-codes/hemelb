@@ -16,8 +16,6 @@
 #include "lb/streamers/GuoZhengShi.h"
 #include "lb/streamers/JunkYang.h"
 #include "lb/streamers/NashZerothOrderPressureIolet.h"
-#include "lb/streamers/NashZerothOrderPressureBB.h"
-
 #include "lb/streamers/LaddIolet.h"
 
 #endif /* HEMELB_LB_STREAMERS_STREAMERS_H */

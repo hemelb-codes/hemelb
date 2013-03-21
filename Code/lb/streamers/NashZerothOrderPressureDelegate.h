@@ -1,7 +1,8 @@
-#ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREDELEGATE_H
-#define HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREDELEGATE_H
+#ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
+#define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 
 #include "util/utilityFunctions.h"
+#include "lb/streamers/BaseStreamerDelegate.h"
 
 namespace hemelb
 {
@@ -10,7 +11,7 @@ namespace hemelb
     namespace streamers
     {
       template<typename CollisionImpl>
-      class NashZerothOrderPressureDelegate
+      class NashZerothOrderPressureDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -62,4 +63,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREDELEGATE_H
+#endif // HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
