@@ -43,9 +43,9 @@ namespace hemelb
                                          geometry::LatticeData* const latticeData,
                                          lb::MacroscopicPropertyCache& propertyCache)
           {
-            for (site_t index = firstIndex; index < (firstIndex + siteCount); index++)
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); ++siteIndex)
             {
-              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(index);
+              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
 
               const distribn_t* distribution = site.GetFOld<LatticeType> ();
 
@@ -62,8 +62,35 @@ namespace hemelb
 
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
-                    = hydroVars.GetFPostCollision()[direction];
+                if (site.HasBoundary(direction))
+                {
+                  site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
+                  site_t bbDestination = (siteIndex * LatticeType::NUMVECTORS) + invDirection;
+                  distribn_t q = site.GetWallDistance<LatticeType> (direction);
+
+                  if (site.HasBoundary(invDirection) || q < 0.5)
+                  {
+                    // If there IS NO fluid site in the opposite direction, fall back to SBB.
+                    // If there IS such a site, we have to wait for the site in the opposite
+                    // direction to finish in order to complete this update. So just bounce-back
+                    // the post collision f that we would have otherwise thrown away (to avoid
+                    // having to collide twice).
+                    * (latticeData->GetFNew(bbDestination)) = hydroVars.GetFPostCollision()[direction];
+                  }
+                  else
+                  {
+                    // We have a fluid site and have all the data needed to complete this direction!
+                    // Implement Eq (5b) from Bouzidi et al.
+                    * (latticeData->GetFNew(bbDestination)) = (hydroVars.GetFPostCollision()[direction] + (2.0 * q - 1)
+                        * hydroVars.GetFPostCollision()[invDirection]) / (2.0 * q);
+                  }
+                }
+                else
+                {
+                  // This is a standard link to another fluid site.
+                  * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
+                      = hydroVars.GetFPostCollision()[direction];
+                }
               }
 
               BaseStreamer<BouzidiFirdaousLallemand>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
@@ -83,59 +110,32 @@ namespace hemelb
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
               geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              distribn_t* fNew = latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS);
 
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
-
-              ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
-              hydroVars.tau = lbmParameters->GetTau();
-
-              // In the first step, we stream and collide as we would for the SimpleCollideAndStream
-              // streamer.
-              collider.CalculatePreCollision(hydroVars, site);
-
-              collider.Collide(lbmParameters, hydroVars);
-
-              // Iterate over the direction indices.
-              for (unsigned int direction = 1; direction < LatticeType::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                // If there's a boundary in that direction and none in the other direction, do the
-                // f-interpolation.
                 if (site.HasBoundary(direction))
                 {
-                  int inverseDirection = LatticeType::INVERSEDIRECTIONS[direction];
+                  site_t invDirection = LatticeType::INVERSEDIRECTIONS[direction];
+                  distribn_t q = site.GetWallDistance<LatticeType> (direction);
+                  // If there is no fluid site in the opposite direction, fall back to simple
+                  // bounce back, which has been done above.
 
-                  if (!site.HasBoundary(inverseDirection))
+                  // If q >= 0.5, then we handled that fully above also.
+                  if (!site.HasBoundary(invDirection) && q < 0.5)
                   {
-                    // Calculate 2 x the distance to the boundary.
-                    distribn_t twoQ = 2.0 * site.GetWallDistance<LatticeType> (direction);
+                    // So, we have a fluid site and all the data needed to complete this direction!
+                    // Implement Eq (5a) from Bouzidi et al.
 
-                    distribn_t thisDirectionNew = *latticeData->GetFNew(siteIndex
-                        * CollisionType::CKernel::LatticeType::NUMVECTORS + direction);
-                    distribn_t thisDirectionOld = hydroVars.GetFPostCollision()[direction];
-                    distribn_t oppDirectionOld = hydroVars.GetFPostCollision()[inverseDirection];
-
-                    // Interpolate between the values of the f direction to work out a new streamed value.
-                    distribn_t streamed = (twoQ < 1.0)
-                      ? (thisDirectionNew + twoQ * (thisDirectionOld - thisDirectionNew))
-                      : (oppDirectionOld + (1. / twoQ) * (thisDirectionOld - oppDirectionOld));
-
-                    // This streamed value is assigned to the f-distribution in the direction facing
-                    // away from the boundary.
-                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection)) = streamed;
-                  }
-                  // If there are boundaries in both directions perform simple bounce-back using the
-                  // post-collision values in f_old.
-
-                  else
-                  {
-                    * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + inverseDirection))
-                        = hydroVars.GetFPostCollision()[direction];
+                    // Note that:
+                    // - fNew[direction] is the newly-arrived fPostColl[direction] from the neighbouring site
+                    // - fNew[invDirection] is the above-bounced-back fPostColl[direction] for this site.
+                    fNew[invDirection] = 2.0 * q * fNew[invDirection] + (1.0 - 2.0 * q) * fNew[direction];
                   }
                 }
               }
             }
           }
-
       };
     }
   }
