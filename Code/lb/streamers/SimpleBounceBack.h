@@ -12,6 +12,8 @@
 
 #include "lb/kernels/BaseKernel.h"
 #include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/SimpleCollideAndStreamDelegate.h"
+#include "lb/streamers/SimpleBounceBackDelegate.h"
 
 namespace hemelb
 {
@@ -19,6 +21,7 @@ namespace hemelb
   {
     namespace streamers
     {
+
       template<typename CollisionImpl>
       class SimpleBounceBack : public BaseStreamer<SimpleBounceBack<CollisionImpl> >
       {
@@ -28,10 +31,12 @@ namespace hemelb
         private:
           CollisionType collider;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+          SimpleBounceBackDelegate<CollisionType> wallLinkDelegate;
 
         public:
           SimpleBounceBack(kernels::InitParams& initParams) :
-            collider(initParams)
+            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams)
           {
 
           }
@@ -62,13 +67,15 @@ namespace hemelb
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t streamingDestination = site.HasBoundary(ii)
-                  ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[ii]
-                  : site.GetStreamedIndex<LatticeType> (ii);
+                if (site.HasBoundary(ii))
+                {
+                  wallLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                }
 
-                // Remember, oFNeq currently hold the equilibrium distribution. We
-                // simultaneously use this and correct it, here.
-                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[ii];
               }
 
               //TODO: Necessary to specify sub-class?

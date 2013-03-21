@@ -2,6 +2,7 @@
 #define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREBB_H
 
 #include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/NashZerothOrderPressureDelegate.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -15,14 +16,17 @@ namespace hemelb
       {
         public:
           typedef CollisionImpl CollisionType;
+          typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         private:
           CollisionType collider;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+          SimpleBounceBackDelegate<CollisionType> wallLinkDelegate;
+          NashZerothOrderPressureDelegate<CollisionType> ioletLinkDelegate;
 
         public:
           NashZerothOrderPressureBB(kernels::InitParams& initParams) :
-            collider(initParams), iolet(initParams.boundaryObject)
+            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
           {
           }
 
@@ -49,59 +53,27 @@ namespace hemelb
               // Start by doing the normal stream and collide operation.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                // The actual bounce-back lines, including streaming and collision. Basically swap
-                // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t streamingDestination = site.HasBoundary(direction)
-                  ? (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction]
-                  : site.GetStreamedIndex<LatticeType> (direction);
-
-                // Remember, oFNeq currently hold the equilibrium distribution. We
-                // simultaneously use this and correct it, here.
-                * (latDat->GetFNew(streamingDestination)) = hydroVars.GetFPostCollision()[direction];
-              }
-
-              // Let's next fill in the blanks on this site that won't get streamed to because of Iolets
-              for (Direction direction = 1; direction < LatticeType::NUMVECTORS; ++direction)
-              {
-                if (!site.HasIolet(direction))
-                  continue;
-
-                int boundaryId = site.GetBoundaryId();
-
-                // Set the the density at the "ghost" site to be the same as the iolet itself.
-                distribn_t ghostDensity = iolet->GetBoundaryDensity(boundaryId);
-
-                // Calculate the velocity at the ghost site, as the component normal to the iolet.
-                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal().GetNormalised();
-
-                // Note that the division by density compensates for the fact that v_x etc have momentum
-                // not velocity.
-                distribn_t component = (hydroVars.momentum / hydroVars.density).Dot(ioletNormal);
-
-                // TODO it's ugly that we have to do this.
-                // TODO having to give 0 as an argument is also ugly.
-                // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
-                // that doesn't get used.
-                kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(f);
-
-                ghostHydrovars.density = ghostDensity;
-                ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
-
-                collider.kernel.CalculateFeq(ghostHydrovars, 0);
-
-                Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
-
-                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamed)
-                    = ghostHydrovars.GetFEq()[unstreamed];
+                if (site.HasIolet(direction))
+                {
+                  ioletLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
+                }
+                else if (site.HasBoundary(direction))
+                {
+                  wallLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
+                }
               }
 
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
               BaseStreamer<NashZerothOrderPressureBB>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                                hydroVars,
-                                                                                                lbmParams,
-                                                                                                propertyCache);
+                                                                                                  hydroVars,
+                                                                                                  lbmParams,
+                                                                                                  propertyCache);
             }
           }
 
@@ -119,9 +91,6 @@ namespace hemelb
           {
             collider.Reset(init);
           }
-
-        private:
-          boundaries::BoundaryValues* iolet;
       };
     }
   }
