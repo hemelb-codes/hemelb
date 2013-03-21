@@ -10,6 +10,7 @@
 #ifndef HEMELB_LB_STREAMERS_SIMPLEBOUNCEBACKDELEGATE_H
 #define HEMELB_LB_STREAMERS_SIMPLEBOUNCEBACKDELEGATE_H
 
+#include "lb/streamers/BaseStreamerDelegate.h"
 #include "lb/streamers/SimpleCollideAndStream.h"
 
 namespace hemelb
@@ -20,7 +21,7 @@ namespace hemelb
     {
 
       template<typename CollisionImpl>
-      class SimpleBounceBackDelegate
+      class SimpleBounceBackDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
           typedef CollisionImpl CollisionType;
