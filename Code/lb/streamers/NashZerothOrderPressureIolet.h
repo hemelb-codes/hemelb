@@ -2,6 +2,7 @@
 #define HEMELB_LB_STREAMERS_NASHZEROTHORDERZEROPRESSUREIOLET_H
 
 #include "lb/streamers/BaseStreamer.h"
+#include "lb/streamers/NashZerothOrderPressureDelegate.h"
 #include "util/utilityFunctions.h"
 #include "debug/Debugger.h"
 
@@ -16,14 +17,15 @@ namespace hemelb
       {
         public:
           typedef CollisionImpl CollisionType;
-
+          typedef typename CollisionType::CKernel::LatticeType LatticeType;
         private:
           CollisionType collider;
-          typedef typename CollisionType::CKernel::LatticeType LatticeType;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
+          NashZerothOrderPressureDelegate<CollisionType> ioletLinkDelegate;
 
         public:
           NashZerothOrderPressureIolet(kernels::InitParams& initParams) :
-            collider(initParams), iolet(initParams.boundaryObject)
+            collider(initParams), bulkLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
           {
           }
 
@@ -38,9 +40,7 @@ namespace hemelb
             {
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
-              const distribn_t* f = site.GetFOld<LatticeType> ();
-
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(site.GetFOld<LatticeType> ());
 
               // First calculate the density and macro-velocity
               collider.CalculatePreCollision(hydroVars, site);
@@ -50,52 +50,22 @@ namespace hemelb
               // Start by doing the normal stream and collide operation.
               for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               {
-                * (latDat->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
-                    = hydroVars.GetFPostCollision()[direction];
+                if (site.HasIolet(direction))
+                {
+                  ioletLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, direction);
+                }
               }
-
-              // Let's next fill in the blanks on this site that won't get streamed to.
-              for (Direction direction = 1; direction < LatticeType::NUMVECTORS; ++direction)
-              {
-                if (!site.HasIolet(direction))
-                  continue;
-
-                int boundaryId = site.GetBoundaryId();
-
-                // Set the density at the "ghost" site to be the density of the iolet.
-                distribn_t ghostDensity = iolet->GetBoundaryDensity(boundaryId);
-
-                // Calculate the velocity at the ghost site, as the component normal to the iolet.
-                util::Vector3D<float> ioletNormal = iolet->GetLocalIolet(boundaryId)->GetNormal();
-
-                // Note that the division by density compensates for the fact that v_x etc have momentum
-                // not velocity.
-                distribn_t component = (hydroVars.momentum / hydroVars.density).Dot(ioletNormal);
-
-                // TODO it's ugly that we have to do this.
-                // TODO having to give 0 as an argument is also ugly.
-                // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
-                // that doesn't get used.
-                kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(f);
-
-                ghostHydrovars.density = ghostDensity;
-                ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
-
-                collider.kernel.CalculateFeq(ghostHydrovars, 0);
-
-                Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
-
-                *latDat->GetFNew(siteIndex * LatticeType::NUMVECTORS + unstreamed)
-                    = ghostHydrovars.GetFEq()[unstreamed];
-              }
-
               ///< @todo #126 It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();
 
               BaseStreamer<NashZerothOrderPressureIolet>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                                   hydroVars,
-                                                                                                   lbmParams,
-                                                                                                   propertyCache);
+                                                                                                     hydroVars,
+                                                                                                     lbmParams,
+                                                                                                     propertyCache);
             }
           }
 
@@ -113,9 +83,6 @@ namespace hemelb
           {
             collider.Reset(init);
           }
-
-        private:
-          boundaries::BoundaryValues* iolet;
       };
     }
   }
