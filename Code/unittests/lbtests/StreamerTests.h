@@ -38,7 +38,7 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE( StreamerTests);
           CPPUNIT_TEST( TestSimpleCollideAndStream);
-          CPPUNIT_TEST( TestFInterpolation);
+          CPPUNIT_TEST( TestBouzidiFirdaousLallemand);
           CPPUNIT_TEST( TestSimpleBounceBack);
           CPPUNIT_TEST( TestGuoZhengShi);
           CPPUNIT_TEST( TestRegularisedIolet);
@@ -82,7 +82,7 @@ namespace hemelb
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
             {
-              geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
+              geometry::Site < geometry::LatticeData > streamedSite = latDat->GetSite(streamedToSite);
 
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
@@ -120,21 +120,17 @@ namespace hemelb
             }
           }
 
-          void TestFInterpolation()
+          void TestBouzidiFirdaousLallemand()
           {
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
-            lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                fInterpolation(initParams);
+            lb::streamers::BouzidiFirdaousLallemand<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+                bfl(initParams);
 
-            fInterpolation.StreamAndCollide<false> (0,
-                                                    latDat->GetLocalFluidSiteCount(),
-                                                    lbmParams,
-                                                    latDat,
-                                                    *propertyCache);
-            fInterpolation.PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
+            bfl.StreamAndCollide<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
+            bfl.PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
 
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
@@ -149,7 +145,7 @@ namespace hemelb
 
                 site_t streamerIndex = streamedSite.GetStreamedIndex<lb::lattices::D3Q15> (oppDirection);
 
-                geometry::Site<geometry::LatticeData> streamerSite = latDat->GetSite(streamerIndex);
+                geometry::Site < geometry::LatticeData > streamerSite = latDat->GetSite(streamerIndex);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
                 if (streamerIndex >= 0 && streamerIndex < (lb::lattices::D3Q15::NUMVECTORS
@@ -245,7 +241,8 @@ namespace hemelb
                       : (oppWallOld + (1. / twoQ) * (toWallOld - oppWallOld));
 
                     std::stringstream msg(std::stringstream::in);
-                    msg << "FInterpolation, PostStep: site " << streamedToSite << " direction " << streamedDirection;
+                    msg << "BouzidiFirdaousLallemand, PostStep: site " << streamedToSite << " direction "
+                        << streamedDirection;
 
                     // Assert that this is the case.
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
@@ -259,8 +256,8 @@ namespace hemelb
                   else
                   {
                     std::stringstream msg(std::stringstream::in);
-                    msg << "FInterpolation, PostStep by simple bounce-back: site " << streamedToSite << " direction "
-                        << streamedDirection;
+                    msg << "BouzidiFirdaousLallemand, PostStep by simple bounce-back: site " << streamedToSite
+                        << " direction " << streamedDirection;
 
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
                                                          hydroVars.GetFPostCollision()[oppDirection],
@@ -836,7 +833,8 @@ namespace hemelb
                 // Check the case by a wall.
                 if (streamer.HasBoundary(streamedDirection))
                 {
-                  distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite + inverseDirection);
+                  distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite
+                      + inverseDirection);
 
                   CPPUNIT_ASSERT_DOUBLES_EQUAL(streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                streamedToFNew,

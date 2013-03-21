@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_STREAMERS_FINTERPOLATION_H
-#define HEMELB_LB_STREAMERS_FINTERPOLATION_H
+#ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
+#define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
 
 #include "lb/streamers/BaseStreamer.h"
 
@@ -20,7 +20,7 @@ namespace hemelb
     {
 
       template<typename CollisionImpl>
-      class FInterpolation : public BaseStreamer<FInterpolation<CollisionImpl> >
+      class BouzidiFirdaousLallemand : public BaseStreamer<BouzidiFirdaousLallemand<CollisionImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -30,7 +30,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
         public:
-          FInterpolation(kernels::InitParams& initParams) :
+          BouzidiFirdaousLallemand(kernels::InitParams& initParams) :
             collider(initParams)
           {
 
@@ -66,10 +66,10 @@ namespace hemelb
                     = hydroVars.GetFPostCollision()[direction];
               }
 
-              BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                       hydroVars,
-                                                                                       lbmParams,
-                                                                                       propertyCache);
+              BaseStreamer<BouzidiFirdaousLallemand>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                                 hydroVars,
+                                                                                                 lbmParams,
+                                                                                                 propertyCache);
             }
           }
 
@@ -141,4 +141,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_STREAMERS_FINTERPOLATION_H */
+#endif /* HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H */
