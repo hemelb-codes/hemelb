@@ -288,18 +288,19 @@ void CylinderGenerator::ClassifySite(Site& site) {
 
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
 			if (link.Type == geometry::CUT_WALL) {
-				ComputeCylinderNormalAtAPoint(link.WallNormalAtWallCut, hit.pt,
-						this->Cylinder->Axis);
+				this->ComputeCylinderNormalAtAPoint(link.WallNormalAtWallCut,
+						hit.pt, this->Cylinder->Axis);
 				link.DistanceInVoxels = distanceInVoxels;
 			}
 		}
 	}
 
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
-	ComputeAveragedNormal(site);
+	this->ComputeAveragedNormal(site);
 }
 
-void CylinderGenerator::ComputeCylinderNormalAtAPoint(Vector& wallNormal, const Vector& surfacePoint, const Vector& cylinderAxis) const{
+void CylinderGenerator::ComputeCylinderNormalAtAPoint(Vector& wallNormal,
+		const Vector& surfacePoint, const Vector& cylinderAxis) const {
 	wallNormal = surfacePoint - cylinderAxis * surfacePoint.Dot(cylinderAxis);
 	wallNormal.Normalise();
 }

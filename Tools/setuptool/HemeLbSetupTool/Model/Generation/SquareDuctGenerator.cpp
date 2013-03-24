@@ -175,5 +175,5 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 	}
 
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
-	ComputeAveragedNormal(site);
+	this->ComputeAveragedNormal(site);
 }
