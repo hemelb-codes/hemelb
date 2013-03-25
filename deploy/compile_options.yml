@@ -44,7 +44,7 @@ non_newtonian_c:
   HEMELB_KERNEL: "NNC"
 non_newtonian_tpl:
   HEMELB_KERNEL: "NNTPL"
-f_interpolation:
+bouzidi_firdaous_lallemand:
   HEMELB_WALL_BOUNDARY: "BFL"
 guo_zheng_shi:
   HEMELB_WALL_BOUNDARY: "GZS"

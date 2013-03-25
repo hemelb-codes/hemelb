@@ -188,7 +188,7 @@ namespace hemelb
                                              + message.str(),
                                          streamedSite.GetWallDistance<lb::lattices::D3Q15> (oppDirection) != -1.0);
 
-                  // To verify the operation of the f-interpolation boundary condition, we'll need:
+                  // To verify the operation of the BFL boundary condition, we'll need:
                   // - the distance to the wall * 2
                   distribn_t twoQ = 2.0 * streamedSite.GetWallDistance<lb::lattices::D3Q15> (oppDirection);
 
@@ -212,7 +212,7 @@ namespace hemelb
                   site_t awayFromWallIndex = streamedSite.GetStreamedIndex<lb::lattices::D3Q15> (streamedDirection)
                       / lb::lattices::D3Q15::NUMVECTORS;
 
-                  // If there's a valid index in that direction, use f-interpolation
+                  // If there's a valid index in that direction, use BFL
                   if (awayFromWallIndex >= 0 && awayFromWallIndex < latDat->GetLocalFluidSiteCount())
                   {
                     const geometry::Site<geometry::LatticeData> awayFromWallSite = latDat->GetSite(awayFromWallIndex);
