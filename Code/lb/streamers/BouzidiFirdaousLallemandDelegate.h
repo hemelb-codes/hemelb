@@ -44,7 +44,8 @@ namespace hemelb
           {
           }
 
-          inline void StreamLink(geometry::LatticeData* const latticeData,
+          inline void StreamLink(const LbmParameters* lbmParams,
+                                 geometry::LatticeData* const latticeData,
                                  const geometry::Site<geometry::LatticeData>& site,
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
@@ -60,7 +61,7 @@ namespace hemelb
               // direction to finish in order to complete this update. So just bounce-back
               // the post collision f that we would have otherwise thrown away (to avoid
               // having to collide twice).
-              bbDelegate.StreamLink(latticeData, site, hydroVars, direction);
+              bbDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
             }
             else
             {

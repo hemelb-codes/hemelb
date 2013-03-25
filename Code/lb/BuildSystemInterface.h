@@ -123,7 +123,7 @@ namespace hemelb
     class GZS
     {
       public:
-        typedef streamers::GuoZhengShi<Collision> Type;
+        typedef typename streamers::GuoZhengShi<Collision>::Type Type;
     };
     /**
      * The simple bounce back boundary condition.
