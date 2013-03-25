@@ -389,7 +389,7 @@ namespace hemelb
 
           void TestGuoZhengShi()
           {
-            lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 guoZhengShi(initParams);
 
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)

@@ -74,11 +74,11 @@ namespace hemelb
               {
                 if (site.HasBoundary(ii))
                 {
-                  wallLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
                 else
                 {
-                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
               }
 
@@ -165,11 +165,11 @@ namespace hemelb
               {
                 if (site.HasIolet(ii))
                 {
-                  ioletLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
                 else
                 {
-                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
               }
 
@@ -259,15 +259,15 @@ namespace hemelb
               {
                 if (site.HasIolet(ii))
                 {
-                  ioletLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
                 else if (site.HasBoundary(ii))
                 {
-                  wallLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
                 else
                 {
-                  bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                  bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
               }
 

@@ -64,7 +64,7 @@ namespace hemelb
 
               for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                bulkLinkDelegate.StreamLink(latDat, site, hydroVars, ii);
+                bulkLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
               }
 
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
