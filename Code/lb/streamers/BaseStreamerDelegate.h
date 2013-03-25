@@ -33,6 +33,12 @@ namespace hemelb
        *
        * Subclasses should therefore redeclare CollisionType and LatticeType
        * for their convenience.
+       *
+       * Since the methods that do the work are NOT polymorphic (and marked as
+       * inline) the compiler can inline them quite straightforwardly---I
+       * checked the assembly output on gcc with -O2 and this is in fact
+       * done. The overhead should be pretty low.
+       *
        */
       template<class CollisionImpl>
       class BaseStreamerDelegate
@@ -41,13 +47,6 @@ namespace hemelb
           typedef CollisionImpl CollisionType;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
-          /**
-           * Constructor
-           * @param delegatorCollider
-           * @param initParams
-           * @return
-           */
-          //BaseStreamerDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams);
         protected:
           /**
            * Protected default ctor to make life a bit easier for subclasses.
