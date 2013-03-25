@@ -44,6 +44,14 @@ namespace hemelb
        *  - <bool tDoRayTracing> DoPostStep(const site_t, const site_t, const LbmParameters*,
        *      geometry::LatticeData*, hemelb::vis::Control*)
        *  - DoReset(kernels::InitParams* init)
+       *
+       * The design is to for the streamers to be pretty dumb and for them to
+       * basically just control iteration over the sites and directions while
+       * delegating the logic of actually streaming to some other classes
+       * (e.g. BouzidiFirdaousLallemand delegates bulk link streaming to
+       * SimpleCollideAndStreamDelegate and wall link streaming to BFLDelagate,
+       * which uses SimpleBounceBackDelegate in the cases where it can't handle
+       * because two opposite links are both wall links).
        */
       template<typename StreamerImpl>
       class BaseStreamer
@@ -56,11 +64,11 @@ namespace hemelb
                                        geometry::LatticeData* latDat,
                                        lb::MacroscopicPropertyCache& propertyCache)
           {
-            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(firstIndex,
-                                                                                         siteCount,
-                                                                                         lbmParams,
-                                                                                         latDat,
-                                                                                         propertyCache);
+            static_cast<StreamerImpl*> (this)->template DoStreamAndCollide<tDoRayTracing> (firstIndex,
+                                                                                           siteCount,
+                                                                                           lbmParams,
+                                                                                           latDat,
+                                                                                           propertyCache);
           }
 
           template<bool tDoRayTracing>
@@ -72,11 +80,11 @@ namespace hemelb
           {
             // The template parameter is required because we're using the CRTP to call a
             // metaprogrammed method of the implementation class.
-            static_cast<StreamerImpl*>(this)->template DoPostStep<tDoRayTracing>(firstIndex,
-                                                                                 siteCount,
-                                                                                 lbmParams,
-                                                                                 latDat,
-                                                                                 propertyCache);
+            static_cast<StreamerImpl*> (this)->template DoPostStep<tDoRayTracing> (firstIndex,
+                                                                                   siteCount,
+                                                                                   lbmParams,
+                                                                                   latDat,
+                                                                                   propertyCache);
           }
 
         protected:
@@ -159,10 +167,10 @@ namespace hemelb
               if (site.IsEdge())
               {
                 LatticeType::CalculateTractionOnAPoint(hydroVars.density,
-                                                             hydroVars.tau,
-                                                             hydroVars.GetFNeq().f,
-                                                             site.GetWallNormal(),
-                                                             tractionOnAPoint);
+                                                       hydroVars.tau,
+                                                       hydroVars.GetFNeq().f,
+                                                       site.GetWallNormal(),
+                                                       tractionOnAPoint);
               }
 
               propertyCache.tractionCache.Put(site.GetIndex(), tractionOnAPoint);
@@ -180,10 +188,10 @@ namespace hemelb
               if (site.IsEdge())
               {
                 LatticeType::CalculateTangentialProjectionTraction(hydroVars.density,
-                                                                         hydroVars.tau,
-                                                                         hydroVars.GetFNeq().f,
-                                                                         site.GetWallNormal(),
-                                                                         tangentialProjectionTractionOnAPoint);
+                                                                   hydroVars.tau,
+                                                                   hydroVars.GetFNeq().f,
+                                                                   site.GetWallNormal(),
+                                                                   tangentialProjectionTractionOnAPoint);
               }
 
               propertyCache.tangentialProjectionTractionCache.Put(site.GetIndex(), tangentialProjectionTractionOnAPoint);

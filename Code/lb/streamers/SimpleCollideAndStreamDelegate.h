@@ -18,7 +18,7 @@ namespace hemelb
     {
 
       template<typename CollisionImpl>
-      class SimpleCollideAndStreamDelegate
+      class SimpleCollideAndStreamDelegate : public BaseStreamerDelegate<CollisionImpl>
       {
         public:
           typedef CollisionImpl CollisionType;
