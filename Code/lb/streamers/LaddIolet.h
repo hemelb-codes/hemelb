@@ -13,6 +13,8 @@
 #include "lb/streamers/StreamerTypeFactory.h"
 #include "lb/streamers/LaddIoletDelegate.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
+#include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
+#include "lb/streamers/GuoZhengShiDelegate.h"
 
 namespace hemelb
 {
@@ -38,6 +40,13 @@ namespace hemelb
       struct LaddIoletBFL
       {
           typedef WallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> ,
+              LaddIoletDelegate<CollisionImpl> > Type;
+      };
+
+      template<class CollisionImpl>
+      struct LaddIoletGZS
+      {
+          typedef WallIoletStreamerTypeFactory<CollisionImpl, GuoZhengShiDelegate<CollisionImpl> ,
               LaddIoletDelegate<CollisionImpl> > Type;
       };
 
