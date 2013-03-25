@@ -21,22 +21,24 @@ namespace hemelb
     namespace streamers
     {
 
-      template<class T>
+      template<class CollisionImpl>
       struct LaddIolet
       {
-          typedef IoletStreamerTypeFactory<T, LaddIoletDelegate<T> > Type;
+          typedef IoletStreamerTypeFactory<CollisionImpl, LaddIoletDelegate<CollisionImpl> > Type;
       };
 
-      template<class T>
+      template<class CollisionImpl>
       struct LaddIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<T, SimpleBounceBackDelegate<T> , LaddIoletDelegate<T> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl> ,
+              LaddIoletDelegate<CollisionImpl> > Type;
       };
 
-      template<class T>
+      template<class CollisionImpl>
       struct LaddIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<T, BouzidiFirdaousLallemandDelegate<T> , LaddIoletDelegate<T> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> ,
+              LaddIoletDelegate<CollisionImpl> > Type;
       };
 
     }
