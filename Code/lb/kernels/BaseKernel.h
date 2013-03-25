@@ -75,9 +75,30 @@ namespace hemelb
             return f_eq;
           }
 
+          inline void SetFEq(Direction i, distribn_t val)
+          {
+            f_eq[i] = val;
+          }
+
+          inline distribn_t* GetFEqPtr()
+          {
+            return f_eq.f;
+          }
+
           inline const FVector<LatticeType>& GetFNeq() const
           {
             return f_neq;
+          }
+          // This is necessary as some of the streamers need the post-collision distribution.
+          // It is calculated by collisions and kernels.
+          inline void SetFNeq(Direction direction, distribn_t value)
+          {
+            f_neq[direction] = value;
+          }
+
+          inline distribn_t* GetFNeqPtr()
+          {
+            return f_neq.f;
           }
 
           // This is necessary as some of the streamers need the post-collision distribution.
