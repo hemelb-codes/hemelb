@@ -13,24 +13,31 @@ namespace hemelb
     namespace streamers
     {
 
-      template<class T>
+      template<class CollisionType>
       struct NashZerothOrderPressureIolet
       {
-          typedef IoletStreamerTypeFactory<T, NashZerothOrderPressureDelegate<T> > Type;
+          typedef IoletStreamerTypeFactory<CollisionType, NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
-      template<class T>
+      template<class CollisionType>
       struct NashZerothOrderPressureIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<T, SimpleBounceBackDelegate<T> , NashZerothOrderPressureDelegate<T> >
-              Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
+              NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
 
-      template<class T>
+      template<class CollisionType>
       struct NashZerothOrderPressureIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<T, BouzidiFirdaousLallemandDelegate<T> ,
-              NashZerothOrderPressureDelegate<T> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
+              NashZerothOrderPressureDelegate<CollisionType> > Type;
+      };
+
+      template<class CollisionType>
+      struct NashZerothOrderPressureIoletGZS
+      {
+          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
+              NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
     }
   }

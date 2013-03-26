@@ -114,7 +114,7 @@ namespace hemelb
     class BFL
     {
       public:
-        typedef streamers::BouzidiFirdaousLallemand<Collision> Type;
+        typedef typename streamers::BouzidiFirdaousLallemand<Collision>::Type Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
@@ -192,7 +192,7 @@ namespace hemelb
     };
 
     /**
-     * Nash in/outlet + SBB
+     * Nash in/outlet + BFL
      */
     template<class Collision>
     class NASHZEROTHORDERPRESSUREBFL
@@ -202,12 +202,30 @@ namespace hemelb
     };
 
     /**
-     * Ladd in/outlet + SBB
+     * Ladd in/outlet + BFL
      */
     template<class Collision>
     struct LADDIOLETBFL
     {
         typedef typename streamers::LaddIoletBFL<Collision>::Type Type;
+    };
+    /**
+     * Nash in/outlet + GZS
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREGZS
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletGZS<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + GZS
+     */
+    template<class Collision>
+    struct LADDIOLETGZS
+    {
+        typedef typename streamers::LaddIoletGZS<Collision>::Type Type;
     };
   }
 }
