@@ -124,7 +124,7 @@ endif()
 
 #------Capture build environment -------------
 
-execute_process(COMMAND hg id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND hg -R ${CMAKE_CURRENT_SOURCE_DIR}/../ id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT rev_ok EQUAL 0)
   message("Could not get revision number from mercurial, looking for revision_info.txt")
   execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
