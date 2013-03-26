@@ -27,7 +27,13 @@ struct LinkData {
 	geometry::CutType Type;
 	float Distance;
 	unsigned int IoletId;
-	inline LinkData() : Type(geometry::CUT_NONE), Distance(0.) {};
+	float DistanceInVoxels;
+	Vector WallNormalAtWallCut;
+	inline LinkData() :
+			Type(geometry::CUT_NONE), Distance(0.), DistanceInVoxels(0.), WallNormalAtWallCut(
+					0) {
+	}
+	;
 };
 
 // A single lattice site
@@ -39,6 +45,8 @@ public:
 	bool IsFluid;
 	std::vector<LinkData> Links;
 	Vector Position;
+	bool WallNormalAvailable; ///< Whether an approximation of the wall normal is available
+	Vector WallNormal; ///< Approximation of the wall normal on this site
 
 	inline void CreateLinksVector() {
 		Links.resize(geometry::NumberOfDisplacements);
@@ -52,7 +60,7 @@ public:
 		return this->index;
 	}
 	inline const Block& GetBlock() const {
-			return this->block;
+		return this->block;
 	}
 	const Index GetDomainBlockCount();
 	const int GetDomainBlockSize();
@@ -95,7 +103,7 @@ protected:
 class LaterNeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline LaterNeighbourIterator(Site& site, unsigned int startpos = 0) :
-		NeighbourIteratorBase(site, startpos) {
+			NeighbourIteratorBase(site, startpos) {
 		this->AdvanceToValid();
 	}
 protected:
@@ -106,7 +114,7 @@ protected:
 class NeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline NeighbourIterator(Site& site, unsigned int startpos = 0) :
-		NeighbourIteratorBase(site, startpos) {
+			NeighbourIteratorBase(site, startpos) {
 		this->AdvanceToValid();
 	}
 protected:
