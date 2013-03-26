@@ -23,31 +23,31 @@ namespace hemelb
     namespace streamers
     {
 
-      template<class CollisionImpl>
+      template<class CollisionType>
       struct LaddIolet
       {
-          typedef IoletStreamerTypeFactory<CollisionImpl, LaddIoletDelegate<CollisionImpl> > Type;
+          typedef IoletStreamerTypeFactory<CollisionType, LaddIoletDelegate<CollisionType> > Type;
       };
 
-      template<class CollisionImpl>
+      template<class CollisionType>
       struct LaddIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<CollisionImpl, SimpleBounceBackDelegate<CollisionImpl> ,
-              LaddIoletDelegate<CollisionImpl> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
+              LaddIoletDelegate<CollisionType> > Type;
       };
 
-      template<class CollisionImpl>
+      template<class CollisionType>
       struct LaddIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> ,
-              LaddIoletDelegate<CollisionImpl> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
+              LaddIoletDelegate<CollisionType> > Type;
       };
 
-      template<class CollisionImpl>
+      template<class CollisionType>
       struct LaddIoletGZS
       {
-          typedef WallIoletStreamerTypeFactory<CollisionImpl, GuoZhengShiDelegate<CollisionImpl> ,
-              LaddIoletDelegate<CollisionImpl> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> , LaddIoletDelegate<
+              CollisionType> > Type;
       };
 
     }
