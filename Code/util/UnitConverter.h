@@ -10,8 +10,6 @@
 #ifndef HEMELB_UTIL_UNITCONVERTER_H
 #define HEMELB_UTIL_UNITCONVERTER_H
 
-#include "lb/LbmParameters.h"
-#include "lb/SimulationState.h"
 #include "constants.h"
 #include "units.h"
 #include "util/Vector3D.h"
@@ -25,14 +23,22 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(lb::LbmParameters* params,
-                      lb::SimulationState* state,
+        UnitConverter(PhysicalTime timeStep,
                       PhysicalDistance voxelSize,
                       PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
         PhysicalPressure ConvertPressureToPhysicalUnits(LatticePressure pressure) const;
+
+        LatticeDistance ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const;
+        PhysicalDistance ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const;
+
+        LatticePosition ConvertPositionToLatticeUnits(const PhysicalPosition& x) const;
+        PhysicalPosition ConvertPositionToPhysicalUnits(const LatticePosition& x) const;
+
+        LatticeSpeed ConvertSpeedToLatticeUnits(const PhysicalSpeed& v) const;
+        PhysicalSpeed ConvertSpeedToPhysicalUnits(const LatticeSpeed& v) const;
 
         /**
          * Convert stress from physical to lattice units, using any rank of tensor
@@ -78,7 +84,7 @@ namespace hemelb
 
         PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
         {
-          return static_cast<double>(time_step) * simulationState->GetTimeStepLength();
+          return static_cast<double>(time_step) * timestepTime;
         }
 
         /**
@@ -100,8 +106,6 @@ namespace hemelb
         }
 
       private:
-        lb::LbmParameters* lbmParameters;
-        lb::SimulationState* simulationState;
         PhysicalDistance voxelSize; //!< Lattice displacement in physical units.
         PhysicalTime timestepTime;
         PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.

@@ -108,13 +108,13 @@ namespace hemelb
      * HEMELB_WALL_BOUNDARY
      */
     /**
-     * The f-interpolation boundary condition.
+     * The Bouzidi-Firdaous-Lallemand interpolation-based boundary condition.
      */
     template<class Collision>
-    class FINTERPOLATION
+    class BFL
     {
       public:
-        typedef streamers::FInterpolation<Collision> Type;
+        typedef typename streamers::BouzidiFirdaousLallemand<Collision>::Type Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
@@ -123,7 +123,7 @@ namespace hemelb
     class GZS
     {
       public:
-        typedef streamers::GuoZhengShi<Collision> Type;
+        typedef typename streamers::GuoZhengShi<Collision>::Type Type;
     };
     /**
      * The simple bounce back boundary condition.
@@ -132,7 +132,7 @@ namespace hemelb
     class SIMPLEBOUNCEBACK
     {
       public:
-        typedef streamers::SimpleBounceBack<Collision> Type;
+        typedef typename streamers::SimpleBounceBack<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -142,6 +142,90 @@ namespace hemelb
     {
       public:
         typedef streamers::JunkYang<Collision> Type;
+    };
+
+    /**
+     * The following classes have names corresponding to the options given in the build system for
+     * HEMELB_IOLET_BOUNDARY
+     */
+
+    /**
+     * Our zeroth-order phantom site BC for iolets
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREIOLET
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIolet<Collision>::Type Type;
+    };
+    /**
+     * The inlet/outlet condition based on Ladd's modified bounce-back on
+     * links.
+     */
+    template<class Collision>
+    struct LADDIOLET
+    {
+        typedef typename streamers::LaddIolet<Collision>::Type Type;
+    };
+
+    /**
+     * The following classes have names corresponding to the options given in the build system for
+     * HEMELB_WALL_IOLET_BOUNDARY
+     */
+    /**
+     * Nash in/outlet + SBB
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSURESBB
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletSBB<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + SBB
+     */
+    template<class Collision>
+    struct LADDIOLETSBB
+    {
+        typedef typename streamers::LaddIoletSBB<Collision>::Type Type;
+    };
+
+    /**
+     * Nash in/outlet + BFL
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREBFL
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletBFL<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + BFL
+     */
+    template<class Collision>
+    struct LADDIOLETBFL
+    {
+        typedef typename streamers::LaddIoletBFL<Collision>::Type Type;
+    };
+    /**
+     * Nash in/outlet + GZS
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREGZS
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletGZS<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + GZS
+     */
+    template<class Collision>
+    struct LADDIOLETGZS
+    {
+        typedef typename streamers::LaddIoletGZS<Collision>::Type Type;
     };
   }
 }

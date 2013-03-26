@@ -7,11 +7,11 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_STREAMERS_GUOZHENGSHI_H
-#define HEMELB_LB_STREAMERS_GUOZHENGSHI_H
+#ifndef HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
+#define HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H
 
+#include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
 #include "lb/streamers/StreamerTypeFactory.h"
-#include "lb/streamers/GuoZhengShiDelegate.h"
 
 namespace hemelb
 {
@@ -21,13 +21,13 @@ namespace hemelb
     {
 
       template<typename CollisionImpl>
-      struct GuoZhengShi
+      struct BouzidiFirdaousLallemand
       {
-          typedef WallStreamerTypeFactory<CollisionImpl, GuoZhengShiDelegate<CollisionImpl> > Type;
+          typedef WallStreamerTypeFactory<CollisionImpl, BouzidiFirdaousLallemandDelegate<CollisionImpl> > Type;
       };
 
     }
   }
 }
 
-#endif /* HEMELB_LB_STREAMERS_GUOZHENGSHI_H */
+#endif /* HEMELB_LB_STREAMERS_BOUZIDIFIRDAOUSLALLEMAND_H */
