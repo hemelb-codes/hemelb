@@ -27,7 +27,7 @@ namespace hemelb
           inlet->SetPressureMean(80.0);
           inlet->SetPhase(PI);
           inlet->SetPeriod(60.0/70.0);
-          inlet->SetNormal(util::Vector3D<float>(-3,4,-9));
+          inlet->SetNormal(util::Vector3D<Dimensionless>(-3,4,-9));
 
           inlets.push_back(inlet);
 
@@ -35,7 +35,7 @@ namespace hemelb
           outlet->SetPressureAmp(0.0);
           outlet->SetPressureMean(80.0);
           outlet->SetPhase(0.0);
-          outlet->SetNormal(util::Vector3D<float>(2,-1,4));
+          outlet->SetNormal(util::Vector3D<Dimensionless>(2,-1,4));
 
           outlets.push_back(outlet);
 

@@ -33,10 +33,9 @@ namespace hemelb
            */
           class InOutLetTests : public helpers::FolderTestFixture
           {
-            CPPUNIT_TEST_SUITE(InOutLetTests);
-                CPPUNIT_TEST(TestCosineConstruct);
-                CPPUNIT_TEST(TestFileConstruct);
-              CPPUNIT_TEST_SUITE_END();
+              CPPUNIT_TEST_SUITE( InOutLetTests);
+              CPPUNIT_TEST( TestCosineConstruct);
+              CPPUNIT_TEST( TestFileConstruct);CPPUNIT_TEST_SUITE_END();
             public:
               void setUp()
               {
@@ -53,14 +52,15 @@ namespace hemelb
                 // Bootstrap ourselves a in inoutlet, by loading config.xml.
                 configuration::SimConfig *config =
                     configuration::SimConfig::Load(Resource("config.xml").Path().c_str());
-                cosine = static_cast<InOutLetCosine*>(config->GetInlets()[0]);
+                cosine = static_cast<InOutLetCosine*> (config->GetInlets()[0]);
 
                 // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
                 lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
-                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
+                util::UnitConverter converter = util::UnitConverter(state.GetTimeStepLength(),
+                                                                    voxelSize,
+                                                                    PhysicalPosition());
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 cosine->Initialise(&converter);
                 cosine->Reset(state);
@@ -77,14 +77,14 @@ namespace hemelb
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPressureAmp());
                 CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPhase());
                 CPPUNIT_ASSERT_EQUAL(0.6, cosine->GetPeriod());
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
+                CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
                                      cosine->GetPosition());
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), cosine->GetNormal());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), cosine->GetNormal());
 
                 // Set an approriate target value for the density, the maximum.
                 double temp = state.GetTimeStepLength() / voxelSize;
-                double targetMeanDensity = 1
-                    + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                double targetMeanDensity = 1 + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2
+                    * BLOOD_DENSITY_Kg_per_m3);
 
                 // Check that the cosine formula correctly produces mean value
                 CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensityMean());
@@ -105,38 +105,73 @@ namespace hemelb
                 lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
                                                                 config->GetTotalTimeSteps());
                 double voxelSize = 0.0001;
-                lb::LbmParameters lbmParams = lb::LbmParameters(state.GetTimeStepLength(), voxelSize);
-                util::UnitConverter converter = util::UnitConverter(&lbmParams, &state, voxelSize, PhysicalPosition());
-                file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
+                util::UnitConverter converter = util::UnitConverter(config->GetTimeStepLength(),
+                                                                    voxelSize,
+                                                                    PhysicalPosition());
+                file = static_cast<InOutLetFile*> (config->GetInlets()[0]);
                 // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
                 file->Initialise(&converter);
                 file->Reset(state);
 
-
                 // Ok, now we have an inlet, check the values are right.
-                CPPUNIT_ASSERT_EQUAL(std::string("./iolet.txt"),file->GetFilePath());
+                CPPUNIT_ASSERT_EQUAL(std::string("./iolet.txt"), file->GetFilePath());
                 CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
                 CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(-1.66017717834e-05,-4.58437586355e-05,-0.05),
+                CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
                                      file->GetPosition());
-                CPPUNIT_ASSERT_EQUAL(util::Vector3D<float>(0.0,0.0,1.0), file->GetNormal());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), file->GetNormal());
 
                 // Set some target values for the density at various times.
                 double temp = state.GetTimeStepLength() / voxelSize;
-                double targetStartDensity = 1
-                    + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
-                double targetMidDensity = 1
-                    + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+                double targetStartDensity = 1 + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2
+                    * BLOOD_DENSITY_Kg_per_m3);
+                double targetMidDensity = 1 + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp / (Cs2
+                    * BLOOD_DENSITY_Kg_per_m3);
 
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(), 1e-6);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensity(0), 1e-6);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity, file->GetDensity(state.GetTotalTimeSteps()/2), 1e-6);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMidDensity, file->GetDensity(state.GetTotalTimeSteps() / 2), 1e-6);
                 FolderTestFixture::tearDown();
+              }
+
+              void TestParabolicVelocityConstruct()
+              {
+
+                // Bootstrap ourselves a in inoutlet, by loading config.xml.
+                configuration::SimConfig *config =
+                    configuration::SimConfig::Load(Resource("config.xml").Path().c_str());
+                p_vel = static_cast<InOutLetParabolicVelocity*> (config->GetInlets()[0]);
+
+                // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
+                lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
+                                                                config->GetTotalTimeSteps());
+                double voxelSize = 0.0001;
+                util::UnitConverter converter = util::UnitConverter(config->GetTimeStepLength(),
+                                                                    voxelSize,
+                                                                    PhysicalPosition());
+                // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
+                p_vel->Initialise(&converter);
+                p_vel->Reset(state);
+
+                // Check the IOLET contains the values expected given the file.
+                /*
+                 * <inlet>
+                 <velocity radius="0.005" maximum="0.10"/>
+                 <normal x="0.0" y="0.0" z="1.0" />
+                 <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
+                 </inlet>
+                 */
+                CPPUNIT_ASSERT_EQUAL(0.005, p_vel->GetRadius());
+                CPPUNIT_ASSERT_EQUAL(0.10, p_vel->GetMaxSpeed());
+                CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
+                                     p_vel->GetPosition());
+                CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), p_vel->GetNormal());
               }
               InOutLetCosine *cosine;
               InOutLetFile *file;
+              InOutLetParabolicVelocity* p_vel;
           };
-          CPPUNIT_TEST_SUITE_REGISTRATION(InOutLetTests);
+          CPPUNIT_TEST_SUITE_REGISTRATION( InOutLetTests);
         }
       }
     }

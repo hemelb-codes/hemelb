@@ -13,6 +13,7 @@
 #include "resources/Resource.h"
 #include "unittests/multiscale/MockIntercommunicator.h"
 #include "multiscale/MultiscaleSimulationMaster.h"
+#include "unittests/helpers/LaddFail.h"
 
 #include <iostream>
 
@@ -184,6 +185,8 @@ namespace hemelb
           }
           void TestCHemeRun()
           {
+            // TODO: This test is fatal if run with LADDIOLET. See ticket #605.
+            LADD_FAIL();
             int argc;
             const char* argv[7];
             argc = 7;

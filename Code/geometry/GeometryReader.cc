@@ -207,32 +207,33 @@ namespace hemelb
       return geometry;
     }
 
+    char* GeometryReader::ReadOnAllTasks(unsigned nBytes)
+    {
+      char* buffer = new char[nBytes];
+      if (currentComms.GetRank() == HEADER_READING_RANK)
+      {
+        MPI_File_read(file, buffer, nBytes, MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
+      }
+
+      MPI_Bcast(buffer,
+                nBytes,
+                MpiDataType<char> (),
+                HEADER_READING_RANK,
+                currentComms.GetCommunicator());
+      return buffer;
+    }
+
     /**
      * Read in the section at the beginning of the config file.
      */
     Geometry GeometryReader::ReadPreamble()
     {
       const unsigned preambleBytes = io::formats::geometry::PreambleLength;
-
-      // Read in the file preamble into a buffer. We read this on a single core then broadcast it.
-      // This has proven to be more efficient than reading in on every core (even using a collective
-      // read).
-      char preambleBuffer[preambleBytes];
-
-      if (currentComms.GetRank() == HEADER_READING_RANK)
-      {
-        MPI_File_read(file, preambleBuffer, preambleBytes, MpiDataType(preambleBuffer[0]), MPI_STATUS_IGNORE);
-      }
-
-      MPI_Bcast(preambleBuffer,
-                preambleBytes,
-                MpiDataType<char>(),
-                HEADER_READING_RANK,
-                currentComms.GetCommunicator());
+      char* preambleBuffer = ReadOnAllTasks(preambleBytes);
 
       // Create an Xdr translator based on the read-in data.
-      hemelb::io::writers::xdr::XdrReader preambleReader = hemelb::io::writers::xdr::XdrMemReader(preambleBuffer,
-                                                                                                  preambleBytes);
+      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(preambleBuffer,
+                                                                                  preambleBytes);
 
       unsigned hlbMagicNumber, gmyMagicNumber, version;
       // Read in housekeeping values
@@ -288,6 +289,8 @@ namespace hemelb
       unsigned paddingValue;
       preambleReader.readUnsignedInt(paddingValue);
 
+      delete[] preambleBuffer;
+
       return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize, voxelSize, origin);
     }
 
@@ -300,19 +303,7 @@ namespace hemelb
     void GeometryReader::ReadHeader(site_t blockCount)
     {
       site_t headerByteCount = GetHeaderLength(blockCount);
-      // Allocate a buffer to read into, then do the reading.
-      char* headerBuffer = new char[headerByteCount];
-
-      if (currentComms.GetRank() == HEADER_READING_RANK)
-      {
-        MPI_File_read(file, headerBuffer, (int) headerByteCount, MpiDataType(headerBuffer[0]), MPI_STATUS_IGNORE);
-      }
-
-      MPI_Bcast(headerBuffer,
-                (int) headerByteCount,
-                MpiDataType<char>(),
-                HEADER_READING_RANK,
-                currentComms.GetCommunicator());
+      char* headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::writers::xdr::XdrReader preambleReader =

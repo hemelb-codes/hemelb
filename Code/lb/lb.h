@@ -43,8 +43,10 @@ namespace hemelb
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
         // Use the wall boundary condition specified through the build system.
         typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
-        typedef streamers::RegularisedIolet<collisions::Normal<LB_KERNEL> > tInletOutletCollision;
-        typedef streamers::NashBB<collisions::Normal<LB_KERNEL> >
+        // Use the in-/out-let BC specified by the build system
+        typedef typename HEMELB_IOLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletOutletCollision;
+        // And again but for sites that are both iolet and wall
+        typedef typename HEMELB_WALL_IOLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type
             tInletOutletWallCollision;
 
       public:

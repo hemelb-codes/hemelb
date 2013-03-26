@@ -11,3 +11,4 @@ $run_prefix
 rm -rf results
 $run_command $install_path/bin/hemelb -in $regression_test_path/config.xml -out $job_results/results -i $images -ss $steering
 $run_command_one_proc $regression_test_path/ImageComparison $regression_test_path/CleanImages results/Images
+$run_command_one_proc $regression_test_path/NumericalComparison $regression_test_path/CleanExtracted results/Extracted
