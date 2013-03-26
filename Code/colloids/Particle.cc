@@ -126,14 +126,14 @@ namespace hemelb
           particleId, globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
-    const DimensionlessQuantity Particle::GetViscosity() const
+    const Dimensionless Particle::GetViscosity() const
     {
       // get fluid viscosity
       //return BLOOD_VISCOSITY_Pa_s;
       return (lbmParams->GetTau() - 0.5) * Cs2 * 1.0/*timestep*/ * 1.0/*density*/;
     }
 
-    const DimensionlessQuantity Particle::CalculateDragCoefficient() const
+    const Dimensionless Particle::CalculateDragCoefficient() const
     {
       // calculate the drag due to the fluid for this particle
       return (largeRadius_ah - smallRadius_a0)
@@ -156,9 +156,9 @@ namespace hemelb
     }
 
     /** modified dirac delta function according to Peskin */
-    const DimensionlessQuantity diracOperation(const LatticePosition& relativePosition)
+    const Dimensionless diracOperation(const LatticePosition& relativePosition)
     {
-      DimensionlessQuantity delta = 1.0;
+      Dimensionless delta = 1.0;
       for (int xyz=0;xyz<3;xyz++)
       {
         const LatticeDistance rmod = fabs(relativePosition[xyz]);

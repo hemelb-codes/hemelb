@@ -38,11 +38,11 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE( StreamerTests);
           CPPUNIT_TEST( TestSimpleCollideAndStream);
-          CPPUNIT_TEST( TestFInterpolation);
+          CPPUNIT_TEST( TestBouzidiFirdaousLallemand);
           CPPUNIT_TEST( TestSimpleBounceBack);
           CPPUNIT_TEST( TestGuoZhengShi);
-          CPPUNIT_TEST( TestRegularisedIolet);
-          CPPUNIT_TEST( TestNashBB);
+          CPPUNIT_TEST( TestNashZerothOrderPressureIolet);
+          CPPUNIT_TEST( TestNashZerothOrderPressureBB);
           CPPUNIT_TEST( TestJunkYangEquivalentToBounceBack);CPPUNIT_TEST_SUITE_END();
         public:
 
@@ -82,7 +82,7 @@ namespace hemelb
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
             {
-              geometry::Site<geometry::LatticeData> streamedSite = latDat->GetSite(streamedToSite);
+              geometry::Site < geometry::LatticeData > streamedSite = latDat->GetSite(streamedToSite);
 
               distribn_t* streamedToFNew = latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * streamedToSite);
 
@@ -120,21 +120,17 @@ namespace hemelb
             }
           }
 
-          void TestFInterpolation()
+          void TestBouzidiFirdaousLallemand()
           {
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
-            lb::streamers::FInterpolation<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                fInterpolation(initParams);
+            lb::streamers::BouzidiFirdaousLallemand<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
+                bfl(initParams);
 
-            fInterpolation.StreamAndCollide<false> (0,
-                                                    latDat->GetLocalFluidSiteCount(),
-                                                    lbmParams,
-                                                    latDat,
-                                                    *propertyCache);
-            fInterpolation.PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
+            bfl.StreamAndCollide<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
+            bfl.PostStep<false> (0, latDat->GetLocalFluidSiteCount(), lbmParams, latDat, *propertyCache);
 
             // Now, go over each lattice site and check each value in f_new is correct.
             for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount(); ++streamedToSite)
@@ -149,7 +145,7 @@ namespace hemelb
 
                 site_t streamerIndex = streamedSite.GetStreamedIndex<lb::lattices::D3Q15> (oppDirection);
 
-                geometry::Site<geometry::LatticeData> streamerSite = latDat->GetSite(streamerIndex);
+                geometry::Site < geometry::LatticeData > streamerSite = latDat->GetSite(streamerIndex);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
                 if (streamerIndex >= 0 && streamerIndex < (lb::lattices::D3Q15::NUMVECTORS
@@ -192,7 +188,7 @@ namespace hemelb
                                              + message.str(),
                                          streamedSite.GetWallDistance<lb::lattices::D3Q15> (oppDirection) != -1.0);
 
-                  // To verify the operation of the f-interpolation boundary condition, we'll need:
+                  // To verify the operation of the BFL boundary condition, we'll need:
                   // - the distance to the wall * 2
                   distribn_t twoQ = 2.0 * streamedSite.GetWallDistance<lb::lattices::D3Q15> (oppDirection);
 
@@ -216,7 +212,7 @@ namespace hemelb
                   site_t awayFromWallIndex = streamedSite.GetStreamedIndex<lb::lattices::D3Q15> (streamedDirection)
                       / lb::lattices::D3Q15::NUMVECTORS;
 
-                  // If there's a valid index in that direction, use f-interpolation
+                  // If there's a valid index in that direction, use BFL
                   if (awayFromWallIndex >= 0 && awayFromWallIndex < latDat->GetLocalFluidSiteCount())
                   {
                     const geometry::Site<geometry::LatticeData> awayFromWallSite = latDat->GetSite(awayFromWallIndex);
@@ -245,7 +241,8 @@ namespace hemelb
                       : (oppWallOld + (1. / twoQ) * (toWallOld - oppWallOld));
 
                     std::stringstream msg(std::stringstream::in);
-                    msg << "FInterpolation, PostStep: site " << streamedToSite << " direction " << streamedDirection;
+                    msg << "BouzidiFirdaousLallemand, PostStep: site " << streamedToSite << " direction "
+                        << streamedDirection;
 
                     // Assert that this is the case.
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
@@ -259,8 +256,8 @@ namespace hemelb
                   else
                   {
                     std::stringstream msg(std::stringstream::in);
-                    msg << "FInterpolation, PostStep by simple bounce-back: site " << streamedToSite << " direction "
-                        << streamedDirection;
+                    msg << "BouzidiFirdaousLallemand, PostStep by simple bounce-back: site " << streamedToSite
+                        << " direction " << streamedDirection;
 
                     CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg.str(),
                                                          hydroVars.GetFPostCollision()[oppDirection],
@@ -300,7 +297,7 @@ namespace hemelb
             offset += latDat->GetMidDomainCollisionCount(0);
 
             // Wall sites use simple bounce back
-            lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 simpleBounceBack(initParams);
 
             simpleBounceBack.StreamAndCollide<false> (offset,
@@ -392,7 +389,7 @@ namespace hemelb
 
           void TestGuoZhengShi()
           {
-            lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
+            lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
                 guoZhengShi(initParams);
 
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)
@@ -662,7 +659,7 @@ namespace hemelb
             }
           }
 
-          void TestRegularisedIolet()
+          void TestNashZerothOrderPressureIolet()
           {
             lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
@@ -672,8 +669,8 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::RegularisedIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                regularisedIolet(initParams);
+            lb::streamers::NashZerothOrderPressureIolet<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
+                ioletCollider(initParams);
 
             for (double assignedWallDistance = 0.4; assignedWallDistance < 1.0; assignedWallDistance += 0.5)
             {
@@ -698,7 +695,7 @@ namespace hemelb
               latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
-              regularisedIolet.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+              ioletCollider.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -762,7 +759,7 @@ namespace hemelb
             }
           }
 
-          void TestNashBB()
+          void TestNashZerothOrderPressureBB()
           {
             lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
@@ -772,8 +769,8 @@ namespace hemelb
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::streamers::NashBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >
-                regularisedIolet(initParams);
+            lb::streamers::NashZerothOrderPressureIoletSBB<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type
+                ioletCollider(initParams);
 
             for (double assignedIoletDistance = 0.4; assignedIoletDistance < 1.0; assignedIoletDistance += 0.5)
             {
@@ -800,7 +797,7 @@ namespace hemelb
               latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
-              regularisedIolet.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
+              ioletCollider.StreamAndCollide<false> (chosenSite, 1, lbmParams, latDat, *propertyCache);
 
               // Check each streamed direction.
               for (Direction streamedDirection = 0; streamedDirection < lb::lattices::D3Q15::NUMVECTORS; ++streamedDirection)
@@ -836,7 +833,8 @@ namespace hemelb
                 // Check the case by a wall.
                 if (streamer.HasBoundary(streamedDirection))
                 {
-                  distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite + inverseDirection);
+                  distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS * chosenSite
+                      + inverseDirection);
 
                   CPPUNIT_ASSERT_DOUBLES_EQUAL(streamerHydroVars.GetFPostCollision()[streamedDirection],
                                                streamedToFNew,

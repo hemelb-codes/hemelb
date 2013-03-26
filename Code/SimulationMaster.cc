@@ -179,8 +179,7 @@ void SimulationMaster::Initialise()
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
-  unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
-                                                  simulationState,
+  unitConvertor = new hemelb::util::UnitConverter(simulationState->GetTimeStepLength(),
                                                   latticeData->GetVoxelSize(),
                                                   latticeData->GetOrigin());
 
