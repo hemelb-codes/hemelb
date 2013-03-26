@@ -52,8 +52,20 @@ public:
 		this->Iolets = std::vector<Iolet*>(iv);
 	}
 
+	/**
+	 * This method implements the algorithm used to approximate the wall normal at a given
+	 * fluid site. This is done based on the normal of the triangles intersected by
+	 * each lattice link and the distance to those intersections.
+	 *
+	 * Current implementation does a weighted sum of the wall normals. The weights are the
+	 * reciprocal of cut distances along each link.
+	 *
+	 * @param site Site object with the data required by the algorithm.
+	 */
+	void ComputeAveragedNormal(Site& site) const;
+
 protected:
-	virtual void ComputeBounds(double []) const = 0;
+	virtual void ComputeBounds(double[]) const = 0;
 	virtual void PreExecute(void);
 	virtual void ClassifySite(Site& site) = 0;
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
@@ -62,7 +74,7 @@ protected:
 	double VoxelSizeMetres;
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
-    virtual int BlockInsideOrOutsideSurface(const Block &block) = 0;
+	virtual int BlockInsideOrOutsideSurface(const Block &block) = 0;
 };
 
 #endif // HEMELBSETUPTOOL_GEOMETRYGENERATOR_H

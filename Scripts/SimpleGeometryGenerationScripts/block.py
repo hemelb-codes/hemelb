@@ -7,12 +7,11 @@
 # specifically made by you with University College London.
 # 
 
-from functools import reduce
 from Site import Site
 
 class Block(object):
-    def __init__(self,sites):
-        self.sites=sites
+    def __init__(self, sites):
+        self.sites = sites
 
     def get_number_of_fluid_sites(self):
         n = 0

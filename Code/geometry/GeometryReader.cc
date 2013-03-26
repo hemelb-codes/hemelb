@@ -34,7 +34,7 @@ namespace hemelb
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings) :
-      latticeInfo(latticeInfo), timings(atimings)
+        latticeInfo(latticeInfo), timings(atimings)
     {
       // Get the group of all procs.
       MPI_Group worldGroup;
@@ -95,13 +95,13 @@ namespace hemelb
       std::string buffering = "collective_buffering";
       std::string bufferingValue = "true";
 
-      MPI_Info_set(fileInfo, const_cast<char*> (accessStyle.c_str()), const_cast<char*> (accessStyleValue.c_str()));
-      MPI_Info_set(fileInfo, const_cast<char*> (buffering.c_str()), const_cast<char*> (bufferingValue.c_str()));
+      MPI_Info_set(fileInfo, const_cast<char*>(accessStyle.c_str()), const_cast<char*>(accessStyleValue.c_str()));
+      MPI_Info_set(fileInfo, const_cast<char*>(buffering.c_str()), const_cast<char*>(bufferingValue.c_str()));
 
       // Open the file.
       // Stupid C-MPI lack of const-correctness
       int error = MPI_File_open(MPI_COMM_WORLD,
-                                const_cast<char *> (dataFilePath.c_str()),
+                                const_cast<char *>(dataFilePath.c_str()),
                                 MPI_MODE_RDONLY,
                                 fileInfo,
                                 &file);
@@ -118,11 +118,11 @@ namespace hemelb
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
-      fflush( NULL);
+      fflush(NULL);
 
       // Set the view to the file.
       std::string mode = "native";
-      MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, const_cast<char*> (mode.c_str()), fileInfo);
+      MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, const_cast<char*>(mode.c_str()), fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
@@ -167,7 +167,7 @@ namespace hemelb
       {
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
-        MPI_File_open(topologyCommunicator, const_cast<char*> (dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
+        MPI_File_open(topologyCommunicator, const_cast<char*>(dataFilePath.c_str()), MPI_MODE_RDONLY, fileInfo, &file);
 
         currentComms = topologyComms;
 
@@ -259,7 +259,13 @@ namespace hemelb
         exit(1);
       }
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Geometry file version: %d", version);
+      if (version != io::formats::geometry::VersionNumber)
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("Geometry file version is %d. Currently supported version is %d.",
+                                                         version,
+                                                         io::formats::geometry::VersionNumber);
+        exit(1);
+      }
 
       // Variables we'll read.
       // We use temporary vars here, as they must be the same size as the type in the file
@@ -416,8 +422,8 @@ namespace hemelb
                          MPI_STATUS_IGNORE);
 
         // Spread it.
-        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
-            != procsWantingThisBlock.end(); receiver++)
+        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
+            receiver != procsWantingThisBlock.end(); receiver++)
         {
           if (*receiver != currentComms.GetRank())
           {
@@ -495,7 +501,7 @@ namespace hemelb
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*> (const_cast<char*> (&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
@@ -504,7 +510,7 @@ namespace hemelb
         std::exit(1);
       }
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*> (&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
@@ -547,6 +553,7 @@ namespace hemelb
         log::Logger::Log<log::Error, log::OnePerCore>("Error reading site type");
       }
 
+      /// @todo #598 use constant in hemelb::io::formats::geometry
       GeometrySite readInSite(isFluid != 0);
 
       // If solid, there's nothing more to do.
@@ -558,6 +565,8 @@ namespace hemelb
       const io::formats::geometry::DisplacementVector& neighbourhood = io::formats::geometry::Get().GetNeighbourhood();
       // Prepare the links array to have enough space.
       readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
+
+      bool isEdgeSite = false;
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -572,6 +581,7 @@ namespace hemelb
         // walls have a floating-point distance to the wall...
         if (link.type == GeometrySiteLink::WALL_INTERSECTION)
         {
+          isEdgeSite = true;
           float distance;
           reader.readFloat(distance);
           link.distanceToIntersection = distance;
@@ -592,7 +602,8 @@ namespace hemelb
         // Now, attempt to match the direction read from the local neighbourhood to one in the
         // lattice being used for simulation. If a match is found, assign the link to the read
         // site.
-        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors(); usedLatticeDirection++)
+        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors();
+            usedLatticeDirection++)
         {
           if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
           {
@@ -601,6 +612,28 @@ namespace hemelb
             break;
           }
         }
+      }
+
+      unsigned normalAvailable;
+      reader.readUnsignedInt(normalAvailable);
+      readInSite.wallNormalAvailable = (normalAvailable == io::formats::geometry::WALL_NORMAL_AVAILABLE);
+
+      if (readInSite.wallNormalAvailable != isEdgeSite)
+      {
+        std::string msg = isEdgeSite ?
+          "edge fluid site without" :
+          "bulk fluid site with";
+
+        log::Logger::Log<log::Critical, log::OnePerCore>("Malformed GMY file, " + msg
+            + " a defined wall normal currently not allowed.");
+        exit(1);
+      }
+
+      if (readInSite.wallNormalAvailable)
+      {
+        reader.readFloat(readInSite.wallNormal[0]);
+        reader.readFloat(readInSite.wallNormal[1]);
+        reader.readFloat(readInSite.wallNormal[2]);
       }
 
       return readInSite;
@@ -687,8 +720,8 @@ namespace hemelb
 
         for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
         {
-          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyComms.GetRank()) && (myProcForSite[site]
-              != ConvertTopologyRankToGlobalRank(topologyComms.GetRank())))
+          if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(topologyComms.GetRank())
+              && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(topologyComms.GetRank())))
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
                                                              site,
@@ -716,8 +749,8 @@ namespace hemelb
 
             for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); ++direction)
             {
-              if (dummySiteData[site * latticeInfo.GetNumVectors() + direction] != siteDataRecv[site
-                  * latticeInfo.GetNumVectors() + direction])
+              if (dummySiteData[site * latticeInfo.GetNumVectors() + direction]
+                  != siteDataRecv[site * latticeInfo.GetNumVectors() + direction])
               {
                 log::Logger::Log<log::Critical, log::OnePerCore>("Different link type was found for site %li, link %i on block %li. One: %li, Two: %li .",
                                                                  site,
@@ -757,14 +790,14 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI <= (blockI + 1))
-                && (neighI < geometry.GetBlockDimensions().x); ++neighI)
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
+                (neighI <= (blockI + 1)) && (neighI < geometry.GetBlockDimensions().x); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ <= (blockJ + 1))
-                  && (neighJ < geometry.GetBlockDimensions().y); ++neighJ)
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
+                  (neighJ <= (blockJ + 1)) && (neighJ < geometry.GetBlockDimensions().y); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK <= (blockK + 1))
-                    && (neighK < geometry.GetBlockDimensions().z); ++neighK)
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
+                    (neighK <= (blockK + 1)) && (neighK < geometry.GetBlockDimensions().z); ++neighK)
                 {
                   site_t lNeighId = geometry.GetBlockIdFromBlockCoordinates(neighI, neighJ, neighK);
 
@@ -917,9 +950,9 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyComms.GetRank())
-        ? topologyRankIn
-        : (topologyRankIn + 1);
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyComms.GetRank()) ?
+        topologyRankIn :
+        (topologyRankIn + 1);
     }
 
     bool GeometryReader::ShouldValidate() const

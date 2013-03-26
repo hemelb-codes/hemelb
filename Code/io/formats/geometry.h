@@ -58,7 +58,7 @@ namespace hemelb
            */
           enum
           {
-            VersionNumber = 2
+            VersionNumber = 3
           //!< VersionNumber
           };
 
@@ -67,21 +67,31 @@ namespace hemelb
            */
           enum SiteType
           {
-            SOLID = 0,//!< SOLID
+            SOLID = 0, //!< SOLID
             FLUID = 1
           //!< FLUID
           };
 
           /**
-           * Type codes for the sort of boundarys intersected by a link.
+           * Type codes for the sort of boundaries intersected by a link.
            */
           enum CutType
           {
             CUT_NONE = 0, //!< No intersection
             CUT_WALL = 1, //!< Intersect a wall
-            CUT_INLET = 2,//!< Intersect an inlet
+            CUT_INLET = 2, //!< Intersect an inlet
             CUT_OUTLET = 3
           //!< Intersect an outlet
+          };
+
+          /**
+           * Type codes defining wall normal availability
+           */
+          enum WallNormalAvailability
+          {
+            WALL_NORMAL_NOT_AVAILABLE = 0, //!< WALL_NORMAL_NOT_AVAILABLE
+            WALL_NORMAL_AVAILABLE = 1
+          //!< WALL_NORMAL_AVAILABLE
           };
 
           /**
@@ -128,10 +138,12 @@ namespace hemelb
            *    * 1 uint for the cut type
            *    * 1 uint for the inlet/outlet ID
            *    * 1 float for the cut distance
+           *  * 1 uint for the wall normal availability
+           *  * 3 floats for the wall normal
            */
           enum
           {
-            MaxFluidSiteRecordLength = 4 + geometry::NumberOfDisplacements * (4 + 4 + 4)
+            MaxFluidSiteRecordLength = 4 + geometry::NumberOfDisplacements * (4 + 4 + 4) + 4 + 3 * 4
           };
           /**
            * Maximum length of a solid site's data. (In fact, this is THE

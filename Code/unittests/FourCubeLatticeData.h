@@ -14,6 +14,7 @@
 #include "units.h"
 #include "geometry/LatticeData.h"
 #include "io/formats/geometry.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -23,7 +24,7 @@ namespace hemelb
     {
       public:
         TestSiteData(geometry::SiteData& siteData) :
-          geometry::SiteData(siteData)
+            geometry::SiteData(siteData)
         {
 
         }
@@ -118,6 +119,33 @@ namespace hemelb
                   }
 
                   site.links.push_back(link);
+
+                }
+
+                /*
+                 * For sites at the intersection of two cube faces considered wall (i.e. perpendicular to the x or y
+                 * axes), we arbitrarily choose the normal to lie along the y axis. The logic below must be consistent
+                 * with Scripts/SimpleGeometryGenerationScripts/four_cube.py
+                 */
+                if (i == 0)
+                {
+                  site.wallNormalAvailable = true;
+                  site.wallNormal = util::Vector3D<float>(-1, 0, 0);
+                }
+                if (i == sitesPerBlockUnit - 1)
+                {
+                  site.wallNormalAvailable = true;
+                  site.wallNormal = util::Vector3D<float>(1, 0, 0);
+                }
+                if (j == 0)
+                {
+                  site.wallNormalAvailable = true;
+                  site.wallNormal = util::Vector3D<float>(0, -1, 0);
+                }
+                if (j == sitesPerBlockUnit - 1)
+                {
+                  site.wallNormalAvailable = true;
+                  site.wallNormal = util::Vector3D<float>(0, 1, 0);
                 }
               }
             }
@@ -191,7 +219,7 @@ namespace hemelb
         template<class LatticeType>
         void SetFOld(site_t site, distribn_t* fOldIn)
         {
-          for(Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+          for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
           {
             *GetFOld(site * LatticeType::NUMVECTORS + direction) = fOldIn[direction];
           }
@@ -199,13 +227,13 @@ namespace hemelb
 
       protected:
         FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
+            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
         }
 
         FourCubeLatticeData() :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
+            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
         {
 
         }
