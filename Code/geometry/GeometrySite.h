@@ -14,6 +14,7 @@
 #include "constants.h"
 #include "units.h"
 #include "geometry/GeometrySiteLink.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -33,14 +34,8 @@ namespace hemelb
         GeometrySite(bool siteIsFluid) :
             targetProcessor(siteIsFluid ?
               -1 :
-              BIG_NUMBER2), isFluid(siteIsFluid)
+              BIG_NUMBER2), isFluid(siteIsFluid), wallNormalAvailable(false)
         {
-        }
-
-        GeometrySite(const GeometrySite& other) :
-            targetProcessor(other.targetProcessor), isFluid(other.isFluid), links(other.links)
-        {
-
         }
 
         //! Processor on which to perform lattice-Boltzmann for the site.
@@ -53,6 +48,12 @@ namespace hemelb
         //! A vector of the link data for each direction in the lattice currently being used
         //! (NOT necessarily the same as the lattice used by the geometry file).
         std::vector<GeometrySiteLink> links;
+
+        //! Whether there's a approximation of the wall normal available in this fluid site.
+        bool wallNormalAvailable;
+
+        //! Wall normal approximation at the current fluid site.
+        util::Vector3D<float> wallNormal;
     };
   }
 }

@@ -73,6 +73,8 @@ namespace hemelb
             {
               for (site_t j = 0; j < 4; j++)
               {
+                bool isEdgeSite = (i == 0 || i == 3 || j == 0 || j == 3);
+
                 for (site_t k = 0; k < 4; k++)
                 {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
@@ -85,6 +87,17 @@ namespace hemelb
 
                   CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetIntersectionData(),
                                        siteData.GetIntersectionData());
+
+                  CPPUNIT_ASSERT_EQUAL(isEdgeSite, readResult.Blocks[0].Sites[siteIndex].wallNormalAvailable);
+
+                  if (isEdgeSite)
+                  {
+                    /// @todo: #597 use CPPUNIT_ASSERT_EQUAL directly (having trouble with Vector3D templated over different types at the minute)
+                    /// CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal(), readResult.Blocks[0].Sites[siteIndex].wallNormal);
+                    bool sameNormal = (fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal()
+                        == readResult.Blocks[0].Sites[siteIndex].wallNormal);
+                    CPPUNIT_ASSERT(sameNormal);
+                  }
 
                   siteIndex++;
                 }

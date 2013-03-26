@@ -27,7 +27,7 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-class PolyDataGenerator : public GeometryGenerator {
+class PolyDataGenerator: public GeometryGenerator {
 public:
 	PolyDataGenerator();
 	virtual ~PolyDataGenerator();
@@ -55,7 +55,7 @@ public:
 	}
 
 private:
-	virtual void ComputeBounds(double []) const;
+	virtual void ComputeBounds(double[]) const;
 	virtual void PreExecute(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
