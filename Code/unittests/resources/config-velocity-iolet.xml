@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="0.2.1">
+  <simulation steps="3000" stresstype="1" step_length="0.0001"/>
+  <geometry>
+    <datafile path="./config.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <velocity radius="0.005" maximum="0.10"/>
+      <normal x="0.0" y="0.0" z="1.0" />
+      <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <velocity radius="0.005" maximum="0.10"/>
+      <normal x="0.0" y="0.0" z="-1.0" />
+      <position x="0.0" y="0.0" z="0.05" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre x="0.0" y="0.0" z="0.0" />
+    <orientation latitude="45.0" longitude="45.0" />
+    <display brightness="0.03" zoom="1.0" />
+    <range maxstress="0.1" maxvelocity="0.1" />
+  </visualisation>
+</hemelbsettings>

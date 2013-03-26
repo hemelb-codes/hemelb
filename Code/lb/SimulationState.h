@@ -10,6 +10,7 @@
 #ifndef HEMELB_LB_SIMULATIONSTATE_H
 #define HEMELB_LB_SIMULATIONSTATE_H
 
+#include "units.h"
 #include "reporting/Reportable.h"
 
 namespace hemelb

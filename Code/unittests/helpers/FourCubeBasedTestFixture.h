@@ -44,7 +44,7 @@ namespace hemelb
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
                                               latDat->GetVoxelSize());
-            unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize(), latDat->GetOrigin());
+            unitConverter = new util::UnitConverter(simState->GetTimeStepLength(), latDat->GetVoxelSize(), latDat->GetOrigin());
 
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();

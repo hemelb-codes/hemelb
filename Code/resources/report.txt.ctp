@@ -34,6 +34,8 @@ Reading group size: {{READING_GROUP_SIZE}}
 Lattice: {{LATTICE_TYPE}}
 Kernel: {{KERNEL_TYPE}}
 Wall boundary condition: {{WALL_BOUNDARY_CONDITION}}
+Iolet boundary condition: {{IOLET_BOUNDARY_CONDITION}}
+Wall/iolet boundary condition: {{WALL_IOLET_BOUNDARY_CONDITION}}
 
 Communications options:
 Point to point implementation: {{POINTPOINT_IMPLEMENTATION}}
