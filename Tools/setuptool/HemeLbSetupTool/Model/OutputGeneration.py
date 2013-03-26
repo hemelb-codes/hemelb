@@ -15,7 +15,8 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
     vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
-    vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere
+    vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere, \
+    vtkPolyDataNormals
 
 from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor
 from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
@@ -331,18 +332,17 @@ class Clipper(object):
             pdSource = capper
             continue
 
-        # If we decide again that we need normals to the surface,
-        # the following adds cell normals to the PolyData
-        # normer = vtkPolyDataNormals()
-        # normer.SetInputConnection(pdSource.GetOutputPort())
-        # normer.ComputeCellNormalsOn()
-        # normer.ComputePointNormalsOff()
-        # normer.SplittingOff()
-        # normer.ConsistencyOn()
-        # normer.AutoOrientNormalsOn()
-        # normer.NonManifoldTraversalOff()
+        # The following adds cell normals to the PolyData
+        normer = vtkPolyDataNormals()
+        normer.SetInputConnection(pdSource.GetOutputPort())
+        normer.ComputeCellNormalsOn()
+        normer.ComputePointNormalsOff()
+        normer.SplittingOff()
+        normer.ConsistencyOn()
+        normer.AutoOrientNormalsOn()
+        normer.NonManifoldTraversalOff()
 
-        return pdSource
+        return normer
 
     pass
 

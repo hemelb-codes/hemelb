@@ -18,12 +18,12 @@ class LatticeFixture(object):
     # Versioning constants
     hemelb_magic_number = 0x686c6221
     geometry_magic_number = 0x676d7904
-    hemelb_geometry_file_format_version_number = 2
+    hemelb_geometry_file_format_version_number = 3
 
     def __init__(self):
         # Assuming zero lattice site is at the origin of coordinates (0,0,0)
-        self.origin=(0.0,)*3
-        self.pack=xdrlib.Packer()
+        self.origin = (0.0,) * 3
+        self.pack = xdrlib.Packer()
 
     def write_preamble(self):
         preamble_encoder = xdrlib.Packer()
@@ -96,24 +96,31 @@ class LatticeFixture(object):
             continue
         return
     
-    def pack_site(self,site, block_encoder):
+    def pack_site(self, site, block_encoder):
         block_encoder.pack_uint(site.site_type)
         # If the site is solid, nothing else is packed. Otherwise, pack information about the links
         if site.site_type == Site.fluid_site:
             for link in site.links:
                 self.pack_link(link, block_encoder)
+            if site.normal is None:
+                block_encoder.pack_uint(0)
+            else:
+                block_encoder.pack_uint(1)
+                block_encoder.pack_float(site.normal[0])
+                block_encoder.pack_float(site.normal[1])
+                block_encoder.pack_float(site.normal[2])
 
-    def pack_link(self,link, block_encoder):
+    def pack_link(self, link, block_encoder):
         # Pack the link type and depending on it, extra information
         block_encoder.pack_uint(link.link_type)
-        if link.link_type in [Link.inlet,Link.outlet]:
+        if link.link_type in [Link.inlet, Link.outlet]:
             # An unsigned integer giving the an index to the inlet array specified in the XML Config File
             block_encoder.pack_uint(link.iolet_index)
         if link.link_type != Link.no_boundary:
             # A single precision floating point number giving the distance to the boundary, as a fraction of the lattice vector
             block_encoder.pack_float(link.wall_distance)
 
-    def write(self,filename):
+    def write(self, filename):
         self.outfile = file(filename, 'wb')
         self.write_preamble()
         self.write_dummy_header()
@@ -122,32 +129,32 @@ class LatticeFixture(object):
         self.outfile.close()
         return
     
-    lattice_directions=(
-        (-1,-1,-1),
-        (-1,-1, 0),
-        (-1,-1,+1),
-        (-1, 0,-1),
+    lattice_directions = (
+        (-1, -1, -1),
+        (-1, -1, 0),
+        (-1, -1, +1),
+        (-1, 0, -1),
         (-1, 0, 0),
-        (-1, 0,+1),
-        (-1,+1,-1),
-        (-1,+1, 0),
-        (-1,+1,+1),
-        ( 0,-1,-1),
-        ( 0,-1, 0),
-        ( 0,-1,+1),
-        ( 0, 0,-1),
+        (-1, 0, +1),
+        (-1, +1, -1),
+        (-1, +1, 0),
+        (-1, +1, +1),
+        (0, -1, -1),
+        (0, -1, 0),
+        (0, -1, +1),
+        (0, 0, -1),
         #( 0, 0, 0),
-        ( 0, 0,+1),
-        ( 0,+1,-1),
-        ( 0,+1, 0),
-        ( 0,+1,+1),
-        (+1,-1,-1),
-        (+1,-1, 0),
-        (+1,-1,+1),
-        (+1, 0,-1),
+        (0, 0, +1),
+        (0, +1, -1),
+        (0, +1, 0),
+        (0, +1, +1),
+        (+1, -1, -1),
+        (+1, -1, 0),
+        (+1, -1, +1),
+        (+1, 0, -1),
         (+1, 0, 0),
-        (+1, 0,+1),
-        (+1,+1,-1),
-        (+1,+1, 0),
-        (+1,+1,+1)
+        (+1, 0, +1),
+        (+1, +1, -1),
+        (+1, +1, 0),
+        (+1, +1, +1)
     )

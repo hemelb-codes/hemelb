@@ -50,11 +50,12 @@ public:
 private:
 	virtual void ComputeBounds(double []) const;
 	void ClassifySite(Site& site);
+	void ComputeCylinderNormalAtAPoint(Vector& wallNormal, const Vector& surfacePoint, const Vector& cylinderAxis) const;
 	CylinderData* Cylinder;
 protected:
 	virtual int BlockInsideOrOutsideSurface(const Block &block) {
         return 0;
-    }
+	}
 };
 
 #endif // HEMELBSETUPTOOL_CYLINDERGENERATOR_H
