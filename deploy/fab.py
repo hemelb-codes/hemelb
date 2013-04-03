@@ -561,10 +561,13 @@ def calc_nodes():
     env.coresusedpernode = env.cores
   env.nodes = int(env.cores) / int(env.coresusedpernode)
 
+# 
 def job(*option_dictionaries):
     """Internal low level job launcher.
     Parameters for the job are determined from the prepared fabric environment
     Execute a generic job on the remote machine. Use hemelb, regress, or test instead."""
+    env.submit_time = time.strftime('%Y%m%d%H%M%S')
+    time.sleep(1.)
     update_environment(*option_dictionaries)
     with_template_job()
     # Use this to request more cores than we use, to measure performance without sharing impact

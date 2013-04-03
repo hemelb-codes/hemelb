@@ -155,5 +155,6 @@ def complete_environment():
     #env.build_number=run("hg id -q -i")
     env.build_cache = env.pather.join(env.build_path, 'CMakeCache.txt')
     env.code_build_cache = env.pather.join(env.code_build_path, "CMakeCache.txt")
+    env.executable = 'hemelb'
 
 complete_environment()
