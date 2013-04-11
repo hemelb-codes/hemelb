@@ -137,10 +137,10 @@ namespace hemelb
            * @param traction traction vector at a given point
            */
           inline static void CalculateTractionOnAPoint(const distribn_t density,
-                                                             const distribn_t tau,
-                                                             const distribn_t fNonEquilibrium[],
-                                                             const util::Vector3D<Dimensionless>& wallNormal,
-                                                             util::Vector3D<LatticeStress>& traction)
+                                                       const distribn_t tau,
+                                                       const distribn_t fNonEquilibrium[],
+                                                       const util::Vector3D<Dimensionless>& wallNormal,
+                                                       util::Vector3D<LatticeStress>& traction)
           {
             util::Matrix3D sigma;
             CalculateStressTensor(density, tau, fNonEquilibrium, sigma);
@@ -164,10 +164,10 @@ namespace hemelb
            * @param tractionTangentialComponent tangential projection of the traction vector
            */
           inline static void CalculateTangentialProjectionTraction(const distribn_t density,
-                                                                         const distribn_t tau,
-                                                                         const distribn_t fNonEquilibrium[],
-                                                                         const util::Vector3D<Dimensionless>& wallNormal,
-                                                                         util::Vector3D<LatticeStress>& tractionTangentialComponent)
+                                                                   const distribn_t tau,
+                                                                   const distribn_t fNonEquilibrium[],
+                                                                   const util::Vector3D<Dimensionless>& wallNormal,
+                                                                   util::Vector3D<LatticeStress>& tractionTangentialComponent)
           {
             util::Vector3D<LatticeStress> traction;
             CalculateTractionOnAPoint(density, tau, fNonEquilibrium, wallNormal, traction);
@@ -184,7 +184,7 @@ namespace hemelb
            *
            *    \sigma = p*I + 2*\mu*S = p*I - \Pi^{(neq)}
            *
-           * where p is hydrostatic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
+           * where p is hydrodynamic pressure, I is the identity tensor, S is the strain rate tensor, and \mu is the
            * viscosity. -2*\mu*S can be shown to be equals to the non equilibrium part of the moment flux tensor \Pi^{(neq)}.
            *
            * \Pi^{(neq)} is assumed to be defined as in Chen&Doolen 1998:
@@ -207,8 +207,11 @@ namespace hemelb
             stressTensor = CalculatePiTensor(fNonEquilibrium);
             stressTensor *= 1 - 1 / (2 * tau);
 
-            // Adds the pressure component to the stress tensor
-            LatticePressure pressure = density * Cs2;
+            // Add the pressure component to the stress tensor. The reference pressure given
+            // by the REFERENCE_PRESSURE_mmHg constant is mapped to rho=1. Here we subtract 1
+            // and when the tensor is turned into physical units REFERENCE_PRESSURE_mmHg will
+            // be added.
+            LatticePressure pressure = (density - 1) * Cs2;
             stressTensor.addDiagonal(pressure);
           }
 
