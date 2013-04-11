@@ -65,12 +65,13 @@ namespace hemelb
 
     util::Matrix3D LbDataSourceIterator::GetStressTensor() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
+      return converter.ConvertFullStressTensorToPhysicalUnits(propertyCache.stressTensorCache.Get(position));
     }
 
     util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTraction() const
     {
-      return converter.ConvertStressToPhysicalUnits(propertyCache.tractionCache.Get(position));
+      return converter.ConvertTractionToPhysicalUnits(propertyCache.tractionCache.Get(position),
+                                                      data.GetSite(position).GetWallNormal());
     }
 
     util::Vector3D<PhysicalStress> LbDataSourceIterator::GetTangentialProjectionTraction() const
