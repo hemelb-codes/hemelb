@@ -78,6 +78,9 @@ namespace hemelb
                                                               hydroVars.momentum.x,
                                                               hydroVars.momentum.y,
                                                               hydroVars.momentum.z,
+                                                              hydroVars.velocity.x,
+                                                              hydroVars.velocity.y,
+                                                              hydroVars.velocity.z,
                                                               hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < MomentBasis::Lattice::NUMVECTORS; ++ii)
@@ -102,7 +105,7 @@ namespace hemelb
               hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
             }
 
-            /** @todo #222 consider computing m_neq directly in the momentum space. See d'Humieres 2002. */
+            /** @todo #222 consider computing m_neq directly in the moment space. See d'Humieres 2002. */
             MomentBasis::ProjectVelsIntoMomentSpace(hydroVars.f_neq.f, hydroVars.m_neq);
           }
 

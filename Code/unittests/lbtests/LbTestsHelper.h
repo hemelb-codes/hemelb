@@ -218,12 +218,16 @@ namespace hemelb
             {
               distribn_t density, feq[Lattice::NUMVECTORS];
               util::Vector3D<distribn_t> momentum;
+              util::Vector3D<distribn_t> velocity;
 
               Lattice::CalculateDensityMomentumFEq(latDat.GetSite(site).GetFOld<Lattice> (),
                                                    density,
                                                    momentum[0],
                                                    momentum[1],
                                                    momentum[2],
+                                                   velocity[0],
+                                                   velocity[1],
+                                                   velocity[2],
                                                    feq);
 
               if (cache.densityCache.RequiresRefresh())
@@ -232,7 +236,7 @@ namespace hemelb
               }
               if (cache.velocityCache.RequiresRefresh())
               {
-                cache.velocityCache.Put(site, momentum / density);
+                cache.velocityCache.Put(site, velocity);
               }
 
               // TODO stress cache filling not yet implemented.

@@ -67,6 +67,7 @@ namespace hemelb
         public:
           distribn_t density, tau;
           util::Vector3D<distribn_t> momentum;
+          util::Vector3D<distribn_t> velocity;
 
           const distribn_t* const f;
 
