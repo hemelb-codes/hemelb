@@ -43,6 +43,9 @@ namespace hemelb
                                                      hydroVars.momentum.x,
                                                      hydroVars.momentum.y,
                                                      hydroVars.momentum.z,
+                                                     hydroVars.velocity.x,
+                                                     hydroVars.velocity.y,
+                                                     hydroVars.velocity.z,
                                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
