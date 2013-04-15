@@ -125,15 +125,18 @@ namespace hemelb
               // Go ahead and calculate the density, momentum and eqm distribution.
               {
                 distribn_t neighbourDensity;
+                LatticeVelocity neighbourMomentum;
                 // Note that nextNodeOutVelocity is passed as the momentum argument, this
                 // is because it is immediately divided by density when the function returns.
                 LatticeType::CalculateDensityMomentumFEq(neighbourFOld,
                                                          neighbourDensity,
+                                                         neighbourMomentum.x,
+                                                         neighbourMomentum.y,
+                                                         neighbourMomentum.z,
                                                          neighbourVelocity.x,
                                                          neighbourVelocity.y,
                                                          neighbourVelocity.z,
                                                          neighbourFEq);
-                neighbourVelocity /= neighbourDensity;
               }
               // Obtain a second estimate, this time ignoring the fluid site closest to
               // the wall. Interpolating the next site away and the site within the wall

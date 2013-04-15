@@ -101,7 +101,7 @@ namespace hemelb
 
             if (propertyCache.velocityCache.RequiresRefresh())
             {
-              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.momentum);
+              propertyCache.velocityCache.Put(site.GetIndex(), hydroVars.velocity);
             }
 
             if (propertyCache.wallShearStressMagnitudeCache.RequiresRefresh())
