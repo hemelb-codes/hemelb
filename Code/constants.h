@@ -23,7 +23,7 @@ namespace hemelb
   // TODO this was used for a convergence test - we could reinstate that at some point.
   const double EPSILON = 1.0e-30;
 
-  const double REFERENCE_PRESSURE_mmHg = 80.0;
+  const double REFERENCE_PRESSURE_mmHg = 0.0;
   const double mmHg_TO_PASCAL = 133.3223874;
   const double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
   const double BLOOD_VISCOSITY_Pa_s = 0.004;

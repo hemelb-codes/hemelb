@@ -50,19 +50,19 @@ namespace hemelb
                                           const distribn_t &momentum_z,
                                           distribn_t f_eq[])
           {
-            const distribn_t density_1 = 1. / density;
+            const distribn_t density_1 = 1.;
             const distribn_t momentumMagnitudeSquared = momentum_x * momentum_x + momentum_y * momentum_y
                 + momentum_z * momentum_z;
 
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
             {
-              const distribn_t momentumComponentInThisDirection = DmQn::CX[direction] * momentum_x
-                  + DmQn::CY[direction] * momentum_y + DmQn::CZ[direction] * momentum_z;
+              const distribn_t mom_dot_ei = DmQn::CX[i] * momentum_x
+                  + DmQn::CY[i] * momentum_y + DmQn::CZ[i] * momentum_z;
 
-              f_eq[direction] = DmQn::EQMWEIGHTS[direction]
+              f_eq[i] = DmQn::EQMWEIGHTS[i]
                   * (density - (3. / 2.) * momentumMagnitudeSquared * density_1
-                      + (9. / 2.) * density_1 * momentumComponentInThisDirection * momentumComponentInThisDirection
-                      + 3. * momentumComponentInThisDirection);
+                      + (9. / 2.) * density_1 * mom_dot_ei * mom_dot_ei
+                      + 3. * mom_dot_ei);
             }
           }
 
