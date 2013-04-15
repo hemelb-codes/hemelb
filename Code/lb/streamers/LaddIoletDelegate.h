@@ -59,7 +59,7 @@ namespace hemelb
 
             LatticeVelocity wallVel(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
 
-            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii] * hydroVars.density * (wallVel.x
+            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii] * (wallVel.x
                 * LatticeType::CX[ii] + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]) / Cs2;
 
             * (latticeData->GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(), ii)))
