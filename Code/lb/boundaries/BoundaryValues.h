@@ -53,6 +53,10 @@ namespace hemelb
           {
             return localIoletCount;
           }
+          inline unsigned int GetTimeStep() const
+          {
+            return state->GetTimeStep();
+          }
         private:
           bool IsIOletOnThisProc(geometry::SiteType ioletType, geometry::LatticeData* latticeData, int boundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);

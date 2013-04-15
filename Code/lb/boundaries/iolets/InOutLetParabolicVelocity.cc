@@ -10,7 +10,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetParabolicVelocity::InOutLetParabolicVelocity() :
-          radius(0.), maxSpeed(0.)
+          radius(0.), maxSpeed(0.), warmUpLength(0)
         {
 
         }
@@ -44,15 +44,25 @@ namespace hemelb
         {
           return 1.0;
         }
-        LatticeVelocity InOutLetParabolicVelocity::GetVelocityAtPosition(const LatticePosition& x) const
+        LatticeVelocity InOutLetParabolicVelocity::GetVelocity(const LatticePosition& x, const LatticeTime t) const
         {
           // v(r) = vMax (1 - r**2 / a**2)
           // where r is the distance from the centreline
           LatticePosition posLat = units->ConvertPositionToLatticeUnits(position);
           LatticePosition displ = x - posLat;
           LatticeDistance z = displ.Dot(normal);
-          Dimensionless rSq = (displ.GetMagnitudeSquared() - z*z) / (radius * radius);
-          return normal * (maxSpeed * (1. - rSq));
+          Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+
+          // Get the max velocity
+          LatticeSpeed max = maxSpeed;
+          // If we're in the warm-up phase, scale down the imposed velocity
+          if (t < warmUpLength)
+          {
+            max *= t / double(warmUpLength);
+          }
+
+          // Brackets to ensure that the scalar multiplies are done before vector * scalar.
+          return normal * (max * (1. - rSq));
         }
       }
     }

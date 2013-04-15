@@ -73,7 +73,7 @@ namespace hemelb
             void SetPeriod(PhysicalTime aPeriod) {
               period=aPeriod;
             }
-            void SetWarmup(PhysicalTime warmup) {
+            void SetWarmup(unsigned int warmup) {
               warmUpLength = warmup;
             }
           private:
@@ -83,7 +83,7 @@ namespace hemelb
 
             double phase;
             PhysicalTime period;
-            PhysicalTime warmUpLength;
+            unsigned int warmUpLength;
         };
 
       }
