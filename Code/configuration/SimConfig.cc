@@ -284,8 +284,10 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForInOutlets(TiXmlElement *parent, bool isLoading, std::vector<
-        lb::boundaries::iolets::InOutLet*> &bResult, std::string childNodeName)
+    void SimConfig::DoIOForInOutlets(TiXmlElement *parent,
+                                     bool isLoading,
+                                     std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
+                                     std::string childNodeName)
     {
       if (isLoading)
       {
@@ -650,6 +652,11 @@ namespace hemelb
       value->SetRadius(temp);
       DoIOForDouble(velocityEl, "maximum", isLoading, temp);
       value->SetMaxSpeed(temp);
+
+      if (warmUpSteps != 0)
+      {
+        value->SetWarmup(warmUpSteps);
+      }
     }
 
     void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading, util::Vector3D<float> &value)
