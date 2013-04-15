@@ -57,10 +57,15 @@ namespace hemelb
             halfWay.y += 0.5 * LatticeType::CY[ii];
             halfWay.z += 0.5 * LatticeType::CZ[ii];
 
-            LatticeVelocity wallVel(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
+            LatticeVelocity wallMom(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
 
-            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii] * (wallVel.x
-                * LatticeType::CX[ii] + wallVel.y * LatticeType::CY[ii] + wallVel.z * LatticeType::CZ[ii]) / Cs2;
+            if (CollisionType::CKernel::LatticeType::IsLatticeCompressible())
+            {
+              wallMom *= hydroVars.density;
+            }
+
+            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii] * (wallMom.x
+                * LatticeType::CX[ii] + wallMom.y * LatticeType::CY[ii] + wallMom.z * LatticeType::CZ[ii]) / Cs2;
 
             * (latticeData->GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(), ii)))
                 = hydroVars.GetFPostCollision()[ii] - correction;

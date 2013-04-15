@@ -9,7 +9,7 @@
 
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
-#include "lb/lattices/D3Q15.h"
+#include "lb/lattices/Lattices.h"
 #include "extraction/PropertyActor.h"
 #include "lb/lb.hpp"
 #include "lb/StabilityTester.h"
