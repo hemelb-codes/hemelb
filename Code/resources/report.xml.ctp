@@ -20,8 +20,10 @@
 		<lattice_type>{{LATTICE_TYPE}}</lattice_type>
 		<kernel_type>{{KERNEL_TYPE}}</kernel_type>
 		<wall_boundary_condition>{{WALL_BOUNDARY_CONDITION}}</wall_boundary_condition>
-		<iolet_boundary_condition>{{IOLET_BOUNDARY_CONDITION}}</iolet_boundary_condition>
-		<wall_iolet_boundary_condition>{{WALL_IOLET_BOUNDARY_CONDITION}}</wall_iolet_boundary_condition>
+		<inlet_boundary_condition>{{INLET_BOUNDARY_CONDITION}}</inlet_boundary_condition>
+		<outlet_boundary_condition>{{OUTLET_BOUNDARY_CONDITION}}</outlet_boundary_condition>
+		<wall_inlet_boundary_condition>{{WALL_INLET_BOUNDARY_CONDITION}}</wall_inlet_boundary_condition>
+		<wall_outlet_boundary_condition>{{WALL_OUTLET_BOUNDARY_CONDITION}}</wall_outlet_boundary_condition>
 		<communications>
 			<implementations>
 				<pointpoint>{{POINTPOINT_IMPLEMENTATION}}</pointpoint>
