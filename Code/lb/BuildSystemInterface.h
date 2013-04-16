@@ -146,7 +146,7 @@ namespace hemelb
 
     /**
      * The following classes have names corresponding to the options given in the build system for
-     * HEMELB_IOLET_BOUNDARY
+     * HEMELB_INLET_BOUNDARY / HEMELB_OUTLET_BOUNDARY
      */
 
     /**
@@ -170,7 +170,7 @@ namespace hemelb
 
     /**
      * The following classes have names corresponding to the options given in the build system for
-     * HEMELB_WALL_IOLET_BOUNDARY
+     * HEMELB_WALL_INLET_BOUNDARY / HEMELB_WALL_OUTLET_BOUNDARY
      */
     /**
      * Nash in/outlet + SBB
