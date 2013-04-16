@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_LB_LATTICESLATTICES_H
-#define HEMELB_LB_LATTICESLATTICES_H
+#ifndef HEMELB_LB_LATTICES_LATTICES_H
+#define HEMELB_LB_LATTICES_LATTICES_H
 
 #include "lb/lattices/D3Q15.h"
 #include "lb/lattices/D3Q19.h"
