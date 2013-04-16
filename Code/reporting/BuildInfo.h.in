@@ -25,12 +25,14 @@ namespace hemelb
     static const std::string lattice_type="@HEMELB_LATTICE@";
     static const std::string kernel_type="@HEMELB_KERNEL@";
     static const std::string wall_boundary_condition="@HEMELB_WALL_BOUNDARY@";
-    static const std::string iolet_boundary_condition="@HEMELB_IOLET_BOUNDARY@";
-    static const std::string wall_iolet_boundary_condition="@HEMELB_WALL_IOLET_BOUNDARY@";
+    static const std::string inlet_boundary_condition="@HEMELB_INLET_BOUNDARY@";
+    static const std::string outlet_boundary_condition="@HEMELB_OUTLET_BOUNDARY@";
+    static const std::string wall_inlet_boundary_condition="@HEMELB_WALL_INLET_BOUNDARY@";
+    static const std::string wall_outlet_boundary_condition="@HEMELB_WALL_OUTLET_BOUNDARY@";
     static const std::string point_point_impl="@HEMELB_POINTPOINT_IMPLEMENTATION@";
-     static const std::string gathers_impl="@HEMELB_GATHERS_IMPLEMENTATION@" ;
-     static const std::string alltoall_impl="@HEMELB_ALLTOALL_IMPLEMENTATION@" ;
-     static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
+    static const std::string gathers_impl="@HEMELB_GATHERS_IMPLEMENTATION@";
+    static const std::string alltoall_impl="@HEMELB_ALLTOALL_IMPLEMENTATION@";
+    static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
   
     
     class BuildInfo : public Reportable {
@@ -47,8 +49,10 @@ namespace hemelb
         build->SetValue("LATTICE_TYPE", lattice_type);
         build->SetValue("KERNEL_TYPE", kernel_type);
         build->SetValue("WALL_BOUNDARY_CONDITION", wall_boundary_condition);
-        build->SetValue("IOLET_BOUNDARY_CONDITION", iolet_boundary_condition);
-        build->SetValue("WALL_IOLET_BOUNDARY_CONDITION", wall_iolet_boundary_condition);
+        build->SetValue("INLET_BOUNDARY_CONDITION", inlet_boundary_condition);
+        build->SetValue("OUTLET_BOUNDARY_CONDITION", outlet_boundary_condition);
+        build->SetValue("WALL_INLET_BOUNDARY_CONDITION", wall_inlet_boundary_condition);
+        build->SetValue("WALL_OUTLET_BOUNDARY_CONDITION", wall_outlet_boundary_condition);
         build->SetValue("SEPARATE_CONCERNS",separate_concerns);
         build->SetValue("ALLTOALL_IMPLEMENTATION",alltoall_impl);
         build->SetValue("GATHERS_IMPLEMENTATION",gathers_impl);
