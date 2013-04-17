@@ -10,7 +10,7 @@
 #ifndef HEMELB_LB_LATTICES_INCOMPRESSIBLELATTICE_H
 #define HEMELB_LB_LATTICES_INCOMPRESSIBLELATTICE_H
 
-#include "Lattice.h"
+#include "lb/lattices/Lattice.h"
 
 namespace hemelb
 {
