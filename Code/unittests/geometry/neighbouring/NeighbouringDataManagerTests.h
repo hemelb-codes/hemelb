@@ -190,6 +190,7 @@ namespace hemelb
 
               // Now, transfer the data about that site.
               Site<LatticeData> exampleSite = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
               netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
@@ -208,6 +209,8 @@ namespace hemelb
               NeighbouringSite transferredSite = data->GetSite(43);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
               {
+                CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
+                                                     exampleSite.GetFOld<lb::lattices::D3Q15>()[direction]);
                 CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
                                      transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }
