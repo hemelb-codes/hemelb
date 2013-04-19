@@ -54,7 +54,7 @@ namespace hemelb
           {
             latticeData = FourCubeLatticeData::Create(CubeSize, 1);
             simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
-            propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, latticeData->GetLocalFluidSiteCount());
+            propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(), VoxelSize, latticeData->GetOrigin());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,

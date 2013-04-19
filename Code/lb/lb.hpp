@@ -37,9 +37,9 @@ namespace hemelb
                           SimulationState* simState,
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), mParams(mState->GetTimeStepLength(),
-                                                                                             latDat->GetVoxelSize()), timings(atimings), propertyCache(*simState,
-                                                                                                                                                       latDat->GetLocalFluidSiteCount()), neighbouringDataManager(neighbouringDataManager)
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
+          mParams(mState->GetTimeStepLength(), latDat->GetVoxelSize()), timings(atimings), 
+          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
@@ -86,19 +86,19 @@ namespace hemelb
 
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
       initParams.boundaryObject = mInletValues;
-      mInletCollision = new tInletOutletCollision(initParams);
+      mInletCollision = new tInletCollision(initParams);
 
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
       initParams.boundaryObject = mOutletValues;
-      mOutletCollision = new tInletOutletCollision(initParams);
+      mOutletCollision = new tOutletCollision(initParams);
 
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
       initParams.boundaryObject = mInletValues;
-      mInletWallCollision = new tInletOutletWallCollision(initParams);
+      mInletWallCollision = new tInletWallCollision(initParams);
 
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
       initParams.boundaryObject = mOutletValues;
-      mOutletWallCollision = new tInletOutletWallCollision(initParams);
+      mOutletWallCollision = new tOutletWallCollision(initParams);
     }
 
     template<class LatticeType>

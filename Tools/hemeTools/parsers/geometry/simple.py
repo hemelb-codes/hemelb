@@ -37,9 +37,9 @@ class ConfigLoader(object):
     Offers a large number of hooks, in a manner similar to an
     event-driver XML parser for examining data on the fly.
     """
-    VERSION = 2
-    MIN_VERSION = 2
-    MAX_VERSION = 2
+    VERSION = 3
+    MIN_VERSION = 3
+    MAX_VERSION = 3
     
     def __init__(self, filename):
         self.FileName = filename

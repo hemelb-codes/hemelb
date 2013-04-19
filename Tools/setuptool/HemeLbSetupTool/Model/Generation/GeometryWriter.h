@@ -23,8 +23,8 @@ class BufferPool;
 
 class GeometryWriter {
 public:
-	GeometryWriter(const std::string& OutputGeometryFile,
-			int BlockSize, Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres);
+	GeometryWriter(const std::string& OutputGeometryFile, int BlockSize,
+			Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres);
 
 	~GeometryWriter();
 

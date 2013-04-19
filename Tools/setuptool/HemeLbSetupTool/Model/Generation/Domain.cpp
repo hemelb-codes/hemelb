@@ -127,7 +127,7 @@ BlockIterator::BlockIterator(Domain& dom, const Index& start) :
 }
 
 BlockIterator::BlockIterator(const BlockIterator& other) :
-	domain(other.domain), current(other.current), maxima(other.maxima) {
+		domain(other.domain), current(other.current), maxima(other.maxima) {
 }
 //	BlockIterator::~BlockIterator();
 
