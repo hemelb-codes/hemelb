@@ -209,8 +209,8 @@ namespace hemelb
               NeighbouringSite transferredSite = data->GetSite(43);
               for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
               {
-                CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
-                                                     exampleSite.GetFOld<lb::lattices::D3Q15>()[direction]);
+                CPPUNIT_ASSERT_EQUAL(exampleSite.GetFOld<lb::lattices::D3Q15>()[direction],
+                                     transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
                 CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
                                      transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }

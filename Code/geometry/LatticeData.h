@@ -81,7 +81,7 @@ namespace hemelb
          * @param localIndex
          * @return
          */
-        inline Site<const LatticeData> GetSite(site_t localIndex) const
+        inline const Site<const LatticeData> GetSite(site_t localIndex) const
         {
           return Site<const LatticeData>(localIndex, *this);
         }

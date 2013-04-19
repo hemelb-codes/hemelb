@@ -22,7 +22,7 @@
 using namespace hemelb::io::formats;
 
 SquareDuctGenerator::SquareDuctGenerator() :
-	GeometryGenerator() {
+		GeometryGenerator() {
 	this->SquareDuct = new SquareDuctData;
 }
 
@@ -30,14 +30,14 @@ SquareDuctGenerator::~SquareDuctGenerator() {
 	delete this->SquareDuct;
 }
 void SquareDuctGenerator::ComputeBounds(double bounds[6]) const {
-	for (int i=0; i<3; ++i) {
-		bounds[2*i] = this->SquareDuct->LowerBound[i];
-		bounds[2*i + 1] = this->SquareDuct->UpperBound[i];
+	for (int i = 0; i < 3; ++i) {
+		bounds[2 * i] = this->SquareDuct->LowerBound[i];
+		bounds[2 * i + 1] = this->SquareDuct->UpperBound[i];
 	}
 }
 
 bool IsInsideDuct(SquareDuctData* duct, Vector& pt) {
-	for (int i=0; i<3; ++i) {
+	for (int i = 0; i < 3; ++i) {
 		if ((pt[i] > duct->LowerBound[i]) && (pt[i] < duct->UpperBound[i])) {
 			// OK
 		} else {
@@ -57,7 +57,8 @@ bool IsInsideDuct(SquareDuctData* duct, Vector& pt) {
  */
 void SquareDuctGenerator::ClassifySite(Site& site) {
 
-	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
+	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
+			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		int nHits;
@@ -75,8 +76,8 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 			if (site.IsFluid) {
 				// Fluid-fluid, must set CUT_NONE for both
 				site.Links[iNeigh].Type = geometry::CUT_NONE;
-				neigh.Links[Neighbours::inverses[iNeigh]].Type
-						= geometry::CUT_NONE;
+				neigh.Links[Neighbours::inverses[iNeigh]].Type =
+						geometry::CUT_NONE;
 			} else {
 				// solid-solid, nothing to do.
 			}
@@ -111,7 +112,8 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 				// for (below, inside, above)
 				if (solid->Position[i] < this->SquareDuct->LowerBound[i]) {
 					type[i] = -1;
-				} else if (solid->Position[i] > this->SquareDuct->UpperBound[i]) {
+				} else if (solid->Position[i]
+						> this->SquareDuct->UpperBound[i]) {
 					type[i] = +1;
 				} else {
 					type[i] = 0;
@@ -131,6 +133,13 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 					link.IoletId = 0;
 				}
 
+				/*
+				 * The wall normal at a link intersection will be normal to one
+				 * of the duct sides most of the times. For link intersections
+				 * happening exactly at the duct edge, we take the wall normal
+				 * to be the same as the direction of the intersecting link.
+				 */
+				link.WallNormalAtWallCut = 0.0;
 				for (i = 0; i < 3; ++i) {
 					if (i == this->SquareDuct->OpenAxis) {
 						// skip
@@ -138,13 +147,33 @@ void SquareDuctGenerator::ClassifySite(Site& site) {
 						if (type[i] != 0) {
 							// This also crosses a wall - so wall
 							link.Type = geometry::CUT_WALL;
+							switch (i) {
+							case 0:
+								link.WallNormalAtWallCut += Vector(type[i], 0,
+										0);
+								break;
+							case 1:
+								link.WallNormalAtWallCut += Vector(0, type[i],
+										0);
+								break;
+							case 2:
+								link.WallNormalAtWallCut += Vector(0, 0,
+										type[i]);
+								break;
+							}
 						} else {
 							// Might be iolet
 						}
 					}
 				}
+				link.WallNormalAtWallCut.Normalise();
+				link.DistanceInVoxels = link.Distance
+						* Neighbours::norms[iSolid];
 			}
 
 		}
 	}
+
+	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
+	this->ComputeAveragedNormal(site);
 }

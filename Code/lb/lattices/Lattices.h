@@ -1,0 +1,18 @@
+//
+// Copyright (C) University College London, 2007-2013, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
+
+#ifndef HEMELB_LB_LATTICES_LATTICES_H
+#define HEMELB_LB_LATTICES_LATTICES_H
+
+#include "lb/lattices/D3Q15.h"
+#include "lb/lattices/D3Q19.h"
+#include "lb/lattices/D3Q27.h"
+#include "lb/lattices/D3Q15i.h"
+
+#endif /* HEMELB_LB_LATTICES_LATTICES_H */
