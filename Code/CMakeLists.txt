@@ -31,15 +31,19 @@ set(HEMELB_DEPENDENCIES_INSTALL_PATH ${HEMELB_DEPENDENCIES_PATH}
 	CACHE FILEPATH "Path to find dependency includes and libraries")
 set(HEMELB_OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 set(HEMELB_LATTICE "D3Q15"
-  CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
+  CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27,D3Q15i)")
 set(HEMELB_KERNEL "LBGK"
   CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
-  CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
-set(HEMELB_IOLET_BOUNDARY "REGULARISEDIOLET"
-  CACHE STRING "Select the boundary conditions to be used at the inlets/outlets (REGULARISEDIOLET,LADDIOLET)")
-set(HEMELB_WALL_IOLET_BOUNDARY "NASHBB"
-  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets/outlets (NASHBB,LADDIOLET)")
+  CACHE STRING "Select the boundary conditions to be used at the walls (BFL,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
+set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
+  CACHE STRING "Select the boundary conditions to be used at the inlet (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
+set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
+  CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
+set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
+  CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
+set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
+  CACHE STRING "Select the boundary conditions to be used at corners between walls and outlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
 	CACHE STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 set(HEMELB_GATHERS_IMPLEMENTATION Separated
@@ -62,8 +66,10 @@ add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
 add_definitions(-DHEMELB_WALL_BOUNDARY=${HEMELB_WALL_BOUNDARY})
-add_definitions(-DHEMELB_IOLET_BOUNDARY=${HEMELB_IOLET_BOUNDARY})
-add_definitions(-DHEMELB_WALL_IOLET_BOUNDARY=${HEMELB_WALL_IOLET_BOUNDARY})
+add_definitions(-DHEMELB_INLET_BOUNDARY=${HEMELB_INLET_BOUNDARY})
+add_definitions(-DHEMELB_OUTLET_BOUNDARY=${HEMELB_OUTLET_BOUNDARY})
+add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
+add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
@@ -124,7 +130,7 @@ endif()
 
 #------Capture build environment -------------
 
-execute_process(COMMAND hg id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND hg -R ${CMAKE_CURRENT_SOURCE_DIR}/../ id -i RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (NOT rev_ok EQUAL 0)
   message("Could not get revision number from mercurial, looking for revision_info.txt")
   execute_process(COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/../revision_info.txt RESULT_VARIABLE rev_ok OUTPUT_VARIABLE HEMELB_REVISION_NUMBER OUTPUT_STRIP_TRAILING_WHITESPACE)

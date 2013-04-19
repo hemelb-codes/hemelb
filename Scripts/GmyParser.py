@@ -344,6 +344,8 @@ class BlockChecker(object):
             self.numFluid += 1
            
             self.CheckFluidSiteLinks(site, addSiteError)
+
+            self.CheckFluidSiteWallNormal(site, addSiteError)
             
             continue
         
@@ -427,6 +429,21 @@ class BlockChecker(object):
                              'an iolet index set (%d).'.format(ioletIndex))
                 pass
             continue
+        return
+
+    def CheckFluidSiteWallNormal(self, site, addSiteError):
+        """Check that a wall normal is available for sites with a link
+        intersecting a wall. Check that the provided normal is a unit
+        vector.
+        """
+        if site.WallNormalAvailable:
+            if not np.any(site.IntersectionType == Site.WALL_INTERSECTION):
+                addSiteError('Site claims to have a wall normal available but no link intersects a wall')
+            if np.fabs(np.linalg.norm(site.WallNormal) - 1.0) > 1e-6:
+                addSiteError('Site has a non unitarian wall normal')
+        else:
+            if np.any(site.IntersectionType == Site.WALL_INTERSECTION):
+                addSiteError('Site has a link intersecting a wall but no wall normal available')
         return
     pass
 

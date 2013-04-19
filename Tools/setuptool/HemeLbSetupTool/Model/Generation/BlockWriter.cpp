@@ -18,7 +18,7 @@
 #include "BufferPool.h"
 
 BlockWriter::BlockWriter(BufferPool* bp) :
-	writer(NULL), buffer(NULL), bufferPool(bp) {
+		writer(NULL), buffer(NULL), bufferPool(bp) {
 	this->Reset();
 }
 
@@ -54,8 +54,8 @@ void BlockWriter::Finish() {
 		int ret; // zlib return code
 
 		// How much data to compress?
-		this->UncompressedBlockLength
-				= this->writer->getCurrentStreamPosition();
+		this->UncompressedBlockLength =
+				this->writer->getCurrentStreamPosition();
 
 		// Set up our compressor
 		z_stream stream;
@@ -74,10 +74,10 @@ void BlockWriter::Finish() {
 
 		// Set input. The XDR buffer has to be char but zlib only works with
 		// unsigned char. Just cast for now...
-		stream.next_in = reinterpret_cast<unsigned char*> (this->buffer);
+		stream.next_in = reinterpret_cast<unsigned char*>(this->buffer);
 		stream.avail_in = this->UncompressedBlockLength;
 		// Set output
-		stream.next_out = reinterpret_cast<unsigned char*> (compressedBuffer);
+		stream.next_out = reinterpret_cast<unsigned char*>(compressedBuffer);
 		stream.avail_out = this->bufferPool->GetSize();
 
 		// Deflate. This should be it, if not their was an error.
@@ -86,14 +86,13 @@ void BlockWriter::Finish() {
 			throw GenerationErrorMessage("Error compressing buffer");
 
 		// How much space did we actually use?
-		this->CompressedBlockLength = reinterpret_cast<char*> (stream.next_out)
+		this->CompressedBlockLength = reinterpret_cast<char*>(stream.next_out)
 				- compressedBuffer;
 
 		// Tell zlib to clean up.
 		ret = deflateEnd(&stream);
 		if (ret != Z_OK)
 			throw GenerationErrorMessage("Cannot free zlib structures");
-
 
 		std::swap(this->buffer, compressedBuffer);
 		this->bufferPool->Free(compressedBuffer);
