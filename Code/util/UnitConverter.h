@@ -23,9 +23,7 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        UnitConverter(PhysicalTime timeStep,
-                      PhysicalDistance voxelSize,
-                      PhysicalPosition latticeOrigin);
+        UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize, PhysicalPosition latticeOrigin);
 
         LatticePressure ConvertPressureToLatticeUnits(PhysicalPressure pressure) const;
         LatticeStress ConvertPressureDifferenceToLatticeUnits(PhysicalStress pressure_grad) const;
@@ -56,6 +54,38 @@ namespace hemelb
         InputType ConvertStressToPhysicalUnits(InputType stress) const
         {
           return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+        }
+
+        /**
+         * Convert a full stress tensor (including pressure and deviatoric components)
+         * to physical units. Note how the diagonal is shifted by REFERENCE_PRESSURE_mmHg.
+         *
+         * @param stressTensor stress tensor in lattice units
+         * @return stress tensor in physical units
+         */
+        Matrix3D ConvertFullStressTensorToPhysicalUnits(Matrix3D stressTensor) const
+        {
+          Matrix3D ret = stressTensor * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          ret.addDiagonal(REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL);
+          return ret;
+        }
+
+        /**
+         * Convert a traction vector (force per unit area) to physical units. Note how a
+         * REFERENCE_PRESSURE_mmHg*wallNormal component is added to account for the reference
+         * pressure that was removed when converting the simulation input to lattice units.
+         *
+         * @param traction traction vector (computed the full stress tensor)
+         * @param wallNormal wall normal at a given site
+         * @return traction vector in physical units
+         */
+        template<class VectorType>
+        Vector3D<VectorType> ConvertTractionToPhysicalUnits(Vector3D<VectorType> traction,
+                                                            const Vector3D<Dimensionless>& wallNormal) const
+        {
+          Vector3D<VectorType> ret = traction * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          ret += wallNormal * REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL;
+          return ret;
         }
 
         /**

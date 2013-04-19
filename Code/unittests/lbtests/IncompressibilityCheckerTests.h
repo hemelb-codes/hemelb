@@ -37,7 +37,7 @@ namespace hemelb
           {
             FourCubeBasedTestFixture::setUp();
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latDat);
-            cache = new lb::MacroscopicPropertyCache(*simState, latDat->GetLocalFluidSiteCount());
+            cache = new lb::MacroscopicPropertyCache(*simState, *latDat);
 
             cache->densityCache.SetRefreshFlag();
             cache->velocityCache.SetRefreshFlag();

@@ -21,6 +21,7 @@ namespace hemelb
         //! Enumeration of the different intersections the link might make between the current
         //! site and the next lattice point in this direction: no intersection,
         //! intersection with a vessel wall and intersection with an inlet or outlet.
+        //! @todo #598 remove enumerated type and replace with equivalent in io::formats::geometry
         enum IntersectionType
         {
           NO_INTERSECTION = 0,

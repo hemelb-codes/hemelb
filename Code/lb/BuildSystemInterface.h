@@ -108,13 +108,13 @@ namespace hemelb
      * HEMELB_WALL_BOUNDARY
      */
     /**
-     * The f-interpolation boundary condition.
+     * The Bouzidi-Firdaous-Lallemand interpolation-based boundary condition.
      */
     template<class Collision>
-    class FINTERPOLATION
+    class BFL
     {
       public:
-        typedef streamers::FInterpolation<Collision> Type;
+        typedef typename streamers::BouzidiFirdaousLallemand<Collision>::Type Type;
     };
     /**
      * The Guo Zheng and Shi mode-extrapolation boundary condition.
@@ -123,7 +123,7 @@ namespace hemelb
     class GZS
     {
       public:
-        typedef streamers::GuoZhengShi<Collision> Type;
+        typedef typename streamers::GuoZhengShi<Collision>::Type Type;
     };
     /**
      * The simple bounce back boundary condition.
@@ -132,7 +132,7 @@ namespace hemelb
     class SIMPLEBOUNCEBACK
     {
       public:
-        typedef streamers::SimpleBounceBack<Collision> Type;
+        typedef typename streamers::SimpleBounceBack<Collision>::Type Type;
     };
     /**
      * The Junk & Yang 2005 boundary condition.
@@ -146,40 +146,87 @@ namespace hemelb
 
     /**
      * The following classes have names corresponding to the options given in the build system for
-     * HEMELB_IOLET_BOUNDARY
+     * HEMELB_INLET_BOUNDARY / HEMELB_OUTLET_BOUNDARY
      */
 
     /**
-     * Our zero-order phantom site BC for iolets
+     * Our zeroth-order phantom site BC for iolets
      */
     template<class Collision>
-    class REGULARISEDIOLET
+    class NASHZEROTHORDERPRESSUREIOLET
     {
       public:
-        typedef streamers::RegularisedIolet<Collision> Type;
+        typedef typename streamers::NashZerothOrderPressureIolet<Collision>::Type Type;
     };
     /**
      * The inlet/outlet condition based on Ladd's modified bounce-back on
-     * links. Note that this also works for WALL_IOLET sites
+     * links.
      */
     template<class Collision>
-    class LADDIOLET
+    struct LADDIOLET
     {
-      public:
-        typedef streamers::LaddIolet<Collision> Type;
+        typedef typename streamers::LaddIolet<Collision>::Type Type;
     };
 
     /**
      * The following classes have names corresponding to the options given in the build system for
-     * HEMELB_WALL_IOLET_BOUNDARY
+     * HEMELB_WALL_INLET_BOUNDARY / HEMELB_WALL_OUTLET_BOUNDARY
+     */
+    /**
+     * Nash in/outlet + SBB
      */
     template<class Collision>
-    class NASHBB
+    class NASHZEROTHORDERPRESSURESBB
     {
       public:
-        typedef streamers::NashBB<Collision> Type;
+        typedef typename streamers::NashZerothOrderPressureIoletSBB<Collision>::Type Type;
     };
 
+    /**
+     * Ladd in/outlet + SBB
+     */
+    template<class Collision>
+    struct LADDIOLETSBB
+    {
+        typedef typename streamers::LaddIoletSBB<Collision>::Type Type;
+    };
+
+    /**
+     * Nash in/outlet + BFL
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREBFL
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletBFL<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + BFL
+     */
+    template<class Collision>
+    struct LADDIOLETBFL
+    {
+        typedef typename streamers::LaddIoletBFL<Collision>::Type Type;
+    };
+    /**
+     * Nash in/outlet + GZS
+     */
+    template<class Collision>
+    class NASHZEROTHORDERPRESSUREGZS
+    {
+      public:
+        typedef typename streamers::NashZerothOrderPressureIoletGZS<Collision>::Type Type;
+    };
+
+    /**
+     * Ladd in/outlet + GZS
+     */
+    template<class Collision>
+    struct LADDIOLETGZS
+    {
+        typedef typename streamers::LaddIoletGZS<Collision>::Type Type;
+    };
   }
 }
 

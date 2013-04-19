@@ -43,11 +43,13 @@ namespace hemelb
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
         // Use the wall boundary condition specified through the build system.
         typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
-        // Use the in-/out-let BC specified by the build system
-        typedef typename HEMELB_IOLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletOutletCollision;
-        // And again but for sites that are both iolet and wall
-        typedef typename HEMELB_WALL_IOLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type
-            tInletOutletWallCollision;
+        // Use the inlet BC specified by the build system
+        typedef typename HEMELB_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletCollision;
+        // Use the outlet BC specified by the build system
+        typedef typename HEMELB_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletCollision;
+        // And again but for sites that are both in-/outlet and wall
+        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
+        typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
 
       public:
         /**
@@ -120,10 +122,10 @@ namespace hemelb
         // Collision objects
         tMidFluidCollision* mMidFluidCollision;
         tWallCollision* mWallCollision;
-        tInletOutletCollision* mInletCollision;
-        tInletOutletCollision* mOutletCollision;
-        tInletOutletWallCollision* mInletWallCollision;
-        tInletOutletWallCollision* mOutletWallCollision;
+        tInletCollision* mInletCollision;
+        tOutletCollision* mOutletCollision;
+        tInletWallCollision* mInletWallCollision;
+        tOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
         void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)

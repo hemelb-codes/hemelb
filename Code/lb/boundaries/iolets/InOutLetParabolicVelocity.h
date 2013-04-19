@@ -57,12 +57,17 @@ namespace hemelb
               maxSpeed = v;
             }
 
+            void SetWarmup(unsigned int warmup) {
+              warmUpLength = warmup;
+            }
 
-            virtual LatticeVelocity GetVelocityAtPosition(const LatticePosition& x) const;
+
+            virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
 
           protected:
             LatticeDistance radius;
             LatticeSpeed maxSpeed;
+            unsigned int warmUpLength;
         };
       }
     }

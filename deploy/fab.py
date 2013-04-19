@@ -144,7 +144,7 @@ def monitor():
         
 def check_complete():
   """Return true if the user has no queued jobs"""
-  return stat()==""
+  return stat() == ""
      
 @task
 def wait_complete():
@@ -153,11 +153,11 @@ def wait_complete():
   while not check_complete():
         time.sleep(30)
 
-def configure_cmake(configurations,extras):
+def configure_cmake(configurations, extras):
     #Read additional configurations from the available options
     if not configurations:
-        configurations=['default']
-    options={}
+        configurations = ['default']
+    options = {}
     for configuration in configurations:
         options.update(cmake_options[configuration])
     options.update(extras)
@@ -165,13 +165,13 @@ def configure_cmake(configurations,extras):
     options.update({'CMAKE_INSTALL_PREFIX':env.install_path,
         "HEMELB_DEPENDENCIES_INSTALL_PATH":env.install_path,
         "HEMELB_SUBPROJECT_MAKE_JOBS":env.make_jobs})
-    env.total_cmake_options=options
-    env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.total_cmake_options.iteritems()])
+    env.total_cmake_options = options
+    env.cmake_flags = ' '.join(["-D%s=%s" % option for option in env.total_cmake_options.iteritems()])
 
 @task
-def configure(*configurations,**extras):
+def configure(*configurations, **extras):
     """CMake configure step for HemeLB and dependencies."""
-    configure_cmake(configurations,extras)
+    configure_cmake(configurations, extras)
 
     with cd(env.build_path):
         with prefix(env.build_prefix):
@@ -179,16 +179,16 @@ def configure(*configurations,**extras):
             run(template("cmake $repository_path $cmake_flags"))
 
 @task
-def code_only(*configurations,**extras):
+def code_only(*configurations, **extras):
     """Configure, build, and install for the /Code C++ code only, do not attempt to install and build dependencies."""
-    execute(configure_code_only,*configurations,**extras)
+    execute(configure_code_only, *configurations, **extras)
     execute(build_code_only)
     execute(install_code_only)
 
 @task
-def configure_code_only(*configurations,**extras):
+def configure_code_only(*configurations, **extras):
     """CMake configure step for HemeLB code only."""
-    configure_cmake(configurations,extras)
+    configure_cmake(configurations, extras)
     run(template("rm -rf $code_build_path"))
     run(template("mkdir -p $code_build_path"))
     with cd(env.code_build_path):
@@ -240,7 +240,7 @@ def revert(args="--all"):
     Specify a path relative to the repository root to revert only some files or directories
     """
     with cd(env.repository_path):
-        run("hg revert %s"%args)
+        run("hg revert %s" % args)
 
 @task
 def send_distributions():
@@ -250,8 +250,8 @@ def send_distributions():
     HTTP redirects are not followed.
     """
     run(template("mkdir -p $repository_path/dependencies/distributions"))
-    rsync_project(local_dir=os.path.join(env.localroot,'dependencies','distributions')+'/',
-    remote_dir=env.pather.join(env.repository_path,'dependencies','distributions'))
+    rsync_project(local_dir=os.path.join(env.localroot, 'dependencies', 'distributions') + '/',
+    remote_dir=env.pather.join(env.repository_path, 'dependencies', 'distributions'))
 
 @task
 def fetch_distributions():
@@ -289,18 +289,18 @@ def sync():
     """
     rsync_project(
             remote_dir=env.repository_path,
-            local_dir=env.localroot+'/',
-            exclude=map(lambda x: x.replace('\n',''),
-            list(open(os.path.join(env.localroot,'.hgignore')))+
+            local_dir=env.localroot + '/',
+            exclude=map(lambda x: x.replace('\n', ''),
+            list(open(os.path.join(env.localroot, '.hgignore'))) + 
             ['.hg']
             )
     )
     # In the case of a sync (non-mercurial) remote, we will not be able to run mercurial on the remote to determine which code is being built.
     # We will therefore assume the id for the current repository, and store that in a separate file along with the code.
-    revision_info_path=os.path.join(env.localroot,'revision_info.txt')
-    with open(revision_info_path,'w') as revision_info:
+    revision_info_path = os.path.join(env.localroot, 'revision_info.txt')
+    with open(revision_info_path, 'w') as revision_info:
         revision_info.write(env.build_number)
-    put(revision_info_path,env.repository_path)
+    put(revision_info_path, env.repository_path)
 
 @task
 def sync_regression_tests():
@@ -310,9 +310,9 @@ def sync_regression_tests():
     """
     rsync_project(
             remote_dir=env.regression_test_repo_path,
-            local_dir=env.regression_tests_root+'/',
-            exclude=map(lambda x: x.replace('\n',''),
-            list(open(os.path.join(env.localroot,'.hgignore')))+
+            local_dir=env.regression_tests_root + '/',
+            exclude=map(lambda x: x.replace('\n', ''),
+            list(open(os.path.join(env.localroot, '.hgignore'))) + 
             ['.hg']
             )
     )
@@ -324,8 +324,8 @@ def patch(args=""):
     Specify a path relative to the repository root to patch only some files or directories
     e.g 'fab legion patch Code/main.cc'
     """
-    local("hg diff %s> fabric.diff"%args)
-    put("fabric.diff",env.pather.join(env.remote_path,env.repository))
+    local("hg diff %s> fabric.diff" % args)
+    put("fabric.diff", env.pather.join(env.remote_path, env.repository))
     with cd(env.repository_path):
         run("patch -p1 < fabric.diff")
 
@@ -333,9 +333,9 @@ def with_template_job():
     """
     Determine a generated job name from environment parameters, and then define additional environment parameters based on it.
     """
-    name=template(env.job_name_template)
+    name = template(env.job_name_template)
     if env.get('label'):
-        name='_'.join((env['label'],name))
+        name = '_'.join((env['label'], name))
     with_job(name)
 
 def with_job(name):
@@ -344,11 +344,11 @@ def with_job(name):
     job_results: the remote location where job results should be stored
     job_results_local: the local location where job results should be stored
     """
-    env.name=name
-    env.job_results=env.pather.join(env.results_path,name)
-    env.job_results_local=os.path.join(env.local_results,name)
-    env.job_results_contents=env.pather.join(env.job_results,'*')
-    env.job_results_contents_local=os.path.join(env.job_results_local,'*')
+    env.name = name
+    env.job_results = env.pather.join(env.results_path, name)
+    env.job_results_local = os.path.join(env.local_results, name)
+    env.job_results_contents = env.pather.join(env.job_results, '*')
+    env.job_results_contents_local = os.path.join(env.job_results_local, '*')
 
 
 def with_template_config():
@@ -363,11 +363,11 @@ def with_config(name):
     job_config_path: the remote location where the config files for the job should be stored
     job_config_path_local: the local location where the config files for the job may be found
     """
-    env.config=name
-    env.job_config_path=env.pather.join(env.config_path,name)
-    env.job_config_path_local=os.path.join(env.local_configs,name)
-    env.job_config_contents=env.pather.join(env.job_config_path,'*')
-    env.job_config_contents_local=os.path.join(env.job_config_path_local,'*')
+    env.config = name
+    env.job_config_path = env.pather.join(env.config_path, name)
+    env.job_config_path_local = os.path.join(env.local_configs, name)
+    env.job_config_contents = env.pather.join(env.job_config_path, '*')
+    env.job_config_contents_local = os.path.join(env.job_config_path_local, '*')
 
 def with_profile(name):
     """Internal: augment the fabric environment with information regarding a particular profile name.
@@ -375,11 +375,11 @@ def with_profile(name):
     job_profile_path: the remote location where the profile should be stored
     job_profile_path_local: the local location where the profile files may be found
     """
-    env.profile=name
-    env.job_profile_path=env.pather.join(env.profiles_path,name)
-    env.job_profile_path_local=os.path.join(env.local_profiles,name)
-    env.job_profile_contents=env.pather.join(env.job_profile_path,'*')
-    env.job_profile_contents_local=os.path.join(env.job_profile_path_local,'*')
+    env.profile = name
+    env.job_profile_path = env.pather.join(env.profiles_path, name)
+    env.job_profile_path_local = os.path.join(env.local_profiles, name)
+    env.job_profile_contents = env.pather.join(env.job_profile_path, '*')
+    env.job_profile_contents_local = os.path.join(env.job_profile_path_local, '*')
 
 @task
 def fetch_configs(config=''):
@@ -409,7 +409,7 @@ def put_configs(config=''):
     """
     with_config(config)
     run(template("mkdir -p $job_config_path"))
-    rsync_project(local_dir=env.job_config_path_local+'/',remote_dir=env.job_config_path)
+    rsync_project(local_dir=env.job_config_path_local + '/', remote_dir=env.job_config_path)
 
 @task
 def put_results(name=''):
@@ -421,10 +421,10 @@ def put_results(name=''):
     """
     with_job(name)
     run(template("mkdir -p $job_results"))
-    rsync_project(local_dir=env.job_results_local+'/',remote_dir=env.job_results)
+    rsync_project(local_dir=env.job_results_local + '/', remote_dir=env.job_results)
 
 @task
-def fetch_results(name='',regex=''):
+def fetch_results(name='', regex=''):
     """
     Fetch results of remote jobs to local result store.
     Specify a job name to transfer just one job.
@@ -463,7 +463,7 @@ def put_profiles(name=''):
     """
     with_profile(name)
     run(template("mkdir -p $job_profile_path"))
-    rsync_project(local_dir=env.job_profile_path_local+'/',remote_dir=env.job_profile_path)
+    rsync_project(local_dir=env.job_profile_path_local + '/', remote_dir=env.job_profile_path)
 
 def update_environment(*dicts):
     for adict in dicts:
@@ -472,24 +472,24 @@ def update_environment(*dicts):
 @task(alias='test')
 def unit_test(**args):
     """Submit a unit-testing job to the remote queue."""
-    job(dict(script='unittests',job_name_template='unittests_${build_number}_${machine_name}',cores=1,wall_time='0:1:0',memory='2G'),args)
+    job(dict(script='unittests', job_name_template='unittests_${build_number}_${machine_name}', cores=1, wall_time='0:1:0', memory='2G'), args)
 
 @task
-def batch_build_code(*configurations,**extras):
+def batch_build_code(*configurations, **extras):
     """Submit a build job to the remote serial queue."""
-    configure_cmake(configurations,extras)
-    with settings(batch_header=env.batch_header+'_serial'):
-      job(dict(script='batch_build_code',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
+    configure_cmake(configurations, extras)
+    with settings(batch_header=env.batch_header + '_serial'):
+      job(dict(script='batch_build_code', job_name_template='build_${build_number}_${machine_name}', queue='serial', cores=1, wall_time='1:0:0', memory='2G'), extras)
 
 @task
-def batch_build(*configurations,**extras):
+def batch_build(*configurations, **extras):
     """Submit a build job to the remote serial queue."""
-    configure_cmake(configurations,extras)
-    with settings(batch_header=env.batch_header+'_serial'):
-      job(dict(script='batch_build',job_name_template='build_${build_number}_${machine_name}',queue='serial',cores=1,wall_time='1:0:0',memory='2G'),extras)
+    configure_cmake(configurations, extras)
+    with settings(batch_header=env.batch_header + '_serial'):
+      job(dict(script='batch_build', job_name_template='build_${build_number}_${machine_name}', queue='serial', cores=1, wall_time='1:0:0', memory='2G'), extras)
 
 @task
-def hemelb(config,**args):
+def hemelb(config, **args):
     """Submit a HemeLB job to the remote queue.
     The job results will be stored with a name pattern as defined in the environment,
     e.g. cylinder-abcd1234-legion-256
@@ -502,11 +502,11 @@ def hemelb(config,**args):
             memory : memory per node
     """
     with_config(config)
-    execute(put_configs,config)
+    execute(put_configs, config)
     job(dict(script='hemelb',
-            cores=4,images=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
-    if args.get('steer',False):
-        execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
+            cores=4, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
+    if args.get('steer', False):
+        execute(steer, env.name, retry=True, framerate=args.get('framerate'), orbit=args.get('orbit'))
 
 @task
 def hemelb_multiscale(config,**args):
@@ -537,17 +537,17 @@ def resubmit(name):
             run(template("$job_dispatch ${name}.sh"))
 
 @task
-def multijob(*names,**args):
+def multijob(*names, **args):
     # We need to put together a job script to submit all the jobs in turn
     # This we do, by just calling the pre-written jobscripts in existing prepared but not run jobs
-    jobscriptpaths=["bash "+env.pather.join(env.scripts_path,name)+".sh" for name in names]
-    env.jobstorun="\n".join(jobscriptpaths)
+    jobscriptpaths = ["bash " + env.pather.join(env.scripts_path, name) + ".sh" for name in names]
+    env.jobstorun = "\n".join(jobscriptpaths)
     # And then, submit it
-    job(dict(script='multijob',job_name_template='multijob',
-            cores=4,images=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
+    job(dict(script='multijob', job_name_template='multijob',
+            cores=4, images=10, steering=1111, wall_time='0:15:0', memory='2G'), args)
 
 @task
-def hemelbs(config,**args):
+def hemelbs(config, **args):
     """Submit multiple HemeLB jobs to the remote queue.
     This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
     The job results will be stored with a name pattern  as defined in the environment,
@@ -560,11 +560,11 @@ def hemelbs(config,**args):
             wall_time : wall-time job limit
             memory : memory per node
     """
-    for currentCores in input_to_range(args.get('cores'),4):
-        hemeconfig={}
+    for currentCores in input_to_range(args.get('cores'), 4):
+        hemeconfig = {}
         hemeconfig.update(args)
-        hemeconfig['cores']=currentCores
-        execute(hemelb,config,**hemeconfig)
+        hemeconfig['cores'] = currentCores
+        execute(hemelb, config, **hemeconfig)
 
 @task(alias='regress')
 def regression_test(**args):
@@ -572,41 +572,44 @@ def regression_test(**args):
     execute(clone_regression_tests)
     execute(copy_regression_tests)
     execute(build_python_tools)
-    job(dict(job_name_template='regression_${build_number}_${machine_name}',cores=3,
-            wall_time='0:20:0',memory='2G',images=0, steering=1111,script='regression'),args)
+    job(dict(job_name_template='regression_${build_number}_${machine_name}', cores=3,
+            wall_time='0:20:0', memory='2G', images=0, steering=1111, script='regression'), args)
 
 def calc_nodes():
   # If we're not reserving whole nodes, then if we request less than one node's worth of cores, need to keep N<=n
-  env.coresusedpernode=env.corespernode
-  if int(env.coresusedpernode)>int(env.cores):
-    env.coresusedpernode=env.cores
-  env.nodes=int(env.cores)/int(env.coresusedpernode)
+  env.coresusedpernode = env.corespernode
+  if int(env.coresusedpernode) > int(env.cores):
+    env.coresusedpernode = env.cores
+  env.nodes = int(env.cores) / int(env.coresusedpernode)
 
+# 
 def job(*option_dictionaries):
     """Internal low level job launcher.
     Parameters for the job are determined from the prepared fabric environment
     Execute a generic job on the remote machine. Use hemelb, regress, or test instead."""
+    env.submit_time = time.strftime('%Y%m%d%H%M%S')
+    time.sleep(1.)
     update_environment(*option_dictionaries)
     with_template_job()
     # Use this to request more cores than we use, to measure performance without sharing impact
-    if env.get('cores_reserved')=='WholeNode' and env.get('corespernode'):
-        env.cores_reserved=(1+(int(env.cores)-1)/int(env.corespernode))*env.corespernode
+    if env.get('cores_reserved') == 'WholeNode' and env.get('corespernode'):
+        env.cores_reserved = (1 + (int(env.cores) - 1) / int(env.corespernode)) * env.corespernode
     # If cores_reserved is not specified, temporarily set it based on the same as the number of cores
     # Needs to be temporary if there's another job with a different number of cores which should also be defaulted to.
     with settings(cores_reserved=env.get('cores_reserved') or env.cores):
         calc_nodes()
         if env.node_type:
-            env.node_type_restriction=template(env.node_type_restriction_template)
-        env['job_name']=env.name[0:env.max_job_name_chars]
+            env.node_type_restriction = template(env.node_type_restriction_template)
+        env['job_name'] = env.name[0:env.max_job_name_chars]
         with settings(cores=1):
           calc_nodes()
-          env.run_command_one_proc=template(env.run_command)
+          env.run_command_one_proc = template(env.run_command)
         calc_nodes()
-        env.run_command=template(env.run_command)
-        env.job_script=script_templates(env.batch_header,env.script)
+        env.run_command = template(env.run_command)
+        env.job_script = script_templates(env.batch_header, env.script)
 
-        env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
-        put(env.job_script,env.dest_name)
+        env.dest_name = env.pather.join(env.scripts_path, env.pather.basename(env.job_script))
+        put(env.job_script, env.dest_name)
         run(template("touch $build_cache"))
         run(template("mkdir -p $job_results"))
         run(template("cp $dest_name $job_results"))
@@ -614,23 +617,23 @@ def job(*option_dictionaries):
         with tempfile.NamedTemporaryFile() as tempf:
             tempf.write(yaml.dump(dict(env)))
             tempf.flush() #Flush the file before we copy it.
-            put(tempf.name,env.pather.join(env.job_results,'env.yml'))
+            put(tempf.name, env.pather.join(env.job_results, 'env.yml'))
         run(template("chmod u+x $dest_name"))
         # Allow option to submit all preparations, but not actually submit the job
-        if not env.get("noexec",False):
+        if not env.get("noexec", False):
                    with cd(env.job_results):
                        with prefix(env.run_prefix):
                            run(template("$job_dispatch $dest_name"))
 
-def input_to_range(arg,default):
-    ttype=type(default)
-    gen_regexp="\[([\d\.]+):([\d\.]+):([\d\.]+)\]" #regexp for a array generator like [1.2:3:0.2]
+def input_to_range(arg, default):
+    ttype = type(default)
+    gen_regexp = "\[([\d\.]+):([\d\.]+):([\d\.]+)\]" #regexp for a array generator like [1.2:3:0.2]
     if not arg:
         return [default]
-    match=re.match(gen_regexp,str(arg))
+    match = re.match(gen_regexp, str(arg))
     if match:
-        vals=list(map(ttype,match.groups()))
-        if ttype==int:
+        vals = list(map(ttype, match.groups()))
+        if ttype == int:
             return range(*vals)
         else:
             return np.arange(*vals)
@@ -641,35 +644,35 @@ def load_profile():
     with_profile(env.profile)
     from HemeLbSetupTool.Model.Profile import Profile
     p = Profile()
-    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local,env.profile)+'.pro'))
+    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pro'))
     return p
 
 def modify_profile(p):
     #Profiles always get created with 1000 steps and 3 cycles.
     #Can't change it here.
     try:
-        p.VoxelSize=type(p.VoxelSize)((env.VoxelSize) or p.VoxelSize)
-        env.VoxelSize=p.VoxelSize
-        env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
+        p.VoxelSize = type(p.VoxelSize)((env.VoxelSize) or p.VoxelSize)
+        env.VoxelSize = p.VoxelSize
+        env.StringVoxelSize = str(env.VoxelSize).replace(".", "_")
     except AttributeError:
         # Remain compatible with old setuptool
-        p.VoxelSizeMetres=type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
-        env.VoxelSize=p.VoxelSizeMetres
-    env.Steps=env.Steps or 1000
-    env.Cycles=env.Cycles or 3
+        p.VoxelSizeMetres = type(p.VoxelSizeMetres)(env.VoxelSize) or p.VoxelSizeMetres
+        env.VoxelSize = p.VoxelSizeMetres
+    env.Steps = env.Steps or 1000
+    env.Cycles = env.Cycles or 3
 
-def profile_environment(profile,VoxelSize,Steps,Cycles,extra_env={}):
-    env.profile=profile
-    env.VoxelSize=VoxelSize or env.get('VoxelSize')
+def profile_environment(profile, VoxelSize, Steps, Cycles, extra_env={}):
+    env.profile = profile
+    env.VoxelSize = VoxelSize or env.get('VoxelSize')
     try:
-        env.VoxelSize=float(env.VoxelSize)
+        env.VoxelSize = float(env.VoxelSize)
     except ValueError:
         pass
     except TypeError:
         pass
-    env.StringVoxelSize=str(env.VoxelSize).replace(".","_")
-    env.Steps=Steps or env.get('Steps')
-    env.Cycles=Cycles or env.get('Cycles')
+    env.StringVoxelSize = str(env.VoxelSize).replace(".", "_")
+    env.Steps = Steps or env.get('Steps')
+    env.Cycles = Cycles or env.get('Cycles')
     env.update(extra_env)
 
 def generate(profile):
@@ -680,90 +683,90 @@ def generate(profile):
 def create_config_impl(p):
     modify_profile(p)
     with_template_config()
-    p.OutputGeometryFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.gmy'))
-    p.OutputXmlFile=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
+    p.OutputGeometryFile = os.path.expanduser(os.path.join(env.job_config_path_local, 'config.gmy'))
+    p.OutputXmlFile = os.path.expanduser(os.path.join(env.job_config_path_local, 'config.xml'))
     local(template("mkdir -p $job_config_path_local"))
     generate(p)
  
 @task
-def create_config(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
+def create_config(profile, VoxelSize=None, Steps=None, Cycles=None, **args):
     """Create a config file
     Create a config file (geometry and xml) based on a configuration profile.
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles,args)
-    p=load_profile()
+    profile_environment(profile, VoxelSize, Steps, Cycles, args)
+    p = load_profile()
     create_config_impl(p)
     # Now modify it to have the specified steps and cycles
-    modify_config(profile,VoxelSize,Steps,Cycles,Steps,Cycles)
+    modify_config(profile, VoxelSize, Steps, Cycles, Steps, Cycles)
 
 @task
-def modify_config(profile,VoxelSize,Steps=1000,Cycles=3,oldSteps=1000,oldCycles=3):
+def modify_config(profile, VoxelSize, Steps=1000, Cycles=3, oldSteps=1000, oldCycles=3):
     """Create a new config by copying an old one, and modifying the steps and cycles"""
-    profile_environment(profile,VoxelSize,oldSteps,oldCycles)           
+    profile_environment(profile, VoxelSize, oldSteps, oldCycles)           
     with_template_config()
-    env.old_config_path=env.job_config_path_local
-    config_path=os.path.expanduser(os.path.join(env.job_config_path_local,'config.xml'))
-    config=ElementTree.parse(config_path)
-    simnode=config.find('simulation')
-    for currentSteps in input_to_range(Steps,1000):
-        for currentCycles in input_to_range(Cycles,3):
-            profile_environment(profile,VoxelSize,currentSteps,currentCycles)
+    env.old_config_path = env.job_config_path_local
+    config_path = os.path.expanduser(os.path.join(env.job_config_path_local, 'config.xml'))
+    config = ElementTree.parse(config_path)
+    simnode = config.find('simulation')
+    for currentSteps in input_to_range(Steps, 1000):
+        for currentCycles in input_to_range(Cycles, 3):
+            profile_environment(profile, VoxelSize, currentSteps, currentCycles)
             with_template_config()
-            if not env.old_config_path==env.job_config_path_local:
+            if not env.old_config_path == env.job_config_path_local:
                 local(template("cp -r $old_config_path $job_config_path_local"))
-            new_config_path=os.path.join(env.job_config_path_local,'config.xml')
-            simnode.set('cyclesteps',str(currentSteps))
-            simnode.set('cycles',str(currentCycles))
+            new_config_path = os.path.join(env.job_config_path_local, 'config.xml')
+            simnode.set('cyclesteps', str(currentSteps))
+            simnode.set('cycles', str(currentCycles))
             config.write(new_config_path)
 
 @task
-def create_configs(profile,VoxelSize=None,Steps=None,Cycles=None,**args):
+def create_configs(profile, VoxelSize=None, Steps=None, Cycles=None, **args):
     """Create many config files, by looping over multiple voxel sizes, step counts, or cycles
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles,args)
-    p=load_profile()
-    for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
-        profile_environment(profile,currentVoxelSize,1000,3)
+    profile_environment(profile, VoxelSize, Steps, Cycles, args)
+    p = load_profile()
+    for currentVoxelSize in input_to_range(VoxelSize, p.VoxelSize):
+        profile_environment(profile, currentVoxelSize, 1000, 3)
         create_config_impl(p)
-        modify_config(profile,currentVoxelSize,Steps,Cycles,1000,3)
+        modify_config(profile, currentVoxelSize, Steps, Cycles, 1000, 3)
 
 @task
-def hemelb_profile(profile,VoxelSize=None,Steps=None,Cycles=None,create_configs=True,**args):
+def hemelb_profile(profile, VoxelSize=None, Steps=None, Cycles=None, create_configs=True, **args):
     """Submit HemeLB job(s) to the remote queue.
     The HemeLB config file(s) will optionally be prepared according to the profile and profile arguments given.
     This can submit a massive number of jobs -- do not use on systems with a limit to number of queued jobs permitted.
     """
-    profile_environment(profile,VoxelSize,Steps,Cycles,args)
-    p=load_profile()
-    for currentVoxelSize in input_to_range(VoxelSize,p.VoxelSize):
+    profile_environment(profile, VoxelSize, Steps, Cycles, args)
+    p = load_profile()
+    for currentVoxelSize in input_to_range(VoxelSize, p.VoxelSize):
         #Steps and cycles don't effect the geometry, so we can create these configs by copy-and-edit
-        profile_environment(profile,currentVoxelSize,1000,3)
-        if not str(create_configs).lower()[0]=='f':
+        profile_environment(profile, currentVoxelSize, 1000, 3)
+        if not str(create_configs).lower()[0] == 'f':
             pass
             create_config_impl(p)
-        for currentSteps in input_to_range(Steps,1000):
-            for currentCycles in input_to_range(Cycles,3):
+        for currentSteps in input_to_range(Steps, 1000):
+            for currentCycles in input_to_range(Cycles, 3):
                 with_template_config()
-                profile_environment(profile,currentVoxelSize,currentSteps,currentCycles)
-                if not str(create_configs).lower()[0]=='f':
-                    modify_config(profile,currentVoxelSize,currentSteps,currentCycles,1000,3)
-                execute(hemelbs,env.config,**args)
+                profile_environment(profile, currentVoxelSize, currentSteps, currentCycles)
+                if not str(create_configs).lower()[0] == 'f':
+                    modify_config(profile, currentVoxelSize, currentSteps, currentCycles, 1000, 3)
+                execute(hemelbs, env.config, **args)
 
 @task
 def get_running_location(job=None):
     if job:
         with_job(job)
-    env.running_node=run(template("cat $job_results/env_details.asc"))
+    env.running_node = run(template("cat $job_results/env_details.asc"))
 
 def manual(cmd):
     #From the fabric wiki, bypass fabric internal ssh control
-    commands=env.command_prefixes[:]
+    commands = env.command_prefixes[:]
     if env.get('cwd'):
-        commands.append("cd %s"%env.cwd)
+        commands.append("cd %s" % env.cwd)
     commands.append(cmd)
-    manual_command=" && ".join(commands)
+    manual_command = " && ".join(commands)
     pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
-    local(pre_cmd + "'"+manual_command+"'", capture=False)
+    local(pre_cmd + "'" + manual_command + "'", capture=False)
     
 def run(cmd):
     if env.manual_ssh:
@@ -771,41 +774,41 @@ def run(cmd):
     else:
         return fabric.api.run(cmd)
         
-def put(src,dest):
+def put(src, dest):
     if env.manual_ssh:
-        env.manual_src=src
-        env.manual_dest=dest
+        env.manual_src = src
+        env.manual_dest = dest
         local(template("scp $manual_src $user@$host:$manual_dest"))
     else:
-        fabric.api.put(src,dest)
+        fabric.api.put(src, dest)
         
 @task
-def vampir(original_job,*args):
-    env.original_job=original_job
-    env.original_job_results=env.pather.join(env.results_path,original_job)
+def vampir(original_job, *args):
+    env.original_job = original_job
+    env.original_job_results = env.pather.join(env.results_path, original_job)
     job(dict(job_name_template='vampir_${original_job}', script='vampir',
-            cores=16,wall_time='0:15:0'),args)
+            cores=16, wall_time='0:15:0'), args)
 
 @task
-def vampir_tunnel(node,port):
-    local("ssh hector -L 30070:nid%s:%s -N"%node,port)
+def vampir_tunnel(node, port):
+    local("ssh hector -L 30070:nid%s:%s -N" % node, port)
 
 @task
-def steer(job,orbit=False,view=False,retry=False,framerate=None):
+def steer(job, orbit=False, view=False, retry=False, framerate=None):
     with_job(job)
     if view:
-        env.steering_client='steering.py'
+        env.steering_client = 'steering.py'
     else:
-        env.steering_client='timing_client.py'
+        env.steering_client = 'timing_client.py'
     if orbit:
-        env.steering_options="--orbit"
+        env.steering_options = "--orbit"
     else:
-        env.steering_options=""
+        env.steering_options = ""
     if retry:
-       env.steering_options+=" --retry"
+       env.steering_options += " --retry"
     if framerate:
-        env.steering_options+=" --MaxFramerate=%s" %framerate
-    command_template="python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
+        env.steering_options += " --MaxFramerate=%s" % framerate
+    command_template = "python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
     if retry:
         while True:
             try:
