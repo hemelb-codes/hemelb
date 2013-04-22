@@ -139,8 +139,8 @@ namespace hemelb
       void NeighbouringDataManager::ShareNeeds()
       {
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM ShareNeeds().");
-        if (needsHaveBeenShared == true)
-          return; //TODO: Fix!
+        //if (needsHaveBeenShared == true)
+        //  return; //TODO: Fix!
 
         // build a table of which procs needs can be achieved from which proc
         std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.GetCommunicator().GetSize());
