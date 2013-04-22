@@ -59,7 +59,7 @@ namespace hemelb
           {
             if (intercomms.DoMultiscale(currentTime))
             {
-              std::cerr << "MH: " << currentTime << std::endl;
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("DoLB() MH currentTime: %f time Resolution: %f", currentTime, timeResolution);
               DoLB();
               currentTime += timeResolution;
             }
@@ -101,7 +101,7 @@ namespace hemelb
           {
             double capacitance = 10.0;
             double deltap = -1.0 * inlet.GetVelocity() / capacitance;
-
+            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("0D (deltap, inlet vel): %f, %f", deltap , inlet.GetVelocity());
             outlet.SetPressure(outlet.GetPressure() + deltap);
           }
 
@@ -111,6 +111,7 @@ namespace hemelb
             {
               Do1D();
               currentTime += timeResolution;
+              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("0D: %f, %f", currentTime , GetOutletPressure());
               std::cerr << "0D: " << currentTime << " " << GetOutletPressure() << std::endl;
             }
           }
