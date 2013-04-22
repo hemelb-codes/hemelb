@@ -206,9 +206,10 @@ namespace hemelb
         void DoTimeStep()
         {
           bool advance = intercomms.DoMultiscale(GetState()->GetTime());
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("At time step %i, should advance %i",
+          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("At time step %i, should advance %i, time %f",
                                                                               GetState()->GetTimeStep(),
-                                                                              static_cast<int>(advance));
+                                                                              static_cast<int>(advance),
+                                                                              GetState()->GetTime());
 
           if (advance)
           {
@@ -219,9 +220,9 @@ namespace hemelb
              * (it's hard enough to get the physics right with a consistent
              * state ;)). */
 
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d", inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount());
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d", inletValues->GetLocalIolet(0)->IsCommsRequired(), inletValues->GetLocalIolet(0)->GetDensityMax(), inletValues->GetLocalIolet(0)->GetPressureMax());
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("outlets: %d", outletValues->GetLocalIolet(0)->IsCommsRequired(), outletValues->GetLocalIolet(0)->GetDensityMax(), outletValues->GetLocalIolet(0)->GetPressureMax());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlet and outlet count: %d and %d", inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("inlets: %d", inletValues->GetLocalIolet(0)->IsCommsRequired(), inletValues->GetLocalIolet(0)->GetDensityMax(), inletValues->GetLocalIolet(0)->GetPressureMax());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("outlets: %d", outletValues->GetLocalIolet(0)->IsCommsRequired(), outletValues->GetLocalIolet(0)->GetDensityMax(), outletValues->GetLocalIolet(0)->GetPressureMax());
 
             SetCommsRequired(inletValues, true);
             SetCommsRequired(outletValues, true);
@@ -246,13 +247,14 @@ namespace hemelb
                                                                                     outletValues->GetLocalIolet(i)->GetPressureMax());
             }
 
-            /* Temporary Orchestration hardcode for testing */
-            for (int i = 0; i < 100; i++)
-            {
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Step: HemeLB advanced to time %f.",
+            /* Temporary Orchestration hardcode for testing 1/100 step ratio
+             * TODO: Make an orchestration system for the multiscale coupling. */
+            //for (int i = 0; i < 100; i++)
+            //{
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Step: HemeLB advanced to time %f.",
                                                                                    GetState()->GetTime());
-              SimulationMaster::DoTimeStep();
-            }
+            SimulationMaster::DoTimeStep();
+            //}
           }
           else
           {
@@ -268,17 +270,17 @@ namespace hemelb
         /* Loops over iolets to set the need for communications. */
         void SetCommsRequired(hemelb::lb::boundaries::BoundaryValues* ioletValues, bool b)
         {
-          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Starting SetCommsRequired.");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Starting SetCommsRequired.");
           for (unsigned int i = 0; i < ioletValues->GetLocalIoletCount(); i++)
           {
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("In loop: %d", ioletValues->GetLocalIoletCount());
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("A: iolet %d %d", i, (ioletValues->GetLocalIolet(i))->IsCommsRequired());
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("B: iolet %d %d", i, static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("In loop: %d", ioletValues->GetLocalIoletCount());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("A: iolet %d %d", i, (ioletValues->GetLocalIolet(i))->IsCommsRequired());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("B: iolet %d %d", i, static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
             dynamic_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
-            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("done with SetCommsRequired iteration.");
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done with SetCommsRequired iteration.");
 
           }
-          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Finishing SetCommsRequired.");
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Finishing SetCommsRequired.");
         }
 
         //Populate an invertedBoundaryList
