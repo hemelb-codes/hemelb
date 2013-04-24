@@ -45,6 +45,11 @@ namespace hemelb
         ++m;
       }
 
+
+      //if(m>1) {
+      //  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("RecvPointToPoint() Neighbouring proc count: %i", m);
+      //}
+
     }
 
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.

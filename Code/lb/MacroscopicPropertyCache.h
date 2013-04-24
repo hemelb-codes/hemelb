@@ -18,6 +18,10 @@
 
 namespace hemelb
 {
+  namespace geometry
+  {
+    class LatticeData;
+  }
   namespace lb
   {
     class MacroscopicPropertyCache
@@ -26,7 +30,7 @@ namespace hemelb
         /**
          * Constructor, the only way to create this object.
          * @param simState The simulation state, so that the cache knows when it is out of date.
-         * @param latticeData Data about the lattice, so the cache knows how big it needs to be.
+         * @param fluidSiteCount Number of fluid sites, so the cache knows how big it needs to be.
          * @return
          */
         MacroscopicPropertyCache(const SimulationState& simState, const geometry::LatticeData& latticeData);
