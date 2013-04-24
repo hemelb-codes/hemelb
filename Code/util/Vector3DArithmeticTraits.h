@@ -10,9 +10,6 @@
 #ifndef HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 #define HEMELB_UTIL_VECTOR3DARITHMETICTRAITS_H
 
-//#include <boost/static_assert.hpp>
-#include "units.h"
-
 namespace hemelb
 {
   namespace util
