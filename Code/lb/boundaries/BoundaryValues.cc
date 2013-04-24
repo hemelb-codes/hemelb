@@ -35,13 +35,14 @@ namespace hemelb
         for (int ioletIndex = 0; ioletIndex < totalIoletCount; ioletIndex++)
         {
           // First create a copy of all iolets
-          iolets::InOutLet* iolet = incoming_iolets[ioletIndex]->Clone();
+          iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->Clone();
 
           iolet->Initialise(unitConverter);
 
           iolets.push_back(iolet);
 
           bool isIOletOnThisProc = IsIOletOnThisProc(ioletType, latticeData, ioletIndex);
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproce? : %d", isIOletOnThisProc);
           procsList[ioletIndex] = GatherProcList(isIOletOnThisProc);
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
@@ -49,12 +50,13 @@ namespace hemelb
           if (isIOletOnThisProc || IsCurrentProcTheBCProc())
           {
             localIoletCount++;
-
             localIoletIDs.push_back(ioletIndex);
-            if (iolet->IsCommsRequired())
-            {
+//            hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletIndex: %d", ioletIndex);
+
+//            if (iolet->IsCommsRequired()) //DEREK: POTENTIAL MULTISCALE ISSUE (this if-statement)
+//            {
               iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
-            }
+//            }
           }
         }
 
@@ -63,6 +65,8 @@ namespace hemelb
 
         // Clear up
         delete[] procsList;
+
+        hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletCount: %d %d", localIoletCount, localIoletIDs[0]);
 
       }
 

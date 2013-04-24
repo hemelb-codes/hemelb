@@ -41,7 +41,7 @@ namespace hemelb
          * These will need to be registered by the deriving copy constructor.
          */
         Intercommunicand(const Intercommunicand &other): values(){}
-        std::vector<BaseSharedValue *> & Values(){return values;}
+        std::vector<BaseSharedValue *> & SharedValues(){return values;}
       private:
         std::vector<BaseSharedValue *> values;
     };

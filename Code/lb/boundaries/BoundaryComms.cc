@@ -19,11 +19,11 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryComms::BoundaryComms(SimulationState* iSimState,
-                                   std::vector<int> &iProcsList,
-                                   bool iHasBoundary) :
-        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
+      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary) :
+          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
       {
+        /* iProcsList contains the procs containing said Boundary/iolet, but NOT proc 0 (the BoundaryControlling/BC proc)! */
+
         // Only BC proc sends
         if (BoundaryValues::IsCurrentProcTheBCProc())
         {
