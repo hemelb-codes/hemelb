@@ -36,7 +36,7 @@ namespace hemelb
     template<typename CacheType>
     void Cache<CacheType>::Reserve(unsigned long size)
     {
-      items.reserve(size);
+      items.resize(size);
     }
   }
 }

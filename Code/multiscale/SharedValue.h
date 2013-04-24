@@ -11,6 +11,13 @@
 #define HEMELB_MULTISCALE_SHAREDVALUE_H
 #include "multiscale/Intercommunicand.h"
 
+/*
+ * IMPORTANT NOTES
+ * - SharedValues are defined generally in InOutlets (iolet) or similar data transfer regions.
+ * - BaseSharedValues are then passed on to the Intercommunicator.
+ * -> Therefore, the Payload shortcuts in this file work *only* on the iolet level, *NOT* on the Intercommunicator level!
+ */
+
 namespace hemelb
 {
   namespace multiscale
@@ -27,10 +34,11 @@ namespace hemelb
          * Syntactic sugar making it prettier to register shared values with their owner in an initialiser list.
          * @param owner
          */
-        BaseSharedValue(Intercommunicand *owner){
+        BaseSharedValue(Intercommunicand *owner)
+        {
           owner->RegisterSharedValue(this);
         }
-        
+
     };
     /***
      * A shared value is a field in an object which can be read and set by the multiscale system.
@@ -38,43 +46,43 @@ namespace hemelb
      * The cast operators are defined so these fields can be treated as interchangeable with their contents.
      * @tparam payload The type of value contained.
      */
-    template<class Payload> class SharedValue : public BaseSharedValue {
+    template<class Payload> class SharedValue : public BaseSharedValue
+    {
       public:
-      /***
-       * Construct a shared value
-       * @param owner The owning intercommunicand, used as "this" in an initialiser list in the parent.
-       * @param val An initial value for the payload.
-       */
-        SharedValue(Intercommunicand* owner, Payload val=Payload())
-          :BaseSharedValue(owner),contents(val)
-          {}
+        typedef Payload PayloadType;
+        /***
+         * Construct a shared value
+         * @param owner The owning intercommunicand, used as "this" in an initialiser list in the parent.
+         * @param val An initial value for the payload.
+         */
+        SharedValue(Intercommunicand* owner, Payload val = Payload()) :
+            BaseSharedValue(owner), contents(val)
+        {
+        }
+
+        Payload GetPayload() const
+        {
+          return contents;
+        }
+
+        void SetPayload(const Payload & input)
+        {
+          contents = input;
+        }
 
         /***
-         * Cast operator to payload value
+         * Cast operator to payload value. Leaving this in to make it work with SimConfig...(have taken the others out to improve code clarity)
          */
-        operator Payload &(){
+        operator Payload &()
+        {
           return contents;
         }
-        /***
-         * Cast operator to const payload value
-         */
-        operator const Payload &() const {
-          return contents;
-        }
-        /***
-         * Assignment operator from payload value
-         * @param input the value to assign
-         * @return the value assigned.
-         */
-        SharedValue<Payload> & operator= (const Payload & input)
-          {
-            contents=input;
-            return *this;
-          }
+
       private:
         Payload contents;
     };
-    template<class Payload> std::ostream & operator<<(std::ostream & stream, const SharedValue<Payload> & sv){
+    template<class Payload> std::ostream & operator<<(std::ostream & stream, const SharedValue<Payload> & sv)
+    {
       return stream << static_cast<Payload>(sv);
     }
   }
