@@ -16,10 +16,12 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkPoints, vtkPolyData, \
     vtkCellArray, vtkTransform, vtkTransformFilter, vtkIdList, vtkPolyLine, \
     vtkXMLPolyDataWriter, vtkAlgorithm, vtkImplicitBoolean, vtkSphere, \
-    vtkPolyDataNormals
+    vtkPolyDataNormals, vtkSTLWriter
 
 from vmtk.vtkvmtk import vtkvmtkPolyDataBoundaryExtractor
 from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
+
+#from CGAL.CGAL_Polyhedron_3 import Polyhedron_3
 
 from .Iolets import Inlet, Outlet, Iolet
 from .Vector import Vector
@@ -126,8 +128,16 @@ class PolyDataGenerator(GeometryGenerator):
 
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
+        a = vtkSTLWriter()
+        print "writing STL"
+        a.SetFileName('testhmout.stl')
+        a.SetInput(self.ClippedSurface)
+        a.Write()
         self.generator.SetClippedSurface(self.ClippedSurface)
-
+        #print "loading cgal"
+        #print type(self.ClippedSurface)
+        #polyhedron=Polyhedron_3("working_cylinder_clipped.off")
+        #self.generator.SetClippedCGALSurface(polyhedron)
         return
 
     pass
