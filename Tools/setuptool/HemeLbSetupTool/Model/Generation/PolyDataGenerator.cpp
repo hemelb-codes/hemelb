@@ -28,6 +28,8 @@
 #include "Block.h"
 #include "vtkXMLPolyDataWriter.h"
 
+#include <iostream>
+
 using namespace hemelb::io::formats;
 
 PolyDataGenerator::PolyDataGenerator() :
@@ -37,6 +39,25 @@ PolyDataGenerator::PolyDataGenerator() :
 	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
+	std::ifstream     in;
+	const char* infile = "working_cylinder_clipped.off"; 
+        in.open(infile);
+	std::istream* p_in = &in;
+	Polyhedron P;
+	(*p_in) >> P;
+	if (!*p_in) {
+	  std::cerr << "error: cannot open file"<< std::endl;
+	  exit( 1);
+	}
+	this->ClippedCGALSurface = &P;
+	//Tree tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end()); 
+	//this->AABBtree =  &tree;
+	cout << this->ClippedCGALSurface->size_of_facets() << endl;
+	//cout << this->AABBtree->size() << endl;
+	//cout << &this->AABBtree << endl;
+	//cout << &this->ClippedCGALSurface << endl;
+	
+	
 }
 
 PolyDataGenerator::~PolyDataGenerator() {
@@ -47,6 +68,9 @@ PolyDataGenerator::~PolyDataGenerator() {
 
 void PolyDataGenerator::ComputeBounds(double bounds[6]) const {
 	this->ClippedSurface->GetBounds(bounds);
+	//	for (int i=0;i<6;i++) {
+	//  cout << bounds[i] << endl;
+	//}
 }
 
 void PolyDataGenerator::PreExecute(void) {
@@ -65,6 +89,37 @@ void PolyDataGenerator::PreExecute(void) {
 		throw GenerationErrorMessage(
 				"Error getting Iolet ID array from clipped surface");
 	}
+	// Vertex_iteratorCGAL vi = P.vertices_begin();
+	// PointCGAL p = vi->point();
+	// double minx = p.x();
+	// double miny = p.y();
+	// double minz = p.z();
+	// double maxx = p.x();
+	// double maxy = p.y();
+	// double maxz = p.z();
+	// for ( ; vi != P.vertices_end() ; ++vi) {
+	//   p = vi->point();
+	//   if ( p.x() < minx)
+        //     minx = p.x();
+	//   if ( p.y() < miny)
+        //     miny = p.y();
+	//   if ( p.z() < minz)
+        //     minz = p.z();
+	//   if ( p.x() > maxx)
+        //     maxx = p.x();
+	//   if ( p.y() > maxy)
+        //     maxy = p.y();
+	//   if ( p.z() > maxz)
+        //     maxz = p.z();
+	// }
+	//cout << minx << " " << miny << " " << minz << " " << endl;
+	//Cout << maxx << " " << maxy << " " << maxz << " " << endl;
+	//PointCGAL p1(-9.5, -4.5, -120.5);
+	//PointCGAL p2(-8.5, -3.5, -119.5);
+	//SegmentCGAL segment_query(p1,p2);
+	//cout << tree.number_of_intersected_primitives(segment_query) << endl;
+
+	
 }
 
 /*
@@ -194,6 +249,33 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
 			this->hitPoints, this->hitCellIds);
+	
+	//cout << this->hitPoints->GetNumberOfPoints() << endl;
+	
+	PointCGAL p(from.Position[0], from.Position[1], from.Position[2]);
+	PointCGAL q(to.Position[0], to.Position[1], to.Position[2]);
+	SegmentCGAL segment_query(p,q);
+	//cout << from.Position[0] << " "<< from.Position[1] << " " << from.Position[2] << endl; 
+	//cout << to.Position[0] << " " << to.Position[1]<< " " << to.Position[2] << endl; 
+	//cout << from.Position[0] - to.Position[0] << " " << from.Position[1] - to.Position[1]<< " " << from.Position[2] - to.Position[2] << endl; 
+	//cout << this->AABBtree->size() << endl;
+	//cout << "and" << endl;
+	cout << this->ClippedCGALSurface->size_of_facets() << endl;
+	//cout << &this->AABBtree << endl;
+	//cout << "and" << endl;
+	//cout << &this->ClippedCGALSurface << endl;
+	//int j = this->AABBtree->number_of_intersected_primitives(segment_query);
+	//if (j != this->hitPoints->GetNumberOfPoints()){
+	  //cout << "test" << endl;
+	  //cout << j << " is not equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
+	  //cout << "From " << from.Position[0] << " " << from.Position[1] << " " << from.Position[2] << endl;
+	  //cout << "To " << to.Position[0] << " " << to.Position[1] << " " << to.Position[2] << endl;
+	//}
+	//else {
+	  //cout << j << " is equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
+	//}
+	//Std::cout << this->AABBtree->number_of_intersected_primitives(segment_query) << endl;
+	//std::cout << "and" << endl;
 	return this->hitPoints->GetNumberOfPoints();
 }
 
