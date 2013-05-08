@@ -27,6 +27,28 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_polyhedron_triangle_primitive.h>
+#include <CGAL/IO/Polyhedron_iostream.h>
+#include <CGAL/IO/Verbose_ostream.h>
+
+typedef CGAL::Simple_cartesian<double> Kernel;
+typedef Kernel::Point_3 PointCGAL;
+typedef Kernel::Plane_3 PlaneCGAL;
+typedef Kernel::Vector_3 VectorCGAL;
+typedef Kernel::Segment_3 SegmentCGAL;
+typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
+typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
+typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
+typedef CGAL::AABB_tree<Traits> Tree;
+typedef Polyhedron::Vertex_iterator     Vertex_iteratorCGAL;
+typedef Tree::Object_and_primitive_id Object_and_primitive_id;
+typedef Tree::Primitive_id Primitive_id;
+
+
 class PolyDataGenerator: public GeometryGenerator {
 public:
 	PolyDataGenerator();
@@ -53,6 +75,9 @@ public:
 	inline void SetClippedSurface(vtkPolyData* val) {
 		this->ClippedSurface = val;
 	}
+	inline void SetClippedCGALSurface(Polyhedron* val) {
+		this->ClippedCGALSurface = val;
+	}
 
 private:
 	virtual void ComputeBounds(double[]) const;
@@ -64,7 +89,9 @@ private:
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
+	Polyhedron* ClippedCGALSurface;
 	vtkOBBTree* Locator;
+	Tree* AABBtree;
 
 	// Members used internally
 	vtkPoints* hitPoints;
