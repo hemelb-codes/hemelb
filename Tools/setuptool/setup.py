@@ -199,7 +199,6 @@ def GetHemeLbCompileFlags():
     
 if __name__ == "__main__":
     # numpy, vtk
-    
     HemeLbDir = os.path.abspath('../../Code')
     BoostDir = GetBoostDir(HemeLbDir)
     vtkLibDir = GetVtkLibDir()
@@ -211,8 +210,8 @@ if __name__ == "__main__":
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
-    extra_link_args = []
-
+    extra_link_args = ['-lcgal']
+    
     # Create the list of extension modules
     ext_modules = []
     # Generation C++ 
