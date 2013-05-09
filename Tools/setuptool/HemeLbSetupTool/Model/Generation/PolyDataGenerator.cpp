@@ -38,26 +38,7 @@ PolyDataGenerator::PolyDataGenerator() :
 	//this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
-	this->hitCellIds = vtkIdList::New();
-	std::ifstream     in;
-	const char* infile = "working_cylinder_clipped.off"; 
-        in.open(infile);
-	std::istream* p_in = &in;
-	Polyhedron P;
-	(*p_in) >> P;
-	if (!*p_in) {
-	  std::cerr << "error: cannot open file"<< std::endl;
-	  exit( 1);
-	}
-	this->ClippedCGALSurface = &P;
-	//Tree tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end()); 
-	//this->AABBtree =  &tree;
-	cout << this->ClippedCGALSurface->size_of_facets() << endl;
-	//cout << this->AABBtree->size() << endl;
-	//cout << &this->AABBtree << endl;
-	//cout << &this->ClippedCGALSurface << endl;
-	
-	
+	this->hitCellIds = vtkIdList::New();	
 }
 
 PolyDataGenerator::~PolyDataGenerator() {
@@ -89,36 +70,6 @@ void PolyDataGenerator::PreExecute(void) {
 		throw GenerationErrorMessage(
 				"Error getting Iolet ID array from clipped surface");
 	}
-	// Vertex_iteratorCGAL vi = P.vertices_begin();
-	// PointCGAL p = vi->point();
-	// double minx = p.x();
-	// double miny = p.y();
-	// double minz = p.z();
-	// double maxx = p.x();
-	// double maxy = p.y();
-	// double maxz = p.z();
-	// for ( ; vi != P.vertices_end() ; ++vi) {
-	//   p = vi->point();
-	//   if ( p.x() < minx)
-        //     minx = p.x();
-	//   if ( p.y() < miny)
-        //     miny = p.y();
-	//   if ( p.z() < minz)
-        //     minz = p.z();
-	//   if ( p.x() > maxx)
-        //     maxx = p.x();
-	//   if ( p.y() > maxy)
-        //     maxy = p.y();
-	//   if ( p.z() > maxz)
-        //     maxz = p.z();
-	// }
-	//cout << minx << " " << miny << " " << minz << " " << endl;
-	//Cout << maxx << " " << maxy << " " << maxz << " " << endl;
-	//PointCGAL p1(-9.5, -4.5, -120.5);
-	//PointCGAL p2(-8.5, -3.5, -119.5);
-	//SegmentCGAL segment_query(p1,p2);
-	//cout << tree.number_of_intersected_primitives(segment_query) << endl;
-
 	
 }
 
@@ -251,7 +202,55 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 			this->hitPoints, this->hitCellIds);
 	
 	//cout << this->hitPoints->GetNumberOfPoints() << endl;
+	std::ifstream     in;
+	const char* infile = "working_cylinder_clipped.off"; 
+        in.open(infile);
+	std::istream* p_in = &in;
+	Polyhedron P;
+	(*p_in) >> P;
+	if (!*p_in) {
+	  std::cerr << "error: cannot open file"<< std::endl;
+	  exit( 1);
+	}
+	this->ClippedCGALSurface = &P;
+	Tree tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end()); 
+	this->AABBtree =  &tree;
+	//cout << this->ClippedCGALSurface->size_of_facets() << endl;
 	
+	//cout << this->AABBtree->size() << endl;
+	//cout << &this->AABBtree << endl;
+	//cout << &this->ClippedCGALSurface << endl;
+	
+
+	// Vertex_iteratorCGAL vi = P.vertices_begin();
+	// PointCGAL p = vi->point();
+	// double minx = p.x();
+	// double miny = p.y();
+	// double minz = p.z();
+	// double maxx = p.x();
+	// double maxy = p.y();
+	// double maxz = p.z();
+	// for ( ; vi != P.vertices_end() ; ++vi) {
+	//   p = vi->point();
+	//   if ( p.x() < minx)
+        //     minx = p.x();
+	//   if ( p.y() < miny)
+        //     miny = p.y();
+	//   if ( p.z() < minz)
+        //     minz = p.z();
+	//   if ( p.x() > maxx)
+        //     maxx = p.x();
+	//   if ( p.y() > maxy)
+        //     maxy = p.y();
+	//   if ( p.z() > maxz)
+        //     maxz = p.z();
+	// }
+	//cout << minx << " " << miny << " " << minz << " " << endl;
+	//Cout << maxx << " " << maxy << " " << maxz << " " << endl;
+	//PointCGAL p1(-9.5, -4.5, -120.5);
+	//PointCGAL p2(-8.5, -3.5, -119.5);
+	//SegmentCGAL segment_query(p1,p2);
+	//cout << tree.number_of_intersected_primitives(segment_query) << endl;
 	PointCGAL p(from.Position[0], from.Position[1], from.Position[2]);
 	PointCGAL q(to.Position[0], to.Position[1], to.Position[2]);
 	SegmentCGAL segment_query(p,q);
@@ -260,22 +259,30 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	//cout << from.Position[0] - to.Position[0] << " " << from.Position[1] - to.Position[1]<< " " << from.Position[2] - to.Position[2] << endl; 
 	//cout << this->AABBtree->size() << endl;
 	//cout << "and" << endl;
-	cout << this->ClippedCGALSurface->size_of_facets() << endl;
+	//cout << this->ClippedCGALSurface->size_of_facets() << endl;
 	//cout << &this->AABBtree << endl;
 	//cout << "and" << endl;
 	//cout << &this->ClippedCGALSurface << endl;
-	//int j = this->AABBtree->number_of_intersected_primitives(segment_query);
-	//if (j != this->hitPoints->GetNumberOfPoints()){
-	  //cout << "test" << endl;
-	  //cout << j << " is not equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
-	  //cout << "From " << from.Position[0] << " " << from.Position[1] << " " << from.Position[2] << endl;
-	  //cout << "To " << to.Position[0] << " " << to.Position[1] << " " << to.Position[2] << endl;
-	//}
-	//else {
-	  //cout << j << " is equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
-	//}
-	//Std::cout << this->AABBtree->number_of_intersected_primitives(segment_query) << endl;
-	//std::cout << "and" << endl;
+	int j = this->AABBtree->number_of_intersected_primitives(segment_query);
+	PointCGAL point1;
+	PointCGAL point2;
+	if (j != this->hitPoints->GetNumberOfPoints()){
+	  std::vector<Object_and_primitive_id> intersections;
+	  this->AABBtree->all_intersections(segment_query,std::back_inserter(intersections));
+	  if (CGAL::assign(point1, intersections[0].first) && CGAL::assign(point2, intersections[1].first)) {
+	    //cout << "Point1 " << point1.x() << " " << point1.y() << " " << point1.z() << endl;
+	    //cout << "Point2 " << point2.x() << " " << point2.y() << " " << point2.z() << endl;
+	    CGAL::Comparison_result pointsidentical = CGAL::compare_xyz(point1,point2);
+	    cout << pointsidentical << endl;
+	    //cout << j << " is not equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
+	    //cout << "From " << from.Position[0] << " " << from.Position[1] << " " << from.Position[2] << endl;
+	    //cout << "To " << to.Position[0] << " " << to.Position[1] << " " << to.Position[2] << endl;
+	  }
+	  else {
+	    cout << "Not just points" << endl;
+	  }
+	  
+	}
 	return this->hitPoints->GetNumberOfPoints();
 }
 
