@@ -590,9 +590,15 @@ namespace hemelb
       TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
       util::Vector3D<double> temp;
       DoIOForDoubleVector(lPositionElement, isLoading, temp);
-      value->SetPosition(temp);
+      if (isLoading)
+      {
+        value->SetPosition(temp);
+      }
       DoIOForDoubleVector(lNormalElement, isLoading, temp);
-      value->SetNormal(temp);
+      if (isLoading)
+      {
+        value->SetNormal(temp);
+      }
     }
 
     void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent,
