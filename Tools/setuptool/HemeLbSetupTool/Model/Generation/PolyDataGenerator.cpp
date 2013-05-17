@@ -38,20 +38,33 @@ PolyDataGenerator::PolyDataGenerator() :
 	//this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
-	this->hitCellIds = vtkIdList::New();	
+	this->hitCellIds = vtkIdList::New();
+	std::ifstream     in;
+	//const char* infile = "working_cylinder_clipped.off";
+	const char* infile = "broken_cylinder_clipped.off";
+        in.open(infile);
+	std::istream* p_in = &in;
+	static Polyhedron P;
+	(*p_in) >> P;
+	if (!*p_in) {
+	  std::cerr << "error: cannot open file"<< std::endl;
+	  exit( 1);
+	}
+	this->ClippedCGALSurface = &P;
+	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
+	this->inside_with_ray = new PointInside(P);
+       	//cout << (*this->inside_with_ray)(p1) << endl;
 }
 
 PolyDataGenerator::~PolyDataGenerator() {
 	this->Locator->Delete();
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
+	delete this->AABBtree;
 }
 
 void PolyDataGenerator::ComputeBounds(double bounds[6]) const {
 	this->ClippedSurface->GetBounds(bounds);
-	//	for (int i=0;i<6;i++) {
-	//  cout << bounds[i] << endl;
-	//}
 }
 
 void PolyDataGenerator::PreExecute(void) {
@@ -88,34 +101,72 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		vtkIdType nHits;
-
+		PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
+		PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
+		bool inside1 = (*this->inside_with_ray)(p1);
+		bool inside2 = (*this->inside_with_ray)(p2);
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
 			nHits = this->ComputeIntersections(site, neigh);
-
+			
 			if (nHits % 2 == 0) {
-				// Even # hits, hence neigh has same type as site
-				neigh.IsFluid = site.IsFluid;
-			} else {
-				// Odd # hits, neigh is opposite type to site
-				neigh.IsFluid = !site.IsFluid;
+			  // Even # hits, hence neigh has same type as site
+			  //neigh.IsFluid = site.IsFluid;
+			  neigh.IsFluid = inside2
+			  if (site.IsFluid != inside1 or neigh.IsFluid != inside2) {
+			    cout << "Ray says " << inside1 << " and " << inside2 << endl;
+			    cout << "and instersect says " << site.IsFluid << " and "<<neigh.IsFluid << endl;
+			  }
+			}
+			else if (nHits == -1) {
+			  cout << "Could not determine fluidness of site" << neigh.Position << " Ray says " << inside2 << endl;
+			  if (inside2){
+			      neigh.IsFluid = true;
+			    }
+			  else{
+			    neigh.IsFluid = false;
+			  }
+			}
+			else {
+			  // Odd # hits, neigh is opposite type to site
+			  //neigh.IsFluid = !site.IsFluid;
+			  neigh.IsFluid = inside2
+			   if (site.IsFluid != inside1 or neigh.IsFluid != inside2) {
+			    cout << "Ray says " << inside1 << " and " << inside2 << endl;
+			    cout << "and instersect says " << site.IsFluid << " and "<<neigh.IsFluid << endl;
+			  }
 			}
 
-			if (neigh.IsFluid)
-				neigh.CreateLinksVector();
+			//if (neigh.IsFluid)
+			//	neigh.CreateLinksVector();
 
 			neigh.IsFluidKnown = true;
 		} else {
 			// We know the fluidness of neigh, maybe don't need to intersect
+			// Only in the case of difference must we intersect.
+			nHits = this->ComputeIntersections(site, neigh);
 			if (site.IsFluid != neigh.IsFluid) {
-				// Only in the case of difference must we intersect.
-				nHits = this->ComputeIntersections(site, neigh);
-				if (nHits % 2 != 1) {
-					throw InconsistentFluidnessError(site, neigh, nHits);
-				}
+			  if (nHits == -1) {
+			    cout << "Could not determine fluidness of site" << endl;
+			  }						
+			  else if (nHits % 2 != 1) {
+			    cout << "Site is " << inside1 << " and neigh is " << inside2 << endl;
+			    if (inside1==inside2){
+			      throw InconsistentFluidnessError(site, neigh, nHits);
+			    }
+			  }
+			}
+			else {
+			  if (nHits % 2 != 0) {
+			    cout << "Site is " << inside1 << " and neigh is " << inside2 << endl;
+			    if (inside1!=inside2){
+			      throw InconsistentFluidnessError(site, neigh, nHits);
+			    }
+			  }
+			  
 			}
 		}
-
+		/*
 		// Four cases: fluid-fluid, solid-solid, fluid-solid and solid-fluid.
 		// Will handle the last two together.
 		if (site.IsFluid == neigh.IsFluid) {
@@ -191,100 +242,89 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				link.DistanceInVoxels = distanceInVoxels;
 			}
 		}
+		}*/ 
 	}
-
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
-	this->ComputeAveragedNormal(site);
+	//this->ComputeAveragedNormal(site);
 }
+
+// int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
+// 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
+// 			this->hitPoints, this->hitCellIds);
+// 	PointCGAL p(from.Position[0], from.Position[1], from.Position[2]);
+// 	PointCGAL q(to.Position[0], to.Position[1], to.Position[2]);
+// 	SegmentCGAL segment_query(p,q);
+// 	int j = this->AABBtree->number_of_intersected_primitives(segment_query);
+// 	PointCGAL point1;
+// 	PointCGAL point2;
+// 	PointCGAL point3;
+// 	int hitpoints = this->hitPoints->GetNumberOfPoints();
+// 	if (j != this->hitPoints->GetNumberOfPoints()){
+// 	  std::vector<Object_and_primitive_id> intersections;
+// 	  this->AABBtree->all_intersections(segment_query,std::back_inserter(intersections));
+// 	  //cout << "cgal found " << j << " hit point and vtk " << this->hitPoints->GetNumberOfPoints() << endl;
+// 	  //cout << "From " << p << " to " << q << endl;
+// 	  if (j == 0) {
+// 	    hitpoints = 0;
+// 	  }
+// 	  else if(j == 1){
+// 	    if (CGAL::assign(point1, intersections[0].first)){
+// 	      hitpoints = j;
+// 	    }
+// 	    else {
+// 	      hitpoints = -1;
+// 	    }
+// 	  }
+// 	  else if(j == 2){
+// 	    if (CGAL::assign(point1, intersections[0].first) && CGAL::assign(point2, intersections[1].first)) {
+// 	      CGAL::Comparison_result pointsidentical = CGAL::compare_xyz(point1,point2);
+// 	      if(pointsidentical != 0){
+// 	// 	cout << "not identical " << pointsidentical << endl;
+// 		hitpoints = j;
+// 	// 	cout << point1.x() << " " << point1.y() << " " << point1.z() << endl;
+// 	// 	cout << point2.x() << " " << point2.y() << " " << point2.z() << endl;
+// 	      }
+// 	      else{
+// 		cout << "2 identical points" << endl;
+// 		hitpoints = 1;
+// 	      }
+// 	    }
+// 	    else {
+// 	      cout << "2 intersections" << endl;
+// 	      hitpoints = -1;
+// 	    }
+// 	  }
+// 	  else if (j == 3){
+// 	    //    if (CGAL::assign(point1, intersections[0].first) && CGAL::assign(point2, intersections[1].first) && CGAL::assign(point3, intersections[2].first)) {
+// 	//       //CGAL::Comparison_result pointsidentical = CGAL::compare_xyz(point1,point2);
+// 	//       //if(pointsidentical != 0){
+// 	//       //cout << j << " is not " << this->hitPoints->GetNumberOfPoints() << endl;
+// 	//       cout << "From " << p << " to " << q << endl;
+// 	//       cout << point1.x() << " " << point1.y() << " " << point1.z() << endl;
+// 	//       cout << point2.x() << " " << point2.y() << " " << point2.z() << endl;
+// 	//       cout << point3.x() << " " << point3.y() << " " << point3.z() << endl;
+// 	//       hitpoints = -1;
+// 	    //   }
+// 	    // else {
+// 	    cout << "3 intersections" << endl;
+// 	    hitpoints = -1;
+// 	  }
+// 	  else {
+// 	    cout << "more than 3 intersections" << endl;
+// 	    hitpoints = -1;
+// 	  }
+// 	}
+// 	return hitpoints;
+// }
+
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
 			this->hitPoints, this->hitCellIds);
-	
-	//cout << this->hitPoints->GetNumberOfPoints() << endl;
-	std::ifstream     in;
-	const char* infile = "working_cylinder_clipped.off"; 
-        in.open(infile);
-	std::istream* p_in = &in;
-	Polyhedron P;
-	(*p_in) >> P;
-	if (!*p_in) {
-	  std::cerr << "error: cannot open file"<< std::endl;
-	  exit( 1);
-	}
-	this->ClippedCGALSurface = &P;
-	Tree tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end()); 
-	this->AABBtree =  &tree;
-	//cout << this->ClippedCGALSurface->size_of_facets() << endl;
-	
-	//cout << this->AABBtree->size() << endl;
-	//cout << &this->AABBtree << endl;
-	//cout << &this->ClippedCGALSurface << endl;
-	
-
-	// Vertex_iteratorCGAL vi = P.vertices_begin();
-	// PointCGAL p = vi->point();
-	// double minx = p.x();
-	// double miny = p.y();
-	// double minz = p.z();
-	// double maxx = p.x();
-	// double maxy = p.y();
-	// double maxz = p.z();
-	// for ( ; vi != P.vertices_end() ; ++vi) {
-	//   p = vi->point();
-	//   if ( p.x() < minx)
-        //     minx = p.x();
-	//   if ( p.y() < miny)
-        //     miny = p.y();
-	//   if ( p.z() < minz)
-        //     minz = p.z();
-	//   if ( p.x() > maxx)
-        //     maxx = p.x();
-	//   if ( p.y() > maxy)
-        //     maxy = p.y();
-	//   if ( p.z() > maxz)
-        //     maxz = p.z();
-	// }
-	//cout << minx << " " << miny << " " << minz << " " << endl;
-	//Cout << maxx << " " << maxy << " " << maxz << " " << endl;
-	//PointCGAL p1(-9.5, -4.5, -120.5);
-	//PointCGAL p2(-8.5, -3.5, -119.5);
-	//SegmentCGAL segment_query(p1,p2);
-	//cout << tree.number_of_intersected_primitives(segment_query) << endl;
-	PointCGAL p(from.Position[0], from.Position[1], from.Position[2]);
-	PointCGAL q(to.Position[0], to.Position[1], to.Position[2]);
-	SegmentCGAL segment_query(p,q);
-	//cout << from.Position[0] << " "<< from.Position[1] << " " << from.Position[2] << endl; 
-	//cout << to.Position[0] << " " << to.Position[1]<< " " << to.Position[2] << endl; 
-	//cout << from.Position[0] - to.Position[0] << " " << from.Position[1] - to.Position[1]<< " " << from.Position[2] - to.Position[2] << endl; 
-	//cout << this->AABBtree->size() << endl;
-	//cout << "and" << endl;
-	//cout << this->ClippedCGALSurface->size_of_facets() << endl;
-	//cout << &this->AABBtree << endl;
-	//cout << "and" << endl;
-	//cout << &this->ClippedCGALSurface << endl;
-	int j = this->AABBtree->number_of_intersected_primitives(segment_query);
-	PointCGAL point1;
-	PointCGAL point2;
-	if (j != this->hitPoints->GetNumberOfPoints()){
-	  std::vector<Object_and_primitive_id> intersections;
-	  this->AABBtree->all_intersections(segment_query,std::back_inserter(intersections));
-	  if (CGAL::assign(point1, intersections[0].first) && CGAL::assign(point2, intersections[1].first)) {
-	    //cout << "Point1 " << point1.x() << " " << point1.y() << " " << point1.z() << endl;
-	    //cout << "Point2 " << point2.x() << " " << point2.y() << " " << point2.z() << endl;
-	    CGAL::Comparison_result pointsidentical = CGAL::compare_xyz(point1,point2);
-	    cout << pointsidentical << endl;
-	    //cout << j << " is not equal to "<< this->hitPoints->GetNumberOfPoints() << endl;
-	    //cout << "From " << from.Position[0] << " " << from.Position[1] << " " << from.Position[2] << endl;
-	    //cout << "To " << to.Position[0] << " " << to.Position[1] << " " << to.Position[2] << endl;
-	  }
-	  else {
-	    cout << "Not just points" << endl;
-	  }
-	  
-	}
-	return this->hitPoints->GetNumberOfPoints();
+	int hitpoints = this->hitPoints->GetNumberOfPoints();
+	return hitpoints;
 }
+
 
 // Function to be called on intersecting leaf nodes of the two OBB trees.
 // Final void pointer is a pointer to an int, namely the count of the number
