@@ -27,8 +27,9 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Filtered_kernel.h>
+//#include <CGAL/Simple_cartesian.h>
+//#include <CGAL/Filtered_kernel.h>
+//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
 #include <CGAL/Polyhedron_3.h>
@@ -37,9 +38,18 @@ class BlockWriter;
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/IO/Verbose_ostream.h>
+#include <CGAL/Point_inside_polyhedron_3.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/math/special_functions/round.hpp>
+#include <boost/call_traits.hpp>
+
+
+
 
 //typedef CGAL::Simple_cartesian<double> CKernel;
 //typedef CGAL::Filtered_kernel<CKernel> Kernel;
+//typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef Kernel::Point_3 PointCGAL;
 typedef Kernel::Plane_3 PlaneCGAL;
@@ -52,7 +62,7 @@ typedef CGAL::AABB_tree<Traits> Tree;
 typedef Polyhedron::Vertex_iterator     Vertex_iteratorCGAL;
 typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 typedef Tree::Primitive_id Primitive_id;
-
+typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
 
 class PolyDataGenerator: public GeometryGenerator {
 public:
@@ -80,9 +90,9 @@ public:
 	inline void SetClippedSurface(vtkPolyData* val) {
 		this->ClippedSurface = val;
 	}
-	inline void SetClippedCGALSurface(Polyhedron* val) {
-		this->ClippedCGALSurface = val;
-	}
+	//inline void SetClippedCGALSurface(Polyhedron* val) {
+	  //this->ClippedCGALSurface = val;
+		//}
 
 private:
 	virtual void ComputeBounds(double[]) const;
@@ -94,14 +104,15 @@ private:
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
-	Polyhedron* ClippedCGALSurface;
 	vtkOBBTree* Locator;
+	Polyhedron* ClippedCGALSurface;
 	Tree* AABBtree;
+	PointInside *inside_with_ray;
 
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
-	vtkIntArray* IoletIdArray;
+	vtkIntArray* IoletIdArray;	
 };
 
 #endif // HEMELBSETUPTOOL_POLYDATAGENERATOR_H

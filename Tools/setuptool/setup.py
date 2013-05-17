@@ -207,6 +207,7 @@ if __name__ == "__main__":
     else:
         vtkIncludeDir = LibToInclude(vtkLibDir)
     include_dirs = [vtkIncludeDir, HemeLbDir, BoostDir]
+    print include_dirs
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
