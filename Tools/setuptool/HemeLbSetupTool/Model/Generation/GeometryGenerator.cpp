@@ -49,7 +49,7 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		// case where there are no fluid sites).
-		BlockWriter* blockWriterPtr = writer.StartNextBlock();
+		//BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		Block& block = *blockIt;
 
 		int side = 0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
@@ -73,13 +73,13 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 				Site& site = **siteIt;
 				this->ClassifySite(site);
 
-				if (site.IsFluid) {
+				/*if (site.IsFluid) {
 					blockWriterPtr->IncrementFluidSitesCount();
 					WriteFluidSite(*blockWriterPtr, site);
 				} else {
 					WriteSolidSite(*blockWriterPtr, site);
-				}
-
+					}*/
+				
 			}
 			break;
 		case -1:
@@ -94,16 +94,16 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 						link_index < site.Links.size(); ++link_index) {
 					site.Links[link_index].Type = geometry::CUT_NONE;
 				}
-				blockWriterPtr->IncrementFluidSitesCount();
-				WriteFluidSite(*blockWriterPtr, site);
+				//blockWriterPtr->IncrementFluidSitesCount();
+				//WriteFluidSite(*blockWriterPtr, site);
 			}
 			break;
 		default:
 			break;
 		}
-		blockWriterPtr->Finish();
-		blockWriterPtr->Write(writer);
-		delete blockWriterPtr;
+		//blockWriterPtr->Finish();
+		//blockWriterPtr->Write(writer);
+		//delete blockWriterPtr;
 	}
 	writer.Close();
 }
