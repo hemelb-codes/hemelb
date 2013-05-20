@@ -27,10 +27,10 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-//#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Simple_cartesian.h>
 //#include <CGAL/Filtered_kernel.h>
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+//#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/AABB_tree.h>
@@ -47,10 +47,10 @@ class BlockWriter;
 
 
 
-//typedef CGAL::Simple_cartesian<double> CKernel;
+typedef CGAL::Simple_cartesian<double> Kernel;
 //typedef CGAL::Filtered_kernel<CKernel> Kernel;
 //typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
-typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
+//typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef Kernel::Point_3 PointCGAL;
 typedef Kernel::Plane_3 PlaneCGAL;
 typedef Kernel::Vector_3 VectorCGAL;
@@ -108,7 +108,7 @@ private:
 	Polyhedron* ClippedCGALSurface;
 	Tree* AABBtree;
 	PointInside *inside_with_ray;
-
+	int numberofvoxels;
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
