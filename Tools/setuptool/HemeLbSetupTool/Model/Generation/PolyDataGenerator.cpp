@@ -159,14 +159,19 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			
 			Vector hitPoint;
 			this->hitPoints->GetPoint(iHit, &hitPoint[0]);
+			// needs logic to pick the right point of the list. Depending on the fluid 
+			Vector hitPointCGAL = Vector(this->HitPointsCGAL[0].x(),this->HitPointsCGAL[0].y(),this->HitPointsCGAL[0].z());
+			//cout << hitPointCGAL << " "<< hitPoint << endl;
 			LinkData& link = fluid->Links[iSolid];
-			if (nHits != 1) {
-			  cout << "hits: " << nHits << endl;
-			  cout << hitPoint << endl;
-			}
+
+			//if (nHits != 1) {
+			//  cout << "hits: " << nHits << " and " << nHitsCGAL <<endl;
+			//  cout << hitPoint << endl;
+			  //cout << this->HitPointCGAL << endl;
+			//}
 			// This is set in any solid case
 			float distanceInVoxels =
-					(hitPoint - fluid->Position).GetMagnitude();
+					(hitPointCGAL - fluid->Position).GetMagnitude();
 			// The distance is in voxels but must be output as a fraction of
 			// the lattice vector. Scale it.
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
@@ -214,6 +219,31 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
 			this->hitPoints, this->hitCellIds);
 	int hitpoints = this->hitPoints->GetNumberOfPoints();
+	PointCGAL p1(from.Position[0], from.Position[1], from.Position[2]);
+	PointCGAL p2(to.Position[0], to.Position[1], to.Position[2]);
+	PointCGAL p3;
+	PointCGAL hitpoint;
+	SegmentCGAL s1;
+	SegmentCGAL segment_query(p1,p2);
+	std::vector<Object_and_primitive_id> CGALintersections;
+	nHitsCGAL = this->AABBtree->number_of_intersected_primitives(segment_query);
+	this->HitPointsCGAL.clear();
+	this->AABBtree->all_intersections(segment_query,std::back_inserter(CGALintersections));
+	double mindist = 1e100;
+	double temp;
+	
+	if (nHitsCGAL) {
+	    for (std::vector<Object_and_primitive_id>::iterator i = CGALintersections.begin(); i != CGALintersections.end(); ++i) {
+	      CGAL::Object object = i->first;
+	      if(CGAL::assign(p3,object)){
+		this->HitPointsCGAL.push_back(p3);
+	      }
+	      else if (CGAL::assign(s1,object)){
+		cout << "line todo" << endl;
+		//temp = CGAL::squared_distance(p2,s1);
+	      }
+	    } 
+	  }
 	return hitpoints;
 }
 

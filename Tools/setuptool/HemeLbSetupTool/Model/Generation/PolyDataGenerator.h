@@ -39,13 +39,12 @@ class BlockWriter;
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/IO/Verbose_ostream.h>
 #include <CGAL/Point_inside_polyhedron_3.h>
+#include <CGAL/squared_distance_3.h>
+
 
 #include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/round.hpp>
 #include <boost/call_traits.hpp>
-
-
-
 
 typedef CGAL::Simple_cartesian<double> Kernel;
 //typedef CGAL::Filtered_kernel<CKernel> Kernel;
@@ -59,7 +58,7 @@ typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
 typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
 typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
-typedef Polyhedron::Vertex_iterator     Vertex_iteratorCGAL;
+typedef Polyhedron::Vertex_iterator Vertex_iteratorCGAL;
 typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 typedef Tree::Primitive_id Primitive_id;
 typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
@@ -112,7 +111,9 @@ private:
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
-	vtkIntArray* IoletIdArray;	
+	vtkIntArray* IoletIdArray;
+	int nHitsCGAL;
+	std::vector<PointCGAL> HitPointsCGAL;
 };
 
 #endif // HEMELBSETUPTOOL_POLYDATAGENERATOR_H
