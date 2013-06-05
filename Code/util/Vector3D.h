@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <limits>
 #include "util/static_assert.h"
+#include "util/utilityFunctions.h"
 #include "util/Vector3DArithmeticTraits.h"
 
 namespace hemelb
@@ -305,6 +306,31 @@ namespace hemelb
         {
           return V1.Dot(V2);
         }
+
+        /**
+         * Cross product between two Vector3D.
+         * @param V1
+         * @param V2
+         * @return
+         */
+        static Vector3D Cross(const Vector3D& V1, const Vector3D& V2)
+        {
+          return Vector3D(V1.y * V2.z - V1.z * V2.y,
+                          V1.z * V2.x - V1.x * V2.z,
+                          V1.x * V2.y - V1.y * V2.x);
+
+        }
+
+        /**
+         * Cross product between this vector and another.
+         * @param other
+         * @return
+         */
+        Vector3D Cross(const Vector3D& other)
+        {
+          return Cross(*this, other);
+        }
+
         /**
          * Compute the magnitude squared of the vector
          * @return magnitude**2
@@ -502,6 +528,19 @@ namespace hemelb
           y = std::max(y, iCompareVector.y);
 
           z = std::max(z, iCompareVector.z);
+        }
+
+        /**
+         * Return whether the vector is within the bounds specified.
+         * @param vMin
+         * @param vMax
+         * @return
+         */
+        bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
+        {
+          return NumericalFunctions::IsInRange(x, vMin.x, vMax.x)
+              && NumericalFunctions::IsInRange(y, vMin.y, vMax.y)
+              && NumericalFunctions::IsInRange(z, vMin.z, vMax.z);
         }
 
         /**
