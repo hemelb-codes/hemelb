@@ -32,6 +32,32 @@ namespace hemelb
       namespace iolets
       {
         /**
+         * Base class for extra data needed by LB BC implementations.
+         * Makes "Iolet coordinates" available.
+         * These are coordinates in a frame aligned with the iolet plane.
+         * iolet(0, 0, 0) corresponds to the iolet's position in lattice coordinates
+         * x & y are arbitrary in plane components,
+         * z is in the direction of the iolet's normal.
+         */
+        class InOutLet;
+        class IoletExtraData
+        {
+          public:
+            IoletExtraData(InOutLet& iolet);
+            virtual ~IoletExtraData();
+            LatticePosition WorldToIolet(LatticeVector r);
+            LatticePosition WorldToIolet(LatticePosition r);
+          protected:
+            typedef util::Vector3D<Dimensionless> UnitVec;
+            UnitVec e1;
+            UnitVec e2;
+            const UnitVec& n;
+            const LatticePosition centre;
+          private:
+            IoletExtraData();
+        };
+
+        /**
          * Base Iolet class
          * Contains information configured from the xml config file, and calculates a density near itself for use in LB calculation
          * Provides maximum and minimum range of densities/pressures for use by steering.
@@ -40,7 +66,7 @@ namespace hemelb
         {
           public:
             InOutLet() :
-              comms(NULL)
+              comms(NULL), extraData(NULL)
             {
             }
             virtual ~InOutLet()
@@ -53,7 +79,8 @@ namespace hemelb
              * @param iIsLoading Read or write?
              * @param simConfig The config object being read
              */
-            virtual void DoIO(TiXmlElement *parent, bool isLoading, configuration::SimConfig* simConfig) = 0;
+            virtual void DoIO(TiXmlElement *parent, bool isLoading,
+                              configuration::SimConfig* simConfig) = 0;
 
             /***
              * Copy the InOutLet.
@@ -144,7 +171,7 @@ namespace hemelb
 
             void SetPosition(PhysicalPosition& x)
             {
-              position= x;
+              position = x;
             }
 
             /**
@@ -156,7 +183,7 @@ namespace hemelb
               normal = newNormal.GetNormalised();
             }
 
-            const util::Vector3D<Dimensionless>& GetNormal()
+            const util::Vector3D<Dimensionless>& GetNormal() const
             {
               return normal;
             }
@@ -170,12 +197,24 @@ namespace hemelb
               minimumSimulationDensity = minSimDensity;
             }
 
+            IoletExtraData* GetExtraData()
+            {
+              return extraData;
+            }
+
+            void SetExtraData(IoletExtraData* ed)
+            {
+              extraData = ed;
+            }
+
           protected:
             LatticeDensity minimumSimulationDensity;
             PhysicalPosition position;
             util::Vector3D<Dimensionless> normal;
             const util::UnitConverter* units;
-            BoundaryComms * comms;
+            BoundaryComms* comms;
+            IoletExtraData* extraData;
+            friend class IoletExtraData;
         };
       }
     }
