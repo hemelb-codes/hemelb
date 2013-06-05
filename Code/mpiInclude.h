@@ -51,6 +51,7 @@ namespace hemelb
     protected:
       static MPI_Datatype mpiType;
       static MPI_Datatype RegisterMpiDataType();
+      template <class U> friend class MpiDataTypeTraits;
   };
 
   // Define the initial value

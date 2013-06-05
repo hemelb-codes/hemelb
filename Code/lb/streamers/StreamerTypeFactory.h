@@ -72,7 +72,7 @@ namespace hemelb
 
               for (Direction ii = 0; ii < LatticeType::NUMVECTORS; ii++)
               {
-                if (site.HasBoundary(ii))
+                if (site.HasWall(ii))
                 {
                   wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
@@ -101,7 +101,7 @@ namespace hemelb
               geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                if (site.HasBoundary(direction))
+                if (site.HasWall(direction))
                 {
                   wallLinkDelegate.PostStepLink(latticeData, site, direction);
                 }
@@ -261,7 +261,7 @@ namespace hemelb
                 {
                   ioletLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
-                else if (site.HasBoundary(ii))
+                else if (site.HasWall(ii))
                 {
                   wallLinkDelegate.StreamLink(lbmParams, latDat, site, hydroVars, ii);
                 }
@@ -291,7 +291,7 @@ namespace hemelb
               geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                if (site.HasBoundary(direction))
+                if (site.HasWall(direction))
                 {
                   wallLinkDelegate.PostStepLink(latticeData, site, direction);
                 }

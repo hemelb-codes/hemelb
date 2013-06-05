@@ -29,11 +29,11 @@ namespace hemelb
 
         }
 
-        void SetHasBoundary(Direction direction)
+        void SetHasWall(Direction direction)
         {
-          unsigned newValue = geometry::SiteData::GetIntersectionData();
+          unsigned newValue = geometry::SiteData::GetWallIntersectionData();
           newValue |= 1U << (direction - 1);
-          boundaryIntersection = newValue;
+          wallIntersection = newValue;
         }
 
         void SetHasIolet(Direction direction)
@@ -43,11 +43,9 @@ namespace hemelb
           ioletIntersection = newValue;
         }
 
-        void SetBoundaryId(int boundaryId)
+        void SetIoletId(int boundaryId)
         {
-          unsigned newValue = geometry::SiteData::GetOtherRawData();
-          newValue |= boundaryId << BOUNDARY_ID_SHIFT;
-          data = newValue;
+          ioletId = boundaryId;
         }
     };
 
@@ -174,10 +172,10 @@ namespace hemelb
         /***
          Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
          **/
-        void SetHasBoundary(site_t site, Direction direction)
+        void SetHasWall(site_t site, Direction direction)
         {
           TestSiteData mutableSiteData(siteData[site]);
-          mutableSiteData.SetHasBoundary(direction);
+          mutableSiteData.SetHasWall(direction);
           siteData[site] = geometry::SiteData(mutableSiteData);
         }
 
@@ -194,10 +192,10 @@ namespace hemelb
         /***
          Not used in setting up the four cube, but used in other tests to poke changes into the four cube for those tests.
          **/
-        void SetBoundaryId(site_t site, int id)
+        void SetIoletId(site_t site, int id)
         {
           TestSiteData mutableSiteData(siteData[site]);
-          mutableSiteData.SetBoundaryId(id);
+          mutableSiteData.SetIoletId(id);
           siteData[site] = geometry::SiteData(mutableSiteData);
         }
 

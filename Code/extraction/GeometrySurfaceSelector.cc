@@ -16,7 +16,7 @@ namespace hemelb
     bool GeometrySurfaceSelector::IsWithinGeometry(const extraction::IterableDataSource& data,
                                                    const util::Vector3D<site_t>& location)
     {
-      return data.IsEdgeSite(location);
+      return data.IsWallSite(location);
     }
 
   } /* namespace extraction */

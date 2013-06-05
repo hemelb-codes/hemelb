@@ -18,14 +18,17 @@ namespace CPPUNIT_NS
   {
       static bool equal(const hemelb::geometry::SiteData& x, const hemelb::geometry::SiteData& y)
       {
-        return (x.GetIntersectionData() == y.GetIntersectionData()) && (x.GetOtherRawData() == y.GetOtherRawData());
+        return (x.GetWallIntersectionData() == y.GetWallIntersectionData())
+            && (x.GetIoletIntersectionData() == y.GetIoletIntersectionData()) && (x.GetSiteType()
+            == y.GetSiteType()) && (x.GetIoletId() == y.GetIoletId());
       }
 
       // Note this vector print doesn't visually distinguish between ("1" "2" "3") and("1, 2" "3").
       static std::string toString(const hemelb::geometry::SiteData& value)
       {
         std::stringstream output;
-        output << value.GetIntersectionData() << " , " << value.GetOtherRawData() << std::flush;
+        output << value.GetSiteType() << ", " << value.GetWallIntersectionData() << ", "
+            << value.GetIoletIntersectionData() << ", " << value.GetIoletId() << std::flush;
         return output.str();
       }
   };

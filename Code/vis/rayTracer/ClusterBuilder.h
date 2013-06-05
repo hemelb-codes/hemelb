@@ -291,7 +291,7 @@ namespace hemelb
 
             const geometry::Site<const geometry::LatticeData> site = mLatticeData->GetSite(localIndex);
 
-            if (site.IsEdge())
+            if (site.IsWall())
             {
               cluster.SetWallData(blockNum, siteIdOnBlock, site.GetWallNormal());
             }

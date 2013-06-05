@@ -62,7 +62,7 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData->GetSite(siteIndex).IsEdge());
+              assert(latticeData->GetSite(siteIndex).IsWall());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
 
               geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
@@ -79,7 +79,7 @@ namespace hemelb
 
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                if (!site.HasBoundary(direction))
+                if (!site.HasWall(direction))
                 {
                   * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
                       = hydroVars.GetFPostCollision()[direction];
@@ -124,7 +124,7 @@ namespace hemelb
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
             {
-              assert(latticeData->GetSite(siteIndex).IsEdge());
+              assert(latticeData->GetSite(siteIndex).IsWall());
               assert(lMatrices.find(siteIndex) != lMatrices.end());
               assert(luPermutationMatrices.find(siteIndex) != luPermutationMatrices.end());
 
@@ -198,7 +198,7 @@ namespace hemelb
 
               // Ignore ones that aren't edges;
               //! @todo: We should also be ignoring iolets
-              if (!localSite.IsEdge())
+              if (!localSite.IsWall())
               {
                 continue;
               }
@@ -221,7 +221,7 @@ namespace hemelb
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
               int inverseDirection = LatticeType::INVERSEDIRECTIONS[direction];
-              if (site.HasBoundary(inverseDirection))
+              if (site.HasWall(inverseDirection))
               {
                 incomingVelocities[contiguousSiteIndex].insert(direction);
               }
