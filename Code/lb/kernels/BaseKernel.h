@@ -60,7 +60,7 @@ namespace hemelb
 
         protected:
           HydroVarsBase(const distribn_t* const f) :
-              f(f)
+            f(f)
           {
           }
 
@@ -123,7 +123,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase<typename KernelImpl::LatticeType>(f)
+            HydroVarsBase<typename KernelImpl::LatticeType> (f)
           {
 
           }
@@ -152,6 +152,9 @@ namespace hemelb
 
           // The number of sites using this kernel instance.
           site_t siteCount;
+
+          // The ranges of the sites that will use this kernel
+          std::vector<std::pair<site_t, site_t> > siteRanges;
 
           // The array with the imposed density at each boundary.
           boundaries::BoundaryValues* boundaryObject;
@@ -196,17 +199,17 @@ namespace hemelb
 
           inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateDensityMomentumFeq(hydroVars, index);
+            static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, index);
           }
 
           inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
+            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
           }
 
           inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
           {
-            static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
+            static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars);
           }
 
       };
