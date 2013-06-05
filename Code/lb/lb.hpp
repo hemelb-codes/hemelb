@@ -130,8 +130,8 @@ namespace hemelb
 
     template<class LatticeType>
     void LBM<LatticeType>::Initialise(vis::Control* iControl,
-                                      boundaries::BoundaryValues* iInletValues,
-                                      boundaries::BoundaryValues* iOutletValues,
+                                      iolets::BoundaryValues* iInletValues,
+                                      iolets::BoundaryValues* iOutletValues,
                                       util::UnitConverter* iUnits)
     {
       mInletValues = iInletValues;
@@ -369,8 +369,8 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::ReadParameters()
     {
-      std::vector<lb::boundaries::iolets::InOutLet*> inlets = mSimConfig->GetInlets();
-      std::vector<lb::boundaries::iolets::InOutLet*> outlets = mSimConfig->GetOutlets();
+      std::vector<lb::iolets::InOutLet*> inlets = mSimConfig->GetInlets();
+      std::vector<lb::iolets::InOutLet*> outlets = mSimConfig->GetOutlets();
       inletCount = inlets.size();
       outletCount = outlets.size();
       mParams.StressType = mSimConfig->GetStressType();

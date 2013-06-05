@@ -18,7 +18,7 @@ namespace hemelb
 {
   namespace lb
   {
-    namespace boundaries
+    namespace iolets
     {
 
       class BoundaryComms

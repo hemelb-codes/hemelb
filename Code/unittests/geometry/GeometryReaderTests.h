@@ -74,7 +74,7 @@ namespace hemelb
             {
               for (site_t j = 1; j < 5; j++)
               {
-                bool isEdgeSite = (i == 1 || i == 4 || j == 1 || j == 4);
+                bool isWallSite = (i == 1 || i == 4 || j == 1 || j == 4);
 
                 for (site_t k = 1; k < 5; k++)
                 {
@@ -92,10 +92,10 @@ namespace hemelb
                   //                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetWallIntersectionData(),
                   //                                       siteData.GetWallIntersectionData());
 
-                  CPPUNIT_ASSERT_EQUAL(isEdgeSite,
+                  CPPUNIT_ASSERT_EQUAL(isWallSite,
                                        readResult.Blocks[0].Sites[siteIndex].wallNormalAvailable);
 
-                  if (isEdgeSite)
+                  if (isWallSite)
                   {
                     /// @todo: #597 use CPPUNIT_ASSERT_EQUAL directly (having trouble with Vector3D templated over different types at the minute)
                     /// CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal(), readResult.Blocks[0].Sites[siteIndex].wallNormal);

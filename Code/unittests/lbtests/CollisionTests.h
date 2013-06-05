@@ -50,7 +50,7 @@ namespace hemelb
 
           void TestNonZeroVelocityEquilibriumFixedDensity()
           {
-            lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
+            lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
                                                          simConfig->GetInlets(),
                                                          simState,
@@ -121,7 +121,7 @@ namespace hemelb
 
           void TestZeroVelocityEquilibriumFixedDensity()
           {
-            lb::boundaries::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
+            lb::iolets::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
                                                           latDat,
                                                           simConfig->GetOutlets(),
                                                           simState,

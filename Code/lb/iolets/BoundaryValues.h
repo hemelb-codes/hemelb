@@ -12,14 +12,14 @@
 
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
-#include "lb/boundaries/iolets/InOutLet.h"
+#include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace boundaries
+    namespace iolets
     {
 
       class BoundaryValues : public net::IteratedAction

@@ -41,7 +41,7 @@ namespace hemelb
             {
               geometry::Site<const geometry::LatticeData> localSite = initParams.latDat->GetSite(localIndex);
 
-              // Ignore ones that aren't edges;
+              // Ignore ones that aren't walls;
               if (!localSite.IsWall())
                 continue;
 

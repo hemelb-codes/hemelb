@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#include "lb/boundaries/BoundaryValues.h"
-#include "lb/boundaries/BoundaryComms.h"
+#include "lb/iolets/BoundaryValues.h"
+#include "lb/iolets/BoundaryComms.h"
 #include "util/utilityFunctions.h"
 #include "util/fileutils.h"
 #include <algorithm>
@@ -18,7 +18,7 @@ namespace hemelb
 {
   namespace lb
   {
-    namespace boundaries
+    namespace iolets
     {
 
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,

@@ -16,7 +16,7 @@
 #include "unittests/lbtests/RheologyModelTests.h"
 #include "unittests/lbtests/IncompressibilityCheckerTests.h"
 #include "unittests/lbtests/LatticeTests.h"
-#include "unittests/lbtests/boundaries/BoundaryTests.h"
-#include "unittests/lbtests/boundaries/iolets/InOutLetTests.h"
+#include "unittests/lbtests/iolets/BoundaryTests.h"
+#include "unittests/lbtests/iolets/InOutLetTests.h"
 
 #endif /* HEMELB_UNITTESTS_LBTESTS_LBTESTS_H */

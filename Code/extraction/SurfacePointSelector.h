@@ -11,7 +11,7 @@ namespace hemelb
     /**
      * This class defines a geometry selector for a point in the geometry surface. By geometry surface we mean the
      * original surface passed into the setup tool (a .stl file possibly). Since such point is unlikely to map directly
-     * onto a lattice site, the class will select any lattice site known to be an edge (in LatticeData terms) and within
+     * onto a lattice site, the class will select any lattice site known to be a wall (in LatticeData terms) and within
      * a sqrt(3) times voxel size radius. This can obviously lead to multiple lattice sites being selected. The user will
      * have to handle this at postprocessing time.
      */

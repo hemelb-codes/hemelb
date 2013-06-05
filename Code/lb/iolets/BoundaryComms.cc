@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#include "lb/boundaries/BoundaryComms.h"
-#include "lb/boundaries/BoundaryValues.h"
+#include "lb/iolets/BoundaryComms.h"
+#include "lb/iolets/BoundaryValues.h"
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 
@@ -16,7 +16,7 @@ namespace hemelb
 {
   namespace lb
   {
-    namespace boundaries
+    namespace iolets
     {
 
       BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary) :
