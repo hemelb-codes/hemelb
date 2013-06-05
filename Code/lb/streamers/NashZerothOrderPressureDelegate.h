@@ -58,7 +58,7 @@ namespace hemelb
           }
         protected:
           CollisionType& collider;
-          boundaries::BoundaryValues& iolet;
+          iolets::BoundaryValues& iolet;
       };
     }
   }

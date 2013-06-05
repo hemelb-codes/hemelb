@@ -14,7 +14,7 @@
 #include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
-#include "lb/boundaries/BoundaryValues.h"
+#include "lb/iolets/BoundaryValues.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
@@ -88,8 +88,8 @@ namespace hemelb
          *
          */
         void Initialise(vis::Control* iControl,
-                        boundaries::BoundaryValues* iInletValues,
-                        boundaries::BoundaryValues* iOutletValues,
+                        iolets::BoundaryValues* iInletValues,
+                        iolets::BoundaryValues* iOutletValues,
                         util::UnitConverter* iUnits);
 
         void ReadVisParameters();
@@ -162,7 +162,7 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
-        boundaries::BoundaryValues *mInletValues, *mOutletValues;
+        iolets::BoundaryValues *mInletValues, *mOutletValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;

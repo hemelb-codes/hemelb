@@ -28,7 +28,7 @@ namespace hemelb
             SimulationMaster(options), intercomms(aintercomms), multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
-          lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
+          lb::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
           hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("CONSTRUCTOR: inlet and outlet count: %d and %d", inletValues->GetLocalIoletCount(), outletValues->GetLocalIoletCount());
           hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("inlets: %d", inletValues->GetLocalIolet(0)->IsCommsRequired(), inletValues->GetLocalIolet(0)->GetDensityMax(), inletValues->GetLocalIolet(0)->GetPressureMax());
@@ -42,7 +42,7 @@ namespace hemelb
             // could be a if dynamic_cast<> rather than using a castable? virtual method pattern, if we prefer.
             if (inletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
+              static_cast<lb::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                 multiscaleIoletType);
             }
           }
@@ -50,12 +50,12 @@ namespace hemelb
           {
             if (outletValues->GetLocalIolet(i)->IsRegistrationRequired())
             {
-              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
+              static_cast<lb::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                  multiscaleIoletType);
             }
           }
           // We only have one shared object type so far, an iolet.
-          lb::boundaries::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
+          lb::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);
 
           /* Process 0 has a list of all the Iolets. The count of all this is highly useful to pre-size all the
            * needed arrays later on, so we are broadcasting this to all the other processes. */
@@ -148,12 +148,12 @@ namespace hemelb
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[0].size(),
                                                                                     i);
-              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
+              static_cast<lb::iolets::InOutLetMultiscale*>(inletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                 multiscaleIoletType);
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) inlets: %i %i",
                                                                                     invertedInletBoundaryList.size(),
                                                                                     invertedInletBoundaryList[i].size());
-              /*static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              /*static_cast<lb::iolets::InOutLetVelocityAware*>(inletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
                                                                                                                                       latticeData,
                                                                                                                                       &propertyCache,
                                                                                                                                       invertedInletBoundaryList[i]);*/
@@ -171,12 +171,12 @@ namespace hemelb
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[0].size(),
                                                                                     i);
-              static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
+              static_cast<lb::iolets::InOutLetMultiscale*>(outletValues->GetLocalIolet(i))->Register(intercomms,
                                                                                                                  multiscaleIoletType);
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("3) outlets: %i %i",
                                                                                     invertedOutletBoundaryList.size(),
                                                                                     invertedOutletBoundaryList[i].size());
-              /*static_cast<lb::boundaries::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
+              /*static_cast<lb::iolets::InOutLetVelocityAware*>(outletValues->GetLocalIolet(i))->InitialiseNeighbouringSites(neighbouringDataManager,
                                                                                                                                        latticeData,
                                                                                                                                        &propertyCache,
                                                                                                                                        invertedOutletBoundaryList[i]);*/
@@ -268,15 +268,15 @@ namespace hemelb
       private:
 
         /* Loops over iolets to set the need for communications. */
-        void SetCommsRequired(hemelb::lb::boundaries::BoundaryValues* ioletValues, bool b)
+        void SetCommsRequired(hemelb::lb::iolets::BoundaryValues* ioletValues, bool b)
         {
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Starting SetCommsRequired.");
           for (unsigned int i = 0; i < ioletValues->GetLocalIoletCount(); i++)
           {
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("In loop: %d", ioletValues->GetLocalIoletCount());
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("A: iolet %d %d", i, (ioletValues->GetLocalIolet(i))->IsCommsRequired());
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("B: iolet %d %d", i, static_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
-            dynamic_cast<lb::boundaries::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("B: iolet %d %d", i, static_cast<lb::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->IsCommsRequired());
+            dynamic_cast<lb::iolets::InOutLetMultiscale*>(ioletValues->GetLocalIolet(i))->SetCommsRequired(b);
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("done with SetCommsRequired iteration.");
 
           }

@@ -17,7 +17,7 @@
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
-#include "lb/boundaries/BoundaryValues.h"
+#include "lb/iolets/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "configuration/CommandLine.h"
 #include "io/PathManager.h"
@@ -48,8 +48,8 @@ class SimulationMaster
     }
     void Finalise();
   protected:
-    hemelb::lb::boundaries::BoundaryValues* inletValues;
-    hemelb::lb::boundaries::BoundaryValues* outletValues;
+    hemelb::lb::iolets::BoundaryValues* inletValues;
+    hemelb::lb::iolets::BoundaryValues* outletValues;
     virtual void DoTimeStep();
     
     /* The next quantities are protected because they are used by MultiscaleSimulationMaster */

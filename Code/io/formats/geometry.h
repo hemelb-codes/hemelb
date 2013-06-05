@@ -73,7 +73,7 @@ namespace hemelb
           };
 
           /**
-           * Type codes for the sort of boundaries intersected by a link.
+           * Type codes for the sort of iolets intersected by a link.
            */
           enum CutType
           {

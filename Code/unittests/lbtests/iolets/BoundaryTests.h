@@ -14,7 +14,7 @@
 
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "resources/Resource.h"
-#include "lb/boundaries/BoundaryValues.h"
+#include "lb/iolets/BoundaryValues.h"
 
 namespace hemelb
 {
@@ -24,7 +24,7 @@ namespace hemelb
     {
       namespace boundaries
       {
-        using namespace hemelb::lb::boundaries;
+        using namespace hemelb::lb::iolets;
         using namespace resources;
         /***
          * Class asserting behaviour of boundary-collection objects and the boundaries (in- and out- lets) within them.
@@ -128,7 +128,7 @@ namespace hemelb
         };
         //BoundaryTests
         CPPUNIT_TEST_SUITE_REGISTRATION(BoundaryTests);
-      } // boundaries
+      } // iolets
     } //lbtests
   } //unittests
 } //hemelb

@@ -14,7 +14,7 @@
 #include "tinyxml.h"
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
-#include "lb/boundaries/iolets/InOutLets.h"
+#include "lb/iolets/InOutLets.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
 
@@ -32,24 +32,24 @@ namespace hemelb
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
         void
-        DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetCosine* value);
-        void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::boundaries::iolets::InOutLetFile* value);
+        DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::iolets::InOutLetCosine* value);
+        void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::iolets::InOutLetFile* value);
         void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
                                        bool isLoading,
-                                       lb::boundaries::iolets::InOutLetMultiscale* value);
+                                       lb::iolets::InOutLetMultiscale* value);
         void DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
                                               bool isLoading,
-                                              lb::boundaries::iolets::InOutLetParabolicVelocity* const value);
+                                              lb::iolets::InOutLetParabolicVelocity* const value);
 
         const util::Vector3D<float> & GetVisualisationCentre() const
         {
           return visualisationCentre;
         }
-        const std::vector<lb::boundaries::iolets::InOutLet*> & GetInlets() const
+        const std::vector<lb::iolets::InOutLet*> & GetInlets() const
         {
           return inlets;
         }
-        const std::vector<lb::boundaries::iolets::InOutLet*> & GetOutlets() const
+        const std::vector<lb::iolets::InOutLet*> & GetOutlets() const
         {
           return outlets;
         }
@@ -135,7 +135,7 @@ namespace hemelb
         void DoIOForString(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, std::string &value);
         void DoIOForInOutlets(TiXmlElement *xmlNode,
                               bool isLoading,
-                              std::vector<lb::boundaries::iolets::InOutLet*> &value,
+                              std::vector<lb::iolets::InOutLet*> &value,
                               std::string childNodeName);
         void DoIOForProperties(TiXmlElement *xmlNode, bool isLoading);
         void DoIOForProperty(TiXmlElement *xmlNode, bool isLoading);
@@ -149,7 +149,7 @@ namespace hemelb
 
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
         void DoIOForDoubleVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<double> &value);
-        void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::boundaries::iolets::InOutLet* const value);
+        void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::iolets::InOutLet* const value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
 
         const double LEGACY_PULSATILE_PERIOD;
@@ -173,8 +173,8 @@ namespace hemelb
       protected:
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
-        std::vector<lb::boundaries::iolets::InOutLet*> inlets;
-        std::vector<lb::boundaries::iolets::InOutLet*> outlets;
+        std::vector<lb::iolets::InOutLet*> inlets;
+        std::vector<lb::iolets::InOutLet*> outlets;
         double timeStepLength;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;

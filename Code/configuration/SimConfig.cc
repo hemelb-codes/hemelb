@@ -286,7 +286,7 @@ namespace hemelb
 
     void SimConfig::DoIOForInOutlets(TiXmlElement *parent,
                                      bool isLoading,
-                                     std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
+                                     std::vector<lb::iolets::InOutLet*> &bResult,
                                      std::string childNodeName)
     {
       if (isLoading)
@@ -301,7 +301,7 @@ namespace hemelb
           TiXmlElement* velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
           TiXmlElement* pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
 
-          lb::boundaries::iolets::InOutLet *newIolet;
+          lb::iolets::InOutLet *newIolet;
 
           if (pressureEl != NULL && velocityEl == NULL)
           {
@@ -314,23 +314,23 @@ namespace hemelb
             if (PFilePath != "")
             {
               // If there is a file specified we use it
-              newIolet = new lb::boundaries::iolets::InOutLetFile();
+              newIolet = new lb::iolets::InOutLetFile();
 
             }
             else if (MultiscaleLabel != "")
             {
-              newIolet = new lb::boundaries::iolets::InOutLetMultiscale();
+              newIolet = new lb::iolets::InOutLetMultiscale();
             }
             else
             {
               // If no file is specified we use a cosine trace
-              newIolet = new lb::boundaries::iolets::InOutLetCosine();
+              newIolet = new lb::iolets::InOutLetCosine();
             }
           }
           else if (pressureEl == NULL && velocityEl != NULL)
           {
             // Velocity
-            newIolet = new lb::boundaries::iolets::InOutLetParabolicVelocity();
+            newIolet = new lb::iolets::InOutLetParabolicVelocity();
           }
           else
           {
@@ -584,7 +584,7 @@ namespace hemelb
 
     void SimConfig::DoIOForBaseInOutlet(TiXmlElement *parent,
                                         bool isLoading,
-                                        lb::boundaries::iolets::InOutLet* const value)
+                                        lb::iolets::InOutLet* const value)
     {
       TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
       TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
@@ -603,7 +603,7 @@ namespace hemelb
 
     void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent,
                                           bool isLoading,
-                                          lb::boundaries::iolets::InOutLetCosine* const value)
+                                          lb::iolets::InOutLetCosine* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
       TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
@@ -625,7 +625,7 @@ namespace hemelb
 
     void SimConfig::DoIOForFileInOutlet(TiXmlElement *parent,
                                         bool isLoading,
-                                        lb::boundaries::iolets::InOutLetFile* const value)
+                                        lb::iolets::InOutLetFile* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
 
@@ -637,7 +637,7 @@ namespace hemelb
 
     void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *parent,
                                               bool isLoading,
-                                              lb::boundaries::iolets::InOutLetMultiscale* const value)
+                                              lb::iolets::InOutLetMultiscale* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
 
@@ -649,7 +649,7 @@ namespace hemelb
 
     void SimConfig::DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
                                                      bool isLoading,
-                                                     lb::boundaries::iolets::InOutLetParabolicVelocity* const value)
+                                                     lb::iolets::InOutLetParabolicVelocity* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
       TiXmlElement* velocityEl = GetChild(parent, "velocity", isLoading);
