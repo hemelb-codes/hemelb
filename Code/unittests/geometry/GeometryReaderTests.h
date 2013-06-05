@@ -26,20 +26,22 @@ namespace hemelb
 
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE (GeometryReaderTests);
-          CPPUNIT_TEST (TestRead);
-          CPPUNIT_TEST (TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE ( GeometryReaderTests);
+          CPPUNIT_TEST ( TestRead);
+          CPPUNIT_TEST ( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
 
           GeometryReaderTests() :
-              timings()
+            timings()
           {
           }
 
           void setUp()
           {
-            reader = new GeometryReader(false, hemelb::lb::lattices::D3Q15::GetLatticeInfo(), timings);
+            reader = new GeometryReader(false,
+                                        hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
+                                        timings);
             lattice = NULL;
             bool dummy;
             topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
@@ -68,17 +70,18 @@ namespace hemelb
           {
             Geometry readResult = reader->LoadAndDecompose(simConfig->GetDataFilePath());
 
-            site_t siteIndex = 0;
-            for (site_t i = 0; i < 4; i++)
+            for (site_t i = 1; i < 5; i++)
             {
-              for (site_t j = 0; j < 4; j++)
+              for (site_t j = 1; j < 5; j++)
               {
-                bool isEdgeSite = (i == 0 || i == 3 || j == 0 || j == 3);
+                bool isEdgeSite = (i == 1 || i == 4 || j == 1 || j == 4);
 
-                for (site_t k = 0; k < 4; k++)
+                for (site_t k = 1; k < 5; k++)
                 {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
                   util::Vector3D<site_t> location(i, j, k);
+                  site_t siteIndex =
+                      fourCube->GetGlobalNoncontiguousSiteIdFromGlobalCoords(location);
 
                   hemelb::geometry::SiteData siteData(readResult.Blocks[0].Sites[siteIndex]);
 
@@ -88,18 +91,18 @@ namespace hemelb
                   CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetIntersectionData(),
                                        siteData.GetIntersectionData());
 
-                  CPPUNIT_ASSERT_EQUAL(isEdgeSite, readResult.Blocks[0].Sites[siteIndex].wallNormalAvailable);
+                  CPPUNIT_ASSERT_EQUAL(isEdgeSite,
+                                       readResult.Blocks[0].Sites[siteIndex].wallNormalAvailable);
 
                   if (isEdgeSite)
                   {
                     /// @todo: #597 use CPPUNIT_ASSERT_EQUAL directly (having trouble with Vector3D templated over different types at the minute)
                     /// CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal(), readResult.Blocks[0].Sites[siteIndex].wallNormal);
-                    bool sameNormal = (fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal()
-                        == readResult.Blocks[0].Sites[siteIndex].wallNormal);
+                    bool sameNormal =
+                        (fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetWallNormal()
+                            == readResult.Blocks[0].Sites[siteIndex].wallNormal);
                     CPPUNIT_ASSERT(sameNormal);
                   }
-
-                  siteIndex++;
                 }
               }
             }
@@ -115,7 +118,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION (GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometryReaderTests);
     }
   }
 }
