@@ -22,7 +22,7 @@ namespace hemelb
         OneInOneOutSimConfig() :
           configuration::SimConfig()
         {
-          lb::boundaries::iolets::InOutLetCosine* inlet = new lb::boundaries::iolets::InOutLetCosine();
+          lb::iolets::InOutLetCosine* inlet = new lb::iolets::InOutLetCosine();
           inlet->SetPressureAmp(1.0);
           inlet->SetPressureMean(80.0);
           inlet->SetPhase(PI);
@@ -31,7 +31,7 @@ namespace hemelb
 
           inlets.push_back(inlet);
 
-          lb::boundaries::iolets::InOutLetCosine* outlet = new lb::boundaries::iolets::InOutLetCosine();
+          lb::iolets::InOutLetCosine* outlet = new lb::iolets::InOutLetCosine();
           outlet->SetPressureAmp(0.0);
           outlet->SetPressureMean(80.0);
           outlet->SetPhase(0.0);

@@ -566,7 +566,7 @@ namespace hemelb
       // Prepare the links array to have enough space.
       readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
 
-      bool isGmyEdgeSite = false;
+      bool isGmyWallSite = false;
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -581,7 +581,7 @@ namespace hemelb
         // walls have a floating-point distance to the wall...
         if (link.type == GeometrySiteLink::WALL_INTERSECTION)
         {
-          isGmyEdgeSite = true;
+          isGmyWallSite = true;
           float distance;
           reader.readFloat(distance);
           link.distanceToIntersection = distance;
@@ -618,10 +618,10 @@ namespace hemelb
       reader.readUnsignedInt(normalAvailable);
       readInSite.wallNormalAvailable = (normalAvailable == io::formats::geometry::WALL_NORMAL_AVAILABLE);
 
-      if (readInSite.wallNormalAvailable != isGmyEdgeSite)
+      if (readInSite.wallNormalAvailable != isGmyWallSite)
       {
-        std::string msg = isGmyEdgeSite ?
-          "edge fluid site without" :
+        std::string msg = isGmyWallSite ?
+          "wall fluid site without" :
           "bulk fluid site with";
 
         log::Logger::Log<log::Critical, log::OnePerCore>("Malformed GMY file, " + msg

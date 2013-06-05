@@ -83,13 +83,13 @@ namespace hemelb
         util::Matrix3D GetStressTensor() const;
 
         /**
-         * Returns the traction vector at an edge site (i.e. stress tensor times surface normal).
+         * Returns the traction vector at a wall site (i.e. stress tensor times surface normal).
          * @return traction vector
          */
         util::Vector3D<PhysicalStress> GetTraction() const;
 
         /**
-         * Returns the projection of the traction vector on the tangential plane of an edge site.
+         * Returns the projection of the traction vector on the tangential plane of a wall site.
          * @return projected traction vector
          */
         util::Vector3D<PhysicalStress> GetTangentialProjectionTraction() const;
@@ -128,7 +128,7 @@ namespace hemelb
         const util::Vector3D<distribn_t>& GetOrigin() const;
 
         /**
-         * Returns true if the site at the given location is marked as an edge site
+         * Returns true if the site at the given location is marked as a wall site
          * (i.e. one of its links intersects a wall)
          *
          * @param location coordinates of interest

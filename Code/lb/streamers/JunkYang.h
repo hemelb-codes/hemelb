@@ -196,7 +196,7 @@ namespace hemelb
             {
               geometry::Site<const geometry::LatticeData> localSite = latticeData.GetSite(contiguousSiteIndex);
 
-              // Ignore ones that aren't edges;
+              // Ignore ones that aren't walls;
               //! @todo: We should also be ignoring iolets
               if (!localSite.IsWall())
               {

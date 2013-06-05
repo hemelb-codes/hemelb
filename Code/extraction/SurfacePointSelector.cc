@@ -19,7 +19,7 @@ namespace hemelb
     bool SurfacePointSelector::IsWithinGeometry(const extraction::IterableDataSource& data,
                                                 const util::Vector3D<site_t>& location)
     {
-      // Don't bother checking distance if current site is not marked as edge
+      // Don't bother checking distance if current site is not marked as wall
       if (!data.IsWallSite(location))
       {
         return false;

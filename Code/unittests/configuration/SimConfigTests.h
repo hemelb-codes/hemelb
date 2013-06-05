@@ -46,7 +46,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(60.0 / (70.0 * 1000), config->GetTimeStepLength());
 
             CPPUNIT_ASSERT_EQUAL(60.0 / 70.0,
-                                 static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
+                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
             delete config;
           }
           void Test_0_2_1_Read()
@@ -57,7 +57,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
 
             CPPUNIT_ASSERT_EQUAL(0.6,
-                                 static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
+                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
             delete config;
           }
           void Test_0_2_0_Write()
@@ -78,7 +78,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / (70.0 * 1000), config->GetTimeStepLength(),1e-6);
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / 70.0,
-                                 static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod(),1e-6);
+                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod(),1e-6);
             FolderTestFixture::tearDown();
             delete config;
           }
@@ -99,7 +99,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
 
             CPPUNIT_ASSERT_EQUAL(0.6,
-                                 static_cast<lb::boundaries::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
+                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
             FolderTestFixture::tearDown();
             delete config;
           }

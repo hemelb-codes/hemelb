@@ -48,8 +48,8 @@ namespace hemelb
             // link and a1_i = w_1 / cs2
 
             int boundaryId = site.GetIoletId();
-            boundaries::iolets::InOutLetParabolicVelocity* iolet =
-                dynamic_cast<boundaries::iolets::InOutLetParabolicVelocity*> (bValues->GetLocalIolet(boundaryId));
+            iolets::InOutLetParabolicVelocity* iolet =
+                dynamic_cast<iolets::InOutLetParabolicVelocity*> (bValues->GetLocalIolet(boundaryId));
             LatticePosition sitePos(site.GetGlobalSiteCoords());
 
             LatticePosition halfWay(sitePos);
@@ -71,7 +71,7 @@ namespace hemelb
                 = hydroVars.GetFPostCollision()[ii] - correction;
           }
         private:
-          boundaries::BoundaryValues* bValues;
+          iolets::BoundaryValues* bValues;
       };
 
     }

@@ -10,12 +10,12 @@
 #ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H
 #define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H
 
-#include "lb/boundaries/iolets/InOutLet.h"
-#include "lb/boundaries/iolets/InOutLetCosine.h"
-#include "lb/boundaries/iolets/InOutLetFile.h"
-#include "lb/boundaries/iolets/InOutLetCycle.h"
-#include "lb/boundaries/iolets/InOutLetMultiscale.h"
-#include "lb/boundaries/iolets/InOutLetParabolicVelocity.h"
-#include "lb/boundaries/iolets/InOutLetVelocityAware.h"
+#include "lb/iolets/InOutLet.h"
+#include "lb/iolets/InOutLetCosine.h"
+#include "lb/iolets/InOutLetFile.h"
+#include "lb/iolets/InOutLetCycle.h"
+#include "lb/iolets/InOutLetMultiscale.h"
+#include "lb/iolets/InOutLetParabolicVelocity.h"
+#include "lb/iolets/InOutLetVelocityAware.h"
 
 #endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H */
