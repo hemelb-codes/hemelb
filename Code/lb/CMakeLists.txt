@@ -1,5 +1,6 @@
 add_library(hemelb_lb
 	boundaries/BoundaryComms.cc boundaries/BoundaryValues.cc
+	boundaries/iolets/InOutLet.cc
 	boundaries/iolets/InOutLetCosine.cc boundaries/iolets/InOutLetFile.cc
 	boundaries/iolets/InOutLetMultiscale.cc boundaries/iolets/InOutLetVelocityAware.cc
 	boundaries/iolets/InOutLetParabolicVelocity.cc
