@@ -32,8 +32,8 @@ namespace hemelb
          */
         Geometry(const util::Vector3D<site_t>& dimensionsInBlocks,
                  site_t blockSize,
-                 PhysicalLength_deprecated voxelSize,
-                 const util::Vector3D<PhysicalLength_deprecated>& origin) :
+                 PhysicalDistance voxelSize,
+                 const util::Vector3D<PhysicalDistance>& origin) :
             dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), voxelSize(voxelSize), origin(origin), blockCount(dimensionsInBlocks.x
                 * dimensionsInBlocks.y * dimensionsInBlocks.z), sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize,
                                                                                                                      3)), Blocks(blockCount)
@@ -128,7 +128,7 @@ namespace hemelb
          * Get voxel size (real-life length of one site length)
          * @return Voxel size.
          */
-        PhysicalLength_deprecated GetVoxelSize() const
+        PhysicalDistance GetVoxelSize() const
         {
           return voxelSize;
         }
@@ -137,7 +137,7 @@ namespace hemelb
          * Get the origin of the geometry in real-world coordinates.
          * @return Origin of the geometry.
          */
-        const util::Vector3D<PhysicalLength_deprecated>& GetOrigin() const
+        const util::Vector3D<PhysicalDistance>& GetOrigin() const
         {
           return origin;
         }
@@ -145,8 +145,8 @@ namespace hemelb
       private:
         const util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
         const site_t blockSize; //! Size of a block, in sites.
-        const PhysicalLength_deprecated voxelSize; //! Size of a block, in real-world units.
-        const util::Vector3D<PhysicalLength_deprecated> origin;
+        const PhysicalDistance voxelSize; //! Size of a block, in real-world units.
+        const util::Vector3D<PhysicalDistance> origin;
 
         const site_t blockCount;
         const site_t sitesPerBlock;

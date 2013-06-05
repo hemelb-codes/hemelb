@@ -42,7 +42,7 @@ namespace hemelb
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
             net = new net::Net();
-            latticeData = FourCubeLatticeData::Create(4, 5); // The 5 here is to match the topology size in the MPICommsMock
+            latticeData = FourCubeLatticeData::Create(6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
@@ -109,7 +109,7 @@ namespace hemelb
             AssertValue("3", "DEPTHS");
             AssertValue("4", "MACHINES");
             AssertValue("1", "BLOCKS");
-            AssertValue("64", "SITESPERBLOCK");
+            AssertValue("216", "SITESPERBLOCK");
           }
 
         private:
