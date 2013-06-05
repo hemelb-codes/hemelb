@@ -42,7 +42,7 @@ namespace hemelb
               geometry::Site<const geometry::LatticeData> localSite = initParams.latDat->GetSite(localIndex);
 
               // Ignore ones that aren't edges;
-              if (!localSite.IsEdge())
+              if (!localSite.IsWall())
                 continue;
 
               const LatticeVector localSiteLocation = localSite.GetGlobalSiteCoords();
@@ -112,7 +112,7 @@ namespace hemelb
             // A similar thing is done with the non-equilibrium distribution estimate. It is either
             // the value in that direction at the nearest site, or an interpolation between the values
             // at the nearest site and the next site away.
-            if (wallDistance < 0.75 && !site.HasBoundary(i))
+            if (wallDistance < 0.75 && !site.HasWall(i))
             {
               // We can only do this if there's gonna be a point there to interpolate from, i.e. there's no boundary
               // in direction i

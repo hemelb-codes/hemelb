@@ -28,7 +28,7 @@ namespace hemelb
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
-            int boundaryId = site.GetBoundaryId();
+            int boundaryId = site.GetIoletId();
 
             // Set the density at the "ghost" site to be the density of the iolet.
             distribn_t ghostDensity = iolet.GetBoundaryDensity(boundaryId);

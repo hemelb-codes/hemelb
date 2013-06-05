@@ -121,8 +121,8 @@ namespace hemelb
           {
             continue;
           }
-          bool lIsInnerSite = true;
-          // Iterate over all direction vectors.
+          bool isMidDomainSite = true;
+          // Iterate over all non-zero direction vectors.
           for (unsigned int l = 1; l < latticeInfo.GetNumVectors(); l++)
           {
             // Find the neighbour site co-ords in this direction.
@@ -165,7 +165,7 @@ namespace hemelb
             {
               continue;
             }
-            lIsInnerSite = false;
+            isMidDomainSite = false;
             totalSharedFs++;
 
             // The first time, net_neigh_procs = 0, so
@@ -221,7 +221,7 @@ namespace hemelb
             case FLUID:
               l = 0;
               break;
-            case EDGE:
+            case WALL:
               l = 1;
               break;
             case INLET:
@@ -230,10 +230,10 @@ namespace hemelb
             case OUTLET:
               l = 3;
               break;
-            case (INLET | EDGE):
+            case (INLET | WALL):
               l = 4;
               break;
-            case (OUTLET | EDGE):
+            case (OUTLET | WALL):
               l = 5;
               break;
           }
@@ -242,7 +242,7 @@ namespace hemelb
             blockReadIn.Sites[localSiteId].wallNormal :
             util::Vector3D<float>(NO_VALUE);
 
-          if (lIsInnerSite)
+          if (isMidDomainSite)
           {
             midDomainBlockNumber[l].push_back(blockId);
             midDomainSiteNumber[l].push_back(localSiteId);

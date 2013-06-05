@@ -28,9 +28,9 @@ namespace hemelb
         {
         }
 
-        inline bool IsEdge() const
+        inline bool IsWall() const
         {
-          return GetSiteData().IsEdge();
+          return GetSiteData().IsWall();
         }
 
         inline bool IsSolid() const
@@ -48,14 +48,14 @@ namespace hemelb
           return GetSiteData().GetSiteType();
         }
 
-        inline int GetBoundaryId() const
+        inline int GetIoletId() const
         {
-          return GetSiteData().GetBoundaryId();
+          return GetSiteData().GetIoletId();
         }
 
-        inline bool HasBoundary(Direction direction) const
+        inline bool HasWall(Direction direction) const
         {
-          return GetSiteData().HasBoundary(direction);
+          return GetSiteData().HasWall(direction);
         }
 
         inline bool HasIolet(Direction direction) const

@@ -42,7 +42,7 @@ namespace hemelb
   const unsigned int FLUID = 1U;
   const unsigned int INLET = 2U;
   const unsigned int OUTLET = 4U;
-  const unsigned int EDGE = 8U;
+  const unsigned int WALL = 8U;
 
   // square of the speed of sound
   const double Cs2 = 1.0 / 3.0;

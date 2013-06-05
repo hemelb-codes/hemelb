@@ -38,7 +38,7 @@ namespace hemelb
           inline void DoCalculatePreCollision(kernels::HydroVars<KernelType>& hydroVars,
                                               const geometry::Site<geometry::LatticeData>& site)
           {
-            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
+            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetIoletId());
 
             hydroVars.momentum = util::Vector3D<distribn_t>::Zero();
 

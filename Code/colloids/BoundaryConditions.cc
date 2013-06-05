@@ -118,7 +118,7 @@ namespace hemelb
       const geometry::SiteType siteType = siteData.GetSiteType();
       const distribn_t* siteWallDistances = site.GetWallDistances();
 
-      const bool isNearWall = siteData.IsEdge();
+      const bool isNearWall = siteData.IsWall();
       const bool isNearInlet = (siteType == geometry::INLET_TYPE);
       const bool isNearOutlet = (siteType == geometry::OUTLET_TYPE);
 

@@ -202,11 +202,11 @@ namespace hemelb
                 {
                   std::stringstream message;
                   message << "Site: " << streamedToSite << " Direction " << oppDirection
-                      << " Data: " << streamedSite.GetSiteData().GetIntersectionData()
+                      << " Data: " << streamedSite.GetSiteData().GetWallIntersectionData()
                       << std::flush;
                   CPPUNIT_ASSERT_MESSAGE("Expected to find a boundary "
                                            "opposite an unstreamed-to direction " + message.str(),
-                                         streamedSite.HasBoundary(oppDirection));
+                                         streamedSite.HasWall(oppDirection));
                   // Test disabled due to RegressionTests issue, see discussion in #87
                   CPPUNIT_ASSERT_MESSAGE("Expect defined cut distance opposite an unstreamed-to direction "
                                              + message.str(),
@@ -465,9 +465,9 @@ namespace hemelb
                   latDat->GetSite(nextSiteAwayFromWall);
 
               // Enforce that there's a boundary in the wall direction.
-              latDat->SetHasBoundary(chosenSite, chosenWallDirection);
-              latDat->SetHasBoundary(chosenSite, chosenDoubleWallDirection1);
-              latDat->SetHasBoundary(chosenSite, chosenDoubleWallDirection2);
+              latDat->SetHasWall(chosenSite, chosenWallDirection);
+              latDat->SetHasWall(chosenSite, chosenDoubleWallDirection1);
+              latDat->SetHasWall(chosenSite, chosenDoubleWallDirection2);
               latDat->SetBoundaryDistance(chosenSite, chosenWallDirection, assignedWallDistance);
               latDat->SetBoundaryDistance(chosenSite,
                                           chosenDoubleWallDirection1,
@@ -500,7 +500,7 @@ namespace hemelb
                 // Check that simple collide and stream has happened when appropriate.
                 // Is streamerIndex a valid index? (And is it not in one of the directions
                 // that has been meddled with for the test)?
-                if (!streamer.HasBoundary(streamedDirection) && streamedIndex >= 0 && streamedIndex
+                if (!streamer.HasWall(streamedDirection) && streamedIndex >= 0 && streamedIndex
                     < (lb::lattices::D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
                 {
                   distribn_t streamedToFNew = *latDat->GetFNew(streamedIndex);
@@ -775,7 +775,7 @@ namespace hemelb
               latDat->SetHasIolet(chosenSite, chosenIoletDirection);
               latDat->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedWallDistance);
               latDat->SetBoundaryNormal(chosenSite, ioletNormal);
-              latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
+              latDat->SetIoletId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
               ioletCollider.StreamAndCollide<false> (chosenSite,
@@ -887,10 +887,10 @@ namespace hemelb
 
               // Enforce that there's a boundary in the iolet direction.
               latDat->SetHasIolet(chosenSite, chosenIoletDirection);
-              latDat->SetHasBoundary(chosenSite, chosenWallDirection);
+              latDat->SetHasWall(chosenSite, chosenWallDirection);
               latDat->SetBoundaryDistance(chosenSite, chosenIoletDirection, assignedIoletDistance);
               latDat->SetBoundaryNormal(chosenSite, ioletNormal);
-              latDat->SetBoundaryId(chosenSite, chosenBoundaryId);
+              latDat->SetIoletId(chosenSite, chosenBoundaryId);
 
               // Perform the collision and streaming.
               ioletCollider.StreamAndCollide<false> (chosenSite,
@@ -921,7 +921,7 @@ namespace hemelb
                 // Is streamerIndex a valid index? (And is it not in one of the directions
                 // that has been meddled with for the test)?
                 if (!streamer.HasIolet(streamedDirection)
-                    && !streamer.HasBoundary(streamedDirection) && streamedIndex >= 0
+                    && !streamer.HasWall(streamedDirection) && streamedIndex >= 0
                     && streamedIndex < (lb::lattices::D3Q15::NUMVECTORS
                         * latDat->GetLocalFluidSiteCount()))
                 {
@@ -938,7 +938,7 @@ namespace hemelb
                     lb::lattices::D3Q15::INVERSEDIRECTIONS[streamedDirection];
 
                 // Check the case by a wall.
-                if (streamer.HasBoundary(streamedDirection))
+                if (streamer.HasWall(streamedDirection))
                 {
                   distribn_t streamedToFNew = *latDat->GetFNew(lb::lattices::D3Q15::NUMVECTORS
                       * chosenSite + inverseDirection);

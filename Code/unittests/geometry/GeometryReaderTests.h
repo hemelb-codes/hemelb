@@ -84,12 +84,13 @@ namespace hemelb
                       fourCube->GetGlobalNoncontiguousSiteIdFromGlobalCoords(location);
 
                   hemelb::geometry::SiteData siteData(readResult.Blocks[0].Sites[siteIndex]);
-
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetOtherRawData(),
-                                       siteData.GetOtherRawData());
-
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetIntersectionData(),
-                                       siteData.GetIntersectionData());
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData(),
+                                       siteData);
+                  //                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetOtherRawData(),
+                  //                                       siteData.GetOtherRawData());
+                  //
+                  //                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSite(fourCube->GetContiguousSiteId(location)).GetSiteData().GetWallIntersectionData(),
+                  //                                       siteData.GetWallIntersectionData());
 
                   CPPUNIT_ASSERT_EQUAL(isEdgeSite,
                                        readResult.Blocks[0].Sites[siteIndex].wallNormalAvailable);
