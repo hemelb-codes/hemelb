@@ -73,6 +73,8 @@ namespace hemelb
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
             geometry::Site<geometry::LatticeData> dummySite(0, *latDat);
+            latDat->SetIoletId(0, 0);
+
             nonZeroVFixedDensityILet.CalculatePreCollision(hydroVars, dummySite);
 
             // Calculate the expected density, velocity and f_eq.
@@ -140,6 +142,7 @@ namespace hemelb
 
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
+            latDat->SetIoletId(0, 0);
             zeroVFixedDensityOLet.CalculatePreCollision(hydroVars, latDat->GetSite(0));
 
             // Calculate the expected density, velocity and f_eq.

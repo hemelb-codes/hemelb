@@ -9,9 +9,15 @@
 
 #include "constants.h"
 #include "geometry/SiteData.h"
-
+#include "mpiInclude.h"
 namespace hemelb
 {
+  template<>
+  MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()
+  {
+    return MpiDataTypeTraits<int>::RegisterMpiDataType();
+  }
+
   namespace geometry
   {
     /**
@@ -26,20 +32,21 @@ namespace hemelb
     {
       if (!readResult.isFluid)
       {
-        data = SOLID_TYPE;
-        boundaryIntersection = 0;
+        type = SOLID_TYPE;
+        wallIntersection = 0;
         ioletIntersection = 0;
+        ioletId = -1;
       }
       else
       {
-        int ioletId = 0;
-        boundaryIntersection = 0;
+        ioletId = -1;
+        wallIntersection = 0;
         ioletIntersection = 0;
 
         bool hadInlet = false;
         bool hadOutlet = false;
 
-        // Iterate over each direction
+        // Iterate over each (non-zero) direction
         for (Direction direction = 1; direction <= readResult.links.size(); ++direction)
         {
           // Get the link
@@ -48,7 +55,7 @@ namespace hemelb
           // If it's a wall link, set the bit for this direction
           if (link.type == GeometrySiteLink::WALL_INTERSECTION)
           {
-            boundaryIntersection |= 1 << (direction - 1);
+            wallIntersection |= 1 << (direction - 1);
           }
           else if (link.type == GeometrySiteLink::INLET_INTERSECTION || link.type
               == GeometrySiteLink::OUTLET_INTERSECTION)
@@ -70,23 +77,23 @@ namespace hemelb
           }
         }
 
-        SiteType type = hadInlet
+        type = hadInlet
           ? INLET_TYPE
-          : hadOutlet
+          : (hadOutlet
             ? OUTLET_TYPE
-            : FLUID_TYPE;
+            : FLUID_TYPE);
 
-        data = (ioletId << BOUNDARY_ID_SHIFT) + type;
       }
     }
 
     SiteData::SiteData(const SiteData& other) :
-      boundaryIntersection(other.boundaryIntersection), ioletIntersection(other.ioletIntersection), data(other.data)
+      wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection),
+          type(other.type), ioletId(other.ioletId)
     {
     }
 
     SiteData::SiteData() :
-        boundaryIntersection(0), data(0)
+      wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1)
     {
     }
 
@@ -94,9 +101,9 @@ namespace hemelb
     {
     }
 
-    bool SiteData::IsEdge() const
+    bool SiteData::IsWall() const
     {
-      return boundaryIntersection != 0;
+      return wallIntersection != 0;
     }
 
     bool SiteData::IsSolid() const
@@ -106,55 +113,43 @@ namespace hemelb
 
     unsigned SiteData::GetCollisionType() const
     {
-      if (data == FLUID_TYPE && boundaryIntersection == 0)
+      if (wallIntersection == 0)
       {
-        return FLUID;
-      }
-
-      SiteType boundary_type = GetSiteType();
-
-      if (boundary_type == FLUID_TYPE)
-      {
-        return EDGE;
-      }
-      if (boundaryIntersection == 0)
-      {
-        if (boundary_type == INLET_TYPE)
+        // No solid wall intersections
+        switch (type)
         {
-          return INLET;
-        }
-        else
-        {
-          return OUTLET;
+          case FLUID_TYPE:
+            return FLUID;
+
+          case INLET_TYPE:
+            return INLET;
+
+          case OUTLET_TYPE:
+            return OUTLET;
         }
       }
       else
       {
-        if (boundary_type == INLET_TYPE)
+        // There are solid wall intersections
+        switch (type)
         {
-          return INLET | EDGE;
+          case FLUID_TYPE:
+            return WALL;
+
+          case INLET_TYPE:
+            return INLET | WALL;
+
+          case OUTLET_TYPE:
+            return OUTLET | WALL;
         }
-        else
-        {
-          return OUTLET | EDGE;
-        }
+
       }
     }
 
-    SiteType SiteData::GetSiteType() const
-    {
-      return (SiteType) (data & SITE_TYPE_MASK);
-    }
-
-    int SiteData::GetBoundaryId() const
-    {
-      return (data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-    }
-
-    bool SiteData::HasBoundary(Direction direction) const
+    bool SiteData::HasWall(Direction direction) const
     {
       unsigned mask = 1U << (direction - 1);
-      return (boundaryIntersection & mask) != 0;
+      return (wallIntersection & mask) != 0;
     }
 
     bool SiteData::HasIolet(Direction direction) const
@@ -168,14 +163,9 @@ namespace hemelb
       return ioletIntersection;
     }
 
-    uint32_t SiteData::GetIntersectionData() const
+    uint32_t SiteData::GetWallIntersectionData() const
     {
-      return boundaryIntersection;
-    }
-
-    uint32_t SiteData::GetOtherRawData() const
-    {
-      return data;
+      return wallIntersection;
     }
 
   }

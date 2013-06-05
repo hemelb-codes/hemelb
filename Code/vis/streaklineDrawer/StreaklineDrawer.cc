@@ -167,7 +167,7 @@ namespace hemelb
                                                  + siteTraverser.GetY()),
                                              static_cast<float>(blockTraverser.GetZ() * blockTraverser.GetBlockSize()
                                                  + siteTraverser.GetZ()),
-                                             site.GetBoundaryId()));
+                                             site.GetIoletId()));
 
           }
           while (siteTraverser.TraverseOne());

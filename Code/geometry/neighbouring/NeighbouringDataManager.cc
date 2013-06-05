@@ -59,8 +59,10 @@ namespace hemelb
           proc_t source = ProcForSite(*localNeed);
           NeighbouringSite site = neighbouringLatticeData.GetSite(*localNeed);
 
-          net.RequestReceiveR(site.GetSiteData().GetIntersectionData(), source);
-          net.RequestReceiveR(site.GetSiteData().GetOtherRawData(), source);
+          net.RequestReceiveR(site.GetSiteData().GetWallIntersectionData(), source);
+          net.RequestReceiveR(site.GetSiteData().GetIoletIntersectionData(), source);
+          net.RequestReceiveR(site.GetSiteData().GetIoletId(), source);
+          net.RequestReceiveR(site.GetSiteData().GetSiteType(), source);
           net.RequestReceive(site.GetWallDistances(),
                              localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                              source);
@@ -78,8 +80,10 @@ namespace hemelb
             Site<LatticeData> site =
                 const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSendR(site.GetSiteData().GetIntersectionData(), other);
-            net.RequestSendR(site.GetSiteData().GetOtherRawData(), other);
+            net.RequestSendR(site.GetSiteData().GetWallIntersectionData(), other);
+            net.RequestSendR(site.GetSiteData().GetIoletIntersectionData(), other);
+            net.RequestSendR(site.GetSiteData().GetIoletId(), other);
+            net.RequestSendR(site.GetSiteData().GetSiteType(), other);
             net.RequestSend(site.GetWallDistances(),
                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                             other);

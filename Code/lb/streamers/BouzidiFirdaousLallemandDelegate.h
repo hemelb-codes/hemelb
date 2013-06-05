@@ -54,7 +54,7 @@ namespace hemelb
             site_t bbDestination = (site.GetIndex() * LatticeType::NUMVECTORS) + invDirection;
             distribn_t q = site.GetWallDistance<LatticeType> (direction);
 
-            if (site.HasBoundary(invDirection) || q < 0.5)
+            if (site.HasWall(invDirection) || q < 0.5)
             {
               // If there IS NO fluid site in the opposite direction, fall back to SBB.
               // If there IS such a site, we have to wait for the site in the opposite
@@ -83,7 +83,7 @@ namespace hemelb
             // bounce back, which has been done above.
 
             // If q >= 0.5, then we handled that fully above also.
-            if (!site.HasBoundary(invDirection) && q < 0.5)
+            if (!site.HasWall(invDirection) && q < 0.5)
             {
               // So, we have a fluid site and all the data needed to complete this direction!
               // Implement Eq (5a) from Bouzidi et al.
