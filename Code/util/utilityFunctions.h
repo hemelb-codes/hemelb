@@ -90,6 +90,12 @@ namespace hemelb
         }
 
         template<typename T>
+        static bool IsInRange(T x, T min, T max)
+        {
+          return ( (x >= min) && (x <= max));
+        }
+
+        template<typename T>
         static T LinearInterpolate(std::vector<T> &xVector, std::vector<T> &yVector, T targetX)
         {
           int lowerIndex = 0;
