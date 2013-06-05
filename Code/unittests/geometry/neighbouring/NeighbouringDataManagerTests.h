@@ -77,12 +77,13 @@ namespace hemelb
               // to illustrate a typical use, we now add a displacement to the global coords of the local site, which in a real example
               // would take it off-proc
               util::Vector3D<site_t> desiredGlobalCoord = globalCoord + util::Vector3D<site_t>(1, 0, 0);
+              // desiredGC = (2,2,3) => id = (2*block + 2) * block + 3
               site_t desiredId = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(desiredGlobalCoord);
-              CPPUNIT_ASSERT_EQUAL(desiredId, static_cast<site_t>(43)); // 43 = 2*16+2*4+3
+              CPPUNIT_ASSERT_EQUAL(site_t(87), desiredId);
 
               manager->RegisterNeededSite(desiredId);
               CPPUNIT_ASSERT_EQUAL(static_cast<std::vector<site_t>::size_type>(1), manager->GetNeededSites().size());
-              CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(43), manager->GetNeededSites()[0]);
+              CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(87), manager->GetNeededSites()[0]);
             }
 
             void TestShareNeedsOneProc()

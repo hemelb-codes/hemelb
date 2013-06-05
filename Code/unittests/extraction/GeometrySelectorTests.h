@@ -30,48 +30,61 @@ namespace hemelb
     {
       class GeometrySelectorTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE (GeometrySelectorTests);
-          CPPUNIT_TEST (TestStraightLineGeometrySelector);
-          CPPUNIT_TEST (TestPlaneGeometrySelector);
-          CPPUNIT_TEST (TestWholeGeometrySelector);
-          CPPUNIT_TEST (TestGeometrySurfaceSelector);
-          CPPUNIT_TEST (TestSurfacePointSelector);
-          CPPUNIT_TEST (TestSurfacePointSelectorMultipleHits);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE ( GeometrySelectorTests);
+          CPPUNIT_TEST ( TestStraightLineGeometrySelector);
+          CPPUNIT_TEST ( TestPlaneGeometrySelector);
+          CPPUNIT_TEST ( TestWholeGeometrySelector);
+          CPPUNIT_TEST ( TestGeometrySurfaceSelector);
+          CPPUNIT_TEST ( TestSurfacePointSelector);
+          CPPUNIT_TEST ( TestSurfacePointSelectorMultipleHits);CPPUNIT_TEST_SUITE_END();
 
         public:
           GeometrySelectorTests() :
-              VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0), planeNormal(1.0),
+                VoxelSize(0.01),
+                CubeSize(10),
+                CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0),
+                planeNormal(1.0),
 
-              planePosition(CentreCoordinate * VoxelSize), planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0), lineEndPoint1(CentreCoordinate
-                  * VoxelSize), lineEndPoint2( (CubeSize + 1) * VoxelSize), surfacePoint(CubeSize * VoxelSize),
+                planePosition(CentreCoordinate * VoxelSize),
+                planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0),
+                lineEndPoint1(CentreCoordinate * VoxelSize),
+                lineEndPoint2( (CubeSize + 1) * VoxelSize),
+                surfacePoint( (CubeSize + 1) * VoxelSize),
 
-              surfacePointMultipleHits(CubeSize * VoxelSize, (CubeSize - 1) * VoxelSize, (CubeSize - 1) * VoxelSize)
+                surfacePointMultipleHits( (CubeSize + 1) * VoxelSize,
+                                         CubeSize * VoxelSize,
+                                         CubeSize * VoxelSize)
           {
 
           }
 
           void setUp()
           {
-            latticeData = FourCubeLatticeData::Create(CubeSize, 1);
+            latticeData = FourCubeLatticeData::Create(CubeSize + 2, 1);
             simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
-            unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(), VoxelSize, latticeData->GetOrigin());
+            unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(),
+                                                            VoxelSize,
+                                                            latticeData->GetOrigin());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,
                                                                               *unitConverter);
 
-            planeGeometrySelector = new hemelb::extraction::PlaneGeometrySelector(planePosition, planeNormal);
-            planeGeometrySelectorWithRadius = new hemelb::extraction::PlaneGeometrySelector(planePosition,
-                                                                                            planeNormal,
-                                                                                            planeRadius);
-            straightLineGeometrySelector = new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1,
-                                                                                                lineEndPoint2);
+            planeGeometrySelector = new hemelb::extraction::PlaneGeometrySelector(planePosition,
+                                                                                  planeNormal);
+            planeGeometrySelectorWithRadius
+                = new hemelb::extraction::PlaneGeometrySelector(planePosition,
+                                                                planeNormal,
+                                                                planeRadius);
+            straightLineGeometrySelector
+                = new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1, lineEndPoint2);
             wholeGeometrySelector = new hemelb::extraction::WholeGeometrySelector();
 
             geometrySurfaceSelector = new hemelb::extraction::GeometrySurfaceSelector();
 
             surfacePointSelector = new hemelb::extraction::SurfacePointSelector(surfacePoint);
-            surfacePointSelectorMultipleHits = new hemelb::extraction::SurfacePointSelector(surfacePointMultipleHits);
+            surfacePointSelectorMultipleHits
+                = new hemelb::extraction::SurfacePointSelector(surfacePointMultipleHits);
           }
 
           void tearDown()
@@ -101,7 +114,7 @@ namespace hemelb
             // Gather the list of coordinates we expect to be on the line.
             std::vector<util::Vector3D<site_t> > includedCoords;
 
-            for (site_t xCoord = coordMin; xCoord < CubeSize; ++xCoord)
+            for (site_t xCoord = coordMin; xCoord <= CubeSize; ++xCoord)
             {
               includedCoords.push_back(util::Vector3D<site_t>(xCoord));
             }
@@ -121,11 +134,11 @@ namespace hemelb
 
             // The plane has normal (1, 1, 1), is centred in the cube and has a radius of
             // CubeSize / 3 lattice units (when the radius is in use).
-            for (site_t xCoord = 0; xCoord < CubeSize; ++xCoord)
+            for (site_t xCoord = 1; xCoord <= CubeSize; ++xCoord)
             {
-              for (site_t yCoord = 0; yCoord < CubeSize; ++yCoord)
+              for (site_t yCoord = 1; yCoord <= CubeSize; ++yCoord)
               {
-                for (site_t zCoord = 0; zCoord < CubeSize; ++zCoord)
+                for (site_t zCoord = 1; zCoord <= CubeSize; ++zCoord)
                 {
                   // Use that p.n = x.n for x on the same plane.
                   // I.e. the current point's coordinate dotted with the normal must be roughly equal
@@ -136,13 +149,17 @@ namespace hemelb
                     continue;
                   }
 
-                  includedCoordsWithoutRadius.push_back(util::Vector3D<site_t>(xCoord, yCoord, zCoord));
+                  includedCoordsWithoutRadius.push_back(util::Vector3D<site_t>(xCoord,
+                                                                               yCoord,
+                                                                               zCoord));
 
                   // Compute the distance from the centre point, include the site if it is within the radius.
-                  if ( (util::Vector3D<distribn_t>(xCoord, yCoord, zCoord)
-                      - util::Vector3D<distribn_t>(CentreCoordinate)).GetMagnitude() < distribn_t(CubeSize) / 3.0)
+                  if ( (util::Vector3D<distribn_t>(xCoord, yCoord, zCoord) - util::Vector3D<
+                      distribn_t>(CentreCoordinate)).GetMagnitude() < distribn_t(CubeSize) / 3.0)
                   {
-                    includedCoordsWithRadius.push_back(util::Vector3D<site_t>(xCoord, yCoord, zCoord));
+                    includedCoordsWithRadius.push_back(util::Vector3D<site_t>(xCoord,
+                                                                              yCoord,
+                                                                              zCoord));
                   }
                 }
               }
@@ -165,7 +182,8 @@ namespace hemelb
             {
               ++count;
               // Every site returned should be included.
-              CPPUNIT_ASSERT(wholeGeometrySelector->Include(*dataSourceIterator, dataSourceIterator->GetPosition()));
+              CPPUNIT_ASSERT(wholeGeometrySelector->Include(*dataSourceIterator,
+                                                            dataSourceIterator->GetPosition()));
             }
 
             // The number of sites passed by the iterator should be the whole cube.
@@ -180,15 +198,17 @@ namespace hemelb
             // consider inlets or outlets as edges.
             std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
 
-            for (site_t xCoord = 0; xCoord < CubeSize; ++xCoord)
+            for (site_t xCoord = 1; xCoord <= CubeSize; ++xCoord)
             {
-              for (site_t yCoord = 0; yCoord < CubeSize; ++yCoord)
+              for (site_t yCoord = 1; yCoord <= CubeSize; ++yCoord)
               {
-                for (site_t zCoord = 0; zCoord < CubeSize; ++zCoord)
+                for (site_t zCoord = 1; zCoord <= CubeSize; ++zCoord)
                 {
-                  if (xCoord == 0 || xCoord == CubeSize - 1 || yCoord == 0 || yCoord == CubeSize - 1)
+                  if (xCoord == 1 || xCoord == CubeSize || yCoord == 1 || yCoord == CubeSize)
                   {
-                    includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(xCoord, yCoord, zCoord));
+                    includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(xCoord,
+                                                                                yCoord,
+                                                                                zCoord));
                   }
                 }
               }
@@ -204,7 +224,7 @@ namespace hemelb
             // The only site we expect to be included is the cube corner (CubeSize-1, CubeSize-1, CubeSize-1) which is
             // exactly sqrt(3) times voxel size away from surfacePoint
             std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
-            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize));
 
             TestExpectedIncludedSites(surfacePointSelector, includedCoordsOnTheSurface);
           }
@@ -216,9 +236,16 @@ namespace hemelb
             // surfacePointMultipleHits is one voxel away from the cube corner (CubeSize-1, CubeSize-1, CubeSize-1) in
             // the x direction, the geometry selector will pick three sites in a sqrt(3) times voxel size radius.
             std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
-            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1));
-            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1, CubeSize - 1, CubeSize - 2));
-            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize - 1, CubeSize - 2, CubeSize - 1));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize,
+                                                                        CubeSize,
+                                                                        CubeSize - 1));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize,
+                                                                        CubeSize - 1,
+                                                                        CubeSize));
+            includedCoordsOnTheSurface.push_back(util::Vector3D<site_t>(CubeSize,
+                                                                        CubeSize - 1,
+                                                                        CubeSize - 1));
 
             TestExpectedIncludedSites(surfacePointSelectorMultipleHits, includedCoordsOnTheSurface);
           }
@@ -226,10 +253,10 @@ namespace hemelb
         private:
           void TestOutOfGeometrySites(hemelb::extraction::GeometrySelector* geometrySelector)
           {
-            util::Vector3D<site_t> invalidLocation(-1);
+            util::Vector3D<site_t> invalidLocation(0);
             CPPUNIT_ASSERT(!geometrySelector->Include(*dataSourceIterator, invalidLocation));
 
-            invalidLocation = util::Vector3D<site_t>(CubeSize);
+            invalidLocation = util::Vector3D<site_t>(CubeSize + 1);
             CPPUNIT_ASSERT(!geometrySelector->Include(*dataSourceIterator, invalidLocation));
           }
 
@@ -245,8 +272,9 @@ namespace hemelb
 
               std::stringstream msg;
 
-              msg << "Site at " << dataSourceIterator->GetPosition().x << "," << dataSourceIterator->GetPosition().y
-                  << "," << dataSourceIterator->GetPosition().z << " was ";
+              msg << "Site at " << dataSourceIterator->GetPosition().x << ","
+                  << dataSourceIterator->GetPosition().y << ","
+                  << dataSourceIterator->GetPosition().z << " was ";
 
               if (!expectedIncluded)
               {
@@ -298,7 +326,7 @@ namespace hemelb
           hemelb::extraction::SurfacePointSelector* surfacePointSelectorMultipleHits;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION (GeometrySelectorTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometrySelectorTests);
 
     }
   }
