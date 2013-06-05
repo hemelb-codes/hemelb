@@ -61,6 +61,32 @@ namespace hemelb
     }
 
     template<class LatticeType>
+    void LBM<LatticeType>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    {
+      initParams.siteRanges.resize(2);
+
+      initParams.siteRanges[0].first = 0;
+      initParams.siteRanges[1].first = mLatDat->GetMidDomainSiteCount();
+      state = 0;
+      initParams.siteRanges[0].second = initParams.siteRanges[0].first + mLatDat->GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].second = initParams.siteRanges[1].first + mLatDat->GetDomainEdgeCollisionCount(state);
+
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
+    }
+
+    template<class LatticeType>
+    void LBM<LatticeType>:: AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    {
+      initParams.siteRanges[0].first += mLatDat->GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].first += mLatDat->GetDomainEdgeCollisionCount(state);
+      ++state;
+      initParams.siteRanges[0].second = initParams.siteRanges[0].first + mLatDat->GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].second = initParams.siteRanges[1].first + mLatDat->GetDomainEdgeCollisionCount(state);
+
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
+    }
+
+    template<class LatticeType>
     void LBM<LatticeType>::InitCollisions()
     {
       /**
@@ -78,25 +104,26 @@ namespace hemelb
       initParams.lbmParams = &mParams;
       initParams.neighbouringDataManager = neighbouringDataManager;
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(0) + mLatDat->GetDomainEdgeCollisionCount(0);
+      unsigned collId;
+      InitInitParamsSiteRanges(initParams, collId);
       mMidFluidCollision = new tMidFluidCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(1) + mLatDat->GetDomainEdgeCollisionCount(1);
+      AdvanceInitParamsSiteRanges(initParams, collId);
       mWallCollision = new tWallCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(2) + mLatDat->GetDomainEdgeCollisionCount(2);
+      AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
       mInletCollision = new tInletCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(3) + mLatDat->GetDomainEdgeCollisionCount(3);
+      AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
       mOutletCollision = new tOutletCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(4) + mLatDat->GetDomainEdgeCollisionCount(4);
+      AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mInletValues;
       mInletWallCollision = new tInletWallCollision(initParams);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(5) + mLatDat->GetDomainEdgeCollisionCount(5);
+      AdvanceInitParamsSiteRanges(initParams, collId);
       initParams.boundaryObject = mOutletValues;
       mOutletWallCollision = new tOutletWallCollision(initParams);
     }
