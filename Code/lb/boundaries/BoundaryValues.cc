@@ -26,7 +26,8 @@ namespace hemelb
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
                                      SimulationState* simulationState,
                                      util::UnitConverter* units) :
-          net::IteratedAction(), totalIoletCount(incoming_iolets.size()), localIoletCount(0), state(simulationState), unitConverter(units)
+        net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
+            state(simulationState), unitConverter(units)
       {
 
         std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
