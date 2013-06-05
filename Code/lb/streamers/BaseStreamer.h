@@ -108,7 +108,7 @@ namespace hemelb
             {
               distribn_t stress;
 
-              if (!site.IsEdge())
+              if (!site.IsWall())
               {
                 stress = NO_VALUE;
               }
@@ -164,7 +164,7 @@ namespace hemelb
                * Wall normals are only available at the sites marked as being at the domain edge.
                * For the sites in the fluid bulk, the traction vector will be 0.
                */
-              if (site.IsEdge())
+              if (site.IsWall())
               {
                 LatticeType::CalculateTractionOnAPoint(hydroVars.density,
                                                        hydroVars.tau,
@@ -185,7 +185,7 @@ namespace hemelb
                * Wall normals are only available at the sites marked as being at the domain edge.
                * For the sites in the fluid bulk, the traction vector will be 0.
                */
-              if (site.IsEdge())
+              if (site.IsWall())
               {
                 LatticeType::CalculateTangentialProjectionTraction(hydroVars.density,
                                                                    hydroVars.tau,

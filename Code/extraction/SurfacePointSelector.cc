@@ -20,7 +20,7 @@ namespace hemelb
                                                 const util::Vector3D<site_t>& location)
     {
       // Don't bother checking distance if current site is not marked as edge
-      if (!data.IsEdgeSite(location))
+      if (!data.IsWallSite(location))
       {
         return false;
       }

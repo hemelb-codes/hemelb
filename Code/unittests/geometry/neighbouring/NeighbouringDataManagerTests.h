@@ -141,10 +141,15 @@ namespace hemelb
               // We should send/receive the site data
               SiteData expectedData = exampleSite.GetSiteData();
               SiteData fixtureData = exampleSite.GetSiteData();
-              netMock->RequireSend(&expectedData.GetIntersectionData(), 1, 0, "IntersectionDataToSelf");
-              netMock->RequireReceive(&fixtureData.GetIntersectionData(), 1, 0, "IntersectionDataFromSelf");
-              netMock->RequireSend(&expectedData.GetOtherRawData(), 1, 0, "RawDataToSelf");
-              netMock->RequireReceive(&fixtureData.GetOtherRawData(), 1, 0, "RawDataFromSelf");
+
+              netMock->RequireSend(&expectedData.GetWallIntersectionData(), 1, 0, "WallIntersectionDataToSelf");
+              netMock->RequireReceive(&fixtureData.GetWallIntersectionData(), 1, 0, "WallIntersectionDataFromSelf");
+              netMock->RequireSend(&expectedData.GetIoletIntersectionData(), 1, 0, "IoletIntersectionDataToSelf");
+              netMock->RequireReceive(&fixtureData.GetIoletIntersectionData(), 1, 0, "IoletIntersectionDataFromSelf");
+              netMock->RequireSend(&expectedData.GetIoletId(), 1, 0, "IoletIdToSelf");
+              netMock->RequireReceive(&fixtureData.GetIoletId(), 1, 0, "IoletIdFromSelf");
+              netMock->RequireSend(&expectedData.GetSiteType(), 1, 0, "SiteTypeToSelf");
+              netMock->RequireReceive(&fixtureData.GetSiteType(), 1, 0, "SiteTypeFromSelf");
 
               netMock->RequireSend(exampleSite.GetWallDistances(),
                                    lb::lattices::D3Q15::NUMVECTORS - 1,

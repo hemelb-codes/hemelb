@@ -566,7 +566,7 @@ namespace hemelb
       // Prepare the links array to have enough space.
       readInSite.links.resize(latticeInfo.GetNumVectors() - 1);
 
-      bool isEdgeSite = false;
+      bool isGmyEdgeSite = false;
 
       // For each link direction...
       for (Direction readDirection = 0; readDirection < neighbourhood.size(); readDirection++)
@@ -581,7 +581,7 @@ namespace hemelb
         // walls have a floating-point distance to the wall...
         if (link.type == GeometrySiteLink::WALL_INTERSECTION)
         {
-          isEdgeSite = true;
+          isGmyEdgeSite = true;
           float distance;
           reader.readFloat(distance);
           link.distanceToIntersection = distance;
@@ -618,9 +618,9 @@ namespace hemelb
       reader.readUnsignedInt(normalAvailable);
       readInSite.wallNormalAvailable = (normalAvailable == io::formats::geometry::WALL_NORMAL_AVAILABLE);
 
-      if (readInSite.wallNormalAvailable != isEdgeSite)
+      if (readInSite.wallNormalAvailable != isGmyEdgeSite)
       {
-        std::string msg = isEdgeSite ?
+        std::string msg = isGmyEdgeSite ?
           "edge fluid site without" :
           "bulk fluid site with";
 

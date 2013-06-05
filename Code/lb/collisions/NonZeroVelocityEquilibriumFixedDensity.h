@@ -44,7 +44,7 @@ namespace hemelb
             // Externally impose a density. Keep a record of the old one so we can scale the
             // momentum vector.
             distribn_t previousDensity = hydroVars.density;
-            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetBoundaryId());
+            hydroVars.density = boundaryObject->GetBoundaryDensity(site.GetIoletId());
 
             hydroVars.momentum *= (hydroVars.density / previousDensity);
 

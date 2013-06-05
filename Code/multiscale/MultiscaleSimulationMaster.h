@@ -295,7 +295,7 @@ namespace hemelb
           {
             /* 1. Obtain Boundary ID number. */
             hemelb::geometry::SiteData s = latticeData->GetSite(offset + i).GetSiteData();
-            int boundaryID = s.GetBoundaryId();
+            int boundaryID = s.GetIoletId();
 
             /* 2. Grow the list to an appropriate size if needed. */
             while ( ((int) invertedBoundaryList.size()) <= boundaryID)

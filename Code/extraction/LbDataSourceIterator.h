@@ -134,7 +134,7 @@ namespace hemelb
          * @param location coordinates of interest
          * @return whether there is a boundary site at location
          */
-        bool IsEdgeSite(const util::Vector3D<site_t>& location) const;
+        bool IsWallSite(const util::Vector3D<site_t>& location) const;
 
 
       private:

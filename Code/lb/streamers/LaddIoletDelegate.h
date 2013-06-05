@@ -47,7 +47,7 @@ namespace hemelb
             // where u is the velocity of the boundary half way along the
             // link and a1_i = w_1 / cs2
 
-            int boundaryId = site.GetBoundaryId();
+            int boundaryId = site.GetIoletId();
             boundaries::iolets::InOutLetParabolicVelocity* iolet =
                 dynamic_cast<boundaries::iolets::InOutLetParabolicVelocity*> (bValues->GetLocalIolet(boundaryId));
             LatticePosition sitePos(site.GetGlobalSiteCoords());

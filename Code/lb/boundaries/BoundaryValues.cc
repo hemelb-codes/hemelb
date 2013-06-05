@@ -88,7 +88,7 @@ namespace hemelb
         {
           const geometry::Site<geometry::LatticeData> site = latticeData->GetSite(i);
 
-          if (site.GetSiteType() == ioletType && site.GetBoundaryId() == boundaryId)
+          if (site.GetSiteType() == ioletType && site.GetIoletId() == boundaryId)
           {
             return true;
           }
