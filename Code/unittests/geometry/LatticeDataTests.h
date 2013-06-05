@@ -22,10 +22,10 @@ namespace hemelb
       using namespace hemelb::geometry;
       class NeighbouringLatticeDataTests : public FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE (NeighbouringLatticeDataTests);
-          CPPUNIT_TEST (TestConstruct);
-          CPPUNIT_TEST (TestConvertGlobalId);
-          CPPUNIT_TEST (TestGetProcFromGlobalId);
+          CPPUNIT_TEST_SUITE ( NeighbouringLatticeDataTests);
+          CPPUNIT_TEST ( TestConstruct);
+          CPPUNIT_TEST ( TestConvertGlobalId);
+          CPPUNIT_TEST ( TestGetProcFromGlobalId);
 
           CPPUNIT_TEST_SUITE_END();
 
@@ -58,7 +58,8 @@ namespace hemelb
             // but we can at least smoke test things with four cube.
             util::Vector3D<site_t> exampleCoord(1, 2, 3);
             site_t id = latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(exampleCoord);
-            CPPUNIT_ASSERT_EQUAL(id, static_cast<site_t>(1 * 16 + 2 * 4 + 3)); //43
+            site_t blockSize = latDat->GetBlockSize();
+            CPPUNIT_ASSERT_EQUAL(site_t( (1 * blockSize + 2) * blockSize + 3), id);
             util::Vector3D<site_t> resultCoord;
             latDat->GetGlobalCoordsFromGlobalNoncontiguousSiteId(id, resultCoord);
             CPPUNIT_ASSERT_EQUAL(resultCoord, exampleCoord);
@@ -67,12 +68,12 @@ namespace hemelb
           void TestGetProcFromGlobalId()
           {
             // Again, we need to work up a way to mock a multi-processor situation to test this properly.
-            CPPUNIT_ASSERT_EQUAL(latDat->ProcProvidingSiteByGlobalNoncontiguousId(43),0);
+            CPPUNIT_ASSERT_EQUAL(latDat->ProcProvidingSiteByGlobalNoncontiguousId(43), 0);
           }
 
         private:
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION (NeighbouringLatticeDataTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION ( NeighbouringLatticeDataTests);
     }
   }
 }

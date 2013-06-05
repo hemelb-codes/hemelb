@@ -26,10 +26,12 @@ class Site(object):
     def bytes(self):
         # unsigned site identifier (solid vs fluid) plus the data required to represent each link
         # plus an unsigned telling whether there's a normal available
-        size = 4 + sum(self.link_extra_bytes_required[link.link_type] for link in self.links) + 4
+        size = 4
+        if self.site_type == self.fluid_site:
+            size += sum(self.link_extra_bytes_required[link.link_type] for link in self.links) + 4
         
-        # if there's a wall normal available, we need 3 floats to store them
-        if self.normal is not None:
-            size += 3 * 4
+            # if there's a wall normal available, we need 3 floats to store them
+            if self.normal is not None:
+                size += 3 * 4
             
         return size

@@ -24,7 +24,7 @@ namespace hemelb
     {
       public:
         TestSiteData(geometry::SiteData& siteData) :
-            geometry::SiteData(siteData)
+          geometry::SiteData(siteData)
         {
 
         }
@@ -63,12 +63,14 @@ namespace hemelb
          *
          * @return
          */
-        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 4, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
                                                 sitesPerBlockUnit,
                                                 0.01,
-                                                util::Vector3D<PhysicalLength_deprecated>::Zero());
+                                                util::Vector3D<PhysicalDistance>::Zero());
+          site_t sitesAlongCube = sitesPerBlockUnit - 2;
+          site_t minInd = 1, maxInd = sitesAlongCube;
 
           hemelb::geometry::BlockReadResult& block = readResult.Blocks[0];
           block.Sites.resize(readResult.GetSitesPerBlock(), geometry::GeometrySite(false));
@@ -81,6 +83,10 @@ namespace hemelb
               for (site_t k = 0; k < sitesPerBlockUnit; ++k)
               {
                 ++index;
+
+                if (i < minInd || i > maxInd || j < minInd || j > maxInd || k < minInd || k
+                    > maxInd)
+                  continue;
 
                 hemelb::geometry::GeometrySite& site = block.Sites[index];
 
@@ -98,21 +104,21 @@ namespace hemelb
                   float randomDistance = (float(std::rand() % 10000) / 10000.0);
 
                   // The inlet is by the minimal z value.
-                  if (neighK < 0)
+                  if (neighK < minInd)
                   {
                     link.ioletId = 0;
                     link.type = geometry::GeometrySiteLink::INLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // The outlet is by the maximal z value.
-                  else if (neighK >= sitesPerBlockUnit)
+                  else if (neighK > maxInd)
                   {
                     link.ioletId = 0;
                     link.type = geometry::GeometrySiteLink::OUTLET_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
-                  else if (neighI < 0 || neighJ < 0 || neighI >= sitesPerBlockUnit || neighJ >= sitesPerBlockUnit)
+                  else if (neighI < minInd || neighJ < minInd || neighI > maxInd || neighJ > maxInd)
                   {
                     link.type = geometry::GeometrySiteLink::WALL_INTERSECTION;
                     link.distanceToIntersection = randomDistance;
@@ -127,22 +133,22 @@ namespace hemelb
                  * axes), we arbitrarily choose the normal to lie along the y axis. The logic below must be consistent
                  * with Scripts/SimpleGeometryGenerationScripts/four_cube.py
                  */
-                if (i == 0)
+                if (i == minInd)
                 {
                   site.wallNormalAvailable = true;
                   site.wallNormal = util::Vector3D<float>(-1, 0, 0);
                 }
-                if (i == sitesPerBlockUnit - 1)
+                if (i == maxInd)
                 {
                   site.wallNormalAvailable = true;
                   site.wallNormal = util::Vector3D<float>(1, 0, 0);
                 }
-                if (j == 0)
+                if (j == minInd)
                 {
                   site.wallNormalAvailable = true;
                   site.wallNormal = util::Vector3D<float>(0, -1, 0);
                 }
-                if (j == sitesPerBlockUnit - 1)
+                if (j == maxInd)
                 {
                   site.wallNormalAvailable = true;
                   site.wallNormal = util::Vector3D<float>(0, 1, 0);
@@ -155,7 +161,8 @@ namespace hemelb
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
-          returnable->fluidSitesOnEachProcessor[0] = sitesPerBlockUnit * sitesPerBlockUnit * sitesPerBlockUnit;
+          returnable->fluidSitesOnEachProcessor[0] = sitesAlongCube * sitesAlongCube
+              * sitesAlongCube;
           for (proc_t rank = 1; rank < rankCount; ++rank)
           {
             returnable->fluidSitesOnEachProcessor[rank] = rank * 1000;
@@ -227,13 +234,13 @@ namespace hemelb
 
       protected:
         FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
         {
 
         }
 
         FourCubeLatticeData() :
-            hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
         {
 
         }
