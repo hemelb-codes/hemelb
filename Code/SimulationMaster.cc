@@ -253,13 +253,13 @@ void SimulationMaster::Initialise()
     imageSendCpt = NULL;
   }
 
-  inletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::INLET_TYPE,
+  inletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
                                                            latticeData,
                                                            simConfig->GetInlets(),
                                                            simulationState,
                                                            unitConvertor);
 
-  outletValues = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
+  outletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
                                                             latticeData,
                                                             simConfig->GetOutlets(),
                                                             simulationState,

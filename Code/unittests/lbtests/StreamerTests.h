@@ -741,7 +741,7 @@ namespace hemelb
 
           void TestNashZerothOrderPressureIolet()
           {
-            lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
+            lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
                                                          simConfig->GetInlets(),
                                                          simState,
@@ -854,7 +854,7 @@ namespace hemelb
 
           void TestNashZerothOrderPressureBB()
           {
-            lb::boundaries::BoundaryValues inletBoundary(geometry::INLET_TYPE,
+            lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
                                                          simConfig->GetInlets(),
                                                          simState,

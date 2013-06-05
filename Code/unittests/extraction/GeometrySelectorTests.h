@@ -195,7 +195,7 @@ namespace hemelb
             TestOutOfGeometrySites(geometrySurfaceSelector);
 
             // Gather the list of coordinates we expect to be on the geometry surface, we do not
-            // consider inlets or outlets as edges.
+            // consider inlets or outlets as walls.
             std::vector<util::Vector3D<site_t> > includedCoordsOnTheSurface;
 
             for (site_t xCoord = 1; xCoord <= CubeSize; ++xCoord)

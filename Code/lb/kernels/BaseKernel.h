@@ -12,7 +12,7 @@
 
 #include <cstdlib>
 #include "constants.h"
-#include "lb/boundaries/BoundaryValues.h"
+#include "lb/iolets/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 
@@ -157,7 +157,7 @@ namespace hemelb
           std::vector<std::pair<site_t, site_t> > siteRanges;
 
           // The array with the imposed density at each boundary.
-          boundaries::BoundaryValues* boundaryObject;
+          iolets::BoundaryValues* boundaryObject;
 
           // The lattice data object. Currently only used for accessing the boundary id
           // of each site next to an inlet or an outlet.
