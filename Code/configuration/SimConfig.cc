@@ -26,7 +26,7 @@ namespace hemelb
     // types to know about the SimConfig object (and get rid of a circular dependency).
 
     SimConfig::SimConfig() :
-      LEGACY_PULSATILE_PERIOD(60.0 / 70.0), hasColloidSection(false), warmUpSteps(0)
+        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), hasColloidSection(false), warmUpSteps(0)
     {
       // This constructor only exists to prevent instantiation without
       // using the static load method.
@@ -89,7 +89,8 @@ namespace hemelb
           totalTimeSteps += warmUpSteps;
       }
 
-      if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength)) && isLoading)
+      if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength))
+          && isLoading)
       {
         timeStepLength = LEGACY_PULSATILE_PERIOD / stepsPerCycle;
       }
@@ -99,7 +100,10 @@ namespace hemelb
       TiXmlElement* geometryElement = GetChild(topNode, "geometry", isLoading);
       if (geometryElement != NULL)
       {
-        DoIOForString(GetChild(geometryElement, "datafile", isLoading), "path", isLoading, dataFilePath);
+        DoIOForString(GetChild(geometryElement, "datafile", isLoading),
+                      "path",
+                      isLoading,
+                      dataFilePath);
       }
 
       if (GetChild(topNode, "colloids", true) != NULL)
@@ -107,11 +111,27 @@ namespace hemelb
         hasColloidSection = true;
       }
 
+      TiXmlElement* initialConditionsElement = GetChild(topNode, "initialconditions", isLoading);
+      if (initialConditionsElement != NULL)
+      {
+        DoIOForInitialConditions(initialConditionsElement, isLoading, initialPressure);
+      }
+      else
+      {
+        ///@todo: #614  There's no other error checking happening in the class and we decided that this would be
+        /// done against an XML schema in Fabric before the file gets to HemeLB. However, since I'm breaking backwards
+        /// compatibility, I prefer this error message than a segfault. Remove if/else branch in due course.
+        log::Logger::Log<log::Critical, log::OnePerCore>("Definition of initial conditions missing in XML file.");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+      }
+
       DoIOForInOutlets(GetChild(topNode, "inlets", isLoading), isLoading, inlets, "inlet");
       DoIOForInOutlets(GetChild(topNode, "outlets", isLoading), isLoading, outlets, "outlet");
 
       TiXmlElement* visualisationElement = GetChild(topNode, "visualisation", isLoading);
-      DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading), isLoading, visualisationCentre);
+      DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading),
+                         isLoading,
+                         visualisationCentre);
       TiXmlElement *lOrientationElement = GetChild(visualisationElement, "orientation", isLoading);
       DoIOForFloat(lOrientationElement, "longitude", isLoading, visualisationLongitude);
       DoIOForFloat(lOrientationElement, "latitude", isLoading, visualisationLatitude);
@@ -130,7 +150,8 @@ namespace hemelb
       DoIOForProperties(propertyExtractionElement, isLoading);
     }
 
-    void SimConfig::DoIOForFloat(TiXmlElement* parent, std::string attributeName, bool isLoading, float &value)
+    void SimConfig::DoIOForFloat(TiXmlElement* parent, std::string attributeName, bool isLoading,
+                                 float &value)
     {
       if (isLoading)
       {
@@ -152,7 +173,8 @@ namespace hemelb
       }
     }
 
-    bool SimConfig::DoIOForDouble(TiXmlElement* parent, std::string attributeName, bool isLoading, double &value)
+    bool SimConfig::DoIOForDouble(TiXmlElement* parent, std::string attributeName, bool isLoading,
+                                  double &value)
     {
       if (isLoading)
       {
@@ -186,7 +208,8 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForString(TiXmlElement* parent, std::string attributeName, bool isLoading, std::string &value)
+    void SimConfig::DoIOForString(TiXmlElement* parent, std::string attributeName, bool isLoading,
+                                  std::string &value)
     {
       if (isLoading)
       {
@@ -209,7 +232,8 @@ namespace hemelb
       }
     }
 
-    bool SimConfig::DoIOForLong(TiXmlElement* parent, std::string attributeName, bool isLoading, long &value)
+    bool SimConfig::DoIOForLong(TiXmlElement* parent, std::string attributeName, bool isLoading,
+                                long &value)
     {
       if (isLoading)
       {
@@ -236,7 +260,8 @@ namespace hemelb
       }
     }
 
-    bool SimConfig::DoIOForULong(TiXmlElement* parent, std::string attributeName, bool isLoading, unsigned long &value)
+    bool SimConfig::DoIOForULong(TiXmlElement* parent, std::string attributeName, bool isLoading,
+                                 unsigned long &value)
     {
       if (isLoading)
       {
@@ -263,16 +288,16 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForStressType(TiXmlElement* xmlNode,
-                                      std::string attributeName,
-                                      bool isLoading,
-                                      lb::StressTypes &value)
+    void SimConfig::DoIOForStressType(TiXmlElement* xmlNode, std::string attributeName,
+                                      bool isLoading, lb::StressTypes &value)
     {
       if (isLoading)
       {
         char *dummy;
         // Read in, in base 10.
-        value = (lb::StressTypes) std::strtol(xmlNode->Attribute(attributeName)->c_str(), &dummy, 10);
+        value = (lb::StressTypes) std::strtol(xmlNode->Attribute(attributeName)->c_str(),
+                                              &dummy,
+                                              10);
       }
       else
       {
@@ -284,8 +309,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForInOutlets(TiXmlElement *parent,
-                                     bool isLoading,
+    void SimConfig::DoIOForInOutlets(TiXmlElement *parent, bool isLoading,
                                      std::vector<lb::iolets::InOutLet*> &bResult,
                                      std::string childNodeName)
     {
@@ -309,8 +333,14 @@ namespace hemelb
             // This is done by checking if a path is specified
             std::string PFilePath;
             std::string MultiscaleLabel;
-            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading), "path", isLoading, PFilePath);
-            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading), "label", isLoading, MultiscaleLabel);
+            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
+                          "path",
+                          isLoading,
+                          PFilePath);
+            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
+                          "label",
+                          isLoading,
+                          MultiscaleLabel);
             if (PFilePath != "")
             {
               // If there is a file specified we use it
@@ -372,8 +402,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForPropertyOutputFile(TiXmlElement *xmlNode,
-                                              bool isLoading,
+    void SimConfig::DoIOForPropertyOutputFile(TiXmlElement *xmlNode, bool isLoading,
                                               extraction::PropertyOutputFile* file)
     {
       if (isLoading)
@@ -406,7 +435,8 @@ namespace hemelb
           }
           else if (propertyElement->ValueStr().compare("geometrysurface") == 0)
           {
-            extraction::GeometrySurfaceSelector* surface = new extraction::GeometrySurfaceSelector();
+            extraction::GeometrySurfaceSelector* surface =
+                new extraction::GeometrySurfaceSelector();
             file->geometry = surface;
           }
           else if (propertyElement->ValueStr().compare("surfacepoint") == 0)
@@ -417,7 +447,8 @@ namespace hemelb
           }
           else
           {
-            log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s", xmlNode->Value());
+            log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s",
+                                                             xmlNode->Value());
             exit(1);
           }
 
@@ -436,14 +467,13 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForLineGeometry(TiXmlElement *xmlNode,
-                                        bool isLoading,
+    void SimConfig::DoIOForLineGeometry(TiXmlElement *xmlNode, bool isLoading,
                                         extraction::StraightLineGeometrySelector*& line)
     {
       TiXmlElement* point1 = GetChild(xmlNode, "point", isLoading);
-      TiXmlElement* point2 = isLoading
-        ? point1->NextSiblingElement("point")
-        : GetChild(xmlNode, "point", isLoading);
+      TiXmlElement* point2 = isLoading ?
+        point1->NextSiblingElement("point") :
+        GetChild(xmlNode, "point", isLoading);
 
       util::Vector3D<float> mutableVector;
       util::Vector3D<float> mutableVector2;
@@ -465,8 +495,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForPlaneGeometry(TiXmlElement *xmlNode,
-                                         bool isLoading,
+    void SimConfig::DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading,
                                          extraction::PlaneGeometrySelector*& plane)
     {
       TiXmlElement* point1 = GetChild(xmlNode, "point", isLoading);
@@ -505,8 +534,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode,
-                                        bool isLoading,
+    void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading,
                                         extraction::SurfacePointSelector*& surfacePoint)
     {
       TiXmlElement* point = GetChild(xmlNode, "point", isLoading);
@@ -527,7 +555,8 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field)
+    void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading,
+                                         extraction::OutputField& field)
     {
       std::string type;
       DoIOForString(xmlNode, "type", isLoading, type);
@@ -577,13 +606,13 @@ namespace hemelb
       }
       else
       {
-        log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file", type.c_str());
+        log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file",
+                                                         type.c_str());
         exit(1);
       }
     }
 
-    void SimConfig::DoIOForBaseInOutlet(TiXmlElement *parent,
-                                        bool isLoading,
+    void SimConfig::DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading,
                                         lb::iolets::InOutLet* const value)
     {
       TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
@@ -601,8 +630,36 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent,
-                                          bool isLoading,
+    void SimConfig::DoIOForInitialConditions(TiXmlElement *parent, bool isLoading,
+                                             PhysicalPressure &value)
+    {
+      assert(parent != NULL);
+      TiXmlElement* pressureElement = GetChild(parent, "pressure", isLoading);
+      assert(pressureElement != NULL);
+      TiXmlElement* uniformPressureElement = GetChild(pressureElement, "uniform", isLoading);
+      assert(uniformPressureElement != NULL);
+
+      DoIOForDouble(uniformPressureElement, "value", isLoading, value);
+
+      if (isLoading)
+      {
+        std::string units;
+        DoIOForString(uniformPressureElement, "units", isLoading, units);
+        if (units != "mmHg")
+        {
+          log::Logger::Log<log::Critical, log::OnePerCore>("Wrong units (%s) in definition of initial pressure. Values should be provided in mmHg.",
+                                                           units.c_str());
+          MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+      }
+      else
+      {
+        std::string units("mmHg");
+        DoIOForString(uniformPressureElement, "units", isLoading, units);
+      }
+    }
+
+    void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent, bool isLoading,
                                           lb::iolets::InOutLetCosine* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
@@ -623,8 +680,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForFileInOutlet(TiXmlElement *parent,
-                                        bool isLoading,
+    void SimConfig::DoIOForFileInOutlet(TiXmlElement *parent, bool isLoading,
                                         lb::iolets::InOutLetFile* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
@@ -635,8 +691,7 @@ namespace hemelb
 
     }
 
-    void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *parent,
-                                              bool isLoading,
+    void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *parent, bool isLoading,
                                               lb::iolets::InOutLetMultiscale* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
@@ -647,9 +702,8 @@ namespace hemelb
       DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
     }
 
-    void SimConfig::DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
-                                                     bool isLoading,
-                                                     lb::iolets::InOutLetParabolicVelocity* const value)
+    void SimConfig::DoIOForParabolicVelocityInOutlet(
+        TiXmlElement *parent, bool isLoading, lb::iolets::InOutLetParabolicVelocity* const value)
     {
       DoIOForBaseInOutlet(parent, isLoading, value);
       TiXmlElement* velocityEl = GetChild(parent, "velocity", isLoading);
@@ -665,19 +719,22 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading, util::Vector3D<float> &value)
+    void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading,
+                                       util::Vector3D<float> &value)
     {
       DoIOForFloat(parent, "x", isLoading, value.x);
       DoIOForFloat(parent, "y", isLoading, value.y);
       DoIOForFloat(parent, "z", isLoading, value.z);
     }
-    void SimConfig::DoIOForDoubleVector(TiXmlElement *parent, bool isLoading, util::Vector3D<double> &value)
+    void SimConfig::DoIOForDoubleVector(TiXmlElement *parent, bool isLoading,
+                                        util::Vector3D<double> &value)
     {
       DoIOForDouble(parent, "x", isLoading, value.x);
       DoIOForDouble(parent, "y", isLoading, value.y);
       DoIOForDouble(parent, "z", isLoading, value.z);
     }
-    TiXmlElement *SimConfig::GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading)
+    TiXmlElement *SimConfig::GetChild(TiXmlElement *parent, std::string childNodeName,
+                                      bool isLoading)
     {
       if (isLoading)
       {
@@ -694,6 +751,11 @@ namespace hemelb
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
+    }
+
+    PhysicalPressure SimConfig::GetInitialPressure() const
+    {
+      return initialPressure;
     }
   }
 }

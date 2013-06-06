@@ -119,6 +119,12 @@ namespace hemelb
          */
         bool HasColloidSection() const;
 
+        /**
+         * Returns the pressure to be used to initialise all the fluid sites in the domain
+         * @return initial pressure
+         */
+        LatticeDensity GetInitialPressure() const;
+
       protected:
         SimConfig();
 
@@ -150,6 +156,7 @@ namespace hemelb
         void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
         void DoIOForDoubleVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<double> &value);
         void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::iolets::InOutLet* const value);
+        void DoIOForInitialConditions(TiXmlElement *parent, bool isLoading, PhysicalPressure &value);
         TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
 
         const double LEGACY_PULSATILE_PERIOD;
@@ -169,6 +176,7 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
+        PhysicalPressure initialPressure; ///< Pressure used to initialise the domain
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
