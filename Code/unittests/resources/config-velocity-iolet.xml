@@ -4,6 +4,11 @@
   <geometry>
     <datafile path="./config.gmy" />
   </geometry>
+  <initialconditions>
+    <pressure>
+      <uniform value="80.0" units="mmHg"/>
+    </pressure>
+  </initialconditions>    
   <inlets>
     <inlet>
       <velocity radius="0.005" maximum="0.10"/>

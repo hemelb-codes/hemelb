@@ -176,14 +176,7 @@ namespace hemelb
     template<class LatticeType>
     void LBM<LatticeType>::SetInitialConditions()
     {
-      distribn_t density = 0.0;
-
-      for (int i = 0; i < OutletCount(); i++)
-      {
-        density += mOutletValues->GetDensityMin(i);
-      }
-
-      density /= OutletCount();
+      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {

@@ -27,7 +27,8 @@ namespace hemelb
           CPPUNIT_TEST (Test_0_2_0_Read);
           CPPUNIT_TEST (Test_0_2_1_Read);
           CPPUNIT_TEST (Test_0_2_0_Write);
-          CPPUNIT_TEST (Test_0_2_1_Write);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (Test_0_2_1_Write);
+          CPPUNIT_TEST (TestXMLFileContent);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -75,10 +76,11 @@ namespace hemelb
 
             // Assert the values are correct.
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / (70.0 * 1000), config->GetTimeStepLength(),1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / (70.0 * 1000), config->GetTimeStepLength(), 1e-6);
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / 70.0,
-                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod(),1e-6);
+                                         static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod(),
+                                         1e-6);
             FolderTestFixture::tearDown();
             delete config;
           }
@@ -103,6 +105,17 @@ namespace hemelb
             FolderTestFixture::tearDown();
             delete config;
           }
+
+          void TestXMLFileContent()
+          {
+            FolderTestFixture::setUp();
+            //Round trip the config twice.
+            CopyResourceToTempdir("config.xml");
+            SimConfig *config = SimConfig::Load("config.xml");
+
+            CPPUNIT_ASSERT_EQUAL(80.0, config->GetInitialPressure());
+          }
+
         private:
           std::string exemplar;
       };
