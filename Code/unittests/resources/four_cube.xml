@@ -4,6 +4,11 @@
   <geometry>
     <datafile path="./four_cube.gmy" />
   </geometry>
+  <initialconditions>
+    <pressure>
+      <uniform value="80.0" units="mmHg"/>
+    </pressure>
+  </initialconditions>  
   <inlets>
     <inlet>
       <pressure amplitude="0.0" mean="80.1" phase="0.0" />
