@@ -56,7 +56,7 @@ namespace hemelb
                                           simConfig->GetInlets(),
                                           simState,
                                           unitConverter);
-              CPPUNIT_ASSERT_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0), 1e-9);
               delete inlets;
             }
             void TestUpdate()
@@ -66,21 +66,21 @@ namespace hemelb
                                           simConfig->GetInlets(),
                                           simState,
                                           unitConverter);
-              CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0), 1e-9);
 
               while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20)
               {
                 simState->Increment();
               }
 
-              CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 + 1.0), inlets->GetBoundaryDensity(0));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 + 1.0), inlets->GetBoundaryDensity(0), 1e-9);
 
               while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 10)
               {
                 simState->Increment();
               }
 
-              CPPUNIT_ASSERT_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0), 1e-9);
               delete inlets;
             }
 
