@@ -38,7 +38,7 @@ namespace hemelb
         public:
           void setUp()
           {
-            epsilon = 1e-6;
+            epsilon = 1e-5;
 
             simpleOutFile.filename = tempOutFileName;
             // The code won't overwrite any existing file
@@ -150,7 +150,7 @@ namespace hemelb
                 "\x50\x72\x65\x73"
                 "\x73\x75\x72\x65"
                 "\x00\x00\x00\x01"
-                "\x40\x54\x00\x00"
+                "\x00\x00\x00\x00"
                 "\x00\x00\x00\x00"
                 "\x00\x00\x00\x08"
                 "\x56\x65\x6C\x6F"
