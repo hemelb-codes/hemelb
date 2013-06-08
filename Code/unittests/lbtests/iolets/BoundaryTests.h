@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_UNITTESTS_LBTESTS_BOUNDARIES_BOUNDARYTESTS_H
-#define HEMELB_UNITTESTS_LBTESTS_BOUNDARIES_BOUNDARYTESTS_H
+#ifndef HEMELB_UNITTESTS_LBTESTS_IOLETS_BOUNDARYTESTS_H
+#define HEMELB_UNITTESTS_LBTESTS_IOLETS_BOUNDARYTESTS_H
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -132,4 +132,4 @@ namespace hemelb
     } //lbtests
   } //unittests
 } //hemelb
-#endif // HEMELB_UNITTESTS_LBTESTS_BOUNDARIES_BOUNDARYTESTS_H
+#endif // HEMELB_UNITTESTS_LBTESTS_IOLETS_BOUNDARYTESTS_H
