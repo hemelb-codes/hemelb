@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
-#define HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
+#ifndef HEMELB_LB_IOLETS_BOUNDARYVALUES_H
+#define HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
@@ -82,4 +82,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H */
+#endif /* HEMELB_LB_IOLETS_BOUNDARYVALUES_H */
