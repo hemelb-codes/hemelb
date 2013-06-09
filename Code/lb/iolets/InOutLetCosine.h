@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCOSINE_H
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCOSINE_H
+#ifndef HEMELB_LB_IOLETS_INOUTLETCOSINE_H
+#define HEMELB_LB_IOLETS_INOUTLETCOSINE_H
 
 #include "lb/iolets/InOutLet.h"
 
@@ -99,4 +99,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCOSINE_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLETCOSINE_H */

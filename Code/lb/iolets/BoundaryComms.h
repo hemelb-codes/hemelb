@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_BOUNDARYCOMMS_H
-#define HEMELB_LB_BOUNDARIES_BOUNDARYCOMMS_H
+#ifndef HEMELB_LB_IOLETS_BOUNDARYCOMMS_H
+#define HEMELB_LB_IOLETS_BOUNDARYCOMMS_H
 
 #include "geometry/LatticeData.h"
 #include "lb/SimulationState.h"
@@ -64,4 +64,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_BOUNDARYCOMMS_H */
+#endif /* HEMELB_LB_IOLETS_BOUNDARYCOMMS_H */
