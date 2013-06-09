@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H
+#ifndef HEMELB_LB_IOLETS_INOUTLETS_H
+#define HEMELB_LB_IOLETS_INOUTLETS_H
 
 #include "lb/iolets/InOutLet.h"
 #include "lb/iolets/InOutLetCosine.h"
@@ -18,4 +18,4 @@
 #include "lb/iolets/InOutLetParabolicVelocity.h"
 #include "lb/iolets/InOutLetVelocityAware.h"
 
-#endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETS_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLETS_H */

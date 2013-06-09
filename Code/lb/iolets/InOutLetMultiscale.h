@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETMULTISCALE_H
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETMULTISCALE_H
+#ifndef HEMELB_LB_IOLETS_INOUTLETMULTISCALE_H
+#define HEMELB_LB_IOLETS_INOUTLETMULTISCALE_H
 
 #include "lb/iolets/InOutLet.h"
 #include "multiscale/Intercommunicand.h"
@@ -94,4 +94,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETMULTISCALE_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLETMULTISCALE_H */

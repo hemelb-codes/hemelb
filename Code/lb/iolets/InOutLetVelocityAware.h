@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H
+#ifndef HEMELB_LB_IOLETS_INOUTLETVELOCITYAWARE_H
+#define HEMELB_LB_IOLETS_INOUTLETVELOCITYAWARE_H
 
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "geometry/LatticeData.h"
@@ -74,4 +74,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETVELOCITYAWARE_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLETVELOCITYAWARE_H */
