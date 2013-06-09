@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCYCLE_HPP
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLETCYCLE_HPP
+#ifndef HEMELB_LB_IOLETS_INOUTLETCYCLE_HPP
+#define HEMELB_LB_IOLETS_INOUTLETCYCLE_HPP
 #include "lb/iolets/InOutLetCycle.h"
 #include "lb/iolets/BoundaryComms.h"
 
@@ -37,4 +37,4 @@ namespace hemelb
     }
   }
 }
-#endif /* HEMELB_LB_BOUNDARIES_INOUTLETCYCLE_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLETCYCLE_H */

@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_BOUNDARIES_IOLETS_INOUTLET_H
-#define HEMELB_LB_BOUNDARIES_IOLETS_INOUTLET_H
+#ifndef HEMELB_LB_IOLETS_INOUTLET_H
+#define HEMELB_LB_IOLETS_INOUTLET_H
 
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
@@ -220,4 +220,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_BOUNDARIES_IOLETS_INOUTLET_H */
+#endif /* HEMELB_LB_IOLETS_INOUTLET_H */
