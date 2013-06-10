@@ -259,7 +259,7 @@ endif()
 include_directories(${TINYXML_INCLUDE_DIR})
 if(HEMELB_USE_BOOST)
 	#------BOOST ------------------
-	SET(Boost_ADDITIONAL_VERSIONS "1.53" "1.53.0" "1.48" "1.48.0")
+	SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
 	SET(BOOST_LIBS regex)
 	find_package(Boost 1.48 REQUIRED)
 	include_directories(${Boost_INCLUDE_DIRS})

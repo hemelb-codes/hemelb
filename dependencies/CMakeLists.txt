@@ -79,13 +79,13 @@ if (PARMETIS_FOUND)
 	message("Parmetis already installed, no need to download")
 else()
 	message("Parmetis not installed, will build from source")
-	find_file(PARMETIS_TARBALL parmetis-4.0.3.tar.gz 
+	find_file(PARMETIS_TARBALL parmetis-4.0.2.tar.gz 
 		DOC "Path to download Parmetis (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT PARMETIS_TARBALL)
 		message("No parmetis source found, will download.")
-		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.3.tar.gz 
+		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
 		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
 	endif()
 	set(PARMETIS_CC ${MPI_C_COMPILER} CACHE STRING "MPI Compiler to use for Parmetis, leave blank to let parmetis guess")
@@ -97,10 +97,10 @@ else()
 		set(PARMETIS_CXX_OPTION cxx=${PARMETIS_CXX})
 	endif()
 	ExternalProject_Add(
-	   parmetis
+	  parmetis
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${PARMETIS_TARBALL}
-	   CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION} && 
+	  CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION} && 
 				cd metis && 
 				make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION}
 		BUILD_IN_SOURCE 1
@@ -130,7 +130,9 @@ else()
 		URL ${PTSCOTCH_TARBALL}
 	  CONFIGURE_COMMAND cd src &&
         cp Make.inc/Makefile.inc.x86-64_pc_linux2 Makefile.inc &&
-        sed -i '/CFLAGS[ \t]*=/ {s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /; s/[ ]*-DINTSIZE[2346]*[ ]*/ /; s/\(=\)[ ]*/\1 -DINTSIZE32 /;}' Makefile.inc
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DINTSIZE[2346]*[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/\\\(=\\\)[ ]*/\\1 -DINTSIZE32 /" Makefile.inc
 		BUILD_IN_SOURCE 1
 		BUILD_COMMAND cd src && make ptscotch
 		INSTALL_COMMAND cd src && make install prefix=<INSTALL_DIR>
@@ -155,13 +157,13 @@ else()
 	  zoltan
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${TRILINOS_TARBALL}
-		BINARY_DIR ${HEMELB_DEPENDENCIES_PATH}/trilinos-build
+    #		BINARY_DIR "<SOURCE_DIR>/BUILD_DIR"
 	  CONFIGURE_COMMAND cd <BINARY_DIR> &&
-        ${CMAKE_COMMAND} \
-        -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR> \
-        -DTPL_ENABLE_MPI:BOOL=ON \
-        -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
-        -DTrilinos_ENABLE_Zoltan:BOOL=ON \
+        ${CMAKE_COMMAND}
+        -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR>
+        -DTPL_ENABLE_MPI:BOOL=ON
+        -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+        -DTrilinos_ENABLE_Zoltan:BOOL=ON
         <SOURCE_DIR>
 		BUILD_COMMAND make
 		INSTALL_COMMAND make install
@@ -178,15 +180,19 @@ else()
 		DOC "Path to PPStee source on disk (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
-	if(NOT PTSCOTCH_TARBALL)
+	if(NOT PPPSTEE_TARBALL)
 		message("No PPStee source found, please download.")
 	endif()
 	ExternalProject_Add(
 	  ppstee
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${PPSTEE_TARBALL}
-	  CONFIGURE_COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> .
-		BUILD_IN_SOURCE 1
+	  CONFIGURE_COMMAND cd <BINARY_DIR> &&
+        ${CMAKE_COMMAND}
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        <SOURCE_DIR>
+    #		BUILD_IN_SOURCE 1
 		BUILD_COMMAND make all
 		INSTALL_COMMAND make install
 	)

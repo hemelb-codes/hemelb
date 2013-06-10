@@ -82,4 +82,7 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-add_dependencies(hemelb cppunit ppstee zoltan ptscotch parmetis tinyxml boost ctemplate zlib mpwide)
+add_dependencies(hemelb cppunit zoltan ptscotch parmetis ppstee tinyxml boost ctemplate zlib mpwide)
+add_dependencies(ppstee zoltan parmetis ptscotch)
+#add_dependencies(hemelb cppunit ptscotch ppstee tinyxml boost ctemplate zlib mpwide)
+#add_dependencies(ppstee ptscotch)
