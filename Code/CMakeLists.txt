@@ -230,10 +230,25 @@ set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
 include_directories(${MPI_INCLUDE_PATH})
 
+#------PPStee  ------------
+find_package(PPStee REQUIRED)
+include_directories(${PPSTEE_INCLUDE_DIR})
+MESSAGE(STATUS "Found PPStee: ${PPSTEE_LIBRARIES}")
+
+#------Zoltan  ------------
+find_package(Zoltan REQUIRED)
+include_directories(${ZOLTAN_INCLUDE_DIR})
+MESSAGE(STATUS "Found Zoltan: ${ZOLTAN_LIBRARIES}")
+
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
 include_directories(${PARMETIS_INCLUDE_DIR})
 MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
+
+#------PTScotch  ------------
+find_package(PTScotch REQUIRED)
+include_directories(${PTSCOTCH_INCLUDE_DIRS})
+MESSAGE(STATUS "Found PTScotch: ${PTSCOTCH_LIBRARIES}")
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
@@ -244,7 +259,8 @@ endif()
 include_directories(${TINYXML_INCLUDE_DIR})
 if(HEMELB_USE_BOOST)
 	#------BOOST ------------------
-	SET(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
+	SET(Boost_ADDITIONAL_VERSIONS "1.53" "1.53.0" "1.48" "1.48.0")
+	SET(BOOST_LIBS regex)
 	find_package(Boost 1.48 REQUIRED)
 	include_directories(${Boost_INCLUDE_DIRS})
 	add_definitions(-DHEMELB_USE_BOOST)
@@ -316,7 +332,10 @@ add_subdirectory(resources)
 target_link_libraries(hemelb 
 	${heme_libraries}
 	${MPI_LIBRARIES}
+	${PPSTEE_LIBRARIES}
 	${PARMETIS_LIBRARIES}
+	${PTSCOTCH_LIBRARIES}
+  ${ZOLTAN_LIBRARIES}
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
@@ -364,7 +383,10 @@ if (HEMELB_BUILD_MULTISCALE)
 	target_link_libraries(multiscale_hemelb
 		${heme_libraries}
 		${MPI_LIBRARIES}
+		${PPSTEE_LIBRARIES}
 		${PARMETIS_LIBRARIES}
+		${PTSCOTCH_LIBRARIES}
+    ${ZOLTAN_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${Boost_LIBRARIES}
 		${CTEMPLATE_LIBRARIES}
@@ -386,7 +408,10 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		hemelb_unittests 
 		${heme_libraries}
 		${MPI_LIBRARIES}
+		${PPSTEE_LIBRARIES}
 		${PARMETIS_LIBRARIES}
+		${PTSCOTCH_LIBRARIES}
+    ${ZOLTAN_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}
@@ -412,7 +437,10 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 		hemelb_functionaltests 
 		${heme_libraries}
 		${MPI_LIBRARIES}
+		${PPSTEE_LIBRARIES}
 		${PARMETIS_LIBRARIES}
+		${PTSCOTCH_LIBRARIES}
+    ${ZOLTAN_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
 		${Boost_LIBRARIES}

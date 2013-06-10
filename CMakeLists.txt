@@ -46,7 +46,8 @@ ExternalProject_Add(
    hemelb
 	URL ${PROJECT_SOURCE_DIR}/Code	
 	CONFIGURE_COMMAND cmake <SOURCE_DIR> 
-	-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} 
+	-DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+	-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} 
 	-DHEMELB_DEPENDENCIES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/dependencies
 	-DHEMELB_DEPENDENCIES_INSTALL_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
 	-DTIXML_USE_STL=${TIXML_USE_STL}
@@ -81,4 +82,4 @@ ExternalProject_Add(
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
-add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)
+add_dependencies(hemelb cppunit ppstee zoltan ptscotch parmetis tinyxml boost ctemplate zlib mpwide)

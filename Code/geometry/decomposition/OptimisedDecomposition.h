@@ -14,6 +14,10 @@
 #include "geometry/Geometry.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "geometry/ParmetisHeader.h"
+#include "ppstee.hpp"
+
+#include "ptscotch.h"
+#include "zoltan.h"
 #include "reporting/Timers.h"
 #include "topology/Communicator.h"
 

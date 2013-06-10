@@ -101,7 +101,8 @@ namespace hemelb
         // comm* is a pointer to the MPI communicator of the processes involved
 
         // Initialise the partition vector.
-        partitionVector = std::vector<idx_t>(localVertexCount, comms.GetRank());
+	// Not needed for PPStee. See below.
+        //partitionVector = std::vector<idx_t>(localVertexCount, comms.GetRank());
 
         // Weight all vertices evenly.
         std::vector < idx_t > vertexWeight(localVertexCount, 1);
@@ -137,12 +138,14 @@ namespace hemelb
         // Reserve 1 on these vectors so that the reference to their first element
         // exists (even if it's unused).
         // Reserve on the vectors to be certain they're at least 1 in capacity (so &vector[0] works)
-        partitionVector.reserve(1);
+        //partitionVector.reserve(1);
         vtxDistribn.reserve(1);
         adjacenciesPerVertex.reserve(1);
         localAdjacencies.reserve(1);
         vertexWeight.reserve(1);
         MPI_Comm communicator = comms.GetCommunicator();
+
+        /* replaced by PPStee:
         ParMETIS_V3_PartKway(&vtxDistribn[0],
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
@@ -159,6 +162,61 @@ namespace hemelb
                              &partitionVector[0],
                              &communicator);
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
+        */ // replaced by PPStee: END
+
+        /* PPStee modifications */
+        // graph
+        //PPSteeGraphParmetis pgraph = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+        PPSteeGraphPtscotch pgraph = PPSteeGraphPtscotch(communicator, localVertexCount, &adjacenciesPerVertex[0], &localAdjacencies[0]);
+        //PPSteeGraphZoltan pgraph = PPSteeGraphZoltan(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+
+        // weights for computation
+        PPSteeWeights pweights(&pgraph);
+std::vector < int > adjwgt(pgraph.getEdgeloccnt(), 1);
+pweights.setWeightsData(&vertexWeight[0], &adjwgt[0]);
+
+        // interface
+        PPStee ppstee;
+
+        // submit graph
+        ppstee.submitGraph(pgraph);
+
+        // submit weights
+        ppstee.submitNewStage(pweights, PPSTEE_STAGE_COMPUTATION);
+
+        // calculate partitioning
+        PPSteePart* ppart = NULL;
+        ppstee.getPartitioning(&ppart);
+
+        // copy partitioning (needs a decent functionality to do so)
+	partitionVector.assign(ppart->getPartData(), ppart->getPartData()+ppart->getVertloccnt());
+
+        // add debug log message: show number of vertices moving to threads #0 - #mpi_n-1
+        int offrange = 0;
+        std::vector<int> pcounter(12, 0);
+        for (int i=0; i<ppart->getVertloccnt(); ++i) {
+          if (ppart->getPartData()[i] >= 0 && ppart->getPartData()[i] <= 11) {
+            pcounter[ppart->getPartData()[i]]++;
+          } else {
+            offrange++;
+          }
+        }
+        log::Logger::Log<log::Debug, log::OnePerCore>("PPStee part counts: %i %i %i %i %i %i %i %i %i %i %i %i (offrange: %i).",
+          pcounter[0],
+          pcounter[1],
+          pcounter[2],
+          pcounter[3],
+          pcounter[4],
+          pcounter[5],
+          pcounter[6],
+          pcounter[7],
+          pcounter[8],
+          pcounter[9],
+          pcounter[10],
+          pcounter[11],
+          offrange
+        );
+/*	*/ // PPStee modifications: END
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()

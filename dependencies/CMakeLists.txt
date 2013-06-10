@@ -79,13 +79,13 @@ if (PARMETIS_FOUND)
 	message("Parmetis already installed, no need to download")
 else()
 	message("Parmetis not installed, will build from source")
-	find_file(PARMETIS_TARBALL parmetis-4.0.2.tar.gz 
+	find_file(PARMETIS_TARBALL parmetis-4.0.3.tar.gz 
 		DOC "Path to download Parmetis (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT PARMETIS_TARBALL)
 		message("No parmetis source found, will download.")
-		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
+		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.3.tar.gz 
 		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
 	endif()
 	set(PARMETIS_CC ${MPI_C_COMPILER} CACHE STRING "MPI Compiler to use for Parmetis, leave blank to let parmetis guess")
@@ -106,6 +106,89 @@ else()
 		BUILD_IN_SOURCE 1
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
 		INSTALL_COMMAND make install MAKEFLAGS= && cd metis && make install MAKEFLAGS=
+	)
+endif()
+
+# ------- ptscotch --------------------
+find_package(PTScotch QUIET)
+if (PTSCOTCH_FOUND)
+	message("PTScotch already installed, no need to download")
+else()
+	message("PTScotch not installed, will build from source")
+	find_file(PTSCOTCH_TARBALL scotch_5.1.12b_esmumps.tar.gz 
+		DOC "Path to PTScotch source on disk (can be url http://)"
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT PTSCOTCH_TARBALL)
+		message("No ptscotch source found, will try to download.")
+		set(PTSCOTCH_TARBALL https://gforge.inria.fr/frs/download.php/28978/scotch_5.1.12b_esmumps.tar.gz
+		CACHE STRING "Path to download PTScotch (can be local file://)" FORCE)
+	endif()
+	ExternalProject_Add(
+	  ptscotch
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+		URL ${PTSCOTCH_TARBALL}
+	  CONFIGURE_COMMAND cd src &&
+        cp Make.inc/Makefile.inc.x86-64_pc_linux2 Makefile.inc &&
+        sed -i '/CFLAGS[ \t]*=/ {s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /; s/[ ]*-DINTSIZE[2346]*[ ]*/ /; s/\(=\)[ ]*/\1 -DINTSIZE32 /;}' Makefile.inc
+		BUILD_IN_SOURCE 1
+		BUILD_COMMAND cd src && make ptscotch
+		INSTALL_COMMAND cd src && make install prefix=<INSTALL_DIR>
+	)
+endif()
+
+# ------- zoltan --------------------
+find_package(ZOLTAN QUIET)
+if (ZOLTAN_FOUND)
+	message("Zoltan already installed, no need to download")
+else()
+	message("Zoltan not installed, will build from Trilinos source")
+  set(TRILINOS_TARBALL_NAME "trilinos-11.2.3-Source.tar.gz")
+	find_file(TRILINOS_TARBALL ${TRILINOS_TARBALL_NAME}
+		DOC "Path to Zoltan source on disk (can be url http://)"
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT TRILINOS_TARBALL)
+		message("No Trilinos source found, please download ${TRILINOS_TARBALL_NAME}.")
+	endif()
+	ExternalProject_Add(
+	  zoltan
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+		URL ${TRILINOS_TARBALL}
+		BINARY_DIR ${HEMELB_DEPENDENCIES_PATH}/trilinos-build
+	  CONFIGURE_COMMAND cd <BINARY_DIR> &&
+        ${CMAKE_COMMAND} \
+        -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR> \
+        -DTPL_ENABLE_MPI:BOOL=ON \
+        -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+        -DTrilinos_ENABLE_Zoltan:BOOL=ON \
+        <SOURCE_DIR>
+		BUILD_COMMAND make
+		INSTALL_COMMAND make install
+	)
+endif()
+
+# ------- PPStee --------------------
+find_package(PPStee QUIET)
+if (PPSTEE_FOUND)
+	message("PPStee already installed, no need to download")
+else()
+	message("PPStee not installed, will build from source")
+	find_file(PPSTEE_TARBALL ppstee-0.1.1.tar.gz
+		DOC "Path to PPStee source on disk (can be url http://)"
+		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT PTSCOTCH_TARBALL)
+		message("No PPStee source found, please download.")
+	endif()
+	ExternalProject_Add(
+	  ppstee
+		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+		URL ${PPSTEE_TARBALL}
+	  CONFIGURE_COMMAND ${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> .
+		BUILD_IN_SOURCE 1
+		BUILD_COMMAND make all
+		INSTALL_COMMAND make install
 	)
 endif()
 
@@ -153,8 +236,8 @@ endif()
 
 if(HEMELB_USE_BOOST)
 	# ---------BOOST -----------------------
-	set(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0")
-	set(BOOST_LIBS regex)
+	set(Boost_ADDITIONAL_VERSIONS "1.53" "1.53.0" "1.48" "1.48.0")
+	set(BOOST_LIBS mpi regex)
 	string(REPLACE ";" "," BOOST_LIBS_COMMA "${BOOST_LIBS}")
 	find_package(Boost 1.48 COMPONENTS ${BOOST_LIBS})
 	if (BOOST_FOUND OR Boost_FOUND)
