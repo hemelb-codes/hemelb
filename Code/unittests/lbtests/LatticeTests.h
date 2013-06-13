@@ -86,6 +86,14 @@ namespace hemelb
               CPPUNIT_ASSERT(LatticeType::CY[direction] <= 1);
               CPPUNIT_ASSERT(LatticeType::CZ[direction] <= 1);
 
+              CPPUNIT_ASSERT(LatticeType::CX[direction] >= -1);
+              CPPUNIT_ASSERT(LatticeType::CYD[direction] >= -1);
+              CPPUNIT_ASSERT(LatticeType::CZD[direction] >= -1);
+              CPPUNIT_ASSERT(LatticeType::CXD[direction] <= 1);
+              CPPUNIT_ASSERT(LatticeType::CYD[direction] <= 1);
+              CPPUNIT_ASSERT(LatticeType::CZD[direction] <= 1);
+
+              
               for (Direction otherDirection = 0; otherDirection < LatticeType::NUMVECTORS; ++otherDirection)
               {
                 if (otherDirection == direction)
@@ -96,6 +104,10 @@ namespace hemelb
                 CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
                     || LatticeType::CY[direction] != LatticeType::CY[otherDirection]
                     || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
+                
+                CPPUNIT_ASSERT(LatticeType::CXD[direction] != LatticeType::CXD[otherDirection]
+                    || LatticeType::CYD[direction] != LatticeType::CYD[otherDirection]
+                    || LatticeType::CZD[direction] != LatticeType::CZD[otherDirection]);
               }
             }
 
@@ -128,12 +140,12 @@ namespace hemelb
             LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
 
             LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
-
-            CPPUNIT_ASSERT(density == expectedDensity);
-
-            CPPUNIT_ASSERT(momentum[0] == expectedMomentum[0]);
-            CPPUNIT_ASSERT(momentum[1] == expectedMomentum[1]);
-            CPPUNIT_ASSERT(momentum[2] == expectedMomentum[2]);
+            
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedDensity, density, epsilon);
+            
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[0], momentum[0], epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[1], momentum[1], epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[2], momentum[2], epsilon);
 
             /*
              static void CalculateFeq(const distribn_t &density,
