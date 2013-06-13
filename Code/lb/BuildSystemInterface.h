@@ -227,6 +227,15 @@ namespace hemelb
     {
         typedef typename streamers::LaddIoletGZS<Collision>::Type Type;
     };
+
+    /**
+     * Nash/Krueger in/outlet + SBB
+     */
+    template<class Collision>
+    struct VIRTUALSITEIOLETSBB
+    {
+        typedef typename streamers::VirtualSiteIolet<Collision> Type;
+    };
   }
 }
 
