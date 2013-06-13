@@ -17,5 +17,6 @@
 #include "lb/streamers/JunkYang.h"
 #include "lb/streamers/NashZerothOrderPressureIolet.h"
 #include "lb/streamers/LaddIolet.h"
+#include "lb/streamers/VirtualSiteIolet.h"
 
 #endif /* HEMELB_LB_STREAMERS_STREAMERS_H */
