@@ -18,6 +18,7 @@ option(HEMELB_STATIC_ASSERT "Use simple compile-time assertions" ON)
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
+option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
@@ -62,6 +63,8 @@ if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
+
+
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
 add_definitions(-DHEMELB_LATTICE=${HEMELB_LATTICE})
 add_definitions(-DHEMELB_KERNEL=${HEMELB_KERNEL})
@@ -91,6 +94,14 @@ endif()
 if (HEMELB_IMAGES_TO_NULL)
 	add_definitions(-DHEMELB_IMAGES_TO_NULL)
 endif()
+
+if (HEMELB_USE_SSE3)
+	add_definitions(-DHEMELB_USE_SSE3)
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
+	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
+        set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
+endif()
+
 
 # Check for a serious compiler bug in GCC
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
