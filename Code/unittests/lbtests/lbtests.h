@@ -18,5 +18,6 @@
 #include "unittests/lbtests/LatticeTests.h"
 #include "unittests/lbtests/iolets/BoundaryTests.h"
 #include "unittests/lbtests/iolets/InOutLetTests.h"
+#include "unittests/lbtests/VirtualSiteIoletStreamerTests.h"
 
 #endif /* HEMELB_UNITTESTS_LBTESTS_LBTESTS_H */
