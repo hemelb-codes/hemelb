@@ -22,7 +22,7 @@ namespace hemelb
   {
     namespace lbtests
     {
-      namespace boundaries
+      namespace iolets
       {
         using namespace hemelb::lb::iolets;
         using namespace resources;
