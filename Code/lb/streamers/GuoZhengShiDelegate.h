@@ -34,46 +34,56 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
           GuoZhengShiDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            collider(delegatorCollider), neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
+              collider(delegatorCollider),
+                  neighbouringLatticeData(initParams.latDat->GetNeighbouringData())
           {
-            // Go through every site on the local processor.
-            for (site_t localIndex = 0; localIndex < initParams.latDat->GetLocalFluidSiteCount(); ++localIndex)
+            // Want to loop over each site this streamer is responsible for,
+            // as specified in the siteRanges.
+            for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
+                initParams.siteRanges.begin(); rangeIt != initParams.siteRanges.end(); ++rangeIt)
             {
-              geometry::Site<const geometry::LatticeData> localSite = initParams.latDat->GetSite(localIndex);
-
-              // Ignore ones that aren't walls;
-              if (!localSite.IsWall())
-                continue;
-
-              const LatticeVector localSiteLocation = localSite.GetGlobalSiteCoords();
-
-              // Iterate over every neighbouring direction from here.
-              for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+              for (site_t localIndex = rangeIt->first; localIndex < rangeIt->second; ++localIndex)
               {
-                const LatticeVector neighbourLocation = localSiteLocation + LatticeVector(LatticeType::CX[direction],
-                                                                                          LatticeType::CY[direction],
-                                                                                          LatticeType::CZ[direction]);
+                geometry::Site<const geometry::LatticeData> localSite =
+                    initParams.latDat->GetSite(localIndex);
 
-                // Make sure we don't try to get info about off-lattice neighbours.
-                if (!initParams.latDat->IsValidLatticeSite(neighbourLocation))
+                // Ignore ones that aren't walls;
+                if (!localSite.IsWall())
                   continue;
 
-                proc_t neighbourSiteHomeProc = initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
+                const LatticeVector localSiteLocation = localSite.GetGlobalSiteCoords();
 
-                // BIG_NUMBER2 means a solid site. We don't want info about solids or
-                // neighbouring sites on this proc.
-                if (neighbourSiteHomeProc == BIG_NUMBER2 || neighbourSiteHomeProc
-                    == topology::NetworkTopology::Instance()->GetLocalRank())
-                  continue;
+                // Iterate over every neighbouring direction from here.
+                for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
+                {
+                  const LatticeVector neighbourLocation = localSiteLocation
+                      + LatticeVector(LatticeType::CX[direction],
+                                      LatticeType::CY[direction],
+                                      LatticeType::CZ[direction]);
 
-                // Create a requirements with the info we need.
-                geometry::neighbouring::RequiredSiteInformation requirements(false);
+                  // Make sure we don't try to get info about off-lattice neighbours.
+                  if (!initParams.latDat->IsValidLatticeSite(neighbourLocation))
+                    continue;
 
-                requirements.Require(geometry::neighbouring::terms::Density);
-                requirements.Require(geometry::neighbouring::terms::Velocity);
+                  proc_t neighbourSiteHomeProc =
+                      initParams.latDat->GetProcIdFromGlobalCoords(neighbourLocation);
 
-                initParams.neighbouringDataManager->RegisterNeededSite(initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation),
-                                                                       requirements);
+                  // BIG_NUMBER2 means a solid site. We don't want info about solids or
+                  // neighbouring sites on this proc.
+                  if (neighbourSiteHomeProc == BIG_NUMBER2
+                      || neighbourSiteHomeProc
+                          == topology::NetworkTopology::Instance()->GetLocalRank())
+                    continue;
+
+                  // Create a requirements with the info we need.
+                  geometry::neighbouring::RequiredSiteInformation requirements(false);
+
+                  requirements.Require(geometry::neighbouring::terms::Density);
+                  requirements.Require(geometry::neighbouring::terms::Velocity);
+
+                  initParams.neighbouringDataManager->RegisterNeededSite(initParams.latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourLocation),
+                                                                         requirements);
+                }
               }
             }
           }
@@ -86,7 +96,7 @@ namespace hemelb
           {
             Direction i = LatticeType::INVERSEDIRECTIONS[iPrime];
             // Get the distance to the boundary.
-            double wallDistance = site.GetWallDistance<LatticeType> (iPrime);
+            double wallDistance = site.GetWallDistance<LatticeType>(iPrime);
             // Now we work out the hypothetical velocity of the solid site on the other side
             // of the wall.
             // Assume that the wall velocity (0) is linearly interpolated along the line
@@ -112,7 +122,7 @@ namespace hemelb
             // A similar thing is done with the non-equilibrium distribution estimate. It is either
             // the value in that direction at the nearest site, or an interpolation between the values
             // at the nearest site and the next site away.
-            if (wallDistance < 0.75 && !site.HasWall(i))
+            if (wallDistance < 0.75 && !site.HasWall(i) && !site.HasIolet(i))
             {
               // We can only do this if there's gonna be a point there to interpolate from, i.e. there's no boundary
               // in direction i
@@ -143,19 +153,22 @@ namespace hemelb
               // to the point on the wall itself (velocity 0):
               // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
               // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-              LatticeVelocity velocityWallSecondEstimate = neighbourVelocity * (wallDistance - 1) / (wallDistance + 1);
+              LatticeVelocity velocityWallSecondEstimate = neighbourVelocity * (wallDistance - 1)
+                  / (wallDistance + 1);
               // Next, we interpolate between the first and second estimates to improve the estimate.
               // Extrapolate to obtain the velocity at the wall site.
               for (int dimension = 0; dimension < 3; dimension++)
               {
-                hydroVarsWall.momentum[dimension] = wallDistance * hydroVarsWall.momentum[dimension] + (1.
-                    - wallDistance) * hydroVars.density * velocityWallSecondEstimate[dimension];
+                hydroVarsWall.momentum[dimension] = wallDistance * hydroVarsWall.momentum[dimension]
+                    + (1. - wallDistance) * hydroVars.density
+                        * velocityWallSecondEstimate[dimension];
               }
               // Interpolate in the same way to get f_neq.
-              distribn_t* fNeqWall = hydroVarsWall .GetFNeqPtr();
+              distribn_t* fNeqWall = hydroVarsWall.GetFNeqPtr();
               for (unsigned j = 0; j < LatticeType::NUMVECTORS; ++j)
               {
-                fNeqWall[j] = wallDistance * fNeqWall[j] + (1. - wallDistance) * (neighbourFOld[j] - neighbourFEq[j]);
+                fNeqWall[j] = wallDistance * fNeqWall[j]
+                    + (1. - wallDistance) * (neighbourFOld[j] - neighbourFEq[j]);
               }
             }
 
@@ -191,23 +204,21 @@ namespace hemelb
           {
             const distribn_t* neighbourFOld;
             // Find the neighbour's global location and which proc it's on.
-            LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords() + LatticeVector(LatticeType::CX[i],
-                                                                                               LatticeType::CY[i],
-                                                                                               LatticeType::CZ[i]);
+            LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
+                + LatticeVector(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
             proc_t neighbourProcessor = latDat->GetProcIdFromGlobalCoords(neighbourGlobalLocation);
             if (neighbourProcessor == topology::NetworkTopology::Instance()->GetLocalRank())
             {
               // If it's local, get a Site object for it.
               geometry::Site<geometry::LatticeData> nextSiteOut =
                   latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
-              neighbourFOld = nextSiteOut.GetFOld<LatticeType> ();
+              neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
             }
             else
             {
-              const geometry::neighbouring::ConstNeighbouringSite
-                  neighbourSite =
-                      neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
-              neighbourFOld = neighbourSite.GetFOld<LatticeType> ();
+              const geometry::neighbouring::ConstNeighbouringSite neighbourSite =
+                  neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
+              neighbourFOld = neighbourSite.GetFOld<LatticeType>();
             }
             return neighbourFOld;
 
