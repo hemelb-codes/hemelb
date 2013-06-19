@@ -37,9 +37,27 @@ namespace hemelb
           typedef CollisionImpl CollisionType;
 
           JunkYang(kernels::InitParams& initParams) :
-              collider(initParams), THETA(0.7), latticeData(*initParams.latDat)
+              collider(initParams), bulkLinkDelegate(collider, initParams), THETA(0.7),
+                  latticeData(*initParams.latDat)
           {
-            AssembleMatrices();
+            for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
+                initParams.siteRanges.begin(); rangeIt != initParams.siteRanges.end(); ++rangeIt)
+            {
+              for (site_t siteIdx = rangeIt->first; siteIdx < rangeIt->second; ++siteIdx)
+              {
+                geometry::Site<const geometry::LatticeData> localSite =
+                    latticeData.GetSite(siteIdx);
+
+                // Ignore ones that aren't walls;
+                //! @todo: We should also be ignoring iolets
+                if (localSite.IsWall())
+                {
+                  ConstructVelocitySets(siteIdx);
+                  AssembleKMatrix(siteIdx);
+                  AssembleLMatrix(siteIdx);
+                }
+              }
+            }
             FactoriseLMatrices();
           }
 
@@ -78,16 +96,22 @@ namespace hemelb
 
               for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; direction++)
               {
-                if (!site.HasWall(direction))
+                if (site.HasWall(direction))
                 {
-                  * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
-                      hydroVars.GetFPostCollision()[direction];
+                  // Do nothing for now.
+                }
+                else
+                {
+                  bulkLinkDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
                 }
               }
 
               // The following for loops prepare the data required by DoPostStep
-              fPostCollisionInverseDir[siteIndex].resize(incomingVelocities[siteIndex].size());
 
+              // TODO: should this resize not be done during initialisation?
+              fPostCollisionInverseDir[siteIndex].resize(incomingVelocities[siteIndex].size());
+              // TODO: Ideally, this should be done in the loop over directions above
+              // but the f's are permuted by the below making it tricky.
               unsigned index = 0;
               for (std::set<Direction>::const_iterator incomingVelocityIter =
                   incomingVelocities[siteIndex].begin();
@@ -161,6 +185,7 @@ namespace hemelb
 
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
           CollisionType collider;
+          SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
 
           //! Problem dimension (2D, 3D)
           static const unsigned DIMENSION = 3U;
@@ -194,30 +219,6 @@ namespace hemelb
           std::map<site_t, ublas::vector<distribn_t> > fPostCollisionInverseDir;
           //! Map of distributions in the previous time step with incoming/outgoing ordering.
           std::map<site_t, ublas::c_vector<distribn_t, LatticeType::NUMVECTORS> > fOld;
-
-          /**
-           * Assemble all the required matrices for all the sites assigned to this kernel
-           */
-          inline void AssembleMatrices()
-          {
-            for (site_t contiguousSiteIndex = 0;
-                contiguousSiteIndex < latticeData.GetLocalFluidSiteCount(); ++contiguousSiteIndex)
-            {
-              geometry::Site<const geometry::LatticeData> localSite =
-                  latticeData.GetSite(contiguousSiteIndex);
-
-              // Ignore ones that aren't walls;
-              //! @todo: We should also be ignoring iolets
-              if (!localSite.IsWall())
-              {
-                continue;
-              }
-
-              ConstructVelocitySets(contiguousSiteIndex);
-              AssembleKMatrix(contiguousSiteIndex);
-              AssembleLMatrix(contiguousSiteIndex);
-            }
-          }
 
           /**
            * Construct the incoming/outgoing velocity sets for site siteLocalIndex
