@@ -5,7 +5,8 @@
 #include "lb/streamers/NashZerothOrderPressureDelegate.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 #include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
-#include "lb/streamers/JunkYang.h"
+#include "lb/streamers/JunkYangFactory.h"
+
 namespace hemelb
 {
   namespace lb

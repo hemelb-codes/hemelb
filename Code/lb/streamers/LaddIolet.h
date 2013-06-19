@@ -15,6 +15,7 @@
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 #include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
 #include "lb/streamers/GuoZhengShiDelegate.h"
+#include "lb/streamers/JunkYangFactory.h"
 
 namespace hemelb
 {
