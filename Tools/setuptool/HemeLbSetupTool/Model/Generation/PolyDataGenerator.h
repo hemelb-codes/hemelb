@@ -54,6 +54,7 @@ typedef Kernel::Point_3 PointCGAL;
 typedef Kernel::Plane_3 PlaneCGAL;
 typedef Kernel::Vector_3 VectorCGAL;
 typedef Kernel::Segment_3 SegmentCGAL;
+typedef Kernel::Triangle_3 TriangleCGAL;
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
 typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
 typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
@@ -62,6 +63,7 @@ typedef Polyhedron::Vertex_iterator Vertex_iteratorCGAL;
 typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 typedef Tree::Primitive_id Primitive_id;
 typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
+typedef Polyhedron::Face_handle FacehandleCGAL;
 
 class PolyDataGenerator: public GeometryGenerator {
 public:
@@ -98,6 +100,7 @@ private:
 	virtual void PreExecute(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
+	void InsideOutside(Site& site);
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
