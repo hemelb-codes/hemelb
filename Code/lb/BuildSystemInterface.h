@@ -141,7 +141,7 @@ namespace hemelb
     class JUNKYANG
     {
       public:
-        typedef streamers::JunkYang<Collision> Type;
+        typedef typename streamers::JunkYang<Collision>::Type Type;
     };
 
     /**

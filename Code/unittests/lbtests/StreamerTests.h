@@ -629,7 +629,7 @@ namespace hemelb
             initParams.siteRanges.push_back(std::pair<site_t, site_t>(offset,
                                                                       offset
                                                                           + latDat->GetMidDomainCollisionCount(1)));
-            lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > > junkYang(initParams);
+            lb::streamers::JunkYang<lb::collisions::Normal<lb::kernels::LBGK<lb::lattices::D3Q15> > >::Type junkYang(initParams);
 
             junkYang.StreamAndCollide<false>(offset,
                                              latDat->GetMidDomainCollisionCount(1),
