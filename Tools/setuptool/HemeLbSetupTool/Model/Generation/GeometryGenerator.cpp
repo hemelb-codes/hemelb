@@ -40,6 +40,31 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 	this->ComputeBounds(bounds);
 	Domain domain(this->VoxelSizeMetres, bounds);
 
+	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
+			++blockIt) {
+		// Open the BlockStarted context of the writer; this will
+		// deal with flushing the state to the file (or not, in the
+		// case where there are no fluid sites).
+		//BlockWriter* blockWriterPtr = writer.StartNextBlock();
+		Block& block = *blockIt;
+
+		
+		for (SiteIterator siteIt = block.begin(); siteIt != block.end();
+					++siteIt) {
+				Site& site = **siteIt;
+				this->ClassifySite(site);
+
+		}
+	}
+}
+
+void GeometryGenerator::Writefile(bool skipNonIntersectingBlocks)
+  throw (GenerationError) {
+	this->PreExecute();
+	double bounds[6];
+	this->ComputeBounds(bounds);
+	Domain domain(this->VoxelSizeMetres, bounds);
+
 	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
 			domain.GetBlockCounts(), domain.GetVoxelSizeMetres(),
 			domain.GetOriginMetres());
@@ -49,15 +74,14 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		// case where there are no fluid sites).
-		//BlockWriter* blockWriterPtr = writer.StartNextBlock();
+		BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		Block& block = *blockIt;
 
 		int side = 0; // represents whether the block is inside (-1) outside (+1) or undetermined (0)
 
 		if (skipNonIntersectingBlocks) {
 			side = this->BlockInsideOrOutsideSurface(block);
-		} else {
-			// don't use the optimisation -- check every site
+		} else {			// don't use the optimisation -- check every site
 			side = 0;
 		}
 
@@ -72,13 +96,13 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 					++siteIt) {
 				Site& site = **siteIt;
 				this->ClassifySite(site);
-
-				/*if (site.IsFluid) {
+				// here we should check site
+				if (site.IsFluid) {
 					blockWriterPtr->IncrementFluidSitesCount();
 					WriteFluidSite(*blockWriterPtr, site);
 				} else {
 					WriteSolidSite(*blockWriterPtr, site);
-					}*/
+					}
 				
 			}
 			break;
@@ -94,19 +118,20 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 						link_index < site.Links.size(); ++link_index) {
 					site.Links[link_index].Type = geometry::CUT_NONE;
 				}
-				//blockWriterPtr->IncrementFluidSitesCount();
-				//WriteFluidSite(*blockWriterPtr, site);
+				blockWriterPtr->IncrementFluidSitesCount();
+				WriteFluidSite(*blockWriterPtr, site);
 			}
 			break;
 		default:
 			break;
 		}
-		//blockWriterPtr->Finish();
-		//blockWriterPtr->Write(writer);
-		//delete blockWriterPtr;
+		blockWriterPtr->Finish();
+		blockWriterPtr->Write(writer);
+		delete blockWriterPtr;
 	}
 	writer.Close();
 }
+
 
 void GeometryGenerator::WriteSolidSite(BlockWriter& blockWriter, Site& site) {
 	blockWriter << static_cast<unsigned int>(geometry::SOLID);
