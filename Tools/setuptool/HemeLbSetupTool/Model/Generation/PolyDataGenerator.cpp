@@ -30,6 +30,8 @@
 
 #include <iostream>
 
+#include <boost/logic/tribool.hpp>
+
 using namespace hemelb::io::formats;
 
 PolyDataGenerator::PolyDataGenerator() :
@@ -105,20 +107,46 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		vtkIdType nHits;
 		PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
 		PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
-		//bool inside1 = (*this->inside_with_ray)(p1);
-		bool inside2 = (*this->inside_with_ray)(p2);
+		bool inside1;
+		bool inside2;
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
 			nHits = this->ComputeIntersections(site, neigh);
-			neigh.IsFluid = inside2;
-			
+			if (nHits == -1){
+			  inside2 = (*this->inside_with_ray)(p2);
+			  neigh.IsFluid = inside2;
+			}
+			else if (nHits % 2 == 0) {
+				// Even # hits, hence neigh has same type as site
+				neigh.IsFluid = site.IsFluid;
+			} else {
+				// Odd # hits, neigh is opposite type to site
+				neigh.IsFluid = !site.IsFluid;
+			}
 			if (neigh.IsFluid)
-			  this->numberofvoxels++;
 			  neigh.CreateLinksVector();
 
 			neigh.IsFluidKnown = true;
 		} else {
 			// We know the fluidness of neigh, maybe don't need to intersect
+		        if (site.IsFluid != neigh.IsFluid) {
+				// Only in the case of difference must we intersect.
+				nHits = this->ComputeIntersections(site, neigh);
+				
+				//if (nHits == -1){
+				  //cout << "This could not be determinded" << endl;
+				  //} 
+				if (nHits % 2 != 1) {
+				  inside1 = (*this->inside_with_ray)(p1);
+				  inside2 = (*this->inside_with_ray)(p2);
+				  if (inside1 == inside2){
+				    throw InconsistentFluidnessError(site, neigh, nHits);
+				  }
+				  else{
+				    cout << "Incons avoided" << nHits << endl;
+				  }
+				}
+			}
 			// Only in the case of difference must we intersect.
 			nHits = this->ComputeIntersections(site, neigh);
 		}
@@ -157,21 +185,21 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				iHit = nHits - 1;
 			}
 			
-			Vector hitPoint;
-			this->hitPoints->GetPoint(iHit, &hitPoint[0]);
+			//Vector hitPoint;
+			//this->hitPoints->GetPoint(iHit, &hitPoint[0]);
 			// needs logic to pick the right point of the list. Depending on the fluid 
-			Vector hitPointCGAL = Vector(this->HitPointsCGAL[0].x(),this->HitPointsCGAL[0].y(),this->HitPointsCGAL[0].z());
-			//cout << hitPointCGAL << " "<< hitPoint << endl;
+			Vector hitPoint;
+			if (nHitsCGAL > 0){
+			  hitPoint = Vector(CGAL::to_double(this->HitPointsCGAL[0].x()),CGAL::to_double(this->HitPointsCGAL[0].y()),CGAL::to_double(this->HitPointsCGAL[0].z()));
+			}else{
+			  //cout << "No hit point found" << endl;
+			  hitPoint = Vector(0,0,0);
+			}
 			LinkData& link = fluid->Links[iSolid];
 
-			//if (nHits != 1) {
-			//  cout << "hits: " << nHits << " and " << nHitsCGAL <<endl;
-			//  cout << hitPoint << endl;
-			  //cout << this->HitPointCGAL << endl;
-			//}
 			// This is set in any solid case
 			float distanceInVoxels =
-					(hitPointCGAL - fluid->Position).GetMagnitude();
+					(hitPoint - fluid->Position).GetMagnitude();
 			// The distance is in voxels but must be output as a fraction of
 			// the lattice vector. Scale it.
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
@@ -214,6 +242,12 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 	//cout << "Voxels "<< this->numberofvoxels << endl;
 }
 
+void PolyDataGenerator::InsideOutside(Site& site){
+  PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
+  bool inside = (*this->inside_with_ray)(point);
+  site.IsFluid = inside;
+  
+}
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->Locator->IntersectWithLine(&from.Position[0], &to.Position[0],
@@ -222,6 +256,10 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	PointCGAL p1(from.Position[0], from.Position[1], from.Position[2]);
 	PointCGAL p2(to.Position[0], to.Position[1], to.Position[2]);
 	PointCGAL p3;
+	PointCGAL v1;
+	PointCGAL v2;
+	PointCGAL v3;
+	FacehandleCGAL f1;
 	PointCGAL hitpoint;
 	SegmentCGAL s1;
 	SegmentCGAL segment_query(p1,p2);
@@ -231,20 +269,50 @@ int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
 	this->AABBtree->all_intersections(segment_query,std::back_inserter(CGALintersections));
 	double mindist = 1e100;
 	double temp;
+	bool i1 =  (*this->inside_with_ray)(p1);
+	bool i2 = (*this->inside_with_ray)(p2);
+	bool works = true; 
+	//boost::logic::tribool res = (*this->inside_with_ray)(p1,p2);
 	
+	//cout << nHitsCGAL << res << endl;
 	if (nHitsCGAL) {
 	    for (std::vector<Object_and_primitive_id>::iterator i = CGALintersections.begin(); i != CGALintersections.end(); ++i) {
-	      CGAL::Object object = i->first;
-	      if(CGAL::assign(p3,object)){
+	      //CGAL::Object object = i->first;
+	      
+	      if(CGAL::assign(p3,i->first)){
 		this->HitPointsCGAL.push_back(p3);
 	      }
-	      else if (CGAL::assign(s1,object)){
-		cout << "line todo" << endl;
-		//temp = CGAL::squared_distance(p2,s1);
+	      else{
+		nHitsCGAL = -1;
 	      }
+
+	      FacehandleCGAL f = i->second;
+	      v1 = f->halfedge()->vertex()->point();
+	      v2 = f->halfedge()->next()->vertex()->point();
+	      v3 = f->halfedge()->next()->next()->vertex()->point();
+	      int ori1 = CGAL::orientation(p1,p2,v1,v2);
+	      int ori2 = CGAL::orientation(p1,p2,v1,v3);
+	      int ori3 = CGAL::orientation(p1,p2,v2,v3);
+	      int ori4 = CGAL::orientation(p1,v1,v2,v3);
+	      int ori5 = CGAL::orientation(p2,v1,v2,v3);
+
+	      if (ori1 == 0 || ori2 == 0 || ori3 == 0 || ori4 == 0 || ori5 == 0){
+		// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. These 2 intersect and the result may be indetermined 
+		// ori4 and ori5. In this case either of the points are coplanar with the triangle (primitive)		
+		nHitsCGAL = -1;
+	      }
+	      if (nHitsCGAL%2 == 1 && i1 == i2){
+		cout << "wrong" << endl;
+		cout << i1 << i2 << nHitsCGAL << endl;
+	      }
+	      if (nHitsCGAL%2 == 0 && i1 != i2) {
+		cout << "wrong too" << endl;
+		cout << i1 << i2 << nHitsCGAL << endl;
+	      }
+	     
 	    } 
 	  }
-	return hitpoints;
+	return nHitsCGAL;
 }
 
 

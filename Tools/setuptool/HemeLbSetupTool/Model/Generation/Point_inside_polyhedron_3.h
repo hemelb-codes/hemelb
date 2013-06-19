@@ -265,7 +265,7 @@ public:
     grid_dz = (bbox.zmax() - bbox.zmin())/(N-1);
     grid_base = Point(bbox.xmin(), bbox.ymin(), bbox.zmin());
  
-
+    
     grid.reserve(N*N*N);
     int points_inside = 0, points_outside=0;
     for(int i=0; i < N; i++){
