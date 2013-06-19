@@ -108,8 +108,6 @@ namespace hemelb
 
               // The following for loops prepare the data required by DoPostStep
 
-              // TODO: should this resize not be done during initialisation?
-              fPostCollisionInverseDir[siteIndex].resize(incomingVelocities[siteIndex].size());
               // TODO: Ideally, this should be done in the loop over directions above
               // but the f's are permuted by the below making it tricky.
               unsigned index = 0;
@@ -242,6 +240,7 @@ namespace hemelb
                 outgoingVelocities[contiguousSiteIndex].insert(direction);
               }
             }
+            fPostCollisionInverseDir[contiguousSiteIndex].resize(incomingVelocities[contiguousSiteIndex].size());
           }
 
           /**
