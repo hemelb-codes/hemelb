@@ -25,7 +25,15 @@ namespace hemelb
       using namespace boost::numeric;
 
       /**
-       * This class implements the Junk&Yang boundary condition as described in
+       * Template to produce Streamers that can cope with fluid-fluid, fluid-solid
+       * (using the Junk&Yang method, see below) and fluid-iolet links. Requires
+       * two classes as arguments: 1) the Collision class and 2) a StreamerDelegate
+       * class that will handle the iolet links.
+       *
+       * It is intended that a simpler metafunction partially specialise this
+       * template on IoletLinkImpl.
+       *
+       * This class implements the Junk&Yang no-slip boundary condition as described in
        *
        * M. Junk and Z. Yang "One-point boundary condition for the lattice Boltzmann method", Phys Rev E 72 (2005)
        */
