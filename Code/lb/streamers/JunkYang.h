@@ -29,15 +29,16 @@ namespace hemelb
        *
        * M. Junk and Z. Yang "One-point boundary condition for the lattice Boltzmann method", Phys Rev E 72 (2005)
        */
-      template<typename CollisionImpl>
-      class JunkYang : public BaseStreamer<JunkYang<CollisionImpl> >
+      template<typename CollisionImpl, typename IoletLinkImpl>
+      class JunkYangFactory : public BaseStreamer<JunkYangFactory<CollisionImpl, IoletLinkImpl> >
       {
         public:
 
           typedef CollisionImpl CollisionType;
 
-          JunkYang(kernels::InitParams& initParams) :
-              collider(initParams), bulkLinkDelegate(collider, initParams), THETA(0.7),
+          JunkYangFactory(kernels::InitParams& initParams) :
+              collider(initParams), bulkLinkDelegate(collider, initParams),
+                  ioletLinkDelegate(collider, initParams), THETA(0.7),
                   latticeData(*initParams.latDat)
           {
             for (std::vector<std::pair<site_t, site_t> >::iterator rangeIt =
@@ -47,9 +48,7 @@ namespace hemelb
               {
                 geometry::Site<const geometry::LatticeData> localSite =
                     latticeData.GetSite(siteIdx);
-
-                // Ignore ones that aren't walls;
-                //! @todo: We should also be ignoring iolets
+                // Only consider walls - the initParams .siteRanges should take care of that for us, but check anyway
                 if (localSite.IsWall())
                 {
                   ConstructVelocitySets(siteIdx);
@@ -61,7 +60,7 @@ namespace hemelb
             FactoriseLMatrices();
           }
 
-          ~JunkYang()
+          ~JunkYangFactory()
           {
             // Free dynamically allocated permutation matrices.
             for (std::map<site_t, ublas::permutation_matrix<std::size_t>*>::iterator iter =
@@ -100,6 +99,10 @@ namespace hemelb
                 {
                   // Do nothing for now.
                 }
+                else if (site.HasIolet(direction))
+                {
+                  ioletLinkDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
+                }
                 else
                 {
                   bulkLinkDelegate.StreamLink(lbmParams, latticeData, site, hydroVars, direction);
@@ -135,10 +138,10 @@ namespace hemelb
                 fOld[siteIndex](index) = site.GetFOld<LatticeType>()[*outgoingVelocityIter];
               }
 
-              BaseStreamer<JunkYang>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
-                                                                                 hydroVars,
-                                                                                 lbmParams,
-                                                                                 propertyCache);
+              BaseStreamer<JunkYangFactory>::template UpdateMinsAndMaxes<tDoRayTracing>(site,
+                                                                                        hydroVars,
+                                                                                        lbmParams,
+                                                                                        propertyCache);
             }
 
           }
@@ -176,6 +179,19 @@ namespace hemelb
                 * (latticeData->GetFNew(siteIndex * LatticeType::NUMVECTORS + *incomingVelocityIter)) =
                     systemSolution[index];
               }
+
+              geometry::Site<geometry::LatticeData> site = latticeData->GetSite(siteIndex);
+              for (std::set<Direction>::const_iterator outgoingVelocityIter =
+                  outgoingVelocities[siteIndex].begin();
+                  outgoingVelocityIter != outgoingVelocities[siteIndex].end();
+                  ++outgoingVelocityIter)
+              {
+                if (site.HasIolet(*outgoingVelocityIter))
+                {
+                  ioletLinkDelegate.PostStepLink(latticeData, site, *outgoingVelocityIter);
+                }
+
+              }
             }
           }
 
@@ -184,7 +200,7 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
           CollisionType collider;
           SimpleCollideAndStreamDelegate<CollisionType> bulkLinkDelegate;
-
+          IoletLinkImpl ioletLinkDelegate;
           //! Problem dimension (2D, 3D)
           static const unsigned DIMENSION = 3U;
           //! Vector coordinate arbitrarily chosen in the paper
@@ -457,6 +473,21 @@ namespace hemelb
                               fNew) + ublas::prod(kMatrices[contiguousSiteIndex], sigmaVector);
           }
       };
+
+      template<typename CollisionImpl>
+      struct NoIoletLink : BaseStreamerDelegate<CollisionImpl>
+      {
+          NoIoletLink(CollisionImpl& collider, kernels::InitParams& initParams)
+          {
+          }
+      };
+
+      template<typename CollisionImpl>
+      struct JunkYang
+      {
+          typedef JunkYangFactory<CollisionImpl, NoIoletLink<CollisionImpl> > Type;
+      };
+
     }
   }
 }

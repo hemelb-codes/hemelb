@@ -5,7 +5,7 @@
 #include "lb/streamers/NashZerothOrderPressureDelegate.h"
 #include "lb/streamers/SimpleBounceBackDelegate.h"
 #include "lb/streamers/BouzidiFirdaousLallemandDelegate.h"
-
+#include "lb/streamers/JunkYang.h"
 namespace hemelb
 {
   namespace lb
@@ -39,6 +39,13 @@ namespace hemelb
           typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> ,
               NashZerothOrderPressureDelegate<CollisionType> > Type;
       };
+
+      template<class CollisionType>
+      struct NashZerothOrderPressureIoletJY
+      {
+          typedef JunkYangFactory<CollisionType, NashZerothOrderPressureDelegate<CollisionType> > Type;
+      };
+
     }
   }
 }

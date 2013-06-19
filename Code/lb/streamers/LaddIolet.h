@@ -32,24 +32,29 @@ namespace hemelb
       template<class CollisionType>
       struct LaddIoletSBB
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, SimpleBounceBackDelegate<CollisionType> ,
-              LaddIoletDelegate<CollisionType> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType,
+              SimpleBounceBackDelegate<CollisionType>, LaddIoletDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct LaddIoletBFL
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, BouzidiFirdaousLallemandDelegate<CollisionType> ,
-              LaddIoletDelegate<CollisionType> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType,
+              BouzidiFirdaousLallemandDelegate<CollisionType>, LaddIoletDelegate<CollisionType> > Type;
       };
 
       template<class CollisionType>
       struct LaddIoletGZS
       {
-          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType> , LaddIoletDelegate<
-              CollisionType> > Type;
+          typedef WallIoletStreamerTypeFactory<CollisionType, GuoZhengShiDelegate<CollisionType>,
+              LaddIoletDelegate<CollisionType> > Type;
       };
 
+      template<class CollisionType>
+      struct LaddIoletJY
+      {
+          typedef JunkYangFactory<CollisionType, LaddIoletDelegate<CollisionType> > Type;
+      };
     }
   }
 }
