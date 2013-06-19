@@ -153,7 +153,10 @@ namespace hemelb
           // The number of sites using this kernel instance.
           site_t siteCount;
 
-          // The ranges of the sites that will use this kernel
+          // Each streamer is responsible for updating certain types of sites. These are arranged such they are largely
+          // contiguous in memory (the local contiguous site id). This data structure refers to which of those are handled
+          // by the current streamer. These are given as a collection of contiguous site ids, running from e.g.
+          // siteRanges[0].first to siteRanges[0].second-1 (inclusive).
           std::vector<std::pair<site_t, site_t> > siteRanges;
 
           // The array with the imposed density at each boundary.
