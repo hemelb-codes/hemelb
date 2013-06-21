@@ -7,10 +7,8 @@ namespace hemelb
   {
     namespace iolets
     {
-      InOutLetParabolicVelocity::InOutLetParabolicVelocity() :
-        radius(0.), maxSpeed(0.), warmUpLength(0)
+      InOutLetParabolicVelocity::InOutLetParabolicVelocity()
       {
-
       }
 
       InOutLetParabolicVelocity::~InOutLetParabolicVelocity()
@@ -29,18 +27,6 @@ namespace hemelb
         return copy;
       }
 
-      PhysicalPressure InOutLetParabolicVelocity::GetPressureMin() const
-      {
-        return REFERENCE_PRESSURE_mmHg;
-      }
-      PhysicalPressure InOutLetParabolicVelocity::GetPressureMax() const
-      {
-        return REFERENCE_PRESSURE_mmHg;
-      }
-      LatticeDensity InOutLetParabolicVelocity::GetDensity(LatticeTime time_step) const
-      {
-        return 1.0;
-      }
       LatticeVelocity InOutLetParabolicVelocity::GetVelocity(const LatticePosition& x,
                                                              const LatticeTime t) const
       {

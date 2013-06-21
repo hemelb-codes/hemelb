@@ -9,7 +9,7 @@
 
 #ifndef HEMELB_LB_IOLETS_INOUTLETPARABOLICVELOCITY_H
 #define HEMELB_LB_IOLETS_INOUTLETPARABOLICVELOCITY_H
-#include "lb/iolets/InOutLet.h"
+#include "lb/iolets/InOutLetVelocity.h"
 
 namespace hemelb
 {
@@ -17,56 +17,14 @@ namespace hemelb
   {
     namespace iolets
     {
-      class InOutLetParabolicVelocity : public InOutLet
+      class InOutLetParabolicVelocity : public InOutLetVelocity
       {
         public:
           InOutLetParabolicVelocity();
           virtual ~InOutLetParabolicVelocity();
-          virtual void DoIO(TiXmlElement *iParent, bool iIsLoading,
-                            configuration::SimConfig* iSimConfig);
-          virtual InOutLet* Clone() const;
-          virtual PhysicalPressure GetPressureMin() const;
-          virtual PhysicalPressure GetPressureMax() const;
-          virtual LatticeDensity GetDensity(LatticeTime time_step) const;
-
-          virtual void Reset(SimulationState &state)
-          {
-            //pass;
-          }
-          /**
-           * Note that the radius and max speed for these are specified in LATTICE UNITS in the XML file.
-           * This is indeed a horrible hack.
-           * @return
-           */
-          virtual LatticeDistance& GetRadius()
-          {
-            return radius;
-          }
-          virtual void SetRadius(LatticeDistance r)
-          {
-            radius = r;
-          }
-
-          virtual LatticeSpeed& GetMaxSpeed()
-          {
-            return maxSpeed;
-          }
-          virtual void SetMaxSpeed(LatticeSpeed v)
-          {
-            maxSpeed = v;
-          }
-
-          void SetWarmup(unsigned int warmup)
-          {
-            warmUpLength = warmup;
-          }
-
-          virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
-
-        protected:
-          LatticeDistance radius;
-          LatticeSpeed maxSpeed;
-          unsigned int warmUpLength;
+          void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
+          InOutLet* Clone() const;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
       };
     }
   }

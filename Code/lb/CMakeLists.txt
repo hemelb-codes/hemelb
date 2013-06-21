@@ -3,6 +3,7 @@ add_library(hemelb_lb
 	iolets/InOutLet.cc
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
 	iolets/InOutLetMultiscale.cc iolets/InOutLetVelocityAware.cc
+    iolets/InOutLetVelocity.cc
 	iolets/InOutLetParabolicVelocity.cc
 	IncompressibilityChecker.cc
 	kernels/momentBasis/DHumieresD3Q15MRTBasis.cc kernels/momentBasis/DHumieresD3Q19MRTBasis.cc
