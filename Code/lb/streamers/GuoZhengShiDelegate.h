@@ -112,19 +112,21 @@ namespace hemelb
           }
 
           /*
-            if (wallDistance < 0.75)
-              if (site.HasIolet(i))
-                if (is not velocity iolet)
-                  Do SBB
-                else
-                  Do Modified GZS2
-              else
-                if (site.HasWall(i))
-                  Do SBB
-                else
-                  Do Regular GZS2
-            else
-              Do GZS1
+           * The outline of this method is as follows:
+           *
+           * if (wallDistance < 0.75)
+           *   if (site.HasIolet(i))
+           *     if (is not velocity iolet)
+           *       Do SBB
+           *     else
+           *       Do Modified GZS2
+           *   else
+           *     if (site.HasWall(i))
+           *       Do SBB
+           *     else
+           *       Do Regular GZS2
+           * else
+           *   Do GZS1
            */
           inline void StreamLink(const LbmParameters* lbmParams,
                                  geometry::LatticeData* const latDat,
