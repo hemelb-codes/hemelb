@@ -211,7 +211,7 @@ def install_code_only():
     with cd(env.code_build_path):
         with prefix(env.build_prefix):
             run("make install")
-            run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
+            # run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
             run(template("cp $code_build_cache $build_cache")) # So that the stored cmake cache matches the active build
 
 @task
