@@ -161,10 +161,10 @@ namespace hemelb
            */
           virtual PhysicalPressure GetPressureMax() const = 0;
 
-          /// @todo: This method must be moved to InOutletPressure
+          /// @todo: #632 This method must be moved to InOutletPressure
           virtual LatticeDensity GetDensity(LatticeTime time_step) const = 0;
 
-          /// @todo: Is this method ever implemented not empty?
+          /// @todo: #632 Is this method ever implemented not empty?
           virtual void Reset(SimulationState& state) = 0;
 
           const PhysicalPosition& GetPosition() const
