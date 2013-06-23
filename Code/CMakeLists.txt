@@ -20,6 +20,8 @@ option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 
+set(HEMELB_EXECUTABLE "hemelb"
+  CACHE STRING "File name of executable to produce")
 set(HEMELB_READING_GROUP_SIZE 5
   CACHE INTEGER "Number of cores to use to read geometry file.")
 set(HEMELB_LOG_LEVEL Info
@@ -299,7 +301,7 @@ if (HEMELB_USE_DEBUGGER)
 endif()
 
 set(root_sources SimulationMaster.cc mpiInclude.cc)
-add_executable(hemelb main.cc ${root_sources})
+add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -324,7 +326,7 @@ foreach(subdir ${package_subdirs})
 	add_subdirectory(${subdir})
 endforeach()
 add_subdirectory(resources)
-target_link_libraries(hemelb 
+target_link_libraries(${HEMELB_EXECUTABLE} 
 	${heme_libraries}
 	${MPI_LIBRARIES}
 	${PARMETIS_LIBRARIES}
@@ -334,7 +336,7 @@ target_link_libraries(hemelb
 	${ZLIB_LIBRARIES}
     ${MPWide_LIBRARIES}
 	)
-INSTALL(TARGETS hemelb RUNTIME DESTINATION bin)
+INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
