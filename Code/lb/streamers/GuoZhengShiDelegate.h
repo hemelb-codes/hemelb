@@ -172,8 +172,8 @@ namespace hemelb
               if (site.HasIolet(i))
               {
                 int boundaryId = site.GetIoletId();
-                iolets::InOutLetParabolicVelocity* iolet =
-                    dynamic_cast<iolets::InOutLetParabolicVelocity*> (bValues->GetLocalIolet(boundaryId));
+                iolets::InOutLetVelocity* iolet =
+                    dynamic_cast<iolets::InOutLetVelocity*> (bValues->GetLocalIolet(boundaryId));
                 if (iolet == NULL)
                 {
                   // SBB
