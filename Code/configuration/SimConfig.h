@@ -40,6 +40,16 @@ namespace hemelb
         void DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
                                               bool isLoading,
                                               lb::iolets::InOutLetParabolicVelocity* const value);
+        /**
+         * Reads/writes Womersley velocity inlet from/to XML file.
+         *
+         * @param parent parent XML element
+         * @param isLoading whether the method is reading or writing
+         * @param value womersley iolet instance to be configured
+         */
+        void DoIOForWomersleyVelocityInOutlet(TiXmlElement *parent,
+                                              bool isLoading,
+                                              lb::iolets::InOutLetWomersleyVelocity* const value);
 
         const util::Vector3D<float> & GetVisualisationCentre() const
         {

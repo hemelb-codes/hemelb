@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="0.2.1">
+  <simulation steps="3000" stresstype="1" step_length="0.0001"/>
+  <geometry>
+    <datafile path="./config.gmy" />
+  </geometry>
+  <initialconditions>
+    <pressure>
+      <uniform value="80.0" units="mmHg"/>
+    </pressure>
+  </initialconditions>    
+  <inlets>
+    <inlet>
+      <womersley_velocity> 
+        <pressure_gradient_amplitude value="2.5" units="lattice"/>
+        <period value="5" units="lattice"/>
+        <womersley_number value="2" units="dimensionless"/>
+        <radius value="10" units="lattice"/>
+        <normal x="0.0" y="0.0" z="1.0" />
+        <position x="0.0" y="0.0" z="-0.05" />
+      </womersley_velocity>
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <pressure amplitude="0.0" mean="0.0" phase="0.0" period="0.0"/>
+      <normal x="0.0" y="0.0" z="-1.0" />
+      <position x="0.0" y="0.0" z="0.05" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre x="0.0" y="0.0" z="0.0" />
+    <orientation latitude="45.0" longitude="45.0" />
+    <display brightness="0.03" zoom="1.0" />
+    <range maxstress="0.1" maxvelocity="0.1" />
+  </visualisation>
+</hemelbsettings>

@@ -44,27 +44,10 @@ namespace hemelb
             radius = r;
           }
 
-          LatticeSpeed& GetMaxSpeed()
-          {
-            return maxSpeed;
-          }
-
-          void SetMaxSpeed(LatticeSpeed v)
-          {
-            maxSpeed = v;
-          }
-
-          void SetWarmup(unsigned int warmup)
-          {
-            warmUpLength = warmup;
-          }
-
           virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const = 0;
 
         protected:
           LatticeDistance radius;
-          LatticeSpeed maxSpeed;
-          unsigned int warmUpLength;
       };
     }
   }

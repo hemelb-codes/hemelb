@@ -408,7 +408,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
-		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt
+		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
+		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
 		)
 endif()
 
