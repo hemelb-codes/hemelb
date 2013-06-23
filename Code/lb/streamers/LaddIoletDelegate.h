@@ -27,7 +27,8 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
           LaddIoletDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            SimpleBounceBackDelegate<CollisionType> (delegatorCollider, initParams), bValues(initParams.boundaryObject)
+              SimpleBounceBackDelegate<CollisionType>(delegatorCollider, initParams),
+                  bValues(initParams.boundaryObject)
           {
           }
 
@@ -48,8 +49,8 @@ namespace hemelb
             // link and a1_i = w_1 / cs2
 
             int boundaryId = site.GetIoletId();
-            iolets::InOutLetParabolicVelocity* iolet =
-                dynamic_cast<iolets::InOutLetParabolicVelocity*> (bValues->GetLocalIolet(boundaryId));
+            iolets::InOutLetVelocity* iolet =
+                dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
             LatticePosition sitePos(site.GetGlobalSiteCoords());
 
             LatticePosition halfWay(sitePos);
@@ -64,11 +65,13 @@ namespace hemelb
               wallMom *= hydroVars.density;
             }
 
-            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii] * (wallMom.x
-                * LatticeType::CX[ii] + wallMom.y * LatticeType::CY[ii] + wallMom.z * LatticeType::CZ[ii]) / Cs2;
+            distribn_t correction = 2. * LatticeType::EQMWEIGHTS[ii]
+                * (wallMom.x * LatticeType::CX[ii] + wallMom.y * LatticeType::CY[ii]
+                    + wallMom.z * LatticeType::CZ[ii]) / Cs2;
 
-            * (latticeData->GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(), ii)))
-                = hydroVars.GetFPostCollision()[ii] - correction;
+            * (latticeData->GetFNew(SimpleBounceBackDelegate<CollisionImpl>::GetBBIndex(site.GetIndex(),
+                                                                                        ii))) =
+                hydroVars.GetFPostCollision()[ii] - correction;
           }
         private:
           iolets::BoundaryValues* bValues;

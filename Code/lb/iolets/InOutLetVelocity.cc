@@ -8,9 +8,8 @@ namespace hemelb
     namespace iolets
     {
       InOutLetVelocity::InOutLetVelocity() :
-        radius(0.), maxSpeed(0.), warmUpLength(0)
+          radius(0.)
       {
-
       }
 
       InOutLetVelocity::~InOutLetVelocity()

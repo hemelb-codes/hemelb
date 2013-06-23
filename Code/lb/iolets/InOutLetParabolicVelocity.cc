@@ -7,7 +7,8 @@ namespace hemelb
   {
     namespace iolets
     {
-      InOutLetParabolicVelocity::InOutLetParabolicVelocity()
+      InOutLetParabolicVelocity::InOutLetParabolicVelocity() :
+          maxSpeed(0.), warmUpLength(0)
       {
       }
 

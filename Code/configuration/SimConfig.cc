@@ -323,11 +323,14 @@ namespace hemelb
 
           // First, work out if it's pressure or velocity based
           TiXmlElement* velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
+          TiXmlElement* womersVelocityEl = GetChild(currentIoletNode,
+                                                    "womersley_velocity",
+                                                    isLoading);
           TiXmlElement* pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
 
           lb::iolets::InOutLet *newIolet;
 
-          if (pressureEl != NULL && velocityEl == NULL)
+          if (pressureEl != NULL && velocityEl == NULL && womersVelocityEl == NULL)
           {
             // Pressure
             // This is done by checking if a path is specified
@@ -357,14 +360,21 @@ namespace hemelb
               newIolet = new lb::iolets::InOutLetCosine();
             }
           }
-          else if (pressureEl == NULL && velocityEl != NULL)
+          else if (pressureEl == NULL && velocityEl != NULL && womersVelocityEl == NULL)
           {
             // Velocity
             newIolet = new lb::iolets::InOutLetParabolicVelocity();
           }
+          else if (pressureEl == NULL && velocityEl == NULL && womersVelocityEl != NULL)
+          {
+            // Velocity
+            newIolet = new lb::iolets::InOutLetWomersleyVelocity();
+          }
           else
           {
             // Error!
+            log::Logger::Log<log::Critical, log::OnePerCore>("Wrongly formatted iolet definition in XML file.");
+            MPI_Abort(MPI_COMM_WORLD, 1);
           }
           newIolet->DoIO(currentIoletNode, isLoading, this);
           bResult.push_back(newIolet);
@@ -716,6 +726,59 @@ namespace hemelb
       if (warmUpSteps != 0)
       {
         value->SetWarmup(warmUpSteps);
+      }
+    }
+
+    void SimConfig::DoIOForWomersleyVelocityInOutlet(
+        TiXmlElement *parent, bool isLoading, lb::iolets::InOutLetWomersleyVelocity* const value)
+    {
+      TiXmlElement *ioletElement = GetChild(parent, "womersley_velocity", isLoading);
+
+      DoIOForBaseInOutlet(ioletElement, isLoading, value);
+
+      {
+        TiXmlElement* radiusEl = GetChild(ioletElement, "radius", isLoading);
+        assert(radiusEl != NULL);
+        double radius_value;
+        DoIOForDouble(radiusEl, "value", isLoading, radius_value);
+        value->SetRadius(radius_value);
+        std::string radius_units;
+        DoIOForString(radiusEl, "units", isLoading, radius_units);
+        /// @todo: #632 we need a policy about not supported units
+        assert(radius_units == "lattice");
+      }
+
+      {
+        TiXmlElement* pressureEl = GetChild(ioletElement, "pressure_gradient_amplitude", isLoading);
+        assert(pressureEl != NULL);
+        double pressureGradValue;
+        DoIOForDouble(pressureEl, "value", isLoading, pressureGradValue);
+        value->SetPressureGradientAmplitude(pressureGradValue);
+        std::string pressureGradUnits;
+        DoIOForString(pressureEl, "units", isLoading, pressureGradUnits);
+        assert(pressureGradUnits == "lattice");
+      }
+
+      {
+        TiXmlElement* periodEl = GetChild(ioletElement, "period", isLoading);
+        assert(periodEl != NULL);
+        double period_value;
+        DoIOForDouble(periodEl, "value", isLoading, period_value);
+        value->SetPeriod(period_value);
+        std::string period_units;
+        DoIOForString(periodEl, "units", isLoading, period_units);
+        assert(period_units == "lattice");
+      }
+
+      {
+        TiXmlElement* womNumEl = GetChild(ioletElement, "womersley_number", isLoading);
+        assert(womNumEl != NULL);
+        double womersley_value;
+        DoIOForDouble(womNumEl, "value", isLoading, womersley_value);
+        value->SetWomersleyNumber(womersley_value);
+        std::string womersley_units;
+        DoIOForString(womNumEl, "units", isLoading, womersley_units);
+        assert(womersley_units == "dimensionless");
       }
     }
 

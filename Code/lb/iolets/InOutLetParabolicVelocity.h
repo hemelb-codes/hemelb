@@ -25,6 +25,25 @@ namespace hemelb
           void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
           InOutLet* Clone() const;
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
+
+          LatticeSpeed& GetMaxSpeed()
+          {
+            return maxSpeed;
+          }
+
+          void SetMaxSpeed(LatticeSpeed v)
+          {
+            maxSpeed = v;
+          }
+
+          void SetWarmup(unsigned int warmup)
+          {
+            warmUpLength = warmup;
+          }
+
+        protected:
+          LatticeSpeed maxSpeed;
+          unsigned int warmUpLength;
       };
     }
   }
