@@ -198,7 +198,7 @@ namespace hemelb
               // Check the IOLET contains the values expected given the file.
               CPPUNIT_ASSERT_EQUAL(10.0, womersVel->GetRadius());
               CPPUNIT_ASSERT_EQUAL(2.5, womersVel->GetPressureGradientAmplitude());
-              CPPUNIT_ASSERT_EQUAL(5.0, womersVel->GetPeriod());
+              CPPUNIT_ASSERT_EQUAL(LatticeTime(5), womersVel->GetPeriod());
               CPPUNIT_ASSERT_EQUAL(2.0, womersVel->GetWomersleyNumber());
               CPPUNIT_ASSERT_EQUAL(PhysicalPosition(0, 0, -0.05), womersVel->GetPosition());
               CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0),
@@ -219,13 +219,13 @@ namespace hemelb
                * With a small enough Womersley number, the solution should match the Poiseuille solution for the same pressure
                * difference after pi/2 radians and have changed direction after 3*pi/2 radians.
                */
-              double eta(1), nu(1);
+              Dimensionless eta(1), nu(1);
 
-              double alpha = 1e-4;
+              Dimensionless alpha = 1e-4;
               womersVel->SetWomersleyNumber(alpha);
               womersVel->SetPeriod(2 * PI * pow(womersVel->GetRadius(), 2) / (alpha * alpha * nu));
 
-              double poiseuilleSolution = womersVel->GetPressureGradientAmplitude()
+              LatticeSpeed poiseuilleSolution = womersVel->GetPressureGradientAmplitude()
                   * pow(womersVel->GetRadius(), 2) / (4 * eta);
 
               LatticePosition pointAtCentrelineLatticeUnits(converter.ConvertPositionToLatticeUnits(womersVel->GetPosition()));
