@@ -68,22 +68,22 @@ namespace hemelb
         pressureGradientAmplitude = pressGradAmp;
       }
 
-      double InOutLetWomersleyVelocity::GetPeriod() const
+      LatticeTime InOutLetWomersleyVelocity::GetPeriod() const
       {
         return period;
       }
 
-      void InOutLetWomersleyVelocity::SetPeriod(const double& per)
+      void InOutLetWomersleyVelocity::SetPeriod(const LatticeTime& per)
       {
         period = per;
       }
 
-      double InOutLetWomersleyVelocity::GetWomersleyNumber() const
+      Dimensionless InOutLetWomersleyVelocity::GetWomersleyNumber() const
       {
         return womersleyNumber;
       }
 
-      void InOutLetWomersleyVelocity::SetWomersleyNumber(const double& womNumber)
+      void InOutLetWomersleyVelocity::SetWomersleyNumber(const Dimensionless& womNumber)
       {
         womersleyNumber = womNumber;
       }

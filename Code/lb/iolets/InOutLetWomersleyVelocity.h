@@ -79,28 +79,28 @@ namespace hemelb
            *
            * @return sinusoidal pressure profile period
            */
-          double GetPeriod() const;
+          LatticeTime GetPeriod() const;
 
           /**
            * Set the period of the zero average pressure gradient sine wave imposed
            *
            * @param per sinusoidal pressure profile period
            */
-          void SetPeriod(const double& per);
+          void SetPeriod(const LatticeTime& per);
 
           /**
            * Get the Womersley number characterising the pulsatile flow simulation
            *
            * @return Womersley number
            */
-          double GetWomersleyNumber() const;
+          Dimensionless GetWomersleyNumber() const;
 
           /**
            * Set the Womersley number characterising the pulsatile flow simulation
            *
            * @param womNumber Womersley number
            */
-          void SetWomersleyNumber(const double& womNumber);
+          void SetWomersleyNumber(const Dimensionless& womNumber);
 
         private:
 
