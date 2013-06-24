@@ -762,8 +762,8 @@ namespace hemelb
       {
         TiXmlElement* periodEl = GetChild(ioletElement, "period", isLoading);
         assert(periodEl != NULL);
-        double period_value;
-        DoIOForDouble(periodEl, "value", isLoading, period_value);
+        unsigned long period_value;
+        DoIOForULong(periodEl, "value", isLoading, period_value);
         value->SetPeriod(period_value);
         std::string period_units;
         DoIOForString(periodEl, "units", isLoading, period_units);
