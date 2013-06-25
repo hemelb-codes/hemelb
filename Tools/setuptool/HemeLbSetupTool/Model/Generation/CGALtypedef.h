@@ -32,4 +32,5 @@ typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 typedef Tree::Primitive_id Primitive_id;
 typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
 typedef Polyhedron::Face_handle FacehandleCGAL;
+typedef Polyhedron::Facet_iterator FacetiteratorCGAL;
 typedef Polyhedron::HalfedgeDS HalfedgeDS;
