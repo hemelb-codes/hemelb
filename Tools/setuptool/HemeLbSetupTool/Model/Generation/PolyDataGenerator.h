@@ -27,43 +27,14 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
-#include <CGAL/Simple_cartesian.h>
-//#include <CGAL/Filtered_kernel.h>
-//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-//#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
-#include <CGAL/double.h>
-#include <CGAL/Polyhedron_3.h>
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_polyhedron_triangle_primitive.h>
-#include <CGAL/IO/Polyhedron_iostream.h>
-#include <CGAL/IO/Verbose_ostream.h>
-#include <CGAL/Point_inside_polyhedron_3.h>
-#include <CGAL/squared_distance_3.h>
 
+#include "CGALtypedef.h"
+#include "BuildCGALPolygon.h"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/round.hpp>
 #include <boost/call_traits.hpp>
 
-typedef CGAL::Simple_cartesian<double> Kernel;
-//typedef CGAL::Filtered_kernel<CKernel> Kernel;
-//typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
-//typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
-typedef Kernel::Point_3 PointCGAL;
-typedef Kernel::Plane_3 PlaneCGAL;
-typedef Kernel::Vector_3 VectorCGAL;
-typedef Kernel::Segment_3 SegmentCGAL;
-typedef Kernel::Triangle_3 TriangleCGAL;
-typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
-typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
-typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
-typedef CGAL::AABB_tree<Traits> Tree;
-typedef Polyhedron::Vertex_iterator Vertex_iteratorCGAL;
-typedef Tree::Object_and_primitive_id Object_and_primitive_id;
-typedef Tree::Primitive_id Primitive_id;
-typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
-typedef Polyhedron::Face_handle FacehandleCGAL;
 
 class PolyDataGenerator: public GeometryGenerator {
 public:
@@ -98,9 +69,12 @@ public:
 private:
 	virtual void ComputeBounds(double[]) const;
 	virtual void PreExecute(void);
+	void CreateCGALPolygon(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
+	int ComputeIntersectionsCGAL(Site& from, Site& to);
 	void InsideOutside(Site& site);
+	BuildCGALPolygon<HalfedgeDS>* triangle;
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
@@ -110,10 +84,10 @@ private:
 	Polyhedron* ClippedCGALSurface;
 	Tree* AABBtree;
 	PointInside *inside_with_ray;
-	int numberofvoxels;
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
+	std::vector<Object_and_primitive_id> hitCellIdsCGAL;
 	vtkIntArray* IoletIdArray;
 	int nHitsCGAL;
 	std::vector<PointCGAL> HitPointsCGAL;

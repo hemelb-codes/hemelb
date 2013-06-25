@@ -218,6 +218,7 @@ if __name__ == "__main__":
     # Generation C++ 
     generation_cpp = [os.path.join('HemeLbSetupTool/Model/Generation', cpp)
                       for cpp in ['Neighbours.cpp',
+                                  #'BuildCGALPolygon.cpp',
                                   'Block.cpp',
                                   'BlockWriter.cpp',
                                   'BufferPool.cpp',
