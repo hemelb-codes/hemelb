@@ -76,8 +76,6 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	//cout << this->ClippedCGALSurface->size_of_vertices() << endl;
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
-	PointCGAL p1(0,0,0);
-	cout << (*this->inside_with_ray)(p1) << endl;
 }
 
 
@@ -122,6 +120,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		bool Ninside;
 		bool debugintersect = true;
 		nHits = this->ComputeIntersections(site, neigh);
+		int nHitsCGAL = this->ComputeIntersectionsCGAL(site, neigh);
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
 			Ninside = (*this->inside_with_ray)(p2);
@@ -201,12 +200,22 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			//Vector hitPoint;
 			//this->hitPoints->GetPoint(iHit, &hitPoint[0]);
 			// needs logic to pick the right point of the list. Depending on the fluid 
+			// The index of the cell in the vtkPolyData that was hit
+			//int hitCellId = this->hitCellIds->GetId(iHit);
+			// The value associated with that cell, which identifies what was hit.
+			//cout << hitCellId << " " << nHits << " " << (*this->inside_with_ray)(p1) << " " << (*this->inside_with_ray)(p2) << endl;
+			Object_and_primitive_id test = hitCellIdsCGAL[0];
+			//cout << "from CGAL " << std::distance(this->ClippedCGALSurface->facets_begin(),test.second) << endl; 
+			int hitCellId;
+			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),test.second);
+
 			Vector hitPoint;
 			//if (nHitsCGAL > 0){
 			//	hitPoint = Vector(CGAL::to_double(this->HitPointsCGAL[0].x()),CGAL::to_double(this->HitPointsCGAL[0].y()),CGAL::to_double(this->HitPointsCGAL[0].z()));
 				//}else{
 			  //cout << "No hit point found" << endl;
-				hitPoint = Vector(0,0,0);
+			hitPoint = Vector(test.first.get_Point_3().x(),test.first.get_Point_3().y(),test.first.get_Point_3().z());
+			cout << hitPoint << endl;
 				//}
 			LinkData& link = fluid->Links[iSolid];
 
@@ -217,9 +226,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			// the lattice vector. Scale it.
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 			
-			// The index of the cell in the vtkPolyData that was hit
-			int hitCellId = this->hitCellIds->GetId(iHit);
-			// The value associated with that cell, which identifies what was hit.
+		
 			int ioletId = this->IoletIdArray->GetValue(hitCellId);
 
 			if (ioletId < 0) {
@@ -227,6 +234,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				link.Type = geometry::CUT_WALL;
 			} else {
 				// We hit an inlet or outlet
+				//cout << ioletId << endl;
+				//cout << this->Iolets[ioletId]->IsInlet << endl;
 				Iolet* iolet = this->Iolets[ioletId];
 				if (iolet->IsInlet) {
 					link.Type = geometry::CUT_INLET;
