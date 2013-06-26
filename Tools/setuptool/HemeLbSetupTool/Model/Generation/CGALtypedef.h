@@ -1,6 +1,5 @@
-#include <CGAL/Simple_cartesian.h>
-//#include <CGAL/Filtered_kernel.h>
-//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+//#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
 #include <CGAL/Polyhedron_3.h>
@@ -13,10 +12,8 @@
 #include <CGAL/squared_distance_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
-
-typedef CGAL::Simple_cartesian<double> Kernel;
-//typedef CGAL::Filtered_kernel<CKernel> Kernel;
-//typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+//typedef CGAL::Simple_cartesian<double> Kernel;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 //typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
 typedef Kernel::Point_3 PointCGAL;
 typedef Kernel::Plane_3 PlaneCGAL;
