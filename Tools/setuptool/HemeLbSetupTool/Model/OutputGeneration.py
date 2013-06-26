@@ -128,17 +128,8 @@ class PolyDataGenerator(GeometryGenerator):
 
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
-        a = vtkSTLWriter()
-        print "writing STL"
-        a.SetFileName('testhmout.stl')
-        a.SetInput(self.ClippedSurface)
-        a.Write()
         self.generator.SetClippedSurface(self.ClippedSurface)
-        #print "loading cgal"
-        #print type(self.ClippedSurface)
-        #polyhedron=Polyhedron_3("working_cylinder_clipped.off")
-        #self.generator.SetClippedCGALSurface(polyhedron)
-        return
+                        return
 
     pass
 
