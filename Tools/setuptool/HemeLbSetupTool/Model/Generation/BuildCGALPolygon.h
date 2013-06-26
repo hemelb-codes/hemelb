@@ -59,7 +59,7 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	double vertex[3];
 	for (int i = 0; i != this->pts->GetNumberOfPoints(); i++ ){
 		this->pts->GetPoint(this->pts->GetNumberOfPoints(), vertex);
-		cout << i << " " << vertex[0] << " " <<vertex[1] << " " << vertex[2] << endl;
+		//cout << i << " " << vertex[0] << " " <<vertex[1] << " " << vertex[2] << endl;
 		B.add_vertex( Point( vertex[0], vertex[1], vertex[2]));
 	}
 	int k = 0;
@@ -70,9 +70,13 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 			B.add_vertex_to_facet( indx[0]);
 			B.add_vertex_to_facet( indx[1]);
 			B.add_vertex_to_facet( indx[2]);
-			cout << k << " " << indx[0] << " "<< indx[1] << " " << indx[2] << " " << endl;
+			//cout << k << " " << indx[0] << " "<< indx[1] << " " << indx[2] << " " << endl;
 			B.end_facet();
 			++k;
+		}
+		else{
+			//We need to acout for this in the iolet map.
+			cout << "Eleminated degenrate vertex" << endl;
 		}
 	}	
 	B.end_surface();
