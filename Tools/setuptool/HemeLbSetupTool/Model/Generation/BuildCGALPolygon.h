@@ -57,7 +57,7 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	vtkIdType npts = 0;
 	vtkIdType *indx = 0;
 	double vertex[3];
-	for (int i = 0; i != 86; i++ ){
+	for (int i = 0; i != this->pts->GetNumberOfPoints(); i++ ){
 		this->pts->GetPoint(this->pts->GetNumberOfPoints(), vertex);
 		cout << i << " " << vertex[0] << " " <<vertex[1] << " " << vertex[2] << endl;
 		B.add_vertex( Point( vertex[0], vertex[1], vertex[2]));
