@@ -14,7 +14,7 @@
 #include "InconsistentFluidnessError.h"
 
 #include "CGALtypedef.h"
-#include "BuildCGALPolygon.h"
+//#include "BuildCGALPolygon.h"
 
 
 #include "Debug.h"
@@ -112,14 +112,15 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
-		vtkIdType nHits;
+		int nHits;
 		PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
 		PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
 		bool inside1;
 		bool inside2;
 		bool Ninside;
 		bool debugintersect = true;
-		nHits = this->ComputeIntersections(site, neigh);
+		//vtkIdType nHitsvtk; 
+		//nHitsvtk = this->ComputeIntersections(site, neigh);
 		int nHitsCGAL = this->ComputeIntersectionsCGAL(site, neigh);
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
@@ -210,13 +211,21 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),test.second);
 
 			Vector hitPoint;
+			PointCGAL testpoint;
 			//if (nHitsCGAL > 0){
 			//	hitPoint = Vector(CGAL::to_double(this->HitPointsCGAL[0].x()),CGAL::to_double(this->HitPointsCGAL[0].y()),CGAL::to_double(this->HitPointsCGAL[0].z()));
 				//}else{
 			  //cout << "No hit point found" << endl;
-			hitPoint = Vector(test.first.get_Point_3().x(),test.first.get_Point_3().y(),test.first.get_Point_3().z());
-			cout << hitPoint << endl;
-				//}
+			if (assign(testpoint, test.first)){//we do an explicite cast to double here. This is only needed if
+				// we use an exact_construction kernel. Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
+				hitPoint = Vector(CGAL::to_double(testpoint.x()),CGAL::to_double(testpoint.y()),CGAL::to_double(testpoint.z()));
+				//hitPoint = Vector(testpoint.x(),testpoint.y(),testpoint.z());
+			}
+			else{
+				hitPoint = Vector(0,0,0);
+			}
+			
+			//cout << hitPoint << endl;
 			LinkData& link = fluid->Links[iSolid];
 
 			// This is set in any solid case
