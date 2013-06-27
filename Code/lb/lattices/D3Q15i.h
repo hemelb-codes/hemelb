@@ -34,9 +34,9 @@ namespace hemelb
           // the same in double (in order to prevent int->double conversions), and aligned to 16B
           static const distribn_t CXD[NUMVECTORS] __attribute__((aligned(16)));
           static const distribn_t CYD[NUMVECTORS] __attribute__((aligned(16)));
-          static const distribn_t CZD[NUMVECTORS] __attribute__((aligned(16)));;
+          static const distribn_t CZD[NUMVECTORS] __attribute__((aligned(16)));
 
-          static const double EQMWEIGHTS[NUMVECTORS] __attribute__((aligned(16)));;
+          static const double EQMWEIGHTS[NUMVECTORS] __attribute__((aligned(16)));
 
           // The index of the inverse direction of each discrete velocity vector
           static const Direction INVERSEDIRECTIONS[NUMVECTORS] ;

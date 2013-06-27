@@ -10,6 +10,8 @@
 #include "constants.h"
 #include "geometry/SiteData.h"
 #include "mpiInclude.h"
+#include <cassert>
+
 namespace hemelb
 {
   template<>
@@ -142,8 +144,11 @@ namespace hemelb
           case OUTLET_TYPE:
             return OUTLET | WALL;
         }
-
       }
+
+      // The end of this function should never be reached. Adding return statement to please CRAY compiler
+      assert(false);
+      return 0u;
     }
 
     bool SiteData::HasWall(Direction direction) const
