@@ -19,9 +19,12 @@ namespace hemelb
 
     /**
      * Evaluates the Bessel function of the first kind order 0 at z. The solution is approximated
-     * with numTerms terms of the series
+     * by the series
      *
      *    J0(z) ~=  1 - 0.25*z*z/1!^2 + (0.25*z*z)^2/2!^2 - (0.25*z*z)^3/3!^2 + ...
+     *
+     * with the termination condition that the norm of the last term is less than
+     * the specified tolerance.
      *
      * See formula 9.1.12 of Abramowitz and Stegun, Handbook of Mathematical Functions.
      *
@@ -29,7 +32,7 @@ namespace hemelb
      * complex arguments.
      *
      * @param z point in the complex plane where we want to evaluate J0
-     * @param numTerms number of terms in the series expansion used to approximate the function
+     * @param tolSq the square of the tolerance used to terminate the expansion.
      * @return J0(z)
      */
     std::complex<double>
