@@ -13,5 +13,6 @@
 #include "unittests/util/Vector3DTests.h"
 #include "unittests/util/Matrix3DTests.h"
 #include "unittests/util/UnitConverterTests.h"
+#include "unittests/util/BesselTests.h"
 
 #endif
