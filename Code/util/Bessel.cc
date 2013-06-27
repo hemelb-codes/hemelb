@@ -10,7 +10,7 @@
 #include "util/Bessel.h"
 
 #include <cmath>
-#include <assert.h>
+#include <cassert>
 #include <iostream>
 
 namespace hemelb
@@ -34,9 +34,15 @@ namespace hemelb
         term = zSqOver4_pow / (fact * fact);
         sum += term;
       }
-      std::cout << i << std::endl;
-      // If this assertion trips, it is very likely that the power of two of the factorial overflowed
+
+      // If this assertion trips, it is likely that the zSqOver4_pow / (fact * fact) has become inf / inf
+      /// @todo: #633 refactor
+#ifdef HAVE_STD_ISNAN
       assert(!std::isnan(real(sum)) && !std::isnan(imag(sum)));
+#endif
+#ifdef HAVE_ISNAN
+      assert(!isnan(real(sum)) && !isnan(imag(sum)));
+#endif
 
       return sum;
     }
