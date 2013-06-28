@@ -8,6 +8,8 @@
 //
 
 #ifndef HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
+#define HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
+
 #include "util/Bessel.h"
 
 namespace hemelb
@@ -260,5 +262,4 @@ namespace hemelb
     }
   }
 }
-#define HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
 #endif // HEMELB_UNITTESTS_UTIL_BESSELTESTS_H
