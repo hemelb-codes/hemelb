@@ -115,40 +115,44 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		bool inside2;
 		bool Ninside;
 		bool debugintersect = true;
-		//vtkIdType nHitsvtk; 
-		//nHitsvtk = this->ComputeIntersections(site, neigh);
-		int nHitsCGAL = this->ComputeIntersectionsCGAL(site, neigh);
+		
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
-			Ninside = (*this->inside_with_ray)(p2);
+			nHits = this->ComputeIntersectionsCGAL(site, neigh);
+			if (nHits % 2 == 0) {
+				// Even # hits, hence neigh has same type as site
+				neigh.IsFluid = site.IsFluid;
+			} else if (nHits % 2 == 1){
+				// Odd # hits, neigh is opposite type to site
+				neigh.IsFluid = !site.IsFluid;
+			} else{
+				// nHits is -1. Cound not determine. Fall back to ray
+				neigh.IsFluid = (*this->inside_with_ray)(p2);
+			}
 			if (debugintersect){
-				nHits = this->ComputeIntersectionsCGAL(site, neigh);
-				if (nHits != -1){
-					if (Ninside == site.IsFluid)
-						if (nHits % 2  == 1){
-							throw InconsistentFluidnessError(site, neigh, nHits);
-						}
+				bool Sinside = (*this->inside_with_ray)(p1);
+				bool Ninside = (*this->inside_with_ray)(p2);
+				if (Ninside != neigh.IsFluid){
+					throw InconsistentFluidnessError(site, neigh, nHits);
 				}
-				else{
-					if (nHits % 2  == 0){
-						throw InconsistentFluidnessError(site, neigh, nHits);
-					}
+				if (Sinside != site.IsFluid){
+					throw InconsistentFluidnessError(site, neigh, nHits);
 				}
 			}
-			neigh.IsFluid = Ninside;
 			
 			if (neigh.IsFluid)
-			  neigh.CreateLinksVector();
-
+				neigh.CreateLinksVector();
+			
 			neigh.IsFluidKnown = true;
 		} else {
 			// We know the fluidness of neigh, maybe don't need to intersect
 			if (site.IsFluid != neigh.IsFluid) {
-				nHits = this->ComputeIntersections(site, neigh);
+				nHits = this->ComputeIntersectionsCGAL(site, neigh);
 				// Only in the case of difference must we intersect.
+				if (nHits % 2 == 0) {
+					throw InconsistentFluidnessError(site, neigh, nHits);
+				}
 				if (debugintersect){
-					nHits = this->ComputeIntersectionsCGAL(site, neigh);
-					
 					if (nHits % 2 != 1) {
 						inside1 = (*this->inside_with_ray)(p1);
 						inside2 = (*this->inside_with_ray)(p2);
