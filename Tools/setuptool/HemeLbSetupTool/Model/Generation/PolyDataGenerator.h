@@ -88,9 +88,12 @@ private:
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
 	std::vector<Object_and_primitive_id> hitCellIdsCGAL;
+	std::vector<Object_Primitive_and_distance> IntersectionCGAL;
 	vtkIntArray* IoletIdArray;
-	int nHitsCGAL;
+	//int nHitsCGAL;
 	std::vector<PointCGAL> HitPointsCGAL;
+	static bool distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j);
+
 };
 
 #endif // HEMELBSETUPTOOL_POLYDATAGENERATOR_H

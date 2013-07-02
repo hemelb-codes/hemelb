@@ -129,7 +129,7 @@ class PolyDataGenerator(GeometryGenerator):
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
-                        return
+        return
 
     pass
 
