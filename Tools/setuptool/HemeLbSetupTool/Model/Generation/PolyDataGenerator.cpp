@@ -14,7 +14,7 @@
 #include "InconsistentFluidnessError.h"
 
 #include "CGALtypedef.h"
-//#include "BuildCGALPolygon.h"
+#include "BuildCGALPolygon.h"
 
 
 #include "Debug.h"
@@ -33,6 +33,7 @@
 #include "vtkXMLPolyDataWriter.h"
 
 #include <iostream>
+#include <cmath> 
 
 #include <boost/logic/tribool.hpp>
 
@@ -66,14 +67,9 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	vtkCellArray *polys;
 	polys = this->ClippedSurface->GetPolys();
 	pts =  this->ClippedSurface->GetPoints();
-	//static BuildCGALPolygon<HalfedgeDS> triangle(pts, polys);
 	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys);
-	//static Polyhedron P; //why can't I create this directly towards the clippedsurface member 
-    //P.delegate(triangle);
-	//this->ClippedCGALSurface = &P;
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
-	//cout << this->ClippedCGALSurface->size_of_vertices() << endl;
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
 }
@@ -297,32 +293,54 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 	PointCGAL v3;
 	FacehandleCGAL f;
 	PointCGAL hitpoint;
+	SegmentCGAL hitsegment;
 	SegmentCGAL segment_query(p1,p2);
-	//std::vector<Object_and_primitive_id> CGALintersections;
-	nHitsCGAL = this->AABBtree->number_of_intersected_primitives(segment_query);
-	this->HitPointsCGAL.clear();
+	int ori[5];
+	int nHitsCGAL = this->AABBtree->number_of_intersected_primitives(segment_query);
 	this->hitCellIdsCGAL.clear();
-	//this->AABBtree->all_intersections(segment_query,std::back_inserter(CGALintersections));
+	this->IntersectionCGAL.clear();
 	this->AABBtree->all_intersections(segment_query, std::back_inserter(this->hitCellIdsCGAL));
+	Object_Primitive_and_distance OPD;
 
 	if (nHitsCGAL) {
 	    for (std::vector<Object_and_primitive_id>::iterator i = this->hitCellIdsCGAL.begin(); i != this->hitCellIdsCGAL.end(); ++i) {
 		 	f = i->second;
+			
 			v1 = f->halfedge()->vertex()->point();
 			v2 = f->halfedge()->next()->vertex()->point();
 			v3 = f->halfedge()->next()->next()->vertex()->point();
-			int ori1 = CGAL::orientation(p1,p2,v1,v2);
-			int ori2 = CGAL::orientation(p1,p2,v1,v3);
-			int ori3 = CGAL::orientation(p1,p2,v2,v3);
-			int ori4 = CGAL::orientation(p1,v1,v2,v3);
-			int ori5 = CGAL::orientation(p2,v1,v2,v3);
-			
-			if (ori1 == 0 || ori2 == 0 || ori3 == 0 || ori4 == 0 || ori5 == 0){
+			// 0,1,2 are not needed with only one point but the speedup looks minmal.
+			ori[0] = CGAL::orientation(p1,p2,v1,v2);
+			ori[1] = CGAL::orientation(p1,p2,v1,v3);
+			ori[2] = CGAL::orientation(p1,p2,v2,v3);
+			ori[3] = CGAL::orientation(p1,v1,v2,v3);
+			ori[4] = CGAL::orientation(p2,v1,v2,v3);
+			if(CGAL::assign(hitpoint,i->first)){
+				double distance = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitpoint,p1)));
+				OPD = std::make_pair(*i,std::sqrt(distance));
+				this->IntersectionCGAL.push_back(OPD);
+			}
+			else if (CGAL::assign(hitsegment,i->first)){
+				double distance1 = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitsegment.vertex(0),p1)));
+				double distance2 = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitsegment.vertex(1),p1)));
+				double distance = (distance1 = distance2)/2;
+				OPD = std::make_pair(*i,distance);
+				this->IntersectionCGAL.push_back(OPD);
+			}
+			else{
+				throw GenerationErrorMessage(
+				"This type of intersection should not happen");
+			}			
+			if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0 || ori[3] == 0 || ori[4] == 0){	
 				// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. These 2 intersect and the result may be indetermined 
 				// ori4 and ori5. In this case either of the points are coplanar with the triangle (primitive)		
 				nHitsCGAL = -1;
 			}    
 	    } 
+	}
+
+	if (nHitsCGAL>1){
+		std::sort(this->IntersectionCGAL.begin(), this->IntersectionCGAL.end(), distancesort);
 	}
 	return nHitsCGAL;
 }
@@ -361,3 +379,5 @@ int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block) {
 	}
 	return 0;
 }
+
+bool PolyDataGenerator::distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j) { return (i.second<j.second); }
