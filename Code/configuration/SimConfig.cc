@@ -743,9 +743,13 @@ namespace hemelb
         DoIOForDouble(radiusEl, "value", isLoading, radius_value);
         value->SetRadius(radius_value);
         std::string radius_units;
+        if (!isLoading)
+          radius_units = "lattice";
+
         DoIOForString(radiusEl, "units", isLoading, radius_units);
         /// @todo: #632 we need a policy about not supported units
-        assert(radius_units == "lattice");
+        if (isLoading)
+          assert(radius_units == "lattice");
       }
 
       {
@@ -755,8 +759,11 @@ namespace hemelb
         DoIOForDouble(pressureEl, "value", isLoading, pressureGradValue);
         value->SetPressureGradientAmplitude(pressureGradValue);
         std::string pressureGradUnits;
+        if (!isLoading)
+          pressureGradUnits = "lattice";
         DoIOForString(pressureEl, "units", isLoading, pressureGradUnits);
-        assert(pressureGradUnits == "lattice");
+        if (isLoading)
+          assert(pressureGradUnits == "lattice");
       }
 
       {
@@ -766,8 +773,11 @@ namespace hemelb
         DoIOForULong(periodEl, "value", isLoading, period_value);
         value->SetPeriod(period_value);
         std::string period_units;
+        if (!isLoading)
+          period_units = "lattice";
         DoIOForString(periodEl, "units", isLoading, period_units);
-        assert(period_units == "lattice");
+        if (isLoading)
+          assert(period_units == "lattice");
       }
 
       {
@@ -777,8 +787,11 @@ namespace hemelb
         DoIOForDouble(womNumEl, "value", isLoading, womersley_value);
         value->SetWomersleyNumber(womersley_value);
         std::string womersley_units;
+        if (!isLoading)
+          womersley_units = "dimensionless";
         DoIOForString(womNumEl, "units", isLoading, womersley_units);
-        assert(womersley_units == "dimensionless");
+        if (isLoading)
+          assert(womersley_units == "dimensionless");
       }
     }
 

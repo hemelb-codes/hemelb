@@ -31,7 +31,6 @@ namespace hemelb
         LatticePosition displ = x - posLat;
         LatticeDistance z = displ.Dot(normal);
         Dimensionless r = sqrt(displ.GetMagnitudeSquared() - z * z);
-        assert(r <= radius);
 
         double omega = 2.0 * PI / period;
         LatticeDensity density = 1.0;
