@@ -65,7 +65,7 @@ namespace hemelb
            *
            * @return pressure gradient amplitude
            */
-          double GetPressureGradientAmplitude() const;
+          double& GetPressureGradientAmplitude();
 
           /**
            * Set the amplitude of the zero average pressure gradient sine wave imposed.
@@ -79,7 +79,7 @@ namespace hemelb
            *
            * @return sinusoidal pressure profile period
            */
-          LatticeTime GetPeriod() const;
+          LatticeTime& GetPeriod();
 
           /**
            * Set the period of the zero average pressure gradient sine wave imposed
@@ -93,7 +93,7 @@ namespace hemelb
            *
            * @return Womersley number
            */
-          Dimensionless GetWomersleyNumber() const;
+          Dimensionless& GetWomersleyNumber();
 
           /**
            * Set the Womersley number characterising the pulsatile flow simulation
@@ -107,7 +107,7 @@ namespace hemelb
           static const Complex i;
           static const Complex iPowThreeHalves;
           double pressureGradientAmplitude; ///< See class documentation
-          double period; ///< See class documentation
+          LatticeTime period; ///< See class documentation
           double womersleyNumber; ///< See class documentation
       };
     }

@@ -44,7 +44,7 @@ namespace hemelb
         return normal * -velocityMagnitude;
       }
 
-      double InOutLetWomersleyVelocity::GetPressureGradientAmplitude() const
+      double& InOutLetWomersleyVelocity::GetPressureGradientAmplitude()
       {
         return pressureGradientAmplitude;
       }
@@ -54,7 +54,7 @@ namespace hemelb
         pressureGradientAmplitude = pressGradAmp;
       }
 
-      LatticeTime InOutLetWomersleyVelocity::GetPeriod() const
+      LatticeTime& InOutLetWomersleyVelocity::GetPeriod()
       {
         return period;
       }
@@ -64,7 +64,7 @@ namespace hemelb
         period = per;
       }
 
-      Dimensionless InOutLetWomersleyVelocity::GetWomersleyNumber() const
+      Dimensionless& InOutLetWomersleyVelocity::GetWomersleyNumber()
       {
         return womersleyNumber;
       }
