@@ -739,13 +739,12 @@ namespace hemelb
       {
         TiXmlElement* radiusEl = GetChild(ioletElement, "radius", isLoading);
         assert(radiusEl != NULL);
-        double radius_value;
-        DoIOForDouble(radiusEl, "value", isLoading, radius_value);
-        value->SetRadius(radius_value);
+
+        DoIOForDouble(radiusEl, "value", isLoading, value->GetRadius());
+
         std::string radius_units;
         if (!isLoading)
           radius_units = "lattice";
-
         DoIOForString(radiusEl, "units", isLoading, radius_units);
         /// @todo: #632 we need a policy about not supported units
         if (isLoading)
@@ -755,9 +754,9 @@ namespace hemelb
       {
         TiXmlElement* pressureEl = GetChild(ioletElement, "pressure_gradient_amplitude", isLoading);
         assert(pressureEl != NULL);
-        double pressureGradValue;
-        DoIOForDouble(pressureEl, "value", isLoading, pressureGradValue);
-        value->SetPressureGradientAmplitude(pressureGradValue);
+
+        DoIOForDouble(pressureEl, "value", isLoading, value->GetPressureGradientAmplitude());
+
         std::string pressureGradUnits;
         if (!isLoading)
           pressureGradUnits = "lattice";
@@ -769,9 +768,9 @@ namespace hemelb
       {
         TiXmlElement* periodEl = GetChild(ioletElement, "period", isLoading);
         assert(periodEl != NULL);
-        unsigned long period_value;
-        DoIOForULong(periodEl, "value", isLoading, period_value);
-        value->SetPeriod(period_value);
+
+        DoIOForULong(periodEl, "value", isLoading, value->GetPeriod());
+
         std::string period_units;
         if (!isLoading)
           period_units = "lattice";
@@ -783,9 +782,9 @@ namespace hemelb
       {
         TiXmlElement* womNumEl = GetChild(ioletElement, "womersley_number", isLoading);
         assert(womNumEl != NULL);
-        double womersley_value;
-        DoIOForDouble(womNumEl, "value", isLoading, womersley_value);
-        value->SetWomersleyNumber(womersley_value);
+
+        DoIOForDouble(womNumEl, "value", isLoading, value->GetWomersleyNumber());
+
         std::string womersley_units;
         if (!isLoading)
           womersley_units = "dimensionless";
