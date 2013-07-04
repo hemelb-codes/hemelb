@@ -2,6 +2,7 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 //#include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/double.h>
+#include <CGAL/Random.h>
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/AABB_tree.h>
 #include <CGAL/AABB_traits.h>
@@ -15,11 +16,14 @@
 //typedef CGAL::Simple_cartesian<double> Kernel;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 //typedef CGAL::Exact_predicates_exact_constructions_kernel Kernel;
+
 typedef Kernel::Point_3 PointCGAL;
 typedef Kernel::Plane_3 PlaneCGAL;
 typedef Kernel::Vector_3 VectorCGAL;
 typedef Kernel::Segment_3 SegmentCGAL;
 typedef Kernel::Triangle_3 TriangleCGAL;
+typedef Kernel::Ray_3 RayCGAL;
+
 typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
 typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
 typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
