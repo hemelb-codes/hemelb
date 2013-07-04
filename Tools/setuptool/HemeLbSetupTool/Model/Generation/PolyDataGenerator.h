@@ -73,7 +73,7 @@ private:
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
 	int ComputeIntersectionsCGAL(Site& from, Site& to);
-	void InsideOutside(Site& site);
+	bool InsideOutside(Site& site);
 	BuildCGALPolygon<HalfedgeDS>* triangle;
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
@@ -83,13 +83,14 @@ private:
 	vtkOBBTree* Locator;
 	Polyhedron* ClippedCGALSurface;
 	Tree* AABBtree;
-	PointInside *inside_with_ray;
+	//PointInside *inside_with_ray;
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
 	std::vector<Object_and_primitive_id> hitCellIdsCGAL;
 	std::vector<Object_Primitive_and_distance> IntersectionCGAL;
 	vtkIntArray* IoletIdArray;
+	std::vector<int> IoletIdArrayCGAL;
 	//int nHitsCGAL;
 	std::vector<PointCGAL> HitPointsCGAL;
 	static bool distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j);

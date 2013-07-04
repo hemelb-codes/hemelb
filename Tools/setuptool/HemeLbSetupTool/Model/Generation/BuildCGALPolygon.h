@@ -36,15 +36,23 @@
 template <class HDS>
 class BuildCGALPolygon: public CGAL::Modifier_base<HDS> {
 public:
-	BuildCGALPolygon(vtkPoints* ptsin, vtkCellArray *polysin) {
+	BuildCGALPolygon(vtkPoints* ptsin, vtkCellArray *polysin,vtkIntArray* IoletIdArrayIn) {
 		this->pts = ptsin;
 		this->polys = polysin;
+		this->IoletIdArray = IoletIdArrayIn;
 	}
 	void operator()( HDS& hds);
+	
+	inline std::vector<int> GetID(void) {
+		return this->ID;
+	}
 
+	
 private:
 	vtkPoints* pts;
 	vtkCellArray* polys;
+	vtkIntArray* IoletIdArray;
+	std::vector<int> ID;
 	
 };
 
@@ -63,7 +71,8 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 		B.add_vertex( Point( vertex[0], vertex[1], vertex[2]));
 
 	}
-	int k = 0;
+	//int k = 0;
+	int j = 0;
 	for (this->polys->InitTraversal(); this->polys->GetNextCell(npts,indx); ){
 		if(indx[0] != indx[1] & indx[0] != indx[2] & indx[1] != indx[2]){ 
 			//VTK polygons can contain lines where two vertexes are identical. Forget these
@@ -73,12 +82,14 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 			B.add_vertex_to_facet( indx[2]);
 			//cout << k << " " << indx[0] << " "<< indx[1] << " " << indx[2] << " " << endl;
 			B.end_facet();
-			++k;
+			//cout << this->IoletIdArray->GetValue(j) << endl;
+			ID.push_back(this->IoletIdArray->GetValue(j));
 		}
 		else{
 			//We need to acout for this in the iolet map.
 			cout << "Eleminated degenrate vertex" << endl;
 		}
+		++j;
 	}	
 	B.end_surface();
 }

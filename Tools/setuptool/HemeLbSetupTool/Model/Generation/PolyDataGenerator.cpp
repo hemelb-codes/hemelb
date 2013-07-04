@@ -35,7 +35,7 @@
 #include <iostream>
 #include <cmath> 
 
-#include <boost/logic/tribool.hpp>
+//#include <boost/logic/tribool.hpp>
 
 using namespace hemelb::io::formats;
 
@@ -52,7 +52,7 @@ PolyDataGenerator::~PolyDataGenerator() {
 	this->Locator->Delete();
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
-	delete this->inside_with_ray;
+	//delete this->inside_with_ray;
 	delete this->AABBtree;
 	delete this->ClippedCGALSurface;
 	delete this->triangle;
@@ -67,11 +67,16 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	vtkCellArray *polys;
 	polys = this->ClippedSurface->GetPolys();
 	pts =  this->ClippedSurface->GetPoints();
-	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys);
+	vtkIntArray* Iolets = this->IoletIdArray;
+	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys,Iolets);
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
+	IoletIdArrayCGAL = this->triangle->GetID();
+	for (std::vector<int>::iterator i = IoletIdArrayCGAL.begin();i != IoletIdArrayCGAL.end(); ++i){
+		//	cout << *i << endl;
+	}
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
-	this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
+	//this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
 }
 
 
@@ -111,11 +116,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		int nHits;
 		PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
 		PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
-		bool inside1;
-		bool inside2;
-		bool Ninside;
-		bool debugintersect = true;
-		
+		bool debugintersect = false;
+		bool testthis;
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
 			nHits = this->ComputeIntersectionsCGAL(site, neigh);
@@ -127,11 +129,14 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				neigh.IsFluid = !site.IsFluid;
 			} else{
 				// nHits is -1. Cound not determine. Fall back to ray
-				neigh.IsFluid = (*this->inside_with_ray)(p2);
+				//neigh.IsFluid = (*this->inside_with_ray)(p2);
+				neigh.IsFluid = InsideOutside(neigh);
 			}
 			if (debugintersect){
-				bool Sinside = (*this->inside_with_ray)(p1);
-				bool Ninside = (*this->inside_with_ray)(p2);
+				//bool Sinside = (*this->inside_with_ray)(p1);
+				//bool Ninside = (*this->inside_with_ray)(p2);
+				bool Sinside = InsideOutside(site);
+				bool Ninside = InsideOutside(neigh);
 				if (Ninside != neigh.IsFluid){
 					throw InconsistentFluidnessError(site, neigh, nHits);
 				}
@@ -154,9 +159,9 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				}
 				if (debugintersect){
 					if (nHits % 2 != 1) {
-						inside1 = (*this->inside_with_ray)(p1);
-						inside2 = (*this->inside_with_ray)(p2);
-						if (inside1 == inside2){
+						bool Sinside = InsideOutside(site);
+						bool Ninside = InsideOutside(neigh);
+						if (Sinside == Ninside){
 							throw InconsistentFluidnessError(site, neigh, nHits);
 						}
 					}
@@ -198,34 +203,38 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				iHit = nHits - 1;
 			}
 			
-			//Vector hitPoint;
-			//this->hitPoints->GetPoint(iHit, &hitPoint[0]);
-			// needs logic to pick the right point of the list. Depending on the fluid 
-			// The index of the cell in the vtkPolyData that was hit
-			//int hitCellId = this->hitCellIds->GetId(iHit);
-			// The value associated with that cell, which identifies what was hit.
-			//cout << hitCellId << " " << nHits << " " << (*this->inside_with_ray)(p1) << " " << (*this->inside_with_ray)(p2) << endl;
-			Object_and_primitive_id test = hitCellIdsCGAL[0];
-			//cout << "from CGAL " << std::distance(this->ClippedCGALSurface->facets_begin(),test.second) << endl; 
-			int hitCellId;
-			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),test.second);
-
 			Vector hitPoint;
 			PointCGAL testpoint;
-			//if (nHitsCGAL > 0){
-			//	hitPoint = Vector(CGAL::to_double(this->HitPointsCGAL[0].x()),CGAL::to_double(this->HitPointsCGAL[0].y()),CGAL::to_double(this->HitPointsCGAL[0].z()));
-				//}else{
-			  //cout << "No hit point found" << endl;
-			if (assign(testpoint, test.first)){//we do an explicite cast to double here. This is only needed if
-				// we use an exact_construction kernel. Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
-				hitPoint = Vector(CGAL::to_double(testpoint.x()),CGAL::to_double(testpoint.y()),CGAL::to_double(testpoint.z()));
-				//hitPoint = Vector(testpoint.x(),testpoint.y(),testpoint.z());
-			}
-			else{
+			int hitCellId;
+			if (nHits == -1){//unclasified intersection need to be carefull.
 				hitPoint = Vector(0,0,0);
+				hitCellId = 0;
+				Object_Primitive_and_distance test = IntersectionCGAL[0];
+				//cout << "size " << IntersectionCGAL.size() << endl;
+				if (assign(testpoint, test.first.first)){//we do an explicite cast to double here. 
+					//This is only needed if we use an exact_construction kernel. 
+					//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
+					
+				}
+				if (IntersectionCGAL.size()>1){
+					//cout << testpoint << endl;
+					for (std::vector<Object_Primitive_and_distance>::iterator distit = IntersectionCGAL.begin(); distit != IntersectionCGAL.end(); ++distit){
+						//cout << distit->second << endl;
+					}
+				}
 			}
-			
-			//cout << hitPoint << endl;
+			else{//normal intersection just take the closest point.
+				Object_Primitive_and_distance test = IntersectionCGAL[iHit];
+				hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),test.first.second);
+				if (assign(testpoint, test.first.first)){//we do an explicite cast to double here. 
+					//This is only needed if we use an exact_construction kernel. 
+					//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
+					hitPoint = Vector(CGAL::to_double(testpoint.x()),CGAL::to_double(testpoint.y()),CGAL::to_double(testpoint.z()));
+				}
+				else{
+					throw GenerationErrorMessage("This type of intersection should not happen");
+				}
+			}
 			LinkData& link = fluid->Links[iSolid];
 
 			// This is set in any solid case
@@ -236,15 +245,14 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 			
 		
-			int ioletId = this->IoletIdArray->GetValue(hitCellId);
+			//			int ioletId = this->IoletIdArray->GetValue(hitCellId);
+			int ioletId = this->IoletIdArrayCGAL[hitCellId];
 
 			if (ioletId < 0) {
 				// -1 => we hit a wall
 				link.Type = geometry::CUT_WALL;
 			} else {
 				// We hit an inlet or outlet
-				//cout << ioletId << endl;
-				//cout << this->Iolets[ioletId]->IsInlet << endl;
 				Iolet* iolet = this->Iolets[ioletId];
 				if (iolet->IsInlet) {
 					link.Type = geometry::CUT_INLET;
@@ -269,15 +277,59 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 	
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
 	this->ComputeAveragedNormal(site);
-	//cout << "site " <<site.Position << endl;
-	//cout << "Voxels "<< this->numberofvoxels << endl;
 }
 
-void PolyDataGenerator::InsideOutside(Site& site){
+bool PolyDataGenerator::InsideOutside(Site& site){
   PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
-  bool inside = (*this->inside_with_ray)(point);
-  site.IsFluid = inside;
-  
+  //bool inside = (*this->inside_with_ray)(point);
+  bool inside2;
+  CGAL::Random_points_on_sphere_3<PointCGAL> random_point(1.);
+  RayCGAL ray_query;
+  PointCGAL hitpoint;
+  int ori[3];
+  bool nextray = true;
+  int nHitsRay;
+  PointCGAL v1;
+  PointCGAL v2;
+  PointCGAL v3;
+  FacehandleCGAL f;
+  std::vector<Object_and_primitive_id> rayhitcells;
+  //site.IsFluid = inside;
+  //if (nHitsCGAL){
+  while(nextray){
+	  ray_query= RayCGAL(point,*random_point);
+	  nHitsRay = this->AABBtree->number_of_intersected_primitives(ray_query);
+	  rayhitcells.clear();
+	  this->AABBtree->all_intersections(ray_query, std::back_inserter(rayhitcells));
+	  for (std::vector<Object_and_primitive_id>::iterator i = rayhitcells.begin(); i != rayhitcells.end(); ++i) {
+		  f = i->second;
+		  
+		  v1 = f->halfedge()->vertex()->point();
+		  v2 = f->halfedge()->next()->vertex()->point();
+		  v3 = f->halfedge()->next()->next()->vertex()->point();
+		  
+		  if (CGAL::orientation(v1,v2,v3,point) == 0){
+			  nextray = false;
+			  inside2 = false;
+			  break;
+		  }
+		  ori[0] = CGAL::orientation(point,*random_point,v2,v3);
+		  ori[1] = CGAL::orientation(point,*random_point,v2,v3);
+		  ori[2] = CGAL::orientation(point,*random_point,v2,v3);
+		  if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0){
+			  nextray = true;
+			  ++random_point;
+			  break;
+		  }
+	  }
+	  nextray=false;
+	  inside2 = nHitsRay % 2;
+  }
+  //if (inside !=  inside2){
+  //	  throw GenerationErrorMessage("This type of intersection should not happen");
+  //}
+
+  return inside2;
 }
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
@@ -305,7 +357,6 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 	this->IntersectionCGAL.clear();
 	this->AABBtree->all_intersections(segment_query, std::back_inserter(this->hitCellIdsCGAL));
 	Object_Primitive_and_distance OPD;
-
 	if (nHitsCGAL) {
 	    for (std::vector<Object_and_primitive_id>::iterator i = this->hitCellIdsCGAL.begin(); i != this->hitCellIdsCGAL.end(); ++i) {
 		 	f = i->second;
@@ -339,11 +390,12 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 				// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. These 2 intersect and the result may be indetermined 
 				// ori4 and ori5. In this case either of the points are coplanar with the triangle (primitive)		
 				nHitsCGAL = -1;
-			}    
+			}
 	    } 
 	}
 
-	if (nHitsCGAL>1){
+	if (nHitsCGAL != 1){
+		
 		std::sort(this->IntersectionCGAL.begin(), this->IntersectionCGAL.end(), distancesort);
 	}
 	return nHitsCGAL;
