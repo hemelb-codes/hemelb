@@ -14,11 +14,13 @@
 
 namespace hemelb
 {
+#ifdef HEMELB_MPI
   template<>
   MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()
   {
     return MpiDataTypeTraits<int>::RegisterMpiDataType();
   }
+#endif
 
   namespace geometry
   {

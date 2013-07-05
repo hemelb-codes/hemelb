@@ -14,7 +14,7 @@
 #ifdef HEMELB_USE_SSE3
   #include <immintrin.h>
 #endif
-#include <mpi.h>
+
 #include "constants.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "util/utilityFunctions.h"
