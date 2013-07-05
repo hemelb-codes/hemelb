@@ -10,6 +10,8 @@
 #ifndef HEMELB_MPIINCLUDE_H
 #define HEMELB_MPIINCLUDE_H
 
+#define HEMELB_MPI
+
 #include <mpi.h>
 
 namespace hemelb
