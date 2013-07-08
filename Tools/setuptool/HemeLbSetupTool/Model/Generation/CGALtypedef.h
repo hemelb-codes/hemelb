@@ -9,7 +9,7 @@
 #include <CGAL/AABB_polyhedron_triangle_primitive.h>
 #include <CGAL/IO/Polyhedron_iostream.h>
 #include <CGAL/IO/Verbose_ostream.h>
-#include <CGAL/Point_inside_polyhedron_3.h>
+#include <CGAL/point_generators_3.h>
 #include <CGAL/squared_distance_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
 
@@ -28,11 +28,8 @@ typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
 typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
 typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
-typedef Polyhedron::Vertex_iterator Vertex_iteratorCGAL;
+
 typedef Tree::Object_and_primitive_id Object_and_primitive_id;
-typedef Tree::Primitive_id Primitive_id;
-typedef CGAL::Point_inside_polyhedron_3<Polyhedron,Kernel> PointInside; 
 typedef Polyhedron::Face_handle FacehandleCGAL;
-typedef Polyhedron::Facet_iterator FacetiteratorCGAL;
 typedef Polyhedron::HalfedgeDS HalfedgeDS;
 typedef std::pair<Object_and_primitive_id, double> Object_Primitive_and_distance;
