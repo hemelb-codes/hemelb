@@ -62,9 +62,6 @@ public:
 	inline void SetClippedSurface(vtkPolyData* val) {
 		this->ClippedSurface = val;
 	}
-	//inline void SetClippedCGALSurface(Polyhedron* val) {
-	  //this->ClippedCGALSurface = val;
-		//}
 
 private:
 	virtual void ComputeBounds(double[]) const;
@@ -93,6 +90,7 @@ private:
 	std::vector<int> IoletIdArrayCGAL;
 	//int nHitsCGAL;
 	std::vector<PointCGAL> HitPointsCGAL;
+	int Intersect(Site& site, Site& neigh);
 	static bool distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j);
 
 };

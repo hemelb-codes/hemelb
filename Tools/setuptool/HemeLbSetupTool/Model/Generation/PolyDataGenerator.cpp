@@ -110,59 +110,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			++neighIt) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
-		int nHits;
-		//PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
-		//PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
-		bool debugintersect = false;
-		//bool testthis;
-		if (!neigh.IsFluidKnown) {
-			// Neighbour unknown, must always intersect
-			nHits = this->ComputeIntersectionsCGAL(site, neigh);
-			if (nHits % 2 == 0) {
-				// Even # hits, hence neigh has same type as site
-				neigh.IsFluid = site.IsFluid;
-			} else if (nHits % 2 == 1){
-				// Odd # hits, neigh is opposite type to site
-				neigh.IsFluid = !site.IsFluid;
-			} else{
-				// nHits is -1. Cound not determine. Fall back to ray
-				//neigh.IsFluid = (*this->inside_with_ray)(p2);
-				neigh.IsFluid = InsideOutside(neigh);
-			}
-			if (debugintersect){
-				//bool Sinside = (*this->inside_with_ray)(p1);
-				//bool Ninside = (*this->inside_with_ray)(p2);
-				bool Sinside = InsideOutside(site);
-				bool Ninside = InsideOutside(neigh);
-				if ((Ninside != neigh.IsFluid) || (Sinside != site.IsFluid)){
-					throw InconsistentFluidnessError(site, neigh, nHits);
-				}
-			}
-			
-			if (neigh.IsFluid)
-				neigh.CreateLinksVector();
-			
-			neigh.IsFluidKnown = true;
-		} else {
-			// We know the fluidness of neigh, maybe don't need to intersect
-			if (site.IsFluid != neigh.IsFluid) {
-				nHits = this->ComputeIntersectionsCGAL(site, neigh);
-				// Only in the case of difference must we intersect.
-				if (nHits % 2 == 0) {
-					throw InconsistentFluidnessError(site, neigh, nHits);
-				}
-				if (debugintersect){
-					if (nHits % 2 != 1) {
-						bool Sinside = InsideOutside(site);
-						bool Ninside = InsideOutside(neigh);
-						if (Sinside == Ninside){
-							throw InconsistentFluidnessError(site, neigh, nHits);
-						}
-					}
-				}
-			}
-		}
-		
+		int nHits = Intersect(site,neigh);
 		// Four cases: fluid-fluid, solid-solid, fluid-solid and solid-fluid.
 		// Will handle the last two together.
 		if (site.IsFluid == neigh.IsFluid) {
@@ -191,7 +139,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			int hitCellId;
 			double distancetol = 0.01;
 			std::vector<int> CloseIoletIDS;
-			if (nHits == -1){//unclasified intersection need to be carefull.
+			if (nHits == -1){//unclassified intersection need to be carefull.
 				if (site.IsFluid) {
 					fluid = &site;
 					solid = &neigh;
@@ -307,6 +255,67 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
 	this->ComputeAveragedNormal(site);
 }
+
+int PolyDataGenerator::Intersect(Site& site, Site& neigh){
+	int nHits;
+	//PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
+	//PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
+	bool debugintersect = false;
+	//bool testthis;
+	if (!neigh.IsFluidKnown) {
+		// Neighbour unknown, must always intersect
+		nHits = this->ComputeIntersectionsCGAL(site, neigh);
+		if (nHits % 2 == 0) {
+			// Even # hits, hence neigh has same type as site
+			neigh.IsFluid = site.IsFluid;
+		} else if (nHits % 2 == 1){
+			// Odd # hits, neigh is opposite type to site
+			neigh.IsFluid = !site.IsFluid;
+		} else{
+			// nHits is -1. Cound not determine. Fall back to ray
+			//neigh.IsFluid = (*this->inside_with_ray)(p2);
+			neigh.IsFluid = InsideOutside(neigh);
+		}
+		if (debugintersect){
+			//bool Sinside = (*this->inside_with_ray)(p1);
+			//bool Ninside = (*this->inside_with_ray)(p2);
+			bool Sinside = InsideOutside(site);
+			bool Ninside = InsideOutside(neigh);
+			if ((Ninside != neigh.IsFluid) || (Sinside != site.IsFluid)){
+				throw InconsistentFluidnessError(site, neigh, nHits);
+			}
+		}
+		
+		if (neigh.IsFluid)
+			neigh.CreateLinksVector();
+		
+		neigh.IsFluidKnown = true;
+	} else {
+		// We know the fluidness of neigh, maybe don't need to intersect
+		if (site.IsFluid != neigh.IsFluid) {
+			nHits = this->ComputeIntersectionsCGAL(site, neigh);
+			// Only in the case of difference must we intersect.
+			if (nHits % 2 == 0) {
+				throw InconsistentFluidnessError(site, neigh, nHits);
+			}
+			if (debugintersect){
+				if (nHits % 2 != 1) {
+					bool Sinside = InsideOutside(site);
+					bool Ninside = InsideOutside(neigh);
+					if (Sinside == Ninside){
+						throw InconsistentFluidnessError(site, neigh, nHits);
+					}
+				}
+			}
+		}
+		else{
+			nHits=0;
+		}
+	}
+	return nHits; 
+}
+
+
 
 bool PolyDataGenerator::InsideOutside(Site& site){
   PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
