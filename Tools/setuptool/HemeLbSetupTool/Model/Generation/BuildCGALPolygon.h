@@ -87,7 +87,7 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 		}
 		else{
 			//We need to acout for this in the iolet map.
-			cout << "Eleminated degenrate vertex" << endl;
+			cout << "Eleminated degenerate vertex" << endl;
 		}
 		++j;
 	}	

@@ -357,9 +357,7 @@ bool PolyDataGenerator::InsideOutside(Site& site){
 		  }
 		  nextray=false;
 		  inside = nHitsRay % 2;
-	  }
-	  
-	  
+	  }	  
   }
   //if (inside !=  inside2){
   //	  throw GenerationErrorMessage("This type of intersection should not happen");
