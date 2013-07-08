@@ -72,9 +72,6 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
 	IoletIdArrayCGAL = this->triangle->GetID();
-	for (std::vector<int>::iterator i = IoletIdArrayCGAL.begin();i != IoletIdArrayCGAL.end(); ++i){
-		//	cout << *i << endl;
-	}
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	//this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
 }
