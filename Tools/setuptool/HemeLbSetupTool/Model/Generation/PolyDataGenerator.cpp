@@ -35,7 +35,6 @@
 #include <iostream>
 #include <cmath> 
 
-//#include <boost/logic/tribool.hpp>
 
 using namespace hemelb::io::formats;
 
@@ -319,11 +318,10 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 
 bool PolyDataGenerator::InsideOutside(Site& site){
   PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
-  //bool inside = (*this->inside_with_ray)(point);
-  bool inside2;
+  //bool inside2 = (*this->inside_with_ray)(point);
+  bool inside;
   CGAL::Random_points_on_sphere_3<PointCGAL> random_point(1.);
   RayCGAL ray_query;
-  PointCGAL hitpoint;
   int ori[3];
   bool nextray = true;
   int nHitsRay;
@@ -332,8 +330,6 @@ bool PolyDataGenerator::InsideOutside(Site& site){
   PointCGAL v3;
   FacehandleCGAL f;
   std::vector<Object_and_primitive_id> rayhitcells;
-  //site.IsFluid = inside;
-  //if (nHitsCGAL){
   while(nextray){
 	  ray_query= RayCGAL(point,*random_point);
 	  nHitsRay = this->AABBtree->number_of_intersected_primitives(ray_query);
@@ -348,7 +344,7 @@ bool PolyDataGenerator::InsideOutside(Site& site){
 		  
 		  if (CGAL::orientation(v1,v2,v3,point) == 0){
 			  nextray = false;
-			  inside2 = false;
+			  inside = false;
 			  break;
 		  }
 		  ori[0] = CGAL::orientation(point,*random_point,v2,v3);
@@ -359,15 +355,17 @@ bool PolyDataGenerator::InsideOutside(Site& site){
 			  ++random_point;
 			  break;
 		  }
+		  nextray=false;
+		  inside = nHitsRay % 2;
 	  }
-	  nextray=false;
-	  inside2 = nHitsRay % 2;
+	  
+	  
   }
   //if (inside !=  inside2){
   //	  throw GenerationErrorMessage("This type of intersection should not happen");
   //}
 
-  return inside2;
+  return inside;
 }
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
