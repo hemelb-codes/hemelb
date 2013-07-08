@@ -114,10 +114,10 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 		Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		int nHits;
-		PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
-		PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
+		//PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
+		//PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
 		bool debugintersect = false;
-		bool testthis;
+		//bool testthis;
 		if (!neigh.IsFluidKnown) {
 			// Neighbour unknown, must always intersect
 			nHits = this->ComputeIntersectionsCGAL(site, neigh);
@@ -137,10 +137,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				//bool Ninside = (*this->inside_with_ray)(p2);
 				bool Sinside = InsideOutside(site);
 				bool Ninside = InsideOutside(neigh);
-				if (Ninside != neigh.IsFluid){
-					throw InconsistentFluidnessError(site, neigh, nHits);
-				}
-				if (Sinside != site.IsFluid){
+				if ((Ninside != neigh.IsFluid) || (Sinside != site.IsFluid)){
 					throw InconsistentFluidnessError(site, neigh, nHits);
 				}
 			}
@@ -191,50 +188,85 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			// hit of interest (i.e. the one closest to the fluid site).
 			int iHit;
 
-			if (site.IsFluid) {
-				fluid = &site;
-				solid = &neigh;
-				iSolid = iNeigh;   
-				iHit = 0;
-			} else {
-				fluid = &neigh;
-				solid = &site;
-				iSolid = Neighbours::inverses[iNeigh];
-				iHit = nHits - 1;
-			}
-			
 			Vector hitPoint;
-			PointCGAL testpoint;
+			PointCGAL hitPointCGAL;
+			SegmentCGAL hitsegmentCGAL;
 			int hitCellId;
+			double distancetol = 0.01;
+			std::vector<int> CloseIoletIDS;
 			if (nHits == -1){//unclasified intersection need to be carefull.
-				hitPoint = Vector(0,0,0);
-				hitCellId = 0;
-				Object_Primitive_and_distance test = IntersectionCGAL[0];
-				//cout << "size " << IntersectionCGAL.size() << endl;
-				if (assign(testpoint, test.first.first)){//we do an explicite cast to double here. 
-					//This is only needed if we use an exact_construction kernel. 
-					//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
+				if (site.IsFluid) {
+					fluid = &site;
+					solid = &neigh;
+					iSolid = iNeigh;
+					int n=0;
+					iHit = n;
+					// here we iterate over all intersections until we find a wall or the rest are futher away than the tol.
+					for (std::vector<Object_Primitive_and_distance>::iterator distit 
+							 = IntersectionCGAL.begin(); distit != IntersectionCGAL.end(); ++distit){
+						if (distit->second > IntersectionCGAL[0].second+distancetol){
+							iHit = n;
+							break;
+						}
+						int temphitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),distit->first.second);
+						int tempioletId = this->IoletIdArrayCGAL[temphitCellId];
+						if (tempioletId<0){
+							break;//hit a wall no need to continue.
+						}//what if we hit both an inlet and outlet. Can that ever happen?
+						++n;
+					}
 					
-				}
-				if (IntersectionCGAL.size()>1){
-					//cout << testpoint << endl;
-					for (std::vector<Object_Primitive_and_distance>::iterator distit = IntersectionCGAL.begin(); distit != IntersectionCGAL.end(); ++distit){
-						//cout << distit->second << endl;
+				} else {
+					fluid = &neigh;
+					solid = &site;
+					iSolid = Neighbours::inverses[iNeigh];
+					int n = IntersectionCGAL.size()-1;
+					iHit = n;
+					for (std::vector<Object_Primitive_and_distance>::reverse_iterator distit 
+							 = IntersectionCGAL.rbegin(); distit != IntersectionCGAL.rend(); ++distit){
+						if (distit->second < IntersectionCGAL.back().second-distancetol){
+							iHit = n;
+							break;//ignoring the following intersections, they are to far away.
+						}
+						int temphitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),distit->first.second);
+						int tempioletId = this->IoletIdArrayCGAL[temphitCellId];
+						if (tempioletId<0){
+							break;//hit a wall no need to continue.
+						}//what if we hit both an inlet and outlet. Can that ever happen?
+						--n;
 					}
 				}
 			}
 			else{//normal intersection just take the closest point.
-				Object_Primitive_and_distance test = IntersectionCGAL[iHit];
-				hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),test.first.second);
-				if (assign(testpoint, test.first.first)){//we do an explicite cast to double here. 
-					//This is only needed if we use an exact_construction kernel. 
-					//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
-					hitPoint = Vector(CGAL::to_double(testpoint.x()),CGAL::to_double(testpoint.y()),CGAL::to_double(testpoint.z()));
-				}
-				else{
-					throw GenerationErrorMessage("This type of intersection should not happen");
+				
+				if (site.IsFluid) {
+					fluid = &site;
+					solid = &neigh;
+					iSolid = iNeigh;   
+					iHit = 0;
+				} else {
+					fluid = &neigh;
+					solid = &site;
+					iSolid = Neighbours::inverses[iNeigh];
+					iHit = nHits - 1;
 				}
 			}
+			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
+			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
+			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
+				//This is only needed if we use an exact_construction kernel. 
+				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
+				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),CGAL::to_double(hitPointCGAL.z()));
+			}
+			else if (CGAL::assign(hitsegmentCGAL, hitpoint_triangle_dist.first.first)){
+				hitPointCGAL = CGAL::midpoint(hitsegmentCGAL.vertex(0),hitsegmentCGAL.vertex(1));
+				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),CGAL::to_double(hitPointCGAL.z()));
+			}
+			else{
+				throw GenerationErrorMessage("This type of intersection should not happen");
+			}
+			
+
 			LinkData& link = fluid->Links[iSolid];
 
 			// This is set in any solid case
@@ -372,7 +404,7 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 			ori[4] = CGAL::orientation(p2,v1,v2,v3);
 			if(CGAL::assign(hitpoint,i->first)){
 				double distance = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitpoint,p1)));
-				OPD = std::make_pair(*i,std::sqrt(distance));
+				OPD = std::make_pair(*i,distance);
 				this->IntersectionCGAL.push_back(OPD);
 			}
 			else if (CGAL::assign(hitsegment,i->first)){
