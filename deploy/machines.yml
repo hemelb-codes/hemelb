@@ -128,6 +128,17 @@ hector:
     CTEMPLATE_PATCH_ALIGN: "ON"
     MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
     MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
+hector_gnu: #Hector, compiling using GNU compiler
+  import: "hector"
+  fabric_dir: "FabricHemeLbGNU"
+  modules: ["load CMake/2.8.6","swap PrgEnv-cray PrgEnv-gnu","swap gcc gcc/4.6.3"] 
+  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
+  cmake_options: 
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    HEMELB_USE_SSE3: "ON"
+    CTEMPLATE_PATCH_ALIGN: "OFF"
+    CTEMPLATE_USE_STATIC: "OFF"    
+#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 supermuc:
   max_job_name_chars: 15
   make_jobs: 4
