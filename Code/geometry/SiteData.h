@@ -12,20 +12,12 @@
 
 #include "units.h"
 #include "geometry/GeometrySite.h"
+#include "geometry/SiteType.h"
 
 namespace hemelb
 {
   namespace geometry
   {
-    enum SiteType
-    {
-      // These must be consistent with the setup tool
-      SOLID_TYPE = 0U,
-      FLUID_TYPE = 1U,
-      INLET_TYPE = 2U,
-      OUTLET_TYPE = 3U
-    };
-
     class SiteData
     {
       public:
