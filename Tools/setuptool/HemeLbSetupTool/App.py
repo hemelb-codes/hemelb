@@ -51,11 +51,7 @@ class SetupTool(wx.App):
             pass
         
         # override any keys that have been set on cmdline.
-        for k, val in self.cmdLineArgs.iteritems():
-            if val is not None:
-                setattr(self.profile, k, val)
-                pass
-            continue
+        self.UpdateAttributesBasedOnCmdLineArgs(self.cmdLineArgs)
         
         self.SetTopWindow(self.view)
         return True
