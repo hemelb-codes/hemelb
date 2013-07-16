@@ -42,7 +42,7 @@ class Profile(Observable):
     
     """
     # Required parameters and defaults.
-    _CloneOrder = ['StlFileUnitId']
+    _CloneOrder = ['StlFileUnitId', 'StlFile', 'VoxelSize']
     _Args = {'StlFile': None,
              'StlFileUnitId': 1,
              'Iolets': ObservableList(),
@@ -93,6 +93,26 @@ class Profile(Observable):
         # update the vtkSTLReader.
         self.AddObserver('StlFile', self.OnStlFileChanged)
         return
+    
+    def UpdateAttributesBasedOnCmdLineArgs(self, cmdLineArgsDict):
+        """ Helper method that takes a dictionary with the arguments provided 
+        to the setup tool via command line (cmdLineArgsDict) and sets/updates 
+        the relevant class attributes.
+        """
+        # Some attributes need to be set in a given order to avoid side effects. 
+        # Set them first
+        for attrName in _CloneOrder:
+            if attrName in cmdLineArgsDict:
+                val = cmdLineArgsDict[attrName]
+                if val is not None:
+                    setattr(self, attrName, val)
+                    cmdLineArgsDict.pop(attrName)
+
+        # Set the rest
+        for k, val in cmdLineArgsDict.iteritems():
+            if val is not None:
+                setattr(p, k, val)
+
     
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
