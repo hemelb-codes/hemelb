@@ -9,19 +9,10 @@
 
 #include "constants.h"
 #include "geometry/SiteData.h"
-#include "mpiInclude.h"
 #include <cassert>
 
 namespace hemelb
 {
-#ifdef HEMELB_MPI
-  template<>
-  MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()
-  {
-    return MpiDataTypeTraits<int>::RegisterMpiDataType();
-  }
-#endif
-
   namespace geometry
   {
     /**
