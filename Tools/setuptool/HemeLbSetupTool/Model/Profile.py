@@ -101,7 +101,7 @@ class Profile(Observable):
         """
         # Some attributes need to be set in a given order to avoid side effects. 
         # Set them first
-        for attrName in _CloneOrder:
+        for attrName in self._CloneOrder:
             if attrName in cmdLineArgsDict:
                 val = cmdLineArgsDict[attrName]
                 if val is not None:
@@ -111,7 +111,7 @@ class Profile(Observable):
         # Set the rest
         for k, val in cmdLineArgsDict.iteritems():
             if val is not None:
-                setattr(p, k, val)
+                setattr(self, k, val)
 
     
     def OnStlFileChanged(self, change):
