@@ -43,10 +43,8 @@ del args.profile
 from HemeLbSetupTool.Model.Profile import Profile
 p = Profile()
 p.LoadFromFile(profile)
+
 # override any keys that have been set on cmdline.
-for k, val in vars(args).iteritems():
-    if val is not None:
-        setattr(p, k, val)
-        pass
-    continue
+p.UpdateAttributesBasedOnCmdLineArgs(vars(args))
+
 p.Generate()
