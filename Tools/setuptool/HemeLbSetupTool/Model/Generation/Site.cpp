@@ -15,8 +15,6 @@
 #include "Iolet.h"
 #include "Neighbours.h"
 
-#include "geometry/SiteData.h"
-
 // C'tor
 Site::Site(Block& block, Index& index) :
 		IsFluidKnown(false), IsFluid(false), Position(
