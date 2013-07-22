@@ -15,6 +15,7 @@
 		<multimachine>{{MULTIMACHINE}}</multimachine>
 		<type>{{TYPE}}</type>
 		<optimisation>{{OPTIMISATION}}</optimisation>
+                <use_sse3>{{USE_SSE3}}</use_sse3>
 		<date>{{TIME}}</date>
 		<reading_group>{{READING_GROUP_SIZE}}</reading_group>
 		<lattice_type>{{LATTICE_TYPE}}</lattice_type>
