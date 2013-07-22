@@ -20,6 +20,7 @@ namespace hemelb
     static const std::string multimachine_on="@HEMELB_USE_MULTIMACHINE@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
+    static const std::string use_sse3="@HEMELB_USE_SSE3@";
     static const std::string build_time="@HEMELB_BUILD_TIME@";
     static const std::string reading_group_size="@HEMELB_READING_GROUP_SIZE@";
     static const std::string lattice_type="@HEMELB_LATTICE@";
@@ -44,6 +45,7 @@ namespace hemelb
         build->SetValue("MULTIMACHINE", multimachine_on);
         build->SetValue("TYPE", build_type);
         build->SetValue("OPTIMISATION", optimisation);
+        build->SetValue("USE_SSE3", use_sse3);
         build->SetValue("TIME", build_time);
         build->SetValue("READING_GROUP_SIZE", reading_group_size);
         build->SetValue("LATTICE_TYPE", lattice_type);
