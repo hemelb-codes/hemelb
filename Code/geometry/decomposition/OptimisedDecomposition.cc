@@ -166,8 +166,10 @@ namespace hemelb
 
         /* PPStee modifications */
         // graph
-        //PPSteeGraphParmetis pgraph = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
-        PPSteeGraphPtscotch pgraph = PPSteeGraphPtscotch(communicator, localVertexCount, &adjacenciesPerVertex[0], &localAdjacencies[0]);
+        PPSteeGraphParmetis pgraph_prime = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+        PPSteeGraphZoltan pgraph = PPSteeGraphZoltan(&pgraph_prime);
+
+        //PPSteeGraphPtscotch pgraph = PPSteeGraphPtscotch(communicator, localVertexCount, &adjacenciesPerVertex[0], &localAdjacencies[0]);
         //PPSteeGraphZoltan pgraph = PPSteeGraphZoltan(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
 
         // weights for computation
