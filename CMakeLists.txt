@@ -83,6 +83,6 @@ ExternalProject_Add(
 )
 
 add_dependencies(hemelb cppunit zoltan ptscotch parmetis ppstee tinyxml boost ctemplate zlib mpwide)
-add_dependencies(ppstee zoltan parmetis ptscotch)
+#add_dependencies(ppstee zoltan parmetis ptscotch)
 #add_dependencies(hemelb cppunit ptscotch ppstee tinyxml boost ctemplate zlib mpwide)
 #add_dependencies(ppstee ptscotch)

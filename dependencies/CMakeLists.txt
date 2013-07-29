@@ -140,7 +140,7 @@ else()
 endif()
 
 # ------- zoltan --------------------
-find_package(ZOLTAN QUIET)
+find_package(Zoltan QUIET)
 if (ZOLTAN_FOUND)
 	message("Zoltan already installed, no need to download")
 else()
@@ -176,7 +176,7 @@ if (PPSTEE_FOUND)
 	message("PPStee already installed, no need to download")
 else()
 	message("PPStee not installed, will build from source")
-	find_file(PPSTEE_TARBALL ppstee-0.1.1.tar.gz
+	find_file(PPSTEE_TARBALL ppstee-0.2.0.tar.gz
 		DOC "Path to PPStee source on disk (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
