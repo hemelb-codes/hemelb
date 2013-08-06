@@ -31,7 +31,8 @@ namespace hemelb
         // Explicit instantiation (a way of splitting templated classes into .h and .cc files)
         template class AbstractRheologyModel<CassonRheologyModel> ;
         template class AbstractRheologyModel<TruncatedPowerLawRheologyModel> ;
-        template class AbstractRheologyModel<CarreauYasudaRheologyModel> ;
+        template class AbstractRheologyModel<CarreauYasudaRheologyModel<HumanCYFit> > ;
+        template class AbstractRheologyModel<CarreauYasudaRheologyModel<MouseCYFit> > ;
       }
     }
   }

@@ -30,9 +30,8 @@ namespace hemelb
        */
       class RheologyModelTests : public CppUnit::TestFixture
       {
-        CPPUNIT_TEST_SUITE( RheologyModelTests );
-        CPPUNIT_TEST( TestRheologyModels );
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE(RheologyModelTests);
+          CPPUNIT_TEST(TestRheologyModels);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -77,8 +76,7 @@ namespace hemelb
             std::vector<distribn_t>::const_iterator shearRate;
             std::vector<distribn_t>::const_iterator truthVis;
             for (shearRate = shearRates.begin(), truthVis = truthViscosities.begin();
-                 shearRate != shearRates.end();
-                 ++shearRate, ++truthVis)
+                shearRate != shearRates.end(); ++shearRate, ++truthVis)
             {
               distribn_t viscosity = RHEOLOGY_MODEL::CalculateViscosityForShearRate(*shearRate,
                                                                                     density);
@@ -91,15 +89,17 @@ namespace hemelb
 
           void TestRheologyModels()
           {
-            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> (shearRates,
-                                                                                                        carreauViscosities,
-                                                                                                        "CarreauYasuda");
-            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CassonRheologyModel> (shearRates,
-                                                                                                 cassonViscosities,
-                                                                                                 "Casson");
-            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::TruncatedPowerLawRheologyModel> (shearRates,
-                                                                                                            powerLawViscosities,
-                                                                                                            "TruncatedPowerLaw");
+            CompareModelAgainsHardcodedValues<
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit>(shearRates,
+                                                                                 carreauViscosities,
+                                                                                 "CarreauYasuda");
+            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CassonRheologyModel>(shearRates,
+                                                                                                cassonViscosities,
+                                                                                                "Casson");
+            CompareModelAgainsHardcodedValues<
+                lb::kernels::rheologyModels::TruncatedPowerLawRheologyModel>(shearRates,
+                                                                             powerLawViscosities,
+                                                                             "TruncatedPowerLaw");
           }
 
         private:
@@ -111,7 +111,7 @@ namespace hemelb
           std::vector<distribn_t> powerLawViscosities;
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( RheologyModelTests );
+      CPPUNIT_TEST_SUITE_REGISTRATION(RheologyModelTests);
     }
   }
 }

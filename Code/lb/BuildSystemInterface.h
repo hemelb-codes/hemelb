@@ -80,7 +80,17 @@ namespace hemelb
     class NNCY
     {
       public:
-        typedef kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModel, Lattice> Type;
+        typedef kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, Lattice> Type;
+    };
+
+    /**
+     * Non-Newtonian kernel with Carreau-Yasuda rheology model fitted to experimental data on murine blood viscosity.
+     */
+    template<class Lattice>
+    class NNCYMOUSE
+    {
+      public:
+        typedef kernels::LBGKNN<kernels::rheologyModels::CarreauYasudaRheologyModelMouseFit, Lattice> Type;
     };
 
     /**
