@@ -12,6 +12,20 @@
 
 #include "lb/kernels/rheologyModels/AbstractRheologyModel.h"
 
+// Macro used to define a fit of the Carreau-Yasuda model. We chose this design
+// (with multiple structs containing the same static const variables instead of
+// inheritance or similar) because CalculateViscosityForShearRate is performance
+// critical and we want as much arithmetic done at compile time as possible.
+#define CY_FIT_NEW(NAME) \
+		    struct NAME \
+        { \
+            static const double ETA_INF; \
+            static const double ETA_ZERO; \
+            static const double LAMBDA; \
+            static const double A; \
+            static const double N; \
+        } \
+
 namespace hemelb
 {
   namespace lb
@@ -20,14 +34,12 @@ namespace hemelb
     {
       namespace rheologyModels
       {
-        // Carreau-Yasuda model constants
-        static const double ETA_INF = 0.0035; // Pa*s
-        static const double ETA_ZERO = 0.16; // Pa*s
-        static const double LAMBDA = 8.2; // s
-        static const double A = 0.64; //  dimensionless
-        static const double N = 0.2128; //  dimensionless
+        CY_FIT_NEW(HumanCYFit);
+        CY_FIT_NEW(MouseCYFit);
 
-        class CarreauYasudaRheologyModel : public AbstractRheologyModel<CarreauYasudaRheologyModel>
+        template<class CYFIT>
+        class CarreauYasudaRheologyModel : public AbstractRheologyModel<
+            CarreauYasudaRheologyModel<CYFIT> >
         {
           public:
             /*
@@ -45,6 +57,9 @@ namespace hemelb
             static double CalculateViscosityForShearRate(const double &iShearRate,
                                                          const distribn_t &iDensity);
         };
+
+        typedef CarreauYasudaRheologyModel<HumanCYFit> CarreauYasudaRheologyModelHumanFit;
+        typedef CarreauYasudaRheologyModel<MouseCYFit> CarreauYasudaRheologyModelMouseFit;
       }
     }
   }

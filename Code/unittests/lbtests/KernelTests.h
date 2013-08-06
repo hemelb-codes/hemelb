@@ -378,7 +378,7 @@ namespace hemelb
 
           void TestLBGKNNCalculationsAndCollision()
           {
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel, lb::lattices::D3Q15>
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, lb::lattices::D3Q15>
                 LB_KERNEL;
 
             /*
