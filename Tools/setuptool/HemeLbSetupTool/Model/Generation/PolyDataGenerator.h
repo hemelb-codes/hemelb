@@ -31,10 +31,6 @@ class BlockWriter;
 #include "CGALtypedef.h"
 #include "BuildCGALPolygon.h"
 
-#include <boost/lexical_cast.hpp>
-#include <boost/math/special_functions/round.hpp>
-#include <boost/call_traits.hpp>
-
 
 class PolyDataGenerator: public GeometryGenerator {
 public:
