@@ -19,7 +19,6 @@
 #include "vtkOBBTree.h"
 #include "vtkPolyData.h"
 #include "vtkPoints.h"
-#include "vtkIdList.h"
 #include "vtkCellData.h"
 #include "vtkDataSet.h"
 #include "vtkMatrix4x4.h"
@@ -63,7 +62,7 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	typedef typename HDS::Vertex   Vertex;
 	typedef typename Vertex::Point Point;
 	vtkIdType npts = 0;
-	vtkIdType *indx = 0;
+	vtkIdType *indx;
 	double vertex[3];
 	for (int i = 0; i != this->pts->GetNumberOfPoints(); i++ ){
 		this->pts->GetPoint(i, vertex);
@@ -76,14 +75,22 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	for (this->polys->InitTraversal(); this->polys->GetNextCell(npts,indx); ){
 		if(indx[0] != indx[1] & indx[0] != indx[2] & indx[1] != indx[2]){ 
 			//VTK polygons can contain lines where two vertexes are identical. Forget these
-			B.begin_facet();
-			B.add_vertex_to_facet( indx[0]);
-			B.add_vertex_to_facet( indx[1]);
-			B.add_vertex_to_facet( indx[2]);
-			//cout << k << " " << indx[0] << " "<< indx[1] << " " << indx[2] << " " << endl;
-			B.end_facet();
-			//cout << this->IoletIdArray->GetValue(j) << endl;
-			ID.push_back(this->IoletIdArray->GetValue(j));
+			std::vector<vtkIdType>  testvec;
+			testvec.push_back(indx[0]);
+			testvec.push_back(indx[1]);
+			testvec.push_back(indx[2]);
+			if (B.test_facet(testvec.begin(), testvec.end())){
+				B.begin_facet();
+				B.add_vertex_to_facet( indx[0]);
+				B.add_vertex_to_facet( indx[1]);
+				B.add_vertex_to_facet( indx[2]);
+				//cout << k << " " << indx[0] << " "<< indx[1] << " " << indx[2] << " " << endl;
+				B.end_facet();
+				//cout << this->IoletIdArray->GetValue(j) << endl;
+				ID.push_back(this->IoletIdArray->GetValue(j));
+			}
+			else
+				cout << "ignoring " << testvec[0] << " " <<  testvec[1] << " " << testvec[2] << endl;
 		}
 		else{
 			//We need to acout for this in the iolet map.
