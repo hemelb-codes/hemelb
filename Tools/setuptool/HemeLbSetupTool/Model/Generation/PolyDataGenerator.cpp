@@ -70,6 +70,11 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys,Iolets);
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
+	if (this->ClippedCGALSurface->size_of_border_edges()){
+		throw GenerationErrorMessage("The surface is not closed.");
+		cout << this->ClippedCGALSurface->size_of_border_edges() << endl;
+	}
+	
 	IoletIdArrayCGAL = this->triangle->GetID();
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	//this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
