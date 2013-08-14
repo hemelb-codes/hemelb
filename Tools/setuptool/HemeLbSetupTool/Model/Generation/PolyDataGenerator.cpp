@@ -15,7 +15,8 @@
 
 #include "CGALtypedef.h"
 #include "BuildCGALPolygon.h"
-
+#include "BuildCGALPolygon.cpp" 
+//because the class is templated we need to include the cpp file to avoid link errors.
 
 #include "Debug.h"
 
