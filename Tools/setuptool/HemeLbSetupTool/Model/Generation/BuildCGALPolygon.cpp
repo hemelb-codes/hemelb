@@ -16,8 +16,8 @@
 
 using namespace hemelb::io::formats;
 
-
-template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
+template<class HDS> 
+void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	CGAL::Polyhedron_incremental_builder_3<HDS> B( hds, true);
 	B.begin_surface( this->pts->GetNumberOfPoints(), this->polys->GetNumberOfCells(), 0);
 	typedef typename HDS::Vertex   Vertex;
@@ -61,3 +61,4 @@ template<class HDS> void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	}	
 	B.end_surface();
 }
+

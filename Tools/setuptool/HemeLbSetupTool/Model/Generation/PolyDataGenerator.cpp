@@ -17,6 +17,8 @@
 #include "BuildCGALPolygon.h"
 #include "BuildCGALPolygon.cpp" 
 //because the class is templated we need to include the cpp file to avoid link errors.
+//the alternative is a explicit instantiation in BuildCGALPolygon.cpp
+//i.e add template class BuildCGALPolygon<HalfedgeDS>; however that seems to be slower.
 
 #include "Debug.h"
 
