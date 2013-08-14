@@ -42,7 +42,7 @@
 using namespace hemelb::io::formats;
 
 PolyDataGenerator::PolyDataGenerator() :
-		GeometryGenerator(), ClippedSurface(NULL) {
+	GeometryGenerator(), ClippedSurface(NULL) {
 	this->Locator = vtkOBBTree::New();
 	//this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
@@ -54,7 +54,6 @@ PolyDataGenerator::~PolyDataGenerator() {
 	this->Locator->Delete();
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
-	//delete this->inside_with_ray;
 	delete this->AABBtree;
 	delete this->ClippedCGALSurface;
 	delete this->triangle;
@@ -73,14 +72,14 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys,Iolets);
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
-	if (this->ClippedCGALSurface->size_of_border_edges()){
-		throw GenerationErrorMessage("The surface is not closed.");
-		cout << this->ClippedCGALSurface->size_of_border_edges() << endl;
+	if(this->ClippedCGALSurface->size_of_border_edges()){
+		throw GenerationErrorMessage("Created surface is not closed.");
+ 	}
+	else{
+		cout << "Sucsesfully created closed polygon from input" << endl;
 	}
-	
 	IoletIdArrayCGAL = this->triangle->GetID();
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
-	//this->inside_with_ray = new PointInside(*this->ClippedCGALSurface);
 }
 
 
@@ -265,8 +264,6 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 
 int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 	int nHits;
-	//PointCGAL p1(site.Position.x,site.Position.y,site.Position.z);
-	//PointCGAL p2(neigh.Position.x,neigh.Position.y,neigh.Position.z);
 	bool debugintersect = false;
 	//bool testthis;
 	if (!neigh.IsFluidKnown) {
@@ -279,13 +276,9 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 			// Odd # hits, neigh is opposite type to site
 			neigh.IsFluid = !site.IsFluid;
 		} else{
-			// nHits is -1. Cound not determine. Fall back to ray
-			//neigh.IsFluid = (*this->inside_with_ray)(p2);
 			neigh.IsFluid = InsideOutside(neigh);
 		}
 		if (debugintersect){
-			//bool Sinside = (*this->inside_with_ray)(p1);
-			//bool Ninside = (*this->inside_with_ray)(p2);
 			bool Sinside = InsideOutside(site);
 			bool Ninside = InsideOutside(neigh);
 			if ((Ninside != neigh.IsFluid) || (Sinside != site.IsFluid)){
@@ -326,7 +319,6 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 
 bool PolyDataGenerator::InsideOutside(Site& site){
   PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
-  //bool inside2 = (*this->inside_with_ray)(point);
   bool inside;
   CGAL::Random_points_on_sphere_3<PointCGAL> random_point(1.);
   RayCGAL ray_query;
@@ -367,9 +359,6 @@ bool PolyDataGenerator::InsideOutside(Site& site){
 		  inside = nHitsRay % 2;
 	  }	  
   }
-  //if (inside !=  inside2){
-  //	  throw GenerationErrorMessage("This type of intersection should not happen");
-  //}
 
   return inside;
 }
