@@ -112,9 +112,10 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
+cout << "classifying site" << site.Position[0]<< site.Position[1] << site.Position[2]  << endl;
   for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
 			++neighIt) {
-		Site& neigh = *neighIt;
+	  	Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		int nHits = Intersect(site,neigh);
 		// Four cases: fluid-fluid, solid-solid, fluid-solid and solid-fluid.
@@ -205,7 +206,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
 			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
 			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
-				//This is only needed if we use an exact_construction kernel. 
+				//The cast to double is only needed if we use an exact_construction kernel. 
 				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
 				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),CGAL::to_double(hitPointCGAL.z()));
 			}
