@@ -51,7 +51,12 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 			cout << "Eleminated degenerate vertex" << endl;
 		}
 		++j;
-	}	
+	}
+	
 	B.end_surface();
+	cout << B.check_unconnected_vertices () << endl;
+	B.remove_unconnected_vertices();
+	cout << B.check_unconnected_vertices () << endl;
+	
 }
 
