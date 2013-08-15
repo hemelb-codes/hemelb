@@ -410,7 +410,7 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 			else if (CGAL::assign(hitsegment,i->first)){
 				double distance1 = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitsegment.vertex(0),p1)));
 				double distance2 = CGAL::to_double(CGAL::sqrt(CGAL::squared_distance(hitsegment.vertex(1),p1)));
-				double distance = (distance1 = distance2)/2;
+				double distance = (distance1 + distance2)/2;
 				OPD = std::make_pair(*i,distance);
 				this->IntersectionCGAL.push_back(OPD);
 			}
