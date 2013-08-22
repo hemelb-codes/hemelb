@@ -509,7 +509,7 @@ def hemelb(config, **args):
         execute(steer, env.name, retry=True, framerate=args.get('framerate'), orbit=args.get('orbit'))
 
 @task
-def hemelb_multiscale(config,**args):
+def multiscale_hemelb(config,**args):
     """Submit a HemeLB multiscale job to the remote queue.
     The job results will be stored with a name pattern as defined in the environment,
     e.g. cylinder-abcd1234-legion-256
@@ -523,7 +523,7 @@ def hemelb_multiscale(config,**args):
     """
     with_config(config)
     execute(put_configs,config)
-    job(dict(script='hemelb_multiscale',
+    job(dict(script='multiscale_hemelb',
             cores=4,images=10, steering=1111, wall_time='0:15:0',memory='2G'),args)
     if args.get('steer',False):
         execute(steer,env.name,retry=True,framerate=args.get('framerate'),orbit=args.get('orbit'))
