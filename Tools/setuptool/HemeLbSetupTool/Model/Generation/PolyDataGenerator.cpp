@@ -114,8 +114,9 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
-  for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
-			++neighIt) {
+	cout << "Site: " << site.Position[0] << " " <<  site.Position[1] << " " <<  site.Position[2] << endl;
+	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
+		 ++neighIt) {
 	  	Site& neigh = *neighIt;
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		int nHits = Intersect(site,neigh);
