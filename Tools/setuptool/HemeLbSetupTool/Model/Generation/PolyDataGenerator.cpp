@@ -76,7 +76,7 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 		throw GenerationErrorMessage("Created surface is not closed.");
  	}
 	else{
-		cout << "Sucsesfully created closed polygon from input" << endl;
+		cout << "Succesfully created closed polygon from input" << endl;
 	}
     int i = 0;
 
