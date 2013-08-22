@@ -34,31 +34,6 @@ void GeometryGenerator::PreExecute() {
 }
 
 void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
-		throw (GenerationError) {
-	this->PreExecute();
-	double bounds[6];
-	this->ComputeBounds(bounds);
-	Domain domain(this->VoxelSizeMetres, bounds);
-
-	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
-			++blockIt) {
-		// Open the BlockStarted context of the writer; this will
-		// deal with flushing the state to the file (or not, in the
-		// case where there are no fluid sites).
-		//BlockWriter* blockWriterPtr = writer.StartNextBlock();
-		Block& block = *blockIt;
-
-		
-		for (SiteIterator siteIt = block.begin(); siteIt != block.end();
-					++siteIt) {
-				Site& site = **siteIt;
-				this->ClassifySite(site);
-
-		}
-	}
-}
-
-void GeometryGenerator::Writefile(bool skipNonIntersectingBlocks)
   throw (GenerationError) {
 	this->PreExecute();
 	double bounds[6];
