@@ -8,6 +8,7 @@
 //
 
 #include "BufferPool.h"
+#include <cstddef>
 
 BufferPool::BufferPool(unsigned int bSize) : size(bSize) {
 }
