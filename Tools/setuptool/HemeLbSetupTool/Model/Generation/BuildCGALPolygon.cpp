@@ -57,6 +57,5 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	cout << B.check_unconnected_vertices () << endl;
 	B.remove_unconnected_vertices();
 	cout << B.check_unconnected_vertices () << endl;
-	
 }
 
