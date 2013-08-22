@@ -31,16 +31,18 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 
 	}
 	int j = 0;
+	Face_handle face; 
 	for (this->polys->InitTraversal(); this->polys->GetNextCell(npts,indx); ){
 		if(indx[0] != indx[1] & indx[0] != indx[2] & indx[1] != indx[2]){ 
 			//VTK polygons can contain lines where two vertexes are identical. Forget these
 			if (B.test_facet(indx, indx+3)){ 
-				B.begin_facet();
+				face = B.begin_facet();
 				B.add_vertex_to_facet( indx[0]);
 				B.add_vertex_to_facet( indx[1]);
 				B.add_vertex_to_facet( indx[2]);
 				B.end_facet();
-				ID.push_back(this->IoletIdArray->GetValue(j));
+				face->id() = j;
+				
 			}
 			else
 				//We need to acout for this in the iolet map
