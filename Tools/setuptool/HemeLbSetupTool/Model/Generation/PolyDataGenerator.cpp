@@ -78,8 +78,12 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	else{
 		cout << "Sucsesfully created closed polygon from input" << endl;
 	}
+    int i = 0;
+    for(Polyhedron::Facet_iterator it = this->ClippedCGALSurface->facets_begin(); it != this->ClippedCGALSurface->facets_end(); ++it) 
+		it->id() = i++; 
 	IoletIdArrayCGAL = this->triangle->GetID();
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
+	this->AABBtree->accelerate_distance_queries();
 }
 
 
@@ -112,7 +116,6 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
-cout << "classifying site" << site.Position[0]<< site.Position[1] << site.Position[2]  << endl;
   for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
 			++neighIt) {
 	  	Site& neigh = *neighIt;
@@ -204,7 +207,9 @@ cout << "classifying site" << site.Position[0]<< site.Position[1] << site.Positi
 				}
 			}
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
-			hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
+			//hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
+			hitCellId = hitpoint_triangle_dist.first.second->id();
+			
 			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
 				//The cast to double is only needed if we use an exact_construction kernel. 
 				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
@@ -217,7 +222,6 @@ cout << "classifying site" << site.Position[0]<< site.Position[1] << site.Positi
 			else{
 				throw GenerationErrorMessage("This type of intersection should not happen");
 			}
-			
 
 			LinkData& link = fluid->Links[iSolid];
 
@@ -266,7 +270,6 @@ cout << "classifying site" << site.Position[0]<< site.Position[1] << site.Positi
 int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 	int nHits;
 	bool debugintersect = false;
-	//bool testthis;
 	if (!neigh.IsFluidKnown) {
 		// Neighbour unknown, must always intersect
 		nHits = this->ComputeIntersectionsCGAL(site, neigh);
@@ -417,7 +420,7 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 			else{
 				throw GenerationErrorMessage(
 				"This type of intersection should not happen");
-			}			
+			}
 			if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0 || ori[3] == 0 || ori[4] == 0){	
 				// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. These 2 intersect and the result may be indetermined 
 				// ori4 and ori5. In this case either of the points are coplanar with the triangle (primitive)		

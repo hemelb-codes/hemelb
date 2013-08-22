@@ -12,6 +12,7 @@
 #include <CGAL/point_generators_3.h>
 #include <CGAL/squared_distance_3.h>
 #include <CGAL/Polyhedron_incremental_builder_3.h>
+#include <CGAL/Polyhedron_items_with_id_3.h>
 
 //typedef CGAL::Simple_cartesian<double> Kernel;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
@@ -24,7 +25,8 @@ typedef Kernel::Segment_3 SegmentCGAL;
 typedef Kernel::Triangle_3 TriangleCGAL;
 typedef Kernel::Ray_3 RayCGAL;
 
-typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
+//typedef CGAL::Polyhedron_3<Kernel> Polyhedron;
+typedef CGAL::Polyhedron_3<Kernel,CGAL::Polyhedron_items_with_id_3> Polyhedron;
 typedef CGAL::AABB_polyhedron_triangle_primitive<Kernel,Polyhedron> Primitive;
 typedef CGAL::AABB_traits<Kernel, Primitive> Traits;
 typedef CGAL::AABB_tree<Traits> Tree;
