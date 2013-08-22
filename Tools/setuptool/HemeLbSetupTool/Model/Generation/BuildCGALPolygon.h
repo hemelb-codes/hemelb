@@ -42,16 +42,10 @@ public:
 	}
 	void operator()( HDS& hds);
 	
-	inline std::vector<int> GetID(void) {
-		return this->ID;
-	}
-
-	
 private:
 	vtkPoints* pts;
 	vtkCellArray* polys;
 	vtkIntArray* IoletIdArray;
-	std::vector<int> ID;
 	
 };
 

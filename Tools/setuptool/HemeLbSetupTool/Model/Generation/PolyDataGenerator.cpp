@@ -79,9 +79,7 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 		cout << "Sucsesfully created closed polygon from input" << endl;
 	}
     int i = 0;
-    for(Polyhedron::Facet_iterator it = this->ClippedCGALSurface->facets_begin(); it != this->ClippedCGALSurface->facets_end(); ++it) 
-		it->id() = i++; 
-	IoletIdArrayCGAL = this->triangle->GetID();
+
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	this->AABBtree->accelerate_distance_queries();
 }
@@ -163,8 +161,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 							iHit = n;
 							break;
 						}
-						int temphitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),distit->first.second);
-						int tempioletId = this->IoletIdArrayCGAL[temphitCellId];
+						int temphitCellId = distit->first.second->id();
+						int tempioletId = this->IoletIdArray->GetValue(temphitCellId);
 						if (tempioletId<0){
 							break;//hit a wall no need to continue.
 						}//what if we hit both an inlet and outlet. Can that ever happen?
@@ -183,8 +181,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 							iHit = n;
 							break;//ignoring the following intersections, they are to far away.
 						}
-						int temphitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),distit->first.second);
-						int tempioletId = this->IoletIdArrayCGAL[temphitCellId];
+						int temphitCellId = distit->first.second->id();
+						int tempioletId = this->IoletIdArray->GetValue(temphitCellId);
 						if (tempioletId<0){
 							break;//hit a wall no need to continue.
 						}//what if we hit both an inlet and outlet. Can that ever happen?
@@ -209,7 +207,6 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
 			//hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
 			hitCellId = hitpoint_triangle_dist.first.second->id();
-			
 			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
 				//The cast to double is only needed if we use an exact_construction kernel. 
 				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
@@ -233,8 +230,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 			
 		
-			//			int ioletId = this->IoletIdArray->GetValue(hitCellId);
-			int ioletId = this->IoletIdArrayCGAL[hitCellId];
+			int ioletId = this->IoletIdArray->GetValue(hitCellId);
 
 			if (ioletId < 0) {
 				// -1 => we hit a wall
