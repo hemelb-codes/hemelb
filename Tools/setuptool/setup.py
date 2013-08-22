@@ -211,7 +211,7 @@ if __name__ == "__main__":
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
-    extra_link_args = ['-lcgal']
+    extra_link_args = ['-lCGAL']
     
     # Create the list of extension modules
     ext_modules = []
