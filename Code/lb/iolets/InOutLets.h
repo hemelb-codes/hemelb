@@ -13,7 +13,6 @@
 #include "lb/iolets/InOutLet.h"
 #include "lb/iolets/InOutLetCosine.h"
 #include "lb/iolets/InOutLetFile.h"
-#include "lb/iolets/InOutLetCycle.h"
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "lb/iolets/InOutLetParabolicVelocity.h"
 #include "lb/iolets/InOutLetVelocityAware.h"
