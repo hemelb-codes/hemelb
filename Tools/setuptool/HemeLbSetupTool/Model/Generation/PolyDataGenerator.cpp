@@ -37,12 +37,13 @@
 
 #include <iostream>
 #include <cmath> 
-
+#include <ctime>
 
 using namespace hemelb::io::formats;
 
-PolyDataGenerator::PolyDataGenerator() :
+PolyDataGenerator::PolyDataGenerator():
 	GeometryGenerator(), ClippedSurface(NULL) {
+
 	this->Locator = vtkOBBTree::New();
 	//this->Locator->SetNumberOfCellsPerNode(32); // the default
 	this->Locator->SetTolerance(1e-9);
@@ -63,25 +64,110 @@ void PolyDataGenerator::ComputeBounds(double bounds[6]) const {
 	this->ClippedSurface->GetBounds(bounds);
 }
 
+
+void PolyDataGenerator::ClosePolygon(void){
+	Halfedge_iterator j;
+	Halfedge_iterator k;
+	Halfedge_iterator l;
+	Halfedge_iterator m;
+	Halfedge_handle newedge;
+	
+	int ncompremoved = ClippedCGALSurface->keep_largest_connected_components(1);
+	cout << "Removing " << ncompremoved << " non connected components" << endl;
+	
+	while(!this->ClippedCGALSurface->is_closed()){
+		for (j = ClippedCGALSurface->border_halfedges_begin(); j != ClippedCGALSurface->halfedges_end(); ++j){
+			// We itterate over all border half edges. Half of them are opposite and not real so test this.
+			// it.next() it the next border edge along the hole. This might not be the same as ++it
+			k = j->next();
+			l = k->next();
+			m = l->next();
+			if (j->is_border() && l->is_border() && k->is_border()){
+				//First find size of hole and make sure that this is simple. I.e.
+				//No two halfedges points to the same vertex. If this is the case we delete one of them until 
+				//the hole is simple.
+				Halfedge_iterator tempit = k;
+				Halfedge_iterator tempit2;
+				int sizehole = 1;
+				bool Simplehole = true;
+				while(tempit != j){
+					for(tempit2 = j; tempit2 != tempit ; tempit2=tempit2->next() ){
+						if (tempit2->vertex() == tempit->vertex()){
+							Simplehole = false;
+							ClippedCGALSurface->erase_facet(tempit2->opposite());
+							break; //remove one facet and try over to see if hole is simple.
+						}
+					}
+					if(!Simplehole){
+						break;
+					}
+					tempit = tempit->next();
+					++sizehole;
+				}
+
+				if (Simplehole){
+					//cout << "Hole has " << sizehole << endl;
+					if (j != m){ //more than 3 edges in hole. Have to subdivide
+						newedge = ClippedCGALSurface->add_facet_to_border(j,l);
+						//cout << "Filling " << j->vertex()->point() <<  " , " << k->vertex()->point() << " to " << newedge->vertex()->point() << endl;
+						break;
+					}
+					else{
+						//cout << "Closing " << j->vertex()->point() << " to " << k->vertex()->point() << endl;
+						newedge = ClippedCGALSurface->fill_hole(j);
+						break;
+					}
+				}
+				else {
+					//cout << "Count not fill since hole is not simple, deleted connected facet instead" << endl;
+					break;
+				}
+			}
+		}
+		ClippedCGALSurface->normalize_border();
+	}
+}
+
 void PolyDataGenerator::CreateCGALPolygon(void){
 	vtkPoints *pts;
 	vtkCellArray *polys;
+	std::clock_t start;
+	double duration;
+	start = std::clock();
+
 	polys = this->ClippedSurface->GetPolys();
 	pts =  this->ClippedSurface->GetPoints();
 	vtkIntArray* Iolets = this->IoletIdArray;
 	this->triangle = new BuildCGALPolygon<HalfedgeDS>(pts, polys,Iolets);
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
-	if(this->ClippedCGALSurface->size_of_border_edges()){
+	this->ClippedCGALSurface->normalize_border();
+
+	if (!this->ClippedCGALSurface->is_closed()){
+		ClosePolygon();
+	}
+
+	if(!this->ClippedCGALSurface->is_closed()){	
 		throw GenerationErrorMessage("Created surface is not closed.");
  	}
+	else if (!ClippedCGALSurface->is_pure_triangle()){
+		throw GenerationErrorMessage("Created surface is not pure triangles, cannot voxelize.");
+	}
+	else if (!ClippedCGALSurface->is_valid()){
+		throw GenerationErrorMessage("Created surface is not valid, cannot voxelize.");	
+	}
 	else{
 		cout << "Succesfully created closed polygon from input" << endl;
-	}
-    int i = 0;
-
+		cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets() << " facets " 
+			 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
+			ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
+			 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
+	}	
+	
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
-	this->AABBtree->accelerate_distance_queries();
+	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    std::cout << "Preprocessing took: "<< duration << " s " << endl;
+
 }
 
 
@@ -114,7 +200,6 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
-	cout << "Site: " << site.Position[0] << " " <<  site.Position[1] << " " <<  site.Position[2] << endl;
 	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
 		 ++neighIt) {
 	  	Site& neigh = *neighIt;
@@ -297,6 +382,9 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 			nHits = this->ComputeIntersectionsCGAL(site, neigh);
 			// Only in the case of difference must we intersect.
 			if (nHits % 2 == 0) {
+				bool Sinside = InsideOutside(site);
+				bool Ninside = InsideOutside(neigh);
+				cout << Sinside << " and " << Ninside << endl;
 				throw InconsistentFluidnessError(site, neigh, nHits);
 			}
 			if (debugintersect){
