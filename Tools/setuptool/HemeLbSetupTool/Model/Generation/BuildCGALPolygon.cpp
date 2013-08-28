@@ -44,11 +44,11 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 				face->id() = j;
 			}
 			else
-				//We need to acout for this in the iolet map
+				//We need to accout for this in the iolet map
 				cout << "Ignoring face between: " << indx[0] << " " <<  indx[1] << " " << indx[2] << endl;
 		}
 		else{
-			//We need to acout for this in the iolet map.
+			//We need to accout for this in the iolet map.
 			cout << "Eleminated degenerate vertex" << endl;
 		}
 		++j;
