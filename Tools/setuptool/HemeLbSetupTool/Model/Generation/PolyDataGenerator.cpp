@@ -109,12 +109,14 @@ void PolyDataGenerator::ClosePolygon(void){
 					//cout << "Hole has " << sizehole << endl;
 					if (j != m){ //more than 3 edges in hole. Have to subdivide
 						newedge = ClippedCGALSurface->add_facet_to_border(j,l);
+						newedge->facet()->id() = 5791313;
 						//cout << "Filling " << j->vertex()->point() <<  " , " << k->vertex()->point() << " to " << newedge->vertex()->point() << endl;
 						break;
 					}
 					else{
 						//cout << "Closing " << j->vertex()->point() << " to " << k->vertex()->point() << endl;
 						newedge = ClippedCGALSurface->fill_hole(j);
+						newedge->facet()->id() = 5791313;
 						break;
 					}
 				}
@@ -142,7 +144,10 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
 	this->ClippedCGALSurface->normalize_border();
-
+	cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets() << " facets " 
+		 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
+		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
+		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 	if (!this->ClippedCGALSurface->is_closed()){
 		ClosePolygon();
 	}
@@ -162,6 +167,14 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 			 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
 			ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
 			 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
+		bool write_out = true;
+		if (write_out){
+			std::ofstream     out;
+			out.open( "test.off");
+			out << (*ClippedCGALSurface);
+			out.close();
+		}
+		
 	}	
 	
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
@@ -263,7 +276,7 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 					iHit = n;
 					for (std::vector<Object_Primitive_and_distance>::reverse_iterator distit 
 							 = IntersectionCGAL.rbegin(); distit != IntersectionCGAL.rend(); ++distit){
-						if (distit->second < IntersectionCGAL.back().second-distancetol){
+						if (distit->second < IntersectionCGAL.back().second - distancetol){
 							iHit = n;
 							break;//ignoring the following intersections, they are to far away.
 						}
