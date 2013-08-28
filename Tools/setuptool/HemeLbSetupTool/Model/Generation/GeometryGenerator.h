@@ -27,8 +27,6 @@ public:
 	virtual ~GeometryGenerator();
 	void Execute(bool skipNonIntersectingBlocks) throw (GenerationError);
 	
-	void Writefile(bool skipNonIntersectingBlocks) throw (GenerationError);
-
 	inline double GetVoxelSizeMetres(void) {
 		return this->VoxelSizeMetres;
 	}
