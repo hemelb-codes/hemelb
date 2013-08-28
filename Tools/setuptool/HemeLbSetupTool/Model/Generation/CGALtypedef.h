@@ -35,4 +35,6 @@ typedef Tree::Object_and_primitive_id Object_and_primitive_id;
 typedef Polyhedron::Face_handle FacehandleCGAL;
 typedef Polyhedron::HalfedgeDS HalfedgeDS;
 typedef HalfedgeDS::Face_handle Face_handle;
+typedef Polyhedron::Halfedge_iterator Halfedge_iterator;
+typedef Polyhedron::Halfedge_handle Halfedge_handle;
 typedef std::pair<Object_and_primitive_id, double> Object_Primitive_and_distance;

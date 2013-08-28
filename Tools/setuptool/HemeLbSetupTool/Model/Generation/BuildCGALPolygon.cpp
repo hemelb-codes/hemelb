@@ -42,7 +42,6 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 				B.add_vertex_to_facet( indx[2]);
 				B.end_facet();
 				face->id() = j;
-				
 			}
 			else
 				//We need to acout for this in the iolet map
@@ -56,8 +55,8 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 	}
 	
 	B.end_surface();
-	cout << B.check_unconnected_vertices () << endl;
+	//cout << B.check_unconnected_vertices () << endl;
 	B.remove_unconnected_vertices();
-	cout << B.check_unconnected_vertices () << endl;
+	//cout << B.check_unconnected_vertices () << endl;
 }
 

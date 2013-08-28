@@ -63,6 +63,7 @@ private:
 	virtual void ComputeBounds(double[]) const;
 	virtual void PreExecute(void);
 	void CreateCGALPolygon(void);
+	void ClosePolygon(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
 	int ComputeIntersectionsCGAL(Site& from, Site& to);
