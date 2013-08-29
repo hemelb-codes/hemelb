@@ -109,14 +109,14 @@ void PolyDataGenerator::ClosePolygon(void){
 					//cout << "Hole has " << sizehole << endl;
 					if (j != m){ //more than 3 edges in hole. Have to subdivide
 						newedge = ClippedCGALSurface->add_facet_to_border(j,l);
-						newedge->facet()->id() = 5791313;
+						newedge->facet()->id() = 1;
 						//cout << "Filling " << j->vertex()->point() <<  " , " << k->vertex()->point() << " to " << newedge->vertex()->point() << endl;
 						break;
 					}
 					else{
 						//cout << "Closing " << j->vertex()->point() << " to " << k->vertex()->point() << endl;
 						newedge = ClippedCGALSurface->fill_hole(j);
-						newedge->facet()->id() = 5791313;
+						newedge->facet()->id() = 1;
 						break;
 					}
 				}
@@ -150,7 +150,7 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
 		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 	if (!this->ClippedCGALSurface->is_closed()){
-		cout << "The polygon is not closed mostlikely due to non manifold edges ignored. Will atempt to close it." 
+		cout << "The polygon is not closed most likely due to non manifold edges ignored. Will atempt to close it." 
 			 << endl;
 		ClosePolygon();
 	}
@@ -262,9 +262,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 							iHit = n;
 							break;
 						}
-						int temphitCellId = distit->first.second->id();
-						int tempioletId = this->IoletIdArray->GetValue(temphitCellId);
-						if (tempioletId<0){
+						int tempioletId = distit->first.second->id() - 2; //shifting back from unsigned
+						if (tempioletId < 0){
 							break;//hit a wall no need to continue.
 						}//what if we hit both an inlet and outlet. Can that ever happen?
 						++n;
@@ -282,9 +281,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 							iHit = n;
 							break;//ignoring the following intersections, they are to far away.
 						}
-						int temphitCellId = distit->first.second->id();
-						int tempioletId = this->IoletIdArray->GetValue(temphitCellId);
-						if (tempioletId<0){
+						int tempioletId = distit->first.second->id() - 2; //shifting back from unsigned
+						if (tempioletId < 0){
 							break;//hit a wall no need to continue.
 						}//what if we hit both an inlet and outlet. Can that ever happen?
 						--n;
@@ -306,9 +304,6 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				}
 			}
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
-			//hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
-			hitCellId = hitpoint_triangle_dist.first.second->id();
-			
 
 			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
 				//The cast to double is only needed if we use an exact_construction kernel. 
@@ -325,7 +320,6 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 
 			LinkData& link = fluid->Links[iSolid];
 			
-	
 			// This is set in any solid case
 			float distanceInVoxels =
 				(hitPoint - fluid->Position).GetMagnitude();
@@ -333,9 +327,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			// the lattice vector. Scale it.
 			link.Distance = distanceInVoxels / Neighbours::norms[iSolid];
 			
-		
-			int ioletId = this->IoletIdArray->GetValue(hitCellId);
-
+			int ioletId =  hitpoint_triangle_dist.first.second->id() - 2;
+			//shifting back from unsigned.
 			if (ioletId < 0) {
 				// -1 => we hit a wall
 				link.Type = geometry::CUT_WALL;
@@ -359,20 +352,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				 hitpoint_triangle_dist.first.second->halfedge()->next()->next()->vertex()->point() - 
 									hitpoint_triangle_dist.first.second->halfedge()->next()->vertex()->point());
 				CGALNorm = CGALNorm/CGAL::sqrt(CGALNorm.squared_length());
-				double* normal = 
-					this->Locator->GetDataSet()->GetCellData()->GetNormals()->GetTuple3(
-								hitCellId);
-				
-				double normaldist = pow(pow(CGALNorm.x()-normal[0],2) + pow(CGALNorm.y()-normal[1],2) + pow(CGALNorm.z()-normal[2],2),0.5);
-				if (normaldist > 1e-3){
-					cout << normaldist << endl;
-					cout << "CGAL " << CGALNorm << endl;
-					cout << "VTK: " << normal[0] << " " << normal[1] << " " << normal[2] << endl;
-					cout << "Id: " << hitpoint_triangle_dist.first.second->id() << endl;
-				}
-
-				link.WallNormalAtWallCut = Vector(normal[0], normal[1],
-												  normal[2]);
+				link.WallNormalAtWallCut = Vector(CGALNorm.x(), CGALNorm.y(),
+												  CGALNorm.z());
 				link.DistanceInVoxels = distanceInVoxels;
 			}
 		}

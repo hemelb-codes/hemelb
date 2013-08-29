@@ -41,14 +41,15 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 				B.add_vertex_to_facet( indx[1]);
 				B.add_vertex_to_facet( indx[2]);
 				B.end_facet();
-				face->id() = j;
+				//cout << this->IoletIdArray->GetValue(j) << endl;
+				face->id() = IoletIdArray->GetValue(j) + 2;
+				//the face id is size_t i.e. unsigned so we shift this to positive. 1 is wall. 2,3 ... are 
+				//the inlets and outlets.  
 			}
 			else
-				//We need to accout for this in the iolet map
 				cout << "Ignoring face between: " << indx[0] << " " <<  indx[1] << " " << indx[2] << endl;
 		}
 		else{
-			//We need to accout for this in the iolet map.
 			cout << "Eleminated degenerate vertex" << endl;
 		}
 		++j;
