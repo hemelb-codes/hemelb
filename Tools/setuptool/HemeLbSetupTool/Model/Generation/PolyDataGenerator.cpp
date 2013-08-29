@@ -130,6 +130,7 @@ void PolyDataGenerator::ClosePolygon(void){
 	}
 }
 
+
 void PolyDataGenerator::CreateCGALPolygon(void){
 	vtkPoints *pts;
 	vtkCellArray *polys;
@@ -149,6 +150,8 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
 		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 	if (!this->ClippedCGALSurface->is_closed()){
+		cout << "The polygon is not closed mostlikely due to non manifold edges ignored. Will atempt to close it." 
+			 << endl;
 		ClosePolygon();
 	}
 
@@ -175,8 +178,7 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 			out.close();
 		}
 		
-	}	
-	
+	}
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
     std::cout << "Preprocessing took: "<< duration << " s " << endl;
@@ -306,6 +308,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
 			//hitCellId = std::distance(this->ClippedCGALSurface->facets_begin(),hitpoint_triangle_dist.first.second);
 			hitCellId = hitpoint_triangle_dist.first.second->id();
+			
+
 			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
 				//The cast to double is only needed if we use an exact_construction kernel. 
 				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
@@ -320,7 +324,8 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			}
 
 			LinkData& link = fluid->Links[iSolid];
-
+			
+	
 			// This is set in any solid case
 			float distanceInVoxels =
 				(hitPoint - fluid->Position).GetMagnitude();
@@ -345,12 +350,27 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				// Set the Id
 				link.IoletId = iolet->Id;
 			}
-
+			
 			// If this link intersected the wall, store the normal of the cell we hit and the distance to it.
 			if (link.Type == geometry::CUT_WALL) {
+				VectorCGAL CGALNorm = 
+				CGAL::cross_product(hitpoint_triangle_dist.first.second->halfedge()->next()->vertex()->point() 
+									- hitpoint_triangle_dist.first.second->halfedge()->vertex()->point(),
+				 hitpoint_triangle_dist.first.second->halfedge()->next()->next()->vertex()->point() - 
+									hitpoint_triangle_dist.first.second->halfedge()->next()->vertex()->point());
+				CGALNorm = CGALNorm/CGAL::sqrt(CGALNorm.squared_length());
 				double* normal = 
 					this->Locator->GetDataSet()->GetCellData()->GetNormals()->GetTuple3(
 								hitCellId);
+				
+				double normaldist = pow(pow(CGALNorm.x()-normal[0],2) + pow(CGALNorm.y()-normal[1],2) + pow(CGALNorm.z()-normal[2],2),0.5);
+				if (normaldist > 1e-3){
+					cout << normaldist << endl;
+					cout << "CGAL " << CGALNorm << endl;
+					cout << "VTK: " << normal[0] << " " << normal[1] << " " << normal[2] << endl;
+					cout << "Id: " << hitpoint_triangle_dist.first.second->id() << endl;
+				}
+
 				link.WallNormalAtWallCut = Vector(normal[0], normal[1],
 												  normal[2]);
 				link.DistanceInVoxels = distanceInVoxels;
