@@ -47,10 +47,10 @@ void BuildCGALPolygon<HDS>::operator()( HDS& hds){
 				//the inlets and outlets.  
 			}
 			else
-				cout << "Ignoring face between: " << indx[0] << " " <<  indx[1] << " " << indx[2] << endl;
+				cout << "Ignoring Non manifold facet between: " << indx[0] << " " <<  indx[1] << " " << indx[2] << endl;
 		}
 		else{
-			cout << "Eleminated degenerate vertex" << endl;
+			cout << "Eleminated degenerate vertex: " << indx[0] << " " <<  indx[1] << " " << indx[2] << endl;
 		}
 		++j;
 	}

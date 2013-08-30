@@ -38,6 +38,8 @@
 #include <iostream>
 #include <cmath> 
 #include <ctime>
+#include <vector>
+
 
 using namespace hemelb::io::formats;
 
@@ -72,20 +74,29 @@ void PolyDataGenerator::ClosePolygon(void){
 	Halfedge_iterator m;
 	Halfedge_handle newedge;
 	
+	cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets() << " facets " 
+		 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
+		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
+		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 	int ncompremoved = ClippedCGALSurface->keep_largest_connected_components(1);
 	cout << "Removing " << ncompremoved << " non connected components" << endl;
-	
+	cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets() << " facets " 
+		 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
+		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
+		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
+
 	while(!this->ClippedCGALSurface->is_closed()){
 		for (j = ClippedCGALSurface->border_halfedges_begin(); j != ClippedCGALSurface->halfedges_end(); ++j){
-			// We itterate over all border half edges. Half of them are opposite and not real so test this.
+			// We itterate over all border half edges. Half of them are opposite border edegs and thus not 
+			// real borders so test this first. 
 			// it.next() it the next border edge along the hole. This might not be the same as ++it
 			k = j->next();
 			l = k->next();
 			m = l->next();
 			if (j->is_border() && l->is_border() && k->is_border()){
-				//First find size of hole and make sure that this is simple. I.e.
-				//No two halfedges points to the same vertex. If this is the case we delete one of them until 
-				//the hole is simple.
+				//First find size of hole and make sure that this is simple. i.e.
+				//No two different halfedges points to the same vertex. 
+				//If this is the case we delete one of them and start over.
 				Halfedge_iterator tempit = k;
 				Halfedge_iterator tempit2;
 				int sizehole = 1;
@@ -95,11 +106,11 @@ void PolyDataGenerator::ClosePolygon(void){
 						if (tempit2->vertex() == tempit->vertex()){
 							Simplehole = false;
 							ClippedCGALSurface->erase_facet(tempit2->opposite());
-							break; //remove one facet and try over to see if hole is simple.
+							break; //remove one facet and start over.
 						}
 					}
 					if(!Simplehole){
-						break;
+						break; //ugly Break inermost while loop.
 					}
 					tempit = tempit->next();
 					++sizehole;
@@ -109,19 +120,36 @@ void PolyDataGenerator::ClosePolygon(void){
 					//cout << "Hole has " << sizehole << endl;
 					if (j != m){ //more than 3 edges in hole. Have to subdivide
 						newedge = ClippedCGALSurface->add_facet_to_border(j,l);
-						newedge->facet()->id() = 1;
 						//cout << "Filling " << j->vertex()->point() <<  " , " << k->vertex()->point() << " to " << newedge->vertex()->point() << endl;
-						break;
 					}
 					else{
 						//cout << "Closing " << j->vertex()->point() << " to " << k->vertex()->point() << endl;
 						newedge = ClippedCGALSurface->fill_hole(j);
-						newedge->facet()->id() = 1;
-						break;
 					}
+					// now find the iolet type from neighbors.
+					tempit = newedge;
+					bool start = true;
+					std::vector<size_t> neighborIds;
+					while(tempit != newedge || start){
+						start = false;
+						if (!tempit->opposite()->is_border()){
+							neighborIds.push_back(tempit->opposite()->facet()->id());
+						}
+						tempit = tempit->next();
+					}
+					std::vector<size_t>::iterator max = std::max_element(neighborIds.begin(), neighborIds.end());
+					std::vector<size_t>::iterator min = std::min_element(neighborIds.begin(), neighborIds.end());
+					if (*max != *min){ // if max is min they are all the same.
+						throw GenerationErrorMessage("Could not determin IOlet id of inserted facet.");
+					}
+					else{
+						newedge->facet()->id() = *max;
+					}
+					break; //we have to normalize the border and restart the forloop since 
+					// filling with add_facet_to_border invalidated the order of border/non border edges. 
 				}
 				else {
-					//cout << "Count not fill since hole is not simple, deleted connected facet instead" << endl;
+					//cout << "Could not fill since hole is not simple, deleted connected facet instead" << endl;
 					break;
 				}
 			}
@@ -145,10 +173,6 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 	this->ClippedCGALSurface = new Polyhedron;
 	this->ClippedCGALSurface->delegate(*this->triangle);
 	this->ClippedCGALSurface->normalize_border();
-	cout << "The polyhedron has " << ClippedCGALSurface->size_of_facets() << " facets " 
-		 << ClippedCGALSurface->size_of_halfedges() << " halfedges " << 
-		ClippedCGALSurface->size_of_border_halfedges() << " border halfedges " 
-		 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 	if (!this->ClippedCGALSurface->is_closed()){
 		cout << "The polygon is not closed most likely due to non manifold edges ignored. Will atempt to close it." 
 			 << endl;
@@ -172,12 +196,11 @@ void PolyDataGenerator::CreateCGALPolygon(void){
 			 << ClippedCGALSurface->size_of_vertices() << " vertices " << endl;
 		bool write_out = true;
 		if (write_out){
-			std::ofstream     out;
-			out.open( "test.off");
+			std::ofstream out;
+			out.open( "exportedsurface.off");
 			out << (*ClippedCGALSurface);
 			out.close();
 		}
-		
 	}
 	this->AABBtree = new Tree(this->ClippedCGALSurface->facets_begin(),this->ClippedCGALSurface->facets_end());
 	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
