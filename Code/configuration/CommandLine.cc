@@ -14,15 +14,20 @@ namespace hemelb
 {
   namespace configuration
   {
+    CommandLine::OptionError::OptionError(const char* msg) :
+      std::runtime_error(std::string(msg))
+    {
+    }
+
     CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-        inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
+      inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), argc(aargc),
+          argv(aargv)
     {
 
       // There should be an odd number of arguments since the parameters occur in pairs.
       if ( (argc % 2) == 0)
       {
-        PrintUsage();
-        return;
+        throw OptionError("There should be an odd number of arguments since the parameters occur in pairs.");
       }
 
       // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
@@ -51,12 +56,9 @@ namespace hemelb
         }
         else
         {
-          PrintUsage();
-          return;
+          throw OptionError("Unknown option");
         }
       }
-
-      ok = true;
     }
 
     void CommandLine::PrintUsage()

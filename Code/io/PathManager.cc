@@ -16,7 +16,7 @@ namespace hemelb
     PathManager::PathManager(const configuration::CommandLine & commandLine,
                              const bool & io,
                              const int & processorCount) :
-      options(commandLine), ok(false), doIo(io)
+      options(commandLine), doIo(io)
     {
 
       inputFile = options.GetInputFile();
@@ -32,9 +32,10 @@ namespace hemelb
       {
         if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
         {
-          hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
-                                                                                  outputDir.c_str());
-          return;
+          std::string msg("Output directory \"");
+          msg.append(outputDir);
+          msg.append("\" already exists.");
+          throw std::runtime_error(msg);
         }
 
         hemelb::util::MakeDirAllRXW(outputDir);
@@ -42,8 +43,6 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(dataPath);
         reportName = outputDir;
       }
-
-      ok = true;
     }
 
     const std::string & PathManager::GetInputFile() const
