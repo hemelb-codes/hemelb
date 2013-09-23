@@ -37,15 +37,7 @@ namespace hemelb
         PathManager(const configuration::CommandLine & commandLine,
                     const bool &io,
                     const int &processorCount);
-        /**
-         * After construction, check this to see if a problem occurred. We are not using exceptions.
-         * @return True if the path manager could not construct input and output locations OK.
-         */
-        // TODO replace with an exception
-        bool HasProblems() const
-        {
-          return (!ok);
-        }
+
         /**
          * A local or full path to the input xml configuration file.
          * @return A local or full path to the input xml configuration file.
@@ -99,7 +91,6 @@ namespace hemelb
         std::string reportName;
         std::string dataPath;
         const configuration::CommandLine &options;
-        bool ok;
         bool doIo; //! Am I the input/output node?
     };
   }

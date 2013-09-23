@@ -11,6 +11,7 @@
 #define HEMELB_CONFIGURATION_COMMANDLINE_H
 
 #include <string>
+#include <stdexcept>
 
 #include "log/Logger.h"
 namespace hemelb
@@ -38,7 +39,7 @@ namespace hemelb
         /**
          * Report to standard output an error message describing the usage
          */
-        void PrintUsage();
+        static void PrintUsage();
         /**
          * @return Number of images that should be produced
          */
@@ -84,16 +85,12 @@ namespace hemelb
         {
           return (argv);
         }
-        /**
-         * Test this after construction to see if there were problems with creation.
-         * Used while we are not using exceptions.
-         * @return True if there were problems parsing the command line, false otherwise.
-         */
-        //TODO replace with an exception
-        bool HasProblems()
+
+        class OptionError : public std::runtime_error
         {
-          return (!ok);
-        }
+          public:
+            OptionError(const char* msg);
+        };
       private:
         std::string inputFile; //! local or full path to input file
         std::string outputDir; //! local or full path to input file
@@ -101,7 +98,6 @@ namespace hemelb
         int steeringSessionId; //! unique identifier for steering session
         int argc; //! count of command line arguments, including program name
         const char * const * const argv; //! command line arguments
-        bool ok; //! track if the construction went OK.
     };
   }
 }
