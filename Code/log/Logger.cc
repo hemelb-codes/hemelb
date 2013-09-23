@@ -15,9 +15,8 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "mpiInclude.h"
 #include "util/utilityFunctions.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "log/Logger.h"
 
 namespace hemelb

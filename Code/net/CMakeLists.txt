@@ -1,4 +1,4 @@
-add_library(hemelb_net IteratedAction.cc BaseNet.cc 
+add_library(hemelb_net mpi.cc IteratedAction.cc BaseNet.cc 
 mixins/pointpoint/CoalescePointPoint.cc
 mixins/pointpoint/SeparatedPointPoint.cc
 mixins/pointpoint/ImmediatePointPoint.cc

@@ -45,11 +45,14 @@ namespace hemelb
 
   }
 
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::vis::BasicPixel>::RegisterMpiDataType()
+  namespace net
   {
-    MPI_Datatype ret = vis::BasicPixel::GetMPIType();
-    MPI_Type_commit(&ret);
-    return ret;
+    template<>
+    MPI_Datatype net::MpiDataTypeTraits<hemelb::vis::BasicPixel>::RegisterMpiDataType()
+    {
+      MPI_Datatype ret = vis::BasicPixel::GetMPIType();
+      MPI_Type_commit(&ret);
+      return ret;
+    }
   }
 }

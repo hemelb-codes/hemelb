@@ -14,7 +14,7 @@
 #include <map>
 
 #include "log/Logger.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "net/net.h"
 #include "vis/BasicPixel.h"
 #include "vis/VisSettings.h"
