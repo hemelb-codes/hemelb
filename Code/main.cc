@@ -42,10 +42,7 @@ int main(int argc, char *argv[])
     // Interpose this catch to print usage before propagating the error.
     catch (hemelb::configuration::CommandLine::OptionError& e)
     {
-      if (hemelbCommunicator.GetRank() == 0)
-      {
-        hemelb::configuration::CommandLine::PrintUsage();
-      }
+      hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::Singleton>(hemelb::configuration::CommandLine::GetUsage());
       throw;
     }
   }

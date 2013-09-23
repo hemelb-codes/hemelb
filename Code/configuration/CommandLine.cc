@@ -61,16 +61,15 @@ namespace hemelb
       }
     }
 
-    void CommandLine::PrintUsage()
+    std::string CommandLine::GetUsage()
     {
-      printf("-!-!-!-!-!-!-!-!-!-!-!-!");
-      printf("Correct usage: hemelb [-<Parameter Name> <Parameter Value>]* \n");
-      printf("Parameter name and significance:\n");
-      printf("-in \t Path to the configuration xml file (default is config.xml)\n");
-      printf("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
-      printf("-i \t Number of images to create (default is 10)\n");
-      printf("-ss \t Steering session identifier (default is 1)\n");
-      printf("-!-!-!-!-!-!-!-!-!-!-!-!");
+      std::string ans("Correct usage: hemelb [-<Parameter Name> <Parameter Value>]* \n");
+      ans.append("Parameter name and significance:\n");
+      ans.append("-in \t Path to the configuration xml file (default is config.xml)\n");
+      ans.append("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
+      ans.append("-i \t Number of images to create (default is 10)\n");
+      ans.append("-ss \t Steering session identifier (default is 1)\n");
+      return ans;
     }
   }
 }
