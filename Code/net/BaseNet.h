@@ -16,7 +16,7 @@
 #include <iostream>
 
 #include "constants.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "topology/Communicator.h"
 
 namespace hemelb

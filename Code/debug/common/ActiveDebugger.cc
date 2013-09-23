@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 #include "debug/common/ActiveDebugger.h"
 

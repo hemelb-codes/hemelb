@@ -11,11 +11,14 @@
 
 namespace hemelb
 {
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::StreakPixel>::RegisterMpiDataType()
+  namespace net
   {
-    MPI_Datatype ret = vis::streaklinedrawer::StreakPixel::GetMPIType();
-    MPI_Type_commit(&ret);
-    return ret;
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::StreakPixel>::RegisterMpiDataType()
+    {
+      MPI_Datatype ret = vis::streaklinedrawer::StreakPixel::GetMPIType();
+      MPI_Type_commit(&ret);
+      return ret;
+    }
   }
 }

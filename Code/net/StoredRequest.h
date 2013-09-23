@@ -11,7 +11,7 @@
 #define HEMELB_NET_STOREDREQUEST_H
 #include <cstring>
 #include "constants.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 namespace hemelb
 {
   namespace net

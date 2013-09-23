@@ -212,12 +212,12 @@ namespace hemelb
       char* buffer = new char[nBytes];
       if (currentComms.GetRank() == HEADER_READING_RANK)
       {
-        MPI_File_read(file, buffer, nBytes, MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
+        MPI_File_read(file, buffer, nBytes, net::MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
       }
 
       MPI_Bcast(buffer,
                 nBytes,
-                MpiDataType<char> (),
+                net::MpiDataType<char> (),
                 HEADER_READING_RANK,
                 currentComms.GetCommunicator());
       return buffer;
@@ -707,14 +707,14 @@ namespace hemelb
         MPI_Allreduce(&myProcForSite[0],
                       &procForSiteRecv[0],
                       (int) geometry.GetSitesPerBlock(),
-                      MpiDataType(procForSiteRecv[0]),
+                      net::MpiDataType(procForSiteRecv[0]),
                       MPI_MIN,
                       topologyCommunicator);
 
         MPI_Allreduce(&dummySiteData[0],
                       &siteDataRecv[0],
                       (int) blockSiteDataLength,
-                      MpiDataType(dummySiteData[0]),
+                      net::MpiDataType(dummySiteData[0]),
                       MPI_MIN,
                       topologyCommunicator);
 

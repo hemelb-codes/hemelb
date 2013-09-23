@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "mpiInclude.h"
+#include "net/mpi.h"
 namespace hemelb
 {
   namespace util

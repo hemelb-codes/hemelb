@@ -10,7 +10,7 @@
 #ifndef HEMELB_VIS_BASICPIXEL_H
 #define HEMELB_VIS_BASICPIXEL_H
 
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 namespace hemelb
 {

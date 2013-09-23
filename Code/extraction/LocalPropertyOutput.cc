@@ -18,13 +18,14 @@ namespace hemelb
 {
   namespace extraction
   {
-    LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec) :
-        dataSource(dataSource), outputSpec(outputSpec)
+    LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
+                                             const PropertyOutputFile* outputSpec) :
+      dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
       MPI_File_open(MPI_COMM_WORLD,
-                    const_cast<char*>(outputSpec->filename.c_str()),
+                    const_cast<char*> (outputSpec->filename.c_str()),
                     MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
                     MPI_INFO_NULL,
                     &outputFile);
@@ -49,7 +50,8 @@ namespace hemelb
       // Then get add each field's length
       for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
       {
-        writeLength += sizeof(WrittenDataType) * GetFieldLength(outputSpec->fields[outputNumber].type);
+        writeLength += sizeof(WrittenDataType)
+            * GetFieldLength(outputSpec->fields[outputNumber].type);
       }
 
       //  Now multiply by local site count
@@ -64,11 +66,16 @@ namespace hemelb
       //! @TODO: These two MPI calls can be replaced with one
 
       // Everyone needs to know the total length written during one iteration.
-      MPI_Allreduce(&writeLength, &allCoresWriteLength, 1, MpiDataType<uint64_t>(), MPI_SUM, MPI_COMM_WORLD);
+      MPI_Allreduce(&writeLength,
+                    &allCoresWriteLength,
+                    1,
+                    net::MpiDataType<uint64_t> (),
+                    MPI_SUM,
+                    MPI_COMM_WORLD);
 
       // Only the root process must know the total number of sites written
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, MpiDataType<uint64_t>(), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, net::MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
 
       unsigned totalHeaderLength = 0;
 
@@ -80,7 +87,8 @@ namespace hemelb
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
           // Name
-          fieldHeaderLength += io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
+          fieldHeaderLength
+              += io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
           // Uint32 for number of fields
           fieldHeaderLength += 4;
           // Double for the offset in each field
@@ -93,10 +101,12 @@ namespace hemelb
 
         {
           // Encoder for ONLY the main header (note shorter length)
-          io::writers::xdr::XdrMemWriter mainHeaderWriter(headerBuffer, io::formats::extraction::MainHeaderLength);
+          io::writers::xdr::XdrMemWriter
+              mainHeaderWriter(headerBuffer, io::formats::extraction::MainHeaderLength);
 
           // Fill it
-          mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber) << uint32_t(io::formats::extraction::MagicNumber)
+          mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber)
+              << uint32_t(io::formats::extraction::MagicNumber)
               << uint32_t(io::formats::extraction::VersionNumber);
           mainHeaderWriter << double(dataSource.GetVoxelSize());
           const util::Vector3D<distribn_t> &origin = dataSource.GetOrigin();
@@ -110,8 +120,9 @@ namespace hemelb
         }
         {
           // Create the field header writer
-          io::writers::xdr::XdrMemWriter fieldHeaderWriter(headerBuffer + io::formats::extraction::MainHeaderLength,
-                                                           fieldHeaderLength);
+          io::writers::xdr::XdrMemWriter
+              fieldHeaderWriter(headerBuffer + io::formats::extraction::MainHeaderLength,
+                                fieldHeaderLength);
           // Write it
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
@@ -123,7 +134,12 @@ namespace hemelb
         }
 
         // Write from the buffer
-        MPI_File_write_at(outputFile, 0, headerBuffer, totalHeaderLength, MPI_BYTE, MPI_STATUS_IGNORE);
+        MPI_File_write_at(outputFile,
+                          0,
+                          headerBuffer,
+                          totalHeaderLength,
+                          MPI_BYTE,
+                          MPI_STATUS_IGNORE);
 
         // And clear it up.
         delete[] headerBuffer;
@@ -138,7 +154,7 @@ namespace hemelb
         if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, MpiDataType<uint64_t>(), 1, 1, MPI_COMM_WORLD);
+          MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
           localDataOffsetIntoFile -= writeLength;
         }
       }
@@ -147,7 +163,7 @@ namespace hemelb
         // Receive the writing start position from the previous core.
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
-                 MpiDataType<uint64_t>(),
+                 net::MpiDataType<uint64_t> (),
                  topology::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
@@ -160,7 +176,7 @@ namespace hemelb
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
-                   MpiDataType<uint64_t>(),
+                   net::MpiDataType<uint64_t>(),
                    topology::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
@@ -228,44 +244,50 @@ namespace hemelb
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetPressure() - REFERENCE_PRESSURE_mmHg);
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetPressure()
+                    - REFERENCE_PRESSURE_mmHg);
                 break;
               case OutputField::Velocity:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVelocity().x)
-                    << static_cast<WrittenDataType>(dataSource.GetVelocity().y)
-                    << static_cast<WrittenDataType>(dataSource.GetVelocity().z);
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetVelocity().x)
+                    << static_cast<WrittenDataType> (dataSource.GetVelocity().y)
+                    << static_cast<WrittenDataType> (dataSource.GetVelocity().z);
                 break;
                 //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVonMisesStress());
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetVonMisesStress());
                 break;
               case OutputField::ShearStress:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearStress());
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetShearStress());
                 break;
               case OutputField::ShearRate:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearRate());
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetShearRate());
                 break;
               case OutputField::StressTensor:
               {
                 util::Matrix3D tensor = dataSource.GetStressTensor();
                 // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                xdrWriter << static_cast<WrittenDataType>(tensor[0][0]) << static_cast<WrittenDataType>(tensor[0][1])
-                    << static_cast<WrittenDataType>(tensor[0][2]) << static_cast<WrittenDataType>(tensor[1][1])
-                    << static_cast<WrittenDataType>(tensor[1][2]) << static_cast<WrittenDataType>(tensor[2][2]);
+                xdrWriter << static_cast<WrittenDataType> (tensor[0][0])
+                    << static_cast<WrittenDataType> (tensor[0][1])
+                    << static_cast<WrittenDataType> (tensor[0][2])
+                    << static_cast<WrittenDataType> (tensor[1][1])
+                    << static_cast<WrittenDataType> (tensor[1][2])
+                    << static_cast<WrittenDataType> (tensor[2][2]);
                 break;
               }
               case OutputField::Traction:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTraction().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTraction().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTraction().z);
+                xdrWriter << static_cast<WrittenDataType> (dataSource.GetTraction().x)
+                    << static_cast<WrittenDataType> (dataSource.GetTraction().y)
+                    << static_cast<WrittenDataType> (dataSource.GetTraction().z);
                 break;
               case OutputField::TangentialProjectionTraction:
-                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().x)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().y)
-                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().z);
+                xdrWriter
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().x)
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
+                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
                 break;
               case OutputField::MpiRank:
-                xdrWriter << static_cast<WrittenDataType>(topology::NetworkTopology::Instance()->GetLocalRank());
+                xdrWriter
+                    << static_cast<WrittenDataType> (topology::NetworkTopology::Instance()->GetLocalRank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no
@@ -277,7 +299,12 @@ namespace hemelb
       }
 
       // Actually do the MPI writing.
-      MPI_File_write_at(outputFile, localDataOffsetIntoFile, buffer, writeLength, MPI_BYTE, MPI_STATUS_IGNORE);
+      MPI_File_write_at(outputFile,
+                        localDataOffsetIntoFile,
+                        buffer,
+                        writeLength,
+                        MPI_BYTE,
+                        MPI_STATUS_IGNORE);
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;

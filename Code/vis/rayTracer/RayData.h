@@ -11,7 +11,7 @@
 #define HEMELB_VIS_RAYTRACER_RAYDATA_H
 
 #include "constants.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "vis/BasicPixel.h"
 #include "vis/DomainStats.h"
 #include "vis/VisSettings.h"

@@ -49,12 +49,14 @@ namespace hemelb
       }
     }
   }
-
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced>::RegisterMpiDataType()
+  namespace net
   {
-    MPI_Datatype ret = vis::raytracer::RayDataEnhanced::GetMpiType();
-    MPI_Type_commit(&ret);
-    return ret;
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced>::RegisterMpiDataType()
+    {
+      MPI_Datatype ret = vis::raytracer::RayDataEnhanced::GetMpiType();
+      MPI_Type_commit(&ret);
+      return ret;
+    }
   }
 }

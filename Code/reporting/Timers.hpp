@@ -27,18 +27,18 @@ namespace hemelb
       CommsPolicy::Reduce(timings,
                           &maxes[0],
                           numberOfTimers,
-                          hemelb::MpiDataType<double>(),
+                          net::MpiDataType<double>(),
                           MPI_MAX,
                           0,
                           MPI_COMM_WORLD);
       CommsPolicy::Reduce(timings,
                           &means[0],
                           numberOfTimers,
-                          hemelb::MpiDataType<double>(),
+                          net::MpiDataType<double>(),
                           MPI_SUM,
                           0,
                           MPI_COMM_WORLD);
-      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, hemelb::MpiDataType<double>(), MPI_MIN, 0, MPI_COMM_WORLD);
+      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(), MPI_MIN, 0, MPI_COMM_WORLD);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
         means[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());

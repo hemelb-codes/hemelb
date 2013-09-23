@@ -452,10 +452,10 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
         MPI_Alltoall(&numberOfBlocksIForceUponX[0],
                      1,
-                     MpiDataType<proc_t> (),
+                     net::MpiDataType<proc_t> (),
                      &blocksForcedOnMe[0],
                      1,
-                     MpiDataType<proc_t> (),
+                     net::MpiDataType<proc_t> (),
                      comms.GetCommunicator());
         timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
         timers[hemelb::reporting::Timers::moveForcingData].Start();
@@ -562,10 +562,10 @@ namespace hemelb
         // each other core.
         MPI_Alltoall(&numberOfBlocksRequiredFrom[0],
                      1,
-                     MpiDataType<site_t> (),
+                     net::MpiDataType<site_t> (),
                      &numberOfBlocksXRequiresFromMe[0],
                      1,
-                     MpiDataType<site_t> (),
+                     net::MpiDataType<site_t> (),
                      comms.GetCommunicator());
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
@@ -817,7 +817,7 @@ namespace hemelb
         MPI_Allreduce(&vtxDistribn[0],
                       &vtxDistribnRecv[0],
                       comms.GetSize() + 1,
-                      MpiDataType(vtxDistribnRecv[0]),
+                      net::MpiDataType(vtxDistribnRecv[0]),
                       MPI_MIN,
                       comms.GetCommunicator());
         for (proc_t rank = 0; rank < comms.GetSize() + 1; ++rank)
@@ -908,7 +908,7 @@ namespace hemelb
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
           MPI_Send(&neighboursAdjacencyCount,
                    1,
-                   MpiDataType(neighboursAdjacencyCount),
+                   net::MpiDataType(neighboursAdjacencyCount),
                    neighbouringProc,
                    42,
                    comms.GetCommunicator());
@@ -925,7 +925,7 @@ namespace hemelb
           // Send the data to the neighbouringProc.
           MPI_Send(&neighboursAdjacencyData[0],
                    (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   MpiDataType<idx_t> (),
+                   net::MpiDataType<idx_t> (),
                    neighbouringProc,
                    43,
                    comms.GetCommunicator());
@@ -936,7 +936,7 @@ namespace hemelb
         {
           MPI_Recv(&neighboursAdjacencyCount,
                    1,
-                   MpiDataType(neighboursAdjacencyCount),
+                   net::MpiDataType(neighboursAdjacencyCount),
                    neighbouringProc,
                    42,
                    comms.GetCommunicator(),
@@ -944,7 +944,7 @@ namespace hemelb
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           MPI_Recv(&neighboursAdjacencyData[0],
                    (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   MpiDataType<idx_t> (),
+                   net::MpiDataType<idx_t> (),
                    neighbouringProc,
                    43,
                    comms.GetCommunicator(),
@@ -1027,7 +1027,7 @@ namespace hemelb
         MPI_Allreduce(&firstSiteIndexPerBlock[0],
                       &firstSiteIndexPerBlockRecv[0],
                       (int) ( ( ( ( (geometry.GetBlockCount()))))),
-                      MpiDataType(firstSiteIndexPerBlock[0]),
+                      net::MpiDataType(firstSiteIndexPerBlock[0]),
                       MPI_MAX,
                       comms.GetCommunicator());
 

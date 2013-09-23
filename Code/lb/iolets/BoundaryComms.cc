@@ -79,7 +79,7 @@ namespace hemelb
         {
           MPI_Isend(density,
                     1,
-                    hemelb::MpiDataType(*density),
+                    net::MpiDataType(*density),
                     procsList[proc],
                     100,
                     MPI_COMM_WORLD,
@@ -93,7 +93,7 @@ namespace hemelb
         {
           MPI_Irecv(density,
                     1,
-                    hemelb::MpiDataType(*density),
+                    net::MpiDataType(*density),
                     BoundaryValues::GetBCProcRank(),
                     100,
                     MPI_COMM_WORLD,

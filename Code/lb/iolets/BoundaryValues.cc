@@ -114,10 +114,10 @@ namespace hemelb
 
         MPI_Gather(&isIOletOnThisProc,
                    1,
-                   hemelb::MpiDataType(isIOletOnThisProc),
+                   net::MpiDataType(isIOletOnThisProc),
                    processorsNeedingIoletFlags,
                    1,
-                   hemelb::MpiDataType(processorsNeedingIoletFlags[0]),
+                   net::MpiDataType(processorsNeedingIoletFlags[0]),
                    GetBCProcRank(),
                    MPI_COMM_WORLD);
 

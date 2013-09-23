@@ -10,7 +10,7 @@
 #ifndef HEMELB_COLLOIDS_PARTICLE_H
 #define HEMELB_COLLOIDS_PARTICLE_H
 
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "colloids/PersistedParticle.h"
 #include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"

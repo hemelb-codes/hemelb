@@ -14,7 +14,7 @@
 #include "geometry/LatticeData.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "colloids/Particle.h"
 #include "topology/NetworkTopology.h"
 #include "units.h"
