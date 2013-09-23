@@ -17,7 +17,7 @@
 
 #include "constants.h"
 #include "net/mpi.h"
-#include "topology/Communicator.h"
+#include "net/Communicator.h"
 
 namespace hemelb
 {
@@ -28,7 +28,7 @@ namespace hemelb
     {
       public:
         BaseNet();
-        BaseNet(topology::Communicator &communicator);
+        BaseNet(Communicator &communicator);
 
         virtual ~BaseNet()
         {
@@ -48,7 +48,7 @@ namespace hemelb
          */
         void Dispatch();
 
-        const topology::Communicator &GetCommunicator() const
+        const Communicator &GetCommunicator() const
         {
           return communicator;
         }
@@ -90,7 +90,7 @@ namespace hemelb
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();
 
-        const topology::Communicator &communicator;
+        const Communicator &communicator;
       private:
         /***
          * Buffers which can be used to store displacements and counts for cleaning up interfaces

@@ -91,7 +91,7 @@ namespace hemelb
 
     bool LbDataSourceIterator::IsAvailable(const util::Vector3D<site_t>& location) const
     {
-      return data.GetProcIdFromGlobalCoords(location) == topology::NetworkTopology::Instance()->GetLocalRank();
+      return data.GetProcIdFromGlobalCoords(location) == net::NetworkTopology::Instance()->GetLocalRank();
     }
 
     distribn_t LbDataSourceIterator::GetVoxelSize() const

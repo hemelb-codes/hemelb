@@ -18,7 +18,7 @@
 
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"

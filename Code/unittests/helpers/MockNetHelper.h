@@ -23,7 +23,7 @@ namespace hemelb
           MockNetHelper():communicatorMock(NULL),netMock(NULL){}
           void setUp(const proc_t core_count, const proc_t current_core)
           {
-            communicatorMock = new topology::Communicator(current_core, core_count);
+            communicatorMock = new net::Communicator(current_core, core_count);
             netMock = new net::NetMock(*communicatorMock);
           }
           void tearDown(){
@@ -31,7 +31,7 @@ namespace hemelb
             delete netMock;
           }
 
-          topology::Communicator *communicatorMock;
+          net::Communicator *communicatorMock;
           net::NetMock *netMock;
       };
 

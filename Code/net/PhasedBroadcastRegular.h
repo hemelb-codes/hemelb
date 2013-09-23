@@ -165,7 +165,7 @@ namespace hemelb
           // If this node is the root of the tree and we've just finished the upwards half, it
           // must act.
           if (iCycleNumber == (base::GetRoundTripLength() - 1)
-              && topology::NetworkTopology::Instance()->GetLocalRank() == 0)
+              && NetworkTopology::Instance()->GetLocalRank() == 0)
           {
             TopNodeAction();
           }

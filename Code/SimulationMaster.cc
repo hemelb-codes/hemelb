@@ -22,7 +22,7 @@
 #include "io/xml/XmlAbstractionLayer.h"
 #include "colloids/ColloidController.h"
 #include "net/BuildInfo.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BoundaryConditions.h"
 
@@ -90,7 +90,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
 SimulationMaster::~SimulationMaster()
 {
 
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     delete imageSendCpt;
   }
@@ -127,7 +127,7 @@ SimulationMaster::~SimulationMaster()
  */
 bool SimulationMaster::IsCurrentProcTheIOProc()
 {
-  return hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
+  return hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
 }
 
 /**
@@ -135,7 +135,7 @@ bool SimulationMaster::IsCurrentProcTheIOProc()
  */
 int SimulationMaster::GetProcessorCount()
 {
-  return hemelb::topology::NetworkTopology::Instance()->GetProcessorCount();
+  return hemelb::net::NetworkTopology::Instance()->GetProcessorCount();
 }
 
 /**
@@ -210,7 +210,7 @@ void SimulationMaster::Initialise()
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
   // Initialise and begin the steering.
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     network = new hemelb::steering::Network(steeringSessionId, timings);
   }
@@ -239,7 +239,7 @@ void SimulationMaster::Initialise()
                                                   latticeData,
                                                   timings[hemelb::reporting::Timers::visualisation]);
 
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     imageSendCpt = new hemelb::steering::ImageSendComponent(simulationState,
                                                             visualisationControl,
@@ -326,7 +326,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
   }
 
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     stepManager->RegisterIteratedActorSteps(*network, 1);
   }
@@ -368,7 +368,7 @@ void SimulationMaster::WriteLocalImages()
       it != writtenImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
 
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
       hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
@@ -394,7 +394,7 @@ void SimulationMaster::GenerateNetworkImages()
       networkImagesCompleted.find(simulationState->GetTimeStep());
       it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result = visualisationControl->GetResult(it->second);
@@ -501,7 +501,7 @@ void SimulationMaster::DoTimeStep()
    This is to be done. */
 
   bool renderForNetworkStream = false;
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc() && !steeringCpt->readyForNextImage)
+  if (hemelb::net::NetworkTopology::Instance()->IsCurrentProcTheIOProc() && !steeringCpt->readyForNextImage)
   {
     renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
     steeringCpt->readyForNextImage = renderForNetworkStream;

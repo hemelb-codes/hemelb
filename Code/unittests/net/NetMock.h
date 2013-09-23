@@ -31,7 +31,7 @@ namespace hemelb
                       public ViaPointPointGathers, public ViaPointPointAllToAll
       {
         public:
-          NetMock(topology::Communicator & communicator) :
+          NetMock(net::Communicator & communicator) :
               BaseNet(communicator), RecordingNet()
           {
           }

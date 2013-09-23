@@ -7,18 +7,18 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H
-#define HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H
+#ifndef HEMELB_NET_NETWORKTOPOLOGY_H
+#define HEMELB_NET_NETWORKTOPOLOGY_H
 
 #include <vector>
 #include <cstdio>
 
 #include "constants.h"
-#include "topology/Communicator.h"
+#include "net/Communicator.h"
 
 namespace hemelb
 {
-  namespace topology
+  namespace net
   {
     class NetworkTopology
     {
@@ -66,4 +66,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_TOPOLOGY_NETWORKTOPOLOGY_H */
+#endif /* HEMELB_NET_NETWORKTOPOLOGY_H */

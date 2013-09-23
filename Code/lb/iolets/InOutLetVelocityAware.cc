@@ -9,7 +9,7 @@
 
 #include "lb/iolets/InOutLetVelocityAware.h"
 #include "configuration/SimConfig.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"
 
@@ -49,7 +49,7 @@ namespace hemelb
 
           // If this is a real proc, register the site as needed with the neighbouring data manager.
           if (neighbourSiteHomeProc != BIG_NUMBER2 && neighbourSiteHomeProc
-              != topology::NetworkTopology::Instance()->GetLocalRank())
+              != net::NetworkTopology::Instance()->GetLocalRank())
           {
             manager->RegisterNeededSite(*site_iterator,
                                         geometry::neighbouring::RequiredSiteInformation(true));
@@ -87,7 +87,7 @@ namespace hemelb
 
         util::Vector3D < distribn_t > totalVelocity(0.);
 
-        int MyProcNumber = topology::NetworkTopology::Instance()->GetLocalRank();
+        int MyProcNumber = net::NetworkTopology::Instance()->GetLocalRank();
 
         /* Apply CalcDensityAndVelocity to extract velocities and add them all up.
          * We're not (yet) using weights or normalisation here, or conversion to physical units */

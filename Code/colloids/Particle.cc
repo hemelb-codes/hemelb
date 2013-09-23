@@ -43,9 +43,9 @@ namespace hemelb
       // ORDER BY isLocal, ownerRank, particleId
       if (ownerRank == other.ownerRank)
         return (particleId < other.particleId);
-      else if (ownerRank == topology::NetworkTopology::Instance()->GetLocalRank())
+      else if (ownerRank == net::NetworkTopology::Instance()->GetLocalRank())
         return true;
-      else if (other.ownerRank == topology::NetworkTopology::Instance()->GetLocalRank())
+      else if (other.ownerRank == net::NetworkTopology::Instance()->GetLocalRank())
         return false;
       else
         return (ownerRank < other.ownerRank);
@@ -208,7 +208,7 @@ namespace hemelb
             proc_t procId;
             site_t siteId;
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
-            bool isSiteLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
+            bool isSiteLocal = (procId == net::NetworkTopology::Instance()->GetLocalRank());
 
             log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, got siteId: %i, isSiteValid: %s, isSiteLocal: %s, procId: %i\n",
@@ -283,7 +283,7 @@ namespace hemelb
             proc_t procId;
             site_t siteId;
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
-            bool isSiteLocal = (procId == topology::NetworkTopology::Instance()->GetLocalRank());
+            bool isSiteLocal = (procId == net::NetworkTopology::Instance()->GetLocalRank());
 
             if (log::Logger::ShouldDisplay<log::Trace>())
             {
@@ -310,7 +310,7 @@ namespace hemelb
               else if (blockStatus == 0)
                 if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == BIG_NUMBER2)
                   siteStatus = 3; // individual site is not simulated, i.e. must be solid
-                else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == topology::NetworkTopology::Instance()->GetLocalRank())
+                else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == net::NetworkTopology::Instance()->GetLocalRank())
                   if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
                   siteStatus = 4; // individual site is local but solid (should not happen?)
 
@@ -320,7 +320,7 @@ namespace hemelb
                 globalStatus = 1; // invalid - out of range
               else if (blockStatus == 2 || (siteStatus == 3) | (siteStatus == 4))
                 globalStatus = 2; // solid
-              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) != topology::NetworkTopology::Instance()->GetLocalRank())
+              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) != net::NetworkTopology::Instance()->GetLocalRank())
                 globalStatus = 3; // remote fluid
 
               log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO STUFF\n");
@@ -361,7 +361,7 @@ namespace hemelb
                 {
                   log::Logger::Log<log::Trace, log::OnePerCore>("MAJOR PROBLEM! isValid: %s, isLocal: %s, procIdForSite: %i, localRank: %i\n", isSiteValid ? "T": "F", isSiteLocal ? "T" : "F",
                     latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)),
-                    topology::NetworkTopology::Instance()->GetLocalRank());
+                    net::NetworkTopology::Instance()->GetLocalRank());
                 }
             }
 

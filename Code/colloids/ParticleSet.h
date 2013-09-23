@@ -16,7 +16,7 @@
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
 #include "colloids/Particle.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "units.h"
 
 namespace hemelb

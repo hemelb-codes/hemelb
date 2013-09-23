@@ -314,7 +314,6 @@ set(package_subdirs
 	geometry
 	net
 	debug
-	topology
 	util
 	io
 	log
@@ -362,7 +361,6 @@ if (HEMELB_BUILD_MULTISCALE)
 		geometry
 		net
 		debug
-		topology
 		util
 		io
 		log

@@ -21,7 +21,7 @@
 #include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q27.h"
 #include "net/net.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
@@ -44,11 +44,11 @@ namespace hemelb
       //  - there's no steering core (then all ranks are involved)
       //  - we're not on core 0 (the only core that might ever not participate)
       //  - there's only one processor (so core 0 has to participate)
-      participateInTopology = !reserveSteeringCore || topology::NetworkTopology::Instance()->GetLocalRank() != 0
-          || topology::NetworkTopology::Instance()->GetProcessorCount() == 1;
+      participateInTopology = !reserveSteeringCore || net::NetworkTopology::Instance()->GetLocalRank() != 0
+          || net::NetworkTopology::Instance()->GetProcessorCount() == 1;
 
       // Create our own group, without the root node if we're not running with it.
-      if (reserveSteeringCore && topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
+      if (reserveSteeringCore && net::NetworkTopology::Instance()->GetProcessorCount() > 1)
       {
         int lExclusions[1] = { 0 };
         MPI_Group_excl(worldGroup, 1, lExclusions, &topologyGroup);
@@ -65,7 +65,7 @@ namespace hemelb
       // decomposition.
       if (participateInTopology)
       {
-        topologyComms = topology::Communicator(topologyCommunicator);
+        topologyComms = net::Communicator(topologyCommunicator);
       }
     }
 
@@ -106,7 +106,7 @@ namespace hemelb
                                 fileInfo,
                                 &file);
 
-      currentComms = topology::Communicator(MPI_COMM_WORLD);
+      currentComms = net::Communicator(MPI_COMM_WORLD);
 
       if (error != MPI_SUCCESS)
       {
@@ -950,7 +950,7 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (topology::NetworkTopology::Instance()->GetLocalRank() == topologyComms.GetRank()) ?
+      return (net::NetworkTopology::Instance()->GetLocalRank() == topologyComms.GetRank()) ?
         topologyRankIn :
         (topologyRankIn + 1);
     }

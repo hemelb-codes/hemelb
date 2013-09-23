@@ -18,7 +18,7 @@
 
 #include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "vis/PixelSet.h"
 #include "vis/PixelSetStore.h"
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
