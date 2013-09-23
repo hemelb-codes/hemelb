@@ -37,7 +37,7 @@ namespace hemelb
     {
     }
 
-    const char* MpiError::what() const
+    const char* MpiError::what() const throw ()
     {
       return message.c_str();
     }
