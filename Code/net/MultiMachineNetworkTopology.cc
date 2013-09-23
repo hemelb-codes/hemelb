@@ -27,7 +27,7 @@ namespace hemelb
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function
      */
-    bool NetworkTopology::InitialiseMachineInfo()
+    void NetworkTopology::InitialiseMachineInfo()
     {
       int err;
       int *depth, **color;
@@ -36,18 +36,18 @@ namespace hemelb
 
       depths = 0;
 
-      err = MPI_Attr_get(MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
+      HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag));
 
-      if (err != MPI_SUCCESS || flag == 0)
+      if (flag == 0)
       {
-        return false;
+        throw std::runtime_error("MPICHX_TOPOLOGY_DEPTHS attribute missing");
       }
 
-      err = MPI_Attr_get(MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
+      HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag));
 
-      if (err != MPI_SUCCESS || flag == 0)
+      if (flag == 0)
       {
-        return false;
+        throw std::runtime_error("MPICHX_TOPOLOGY_DEPTHS attribute missing");
       }
 
       machineCount = 0;
@@ -113,7 +113,6 @@ namespace hemelb
           MachineIdOfEachProc[i] = machine_id;
         }
       }
-      return true;
     }
   }
 }

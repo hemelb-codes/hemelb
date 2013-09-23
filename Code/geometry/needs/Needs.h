@@ -60,7 +60,7 @@ namespace hemelb
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
         net::InterfaceDelegationNet &net;
-        const net::Communicator & communicator;
+        const net::MpiCommunicator & communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;
         void Validate(const site_t blockCount, const std::vector<bool>& readBlock);

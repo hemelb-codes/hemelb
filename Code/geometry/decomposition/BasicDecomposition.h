@@ -12,7 +12,7 @@
 
 #include "geometry/Geometry.h"
 #include "lb/lattices/LatticeInfo.h"
-#include "net/Communicator.h"
+#include "net/MpiCommunicator.h"
 #include "units.h"
 #include "util/Vector3D.h"
 
@@ -39,7 +39,7 @@ namespace hemelb
            */
           BasicDecomposition(const Geometry& geometry,
                              const lb::lattices::LatticeInfo& latticeInfo,
-                             const net::Communicator& communicator,
+                             const net::MpiCommunicator& communicator,
                              const std::vector<site_t>& fluidSitesOnEachBlock);
 
           /**
@@ -114,7 +114,7 @@ namespace hemelb
 
           const Geometry& geometry; //! The geometry being decomposed.
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice to decompose for.
-          const net::Communicator& communicator; //! The communicator object being decomposed over.
+          const net::MpiCommunicator& communicator; //! The communicator object being decomposed over.
           const std::vector<site_t>& fluidSitesOnEachBlock; //! The number of fluid sites on each block in the geometry.
       };
     } /* namespace decomposition */

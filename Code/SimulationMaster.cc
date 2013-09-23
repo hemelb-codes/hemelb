@@ -15,7 +15,6 @@
 #include "util/utilityFunctions.h"
 #include "geometry/GeometryReader.h"
 #include "geometry/LatticeData.h"
-#include "debug/Debugger.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "lb/HFunction.h"
@@ -45,8 +44,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   }
 
   timings[hemelb::reporting::Timers::total].Start();
-
-  hemelb::debug::Debugger::Init(options.Arguments()[0]);
 
   latticeData = NULL;
 

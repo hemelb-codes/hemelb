@@ -36,9 +36,6 @@ namespace hemelb
 
           void setUp()
           {
-            bool dummy;
-            net::NetworkTopology::Instance()->Init(0, NULL, &dummy);
-
           }
 
           void tearDown()
