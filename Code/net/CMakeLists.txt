@@ -4,7 +4,9 @@ else(HEMELB_USE_MULTIMACHINE)
 	set(topology SingleMachineNetworkTopology.cc)
 endif(HEMELB_USE_MULTIMACHINE)
 
-add_library(hemelb_net mpi.cc IteratedAction.cc BaseNet.cc 
+add_library(hemelb_net
+  MpiDataType.cc MpiEnvironment.cc MpiError.cc
+ IteratedAction.cc BaseNet.cc 
 NetworkTopology.cc ${topology}
 mixins/pointpoint/CoalescePointPoint.cc
 mixins/pointpoint/SeparatedPointPoint.cc

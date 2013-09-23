@@ -38,7 +38,7 @@ namespace hemelb
     {
     }
 
-    BaseNet::BaseNet(Communicator &commObject) :
+    BaseNet::BaseNet(MpiCommunicator &commObject) :
         BytesSent(0), SyncPointsCounted(0), communicator(commObject)
     {
     }

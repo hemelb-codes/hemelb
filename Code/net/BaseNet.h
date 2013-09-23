@@ -17,7 +17,7 @@
 
 #include "constants.h"
 #include "net/mpi.h"
-#include "net/Communicator.h"
+#include "net/MpiCommunicator.h"
 
 namespace hemelb
 {
@@ -28,7 +28,7 @@ namespace hemelb
     {
       public:
         BaseNet();
-        BaseNet(Communicator &communicator);
+        BaseNet(MpiCommunicator &communicator);
 
         virtual ~BaseNet()
         {
@@ -48,7 +48,7 @@ namespace hemelb
          */
         void Dispatch();
 
-        const Communicator &GetCommunicator() const
+        const MpiCommunicator &GetCommunicator() const
         {
           return communicator;
         }
@@ -90,7 +90,7 @@ namespace hemelb
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();
 
-        const Communicator &communicator;
+        const MpiCommunicator &communicator;
       private:
         /***
          * Buffers which can be used to store displacements and counts for cleaning up interfaces

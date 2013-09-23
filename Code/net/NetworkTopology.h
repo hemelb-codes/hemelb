@@ -14,7 +14,7 @@
 #include <cstdio>
 
 #include "constants.h"
-#include "net/Communicator.h"
+#include "net/MpiCommunicator.h"
 
 namespace hemelb
 {
@@ -26,7 +26,7 @@ namespace hemelb
         static NetworkTopology* Instance();
         ~NetworkTopology();
 
-        void Init(int argCount, char ** argList, bool * oMachineDiscoverySuccess);
+        void Init(MpiCommunicator& commun);
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size
@@ -35,15 +35,15 @@ namespace hemelb
         proc_t GetProcessorCount() const;
         int GetDepths() const;
         unsigned int GetMachineCount() const;
-        Communicator const & GetComms() const {
+        MpiCommunicator const & GetComms() const {
           return comms;
         }
 
       private:
         NetworkTopology();
-        bool InitialiseMachineInfo();
+        void InitialiseMachineInfo();
 
-        Communicator comms;
+        MpiCommunicator comms;
 
         // Number of depths in the topology.
         int depths;

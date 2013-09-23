@@ -169,9 +169,9 @@ namespace hemelb
         MPI_Info fileInfo;
         MPI_Group topologyGroup; //! New group for ranks in the topology.
         MPI_Comm topologyCommunicator; //! New communicator for ranks in the topology.
-        net::Communicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
+        net::MpiCommunicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
         // TODO: This was never a good plan, better code design will avoid the need for it.
-        net::Communicator currentComms; //! The communicator currently in use.
+        net::MpiCommunicator currentComms; //! The communicator currently in use.
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 

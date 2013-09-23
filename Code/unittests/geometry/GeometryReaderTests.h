@@ -43,8 +43,6 @@ namespace hemelb
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
                                         timings);
             lattice = NULL;
-            bool dummy;
-            net::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             fourCube = FourCubeLatticeData::Create();
             FolderTestFixture::setUp();
             CopyResourceToTempdir("four_cube.xml");

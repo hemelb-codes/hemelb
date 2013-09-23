@@ -7,24 +7,24 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_COMMUNICATOR_H
-#define HEMELB_NET_COMMUNICATOR_H
+#ifndef HEMELB_NET_MPICOMMUNICATOR_H
+#define HEMELB_NET_MPICOMMUNICATOR_H
 
 #include "units.h"
-#include <mpi.h>
+#include "net/mpi.h"
 
 namespace hemelb
 {
   namespace net
   {
-    class Communicator
+    class MpiCommunicator
     {
       public:
         /**
          * Constructor for an uninitialised, NULL communicator
          * @param communicator
          */
-        Communicator() :
+        MpiCommunicator() :
             size(0)
         {
 
@@ -34,7 +34,7 @@ namespace hemelb
          * Constructor to get data needed from an MPI communicator
          * @param communicator
          */
-        Communicator(MPI_Comm communicator) :
+        MpiCommunicator(MPI_Comm communicator) :
             communicator(communicator)
         {
           int commRank, commSize;
@@ -54,7 +54,7 @@ namespace hemelb
          * @param rank
          * @param size
          */
-        Communicator(proc_t rank, proc_t size) :
+        MpiCommunicator(proc_t rank, proc_t size) :
             rank(rank), size(size), communicator(NULL), group(NULL)
         {
         }
@@ -104,4 +104,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_NET_COMMUNICATOR_H */
+#endif /* HEMELB_NET_MPICOMMUNICATOR_H */

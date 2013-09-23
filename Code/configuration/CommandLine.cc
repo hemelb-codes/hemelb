@@ -18,20 +18,6 @@ namespace hemelb
         inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
     {
 
-      // Initialise the network discovery. If this fails, abort.
-      // Needs to go first, because need to know if am the IO process for printing usage.
-
-      bool topologySuccess = true;
-      // MPI C doesn't provide const-correct interface, so cast away the const on argv.
-      hemelb::net::NetworkTopology::Instance()->Init(argc, const_cast<char**>(argv), &topologySuccess);
-
-      if (!topologySuccess)
-      {
-        hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
-        PrintUsage();
-        return;
-      }
-
       // There should be an odd number of arguments since the parameters occur in pairs.
       if ( (argc % 2) == 0)
       {
