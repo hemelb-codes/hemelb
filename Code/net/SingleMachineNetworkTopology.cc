@@ -28,7 +28,7 @@ namespace hemelb
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function
      */
-    bool NetworkTopology::InitialiseMachineInfo()
+    void NetworkTopology::InitialiseMachineInfo()
     {
       // the machine is assumed to be only one if this function is
       // used instead of the previous one
@@ -44,8 +44,6 @@ namespace hemelb
         MachineIdOfEachProc[i] = 0;
       }
       ProcCountOnEachMachine[0] = GetProcessorCount();
-
-      return true;
     }
   }
 }

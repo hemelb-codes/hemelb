@@ -28,16 +28,13 @@ namespace hemelb
       return &instance;
     }
 
-    void NetworkTopology::Init(int argCount, char ** argList, bool* oSuccess)
+    void NetworkTopology::Init(MpiCommunicator& commun)
     {
       if (!initialised)
       {
         initialised = true;
-        MPI_Init(&argCount, &argList);
-
-        comms = Communicator(MPI_COMM_WORLD);
-
-        *oSuccess = InitialiseMachineInfo();
+        comms = commun;
+        InitialiseMachineInfo();
       }
     }
 
@@ -45,8 +42,6 @@ namespace hemelb
     {
       if (initialised)
       {
-        MPI_Finalize();
-
         delete[] ProcCountOnEachMachine;
         delete[] MachineIdOfEachProc;
       }

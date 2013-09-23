@@ -65,7 +65,7 @@ namespace hemelb
       // decomposition.
       if (participateInTopology)
       {
-        topologyComms = net::Communicator(topologyCommunicator);
+        topologyComms = net::MpiCommunicator(topologyCommunicator);
       }
     }
 
@@ -106,7 +106,7 @@ namespace hemelb
                                 fileInfo,
                                 &file);
 
-      currentComms = net::Communicator(MPI_COMM_WORLD);
+      currentComms = net::MpiCommunicator(MPI_COMM_WORLD);
 
       if (error != MPI_SUCCESS)
       {

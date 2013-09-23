@@ -36,8 +36,7 @@ namespace hemelb
             // Initialise the network topology (necessary for using the inlets and oulets.
             int args = 1;
             char** argv = NULL;
-            bool success;
-            net::NetworkTopology::Instance()->Init(args, argv, &success);
+
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();

@@ -33,6 +33,10 @@
 
 int main(int argc, char **argv)
 {
+  hemelb::net::MpiEnvironment mpi(argc, argv);
+  hemelb::net::MpiCommunicator testCommunicator(MPI_COMM_WORLD);
+  hemelb::net::NetworkTopology::Instance()->Init(testCommunicator);
+
   std::ostream * reportto=&std::cerr;
   std::ofstream reportfile;
   int opt;
@@ -67,9 +71,9 @@ int main(int argc, char **argv)
 
   try
   {
+
     std::cout << "Running " << testPath;
     runner.run(controller, testPath);
-
     // Print test XML output to stderr
     CppUnit::XmlOutputter outputter(&result, *reportto);
     outputter.write();
