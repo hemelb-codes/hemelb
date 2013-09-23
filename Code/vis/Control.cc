@@ -87,8 +87,8 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, mins, 3, net::MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, net::MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
       visSettings.ctr_x = 0.5F * (float) (latticeData->GetBlockSize() * (mins[0] + maxes[0]));
       visSettings.ctr_y = 0.5F * (float) (latticeData->GetBlockSize() * (mins[1] + maxes[1]));

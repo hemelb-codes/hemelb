@@ -7,14 +7,16 @@
 // specifically made by you with University College London.
 //
 
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "geometry/SiteType.h"
 
 namespace hemelb
 {
+  namespace net {
   template<>
   MPI_Datatype MpiDataTypeTraits<geometry::SiteType>::RegisterMpiDataType()
   {
     return MpiDataTypeTraits<int>::RegisterMpiDataType();
+  }
   }
 }

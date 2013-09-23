@@ -14,7 +14,7 @@
 #include <map>
 
 #include "constants.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 #include "geometry/LatticeData.h"
 #include "lb/MacroscopicPropertyCache.h"

@@ -287,10 +287,10 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
-                    MpiDataType<site_t>(),
+                    net::MpiDataType<site_t>(),
                     &fluidSitesOnEachProcessor[0],
                     1,
-                    MpiDataType<site_t>(),
+                    net::MpiDataType<site_t>(),
                     MPI_COMM_WORLD);
       totalFluidSites = 0;
       for (proc_t ii = 0; ii < topology::NetworkTopology::Instance()->GetProcessorCount(); ++ii)
@@ -337,8 +337,8 @@ namespace hemelb
       }
 
       site_t siteMins[3], siteMaxes[3];
-      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, net::MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, net::MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
       for (unsigned ii = 0; ii < 3; ++ii)
       {
         globalSiteMins[ii] = siteMins[ii];

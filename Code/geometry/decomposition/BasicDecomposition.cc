@@ -8,7 +8,7 @@
 // 
 
 #include "geometry/decomposition/BasicDecomposition.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 namespace hemelb
 {
@@ -58,7 +58,7 @@ namespace hemelb
         MPI_Allreduce(&procAssignedToEachBlock[0],
                       &procForEachBlockRecv[0],
                       (int) geometry.GetBlockCount(),
-                      MpiDataType<proc_t> (),
+                      net::MpiDataType<proc_t> (),
                       MPI_MAX,
                       communicator.GetCommunicator());
 

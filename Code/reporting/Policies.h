@@ -18,7 +18,7 @@
  */
 
 #include <fstream>
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 

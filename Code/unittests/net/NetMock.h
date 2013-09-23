@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "constants.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "net/net.h"
 #include "unittests/net/RecordingNet.h"
 

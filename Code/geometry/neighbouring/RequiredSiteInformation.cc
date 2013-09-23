@@ -8,7 +8,7 @@
 // 
 
 #include "geometry/neighbouring/RequiredSiteInformation.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 namespace hemelb
 {
   namespace geometry

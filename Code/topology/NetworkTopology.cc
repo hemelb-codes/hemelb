@@ -8,7 +8,7 @@
 // 
 
 #include "topology/NetworkTopology.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 namespace hemelb
 {

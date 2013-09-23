@@ -12,7 +12,7 @@
 
 #include "extraction/IterableDataSource.h"
 #include "extraction/PropertyOutputFile.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 
 namespace hemelb
 {

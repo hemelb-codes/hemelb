@@ -16,7 +16,7 @@
 #include "io/writers/xdr/XdrReader.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "lb/LbmParameters.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "geometry/ParmetisHeader.h"
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"

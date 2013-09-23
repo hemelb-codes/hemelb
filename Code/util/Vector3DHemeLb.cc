@@ -8,7 +8,7 @@
 // 
 
 #include "util/Vector3D.h"
-#include "mpiInclude.h"
+#include "net/mpi.h"
 #include "units.h"
 #include <cassert>
 #include "log/Logger.h"
@@ -21,7 +21,7 @@ namespace hemelb
     const int typeCount = 1;
     int blocklengths[typeCount] = { 3 };
 
-    MPI_Datatype types[typeCount] = { MpiDataType<vectorType> () };
+    MPI_Datatype types[typeCount] = { net::MpiDataType<vectorType> () };
 
     MPI_Aint displacements[typeCount] = { 0 };
 
@@ -34,19 +34,19 @@ namespace hemelb
   }
 
   template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
+  MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
   {
     return GenerateTypeForVector<float> ();
   }
 
   template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
+  MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
   {
     return GenerateTypeForVector<site_t> ();
   }
 
   template<>
-   MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
+   MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
    {
      return GenerateTypeForVector<distribn_t> ();
    }

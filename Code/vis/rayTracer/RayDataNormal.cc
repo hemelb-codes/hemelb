@@ -21,7 +21,7 @@ namespace hemelb
     {
 
       RayDataNormal::RayDataNormal(int i, int j) :
-          RayData<RayDataNormal>(i, j)
+        RayData<RayDataNormal> (i, j)
       {
         mVelR = 0.0F;
         mVelG = 0.0F;
@@ -37,7 +37,8 @@ namespace hemelb
 
       }
 
-      void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData,
+      void RayDataNormal::DoUpdateDataForNormalFluidSite(
+                                                         const SiteData_t& iSiteData,
                                                          const util::Vector3D<float>& iRayDirection,
                                                          const float iRayLengthInVoxel,
                                                          const VisSettings& iVisSettings)
@@ -89,10 +90,11 @@ namespace hemelb
 
       void RayDataNormal::MakeColourComponent(float value, unsigned char& colour) const
       {
-        colour = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
-                                                                            / GetCumulativeLengthInFluid()),
-                                                                        0,
-                                                                        255);
+        colour
+            = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
+                                                                         / GetCumulativeLengthInFluid()),
+                                                                     0,
+                                                                     255);
       }
 
       void RayDataNormal::DoCombine(const RayDataNormal& iOtherRayData)
@@ -128,12 +130,15 @@ namespace hemelb
     }
   }
 
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataNormal>::RegisterMpiDataType()
+  namespace net
   {
-    MPI_Datatype ret = vis::raytracer::RayDataNormal::GetMPIType();
-    MPI_Type_commit(&ret);
-    return ret;
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataNormal>::RegisterMpiDataType()
+    {
+      MPI_Datatype ret = vis::raytracer::RayDataNormal::GetMPIType();
+      MPI_Type_commit(&ret);
+      return ret;
+    }
   }
 }
 

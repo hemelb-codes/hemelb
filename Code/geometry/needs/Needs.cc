@@ -93,10 +93,10 @@ namespace hemelb
         proc_t readingCore = GetReadingCoreForBlock(block);
         MPI_Gather(&neededHere,
                    1,
-                   MpiDataType<int>(),
+                   net::MpiDataType<int>(),
                    &procsWantingThisBlockBuffer[0],
                    1,
-                   MpiDataType<int>(),
+                   net::MpiDataType<int>(),
                    readingCore,
                    communicator.GetCommunicator());
 
