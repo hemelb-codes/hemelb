@@ -13,7 +13,7 @@
 #include "configuration/SimConfig.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/SimulationState.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/OneInOneOutSimConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"
@@ -37,7 +37,7 @@ namespace hemelb
             int args = 1;
             char** argv = NULL;
             bool success;
-            topology::NetworkTopology::Instance()->Init(args, argv, &success);
+            net::NetworkTopology::Instance()->Init(args, argv, &success);
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();

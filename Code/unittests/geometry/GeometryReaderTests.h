@@ -44,7 +44,7 @@ namespace hemelb
                                         timings);
             lattice = NULL;
             bool dummy;
-            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
+            net::NetworkTopology::Instance()->Init(0, NULL, &dummy);
             fourCube = FourCubeLatticeData::Create();
             FolderTestFixture::setUp();
             CopyResourceToTempdir("four_cube.xml");

@@ -322,9 +322,9 @@ namespace hemelb
         {
           std::vector<std::vector<site_t> > outList;
           int *recvSizes =
-              new int[hemelb::topology::NetworkTopology::Instance()->GetProcessorCount()];
+              new int[hemelb::net::NetworkTopology::Instance()->GetProcessorCount()];
           int *recvDispls =
-              new int[hemelb::topology::NetworkTopology::Instance()->GetProcessorCount()];
+              new int[hemelb::net::NetworkTopology::Instance()->GetProcessorCount()];
 
           /* TODO: ASSUMPTION:
            * inList.size() is equal everywhere. This is not necessarily the case.
@@ -346,15 +346,15 @@ namespace hemelb
                           recvSizes,
                           1,
                           MPI_INT,
-                          hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator());
+                          hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator());
 
             int64_t totalSize = 0;
 
             int np = 0;
             int rank = 0;
-            MPI_Comm_size(hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator(),
+            MPI_Comm_size(hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator(),
                           &np);
-            MPI_Comm_rank(hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator(),
+            MPI_Comm_rank(hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator(),
                           &rank);
             int64_t offset = 0;
 
@@ -374,7 +374,7 @@ namespace hemelb
                            recvSizes,
                            recvDispls,
                            MPI_LONG_LONG,
-                           hemelb::topology::NetworkTopology::Instance()->GetComms().GetCommunicator());
+                           hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator());
 
             std::vector<site_t> subList;
             for (int j = 0; j < totalSize; j++)

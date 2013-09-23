@@ -19,7 +19,7 @@ namespace hemelb
     namespace decomposition
     {
       OptimisedDecomposition::OptimisedDecomposition(reporting::Timers& timers,
-                                                     topology::Communicator& comms,
+                                                     net::Communicator& comms,
                                                      const Geometry& geometry,
                                                      const lb::lattices::LatticeInfo& latticeInfo,
                                                      const std::vector<proc_t>& procForEachBlock,

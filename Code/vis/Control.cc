@@ -500,7 +500,7 @@ namespace hemelb
        *
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
-      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+      net::NetworkTopology* netTop = net::NetworkTopology::Instance();
       net::Net tempNet;
 
       Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0 ?

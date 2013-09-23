@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "net/mpi.h"
 /*
  * NOTE!
@@ -22,7 +22,7 @@
 
 namespace hemelb
 {
-  namespace topology
+  namespace net
   {
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function

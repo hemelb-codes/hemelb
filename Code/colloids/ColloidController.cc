@@ -38,7 +38,7 @@ namespace hemelb
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
                                          reporting::Timers& timers) :
-      localRank(topology::NetworkTopology::Instance()->GetLocalRank()),
+      localRank(net::NetworkTopology::Instance()->GetLocalRank()),
       simulationState(simulationState), timers(timers)
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM

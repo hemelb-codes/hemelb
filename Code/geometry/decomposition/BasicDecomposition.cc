@@ -19,7 +19,7 @@ namespace hemelb
 
       BasicDecomposition::BasicDecomposition(const Geometry& geometry,
                                              const lb::lattices::LatticeInfo& latticeInfo,
-                                             const topology::Communicator& communicator,
+                                             const net::Communicator& communicator,
                                              const std::vector<site_t>& fluidSitesOnEachBlock) :
         geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
             fluidSitesOnEachBlock(fluidSitesOnEachBlock)

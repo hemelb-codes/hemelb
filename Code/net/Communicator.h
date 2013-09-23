@@ -7,15 +7,15 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_TOPOLOGY_COMMUNICATOR_H
-#define HEMELB_TOPOLOGY_COMMUNICATOR_H
+#ifndef HEMELB_NET_COMMUNICATOR_H
+#define HEMELB_NET_COMMUNICATOR_H
 
 #include "units.h"
 #include <mpi.h>
 
 namespace hemelb
 {
-  namespace topology
+  namespace net
   {
     class Communicator
     {
@@ -104,4 +104,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_TOPOLOGY_COMMUNICATOR_H */
+#endif /* HEMELB_NET_COMMUNICATOR_H */

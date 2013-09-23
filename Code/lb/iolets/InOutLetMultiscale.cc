@@ -9,7 +9,7 @@
 
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "configuration/SimConfig.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
 
