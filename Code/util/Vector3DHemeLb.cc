@@ -15,41 +15,43 @@
 
 namespace hemelb
 {
-  template<typename vectorType>
-  MPI_Datatype GenerateTypeForVector()
+  namespace net
   {
-    const int typeCount = 1;
-    int blocklengths[typeCount] = { 3 };
+    template<typename vectorType>
+    MPI_Datatype GenerateTypeForVector()
+    {
+      const int typeCount = 1;
+      int blocklengths[typeCount] = { 3 };
 
-    MPI_Datatype types[typeCount] = { net::MpiDataType<vectorType> () };
+      MPI_Datatype types[typeCount] = { net::MpiDataType<vectorType>() };
 
-    MPI_Aint displacements[typeCount] = { 0 };
+      MPI_Aint displacements[typeCount] = { 0 };
 
-    MPI_Datatype ret;
+      MPI_Datatype ret;
 
-    MPI_Type_struct(typeCount, blocklengths, displacements, types, &ret);
+      MPI_Type_struct(typeCount, blocklengths, displacements, types, &ret);
 
-    MPI_Type_commit(&ret);
-    return ret;
+      MPI_Type_commit(&ret);
+      return ret;
+    }
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
+    {
+      return GenerateTypeForVector<float> ();
+    }
+
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
+    {
+      return GenerateTypeForVector<site_t> ();
+    }
+
+    template<>
+    MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
+    {
+      return GenerateTypeForVector<distribn_t> ();
+    }
   }
-
-  template<>
-  MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
-  {
-    return GenerateTypeForVector<float> ();
-  }
-
-  template<>
-  MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
-  {
-    return GenerateTypeForVector<site_t> ();
-  }
-
-  template<>
-   MPI_Datatype net::MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
-   {
-     return GenerateTypeForVector<distribn_t> ();
-   }
   namespace util
   {
     namespace
