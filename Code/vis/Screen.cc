@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include "vis/Screen.h"
 

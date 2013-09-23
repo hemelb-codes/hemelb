@@ -11,7 +11,7 @@
 #define HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #include <vector>
 #include "net/net.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 namespace hemelb
 {
   namespace geometry
@@ -60,7 +60,7 @@ namespace hemelb
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
         net::InterfaceDelegationNet &net;
-        const topology::Communicator & communicator;
+        const net::Communicator & communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;
         void Validate(const site_t blockCount, const std::vector<bool>& readBlock);

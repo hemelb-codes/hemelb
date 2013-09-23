@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 // 
 
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 
 /*
  * NOTE!
@@ -22,7 +22,7 @@
 
 namespace hemelb
 {
-  namespace topology
+  namespace net
   {
 
     /*!

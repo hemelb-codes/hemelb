@@ -9,7 +9,7 @@
 
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb

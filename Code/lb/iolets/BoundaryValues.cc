@@ -109,7 +109,7 @@ namespace hemelb
         // For each inlet/outlet there is an array of length equal to total number of procs.
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
-        proc_t processorCount = topology::NetworkTopology::Instance()->GetProcessorCount();
+        proc_t processorCount = net::NetworkTopology::Instance()->GetProcessorCount();
         int *processorsNeedingIoletFlags = new int[processorCount];
 
         MPI_Gather(&isIOletOnThisProc,
@@ -143,7 +143,7 @@ namespace hemelb
 
       bool BoundaryValues::IsCurrentProcTheBCProc()
       {
-        return topology::NetworkTopology::Instance()->GetLocalRank() == GetBCProcRank();
+        return net::NetworkTopology::Instance()->GetLocalRank() == GetBCProcRank();
       }
 
       proc_t BoundaryValues::GetBCProcRank()

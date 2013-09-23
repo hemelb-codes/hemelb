@@ -28,7 +28,7 @@ namespace hemelb
         {
 
         }
-        Net(topology::Communicator &communicator) :
+        Net(Communicator &communicator) :
             BaseNet(communicator), StoringNet()
         {
         }

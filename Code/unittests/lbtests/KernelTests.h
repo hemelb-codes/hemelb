@@ -47,7 +47,7 @@ namespace hemelb
           void setUp()
           {
             bool dummy;
-            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
+            net::NetworkTopology::Instance()->Init(0, NULL, &dummy);
 
             FourCubeBasedTestFixture::setUp();
           }

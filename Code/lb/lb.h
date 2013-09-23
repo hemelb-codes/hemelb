@@ -12,7 +12,7 @@
 
 #include "net/net.h"
 #include "net/IteratedAction.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "lb/SimulationState.h"
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/MacroscopicPropertyCache.h"

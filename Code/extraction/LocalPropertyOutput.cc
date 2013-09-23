@@ -12,7 +12,7 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 
 namespace hemelb
 {
@@ -58,7 +58,7 @@ namespace hemelb
       writeLength *= siteCount;
 
       // The IO proc also writes the iteration number
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         writeLength += 8;
       }
@@ -80,7 +80,7 @@ namespace hemelb
       unsigned totalHeaderLength = 0;
 
       // Write the header information on the IO proc.
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         // Compute the length of the field header
         unsigned fieldHeaderLength = 0;
@@ -146,12 +146,12 @@ namespace hemelb
       }
 
       // Calculate where each core should start writing
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         // For core 0 this is easy: it passes the value for core 1 to the core.
         localDataOffsetIntoFile = totalHeaderLength;
 
-        if (topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
+        if (net::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
@@ -164,20 +164,20 @@ namespace hemelb
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
                  net::MpiDataType<uint64_t> (),
-                 topology::NetworkTopology::Instance()->GetLocalRank() - 1,
+                 net::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
         // Send the next core its start position.
-        if (topology::NetworkTopology::Instance()->GetLocalRank()
-            != (topology::NetworkTopology::Instance()->GetProcessorCount() - 1))
+        if (net::NetworkTopology::Instance()->GetLocalRank()
+            != (net::NetworkTopology::Instance()->GetProcessorCount() - 1))
         {
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
                    net::MpiDataType<uint64_t>(),
-                   topology::NetworkTopology::Instance()->GetLocalRank() + 1,
+                   net::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
                    MPI_COMM_WORLD);
           localDataOffsetIntoFile -= writeLength;
@@ -223,7 +223,7 @@ namespace hemelb
       io::writers::xdr::XdrMemWriter xdrWriter(buffer, writeLength);
 
       // Firstly, the IO proc must write the iteration number.
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         xdrWriter << (uint64_t) timestepNumber;
       }
@@ -287,7 +287,7 @@ namespace hemelb
                 break;
               case OutputField::MpiRank:
                 xdrWriter
-                    << static_cast<WrittenDataType> (topology::NetworkTopology::Instance()->GetLocalRank());
+                    << static_cast<WrittenDataType> (net::NetworkTopology::Instance()->GetLocalRank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no

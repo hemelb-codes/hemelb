@@ -23,7 +23,7 @@ namespace hemelb
 
       bool topologySuccess = true;
       // MPI C doesn't provide const-correct interface, so cast away the const on argv.
-      hemelb::topology::NetworkTopology::Instance()->Init(argc, const_cast<char**>(argv), &topologySuccess);
+      hemelb::net::NetworkTopology::Instance()->Init(argc, const_cast<char**>(argv), &topologySuccess);
 
       if (!topologySuccess)
       {

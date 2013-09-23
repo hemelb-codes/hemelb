@@ -16,7 +16,7 @@
 #include "net/IteratedAction.h"
 #include "net/net.h"
 #include "lb/SimulationState.h"
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 
 namespace hemelb
 {
@@ -88,7 +88,7 @@ namespace hemelb
           proc_t noSeenToThisDepth = 1;
           proc_t noAtCurrentDepth = 1;
 
-          hemelb::topology::NetworkTopology* netTop = hemelb::topology::NetworkTopology::Instance();
+          NetworkTopology* netTop = NetworkTopology::Instance();
 
           while (noSeenToThisDepth < netTop->GetProcessorCount())
           {

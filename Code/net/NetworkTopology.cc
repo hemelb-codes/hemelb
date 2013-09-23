@@ -7,12 +7,12 @@
 // specifically made by you with University College London.
 // 
 
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "net/mpi.h"
 
 namespace hemelb
 {
-  namespace topology
+  namespace net
   {
     NetworkTopology NetworkTopology::instance;
     bool NetworkTopology::initialised = false;

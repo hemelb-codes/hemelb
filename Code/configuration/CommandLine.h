@@ -12,7 +12,7 @@
 
 #include <string>
 
-#include "topology/NetworkTopology.h"
+#include "net/NetworkTopology.h"
 #include "log/Logger.h"
 namespace hemelb
 {
