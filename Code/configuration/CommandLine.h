@@ -39,7 +39,7 @@ namespace hemelb
         /**
          * Report to standard output an error message describing the usage
          */
-        static void PrintUsage();
+        static std::string GetUsage();
         /**
          * @return Number of images that should be produced
          */
