@@ -10,7 +10,7 @@
 #include "util/Vector3D.h"
 #include "net/mpi.h"
 #include "units.h"
-#include <cassert>
+#include <stdexcept>
 #include "log/Logger.h"
 
 namespace hemelb
@@ -57,8 +57,7 @@ namespace hemelb
       void DefaultHandlerFunction(int direction)
       {
         // TODO need to find a way of handling this case better.
-        log::Logger::Log<log::Error, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
-        assert(false);
+        throw std::runtime_error("Failed while accessing a direction in Vector3D.");
       }
     }
     Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
