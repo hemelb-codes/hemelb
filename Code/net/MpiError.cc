@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 //
 
-#include "MpiError.h"
+#include "net/MpiError.h"
 #include <sstream>
 
 namespace hemelb
