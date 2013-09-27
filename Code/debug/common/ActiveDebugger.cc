@@ -77,10 +77,10 @@ namespace hemelb
 
       MPI_Gather((void*) &pId,
                  1,
-                 MpiDataType(pId),
+                 net::MpiDataType(pId),
                  (void*) & (mPIds->front()),
                  1,
-                 MpiDataType(mPIds->front()),
+                 net::MpiDataType(mPIds->front()),
                  0,
                  MPI_COMM_WORLD);
 
@@ -124,10 +124,10 @@ namespace hemelb
 
         MPI_Gather((void*) &pId,
                    1,
-                   MpiDataType(pId),
+                   net::MpiDataType(pId),
                    (void*) & (mPIds->front()),
                    1,
-                   MpiDataType(mPIds->front()),
+                   net::MpiDataType(mPIds->front()),
                    0,
                    MPI_COMM_WORLD);
 
