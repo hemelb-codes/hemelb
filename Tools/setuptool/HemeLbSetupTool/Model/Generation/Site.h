@@ -16,7 +16,7 @@
 // shortcut to geometry class
 using hemelb::io::formats::geometry;
 
-class Iolet;
+//class Iolet;
 class Block;
 class Domain;
 

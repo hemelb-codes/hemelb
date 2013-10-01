@@ -199,7 +199,6 @@ def GetHemeLbCompileFlags():
     
 if __name__ == "__main__":
     # numpy, vtk
-    
     HemeLbDir = os.path.abspath('../../Code')
     BoostDir = GetBoostDir(HemeLbDir)
     vtkLibDir = GetVtkLibDir()
@@ -208,16 +207,18 @@ if __name__ == "__main__":
     else:
         vtkIncludeDir = LibToInclude(vtkLibDir)
     include_dirs = [vtkIncludeDir, HemeLbDir, BoostDir]
+    print include_dirs
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
-    extra_link_args = []
-
+    extra_link_args = ['-lCGAL', '-lgmp']
+    
     # Create the list of extension modules
     ext_modules = []
     # Generation C++ 
     generation_cpp = [os.path.join('HemeLbSetupTool/Model/Generation', cpp)
                       for cpp in ['Neighbours.cpp',
+                                  'BuildCGALPolygon.cpp',
                                   'Block.cpp',
                                   'BlockWriter.cpp',
                                   'BufferPool.cpp',
