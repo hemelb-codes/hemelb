@@ -27,6 +27,11 @@ class GeometryWriter;
 class Site;
 class BlockWriter;
 
+
+#include "CGALtypedef.h"
+#include "BuildCGALPolygon.h"
+
+
 class PolyDataGenerator: public GeometryGenerator {
 public:
 	PolyDataGenerator();
@@ -57,19 +62,32 @@ public:
 private:
 	virtual void ComputeBounds(double[]) const;
 	virtual void PreExecute(void);
+	void CreateCGALPolygon(void);
+	void ClosePolygon(void);
 	void ClassifySite(Site& site);
 	int ComputeIntersections(Site& from, Site& to);
+	int ComputeIntersectionsCGAL(Site& from, Site& to);
+	bool InsideOutside(Site& site);
+	BuildCGALPolygon<HalfedgeDS>* triangle;
 	// represents whether the block is inside (-1) outside (+1) or undetermined (0)
 	virtual int BlockInsideOrOutsideSurface(const Block &block);
 	// Members set from outside to initialise
 	double SeedPointWorking[3];
 	vtkPolyData* ClippedSurface;
 	vtkOBBTree* Locator;
-
+	Polyhedron* ClippedCGALSurface;
+	Tree* AABBtree;
+	//PointInside *inside_with_ray;
 	// Members used internally
 	vtkPoints* hitPoints;
 	vtkIdList* hitCellIds;
+	std::vector<Object_and_primitive_id> hitCellIdsCGAL;
+	std::vector<Object_Primitive_and_distance> IntersectionCGAL;
 	vtkIntArray* IoletIdArray;
+	std::vector<PointCGAL> HitPointsCGAL;
+	int Intersect(Site& site, Site& neigh);
+	static bool distancesort(const Object_Primitive_and_distance i,const Object_Primitive_and_distance j);
+
 };
 
 #endif // HEMELBSETUPTOOL_POLYDATAGENERATOR_H
