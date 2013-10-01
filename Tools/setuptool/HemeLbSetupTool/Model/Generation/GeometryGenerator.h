@@ -26,7 +26,7 @@ public:
 	GeometryGenerator();
 	virtual ~GeometryGenerator();
 	void Execute(bool skipNonIntersectingBlocks) throw (GenerationError);
-
+	
 	inline double GetVoxelSizeMetres(void) {
 		return this->VoxelSizeMetres;
 	}
@@ -68,6 +68,7 @@ protected:
 	virtual void ComputeBounds(double[]) const = 0;
 	virtual void PreExecute(void);
 	virtual void ClassifySite(Site& site) = 0;
+	//virtual void CreateCGALPolygon(void);
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
 	// Members set from outside to initialise
