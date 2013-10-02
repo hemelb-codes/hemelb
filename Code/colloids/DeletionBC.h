@@ -19,11 +19,12 @@ namespace hemelb
     class DeletionBC : public BoundaryCondition
     {
       public:
-        static BoundaryCondition* ReadFromXml(io::xml::XmlAbstractionLayer& xml)
+        static BoundaryCondition* ReadFromXml(io::xml::Element& xml)
         {
           // activationDistance defaults to 1/4 lattice unit *beyond* the boundary
           LatticeDistance activationDistance = -0.25;
-          xml.GetDoubleValueAndConvert("activationDistance", activationDistance);
+          // TODO: Convert to lattice units
+          xml.GetAttributeOrThrow("activationDistance", activationDistance);
           return new DeletionBC(activationDistance);
         }
 

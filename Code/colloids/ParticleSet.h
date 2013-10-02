@@ -29,7 +29,7 @@ namespace hemelb
       public:
         /** constructor - gets local particle information from xml config file */
         ParticleSet(const geometry::LatticeData& latDatLBM,
-                    io::xml::XmlAbstractionLayer& xml,
+                    io::xml::Element& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,

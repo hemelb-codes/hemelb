@@ -15,52 +15,41 @@ namespace hemelb
 {
   namespace colloids
   {
-    std::map<std::string, const BodyForce* const> BodyForces::bodyForces;
+    std::map<std::string, const BodyForce* const > BodyForces::bodyForces;
     std::map<site_t, LatticeForceVector> BodyForces::forceForEachSite;
 
-    const void BodyForces::InitBodyForces(io::xml::XmlAbstractionLayer& xml)
+    const void BodyForces::InitBodyForces(io::xml::Document& xml)
     {
       std::map<std::string, BodyForceFactory_Create> mapForceGenerators;
-      mapForceGenerators["gravitic"] = &(GraviticBodyForceFactory::Create);
-      mapForceGenerators["constant"] = &(ConstantBodyForceFactory::Create);
-      mapForceGenerators["inv_r_sq"] = &(RadialBodyForceFactory::Create);
+      mapForceGenerators["gravitic"] = & (GraviticBodyForceFactory::Create);
+      mapForceGenerators["constant"] = & (ConstantBodyForceFactory::Create);
+      mapForceGenerators["inv_r_sq"] = & (RadialBodyForceFactory::Create);
 
-      bool ok = true;
-      xml.ResetToTopLevel();
-      ok &= xml.MoveToChild("colloids");
-      ok &= xml.MoveToChild("bodyForces");
-      if (!ok) return;
+      io::xml::Element colloidsBodyForcesNode =
+          xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("bodyForces");
 
-      for (std::map<std::string, BodyForceFactory_Create>::const_iterator
-           iter = mapForceGenerators.begin();
-           iter != mapForceGenerators.end();
-           iter++)
+      for (std::map<std::string, BodyForceFactory_Create>::const_iterator iter =
+          mapForceGenerators.begin(); iter != mapForceGenerators.end(); iter++)
       {
         const std::string forceClass = iter->first;
         const BodyForceFactory_Create createFunction = iter->second;
-        bool found = xml.MoveToChild(forceClass);
-        if (found)
+
+        for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass);
+            forceNode != io::xml::Element::Missing();
+            forceNode = forceNode.NextSiblingOrNull(forceClass))
         {
-          while (found)
-          {
-            std::string forceName;
-            ok &= xml.GetString("forceName", forceName);
-            BodyForce* nextForce = createFunction(xml);
-            BodyForces::bodyForces.insert(std::make_pair(forceName, nextForce));
-            found = xml.NextSibling(forceClass);
-          }
-          xml.MoveToParent();
+          std::string forceName = colloidsBodyForcesNode.GetAttributeOrThrow("forceName");
+          BodyForce* nextForce = createFunction(forceNode);
+          BodyForces::bodyForces.insert(std::make_pair(forceName, nextForce));
         }
       }
-      xml.ResetToTopLevel();
     }
 
     const LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle)
     {
       LatticeForceVector totalForce;
-      for (std::map<std::string, const BodyForce* const>::const_iterator iter = bodyForces.begin();
-           iter != bodyForces.end();
-           iter++)
+      for (std::map<std::string, const BodyForce* const >::const_iterator iter = bodyForces.begin(); iter
+          != bodyForces.end(); iter++)
         totalForce += iter->second->GetForceForParticle(particle);
       return totalForce;
     }

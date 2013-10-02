@@ -22,7 +22,7 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from xml configuration file */
-        PersistedParticle(io::xml::XmlAbstractionLayer& xml);
+        PersistedParticle(io::xml::Element& xml);
 
       protected:
         /** constructor - uses explicitly supplied values */

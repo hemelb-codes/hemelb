@@ -19,7 +19,7 @@ namespace hemelb
   {
     Particle::Particle(const geometry::LatticeData& latDatLBM,
                        const hemelb::lb::LbmParameters *lbmParams,
-                       io::xml::XmlAbstractionLayer& xml) :
+                       io::xml::Element& xml) :
       PersistedParticle(xml),
       lbmParams(lbmParams)
     {

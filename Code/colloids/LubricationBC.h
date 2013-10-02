@@ -20,10 +20,10 @@ namespace hemelb
     class LubricationBC : public BoundaryCondition
     {
       public:
-        static BoundaryCondition* ReadFromXml(io::xml::XmlAbstractionLayer& xml)
+        static BoundaryCondition* ReadFromXml(io::xml::Element& xml)
         {
           LatticeDistance effectiveRange = 1.0;
-          xml.GetDoubleValue("effectiveRange", effectiveRange);
+          const std::string& rangestr = xml.GetAttributeOrThrow("effectiveRange", effectiveRange);
           return new LubricationBC(effectiveRange);
         }
 

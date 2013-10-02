@@ -21,7 +21,7 @@ namespace hemelb
   namespace colloids
   {
     ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
-                             io::xml::XmlAbstractionLayer& xml,
+                             io::xml::Element& particlesElem,
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
@@ -61,13 +61,18 @@ namespace hemelb
       scanMap.insert(scanMapContentType(localRank, scanMapElementType(0, 0)));
 
       // assume we are at the <Particles> node
-      bool found = xml.MoveToChild("subgridParticle");
-      if (found)
-        propertyCache.velocityCache.SetRefreshFlag();
-      while (found)
+      bool first = true;
+      for (io::xml::Element particleElem = particlesElem.GetChildOrNull("subgridParticle");
+           particleElem != io::xml::Element::Missing();
+           particleElem = particleElem.NextSiblingOrNull("subgridParticle"))
       {
+        if (first)
+        {
+          propertyCache.velocityCache.SetRefreshFlag();
+          first = false;
+        }
         // create the particle object from the settings in the config file
-        Particle nextParticle(latDatLBM, lbmParams, xml);
+        Particle nextParticle(latDatLBM, lbmParams, particlesElem);
         // check the particle is valid, i.e. in fluid, and is locally owned
         if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {
@@ -76,10 +81,8 @@ namespace hemelb
           // ... and keep the count of local particles up-to-date
           scanMap[localRank].first++;
         }
-        found = xml.NextSibling("subgridParticle");
       }
     }
-    ;
 
     ParticleSet::~ParticleSet()
     {
