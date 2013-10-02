@@ -9,9 +9,7 @@
 
 #include "util/Vector3D.h"
 #include "net/mpi.h"
-#include "units.h"
-#include <stdexcept>
-#include "log/Logger.h"
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -59,7 +57,7 @@ namespace hemelb
       void DefaultHandlerFunction(int direction)
       {
         // TODO need to find a way of handling this case better.
-        throw std::runtime_error("Failed while accessing a direction in Vector3D.");
+        throw Exception() << "Failed while accessing a direction in Vector3D.";
       }
     }
     Vector3DBase::HandlerFunction* Vector3DBase::handler = DefaultHandlerFunction;
