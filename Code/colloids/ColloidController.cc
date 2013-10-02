@@ -33,7 +33,7 @@ namespace hemelb
     ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
                                          const lb::SimulationState& simulationState,
                                          const geometry::Geometry& gmyResult,
-                                         io::xml::XmlAbstractionLayer& xml,
+                                         io::xml::Document& xml,
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
@@ -58,11 +58,8 @@ namespace hemelb
         "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
         localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
 
-      bool ok = true;
-      xml.ResetToTopLevel();
-      ok &= xml.MoveToChild("colloids");
-      ok &= xml.MoveToChild("particles");
-      particleSet = new ParticleSet(latDatLBM, xml, propertyCache,
+      io::xml::Element particlesElem = xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("particles");
+      particleSet = new ParticleSet(latDatLBM, particlesElem, propertyCache,
                                     lbmParams,
                                     neighbourProcessors, outputPath);
     }

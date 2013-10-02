@@ -34,13 +34,13 @@ namespace hemelb
         virtual ~BoundaryCondition() {};
     };
 
-    typedef BoundaryCondition*(*BoundaryConditionFactory_Create)(io::xml::XmlAbstractionLayer& xml);
+    typedef BoundaryCondition*(*BoundaryConditionFactory_Create)(io::xml::Element& xml);
 
     template <class TClass>
     class BoundaryConditionFactory
     {
       public:
-        static BoundaryCondition* Create(io::xml::XmlAbstractionLayer& xml)
+        static BoundaryCondition* Create(io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
         };
@@ -53,7 +53,7 @@ namespace hemelb
         /** factory method - gets initial values from xml configuration file */
         static const void InitBoundaryConditions(
                             const geometry::LatticeData* const latticeData,
-                            io::xml::XmlAbstractionLayer& xml);
+                            io::xml::Document& xml);
 
         static const void AddBoundaryCondition(
                             const std::string name,

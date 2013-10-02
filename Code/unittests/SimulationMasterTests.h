@@ -41,8 +41,13 @@ namespace hemelb
           FolderTestFixture::setUp();
           CopyResourceToTempdir("four_cube.xml");
           CopyResourceToTempdir("four_cube.gmy");
+          try {
           options = new hemelb::configuration::CommandLine(argc, argv);
           master = new SimulationMaster(*options);
+          } catch (hemelb::io::xml::ChildError& e) {
+            std::cout << e.what() << std::endl;
+            throw;
+          }
         }
 
         void tearDown()

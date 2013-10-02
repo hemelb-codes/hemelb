@@ -27,10 +27,15 @@ namespace hemelb
     class GraviticBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::XmlAbstractionLayer& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
           LatticeForceVector field;
-          xml.GetDoubleVectorAndConvert("field", field);
+          // TODO: convert to lattice units
+          io::xml::Element fieldElem = xml.GetChildOrThrow("field");
+          fieldElem.GetAttributeOrThrow("x", field.x);
+          fieldElem.GetAttributeOrThrow("y", field.y);
+          fieldElem.GetAttributeOrThrow("z", field.z);
+
           return new GraviticBodyForce(field);
         };
 

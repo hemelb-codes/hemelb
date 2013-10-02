@@ -25,7 +25,7 @@ namespace hemelb
 
     const void BoundaryConditions::InitBoundaryConditions(
                                      const geometry::LatticeData* const latticeData,
-                                     io::xml::XmlAbstractionLayer& xml)
+                                     io::xml::Document& xml)
     {
       BoundaryConditions::latticeData = latticeData;
 
@@ -33,11 +33,7 @@ namespace hemelb
       mapBCGenerators["lubricationBC"] = &(LubricationBoundaryConditionFactory::Create);
       mapBCGenerators["deletionBC"] = &(DeletionBoundaryConditionFactory::Create);
 
-      bool ok = true;
-      xml.ResetToTopLevel();
-      ok &= xml.MoveToChild("colloids");
-      ok &= xml.MoveToChild("boundaryConditions");
-      if (!ok) return;
+      io::xml::Element colloidsBC = xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("boundaryConditions");
 
       for (std::map<std::string, BoundaryConditionFactory_Create>::const_iterator
            iter = mapBCGenerators.begin();
@@ -49,31 +45,21 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>(
           "*** In BoundaryConditions::InitBoundaryConditions - looking for %s BC in XML\n",
           boundaryConditionClass.c_str());
-        bool found = xml.MoveToChild(boundaryConditionClass);
-        if (found)
+        for(// There must be at least one BC element for each type
+            io::xml::Element bcNode = colloidsBC.GetChildOrThrow(boundaryConditionClass);
+            !(bcNode == io::xml::Element::Missing());
+            bcNode = bcNode.NextSiblingOrNull(boundaryConditionClass))
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "*** In BoundaryConditions::InitBoundaryConditions - found BC in XML\n");
-          while (found)
-          {
-            std::string appliesTo;
-            ok &= xml.GetString("appliesTo", appliesTo);
-            BoundaryCondition* nextBC = createFunction(xml);
-            if (appliesTo == "wall")
-              BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
-            else if (appliesTo == "inlet")
-              BoundaryConditions::boundaryConditionsInlet.push_back(nextBC);
-            else if (appliesTo == "outlet")
-              BoundaryConditions::boundaryConditionsOutlet.push_back(nextBC);
-            found = xml.NextSibling(boundaryConditionClass);
-          }
-          xml.MoveToParent();
-        } else {
-          log::Logger::Log<log::Debug, log::OnePerCore>(
-            "*** In BoundaryConditions::InitBoundaryConditions - no BCs in XML !!\n");
+          const std::string& appliesTo = bcNode.GetAttributeOrThrow("appliesTo");
+          BoundaryCondition* nextBC = createFunction(bcNode);
+          if (appliesTo == "wall")
+            BoundaryConditions::boundaryConditionsWall.push_back(nextBC);
+          else if (appliesTo == "inlet")
+            BoundaryConditions::boundaryConditionsInlet.push_back(nextBC);
+          else if (appliesTo == "outlet")
+            BoundaryConditions::boundaryConditionsOutlet.push_back(nextBC);
         }
       }
-      xml.ResetToTopLevel();
     }
 
     const bool BoundaryConditions::DoSomeThingsToParticle(
