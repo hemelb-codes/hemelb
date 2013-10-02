@@ -11,9 +11,10 @@
 #define HEMELB_CONFIGURATION_COMMANDLINE_H
 
 #include <string>
-#include <stdexcept>
 
+#include "Exception.h"
 #include "log/Logger.h"
+
 namespace hemelb
 {
   namespace configuration
@@ -86,10 +87,11 @@ namespace hemelb
           return (argv);
         }
 
-        class OptionError : public std::runtime_error
+        /**
+         * Allow separate catching of these exceptions to enable usage printing.
+         */
+        class OptionError : public Exception
         {
-          public:
-            OptionError(const char* msg);
         };
       private:
         std::string inputFile; //! local or full path to input file

@@ -39,16 +39,12 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag));
 
       if (flag == 0)
-      {
-        throw std::runtime_error("MPICHX_TOPOLOGY_DEPTHS attribute missing");
-      }
+        throw Exception() << "MPICHX_TOPOLOGY_DEPTHS attribute missing";
 
       HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag));
 
       if (flag == 0)
-      {
-        throw std::runtime_error("MPICHX_TOPOLOGY_DEPTHS attribute missing");
-      }
+        throw Exception() << "MPICHX_TOPOLOGY_COLORS attribute missing";
 
       machineCount = 0;
 
