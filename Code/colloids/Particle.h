@@ -34,7 +34,7 @@ namespace hemelb
         /** constructor - gets initial values from an xml configuration file */
         Particle(const geometry::LatticeData& latDatLBM,
                  const hemelb::lb::LbmParameters *lbmParams,
-                 io::xml::XmlAbstractionLayer& xml);
+                 io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
         Particle() {};

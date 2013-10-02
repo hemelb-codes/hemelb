@@ -88,15 +88,15 @@ namespace hemelb
           {
             // Check the zero length string
             std::string s0;
-            CPPUNIT_ASSERT_EQUAL(size_t(4), io::formats::extraction::GetStoredLengthOfString(s0));
+            CPPUNIT_ASSERT_EQUAL(size_t(4), hemelb::io::formats::extraction::GetStoredLengthOfString(s0));
 
             // This should have no padding
             std::string s1("Fish");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), io::formats::extraction::GetStoredLengthOfString(s1));
+            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s1));
 
             // This must be padded up to 8 bytes
             std::string s2("A");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), io::formats::extraction::GetStoredLengthOfString(s2));
+            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s2));
 
           }
 
@@ -210,7 +210,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(expectedSize, nRead);
 
             // Create an XDR buffer reader to process the file for comparison
-            io::writers::xdr::XdrMemReader reader(contentsBuffer, expectedSize);
+            hemelb::io::writers::xdr::XdrMemReader reader(contentsBuffer, expectedSize);
 
             // The timestep should be correct
             uint64_t readTimestep;

@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>HemeLB</title>
+  </head>
+  <body>
+    <div id="banner">
+      <div id="header">
+        <a id="logo" href="/trac/hemelb">
+          <img src="/trac/hemelb/chrome/site/hemelb.jpg" alt="HemeLB" height="156" width="158" />
+        </a>
+      </div>
+      <div id="metanav" class="nav">
+        <ul>
+          <li class="first">logged in as rupert</li>
+          <li>
+            <a href="/trac/hemelb/logout">Logout</a>
+          </li>
+          <li>
+            <a href="/trac/hemelb/prefs">Preferences</a>
+          </li>
+          <li>
+            <a href="/trac/hemelb/wiki/TracGuide">Help/Guide</a>
+          </li>
+          <li class="last">
+            <a href="/trac/hemelb/about">About Trac</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </body>
+  <conversiontests>
+    <shouldwork>
+      <datum type="int" value="120" />
+      <datum type="int" value="-24324" />
+      <datum type="double" value="1.0" />
+      <datum type="double" value="1.6e-3" />
+    </shouldwork>
+    <shouldfail>
+      <datum type="double" value="1.0  " />
+      <datum type="double" value="notadouble" />
+      <datum type="int" value="1.0" />
+    </shouldfail>
+  </conversiontests>
+</html>

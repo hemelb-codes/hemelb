@@ -174,20 +174,19 @@ void SimulationMaster::Initialise()
   unitConvertor = new hemelb::util::UnitConverter(simulationState->GetTimeStepLength(),
                                                   latticeData->GetVoxelSize(),
                                                   latticeData->GetOrigin());
-
-  timings[hemelb::reporting::Timers::colloidInitialisation].Start();
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
-  std::string colloidConfigPath = simConfig->GetColloidConfigPath();
-  hemelb::io::xml::XmlAbstractionLayer xml(colloidConfigPath, *unitConvertor);
-
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
-  hemelb::colloids::BodyForces::InitBodyForces(xml);
-
-  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
-  hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
-
   if (simConfig->HasColloidSection())
   {
+    timings[hemelb::reporting::Timers::colloidInitialisation].Start();
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
+    std::string colloidConfigPath = simConfig->GetColloidConfigPath();
+    hemelb::io::xml::Document xml(colloidConfigPath);
+
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
+    hemelb::colloids::BodyForces::InitBodyForces(xml);
+
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
+    hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
+
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
     colloidController
         = new hemelb::colloids::ColloidController(*latticeData,

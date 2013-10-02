@@ -410,6 +410,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
 		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
+		unittests/resources/xmltest.xml
 		)
 endif()
 

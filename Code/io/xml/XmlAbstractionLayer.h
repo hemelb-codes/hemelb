@@ -11,11 +11,12 @@
 #define HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
 
 #include <cstdlib>
-#include <stack>
-#include "tinyxml.h"
-#include "units.h"
-#include "util/UnitConverter.h"
-#include "util/Vector3D.h"
+#include <sstream>
+#include "Exception.h"
+
+// Forward declare the TinyXML types needed.
+class TiXmlDocument;
+class TiXmlElement;
 
 namespace hemelb
 {
@@ -23,11 +24,204 @@ namespace hemelb
   {
     namespace xml
     {
+
+      class Element
+      {
+        public:
+          static Element Missing();
+
+          Element(TiXmlElement* el);
+          ~Element();
+
+          /**
+           * Get the name of the element
+           * @return
+           */
+          const std::string& GetName() const;
+
+          /**
+           * Gets the first child element with the specified name
+           *
+           * @param $name
+           *   the name of the child element to return
+           *
+           * @return
+           *   returns the child element if it was found or
+           *   Element::Missing() if not
+           */
+          Element GetChildOrNull(const std::string& name);
+          /**
+           * Gets the first child element with the specified name or throw
+           * ChildError if it does not exist.
+           *
+           * @param $name
+           *   the name of the child element to return
+           *
+           * @return
+           *   returns the child element
+           */
+          Element GetChildOrThrow(const std::string& name);
+
+          /**
+           * Return the next sibling element with the specified name, if any
+           * If no suitable sibling element exists then return Element::Missing()
+           *
+           * @param $name
+           *   the name of the sibling element to get
+           *
+           * @return
+           *   Next sibling or Element::Missing()
+           */
+          Element NextSiblingOrNull(const std::string name);
+
+          /**
+           * Return the next sibling element with the specified name, if any
+           * If no suitable sibling element exists then throw SiblingError
+           *
+           * @param $name
+           *   the name of the sibling element to get
+           *
+           * @return
+           *   Next sibling.
+           */
+          Element NextSiblingOrThrow(const std::string name);
+
+          /**
+           * Return the parent element unless this is the root element.
+           * If so then return Element::Missing()
+           *
+           * @return
+           *   Parent or Element::Missing()
+           */
+          Element GetParentOrNull();
+          /**
+           * Return the parent element unless this is the root element.
+           * If so then throws ParentError
+           *
+           * @return
+           *   Parent
+           */
+          Element GetParentOrThrow();
+
+          /**
+           * Get the value (as a string) contained in the specified attribute.
+           * If it does not exist, return NULL
+           * @param $name
+           *   The name of the attribute to get
+           * @return
+           *   A pointer to a string containing the attribute value (or NULL
+           *   on failure)
+           */
+          const std::string* GetAttributeOrNull(const std::string& name);
+          /**
+           * Get the value (as a string) contained in the specified attribute.
+           * If it does not exist, throws AttributeError
+           * @param $name
+           *   The name of the attribute to get
+           * @return
+           *   A reference to a string containing the attribute value
+           */
+          const std::string& GetAttributeOrThrow(const std::string& name);
+
+          /**
+           * Get the value (as a string) contained in the specified attribute.
+           * If it does not exist, return NULL
+           * @param $name
+           *   The name of the attribute to get
+           * @return
+           *   A pointer to a string containing the attribute value
+           */
+
+          /**
+           * Get the value contained in the specified attribute. This function
+           * will attempt to convert the string to the type of the second
+           * argument using std::istream::operator>> (i.e. the standard library's
+           * formatted input operator) so this can work for arbitrary types,
+           * as long as you supply an implementation for:
+           *   std::istream& operator>>(std::istream&, T&);
+           *
+           * This also returns the attribute as a pointer to the string value
+           * of the attribute, which will be Element::Missing() if it does not
+           * exist.
+           *
+           * If the attribute exists but does not convert correctly to type T,
+           * then this will throw std::stringstream::failure.
+           *
+           * If the attribute exists, and converts to type T but does not use
+           * the whole attribute string, then this will throw ParseError.
+           *
+           * @param $name
+           *   Attribute to read and convert
+           * @param $out
+           *   Variable in which to store the converted attribute.
+           * @return
+           *   A pointer to a string containing the attribute value (or NULL
+           *   if it does not exist)
+           */
+          template<class T>
+          const std::string* GetAttributeOrNull(const std::string& name, T& out);
+
+          /**
+           * Get the value contained in the specified attribute. This function
+           * will attempt to convert the string to the type of the second
+           * argument using std::istream::operator>> (i.e. the standard library's
+           * formatted input operator) so this can work for arbitrary types,
+           * as long as you supply an implementation for:
+           *   std::istream& operator>>(std::istream&, T&);
+           *
+           * This also returns the attribute as a reference to the string value
+           * of the attribute.
+           *
+           * If the attribute does not exists, throw AttributeError.
+           *
+           * If the attribute exists but does not convert correctly to type T,
+           * then this will throw std::stringstream::failure.
+           *
+           * If the attribute exists, and converts to type T but does not use
+           * the whole attribute string, then this will throw ParseError.
+           *
+           * @param $name
+           *   Attribute to read and convert
+           * @param $out
+           *   Variable in which to store the converted attribute.
+           * @return
+           *   A reference to a string containing the attribute value
+           */
+          template<class T>
+          const std::string& GetAttributeOrThrow(const std::string& name, T& out);
+
+          /**
+           * Return a string giving a full path to the element.
+           * @return
+           */
+          std::string GetPath() const;
+
+        private:
+          TiXmlElement* el;
+
+          /**
+           * Recursive function used by GetPath
+           * @param el
+           * @param ans
+           */
+          static void GetPathWorker(const TiXmlElement* el, std::string& ans);
+
+          /**
+           * Equality and inequality operators for
+           * @param left
+           * @param right
+           * @return
+           */
+          friend bool operator==(const Element& left, const Element& right);
+          friend bool operator!=(const Element& left, const Element& right);
+      };
+      bool operator==(const Element& left, const Element& right);
+      bool operator!=(const Element& left, const Element& right);
       /** an abstraction for an XML document
        *
        * this class localises the dependency on an external XML library
        */
-      class XmlAbstractionLayer
+      class Document
       {
         public:
           /**
@@ -36,222 +230,159 @@ namespace hemelb
            * @param $path
            *   the path to the XML file to be read by this object
            */
-          XmlAbstractionLayer(const std::string path, const util::UnitConverter& converter);
-        
+          Document(const std::string path);
+
           /** destructor */
-          ~XmlAbstractionLayer();
+          ~Document();
+          Element GetRoot();
+        private:
+          TiXmlDocument* xmlDoc;
+      };
 
-          /** resets the internal position pointer to the top-level or root node */
-          void ResetToTopLevel();
-
+      /**
+       * Base class for XML errors. Should not be instantiated.
+       */
+      class XmlError : public hemelb::Exception
+      {
+        protected:
+          //
           /**
-           * moves to the first child element irrespective of name
+           * Should not be instantiated, only its subclasses.
            *
-           * moves the internal position pointer
-           * to the first child element of the current element, if any
-           * if no suitable child element exists then
-           * the internal position pointer is not moved
+           * Requires the Element where the error occured.
            *
-           * @return
-           *   returns true if a suitable child element was found
-           *   or false if the internal position pointer was not moved
+           * @param element
            */
-          bool MoveToChild();
+          XmlError(const Element& element);
 
+        public:
           /**
-           * moves to the first child element with the specified name
-           *
-           * moves the internal position pointer
-           * to the first child element with the specified name, if any
-           * if no suitable child element exists then
-           * the internal position pointer is not moved
-           *
-           * @param $name
-           *   the name of the child element to move to
-           *
+           * Access the Element where the error occurred.
            * @return
-           *   returns true if a suitable child element was found
-           *   or false if the internal position pointer was not moved
            */
-          bool MoveToChild(const std::string name);
-
+          inline const Element& GetNode() const
+          {
+            return elem;
+          }
           /**
-           * moves to the next sibling element irrespective of name
-           *
-           * moves the internal position pointer
-           * to the next sibling element of the current element, if any
-           * if no suitable sibling element exists then
-           * the internal position pointer is not moved
-           *
-           * @return
-           *   returns true if a suitable child element was found
-           *   or false if the internal position pointer was not moved
+           * D'tor because the default one does not have the correct exception
+           * specification.
            */
-          bool NextSibling();
-
+          virtual ~XmlError() throw ()
+          {
+          }
           /**
-           * moves to the next sibling element with the specified name
-           *
-           * moves the internal position pointer
-           * to the next sibling element with the specified name, if any
-           * if no suitable sibling element exists then
-           * the internal position pointer is not moved
-           *
-           * @param $name
-           *   the name of the sibling element to move to
-           *
+           * Supply an human readable error message.
            * @return
-           *   returns true if a suitable child element was found
-           *   or false if the internal position pointer was not moved
            */
-          bool NextSibling(const std::string name);
+          //virtual const char* what() const throw ();
 
-          /**
-           * moves to the parent element irrespective of name
-           *
-           * moves the internal position pointer
-           * to the parent element of the current element, if any
-           * if no parent element exists (i.e. the current node is the root) then
-           * the internal position pointer is not moved
-           *
-           * @return
-           *   returns true if a parent element was found
-           *   or false if the internal position pointer was not moved
-           */
-          bool MoveToParent();
+        protected:
+          const Element elem;
+          // Full path to the element
+          const std::string elemPath;
+      };
 
-          /**
-           * reads an integer valued attribute from the current element
-           *
-           * reads the value of the attribute with the specified name
-           * and converts it to an unsigned long before returning it
-           *
-           * @param $name
-           *   the name of the attribute within the current element
-           * @param $value
-           *   the converted value of the attribute (output)
-           *
-           * @return
-           *   returns true if the attribute was found and converted successfully
-           *   or false if the attribute was not found or could not be converted
-           */
-          bool GetUnsignedLongValue(const std::string name, unsigned long& value);
+      /**
+       * Indicate that an element does not have a requested attribute
+       */
+      class AttributeError : public XmlError
+      {
+        public:
+          AttributeError(const Element& n, const std::string& attr_);
 
-          /**
-           * reads a floating-point valued attribute from the current element
-           *
-           * reads the value of the attribute with the specified name
-           * and converts it to a double before returning it
-           *
-           * @param $name
-           *   the name of the attribute within the current element
-           * @param $value
-           *   the converted value of the attribute (output)
-           *
-           * @return
-           *   returns true if the attribute was found and converted successfully
-           *   or false if the attribute was not found or could not be converted
-           */
-          bool GetDoubleValue(const std::string name, double& value);
-
-          /**
-           * reads a floating-point valued attribute from the current element
-           *
-           * reads the value of the attribute with the specified name
-           * and converts it to a double in lattice units before returning it
-           *
-           * @param $name
-           *   the name of the attribute within the current element
-           * @param $value
-           *   the converted value of the attribute (output)
-           *
-           * @return
-           *   returns true if the attribute was found and converted successfully
-           *   or false if the attribute was not found or could not be converted
-           */
-          bool GetDoubleValueAndConvert(const std::string name, double& value);
-
-          /**
-           * reads a 3D vector of double values from the current element
-           *
-           * reads the value of the vector with the specified name
-           * the name specifies the name of a child element
-           * that contains attributes for each co-ordinate value
-           * the attributes are named: xValue, yValue, and zValue
-           * each co-ordinate attribute value is converted to a double
-           * before setting the x, y, and z properties of the vector parameter
-           * if this function returns false then no change was made to vector
-           *
-           * @param $name
-           *   the name of the child vector element within the current element
-           * @param $vector
-           *   the converted value of the child vector element (output)
-           *
-           * @return
-           *   returns true if the vector was found and converted successfully
-           *   or false if the vector was not found or could not be converted
-           */
-          bool GetDoubleVector(const std::string name, util::Vector3D<double>& vector);
-
-          /**
-           * reads a 3D vector of double values from the current element
-           *
-           * reads the value of the vector with the specified name
-           * the name specifies the name of a child element
-           * that contains attributes for each co-ordinate value
-           * the attributes are named: xValue, yValue, and zValue
-           * each co-ordinate attribute value is converted to a double in lattice units
-           * before setting the x, y, and z properties of the vector parameter
-           * if this function returns false then no change was made to vector
-           *
-           * @param $name
-           *   the name of the child vector element within the current element
-           * @param $vector
-           *   the converted value of the child vector element (output)
-           *
-           * @return
-           *   returns true if the vector was found and converted successfully
-           *   or false if the vector was not found or could not be converted
-           */
-          bool GetDoubleVectorAndConvert(const std::string name, util::Vector3D<double>& vector);
-
-          /**
-           * reads a 3D vector representing a LatticePosition from the current element
-           *
-           * reads the value of the vector with the specified name
-           * the name specifies the name of a child element
-           * that contains attributes for each co-ordinate value
-           * the attributes are named: xValue, yValue, and zValue
-           * each co-ordinate attribute value is converted to a double in lattice units
-           * before setting the x, y, and z properties of the vector parameter
-           * if this function returns false then no change was made to vector
-           *
-           * @param $name
-           *   the name of the child vector element within the current element
-           * @param $vector
-           *   the converted value of the child vector element (output)
-           *
-           * @return
-           *   returns true if the vector was found and converted successfully
-           *   or false if the vector was not found or could not be converted
-           */
-          bool GetLatticePosition(const std::string name, LatticePosition& vector);
-
-          bool GetString(const std::string name, std::string& value);
+          virtual ~AttributeError() throw ()
+          {
+          }
 
         private:
-          /** a pointer to the xml file being abstracted by this object */
-          TiXmlDocument *xmlDocument;
-
-          /** a pointer to the current node - the current position pointer */
-          TiXmlElement  *currentNode;
-
-          /** a stack containing pointers to all parents of the current node */
-          std::stack<TiXmlElement*> parentNodes;
-
-          /** a converter that can convert from physical units to lattice units */
-          const util::UnitConverter& converter;
+          const std::string attr;
       };
+
+      class ParseError : public XmlError
+      {
+        public:
+          ParseError(const Element& el, const std::string& attrName, const std::string& attrVal);
+          virtual ~ParseError() throw ()
+          {
+          }
+
+        private:
+          const std::string name;
+          const std::string val;
+      };
+
+      /**
+       * Indicate that a requested element does not exist. Should not be used
+       * directly; use ChildError, ParentError, or SiblingError.
+       */
+      class ElementError : public XmlError
+      {
+        protected:
+          ElementError(const Element& n, const std::string& elemName);
+        public:
+          virtual ~ElementError() throw ()
+          {
+          }
+        protected:
+          const std::string elemName;
+      };
+      /**
+       * Indicate that an element lacks the requested child
+       */
+      class ChildError : public ElementError
+      {
+        public:
+          ChildError(const Element& elem, const std::string& subElemName);
+      };
+
+      /**
+       * Indicate that an element lacks a parent.
+       */
+      class ParentError : public ElementError
+      {
+        public:
+          ParentError(const Element& elem);
+      };
+
+      /**
+       * Indicate that an element lacks the requested sibling.
+       */
+      class SiblingError : public ElementError
+      {
+        public:
+          SiblingError(const Element& elem, const std::string& subElemName);
+      };
+
+
+      // Implement the template member functions declared above, now that the
+      // declarations of the exceptions are available.
+      template<class T>
+      const std::string* Element::GetAttributeOrNull(const std::string& name, T& out)
+      {
+        const std::string* attrString = GetAttributeOrNull(name);
+        if (attrString != NULL)
+        {
+          std::stringstream attrStream(*attrString, std::ios_base::in);
+          // Have it throw on error.
+          attrStream.exceptions(std::stringstream::failbit);
+          attrStream >> out;
+          size_t pos = attrStream.tellg();
+          if (pos != attrString->size())
+          {
+            throw ParseError(*this, name, *attrString);
+          }
+        }
+        return attrString;
+      }
+      template<class T>
+      const std::string& Element::GetAttributeOrThrow(const std::string& name, T& out)
+      {
+        const std::string* ans = GetAttributeOrNull(name, out);
+        if (ans == NULL)
+          throw AttributeError(*this, name);
+        return *ans;
+      }
     }
   }
 }

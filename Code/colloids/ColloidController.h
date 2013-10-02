@@ -33,7 +33,7 @@ namespace hemelb
         ColloidController(const geometry::LatticeData& latDatLBM,
                           const lb::SimulationState& simulationState,
                           const geometry::Geometry& gmyResult,
-                          io::xml::XmlAbstractionLayer& xml,
+                          io::xml::Document& xml,
                           lb::MacroscopicPropertyCache& propertyCache,
                           const hemelb::lb::LbmParameters *lbmParams,
                           const std::string& outputPath,

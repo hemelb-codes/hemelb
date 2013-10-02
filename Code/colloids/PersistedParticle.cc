@@ -8,21 +8,28 @@
 // 
 
 #include "colloids/PersistedParticle.h"
+#include "constants.h"
 
 namespace hemelb
 {
   namespace colloids
   {
-    PersistedParticle::PersistedParticle(io::xml::XmlAbstractionLayer& xml)
+    PersistedParticle::PersistedParticle(io::xml::Element& xml)
     {
       // assume we are currently at a <SubgridParticle> node
+      xml.GetAttributeOrThrow("ParticleId", particleId);
+      // TODO: Convert to lattice
+      xml.GetAttributeOrThrow("InputRadiusA0", smallRadius_a0);
+      // TODO: Convert to lattice
+      xml.GetAttributeOrThrow("HydrostaticRadiusAh", largeRadius_ah);
+      // TODO: This MAY not need to be converted to lattice (wasn't before my refactor)
+      xml.GetAttributeOrThrow("Mass", mass);
+      // TODO: Convert to lattice
+      io::xml::Element initPosElem = xml.GetChildOrThrow("initialPosition");
+      initPosElem.GetAttributeOrThrow("x", globalPosition.x);
+      initPosElem.GetAttributeOrThrow("y", globalPosition.y);
+      initPosElem.GetAttributeOrThrow("z", globalPosition.z);
 
-      bool ok = true;
-      ok &= xml.GetUnsignedLongValue("ParticleId", particleId);
-      ok &= xml.GetDoubleValueAndConvert("InputRadiusA0", smallRadius_a0);
-      ok &= xml.GetDoubleValueAndConvert("HydrostaticRadiusAh", largeRadius_ah);
-      ok &= xml.GetDoubleValue("Mass", mass);
-      ok &= xml.GetLatticePosition("initialPosition", globalPosition);
       lastCheckpointTimestep = 0;
       markedForDeletionTimestep = BIG_NUMBER2;
     };

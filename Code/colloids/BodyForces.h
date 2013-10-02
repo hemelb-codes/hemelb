@@ -28,13 +28,13 @@ namespace hemelb
         virtual ~BodyForce() {};
     };
 
-    typedef BodyForce*(*BodyForceFactory_Create)(io::xml::XmlAbstractionLayer& xml);
+    typedef BodyForce*(*BodyForceFactory_Create)(io::xml::Element& xml);
 
     template <class TClass>
     class BodyForceFactory
     {
       public:
-        static BodyForce* Create(io::xml::XmlAbstractionLayer& xml)
+        static BodyForce* Create(io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
         };
@@ -45,7 +45,7 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBodyForces(io::xml::XmlAbstractionLayer& xml);
+        static const void InitBodyForces(io::xml::Document& xml);
 
         static const void AddBodyForce(const std::string name, const BodyForce* const);
 

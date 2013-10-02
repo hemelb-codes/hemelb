@@ -20,10 +20,14 @@ namespace hemelb
     class ConstantBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::XmlAbstractionLayer& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
           LatticeForceVector field;
-          xml.GetDoubleVectorAndConvert("force", field);
+          io::xml::Element force = xml.GetChildOrThrow("force");
+          // TODO: convert to lattice units
+          xml.GetAttributeOrThrow("x", field.x);
+          xml.GetAttributeOrThrow("y", field.y);
+          xml.GetAttributeOrThrow("z", field.z);
           return new ConstantBodyForce(field);
         };
 
@@ -50,12 +54,18 @@ namespace hemelb
     class RadialBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::XmlAbstractionLayer& xml)
+        static BodyForce* ReadFromXml(io::xml::Element& xml)
         {
           LatticeForce magnitude;
           LatticePosition centrePoint;
-          xml.GetDoubleValueAndConvert("magnitude", magnitude);
-          xml.GetLatticePosition("centrePoint", centrePoint);
+          // TODO: convert to lattice units.
+          xml.GetAttributeOrThrow("magnitude", magnitude);
+          // TODO: convert to lattice units.
+          io::xml::Element centreElem = xml.GetChildOrThrow("centrePoint");
+          centreElem.GetAttributeOrThrow("x", centrePoint.x);
+          centreElem.GetAttributeOrThrow("y", centrePoint.y);
+          centreElem.GetAttributeOrThrow("z", centrePoint.z);
+
           return new RadialBodyForce(centrePoint, magnitude);
         };
 
