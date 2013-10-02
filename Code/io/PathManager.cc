@@ -8,7 +8,8 @@
 // 
 
 #include "io/PathManager.h"
-#include <sstream>
+#include "Exception.h"
+
 namespace hemelb
 {
   namespace io
@@ -31,12 +32,7 @@ namespace hemelb
       if (doIo)
       {
         if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
-        {
-          std::string msg("Output directory \"");
-          msg.append(outputDir);
-          msg.append("\" already exists.");
-          throw std::runtime_error(msg);
-        }
+          throw Exception() << "Output directory '"<< outputDir <<"' already exists.";
 
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);

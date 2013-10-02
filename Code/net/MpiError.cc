@@ -18,28 +18,16 @@ namespace hemelb
                        const int lineNo_) :
       mpiFunc(mpiFunc_), errorCode(errorCode_), fileName(fileName_), lineNo(lineNo_)
     {
+      // Construct the first bit of error message
+      *this << fileName << ":" << lineNo << ": " << mpiFunc << ": ";
+
       // Query the MPI implementation for its reason for failure
       char buffer[MPI_MAX_ERROR_STRING];
       int len;
       MPI_Error_string(errorCode_, buffer, &len);
 
-      // Construct the complete error message
-      {
-        std::stringstream msg;
-        msg << fileName << ":" << lineNo << ": ";
-        msg << mpiFunc_ << ": ";
-        message = msg.str();
-      }
-      message.append(buffer, len);
+      *this << buffer;
     }
 
-    MpiError::~MpiError() throw ()
-    {
-    }
-
-    const char* MpiError::what() const throw ()
-    {
-      return message.c_str();
-    }
   }
 }

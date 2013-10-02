@@ -12,24 +12,29 @@
 
 #include <mpi.h>
 #include <string>
+#include "Exception.h"
 
 namespace hemelb
 {
   namespace net
   {
-    class MpiError : public std::exception
+    /**
+     * Indicate an error to do with MPI.
+     *
+     * Will be thrown by the HEMELB_MPI_CALL macro, as in:
+     *   HEMELB_MPI_CALL(MPI_Send, (buffer, count, dtype, toRank, tag, MPI_COMM_WORLD) );
+     *
+     */
+    class MpiError : public ::hemelb::Exception
     {
       public:
         MpiError(const char* mpiFunc_, int errorCode_, const char* fileName_, const int lineNo);
-        virtual ~MpiError() throw ();
 
-        virtual const char * what() const throw ();
       private:
         const char* mpiFunc;
         const int errorCode;
         const char* fileName;
         const int lineNo;
-        std::string message;
     };
   }
 }
