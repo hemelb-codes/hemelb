@@ -693,7 +693,27 @@ namespace hemelb
     template<typename T>
     std::ostream& operator<<(std::ostream& o, Vector3D<T> const& v3)
     {
-      return o << "x: " << v3.x << "; y: " << v3.y << "; z: " << v3.z;
+      return o << "(" << v3.x << ", " << v3.y << ", " << v3.z << ")";
+    }
+
+    bool CheckNextChar(std::istream& i, char c);
+    template<typename T>
+    std::istream& operator>>(std::istream& i, Vector3D<T>& v3)
+    {
+      if (CheckNextChar(i, '('))
+      {
+        i >> v3.x;
+        if (CheckNextChar(i, ','))
+        {
+          i >> v3.y;
+          if (CheckNextChar(i, ','))
+          {
+            i >> v3.x;
+            CheckNextChar(i, ')');
+          }
+        }
+      }
+      return i;
     }
   }
 }

@@ -123,24 +123,26 @@ namespace hemelb
             html.GetParentOrThrow();
           }
 
+#define IF_TYPE_EQ_THEN_CHECK(DTYPE) \
+    if (type == #DTYPE) \
+    { \
+      DTYPE value; \
+      datum.GetAttributeOrThrow("value", value); \
+    }
           void TestAttributeConversion()
           {
             xml::Element shouldWork = xmlDoc->GetRoot().GetChildOrThrow("conversiontests").GetChildOrThrow("shouldwork");
+
             for (xml::Element datum = shouldWork.GetChildOrThrow("datum");
                 datum != xml::Element::Missing();
                 datum = datum.NextSiblingOrNull("datum"))
             {
               std::string type = datum.GetAttributeOrThrow("type");
-              if (type == "int")
-              {
-                int value;
-                datum.GetAttributeOrThrow("value", value);
-              }
-              else if (type == "double")
-              {
-                double value;
-                datum.GetAttributeOrThrow("value", value);
-              }
+              IF_TYPE_EQ_THEN_CHECK(int);
+              IF_TYPE_EQ_THEN_CHECK(double);
+              IF_TYPE_EQ_THEN_CHECK(hemelb::util::Vector3D<double>);
+              //IF_TYPE_EQ_THEN_CHECK(hemelb::util::Vector3D<int>);
+              IF_TYPE_EQ_THEN_CHECK(unsigned);
             }
           }
 
@@ -155,16 +157,11 @@ namespace hemelb
               bool didThrow = false;
               try
               {
-                if (type == "int")
-                {
-                  int value;
-                  datum.GetAttributeOrThrow("value", value);
-                }
-                else if (type == "double")
-                {
-                  double value;
-                  datum.GetAttributeOrThrow("value", value);
-                }
+                IF_TYPE_EQ_THEN_CHECK(int);
+                IF_TYPE_EQ_THEN_CHECK(double);
+                IF_TYPE_EQ_THEN_CHECK(hemelb::util::Vector3D<double>);
+                IF_TYPE_EQ_THEN_CHECK(hemelb::util::Vector3D<int>);
+                IF_TYPE_EQ_THEN_CHECK(unsigned);
               } catch (std::exception& e) {
                 std::cout << e.what() << std::endl;
                 didThrow = true;

@@ -38,6 +38,7 @@ namespace hemelb
            * @return
            */
           const std::string& GetName() const;
+          void GetName(const std::string& str);
 
           /**
            * Gets the first child element with the specified name
@@ -364,13 +365,17 @@ namespace hemelb
         if (attrString != NULL)
         {
           std::stringstream attrStream(*attrString, std::ios_base::in);
-          // Have it throw on error.
-          attrStream.exceptions(std::stringstream::failbit);
+
           attrStream >> out;
+          if (attrStream.fail())
+          {
+            throw ParseError(*this, name, *attrString) << " error in extraction operator";
+          }
+
           size_t pos = attrStream.tellg();
           if (pos != attrString->size())
           {
-            throw ParseError(*this, name, *attrString);
+            throw ParseError(*this, name, *attrString) << " not all characters consumed";
           }
         }
         return attrString;

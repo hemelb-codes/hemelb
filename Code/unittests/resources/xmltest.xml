@@ -35,11 +35,18 @@
       <datum type="int" value="-24324" />
       <datum type="double" value="1.0" />
       <datum type="double" value="1.6e-3" />
+      <datum type="hemelb::util::Vector3D<double>" value="(-1.4, 11e7, 42)" />
+      <datum type="unsigned" value="42" />
     </shouldwork>
     <shouldfail>
       <datum type="double" value="1.0  " />
       <datum type="double" value="notadouble" />
       <datum type="int" value="1.0" />
+      <datum type="hemelb::util::Vector3D<double>" value="(11e7, 42)" />
+      <datum type="hemelb::util::Vector3D<double>" value="(wombat, 42, %.4f)" />
+      <datum type="hemelb::util::Vector3D<int>" value="(-1.4, 11e7, 42)" />
+      <datum type="hemelb::util::Vector3D<int>" value="[-1.4, 11e7, 42]" />
+      <datum type="unsigned" value="-42" />
     </shouldfail>
   </conversiontests>
 </html>
