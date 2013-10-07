@@ -11,7 +11,9 @@
 #define HEMELB_IO_XML_XMLABSTRACTIONLAYER_H
 
 #include <cstdlib>
+#include <iostream>
 #include <sstream>
+#include <limits>
 #include "Exception.h"
 
 // Forward declare the TinyXML types needed.
@@ -277,6 +279,11 @@ namespace hemelb
            * @return
            */
           //virtual const char* what() const throw ();
+          template<typename T>
+          XmlError& operator<<(const T& t)
+          {
+            return static_cast<XmlError&> (Exception::operator<<(t));
+          }
 
         protected:
           const Element elem;
@@ -295,6 +302,11 @@ namespace hemelb
           virtual ~AttributeError() throw ()
           {
           }
+          template<typename T>
+          AttributeError& operator<<(const T& t)
+          {
+            return static_cast<AttributeError&> (XmlError::operator<<(t));
+          }
 
         private:
           const std::string attr;
@@ -306,6 +318,12 @@ namespace hemelb
           ParseError(const Element& el, const std::string& attrName, const std::string& attrVal);
           virtual ~ParseError() throw ()
           {
+          }
+
+          template<typename T>
+          ParseError& operator<<(const T& t)
+          {
+            return static_cast<ParseError&> (XmlError::operator<<(t));
           }
 
         private:
@@ -325,6 +343,12 @@ namespace hemelb
           virtual ~ElementError() throw ()
           {
           }
+          template<typename T>
+          ElementError& operator<<(const T& t)
+          {
+            return static_cast<ElementError&> (XmlError::operator<<(t));
+          }
+
         protected:
           const std::string elemName;
       };
@@ -335,6 +359,12 @@ namespace hemelb
       {
         public:
           ChildError(const Element& elem, const std::string& subElemName);
+          template<typename T>
+          ChildError& operator<<(const T& t)
+          {
+            return static_cast<ChildError&> (ElementError::operator<<(t));
+          }
+
       };
 
       /**
@@ -344,6 +374,12 @@ namespace hemelb
       {
         public:
           ParentError(const Element& elem);
+          template<typename T>
+          ParentError& operator<<(const T& t)
+          {
+            return static_cast<ParentError&> (ElementError::operator<<(t));
+          }
+
       };
 
       /**
@@ -353,8 +389,13 @@ namespace hemelb
       {
         public:
           SiblingError(const Element& elem, const std::string& subElemName);
-      };
+          template<typename T>
+          SiblingError& operator<<(const T& t)
+          {
+            return static_cast<SiblingError&> (ElementError::operator<<(t));
+          }
 
+      };
 
       // Implement the template member functions declared above, now that the
       // declarations of the exceptions are available.
@@ -364,16 +405,40 @@ namespace hemelb
         const std::string* attrString = GetAttributeOrNull(name);
         if (attrString != NULL)
         {
+          /*
+           * So, basically parsing of unsigned values varies across platforms
+           * such that on OS X 10.8
+           *   unsigned ans
+           *   stream = istringstream("-1");
+           *   stream >> ans;
+           * will NOT set ans but will set stream's failbit.
+           *
+           * On various Linux boxes, this will set ans == 2**32 - 1 and NOT set
+           * the fail bit.
+           *
+           * Here, for types numeric_limits knows are unsigned we explicitly
+           * check for a "-" and throw a suitable error.
+           */
+          if (std::numeric_limits<T>::is_specialized && !std::numeric_limits<T>::is_signed)
+          {
+            if (attrString->at(0) == '-')
+            {
+              throw ParseError(*this, name, *attrString) << " attempt to convert negative number to unsigned type";
+            }
+          }
           std::stringstream attrStream(*attrString, std::ios_base::in);
+
+          // Don't skip whitespace as that could indicate a malformed value
+          attrStream >> std::noskipws;
 
           attrStream >> out;
           if (attrStream.fail())
           {
             throw ParseError(*this, name, *attrString) << " error in extraction operator";
           }
-
-          size_t pos = attrStream.tellg();
-          if (pos != attrString->size())
+          bool eof = attrStream.eof();
+          std::stringstream::pos_type pos = attrStream.tellg();
+          if (!eof && pos != int(attrString->size()))
           {
             throw ParseError(*this, name, *attrString) << " not all characters consumed";
           }
@@ -388,6 +453,7 @@ namespace hemelb
           throw AttributeError(*this, name);
         return *ans;
       }
+
     }
   }
 }

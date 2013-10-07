@@ -34,15 +34,20 @@ namespace hemelb
         Vector3DBase::handler(direction);
       }
     }
-    bool CheckNextChar(std::istream& i, char c)
-    {
-      if (i.get() != c)
-      {
-        i.setstate(i.failbit);
-        return false;
-      }
-      return true;
-    }
 
+    namespace detail
+    {
+      bool CheckNextChar(std::istream& i, char c)
+      {
+        char got = 0;
+        i >> got;
+        if (got != c)
+        {
+          i.setstate(i.failbit);
+          return false;
+        }
+        return true;
+      }
+    }
   }
 }
