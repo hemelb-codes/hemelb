@@ -15,29 +15,36 @@ namespace hemelb
 {
   namespace debug
   {
-    OsxDebugger::OsxDebugger(const char* const executable) : ActiveDebugger(executable) {}
-    
-    const std::string OsxDebugger::GetPlatformInterpreter(void) const {
+    OsxDebugger::OsxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+      ActiveDebugger(executable, comm)
+    {
+    }
+
+    const std::string OsxDebugger::GetPlatformInterpreter(void) const
+    {
       return std::string("osascript");
     }
-    
-    const std::string OsxDebugger::GetPlatformScript(void) const {
-      std::string include (__FILE__);
+
+    const std::string OsxDebugger::GetPlatformScript(void) const
+    {
+      std::string include(__FILE__);
       std::string debugOsxDir = include.substr(0, include.rfind('/'));
-      
+
       return debugOsxDir + "/MPIdebug.scpt";
     }
-    
-    const std::string OsxDebugger::GetPlatformGdbScript(void) const {
-      std::string include (__FILE__);
+
+    const std::string OsxDebugger::GetPlatformGdbScript(void) const
+    {
+      std::string include(__FILE__);
       std::string debugOsxDir = include.substr(0, include.rfind('/'));
-      
+
       return debugOsxDir + "/resume.gdb";
     }
 
-    Debugger* PlatformDebuggerFactory(const char * const executable) {
-      return new OsxDebugger(executable);
+    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm)
+    {
+      return new OsxDebugger(executable, comm);
     }
- 
+
   } // namespace debug
 } // namespace hemelb

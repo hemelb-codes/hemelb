@@ -25,14 +25,14 @@ namespace hemelb
       const std::string GetPlatformGdbScript(void) const;
       
       // C'tor...
-      OsxDebugger(const char* const executable);
+      OsxDebugger(const char* const executable, const net::MpiCommunicator& comm);
       // ... which the factory function needs to be able to get at.
-      friend Debugger* PlatformDebuggerFactory(const char* const executable);
+      friend Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
       
     };
     
     // Factory. Don't be calling this.
-    Debugger* PlatformDebuggerFactory(const char* const executable);
+    Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
   }
 }
 

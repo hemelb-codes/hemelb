@@ -31,8 +31,8 @@ namespace hemelb
   namespace debug
   {
 
-    ActiveDebugger::ActiveDebugger(const char* const executable) :
-      Debugger(executable), mAmAttached(false), mPIds(NULL)
+    ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+      Debugger(executable, comm), mAmAttached(false), mPIds(NULL)
     {
     }
 
@@ -67,27 +67,15 @@ namespace hemelb
         return;
 
       volatile int amWaiting = 1;
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      int nProcs;
-      MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
-      mPIds = new VoI(nProcs);
-      int pId = getpid();
-      pid_t childPid = 0;
 
-      MPI_Gather((void*) &pId,
-                 1,
-                 net::MpiDataType(pId),
-                 (void*) & (mPIds->front()),
-                 1,
-                 net::MpiDataType(mPIds->front()),
-                 0,
-                 MPI_COMM_WORLD);
+      int childPid = -1;
+      // To rank 0
+      GatherProcessIds();
 
-      if (rank == 0)
+      if (mCommunicator.Rank() == 0)
       {
         childPid = fork();
-
+        // Fork gives the PID of the child to the parent and zero to the child
         if (childPid == 0)
         {
           // This function won't return.
@@ -99,7 +87,7 @@ namespace hemelb
       while (amWaiting)
         sleep(5);
 
-      if (rank == 0)
+      if (mCommunicator.Rank() == 0)
       {
         // Reap the spawner
         int deadPid = waitpid(childPid, NULL, 0);
@@ -110,28 +98,22 @@ namespace hemelb
 
     void ActiveDebugger::GatherProcessIds()
     {
-      if (mAmAttached)
-      {
-        // Return a vector of the process ids
-        int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        int nProcs;
-        MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
+      int rank = mCommunicator.Rank();
+      int nProcs = mCommunicator.Size();
 
-        mPIds = new VoI(nProcs);
+      mPIds = new VoI(nProcs);
 
-        int pId = getpid();
+      int pId = getpid();
 
-        MPI_Gather((void*) &pId,
-                   1,
-                   net::MpiDataType(pId),
-                   (void*) & (mPIds->front()),
-                   1,
-                   net::MpiDataType(mPIds->front()),
-                   0,
-                   MPI_COMM_WORLD);
-
-      }
+      HEMELB_MPI_CALL(MPI_Gather,
+          ((void*) &pId,
+              1,
+              net::MpiDataType(pId),
+              (void*) & (mPIds->front()),
+              1,
+              net::MpiDataType(mPIds->front()),
+              0,
+              mCommunicator));
     }
 
     void ActiveDebugger::SpawnDebuggers(void)
