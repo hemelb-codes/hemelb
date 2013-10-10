@@ -10,6 +10,7 @@
 
 #include "net/MpiEnvironment.h"
 #include "net/MpiError.h"
+#include "net/MpiCommunicator.h"
 
 namespace hemelb
 {
@@ -55,7 +56,7 @@ namespace hemelb
 
     void MpiEnvironment::Abort(int errorCode)
     {
-      MPI_Abort(MPI_COMM_WORLD, errorCode);
+      MpiCommunicator::World().Abort(errorCode);
     }
 
   }

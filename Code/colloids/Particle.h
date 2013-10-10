@@ -164,7 +164,7 @@ namespace hemelb
          *  the fields included are all those from the PersistedParticle base class
          *  note - this data type uses displacements rather than absolute addresses
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-         *  when you no longer need this type, remember to call MPI_Datatype_free 
+         *  when you no longer need this type, remember to call MPI_Type_free
          */
         const MPI_Datatype CreateMpiDatatypeWithPosition() const;
 
@@ -172,7 +172,7 @@ namespace hemelb
          *  the fields included in this type are: particleId and velocity(xyz) only
          *  note - this data type uses displacements rather than absolute addresses
          *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-         *  when you no longer need this type, remember to call MPI_Datatype_free 
+         *  when you no longer need this type, remember to call MPI_Type_free
          */
         const MPI_Datatype CreateMpiDatatypeWithVelocity() const;
 

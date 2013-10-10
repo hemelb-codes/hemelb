@@ -167,8 +167,8 @@ namespace hemelb
         MPI_File file;
         //! Information about the file, to give cues and hints to MPI.
         MPI_Info fileInfo;
-        MPI_Group topologyGroup; //! New group for ranks in the topology.
-        MPI_Comm topologyCommunicator; //! New communicator for ranks in the topology.
+        net::MpiGroup topologyGroup; //! New group for ranks in the topology.
+        //net::MpiCommunicator topologyCommunicator; //! New communicator for ranks in the topology.
         net::MpiCommunicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
         // TODO: This was never a good plan, better code design will avoid the need for it.
         net::MpiCommunicator currentComms; //! The communicator currently in use.

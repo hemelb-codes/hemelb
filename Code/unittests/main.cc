@@ -34,7 +34,9 @@
 int main(int argc, char **argv)
 {
   hemelb::net::MpiEnvironment mpi(argc, argv);
-  hemelb::net::MpiCommunicator testCommunicator(MPI_COMM_WORLD);
+  hemelb::log::Logger::Init();
+
+  hemelb::net::MpiCommunicator testCommunicator = hemelb::net::MpiCommunicator::World();
   hemelb::net::NetworkTopology::Instance()->Init(testCommunicator);
 
   std::ostream * reportto=&std::cerr;

@@ -597,11 +597,11 @@ void SimulationMaster::RecalculatePropertyRequirements()
  */
 void SimulationMaster::Abort()
 {
-  MPI_Abort(MPI_COMM_WORLD, 1);
-
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
   hemelb::log::Logger::Log<hemelb::log::Critical, hemelb::log::OnePerCore>("Aborting");
+  hemelb::net::MpiEnvironment::Abort(1);
+
   exit(1);
 }
 

@@ -6,6 +6,7 @@ endif(HEMELB_USE_MULTIMACHINE)
 
 add_library(hemelb_net
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
+  MpiCommunicator.cc MpiGroup.cc
  IteratedAction.cc BaseNet.cc 
 NetworkTopology.cc ${topology}
 mixins/pointpoint/CoalescePointPoint.cc

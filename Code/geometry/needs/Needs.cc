@@ -34,7 +34,7 @@ namespace hemelb
 
       // Share the counts of needed blocks
       int blocksNeededSize[readingGroupSize];
-      std::vector<int> blocksNeededSizes(communicator.GetSize());
+      std::vector<int> blocksNeededSizes(communicator.Size());
 
       for (proc_t readingCore = 0; readingCore < readingGroupSize; readingCore++)
       {
@@ -42,7 +42,7 @@ namespace hemelb
         net.RequestGatherSend(blocksNeededSize[readingCore], readingCore);
 
       }
-      if (communicator.GetRank() < readingGroupSize)
+      if (communicator.Rank() < readingGroupSize)
       {
         net.RequestGatherReceive(blocksNeededSizes);
       }
@@ -56,16 +56,16 @@ namespace hemelb
 
       std::vector<site_t> blocksNeededOn;
 
-      if (communicator.GetRank() < readingGroupSize)
+      if (communicator.Rank() < readingGroupSize)
       {
         net.RequestGatherVReceive(blocksNeededOn, blocksNeededSizes);
       }
       net.Dispatch();
-      if (communicator.GetRank() < readingGroupSize)
+      if (communicator.Rank() < readingGroupSize)
       {
         int needsPassed = 0;
         // Transpose the blocks needed on cores matrix
-        for (proc_t sendingCore = 0; sendingCore < communicator.GetSize(); sendingCore++)
+        for (proc_t sendingCore = 0; sendingCore < communicator.Size(); sendingCore++)
         {
           for (int needForThisSendingCore = 0; needForThisSendingCore < blocksNeededSizes[sendingCore];
               ++needForThisSendingCore)
@@ -86,7 +86,7 @@ namespace hemelb
 
     void Needs::Validate(const site_t blockCount, const std::vector<bool>& readBlock)
     {
-      std::vector<int> procsWantingThisBlockBuffer(communicator.GetSize());
+      std::vector<int> procsWantingThisBlockBuffer(communicator.Size());
       for (site_t block = 0; block < blockCount; ++block)
       {
         int neededHere = readBlock[block];
@@ -98,12 +98,12 @@ namespace hemelb
                    1,
                    net::MpiDataType<int>(),
                    readingCore,
-                   communicator.GetCommunicator());
+                   communicator);
 
-        if (communicator.GetRank() == readingCore)
+        if (communicator.Rank() == readingCore)
         {
 
-          for (proc_t needingProcOld = 0; needingProcOld < communicator.GetSize(); needingProcOld++)
+          for (proc_t needingProcOld = 0; needingProcOld < communicator.Size(); needingProcOld++)
           {
             bool found = false;
             for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();

@@ -40,7 +40,7 @@ namespace hemelb
                     request->Type,
                     it->first,
                     10,
-                    communicator.GetCommunicator(),
+                    communicator,
                     &requests[m]);
           ++m;
         }
@@ -90,7 +90,7 @@ namespace hemelb
                     request->Type,
                     it->first,
                     10,
-                    communicator.GetCommunicator(),
+                    communicator,
                     &requests[count_receives+m]);
           ++m;
         }

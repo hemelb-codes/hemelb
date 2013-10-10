@@ -99,7 +99,7 @@ namespace hemelb
     /** creates a derived MPI datatype that represents a single particle object
      *  note - this data type uses displacements rather than absolute addresses
      *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-     *  when you no longer need this type, remember to call MPI_Datatype_free
+     *  when you no longer need this type, remember to call MPI_Type_free
      */
     const MPI_Datatype Particle::CreateMpiDatatypeWithPosition() const
     {
@@ -179,7 +179,7 @@ namespace hemelb
     /** creates a derived MPI datatype that represents a single particle object
      *  note - this data type uses displacements rather than absolute addresses
      *  refer to Example 4.17 on pp114-117 of the MPI specification version 2.2
-     *  when you no longer need this type, remember to call MPI_Datatype_free
+     *  when you no longer need this type, remember to call MPI_Type_free
      */
     const MPI_Datatype Particle::CreateMpiDatatypeWithVelocity() const
     {
