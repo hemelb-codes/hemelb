@@ -37,6 +37,8 @@ int main(int argc, char **argv)
   hemelb::log::Logger::Init();
 
   hemelb::net::MpiCommunicator testCommunicator = hemelb::net::MpiCommunicator::World();
+  hemelb::debug::Debugger::Init(argv[0], testCommunicator);
+
   hemelb::net::NetworkTopology::Instance()->Init(testCommunicator);
 
   std::ostream * reportto=&std::cerr;

@@ -25,14 +25,14 @@ namespace hemelb
     {
     }
 
-    NullDebugger::NullDebugger(const char* const executable) :
-      Debugger(executable)
+    NullDebugger::NullDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+      Debugger(executable, comm)
     {
     }
 
-    Debugger* PlatformDebuggerFactory(const char * const executable)
+    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm)
     {
-      return new NullDebugger(executable);
+      return new NullDebugger(executable, comm);
     }
   }
 }
