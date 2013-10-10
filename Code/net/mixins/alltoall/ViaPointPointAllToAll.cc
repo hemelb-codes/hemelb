@@ -22,7 +22,7 @@ namespace hemelb
         int size;
         MPI_Type_size(receivereq->Type, &size);
 
-        for (int source_rank = 0; source_rank < communicator.GetSize(); source_rank++)
+        for (int source_rank = 0; source_rank < communicator.Size(); source_rank++)
         {
 
           // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
@@ -48,7 +48,7 @@ namespace hemelb
         int size;
         MPI_Type_size(sendreq->Type, &size);
 
-        for (int dest_rank = 0; dest_rank < communicator.GetSize(); dest_rank++)
+        for (int dest_rank = 0; dest_rank < communicator.Size(); dest_rank++)
         {
 
           RequestSendImpl(static_cast<unsigned char *>(sendreq->Pointer) + size * dest_rank,

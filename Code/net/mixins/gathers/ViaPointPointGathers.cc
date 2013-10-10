@@ -21,7 +21,7 @@ namespace hemelb
         int size;
         MPI_Type_size(receive_it->Type, &size);
 
-        for (int source_rank = 0; source_rank < communicator.GetSize(); source_rank++)
+        for (int source_rank = 0; source_rank < communicator.Size(); source_rank++)
         {
           // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
           // But we cannot currently see a better solution to avoid compiler warnings from void* arithmetic.
@@ -58,7 +58,7 @@ namespace hemelb
         int size;
         MPI_Type_size(receive_it->Type, &size);
 
-        for (int source_rank = 0; source_rank < communicator.GetSize(); source_rank++)
+        for (int source_rank = 0; source_rank < communicator.Size(); source_rank++)
         {
           // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
           // But we cannot currently see a better solution to avoid compiler warnings from void* arithmetic.

@@ -8,35 +8,105 @@
 //
 
 #include "net/MpiCommunicator.h"
+#include "net/MpiGroup.h"
 
 namespace hemelb
 {
   namespace net
   {
-
-    MpiCommunicator::MpiCommunicator() :
-      size(0)
+    namespace
     {
-
+      void Deleter(MPI_Comm* comm)
+      {
+        int finalized;
+        HEMELB_MPI_CALL(MPI_Finalized, (&finalized));
+        if (!finalized)
+          HEMELB_MPI_CALL(MPI_Comm_free, (comm));
+        delete comm;
+      }
     }
 
-    MpiCommunicator::MpiCommunicator(MPI_Comm communicator) :
-      communicator(communicator)
+    MpiCommunicator MpiCommunicator::World()
     {
-      int commRank, commSize;
-
-      MPI_Comm_rank(communicator, &commRank);
-      MPI_Comm_size(communicator, &commSize);
-      MPI_Comm_group(communicator, &group);
-
-      rank = commRank;
-      size = commSize;
+      return MpiCommunicator(MPI_COMM_WORLD, false);
     }
 
-    MpiCommunicator::MpiCommunicator(proc_t rank, proc_t size) :
-      rank(rank), size(size), communicator(NULL), group(NULL)
+    MpiCommunicator::MpiCommunicator() : commPtr()
     {
     }
 
+    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) : commPtr()
+    {
+      if (communicator == MPI_COMM_NULL)
+        return;
+
+      if (owner)
+      {
+        commPtr.reset(new MPI_Comm(communicator), Deleter);
+      }
+      else
+      {
+        commPtr.reset(new MPI_Comm(communicator));
+      }
+    }
+
+//    MpiCommunicator& MpiCommunicator::operator=(const MpiCommunicator& rhs)
+//    {
+//      commPtr = rhs.commPtr;
+//      return *this;
+//    }
+
+    bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
+    {
+      if (comm1)
+      {
+        if (comm2)
+        {
+          int result;
+          HEMELB_MPI_CALL(MPI_Comm_compare,
+              (comm1, comm2, &result));
+          return result == MPI_IDENT;
+        }
+        return false;
+      }
+      return (!comm2);
+    }
+
+    bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
+    {
+      return ! (comm1 == comm2);
+    }
+
+    int MpiCommunicator::Rank() const
+    {
+      int rank;
+      HEMELB_MPI_CALL(MPI_Comm_rank, (*commPtr, &rank));
+      return rank;
+    }
+
+    int MpiCommunicator::Size() const
+    {
+      int size;
+      HEMELB_MPI_CALL(MPI_Comm_size, (*commPtr, &size));
+      return size;
+    }
+
+    MpiGroup MpiCommunicator::Group() const
+    {
+      MPI_Group grp;
+      HEMELB_MPI_CALL(MPI_Comm_group, (*commPtr, &grp));
+      return MpiGroup(grp, true);
+    }
+
+    MpiCommunicator MpiCommunicator::Create(const MpiGroup& grp) const
+    {
+      MPI_Comm newComm;
+      HEMELB_MPI_CALL(MPI_Comm_create, (*commPtr, grp, &newComm));
+      return MpiCommunicator(newComm, true);
+    }
+    void MpiCommunicator::Abort(int errCode) const
+    {
+      HEMELB_MPI_CALL(MPI_Abort, (*commPtr, errCode));
+    }
   }
 }

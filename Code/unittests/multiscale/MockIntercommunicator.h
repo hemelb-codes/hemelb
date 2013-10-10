@@ -25,7 +25,7 @@ namespace hemelb
     namespace multiscale
     {
       /***
-       * Example type traits structure, using the HemeLB implementation of MPI_TYPE traits.
+       * Example type traits structure, using the HemeLB implementation of MPI_Datatype traits.
        */
 
       struct MPIRuntimeType

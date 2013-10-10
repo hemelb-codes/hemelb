@@ -54,12 +54,12 @@ namespace hemelb
 
     proc_t NetworkTopology::GetLocalRank() const
     {
-      return comms.GetRank();
+      return comms.Rank();
     }
 
     proc_t NetworkTopology::GetProcessorCount() const
     {
-      return comms.GetSize();
+      return comms.Size();
     }
 
     int NetworkTopology::GetDepths() const

@@ -35,7 +35,7 @@ namespace hemelb
         proc_t GetProcessorCount() const;
         int GetDepths() const;
         unsigned int GetMachineCount() const;
-        MpiCommunicator const & GetComms() const {
+        const MpiCommunicator & GetComms() const {
           return comms;
         }
 

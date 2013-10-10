@@ -24,24 +24,27 @@ namespace hemelb
   namespace log
   {
     const LogLevel Logger::currentLogLevel = HEMELB_LOG_LEVEL;
+    // Use negative value to indicate uninitialised.
     int Logger::thisRank = -1;
     double Logger::startTime = -1.0;
+
+    void Logger::Init()
+    {
+      // If Logger uninitialised
+      if (thisRank < 0)
+      {
+        // Check that MPI is ready
+        if (net::MpiEnvironment::Initialized())
+        {
+          thisRank = net::MpiCommunicator::World().Rank();
+        }
+        startTime = util::myClock();
+      }
+    }
 
     template<>
     void Logger::LogInternal<OnePerCore>(std::string format, std::va_list args)
     {
-      if (thisRank < 0)
-      {
-        // need to be able to log, even if MPI not initialised (for testability)
-        int initialized;
-        MPI_Initialized(&initialized);
-        if (initialized)
-        {
-          MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
-        }
-        startTime = util::myClock();
-      }
-
       std::stringstream output;
 
       // Set the fill digit to be 0, so the integer 1 renders as 0000001
@@ -67,17 +70,6 @@ namespace hemelb
     template<>
     void Logger::LogInternal<Singleton>(std::string format, std::va_list args)
     {
-      if (thisRank < 0)
-      {
-        int initialized;
-        MPI_Initialized(&initialized);
-        if (initialized)
-        {
-          MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
-        }
-        startTime = util::myClock();
-      }
-
       if (thisRank == 0)
       {
         char lead[20];
@@ -87,5 +79,6 @@ namespace hemelb
         std::vprintf(newFormat.append(format).append("\n").c_str(), args);
       }
     }
+
   }
 }

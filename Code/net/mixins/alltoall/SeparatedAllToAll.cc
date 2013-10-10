@@ -26,7 +26,7 @@ namespace hemelb
                      receivereq.Pointer,
                      receivereq.Count,
                      receivereq.Type,
-                     communicator.GetCommunicator());
+                     communicator);
       }
 
       allToAllReceiveProcComms.clear();

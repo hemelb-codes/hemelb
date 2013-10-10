@@ -119,7 +119,7 @@ namespace hemelb
                    1,
                    net::MpiDataType(processorsNeedingIoletFlags[0]),
                    GetBCProcRank(),
-                   MPI_COMM_WORLD);
+                   net::NetworkTopology::Instance()->GetComms());
 
         if (IsCurrentProcTheBCProc())
         {

@@ -31,7 +31,7 @@ namespace hemelb
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
        */
-      MPI_File_open(MPI_COMM_WORLD,
+      MPI_File_open(net::MpiCommunicator::World(),
                     const_cast<char*>(path.c_str()),
                     MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE,
                     MPI_INFO_NULL,
@@ -254,11 +254,11 @@ namespace hemelb
     {
       /** CommunicateParticlePositions
        *    For each neighbour rank p
-       *    - MPI_IRECV( number_of_remote_particles )
-       *    - MPI_IRECV( list_of_remote_particles )
-       *    - MPI_ISEND( number_of_local_particles )
-       *    - MPI_ISEND( list_of_local_particles )
-       *    MPI_WAITALL()
+       *    - MPI_Irecv( number_of_remote_particles )
+       *    - MPI_Irecv( list_of_remote_particles )
+       *    - MPI_Isend( number_of_local_particles )
+       *    - MPI_Isend list_of_local_particles )
+       *    MPI_Waitall()
        *
        *  The global position of each particle is updated by the ownerRank process.
        *  The ownerRank for each particle is verified when its position is updated.
@@ -326,11 +326,11 @@ namespace hemelb
     {
       /** CommunicateFluidVelocities
        *    For each neighbour rank p
-       *    - MPI_IRECV( number_of_incoming_velocities )
-       *    - MPI_IRECV( list_of_incoming_velocities )
-       *    - MPI_ISEND( number_of_outgoing_velocities )
-       *    - MPI_ISEND( list_of_outgoing_velocities )
-       *    MPI_WAITALL()
+       *    - MPI_Irecv( number_of_incoming_velocities )
+       *    - MPI_Irecv( list_of_incoming_velocities )
+       *    - MPI_Isend( number_of_outgoing_velocities )
+       *    - MPI_Isend( list_of_outgoing_velocities )
+       *    MPI_Waitall()
        */
 
       if (scanMap.size() < 2)

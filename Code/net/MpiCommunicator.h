@@ -10,97 +10,102 @@
 #ifndef HEMELB_NET_MPICOMMUNICATOR_H
 #define HEMELB_NET_MPICOMMUNICATOR_H
 
-#include "units.h"
-#include "net/mpi.h"
+//#include "units.h"
+//#include "net/mpi.h"
+#include "net/MpiError.h"
+#include <boost/shared_ptr.hpp>
 
 namespace hemelb
 {
   namespace net
   {
+    class MpiGroup;
+
     class MpiCommunicator
     {
       public:
-        /**
-         * Constructor for an uninitialised, NULL communicator
-         * @param communicator
-         */
-        MpiCommunicator() :
-            size(0)
-        {
-
-        }
+        static MpiCommunicator World();
 
         /**
-         * Constructor to get data needed from an MPI communicator
+         * Constructor for an uninitialised communicator, equivalent to
+         * MPI_COMM_NULL
          * @param communicator
          */
-        MpiCommunicator(MPI_Comm communicator) :
-            communicator(communicator)
-        {
-          int commRank, commSize;
+        MpiCommunicator();
 
-          MPI_Comm_rank(communicator, &commRank);
-          MPI_Comm_size(communicator, &commSize);
-          MPI_Comm_group(communicator, &group);
-
-          rank = commRank;
-          size = commSize;
-        }
-
-        /***
-         * Constructor for a dummy communicator
-         * Can be useful for testing.
-         * Communicator and group are invalid when used in this way.
-         * @param rank
-         * @param size
+        /**
+         * Class has virtual methods so should have virtual d'tor.
          */
-        MpiCommunicator(proc_t rank, proc_t size) :
-            rank(rank), size(size), communicator(NULL), group(NULL)
+        virtual ~MpiCommunicator()
         {
+
         }
+        /**
+         * Assignment operator.
+         * @param rhs
+         * @return
+         */
+        //MpiCommunicator& operator=(const MpiCommunicator& rhs);
 
         /**
          * Returns the local rank on the communicator
          * @return
          */
-        inline proc_t GetRank() const
-        {
-          return rank;
-        }
+        virtual int Rank() const;
 
         /**
          * Returns the size of the communicator (i.e. total number of procs involved).
          * @return
          */
-        inline proc_t GetSize() const
-        {
-          return size;
-        }
+        virtual int Size() const;
 
         /**
-         * Returns the MPI communicator being used.
-         * @return
+         * Creates a new communicator
+         * @param Group which is a subset of the group of this communicator.
+         * @return New communicator.
          */
-        inline MPI_Comm GetCommunicator() const
-        {
-          return communicator;
-        }
+        MpiCommunicator Create(const MpiGroup& grp) const;
 
+        /**
+         * Allow implicit casts to MPI_Comm
+         * @return The underlying MPI communicator.
+         */
+        operator MPI_Comm() const
+        {
+          return *commPtr;
+        }
+        /**
+         * Is this communicator valid? I.e. not equal to MPI_COMM_NULL.
+         */
+        operator bool() const
+        {
+          return (bool)commPtr;
+        }
         /**
          * Returns the MPI group being used.
          * @return
          */
-        inline MPI_Group GetGroup() const
-        {
-          return group;
-        }
+        MpiGroup Group() const;
+
+        /**
+         * Abort - should try to bring down all tasks, but no guarantees
+         * @param errCode
+         */
+        void Abort(int errCode) const;
 
       private:
-        proc_t rank;
-        proc_t size;
-        MPI_Comm communicator;
-        MPI_Group group;
+        /**
+         * Constructor to get data needed from an MPI communicator
+         * @param communicator
+         */
+        MpiCommunicator(MPI_Comm communicator, bool willOwn);
+
+        boost::shared_ptr<MPI_Comm> commPtr;
     };
+
+    bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
+    bool operator!=(const MpiCommunicator& comm1, const MpiCommunicator& comm2);
+
   }
 }
 

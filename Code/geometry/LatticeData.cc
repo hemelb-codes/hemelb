@@ -283,7 +283,8 @@ namespace hemelb
 
     void LatticeData::CollectFluidSiteDistribution()
     {
-      fluidSitesOnEachProcessor.resize(net::NetworkTopology::Instance()->GetProcessorCount());
+      const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+      fluidSitesOnEachProcessor.resize(comms.Size());
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
@@ -291,9 +292,9 @@ namespace hemelb
                     &fluidSitesOnEachProcessor[0],
                     1,
                     net::MpiDataType<site_t>(),
-                    MPI_COMM_WORLD);
+                    comms);
       totalFluidSites = 0;
-      for (proc_t ii = 0; ii < net::NetworkTopology::Instance()->GetProcessorCount(); ++ii)
+      for (proc_t ii = 0; ii < comms.Size(); ++ii)
       {
         totalFluidSites += fluidSitesOnEachProcessor[ii];
       }
@@ -337,8 +338,9 @@ namespace hemelb
       }
 
       site_t siteMins[3], siteMaxes[3];
-      MPI_Allreduce(localMins, siteMins, 3, net::MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, net::MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+      const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+      MPI_Allreduce(localMins, siteMins, 3, net::MpiDataType<site_t>(), MPI_MIN, comms);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, net::MpiDataType<site_t>(), MPI_MAX, comms);
       for (unsigned ii = 0; ii < 3; ++ii)
       {
         globalSiteMins[ii] = siteMins[ii];

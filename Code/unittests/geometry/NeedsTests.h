@@ -47,7 +47,7 @@ namespace hemelb
           void TestReadingOne()
           {
             SetupMocks(6, 2, 5, 0);
-            CPPUNIT_ASSERT_EQUAL(communicatorMock->GetSize(),5);
+            CPPUNIT_ASSERT_EQUAL(communicatorMock->Size(),5);
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // I would expect to send to the other reading core, my count of needed cores

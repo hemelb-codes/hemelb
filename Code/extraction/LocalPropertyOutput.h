@@ -70,6 +70,7 @@ namespace hemelb
          */
         double GetOffset(OutputField::FieldType field) const;
 
+        const net::MpiCommunicator& comms;
         /**
          * The MPI file to write into.
          */

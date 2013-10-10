@@ -61,7 +61,7 @@ namespace hemelb
            * needed arrays later on, so we are broadcasting this to all the other processes. */
           unsigned GlobalIoletCount[] = { inletValues->GetLocalIoletCount(),
                                           outletValues->GetLocalIoletCount() };
-          MPI_Bcast(GlobalIoletCount, 2, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+          MPI_Bcast(GlobalIoletCount, 2, MPI_UNSIGNED, 0, net::NetworkTopology::Instance()->GetComms());
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -346,16 +346,12 @@ namespace hemelb
                           recvSizes,
                           1,
                           MPI_INT,
-                          hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator());
+                          hemelb::net::NetworkTopology::Instance()->GetComms());
 
             int64_t totalSize = 0;
 
-            int np = 0;
-            int rank = 0;
-            MPI_Comm_size(hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator(),
-                          &np);
-            MPI_Comm_rank(hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator(),
-                          &rank);
+            int np = hemelb::net::NetworkTopology::Instance()->GetComms().Size();
+            int rank = hemelb::net::NetworkTopology::Instance()->GetComms().Rank();
             int64_t offset = 0;
 
             for (int j = 0; j < np; j++)
@@ -374,7 +370,7 @@ namespace hemelb
                            recvSizes,
                            recvDispls,
                            MPI_LONG_LONG,
-                           hemelb::net::NetworkTopology::Instance()->GetComms().GetCommunicator());
+                           hemelb::net::NetworkTopology::Instance()->GetComms());
 
             std::vector<site_t> subList;
             for (int j = 0; j < totalSize; j++)

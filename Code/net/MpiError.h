@@ -22,7 +22,7 @@ namespace hemelb
      * Indicate an error to do with MPI.
      *
      * Will be thrown by the HEMELB_MPI_CALL macro, as in:
-     *   HEMELB_MPI_CALL(MPI_Send, (buffer, count, dtype, toRank, tag, MPI_COMM_WORLD) );
+     *   HEMELB_MPI_CALL(MPI_Send, (buffer, count, dtype, toRank, tag, communicator) );
      *
      */
     class MpiError : public ::hemelb::Exception

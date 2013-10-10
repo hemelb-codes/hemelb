@@ -24,21 +24,23 @@ namespace hemelb
         timings[ii] = timers[ii].Get();
       }
 
+      // TODO: Should this be World() or NetworkTopology::GetComms()?
+      const net::MpiCommunicator& comms = net::MpiCommunicator::World();
       CommsPolicy::Reduce(timings,
                           &maxes[0],
                           numberOfTimers,
                           net::MpiDataType<double>(),
                           MPI_MAX,
                           0,
-                          MPI_COMM_WORLD);
+                          comms);
       CommsPolicy::Reduce(timings,
                           &means[0],
                           numberOfTimers,
                           net::MpiDataType<double>(),
                           MPI_SUM,
                           0,
-                          MPI_COMM_WORLD);
-      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(), MPI_MIN, 0, MPI_COMM_WORLD);
+                          comms);
+      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(), MPI_MIN, 0, comms);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
         means[ii] /= (double) (net::NetworkTopology::Instance()->GetProcessorCount());

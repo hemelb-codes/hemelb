@@ -20,12 +20,13 @@ int main(int argc, char *argv[])
 
   // Bring up MPI
   hemelb::net::MpiEnvironment mpi(argc, argv);
+  hemelb::log::Logger::Init();
   try
   {
     // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
     hemelb::debug::Debugger::Init(argv[0]);
 
-    hemelb::net::MpiCommunicator hemelbCommunicator(MPI_COMM_WORLD);
+    hemelb::net::MpiCommunicator hemelbCommunicator = hemelb::net::MpiCommunicator::World();
     hemelb::net::NetworkTopology::Instance()->Init(hemelbCommunicator);
     try
     {

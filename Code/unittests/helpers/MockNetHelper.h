@@ -17,16 +17,47 @@ namespace hemelb
   {
     namespace helpers
     {
+      class MockMpiCommunicator : public net::MpiCommunicator
+      {
+        public:
+          /***
+           * Constructor for a dummy communicator
+           * Can be useful for testing but can't actually be used
+           * @param rank
+           * @param size
+           */
+          MockMpiCommunicator(int rank_, int size_) :
+            MpiCommunicator(), rank(rank_), size(size_)
+          {
+
+          }
+
+          virtual inline int Rank() const
+          {
+            return rank;
+          }
+          virtual inline int Size() const
+          {
+            return size;
+          }
+        private:
+          int rank, size;
+      };
+
       class MockNetHelper
       {
         protected:
-          MockNetHelper():communicatorMock(NULL),netMock(NULL){}
+          MockNetHelper() :
+            communicatorMock(NULL), netMock(NULL)
+          {
+          }
           void setUp(const proc_t core_count, const proc_t current_core)
           {
-            communicatorMock = new net::MpiCommunicator(current_core, core_count);
+            communicatorMock = new MockMpiCommunicator(current_core, core_count);
             netMock = new net::NetMock(*communicatorMock);
           }
-          void tearDown(){
+          void tearDown()
+          {
             delete communicatorMock;
             delete netMock;
           }
