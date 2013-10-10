@@ -20,11 +20,11 @@ namespace hemelb
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec) :
-      dataSource(dataSource), outputSpec(outputSpec)
+      comms(net::NetworkTopology::Instance()->GetComms()), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      MPI_File_open(MPI_COMM_WORLD,
+      MPI_File_open(comms,
                     const_cast<char*> (outputSpec->filename.c_str()),
                     MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
                     MPI_INFO_NULL,
@@ -71,11 +71,11 @@ namespace hemelb
                     1,
                     net::MpiDataType<uint64_t> (),
                     MPI_SUM,
-                    MPI_COMM_WORLD);
+                    comms);
 
       // Only the root process must know the total number of sites written
       uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, net::MpiDataType<uint64_t> (), MPI_SUM, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&siteCount, &allSiteCount, 1, net::MpiDataType<uint64_t> (), MPI_SUM, 0, comms);
 
       unsigned totalHeaderLength = 0;
 
@@ -154,7 +154,7 @@ namespace hemelb
         if (net::NetworkTopology::Instance()->GetProcessorCount() > 1)
         {
           localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, MPI_COMM_WORLD);
+          MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, comms);
           localDataOffsetIntoFile -= writeLength;
         }
       }
@@ -166,7 +166,7 @@ namespace hemelb
                  net::MpiDataType<uint64_t> (),
                  net::NetworkTopology::Instance()->GetLocalRank() - 1,
                  1,
-                 MPI_COMM_WORLD,
+                 comms,
                  MPI_STATUS_IGNORE);
 
         // Send the next core its start position.
@@ -179,7 +179,7 @@ namespace hemelb
                    net::MpiDataType<uint64_t>(),
                    net::NetworkTopology::Instance()->GetLocalRank() + 1,
                    1,
-                   MPI_COMM_WORLD);
+                   comms);
           localDataOffsetIntoFile -= writeLength;
         }
       }

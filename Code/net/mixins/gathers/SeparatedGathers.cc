@@ -29,7 +29,7 @@ namespace hemelb
         /*
          * If I am sending to MYSELF, then I must assemble a gather request for sending and receiving myself
          */
-        if (send_it->first == communicator.GetRank())
+        if (send_it->first == communicator.Rank())
         {
           /*
            * I may be the ROOT of several gathers.
@@ -51,8 +51,8 @@ namespace hemelb
                        receive_it->Pointer,
                        1,
                        receive_it->Type,
-                       communicator.GetRank(),
-                       communicator.GetCommunicator());
+                       communicator.Rank(),
+                       communicator);
             ++gather_index;
           }
         }
@@ -64,7 +64,7 @@ namespace hemelb
         {
           for (GatherProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
           {
-            MPI_Gather(req->Pointer, 1, req->Type, NULL, 1, req->Type, send_it->first, communicator.GetCommunicator());
+            MPI_Gather(req->Pointer, 1, req->Type, NULL, 1, req->Type, send_it->first, communicator);
           }
         }
       }
@@ -80,7 +80,7 @@ namespace hemelb
           send_it != gatherVSendProcessorComms.end(); ++send_it)
       {
 
-        if (send_it->first == communicator.GetRank())
+        if (send_it->first == communicator.Rank())
         {
           int gather_index = 0;
 
@@ -99,8 +99,8 @@ namespace hemelb
                         receive_it->Counts,
                         receive_it->Displacements,
                         receive_it->Type,
-                        communicator.GetRank(),
-                        communicator.GetCommunicator());
+                        communicator.Rank(),
+                        communicator);
             ++gather_index;
           }
         }
@@ -117,7 +117,7 @@ namespace hemelb
                         NULL,
                         req->Type,
                         send_it->first,
-                        communicator.GetCommunicator());
+                        communicator);
           }
 
         }

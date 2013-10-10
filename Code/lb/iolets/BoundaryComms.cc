@@ -82,7 +82,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     procsList[proc],
                     100,
-                    MPI_COMM_WORLD,
+                    net::NetworkTopology::Instance()->GetComms(),
                     &sendRequest[proc]);
         }
       }
@@ -96,7 +96,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     BoundaryValues::GetBCProcRank(),
                     100,
-                    MPI_COMM_WORLD,
+                    net::NetworkTopology::Instance()->GetComms(),
                     &receiveRequest);
         }
       }

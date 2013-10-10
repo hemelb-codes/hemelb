@@ -35,13 +35,13 @@ namespace hemelb
       int i, j, sum;
 
       depths = 0;
-
-      HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag));
+      net::MpiCommunicator& commWorld = net::MpiCommunicator::World();
+      HEMELB_MPI_CALL(MPI_Comm_get_attr, (commWorld, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag));
 
       if (flag == 0)
         throw Exception() << "MPICHX_TOPOLOGY_DEPTHS attribute missing";
 
-      HEMELB_MPI_CALL(MPI_Comm_Attr_get, (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag));
+      HEMELB_MPI_CALL(MPI_Comm_get_attr, (commWorld, MPICHX_TOPOLOGY_COLORS, &color, &flag));
 
       if (flag == 0)
         throw Exception() << "MPICHX_TOPOLOGY_COLORS attribute missing";

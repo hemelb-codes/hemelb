@@ -49,6 +49,8 @@ namespace hemelb
           return queryLogLevel <= currentLogLevel;
         }
 
+        static void Init();
+
         template<LogLevel queryLogLevel, LogType logType>
         static void Log(std::string format, ...)
         {

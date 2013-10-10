@@ -45,7 +45,7 @@ namespace hemelb
         DivideBlocks(procAssignedToEachBlock,
                      unvisitedFluidBlockCount,
                      geometry,
-                     communicator.GetSize(),
+                     communicator.Size(),
                      fluidSitesOnEachBlock);
       }
 
@@ -60,7 +60,7 @@ namespace hemelb
                       (int) geometry.GetBlockCount(),
                       net::MpiDataType<proc_t> (),
                       MPI_MAX,
-                      communicator.GetCommunicator());
+                      communicator);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
@@ -84,7 +84,7 @@ namespace hemelb
         // required on each unit.
         proc_t currentUnit = 0;
 
-        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (communicator.GetSize()));
+        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (communicator.Size()));
 
         // Create an array to monitor whether each block has been assigned yet.
         std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
