@@ -15,30 +15,30 @@ namespace hemelb
 {
   namespace debug
   {
-    LinuxDebugger::LinuxDebugger(const char* const executable) :
-      ActiveDebugger(executable) {}
-    
+    LinuxDebugger::LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
+      ActiveDebugger(executable, comm) {}
+
     const std::string LinuxDebugger::GetPlatformInterpreter(void) const {
       return std::string("bash");
     }
-    
+
     const std::string LinuxDebugger::GetPlatformScript(void) const {
       std::string include (__FILE__);
       std::string debugLinuxDir = include.substr(0, include.rfind('/'));
-      
+
       return debugLinuxDir + "/launchGdbs.sh";
     }
-    
+
     const std::string LinuxDebugger::GetPlatformGdbScript(void) const {
       std::string include (__FILE__);
       std::string debugLinuxDir = include.substr(0, include.rfind('/'));
-      
+
       return debugLinuxDir + "/resume.gdb";
     }
-    
-    Debugger* PlatformDebuggerFactory(const char * const executable) {
-      return new LinuxDebugger(executable);
+
+    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm) {
+      return new LinuxDebugger(executable, comm);
     }
- 
+
   } // namespace debug
 } // namespace hemelb

@@ -23,10 +23,10 @@ int main(int argc, char *argv[])
   hemelb::log::Logger::Init();
   try
   {
-    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-    hemelb::debug::Debugger::Init(argv[0]);
-
     hemelb::net::MpiCommunicator hemelbCommunicator = hemelb::net::MpiCommunicator::World();
+    // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+    hemelb::debug::Debugger::Init(argv[0], hemelbCommunicator);
+
     hemelb::net::NetworkTopology::Instance()->Init(hemelbCommunicator);
     try
     {

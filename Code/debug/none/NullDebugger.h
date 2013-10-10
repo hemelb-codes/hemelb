@@ -24,11 +24,11 @@ namespace hemelb
 
       protected:
         void Attach(void);
-        NullDebugger(const char* const executable);
-        friend Debugger* PlatformDebuggerFactory(const char* const executable);
+        NullDebugger(const char* const executable, const net::MpiCommunicator& comm);
+        friend Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
     };
 
-    Debugger* PlatformDebuggerFactory(const char* const executable);
+    Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
   }
 }
 
