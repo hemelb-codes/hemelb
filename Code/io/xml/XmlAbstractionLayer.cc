@@ -52,6 +52,11 @@ namespace hemelb
         return el->ValueStr();
       }
 
+      int Element::GetLine() const
+      {
+        return el->Row();
+      }
+
       Element Element::GetChildOrNull(const std::string& name)
       {
         TiXmlElement* ans = el->FirstChildElement(name);
@@ -138,11 +143,11 @@ namespace hemelb
 
       std::string Element::GetPath() const
       {
-        std::string ans;
+        std::ostringstream ans;
         GetPathWorker(el, ans);
-        return ans;
+        return ans.str();
       }
-      void Element::GetPathWorker(const TiXmlElement* el, std::string& ans)
+      void Element::GetPathWorker(const TiXmlElement* el, std::ostringstream& ans)
       {
         const TiXmlNode* parent = el->Parent();
         const TiXmlElement* parentEl = parent->ToElement();
@@ -155,17 +160,15 @@ namespace hemelb
           const TiXmlDocument* doc = parent->ToDocument();
           if (doc != NULL)
           {
-            ans.append(doc->Value());
-            ans.append(":");
+            ans << doc->Value() << ":";
           }
           else
           {
-            ans.append("?");
+            ans << "?:";
           }
         }
 
-        ans.append("/");
-        ans.append(el->Value());
+        ans << "/" << el->Value() << "(" << el->Row() << ")";
       }
 
       /**

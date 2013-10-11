@@ -47,7 +47,7 @@ namespace hemelb
             FolderTestFixture::setUp();
             CopyResourceToTempdir("four_cube.xml");
             CopyResourceToTempdir("four_cube.gmy");
-            simConfig = configuration::SimConfig::Load("four_cube.xml");
+            simConfig = new configuration::SimConfig("four_cube.xml");
           }
 
           void tearDown()

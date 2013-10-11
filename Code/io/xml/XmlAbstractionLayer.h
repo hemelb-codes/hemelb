@@ -43,7 +43,11 @@ namespace hemelb
            */
           const std::string& GetName() const;
           void GetName(const std::string& str);
-
+          /**
+           * Get the line number
+           * @return
+           */
+          int GetLine() const;
           /**
            * Gets the first child element with the specified name
            *
@@ -219,7 +223,7 @@ namespace hemelb
            * @param el
            * @param ans
            */
-          static void GetPathWorker(const TiXmlElement* el, std::string& ans);
+          static void GetPathWorker(const TiXmlElement* el, std::ostringstream& ans);
 
           /**
            * Equality and inequality operators for

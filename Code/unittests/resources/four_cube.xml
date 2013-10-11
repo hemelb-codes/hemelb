@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
-<hemelbsettings>
-  <simulation steps="10" step_length="0.0857" stresstype="1" />
+<hemelbsettings version="2">
+  <simulation>
+    <steps value="10" units="lattice" />
+    <step_length value="0.0857" units="s" />
+    <stresstype value="1" />
+  </simulation>
   <geometry>
     <datafile path="./four_cube.gmy" />
   </geometry>
@@ -11,55 +15,69 @@
   </initialconditions>  
   <inlets>
     <inlet>
-      <pressure amplitude="0.0" mean="80.1" phase="0.0" />
-      <normal x="0.0" y="0.0" z="1.0" />
-      <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="80.1" units="mmHg" />
+        <phase value="0.0" units="dimensionless" />
+        <period value="0.6" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,1.0)" units="dimensionless" />
+      <position value="(-1.66017717834e-05,-4.58437586355e-05,-0.05)" units="m" />
     </inlet>
   </inlets>
   <outlets>
     <outlet>
-      <pressure amplitude="0.0" mean="80.0" phase="0.0" />
-      <normal x="0.0" y="0.0" z="-1.0" />
-      <position x="0.0" y="0.0" z="0.05" />
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="80.0" units="mmHg" />
+        <phase value="0.0" units="dimensionless" />
+        <period value="0.6" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
+      <position value="(0.0,0.0,0.05)" units="m" />
     </outlet>
   </outlets>
   <visualisation>
-    <centre x="0.0" y="0.0" z="0.0" />
-    <orientation latitude="45.0" longitude="45.0" />
+    <centre value="(0.0,0.0,0.0)" units="m" />
+    <orientation>
+      <latitude value="45.0" units="deg" />
+      <longitude value="45.0" units="deg" />
+    </orientation>
     <display brightness="0.03" zoom="1.0" />
-    <range maxstress="0.1" maxvelocity="0.1" />
+    <range>
+      <maxstress value="0.1" units="Pa" />
+      <maxvelocity value="0.1" units="m/s" />
+    </range>
   </visualisation>
   <properties>
-    <propertyoutput frequency="2" file="wholegeometryvelocityandstress.dat">
-      <wholegeometry>
-        <field type="velocity" name="Whole velocity field"/>
-        <field type="vonmisesstress"/>
-      </wholegeometry>      
+    <propertyoutput period="2" file="wholegeometryvelocityandstress.dat">
+      <geometry type="whole" />
+      <field type="velocity" name="Whole velocity field"/>
+      <field type="vonmisesstress"/>
     </propertyoutput>
-    <propertyoutput frequency="5" file="centrelinepressure.dat">
-      <linegeometry>
-        <point x="2.5" y="2.5" z="0"/>
-        <point x="2.5" y="2.5" z="5"/> 
-        <field type="pressure"/>
-      </linegeometry>    
+    <propertyoutput period="5" file="centrelinepressure.dat">
+      <geometry type="line">
+        <point value="(2.5,2.5,0)" units="m" />
+        <point value="(2.5,2.5,5)" units="m" />
+      </geometry>
+      <field type="pressure"/>
     </propertyoutput>
-    <propertyoutput frequency="5" file="centrelineshearrate.dat">
-      <linegeometry>
-        <point x="2.5" y="2.5" z="0"/>
-        <point x="2.5" y="2.5" z="5"/> 
-        <field type="shearrate"/>
-      </linegeometry>    
+    <propertyoutput period="5" file="centrelineshearrate.dat">
+      <geometry type="line">
+        <point value="(2.5,2.5,0)" units="m" />
+        <point value="(2.5,2.5,5)" units="m" />
+      </geometry>
+      <field type="shearrate"/>
     </propertyoutput>    
-    <propertyoutput frequency="5" file="surfaceshearstress.dat">
-      <geometrysurface>
-        <field type="shearstress"/>
-      </geometrysurface>    
+    <propertyoutput period="5" file="surfaceshearstress.dat">
+      <geometry type="surface" />
+      <field type="shearstress"/>
     </propertyoutput>    
-    <propertyoutput frequency="10" file="surfacetraction.dat">
-      <surfacepoint>
-        <point x="2.5" y="2.5" z="0"/>
-        <field type="traction"/>
-      </surfacepoint>    
+    <propertyoutput period="10" file="surfacetraction.dat">
+      <geometry type="surfacepoint">
+        <point value="(2.5,2.5,0)" units="m" />
+      </geometry>
+      <field type="traction"/>
     </propertyoutput>    
   </properties>
 </hemelbsettings>
