@@ -22,7 +22,6 @@ namespace hemelb
         public:
           InOutLetParabolicVelocity();
           virtual ~InOutLetParabolicVelocity();
-          void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
           InOutLet* Clone() const;
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
 

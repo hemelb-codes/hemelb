@@ -119,12 +119,6 @@ namespace hemelb
         commsRequired = b;
       }
 
-      void InOutLetMultiscale::DoIO(TiXmlElement *parent, bool isLoading,
-                                    configuration::SimConfig* simConfig)
-      {
-        simConfig->DoIOForMultiscaleInOutlet(parent, isLoading, this);
-      }
-
       /* Distribution of internal pressure values */
       void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTime time_step)
       {

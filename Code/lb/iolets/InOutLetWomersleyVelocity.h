@@ -35,14 +35,6 @@ namespace hemelb
       class InOutLetWomersleyVelocity : public InOutLetVelocity
       {
         public:
-          /**
-           * Read the TinyXML structure and set up the iolet, or write it to a TinyXML structure.
-           *
-           * @param iParent Parent XML element
-           * @param iIsLoading Read or write?
-           * @param simConfig The config object being read
-           */
-          void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
 
           /**
            * Returns a copy of the current iolet. The caller is responsible for freeing that memory.

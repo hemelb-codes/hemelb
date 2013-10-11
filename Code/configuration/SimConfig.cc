@@ -21,15 +21,17 @@ namespace hemelb
 {
   namespace configuration
   {
-    // TODO really, the functions that take a TiXML object, a bool, a string and some basic type
-    // should go into some Tiny XML abstraction layer. This would remove the need for the IOLet
-    // types to know about the SimConfig object (and get rid of a circular dependency).
-
-    SimConfig::SimConfig() :
-        LEGACY_PULSATILE_PERIOD(60.0 / 70.0), hasColloidSection(false), warmUpSteps(0)
+    SimConfig::SimConfig(const std::string& path) :
+      xmlFilePath(path), hasColloidSection(false), warmUpSteps(0)
     {
-      // This constructor only exists to prevent instantiation without
-      // using the static load method.
+      if (!util::file_exists(path.c_str()))
+      {
+        throw Exception() << "Config file '" << path << "' does not exist";
+      }
+      rawXmlDoc = new io::xml::Document(path);
+      colloidConfigPath = path;
+      DoIO(rawXmlDoc->GetRoot());
+      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, path);
     }
 
     SimConfig::~SimConfig()
@@ -38,789 +40,552 @@ namespace hemelb
       {
         delete propertyOutputs[outputNumber];
       }
+
+      delete rawXmlDoc;
+      rawXmlDoc = NULL;
     }
 
-    SimConfig *SimConfig::Load(const char *path)
+    void SimConfig::DoIO(io::xml::Element topNode)
     {
-      util::check_file(path);
-      TiXmlDocument configFile;
-      configFile.LoadFile(path);
+      // Top element must be:
+      // <hemelbsettings version="2" />
+      if (topNode.GetName() != "hemelbsettings")
+        throw Exception() << "Invalid root element: " << topNode.GetPath();
 
-      SimConfig *result = new SimConfig();
-      result->colloidConfigPath = path;
-      result->DoIO(configFile.FirstChildElement(), true);
-      result->dataFilePath = util::NormalizePathRelativeToPath(result->dataFilePath, path);
+      unsigned version;
+      const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
+      if (version != 2U)
+        throw Exception() << "Unrecognised XML version. Expected 2, got " << versionStr;
 
-      return result;
-    }
+      io::xml::Element simulationEl = topNode.GetChildOrThrow("simulation");
+      DoIOForSimulationElement(simulationEl);
 
-    void SimConfig::Save(std::string path)
-    {
-      TiXmlDocument configFile;
-      TiXmlDeclaration * declaration = new TiXmlDeclaration("1.0", "", "");
-      TiXmlElement *topElement = new TiXmlElement("hemelbsettings");
+      io::xml::Element geometryEl = topNode.GetChildOrThrow("geometry");
+      DoIOForGeometryElement(geometryEl);
 
-      configFile.LinkEndChild(declaration);
-      configFile.LinkEndChild(topElement);
-
-      DoIO(topElement, false);
-
-      configFile.SaveFile(path);
-    }
-
-    void SimConfig::DoIO(TiXmlElement *topNode, bool isLoading)
-    {
-      TiXmlElement* simulationElement = GetChild(topNode, "simulation", isLoading);
-
-      // Backwards compatibility with 0.2.0 input file.
-      unsigned long numCycles;
-      long stepsPerCycle;
-      // short cut means DOIO will not be called for legacy values when saving.
-      if (isLoading && DoIOForULong(simulationElement, "cycles", isLoading, numCycles)
-          && DoIOForLong(simulationElement, "cyclesteps", isLoading, stepsPerCycle))
-      {
-        totalTimeSteps = numCycles * stepsPerCycle;
-      }
-      else
-      {
-        DoIOForULong(simulationElement, "steps", isLoading, totalTimeSteps);
-        DoIOForULong(simulationElement, "extra_warmup_steps", isLoading, warmUpSteps);
-        if (isLoading)
-          totalTimeSteps += warmUpSteps;
-      }
-
-      if ( (!DoIOForDouble(simulationElement, "step_length", isLoading, timeStepLength))
-          && isLoading)
-      {
-        timeStepLength = LEGACY_PULSATILE_PERIOD / stepsPerCycle;
-      }
-
-      DoIOForStressType(simulationElement, "stresstype", isLoading, stressType);
-
-      TiXmlElement* geometryElement = GetChild(topNode, "geometry", isLoading);
-      if (geometryElement != NULL)
-      {
-        DoIOForString(GetChild(geometryElement, "datafile", isLoading),
-                      "path",
-                      isLoading,
-                      dataFilePath);
-      }
-
-      if (GetChild(topNode, "colloids", true) != NULL)
+      if (topNode.GetChildOrNull("colloids") != NULL)
       {
         hasColloidSection = true;
       }
 
-      TiXmlElement* initialConditionsElement = GetChild(topNode, "initialconditions", isLoading);
-      if (initialConditionsElement != NULL)
-      {
-        DoIOForInitialConditions(initialConditionsElement, isLoading, initialPressure);
-      }
-      else
-      {
-        ///@todo: #614  There's no other error checking happening in the class and we decided that this would be
-        /// done against an XML schema in Fabric before the file gets to HemeLB. However, since I'm breaking backwards
-        /// compatibility, I prefer this error message than a segfault. Remove if/else branch in due course.
-        log::Logger::Log<log::Critical, log::OnePerCore>("Definition of initial conditions missing in XML file.");
-        MPI_Abort(MPI_COMM_WORLD, 1);
-      }
+      io::xml::Element initialConditionsElement = topNode.GetChildOrThrow("initialconditions");
+      DoIOForInitialConditions(initialConditionsElement);
 
-      DoIOForInOutlets(GetChild(topNode, "inlets", isLoading), isLoading, inlets, "inlet");
-      DoIOForInOutlets(GetChild(topNode, "outlets", isLoading), isLoading, outlets, "outlet");
+      inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
+      outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
+      /*
+       io::xml::Element visualisationElement = GetChild(topNode, "visualisation", isLoading);
+       DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading),
+       isLoading,
+       visualisationCentre);
+       io::xml::Element lOrientationElement = GetChild(visualisationElement, "orientation", isLoading);
+       lOrientationElement.GetAttributeOrThrow("longitude", visualisationLongitude);
+       lOrientationElement.GetAttributeOrThrow("latitude", visualisationLatitude);
 
-      TiXmlElement* visualisationElement = GetChild(topNode, "visualisation", isLoading);
-      DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading),
-                         isLoading,
-                         visualisationCentre);
-      TiXmlElement *lOrientationElement = GetChild(visualisationElement, "orientation", isLoading);
-      DoIOForFloat(lOrientationElement, "longitude", isLoading, visualisationLongitude);
-      DoIOForFloat(lOrientationElement, "latitude", isLoading, visualisationLatitude);
+       io::xml::Element displayElement = GetChild(visualisationElement, "display", isLoading);
 
-      TiXmlElement *displayElement = GetChild(visualisationElement, "display", isLoading);
+       displayElement.GetAttributeOrThrow("zoom", visualisationZoom);
+       displayElement.GetAttributeOrThrow("brightness", visualisationBrightness);
 
-      DoIOForFloat(displayElement, "zoom", isLoading, visualisationZoom);
-      DoIOForFloat(displayElement, "brightness", isLoading, visualisationBrightness);
+       io::xml::Element rangeElement = GetChild(visualisationElement, "range", isLoading);
 
-      TiXmlElement *rangeElement = GetChild(visualisationElement, "range", isLoading);
-
-      DoIOForFloat(rangeElement, "maxvelocity", isLoading, maxVelocity);
-      DoIOForFloat(rangeElement, "maxstress", isLoading, maxStress);
-
-      TiXmlElement* propertyExtractionElement = GetChild(topNode, "properties", isLoading);
-      DoIOForProperties(propertyExtractionElement, isLoading);
+       rangeElement.GetAttributeOrThrow("maxvelocity", maxVelocity);
+       rangeElement.GetAttributeOrThrow("maxstress", maxStress);
+       */
+      // Optional element <properties>
+      io::xml::Element propertiesEl = topNode.GetChildOrNull("properties");
+      if (propertiesEl != io::xml::Element::Missing())
+        DoIOForProperties(propertiesEl);
     }
 
-    void SimConfig::DoIOForFloat(TiXmlElement* parent, std::string attributeName, bool isLoading,
-                                 float &value)
+    template<typename T>
+    void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
     {
-      if (isLoading)
+      const std::string& got = elem.GetAttributeOrThrow("units");
+      if (got != units)
       {
-        char *dummy;
-        value = (float) std::strtod(parent->Attribute(attributeName)->c_str(), &dummy);
+        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
+            << units << "', got '" << got << "'";
       }
-      else
+
+      elem.GetAttributeOrThrow("value", value);
+    }
+
+    void SimConfig::DoIOForSimulationElement(const io::xml::Element simEl)
+    {
+      // Required element
+      // <stresstype value="enum lb::StressTypes" />
+      unsigned tmp;
+      simEl.GetChildOrThrow("stresstype").GetAttributeOrThrow("value", tmp);
+      switch (tmp)
       {
-        // This should be ample.
-        std::stringstream output(std::stringstream::out);
+        case lb::IgnoreStress:
+          stressType = lb::IgnoreStress;
+          break;
+        case lb::ShearStress:
+          stressType = lb::IgnoreStress;
+          break;
+        case lb::VonMises:
+          stressType = lb::IgnoreStress;
+          break;
+        default:
+          throw Exception() << "Invalid stresstype: " << tmp;
+      }
 
-        output.precision(6);
+      // Required element
+      // <steps value="unsigned" units="lattice />
+      const io::xml::Element stepsEl = simEl.GetChildOrThrow("steps");
+      GetDimensionalValue(stepsEl, "lattice", totalTimeSteps);
 
-        // %g uses the shorter of decimal / mantissa-exponent notations.
-        // 6 significant figures will be written.
-        output << value;
+      // Required element
+      // <step_length value="float" units="s" />
+      const io::xml::Element tsEl = simEl.GetChildOrThrow("step_length");
+      GetDimensionalValue(tsEl, "s", timeStepLength);
 
-        parent->SetAttribute(attributeName, output.str());
+      // Optional element
+      // <extra_warmup_steps value="unsigned" units="lattice" />
+      const io::xml::Element wuEl = simEl.GetChildOrNull("extra_warmup_steps");
+      if (wuEl != io::xml::Element::Missing())
+      {
+        GetDimensionalValue(wuEl, "lattice", warmUpSteps);
+        totalTimeSteps += warmUpSteps;
       }
     }
 
-    bool SimConfig::DoIOForDouble(TiXmlElement* parent, std::string attributeName, bool isLoading,
-                                  double &value)
+    void SimConfig::DoIOForGeometryElement(const io::xml::Element geometryEl)
     {
-      if (isLoading)
-      {
-        const std::string* data = parent->Attribute(attributeName);
+      // Required element
+      // <geometry>
+      //  <datafile path="relative path to GMY" />
+      // </geometry>
+      dataFilePath = geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path");
+      // Convert to a full path
+      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, xmlFilePath);
+      // TODO: peek into the GMY to get the space step.
+    }
 
-        if (data != NULL)
+    std::vector<lb::iolets::InOutLet*> SimConfig::DoIOForInOutlets(const io::xml::Element ioletsEl)
+    {
+      const std::string& nodeName = ioletsEl.GetName();
+
+      const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
+      std::vector<lb::iolets::InOutLet*> ioletList;
+      for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName); currentIoletNode
+          != io::xml::Element::Missing(); currentIoletNode
+          = currentIoletNode.NextSiblingOrNull(childNodeName))
+      {
+        // Determine which InOutlet to create
+        io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
+        const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
+
+        lb::iolets::InOutLet* newIolet = NULL;
+
+        if (conditionType == "pressure")
         {
-          char *dummy;
-          value = std::strtod(parent->Attribute(attributeName)->c_str(), &dummy);
-          return true;
+          newIolet = DoIOForPressureInOutlet(currentIoletNode);
+        }
+        else if (conditionType == "velocity")
+        {
+          newIolet = DoIOForVelocityInOutlet(currentIoletNode);
         }
         else
         {
-          value = 0.0;
-          return false;
+          throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
+              << conditionEl.GetPath();
         }
+        ioletList.push_back(newIolet);
+      }
+      return ioletList;
+    }
+
+    lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
+    {
+      const std::string& conditionSubtype = ioletEl.GetAttributeOrThrow("subtype");
+      lb::iolets::InOutLet* newIolet = NULL;
+      if (conditionSubtype == "cosine")
+      {
+        newIolet = DoIOForCosinePressureInOutlet(ioletEl);
+      }
+      else if (conditionSubtype == "file")
+      {
+        newIolet = DoIOForFilePressureInOutlet(ioletEl);
+      }
+      else if (conditionSubtype == "multiscale")
+      {
+        newIolet = DoIOForMultiscalePressureInOutlet(ioletEl);
       }
       else
       {
-        // This should be ample.
-        std::stringstream output(std::stringstream::out);
-
-        output.precision(6);
-
-        // %g uses the shorter of decimal / mantissa-exponent notations.
-        // 6 significant figures will be written.
-        output << value;
-
-        parent->SetAttribute(attributeName, output.str());
-        return true;
+        throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
+            << ioletEl.GetPath();
       }
+
+      return newIolet;
     }
 
-    void SimConfig::DoIOForString(TiXmlElement* parent, std::string attributeName, bool isLoading,
-                                  std::string &value)
+    lb::iolets::InOutLet* SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl)
     {
-      if (isLoading)
+      const std::string& conditionSubtype = ioletEl.GetAttributeOrThrow("subtype");
+      lb::iolets::InOutLet* newIolet = NULL;
+      if (conditionSubtype == "parabolic")
       {
-        // Compare to 0 not NULL, because that's what Attribute in TinyXml returns
-        if (parent->Attribute(attributeName) == 0)
-        {
-          value = "";
-        }
-        else
-        {
-          value = std::string(parent->Attribute(attributeName)->c_str());
-        }
+        newIolet = DoIOForParabolicVelocityInOutlet(ioletEl);
+      }
+      else if (conditionSubtype == "womersley")
+      {
+        newIolet = DoIOForWomersleyVelocityInOutlet(ioletEl);
       }
       else
       {
-        if (value != "")
-        {
-          parent->SetAttribute(attributeName, value);
-        }
+        throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
+            << ioletEl.GetPath();
+      }
+
+      return newIolet;
+    }
+
+    /*
+     // First, work out if it's pressure or velocity based
+     io::xml::Element velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
+     io::xml::Element womersVelocityEl = GetChild(currentIoletNode,
+     "womersley_velocity",
+     isLoading);
+     io::xml::Element pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
+
+     lb::iolets::InOutLet *newIolet;
+
+     if (pressureEl != NULL && velocityEl == NULL && womersVelocityEl == NULL)
+     {
+     // Pressure
+     // This is done by checking if a path is specified
+     std::string PFilePath;
+     std::string MultiscaleLabel;
+     DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
+     "path",
+     isLoading,
+     PFilePath);
+     DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
+     "label",
+     isLoading,
+     MultiscaleLabel);
+     if (PFilePath != "")
+     {
+     // If there is a file specified we use it
+     newIolet = new lb::iolets::InOutLetFile();
+
+     }
+     else if (MultiscaleLabel != "")
+     {
+     newIolet = new lb::iolets::InOutLetMultiscale();
+     }
+     else
+     {
+     // If no file is specified we use a cosine trace
+     newIolet = new lb::iolets::InOutLetCosine();
+     }
+     }
+     else if (pressureEl == NULL && velocityEl != NULL && womersVelocityEl == NULL)
+     {
+     // Velocity
+     newIolet = new lb::iolets::InOutLetParabolicVelocity();
+     }
+     else if (pressureEl == NULL && velocityEl == NULL && womersVelocityEl != NULL)
+     {
+     // Velocity
+     newIolet = new lb::iolets::InOutLetWomersleyVelocity();
+     }
+     else
+     {
+     // Error!
+     log::Logger::Log<log::Critical, log::OnePerCore>("Wrongly formatted iolet definition in XML file.");
+     MPI_Abort(MPI_COMM_WORLD, 1);
+     }
+
+
+     }
+
+     }*/
+
+    void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
+    {
+      for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput"); !poPtr.AtEnd(); ++poPtr)
+      {
+        propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
       }
     }
 
-    bool SimConfig::DoIOForLong(TiXmlElement* parent, std::string attributeName, bool isLoading,
-                                long &value)
+    extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
+                                                                         const io::xml::Element& propertyoutputEl)
     {
-      if (isLoading)
+      extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
+      file->filename = propertyoutputEl.GetAttributeOrThrow("file");
+
+      propertyoutputEl.GetAttributeOrThrow("period", file->frequency);
+
+      io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
+      const std::string& type = geometryEl.GetAttributeOrThrow("type");
+
+      if (type == "plane")
       {
-        const std::string *read_result = parent->Attribute(attributeName);
-        if (read_result == NULL)
-        {
-          value = 0.0;
-          return false;
-        }
-        char *dummy;
-        // Read in, in base 10.
-        value = std::strtol(read_result->c_str(), &dummy, 10);
-        return true;
+        file->geometry = DoIOForPlaneGeometry(geometryEl);
+      }
+      else if (type == "line")
+      {
+        file->geometry = DoIOForLineGeometry(geometryEl);
+      }
+      else if (type == "whole")
+      {
+        file->geometry = new extraction::WholeGeometrySelector();
+      }
+      else if (type == "surface")
+      {
+        file->geometry = new extraction::GeometrySurfaceSelector();
+      }
+      else if (type == "surfacepoint")
+      {
+        file->geometry = DoIOForSurfacePoint(geometryEl);
       }
       else
       {
-        // This should be ample.
-        std::stringstream output(std::stringstream::out);
-
-        output << value;
-
-        parent->SetAttribute(attributeName, output.str());
-        return true;
+        throw Exception() << "Unrecognised property output geometry selector '" << type
+            << "' in element " << geometryEl.GetPath();
       }
+
+      for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field"); !fieldPtr.AtEnd(); ++fieldPtr)
+        file->fields.push_back(DoIOForPropertyField(*fieldPtr));
+
+      return file;
     }
 
-    bool SimConfig::DoIOForULong(TiXmlElement* parent, std::string attributeName, bool isLoading,
-                                 unsigned long &value)
+    extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(
+                                                                             const io::xml::Element& geometryEl)
     {
-      if (isLoading)
+      io::xml::Element point1El = geometryEl.GetChildOrThrow("point");
+      io::xml::Element point2El = point1El.NextSiblingOrThrow("point");
+
+      util::Vector3D<float> point1;
+      util::Vector3D<float> point2;
+
+      GetDimensionalValue(point1El, "m", point1);
+      GetDimensionalValue(point2El, "m", point2);
+
+      return new extraction::StraightLineGeometrySelector(point1, point2);
+    }
+
+    extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
+                                                                       const io::xml::Element& geometryEl)
+    {
+      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
+      io::xml::Element normalEl = geometryEl.GetChildOrThrow("normal");
+
+      util::Vector3D<float> point;
+      util::Vector3D<float> normal;
+
+      GetDimensionalValue(pointEl, "m", point);
+      GetDimensionalValue(normalEl, "dimensionless", normal);
+
+      io::xml::Element radiusEl = geometryEl.GetChildOrNull("radius");
+
+      if (radiusEl == io::xml::Element::Missing())
       {
-        const std::string *read_result = parent->Attribute(attributeName);
-        if (read_result == NULL)
-        {
-          value = 0;
-          return false;
-        }
-        char *dummy;
-        // Read in, in base 10.
-        value = std::strtoul(read_result->c_str(), &dummy, 10);
-        return true;
+        return new extraction::PlaneGeometrySelector(point, normal);
       }
       else
       {
-        // This should be ample.
-        std::stringstream output(std::stringstream::out);
-
-        output << value;
-
-        parent->SetAttribute(attributeName, output.str());
-        return true;
+        float radius;
+        GetDimensionalValue(radiusEl, "m", radius);
+        return new extraction::PlaneGeometrySelector(point, normal, radius);
       }
+
     }
 
-    void SimConfig::DoIOForStressType(TiXmlElement* xmlNode, std::string attributeName,
-                                      bool isLoading, lb::StressTypes &value)
+    extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
+                                                                     const io::xml::Element& geometryEl)
     {
-      if (isLoading)
-      {
-        char *dummy;
-        // Read in, in base 10.
-        value = (lb::StressTypes) std::strtol(xmlNode->Attribute(attributeName)->c_str(),
-                                              &dummy,
-                                              10);
-      }
-      else
-      {
-        std::stringstream output(std::stringstream::out);
+      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
 
-        output << (int) value;
-
-        xmlNode->SetAttribute(attributeName, output.str());
-      }
+      util::Vector3D<float> point;
+      GetDimensionalValue(pointEl, "m", point);
+      return new extraction::SurfacePointSelector(point);
     }
 
-    void SimConfig::DoIOForInOutlets(TiXmlElement *parent, bool isLoading,
-                                     std::vector<lb::iolets::InOutLet*> &bResult,
-                                     std::string childNodeName)
+    extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
     {
-      if (isLoading)
-      {
-        TiXmlElement *currentIoletNode = parent->FirstChildElement(childNodeName);
-
-        while (currentIoletNode != NULL)
-        {
-          // Determine which InOutlet to create
-
-          // First, work out if it's pressure or velocity based
-          TiXmlElement* velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
-          TiXmlElement* womersVelocityEl = GetChild(currentIoletNode,
-                                                    "womersley_velocity",
-                                                    isLoading);
-          TiXmlElement* pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
-
-          lb::iolets::InOutLet *newIolet;
-
-          if (pressureEl != NULL && velocityEl == NULL && womersVelocityEl == NULL)
-          {
-            // Pressure
-            // This is done by checking if a path is specified
-            std::string PFilePath;
-            std::string MultiscaleLabel;
-            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-                          "path",
-                          isLoading,
-                          PFilePath);
-            DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-                          "label",
-                          isLoading,
-                          MultiscaleLabel);
-            if (PFilePath != "")
-            {
-              // If there is a file specified we use it
-              newIolet = new lb::iolets::InOutLetFile();
-
-            }
-            else if (MultiscaleLabel != "")
-            {
-              newIolet = new lb::iolets::InOutLetMultiscale();
-            }
-            else
-            {
-              // If no file is specified we use a cosine trace
-              newIolet = new lb::iolets::InOutLetCosine();
-            }
-          }
-          else if (pressureEl == NULL && velocityEl != NULL && womersVelocityEl == NULL)
-          {
-            // Velocity
-            newIolet = new lb::iolets::InOutLetParabolicVelocity();
-          }
-          else if (pressureEl == NULL && velocityEl == NULL && womersVelocityEl != NULL)
-          {
-            // Velocity
-            newIolet = new lb::iolets::InOutLetWomersleyVelocity();
-          }
-          else
-          {
-            // Error!
-            log::Logger::Log<log::Critical, log::OnePerCore>("Wrongly formatted iolet definition in XML file.");
-            MPI_Abort(MPI_COMM_WORLD, 1);
-          }
-          newIolet->DoIO(currentIoletNode, isLoading, this);
-          bResult.push_back(newIolet);
-          currentIoletNode = currentIoletNode->NextSiblingElement(childNodeName);
-
-        }
-      }
-      else
-      {
-        for (unsigned int ii = 0; ii < bResult.size(); ii++)
-        {
-          // NB we're good up to 99 io-lets here.
-          bResult[ii]->DoIO(GetChild(parent, childNodeName, isLoading), isLoading, this);
-        }
-      }
-    }
-
-    void SimConfig::DoIOForProperties(TiXmlElement *xmlNode, bool isLoading)
-    {
-      if (isLoading && xmlNode == NULL)
-      {
-        return;
-      }
-
-      TiXmlElement *currentPropertyNode = xmlNode->FirstChildElement();
-
-      while (currentPropertyNode != NULL)
-      {
-        extraction::PropertyOutputFile* output = new extraction::PropertyOutputFile();
-
-        DoIOForPropertyOutputFile(currentPropertyNode, isLoading, output);
-        propertyOutputs.push_back(output);
-
-        currentPropertyNode = currentPropertyNode->NextSiblingElement();
-      }
-    }
-
-    void SimConfig::DoIOForPropertyOutputFile(TiXmlElement *xmlNode, bool isLoading,
-                                              extraction::PropertyOutputFile* file)
-    {
-      if (isLoading)
-      {
-        DoIOForString(xmlNode, "file", isLoading, file->filename);
-
-        char* dummy;
-        file->frequency = strtoul(xmlNode->Attribute("frequency"), &dummy, 10);
-
-        TiXmlElement* propertyElement = xmlNode->FirstChildElement();
-
-        if (isLoading)
-        {
-          if (propertyElement->ValueStr().compare("planegeometry") == 0)
-          {
-            extraction::PlaneGeometrySelector* plane = NULL;
-            DoIOForPlaneGeometry(propertyElement, isLoading, plane);
-            file->geometry = plane;
-          }
-          else if (propertyElement->ValueStr().compare("linegeometry") == 0)
-          {
-            extraction::StraightLineGeometrySelector* line = NULL;
-            DoIOForLineGeometry(propertyElement, isLoading, line);
-            file->geometry = line;
-          }
-          else if (propertyElement->ValueStr().compare("wholegeometry") == 0)
-          {
-            extraction::WholeGeometrySelector* whole = new extraction::WholeGeometrySelector();
-            file->geometry = whole;
-          }
-          else if (propertyElement->ValueStr().compare("geometrysurface") == 0)
-          {
-            extraction::GeometrySurfaceSelector* surface =
-                new extraction::GeometrySurfaceSelector();
-            file->geometry = surface;
-          }
-          else if (propertyElement->ValueStr().compare("surfacepoint") == 0)
-          {
-            extraction::SurfacePointSelector* surfacePoint = NULL;
-            DoIOForSurfacePoint(propertyElement, isLoading, surfacePoint);
-            file->geometry = surfacePoint;
-          }
-          else
-          {
-            log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised geometry type: %s",
-                                                             xmlNode->Value());
-            exit(1);
-          }
-
-          TiXmlElement *currentFieldNode = propertyElement->FirstChildElement("field");
-
-          while (currentFieldNode != NULL)
-          {
-            extraction::OutputField outputField;
-
-            DoIOForPropertyField(currentFieldNode, isLoading, outputField);
-            file->fields.push_back(outputField);
-
-            currentFieldNode = currentFieldNode->NextSiblingElement("field");
-          }
-        }
-      }
-    }
-
-    void SimConfig::DoIOForLineGeometry(TiXmlElement *xmlNode, bool isLoading,
-                                        extraction::StraightLineGeometrySelector*& line)
-    {
-      TiXmlElement* point1 = GetChild(xmlNode, "point", isLoading);
-      TiXmlElement* point2 = isLoading ?
-        point1->NextSiblingElement("point") :
-        GetChild(xmlNode, "point", isLoading);
-
-      util::Vector3D<float> mutableVector;
-      util::Vector3D<float> mutableVector2;
-
-      if (isLoading)
-      {
-        DoIOForFloatVector(point1, isLoading, mutableVector);
-        DoIOForFloatVector(point2, isLoading, mutableVector2);
-
-        line = new extraction::StraightLineGeometrySelector(mutableVector, mutableVector2);
-      }
-      else
-      {
-        mutableVector = line->GetEndpoint1();
-        mutableVector2 = line->GetEndpoint2();
-
-        DoIOForFloatVector(point1, isLoading, mutableVector);
-        DoIOForFloatVector(point2, isLoading, mutableVector2);
-      }
-    }
-
-    void SimConfig::DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading,
-                                         extraction::PlaneGeometrySelector*& plane)
-    {
-      TiXmlElement* point1 = GetChild(xmlNode, "point", isLoading);
-      TiXmlElement* normal = GetChild(xmlNode, "normal", isLoading);
-
-      util::Vector3D<float> mutableVector;
-      util::Vector3D<float> mutableVector2;
-
-      if (isLoading)
-      {
-        DoIOForFloatVector(point1, isLoading, mutableVector);
-        DoIOForFloatVector(normal, isLoading, mutableVector2);
-
-        const char* radiusAttribute = xmlNode->Attribute("radius");
-
-        if (radiusAttribute == NULL)
-        {
-          plane = new extraction::PlaneGeometrySelector(mutableVector, mutableVector2);
-        }
-        else
-        {
-          char* dummy;
-          float radius = (float) std::strtod(radiusAttribute, &dummy);
-          plane = new extraction::PlaneGeometrySelector(mutableVector, mutableVector2, radius);
-        }
-      }
-      else
-      {
-        mutableVector = plane->GetPoint();
-        mutableVector = plane->GetNormal();
-        float radius = plane->GetRadius();
-
-        DoIOForFloatVector(point1, isLoading, mutableVector);
-        DoIOForFloatVector(normal, isLoading, mutableVector2);
-        xmlNode->SetAttribute("radius", radius);
-      }
-    }
-
-    void SimConfig::DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading,
-                                        extraction::SurfacePointSelector*& surfacePoint)
-    {
-      TiXmlElement* point = GetChild(xmlNode, "point", isLoading);
-
-      util::Vector3D<float> mutableVector;
-
-      if (isLoading)
-      {
-        DoIOForFloatVector(point, isLoading, mutableVector);
-
-        surfacePoint = new extraction::SurfacePointSelector(mutableVector);
-      }
-      else
-      {
-        mutableVector = surfacePoint->GetPoint();
-
-        DoIOForFloatVector(point, isLoading, mutableVector);
-      }
-    }
-
-    void SimConfig::DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading,
-                                         extraction::OutputField& field)
-    {
-      std::string type;
-      DoIOForString(xmlNode, "type", isLoading, type);
-      DoIOForString(xmlNode, "name", isLoading, field.name);
+      extraction::OutputField field;
+      const std::string type = fieldEl.GetAttributeOrThrow("type");
+      const std::string* name = fieldEl.GetAttributeOrNull("name");
 
       // Default name is identical to type.
-      if (isLoading && field.name.length() == 0)
+      if (name == NULL)
       {
         field.name = type;
       }
+      else
+      {
+        field.name = *name;
+      }
 
-      if (type.compare("pressure") == 0)
+      // Check and assign the type.
+      if (type == "pressure")
       {
         field.type = extraction::OutputField::Pressure;
       }
-      else if (type.compare("velocity") == 0)
+      else if (type == "velocity")
       {
         field.type = extraction::OutputField::Velocity;
       }
-      else if (type.compare("vonmisesstress") == 0)
+      else if (type == "vonmisesstress")
       {
         field.type = extraction::OutputField::VonMisesStress;
       }
-      else if (type.compare("shearstress") == 0)
+      else if (type == "shearstress")
       {
         field.type = extraction::OutputField::ShearStress;
       }
-      else if (type.compare("shearrate") == 0)
+      else if (type == "shearrate")
       {
         field.type = extraction::OutputField::ShearRate;
       }
-      else if (type.compare("stresstensor") == 0)
+      else if (type == "stresstensor")
       {
         field.type = extraction::OutputField::StressTensor;
       }
-      else if (type.compare("traction") == 0)
+      else if (type == "traction")
       {
         field.type = extraction::OutputField::Traction;
       }
-      else if (type.compare("tangentialprojectiontraction") == 0)
+      else if (type == "tangentialprojectiontraction")
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
-      else if (type.compare("mpirank") == 0)
+      else if (type == "mpirank")
       {
         field.type = extraction::OutputField::MpiRank;
       }
       else
       {
-        log::Logger::Log<log::Critical, log::OnePerCore>("Unrecognised field type (%s) in xml file",
-                                                         type.c_str());
-        exit(1);
+        throw Exception() << "Unrecognised field type '" << type << "' in " << fieldEl.GetPath();
       }
+      return field;
     }
 
-    void SimConfig::DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading,
-                                        lb::iolets::InOutLet* const value)
+    void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
+                                        lb::iolets::InOutLet* value)
     {
-      TiXmlElement* lPositionElement = GetChild(parent, "position", isLoading);
-      TiXmlElement* lNormalElement = GetChild(parent, "normal", isLoading);
+      io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
+      io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
+
       util::Vector3D<double> temp;
-      DoIOForDoubleVector(lPositionElement, isLoading, temp);
-      if (isLoading)
-      {
-        value->SetPosition(temp);
-      }
-      DoIOForDoubleVector(lNormalElement, isLoading, temp);
-      if (isLoading)
-      {
-        value->SetNormal(temp);
-      }
+      GetDimensionalValue(positionEl, "m", temp);
+      value->SetPosition(temp);
+
+      GetDimensionalValue(normalEl, "dimensionless", temp);
+      value->SetNormal(temp);
     }
 
-    void SimConfig::DoIOForInitialConditions(TiXmlElement *parent, bool isLoading,
-                                             PhysicalPressure &value)
+    void SimConfig::DoIOForInitialConditions(io::xml::Element parent)
     {
-      assert(parent != NULL);
-      TiXmlElement* pressureElement = GetChild(parent, "pressure", isLoading);
-      assert(pressureElement != NULL);
-      TiXmlElement* uniformPressureElement = GetChild(pressureElement, "uniform", isLoading);
-      assert(uniformPressureElement != NULL);
+      //, isLoading, initialPressure
+      io::xml::Element pressureElement = parent.GetChildOrThrow("pressure");
+      io::xml::Element uniformPressureElement = parent.GetChildOrThrow("uniform");
 
-      DoIOForDouble(uniformPressureElement, "value", isLoading, value);
-
-      if (isLoading)
-      {
-        std::string units;
-        DoIOForString(uniformPressureElement, "units", isLoading, units);
-        if (units != "mmHg")
-        {
-          log::Logger::Log<log::Critical, log::OnePerCore>("Wrong units (%s) in definition of initial pressure. Values should be provided in mmHg.",
-                                                           units.c_str());
-          MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-      }
-      else
-      {
-        std::string units("mmHg");
-        DoIOForString(uniformPressureElement, "units", isLoading, units);
-      }
+      GetDimensionalValue(uniformPressureElement, "mmHg", initialPressure);
     }
 
-    void SimConfig::DoIOForCosineInOutlet(TiXmlElement *parent, bool isLoading,
-                                          lb::iolets::InOutLetCosine* const value)
+    lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
+                                                                         const io::xml::Element& ioletEl)
     {
-      DoIOForBaseInOutlet(parent, isLoading, value);
-      TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
+      lb::iolets::InOutLetCosine* newIolet = new lb::iolets::InOutLetCosine();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      DoIOForDouble(lPressureElement, "mean", isLoading, value->GetPressureMean());
-      DoIOForDouble(lPressureElement, "amplitude", isLoading, value->GetPressureAmp());
-      DoIOForDouble(lPressureElement, "phase", isLoading, value->GetPhase());
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      GetDimensionalValue(conditionEl.GetChildOrThrow("amplitude"),
+                          "mmHg",
+                          newIolet->GetPressureAmp());
+      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", newIolet->GetPressureMean());
+      GetDimensionalValue(conditionEl.GetChildOrThrow("phase"), "mmHg", newIolet->GetPhase());
+      GetDimensionalValue(conditionEl.GetChildOrThrow("period"), "s", newIolet->GetPeriod());
+      if (warmUpSteps != 0)
+      {
+        newIolet->SetWarmup(warmUpSteps);
+      }
+      return newIolet;
+    }
+
+    lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
+                                                                     const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetFile* newIolet = new lb::iolets::InOutLetFile();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
+      newIolet->GetFilePath() = pathEl.GetAttributeOrThrow("value");
+
+      return newIolet;
+    }
+
+    lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
+                                                                                 const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetMultiscale* newIolet = new lb::iolets::InOutLetMultiscale();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      const io::xml::Element pressureEl = conditionEl.GetChildOrThrow("pressure");
+      GetDimensionalValue(pressureEl, "mmHg", newIolet->GetPressureReference());
+
+      const io::xml::Element velocityEl = conditionEl.GetChildOrThrow("velocity");
+      GetDimensionalValue(velocityEl, "m/s", newIolet->GetVelocityReference());
+
+      newIolet->GetLabel() = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
+      return newIolet;
+    }
+
+    lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetParabolicVelocity* newIolet = new lb::iolets::InOutLetParabolicVelocity();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+      GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
+
+      const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
+      GetDimensionalValue(maximumEl, "lattice", newIolet->GetMaxSpeed());
 
       if (warmUpSteps != 0)
       {
-        value->SetWarmup(warmUpSteps);
+        newIolet->SetWarmup(warmUpSteps);
       }
 
-      if (!DoIOForDouble(lPressureElement, "period", isLoading, value->GetPeriod()) && isLoading)
-      {
-        value->SetPeriod(LEGACY_PULSATILE_PERIOD);
-      }
+      return newIolet;
     }
 
-    void SimConfig::DoIOForFileInOutlet(TiXmlElement *parent, bool isLoading,
-                                        lb::iolets::InOutLetFile* const value)
+    lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
+                                                     const io::xml::Element& ioletEl)
     {
-      DoIOForBaseInOutlet(parent, isLoading, value);
+      lb::iolets::InOutLetWomersleyVelocity* newIolet = new lb::iolets::InOutLetWomersleyVelocity();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
 
-      TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      DoIOForString(lPressureElement, "path", isLoading, value->GetFilePath());
+      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+      GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
 
-    }
+      const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
+      GetDimensionalValue(pgAmpEl, "lattice", newIolet->GetPressureGradientAmplitude());
 
-    void SimConfig::DoIOForMultiscaleInOutlet(TiXmlElement *parent, bool isLoading,
-                                              lb::iolets::InOutLetMultiscale* const value)
-    {
-      DoIOForBaseInOutlet(parent, isLoading, value);
+      const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
+      GetDimensionalValue(periodEl, "lattice", newIolet->GetPeriod());
 
-      TiXmlElement* lPressureElement = GetChild(parent, "pressure", isLoading);
-      DoIOForDouble(lPressureElement, "pressure", isLoading, value->GetPressureReference());
-      DoIOForDouble(lPressureElement, "velocity", isLoading, value->GetVelocityReference());
-      DoIOForString(lPressureElement, "label", isLoading, value->GetLabel());
-    }
+      const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
+      GetDimensionalValue(womNumEl, "dimensionless", newIolet->GetWomersleyNumber());
 
-    void SimConfig::DoIOForParabolicVelocityInOutlet(
-        TiXmlElement *parent, bool isLoading, lb::iolets::InOutLetParabolicVelocity* const value)
-    {
-      DoIOForBaseInOutlet(parent, isLoading, value);
-      TiXmlElement* velocityEl = GetChild(parent, "velocity", isLoading);
-      double temp;
-      DoIOForDouble(velocityEl, "radius", isLoading, temp);
-      value->SetRadius(temp);
-      DoIOForDouble(velocityEl, "maximum", isLoading, temp);
-      value->SetMaxSpeed(temp);
-
-      if (warmUpSteps != 0)
-      {
-        value->SetWarmup(warmUpSteps);
-      }
-    }
-
-    void SimConfig::DoIOForWomersleyVelocityInOutlet(
-        TiXmlElement *parent, bool isLoading, lb::iolets::InOutLetWomersleyVelocity* const value)
-    {
-      TiXmlElement *ioletElement = GetChild(parent, "womersley_velocity", isLoading);
-
-      DoIOForBaseInOutlet(ioletElement, isLoading, value);
-
-      {
-        TiXmlElement* radiusEl = GetChild(ioletElement, "radius", isLoading);
-        assert(radiusEl != NULL);
-
-        DoIOForDouble(radiusEl, "value", isLoading, value->GetRadius());
-
-        std::string radius_units;
-        if (!isLoading)
-          radius_units = "lattice";
-        DoIOForString(radiusEl, "units", isLoading, radius_units);
-        /// @todo: #632 we need a policy about not supported units
-        if (isLoading)
-          assert(radius_units == "lattice");
-      }
-
-      {
-        TiXmlElement* pressureEl = GetChild(ioletElement, "pressure_gradient_amplitude", isLoading);
-        assert(pressureEl != NULL);
-
-        DoIOForDouble(pressureEl, "value", isLoading, value->GetPressureGradientAmplitude());
-
-        std::string pressureGradUnits;
-        if (!isLoading)
-          pressureGradUnits = "lattice";
-        DoIOForString(pressureEl, "units", isLoading, pressureGradUnits);
-        if (isLoading)
-          assert(pressureGradUnits == "lattice");
-      }
-
-      {
-        TiXmlElement* periodEl = GetChild(ioletElement, "period", isLoading);
-        assert(periodEl != NULL);
-
-        DoIOForULong(periodEl, "value", isLoading, value->GetPeriod());
-
-        std::string period_units;
-        if (!isLoading)
-          period_units = "lattice";
-        DoIOForString(periodEl, "units", isLoading, period_units);
-        if (isLoading)
-          assert(period_units == "lattice");
-      }
-
-      {
-        TiXmlElement* womNumEl = GetChild(ioletElement, "womersley_number", isLoading);
-        assert(womNumEl != NULL);
-
-        DoIOForDouble(womNumEl, "value", isLoading, value->GetWomersleyNumber());
-
-        std::string womersley_units;
-        if (!isLoading)
-          womersley_units = "dimensionless";
-        DoIOForString(womNumEl, "units", isLoading, womersley_units);
-        if (isLoading)
-          assert(womersley_units == "dimensionless");
-      }
-    }
-
-    void SimConfig::DoIOForFloatVector(TiXmlElement *parent, bool isLoading,
-                                       util::Vector3D<float> &value)
-    {
-      DoIOForFloat(parent, "x", isLoading, value.x);
-      DoIOForFloat(parent, "y", isLoading, value.y);
-      DoIOForFloat(parent, "z", isLoading, value.z);
-    }
-    void SimConfig::DoIOForDoubleVector(TiXmlElement *parent, bool isLoading,
-                                        util::Vector3D<double> &value)
-    {
-      DoIOForDouble(parent, "x", isLoading, value.x);
-      DoIOForDouble(parent, "y", isLoading, value.y);
-      DoIOForDouble(parent, "z", isLoading, value.z);
-    }
-    TiXmlElement *SimConfig::GetChild(TiXmlElement *parent, std::string childNodeName,
-                                      bool isLoading)
-    {
-      if (isLoading)
-      {
-        return parent->FirstChildElement(childNodeName);
-      }
-      else
-      {
-        TiXmlElement* newChild = new TiXmlElement(childNodeName);
-        parent->LinkEndChild(newChild);
-        return newChild;
-      }
+      return newIolet;
     }
 
     bool SimConfig::HasColloidSection() const

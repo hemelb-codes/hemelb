@@ -12,12 +12,6 @@ namespace hemelb
       const InOutLetWomersleyVelocity::Complex InOutLetWomersleyVelocity::iPowThreeHalves =
           pow(i, 1.5);
 
-      void InOutLetWomersleyVelocity::DoIO(TiXmlElement *iParent, bool iIsLoading,
-                                           configuration::SimConfig* iSimConfig)
-      {
-        iSimConfig->DoIOForWomersleyVelocityInOutlet(iParent, iIsLoading, this);
-      }
-
       InOutLet* InOutLetWomersleyVelocity::Clone() const
       {
         InOutLet* copy = new InOutLetWomersleyVelocity(*this);
