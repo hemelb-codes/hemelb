@@ -25,7 +25,7 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
-
+#include "debug/Debugger.h"
 namespace hemelb
 {
   namespace geometry
@@ -34,21 +34,23 @@ namespace hemelb
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings) :
-        latticeInfo(latticeInfo), timings(atimings)
+      latticeInfo(latticeInfo), timings(atimings)
     {
+      debug::Debugger::Get()->BreakHere();
       // Get the group of all procs.
-      net::MpiCommunicator commWorld = net::MpiCommunicator::World();
+      net::MpiCommunicator commWorld = net::NetworkTopology::Instance()->GetComms();
       net::MpiGroup worldGroup = commWorld.Group();
 
       // This rank should participate in the domain decomposition if
       //  - there's no steering core (then all ranks are involved)
       //  - we're not on core 0 (the only core that might ever not participate)
       //  - there's only one processor (so core 0 has to participate)
-      participateInTopology = !reserveSteeringCore || net::NetworkTopology::Instance()->GetLocalRank() != 0
-          || net::NetworkTopology::Instance()->GetProcessorCount() == 1;
+      participateInTopology = !reserveSteeringCore ||
+          commWorld.Rank() != 0 ||
+          commWorld.Size() == 1;
 
       // Create our own group, without the root node if we're not running with it.
-      if (reserveSteeringCore && net::NetworkTopology::Instance()->GetProcessorCount() > 1)
+      if (reserveSteeringCore && commWorld.Size() > 1)
       {
         std::vector<int> lExclusions(1);
         lExclusions[0] = 0;
@@ -70,6 +72,7 @@ namespace hemelb
 
     Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
+      debug::Debugger::Get()->BreakHere();
       log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -90,12 +93,12 @@ namespace hemelb
               const_cast<char*> (buffering.c_str()),
               const_cast<char*> (bufferingValue.c_str())));
 
-      currentComms = net::MpiCommunicator::World();
+      currentComms = net::NetworkTopology::Instance()->GetComms();
 
       // Open the file.
       // Stupid C-MPI lack of const-correctness
       HEMELB_MPI_CALL(MPI_File_open,
-          (topologyComms,
+          (currentComms,
               const_cast<char *>(dataFilePath.c_str()),
               MPI_MODE_RDONLY,
               fileInfo,
@@ -135,7 +138,10 @@ namespace hemelb
       {
         // Get an initial base-level decomposition of the domain macro-blocks over processors.
         // This will later be improved upon by ParMetis.
-        decomposition::BasicDecomposition basicDecomposer(geometry, latticeInfo, topologyComms, fluidSitesOnEachBlock);
+        decomposition::BasicDecomposition basicDecomposer(geometry,
+                                                          latticeInfo,
+                                                          topologyComms,
+                                                          fluidSitesOnEachBlock);
         basicDecomposer.Decompose(principalProcForEachBlock);
 
         if (ShouldValidate())
@@ -207,11 +213,7 @@ namespace hemelb
         MPI_File_read(file, buffer, nBytes, net::MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
       }
 
-      MPI_Bcast(buffer,
-                nBytes,
-                net::MpiDataType<char>(),
-                HEADER_READING_RANK,
-                currentComms);
+      MPI_Bcast(buffer, nBytes, net::MpiDataType<char>(), HEADER_READING_RANK, currentComms);
       return buffer;
     }
 
@@ -283,7 +285,10 @@ namespace hemelb
 
       delete[] preambleBuffer;
 
-      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize, voxelSize, origin);
+      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
+                      blockSize,
+                      voxelSize,
+                      origin);
     }
 
     /**
