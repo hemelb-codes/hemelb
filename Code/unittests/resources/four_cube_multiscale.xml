@@ -1,6 +1,10 @@
 <?xml version="1.0" ?>
-<hemelbsettings>
-  <simulation steps="100" step_length="0.2" stresstype="1" />
+<hemelbsettings version="2">
+  <simulation>
+    <steps value="100" units="lattice" />
+    <step_length value="0.2" units="s" />
+    <stresstype value="1" />
+  </simulation>
   <geometry>
     <datafile path="./four_cube.gmy" />
   </geometry>
@@ -11,37 +15,50 @@
   </initialconditions>  
   <inlets>
     <inlet>
-      <pressure label="boundary1" pressure="81.0" velocity="0.1"/>
-      <normal x="0.0" y="0.0" z="1.0" />
-      <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
+      <condition type="pressure" subtype="multiscale">
+        <label value="boundary1" />
+        <pressure value="81.0" units="mmHg" />
+        <velocity value="0.1" units="m/s" />
+      </condition>
+      <normal value="(0.0,0.0,1.0)" units="dimensionless" />
+      <position value="(-1.66017717834e-05,-4.58437586355e-05,-0.05)" units="m" />
     </inlet>
   </inlets>
   <outlets>
     <outlet>
-      <pressure label="boundary2" pressure="79.0" velocity="0.1"/>
-      <normal x="0.0" y="0.0" z="-1.0" />
-      <position x="0.0" y="0.0" z="0.05" />
+      <condition type="pressure" subtype="multiscale">
+        <label value="boundary2" />
+        <pressure value="79.0" units="mmHg" />
+        <velocity value="0.1" units="m/s" />
+      </condition>
+      <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
+      <position value="(0.0,0.0,0.05)" units="m" />
     </outlet>
   </outlets>
   <visualisation>
-    <centre x="0.0" y="0.0" z="0.0" />
-    <orientation latitude="45.0" longitude="45.0" />
+    <centre value="(0.0,0.0,0.0)" units="m" />
+    <orientation>
+      <latitude value="45.0" units="deg" />
+      <longitude value="45.0" units="deg" />
+    </orientation>
     <display brightness="0.03" zoom="1.0" />
-    <range maxstress="0.1" maxvelocity="0.1" />
+    <range>
+      <maxstress value="0.1" units="Pa" />
+      <maxvelocity value="0.1" units="m/s" />
+    </range>
   </visualisation>
   <properties>
-    <propertyoutput frequency="2" file="wholegeometryvelocityandstress.dat">
-      <wholegeometry>
-        <field type="velocity" name="Whole velocity field"/>
-        <field type="vonmisesstress"/>
-      </wholegeometry>      
+    <propertyoutput period="2" file="wholegeometryvelocityandstress.dat">
+      <geometry type="whole" />
+      <field type="velocity" name="Whole velocity field"/>
+      <field type="vonmisesstress"/>
     </propertyoutput>
-    <propertyoutput frequency="5" file="centrelinepressure.dat">
-      <linegeometry>
-        <point x="2.5" y="2.5" z="0"/>
-        <point x="2.5" y="2.5" z="5"/> 
-        <field type="pressure"/>
-      </linegeometry>    
+    <propertyoutput period="5" file="centrelinepressure.dat">
+      <geometry type="line">
+        <point value="(2.5,2.5,0)" units="m" />
+        <point value="(2.5,2.5,5)" units="m" /> 
+      </linegeometry>
+      <field type="pressure"/>    
     </propertyoutput>
   </properties>
 </hemelbsettings>

@@ -31,12 +31,12 @@ namespace hemelb
          */
         class InOutLetTests : public helpers::FolderTestFixture
         {
-            CPPUNIT_TEST_SUITE(InOutLetTests);
-            CPPUNIT_TEST(TestCosineConstruct);
-            CPPUNIT_TEST(TestFileConstruct);
-            CPPUNIT_TEST(TestIoletCoordinates);
-            CPPUNIT_TEST(TestParabolicVelocityConstruct);
-            CPPUNIT_TEST(TestWomersleyVelocityConstruct);CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST_SUITE( InOutLetTests);
+            CPPUNIT_TEST( TestCosineConstruct);
+            CPPUNIT_TEST( TestFileConstruct);
+            CPPUNIT_TEST( TestIoletCoordinates);
+            CPPUNIT_TEST( TestParabolicVelocityConstruct);
+            CPPUNIT_TEST( TestWomersleyVelocityConstruct);CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
@@ -51,13 +51,12 @@ namespace hemelb
             {
 
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig *config =
-                  configuration::SimConfig::Load(Resource("config.xml").Path().c_str());
-              cosine = static_cast<InOutLetCosine*>(config->GetInlets()[0]);
+              configuration::SimConfig config(Resource("config.xml").Path());
+              cosine = static_cast<InOutLetCosine*> (config.GetInlets()[0]);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
-              lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
-                                                              config->GetTotalTimeSteps());
+              lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
+                                                              config.GetTotalTimeSteps());
               double voxelSize = 0.0001;
               util::UnitConverter converter = util::UnitConverter(state.GetTimeStepLength(),
                                                                   voxelSize,
@@ -85,9 +84,8 @@ namespace hemelb
 
               // Set an approriate target value for the density, the maximum.
               double temp = state.GetTimeStepLength() / voxelSize;
-              double targetMeanDensity = 1
-                  + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-                      / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+              double targetMeanDensity = 1 + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL
+                  * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
 
               // Check that the cosine formula correctly produces mean value
               CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensityMean());
@@ -103,15 +101,14 @@ namespace hemelb
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();
 
-              configuration::SimConfig *config =
-                  configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
-              lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
-                                                              config->GetTotalTimeSteps());
+              configuration::SimConfig config(Resource("config_file_inlet.xml").Path());
+              lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
+                                                              config.GetTotalTimeSteps());
               double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config->GetTimeStepLength(),
+              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
                                                                   voxelSize,
                                                                   PhysicalPosition());
-              file = static_cast<InOutLetFile*>(config->GetInlets()[0]);
+              file = static_cast<InOutLetFile*> (config.GetInlets()[0]);
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
               file->Initialise(&converter);
               file->Reset(state);
@@ -126,12 +123,10 @@ namespace hemelb
 
               // Set some target values for the density at various times.
               double temp = state.GetTimeStepLength() / voxelSize;
-              double targetStartDensity = 1
-                  + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-                      / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
-              double targetMidDensity = 1
-                  + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-                      / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+              double targetStartDensity = 1 + (78.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL
+                  * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
+              double targetMidDensity = 1 + (82.0 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL
+                  * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensityMin(), 1e-6);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, file->GetDensity(0), 1e-6);
@@ -145,15 +140,14 @@ namespace hemelb
             {
 
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig *config =
-                  configuration::SimConfig::Load(Resource("config-velocity-iolet.xml").Path().c_str());
-              p_vel = static_cast<InOutLetParabolicVelocity*>(config->GetInlets()[0]);
+              configuration::SimConfig config(Resource("config-velocity-iolet.xml").Path());
+              p_vel = static_cast<InOutLetParabolicVelocity*> (config.GetInlets()[0]);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
-              lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
-                                                              config->GetTotalTimeSteps());
+              lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
+                                                              config.GetTotalTimeSteps());
               double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config->GetTimeStepLength(),
+              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
                                                                   voxelSize,
                                                                   PhysicalPosition());
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
@@ -172,23 +166,21 @@ namespace hemelb
               CPPUNIT_ASSERT_EQUAL(0.10, p_vel->GetMaxSpeed());
               CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
                                    p_vel->GetPosition());
-              CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0),
-                                   p_vel->GetNormal());
+              CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), p_vel->GetNormal());
             }
 
             void TestWomersleyVelocityConstruct()
             {
 
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig *config =
-                  configuration::SimConfig::Load(Resource("config_new_velocity_inlets.xml").Path().c_str());
-              womersVel = static_cast<InOutLetWomersleyVelocity*>(config->GetInlets()[0]);
+              configuration::SimConfig config(Resource("config_new_velocity_inlets.xml").Path());
+              womersVel = static_cast<InOutLetWomersleyVelocity*> (config.GetInlets()[0]);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
-              lb::SimulationState state = lb::SimulationState(config->GetTimeStepLength(),
-                                                              config->GetTotalTimeSteps());
+              lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
+                                                              config.GetTotalTimeSteps());
               double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config->GetTimeStepLength(),
+              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
                                                                   voxelSize,
                                                                   PhysicalPosition());
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
@@ -208,7 +200,8 @@ namespace hemelb
                *  Test that the analytical solution at r=R is 0
                */
               PhysicalPosition pointAtCylinderWall(womersVel->GetRadius() * voxelSize, 0, -0.05);
-              LatticePosition pointAtCylinderWallLatticeUnits(converter.ConvertPositionToLatticeUnits(pointAtCylinderWall));
+              LatticePosition
+                  pointAtCylinderWallLatticeUnits(converter.ConvertPositionToLatticeUnits(pointAtCylinderWall));
               LatticeVelocity zeroVelAtWall(womersVel->GetVelocity(pointAtCylinderWallLatticeUnits,
                                                                    0));
               CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, zeroVelAtWall[0], 1e-9);
@@ -228,23 +221,22 @@ namespace hemelb
               LatticeSpeed poiseuilleSolution = womersVel->GetPressureGradientAmplitude()
                   * pow(womersVel->GetRadius(), 2) / (4 * eta);
 
-              LatticePosition pointAtCentrelineLatticeUnits(converter.ConvertPositionToLatticeUnits(womersVel->GetPosition()));
+              LatticePosition
+                  pointAtCentrelineLatticeUnits(converter.ConvertPositionToLatticeUnits(womersVel->GetPosition()));
 
               {
-                LatticeVelocity poiseuilleVelAtCentreLine(womersVel->GetVelocity(pointAtCentrelineLatticeUnits,
-                                                                                 0.25
-                                                                                     * womersVel->GetPeriod()));
+                LatticeVelocity
+                    poiseuilleVelAtCentreLine(womersVel->GetVelocity(pointAtCentrelineLatticeUnits,
+                                                                     0.25 * womersVel->GetPeriod()));
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, poiseuilleVelAtCentreLine[0], 1e-9);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, poiseuilleVelAtCentreLine[1], 1e-9);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(poiseuilleSolution,
-                                             poiseuilleVelAtCentreLine[2],
-                                             1e-9);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(poiseuilleSolution, poiseuilleVelAtCentreLine[2], 1e-9);
               }
 
               {
-                LatticeVelocity poiseuilleVelAtCentreLine(womersVel->GetVelocity(pointAtCentrelineLatticeUnits,
-                                                                                 0.75
-                                                                                     * womersVel->GetPeriod()));
+                LatticeVelocity
+                    poiseuilleVelAtCentreLine(womersVel->GetVelocity(pointAtCentrelineLatticeUnits,
+                                                                     0.75 * womersVel->GetPeriod()));
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, poiseuilleVelAtCentreLine[0], 1e-9);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, poiseuilleVelAtCentreLine[1], 1e-9);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(-poiseuilleSolution,
@@ -256,9 +248,6 @@ namespace hemelb
 
             class ConcreteIolet : public InOutLet
             {
-                virtual void DoIO(TiXmlElement*, bool, hemelb::configuration::SimConfig*)
-                {
-                }
                 virtual InOutLet* Clone() const
                 {
                   ConcreteIolet* copy = new ConcreteIolet(*this);
@@ -319,7 +308,7 @@ namespace hemelb
             InOutLetParabolicVelocity* p_vel;
             InOutLetWomersleyVelocity* womersVel;
         };
-        CPPUNIT_TEST_SUITE_REGISTRATION(InOutLetTests);
+        CPPUNIT_TEST_SUITE_REGISTRATION( InOutLetTests);
       }
     }
   }
