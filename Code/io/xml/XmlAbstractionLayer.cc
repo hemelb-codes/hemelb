@@ -43,7 +43,7 @@ namespace hemelb
       Element::~Element()
       {
       }
-      Element Element::Missing()
+      const Element Element::Missing()
       {
         return Element(NULL);
       }
@@ -55,8 +55,11 @@ namespace hemelb
       Element Element::GetChildOrNull(const std::string& name)
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
-          return NULL;
+        return Element(ans);
+      }
+      const Element Element::GetChildOrNull(const std::string& name) const
+      {
+        TiXmlElement* ans = el->FirstChildElement(name);
         return Element(ans);
       }
 
@@ -67,6 +70,19 @@ namespace hemelb
           throw ChildError(*this, name);
 
         return Element(ans);
+      }
+      const Element Element::GetChildOrThrow(const std::string& name) const
+      {
+        TiXmlElement* ans = el->FirstChildElement(name);
+        if (ans == NULL)
+          throw ChildError(*this, name);
+
+        return Element(ans);
+      }
+
+      ChildIterator Element::IterChildren(const std::string& name) const
+      {
+        return ChildIterator(*this, name);
       }
 
       Element Element::NextSiblingOrNull(const std::string name)
@@ -86,11 +102,11 @@ namespace hemelb
 
         return Element(ans);
       }
-      const std::string* Element::GetAttributeOrNull(const std::string& name)
+      const std::string* Element::GetAttributeOrNull(const std::string& name) const
       {
         return el->Attribute(name);
       }
-      const std::string& Element::GetAttributeOrThrow(const std::string& name)
+      const std::string& Element::GetAttributeOrThrow(const std::string& name) const
       {
         const std::string* ans = el->Attribute(name);
         if (ans == NULL)
@@ -150,6 +166,113 @@ namespace hemelb
 
         ans.append("/");
         ans.append(el->Value());
+      }
+
+      /**
+       * Default constructor
+       */
+      ChildIterator::ChildIterator() :
+        parent(Element::Missing()), current(Element::Missing()), name()
+      {
+      }
+
+      /**
+       * Constructor that will iterate over subelements with the given name.
+       * @param elem
+       * @param subElemName
+       */
+      ChildIterator::ChildIterator(const Element& elem, const std::string& subElemName) :
+        parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
+      {
+      }
+
+      /**
+       * Copy constructor
+       * @param other
+       */
+      ChildIterator::ChildIterator(const ChildIterator& other) :
+        parent(other.parent), current(other.current), name(other.name)
+      {
+      }
+
+      /**
+       * Copy assignment
+       * @param other
+       * @return
+       */
+      ChildIterator& ChildIterator::operator=(const ChildIterator& other)
+      {
+        parent = other.parent;
+        current = other.current;
+        name = other.name;
+        return *this;
+      }
+
+      /**
+       * Equality comparable
+       * @param
+       * @return
+       */
+      bool operator==(const ChildIterator& a, const ChildIterator& b)
+      {
+        return (a.parent == b.parent) && (a.name == b.name) && (a.current == b.current);
+      }
+
+      /**
+       * Inequality
+       * @param
+       * @return
+       */
+      bool operator!=(const ChildIterator& a, const ChildIterator& b)
+      {
+        return ! (a == b);
+      }
+
+      /**
+       * Dereference
+       * @return
+       */
+      ChildIterator::reference ChildIterator::operator*()
+      {
+        return current;
+      }
+
+      /**
+       * Dereference
+       * @return
+       */
+      ChildIterator::pointer ChildIterator::operator->()
+      {
+        return &current;
+      }
+
+      /**
+       * Prefix increment
+       * @return
+       */
+      ChildIterator& ChildIterator::operator++()
+      {
+        // increment and return the updated version
+        current = current.NextSiblingOrNull(name);
+        return *this;
+      }
+
+      /**
+       * Postfix increment
+       * @param
+       * @return
+       */
+      ChildIterator ChildIterator::operator++(int n)
+      {
+        // increment and return the value pre-increment
+        ChildIterator ans = *this;
+        ++(*this);
+        return ans;
+      }
+
+      bool ChildIterator::AtEnd() const
+      {
+        return current == Element::Missing();
       }
 
       // XML exception base class

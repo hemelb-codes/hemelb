@@ -16,6 +16,9 @@ namespace hemelb
 {
   namespace unittests
   {
+    /**
+     * TODO: Figure out what this is supposed to be.
+     */
     class OneInOneOutSimConfig : public configuration::SimConfig
     {
       public:

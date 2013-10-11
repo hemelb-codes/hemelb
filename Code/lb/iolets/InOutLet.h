@@ -13,15 +13,9 @@
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
-#include "tinyxml.h"
 
 namespace hemelb
 {
-  namespace configuration
-  {
-    class SimConfig;
-  }
-
   namespace lb
   {
     namespace iolets
@@ -71,15 +65,6 @@ namespace hemelb
           virtual ~InOutLet()
           {
           }
-
-          /***
-           * Read the TinyXML structure and set up the iolet, or write it to a TinyXML structure.
-           * @param iParent Parent XML element
-           * @param iIsLoading Read or write?
-           * @param simConfig The config object being read
-           */
-          virtual void DoIO(TiXmlElement *parent, bool isLoading,
-                            configuration::SimConfig* simConfig) = 0;
 
           /***
            * Copy the InOutLet.

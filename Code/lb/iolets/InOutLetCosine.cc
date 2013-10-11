@@ -25,12 +25,6 @@ namespace hemelb
 
       }
 
-      void InOutLetCosine::DoIO(TiXmlElement *iParent, bool iIsLoading,
-                                configuration::SimConfig* iSimConfig)
-      {
-        iSimConfig->DoIOForCosineInOutlet(iParent, iIsLoading, this);
-      }
-
       InOutLet* InOutLetCosine::Clone() const
       {
         InOutLetCosine* copy = new InOutLetCosine(*this);

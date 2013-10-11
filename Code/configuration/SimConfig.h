@@ -11,12 +11,12 @@
 #define HEMELB_CONFIGURATION_SIMCONFIG_H
 
 #include <vector>
-#include "tinyxml.h"
 #include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 #include "lb/iolets/InOutLets.h"
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
+#include "io/xml/XmlAbstractionLayer.h"
 
 namespace hemelb
 {
@@ -25,31 +25,11 @@ namespace hemelb
     class SimConfig
     {
       public:
-        static SimConfig *Load(const char *path);
+        SimConfig(const std::string& path);
         ~SimConfig();
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
-
-        void
-        DoIOForCosineInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::iolets::InOutLetCosine* value);
-        void DoIOForFileInOutlet(TiXmlElement *xmlNode, bool isLoading, lb::iolets::InOutLetFile* value);
-        void DoIOForMultiscaleInOutlet(TiXmlElement *xmlNode,
-                                       bool isLoading,
-                                       lb::iolets::InOutLetMultiscale* value);
-        void DoIOForParabolicVelocityInOutlet(TiXmlElement *parent,
-                                              bool isLoading,
-                                              lb::iolets::InOutLetParabolicVelocity* const value);
-        /**
-         * Reads/writes Womersley velocity inlet from/to XML file.
-         *
-         * @param parent parent XML element
-         * @param isLoading whether the method is reading or writing
-         * @param value womersley iolet instance to be configured
-         */
-        void DoIOForWomersleyVelocityInOutlet(TiXmlElement *parent,
-                                              bool isLoading,
-                                              lb::iolets::InOutLetWomersleyVelocity* const value);
 
         const util::Vector3D<float> & GetVisualisationCentre() const
         {
@@ -136,40 +116,44 @@ namespace hemelb
         LatticeDensity GetInitialPressure() const;
 
       protected:
-        SimConfig();
 
       private:
-        void DoIO(TiXmlElement *xmlNode, bool isLoading);
-        bool DoIOForLong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, long &value);
-        void DoIOForStressType(TiXmlElement* xmlNode,
-                               std::string attributeName,
-                               bool isLoading,
-                               lb::StressTypes &value);
-        bool DoIOForULong(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, unsigned long &value);
-        void DoIOForFloat(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, float &value);
-        bool DoIOForDouble(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, double &value);
-        void DoIOForString(TiXmlElement* xmlNode, std::string attributeName, bool isLoading, std::string &value);
-        void DoIOForInOutlets(TiXmlElement *xmlNode,
-                              bool isLoading,
-                              std::vector<lb::iolets::InOutLet*> &value,
-                              std::string childNodeName);
-        void DoIOForProperties(TiXmlElement *xmlNode, bool isLoading);
-        void DoIOForProperty(TiXmlElement *xmlNode, bool isLoading);
-        void DoIOForPropertyField(TiXmlElement *xmlNode, bool isLoading, extraction::OutputField& field);
-        void DoIOForPropertyOutputFile(TiXmlElement *xmlNode, bool isLoading, extraction::PropertyOutputFile* file);
-        void DoIOForLineGeometry(TiXmlElement *xmlNode,
-                                 bool isLoading,
-                                 extraction::StraightLineGeometrySelector*& line);
-        void DoIOForPlaneGeometry(TiXmlElement *xmlNode, bool isLoading, extraction::PlaneGeometrySelector*& plane);
-        void DoIOForSurfacePoint(TiXmlElement *xmlNode, bool isLoading, extraction::SurfacePointSelector*& plane);
+        void DoIO(const io::xml::Element xmlNode);
+        void DoIOForSimulationElement(const io::xml::Element simEl);
+        void DoIOForGeometryElement(const io::xml::Element geometryEl);
 
-        void DoIOForFloatVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<float> &value);
-        void DoIOForDoubleVector(TiXmlElement *xmlNode, bool isLoading, util::Vector3D<double> &value);
-        void DoIOForBaseInOutlet(TiXmlElement *parent, bool isLoading, lb::iolets::InOutLet* const value);
-        void DoIOForInitialConditions(TiXmlElement *parent, bool isLoading, PhysicalPressure &value);
-        TiXmlElement* GetChild(TiXmlElement *parent, std::string childNodeName, bool isLoading);
+        std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
 
-        const double LEGACY_PULSATILE_PERIOD;
+        void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
+
+        lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
+
+        lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
+        /**
+         * Reads/writes Womersley velocity inlet from/to XML file.
+         *
+         * @param parent parent XML element
+         * @param isLoading whether the method is reading or writing
+         * @param value womersley iolet instance to be configured
+         */
+        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+
+        void DoIOForProperties(const io::xml::Element& xmlNode);
+        void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
+        extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
+        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
+        extraction::StraightLineGeometrySelector* DoIOForLineGeometry(const io::xml::Element& xmlNode);
+        extraction::PlaneGeometrySelector* DoIOForPlaneGeometry(const io::xml::Element&);
+        extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
+
+        void DoIOForInitialConditions(io::xml::Element parent);
+
+        const std::string& xmlFilePath;
+        io::xml::Document* rawXmlDoc;
         std::string dataFilePath;
 
         util::Vector3D<float> visualisationCentre;

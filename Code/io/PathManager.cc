@@ -83,7 +83,7 @@ namespace hemelb
     {
       if (doIo)
       {
-        simConfig->Save(outputDir + "/" + configLeafName);
+        //simConfig->Save(outputDir + "/" + configLeafName);
       }
     }
 
