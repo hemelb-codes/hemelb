@@ -116,11 +116,15 @@ namespace hemelb
         LatticeDensity GetInitialPressure() const;
 
       protected:
+        /**
+         * Protected default ctor to allow derived test fixture classes to create mocks.
+         */
+        SimConfig();
 
       private:
         void DoIO(const io::xml::Element xmlNode);
-        void DoIOForSimulationElement(const io::xml::Element simEl);
-        void DoIOForGeometryElement(const io::xml::Element geometryEl);
+        void DoIOForSimulation(const io::xml::Element simEl);
+        void DoIOForGeometry(const io::xml::Element geometryEl);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
 
@@ -151,6 +155,7 @@ namespace hemelb
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
+        void DoIOForVisualisation(const io::xml::Element& visEl);
 
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;

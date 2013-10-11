@@ -21,8 +21,13 @@ namespace hemelb
 {
   namespace configuration
   {
+    SimConfig::SimConfig() :
+      xmlFilePath(""), hasColloidSection(false), warmUpSteps(0), rawXmlDoc(NULL)
+    {
+    }
+
     SimConfig::SimConfig(const std::string& path) :
-      xmlFilePath(path), hasColloidSection(false), warmUpSteps(0)
+      xmlFilePath(path), hasColloidSection(false), warmUpSteps(0), rawXmlDoc(NULL)
     {
       if (!util::file_exists(path.c_str()))
       {
@@ -57,41 +62,22 @@ namespace hemelb
       if (version != 2U)
         throw Exception() << "Unrecognised XML version. Expected 2, got " << versionStr;
 
-      io::xml::Element simulationEl = topNode.GetChildOrThrow("simulation");
-      DoIOForSimulationElement(simulationEl);
+      DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
 
-      io::xml::Element geometryEl = topNode.GetChildOrThrow("geometry");
-      DoIOForGeometryElement(geometryEl);
+      DoIOForGeometry(topNode.GetChildOrThrow("geometry"));
 
-      if (topNode.GetChildOrNull("colloids") != NULL)
+      if (topNode.GetChildOrNull("colloids") != io::xml::Element::Missing())
       {
         hasColloidSection = true;
       }
 
-      io::xml::Element initialConditionsElement = topNode.GetChildOrThrow("initialconditions");
-      DoIOForInitialConditions(initialConditionsElement);
+      DoIOForInitialConditions(topNode.GetChildOrThrow("initialconditions"));
 
       inlets = DoIOForInOutlets(topNode.GetChildOrThrow("inlets"));
       outlets = DoIOForInOutlets(topNode.GetChildOrThrow("outlets"));
-      /*
-       io::xml::Element visualisationElement = GetChild(topNode, "visualisation", isLoading);
-       DoIOForFloatVector(GetChild(visualisationElement, "centre", isLoading),
-       isLoading,
-       visualisationCentre);
-       io::xml::Element lOrientationElement = GetChild(visualisationElement, "orientation", isLoading);
-       lOrientationElement.GetAttributeOrThrow("longitude", visualisationLongitude);
-       lOrientationElement.GetAttributeOrThrow("latitude", visualisationLatitude);
 
-       io::xml::Element displayElement = GetChild(visualisationElement, "display", isLoading);
+      DoIOForVisualisation(topNode.GetChildOrThrow("visualisation"));
 
-       displayElement.GetAttributeOrThrow("zoom", visualisationZoom);
-       displayElement.GetAttributeOrThrow("brightness", visualisationBrightness);
-
-       io::xml::Element rangeElement = GetChild(visualisationElement, "range", isLoading);
-
-       rangeElement.GetAttributeOrThrow("maxvelocity", maxVelocity);
-       rangeElement.GetAttributeOrThrow("maxstress", maxStress);
-       */
       // Optional element <properties>
       io::xml::Element propertiesEl = topNode.GetChildOrNull("properties");
       if (propertiesEl != io::xml::Element::Missing())
@@ -111,7 +97,7 @@ namespace hemelb
       elem.GetAttributeOrThrow("value", value);
     }
 
-    void SimConfig::DoIOForSimulationElement(const io::xml::Element simEl)
+    void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
     {
       // Required element
       // <stresstype value="enum lb::StressTypes" />
@@ -152,7 +138,7 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIOForGeometryElement(const io::xml::Element geometryEl)
+    void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
     {
       // Required element
       // <geometry>
@@ -200,7 +186,9 @@ namespace hemelb
 
     lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
     {
-      const std::string& conditionSubtype = ioletEl.GetAttributeOrThrow("subtype");
+      io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+
       lb::iolets::InOutLet* newIolet = NULL;
       if (conditionSubtype == "cosine")
       {
@@ -225,7 +213,9 @@ namespace hemelb
 
     lb::iolets::InOutLet* SimConfig::DoIOForVelocityInOutlet(const io::xml::Element& ioletEl)
     {
-      const std::string& conditionSubtype = ioletEl.GetAttributeOrThrow("subtype");
+      io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+      const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
+
       lb::iolets::InOutLet* newIolet = NULL;
       if (conditionSubtype == "parabolic")
       {
@@ -243,359 +233,314 @@ namespace hemelb
 
       return newIolet;
     }
-
-    /*
-     // First, work out if it's pressure or velocity based
-     io::xml::Element velocityEl = GetChild(currentIoletNode, "velocity", isLoading);
-     io::xml::Element womersVelocityEl = GetChild(currentIoletNode,
-     "womersley_velocity",
-     isLoading);
-     io::xml::Element pressureEl = GetChild(currentIoletNode, "pressure", isLoading);
-
-     lb::iolets::InOutLet *newIolet;
-
-     if (pressureEl != NULL && velocityEl == NULL && womersVelocityEl == NULL)
-     {
-     // Pressure
-     // This is done by checking if a path is specified
-     std::string PFilePath;
-     std::string MultiscaleLabel;
-     DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-     "path",
-     isLoading,
-     PFilePath);
-     DoIOForString(GetChild(currentIoletNode, "pressure", isLoading),
-     "label",
-     isLoading,
-     MultiscaleLabel);
-     if (PFilePath != "")
-     {
-     // If there is a file specified we use it
-     newIolet = new lb::iolets::InOutLetFile();
-
-     }
-     else if (MultiscaleLabel != "")
-     {
-     newIolet = new lb::iolets::InOutLetMultiscale();
-     }
-     else
-     {
-     // If no file is specified we use a cosine trace
-     newIolet = new lb::iolets::InOutLetCosine();
-     }
-     }
-     else if (pressureEl == NULL && velocityEl != NULL && womersVelocityEl == NULL)
-     {
-     // Velocity
-     newIolet = new lb::iolets::InOutLetParabolicVelocity();
-     }
-     else if (pressureEl == NULL && velocityEl == NULL && womersVelocityEl != NULL)
-     {
-     // Velocity
-     newIolet = new lb::iolets::InOutLetWomersleyVelocity();
-     }
-     else
-     {
-     // Error!
-     log::Logger::Log<log::Critical, log::OnePerCore>("Wrongly formatted iolet definition in XML file.");
-     MPI_Abort(MPI_COMM_WORLD, 1);
-     }
-
-
-     }
-
-     }*/
-
-    void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
+    void SimConfig::DoIOForVisualisation(const io::xml::Element& visEl)
     {
-      for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput"); !poPtr.AtEnd(); ++poPtr)
-      {
-        propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
-      }
-    }
+      GetDimensionalValue(visEl.GetChildOrThrow("centre"), "m", visualisationCentre);
 
-    extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
-                                                                         const io::xml::Element& propertyoutputEl)
+      io::xml::Element orientationEl = visEl.GetChildOrThrow("orientation");
+      GetDimensionalValue(orientationEl.GetChildOrThrow("longitude"), "deg", visualisationLongitude);
+      GetDimensionalValue(orientationEl.GetChildOrThrow("latitude"), "deg", visualisationLatitude);
+
+      io::xml::Element displayEl = visEl.GetChildOrThrow("display");
+      displayEl.GetAttributeOrThrow("zoom", visualisationZoom);
+      displayEl.GetAttributeOrThrow("brightness", visualisationBrightness);
+
+      io::xml::Element rangeEl = visEl.GetChildOrThrow("range");
+      GetDimensionalValue(rangeEl.GetChildOrThrow("maxvelocity"), "m/s", maxVelocity);
+      GetDimensionalValue(rangeEl.GetChildOrThrow("maxstress"), "Pa", maxStress);
+  }
+
+  void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
+  {
+    for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput"); !poPtr.AtEnd(); ++poPtr)
     {
-      extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
-      file->filename = propertyoutputEl.GetAttributeOrThrow("file");
-
-      propertyoutputEl.GetAttributeOrThrow("period", file->frequency);
-
-      io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
-      const std::string& type = geometryEl.GetAttributeOrThrow("type");
-
-      if (type == "plane")
-      {
-        file->geometry = DoIOForPlaneGeometry(geometryEl);
-      }
-      else if (type == "line")
-      {
-        file->geometry = DoIOForLineGeometry(geometryEl);
-      }
-      else if (type == "whole")
-      {
-        file->geometry = new extraction::WholeGeometrySelector();
-      }
-      else if (type == "surface")
-      {
-        file->geometry = new extraction::GeometrySurfaceSelector();
-      }
-      else if (type == "surfacepoint")
-      {
-        file->geometry = DoIOForSurfacePoint(geometryEl);
-      }
-      else
-      {
-        throw Exception() << "Unrecognised property output geometry selector '" << type
-            << "' in element " << geometryEl.GetPath();
-      }
-
-      for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field"); !fieldPtr.AtEnd(); ++fieldPtr)
-        file->fields.push_back(DoIOForPropertyField(*fieldPtr));
-
-      return file;
-    }
-
-    extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(
-                                                                             const io::xml::Element& geometryEl)
-    {
-      io::xml::Element point1El = geometryEl.GetChildOrThrow("point");
-      io::xml::Element point2El = point1El.NextSiblingOrThrow("point");
-
-      util::Vector3D<float> point1;
-      util::Vector3D<float> point2;
-
-      GetDimensionalValue(point1El, "m", point1);
-      GetDimensionalValue(point2El, "m", point2);
-
-      return new extraction::StraightLineGeometrySelector(point1, point2);
-    }
-
-    extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
-                                                                       const io::xml::Element& geometryEl)
-    {
-      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
-      io::xml::Element normalEl = geometryEl.GetChildOrThrow("normal");
-
-      util::Vector3D<float> point;
-      util::Vector3D<float> normal;
-
-      GetDimensionalValue(pointEl, "m", point);
-      GetDimensionalValue(normalEl, "dimensionless", normal);
-
-      io::xml::Element radiusEl = geometryEl.GetChildOrNull("radius");
-
-      if (radiusEl == io::xml::Element::Missing())
-      {
-        return new extraction::PlaneGeometrySelector(point, normal);
-      }
-      else
-      {
-        float radius;
-        GetDimensionalValue(radiusEl, "m", radius);
-        return new extraction::PlaneGeometrySelector(point, normal, radius);
-      }
-
-    }
-
-    extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
-                                                                     const io::xml::Element& geometryEl)
-    {
-      io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
-
-      util::Vector3D<float> point;
-      GetDimensionalValue(pointEl, "m", point);
-      return new extraction::SurfacePointSelector(point);
-    }
-
-    extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
-    {
-      extraction::OutputField field;
-      const std::string type = fieldEl.GetAttributeOrThrow("type");
-      const std::string* name = fieldEl.GetAttributeOrNull("name");
-
-      // Default name is identical to type.
-      if (name == NULL)
-      {
-        field.name = type;
-      }
-      else
-      {
-        field.name = *name;
-      }
-
-      // Check and assign the type.
-      if (type == "pressure")
-      {
-        field.type = extraction::OutputField::Pressure;
-      }
-      else if (type == "velocity")
-      {
-        field.type = extraction::OutputField::Velocity;
-      }
-      else if (type == "vonmisesstress")
-      {
-        field.type = extraction::OutputField::VonMisesStress;
-      }
-      else if (type == "shearstress")
-      {
-        field.type = extraction::OutputField::ShearStress;
-      }
-      else if (type == "shearrate")
-      {
-        field.type = extraction::OutputField::ShearRate;
-      }
-      else if (type == "stresstensor")
-      {
-        field.type = extraction::OutputField::StressTensor;
-      }
-      else if (type == "traction")
-      {
-        field.type = extraction::OutputField::Traction;
-      }
-      else if (type == "tangentialprojectiontraction")
-      {
-        field.type = extraction::OutputField::TangentialProjectionTraction;
-      }
-      else if (type == "mpirank")
-      {
-        field.type = extraction::OutputField::MpiRank;
-      }
-      else
-      {
-        throw Exception() << "Unrecognised field type '" << type << "' in " << fieldEl.GetPath();
-      }
-      return field;
-    }
-
-    void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
-                                        lb::iolets::InOutLet* value)
-    {
-      io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
-      io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
-
-      util::Vector3D<double> temp;
-      GetDimensionalValue(positionEl, "m", temp);
-      value->SetPosition(temp);
-
-      GetDimensionalValue(normalEl, "dimensionless", temp);
-      value->SetNormal(temp);
-    }
-
-    void SimConfig::DoIOForInitialConditions(io::xml::Element parent)
-    {
-      //, isLoading, initialPressure
-      io::xml::Element pressureElement = parent.GetChildOrThrow("pressure");
-      io::xml::Element uniformPressureElement = parent.GetChildOrThrow("uniform");
-
-      GetDimensionalValue(uniformPressureElement, "mmHg", initialPressure);
-    }
-
-    lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
-                                                                         const io::xml::Element& ioletEl)
-    {
-      lb::iolets::InOutLetCosine* newIolet = new lb::iolets::InOutLetCosine();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-
-      GetDimensionalValue(conditionEl.GetChildOrThrow("amplitude"),
-                          "mmHg",
-                          newIolet->GetPressureAmp());
-      GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", newIolet->GetPressureMean());
-      GetDimensionalValue(conditionEl.GetChildOrThrow("phase"), "mmHg", newIolet->GetPhase());
-      GetDimensionalValue(conditionEl.GetChildOrThrow("period"), "s", newIolet->GetPeriod());
-      if (warmUpSteps != 0)
-      {
-        newIolet->SetWarmup(warmUpSteps);
-      }
-      return newIolet;
-    }
-
-    lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
-                                                                     const io::xml::Element& ioletEl)
-    {
-      lb::iolets::InOutLetFile* newIolet = new lb::iolets::InOutLetFile();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
-      newIolet->GetFilePath() = pathEl.GetAttributeOrThrow("value");
-
-      return newIolet;
-    }
-
-    lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
-                                                                                 const io::xml::Element& ioletEl)
-    {
-      lb::iolets::InOutLetMultiscale* newIolet = new lb::iolets::InOutLetMultiscale();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-
-      const io::xml::Element pressureEl = conditionEl.GetChildOrThrow("pressure");
-      GetDimensionalValue(pressureEl, "mmHg", newIolet->GetPressureReference());
-
-      const io::xml::Element velocityEl = conditionEl.GetChildOrThrow("velocity");
-      GetDimensionalValue(velocityEl, "m/s", newIolet->GetVelocityReference());
-
-      newIolet->GetLabel() = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
-      return newIolet;
-    }
-
-    lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl)
-    {
-      lb::iolets::InOutLetParabolicVelocity* newIolet = new lb::iolets::InOutLetParabolicVelocity();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-
-      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
-
-      const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
-      GetDimensionalValue(maximumEl, "lattice", newIolet->GetMaxSpeed());
-
-      if (warmUpSteps != 0)
-      {
-        newIolet->SetWarmup(warmUpSteps);
-      }
-
-      return newIolet;
-    }
-
-    lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
-                                                     const io::xml::Element& ioletEl)
-    {
-      lb::iolets::InOutLetWomersleyVelocity* newIolet = new lb::iolets::InOutLetWomersleyVelocity();
-      DoIOForBaseInOutlet(ioletEl, newIolet);
-
-      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
-
-      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
-
-      const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
-      GetDimensionalValue(pgAmpEl, "lattice", newIolet->GetPressureGradientAmplitude());
-
-      const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
-      GetDimensionalValue(periodEl, "lattice", newIolet->GetPeriod());
-
-      const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
-      GetDimensionalValue(womNumEl, "dimensionless", newIolet->GetWomersleyNumber());
-
-      return newIolet;
-    }
-
-    bool SimConfig::HasColloidSection() const
-    {
-      return hasColloidSection;
-    }
-
-    PhysicalPressure SimConfig::GetInitialPressure() const
-    {
-      return initialPressure;
+      propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
     }
   }
+
+  extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
+      const io::xml::Element& propertyoutputEl)
+  {
+    extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
+    file->filename = propertyoutputEl.GetAttributeOrThrow("file");
+
+    propertyoutputEl.GetAttributeOrThrow("period", file->frequency);
+
+    io::xml::Element geometryEl = propertyoutputEl.GetChildOrThrow("geometry");
+    const std::string& type = geometryEl.GetAttributeOrThrow("type");
+
+    if (type == "plane")
+    {
+      file->geometry = DoIOForPlaneGeometry(geometryEl);
+    }
+    else if (type == "line")
+    {
+      file->geometry = DoIOForLineGeometry(geometryEl);
+    }
+    else if (type == "whole")
+    {
+      file->geometry = new extraction::WholeGeometrySelector();
+    }
+    else if (type == "surface")
+    {
+      file->geometry = new extraction::GeometrySurfaceSelector();
+    }
+    else if (type == "surfacepoint")
+    {
+      file->geometry = DoIOForSurfacePoint(geometryEl);
+    }
+    else
+    {
+      throw Exception() << "Unrecognised property output geometry selector '" << type
+      << "' in element " << geometryEl.GetPath();
+    }
+
+    for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field"); !fieldPtr.AtEnd(); ++fieldPtr)
+    file->fields.push_back(DoIOForPropertyField(*fieldPtr));
+
+    return file;
+  }
+
+  extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(
+      const io::xml::Element& geometryEl)
+  {
+    io::xml::Element point1El = geometryEl.GetChildOrThrow("point");
+    io::xml::Element point2El = point1El.NextSiblingOrThrow("point");
+
+    util::Vector3D<float> point1;
+    util::Vector3D<float> point2;
+
+    GetDimensionalValue(point1El, "m", point1);
+    GetDimensionalValue(point2El, "m", point2);
+
+    return new extraction::StraightLineGeometrySelector(point1, point2);
+  }
+
+  extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
+      const io::xml::Element& geometryEl)
+  {
+    io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
+    io::xml::Element normalEl = geometryEl.GetChildOrThrow("normal");
+
+    util::Vector3D<float> point;
+    util::Vector3D<float> normal;
+
+    GetDimensionalValue(pointEl, "m", point);
+    GetDimensionalValue(normalEl, "dimensionless", normal);
+
+    io::xml::Element radiusEl = geometryEl.GetChildOrNull("radius");
+
+    if (radiusEl == io::xml::Element::Missing())
+    {
+      return new extraction::PlaneGeometrySelector(point, normal);
+    }
+    else
+    {
+      float radius;
+      GetDimensionalValue(radiusEl, "m", radius);
+      return new extraction::PlaneGeometrySelector(point, normal, radius);
+    }
+
+  }
+
+  extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
+      const io::xml::Element& geometryEl)
+  {
+    io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
+
+    util::Vector3D<float> point;
+    GetDimensionalValue(pointEl, "m", point);
+    return new extraction::SurfacePointSelector(point);
+  }
+
+  extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
+  {
+    extraction::OutputField field;
+    const std::string type = fieldEl.GetAttributeOrThrow("type");
+    const std::string* name = fieldEl.GetAttributeOrNull("name");
+
+    // Default name is identical to type.
+    if (name == NULL)
+    {
+      field.name = type;
+    }
+    else
+    {
+      field.name = *name;
+    }
+
+    // Check and assign the type.
+    if (type == "pressure")
+    {
+      field.type = extraction::OutputField::Pressure;
+    }
+    else if (type == "velocity")
+    {
+      field.type = extraction::OutputField::Velocity;
+    }
+    else if (type == "vonmisesstress")
+    {
+      field.type = extraction::OutputField::VonMisesStress;
+    }
+    else if (type == "shearstress")
+    {
+      field.type = extraction::OutputField::ShearStress;
+    }
+    else if (type == "shearrate")
+    {
+      field.type = extraction::OutputField::ShearRate;
+    }
+    else if (type == "stresstensor")
+    {
+      field.type = extraction::OutputField::StressTensor;
+    }
+    else if (type == "traction")
+    {
+      field.type = extraction::OutputField::Traction;
+    }
+    else if (type == "tangentialprojectiontraction")
+    {
+      field.type = extraction::OutputField::TangentialProjectionTraction;
+    }
+    else if (type == "mpirank")
+    {
+      field.type = extraction::OutputField::MpiRank;
+    }
+    else
+    {
+      throw Exception() << "Unrecognised field type '" << type << "' in " << fieldEl.GetPath();
+    }
+    return field;
+  }
+
+  void SimConfig::DoIOForBaseInOutlet(const io::xml::Element& ioletEl,
+      lb::iolets::InOutLet* value)
+  {
+    io::xml::Element positionEl = ioletEl.GetChildOrThrow("position");
+    io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
+
+    util::Vector3D<double> temp;
+    GetDimensionalValue(positionEl, "m", temp);
+    value->SetPosition(temp);
+
+    GetDimensionalValue(normalEl, "dimensionless", temp);
+    value->SetNormal(temp);
+  }
+
+  void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
+  {
+    //, isLoading, initialPressure
+    io::xml::Element pressureEl = initialconditionsEl.GetChildOrThrow("pressure");
+    io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+
+    GetDimensionalValue(uniformEl, "mmHg", initialPressure);
+  }
+
+  lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
+      const io::xml::Element& ioletEl)
+  {
+    lb::iolets::InOutLetCosine* newIolet = new lb::iolets::InOutLetCosine();
+    DoIOForBaseInOutlet(ioletEl, newIolet);
+
+    const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+    GetDimensionalValue(conditionEl.GetChildOrThrow("amplitude"),
+        "mmHg",
+        newIolet->GetPressureAmp());
+    GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", newIolet->GetPressureMean());
+    GetDimensionalValue(conditionEl.GetChildOrThrow("phase"), "dimensionless", newIolet->GetPhase());
+    GetDimensionalValue(conditionEl.GetChildOrThrow("period"), "s", newIolet->GetPeriod());
+    if (warmUpSteps != 0)
+    {
+      newIolet->SetWarmup(warmUpSteps);
+    }
+    return newIolet;
+  }
+
+  lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
+      const io::xml::Element& ioletEl)
+  {
+    lb::iolets::InOutLetFile* newIolet = new lb::iolets::InOutLetFile();
+    DoIOForBaseInOutlet(ioletEl, newIolet);
+
+    const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+    const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
+    newIolet->GetFilePath() = pathEl.GetAttributeOrThrow("value");
+
+    return newIolet;
+  }
+
+  lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
+      const io::xml::Element& ioletEl)
+  {
+    lb::iolets::InOutLetMultiscale* newIolet = new lb::iolets::InOutLetMultiscale();
+    DoIOForBaseInOutlet(ioletEl, newIolet);
+
+    const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+    const io::xml::Element pressureEl = conditionEl.GetChildOrThrow("pressure");
+    GetDimensionalValue(pressureEl, "mmHg", newIolet->GetPressureReference());
+
+    const io::xml::Element velocityEl = conditionEl.GetChildOrThrow("velocity");
+    GetDimensionalValue(velocityEl, "m/s", newIolet->GetVelocityReference());
+
+    newIolet->GetLabel() = conditionEl.GetChildOrThrow("label").GetAttributeOrThrow("value");
+    return newIolet;
+  }
+
+  lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(
+      const io::xml::Element& ioletEl)
+  {
+    lb::iolets::InOutLetParabolicVelocity* newIolet = new lb::iolets::InOutLetParabolicVelocity();
+    DoIOForBaseInOutlet(ioletEl, newIolet);
+
+    const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+    const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+    GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
+
+    const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
+    GetDimensionalValue(maximumEl, "lattice", newIolet->GetMaxSpeed());
+
+    if (warmUpSteps != 0)
+    {
+      newIolet->SetWarmup(warmUpSteps);
+    }
+
+    return newIolet;
+  }
+
+  lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
+      const io::xml::Element& ioletEl)
+  {
+    lb::iolets::InOutLetWomersleyVelocity* newIolet = new lb::iolets::InOutLetWomersleyVelocity();
+    DoIOForBaseInOutlet(ioletEl, newIolet);
+
+    const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+    const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+    GetDimensionalValue(radiusEl, "lattice", newIolet->GetRadius());
+
+    const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
+    GetDimensionalValue(pgAmpEl, "lattice", newIolet->GetPressureGradientAmplitude());
+
+    const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
+    GetDimensionalValue(periodEl, "lattice", newIolet->GetPeriod());
+
+    const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
+    GetDimensionalValue(womNumEl, "dimensionless", newIolet->GetWomersleyNumber());
+
+    return newIolet;
+  }
+
+  bool SimConfig::HasColloidSection() const
+  {
+    return hasColloidSection;
+  }
+
+  PhysicalPressure SimConfig::GetInitialPressure() const
+  {
+    return initialPressure;
+  }
+}
 }

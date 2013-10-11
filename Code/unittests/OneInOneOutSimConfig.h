@@ -22,8 +22,7 @@ namespace hemelb
     class OneInOneOutSimConfig : public configuration::SimConfig
     {
       public:
-        OneInOneOutSimConfig() :
-          configuration::SimConfig()
+        OneInOneOutSimConfig()
         {
           lb::iolets::InOutLetCosine* inlet = new lb::iolets::InOutLetCosine();
           inlet->SetPressureAmp(1.0);

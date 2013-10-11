@@ -90,7 +90,7 @@ namespace hemelb
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();
               configuration::SimConfig *fileInletConfig =
-                  configuration::SimConfig::Load(Resource("config_file_inlet.xml").Path().c_str());
+                  new configuration::SimConfig(Resource("config_file_inlet.xml").Path());
 
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
