@@ -29,12 +29,6 @@ namespace hemelb
 
       }
 
-      void InOutLetFile::DoIO(TiXmlElement *parent, bool isLoading,
-                              configuration::SimConfig* simConfig)
-      {
-        simConfig->DoIOForFileInOutlet(parent, isLoading, this);
-      }
-
       InOutLet* InOutLetFile::Clone() const
       {
         InOutLetFile* copy = new InOutLetFile(*this);

@@ -33,8 +33,6 @@ namespace hemelb
         public:
           InOutLetFile();
           virtual ~InOutLetFile();
-          virtual void DoIO(TiXmlElement *parent, bool isLoading,
-                            configuration::SimConfig* simConfig);
           virtual InOutLet* Clone() const;
           virtual void Reset(SimulationState &state)
           {

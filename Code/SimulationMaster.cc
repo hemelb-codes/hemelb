@@ -56,7 +56,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
-  simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
+  simConfig = new hemelb::configuration::SimConfig(fileManager->GetInputFile());
   fileManager->SaveConfiguration(simConfig);
   Initialise();
   if (IsCurrentProcTheIOProc())

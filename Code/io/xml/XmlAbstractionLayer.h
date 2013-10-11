@@ -26,11 +26,13 @@ namespace hemelb
   {
     namespace xml
     {
+      // Forward declare
+      class ChildIterator;
 
       class Element
       {
         public:
-          static Element Missing();
+          static const Element Missing();
 
           Element(TiXmlElement* el);
           ~Element();
@@ -53,6 +55,7 @@ namespace hemelb
            *   Element::Missing() if not
            */
           Element GetChildOrNull(const std::string& name);
+          const Element GetChildOrNull(const std::string& name) const;
           /**
            * Gets the first child element with the specified name or throw
            * ChildError if it does not exist.
@@ -64,6 +67,14 @@ namespace hemelb
            *   returns the child element
            */
           Element GetChildOrThrow(const std::string& name);
+          const Element GetChildOrThrow(const std::string& name) const;
+
+          /**
+           * Return iterator over children with the specified name.
+           * @param name
+           * @return
+           */
+          ChildIterator IterChildren(const std::string& name) const;
 
           /**
            * Return the next sibling element with the specified name, if any
@@ -115,7 +126,7 @@ namespace hemelb
            *   A pointer to a string containing the attribute value (or NULL
            *   on failure)
            */
-          const std::string* GetAttributeOrNull(const std::string& name);
+          const std::string* GetAttributeOrNull(const std::string& name) const;
           /**
            * Get the value (as a string) contained in the specified attribute.
            * If it does not exist, throws AttributeError
@@ -124,7 +135,7 @@ namespace hemelb
            * @return
            *   A reference to a string containing the attribute value
            */
-          const std::string& GetAttributeOrThrow(const std::string& name);
+          const std::string& GetAttributeOrThrow(const std::string& name) const;
 
           /**
            * Get the value (as a string) contained in the specified attribute.
@@ -162,7 +173,7 @@ namespace hemelb
            *   if it does not exist)
            */
           template<class T>
-          const std::string* GetAttributeOrNull(const std::string& name, T& out);
+          const std::string* GetAttributeOrNull(const std::string& name, T& out) const;
 
           /**
            * Get the value contained in the specified attribute. This function
@@ -191,13 +202,14 @@ namespace hemelb
            *   A reference to a string containing the attribute value
            */
           template<class T>
-          const std::string& GetAttributeOrThrow(const std::string& name, T& out);
+          const std::string& GetAttributeOrThrow(const std::string& name, T& out) const;
 
           /**
            * Return a string giving a full path to the element.
            * @return
            */
           std::string GetPath() const;
+
 
         private:
           TiXmlElement* el;
@@ -220,6 +232,91 @@ namespace hemelb
       };
       bool operator==(const Element& left, const Element& right);
       bool operator!=(const Element& left, const Element& right);
+
+      /**
+       * Want to model the ForwardIterator concept
+       */
+      class ChildIterator : public std::iterator<std::forward_iterator_tag, Element>
+      {
+        public:
+          /**
+           * Default constructor
+           */
+          ChildIterator();
+
+          /**
+           * Constructor that will iterate over subelements with the given name.
+           * @param elem
+           * @param subElemName
+           */
+          ChildIterator(const Element& elem, const std::string& subElemName);
+
+          /**
+           * Copy constructor
+           * @param other
+           */
+          ChildIterator(const ChildIterator& other);
+
+          // Default is fine
+          // /**
+          //  * Destructor.
+          //  */
+          // ~ChildIterator();
+
+          /**
+           * Copy assignment
+           * @param other
+           * @return
+           */
+          ChildIterator& operator=(const ChildIterator& other);
+
+
+          /**
+           * Dereference
+           * @return
+           */
+          reference operator*();
+
+          /**
+           * Dereference
+           * @return
+           */
+          pointer operator->();
+
+          /**
+           * Prefix increment
+           * @return
+           */
+          ChildIterator& operator++();
+          /**
+           * Postfix increment
+           * @param
+           * @return
+           */
+          ChildIterator operator++(int);
+
+          bool AtEnd() const;
+
+        private:
+          Element parent;
+          Element current;
+          std::string name;
+          friend bool operator==(const ChildIterator& a, const ChildIterator& b);
+      };
+      /**
+       * Equality comparable
+       * @param
+       * @return
+       */
+      bool operator==(const ChildIterator& a, const ChildIterator& b);
+
+      /**
+       * Inequality
+       * @param
+       * @return
+       */
+      bool operator!=(const ChildIterator& a, const ChildIterator& b);
+
       /** an abstraction for an XML document
        *
        * this class localises the dependency on an external XML library
@@ -400,7 +497,7 @@ namespace hemelb
       // Implement the template member functions declared above, now that the
       // declarations of the exceptions are available.
       template<class T>
-      const std::string* Element::GetAttributeOrNull(const std::string& name, T& out)
+      const std::string* Element::GetAttributeOrNull(const std::string& name, T& out) const
       {
         const std::string* attrString = GetAttributeOrNull(name);
         if (attrString != NULL)
@@ -423,7 +520,8 @@ namespace hemelb
           {
             if (attrString->at(0) == '-')
             {
-              throw ParseError(*this, name, *attrString) << " attempt to convert negative number to unsigned type";
+              throw ParseError(*this, name, *attrString)
+                  << " attempt to convert negative number to unsigned type";
             }
           }
           std::stringstream attrStream(*attrString, std::ios_base::in);
@@ -446,7 +544,7 @@ namespace hemelb
         return attrString;
       }
       template<class T>
-      const std::string& Element::GetAttributeOrThrow(const std::string& name, T& out)
+      const std::string& Element::GetAttributeOrThrow(const std::string& name, T& out) const
       {
         const std::string* ans = GetAttributeOrNull(name, out);
         if (ans == NULL)

@@ -16,12 +16,6 @@ namespace hemelb
       {
       }
 
-      void InOutLetParabolicVelocity::DoIO(TiXmlElement *iParent, bool iIsLoading,
-                                           configuration::SimConfig* iSimConfig)
-      {
-        iSimConfig->DoIOForParabolicVelocityInOutlet(iParent, iIsLoading, this);
-      }
-
       InOutLet* InOutLetParabolicVelocity::Clone() const
       {
         InOutLet* copy = new InOutLetParabolicVelocity(*this);

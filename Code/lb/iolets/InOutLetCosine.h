@@ -29,8 +29,6 @@ namespace hemelb
         public:
           InOutLetCosine();
           virtual ~InOutLetCosine();
-          virtual void DoIO(TiXmlElement *iParent, bool iIsLoading,
-                            configuration::SimConfig* iSimConfig);
           virtual InOutLet* Clone() const;
           virtual void Reset(SimulationState &state)
           {

@@ -43,8 +43,6 @@ namespace hemelb
           InOutLetMultiscale();
           InOutLetMultiscale(const InOutLetMultiscale &other);
           virtual ~InOutLetMultiscale();
-          virtual void DoIO(TiXmlElement *parent, bool isLoading,
-                            configuration::SimConfig* simConfig);
           virtual InOutLet* Clone() const;
           virtual void Reset(SimulationState &state);
           virtual bool IsRegistrationRequired() const;
