@@ -15,7 +15,6 @@
 #include "lb/iolets/InOutLetFile.h"
 #include "lb/iolets/InOutLetMultiscale.h"
 #include "lb/iolets/InOutLetParabolicVelocity.h"
-//#include "lb/iolets/InOutLetVelocityAware.h"
 #include "lb/iolets/InOutLetWomersleyVelocity.h"
 
 #endif /* HEMELB_LB_IOLETS_INOUTLETS_H */
