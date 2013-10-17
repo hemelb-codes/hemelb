@@ -35,6 +35,9 @@ namespace hemelb
        * for building boundary conditions which have access to their nearby velocity field.
        * The min and max pressure SharedValues are placeholders for information needed by the steering and visualisation code.
        * The steering and visualisation code requires minimum and maximum pressure values.
+       * ExchangeAreaSize is the size of the area which is used to exchange information with with the outside world. It is
+       * set to '1' for 1-dimensional iolets, to the surface area (in lattice sites) of the InOutLet for 2-dimensional iolets,
+       * and to an even higher value should we wish to go for overlapping exchange regions.
        */
       class InOutLetMultiscale : public multiscale::Intercommunicand,
                                  public InOutLet
@@ -47,11 +50,17 @@ namespace hemelb
           virtual void Reset(SimulationState &state);
           virtual bool IsRegistrationRequired() const;
 
+          virtual int GetNumberOfFieldPoints() const;
+          // returns the number of field points that are exchanged with the coupled code.
+          // field points will map one-to-one to HemeLB lattice sites initially; we will
+          // rely on external tools to perform any interpolation tasks.
           LatticeDensity GetDensity(unsigned long timeStep) const;
           PhysicalPressure GetPressureMin() const;
           PhysicalPressure GetPressureMax() const;
           PhysicalVelocity_deprecated GetVelocity() const;
           PhysicalPressure GetPressure() const;
+          //TODO: update Velocity data type.
+          //TODO: enable array returns in these functions when we have more than one field point.
 
           multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
           multiscale::SharedValue<PhysicalVelocity_deprecated> & GetVelocityReference();
@@ -83,6 +92,7 @@ namespace hemelb
           std::string label;
 
           bool commsRequired;
+          int numberOfFieldPoints;
           multiscale::SharedValue<PhysicalPressure> pressure;
           multiscale::SharedValue<PhysicalPressure> minPressure;
           multiscale::SharedValue<PhysicalPressure> maxPressure;
