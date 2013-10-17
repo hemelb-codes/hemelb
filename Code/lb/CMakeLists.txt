@@ -2,7 +2,7 @@ add_library(hemelb_lb
 	iolets/BoundaryComms.cc iolets/BoundaryValues.cc
 	iolets/InOutLet.cc
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
-	iolets/InOutLetMultiscale.cc iolets/InOutLetVelocityAware.cc
+	iolets/InOutLetMultiscale.cc
     iolets/InOutLetVelocity.cc
 	iolets/InOutLetParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc
 	IncompressibilityChecker.cc
