@@ -80,10 +80,19 @@ namespace hemelb
 
       private:
         Payload contents;
+        template<class U>
+        friend std::istream& operator>>(std::istream& stream, SharedValue<U>& sv);
     };
-    template<class Payload> std::ostream & operator<<(std::ostream & stream, const SharedValue<Payload> & sv)
+
+    template<class Payload>
+    std::ostream & operator<<(std::ostream & stream, const SharedValue<Payload> & sv)
     {
-      return stream << static_cast<Payload>(sv);
+      return stream << static_cast<Payload&>(sv);
+    }
+    template<class Payload>
+    std::istream& operator>>(std::istream& stream, SharedValue<Payload> & sv)
+    {
+      return stream >> sv.contents;
     }
   }
 }

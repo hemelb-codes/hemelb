@@ -25,7 +25,8 @@ namespace hemelb
             pressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             minPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             maxPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
+            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY),
+            numberOfFieldPoints(1)
       {
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
                                                                               GetVelocity(),
@@ -85,7 +86,7 @@ namespace hemelb
       {
         return maxPressure.GetPayload();
       }
-      PhysicalVelocity_deprecated InOutLetMultiscale::GetVelocity() const
+      PhysicalVelocity InOutLetMultiscale::GetVelocity() const
       {
         return velocity;
       }
@@ -99,7 +100,7 @@ namespace hemelb
         return pressure;
       }
 
-      multiscale::SharedValue<PhysicalVelocity_deprecated> & InOutLetMultiscale::GetVelocityReference()
+      multiscale::SharedValue<PhysicalVelocity> & InOutLetMultiscale::GetVelocityReference()
       {
         return velocity;
       }
