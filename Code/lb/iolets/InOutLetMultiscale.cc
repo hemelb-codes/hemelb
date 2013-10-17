@@ -68,6 +68,10 @@ namespace hemelb
       {
         return true;
       }
+      int InOutLetMultiscale::GetNumberOfFieldPoints() const
+      {
+        return numberOfFieldPoints;
+      }
       LatticeDensity InOutLetMultiscale::GetDensity(unsigned long timeStep) const
       {
         /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
