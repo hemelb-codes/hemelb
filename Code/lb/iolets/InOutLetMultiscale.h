@@ -22,8 +22,8 @@ namespace hemelb
     {
       namespace multiscale_constants
       {
-        const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 80.0;
-        const PhysicalVelocity_deprecated HEMELB_MULTISCALE_REFERENCE_VELOCITY = 0.0;
+        const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 0.0;
+        const PhysicalVelocity HEMELB_MULTISCALE_REFERENCE_VELOCITY = PhysicalVelocity(0.0, 0.0, 0.0);
       }
 
       /***
@@ -57,13 +57,14 @@ namespace hemelb
           LatticeDensity GetDensity(unsigned long timeStep) const;
           PhysicalPressure GetPressureMin() const;
           PhysicalPressure GetPressureMax() const;
-          PhysicalVelocity_deprecated GetVelocity() const;
+          PhysicalVelocity GetVelocity() const;
           PhysicalPressure GetPressure() const;
+          //std::vector<PhysicalPressure GetPressures() const;
           //TODO: update Velocity data type.
-          //TODO: enable array returns in these functions when we have more than one field point.
+          //TODO: enable array returns in these functions (for pressure and velocity) when we have more than one field point.
 
           multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
-          multiscale::SharedValue<PhysicalVelocity_deprecated> & GetVelocityReference();
+          multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference();
 
           template<class Intercommunicator> void Register(
                                                           Intercommunicator &intercomms,
@@ -96,7 +97,7 @@ namespace hemelb
           multiscale::SharedValue<PhysicalPressure> pressure;
           multiscale::SharedValue<PhysicalPressure> minPressure;
           multiscale::SharedValue<PhysicalPressure> maxPressure;
-          mutable multiscale::SharedValue<PhysicalVelocity_deprecated> velocity;
+          mutable multiscale::SharedValue<PhysicalVelocity> velocity;
       };
     }
   }

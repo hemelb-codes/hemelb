@@ -18,7 +18,7 @@
       <condition type="pressure" subtype="multiscale">
         <label value="boundary1" />
         <pressure value="81.0" units="mmHg" />
-        <velocity value="0.1" units="m/s" />
+        <velocity value="(0.0,0.0,0.1)" units="m/s" />
       </condition>
       <normal value="(0.0,0.0,1.0)" units="dimensionless" />
       <position value="(-1.66017717834e-05,-4.58437586355e-05,-0.05)" units="m" />
@@ -29,7 +29,7 @@
       <condition type="pressure" subtype="multiscale">
         <label value="boundary2" />
         <pressure value="79.0" units="mmHg" />
-        <velocity value="0.1" units="m/s" />
+        <velocity value="(0.0,0.0,0.1)" units="m/s" />
       </condition>
       <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
       <position value="(0.0,0.0,0.05)" units="m" />
