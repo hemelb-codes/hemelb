@@ -16,6 +16,8 @@
 #include "geometry/ParmetisHeader.h"
 #include "reporting/Timers.h"
 #include "net/MpiCommunicator.h"
+#include "geometry/SiteData.h"
+#include "geometry/GeometryBlock.h"
 
 namespace hemelb
 {
@@ -26,8 +28,7 @@ namespace hemelb
       class OptimisedDecomposition
       {
         public:
-          OptimisedDecomposition(reporting::Timers& timers,
-                                 net::MpiCommunicator& comms,
+          OptimisedDecomposition(reporting::Timers& timers, net::MpiCommunicator& comms,
                                  const Geometry& geometry,
                                  const lb::lattices::LatticeInfo& latticeInfo,
                                  const std::vector<proc_t>& procForEachBlock,
@@ -54,10 +55,17 @@ namespace hemelb
         private:
           typedef util::Vector3D<site_t> BlockLocation;
           /**
+           * Populates the vector of vertex weights with different values for each local site type.
+           * This allows ParMETIS to more efficiently decompose the system.
+           *
+           * @return
+           */
+          void PopulateVertexWeightData(idx_t localVertexCount);
+          /**
            * Populates the vertex distribution array in a ParMetis-compatible way. (off-by-1,
            * cumulative count)
            *
-           * @return
+           * @param localVertexCount The number of local vertices
            */
           void PopulateSiteDistribution();
 
@@ -118,10 +126,10 @@ namespace hemelb
            * @param neighboursAdjacencyData Array to receive neighbour's expectations about adjacencies
            * @param expectedAdjacencyData Adjacency data as this core expects it to be
            */
-          void SendAdjacencyDataToLowerRankedProc(proc_t neighbouringProc,
-                                                  idx_t& neighboursAdjacencyCount,
-                                                  std::vector<idx_t>& neighboursAdjacencyData,
-                                                  std::multimap<idx_t, idx_t>& expectedAdjacencyData);
+          void SendAdjacencyDataToLowerRankedProc(
+              proc_t neighbouringProc, idx_t& neighboursAdjacencyCount,
+              std::vector<idx_t>& neighboursAdjacencyData,
+              std::multimap<idx_t, idx_t>& expectedAdjacencyData);
 
           /**
            * Compares this core's and a neighbouring core's version of the adjacency data between
@@ -132,8 +140,7 @@ namespace hemelb
            * @param neighboursAdjacencyData Array to receive neighbour's expectations about adjacencies
            * @param expectedAdjacencyData Adjacency data as this core expects it to be
            */
-          void CompareAdjacencyData(proc_t neighbouringProc,
-                                    idx_t neighboursAdjacencyCount,
+          void CompareAdjacencyData(proc_t neighbouringProc, idx_t neighboursAdjacencyCount,
                                     const std::vector<idx_t>& neighboursAdjacencyData,
                                     std::multimap<idx_t, idx_t>& expectedAdjacencyData);
 
@@ -142,7 +149,8 @@ namespace hemelb
            * @param blockIdLookupByLastSiteIndex
            * @return
            */
-          std::vector<idx_t> CompileMoveData(std::map<site_t, site_t>& blockIdLookupByLastSiteIndex);
+          std::vector<idx_t> CompileMoveData(
+              std::map<site_t, site_t>& blockIdLookupByLastSiteIndex);
 
           /**
            * Force some other cores to take info on blocks they might not know they need to know
@@ -150,8 +158,9 @@ namespace hemelb
            * @param moveData
            * @param blockIdsIRequireFromX
            */
-          void ForceSomeBlocksOnOtherCores(std::vector<idx_t>& moveData,
-                                           std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX);
+          void ForceSomeBlocksOnOtherCores(
+              std::vector<idx_t>& moveData,
+              std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX);
 
           /**
            * Get the blocks required from every other processor.
@@ -161,10 +170,11 @@ namespace hemelb
            * @param numberOfBlocksXRequiresFromMe
            * @param blockIdsXRequiresFromMe
            */
-          void GetBlockRequirements(std::vector<site_t>& numberOfBlocksRequiredFrom,
-                                    std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX,
-                                    std::vector<site_t>& numberOfBlocksXRequiresFromMe,
-                                    std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe);
+          void GetBlockRequirements(
+              std::vector<site_t>& numberOfBlocksRequiredFrom,
+              std::map<proc_t, std::vector<site_t> >& blockIdsIRequireFromX,
+              std::vector<site_t>& numberOfBlocksXRequiresFromMe,
+              std::map<proc_t, std::vector<site_t> >& blockIdsXRequiresFromMe);
 
           /**
            * Share the number of moves to be made between each pair of processors that need to move
@@ -207,6 +217,7 @@ namespace hemelb
           std::vector<idx_t> vtxDistribn; //! The vertex distribution across participating cores.
           std::vector<idx_t> firstSiteIndexPerBlock; //! The global contiguous index of the first fluid site on each block.
           std::vector<idx_t> adjacenciesPerVertex; //! The number of adjacencies for each local fluid site
+          std::vector<idx_t> vertexWeights; //! The weight of each local fluid site
           std::vector<idx_t> localAdjacencies; //! The list of adjacent vertex numbers for each local fluid site
           std::vector<idx_t> partitionVector; //! The results of the optimisation -- which core each fluid site should go to.
           std::vector<idx_t> allMoves; //! The list of move counts from each core
