@@ -6,3 +6,8 @@ add_library(
 	neighbouring/NeighbouringLatticeData.cc	neighbouring/NeighbouringDataManager.cc
 	neighbouring/RequiredSiteInformation.cc
 	)
+configure_file (
+  "${PROJECT_SOURCE_DIR}/geometry/decomposition/DecompositionWeights.h.in"
+  "${PROJECT_BINARY_DIR}/geometry/decomposition/DecompositionWeights.h"
+  )
+
