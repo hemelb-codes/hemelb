@@ -161,7 +161,8 @@ hector_gnu: #Hector, compiling using GNU compiler
     MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
     HEMELB_USE_SSE3: "ON"
     CTEMPLATE_PATCH_ALIGN: "OFF"
-    CTEMPLATE_USE_STATIC: "OFF"    
+    CTEMPLATE_USE_STATIC: "OFF"   
+    HEMELB_COMPUTE_ARCHITECTURE: "AMDBULLDOZER" 
 #    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 supermuc:
   max_job_name_chars: 15

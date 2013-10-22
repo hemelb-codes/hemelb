@@ -118,6 +118,7 @@ namespace hemelb
         idx_t weightFlag = 2;
         idx_t numberingFlag = 0;
         idx_t edgesCut = 0;
+        idx_t nDims = 3;
         idx_t options[4] = { 0, 0, 0, 0 };
         if (ShouldValidate())
         {
@@ -146,7 +147,7 @@ namespace hemelb
         localAdjacencies.reserve(1);
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
-        ParMETIS_V3_PartKway(&vtxDistribn[0],
+        /*ParMETIS_V3_PartKway(&vtxDistribn[0],
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
                              &vertexWeights[0],
@@ -160,8 +161,28 @@ namespace hemelb
                              options,
                              &edgesCut,
                              &partitionVector[0],
+                             &communicator);*/
+        ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
+                             &adjacenciesPerVertex[0],
+                             &localAdjacencies[0],
+                             &vertexWeights[0],
+                             NULL,
+                             &weightFlag,
+                             &numberingFlag,
+                             &nDims,
+                             &vertexCoordinates[0],
+                             &noConstraints,
+                             &desiredPartitionSize,
+                             &domainWeights[0],
+                             &tolerance,
+                             options,
+                             &edgesCut,
+                             &partitionVector[0],
                              &communicator);
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
+        if(comms.Rank() == comms.Size() - 1) {
+          log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
+        }
       }
 
       void OptimisedDecomposition::PopulateVertexWeightData(idx_t localVertexCount)
@@ -204,13 +225,17 @@ namespace hemelb
                 const BlockReadResult& blockReadResult = geometry.Blocks[blockNumber];
 
                 site_t m = -1;
+                const int block_size = geometry.GetBlockSize();
+                const int blockXCoord = blockI * block_size;
+                const int blockYCoord = blockJ * block_size;
+                const int blockZCoord = blockK * block_size;
 
                 // ... iterate over sites within the block...
-                for (site_t localSiteI = 0; localSiteI < geometry.GetBlockSize(); localSiteI++)
+                for (site_t localSiteI = 0; localSiteI < block_size; localSiteI++)
                 {
-                  for (site_t localSiteJ = 0; localSiteJ < geometry.GetBlockSize(); localSiteJ++)
+                  for (site_t localSiteJ = 0; localSiteJ < block_size; localSiteJ++)
                   {
-                    for (site_t localSiteK = 0; localSiteK < geometry.GetBlockSize(); localSiteK++)
+                    for (site_t localSiteK = 0; localSiteK < block_size; localSiteK++)
                     {
                       ++m;
 
@@ -263,6 +288,9 @@ namespace hemelb
                       }
 
                       vertexWeights.push_back(localweight);
+                      vertexCoordinates.push_back(blockXCoord + localSiteI);
+                      vertexCoordinates.push_back(blockYCoord + localSiteJ);
+                      vertexCoordinates.push_back(blockZCoord + localSiteK);
 
                     }
 
