@@ -37,6 +37,9 @@ set(HEMELB_SUBPROJECT_MAKE_JOBS 1 CACHE INTEGER "Number of jobs to use for subpr
 option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF) 
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
@@ -80,6 +83,7 @@ ExternalProject_Add(
 	-DHEMELB_BUILD_MULTISCALE=${HEMELB_BUILD_MULTISCALE}
 	-DHEMELB_IMAGES_TO_NULL=${HEMELB_IMAGES_TO_NULL}
         -DHEMELB_USE_SSE3=${HEMELB_USE_SSE3}
+    -DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE}
 	BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 )
 
