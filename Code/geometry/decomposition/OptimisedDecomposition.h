@@ -218,6 +218,7 @@ namespace hemelb
           std::vector<idx_t> firstSiteIndexPerBlock; //! The global contiguous index of the first fluid site on each block.
           std::vector<idx_t> adjacenciesPerVertex; //! The number of adjacencies for each local fluid site
           std::vector<idx_t> vertexWeights; //! The weight of each local fluid site
+          std::vector<real_t> vertexCoordinates; //! The coordinates of each local fluid site
           std::vector<idx_t> localAdjacencies; //! The list of adjacent vertex numbers for each local fluid site
           std::vector<idx_t> partitionVector; //! The results of the optimisation -- which core each fluid site should go to.
           std::vector<idx_t> allMoves; //! The list of move counts from each core
