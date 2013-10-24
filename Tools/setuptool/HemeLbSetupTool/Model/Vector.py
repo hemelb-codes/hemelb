@@ -29,8 +29,11 @@ class Vector(Observable):
 
         return
     
+    def __repr__(self):
+        return 'Vector({0.x}, {0.y}, {0.z})'.format(self)
     def __str__(self):
-        return '[%f, %f, %f]' % (self.x, self.y, self.z)
+        return '({0.x},{0.y},{0.z})'.format(self)
+    
     def __getstate__(self):
         picdic = {}
         for attr in ('x', 'y', 'z'):
