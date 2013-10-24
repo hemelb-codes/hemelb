@@ -9,7 +9,6 @@
 
 import numpy as np
 import os.path
-from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
@@ -26,6 +25,7 @@ from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
 from .Iolets import Inlet, Outlet, Iolet
 from .Vector import Vector
 from .Profile import Profile, metre
+from .XmlWriter import XmlWriter
 
 import Generation
 import pdb
@@ -563,112 +563,6 @@ class PolyDataCloser(vtkProgrammableFilter):
     pass
 
 
-class XmlWriter(object):
-
-    def __init__(self, profile):
-        self.profile = profile
-        return
-
-    @staticmethod
-    def indent(elem, level=0):
-        i = "\n" + level * "  "
-        if len(elem):
-            if not elem.text or not elem.text.strip():
-                elem.text = i + "  "
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-            for elem in elem:
-                XmlWriter.indent(elem, level + 1)
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-        else:
-            if level and (not elem.tail or not elem.tail.strip()):
-                elem.tail = i
-        return
-
-    def Write(self):
-        self.root = Element('hemelbsettings')
-        self.DoSimulation()
-        self.DoGeometry()
-        self.DoIolets()
-        self.DoVisualisation()
-
-        self.indent(self.root)
-
-        xmlFile = file(self.profile.OutputXmlFile, 'wb')
-        xmlFile.write('<?xml version="1.0" ?>\n')
-        ElementTree(self.root).write(xmlFile)
-        return
-
-    def DoSimulation(self):
-        sim = SubElement(self.root, 'simulation')
-        sim.set('cycles', str(self.profile.Cycles))
-        sim.set('cyclesteps', str(self.profile.Steps))
-        sim.set('stresstype', str(1))
-        return
-
-    def DoGeometry(self):
-        geom = SubElement(self.root, 'geometry')
-
-        data = SubElement(geom, 'datafile')
-        data.set('path', os.path.relpath(self.profile.OutputGeometryFile,
-                                         os.path.split(self.profile.OutputXmlFile)[0]))
-        return
-
-    def DoIolets(self):
-        inlets = SubElement(self.root, 'inlets')
-        outlets = SubElement(self.root, 'outlets')
-
-        for io in self.profile.Iolets:
-            if isinstance(io, Inlet):
-                iolet = SubElement(inlets, 'inlet')
-            elif isinstance(io, Outlet):
-                iolet = SubElement(outlets, 'outlet')
-            else:
-                continue
-            pressure = SubElement(iolet, 'pressure')
-            pressure.set('mean', str(io.Pressure.x))
-            pressure.set('amplitude', str(io.Pressure.y))
-            pressure.set('phase', str(io.Pressure.z))
-
-            normal = SubElement(iolet, 'normal')
-            normal.set('x', str(io.Normal.x))
-            normal.set('y', str(io.Normal.y))
-            normal.set('z', str(io.Normal.z))
-
-            position = SubElement(iolet, 'position')
-            position.set(
-                'x', str(io.Centre.x * self.profile.StlFileUnit.SizeInMetres))
-            position.set(
-                'y', str(io.Centre.y * self.profile.StlFileUnit.SizeInMetres))
-            position.set(
-                'z', str(io.Centre.z * self.profile.StlFileUnit.SizeInMetres))
-            continue
-        return
-
-    def DoVisualisation(self):
-        vis = SubElement(self.root, 'visualisation')
-
-        centre = SubElement(vis, 'centre')
-        centre.set('x', '0.0')
-        centre.set('y', '0.0')
-        centre.set('z', '0.0')
-
-        orientation = SubElement(vis, 'orientation')
-        orientation.set('longitude', '45.0')
-        orientation.set('latitude', '45.0')
-
-        display = SubElement(vis, 'display')
-        display.set('zoom', '1.0')
-        display.set('brightness', '0.03')
-
-        range = SubElement(vis, 'range')
-        range.set('maxvelocity', str(0.1))
-        range.set('maxstress', str(0.1))
-
-        return
-
-    pass
 
 # Debugging helpers
 
