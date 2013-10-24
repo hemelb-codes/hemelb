@@ -574,7 +574,7 @@ class ProfileProxy(HemeLbParameters):
         inP = self.SolutionForUnknown(self.Tree.InletPressure)
         self.QuantityToXml(condEl, 'amplitude', inP)
         self.QuantityToXml(condEl, 'mean', inP)
-        self.QuantityToXml(condEl, 'phase', 0.0 * pq.dimensionless)
+        self.QuantityToXml(condEl, 'phase', np.pi * pq.radian)
         self.QuantityToXml(condEl, 'period', self.PulsatilePeriod)
         
         return
@@ -588,7 +588,7 @@ class ProfileProxy(HemeLbParameters):
             
             self.QuantityToXml(condEl, 'amplitude', self.OutletPressure)
             self.QuantityToXml(condEl, 'mean', self.OutletPressure)
-            self.QuantityToXml(condEl, 'phase', 0.0 * pq.dimensionless)
+            self.QuantityToXml(condEl, 'phase', 0.0 * pq.radian)
             self.QuantityToXml(condEl, 'period', self.PulsatilePeriod)
             continue
         return
