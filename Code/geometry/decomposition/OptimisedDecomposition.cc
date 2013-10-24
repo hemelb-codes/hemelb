@@ -179,6 +179,24 @@ namespace hemelb
                              &edgesCut,
                              &partitionVector[0],
                              &communicator);
+
+        /** Preliminary development code to create a group communicator
+        std::vector<int> localRanksInNode;
+        int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
+        int coresInNodePartition = hemelbCoresPerNode;
+        log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
+
+        if(localBaseRank + hemelbCoresPerNode > comms.Size()) {
+          coresInNodePartition = comms.Size() - localBaseRank;
+        }
+
+        for(int i=0; i<coresInNodePartition; i++) {
+          localRanksInNode.push_back(localBaseRank + i);
+        }
+
+        net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
+        net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);*/
+
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
         if(comms.Rank() == comms.Size() - 1) {
           log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
@@ -308,13 +326,15 @@ namespace hemelb
         int TotalCoreWeight = ( (FluidSiteCounter * hemelbSiteWeights[0])
             + (WallSiteCounter * hemelbSiteWeights[1]) + (IOSiteCounter * hemelbSiteWeights[2])
             + (WallIOSiteCounter * hemelbSiteWeights[4])) / hemelbSiteWeights[0];
+        int TotalSites = FluidSiteCounter + WallSiteCounter + WallIOSiteCounter;
 
-        log::Logger::Log<log::Info, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, and %u WallIO Sites on core %u. This amounts to a core weight equivalent to %u Bulk Flow Sites",
+        log::Logger::Log<log::Debug, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, %u WallIO Sites on core %u. Total: %u (Weighted %u Points)",
                                                      FluidSiteCounter,
                                                      WallSiteCounter,
                                                      IOSiteCounter,
                                                      WallIOSiteCounter,
                                                      comms.Rank(),
+                                                     TotalSites,
                                                      TotalCoreWeight);
       }
 

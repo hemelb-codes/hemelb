@@ -39,6 +39,8 @@ namespace hemelb
                                                 hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@, 
                                                 hemelbSiteWeights@HEMELB_INLET_BOUNDARY@, 
                                                 hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@ };
+                                                
+      static const int hemelbCoresPerNode = 32;
     }
   } 
 }  
