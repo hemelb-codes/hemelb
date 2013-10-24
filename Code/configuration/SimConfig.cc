@@ -448,7 +448,7 @@ namespace hemelb
         "mmHg",
         newIolet->GetPressureAmp());
     GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", newIolet->GetPressureMean());
-    GetDimensionalValue(conditionEl.GetChildOrThrow("phase"), "dimensionless", newIolet->GetPhase());
+    GetDimensionalValue(conditionEl.GetChildOrThrow("phase"), "rad", newIolet->GetPhase());
     GetDimensionalValue(conditionEl.GetChildOrThrow("period"), "s", newIolet->GetPeriod());
     if (warmUpSteps != 0)
     {
