@@ -18,7 +18,7 @@
       <condition type="pressure" subtype="cosine">
         <amplitude value="0.0" units="mmHg" />
         <mean value="80.1" units="mmHg" />
-        <phase value="0.0" units="dimensionless" />
+        <phase value="0.0" units="rad" />
         <period value="0.6" units="s" />
       </condition>
       <normal value="(0.0,0.0,1.0)" units="dimensionless" />
@@ -30,7 +30,7 @@
       <condition type="pressure" subtype="cosine">
         <amplitude value="0.0" units="mmHg" />
         <mean value="80.0" units="mmHg" />
-        <phase value="0.0" units="dimensionless" />
+        <phase value="0.0" units="rad" />
         <period value="0.6" units="s" />
       </condition>
       <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
