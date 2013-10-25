@@ -59,9 +59,10 @@ namespace hemelb
 
           /* Process 0 has a list of all the Iolets. The count of all this is highly useful to pre-size all the
            * needed arrays later on, so we are broadcasting this to all the other processes. */
-          unsigned GlobalIoletCount[] = { inletValues->GetLocalIoletCount(),
-                                          outletValues->GetLocalIoletCount() };
-          MPI_Bcast(GlobalIoletCount, 2, MPI_UNSIGNED, 0, net::NetworkTopology::Instance()->GetComms());
+          std::vector<unsigned> GlobalIoletCount;
+          GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
+          GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
+          net::NetworkTopology::Instance()->GetComms().Broadcast(GlobalIoletCount, 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);

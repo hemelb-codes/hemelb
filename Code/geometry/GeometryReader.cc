@@ -205,15 +205,14 @@ namespace hemelb
       return geometry;
     }
 
-    char* GeometryReader::ReadOnAllTasks(unsigned nBytes)
+    std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
     {
-      char* buffer = new char[nBytes];
+      std::vector<char> buffer(nBytes);
       if (currentComms.Rank() == HEADER_READING_RANK)
       {
-        MPI_File_read(file, buffer, nBytes, net::MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
+        MPI_File_read(file, &buffer[0], nBytes, net::MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
       }
-
-      MPI_Bcast(buffer, nBytes, net::MpiDataType<char>(), HEADER_READING_RANK, currentComms);
+      currentComms.Broadcast(buffer, HEADER_READING_RANK);
       return buffer;
     }
 
@@ -223,10 +222,10 @@ namespace hemelb
     Geometry GeometryReader::ReadPreamble()
     {
       const unsigned preambleBytes = io::formats::geometry::PreambleLength;
-      char* preambleBuffer = ReadOnAllTasks(preambleBytes);
+      std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
 
       // Create an Xdr translator based on the read-in data.
-      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(preambleBuffer,
+      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(&preambleBuffer[0],
                                                                                   preambleBytes);
 
       unsigned hlbMagicNumber, gmyMagicNumber, version;
@@ -283,8 +282,6 @@ namespace hemelb
       unsigned paddingValue;
       preambleReader.readUnsignedInt(paddingValue);
 
-      delete[] preambleBuffer;
-
       return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
                       blockSize,
                       voxelSize,
@@ -300,11 +297,11 @@ namespace hemelb
     void GeometryReader::ReadHeader(site_t blockCount)
     {
       site_t headerByteCount = GetHeaderLength(blockCount);
-      char* headerBuffer = ReadOnAllTasks(headerByteCount);
+      std::vector<char> headerBuffer = ReadOnAllTasks(headerByteCount);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::writers::xdr::XdrReader preambleReader =
-          hemelb::io::writers::xdr::XdrMemReader(headerBuffer, (unsigned int) headerByteCount);
+          hemelb::io::writers::xdr::XdrMemReader(&headerBuffer[0], (unsigned int) headerByteCount);
 
       // Read in all the data.
       for (site_t block = 0; block < blockCount; block++)
@@ -318,8 +315,6 @@ namespace hemelb
         bytesPerCompressedBlock.push_back(bytes);
         bytesPerUncompressedBlock.push_back(uncompressedBytes);
       }
-
-      delete[] headerBuffer;
     }
 
     /**
@@ -656,14 +651,9 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
 
       // We check the isFluid property and the link type for each direction
-      site_t blockSiteDataLength = geometry.GetSitesPerBlock() * (1 + latticeInfo.GetNumVectors()
-          - 1);
 
       std::vector<proc_t> myProcForSite;
       std::vector<unsigned> dummySiteData;
-
-      std::vector<proc_t> procForSiteRecv(geometry.GetSitesPerBlock());
-      std::vector<unsigned> siteDataRecv(blockSiteDataLength);
 
       // We also validate that each processor has the same beliefs about each site.
       for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
@@ -708,19 +698,8 @@ namespace hemelb
 
         // Reduce using a minimum to find the actual processor for each site (ignoring the
         // BIG_NUMBER2 entries).
-        MPI_Allreduce(&myProcForSite[0],
-                      &procForSiteRecv[0],
-                      (int) geometry.GetSitesPerBlock(),
-                      net::MpiDataType(procForSiteRecv[0]),
-                      MPI_MIN,
-                      topologyComms);
-
-        MPI_Allreduce(&dummySiteData[0],
-                      &siteDataRecv[0],
-                      (int) blockSiteDataLength,
-                      net::MpiDataType(dummySiteData[0]),
-                      MPI_MIN,
-                      topologyComms);
+        std::vector<proc_t> procForSiteRecv = topologyComms.AllReduce(myProcForSite, MPI_MIN);
+        std::vector<unsigned> siteDataRecv = topologyComms.AllReduce(dummySiteData, MPI_MIN);
 
         for (site_t site = 0; site < geometry.GetSitesPerBlock(); ++site)
         {
