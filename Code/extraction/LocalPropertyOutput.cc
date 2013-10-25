@@ -66,12 +66,7 @@ namespace hemelb
       //! @TODO: These two MPI calls can be replaced with one
 
       // Everyone needs to know the total length written during one iteration.
-      MPI_Allreduce(&writeLength,
-                    &allCoresWriteLength,
-                    1,
-                    net::MpiDataType<uint64_t> (),
-                    MPI_SUM,
-                    comms);
+      allCoresWriteLength = comms.AllReduce(writeLength, MPI_SUM);
 
       // Only the root process must know the total number of sites written
       uint64_t allSiteCount = 0;

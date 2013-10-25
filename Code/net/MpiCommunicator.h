@@ -12,6 +12,7 @@
 
 //#include "units.h"
 //#include "net/mpi.h"
+#include <vector>
 #include "net/MpiError.h"
 #include <boost/shared_ptr.hpp>
 
@@ -93,6 +94,18 @@ namespace hemelb
          */
         void Abort(int errCode) const;
 
+        void AllReduce();
+
+        template <typename T>
+        void Broadcast(T& val, const int root) const;
+        template <typename T>
+        void Broadcast(std::vector<T>& vals, const int root) const;
+
+        template <typename T>
+        T AllReduce(const T& val, const MPI_Op& op) const;
+        template <typename T>
+        std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
+
       private:
         /**
          * Constructor to get data needed from an MPI communicator
@@ -108,5 +121,7 @@ namespace hemelb
 
   }
 }
+
+#include "net/MpiCommunicator.hpp"
 
 #endif /* HEMELB_NET_MPICOMMUNICATOR_H */

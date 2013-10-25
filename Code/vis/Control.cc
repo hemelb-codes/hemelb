@@ -76,8 +76,7 @@ namespace hemelb
         block_max_z = util::NumericalFunctions::max(block_max_z, blockIt.GetCurrentLocation().z);
       }
 
-      site_t mins[3], maxes[3];
-      site_t localMins[3], localMaxes[3];
+      std::vector<site_t> localMins(3), localMaxes(3);
 
       localMins[0] = block_min_x;
       localMins[1] = block_min_y;
@@ -88,8 +87,8 @@ namespace hemelb
       localMaxes[2] = block_max_z;
 
       const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
-      MPI_Allreduce(localMins, mins, 3, net::MpiDataType<site_t>(), MPI_MIN, comms);
-      MPI_Allreduce(localMaxes, maxes, 3, net::MpiDataType<site_t>(), MPI_MAX, comms);
+      std::vector<site_t> mins = comms.AllReduce(localMins, MPI_MIN);
+      std::vector<site_t> maxes = comms.AllReduce(localMaxes, MPI_MAX);
 
       visSettings.ctr_x = 0.5F * (float) (latticeData->GetBlockSize() * (mins[0] + maxes[0]));
       visSettings.ctr_y = 0.5F * (float) (latticeData->GetBlockSize() * (mins[1] + maxes[1]));
