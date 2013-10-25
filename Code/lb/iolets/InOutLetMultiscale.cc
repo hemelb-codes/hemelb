@@ -28,10 +28,6 @@ namespace hemelb
             velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY),
             numberOfFieldPoints(1)
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
-                                                                              GetVelocity(),
-                                                                              GetPressure(),
-                                                                              GetPressureMax());
       }
       /***
        * The shared values are registered through the initialiser-list syntactic sugar.
@@ -44,12 +40,6 @@ namespace hemelb
             pressure(this, other.GetPressureMax()), minPressure(this, other.GetPressureMin()),
             maxPressure(this, other.GetPressureMax()), velocity(this, other.GetVelocity())
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletMS, GetDensity(): velocity is %f, pressure is %f/%f or %f/%f",
-                                                                              GetVelocity(),
-                                                                              GetPressure(),
-                                                                              other.GetPressure(),
-                                                                              GetPressureMax(),
-                                                                              other.GetPressureMax());
       }
 
       InOutLetMultiscale::~InOutLetMultiscale()
