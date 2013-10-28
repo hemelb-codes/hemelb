@@ -32,7 +32,7 @@ namespace hemelb
   {
 
     ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      Debugger(executable, comm), mAmAttached(false), mPIds(NULL)
+      Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
 
@@ -101,19 +101,9 @@ namespace hemelb
       int rank = mCommunicator.Rank();
       int nProcs = mCommunicator.Size();
 
-      mPIds = new VoI(nProcs);
-
       int pId = getpid();
 
-      HEMELB_MPI_CALL(MPI_Gather,
-          ((void*) &pId,
-              1,
-              net::MpiDataType(pId),
-              (void*) & (mPIds->front()),
-              1,
-              net::MpiDataType(mPIds->front()),
-              0,
-              mCommunicator));
+      mPIds = mCommunicator.Gather(pId, 0);
     }
 
     void ActiveDebugger::SpawnDebuggers(void)
@@ -145,7 +135,7 @@ namespace hemelb
 
       args.push_back(binaryPath);
 
-      for (VoI::iterator i = mPIds->begin(); i < mPIds->end(); ++i)
+      for (VoI::iterator i = mPIds.begin(); i < mPIds.end(); ++i)
       {
         // This leaks memory
         args.push_back(ConvertIntToString(*i));

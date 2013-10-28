@@ -39,7 +39,7 @@ namespace hemelb
         ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm);
 
         bool mAmAttached;// Indicate attachment state
-        VoI* mPIds;// vector of process IDs
+        VoI mPIds;// vector of process IDs
 
         void Attach(void);
         void GatherProcessIds(void);

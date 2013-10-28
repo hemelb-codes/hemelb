@@ -94,8 +94,6 @@ namespace hemelb
          */
         void Abort(int errCode) const;
 
-        void AllReduce();
-
         template <typename T>
         void Broadcast(T& val, const int root) const;
         template <typename T>
@@ -105,6 +103,14 @@ namespace hemelb
         T AllReduce(const T& val, const MPI_Op& op) const;
         template <typename T>
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
+
+        template <typename T>
+        T Reduce(const T& val, const MPI_Op& op, const int root) const;
+        template <typename T>
+        std::vector<T> Reduce(const std::vector<T>& vals, const MPI_Op& op, const int root) const;
+
+        template <typename T>
+        std::vector<T> Gather(const T& val, const int root) const;
 
       private:
         /**
