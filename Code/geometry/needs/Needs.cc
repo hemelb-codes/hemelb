@@ -86,19 +86,11 @@ namespace hemelb
 
     void Needs::Validate(const site_t blockCount, const std::vector<bool>& readBlock)
     {
-      std::vector<int> procsWantingThisBlockBuffer(communicator.Size());
       for (site_t block = 0; block < blockCount; ++block)
       {
         int neededHere = readBlock[block];
         proc_t readingCore = GetReadingCoreForBlock(block);
-        MPI_Gather(&neededHere,
-                   1,
-                   net::MpiDataType<int>(),
-                   &procsWantingThisBlockBuffer[0],
-                   1,
-                   net::MpiDataType<int>(),
-                   readingCore,
-                   communicator);
+        std::vector<int> procsWantingThisBlockBuffer = communicator.Gather(neededHere, readingCore);
 
         if (communicator.Rank() == readingCore)
         {
