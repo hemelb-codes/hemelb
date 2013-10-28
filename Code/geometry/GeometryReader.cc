@@ -36,7 +36,6 @@ namespace hemelb
                                    reporting::Timers &atimings) :
       latticeInfo(latticeInfo), timings(atimings)
     {
-      debug::Debugger::Get()->BreakHere();
       // Get the group of all procs.
       net::MpiCommunicator commWorld = net::NetworkTopology::Instance()->GetComms();
       net::MpiGroup worldGroup = commWorld.Group();
@@ -72,7 +71,6 @@ namespace hemelb
 
     Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
     {
-      debug::Debugger::Get()->BreakHere();
       log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
 
