@@ -32,7 +32,7 @@ namespace hemelb
       );
     }
 
-    template <typename T>
+    template<typename T>
     T MpiCommunicator::AllReduce(const T& val, const MPI_Op& op) const
     {
       T ans;
@@ -43,7 +43,7 @@ namespace hemelb
       return ans;
     }
 
-    template <typename T>
+    template<typename T>
     std::vector<T> MpiCommunicator::AllReduce(const std::vector<T>& vals, const MPI_Op& op) const
     {
       std::vector<T> ans(vals.size());
@@ -54,6 +54,58 @@ namespace hemelb
       return ans;
     }
 
+    template<typename T>
+    T MpiCommunicator::Reduce(const T& val, const MPI_Op& op, const int root) const
+    {
+      T ans;
+      HEMELB_MPI_CALL(
+          MPI_Reduce,
+          (const_cast<T*>(&val), &ans, 1, MpiDataType<T>(), op, root, *this)
+      );
+      return ans;
+    }
+
+    template<typename T>
+    std::vector<T> MpiCommunicator::Reduce(const std::vector<T>& vals, const MPI_Op& op,
+                                           const int root) const
+    {
+      std::vector<T> ans;
+      T* recvbuf = NULL;
+
+      if (Rank() == root)
+      {
+        // Standard says the address of receive buffer only matters at the root.
+        ans.resize(vals.size());
+        recvbuf = &ans[0];
+      }
+
+      HEMELB_MPI_CALL(
+          MPI_Reduce,
+          (const_cast<T*>(&vals[0]), recvbuf, vals.size(), MpiDataType<T>(), op, root, *this)
+      );
+      return ans;
+    }
+
+    template<typename T>
+    std::vector<T> MpiCommunicator::Gather(const T& val, const int root) const
+    {
+      std::vector<T> ans;
+      T* recvbuf = NULL;
+
+      if (Rank() == root)
+      {
+        // Standard says the address of receive buffer only matters at the root.
+        ans.resize(Size());
+        recvbuf = &ans[0];
+      }
+      HEMELB_MPI_CALL(
+          MPI_Gather,
+          (const_cast<T*>(&val), 1, MpiDataType<T>(),
+              recvbuf, 1, MpiDataType<T>(),
+              root, *this)
+      );
+      return ans;
+    }
   }
 }
 

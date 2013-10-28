@@ -68,9 +68,9 @@ namespace hemelb
       // Everyone needs to know the total length written during one iteration.
       allCoresWriteLength = comms.AllReduce(writeLength, MPI_SUM);
 
-      // Only the root process must know the total number of sites written
-      uint64_t allSiteCount = 0;
-      MPI_Reduce(&siteCount, &allSiteCount, 1, net::MpiDataType<uint64_t> (), MPI_SUM, 0, comms);
+      // Only the root process needs to know the total number of sites written
+      // Note this has a garbage value on other procs.
+      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM, 0);
 
       unsigned totalHeaderLength = 0;
 
