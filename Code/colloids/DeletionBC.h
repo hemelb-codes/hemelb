@@ -24,7 +24,10 @@ namespace hemelb
           // activationDistance defaults to 1/4 lattice unit *beyond* the boundary
           LatticeDistance activationDistance = -0.25;
           // TODO: Convert to lattice units
-          xml.GetAttributeOrThrow("activationDistance", activationDistance);
+          io::xml::Element actDistEl = xml.GetChildOrNull("activationDistance");
+          if (actDistEl != io::xml::Element::Missing())
+            configuration::GetDimensionalValue(actDistEl, "lattice", activationDistance);
+
           return new DeletionBC(activationDistance);
         }
 
