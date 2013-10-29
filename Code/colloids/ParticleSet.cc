@@ -72,7 +72,7 @@ namespace hemelb
           first = false;
         }
         // create the particle object from the settings in the config file
-        Particle nextParticle(latDatLBM, lbmParams, particlesElem);
+        Particle nextParticle(latDatLBM, lbmParams, particleElem);
         // check the particle is valid, i.e. in fluid, and is locally owned
         if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {

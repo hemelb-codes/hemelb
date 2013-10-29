@@ -84,19 +84,6 @@ namespace hemelb
         DoIOForProperties(propertiesEl);
     }
 
-    template<typename T>
-    void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
-    {
-      const std::string& got = elem.GetAttributeOrThrow("units");
-      if (got != units)
-      {
-        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
-            << units << "', got '" << got << "'";
-      }
-
-      elem.GetAttributeOrThrow("value", value);
-    }
-
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
     {
       // Required element
