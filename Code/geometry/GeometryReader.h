@@ -21,6 +21,7 @@
 #include "reporting/Timers.h"
 #include "util/Vector3D.h"
 #include "units.h"
+#include "geometry/GeometryReaderBase.h"
 #include "geometry/Geometry.h"
 #include "geometry/needs/Needs.h"
 
@@ -29,7 +30,7 @@ namespace hemelb
   namespace geometry
   {
 
-    class GeometryReader
+    class GeometryReader : public GeometryReaderBase
     {
       public:
         typedef util::Vector3D<site_t> BlockLocation;
@@ -40,20 +41,6 @@ namespace hemelb
         Geometry LoadAndDecompose(const std::string& dataFilePath);
 
       private:
-        /**
-         * Read from the file into a buffer. We read this on a single core then broadcast it.
-         * This has proven to be more efficient than reading in on every core (even using a collective
-         * read).
-         *
-         * Note this allocates memory and returns the pointer to you.
-         *
-         * @param nBytes
-         * @return
-         */
-        std::vector<char> ReadOnAllTasks(unsigned nBytes);
-
-        Geometry ReadPreamble();
-
         void ReadHeader(site_t blockCount);
 
         void ReadInBlocksWithHalo(Geometry& geometry,
@@ -156,22 +143,14 @@ namespace hemelb
          */
         bool ShouldValidate() const;
 
-        //! The rank which reads in the header information.
-        static const proc_t HEADER_READING_RANK = 0;
         //! The number of cores (0-READING_GROUP_SIZE-1) that read files in parallel
         static const proc_t READING_GROUP_SIZE = HEMELB_READING_GROUP_SIZE;
 
         //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
-        //! File accessed to read in the geometry data.
-        MPI_File file;
-        //! Information about the file, to give cues and hints to MPI.
-        MPI_Info fileInfo;
         net::MpiGroup topologyGroup; //! New group for ranks in the topology.
         //net::MpiCommunicator topologyCommunicator; //! New communicator for ranks in the topology.
         net::MpiCommunicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
-        // TODO: This was never a good plan, better code design will avoid the need for it.
-        net::MpiCommunicator currentComms; //! The communicator currently in use.
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 
