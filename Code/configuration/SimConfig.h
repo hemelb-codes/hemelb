@@ -22,6 +22,19 @@ namespace hemelb
 {
   namespace configuration
   {
+    template<typename T>
+    void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
+    {
+      const std::string& got = elem.GetAttributeOrThrow("units");
+      if (got != units)
+      {
+        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
+            << units << "', got '" << got << "'";
+      }
+
+      elem.GetAttributeOrThrow("value", value);
+    }
+
     class SimConfig
     {
       public:
@@ -133,10 +146,12 @@ namespace hemelb
         lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetMultiscale
+            * DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
 
         lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetParabolicVelocity
+            * DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
         /**
          * Reads/writes Womersley velocity inlet from/to XML file.
          *
@@ -144,13 +159,16 @@ namespace hemelb
          * @param isLoading whether the method is reading or writing
          * @param value womersley iolet instance to be configured
          */
-        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetWomersleyVelocity
+            * DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
-        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
-        extraction::StraightLineGeometrySelector* DoIOForLineGeometry(const io::xml::Element& xmlNode);
+        extraction::PropertyOutputFile
+            * DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
+        extraction::StraightLineGeometrySelector
+            * DoIOForLineGeometry(const io::xml::Element& xmlNode);
         extraction::PlaneGeometrySelector* DoIOForPlaneGeometry(const io::xml::Element&);
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
