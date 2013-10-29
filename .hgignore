@@ -2,7 +2,6 @@ syntax: glob
 *.pyc
 *.o
 *.d
-*.orig
 *~
 .metadata/*
 build/*
