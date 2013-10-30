@@ -18,14 +18,14 @@ namespace hemelb
     GeometryPeeker::GeometryPeeker(const std::string& gmyFileName)
     {
 
-      currentComms = net::NetworkTopology::Instance()->GetComms();
-      OpenFile(gmyFileName);
-      Geometry gmy = ReadPreamble();
-      voxelSize = gmy.GetVoxelSize();
-      origin = gmy.GetOrigin();
-
-      HEMELB_MPI_CALL(MPI_File_close, (&file));
-      HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
+//      currentComms = net::NetworkTopology::Instance()->GetComms();
+//      OpenFile(gmyFileName);
+//      Geometry gmy = ReadPreamble();
+//      voxelSize = gmy.GetVoxelSize();
+//      origin = gmy.GetOrigin();
+//
+//      HEMELB_MPI_CALL(MPI_File_close, (&file));
+//      HEMELB_MPI_CALL(MPI_Info_free, (&fileInfo));
     }
   }
 }

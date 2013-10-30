@@ -126,6 +126,11 @@ namespace hemelb
 
         bool Convert(std::string units, double& value) const;
 
+        PhysicalDistance GetVoxelSize() const
+        {
+          return voxelSize;
+        }
+
         PhysicalPosition GetLatticeOrigin() const
         {
           return latticeOrigin;

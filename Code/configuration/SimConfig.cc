@@ -59,8 +59,8 @@ namespace hemelb
 
       unsigned version;
       const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
-      if (version != 2U)
-        throw Exception() << "Unrecognised XML version. Expected 2, got " << versionStr;
+      if (version != 3U)
+        throw Exception() << "Unrecognised XML version. Expected 3, got " << versionStr;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
 
@@ -123,6 +123,16 @@ namespace hemelb
         GetDimensionalValue(wuEl, "lattice", warmUpSteps);
         totalTimeSteps += warmUpSteps;
       }
+
+      // Required element
+      // <voxel_size value="float" units="m" />
+      const io::xml::Element vsEl = simEl.GetChildOrThrow("voxel_size");
+      GetDimensionalValue(vsEl, "m", voxelSizeMetres);
+
+      // Required element
+      // <origin value="(x,y,z)" units="m" />
+      const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
+      GetDimensionalValue(originEl, "m", geometryOriginMetres);
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)

@@ -29,14 +29,15 @@ namespace hemelb
     struct LbmParameters
     {
       public:
-        LbmParameters(distribn_t timeStepLength, distribn_t voxelSize)
+        LbmParameters(PhysicalTime timeStepLength, PhysicalDistance voxelSize)
         {
           Update(timeStepLength, voxelSize);
         }
 
-        void Update(distribn_t timeStepLength, distribn_t voxelSize)
+        void Update(PhysicalTime timeStepLength, PhysicalDistance voxelSizeMetres)
         {
           timestep = timeStepLength;
+          voxelSize = voxelSizeMetres;
           tau = 0.5
               + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
                   / (Cs2 * voxelSize * voxelSize);
@@ -46,9 +47,14 @@ namespace hemelb
           beta = -1.0 / (2.0 * tau);
         }
 
-        distribn_t GetTimeStep() const
+        PhysicalTime GetTimeStep() const
         {
           return timestep;
+        }
+
+        PhysicalDistance GetVoxelSize() const
+        {
+          return voxelSize;
         }
 
         distribn_t GetOmega() const
@@ -74,7 +80,8 @@ namespace hemelb
         StressTypes StressType;
 
       private:
-        distribn_t timestep;
+        PhysicalTime timestep;
+        PhysicalDistance voxelSize;
         distribn_t omega;
         distribn_t tau;
         distribn_t stressParameter;
