@@ -64,9 +64,9 @@ namespace hemelb
         static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
-                                                sitesPerBlockUnit,
-                                                0.01,
-                                                util::Vector3D<PhysicalDistance>::Zero());
+                                                sitesPerBlockUnit);
+// VoxelSize                                               0.01,
+// Origin                                               util::Vector3D<PhysicalDistance>::Zero());
           site_t sitesAlongCube = sitesPerBlockUnit - 2;
           site_t minInd = 1, maxInd = sitesAlongCube;
 

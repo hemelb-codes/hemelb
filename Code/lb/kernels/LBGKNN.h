@@ -14,7 +14,7 @@
 #include "lb/SimulationState.h"
 #include <cassert>
 #include <cmath>
-
+#include "debug/Debugger.h"
 namespace hemelb
 {
   namespace lb
@@ -122,10 +122,11 @@ namespace hemelb
            */
           void InitState(const InitParams& initParams)
           {
+            debug::Debugger::Get()->BreakHere();
             // Initialise relaxation time across the domain to HemeLB's default value.
             mTau.resize(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau());
             mTimeStep = initParams.lbmParams->GetTimeStep();
-            mSpaceStep = initParams.latDat->GetVoxelSize();
+            mSpaceStep = initParams.lbmParams->GetVoxelSize();
           }
 
           /**

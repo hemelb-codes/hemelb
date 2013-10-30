@@ -43,6 +43,8 @@ namespace hemelb
 
           totalTimeSteps = 10000;
           timeStepLength = 60.0/(70.0*1000.0);
+          voxelSizeMetres = 0.01;
+          geometryOriginMetres = util::Vector3D<PhysicalDistance>::Zero();
         }
     };
   }
