@@ -19,6 +19,7 @@
 #include "unittests/helpers/FolderTestFixture.h"
 
 #include <iostream>
+#include "debug/Debugger.h"
 namespace hemelb
 {
   namespace unittests
@@ -28,26 +29,31 @@ namespace hemelb
       class FourCubeBasedTestFixture : public helpers::FolderTestFixture
       {
 
-
         public:
-          FourCubeBasedTestFixture():initParams(){}
+          FourCubeBasedTestFixture() :
+            initParams()
+          {
+          }
           void setUp()
           {
             // Initialise the network topology (necessary for using the inlets and oulets.
             int args = 1;
             char** argv = NULL;
-
+            debug::Debugger::Get()->BreakHere();
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();
-            simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),simConfig->GetTotalTimeSteps());
+            simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
+                                                       simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
-                                              latDat->GetVoxelSize());
-            unitConverter = new util::UnitConverter(simState->GetTimeStepLength(), latDat->GetVoxelSize(), latDat->GetOrigin());
+                                              simConfig->GetVoxelSize());
+            unitConverter = new util::UnitConverter(simState->GetTimeStepLength(),
+                                                    simConfig->GetVoxelSize(),
+                                                    simConfig->GetGeometryOrigin());
 
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
-            initParams.lbmParams=lbmParams;
+            initParams.lbmParams = lbmParams;
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
 

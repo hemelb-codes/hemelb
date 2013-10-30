@@ -36,9 +36,7 @@ namespace hemelb
         latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
     {
       SetBasicDetails(readResult.GetBlockDimensions(),
-                      readResult.GetBlockSize(),
-                      readResult.GetVoxelSize(),
-                      readResult.GetOrigin());
+                      readResult.GetBlockSize());
 
       ProcessReadSites(readResult);
       // if debugging then output beliefs regarding geometry and neighbour list
@@ -61,14 +59,10 @@ namespace hemelb
     }
 
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
-                                      site_t blockSizeIn,
-                                      distribn_t voxelSizeIn,
-                                      util::Vector3D<distribn_t> originIn)
+                                      site_t blockSizeIn)
     {
       blockCounts = blocksIn;
       blockSize = blockSizeIn;
-      voxelSize = voxelSizeIn;
-      origin = originIn;
       sites = blocksIn * blockSize;
       sitesPerBlockVolumeUnit = blockSize * blockSize * blockSize;
       blockCount = blockCounts.x * blockCounts.y * blockCounts.z;

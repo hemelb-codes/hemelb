@@ -111,28 +111,19 @@ namespace hemelb
       // We use temporary vars here, as they must be the same size as the type in the file
       // regardless of the internal type used.
       unsigned int blocksX, blocksY, blocksZ, blockSize;
-      double voxelSize;
-      util::Vector3D<double> origin;
 
       // Read in the values.
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
       preambleReader.readUnsignedInt(blocksZ);
       preambleReader.readUnsignedInt(blockSize);
-      preambleReader.readDouble(voxelSize);
-      for (unsigned int i = 0; i < 3; ++i)
-      {
-        preambleReader.readDouble(origin[i]);
-      }
 
       // Read the padding unsigned int.
       unsigned paddingValue;
       preambleReader.readUnsignedInt(paddingValue);
 
       return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
-                      blockSize,
-                      voxelSize,
-                      origin);
+                      blockSize);
     }
 
     std::vector<char> GeometryReaderBase::ReadOnAllTasks(unsigned nBytes)

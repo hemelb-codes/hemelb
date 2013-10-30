@@ -100,6 +100,14 @@ namespace hemelb
         {
           return timeStepLength;
         }
+        PhysicalDistance GetVoxelSize() const
+        {
+          return voxelSizeMetres;
+        }
+        PhysicalPosition GetGeometryOrigin() const
+        {
+          return geometryOriginMetres;
+        }
         unsigned int PropertyOutputCount() const
         {
           return propertyOutputs.size();
@@ -200,10 +208,11 @@ namespace hemelb
         // instantiated.
         std::vector<lb::iolets::InOutLet*> inlets;
         std::vector<lb::iolets::InOutLet*> outlets;
-        double timeStepLength;
+        PhysicalTime timeStepLength;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;
-
+        PhysicalDistance voxelSizeMetres;
+        PhysicalPosition geometryOriginMetres;
     };
   }
 }

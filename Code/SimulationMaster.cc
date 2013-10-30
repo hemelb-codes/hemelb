@@ -171,9 +171,9 @@ void SimulationMaster::Initialise()
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
-  unitConvertor = new hemelb::util::UnitConverter(simulationState->GetTimeStepLength(),
-                                                  latticeData->GetVoxelSize(),
-                                                  latticeData->GetOrigin());
+  unitConvertor = new hemelb::util::UnitConverter(simConfig->GetTimeStepLength(),
+                                                  simConfig->GetVoxelSize(),
+                                                  simConfig->GetGeometryOrigin());
   if (simConfig->HasColloidSection())
   {
     timings[hemelb::reporting::Timers::colloidInitialisation].Start();

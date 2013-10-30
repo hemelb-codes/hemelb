@@ -58,7 +58,7 @@ namespace hemelb
            */
           enum
           {
-            VersionNumber = 3
+            VersionNumber = 4
           //!< VersionNumber
           };
 
@@ -109,15 +109,13 @@ namespace hemelb
            *  * 1 uint for the version
            *  * 3 uints for the problem dimensions in blocks
            *  * 1 uint for the number of sites along one block side
-           *  * 1 double for the voxel size
-           *  * 3 doubles for the coords of the origin
-           *  * 1 uint, value 0 to pad to 64 bytes
+           *  * 1 uint, value 0 to pad to 32 bytes
            *
-           *  * 8 uints, 4 doubles = 8 * 4 + 4 * 8 = 64
+           *  * 8 uints = 8 * 4  = 32
            */
           enum
           {
-            PreambleLength = 64
+            PreambleLength = 32
           };
 
           /**

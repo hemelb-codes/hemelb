@@ -31,10 +31,8 @@ namespace hemelb
          * Default constructor initialises internal variables
          */
         Geometry(const util::Vector3D<site_t>& dimensionsInBlocks,
-                 site_t blockSize,
-                 PhysicalDistance voxelSize,
-                 const util::Vector3D<PhysicalDistance>& origin) :
-            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), voxelSize(voxelSize), origin(origin), blockCount(dimensionsInBlocks.x
+                 site_t blockSize) :
+            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), blockCount(dimensionsInBlocks.x
                 * dimensionsInBlocks.y * dimensionsInBlocks.z), sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize,
                                                                                                                      3)), Blocks(blockCount)
         {
@@ -124,29 +122,9 @@ namespace hemelb
           return blockSize;
         }
 
-        /**
-         * Get voxel size (real-life length of one site length)
-         * @return Voxel size.
-         */
-        PhysicalDistance GetVoxelSize() const
-        {
-          return voxelSize;
-        }
-
-        /**
-         * Get the origin of the geometry in real-world coordinates.
-         * @return Origin of the geometry.
-         */
-        const util::Vector3D<PhysicalDistance>& GetOrigin() const
-        {
-          return origin;
-        }
-
       private:
         const util::Vector3D<site_t> dimensionsInBlocks; //! The count of blocks in each direction
         const site_t blockSize; //! Size of a block, in sites.
-        const PhysicalDistance voxelSize; //! Size of a block, in real-world units.
-        const util::Vector3D<PhysicalDistance> origin;
 
         const site_t blockCount;
         const site_t sitesPerBlock;
