@@ -24,7 +24,7 @@ class BufferPool;
 class GeometryWriter {
 public:
 	GeometryWriter(const std::string& OutputGeometryFile, int BlockSize,
-			Index BlockCounts, double VoxelSizeMetres, Vector OriginMetres);
+			Index BlockCounts);
 
 	~GeometryWriter();
 
@@ -35,8 +35,6 @@ protected:
 	std::string OutputGeometryFile;
 	int BlockSize;
 	Index BlockCounts;
-	double VoxelSizeMetres;
-	Vector OriginMetres;
 
 	int headerStart;
 	XdrWriter* headerEncoder;
