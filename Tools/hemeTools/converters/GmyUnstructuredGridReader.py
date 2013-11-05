@@ -170,7 +170,7 @@ if __name__ == "__main__":
         'for the given geometry file.'
         )
     parser.add_argument('input', nargs=1, type=argparse.FileType(),
-                        help='the geometry file')
+                        help='the XML file')
     parser.add_argument('output', nargs=argparse.OPTIONAL,
                         help='file to write VTK data to, if omitted, use '
                         'input basename + ".vtu"',

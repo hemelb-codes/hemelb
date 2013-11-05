@@ -19,17 +19,14 @@
 using hemelb::io::formats::geometry;
 
 GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
-		int BlockSize, Index BlockCounts, double VoxelSizeMetres,
-		Vector OriginMetres) :
-		OutputGeometryFile(OutputGeometryFile), BlockSize(BlockSize), VoxelSizeMetres(
-				VoxelSizeMetres) {
+		int BlockSize, Index BlockCounts) :
+		OutputGeometryFile(OutputGeometryFile), BlockSize(BlockSize) {
 
 	this->BlockBufferPool = new BufferPool(
 			geometry::GetMaxBlockRecordLength(BlockSize));
 
 	for (unsigned int i = 0; i < 3; ++i) {
 		this->BlockCounts[i] = BlockCounts[i];
-		this->OriginMetres[i] = OriginMetres[i];
 	}
 
 	{
@@ -55,17 +52,9 @@ GeometryWriter::GeometryWriter(const std::string& OutputGeometryFile,
 		// Sites along 1 dimension of a block
 		encoder << this->BlockSize;
 
-		// Voxel Size, in metres
-		encoder << this->VoxelSizeMetres;
-
-		// Position of site index (0,0,0) in block index (0,0,0), in
-		// metres in the STL file's coordinate system
-		for (unsigned int i = 0; i < 3; ++i)
-			encoder << this->OriginMetres[i];
-
 		// padding
 		encoder << 0U;
-		// TODO: Check that buffer length is 64 bytes
+		// TODO: Check that buffer length is 32 bytes
 
 		// (Dummy) Header
 
