@@ -18,7 +18,7 @@ from .Vector import Vector
 import pdb
 
 class XmlWriter(object):
-    VERSION = 2
+    VERSION = 3
     STRESSTYPE = 1
     
     def __init__(self, profile):
@@ -63,6 +63,8 @@ class XmlWriter(object):
         QuantityElement(sim, 'step_length', self.profile.TimeStepSeconds, 's')
         QuantityElement(sim, 'steps', int(self.profile.DurationSeconds/self.profile.TimeStepSeconds), 'lattice')
         ValueElement(sim, 'stresstype', self.STRESSTYPE)
+        QuantityElement(sim, 'voxel_size', self.profile.VoxelSizeMetres, 'm')
+        QuantityElement(sim, 'origin', self.profile.OriginMetres, 'm')
         return
 
     def DoGeometry(self, root):

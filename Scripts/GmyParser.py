@@ -222,7 +222,7 @@ class CheckingLoader(AsyncBlockProcessingLoader):
             self.HeaderBytes +
             np.sum(self.BlockDataLength)
             )
-        if claimedFileSize != os.path.getsize(self.FileName):
+        if claimedFileSize != os.path.getsize(self.GmyFileName):
             self.PrintError(
                 DomainError(
                     'File length does not match file metadata'

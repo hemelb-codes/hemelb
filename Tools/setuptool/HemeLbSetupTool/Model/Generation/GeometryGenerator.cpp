@@ -38,11 +38,10 @@ void GeometryGenerator::Execute(bool skipNonIntersectingBlocks)
 	this->PreExecute();
 	double bounds[6];
 	this->ComputeBounds(bounds);
-	Domain domain(this->VoxelSizeMetres, bounds);
+	Domain domain(this->OriginWorking, this->SiteCounts);
 
 	GeometryWriter writer(this->OutputGeometryFile, domain.GetBlockSize(),
-			domain.GetBlockCounts(), domain.GetVoxelSizeMetres(),
-			domain.GetOriginMetres());
+			domain.GetBlockCounts());
 
 	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end();
 			++blockIt) {
