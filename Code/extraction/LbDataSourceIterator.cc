@@ -94,12 +94,12 @@ namespace hemelb
       return data.GetProcIdFromGlobalCoords(location) == net::NetworkTopology::Instance()->GetLocalRank();
     }
 
-    distribn_t LbDataSourceIterator::GetVoxelSize() const
+    PhysicalDistance LbDataSourceIterator::GetVoxelSize() const
     {
       return converter.GetVoxelSize();
     }
 
-    const util::Vector3D<distribn_t>& LbDataSourceIterator::GetOrigin() const
+    const PhysicalPosition& LbDataSourceIterator::GetOrigin() const
     {
       return converter.GetLatticeOrigin();
     }
