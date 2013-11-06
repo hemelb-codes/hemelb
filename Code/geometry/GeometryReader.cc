@@ -281,9 +281,7 @@ namespace hemelb
       preambleReader.readUnsignedInt(paddingValue);
 
       return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
-                      blockSize,
-                      voxelSize,
-                      origin);
+                      blockSize);
     }
 
     /**
