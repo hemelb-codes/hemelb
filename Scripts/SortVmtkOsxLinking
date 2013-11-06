@@ -80,7 +80,7 @@ vtk_lib_dir = os.path.normpath(os.path.dirname(a_vtk_lib_path))
 
 vmtk_python_dir = os.path.join(vmtk_lib_dir, 'vmtk')
 
-for library in glob.glob('vmtk/libvtkvmtk*.so'):
+for library in glob.glob(os.path.join(vmtk_python_dir, 'libvtkvmtk*.so')):
     print 'Checking {}'.format(library)
     deps = SortDependencies(library)['plain']
     rpaths = GetRpaths(library)
