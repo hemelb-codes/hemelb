@@ -118,14 +118,14 @@ namespace hemelb
          * Returns the real-world size of a single lattice unit.
          * @return
          */
-        distribn_t GetVoxelSize() const;
+        PhysicalDistance GetVoxelSize() const;
 
         /**
          * Returns the origin of the geometry in real, spatial units.
          *
          * @return
          */
-        const util::Vector3D<distribn_t>& GetOrigin() const;
+        const PhysicalPosition& GetOrigin() const;
 
         /**
          * Returns true if the site at the given location is marked as a wall site
