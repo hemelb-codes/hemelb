@@ -25,12 +25,12 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
-#include "Exception.h"
-
+#include "debug/Debugger.h"
 namespace hemelb
 {
   namespace geometry
   {
+
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings) :
@@ -53,7 +53,6 @@ namespace hemelb
       {
         std::vector<int> lExclusions(1);
         lExclusions[0] = 0;
-        //TODO: I think topologyGroup can be made just a local instead of member variable.
         topologyGroup = worldGroup.Exclude(lExclusions);
         // Create a communicator just for the domain decomposition.
         topologyComms = commWorld.Create(topologyGroup);
@@ -74,9 +73,44 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
+
+      // Open the file using the MPI parallel I/O interface at the path
+      // given, in read-only mode.
+      HEMELB_MPI_CALL(MPI_Info_create, (&fileInfo));
+
+      // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
+      std::string accessStyle = "access_style";
+      std::string accessStyleValue = "sequential";
+      std::string buffering = "collective_buffering";
+      std::string bufferingValue = "true";
+
+      HEMELB_MPI_CALL(MPI_Info_set, (fileInfo,
+              const_cast<char*> (accessStyle.c_str()),
+              const_cast<char*> (accessStyleValue.c_str())));
+      HEMELB_MPI_CALL(MPI_Info_set, (fileInfo,
+              const_cast<char*> (buffering.c_str()),
+              const_cast<char*> (bufferingValue.c_str())));
+
       currentComms = net::NetworkTopology::Instance()->GetComms();
-      OpenFile(dataFilePath);
+
+      // Open the file.
+      // Stupid C-MPI lack of const-correctness
+      HEMELB_MPI_CALL(MPI_File_open,
+          (currentComms,
+              const_cast<char *>(dataFilePath.c_str()),
+              MPI_MODE_RDONLY,
+              fileInfo,
+              &file)
+      );
+
       log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
+      // TODO: Why is there this fflush?
+      fflush( NULL);
+
+      // Set the view to the file.
+      std::string mode = "native";
+      HEMELB_MPI_CALL(MPI_File_set_view,
+          (file, 0, MPI_CHAR, MPI_CHAR, const_cast<char*> (mode.c_str()), fileInfo));
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
@@ -169,7 +203,88 @@ namespace hemelb
       return geometry;
     }
 
+    std::vector<char> GeometryReader::ReadOnAllTasks(unsigned nBytes)
+    {
+      std::vector<char> buffer(nBytes);
+      if (currentComms.Rank() == HEADER_READING_RANK)
+      {
+        MPI_File_read(file, &buffer[0], nBytes, net::MpiDataType(buffer[0]), MPI_STATUS_IGNORE);
+      }
+      currentComms.Broadcast(buffer, HEADER_READING_RANK);
+      return buffer;
+    }
 
+    /**
+     * Read in the section at the beginning of the config file.
+     */
+    Geometry GeometryReader::ReadPreamble()
+    {
+      const unsigned preambleBytes = io::formats::geometry::PreambleLength;
+      std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
+
+      // Create an Xdr translator based on the read-in data.
+      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(&preambleBuffer[0],
+                                                                                  preambleBytes);
+
+      unsigned hlbMagicNumber, gmyMagicNumber, version;
+      // Read in housekeeping values
+      preambleReader.readUnsignedInt(hlbMagicNumber);
+      preambleReader.readUnsignedInt(gmyMagicNumber);
+      preambleReader.readUnsignedInt(version);
+
+      // Check the value of the HemeLB magic number.
+      if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("This file starts with %d, not the HemeLB magic number %d.",
+                                                         hlbMagicNumber,
+                                                         io::formats::HemeLbMagicNumber);
+        exit(1);
+      }
+
+      // Check the value of the geometry file magic number.
+      if (gmyMagicNumber != io::formats::geometry::MagicNumber)
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("This file is not a geometry file: had %d, not the geometry magic number %d.",
+                                                         gmyMagicNumber,
+                                                         io::formats::geometry::MagicNumber);
+        exit(1);
+      }
+
+      if (version != io::formats::geometry::VersionNumber)
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("Geometry file version is %d. Currently supported version is %d.",
+                                                         version,
+                                                         io::formats::geometry::VersionNumber);
+        exit(1);
+      }
+
+      // Variables we'll read.
+      // We use temporary vars here, as they must be the same size as the type in the file
+      // regardless of the internal type used.
+      unsigned int blocksX, blocksY, blocksZ, blockSize;
+      double voxelSize;
+      util::Vector3D<double> origin;
+
+      // Read in the values.
+      preambleReader.readUnsignedInt(blocksX);
+      preambleReader.readUnsignedInt(blocksY);
+      preambleReader.readUnsignedInt(blocksZ);
+      preambleReader.readUnsignedInt(blockSize);
+      preambleReader.readDouble(voxelSize);
+      for (unsigned int i = 0; i < 3; ++i)
+      {
+        preambleReader.readDouble(origin[i]);
+      }
+
+      // Read the padding unsigned int.
+      unsigned paddingValue;
+      preambleReader.readUnsignedInt(paddingValue);
+
+      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
+                      blockSize,
+                      voxelSize,
+                      origin);
+    }
 
     /**
      * Read the header section, with minimal information about each block.
@@ -383,20 +498,27 @@ namespace hemelb
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
-        throw Exception() << "Decompression error for block";
-
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
       stream.avail_out = uncompressed.size();
       stream.next_out = reinterpret_cast<unsigned char*> (&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
-        throw Exception() << "Decompression error for block";
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
 
       uncompressed.resize(uncompressed.size() - stream.avail_out);
       ret = inflateEnd(&stream);
       if (ret != Z_OK)
-        throw Exception() << "Decompression error for block";
-
+      {
+        log::Logger::Log<log::Critical, log::OnePerCore>("Decompression error for block");
+        std::exit(1);
+      }
       timings[hemelb::reporting::Timers::unzip].Stop();
       return uncompressed;
     }
@@ -497,8 +619,9 @@ namespace hemelb
           ? "wall fluid site without"
           : "bulk fluid site with";
 
-        throw Exception() << "Malformed GMY file, " << msg
-            << " a defined wall normal currently not allowed.";
+        log::Logger::Log<log::Critical, log::OnePerCore>("Malformed GMY file, " + msg
+            + " a defined wall normal currently not allowed.");
+        exit(1);
       }
 
       if (readInSite.wallNormalAvailable)
