@@ -23,12 +23,11 @@ namespace hemelb
       }
 
       LatticeVelocity InOutLetParabolicVelocity::GetVelocity(const LatticePosition& x,
-                                                             const LatticeTime t) const
+                                                             const LatticeTimeStep t) const
       {
         // v(r) = vMax (1 - r**2 / a**2)
         // where r is the distance from the centreline
-        LatticePosition posLat = units->ConvertPositionToLatticeUnits(position);
-        LatticePosition displ = x - posLat;
+        LatticePosition displ = x - position;
         LatticeDistance z = displ.Dot(normal);
         Dimensionless rSq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
 

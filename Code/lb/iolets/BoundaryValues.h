@@ -29,7 +29,7 @@ namespace hemelb
                          geometry::LatticeData* latticeData,
                          const std::vector<iolets::InOutLet*> &iolets,
                          SimulationState* simulationState,
-                         util::UnitConverter* units);
+                         const util::UnitConverter& units);
           ~BoundaryValues();
 
           void RequestComms();
@@ -38,10 +38,10 @@ namespace hemelb
 
           void FinishReceive();
 
-          distribn_t GetBoundaryDensity(const int index);
+          LatticeDensity GetBoundaryDensity(const int index);
 
-          distribn_t GetDensityMin(int boundaryId);
-          distribn_t GetDensityMax(int boundaryId);
+          LatticeDensity GetDensityMin(int boundaryId);
+          LatticeDensity GetDensityMax(int boundaryId);
 
           static bool IsCurrentProcTheBCProc();
           static proc_t GetBCProcRank();
@@ -75,7 +75,7 @@ namespace hemelb
           std::vector<iolets::InOutLet*> iolets;
 
           SimulationState* state;
-          util::UnitConverter* unitConverter;
+          const util::UnitConverter& unitConverter;
       }
       ;
     }

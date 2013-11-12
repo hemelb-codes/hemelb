@@ -43,23 +43,23 @@ namespace hemelb
           void Test_0_2_0_Read()
           {
             // smoke test the configuration as having loaded OK
-            SimConfig config(Resource("config0_2_0.xml").Path());
-            CPPUNIT_ASSERT_EQUAL(3000lu, config.GetTotalTimeSteps());
-            CPPUNIT_ASSERT_EQUAL(0.0001, config.GetTimeStepLength());
-
-            CPPUNIT_ASSERT_EQUAL(0.6,
-                                 static_cast<lb::iolets::InOutLetCosine*>(config.GetInlets()[0])->GetPeriod());
+            SimConfig* config = SimConfig::New(Resource("config0_2_0.xml").Path());
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
+            CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
+            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            CPPUNIT_ASSERT(inlet != NULL);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
           }
 
           void Test_0_2_1_Read()
           {
             // smoke test the configuration as having loaded OK
-            SimConfig config(Resource("config.xml").Path());
-            CPPUNIT_ASSERT_EQUAL(3000lu, config.GetTotalTimeSteps());
-            CPPUNIT_ASSERT_EQUAL(0.0001, config.GetTimeStepLength());
-
-            CPPUNIT_ASSERT_EQUAL(0.6,
-                                 static_cast<lb::iolets::InOutLetCosine*>(config.GetInlets()[0])->GetPeriod());
+            SimConfig* config = SimConfig::New(Resource("config.xml").Path());
+            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
+            CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
+            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            CPPUNIT_ASSERT(inlet != NULL);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
           }
 //          void Test_0_2_0_Write()
 //          {
@@ -136,9 +136,9 @@ namespace hemelb
             FolderTestFixture::setUp();
             //Round trip the config twice.
             CopyResourceToTempdir("config.xml");
-            SimConfig config("config.xml");
+            SimConfig* config = SimConfig::New("config.xml");
 
-            CPPUNIT_ASSERT_EQUAL(80.0, config.GetInitialPressure());
+            CPPUNIT_ASSERT_EQUAL(80.0, config->GetInitialPressure());
           }
 
         private:

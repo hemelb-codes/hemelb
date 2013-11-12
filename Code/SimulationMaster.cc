@@ -56,7 +56,9 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   steeringSessionId = options.GetSteeringSessionId();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
-  simConfig = new hemelb::configuration::SimConfig(fileManager->GetInputFile());
+  simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
+  unitConverter = &simConfig->GetUnitConverter();
+
   fileManager->SaveConfiguration(simConfig);
   Initialise();
   if (IsCurrentProcTheIOProc())
@@ -96,7 +98,6 @@ SimulationMaster::~SimulationMaster()
   delete stabilityTester;
   delete entropyTester;
   delete simulationState;
-  delete unitConvertor;
   delete incompressibilityChecker;
   delete neighbouringDataManager;
 
@@ -171,9 +172,6 @@ void SimulationMaster::Initialise()
 
   hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
-  unitConvertor = new hemelb::util::UnitConverter(simConfig->GetTimeStepLength(),
-                                                  simConfig->GetVoxelSize(),
-                                                  simConfig->GetGeometryOrigin());
   if (simConfig->HasColloidSection())
   {
     timings[hemelb::reporting::Timers::colloidInitialisation].Start();
@@ -249,15 +247,15 @@ void SimulationMaster::Initialise()
                                                        latticeData,
                                                        simConfig->GetInlets(),
                                                        simulationState,
-                                                       unitConvertor);
+                                                       *unitConverter);
 
   outletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
                                                         latticeData,
                                                         simConfig->GetOutlets(),
                                                         simulationState,
-                                                        unitConvertor);
+                                                        *unitConverter);
 
-  latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConvertor);
+  latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
   neighbouringDataManager->ShareNeeds();
   neighbouringDataManager->TransferNonFieldDependentInformation();
 
@@ -267,7 +265,7 @@ void SimulationMaster::Initialise()
                                                         &communicationNet,
                                                         simulationState,
                                                         simConfig,
-                                                        unitConvertor);
+                                                        unitConverter);
 
   // Read in the visualisation parameters.
   latticeBoltzmannModel->ReadVisParameters();
@@ -275,7 +273,7 @@ void SimulationMaster::Initialise()
   propertyDataSource
       = new hemelb::extraction::LbDataSourceIterator(latticeBoltzmannModel->GetPropertyCache(),
                                                      *latticeData,
-                                                     *unitConvertor);
+                                                     *unitConverter);
 
   if (simConfig->PropertyOutputCount() > 0)
   {
@@ -615,7 +613,7 @@ void SimulationMaster::LogStabilityReport()
                                                                         incompressibilityChecker->GetMaxRelativeDensityDifference(),
                                                                         incompressibilityChecker->GetGlobalLargestVelocityMagnitude()
                                                                             / hemelb::Cs,
-                                                                        unitConvertor->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
+                                                                        unitConverter->ConvertVelocityToPhysicalUnits(incompressibilityChecker->GetGlobalLargestVelocityMagnitude()));
   }
 }
 

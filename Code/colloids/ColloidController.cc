@@ -16,7 +16,7 @@ namespace hemelb
 {
   namespace colloids
   {
-    const void ColloidController::OutputInformation(const LatticeTime timestep) const
+    const void ColloidController::OutputInformation(const LatticeTimeStep timestep) const
     {
       timers[reporting::Timers::colloidOutput].Start();
       particleSet->OutputInformation(timestep);
@@ -257,7 +257,7 @@ namespace hemelb
 
     void ColloidController::EndIteration()
     {
-      const LatticeTime currentTimestep = simulationState.GetTimeStep();
+      const LatticeTimeStep currentTimestep = simulationState.GetTimeStep();
 
       // step 6
       timers[reporting::Timers::colloidUpdateCalculations].Start();

@@ -25,7 +25,7 @@ namespace hemelb
                                      geometry::LatticeData* latticeData,
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
                                      SimulationState* simulationState,
-                                     util::UnitConverter* units) :
+                                     const util::UnitConverter& units) :
         net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
             state(simulationState), unitConverter(units)
       {
@@ -38,7 +38,7 @@ namespace hemelb
           // First create a copy of all iolets
           iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->Clone();
 
-          iolet->Initialise(unitConverter);
+          iolet->Initialise(&unitConverter);
 
           iolets.push_back(iolet);
 
@@ -194,17 +194,17 @@ namespace hemelb
       }
 
       // This assumes the program has already waited for comms to finish before
-      distribn_t BoundaryValues::GetBoundaryDensity(const int index)
+      LatticeDensity BoundaryValues::GetBoundaryDensity(const int index)
       {
         return iolets[index]->GetDensity(state->Get0IndexedTimeStep());
       }
 
-      distribn_t BoundaryValues::GetDensityMin(int iBoundaryId)
+      LatticeDensity BoundaryValues::GetDensityMin(int iBoundaryId)
       {
         return iolets[iBoundaryId]->GetDensityMin();
       }
 
-      distribn_t BoundaryValues::GetDensityMax(int iBoundaryId)
+      LatticeDensity BoundaryValues::GetDensityMax(int iBoundaryId)
       {
         return iolets[iBoundaryId]->GetDensityMax();
       }

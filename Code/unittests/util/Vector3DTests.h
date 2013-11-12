@@ -13,6 +13,26 @@
 #include <cppunit/TestFixture.h>
 #include "util/Vector3D.h"
 
+namespace CPPUNIT_NS
+{
+  template<>
+  struct assertion_traits<hemelb::util::Vector3D<double> >
+  {
+      static bool equal(const hemelb::util::Vector3D<double>& x,
+                        const hemelb::util::Vector3D<double>& y)
+      {
+        return (x - y).GetMagnitudeSquared() < 1e-9;
+      }
+
+      static std::string toString( const hemelb::util::Vector3D<double>& x )
+      {
+        OStringStream ost;
+        ost << x;
+        return ost.str();
+      }
+  };
+}
+
 namespace hemelb
 {
   namespace unittests
@@ -21,8 +41,8 @@ namespace hemelb
     {
       class Vector3DTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(Vector3DTests);
-          CPPUNIT_TEST(TestCastsInVector3DProduct);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( Vector3DTests);
+          CPPUNIT_TEST( TestCastsInVector3DProduct);CPPUNIT_TEST_SUITE_END();
         public:
           void TestCastsInVector3DProduct()
           {
@@ -62,7 +82,7 @@ namespace hemelb
           }
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(Vector3DTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( Vector3DTests);
 
     }
   }

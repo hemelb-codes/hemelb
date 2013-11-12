@@ -75,7 +75,7 @@ namespace hemelb
     // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
 
     const void Particle::WriteToStream(
-                 const LatticeTime currentTimestep,
+                 const LatticeTimeStep currentTimestep,
                  io::writers::Writer& writer)
     {
       lastCheckpointTimestep = currentTimestep;
