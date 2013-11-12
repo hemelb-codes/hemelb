@@ -28,13 +28,13 @@ namespace hemelb
       return ans;
     }
     SimConfig::SimConfig() :
-      xmlFilePath(""), hasColloidSection(false), rawXmlDoc(NULL), warmUpSteps(0),
+      xmlFilePath(""), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
           unitConverter(NULL)
     {
     }
 
     SimConfig::SimConfig(const std::string& path) :
-      xmlFilePath(path), hasColloidSection(false), rawXmlDoc(NULL), warmUpSteps(0),
+      xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
           unitConverter(NULL)
     {
     }

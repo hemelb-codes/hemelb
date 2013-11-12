@@ -59,7 +59,6 @@ namespace hemelb
         proc_t GetReadingCoreForBlock(const site_t blockNumber) const;
       private:
         std::vector<std::vector<proc_t> > procsWantingBlocksBuffer;
-        net::InterfaceDelegationNet &net;
         const net::MpiCommunicator & communicator;
         const proc_t readingGroupSize;
         bool shouldValidate;

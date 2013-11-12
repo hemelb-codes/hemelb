@@ -19,8 +19,8 @@ namespace hemelb
                  const std::vector<bool>& readBlock,
                  const proc_t readingGroupSize,
                  net::InterfaceDelegationNet & net,
-                 bool shouldValidate) :
-        procsWantingBlocksBuffer(blockCount), net(net), communicator(net.GetCommunicator()), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate)
+                 bool shouldValidate_) :
+        procsWantingBlocksBuffer(blockCount), communicator(net.GetCommunicator()), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
