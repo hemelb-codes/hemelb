@@ -26,9 +26,6 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (SimConfigTests);
           CPPUNIT_TEST (Test_0_2_0_Read);
           CPPUNIT_TEST (Test_0_2_1_Read);
-//          CPPUNIT_TEST (Test_0_2_0_Write);
-//          CPPUNIT_TEST (Test_0_2_1_Write);
-//          CPPUNIT_TEST (TestVelocityInletsWrite);
           CPPUNIT_TEST (TestXMLFileContent);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
@@ -61,75 +58,6 @@ namespace hemelb
             CPPUNIT_ASSERT(inlet != NULL);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
           }
-//          void Test_0_2_0_Write()
-//          {
-//            FolderTestFixture::setUp();
-//            //Round trip the config twice.
-//            CopyResourceToTempdir("config0_2_0.xml");
-//            SimConfig *config = SimConfig::Load("config0_2_0.xml");
-//            config->Save("config0_2_0b.xml");
-//            delete config;
-//            config = SimConfig::Load("config0_2_0b.xml");
-//            config->Save("config0_2_0c.xml");
-//            delete config;
-//            config = SimConfig::Load("config0_2_0c.xml");
-//
-//            // Assert the values are correct.
-//            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
-//            CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / (70.0 * 1000), config->GetTimeStepLength(), 1e-6);
-//
-//            CPPUNIT_ASSERT_DOUBLES_EQUAL(60.0 / 70.0,
-//                                         static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod(),
-//                                         1e-6);
-//            FolderTestFixture::tearDown();
-//            delete config;
-//          }
-//          void Test_0_2_1_Write()
-//          {
-//            FolderTestFixture::setUp();
-//            //Round trip the config twice.
-//            CopyResourceToTempdir("config.xml");
-//            SimConfig *config = SimConfig::Load("config.xml");
-//            config->Save("config0_2_1b.xml");
-//            delete config;
-//            config = SimConfig::Load("config0_2_1b.xml");
-//            config->Save("config0_2_1c.xml");
-//            delete config;
-//            config = SimConfig::Load("config0_2_1c.xml");
-//
-//            CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
-//            CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
-//
-//            CPPUNIT_ASSERT_EQUAL(0.6,
-//                                 static_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0])->GetPeriod());
-//            FolderTestFixture::tearDown();
-//            delete config;
-//          }
-
-//          void TestVelocityInletsWrite()
-//          {
-//            FolderTestFixture::setUp();
-//            //Round trip the config twice.
-//            CopyResourceToTempdir("config_new_velocity_inlets.xml");
-//            SimConfig *config = SimConfig::Load("config_new_velocity_inlets.xml");
-//            config->Save("config_new_velocity_inlets_b.xml");
-//            delete config;
-//            config = SimConfig::Load("config_new_velocity_inlets_b.xml");
-//            config->Save("config_new_velocity_inlets_c.xml");
-//            delete config;
-//            config = SimConfig::Load("config_new_velocity_inlets_c.xml");
-//
-//            lb::iolets::InOutLetWomersleyVelocity* inlet =
-//                dynamic_cast<lb::iolets::InOutLetWomersleyVelocity*>(config->GetInlets()[0]);
-//            assert(inlet);
-//
-//            CPPUNIT_ASSERT_EQUAL(10.0, inlet->GetRadius());
-//            CPPUNIT_ASSERT_EQUAL(2.5, inlet->GetPressureGradientAmplitude());
-//            CPPUNIT_ASSERT_EQUAL(LatticeTime(5), inlet->GetPeriod());
-//            CPPUNIT_ASSERT_EQUAL(2.0, inlet->GetWomersleyNumber());
-//            FolderTestFixture::tearDown();
-//            delete config;
-//          }
 
           void TestXMLFileContent()
           {
