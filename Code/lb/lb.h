@@ -90,7 +90,7 @@ namespace hemelb
         void Initialise(vis::Control* iControl,
                         iolets::BoundaryValues* iInletValues,
                         iolets::BoundaryValues* iOutletValues,
-                        util::UnitConverter* iUnits);
+                        const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
 
@@ -167,7 +167,7 @@ namespace hemelb
         LbmParameters mParams;
         vis::Control* mVisControl;
 
-        util::UnitConverter* mUnits;
+        const util::UnitConverter* mUnits;
 
         hemelb::reporting::Timers &timings;
 

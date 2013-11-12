@@ -54,7 +54,7 @@ namespace hemelb
                                                          latDat,
                                                          simConfig->GetInlets(),
                                                          simState,
-                                                         unitConverter);
+                                                         *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
 
@@ -125,7 +125,7 @@ namespace hemelb
                                                           latDat,
                                                           simConfig->GetOutlets(),
                                                           simState,
-                                                          unitConverter);
+                                                          *unitConverter);
             initParams.boundaryObject = &outletBoundary;
 
             lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >

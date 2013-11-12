@@ -16,15 +16,15 @@ namespace hemelb
       {
       }
 
-      PhysicalPressure InOutLetVelocity::GetPressureMin() const
+      LatticeDensity InOutLetVelocity::GetDensityMin() const
       {
-        return REFERENCE_PRESSURE_mmHg;
+        return 1.0;
       }
-      PhysicalPressure InOutLetVelocity::GetPressureMax() const
+      LatticeDensity InOutLetVelocity::GetDensityMax() const
       {
-        return REFERENCE_PRESSURE_mmHg;
+        return 1.0;
       }
-      LatticeDensity InOutLetVelocity::GetDensity(LatticeTime time_step) const
+      LatticeDensity InOutLetVelocity::GetDensity(LatticeTimeStep time_step) const
       {
         return 1.0;
       }

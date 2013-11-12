@@ -102,7 +102,7 @@ class SimulationMaster
     hemelb::colloids::ColloidController* colloidController;
     hemelb::net::Net communicationNet;
 
-    hemelb::util::UnitConverter* unitConvertor;
+    const hemelb::util::UnitConverter* unitConverter;
 
     hemelb::vis::Control* visualisationControl;
     hemelb::extraction::IterableDataSource* propertyDataSource;
@@ -114,7 +114,7 @@ class SimulationMaster
     unsigned int imagesPerSimulation;
     int steeringSessionId;
     unsigned int imagesPeriod;
-    static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
+    static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

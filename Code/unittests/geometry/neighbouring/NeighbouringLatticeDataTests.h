@@ -44,7 +44,7 @@ namespace hemelb
             {
               FourCubeBasedTestFixture::setUp();
               data = &latDat->GetNeighbouringData();
-              exampleSite = new Site<LatticeData>(latDat->GetSite(0));
+              exampleSite = new Site<LatticeData>(latDat->GetSite(24));
             }
 
             void tearDown()

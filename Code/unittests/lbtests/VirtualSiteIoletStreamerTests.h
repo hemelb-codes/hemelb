@@ -94,13 +94,13 @@ namespace hemelb
                                                            latDat,
                                                            simConfig->GetInlets(),
                                                            simState,
-                                                           unitConverter);
+                                                           *unitConverter);
             InOutLetCosine* inlet = GetIolet(inletBoundary);
             // We have to make the outlet sane and consistent with the geometry now.
             inlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, 1));
             PhysicalPosition inletCentre(2.5, 2.5, 0.5);
             inletCentre *= simConfig->GetVoxelSize();
-            inlet->SetPosition(inletCentre);
+            inlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(inletCentre));
             // Want to set the density gradient to be 0.01 in lattice units,
             // starting at 1.0 at the outlet.
             inlet->SetPressureAmp(0.);
@@ -130,14 +130,14 @@ namespace hemelb
                                                             latDat,
                                                             simConfig->GetOutlets(),
                                                             simState,
-                                                            unitConverter);
+                                                            *unitConverter);
 
             InOutLetCosine* outlet = GetIolet(outletBoundary);
             // We have to make the outlet sane and consistent with the geometry now.
             outlet->SetNormal(util::Vector3D<Dimensionless>(0, 0, -1));
             PhysicalPosition outletCentre(2.5, 2.5, 4.5);
             outletCentre *= simConfig->GetVoxelSize();
-            outlet->SetPosition(outletCentre);
+            outlet->SetPosition(unitConverter->ConvertPositionToLatticeUnits(outletCentre));
             outlet->SetPressureAmp(0.);
             outlet->SetPressureMean(unitConverter->ConvertPressureToPhysicalUnits(1.0 * Cs2));
 
@@ -400,7 +400,7 @@ namespace hemelb
               site_t vSiteGlobalIdx = vsIt->first;
               VirtualSite& vSite = vsIt->second;
 
-              CPPUNIT_ASSERT_EQUAL(LatticeTime(1), vSite.hv.t);
+              CPPUNIT_ASSERT_EQUAL(LatticeTimeStep(1), vSite.hv.t);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(LatticeDensity(1.045), vSite.hv.rho, allowedError);
 
               LatticeVector pos;
@@ -420,7 +420,7 @@ namespace hemelb
               site_t vSiteGlobalIdx = vsIt->first;
               VirtualSite& vSite = vsIt->second;
 
-              CPPUNIT_ASSERT_EQUAL(LatticeTime(1), vSite.hv.t);
+              CPPUNIT_ASSERT_EQUAL(LatticeTimeStep(1), vSite.hv.t);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(LatticeDensity(0.995), vSite.hv.rho, allowedError);
 
               LatticeVector pos;
@@ -437,7 +437,7 @@ namespace hemelb
           lb::iolets::BoundaryValues* inletBoundary;
           lb::lattices::LatticeInfo* lattice;
 
-          void CheckAllHVUpdated(lb::iolets::BoundaryValues* iolets, LatticeTime expectedT)
+          void CheckAllHVUpdated(lb::iolets::BoundaryValues* iolets, LatticeTimeStep expectedT)
           {
             VSExtra<Lattice> * extra =
                 dynamic_cast<VSExtra<Lattice>*> (iolets->GetLocalIolet(0)->GetExtraData());

@@ -19,7 +19,7 @@ namespace hemelb
     {
 
       InOutLetCosine::InOutLetCosine() :
-        InOutLet(), pressureMeanPhysical(0.0), pressureAmpPhysical(0.0), phase(0.0), period(1.0),
+        InOutLet(), densityMean(1.0), densityAmp(0.0), phase(0.0), period(1.0),
             warmUpLength(0)
       {
 
@@ -37,13 +37,12 @@ namespace hemelb
 
       }
 
-      LatticeDensity InOutLetCosine::GetDensity(unsigned long time_step) const
+      LatticeDensity InOutLetCosine::GetDensity(LatticeTimeStep time_step) const
       {
-        double w = 2.0 * PI / period;
+        LatticeReciprocalTime w = 2.0 * PI / period;
 
         // Calculate the target
-        LatticeDensity target = GetDensityMean() + GetDensityAmp() * cos(w
-            * units->ConvertTimeStepToPhysicalUnits(time_step) + phase);
+        LatticeDensity target = GetDensityMean() + GetDensityAmp() * cos(w * time_step + phase);
 
         // If we're past the warm-up phase, just use the target.
         if (time_step >= warmUpLength)
@@ -55,16 +54,6 @@ namespace hemelb
         double interpolationFactor = ((double) time_step) / ((double) warmUpLength);
 
         return interpolationFactor * target + (1. - interpolationFactor) * minimumSimulationDensity;
-      }
-
-      LatticeDensity InOutLetCosine::GetDensityMean() const
-      {
-        return units->ConvertPressureToLatticeUnits(pressureMeanPhysical) / Cs2;
-      }
-
-      LatticeDensity InOutLetCosine::GetDensityAmp() const
-      {
-        return units->ConvertPressureDifferenceToLatticeUnits(pressureAmpPhysical) / Cs2;
       }
 
     }

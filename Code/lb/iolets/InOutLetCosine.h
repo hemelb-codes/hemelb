@@ -34,62 +34,83 @@ namespace hemelb
           {
             //pass;
           }
-          LatticeDensity GetDensityMean() const;
-          LatticeDensity GetDensityAmp() const;
+
           LatticeDensity GetDensity(unsigned long time_step) const;
-          PhysicalPressure GetPressureMin() const
+
+          const LatticeDensity& GetDensityMean() const
           {
-            return pressureMeanPhysical - pressureAmpPhysical;
+            return densityMean;
           }
-          PhysicalPressure GetPressureMax() const
+          void SetDensityMean(const LatticeDensity& rho)
           {
-            return pressureMeanPhysical + pressureAmpPhysical;
+            densityMean = rho;
           }
-          // TODO I do not like returning references, this method should be const and we should have a setter.
-          // but, the way the IO code in SimConfig is currently set up prevents this for now.
-          PhysicalPressure & GetPressureMean()
+
+          const LatticeDensity& GetDensityAmp() const
           {
-            return pressureMeanPhysical;
+            return densityAmp;
           }
-          void SetPressureMean(PhysicalPressure pressure)
+          void SetDensityAmp(const LatticeDensity& rho)
           {
-            pressureMeanPhysical = pressure;
+            densityAmp = rho;
           }
-          PhysicalPressure & GetPressureAmp()
+
+          LatticeDensity GetDensityMin() const
           {
-            return pressureAmpPhysical;
+            return (densityMean - densityAmp);
           }
-          void SetPressureAmp(PhysicalPressure pressure)
+          LatticeDensity GetDensityMax() const
           {
-            pressureAmpPhysical = pressure;
+            return (densityMean + densityAmp);
           }
-          double & GetPhase()
+
+          LatticePressure GetPressureMean() const
+          {
+            return densityMean * Cs2;
+          }
+          void SetPressureMean(const LatticePressure& pressure)
+          {
+            densityMean = pressure / Cs2;
+          }
+
+          LatticePressure GetPressureAmp() const
+          {
+            return densityAmp * Cs2;
+          }
+          void SetPressureAmp(const LatticePressure& pressure)
+          {
+            densityAmp = pressure / Cs2;
+          }
+
+          const Angle& GetPhase() const
           {
             return phase;
           }
-          void SetPhase(double aPhase)
+          void SetPhase(const Angle& aPhase)
           {
             phase = aPhase;
           }
-          PhysicalTime & GetPeriod()
+
+          const LatticeTime& GetPeriod() const
           {
             return period;
           }
-          void SetPeriod(PhysicalTime aPeriod)
+          void SetPeriod(const LatticeTime& aPeriod)
           {
             period = aPeriod;
           }
+
           void SetWarmup(unsigned int warmup)
           {
             warmUpLength = warmup;
           }
         private:
 
-          PhysicalPressure pressureMeanPhysical;
-          PhysicalPressure pressureAmpPhysical;
+          LatticeDensity densityMean;
+          LatticeDensity densityAmp;
 
-          double phase;
-          PhysicalTime period;
+          Angle phase;
+          LatticeTime period;
           unsigned int warmUpLength;
       };
 
