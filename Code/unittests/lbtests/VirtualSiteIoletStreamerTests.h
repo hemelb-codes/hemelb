@@ -462,9 +462,6 @@ namespace hemelb
           {
             site_t expectedGlobalIdx =
                 latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(expectedPt);
-            site_t expectedLocalIdx =
-                latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(expectedGlobalIdx);
-            geometry::Site < geometry::LatticeData > site = latDat->GetSite(expectedLocalIdx);
             RSHV::Map::iterator hvPtr = extra.hydroVarsCache.find(expectedGlobalIdx);
 
             CPPUNIT_ASSERT(hvPtr != extra.hydroVarsCache.end());

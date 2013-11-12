@@ -127,8 +127,8 @@ namespace hemelb
           //invertedOutletBoundaryList =
           //    ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
 
-          hemelb::lb::MacroscopicPropertyCache& propertyCache =
-              latticeBoltzmannModel->GetPropertyCache();
+          //hemelb::lb::MacroscopicPropertyCache& propertyCache =
+          //    latticeBoltzmannModel->GetPropertyCache();
 
           //WORKAROUND: Reserve space in the velocityCache to ensure that all elements are properly allocated.
           //If this is not set, then velocityCache will contain 0 elements at the start even though the
@@ -352,7 +352,6 @@ namespace hemelb
             int64_t totalSize = 0;
 
             int np = hemelb::net::NetworkTopology::Instance()->GetComms().Size();
-            int rank = hemelb::net::NetworkTopology::Instance()->GetComms().Rank();
             int64_t offset = 0;
 
             for (int j = 0; j < np; j++)

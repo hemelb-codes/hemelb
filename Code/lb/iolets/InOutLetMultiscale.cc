@@ -22,11 +22,11 @@ namespace hemelb
 
       InOutLetMultiscale::InOutLetMultiscale() :
         multiscale::Intercommunicand(), InOutLet(),
+            numberOfFieldPoints(1),
             pressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             minPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             maxPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY),
-            numberOfFieldPoints(1)
+            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
       {
       }
       /***

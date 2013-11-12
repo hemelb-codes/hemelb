@@ -68,9 +68,7 @@ namespace hemelb
       private:
         const std::string &path;
         void Write(const std::string &ctemplate, const std::string &as); //! Write the report to disk, (or wherever the WriterPolicy decides.)
-        bool doIo; //! Is this the processor which should write the report.
         unsigned int imageCount; //! Number of images written.
-        bool stability; //! Stability of the simulation.
         ctemplate::TemplateDictionary dictionary;
         std::vector<Reportable*> reportableObjects;
     };

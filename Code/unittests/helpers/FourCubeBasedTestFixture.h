@@ -36,10 +36,6 @@ namespace hemelb
           }
           void setUp()
           {
-            // Initialise the network topology (necessary for using the inlets and oulets.
-            int args = 1;
-            char** argv = NULL;
-
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();

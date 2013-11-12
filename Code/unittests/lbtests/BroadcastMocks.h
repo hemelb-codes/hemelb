@@ -192,7 +192,7 @@ namespace hemelb
 
       private:
         /** Number of children nodes in the tree */
-        unsigned spreadFactor;
+        // unsigned spreadFactor;
 
         /** Number of iterations of the phased broadcast algorithm */
         unsigned iterationCounter;
@@ -212,7 +212,7 @@ namespace hemelb
     BroadcastMockLeafNode::BroadcastMockLeafNode(net::Net * net,
                                                  const lb::SimulationState * simState,
                                                  unsigned int spreadFactor) :
-        net::PhasedBroadcastRegular<>(net, simState, spreadFactor), spreadFactor(spreadFactor), iterationCounter(0)
+        net::PhasedBroadcastRegular<>(net, simState, spreadFactor), /*spreadFactor(spreadFactor),*/ iterationCounter(0)
     {
     }
 

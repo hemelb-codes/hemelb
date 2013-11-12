@@ -14,7 +14,7 @@ namespace hemelb
   namespace reporting
   {
     Reporter::Reporter(const std::string &apath, const std::string &inputFile) :
-        path(apath), imageCount(0), stability(true), dictionary("Reporting dictionary")
+        path(apath), imageCount(0), dictionary("Reporting dictionary")
     {
       dictionary.SetValue("CONFIG", inputFile);
     }

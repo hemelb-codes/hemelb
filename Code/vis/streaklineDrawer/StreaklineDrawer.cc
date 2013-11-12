@@ -31,8 +31,10 @@ namespace hemelb
                                          const Viewpoint& iViewpoint,
                                          const VisSettings& iVisSettings,
                                          const lb::MacroscopicPropertyCache& propertyCache) :
-          latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings), propertyCache(propertyCache), particleManager(neighbouringProcessors), velocityField(neighbouringProcessors,
-                                                                                                                                                                                   propertyCache)
+          latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings),
+          // propertyCache(propertyCache),
+          particleManager(neighbouringProcessors),
+          velocityField(neighbouringProcessors, propertyCache)
       {
         velocityField.BuildVelocityField(iLatDat);
         ChooseSeedParticles();
