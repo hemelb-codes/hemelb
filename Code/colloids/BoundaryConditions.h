@@ -63,7 +63,7 @@ namespace hemelb
             returns false if the particle should be deleted, true otherwise
          */
         static const bool DoSomeThingsToParticle(
-                            const LatticeTime currentTimestep,
+                            const LatticeTimeStep currentTimestep,
                             Particle& particle);
 
         /** allows all registered boundary conditions to create new particles */

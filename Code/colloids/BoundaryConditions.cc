@@ -63,7 +63,7 @@ namespace hemelb
     }
 
     const bool BoundaryConditions::DoSomeThingsToParticle(
-                 const LatticeTime currentTimestep,
+                 const LatticeTimeStep currentTimestep,
                  Particle& particle)
     {
       bool keep = true;

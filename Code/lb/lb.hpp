@@ -132,7 +132,7 @@ namespace hemelb
     void LBM<LatticeType>::Initialise(vis::Control* iControl,
                                       iolets::BoundaryValues* iInletValues,
                                       iolets::BoundaryValues* iOutletValues,
-                                      util::UnitConverter* iUnits)
+                                      const util::UnitConverter* iUnits)
     {
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;

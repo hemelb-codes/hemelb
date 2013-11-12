@@ -38,27 +38,33 @@ namespace hemelb
           {
             CalculateTable(state.GetTotalTimeSteps());
           }
-          std::string & GetFilePath()
+
+          const std::string& GetFilePath()
           {
             return pressureFilePath;
           }
-          PhysicalPressure GetPressureMin() const
+          void SetFilePath(const std::string& path)
           {
-            return pressureMinPhysical;
+            pressureFilePath = path;
           }
-          PhysicalPressure GetPressureMax() const
+
+          LatticeDensity GetDensityMin() const
           {
-            return pressureMaxPhysical;
+            return densityMin;
           }
-          LatticeDensity GetDensity(LatticeTime timeStep) const
+          LatticeDensity GetDensityMax() const
+          {
+            return densityMax;
+          }
+          LatticeDensity GetDensity(LatticeTimeStep timeStep) const
           {
             return densityTable[timeStep];
           }
         private:
-          void CalculateTable(LatticeTime totalTimeSteps);
+          void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeDensity> densityTable;
-          PhysicalPressure pressureMinPhysical;
-          PhysicalPressure pressureMaxPhysical;
+          LatticeDensity densityMin;
+          LatticeDensity densityMax;
           std::string pressureFilePath;
       };
 

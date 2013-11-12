@@ -48,7 +48,7 @@ namespace hemelb
         /** overloaded from IteratedAction */
         void EndIteration();
 
-        const void OutputInformation(const LatticeTime timestep) const;
+        const void OutputInformation(const LatticeTimeStep timestep) const;
 
       private:
         /** cached copy of local rank (obtained from topology) */

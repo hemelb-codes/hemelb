@@ -38,8 +38,13 @@ namespace hemelb
     class SimConfig
     {
       public:
+        static SimConfig* New(const std::string& path);
+      protected:
         SimConfig(const std::string& path);
-        ~SimConfig();
+        void Init();
+
+      public:
+        virtual ~SimConfig();
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
@@ -88,17 +93,17 @@ namespace hemelb
         {
           return dataFilePath;
         }
-        LatticeTime GetTotalTimeSteps() const
+        LatticeTimeStep GetTotalTimeSteps() const
         {
           return totalTimeSteps;
         }
-        LatticeTime GetWarmUpSteps() const
+        LatticeTimeStep GetWarmUpSteps() const
         {
           return warmUpSteps;
         }
         PhysicalTime GetTimeStepLength() const
         {
-          return timeStepLength;
+          return timeStepSeconds;
         }
         PhysicalDistance GetVoxelSize() const
         {
@@ -136,11 +141,39 @@ namespace hemelb
          */
         LatticeDensity GetInitialPressure() const;
 
+        const util::UnitConverter& GetUnitConverter() const;
+
       protected:
         /**
          * Protected default ctor to allow derived test fixture classes to create mocks.
          */
         SimConfig();
+        /**
+         * Create the unit converter - virtual so that mocks can override it.
+         */
+        virtual void CreateUnitConverter();
+
+        /**
+         * Check that the iolet is OK for the CMake configuration.
+         * @param ioletEl
+         * @param requiredBC
+         */
+        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl, const std::string& requiredBC);
+
+        template<typename T>
+        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, T& value)
+        {
+          GetDimensionalValue(elem, units, value);
+          value = unitConverter->ConvertToLatticeUnits(units, value);
+        }
+
+        template<typename T>
+        T GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units)
+        {
+          T ans;
+          GetDimensionalValueInLatticeUnits(elem, units, ans);
+          return ans;
+        }
 
       private:
         void DoIO(const io::xml::Element xmlNode);
@@ -201,18 +234,19 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
-        PhysicalPressure initialPressure; ///< Pressure used to initialise the domain
+        PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
         std::vector<lb::iolets::InOutLet*> inlets;
         std::vector<lb::iolets::InOutLet*> outlets;
-        PhysicalTime timeStepLength;
+        PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;
         PhysicalDistance voxelSizeMetres;
         PhysicalPosition geometryOriginMetres;
+        util::UnitConverter* unitConverter;
     };
   }
 }

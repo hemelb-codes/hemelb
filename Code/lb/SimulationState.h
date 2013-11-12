@@ -36,9 +36,9 @@ namespace hemelb
         void SetIsRendering(bool value);
         void SetStability(Stability value);
 
-        LatticeTime GetTimeStep() const;
-        LatticeTime Get0IndexedTimeStep() const;
-        LatticeTime GetTotalTimeSteps() const;
+        LatticeTimeStep GetTimeStep() const;
+        LatticeTimeStep Get0IndexedTimeStep() const;
+        LatticeTimeStep GetTotalTimeSteps() const;
         bool IsTerminating() const;
         bool IsRendering() const;
         Stability GetStability() const;
@@ -50,8 +50,8 @@ namespace hemelb
 
       private:
         PhysicalTime timeStepLength;
-        LatticeTime timeStep;
-        LatticeTime totalTimeSteps;
+        LatticeTimeStep timeStep;
+        LatticeTimeStep totalTimeSteps;
         bool isTerminating;
         bool isRendering;
         Stability stability;

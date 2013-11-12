@@ -49,12 +49,12 @@ namespace hemelb
         /** the number of the most recent timestep during which
          *  information about this particle was written to disk
          */
-        LatticeTime     lastCheckpointTimestep;
+        LatticeTimeStep     lastCheckpointTimestep;
 
         /** the number of the most recent timestep during which
          *  this particle first entered the region of an outlet
          */
-        LatticeTime     markedForDeletionTimestep;
+        LatticeTimeStep     markedForDeletionTimestep;
 
         /** the mass of the particle */
         PhysicalMass    mass;

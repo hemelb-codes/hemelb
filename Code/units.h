@@ -43,7 +43,8 @@ namespace hemelb
   typedef distribn_t LatticeStress;
   typedef float ScreenStress;
 
-  typedef unsigned long LatticeTime; // lattice time steps.
+  typedef unsigned long LatticeTimeStep; // lattice time steps.
+  typedef double LatticeTime;
   typedef double PhysicalTime; // seconds
 
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
@@ -51,7 +52,7 @@ namespace hemelb
 
   typedef double PhysicalMass; // kilograms
 
-  typedef double RadianAngle;
+  typedef double Angle;
 
   // TODO: deprecated, use PhysicalDistance instead - should be fixed as part of ticket #437
   typedef double PhysicalLength_deprecated;
@@ -77,6 +78,8 @@ namespace hemelb
   typedef util::Vector3D<PhysicalSpeed> PhysicalVelocity;
   typedef util::Vector3D<LatticeSpeed> LatticeVelocity;
 
+  typedef double PhysicalPressureGradient;
+  typedef double LatticePressureGradient;
 
   typedef double Dimensionless;
 }

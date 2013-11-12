@@ -19,7 +19,7 @@
 #include "unittests/helpers/FolderTestFixture.h"
 
 #include <iostream>
-#include "debug/Debugger.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -39,7 +39,7 @@ namespace hemelb
             // Initialise the network topology (necessary for using the inlets and oulets.
             int args = 1;
             char** argv = NULL;
-            debug::Debugger::Get()->BreakHere();
+
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();
@@ -47,9 +47,7 @@ namespace hemelb
                                                        simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
                                               simConfig->GetVoxelSize());
-            unitConverter = new util::UnitConverter(simState->GetTimeStepLength(),
-                                                    simConfig->GetVoxelSize(),
-                                                    simConfig->GetGeometryOrigin());
+            unitConverter = &simConfig->GetUnitConverter();
 
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
@@ -63,7 +61,6 @@ namespace hemelb
             delete lbmParams;
             delete simState;
             delete simConfig;
-            delete unitConverter;
           }
 
         protected:
@@ -73,7 +70,7 @@ namespace hemelb
           lb::LbmParameters* lbmParams;
           configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
-          util::UnitConverter* unitConverter;
+          const util::UnitConverter* unitConverter;
         private:
 
       };

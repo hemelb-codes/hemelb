@@ -37,8 +37,8 @@ namespace hemelb
        */
       InOutLetMultiscale::InOutLetMultiscale(const InOutLetMultiscale &other) :
         Intercommunicand(other), label(other.label), commsRequired(false),
-            pressure(this, other.GetPressureMax()), minPressure(this, other.GetPressureMin()),
-            maxPressure(this, other.GetPressureMax()), velocity(this, other.GetVelocity())
+            pressure(this, other.maxPressure.GetPayload()), minPressure(this, other.minPressure.GetPayload()),
+            maxPressure(this, other.maxPressure.GetPayload()), velocity(this, other.GetVelocity())
       {
       }
 
@@ -68,13 +68,13 @@ namespace hemelb
         /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
         return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
       }
-      PhysicalPressure InOutLetMultiscale::GetPressureMin() const
+      LatticeDensity InOutLetMultiscale::GetDensityMin() const
       {
-        return minPressure.GetPayload();
+        return units->ConvertPressureToLatticeUnits(minPressure.GetPayload()) / Cs2;
       }
-      PhysicalPressure InOutLetMultiscale::GetPressureMax() const
+      LatticeDensity InOutLetMultiscale::GetDensityMax() const
       {
-        return maxPressure.GetPayload();
+        return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
       }
       PhysicalVelocity InOutLetMultiscale::GetVelocity() const
       {
@@ -115,7 +115,7 @@ namespace hemelb
       }
 
       /* Distribution of internal pressure values */
-      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTime time_step)
+      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTimeStep time_step)
       {
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
                                                                               isIoProc

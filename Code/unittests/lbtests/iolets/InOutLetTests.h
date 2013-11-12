@@ -15,6 +15,7 @@
 #include "unittests/helpers/FolderTestFixture.h"
 #include "lb/iolets/InOutLets.h"
 #include "resources/Resource.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -26,6 +27,23 @@ namespace hemelb
       {
         using namespace lb::iolets;
         using namespace resources;
+
+        class UncheckedSimConfig : public configuration::SimConfig
+        {
+          public:
+            UncheckedSimConfig(const std::string& path) :
+              configuration::SimConfig(path)
+            {
+              Init();
+            }
+          protected:
+            virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
+                                                const std::string& requiredBC)
+            {
+
+            }
+        };
+
         /***
          * Class asserting behaviour of in- and out- lets.
          */
@@ -49,18 +67,15 @@ namespace hemelb
           private:
             void TestCosineConstruct()
             {
-
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig config(Resource("config.xml").Path());
+              UncheckedSimConfig config(Resource("config.xml").Path());
               cosine = static_cast<InOutLetCosine*> (config.GetInlets()[0]);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(state.GetTimeStepLength(),
-                                                                  voxelSize,
-                                                                  PhysicalPosition());
+              double voxelSize = config.GetVoxelSize();
+              const util::UnitConverter& converter = config.GetUnitConverter();
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
               cosine->Initialise(&converter);
               cosine->Reset(state);
@@ -73,23 +88,27 @@ namespace hemelb
                <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
                </inlet>
                */
-              CPPUNIT_ASSERT_EQUAL(80.1, cosine->GetPressureMean());
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(80.1, converter.ConvertPressureToPhysicalUnits(cosine->GetPressureMean()), 1e-6);
               CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPressureAmp());
               CPPUNIT_ASSERT_EQUAL(0.0, cosine->GetPhase());
-              CPPUNIT_ASSERT_EQUAL(0.6, cosine->GetPeriod());
-              CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
-                                   cosine->GetPosition());
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.6, converter.ConvertTimeToPhysicalUnits(cosine->GetPeriod()), 1e-6);
+
+              PhysicalPosition expected(-1.66017717834e-05, -4.58437586355e-05, -0.05);
+              PhysicalPosition actual =
+                  converter.ConvertPositionToPhysicalUnits(cosine->GetPosition());
+              for (unsigned i = 0; i < 3; ++i)
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i], actual[i], 1e-9);
+
               CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0),
                                    cosine->GetNormal());
 
               // Set an approriate target value for the density, the maximum.
               double temp = state.GetTimeStepLength() / voxelSize;
-              double targetMeanDensity = 1 + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL
+              LatticeDensity targetMeanDensity = 1 + (80.1 - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL
                   * temp * temp / (Cs2 * BLOOD_DENSITY_Kg_per_m3);
-
               // Check that the cosine formula correctly produces mean value
-              CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensityMean());
-              CPPUNIT_ASSERT_EQUAL(targetMeanDensity, cosine->GetDensity(0));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMeanDensity, cosine->GetDensityMean(), 1e-9);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(targetMeanDensity, cosine->GetDensity(0), 1e-9);
             }
             void TestFileConstruct()
             {
@@ -101,13 +120,11 @@ namespace hemelb
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();
 
-              configuration::SimConfig config(Resource("config_file_inlet.xml").Path());
+              UncheckedSimConfig config(Resource("config_file_inlet.xml").Path());
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
-                                                                  voxelSize,
-                                                                  PhysicalPosition());
+              double voxelSize = config.GetVoxelSize();
+              const util::UnitConverter& converter = config.GetUnitConverter();
               file = static_cast<InOutLetFile*> (config.GetInlets()[0]);
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
               file->Initialise(&converter);
@@ -115,10 +132,12 @@ namespace hemelb
 
               // Ok, now we have an inlet, check the values are right.
               CPPUNIT_ASSERT_EQUAL(std::string("./iolet.txt"), file->GetFilePath());
-              CPPUNIT_ASSERT_EQUAL(78.0, file->GetPressureMin());
-              CPPUNIT_ASSERT_EQUAL(82.0, file->GetPressureMax());
-              CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
-                                   file->GetPosition());
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(78.0, converter.ConvertPressureToPhysicalUnits(file->GetPressureMin()), 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(82.0, converter.ConvertPressureToPhysicalUnits(file->GetPressureMax()), 1e-6);
+              PhysicalPosition expected(-1.66017717834e-05, -4.58437586355e-05, -0.05);
+              PhysicalPosition actual =
+                  converter.ConvertPositionToPhysicalUnits(file->GetPosition());
+              CPPUNIT_ASSERT_EQUAL(expected, actual);
               CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), file->GetNormal());
 
               // Set some target values for the density at various times.
@@ -140,16 +159,14 @@ namespace hemelb
             {
 
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig config(Resource("config-velocity-iolet.xml").Path());
-              p_vel = static_cast<InOutLetParabolicVelocity*> (config.GetInlets()[0]);
+              UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
+              p_vel = dynamic_cast<InOutLetParabolicVelocity*> (config.GetInlets()[0]);
+              CPPUNIT_ASSERT(p_vel != NULL);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
-                                                                  voxelSize,
-                                                                  PhysicalPosition());
+              const util::UnitConverter& converter = config.GetUnitConverter();
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
               p_vel->Initialise(&converter);
               p_vel->Reset(state);
@@ -162,10 +179,10 @@ namespace hemelb
                <position x="-1.66017717834e-05" y="-4.58437586355e-05" z="-0.05" />
                </inlet>
                */
-              CPPUNIT_ASSERT_EQUAL(0.005, p_vel->GetRadius());
-              CPPUNIT_ASSERT_EQUAL(0.10, p_vel->GetMaxSpeed());
+              CPPUNIT_ASSERT_EQUAL(5.0, p_vel->GetRadius());
+              CPPUNIT_ASSERT_EQUAL(0.01, p_vel->GetMaxSpeed());
               CPPUNIT_ASSERT_EQUAL(PhysicalPosition(-1.66017717834e-05, -4.58437586355e-05, -0.05),
-                                   p_vel->GetPosition());
+                                   converter.ConvertPositionToPhysicalUnits(p_vel->GetPosition()));
               CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0), p_vel->GetNormal());
             }
 
@@ -173,26 +190,25 @@ namespace hemelb
             {
 
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
-              configuration::SimConfig config(Resource("config_new_velocity_inlets.xml").Path());
+              UncheckedSimConfig config(Resource("config_new_velocity_inlets.xml").Path());
               womersVel = static_cast<InOutLetWomersleyVelocity*> (config.GetInlets()[0]);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = 0.0001;
-              util::UnitConverter converter = util::UnitConverter(config.GetTimeStepLength(),
-                                                                  voxelSize,
-                                                                  PhysicalPosition());
+              double voxelSize = config.GetVoxelSize();
+              const util::UnitConverter& converter = config.GetUnitConverter();
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
               womersVel->Initialise(&converter);
               womersVel->Reset(state);
 
               // Check the IOLET contains the values expected given the file.
               CPPUNIT_ASSERT_EQUAL(10.0, womersVel->GetRadius());
-              CPPUNIT_ASSERT_EQUAL(2.5, womersVel->GetPressureGradientAmplitude());
-              CPPUNIT_ASSERT_EQUAL(LatticeTime(5), womersVel->GetPeriod());
+              CPPUNIT_ASSERT_EQUAL(mmHg_TO_PASCAL * 1e-6, womersVel->GetPressureGradientAmplitude());
+              CPPUNIT_ASSERT_EQUAL(5.0, womersVel->GetPeriod());
               CPPUNIT_ASSERT_EQUAL(2.0, womersVel->GetWomersleyNumber());
-              CPPUNIT_ASSERT_EQUAL(PhysicalPosition(0, 0, -0.05), womersVel->GetPosition());
+              CPPUNIT_ASSERT_EQUAL(PhysicalPosition(0, 0, -0.05),
+                                   converter.ConvertPositionToPhysicalUnits(womersVel->GetPosition()));
               CPPUNIT_ASSERT_EQUAL(util::Vector3D<Dimensionless>(0.0, 0.0, 1.0),
                                    womersVel->GetNormal());
 
@@ -253,15 +269,15 @@ namespace hemelb
                   ConcreteIolet* copy = new ConcreteIolet(*this);
                   return copy;
                 }
-                virtual PhysicalPressure GetPressureMin() const
+                virtual LatticeDensity GetDensityMin() const
                 {
-                  return REFERENCE_PRESSURE_mmHg;
+                  return 1.0;
                 }
-                virtual PhysicalPressure GetPressureMax() const
+                virtual LatticeDensity GetDensityMax() const
                 {
-                  return REFERENCE_PRESSURE_mmHg;
+                  return 1.0;
                 }
-                virtual LatticeDensity GetDensity(hemelb::LatticeTime) const
+                virtual LatticeDensity GetDensity(hemelb::LatticeTimeStep) const
                 {
                   return 1.0;
                 }
@@ -272,6 +288,9 @@ namespace hemelb
 
             void TestIoletCoordinates()
             {
+              // unit converter - make physical and lattice units the same
+              hemelb::util::UnitConverter units(1, 1, PhysicalPosition::Zero());
+
               ConcreteIolet iolet;
               // normal
               util::Vector3D<Dimensionless> n(5, 7, -4);
@@ -279,9 +298,7 @@ namespace hemelb
               iolet.SetNormal(n);
               // position
               PhysicalPosition c(7.77438796, 9.21293516, 9.87122463);
-              iolet.SetPosition(c);
-              // unit converter - make physical and lattice units the same
-              hemelb::util::UnitConverter units(1, 1, PhysicalPosition::Zero());
+              iolet.SetPosition(units.ConvertPositionToLatticeUnits(c));
               iolet.Initialise(&units);
               IoletExtraData extra(iolet);
               iolet.SetExtraData(&extra);

@@ -33,7 +33,7 @@ namespace hemelb
       {
           typedef util::FlatMap<site_t, RSHV>::Type Map;
           // Time step at which this was last updated
-          LatticeTime t;
+          LatticeTimeStep t;
           // Density at that time
           LatticeDensity rho;
           // Velocity at that time
