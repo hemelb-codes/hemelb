@@ -250,7 +250,6 @@ namespace hemelb
             void TestShareFieldDataOneProcViaIterableAction()
             {
               site_t targetGlobalOneDIdx = 43;
-              LatticeVector targetGlobalThreeDIdx = latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
               site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
               // begin by setting up mocks for the required site
