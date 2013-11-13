@@ -60,12 +60,14 @@ namespace hemelb
           {
             return densityTable[timeStep];
           }
+          virtual void Initialise(const util::UnitConverter* unitConverter);
         private:
           void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeDensity> densityTable;
           LatticeDensity densityMin;
           LatticeDensity densityMax;
           std::string pressureFilePath;
+          const util::UnitConverter* units;
       };
 
     }

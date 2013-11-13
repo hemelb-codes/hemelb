@@ -113,7 +113,6 @@ namespace hemelb
            */
           virtual void Initialise(const util::UnitConverter* unitConverter)
           {
-            units = unitConverter;
           }
 
           /***
@@ -199,7 +198,6 @@ namespace hemelb
           LatticeDensity minimumSimulationDensity;
           LatticePosition position;
           util::Vector3D<Dimensionless> normal;
-          const util::UnitConverter* units;
           BoundaryComms* comms;
           IoletExtraData* extraData;
           friend class IoletExtraData;
