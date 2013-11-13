@@ -24,7 +24,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFile::InOutLetFile() :
-        InOutLet(), densityTable(0)
+        InOutLet(), densityTable(0), units(NULL)
       {
 
       }
@@ -40,7 +40,10 @@ namespace hemelb
       {
 
       }
-
+      void InOutLetFile::Initialise(const util::UnitConverter* unitConverter)
+      {
+        units = unitConverter;
+      }
       // This reads in a file and interpolates between points to generate a cycle
       // IMPORTANT: to allow reading in data taken at irregular intervals the user
       // needs to make sure that the last point in the file coincides with the first
