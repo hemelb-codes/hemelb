@@ -278,6 +278,10 @@ namespace hemelb
       {
         newIolet = DoIOForWomersleyVelocityInOutlet(ioletEl);
       }
+      else if (conditionSubtype == "file")
+      {
+        newIolet = DoIOForFileVelocityInOutlet(ioletEl);
+      }
       else
       {
         throw Exception() << "Invalid boundary condition subtype '" << conditionSubtype << "' in "
@@ -553,7 +557,7 @@ namespace hemelb
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<PhysicalDistance>(radiusEl, "m"));
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
 
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
       newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
@@ -587,6 +591,23 @@ namespace hemelb
 
       return newIolet;
     }
+
+    lb::iolets::InOutLetFileVelocity* SimConfig::DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl)
+    {
+      lb::iolets::InOutLetFileVelocity* newIolet = new lb::iolets::InOutLetFileVelocity();
+      DoIOForBaseInOutlet(ioletEl, newIolet);
+
+      const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
+
+      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
+      newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
+
+      const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+
+      return newIolet;
+    }
+
 
     bool SimConfig::HasColloidSection() const
     {
