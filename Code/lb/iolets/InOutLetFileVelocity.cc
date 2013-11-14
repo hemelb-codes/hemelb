@@ -22,6 +22,10 @@ namespace hemelb
   {
     namespace iolets
     {
+      InOutLetFileVelocity::InOutLetFileVelocity() :
+          units(NULL)
+      {
+      }
 
       InOutLet* InOutLetFileVelocity::Clone() const
       {
@@ -33,7 +37,7 @@ namespace hemelb
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
-        std::map < PhysicalTime, PhysicalSpeed > timeValuePairs;
+        std::map<PhysicalTime, PhysicalSpeed> timeValuePairs;
 
         double timeTemp, valueTemp;
 
@@ -57,8 +61,8 @@ namespace hemelb
         // Determine min and max pressure on the way
 //        PhysicalPressure pMin = timeValuePairs.begin()->second;
 //        PhysicalPressure pMax = timeValuePairs.begin()->second;
-        for (std::map<PhysicalTime, PhysicalSpeed>::iterator entry = timeValuePairs.begin(); entry
-            != timeValuePairs.end(); entry++)
+        for (std::map<PhysicalTime, PhysicalSpeed>::iterator entry = timeValuePairs.begin();
+            entry != timeValuePairs.end(); entry++)
         {
 //          pMin = util::NumericalFunctions::min(pMin, entry->second);
 //          pMax = util::NumericalFunctions::max(pMax, entry->second);
@@ -70,15 +74,17 @@ namespace hemelb
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
-          throw Exception() << "Last point's value does not match the first point's value in " <<velocityFilePath;
+          throw Exception() << "Last point's value does not match the first point's value in "
+              << velocityFilePath;
 
         // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
         velocityTable.resize(totalTimeSteps + 1);
         // Now convert these vectors into arrays using linear interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
-          double point = times.front() + (static_cast<double> (timeStep)
-              / static_cast<double> (totalTimeSteps)) * (times.back() - times.front());
+          double point = times.front()
+              + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps))
+                  * (times.back() - times.front());
 
           PhysicalSpeed vel = util::NumericalFunctions::LinearInterpolate(times, values, point);
 
@@ -87,7 +93,8 @@ namespace hemelb
 
       }
 
-      LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const
+      LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
+                                                        const LatticeTimeStep t) const
       {
         // v(r) = vMax (1 - r**2 / a**2)
         // where r is the distance from the centreline
@@ -101,6 +108,11 @@ namespace hemelb
 
         // Brackets to ensure that the scalar multiplies are done before vector * scalar.
         return normal * (max * (1. - rSqOverASq));
+      }
+
+      void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
+      {
+        units = unitConverter;
       }
 
     }

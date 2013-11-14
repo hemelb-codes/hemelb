@@ -22,6 +22,8 @@ namespace hemelb
       class InOutLetFileVelocity : public InOutLetVelocity
       {
         public:
+          InOutLetFileVelocity();
+
           InOutLet* Clone() const;
           void Reset(SimulationState &state)
           {
@@ -39,10 +41,13 @@ namespace hemelb
 
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
 
+          void Initialise(const util::UnitConverter* unitConverter);
+
         private:
           std::string velocityFilePath;
           void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeSpeed> velocityTable;
+          const util::UnitConverter* units;
 
       };
 
