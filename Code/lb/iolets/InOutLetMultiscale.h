@@ -47,6 +47,7 @@ namespace hemelb
           InOutLetMultiscale(const InOutLetMultiscale &other);
           virtual ~InOutLetMultiscale();
           virtual InOutLet* Clone() const;
+          virtual void Initialise(const util::UnitConverter* unitConverter);
           virtual void Reset(SimulationState &state);
           virtual bool IsRegistrationRequired() const;
 
@@ -90,7 +91,7 @@ namespace hemelb
 
         private:
           std::string label;
-
+          const util::UnitConverter* units;
           bool commsRequired;
           int numberOfFieldPoints;
           multiscale::SharedValue<PhysicalPressure> pressure;
