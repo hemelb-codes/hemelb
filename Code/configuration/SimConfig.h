@@ -194,14 +194,23 @@ namespace hemelb
         lb::iolets::InOutLetParabolicVelocity
             * DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
         /**
-         * Reads/writes Womersley velocity inlet from/to XML file.
+         * Reads a Womersley velocity iolet definition from the XML config file and returns
+         * an InOutLetWomersleyVelocity object
          *
-         * @param parent parent XML element
-         * @param isLoading whether the method is reading or writing
-         * @param value womersley iolet instance to be configured
+         * @param ioletEl in memory representation of <inlet> or <outlet> xml element
+         * @return InOutLetWomersleyVelocity object
          */
         lb::iolets::InOutLetWomersleyVelocity
             * DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+
+        /**
+         * Reads a file velocity iolet definition from the XML config file and returns
+         * an InOutLetFileVelocity object
+         *
+         * @param ioletEl in memory representation of <inlet> or <outlet> xml element
+         * @return InOutLetFileVelocity object
+         */
+        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
