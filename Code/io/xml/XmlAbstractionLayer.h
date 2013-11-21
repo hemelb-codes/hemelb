@@ -91,6 +91,11 @@ namespace hemelb
           const Element GetChildOrThrow() const;
 
           /**
+           * Return iterator over all children.
+           * @return
+           */
+          ChildIterator IterChildren() const;
+          /**
            * Return iterator over children with the specified name.
            * @param name
            * @return
@@ -278,7 +283,7 @@ namespace hemelb
            * Constructor to iterate over all subelements.
            * @param elem
            */
-          ChildIterator(const Element& elem)
+          ChildIterator(const Element& elem);
           /**
            * Constructor that will iterate over subelements with the given name.
            * @param elem

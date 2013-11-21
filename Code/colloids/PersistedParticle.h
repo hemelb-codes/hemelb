@@ -10,11 +10,17 @@
 #ifndef HEMELB_COLLOIDS_PERSISTEDPARTICLE_H
 #define HEMELB_COLLOIDS_PERSISTEDPARTICLE_H
 
-#include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
 
 namespace hemelb
 {
+  namespace io
+  {
+    namespace xml
+    {
+      class Element;
+    }
+  }
   namespace colloids
   {
     /** represents a particle as stored in the xml configuration file */
@@ -26,19 +32,22 @@ namespace hemelb
 
       protected:
         /** constructor - uses explicitly supplied values */
-        PersistedParticle(unsigned long particleId,
-                          LatticeDistance a0, LatticeDistance ah,
-                          PhysicalMass mass,
-                          LatticePosition globalPosition) :
-          particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah),
-          mass(mass), globalPosition(globalPosition)
-        {};
+        PersistedParticle(unsigned long particleId, LatticeDistance a0, LatticeDistance ah,
+                          PhysicalMass mass, LatticePosition globalPosition) :
+          particleId(particleId), smallRadius_a0(a0), largeRadius_ah(ah), mass(mass),
+              globalPosition(globalPosition)
+        {
+        }
+        ;
 
         /** constructor - uses default values for each field */
-        PersistedParticle() {};
+        PersistedParticle()
+        {
+        }
+        ;
 
         /** system-wide-unique identifier for this particle */
-        unsigned long   particleId;
+        unsigned long particleId;
 
         /** the radius of the particle */
         LatticeDistance smallRadius_a0;
@@ -49,15 +58,15 @@ namespace hemelb
         /** the number of the most recent timestep during which
          *  information about this particle was written to disk
          */
-        LatticeTimeStep     lastCheckpointTimestep;
+        LatticeTimeStep lastCheckpointTimestep;
 
         /** the number of the most recent timestep during which
          *  this particle first entered the region of an outlet
          */
-        LatticeTimeStep     markedForDeletionTimestep;
+        LatticeTimeStep markedForDeletionTimestep;
 
         /** the mass of the particle */
-        PhysicalMass    mass;
+        PhysicalMass mass;
 
         /** the global position of the particle in lattice units */
         LatticePosition globalPosition;

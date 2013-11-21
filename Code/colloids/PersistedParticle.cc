@@ -9,6 +9,7 @@
 
 #include "colloids/PersistedParticle.h"
 #include "constants.h"
+#include "io/xml/XmlAbstractionLayer.h"
 
 namespace hemelb
 {

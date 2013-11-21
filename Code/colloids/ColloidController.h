@@ -15,7 +15,6 @@
 #include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "geometry/Geometry.h"
-#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "colloids/ParticleSet.h"
 #include "util/Vector3D.h"
@@ -23,6 +22,14 @@
 
 namespace hemelb
 {
+  namespace io
+  {
+    namespace xml
+    {
+      class Element;
+    }
+  }
+
   namespace colloids
   {
     /** provides the control interface between colloid simulation and the rest of the system */
@@ -76,6 +83,10 @@ namespace hemelb
          * The forces acting upon the particles.
          */
         BodyForces* forces;
+        /**
+         * The boundary conditions for the particles.
+         */
+        BoundaryConditions* bcs;
 
         /** obtains the neighbourhood for a particular region of influence defined by distance */
         const Neighbourhood GetNeighbourhoodVectors(site_t distance);

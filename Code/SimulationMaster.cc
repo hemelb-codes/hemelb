@@ -181,9 +181,6 @@ void SimulationMaster::Initialise()
     hemelb::io::xml::Document xml(colloidConfigPath);
     const hemelb::io::xml::Element& colloidsEl = xml.GetRoot().GetChildOrThrow("colloids");
 
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
-    hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
-
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising Colloids.");
     colloidController
         = new hemelb::colloids::ColloidController(*latticeData,

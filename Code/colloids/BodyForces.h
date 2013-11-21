@@ -10,13 +10,20 @@
 #ifndef HEMELB_COLLOIDS_BODYFORCES_H
 #define HEMELB_COLLOIDS_BODYFORCES_H
 
-#include "io/xml/XmlAbstractionLayer.h"
 #include "units.h"
 #include <map>
 #include "colloids/Particle.h"
 
 namespace hemelb
 {
+  namespace io
+  {
+    namespace xml
+    {
+      class Element;
+    }
+  }
+
   namespace colloids
   {
     /** base class for all representations of a body force stored in the xml configuration file */
@@ -31,13 +38,13 @@ namespace hemelb
         ;
     };
 
-    typedef BodyForce*(*BodyForceFactory_Create)(io::xml::Element& xml);
+    typedef BodyForce*(*BodyForceFactory_Create)(const io::xml::Element& xml);
 
     template<class TClass>
     class BodyForceFactory
     {
       public:
-        static BodyForce* Create(io::xml::Element& xml)
+        static BodyForce* Create(const io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
         }

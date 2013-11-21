@@ -12,7 +12,6 @@
 
 #include <vector>
 #include "geometry/LatticeData.h"
-#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "net/mpi.h"
 #include "colloids/Particle.h"
@@ -21,9 +20,19 @@
 
 namespace hemelb
 {
+  namespace io
+  {
+    namespace xml
+    {
+      class Element;
+    }
+  }
+
   namespace colloids
   {
     class BodyForces;
+    class BoundaryConditions;
+
     /** represents the set of all particles known to the local process */
     class ParticleSet
     {
@@ -35,6 +44,7 @@ namespace hemelb
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,
                     BodyForces& forces,
+                    BoundaryConditions& BCs,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -112,6 +122,7 @@ namespace hemelb
          */
         MPI_File file;
         BodyForces& forces;
+        BoundaryConditions& bcs;
     };
   }
 }

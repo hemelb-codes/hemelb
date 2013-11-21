@@ -27,7 +27,7 @@ namespace hemelb
     class GraviticBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::Element& xml)
+        static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
           LatticeForceVector field;
           // TODO: convert to lattice units

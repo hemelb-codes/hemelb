@@ -20,7 +20,7 @@ namespace hemelb
     class ConstantBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::Element& xml)
+        static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
           LatticeForceVector field;
           io::xml::Element force = xml.GetChildOrThrow("force");
@@ -52,7 +52,7 @@ namespace hemelb
     class RadialBodyForce : public BodyForce
     {
       public:
-        static BodyForce* ReadFromXml(io::xml::Element& xml)
+        static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
           LatticeForce magnitude;
           LatticePosition centrePoint;

@@ -26,8 +26,9 @@ namespace hemelb
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
                              BodyForces& bodyForces,
+                             BoundaryConditions& BCs,
                              const std::string& outputPath) :
-        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), forces(bodyForces)
+        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), forces(bodyForces), bcs(BCs)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -196,7 +197,7 @@ namespace hemelb
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
         {
-          BoundaryConditions::DoSomeThingsToParticle(currentTimestep, particle);
+          bcs.DoSomeThingsToParticle(currentTimestep, particle);
           if (particle.IsReadyToBeDeleted())
             log::Logger::Log<log::Trace, log::OnePerCore>("In ParticleSet::ApplyBoundaryConditions - timestep: %lu, particleId: %lu, IsReadyToBeDeleted: %s, markedForDeletion: %lu, lastCheckpoint: %lu\n",
                                                           currentTimestep,

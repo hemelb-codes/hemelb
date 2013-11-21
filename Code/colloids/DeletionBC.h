@@ -19,7 +19,7 @@ namespace hemelb
     class DeletionBC : public BoundaryCondition
     {
       public:
-        static BoundaryCondition* ReadFromXml(io::xml::Element& xml)
+        static BoundaryCondition* ReadFromXml(const io::xml::Element& xml)
         {
           // activationDistance defaults to 1/4 lattice unit *beyond* the boundary
           LatticeDistance activationDistance = -0.25;

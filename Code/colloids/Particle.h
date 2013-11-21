@@ -13,13 +13,20 @@
 #include "net/mpi.h"
 #include "colloids/PersistedParticle.h"
 #include "geometry/LatticeData.h"
-#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/MacroscopicPropertyCache.h"
 #include "util/Vector3D.h"
 #include "io/writers/Writer.h"
 
 namespace hemelb
 {
+  namespace io
+  {
+    namespace xml
+    {
+      class Element;
+    }
+  }
+
   namespace colloids
   {
     class BodyForces;

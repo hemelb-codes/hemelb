@@ -63,15 +63,6 @@ namespace hemelb
         TiXmlElement* ans = el->FirstChildElement();
         return Element(ans);
       }
-
-      // Get the first child with the given name
-      const Element Element::GetChildOrNull(const std::string& name) const
-      {
-        TiXmlElement* ans = el->FirstChildElement(name);
-        return Element(ans);
-      }
-
-      // Get the first child
       const Element Element::GetChildOrThrow() const
       {
         TiXmlElement* ans = el->FirstChildElement();
@@ -82,6 +73,11 @@ namespace hemelb
       }
 
       // Get the first child with the given name
+      const Element Element::GetChildOrNull(const std::string& name) const
+      {
+        TiXmlElement* ans = el->FirstChildElement(name);
+        return Element(ans);
+      }
       const Element Element::GetChildOrThrow(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
@@ -91,20 +87,38 @@ namespace hemelb
         return Element(ans);
       }
 
+      // Iterator over all children
+      ChildIterator Element::IterChildren() const
+      {
+        return ChildIterator(*this);
+      }
+      // Iterator over children with the given name
       ChildIterator Element::IterChildren(const std::string& name) const
       {
         return ChildIterator(*this, name);
       }
 
-      const Element Element::NextSiblingOrNull(const std::string name) const
+      // Next sibling with any name
+      const Element Element::NextSiblingOrNull() const
       {
-        TiXmlElement* ans = el->NextSiblingElement(name);
+        TiXmlElement* ans = el->NextSiblingElement();
+        return Element(ans);
+      }
+      const Element Element::NextSiblingOrThrow() const
+      {
+        TiXmlElement* ans = el->NextSiblingElement();
         if (ans == NULL)
-          return NULL;
+          throw SiblingError(*this, "*any*");
 
         return Element(ans);
       }
 
+      // Next sibling with the given name.
+      const Element Element::NextSiblingOrNull(const std::string name) const
+      {
+        TiXmlElement* ans = el->NextSiblingElement(name);
+        return Element(ans);
+      }
       const Element Element::NextSiblingOrThrow(const std::string name) const
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
@@ -113,6 +127,8 @@ namespace hemelb
 
         return Element(ans);
       }
+
+      // Get the named attribute.
       const std::string* Element::GetAttributeOrNull(const std::string& name) const
       {
         return el->Attribute(name);
@@ -126,6 +142,7 @@ namespace hemelb
         return *ans;
       }
 
+      // Get the parent element.
       const Element Element::GetParentOrNull() const
       {
         return Element(el->Parent()->ToElement());

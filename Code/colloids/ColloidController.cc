@@ -9,6 +9,7 @@
 
 #include "colloids/ColloidController.h"
 #include "colloids/BodyForces.h"
+#include "colloids/BoundaryConditions.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
@@ -44,6 +45,7 @@ namespace hemelb
     {
       // Initialise the BodyForces on the particles.
       forces = BodyForces::Load(colloidsEl.GetChildOrThrow("bodyForces"));
+      bcs = BoundaryConditions::Load(latDatLBM, colloidsEl.GetChildOrThrow("boundaryConditions"));
 
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -65,7 +67,7 @@ namespace hemelb
       const io::xml::Element& particlesElem = colloidsEl.GetChildOrThrow("particles");
       particleSet = new ParticleSet(latDatLBM, particlesElem, propertyCache,
                                     lbmParams,
-                                    neighbourProcessors, *forces, outputPath);
+                                    neighbourProcessors, *forces, *bcs, outputPath);
     }
 
     void ColloidController::InitialiseNeighbourList(
