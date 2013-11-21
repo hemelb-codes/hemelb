@@ -33,7 +33,7 @@ namespace hemelb
         ColloidController(const geometry::LatticeData& latDatLBM,
                           const lb::SimulationState& simulationState,
                           const geometry::Geometry& gmyResult,
-                          io::xml::Document& xml,
+                          const io::xml::Element& colloidsEl,
                           lb::MacroscopicPropertyCache& propertyCache,
                           const hemelb::lb::LbmParameters *lbmParams,
                           const std::string& outputPath,
@@ -71,6 +71,11 @@ namespace hemelb
 
         /** a list of relative 3D vectors that defines the sites within a region of influence */
         typedef std::vector<util::Vector3D<site_t> > Neighbourhood;
+
+        /**
+         * The forces acting upon the particles.
+         */
+        BodyForces* forces;
 
         /** obtains the neighbourhood for a particular region of influence defined by distance */
         const Neighbourhood GetNeighbourhoodVectors(site_t distance);

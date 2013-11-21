@@ -25,19 +25,23 @@ namespace hemelb
       public:
         virtual const LatticeForceVector GetForceForParticle(const Particle&) const =0;
       protected:
-        virtual ~BodyForce() {};
+        virtual ~BodyForce()
+        {
+        }
+        ;
     };
 
     typedef BodyForce*(*BodyForceFactory_Create)(io::xml::Element& xml);
 
-    template <class TClass>
+    template<class TClass>
     class BodyForceFactory
     {
       public:
         static BodyForce* Create(io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
-        };
+        }
+        ;
     };
 
     /** container for all body forces currently active in the simulation */
@@ -45,24 +49,24 @@ namespace hemelb
     {
       public:
         /** factory method - gets initial values from xml configuration file */
-        static const void InitBodyForces(io::xml::Document& xml);
+        static BodyForces* Load(const io::xml::Element& xml);
 
-        static const void AddBodyForce(const std::string name, const BodyForce* const);
+        //void AddBodyForce(const std::string name, const BodyForce* const );
 
         /** accumulates the effects of all known body forces on the particle */
-        static const LatticeForceVector GetBodyForcesForParticle(const Particle& particle);
+        LatticeForceVector GetBodyForcesForParticle(const Particle& particle) const;
 
-        static void ClearBodyForcesForAllSiteIds()
+        void ClearBodyForcesForAllSiteIds()
         {
           forceForEachSite.clear();
         }
 
-        static void SetBodyForcesForSiteId(const site_t siteId, const LatticeForceVector force)
+        void SetBodyForcesForSiteId(const site_t siteId, const LatticeForceVector force)
         {
           forceForEachSite[siteId] = force;
         }
 
-        static const LatticeForceVector GetBodyForcesForSiteId(const site_t siteId)
+        const LatticeForceVector GetBodyForcesForSiteId(const site_t siteId)
         {
           return forceForEachSite[siteId];
         }
@@ -73,8 +77,8 @@ namespace hemelb
          * the value type must be a base class pointer
          * as only pointers are type-compatible in C++
          */
-        static std::map<std::string, const BodyForce* const> bodyForces;
-        static std::map<site_t, LatticeForceVector> forceForEachSite;
+        std::map<std::string, const BodyForce* const > bodyForces;
+        std::map<site_t, LatticeForceVector> forceForEachSite;
     };
   }
 }

@@ -22,6 +22,7 @@ namespace hemelb
 {
   namespace colloids
   {
+    class BodyForces;
     /**
      * represents a single simulated biocolloid particle
      *
@@ -34,7 +35,7 @@ namespace hemelb
         /** constructor - gets initial values from an xml configuration file */
         Particle(const geometry::LatticeData& latDatLBM,
                  const hemelb::lb::LbmParameters *lbmParams,
-                 io::xml::Element& xml);
+                 const io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
         Particle() {};
@@ -138,10 +139,10 @@ namespace hemelb
         const void UpdatePosition(const geometry::LatticeData& latDatLBM);
 
         /** calculates the effects of all body forces on this particle */
-        const void CalculateBodyForces();
+        const void CalculateBodyForces(const BodyForces& forces);
 
         /** calculates the effects of this particle on each lattice site */
-        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
+        const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM, BodyForces& forces) const;
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity(

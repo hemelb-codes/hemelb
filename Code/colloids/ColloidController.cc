@@ -8,6 +8,7 @@
 // 
 
 #include "colloids/ColloidController.h"
+#include "colloids/BodyForces.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "log/Logger.h"
@@ -33,7 +34,7 @@ namespace hemelb
     ColloidController::ColloidController(const geometry::LatticeData& latDatLBM,
                                          const lb::SimulationState& simulationState,
                                          const geometry::Geometry& gmyResult,
-                                         io::xml::Document& xml,
+                                         const io::xml::Element& colloidsEl,
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
@@ -41,6 +42,9 @@ namespace hemelb
       localRank(net::NetworkTopology::Instance()->GetLocalRank()),
       simulationState(simulationState), timers(timers)
     {
+      // Initialise the BodyForces on the particles.
+      forces = BodyForces::Load(colloidsEl.GetChildOrThrow("bodyForces"));
+
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
       // contains more information than was used when creating the LB lattice, i.e. latDatLBM
@@ -58,10 +62,10 @@ namespace hemelb
         "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
         localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
 
-      io::xml::Element particlesElem = xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("particles");
+      const io::xml::Element& particlesElem = colloidsEl.GetChildOrThrow("particles");
       particleSet = new ParticleSet(latDatLBM, particlesElem, propertyCache,
                                     lbmParams,
-                                    neighbourProcessors, outputPath);
+                                    neighbourProcessors, *forces, outputPath);
     }
 
     void ColloidController::InitialiseNeighbourList(

@@ -23,16 +23,18 @@ namespace hemelb
 {
   namespace colloids
   {
+    class BodyForces;
     /** represents the set of all particles known to the local process */
     class ParticleSet
     {
       public:
         /** constructor - gets local particle information from xml config file */
         ParticleSet(const geometry::LatticeData& latDatLBM,
-                    io::xml::Element& xml,
+                    const io::xml::Element& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,
+                    BodyForces& forces,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -109,6 +111,7 @@ namespace hemelb
          * MPI File handle to write with
          */
         MPI_File file;
+        BodyForces& forces;
     };
   }
 }

@@ -14,7 +14,7 @@ namespace hemelb
 {
   namespace colloids
   {
-    PersistedParticle::PersistedParticle(io::xml::Element& xml)
+    PersistedParticle::PersistedParticle(const io::xml::Element& xml)
     {
       // assume we are currently at a <SubgridParticle> node
       xml.GetAttributeOrThrow("ParticleId", particleId);

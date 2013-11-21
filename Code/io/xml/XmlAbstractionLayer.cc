@@ -57,25 +57,31 @@ namespace hemelb
         return el->Row();
       }
 
-      Element Element::GetChildOrNull(const std::string& name)
+      // Get the first child
+      const Element Element::GetChildOrNull() const
       {
-        TiXmlElement* ans = el->FirstChildElement(name);
+        TiXmlElement* ans = el->FirstChildElement();
         return Element(ans);
       }
+
+      // Get the first child with the given name
       const Element Element::GetChildOrNull(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
         return Element(ans);
       }
 
-      Element Element::GetChildOrThrow(const std::string& name)
+      // Get the first child
+      const Element Element::GetChildOrThrow() const
       {
-        TiXmlElement* ans = el->FirstChildElement(name);
+        TiXmlElement* ans = el->FirstChildElement();
         if (ans == NULL)
-          throw ChildError(*this, name);
+          throw ChildError(*this, "*any*");
 
         return Element(ans);
       }
+
+      // Get the first child with the given name
       const Element Element::GetChildOrThrow(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
@@ -90,7 +96,7 @@ namespace hemelb
         return ChildIterator(*this, name);
       }
 
-      Element Element::NextSiblingOrNull(const std::string name)
+      const Element Element::NextSiblingOrNull(const std::string name) const
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
         if (ans == NULL)
@@ -99,7 +105,7 @@ namespace hemelb
         return Element(ans);
       }
 
-      Element Element::NextSiblingOrThrow(const std::string name)
+      const Element Element::NextSiblingOrThrow(const std::string name) const
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
         if (ans == NULL)
@@ -120,11 +126,11 @@ namespace hemelb
         return *ans;
       }
 
-      Element Element::GetParentOrNull()
+      const Element Element::GetParentOrNull() const
       {
         return Element(el->Parent()->ToElement());
       }
-      Element Element::GetParentOrThrow()
+      const Element Element::GetParentOrThrow() const
       {
         TiXmlElement* parent = el->Parent()->ToElement();
         if (parent == NULL)
@@ -176,6 +182,14 @@ namespace hemelb
        */
       ChildIterator::ChildIterator() :
         parent(Element::Missing()), current(Element::Missing()), name()
+      {
+      }
+      /**
+       * Constructor to iterate over all subelements.
+       * @param elem
+       */
+      ChildIterator::ChildIterator(const Element& elem) :
+        parent(elem), current(elem.GetChildOrNull()), name()
       {
       }
 
@@ -256,7 +270,10 @@ namespace hemelb
       ChildIterator& ChildIterator::operator++()
       {
         // increment and return the updated version
-        current = current.NextSiblingOrNull(name);
+        if (name == "")
+          current = current.NextSiblingOrNull();
+        else
+          current = current.NextSiblingOrNull(name);
         return *this;
       }
 

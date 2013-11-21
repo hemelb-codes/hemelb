@@ -6,7 +6,8 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 // 
-
+#include "Exception.h"
+#include "log/Logger.h"
 #include "colloids/BodyForces.h"
 #include "colloids/BodyForceExamples.h"
 #include "colloids/GraviticBodyForce.h"
@@ -15,18 +16,23 @@ namespace hemelb
 {
   namespace colloids
   {
-    std::map<std::string, const BodyForce* const > BodyForces::bodyForces;
-    std::map<site_t, LatticeForceVector> BodyForces::forceForEachSite;
 
-    const void BodyForces::InitBodyForces(io::xml::Document& xml)
+    BodyForces* BodyForces::Load(const io::xml::Element& colloidsBodyForcesNode)
     {
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
+      if (colloidsBodyForcesNode.GetName() != "bodyForces")
+        throw Exception()
+            << "BodyForces::Load got XML Element with wrong name. Expected 'bodyForces', got '"
+            << colloidsBodyForcesNode.GetName() << "'.";
+      // Create a map from the strings used in the XML (as attribute "forceName")
+      // to the factory functions that create them.
+
       std::map<std::string, BodyForceFactory_Create> mapForceGenerators;
       mapForceGenerators["gravitic"] = & (GraviticBodyForceFactory::Create);
       mapForceGenerators["constant"] = & (ConstantBodyForceFactory::Create);
       mapForceGenerators["inv_r_sq"] = & (RadialBodyForceFactory::Create);
 
-      io::xml::Element colloidsBodyForcesNode =
-          xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("bodyForces");
+      BodyForces* ans = new BodyForces();
 
       for (std::map<std::string, BodyForceFactory_Create>::const_iterator iter =
           mapForceGenerators.begin(); iter != mapForceGenerators.end(); iter++)
@@ -34,18 +40,18 @@ namespace hemelb
         const std::string forceClass = iter->first;
         const BodyForceFactory_Create createFunction = iter->second;
 
-        for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass);
-            forceNode != io::xml::Element::Missing();
-            forceNode = forceNode.NextSiblingOrNull(forceClass))
+        for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass); forceNode
+            != io::xml::Element::Missing(); forceNode = forceNode.NextSiblingOrNull(forceClass))
         {
           std::string forceName = forceNode.GetAttributeOrThrow("forceName");
           BodyForce* nextForce = createFunction(forceNode);
-          BodyForces::bodyForces.insert(std::make_pair(forceName, nextForce));
+          ans->bodyForces.insert(std::make_pair(forceName, nextForce));
         }
       }
+      return ans;
     }
 
-    const LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle)
+    LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle) const
     {
       LatticeForceVector totalForce;
       for (std::map<std::string, const BodyForce* const >::const_iterator iter = bodyForces.begin(); iter

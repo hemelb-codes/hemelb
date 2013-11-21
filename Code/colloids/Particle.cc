@@ -19,7 +19,7 @@ namespace hemelb
   {
     Particle::Particle(const geometry::LatticeData& latDatLBM,
                        const hemelb::lb::LbmParameters *lbmParams,
-                       io::xml::Element& xml) :
+                       const io::xml::Element& xml) :
       PersistedParticle(xml),
       lbmParams(lbmParams)
     {
@@ -140,14 +140,14 @@ namespace hemelb
            / (6.0 * PI * GetViscosity() * smallRadius_a0 * largeRadius_ah);
     }
 
-    const void Particle::CalculateBodyForces()
+    const void Particle::CalculateBodyForces(const BodyForces& forces)
     {
       log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}\n",
         particleId, globalPosition.x, globalPosition.y, globalPosition.z);
 
       // delegate the calculation of body forces to the BodyForces class
-      bodyForces = BodyForces::GetBodyForcesForParticle(*this);
+      bodyForces = forces.GetBodyForcesForParticle(*this);
 
       log::Logger::Log<log::Trace, log::OnePerCore>(
         "In colloids::Particle::CalculateBodyForces, id: %i, position: {%g,%g,%g}, bodyForces: {%g,%g,%g}\n",
@@ -175,7 +175,7 @@ namespace hemelb
     }
 
     const void Particle::CalculateFeedbackForces(
-                           const geometry::LatticeData& latDatLBM) const
+                           const geometry::LatticeData& latDatLBM, BodyForces& forces) const
                            //lb::MacroscopicPropertyCache& propertyCache) const
     {
       /** CalculateFeedbackForces
@@ -232,12 +232,12 @@ namespace hemelb
 
             // read value of force for site index from macroscopic cache
             //LatticeForceVector partialInterpolation = propertyCache.bodyForcesCache.Get(siteId) +
-            LatticeForceVector partialInterpolation = BodyForces::GetBodyForcesForSiteId(siteId) +
+            LatticeForceVector partialInterpolation = forces.GetBodyForcesForSiteId(siteId) +
                                                       contribution;
 
             // read value of force for site index from macroscopic cache
             //propertyCache.bodyForcesCache.Put(siteId, partialInterpolation);
-            BodyForces::SetBodyForcesForSiteId(siteId, partialInterpolation);
+            forces.SetBodyForcesForSiteId(siteId, partialInterpolation);
 
             log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, siteIndex: %i, bodyForces: {%g,%g,%g}, contribution: {%g,%g,%g}, forceOnSiteSoFar: {%g,%g,%g}\n",

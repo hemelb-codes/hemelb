@@ -176,11 +176,10 @@ void SimulationMaster::Initialise()
   {
     timings[hemelb::reporting::Timers::colloidInitialisation].Start();
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Loading Colloid config.");
+    // Get the colloids element
     std::string colloidConfigPath = simConfig->GetColloidConfigPath();
     hemelb::io::xml::Document xml(colloidConfigPath);
-
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
-    hemelb::colloids::BodyForces::InitBodyForces(xml);
+    const hemelb::io::xml::Element& colloidsEl = xml.GetRoot().GetChildOrThrow("colloids");
 
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Boundary Conditions.");
     hemelb::colloids::BoundaryConditions::InitBoundaryConditions(latticeData, xml);
@@ -190,7 +189,7 @@ void SimulationMaster::Initialise()
         = new hemelb::colloids::ColloidController(*latticeData,
                                                   *simulationState,
                                                   readGeometryData,
-                                                  xml,
+                                                  colloidsEl,
                                                   propertyCache,
                                                   latticeBoltzmannModel->GetLbmParams(),
                                                   fileManager->GetColloidPath(),

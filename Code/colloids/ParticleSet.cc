@@ -21,12 +21,13 @@ namespace hemelb
   namespace colloids
   {
     ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
-                             io::xml::Element& particlesElem,
+                             const io::xml::Element& particlesElem,
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
+                             BodyForces& bodyForces,
                              const std::string& outputPath) :
-        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
+        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), forces(bodyForces)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -184,7 +185,7 @@ namespace hemelb
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
-          particle.CalculateBodyForces();
+          particle.CalculateBodyForces(forces);
       }
     }
 
@@ -231,12 +232,12 @@ namespace hemelb
 
     const void ParticleSet::CalculateFeedbackForces()
     {
-      BodyForces::ClearBodyForcesForAllSiteIds();
+      forces.ClearBodyForcesForAllSiteIds();
       for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
       {
         const Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
-          particle.CalculateFeedbackForces(latDatLBM);
+          particle.CalculateFeedbackForces(latDatLBM, forces);
       }
     }
 

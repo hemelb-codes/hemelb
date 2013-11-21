@@ -48,6 +48,16 @@ namespace hemelb
            * @return
            */
           int GetLine() const;
+
+          /**
+           * Gets the first child element
+           *
+           * @return
+           *   returns the child element if any exist or
+           *   Element::Missing() if not
+           */
+          const Element GetChildOrNull() const;
+
           /**
            * Gets the first child element with the specified name
            *
@@ -58,7 +68,6 @@ namespace hemelb
            *   returns the child element if it was found or
            *   Element::Missing() if not
            */
-          Element GetChildOrNull(const std::string& name);
           const Element GetChildOrNull(const std::string& name) const;
           /**
            * Gets the first child element with the specified name or throw
@@ -70,8 +79,16 @@ namespace hemelb
            * @return
            *   returns the child element
            */
-          Element GetChildOrThrow(const std::string& name);
           const Element GetChildOrThrow(const std::string& name) const;
+
+          /**
+           * Gets the first child element or throw
+           * ChildError if it does not exist.
+           *
+           * @return
+           *   returns the child element
+           */
+          const Element GetChildOrThrow() const;
 
           /**
            * Return iterator over children with the specified name.
@@ -79,6 +96,25 @@ namespace hemelb
            * @return
            */
           ChildIterator IterChildren(const std::string& name) const;
+
+          /**
+           * Return the next sibling element, if any
+           * If no suitable sibling element exists then return Element::Missing()
+           *
+           * @return
+           *   Next sibling or Element::Missing()
+           */
+          const Element NextSiblingOrNull() const;
+
+          /**
+           * Return the next sibling element, if any
+           * If no suitable sibling element exists then throw SiblingError
+           *
+           * @return
+           *   Next sibling.
+           */
+
+          const Element NextSiblingOrThrow() const;
 
           /**
            * Return the next sibling element with the specified name, if any
@@ -90,7 +126,7 @@ namespace hemelb
            * @return
            *   Next sibling or Element::Missing()
            */
-          Element NextSiblingOrNull(const std::string name);
+          const Element NextSiblingOrNull(const std::string name) const;
 
           /**
            * Return the next sibling element with the specified name, if any
@@ -102,7 +138,7 @@ namespace hemelb
            * @return
            *   Next sibling.
            */
-          Element NextSiblingOrThrow(const std::string name);
+          const Element NextSiblingOrThrow(const std::string name) const;
 
           /**
            * Return the parent element unless this is the root element.
@@ -111,7 +147,7 @@ namespace hemelb
            * @return
            *   Parent or Element::Missing()
            */
-          Element GetParentOrNull();
+          const Element GetParentOrNull() const;
           /**
            * Return the parent element unless this is the root element.
            * If so then throws ParentError
@@ -119,7 +155,7 @@ namespace hemelb
            * @return
            *   Parent
            */
-          Element GetParentOrThrow();
+          const Element GetParentOrThrow() const;
 
           /**
            * Get the value (as a string) contained in the specified attribute.
@@ -140,15 +176,6 @@ namespace hemelb
            *   A reference to a string containing the attribute value
            */
           const std::string& GetAttributeOrThrow(const std::string& name) const;
-
-          /**
-           * Get the value (as a string) contained in the specified attribute.
-           * If it does not exist, return NULL
-           * @param $name
-           *   The name of the attribute to get
-           * @return
-           *   A pointer to a string containing the attribute value
-           */
 
           /**
            * Get the value contained in the specified attribute. This function
@@ -247,7 +274,11 @@ namespace hemelb
            * Default constructor
            */
           ChildIterator();
-
+          /**
+           * Constructor to iterate over all subelements.
+           * @param elem
+           */
+          ChildIterator(const Element& elem)
           /**
            * Constructor that will iterate over subelements with the given name.
            * @param elem
