@@ -30,7 +30,7 @@ namespace hemelb
         xmlDoc = NULL;
       }
 
-      Element Document::GetRoot()
+      Element Document::GetRoot() const
       {
         return Element(xmlDoc->RootElement());
       }

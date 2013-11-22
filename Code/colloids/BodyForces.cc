@@ -43,7 +43,7 @@ namespace hemelb
         for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass); forceNode
             != io::xml::Element::Missing(); forceNode = forceNode.NextSiblingOrNull(forceClass))
         {
-          std::string forceName = forceNode.GetAttributeOrThrow("forceName");
+          std::string forceName = forceNode.GetAttributeOrThrow("name");
           BodyForce* nextForce = createFunction(forceNode);
           ans->bodyForces.insert(std::make_pair(forceName, nextForce));
         }

@@ -374,7 +374,7 @@ namespace hemelb
 
           /** destructor */
           ~Document();
-          Element GetRoot();
+          Element GetRoot() const;
         private:
           TiXmlDocument* xmlDoc;
       };

@@ -19,7 +19,7 @@ namespace hemelb
     /** THIS CLASS SHOULD NOT BE USED IN ITS CURRENT FORM
      *
      *  It is intended to approximate the external force of gravity on colloid particles.
-     *  However, the calculation should take into account the boyancy caused by the fluid
+     *  However, the calculation should take into account the buoyancy caused by the fluid
      *  so the "mass" of the particle should really be the difference between its density
      *  and the density of the surrounding fluid, which can be calculated from viscosity?
      *  This needs changes to PersistedParticle, config.xml and MPI types (mass->density)
@@ -29,14 +29,12 @@ namespace hemelb
       public:
         static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
-          LatticeForceVector field;
+          LatticeForceVector g;
           // TODO: convert to lattice units
-          io::xml::Element fieldElem = xml.GetChildOrThrow("field");
-          fieldElem.GetAttributeOrThrow("x", field.x);
-          fieldElem.GetAttributeOrThrow("y", field.y);
-          fieldElem.GetAttributeOrThrow("z", field.z);
+          io::xml::Element gEl = xml.GetChildOrThrow("acceleration");
+          configuration::GetDimensionalValue(gEl, "m s^-2", g);
 
-          return new GraviticBodyForce(field);
+          return new GraviticBodyForce(g);
         };
 
         virtual const LatticeForceVector GetForceForParticle(const Particle& particle) const
@@ -48,7 +46,7 @@ namespace hemelb
         GraviticBodyForce(const LatticeForceVector constantForce) :
           graviticForce(constantForce) {};
 
-        const LatticeForceVector graviticForce;
+        const LatticeAccelerationVector graviticForce;
     };
 
     class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce> { };

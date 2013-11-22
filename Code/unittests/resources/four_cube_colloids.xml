@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <steps value="10" units="lattice" />
+    <step_length value="0.0857" units="s" />
+    <voxel_size value="0.01" units="m" />
+    <origin value="(0.0,0.0,0.0)" units="m" />
+    <stresstype value="1" />
+  </simulation>
+  <geometry>
+    <datafile path="./four_cube.gmy" />
+  </geometry>
+  <initialconditions>
+    <pressure>
+      <uniform value="0.0" units="mmHg"/>
+    </pressure>
+  </initialconditions>  
+  <inlets>
+    <inlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="00.1" units="mmHg" />
+        <phase value="0.0" units="rad" />
+        <period value="0.6" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,1.0)" units="dimensionless" />
+      <position value="(-1.66017717834e-05,-4.58437586355e-05,-0.05)" units="m" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition type="pressure" subtype="cosine">
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="00.0" units="mmHg" />
+        <phase value="0.0" units="rad" />
+        <period value="0.6" units="s" />
+      </condition>
+      <normal value="(0.0,0.0,-1.0)" units="dimensionless" />
+      <position value="(0.0,0.0,0.05)" units="m" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre value="(0.0,0.0,0.0)" units="m" />
+    <orientation>
+      <latitude value="45.0" units="deg" />
+      <longitude value="45.0" units="deg" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxstress value="0.1" units="Pa" />
+      <maxvelocity value="0.1" units="m/s" />
+    </range>
+  </visualisation>
+  <colloids>
+    <bodyForces>
+      <gravitic name="gravity">
+        <acceleration value="(0,0,-9.81)" units="m s^-2" />
+      </gravitic>
+      <constant name="const">
+        <force value="(1,2,3e-3)" units="N" />
+      </constant>
+      <inv_r_sq name="coloumb">
+        <centre value="(0.02,0.03,0.04)" units="m" />
+        <magnitude value="1e-6" units="N m^2" />
+      </inv_r_sq>
+    </bodyForces>
+    <boundaryConditions>
+    </boundaryConditions>
+  </colloids>
+</hemelbsettings>

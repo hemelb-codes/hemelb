@@ -58,9 +58,9 @@ namespace hemelb
           LatticePosition centrePoint;
           // TODO: convert to lattice units.
           io::xml::Element magnitudeEl = xml.GetChildOrThrow("magnitude");
-          configuration::GetDimensionalValue(magnitudeEl, "N/m^2", magnitude);
+          configuration::GetDimensionalValue(magnitudeEl, "N m^2", magnitude);
           // TODO: convert to lattice units.
-          io::xml::Element centreElem = xml.GetChildOrThrow("centrePoint");
+          io::xml::Element centreElem = xml.GetChildOrThrow("centre");
           configuration::GetDimensionalValue(centreElem, "m", centrePoint);
 
           return new RadialBodyForce(centrePoint, magnitude);
