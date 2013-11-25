@@ -456,6 +456,17 @@ namespace hemelb
         }
 
         /**
+          * Get the force vector at the given site
+          * @param iSiteIndex
+          * @return
+          */
+        // Method should remain protected, intent is to access this information via Site
+        inline const util::Vector3D<distribn_t>& GetForceAtSite(site_t iSiteIndex) const
+        {
+          return forceAtSite[iSiteIndex];
+        }
+
+        /**
          * Get a pointer to the fOld array starting at the requested index
          * @param distributionIndex
          * @return
@@ -530,6 +541,12 @@ namespace hemelb
         util::Vector3D<distribn_t>& GetNormalToWall(site_t iSiteIndex)
         {
           return wallNormalAtSite[iSiteIndex];
+        }
+
+        // Method should remain protected, intent is to access this information via Site
+        util::Vector3D<distribn_t>& GetForceAtSite(site_t iSiteIndex)
+		{
+          return forceAtSite[iSiteIndex];
         }
 
         /**
