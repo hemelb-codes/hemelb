@@ -474,8 +474,8 @@ namespace hemelb
       io::xml::Element normalEl = ioletEl.GetChildOrThrow("normal");
 
       PhysicalPosition pos;
-      GetDimensionalValueInLatticeUnits(positionEl, "m", pos);
-      value->SetPosition(pos);
+      GetDimensionalValue(positionEl, "m", pos);
+      value->SetPosition(unitConverter->ConvertPositionToLatticeUnits(pos));
 
       util::Vector3D<double> norm;
       GetDimensionalValue(normalEl, "dimensionless", norm);
