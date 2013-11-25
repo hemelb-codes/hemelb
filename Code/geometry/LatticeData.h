@@ -408,6 +408,7 @@ namespace hemelb
 
           oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
           newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
+          forceAtSite.resize(localFluidSites * 3); // TODO: '3' works but is not what schmie really wants
         }
         void CollectFluidSiteDistribution();
         void CollectGlobalSiteExtrema();
@@ -564,6 +565,7 @@ namespace hemelb
         site_t localFluidSites; //! The number of local fluid sites.
         std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
         std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
+        std::vector<util::Vector3D<distribn_t> > forceAtSite; //! Holds the force vector at a fluid site
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
