@@ -128,6 +128,7 @@ hector:
     CTEMPLATE_PATCH_ALIGN: "ON"
     MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
     MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
+    HEMELB_COMPUTE_ARCHITECTURE: "NEUTRAL"
 hector_gnu: #Hector, compiling using GNU compiler
   import: "hector"
   max_job_name_chars: 15
@@ -162,7 +163,7 @@ hector_gnu: #Hector, compiling using GNU compiler
     HEMELB_USE_SSE3: "ON"
     CTEMPLATE_PATCH_ALIGN: "OFF"
     CTEMPLATE_USE_STATIC: "OFF"   
-    HEMELB_COMPUTE_ARCHITECTURE: "AMDBULLDOZER" 
+    HEMELB_COMPUTE_ARCHITECTURE: "NEUTRAL" 
 #    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 supermuc:
   max_job_name_chars: 15
