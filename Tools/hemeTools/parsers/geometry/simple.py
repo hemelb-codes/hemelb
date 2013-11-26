@@ -11,6 +11,8 @@ import numpy as np
 import xdrlib
 from ...utils import xdr
 import zlib
+import os.path
+from xml.etree import ElementTree
 
 from .generic import Domain, Block, AllSolidBlock, Site
 from .. import HemeLbMagicNumber
@@ -37,14 +39,36 @@ class ConfigLoader(object):
     Offers a large number of hooks, in a manner similar to an
     event-driver XML parser for examining data on the fly.
     """
-    VERSION = 3
-    MIN_VERSION = 3
-    MAX_VERSION = 3
+    VERSION = 4
+    MIN_VERSION = 4
+    MAX_VERSION = 4
     
     def __init__(self, filename):
-        self.FileName = filename
-        self.File = file(filename)
+        self.XmlFileName = filename
+        tree = ElementTree.ElementTree()
+        root = tree.parse(filename)
+        # Get the GMY file from the XML
+        gmyEl = root.find('geometry/datafile')
+        assert gmyEl is not None, "XML does not have element 'geometry/datafile'!"
+        relpath = gmyEl.get('path')
+        assert relpath is not None, "Element 'geometry/datafile' does not have attribute 'path'"
+        self.GmyFileName = os.path.join(os.path.dirname(filename), relpath)
+        
         self.Domain = Domain()
+        
+        # Now the voxel size and origin
+        vsEl = root.find('simulation/voxel_size')
+        assert vsEl.get('units') == 'm', "voxel_size units not 'm'"
+        self.Domain.VoxelSize = float(vsEl.get('value'))
+        
+        oEl = root.find('simulation/origin')
+        assert oEl.get('units') == 'm', "origin units not 'm'"
+        oStr = oEl.get('value')
+        assert oStr[0] == '(' and oStr[-1] == ')'
+        self.Domain.Origin = np.array(oStr[1:-1].split(','), dtype=float)
+        assert self.Domain.Origin.shape == (3,)
+        
+        self.File = file(self.GmyFileName)
         return
     
     def Load(self):
@@ -64,13 +88,11 @@ class ConfigLoader(object):
         1 uints for version number
         3 uints for domain size in blocks
         1 uint for number of sites along one side of a block
-        1 double for lattice unit size
-        3 double for coordinates of zero lattice site
         1 uint of value 0 to pad to 72 bytes
         """
         self.OnBeginPreamble()
         
-        self.PreambleBytes = 64
+        self.PreambleBytes = 32
         preambleLoader = xdrlib.Unpacker(self.File.read(self.PreambleBytes))
 
         hlbNumber = preambleLoader.unpack_uint()
@@ -91,9 +113,6 @@ class ConfigLoader(object):
         self.Domain.BlockCounts = np.array([preambleLoader.unpack_uint() for i in xrange(3)], dtype=np.uint)
         self.Domain.BlockSize = preambleLoader.unpack_uint()
         
-        self.Domain.VoxelSize = preambleLoader.unpack_double()
-        self.Domain.Origin = np.array([preambleLoader.unpack_double() for i in xrange(3)], dtype=np.double)
-
         padding = preambleLoader.unpack_uint()
         if padding != PADDING_BYTE:
             raise GeometryParsingError(r"The preamble to this file is padded with the wrong value. Instead of %d, I found %d" % (PADDING_BYTE, padding))

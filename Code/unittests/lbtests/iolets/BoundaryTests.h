@@ -50,12 +50,12 @@ namespace hemelb
           private:
             void TestConstruct()
             {
-              double targetStartDensity = pressureToDensity(80.0 - 1.0);
+              double targetStartDensity = unitConverter->ConvertPressureToLatticeUnits(80.0 - 1.0) / Cs2;
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
-                                          unitConverter);
+                                          *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0), 1e-9);
               delete inlets;
             }
@@ -65,7 +65,7 @@ namespace hemelb
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
-                                          unitConverter);
+                                          *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0), 1e-9);
 
               while (simState->Get0IndexedTimeStep() < simState->GetTotalTimeSteps() / 20)
@@ -90,13 +90,13 @@ namespace hemelb
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();
               configuration::SimConfig *fileInletConfig =
-                  new configuration::SimConfig(Resource("config_file_inlet.xml").Path());
+                  configuration::SimConfig::New(Resource("config_file_inlet.xml").Path());
 
               inlets = new BoundaryValues(hemelb::geometry::INLET_TYPE,
                                           latDat,
                                           fileInletConfig->GetInlets(),
                                           simState,
-                                          unitConverter);
+                                          *unitConverter);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
 
@@ -119,7 +119,7 @@ namespace hemelb
             }
             double pressureToDensity(double pressure)
             {
-              double inverseVelocity = simState->GetTimeStepLength() / latDat->GetVoxelSize();
+              double inverseVelocity = simConfig->GetTimeStepLength() / simConfig->GetVoxelSize();
               return 1
                   + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * inverseVelocity * inverseVelocity
                       / (Cs2 * BLOOD_DENSITY_Kg_per_m3);

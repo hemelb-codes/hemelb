@@ -12,69 +12,26 @@
 #include "Domain.h"
 #include "Debug.h"
 
-Domain::Domain(double VoxelSizeMetres, double SurfaceBoundsWorking[6],
-		unsigned int BlockSize) :
-	BlockSize(BlockSize), VoxelSizeMetres(VoxelSizeMetres) {
-	double min, max, size, extra, siteZero;
-	int nSites, nBlocks, remainder, totalBlocks = 1;
+Domain::Domain(double OriginWorking[3], unsigned SiteCounts[3], unsigned BlockSize) :
+	BlockSize(BlockSize) {
 
-	/*
-	 * Here we are setting the location of our domain's origin in the input
-	 * space and the number of sites along each axis. Sites will all have
-	 * positions of:
-	 * 		Origin + Index * VoxelSize,
-	 * where:
-	 * 		0 <= Index[i] < nSites[i]
-	 *
-	 * We also require that there be at least one solid site outside the fluid
-	 * sites. For the case of axis-aligned faces which are an integer number
-	 * of VoxelSizes apart (e.g. synthetic datasets!) this can cause numerical
-	 * issues for the classifier if all the points that are "outside" are very
-	 * close to the surface so we further require that these sites are a
-	 * little further from the bounding box of the PolyData.
-	 */
+	int remainder, totalBlocks = 1;
+
 	for (unsigned int i = 0; i < 3; ++i) {
-		// Bounds of the vtkPolyData
-		min = SurfaceBoundsWorking[2 * i];
-		max = SurfaceBoundsWorking[2 * i + 1];
-		size = max - min;
-
-		nSites = int(size / this->GetVoxelSizeWorking());
-		/* Since int() truncates, we have:
-		 * 		0 < size/VoxelSize - nSites < 1.
-		 * Hence we need nSites + 1 links and therefore nSites + 2 sites
-		 */
-		nSites += 2;
-
-		/* The extra distance from size to the distance from x[0] to x[nSites -1]
-		 */
-		extra = (nSites - 1) * this->GetVoxelSizeWorking() - size;
-
-		/* To avoid numerical problems with the classifier, ensure that the
-		 * sites just outside the fluid region are at least 1% of a VoxelSize
-		 * away.
-		 */
-		if (extra < this->GetVoxelSizeWorking() / 100.) {
-			// They weren't, so add one to the # sites and recalculate extra
-			nSites += 1;
-			extra = (nSites - 1) * this->GetVoxelSizeWorking() - size;
-		}
-
-		/* Now ensure this extra space is equally balanced before & after the
-		 * fluid region with the placement of the first site.
-		 */
-		siteZero = min - 0.5 * extra;
+		// Copy in
+		this->OriginWorking[i] = OriginWorking[i];
+		this->SiteCounts[i] = SiteCounts[i];
 
 		// Now work out how many blocks we require.
-		nBlocks = nSites / BlockSize;
-		remainder = nSites % BlockSize;
+		this->BlockCounts[i] = this->SiteCounts[i] / BlockSize;
+		remainder = this->SiteCounts[i] % BlockSize;
 		if (remainder)
-			++nBlocks;
-		// Set the member vars for this axis
-		this->OriginWorking[i] = siteZero;
-		this->BlockCounts[i] = nBlocks;
-		this->SiteCounts[i] = nBlocks * BlockSize;
-		totalBlocks *= nBlocks;
+			++this->BlockCounts[i];
+
+		// Adjust the site count
+		this->SiteCounts[i] = this->BlockCounts[i] * BlockSize;
+
+		totalBlocks *= this->BlockCounts[i];
 	}
 	// Resize the block vector
 	this->blocks.resize(totalBlocks);
@@ -83,7 +40,6 @@ Domain::Domain(double VoxelSizeMetres, double SurfaceBoundsWorking[6],
 
 Vector Domain::CalcPositionWorkingFromIndex(const Index& index) const {
 	Vector ans(index);
-	ans *= this->GetVoxelSizeWorking();
 	ans += this->OriginWorking;
 	return ans;
 }

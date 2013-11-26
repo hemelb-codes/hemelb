@@ -207,7 +207,7 @@ namespace hemelb
                                  const LbmParameters* lbmParams, geometry::LatticeData* latDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
-            const LatticeTime t = bValues->GetTimeStep();
+            const LatticeTimeStep t = bValues->GetTimeStep();
             const typename VSiteByLocalIdxMultiMap::iterator beginVSites =
                 vsByLocalIdx.lower_bound(firstIndex), endVSites =
                 vsByLocalIdx.lower_bound(firstIndex + siteCount);
@@ -318,7 +318,7 @@ namespace hemelb
 
           void CalculateVirtualSiteDistributions(const geometry::LatticeData& latDat,
                                                  const InOutLet& iolet, RSHV::Map& hydroVarsCache,
-                                                 VSiteType& vSite, const LatticeTime t)
+                                                 VSiteType& vSite, const LatticeTimeStep t)
           {
             if (vSite.hv.t != t)
             {
@@ -354,7 +354,7 @@ namespace hemelb
           LatticeDensity CalculateVirtualSiteDensity(const geometry::LatticeData& latDat,
                                                      const InOutLet& iolet,
                                                      RSHV::Map& hydroVarsCache,
-                                                     const VSiteType& vSite, const LatticeTime t)
+                                                     const VSiteType& vSite, const LatticeTimeStep t)
           {
             LatticeDensity rho = 0.;
             LatticeDensity rho_iolet = iolet.GetDensity(t);
@@ -387,7 +387,7 @@ namespace hemelb
           LatticeVelocity CalculateVirtualSiteVelocity(const geometry::LatticeData& latDat,
                                                        const InOutLet& iolet,
                                                        RSHV::Map& hydroVarsCache,
-                                                       const VSiteType& vSite, const LatticeTime t)
+                                                       const VSiteType& vSite, const LatticeTimeStep t)
           {
             /*
              *  Anstaz is u(x,y) = Ax + By + C
@@ -449,7 +449,7 @@ namespace hemelb
           }
 
           RSHV& GetHV(const geometry::LatticeData& latDat, RSHV::Map& hydroVarsCache,
-                      const site_t globalIdx, const LatticeTime t)
+                      const site_t globalIdx, const LatticeTimeStep t)
           {
             RSHV& ans = hydroVarsCache.at(globalIdx);
             /* Local sites have their entry in the cache set during collision

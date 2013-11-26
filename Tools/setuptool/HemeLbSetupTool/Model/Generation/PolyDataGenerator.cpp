@@ -566,6 +566,7 @@ int IntersectingLeafCounter(vtkOBBNode* polyNode, vtkOBBNode* cubeNode,
 		vtkMatrix4x4* transform, void *ptr_to_intersection_count) {
 	int &intersection_count = *static_cast<int*>(ptr_to_intersection_count);
 	intersection_count++;
+	return 0;
 }
 
 int PolyDataGenerator::BlockInsideOrOutsideSurface(const Block &block) {

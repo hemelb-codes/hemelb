@@ -9,7 +9,7 @@
 
 #include "constants.h"
 #include "geometry/SiteData.h"
-#include <cassert>
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -121,6 +121,9 @@ namespace hemelb
 
           case OUTLET_TYPE:
             return OUTLET;
+
+          case SOLID_TYPE:
+            throw Exception() << "Requesting collision type for solid site!";
         }
       }
       else
@@ -136,11 +139,15 @@ namespace hemelb
 
           case OUTLET_TYPE:
             return OUTLET | WALL;
+
+          case SOLID_TYPE:
+            throw Exception() << "Requesting collision type for solid site!";
+
         }
       }
 
+      throw Exception() << "Requesting collision type for solid site!";
       // The end of this function should never be reached. Adding return statement to please CRAY compiler
-      assert(false);
       return 0u;
     }
 

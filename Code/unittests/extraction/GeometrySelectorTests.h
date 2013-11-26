@@ -65,7 +65,7 @@ namespace hemelb
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(),
                                                             VoxelSize,
-                                                            latticeData->GetOrigin());
+                                                            PhysicalPosition::Zero());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,
                                                                               *unitConverter);

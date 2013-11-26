@@ -50,28 +50,28 @@ namespace hemelb
            * @param t time
            * @return velocity
            */
-          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
 
           /**
            * Get the amplitude of the zero average pressure gradient sine wave imposed.
            *
            * @return pressure gradient amplitude
            */
-          double& GetPressureGradientAmplitude();
+          const LatticePressureGradient& GetPressureGradientAmplitude() const;
 
           /**
            * Set the amplitude of the zero average pressure gradient sine wave imposed.
            *
            * @param pressGradAmp pressure gradient amplitude
            */
-          void SetPressureGradientAmplitude(const double& pressGradAmp);
+          void SetPressureGradientAmplitude(const LatticePressureGradient& pressGradAmp);
 
           /**
            * Get the period of the zero average pressure gradient sine wave imposed
            *
            * @return sinusoidal pressure profile period
            */
-          LatticeTime& GetPeriod();
+          const LatticeTime& GetPeriod() const;
 
           /**
            * Set the period of the zero average pressure gradient sine wave imposed
@@ -85,7 +85,7 @@ namespace hemelb
            *
            * @return Womersley number
            */
-          Dimensionless& GetWomersleyNumber();
+          const Dimensionless& GetWomersleyNumber() const;
 
           /**
            * Set the Womersley number characterising the pulsatile flow simulation
@@ -98,7 +98,7 @@ namespace hemelb
           typedef std::complex<double> Complex;
           static const Complex i;
           static const Complex iPowThreeHalves;
-          double pressureGradientAmplitude; ///< See class documentation
+          LatticePressureGradient pressureGradientAmplitude; ///< See class documentation
           LatticeTime period; ///< See class documentation
           double womersleyNumber; ///< See class documentation
       };

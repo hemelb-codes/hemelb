@@ -8,39 +8,51 @@
 # specifically made by you with University College London.
 # 
 
-import xdrlib
+from hemeTools.parsers.geometry.simple import ConfigLoader
+from hemeTools.parsers.geometry.generic import Domain
 import numpy as np
+
+class HeaderEndException(Exception):
+    pass
+
+class CountingLoader(ConfigLoader):
+    def __init__(self, filename):
+        self.GmyFileName = filename
+        self.Domain = Domain()
+        self.Domain.VoxelSize = 1.0
+        self.Domain.Origin = np.zeros(3, dtype=float)
+        self.File = file(self.GmyFileName)
+
+    def OnEndHeader(self):
+        raise HeaderEndException()
+    pass
 
 def CountFluidSites(filename, verbosity=1):
     summary = 'FileName = "{filename}"\n'
-    for var in 'StressType BlockCounts BlockSize VoxelSize Origin TotalFluidSites'.split():
+    for var in 'BlockCounts BlockSize TotalFluidSites'.split():
         summary += '\t%s = {%s}\n' % (var,var)
         continue
     
-    cfg = file(filename)
-    preamble = cfg.read(5*4 + 4*8)
-    un = xdrlib.Unpacker(preamble)
+    ldr = CountingLoader(filename)
+    try:
+        ldr.Load()
+    except HeaderEndException:
+        # OK
+        pass
+    else:
+        # Error
+        raise RunTimeError("The expected exception was not raised!")
     
-    StressType = un.unpack_uint()
-    BlockCounts = [un.unpack_uint() for i in xrange(3)]
-    BlockSize = un.unpack_uint()
-
+    BlockCounts = ldr.Domain.BlockCounts
+    BlockSize = ldr.Domain.BlockSize
     TotalBlocks = np.prod(BlockCounts)
-    VoxelSize = un.unpack_double()
-    Origin = [un.unpack_double() for i in xrange(3)]
     
-    header = cfg.read(2 * TotalBlocks * 4)
-    un = xdrlib.Unpacker(header)
-
-    FluidSitesPerBlock = np.zeros(TotalBlocks, dtype=np.uint)
-    BytesPerBlock = np.zeros(TotalBlocks, dtype=np.uint)
-
-    for i in xrange(TotalBlocks):
-        FluidSitesPerBlock[i] = un.unpack_uint()
-        BytesPerBlock[i] = un.unpack_uint()
+    FluidSitesPerBlock = ldr.Domain.BlockFluidSiteCounts
+    BytesPerBlock = ldr.BlockDataLength
+    UncompressedBytesPerBlock = ldr.BlockUncompressedDataLength
 
     TotalFluidSites = FluidSitesPerBlock.sum()
-
+    
     if verbosity == 0:
         return TotalFluidSites
     elif verbosity == 1:
@@ -48,9 +60,9 @@ def CountFluidSites(filename, verbosity=1):
 
     # verbosity >= 2
     summary = summary.format(**locals())
-    summary += '\t\tIndex\tSites\tBytes\n'
+    summary += '\t\tIndex\tSites\tZipped\tUnzipped\n'
     for i in xrange(TotalBlocks):
-        summary += '\t\t%d\t%d\t%d\n' % (i, FluidSitesPerBlock[i], BytesPerBlock[i])
+        summary += '\t\t%d\t%d\t%d\t%d\n' % (i, FluidSitesPerBlock[i], BytesPerBlock[i], UncompressedBytesPerBlock[i])
         continue
     
     return summary

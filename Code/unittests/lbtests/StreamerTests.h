@@ -457,13 +457,6 @@ namespace hemelb
               const Direction chosenDoubleWallDirection1 = 7;
               const Direction chosenDoubleWallDirection2 = 8;
 
-              // Calculate the next site out from the wall.
-              const site_t nextSiteAwayFromWall =
-                  streamer.GetStreamedIndex<lb::lattices::D3Q15> (chosenUnstreamedDirection)
-                      / lb::lattices::D3Q15::NUMVECTORS;
-              const geometry::Site<geometry::LatticeData>& nextSiteAway =
-                  latDat->GetSite(nextSiteAwayFromWall);
-
               // Enforce that there's a boundary in the wall direction.
               latDat->SetHasWall(chosenSite, chosenWallDirection);
               latDat->SetHasWall(chosenSite, chosenDoubleWallDirection1);
@@ -786,7 +779,7 @@ namespace hemelb
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     unitConverter);
+                                                     *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
 
@@ -899,7 +892,7 @@ namespace hemelb
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     unitConverter);
+                                                     *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
 

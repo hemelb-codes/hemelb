@@ -9,7 +9,7 @@ script with no arguments.
 import vtk
 from vtk.util import numpy_support
 import numpy as np
-from hemeTools.utils import *
+from hemeTools.utils import MatchCorresponding
 from hemeTools.parsers.extraction import ExtractedProperty
 
 # Work around limitations of the VTK bindings support (enum wrapping added in 5.8)
@@ -181,22 +181,15 @@ class ExtractedPropertyUnstructuredGridReader(vtk.vtkProgrammableFilter):
             # Insert it into the dictionary
             field_dict[name] = field
 
-        # Copy the data into the correct position in the output array
-        for i, point in enumerate(extracted_data):
-            cellId = self.OutputCellIdsByInputIndex[i]
-
-            # TODO: this needs another case for the stress. We should check
-            # what representation VTK uses for rank 3 tensors.            
-            for field_name,field in field_dict.items():
-                if field.GetNumberOfComponents() == 3:
-                    field.SetTuple3(cellId, *getattr(point, field_name))
-                else:
-                    field.SetTuple1(cellId, getattr(point, field_name))
-        
-        # Add the arrays to the output data object
-        for field in field_dict:
-            output.GetCellData().AddArray(field_dict[field])
-            
+        # Copy the data into the correct position in the output array and add 
+        # the array to the output.
+        # TODO: this needs a case for the stress. We should check what 
+        # representation VTK uses for rank 3 tensors. 
+        for field_name, field in field_dict.iteritems():
+            fieldArray = numpy_support.vtk_to_numpy(field)
+            fieldArray[self.OutputCellIdsByInputIndex] = getattr(extracted_data, field_name)
+            output.GetCellData().AddArray(field)
+                        
         return
     pass
 

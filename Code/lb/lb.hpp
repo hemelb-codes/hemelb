@@ -38,7 +38,7 @@ namespace hemelb
                           reporting::Timers &atimings,
                           geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
-          mParams(mState->GetTimeStepLength(), latDat->GetVoxelSize()), timings(atimings), 
+          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
           propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
@@ -132,7 +132,7 @@ namespace hemelb
     void LBM<LatticeType>::Initialise(vis::Control* iControl,
                                       iolets::BoundaryValues* iInletValues,
                                       iolets::BoundaryValues* iOutletValues,
-                                      util::UnitConverter* iUnits)
+                                      const util::UnitConverter* iUnits)
     {
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;

@@ -44,7 +44,6 @@ namespace hemelb
         Network* mNetwork;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
-        const lb::LbmParameters* mLbmParams;
         const unsigned inletCount;
         float MaxFramerate;
         char* xdrSendBuffer;

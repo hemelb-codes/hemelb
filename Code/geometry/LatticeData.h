@@ -96,25 +96,6 @@ namespace hemelb
         }
 
         /**
-         * Get the voxel size, the real-world length of a lattice unit
-         * @return
-         */
-        inline distribn_t GetVoxelSize() const
-        {
-          return voxelSize;
-        }
-
-        /**
-         * Get the real-world origin of the geometry (i.e. where the lattice point
-         * (0,0,0) maps to)
-         * @return
-         */
-        inline const util::Vector3D<distribn_t> GetOrigin() const
-        {
-          return origin;
-        }
-
-        /**
          * Get the number of sites along one block length
          * @return
          */
@@ -361,9 +342,7 @@ namespace hemelb
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks,
-                             site_t blockSize,
-                             distribn_t voxelSize,
-                             util::Vector3D<distribn_t> originIn);
+                             site_t blockSize);
 
         void ProcessReadSites(const Geometry& readResult);
 
@@ -573,8 +552,6 @@ namespace hemelb
         const lb::lattices::LatticeInfo& latticeInfo;
         util::Vector3D<site_t> blockCounts;
         site_t blockSize;
-        distribn_t voxelSize;
-        util::Vector3D<distribn_t> origin;
         util::Vector3D<site_t> sites;
         site_t sitesPerBlockVolumeUnit;
         site_t blockCount;

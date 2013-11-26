@@ -37,7 +37,8 @@ def GetVtkVersion():
 def DarwinGrep(results):
     lines = results.split('\n')
     # Ditch first line
-    lines.pop(0)
+    libpath = lines.pop(0)
+    libdir = os.path.dirname(libpath)
     
     for line in lines:
         # Split on whitespace
@@ -55,10 +56,18 @@ def DarwinGrep(results):
             
             # Do a string split rather than os.path.splitext as the latter splits on the last dot
             base, rest = base.split('.', 1)
-            print dir, base, " ", rest
-            if base.find('libvtkCommon') != -1:
-                return dir
             
+            if base.startswith('libvtkCommon'):
+                # it's the right directory. Now deal with OS X linking options
+                if dir.startswith('/'):
+                    # It's an absolute path - easy!
+                    ans = dir
+                elif dir.startswith('@loader_path'):
+                    # Relative to the library path
+                    ans = dir.replace('@loader_path', libdir)
+                else:
+                    raise ValueError("Can't deduce actual directory from otool output '{}'".format(line))
+                return os.path.normpath(ans)
         except ValueError:
             pass
         continue
@@ -130,7 +139,7 @@ def GetVtkLibDir():
 
 def GetBoostDir(hemeLbDir):
     boostDir = os.path.join(hemeLbDir, '../dependencies/include/') 
-    return boostDir
+    return os.path.normpath(boostDir)
 
 def GetVtkCompileFlags(vtkLibDir):
     # SET(VTK_REQUIRED_CXX_FLAGS " -Wno-deprecated -no-cpp-precomp")
@@ -178,7 +187,7 @@ int main(int count, char** v){
         try:
             with file('test.cpp', 'w') as cSrc:
                 cSrc.write(prog)
-            compile = 'g++ -c test.cpp'
+            compile = 'g++ -c test.cpp 2> /dev/null > /dev/null'
             returnCode = subprocess.call(compile, shell=True)
         finally:
             os.chdir(curDir)
@@ -207,7 +216,7 @@ if __name__ == "__main__":
     else:
         vtkIncludeDir = LibToInclude(vtkLibDir)
     include_dirs = [vtkIncludeDir, HemeLbDir, BoostDir]
-    print include_dirs
+    
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()

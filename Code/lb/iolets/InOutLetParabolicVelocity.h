@@ -23,14 +23,13 @@ namespace hemelb
           InOutLetParabolicVelocity();
           virtual ~InOutLetParabolicVelocity();
           InOutLet* Clone() const;
-          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const;
+          LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
 
-          LatticeSpeed& GetMaxSpeed()
+          const LatticeSpeed& GetMaxSpeed() const
           {
             return maxSpeed;
           }
-
-          void SetMaxSpeed(LatticeSpeed v)
+          void SetMaxSpeed(const LatticeSpeed& v)
           {
             maxSpeed = v;
           }
