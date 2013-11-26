@@ -25,7 +25,7 @@ namespace hemelb
                                      geometry::LatticeData* latticeData,
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
                                      SimulationState* simulationState,
-                                     util::UnitConverter* units) :
+                                     const util::UnitConverter& units) :
         net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
             state(simulationState), unitConverter(units)
       {
@@ -38,7 +38,7 @@ namespace hemelb
           // First create a copy of all iolets
           iolets::InOutLet* iolet = (incoming_iolets[ioletIndex])->Clone();
 
-          iolet->Initialise(unitConverter);
+          iolet->Initialise(&unitConverter);
 
           iolets.push_back(iolet);
 
@@ -109,24 +109,16 @@ namespace hemelb
         // For each inlet/outlet there is an array of length equal to total number of procs.
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
-        proc_t processorCount = net::NetworkTopology::Instance()->GetProcessorCount();
-        int *processorsNeedingIoletFlags = new int[processorCount];
 
-        MPI_Gather(&isIOletOnThisProc,
-                   1,
-                   net::MpiDataType(isIOletOnThisProc),
-                   processorsNeedingIoletFlags,
-                   1,
-                   net::MpiDataType(processorsNeedingIoletFlags[0]),
-                   GetBCProcRank(),
-                   net::NetworkTopology::Instance()->GetComms());
+        const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+        std::vector<int> processorsNeedingIoletFlags = comms.Gather(isIOletOnThisProc, GetBCProcRank());
 
         if (IsCurrentProcTheBCProc())
         {
           // Now we have an array for each IOlet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
           // of ints which store a list of processor ranks.
-          for (proc_t process = 0; process < processorCount; process++)
+          for (proc_t process = 0; process < processorsNeedingIoletFlags.size(); ++process)
           {
             if (processorsNeedingIoletFlags[process])
             {
@@ -134,9 +126,6 @@ namespace hemelb
             }
           }
         }
-
-        // Clear up
-        delete[] processorsNeedingIoletFlags;
 
         return processorsNeedingIoletList; // return by copy
       }
@@ -205,17 +194,17 @@ namespace hemelb
       }
 
       // This assumes the program has already waited for comms to finish before
-      distribn_t BoundaryValues::GetBoundaryDensity(const int index)
+      LatticeDensity BoundaryValues::GetBoundaryDensity(const int index)
       {
         return iolets[index]->GetDensity(state->Get0IndexedTimeStep());
       }
 
-      distribn_t BoundaryValues::GetDensityMin(int iBoundaryId)
+      LatticeDensity BoundaryValues::GetDensityMin(int iBoundaryId)
       {
         return iolets[iBoundaryId]->GetDensityMin();
       }
 
-      distribn_t BoundaryValues::GetDensityMax(int iBoundaryId)
+      LatticeDensity BoundaryValues::GetDensityMax(int iBoundaryId)
       {
         return iolets[iBoundaryId]->GetDensityMax();
       }

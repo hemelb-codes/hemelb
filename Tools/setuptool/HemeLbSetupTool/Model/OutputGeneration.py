@@ -9,7 +9,6 @@
 
 import numpy as np
 import os.path
-from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
     vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkProgrammableFilter, \
@@ -26,6 +25,7 @@ from vmtk.vtkvmtk import vtkvmtkBoundaryReferenceSystems
 from .Iolets import Inlet, Outlet, Iolet
 from .Vector import Vector
 from .Profile import Profile, metre
+from .XmlWriter import XmlWriter
 
 import Generation
 import pdb
@@ -42,19 +42,19 @@ def DVfromV(v):
 class GeometryGenerator(object):
 
     def __init__(self):
-        self.skipNonIntersectingBlocks = False
+        self.skipNonIntersectingBlocks = True
 
     def _MakeIoletProxies(self):
         # Construct the Iolet structs
         nIn = 0
         nOut = 0
         ioletProxies = []
-        for io in self.profile.Iolets:
+        for io in self._profile.Iolets:
             proxy = Generation.Iolet()
 
-            proxy.Centre = DVfromV(io.Centre) / self.profile.VoxelSize
+            proxy.Centre = DVfromV(io.Centre) / self._profile.VoxelSize
             proxy.Normal = DVfromV(io.Normal)
-            proxy.Radius = io.Radius / self.profile.VoxelSize
+            proxy.Radius = io.Radius / self._profile.VoxelSize
 
             if isinstance(io, Inlet):
                 io.Id = proxy.Id = nIn
@@ -71,11 +71,10 @@ class GeometryGenerator(object):
 
     def _SetCommonGeneratorProperties(self):
         self.generator.SetOutputGeometryFile(
-            str(self.profile.OutputGeometryFile))
+            str(self._profile.OutputGeometryFile))
         # We need to keep a reference to this to make sure it's not GC'ed
         self.ioletProxies = self._MakeIoletProxies()
         self.generator.SetIolets(self.ioletProxies)
-        self.generator.SetVoxelSizeMetres(self.profile.VoxelSizeMetres)
         return
 
     def Execute(self):
@@ -84,7 +83,7 @@ class GeometryGenerator(object):
         t = Timer()
         t.Start()
         self.generator.Execute(self.skipNonIntersectingBlocks)
-        XmlWriter(self.profile).Write()
+        XmlWriter(self).Write()
         t.Stop()
         print "Setup time: %f s" % t.GetTime()
         return
@@ -99,13 +98,12 @@ class PolyDataGenerator(GeometryGenerator):
         GeometryGenerator object.
         """
         GeometryGenerator.__init__(self)
-        self.profile = profile
+        self._profile = profile
         self.generator = Generation.PolyDataGenerator()
         self._SetCommonGeneratorProperties()
         self.generator.SetSeedPointWorking(
             profile.SeedPoint.x / profile.VoxelSize,
-            profile.SeedPoint.y /
-            profile.VoxelSize,
+            profile.SeedPoint.y / profile.VoxelSize,
             profile.SeedPoint.z / profile.VoxelSize)
 
         # This will create the pipeline for the clipped surface
@@ -122,15 +120,80 @@ class PolyDataGenerator(GeometryGenerator):
             clipper.ClippedSurfaceSource.GetOutputPort())
 
         # Uncomment this an insert the output path to debug pipeline construction
-        # write = StageWriter('/path/to/stage/output/directory').WriteOutput
+        # write = StageWriter('/Users/rupert/working/compare/aneurysm').WriteOutput
+        # i = 0
         # for alg in getpipeline(transformer):
-        #    write(alg)
+        #     print i
+        #     i += 1
+        #     print alg
+        #     write(alg)
 
         transformer.Update()
         self.ClippedSurface = transformer.GetOutput()
         self.generator.SetClippedSurface(self.ClippedSurface)
+        
+        originWorking, nSites = self._ComputeOriginWorking()
+        self.generator.SetOriginWorking(*(float(x) for x in originWorking))
+        self.generator.SetSiteCounts(*(int(x) for x in nSites))
+        self.OriginMetres = Vector(originWorking * self.VoxelSizeMetres) 
         return
+    
+    def __getattr__(self, attr):
+        """Delegate unknown attribute access to profile object.
+        """
+        return getattr(self._profile, attr)
+    
+    def _ComputeOriginWorking(self):
+        """
+        Here we are setting the location of our domain's origin in the input
+        space and the number of sites along each axis. Sites will all have
+        positions of:
+               Origin + Index * VoxelSize,
+        where:
+               0 <= Index[i] < nSites[i]
+        
+        We also require that there be at least one solid site outside the fluid
+        sites. For the case of axis-aligned faces which are an integer number
+        of VoxelSizes apart (e.g. synthetic datasets!) this can cause numerical
+        issues for the classifier if all the points that are "outside" are very
+        close to the surface so we further require that these sites are a
+        little further from the bounding box of the PolyData.
+        """
+        SurfaceBoundsWorking = self.ClippedSurface.GetBounds()
+        OriginWorking = np.zeros(3, dtype=float)
+        nSites = np.zeros(3, dtype=np.uint)
+        
+        for i in xrange(3):
+            # Bounds of the vtkPolyData
+            min = SurfaceBoundsWorking[2 * i]
+            max = SurfaceBoundsWorking[2 * i + 1]
+            size = max - min
+            
+            nSites[i] = int(size)
+            # Since int() truncates, we have:
+            #         0 < size/VoxelSize - nSites < 1.
+            # Hence we need nSites + 1 links and therefore nSites + 2 sites
+            nSites[i] += 2
+            
+            # The extra distance from size to the distance from x[0] to x[nSites -1]
+            extra = (nSites[i] - 1) - size
 
+            # To avoid numerical problems with the classifier, ensure that the
+            # sites just outside the fluid region are at least 1% of a VoxelSize
+            # away.
+         
+            if (extra < 0.01):
+                # They weren't, so add one to the # sites and recalculate extra
+                nSites[i] += 1
+                extra = (nSites[i] - 1) - size
+                pass
+
+            # Now ensure this extra space is equally balanced before & after the
+            # fluid region with the placement of the first site.
+            OriginWorking[i] = min - 0.5 * extra
+            continue
+        
+        return OriginWorking, nSites
     pass
 
 
@@ -149,11 +212,11 @@ class CylinderGenerator(GeometryGenerator):
         self.InletPressure = InletPressure
         self.OutletPressure = OutletPressure
 
-        self.profile = Profile()
-        self.profile.StlFileUnitId = Profile._UnitChoices.index(metre)
-        self.profile.VoxelSize = VoxelSizeMetres
-        self.profile.OutputGeometryFile = OutputGeometryFile
-        self.profile.OutputXmlFile = OutputXmlFile
+        self._profile = Profile()
+        self._profile.StlFileUnitId = Profile._UnitChoices.index(metre)
+        self._profile.VoxelSize = VoxelSizeMetres
+        self._profile.OutputGeometryFile = OutputGeometryFile
+        self._profile.OutputXmlFile = OutputXmlFile
         self._MakeIolets()
 
         self.generator = Generation.CylinderGenerator()
@@ -174,7 +237,7 @@ class CylinderGenerator(GeometryGenerator):
         inlet.Radius = self.RadiusMetres
         if self.InletPressure is not None:
             inlet.Pressure = self.InletPressure
-        self.profile.Iolets.append(inlet)
+        self._profile.Iolets.append(inlet)
 
         outlet = Outlet()
         outlet.Centre = Vector(
@@ -183,7 +246,7 @@ class CylinderGenerator(GeometryGenerator):
         outlet.Radius = self.RadiusMetres
         if self.OutletPressure is not None:
             outlet.Pressure = self.OutletPressure
-        self.profile.Iolets.append(outlet)
+        self._profile.Iolets.append(outlet)
 
         return
 
@@ -208,11 +271,11 @@ class SquareDuctGenerator(GeometryGenerator):
         self.InletPressure = InletPressure
         self.OutletPressure = OutletPressure
 
-        self.profile = Profile()
-        self.profile.StlFileUnitId = Profile._UnitChoices.index(metre)
-        self.profile.VoxelSize = VoxelSizeMetres
-        self.profile.OutputGeometryFile = OutputGeometryFile
-        self.profile.OutputXmlFile = OutputXmlFile
+        self._profile = Profile()
+        self._profile.StlFileUnitId = Profile._UnitChoices.index(metre)
+        self._profile.VoxelSize = VoxelSizeMetres
+        self._profile.OutputGeometryFile = OutputGeometryFile
+        self._profile.OutputXmlFile = OutputXmlFile
         self._MakeIolets()
 
         self.generator = Generation.SquareDuctGenerator()
@@ -229,31 +292,31 @@ class SquareDuctGenerator(GeometryGenerator):
         # Construct the Iolet structs
         inlet = Inlet()
         c = [0., 0., 0.]
-        c[self.OpenAxis] = -0.5 * self.LengthVoxels * self.profile.VoxelSize
+        c[self.OpenAxis] = -0.5 * self.LengthVoxels * self._profile.VoxelSize
         inlet.Centre = Vector(*c)
         
         n = Generation.DoubleVector()
         n[self.OpenAxis] = 1.
         inlet.Normal = Vector(n.x, n.y, n.z)
         
-        inlet.Radius = self.SideVoxels * self.profile.VoxelSizeMetres
+        inlet.Radius = self.SideVoxels * self._profile.VoxelSizeMetres
         if self.InletPressure is not None:
             inlet.Pressure = self.InletPressure
-        self.profile.Iolets.append(inlet)
+        self._profile.Iolets.append(inlet)
 
         outlet = Outlet()
         c = [0., 0., 0.]
-        c[self.OpenAxis] = 0.5 * self.LengthVoxels * self.profile.VoxelSize
+        c[self.OpenAxis] = 0.5 * self.LengthVoxels * self._profile.VoxelSize
         outlet.Centre = Vector(*c)
         
         n = Generation.DoubleVector()
         n[self.OpenAxis] = -1.
         outlet.Normal = Vector(n.x, n.y, n.z)
         
-        outlet.Radius = self.SideVoxels * self.profile.VoxelSizeMetres
+        outlet.Radius = self.SideVoxels * self._profile.VoxelSizeMetres
         if self.OutletPressure is not None:
             outlet.Pressure = self.OutletPressure
-        self.profile.Iolets.append(outlet)
+        self._profile.Iolets.append(outlet)
 
         return
 
@@ -563,112 +626,6 @@ class PolyDataCloser(vtkProgrammableFilter):
     pass
 
 
-class XmlWriter(object):
-
-    def __init__(self, profile):
-        self.profile = profile
-        return
-
-    @staticmethod
-    def indent(elem, level=0):
-        i = "\n" + level * "  "
-        if len(elem):
-            if not elem.text or not elem.text.strip():
-                elem.text = i + "  "
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-            for elem in elem:
-                XmlWriter.indent(elem, level + 1)
-            if not elem.tail or not elem.tail.strip():
-                elem.tail = i
-        else:
-            if level and (not elem.tail or not elem.tail.strip()):
-                elem.tail = i
-        return
-
-    def Write(self):
-        self.root = Element('hemelbsettings')
-        self.DoSimulation()
-        self.DoGeometry()
-        self.DoIolets()
-        self.DoVisualisation()
-
-        self.indent(self.root)
-
-        xmlFile = file(self.profile.OutputXmlFile, 'wb')
-        xmlFile.write('<?xml version="1.0" ?>\n')
-        ElementTree(self.root).write(xmlFile)
-        return
-
-    def DoSimulation(self):
-        sim = SubElement(self.root, 'simulation')
-        sim.set('cycles', str(self.profile.Cycles))
-        sim.set('cyclesteps', str(self.profile.Steps))
-        sim.set('stresstype', str(1))
-        return
-
-    def DoGeometry(self):
-        geom = SubElement(self.root, 'geometry')
-
-        data = SubElement(geom, 'datafile')
-        data.set('path', os.path.relpath(self.profile.OutputGeometryFile,
-                                         os.path.split(self.profile.OutputXmlFile)[0]))
-        return
-
-    def DoIolets(self):
-        inlets = SubElement(self.root, 'inlets')
-        outlets = SubElement(self.root, 'outlets')
-
-        for io in self.profile.Iolets:
-            if isinstance(io, Inlet):
-                iolet = SubElement(inlets, 'inlet')
-            elif isinstance(io, Outlet):
-                iolet = SubElement(outlets, 'outlet')
-            else:
-                continue
-            pressure = SubElement(iolet, 'pressure')
-            pressure.set('mean', str(io.Pressure.x))
-            pressure.set('amplitude', str(io.Pressure.y))
-            pressure.set('phase', str(io.Pressure.z))
-
-            normal = SubElement(iolet, 'normal')
-            normal.set('x', str(io.Normal.x))
-            normal.set('y', str(io.Normal.y))
-            normal.set('z', str(io.Normal.z))
-
-            position = SubElement(iolet, 'position')
-            position.set(
-                'x', str(io.Centre.x * self.profile.StlFileUnit.SizeInMetres))
-            position.set(
-                'y', str(io.Centre.y * self.profile.StlFileUnit.SizeInMetres))
-            position.set(
-                'z', str(io.Centre.z * self.profile.StlFileUnit.SizeInMetres))
-            continue
-        return
-
-    def DoVisualisation(self):
-        vis = SubElement(self.root, 'visualisation')
-
-        centre = SubElement(vis, 'centre')
-        centre.set('x', '0.0')
-        centre.set('y', '0.0')
-        centre.set('z', '0.0')
-
-        orientation = SubElement(vis, 'orientation')
-        orientation.set('longitude', '45.0')
-        orientation.set('latitude', '45.0')
-
-        display = SubElement(vis, 'display')
-        display.set('zoom', '1.0')
-        display.set('brightness', '0.03')
-
-        range = SubElement(vis, 'range')
-        range.set('maxvelocity', str(0.1))
-        range.set('maxstress', str(0.1))
-
-        return
-
-    pass
 
 # Debugging helpers
 

@@ -76,7 +76,7 @@ namespace hemelb
           const Screen& screen;
           const Viewpoint& viewpoint;
           const VisSettings& visSettings;
-          const lb::MacroscopicPropertyCache& propertyCache;
+          //const lb::MacroscopicPropertyCache& propertyCache;
 
           std::map<proc_t, NeighbouringProcessor> neighbouringProcessors;
           ParticleManager particleManager;

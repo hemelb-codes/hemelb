@@ -27,17 +27,6 @@ public:
 	virtual ~GeometryGenerator();
 	void Execute(bool skipNonIntersectingBlocks) throw (GenerationError);
 	
-	inline double GetVoxelSizeMetres(void) {
-		return this->VoxelSizeMetres;
-	}
-	inline void SetVoxelSizeMetres(double val) {
-		this->VoxelSizeMetres = val;
-	}
-
-	inline double GetVoxelSizeWorking(void) {
-		return 1;
-	}
-
 	inline std::string GetOutputGeometryFile(void) {
 		return this->OutputGeometryFile;
 	}
@@ -50,6 +39,18 @@ public:
 	}
 	inline void SetIolets(std::vector<Iolet*> iv) {
 		this->Iolets = std::vector<Iolet*>(iv);
+	}
+
+	inline void SetOriginWorking(double x, double y, double z) {
+		this->OriginWorking[0] = x;
+		this->OriginWorking[1] = y;
+		this->OriginWorking[2] = z;
+	}
+
+	inline void SetSiteCounts(unsigned x, unsigned y, unsigned z) {
+		this->SiteCounts[0] = x;
+		this->SiteCounts[1] = y;
+		this->SiteCounts[2] = z;
 	}
 
 	/**
@@ -72,7 +73,8 @@ protected:
 	void WriteSolidSite(BlockWriter& blockWriter, Site& site);
 	void WriteFluidSite(BlockWriter& blockWriter, Site& site);
 	// Members set from outside to initialise
-	double VoxelSizeMetres;
+	double OriginWorking[3];
+	unsigned SiteCounts[3];
 	std::string OutputGeometryFile;
 	std::vector<Iolet*> Iolets;
 	virtual int BlockInsideOrOutsideSurface(const Block &block) = 0;

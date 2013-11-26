@@ -26,7 +26,7 @@ namespace hemelb
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork,
                                            unsigned inletCountIn) :
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams), inletCount(inletCountIn), MaxFramerate(25.0)
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), inletCount(inletCountIn), MaxFramerate(25.0)
     {
       xdrSendBuffer = new char[maxSendSize];
 

@@ -24,7 +24,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFile::InOutLetFile() :
-        InOutLet(), densityTable(0)
+        InOutLet(), densityTable(0), units(NULL)
       {
 
       }
@@ -40,12 +40,15 @@ namespace hemelb
       {
 
       }
-
+      void InOutLetFile::Initialise(const util::UnitConverter* unitConverter)
+      {
+        units = unitConverter;
+      }
       // This reads in a file and interpolates between points to generate a cycle
       // IMPORTANT: to allow reading in data taken at irregular intervals the user
       // needs to make sure that the last point in the file coincides with the first
       // point of a new cycle for a continuous trace.
-      void InOutLetFile::CalculateTable(LatticeTime totalTimeSteps)
+      void InOutLetFile::CalculateTable(LatticeTimeStep totalTimeSteps)
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
@@ -71,24 +74,23 @@ namespace hemelb
 
         // Must convert into vectors since LinearInterpolate works on a pair of vectors
         // Determine min and max pressure on the way
-        pressureMinPhysical = timeValuePairs.begin()->second;
-        pressureMaxPhysical = timeValuePairs.begin()->second;
+        PhysicalPressure pMin = timeValuePairs.begin()->second;
+        PhysicalPressure pMax = timeValuePairs.begin()->second;
         for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin(); entry
             != timeValuePairs.end(); entry++)
         {
-          pressureMinPhysical = util::NumericalFunctions::min(pressureMinPhysical, entry->second);
-          pressureMaxPhysical = util::NumericalFunctions::max(pressureMaxPhysical, entry->second);
+          pMin = util::NumericalFunctions::min(pMin, entry->second);
+          pMax = util::NumericalFunctions::max(pMax, entry->second);
           times.push_back(entry->first);
           values.push_back(entry->second);
         }
+        densityMin = units->ConvertPressureToLatticeUnits(pMin) / Cs2;
+        densityMax = units->ConvertPressureToLatticeUnits(pMax) / Cs2;
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
-        {
-          log::Logger::Log<log::Critical, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
-                                                           pressureFilePath.c_str());
-          exit(0);
-        }
+          throw Exception() << "Last point's value does not match the first point's value in " <<pressureFilePath;
+
         // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
         densityTable.resize(totalTimeSteps + 1);
         // Now convert these vectors into arrays using linear interpolation

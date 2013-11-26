@@ -14,6 +14,7 @@
 #include "units.h"
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
+#include "Exception.h"
 
 namespace hemelb
 {
@@ -53,7 +54,7 @@ namespace hemelb
         template<class InputType>
         InputType ConvertStressToPhysicalUnits(InputType stress) const
         {
-          return stress * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          return stress * latticePressure;
         }
 
         /**
@@ -65,7 +66,7 @@ namespace hemelb
          */
         Matrix3D ConvertFullStressTensorToPhysicalUnits(Matrix3D stressTensor) const
         {
-          Matrix3D ret = stressTensor * (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+          Matrix3D ret = stressTensor * latticePressure;
           ret.addDiagonal(REFERENCE_PRESSURE_mmHg * mmHg_TO_PASCAL);
           return ret;
         }
@@ -112,10 +113,9 @@ namespace hemelb
         }
         double ConvertPressureDifferenceToPhysicalUnits(distribn_t pressure_grad) const;
 
-        PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTime time_step) const
-        {
-          return static_cast<double>(time_step) * timestepTime;
-        }
+        LatticeTime ConvertTimeToLatticeUnits(const PhysicalTime& t) const;
+        PhysicalTime ConvertTimeToPhysicalUnits(const LatticeTime& t) const;
+        PhysicalTime ConvertTimeStepToPhysicalUnits(LatticeTimeStep time_step) const;
 
         /**
          * Converts a shear rate in lattice units into physical units
@@ -124,22 +124,80 @@ namespace hemelb
          */
         PhysicalReciprocalTime ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const;
 
-        bool Convert(std::string units, double& value) const;
+        const PhysicalDistance& GetVoxelSize() const
+        {
+          return latticeDistance;
+        }
 
-        PhysicalPosition GetLatticeOrigin() const
+        const PhysicalPosition& GetLatticeOrigin() const
         {
           return latticeOrigin;
         }
         LatticePosition GetPhysicalOrigin() const
         {
-          return LatticePosition() - (latticeOrigin / voxelSize);
+          return LatticePosition() - (latticeOrigin / latticeDistance);
+        }
+
+        template <typename T>
+        T ConvertToLatticeUnits(std::string units, const T& value) const
+        {
+          double scale_factor;
+
+          if (units == "m")
+          {
+            scale_factor = latticeDistance;
+          }
+          else if (units == "m/s/s")
+          {
+            scale_factor = latticeDistance/ (latticeTime * latticeTime);
+          }
+          else if (units == "N")
+          {
+            // F = ma so Force = mass * length / time / time and Newton = Kg * metre / second / second
+            scale_factor = latticeMass * latticeDistance / (latticeTime * latticeTime);
+          }
+          else if (units == "s")
+          {
+            scale_factor = latticeTime;
+          }
+          else if (units == "rad" || units == "dimensionless")
+          {
+            scale_factor = 1.;
+          }
+          else if (units == "m/s")
+          {
+            scale_factor = latticeDistance / latticeTime;
+          }
+          else if (units == "mmHg")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeTime * latticeTime) / mmHg_TO_PASCAL;
+          }
+          else if (units == "Pa")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeTime * latticeTime);
+          }
+          else if (units == "mmHg/m")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime * latticeTime) / mmHg_TO_PASCAL;
+          }
+          else if (units == "Pa/m")
+          {
+            scale_factor = latticeMass / (latticeDistance * latticeDistance * latticeTime * latticeTime);
+          }
+          else
+          {
+            throw Exception() << "Unknown units '" << units << "'";
+          }
+          return value / scale_factor;
         }
 
       private:
-        PhysicalDistance voxelSize; //!< Lattice displacement in physical units.
-        PhysicalTime timestepTime;
-        PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
-        PhysicalPosition latticeOrigin;
+        const PhysicalDistance latticeDistance; //!< Lattice displacement in physical units.
+        const PhysicalTime latticeTime;
+        const PhysicalMass latticeMass;
+        const PhysicalSpeed latticeSpeed; //!< Lattice displacement length divided by time step.
+        const PhysicalPosition latticeOrigin;
+        const PhysicalPressure latticePressure;
     };
 
   }

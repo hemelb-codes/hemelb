@@ -22,11 +22,29 @@ namespace hemelb
 {
   namespace configuration
   {
+    template<typename T>
+    void GetDimensionalValue(const io::xml::Element& elem, const std::string& units, T& value)
+    {
+      const std::string& got = elem.GetAttributeOrThrow("units");
+      if (got != units)
+      {
+        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
+            << units << "', got '" << got << "'";
+      }
+
+      elem.GetAttributeOrThrow("value", value);
+    }
+
     class SimConfig
     {
       public:
+        static SimConfig* New(const std::string& path);
+      protected:
         SimConfig(const std::string& path);
-        ~SimConfig();
+        void Init();
+
+      public:
+        virtual ~SimConfig();
 
         void Save(std::string path); // TODO this method should be able to be CONST
         // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
@@ -75,17 +93,25 @@ namespace hemelb
         {
           return dataFilePath;
         }
-        LatticeTime GetTotalTimeSteps() const
+        LatticeTimeStep GetTotalTimeSteps() const
         {
           return totalTimeSteps;
         }
-        LatticeTime GetWarmUpSteps() const
+        LatticeTimeStep GetWarmUpSteps() const
         {
           return warmUpSteps;
         }
         PhysicalTime GetTimeStepLength() const
         {
-          return timeStepLength;
+          return timeStepSeconds;
+        }
+        PhysicalDistance GetVoxelSize() const
+        {
+          return voxelSizeMetres;
+        }
+        PhysicalPosition GetGeometryOrigin() const
+        {
+          return geometryOriginMetres;
         }
         unsigned int PropertyOutputCount() const
         {
@@ -115,11 +141,39 @@ namespace hemelb
          */
         LatticeDensity GetInitialPressure() const;
 
+        const util::UnitConverter& GetUnitConverter() const;
+
       protected:
         /**
          * Protected default ctor to allow derived test fixture classes to create mocks.
          */
         SimConfig();
+        /**
+         * Create the unit converter - virtual so that mocks can override it.
+         */
+        virtual void CreateUnitConverter();
+
+        /**
+         * Check that the iolet is OK for the CMake configuration.
+         * @param ioletEl
+         * @param requiredBC
+         */
+        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl, const std::string& requiredBC);
+
+        template<typename T>
+        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, T& value)
+        {
+          GetDimensionalValue(elem, units, value);
+          value = unitConverter->ConvertToLatticeUnits(units, value);
+        }
+
+        template<typename T>
+        T GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units)
+        {
+          T ans;
+          GetDimensionalValueInLatticeUnits(elem, units, ans);
+          return ans;
+        }
 
       private:
         void DoIO(const io::xml::Element xmlNode);
@@ -133,24 +187,38 @@ namespace hemelb
         lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetMultiscale
+            * DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
 
         lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetParabolicVelocity
+            * DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
         /**
-         * Reads/writes Womersley velocity inlet from/to XML file.
+         * Reads a Womersley velocity iolet definition from the XML config file and returns
+         * an InOutLetWomersleyVelocity object
          *
-         * @param parent parent XML element
-         * @param isLoading whether the method is reading or writing
-         * @param value womersley iolet instance to be configured
+         * @param ioletEl in memory representation of <inlet> or <outlet> xml element
+         * @return InOutLetWomersleyVelocity object
          */
-        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetWomersleyVelocity
+            * DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+
+        /**
+         * Reads a file velocity iolet definition from the XML config file and returns
+         * an InOutLetFileVelocity object
+         *
+         * @param ioletEl in memory representation of <inlet> or <outlet> xml element
+         * @return InOutLetFileVelocity object
+         */
+        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
-        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
-        extraction::StraightLineGeometrySelector* DoIOForLineGeometry(const io::xml::Element& xmlNode);
+        extraction::PropertyOutputFile
+            * DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
+        extraction::StraightLineGeometrySelector
+            * DoIOForLineGeometry(const io::xml::Element& xmlNode);
         extraction::PlaneGeometrySelector* DoIOForPlaneGeometry(const io::xml::Element&);
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
@@ -175,17 +243,19 @@ namespace hemelb
          * True if the file has a colloids section.
          */
         bool hasColloidSection;
-        PhysicalPressure initialPressure; ///< Pressure used to initialise the domain
+        PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
         // instantiated.
         std::vector<lb::iolets::InOutLet*> inlets;
         std::vector<lb::iolets::InOutLet*> outlets;
-        double timeStepLength;
+        PhysicalTime timeStepSeconds;
         unsigned long totalTimeSteps;
         unsigned long warmUpSteps;
-
+        PhysicalDistance voxelSizeMetres;
+        PhysicalPosition geometryOriginMetres;
+        util::UnitConverter* unitConverter;
     };
   }
 }

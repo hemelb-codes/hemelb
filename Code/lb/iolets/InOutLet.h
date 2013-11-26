@@ -103,7 +103,7 @@ namespace hemelb
            * Carry out communication necessary
            * @param isIoProcess Is the process the master process?
            */
-          virtual void DoComms(bool isIoProcess, const LatticeTime timeStep)
+          virtual void DoComms(bool isIoProcess, const LatticeTimeStep timeStep)
           {
             // pass
           }
@@ -111,53 +111,52 @@ namespace hemelb
            * Set up the Iolet.
            * @param units a UnitConverter instance.
            */
-          void Initialise(const util::UnitConverter* unitConverter)
+          virtual void Initialise(const util::UnitConverter* unitConverter)
           {
-            units = unitConverter;
           }
 
           /***
            * Get the minimum density, in lattice units
            * @return minimum density, in lattice units
            */
-          LatticePressure GetDensityMin() const
-          {
-            return units->ConvertPressureToLatticeUnits(GetPressureMin()) / Cs2;
-          }
+          virtual LatticeDensity GetDensityMin() const = 0;
 
           /***
            * Get the maximum density, in lattice units
            * @return maximum density, in lattice units
            */
-          LatticePressure GetDensityMax() const
+          virtual LatticeDensity GetDensityMax() const = 0;
+
+          /***
+           * Get the minimum pressure, in lattice units
+           * @return
+           */
+          LatticePressure GetPressureMin() const
           {
-            return units->ConvertPressureToLatticeUnits(GetPressureMax()) / Cs2;
+            return GetDensityMin() * Cs2;
           }
 
           /***
-           * Get the minimum pressure, in physical units
+           * Get the maximum pressure, in lattice units
            * @return
            */
-          virtual PhysicalPressure GetPressureMin() const =0;
-
-          /***
-           * Get the maximum pressure, in physical units
-           * @return
-           */
-          virtual PhysicalPressure GetPressureMax() const = 0;
+          LatticePressure GetPressureMax() const
+          {
+            return GetDensityMax() * Cs2;
+          }
 
           /// @todo: #632 This method must be moved to InOutletPressure
-          virtual LatticeDensity GetDensity(LatticeTime time_step) const = 0;
+          virtual LatticeDensity GetDensity(LatticeTimeStep time_step) const = 0;
 
           /// @todo: #632 Is this method ever implemented not empty?
           virtual void Reset(SimulationState& state) = 0;
 
-          const PhysicalPosition& GetPosition() const
+          const LatticePosition& GetPosition() const
           {
             return position;
           }
 
-          void SetPosition(PhysicalPosition& x)
+          void SetPosition(const LatticePosition& x)
           {
             position = x;
           }
@@ -197,9 +196,8 @@ namespace hemelb
 
         protected:
           LatticeDensity minimumSimulationDensity;
-          PhysicalPosition position;
+          LatticePosition position;
           util::Vector3D<Dimensionless> normal;
-          const util::UnitConverter* units;
           BoundaryComms* comms;
           IoletExtraData* extraData;
           friend class IoletExtraData;

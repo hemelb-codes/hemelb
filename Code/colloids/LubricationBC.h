@@ -23,7 +23,7 @@ namespace hemelb
         static BoundaryCondition* ReadFromXml(io::xml::Element& xml)
         {
           LatticeDistance effectiveRange = 1.0;
-          const std::string& rangestr = xml.GetAttributeOrThrow("effectiveRange", effectiveRange);
+          xml.GetAttributeOrThrow("effectiveRange", effectiveRange);
           return new LubricationBC(effectiveRange);
         }
 

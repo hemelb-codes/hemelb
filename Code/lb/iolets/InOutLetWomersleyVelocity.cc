@@ -19,10 +19,9 @@ namespace hemelb
       }
 
       LatticeVelocity InOutLetWomersleyVelocity::GetVelocity(const LatticePosition& x,
-                                                             const LatticeTime t) const
+                                                             const LatticeTimeStep t) const
       {
-        LatticePosition posLat = units->ConvertPositionToLatticeUnits(position);
-        LatticePosition displ = x - posLat;
+        LatticePosition displ = x - position;
         LatticeDistance z = displ.Dot(normal);
         Dimensionless r = sqrt(displ.GetMagnitudeSquared() - z * z);
 
@@ -38,17 +37,17 @@ namespace hemelb
         return normal * -velocityMagnitude;
       }
 
-      double& InOutLetWomersleyVelocity::GetPressureGradientAmplitude()
+      const LatticePressureGradient& InOutLetWomersleyVelocity::GetPressureGradientAmplitude() const
       {
         return pressureGradientAmplitude;
       }
 
-      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(const double& pressGradAmp)
+      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(const LatticePressureGradient& pressGradAmp)
       {
         pressureGradientAmplitude = pressGradAmp;
       }
 
-      LatticeTime& InOutLetWomersleyVelocity::GetPeriod()
+      const LatticeTime& InOutLetWomersleyVelocity::GetPeriod() const
       {
         return period;
       }
@@ -58,7 +57,7 @@ namespace hemelb
         period = per;
       }
 
-      Dimensionless& InOutLetWomersleyVelocity::GetWomersleyNumber()
+      const Dimensionless& InOutLetWomersleyVelocity::GetWomersleyNumber() const
       {
         return womersleyNumber;
       }

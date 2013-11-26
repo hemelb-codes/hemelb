@@ -14,6 +14,8 @@ namespace hemelb
 {
   namespace geometry
   {
+    const site_t Block::SOLID_SITE_ID = 1U << 31;
+
     Block::Block()
     {
     }

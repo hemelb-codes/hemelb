@@ -50,7 +50,7 @@ namespace hemelb
          * @param nBytes
          * @return
          */
-        char* ReadOnAllTasks(unsigned nBytes);
+        std::vector<char> ReadOnAllTasks(unsigned nBytes);
 
         Geometry ReadPreamble();
 

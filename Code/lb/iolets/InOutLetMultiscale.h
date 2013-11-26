@@ -47,6 +47,7 @@ namespace hemelb
           InOutLetMultiscale(const InOutLetMultiscale &other);
           virtual ~InOutLetMultiscale();
           virtual InOutLet* Clone() const;
+          virtual void Initialise(const util::UnitConverter* unitConverter);
           virtual void Reset(SimulationState &state);
           virtual bool IsRegistrationRequired() const;
 
@@ -55,10 +56,10 @@ namespace hemelb
           // field points will map one-to-one to HemeLB lattice sites initially; we will
           // rely on external tools to perform any interpolation tasks.
           LatticeDensity GetDensity(unsigned long timeStep) const;
-          PhysicalPressure GetPressureMin() const;
-          PhysicalPressure GetPressureMax() const;
+          virtual LatticeDensity GetDensityMin() const;
+          virtual LatticeDensity GetDensityMax() const;
           PhysicalVelocity GetVelocity() const;
-          PhysicalPressure GetPressure() const;
+          LatticePressure GetPressure() const;
           //std::vector<PhysicalPressure GetPressures() const;
           //TODO: update Velocity data type.
           //TODO: enable array returns in these functions (for pressure and velocity) when we have more than one field point.
@@ -66,8 +67,7 @@ namespace hemelb
           multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
           multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference();
 
-          template<class Intercommunicator> void Register(
-                                                          Intercommunicator &intercomms,
+          template<class Intercommunicator> void Register(Intercommunicator &intercomms,
                                                           typename Intercommunicator::IntercommunicandTypeT &type)
           {
             intercomms.RegisterIntercommunicand(type, *this, label);
@@ -87,11 +87,11 @@ namespace hemelb
 
           virtual bool IsCommsRequired() const;
           virtual void SetCommsRequired(bool b);
-          void DoComms(bool isIoProcess, const LatticeTime timeStep);
+          void DoComms(bool isIoProcess, const LatticeTimeStep timeStep);
 
         private:
           std::string label;
-
+          const util::UnitConverter* units;
           bool commsRequired;
           int numberOfFieldPoints;
           multiscale::SharedValue<PhysicalPressure> pressure;

@@ -23,7 +23,6 @@ namespace hemelb
       stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
       tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
       tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-      simulationState(simState),
       siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();

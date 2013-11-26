@@ -15,14 +15,18 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize, PhysicalPosition latticeOrigin) :
-      voxelSize(voxelSize), timestepTime(timeStep), latticeSpeed(voxelSize / timestepTime),
-          latticeOrigin(latticeOrigin)
+    UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
+                                 PhysicalPosition latticeOrigin) :
+      latticeDistance(voxelSize), latticeTime(timeStep),
+          latticeMass(BLOOD_DENSITY_Kg_per_m3 * voxelSize * voxelSize * voxelSize),
+          latticeSpeed(voxelSize / latticeTime),
+          latticeOrigin(latticeOrigin),
+          latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
     {
 
     }
 
-    LatticeDensity UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
+    LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
       return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - REFERENCE_PRESSURE_mmHg);
     }
@@ -32,35 +36,38 @@ namespace hemelb
       return REFERENCE_PRESSURE_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
     }
 
-    LatticeDensity UnitConverter::ConvertPressureDifferenceToLatticeUnits(double pressure_grad) const
+    LatticePressure UnitConverter::ConvertPressureDifferenceToLatticeUnits(
+                                                                           PhysicalPressure pressure_diff) const
     {
-      return pressure_grad * mmHg_TO_PASCAL / (latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3);
+      return pressure_diff * mmHg_TO_PASCAL / latticePressure;
     }
 
-    double UnitConverter::ConvertPressureDifferenceToPhysicalUnits(LatticePressure pressure_grad) const
+    PhysicalPressure UnitConverter::ConvertPressureDifferenceToPhysicalUnits(
+                                                                             LatticePressure pressure_diff) const
     {
-      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * latticeSpeed * latticeSpeed / mmHg_TO_PASCAL;
+      return pressure_diff * latticePressure / mmHg_TO_PASCAL;
     }
 
-    PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(LatticeReciprocalTime shearRate) const
+    PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(
+                                                                          LatticeReciprocalTime shearRate) const
     {
-      return shearRate / timestepTime;
+      return shearRate / latticeTime;
     }
     LatticeDistance UnitConverter::ConvertDistanceToLatticeUnits(const PhysicalDistance& x) const
     {
-      return x / voxelSize;
+      return x / latticeDistance;
     }
     PhysicalDistance UnitConverter::ConvertDistanceToPhysicalUnits(const LatticeDistance& x) const
     {
-      return x * voxelSize;
+      return x * latticeDistance;
     }
     LatticePosition UnitConverter::ConvertPositionToLatticeUnits(const PhysicalPosition& x) const
     {
-      return (x - latticeOrigin) / voxelSize;
+      return (x - latticeOrigin) / latticeDistance;
     }
     PhysicalPosition UnitConverter::ConvertPositionToPhysicalUnits(const LatticePosition& x) const
     {
-      return x * voxelSize + latticeOrigin;
+      return x * latticeDistance + latticeOrigin;
     }
 
     LatticeSpeed UnitConverter::ConvertSpeedToLatticeUnits(const PhysicalSpeed& v) const
@@ -71,19 +78,18 @@ namespace hemelb
     {
       return v * latticeSpeed;
     }
-
-    bool UnitConverter::Convert(std::string units, double& value) const
+    LatticeTime UnitConverter::ConvertTimeToLatticeUnits(const PhysicalTime& t) const
     {
-      if (units == "metres" || units == "m")
-        value /= voxelSize;
-      else if (units == "si_acceleration" || units == "m/s/s" || units == "ms-2")
-        value *= timestepTime * timestepTime / voxelSize;
-      else if (units == "Newtons" || units == "N")
-        // F = ma so Force = mass * length / time / time and Newton = Kg * metre / second / second
-        value *= voxelSize * voxelSize * latticeSpeed * latticeSpeed * BLOOD_DENSITY_Kg_per_m3;
-      else
-        return false;
-      return true;
+      return t / latticeTime;
     }
+    PhysicalTime UnitConverter::ConvertTimeToPhysicalUnits(const LatticeTime& t) const
+    {
+      return t * latticeTime;
+    }
+    PhysicalTime UnitConverter::ConvertTimeStepToPhysicalUnits(LatticeTimeStep time_step) const
+    {
+      return LatticeTime(time_step) * latticeTime;
+    }
+
   }
 }
