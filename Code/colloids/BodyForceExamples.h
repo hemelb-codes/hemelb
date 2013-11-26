@@ -25,9 +25,7 @@ namespace hemelb
           LatticeForceVector field;
           io::xml::Element force = xml.GetChildOrThrow("force");
           // TODO: convert to lattice units
-          xml.GetAttributeOrThrow("x", field.x);
-          xml.GetAttributeOrThrow("y", field.y);
-          xml.GetAttributeOrThrow("z", field.z);
+          configuration::GetDimensionalValue(force, "N", field);
           return new ConstantBodyForce(field);
         };
 
@@ -59,12 +57,11 @@ namespace hemelb
           LatticeForce magnitude;
           LatticePosition centrePoint;
           // TODO: convert to lattice units.
-          xml.GetAttributeOrThrow("magnitude", magnitude);
+          io::xml::Element magnitudeEl = xml.GetChildOrThrow("magnitude");
+          configuration::GetDimensionalValue(magnitudeEl, "N/m^2", magnitude);
           // TODO: convert to lattice units.
           io::xml::Element centreElem = xml.GetChildOrThrow("centrePoint");
-          centreElem.GetAttributeOrThrow("x", centrePoint.x);
-          centreElem.GetAttributeOrThrow("y", centrePoint.y);
-          centreElem.GetAttributeOrThrow("z", centrePoint.z);
+          configuration::GetDimensionalValue(centreElem, "m", centrePoint);
 
           return new RadialBodyForce(centrePoint, magnitude);
         };

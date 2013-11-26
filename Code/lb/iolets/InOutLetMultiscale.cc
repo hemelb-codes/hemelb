@@ -22,16 +22,13 @@ namespace hemelb
 
       InOutLetMultiscale::InOutLetMultiscale() :
         multiscale::Intercommunicand(), InOutLet(),
+            units(NULL),
+            numberOfFieldPoints(1),
             pressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             minPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
             maxPressure(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_PRESSURE),
-            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY),
-            numberOfFieldPoints(1)
+            velocity(this, multiscale_constants::HEMELB_MULTISCALE_REFERENCE_VELOCITY)
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Creation: IoletMS, GetDensity(): velocity is %f, pressure is %f or %f",
-                                                                              GetVelocity(),
-                                                                              GetPressure(),
-                                                                              GetPressureMax());
       }
       /***
        * The shared values are registered through the initialiser-list syntactic sugar.
@@ -40,16 +37,15 @@ namespace hemelb
        * preserve the single-scale code.
        */
       InOutLetMultiscale::InOutLetMultiscale(const InOutLetMultiscale &other) :
-        Intercommunicand(other), label(other.label), commsRequired(false),
-            pressure(this, other.GetPressureMax()), minPressure(this, other.GetPressureMin()),
-            maxPressure(this, other.GetPressureMax()), velocity(this, other.GetVelocity())
+        Intercommunicand(other), label(other.label), units(other.units), commsRequired(false),
+            pressure(this, other.maxPressure.GetPayload()), minPressure(this, other.minPressure.GetPayload()),
+            maxPressure(this, other.maxPressure.GetPayload()), velocity(this, other.GetVelocity())
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("On Clone: IoletMS, GetDensity(): velocity is %f, pressure is %f/%f or %f/%f",
-                                                                              GetVelocity(),
-                                                                              GetPressure(),
-                                                                              other.GetPressure(),
-                                                                              GetPressureMax(),
-                                                                              other.GetPressureMax());
+      }
+
+      void InOutLetMultiscale::Initialise(const util::UnitConverter* unitConverter)
+      {
+        units = unitConverter;
       }
 
       InOutLetMultiscale::~InOutLetMultiscale()
@@ -78,13 +74,13 @@ namespace hemelb
         /* TODO: Fix pressure and GetPressure values (using PressureMax() for now). */
         return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
       }
-      PhysicalPressure InOutLetMultiscale::GetPressureMin() const
+      LatticeDensity InOutLetMultiscale::GetDensityMin() const
       {
-        return minPressure.GetPayload();
+        return units->ConvertPressureToLatticeUnits(minPressure.GetPayload()) / Cs2;
       }
-      PhysicalPressure InOutLetMultiscale::GetPressureMax() const
+      LatticeDensity InOutLetMultiscale::GetDensityMax() const
       {
-        return maxPressure.GetPayload();
+        return units->ConvertPressureToLatticeUnits(maxPressure.GetPayload()) / Cs2;
       }
       PhysicalVelocity InOutLetMultiscale::GetVelocity() const
       {
@@ -125,7 +121,7 @@ namespace hemelb
       }
 
       /* Distribution of internal pressure values */
-      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTime time_step)
+      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTimeStep time_step)
       {
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
                                                                               isIoProc

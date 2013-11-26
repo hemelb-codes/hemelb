@@ -36,9 +36,7 @@ namespace hemelb
         latticeInfo(latticeInfo), neighbouringData(new neighbouring::NeighbouringLatticeData(latticeInfo))
     {
       SetBasicDetails(readResult.GetBlockDimensions(),
-                      readResult.GetBlockSize(),
-                      readResult.GetVoxelSize(),
-                      readResult.GetOrigin());
+                      readResult.GetBlockSize());
 
       ProcessReadSites(readResult);
       // if debugging then output beliefs regarding geometry and neighbour list
@@ -61,14 +59,10 @@ namespace hemelb
     }
 
     void LatticeData::SetBasicDetails(util::Vector3D<site_t> blocksIn,
-                                      site_t blockSizeIn,
-                                      distribn_t voxelSizeIn,
-                                      util::Vector3D<distribn_t> originIn)
+                                      site_t blockSizeIn)
     {
       blockCounts = blocksIn;
       blockSize = blockSizeIn;
-      voxelSize = voxelSizeIn;
-      origin = originIn;
       sites = blocksIn * blockSize;
       sitesPerBlockVolumeUnit = blockSize * blockSize * blockSize;
       blockCount = blockCounts.x * blockCounts.y * blockCounts.z;
@@ -302,8 +296,8 @@ namespace hemelb
 
     void LatticeData::CollectGlobalSiteExtrema()
     {
-      site_t localMins[3];
-      site_t localMaxes[3];
+      std::vector<site_t> localMins(3);
+      std::vector<site_t> localMaxes(3);
 
       for (unsigned dim = 0; dim < 3; ++dim)
       {
@@ -337,10 +331,10 @@ namespace hemelb
 
       }
 
-      site_t siteMins[3], siteMaxes[3];
       const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
-      MPI_Allreduce(localMins, siteMins, 3, net::MpiDataType<site_t>(), MPI_MIN, comms);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, net::MpiDataType<site_t>(), MPI_MAX, comms);
+      std::vector<site_t> siteMins = comms.AllReduce(localMins, MPI_MIN);
+      std::vector<site_t> siteMaxes = comms.AllReduce(localMaxes, MPI_MAX);
+
       for (unsigned ii = 0; ii < 3; ++ii)
       {
         globalSiteMins[ii] = siteMins[ii];

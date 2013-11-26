@@ -90,7 +90,7 @@ namespace hemelb
         /**
          * The state of the simulation, including the number of timesteps passed.
          */
-        const SimulationState& simulationState;
+        // const SimulationState& simulationState;
 
         /**
          * The number of sites.

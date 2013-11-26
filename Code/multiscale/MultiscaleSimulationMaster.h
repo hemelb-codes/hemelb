@@ -59,9 +59,10 @@ namespace hemelb
 
           /* Process 0 has a list of all the Iolets. The count of all this is highly useful to pre-size all the
            * needed arrays later on, so we are broadcasting this to all the other processes. */
-          unsigned GlobalIoletCount[] = { inletValues->GetLocalIoletCount(),
-                                          outletValues->GetLocalIoletCount() };
-          MPI_Bcast(GlobalIoletCount, 2, MPI_UNSIGNED, 0, net::NetworkTopology::Instance()->GetComms());
+          std::vector<unsigned> GlobalIoletCount;
+          GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
+          GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
+          net::NetworkTopology::Instance()->GetComms().Broadcast(GlobalIoletCount, 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -126,8 +127,8 @@ namespace hemelb
           //invertedOutletBoundaryList =
           //    ExchangeAndCompleteInverseBoundaryList(invertedOutletBoundaryList);
 
-          hemelb::lb::MacroscopicPropertyCache& propertyCache =
-              latticeBoltzmannModel->GetPropertyCache();
+          //hemelb::lb::MacroscopicPropertyCache& propertyCache =
+          //    latticeBoltzmannModel->GetPropertyCache();
 
           //WORKAROUND: Reserve space in the velocityCache to ensure that all elements are properly allocated.
           //If this is not set, then velocityCache will contain 0 elements at the start even though the
@@ -351,7 +352,6 @@ namespace hemelb
             int64_t totalSize = 0;
 
             int np = hemelb::net::NetworkTopology::Instance()->GetComms().Size();
-            int rank = hemelb::net::NetworkTopology::Instance()->GetComms().Rank();
             int64_t offset = 0;
 
             for (int j = 0; j < np; j++)

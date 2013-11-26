@@ -4,7 +4,7 @@ add_library(hemelb_lb
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
 	iolets/InOutLetMultiscale.cc
     iolets/InOutLetVelocity.cc
-	iolets/InOutLetParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc
+	iolets/InOutLetParabolicVelocity.cc iolets/InOutLetWomersleyVelocity.cc iolets/InOutLetFileVelocity.cc
 	IncompressibilityChecker.cc
 	kernels/momentBasis/DHumieresD3Q15MRTBasis.cc kernels/momentBasis/DHumieresD3Q19MRTBasis.cc
 	kernels/rheologyModels/AbstractRheologyModel.cc kernels/rheologyModels/CarreauYasudaRheologyModel.cc 

@@ -73,11 +73,11 @@ namespace hemelb
                / ( smallRadius_a0 * largeRadius_ah );
         }
 
-        const LatticeTime& GetLastCheckpointTimestep() const
+        const LatticeTimeStep& GetLastCheckpointTimestep() const
         {
           return lastCheckpointTimestep;
         }
-        const LatticeTime& GetDeletionMarker() const
+        const LatticeTimeStep& GetDeletionMarker() const
         {
           return markedForDeletionTimestep;
         }
@@ -91,7 +91,7 @@ namespace hemelb
         /** sets the deletion marker to the current timestep
          *  the particle will be deleted after the next checkpoint
          */
-        const void SetDeletionMarker(LatticeTime timestep)
+        const void SetDeletionMarker(LatticeTimeStep timestep)
         {
           if (timestep < markedForDeletionTimestep)
             markedForDeletionTimestep = timestep;
@@ -124,7 +124,7 @@ namespace hemelb
 
         /** for serialisation into output file */
         const void WriteToStream(
-                     const LatticeTime currentTimestep,
+                     const LatticeTimeStep currentTimestep,
                      io::writers::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */

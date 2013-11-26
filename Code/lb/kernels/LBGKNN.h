@@ -125,7 +125,7 @@ namespace hemelb
             // Initialise relaxation time across the domain to HemeLB's default value.
             mTau.resize(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau());
             mTimeStep = initParams.lbmParams->GetTimeStep();
-            mSpaceStep = initParams.latDat->GetVoxelSize();
+            mSpaceStep = initParams.lbmParams->GetVoxelSize();
           }
 
           /**

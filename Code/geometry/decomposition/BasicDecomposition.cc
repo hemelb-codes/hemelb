@@ -53,14 +53,7 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
-        std::vector<proc_t> procForEachBlockRecv(geometry.GetBlockCount());
-
-        MPI_Allreduce(&procAssignedToEachBlock[0],
-                      &procForEachBlockRecv[0],
-                      (int) geometry.GetBlockCount(),
-                      net::MpiDataType<proc_t> (),
-                      MPI_MAX,
-                      communicator);
+        std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock, MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {

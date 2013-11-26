@@ -1025,13 +1025,8 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
         // vtxDistribn should be the same on all cores.
-        std::vector<idx_t> vtxDistribnRecv(comms.Size() + 1);
-        MPI_Allreduce(&vtxDistribn[0],
-                      &vtxDistribnRecv[0],
-                      comms.Size() + 1,
-                      net::MpiDataType(vtxDistribnRecv[0]),
-                      MPI_MIN,
-                      comms);
+        std::vector<idx_t> vtxDistribnRecv = comms.AllReduce(vtxDistribn, MPI_MIN);
+
         for (proc_t rank = 0; rank < comms.Size() + 1; ++rank)
         {
           if (vtxDistribn[rank] != vtxDistribnRecv[rank])
@@ -1240,16 +1235,10 @@ namespace hemelb
       void OptimisedDecomposition::ValidateFirstSiteIndexOnEachBlock()
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
-        std::vector<idx_t> firstSiteIndexPerBlockRecv(geometry.GetBlockCount());
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
-        MPI_Allreduce(&firstSiteIndexPerBlock[0],
-                      &firstSiteIndexPerBlockRecv[0],
-                      (int) ( ( ( ( (geometry.GetBlockCount()))))),
-                      net::MpiDataType(firstSiteIndexPerBlock[0]),
-                      MPI_MAX,
-                      comms);
+        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock, MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {

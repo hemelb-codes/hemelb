@@ -24,7 +24,7 @@ namespace hemelb
       // Query the MPI implementation for its reason for failure
       char buffer[MPI_MAX_ERROR_STRING];
       int len;
-      MPI_Error_string(errorCode_, buffer, &len);
+      MPI_Error_string(errorCode, buffer, &len);
 
       *this << buffer;
     }

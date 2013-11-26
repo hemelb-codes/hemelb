@@ -72,7 +72,7 @@ namespace hemelb
           first = false;
         }
         // create the particle object from the settings in the config file
-        Particle nextParticle(latDatLBM, lbmParams, particlesElem);
+        Particle nextParticle(latDatLBM, lbmParams, particleElem);
         // check the particle is valid, i.e. in fluid, and is locally owned
         if (nextParticle.IsValid() && nextParticle.GetOwnerRank() == localRank)
         {
@@ -90,7 +90,7 @@ namespace hemelb
       particles.clear();
     }
 
-    const void ParticleSet::OutputInformation(const LatticeTime timestep)
+    const void ParticleSet::OutputInformation(const LatticeTimeStep timestep)
     {
       // Ensure the buffer is large enough.
       const unsigned int maxSize = io::formats::colloids::RecordLength * particles.size()
@@ -188,7 +188,7 @@ namespace hemelb
       }
     }
 
-    const void ParticleSet::ApplyBoundaryConditions(const LatticeTime currentTimestep)
+    const void ParticleSet::ApplyBoundaryConditions(const LatticeTimeStep currentTimestep)
     {
       for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
       {

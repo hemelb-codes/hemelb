@@ -19,6 +19,7 @@
 #include "unittests/helpers/FolderTestFixture.h"
 
 #include <iostream>
+
 namespace hemelb
 {
   namespace unittests
@@ -28,26 +29,25 @@ namespace hemelb
       class FourCubeBasedTestFixture : public helpers::FolderTestFixture
       {
 
-
         public:
-          FourCubeBasedTestFixture():initParams(){}
+          FourCubeBasedTestFixture() :
+            initParams()
+          {
+          }
           void setUp()
           {
-            // Initialise the network topology (necessary for using the inlets and oulets.
-            int args = 1;
-            char** argv = NULL;
-
             latDat = FourCubeLatticeData::Create();
 
             simConfig = new OneInOneOutSimConfig();
-            simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),simConfig->GetTotalTimeSteps());
+            simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
+                                                       simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
-                                              latDat->GetVoxelSize());
-            unitConverter = new util::UnitConverter(simState->GetTimeStepLength(), latDat->GetVoxelSize(), latDat->GetOrigin());
+                                              simConfig->GetVoxelSize());
+            unitConverter = &simConfig->GetUnitConverter();
 
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
-            initParams.lbmParams=lbmParams;
+            initParams.lbmParams = lbmParams;
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
 
@@ -57,7 +57,6 @@ namespace hemelb
             delete lbmParams;
             delete simState;
             delete simConfig;
-            delete unitConverter;
           }
 
         protected:
@@ -67,7 +66,7 @@ namespace hemelb
           lb::LbmParameters* lbmParams;
           configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
-          util::UnitConverter* unitConverter;
+          const util::UnitConverter* unitConverter;
         private:
 
       };

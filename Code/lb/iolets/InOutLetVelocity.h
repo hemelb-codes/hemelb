@@ -22,9 +22,9 @@ namespace hemelb
         public:
           InOutLetVelocity();
           virtual ~InOutLetVelocity();
-          PhysicalPressure GetPressureMin() const;
-          PhysicalPressure GetPressureMax() const;
-          LatticeDensity GetDensity(LatticeTime time_step) const;
+          LatticeDensity GetDensityMin() const;
+          LatticeDensity GetDensityMax() const;
+          LatticeDensity GetDensity(LatticeTimeStep time_step) const;
 
           void Reset(SimulationState &state)
           {
@@ -35,16 +35,16 @@ namespace hemelb
            * This is indeed a horrible hack.
            * @return
            */
-          LatticeDistance& GetRadius()
+          const LatticeDistance& GetRadius() const
           {
             return radius;
           }
-          void SetRadius(LatticeDistance r)
+          void SetRadius(const LatticeDistance& r)
           {
             radius = r;
           }
 
-          virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTime t) const = 0;
+          virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const = 0;
 
         protected:
           LatticeDistance radius;

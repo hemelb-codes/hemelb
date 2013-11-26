@@ -75,7 +75,7 @@ namespace hemelb
     // 7 fields * 8 bytes-per-field = 56 bytes, when transient fields are not included
 
     const void Particle::WriteToStream(
-                 const LatticeTime currentTimestep,
+                 const LatticeTimeStep currentTimestep,
                  io::writers::Writer& writer)
     {
       lastCheckpointTimestep = currentTimestep;
@@ -308,12 +308,17 @@ namespace hemelb
               else if (blockStatus == 2)
                 siteStatus = 2; // deemed solid because block is empty
               else if (blockStatus == 0)
+              {
                 if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == BIG_NUMBER2)
+                {
                   siteStatus = 3; // individual site is not simulated, i.e. must be solid
+                }
                 else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == net::NetworkTopology::Instance()->GetLocalRank())
+                {
                   if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
                   siteStatus = 4; // individual site is local but solid (should not happen?)
-
+                }
+              }
               log::Logger::Log<log::Trace, log::OnePerCore>("WAIT A MINUTE 4 ...\n");
 
               if (blockStatus == 1 || (siteStatus == 1))

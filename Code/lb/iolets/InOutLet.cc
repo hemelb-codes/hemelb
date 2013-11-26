@@ -45,7 +45,7 @@ namespace hemelb
 
       IoletExtraData::IoletExtraData(InOutLet& iolet) :
         n(iolet.GetNormal()),
-            centre(iolet.units->ConvertPositionToLatticeUnits(iolet.GetPosition()))
+            centre(iolet.GetPosition())
       {
         // Arbitrary vector - chosen as the direction mutually perpendicular
         // to the normal and a Cartesian direction that has the largest

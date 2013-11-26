@@ -47,8 +47,8 @@ class Profile(Observable):
              'StlFileUnitId': 1,
              'Iolets': ObservableList(),
              'VoxelSize': 0.,
-             'Cycles': 3,
-             'Steps': 1000,
+             'TimeStepSeconds': 1e-4,
+             'DurationSeconds': 5.0,
              'SeedPoint': Vector(),
              'OutputGeometryFile': None,
              'OutputXmlFile': None}
