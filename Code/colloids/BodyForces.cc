@@ -16,14 +16,20 @@ namespace hemelb
 {
   namespace colloids
   {
+    BodyForces* BodyForces::Load(const io::xml::Element& xml)
+    {
+      BodyForces* ans = new BodyForces();
+      ans->Init(xml);
+      return ans;
+    }
 
-    BodyForces* BodyForces::Load(const io::xml::Element& colloidsBodyForcesNode)
+    void BodyForces::Init(const io::xml::Element& bodyForcesEl)
     {
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Creating Body Forces.");
-      if (colloidsBodyForcesNode.GetName() != "bodyForces")
+      if (bodyForcesEl.GetName() != "bodyForces")
         throw Exception()
             << "BodyForces::Load got XML Element with wrong name. Expected 'bodyForces', got '"
-            << colloidsBodyForcesNode.GetName() << "'.";
+            << bodyForcesEl.GetName() << "'.";
       // Create a map from the strings used in the XML (as attribute "forceName")
       // to the factory functions that create them.
 
@@ -32,23 +38,20 @@ namespace hemelb
       mapForceGenerators["constant"] = & (ConstantBodyForceFactory::Create);
       mapForceGenerators["inv_r_sq"] = & (RadialBodyForceFactory::Create);
 
-      BodyForces* ans = new BodyForces();
-
       for (std::map<std::string, BodyForceFactory_Create>::const_iterator iter =
           mapForceGenerators.begin(); iter != mapForceGenerators.end(); iter++)
       {
         const std::string forceClass = iter->first;
         const BodyForceFactory_Create createFunction = iter->second;
 
-        for (io::xml::Element forceNode = colloidsBodyForcesNode.GetChildOrNull(forceClass); forceNode
+        for (io::xml::Element forceNode = bodyForcesEl.GetChildOrNull(forceClass); forceNode
             != io::xml::Element::Missing(); forceNode = forceNode.NextSiblingOrNull(forceClass))
         {
           std::string forceName = forceNode.GetAttributeOrThrow("name");
           BodyForce* nextForce = createFunction(forceNode);
-          ans->bodyForces.insert(std::make_pair(forceName, nextForce));
+          bodyForces.insert(std::make_pair(forceName, nextForce));
         }
       }
-      return ans;
     }
 
     LatticeForceVector BodyForces::GetBodyForcesForParticle(const Particle& particle) const

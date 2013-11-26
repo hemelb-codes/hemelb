@@ -78,13 +78,18 @@ namespace hemelb
           return forceForEachSite[siteId];
         }
 
-      private:
+        // Protected to let test subclasses at the members.
+      protected:
+        // Does the actual work of initialisation
+        void Init(const io::xml::Element& xml);
+
+        typedef std::map<std::string, const BodyForce* const > BodyForceMap;
         /**
          * stores the details of all known body forces
          * the value type must be a base class pointer
          * as only pointers are type-compatible in C++
          */
-        std::map<std::string, const BodyForce* const > bodyForces;
+        BodyForceMap bodyForces;
         std::map<site_t, LatticeForceVector> forceForEachSite;
     };
   }

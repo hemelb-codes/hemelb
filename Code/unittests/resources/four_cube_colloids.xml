@@ -59,7 +59,7 @@
       <constant name="const">
         <force value="(1,2,3e-3)" units="N" />
       </constant>
-      <inv_r_sq name="coloumb">
+      <inv_r_sq name="coulomb">
         <centre value="(0.02,0.03,0.04)" units="m" />
         <magnitude value="1e-6" units="N m^2" />
       </inv_r_sq>

@@ -86,6 +86,10 @@ namespace hemelb
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
 
+  // For the force constant of the 1/r^2 force field.
+  typedef double PhysicalForceLengthSquared;
+  typedef double LatticeForceLengthSquared;
+
   typedef double Dimensionless;
 }
 #endif //HEMELB_UNITS_H

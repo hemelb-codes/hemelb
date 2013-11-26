@@ -29,7 +29,7 @@ namespace hemelb
       public:
         static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
-          LatticeForceVector g;
+          LatticeAccelerationVector g;
           // TODO: convert to lattice units
           io::xml::Element gEl = xml.GetChildOrThrow("acceleration");
           configuration::GetDimensionalValue(gEl, "m s^-2", g);
@@ -39,14 +39,17 @@ namespace hemelb
 
         virtual const LatticeForceVector GetForceForParticle(const Particle& particle) const
         {
-          return graviticForce * particle.GetMass();
+          return accelerationDueToGravity * particle.GetMass();
         };
-
+        const LatticeAccelerationVector& GetAccelerationDueToGravity() const
+        {
+          return accelerationDueToGravity;
+        }
       protected:
         GraviticBodyForce(const LatticeForceVector constantForce) :
-          graviticForce(constantForce) {};
+          accelerationDueToGravity(constantForce) {};
 
-        const LatticeAccelerationVector graviticForce;
+        const LatticeAccelerationVector accelerationDueToGravity;
     };
 
     class GraviticBodyForceFactory : public BodyForceFactory<GraviticBodyForce> { };

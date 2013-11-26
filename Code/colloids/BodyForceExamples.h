@@ -34,6 +34,10 @@ namespace hemelb
           return constantForce;
         };
 
+        const LatticeForceVector& GetForce() const
+        {
+          return constantForce;
+        }
       protected:
         ConstantBodyForce(const LatticeForceVector constantForce) :
           BodyForce(), constantForce(constantForce) {};
@@ -54,7 +58,7 @@ namespace hemelb
       public:
         static BodyForce* ReadFromXml(const io::xml::Element& xml)
         {
-          LatticeForce magnitude;
+          LatticeForceLengthSquared magnitude;
           LatticePosition centrePoint;
           // TODO: convert to lattice units.
           io::xml::Element magnitudeEl = xml.GetChildOrThrow("magnitude");
@@ -81,12 +85,21 @@ namespace hemelb
           return direction.GetNormalised() * (magnitude / direction.GetMagnitudeSquared());
         };
 
+        const LatticePosition& GetCentrePoint() const
+        {
+          return centrePoint;
+        }
+        const LatticeForce& GetMagnitude() const
+        {
+          return magnitude;
+        }
+
       protected:
         RadialBodyForce(const LatticePosition centrePoint, const LatticeForce magnitude) :
           BodyForce(), centrePoint(centrePoint), magnitude(magnitude) {};
 
         const LatticePosition centrePoint;
-        const LatticeForce magnitude;
+        const LatticeForceLengthSquared magnitude;
     };
 
     class RadialBodyForceFactory : public BodyForceFactory<RadialBodyForce> { };
