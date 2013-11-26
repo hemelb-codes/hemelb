@@ -148,57 +148,58 @@ namespace hemelb
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
         /*ParMETIS_V3_PartKway(&vtxDistribn[0],
-                             &adjacenciesPerVertex[0],
-                             &localAdjacencies[0],
-                             &vertexWeights[0],
-                             NULL,
-                             &weightFlag,
-                             &numberingFlag,
-                             &noConstraints,
-                             &desiredPartitionSize,
-                             &domainWeights[0],
-                             &tolerance,
-                             options,
-                             &edgesCut,
-                             &partitionVector[0],
-                             &communicator);*/
+         &adjacenciesPerVertex[0],
+         &localAdjacencies[0],
+         &vertexWeights[0],
+         NULL,
+         &weightFlag,
+         &numberingFlag,
+         &noConstraints,
+         &desiredPartitionSize,
+         &domainWeights[0],
+         &tolerance,
+         options,
+         &edgesCut,
+         &partitionVector[0],
+         &communicator);*/
         ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
-                             &adjacenciesPerVertex[0],
-                             &localAdjacencies[0],
-                             &vertexWeights[0],
-                             NULL,
-                             &weightFlag,
-                             &numberingFlag,
-                             &nDims,
-                             &vertexCoordinates[0],
-                             &noConstraints,
-                             &desiredPartitionSize,
-                             &domainWeights[0],
-                             &tolerance,
-                             options,
-                             &edgesCut,
-                             &partitionVector[0],
-                             &communicator);
+                                 &adjacenciesPerVertex[0],
+                                 &localAdjacencies[0],
+                                 &vertexWeights[0],
+                                 NULL,
+                                 &weightFlag,
+                                 &numberingFlag,
+                                 &nDims,
+                                 &vertexCoordinates[0],
+                                 &noConstraints,
+                                 &desiredPartitionSize,
+                                 &domainWeights[0],
+                                 &tolerance,
+                                 options,
+                                 &edgesCut,
+                                 &partitionVector[0],
+                                 &communicator);
 
         /** Preliminary development code to create a group communicator
-        std::vector<int> localRanksInNode;
-        int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
-        int coresInNodePartition = hemelbCoresPerNode;
-        log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
+         std::vector<int> localRanksInNode;
+         int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
+         int coresInNodePartition = hemelbCoresPerNode;
+         log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
 
-        if(localBaseRank + hemelbCoresPerNode > comms.Size()) {
-          coresInNodePartition = comms.Size() - localBaseRank;
-        }
+         if(localBaseRank + hemelbCoresPerNode > comms.Size()) {
+         coresInNodePartition = comms.Size() - localBaseRank;
+         }
 
-        for(int i=0; i<coresInNodePartition; i++) {
-          localRanksInNode.push_back(localBaseRank + i);
-        }
+         for(int i=0; i<coresInNodePartition; i++) {
+         localRanksInNode.push_back(localBaseRank + i);
+         }
 
-        net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
-        net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);*/
+         net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
+         net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);*/
 
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
-        if(comms.Rank() == comms.Size() - 1) {
+        if (comms.Rank() == comms.Size() - 1)
+        {
           log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
         }
       }
@@ -211,67 +212,65 @@ namespace hemelb
         //vertexWeights.push_back(0);
 
         //We define every architecture that we will switch on:
-        std::string INTELSANDYBRIDGE="INTELSANDYBRIDGE";
+        std::string INTELSANDYBRIDGE = "INTELSANDYBRIDGE";
         std::string AMDBULLDOZER = "AMDBULLDOZER";
         std::string NEUTRAL = "NEUTRAL";
 
-        if (HEMELB_COMPUTE_ARCHITECTURE.compare(NEUTRAL) == 0)
+        // For each block (counting up by lowest site id)...
+        for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
         {
-          for(int i=0; i < localVertexCount; i++) {
-            vertexWeights.push_back(1);
-          }
-        }
-        else
-        {
-          // For each block (counting up by lowest site id)...
-          for (site_t blockI = 0; blockI < geometry.GetBlockDimensions().x; blockI++)
+          for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
           {
-            for (site_t blockJ = 0; blockJ < geometry.GetBlockDimensions().y; blockJ++)
+            for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
             {
-              for (site_t blockK = 0; blockK < geometry.GetBlockDimensions().z; blockK++)
+              const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
+                                                                                 blockJ,
+                                                                                 blockK);
+
+              // Only consider sites on this processor.
+              if (procForEachBlock[blockNumber] != comms.Rank())
               {
-                const site_t blockNumber = geometry.GetBlockIdFromBlockCoordinates(blockI,
-                                                                                   blockJ,
-                                                                                   blockK);
+                continue;
+              }
 
-                // Only consider sites on this processor.
-                if (procForEachBlock[blockNumber] != comms.Rank())
+              const BlockReadResult& blockReadResult = geometry.Blocks[blockNumber];
+
+              site_t m = -1;
+              const int block_size = geometry.GetBlockSize();
+              const int blockXCoord = blockI * block_size;
+              const int blockYCoord = blockJ * block_size;
+              const int blockZCoord = blockK * block_size;
+
+              // ... iterate over sites within the block...
+              for (site_t localSiteI = 0; localSiteI < block_size; localSiteI++)
+              {
+                for (site_t localSiteJ = 0; localSiteJ < block_size; localSiteJ++)
                 {
-                  continue;
-                }
-
-                const BlockReadResult& blockReadResult = geometry.Blocks[blockNumber];
-
-                site_t m = -1;
-                const int block_size = geometry.GetBlockSize();
-                const int blockXCoord = blockI * block_size;
-                const int blockYCoord = blockJ * block_size;
-                const int blockZCoord = blockK * block_size;
-
-                // ... iterate over sites within the block...
-                for (site_t localSiteI = 0; localSiteI < block_size; localSiteI++)
-                {
-                  for (site_t localSiteJ = 0; localSiteJ < block_size; localSiteJ++)
+                  for (site_t localSiteK = 0; localSiteK < block_size; localSiteK++)
                   {
-                    for (site_t localSiteK = 0; localSiteK < block_size; localSiteK++)
+                    ++m;
+
+                    // ... only looking at non-solid sites...
+                    if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
                     {
-                      ++m;
+                      continue;
+                    }
 
-                      // ... only looking at non-solid sites...
-                      if (blockReadResult.Sites[m].targetProcessor == BIG_NUMBER2)
-                      {
-                        continue;
-                      }
+                    //Getting Site ID to be able to identify site type
+                    site_t localSiteId = geometry.GetSiteIdFromSiteCoordinates(localSiteI,
+                                                                               localSiteJ,
+                                                                               localSiteK);
 
-                      //Getting Site ID to be able to identify site type
-                      site_t localSiteId = geometry.GetSiteIdFromSiteCoordinates(localSiteI,
-                                                                                 localSiteJ,
-                                                                                 localSiteK);
+                    //Switch structure which identifies site type and assigns the proper weight to each vertex
 
-                      //Switch structure which identifies site type and assigns the proper weight to each vertex
+                    SiteData siteData(blockReadResult.Sites[localSiteId]);
 
-                      SiteData siteData(blockReadResult.Sites[localSiteId]);
-
+                    if (HEMELB_COMPUTE_ARCHITECTURE.compare(NEUTRAL) == 0)
+                    {
+                      localweight = 1;
+                    }
+                    else
+                    {
                       switch (siteData.GetCollisionType())
                       {
                         case FLUID:
@@ -304,13 +303,12 @@ namespace hemelb
                           ++WallIOSiteCounter;
                           break;
                       }
-
-                      vertexWeights.push_back(localweight);
-                      vertexCoordinates.push_back(blockXCoord + localSiteI);
-                      vertexCoordinates.push_back(blockYCoord + localSiteJ);
-                      vertexCoordinates.push_back(blockZCoord + localSiteK);
-
                     }
+
+                    vertexWeights.push_back(localweight);
+                    vertexCoordinates.push_back(blockXCoord + localSiteI);
+                    vertexCoordinates.push_back(blockYCoord + localSiteJ);
+                    vertexCoordinates.push_back(blockZCoord + localSiteK);
 
                   }
 
@@ -329,13 +327,13 @@ namespace hemelb
         int TotalSites = FluidSiteCounter + WallSiteCounter + WallIOSiteCounter;
 
         log::Logger::Log<log::Debug, log::OnePerCore>("There are %u Bulk Flow Sites, %u Wall Sites, %u IO Sites, %u WallIO Sites on core %u. Total: %u (Weighted %u Points)",
-                                                     FluidSiteCounter,
-                                                     WallSiteCounter,
-                                                     IOSiteCounter,
-                                                     WallIOSiteCounter,
-                                                     comms.Rank(),
-                                                     TotalSites,
-                                                     TotalCoreWeight);
+                                                      FluidSiteCounter,
+                                                      WallSiteCounter,
+                                                      IOSiteCounter,
+                                                      WallIOSiteCounter,
+                                                      comms.Rank(),
+                                                      TotalSites,
+                                                      TotalCoreWeight);
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()
@@ -1238,7 +1236,8 @@ namespace hemelb
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
-        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock, MPI_MAX);
+        std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock,
+                                                                        MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
