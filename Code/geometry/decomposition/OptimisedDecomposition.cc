@@ -201,6 +201,12 @@ namespace hemelb
         if (comms.Rank() == comms.Size() - 1)
         {
           log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
+          if (edgesCut < 1 && comms.Size() > 2)
+          {
+            throw Exception()
+                << "The decomposition using ParMetis returned an edge cut of 0 even though there are multiple processes. "
+                << "This means/implies that ParMETIS cannot properly decompose the system, and no properly load-balanced parallel simulation can be started.";
+          }
         }
       }
 
@@ -265,44 +271,37 @@ namespace hemelb
 
                     SiteData siteData(blockReadResult.Sites[localSiteId]);
 
-                    if (HEMELB_COMPUTE_ARCHITECTURE.compare(NEUTRAL) == 0)
+                    switch (siteData.GetCollisionType())
                     {
-                      localweight = 1;
-                    }
-                    else
-                    {
-                      switch (siteData.GetCollisionType())
-                      {
-                        case FLUID:
-                          localweight = hemelbSiteWeights[0];
-                          ++FluidSiteCounter;
-                          break;
+                      case FLUID:
+                        localweight = hemelbSiteWeights[0];
+                        ++FluidSiteCounter;
+                        break;
 
-                        case WALL:
-                          localweight = hemelbSiteWeights[1];
-                          ++WallSiteCounter;
-                          break;
+                      case WALL:
+                        localweight = hemelbSiteWeights[1];
+                        ++WallSiteCounter;
+                        break;
 
-                        case INLET:
-                          localweight = hemelbSiteWeights[2];
-                          ++IOSiteCounter;
-                          break;
+                      case INLET:
+                        localweight = hemelbSiteWeights[2];
+                        ++IOSiteCounter;
+                        break;
 
-                        case OUTLET:
-                          localweight = hemelbSiteWeights[3];
-                          ++IOSiteCounter;
-                          break;
+                      case OUTLET:
+                        localweight = hemelbSiteWeights[3];
+                        ++IOSiteCounter;
+                        break;
 
-                        case (INLET | WALL):
-                          localweight = hemelbSiteWeights[4];
-                          ++WallIOSiteCounter;
-                          break;
+                      case (INLET | WALL):
+                        localweight = hemelbSiteWeights[4];
+                        ++WallIOSiteCounter;
+                        break;
 
-                        case (OUTLET | WALL):
-                          localweight = hemelbSiteWeights[5];
-                          ++WallIOSiteCounter;
-                          break;
-                      }
+                      case (OUTLET | WALL):
+                        localweight = hemelbSiteWeights[5];
+                        ++WallIOSiteCounter;
+                        break;
                     }
 
                     vertexWeights.push_back(localweight);
