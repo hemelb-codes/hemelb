@@ -13,6 +13,7 @@
 #include "lb/streamers/BaseStreamerDelegate.h"
 #include "geometry/neighbouring/RequiredSiteInformation.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -147,7 +148,8 @@ namespace hemelb
             // Then 0 = velocityWall * wallDistance + velocityFluid * (1 - wallDistance)
             // Hence velocityWall = velocityFluid * (1 - 1/wallDistance)
             distribn_t fWall[LatticeType::NUMVECTORS];
-            kernels::HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall);
+            util::Vector3D<distribn_t> force;
+            kernels::HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall,&force);
 
             hydroVarsWall.density = hydroVars.density;
             hydroVarsWall.momentum = hydroVars.momentum * (1. - 1. / wallDistance);
