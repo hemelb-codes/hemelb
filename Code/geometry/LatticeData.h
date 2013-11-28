@@ -461,9 +461,9 @@ namespace hemelb
           * @return
           */
         // Method should remain protected, intent is to access this information via Site
-        inline const util::Vector3D<distribn_t>& GetForceAtSite(site_t iSiteIndex) const
+        inline const util::Vector3D<distribn_t>* GetForceAtSite(site_t iSiteIndex) const
         {
-          return forceAtSite[iSiteIndex];
+          return &forceAtSite[iSiteIndex];
         }
 
         /**
@@ -544,9 +544,9 @@ namespace hemelb
         }
 
         // Method should remain protected, intent is to access this information via Site
-        util::Vector3D<distribn_t>& GetForceAtSite(site_t iSiteIndex)
+        util::Vector3D<distribn_t>* GetForceAtSite(site_t iSiteIndex)
 		{
-          return forceAtSite[iSiteIndex];
+          return &forceAtSite[iSiteIndex];
         }
 
         /**
