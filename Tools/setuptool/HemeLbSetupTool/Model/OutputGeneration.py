@@ -42,7 +42,7 @@ def DVfromV(v):
 class GeometryGenerator(object):
 
     def __init__(self):
-        self.skipNonIntersectingBlocks = True
+        self.skipNonIntersectingBlocks = False
 
     def _MakeIoletProxies(self):
         # Construct the Iolet structs
