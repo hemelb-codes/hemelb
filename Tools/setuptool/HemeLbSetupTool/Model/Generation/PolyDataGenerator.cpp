@@ -238,6 +238,9 @@ void PolyDataGenerator::PreExecute(void) {
  *
  */
 void PolyDataGenerator::ClassifySite(Site& site) {
+        if (!site.IsFluidKnown){
+		throw GenerationErrorMessage("The start site is not known cannot continue");
+	}
 	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end();
 		 ++neighIt) {
 	  	Site& neigh = *neighIt;
@@ -278,14 +281,16 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 					iSolid = iNeigh;
 					int n=0;
 					iHit = n;
-					// here we iterate over all intersections until we find a wall or the rest are futher away than the tol.
+					// here we iterate over all intersections until we 
+					// find a wall or the rest are futher away than the tol.
 					for (std::vector<Object_Primitive_and_distance>::iterator distit 
 							 = IntersectionCGAL.begin(); distit != IntersectionCGAL.end(); ++distit){
 						if (distit->second > IntersectionCGAL[0].second+distancetol){
 							iHit = n;
 							break;
 						}
-						int tempioletId = distit->first.second->id() - 2; //shifting back from unsigned
+						int tempioletId = distit->first.second->id() - 2; 
+						//shifting back from unsigned
 						if (tempioletId < 0){
 							break;//hit a wall no need to continue.
 						}//what if we hit both an inlet and outlet. Can that ever happen?
@@ -328,14 +333,18 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 			}
 			Object_Primitive_and_distance hitpoint_triangle_dist = IntersectionCGAL[iHit];
 
-			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){//we do an explicite cast to double here. 
-				//The cast to double is only needed if we use an exact_construction kernel. 
-				//Otherwise this is already a double but keeping this in makes it posible to change the kernel for testing.
-				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),CGAL::to_double(hitPointCGAL.z()));
+			if (CGAL::assign(hitPointCGAL, hitpoint_triangle_dist.first.first)){
+			//we do an explicite cast to double here. 
+			//The cast to double is only needed if we use an exact_construction kernel. 
+			//Otherwise this is already a double but keeping this in makes it 
+			//posible to change the kernel for testing.
+				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),
+						  CGAL::to_double(hitPointCGAL.z()));
 			}
 			else if (CGAL::assign(hitsegmentCGAL, hitpoint_triangle_dist.first.first)){
 				hitPointCGAL = CGAL::midpoint(hitsegmentCGAL.vertex(0),hitsegmentCGAL.vertex(1));
-				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),CGAL::to_double(hitPointCGAL.z()));
+				hitPoint = Vector(CGAL::to_double(hitPointCGAL.x()),CGAL::to_double(hitPointCGAL.y()),
+						  CGAL::to_double(hitPointCGAL.z()));
 			}
 			else{
 				throw GenerationErrorMessage("This type of intersection should not happen");
@@ -375,12 +384,11 @@ void PolyDataGenerator::ClassifySite(Site& site) {
 				 hitpoint_triangle_dist.first.second->halfedge()->next()->next()->vertex()->point() - 
 									hitpoint_triangle_dist.first.second->halfedge()->next()->vertex()->point());
 				CGALNorm = CGALNorm/CGAL::sqrt(CGALNorm.squared_length());
-				link.WallNormalAtWallCut = Vector(CGALNorm.x(), CGALNorm.y(),
-												  CGALNorm.z());
+				link.WallNormalAtWallCut = Vector(CGALNorm.x(), CGALNorm.y(),CGALNorm.z());
 				link.DistanceInVoxels = distanceInVoxels;
 			}
 		}
-  } 
+	}
 	
 	// If there's enough information available, an approximation of the wall normal will be computed for this fluid site.
 	this->ComputeAveragedNormal(site);
@@ -390,52 +398,44 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 	int nHits;
 	bool debugintersect = false;
 	if (!neigh.IsFluidKnown) {
-		// Neighbour unknown, must always intersect
+	// Neighbour unknown, must always intersect
 		nHits = this->ComputeIntersectionsCGAL(site, neigh);
 		if (nHits % 2 == 0) {
-			// Even # hits, hence neigh has same type as site
-			neigh.IsFluid = site.IsFluid;
-		} else if (nHits % 2 == 1){
+		// Even # hits, hence neigh has same type as site
+		neigh.IsFluid = site.IsFluid;
+		} 
+		else if (nHits % 2 == 1){
 			// Odd # hits, neigh is opposite type to site
 			neigh.IsFluid = !site.IsFluid;
-		} else{
-			neigh.IsFluid = InsideOutside(neigh);
-		}
-		if (debugintersect){
-			bool Sinside = InsideOutside(site);
-			bool Ninside = InsideOutside(neigh);
-			if ((Ninside != neigh.IsFluid) || (Sinside != site.IsFluid)){
-				throw InconsistentFluidnessError(site, neigh, nHits);
-			}
-		}
-		
-		if (neigh.IsFluid)
-			neigh.CreateLinksVector();
-		
-		neigh.IsFluidKnown = true;
-	} else {
-		// We know the fluidness of neigh, maybe don't need to intersect
-		if (site.IsFluid != neigh.IsFluid) {
-			nHits = this->ComputeIntersectionsCGAL(site, neigh);
-			// Only in the case of difference must we intersect.
-			if (nHits % 2 == 0) {
-				bool Sinside = InsideOutside(site);
-				bool Ninside = InsideOutside(neigh);
-				cout << Sinside << " and " << Ninside << endl;
-				throw InconsistentFluidnessError(site, neigh, nHits);
-			}
-			if (debugintersect){
-				if (nHits % 2 != 1) {
-					bool Sinside = InsideOutside(site);
-					bool Ninside = InsideOutside(neigh);
-					if (Sinside == Ninside){
-						throw InconsistentFluidnessError(site, neigh, nHits);
-					}
-				}
-			}
 		}
 		else{
-			nHits=0;
+			neigh.IsFluid = InsideOutside(neigh);
+		}
+		if (neigh.IsFluid)
+			neigh.CreateLinksVector();
+		neigh.IsFluidKnown = true;
+	} 
+	else {
+	// We know the fluidness of neigh, maybe don't need to intersect
+	if (site.IsFluid != neigh.IsFluid) {
+		nHits = this->ComputeIntersectionsCGAL(site, neigh);
+	// Only in the case of difference must we intersect.
+		if (nHits % 2 == 0) {
+			bool Sinside = InsideOutside(site);
+			bool Ninside = InsideOutside(neigh);
+			throw InconsistentIntersectRayError(site, neigh, nHits, Sinside, Ninside);
+		}
+	}
+	else{ // No need to intersect
+		nHits=0;
+		}
+	}
+
+	if (debugintersect){
+		bool Sinside = InsideOutside(site);
+		bool Ninside = InsideOutside(neigh);
+		if (Sinside != site.IsFluid || Ninside != neigh.IsFluid){
+      			throw InconsistentIntersectRayError(site, neigh, nHits, Sinside, Ninside);
 		}
 	}
 	return nHits; 
@@ -444,49 +444,53 @@ int PolyDataGenerator::Intersect(Site& site, Site& neigh){
 
 
 bool PolyDataGenerator::InsideOutside(Site& site){
-  PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
-  bool inside;
-  CGAL::Random_points_on_sphere_3<PointCGAL> random_point(1.);
-  RayCGAL ray_query;
-  int ori[3];
-  bool nextray = true;
-  int nHitsRay;
-  PointCGAL v1;
-  PointCGAL v2;
-  PointCGAL v3;
-  FacehandleCGAL f;
-  std::vector<Object_and_primitive_id> rayhitcells;
-  while(nextray){
-	  ray_query= RayCGAL(point,*random_point);
-	  nHitsRay = this->AABBtree->number_of_intersected_primitives(ray_query);
-	  rayhitcells.clear();
-	  this->AABBtree->all_intersections(ray_query, std::back_inserter(rayhitcells));
-	  for (std::vector<Object_and_primitive_id>::iterator i = rayhitcells.begin(); i != rayhitcells.end(); ++i) {
-		  f = i->second;
-		  
-		  v1 = f->halfedge()->vertex()->point();
-		  v2 = f->halfedge()->next()->vertex()->point();
-		  v3 = f->halfedge()->next()->next()->vertex()->point();
-		  
-		  if (CGAL::orientation(v1,v2,v3,point) == 0){
-			  nextray = false;
-			  inside = false;
-			  break;
-		  }
-		  ori[0] = CGAL::orientation(point,*random_point,v2,v3);
-		  ori[1] = CGAL::orientation(point,*random_point,v2,v3);
-		  ori[2] = CGAL::orientation(point,*random_point,v2,v3);
-		  if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0){
-			  nextray = true;
-			  ++random_point;
-			  break;
-		  }
-		  nextray=false;
-		  inside = nHitsRay % 2;
-	  }	  
-  }
-
-  return inside;
+	PointCGAL point(site.Position[0], site.Position[1], site.Position[2]);
+	bool inside;
+	CGAL::Random_points_on_sphere_3<PointCGAL> random_point(1.);
+	RayCGAL ray_query;
+	int ori[3];
+	bool nextray = true;
+	int nHitsRay;
+	PointCGAL v1;
+	PointCGAL v2;
+	PointCGAL v3;
+	FacehandleCGAL f;
+	std::vector<Object_and_primitive_id> rayhitcells;
+	while(nextray){
+	ray_query= RayCGAL(point,*random_point);
+	nHitsRay = this->AABBtree->number_of_intersected_primitives(ray_query);
+ 	if (nHitsRay > 0){
+		rayhitcells.clear();
+		this->AABBtree->all_intersections(ray_query, std::back_inserter(rayhitcells));
+      		for (std::vector<Object_and_primitive_id>::iterator i = rayhitcells.begin(); 
+		     i != rayhitcells.end(); ++i) {
+		f = i->second;
+		v1 = f->halfedge()->vertex()->point();
+		v2 = f->halfedge()->next()->vertex()->point();
+		v3 = f->halfedge()->next()->next()->vertex()->point();
+		if (CGAL::orientation(v1,v2,v3,point) == 0){
+			nextray = false;
+			inside = false;
+			break;
+		}
+		ori[0] = CGAL::orientation(point,*random_point,v1,v2);
+		ori[1] = CGAL::orientation(point,*random_point,v1,v3);
+		ori[2] = CGAL::orientation(point,*random_point,v2,v3);
+		if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0){
+	  		nextray = true;
+			++random_point;
+			break;
+		}
+		nextray=false;
+		inside = nHitsRay % 2;
+		}	  
+	}
+	else{
+		inside = false;
+		nextray = false;
+	}
+	}
+	return inside;
 }
 
 int PolyDataGenerator::ComputeIntersections(Site& from, Site& to) {
@@ -514,14 +518,16 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 	this->IntersectionCGAL.clear();
 	this->AABBtree->all_intersections(segment_query, std::back_inserter(this->hitCellIdsCGAL));
 	Object_Primitive_and_distance OPD;
+
 	if (nHitsCGAL) {
-	    for (std::vector<Object_and_primitive_id>::iterator i = this->hitCellIdsCGAL.begin(); i != this->hitCellIdsCGAL.end(); ++i) {
+	    for (std::vector<Object_and_primitive_id>::iterator i = this->hitCellIdsCGAL.begin();
+		 i != this->hitCellIdsCGAL.end(); ++i) {
 		 	f = i->second;
 			
 			v1 = f->halfedge()->vertex()->point();
 			v2 = f->halfedge()->next()->vertex()->point();
 			v3 = f->halfedge()->next()->next()->vertex()->point();
-			// 0,1,2 are not needed with only one point but the speedup looks minmal.
+			// 0,1,2 are not needed with only one point but the speedup looks minimal.
 			ori[0] = CGAL::orientation(p1,p2,v1,v2);
 			ori[1] = CGAL::orientation(p1,p2,v1,v3);
 			ori[2] = CGAL::orientation(p1,p2,v2,v3);
@@ -543,16 +549,17 @@ int PolyDataGenerator::ComputeIntersectionsCGAL(Site& from, Site& to) {
 				throw GenerationErrorMessage(
 				"This type of intersection should not happen");
 			}
-			if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0 || ori[3] == 0 || ori[4] == 0){	
-				// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. These 2 intersect and the result may be indetermined 
-				// ori4 and ori5. In this case either of the points are coplanar with the triangle (primitive)		
+			if (ori[0] == 0 || ori[1] == 0 || ori[2] == 0 || ori[3] == 0 || ori[4] == 0){
+			// ori1,2,3 if the segment from voxel 1 to voxel 2 is in the same plane as the edge. 
+			// These 2 intersect and the result may be indetermined 
+		        // Ori4 and Ori5. In this case either of the points are coplanar with the triangle (primitive)	 
+			// In all cases the intersection is not usefull.
 				nHitsCGAL = -1;
 			}
-	    } 
+		}
 	}
 
-	if (nHitsCGAL != 1){
-		
+	if (nHitsCGAL != 1){		
 		std::sort(this->IntersectionCGAL.begin(), this->IntersectionCGAL.end(), distancesort);
 	}
 	return nHitsCGAL;
