@@ -17,7 +17,8 @@ namespace hemelb
   {
 
     SimulationState::SimulationState(double timeStepLength, unsigned long totalTimeSteps) :
-        timeStepLength(timeStepLength), timeStep(1), totalTimeSteps(totalTimeSteps), isTerminating(false), isRendering(false), stability(Stable)
+        timeStepLength(timeStepLength), timeStep(1), totalTimeSteps(totalTimeSteps),
+            isTerminating(false), isRendering(false), stability(Stable)
     {
     }
 
@@ -77,9 +78,17 @@ namespace hemelb
       dictionary.SetFormattedValue("TIME_STEP_LENGTH", "%lf", GetTimeStepLength());
       dictionary.SetIntValue("STEPS", GetTimeStep() - 1);
       dictionary.SetIntValue("TOTAL_TIME_STEPS", GetTotalTimeSteps());
-      if (stability == lb::Unstable)
+
+      switch (stability)
       {
-        dictionary.AddSectionDictionary("UNSTABLE");
+        case lb::Unstable:
+          dictionary.AddSectionDictionary("UNSTABLE");
+          break;
+        case lb::StableAndConverged:
+          dictionary.AddSectionDictionary("SOLUTIONCONVERGED");
+          break;
+        default:
+          break;
       }
     }
   }
