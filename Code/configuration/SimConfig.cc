@@ -28,14 +28,14 @@ namespace hemelb
       return ans;
     }
     SimConfig::SimConfig() :
-      xmlFilePath(""), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-          unitConverter(NULL)
+        xmlFilePath(""), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
+            unitConverter(NULL)
     {
     }
 
     SimConfig::SimConfig(const std::string& path) :
-      xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-          unitConverter(NULL)
+        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
+            unitConverter(NULL)
     {
     }
     void SimConfig::Init()
@@ -97,6 +97,12 @@ namespace hemelb
       io::xml::Element propertiesEl = topNode.GetChildOrNull("properties");
       if (propertiesEl != io::xml::Element::Missing())
         DoIOForProperties(propertiesEl);
+
+      // Optional element <monitoring>
+      io::xml::Element monitoringEl = topNode.GetChildOrNull("monitoring");
+      if (monitoringEl != io::xml::Element::Missing())
+        DoIOForMonitoring(monitoringEl);
+
     }
 
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
@@ -207,9 +213,9 @@ namespace hemelb
 
       const std::string childNodeName = nodeName.substr(0, nodeName.size() - 1);
       std::vector<lb::iolets::InOutLet*> ioletList;
-      for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName); currentIoletNode
-          != io::xml::Element::Missing(); currentIoletNode
-          = currentIoletNode.NextSiblingOrNull(childNodeName))
+      for (io::xml::Element currentIoletNode = ioletsEl.GetChildOrNull(childNodeName);
+          currentIoletNode != io::xml::Element::Missing();
+          currentIoletNode = currentIoletNode.NextSiblingOrNull(childNodeName))
       {
         // Determine which InOutlet to create
         io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
@@ -295,7 +301,9 @@ namespace hemelb
       GetDimensionalValue(visEl.GetChildOrThrow("centre"), "m", visualisationCentre);
 
       io::xml::Element orientationEl = visEl.GetChildOrThrow("orientation");
-      GetDimensionalValue(orientationEl.GetChildOrThrow("longitude"), "deg", visualisationLongitude);
+      GetDimensionalValue(orientationEl.GetChildOrThrow("longitude"),
+                          "deg",
+                          visualisationLongitude);
       GetDimensionalValue(orientationEl.GetChildOrThrow("latitude"), "deg", visualisationLatitude);
 
       io::xml::Element displayEl = visEl.GetChildOrThrow("display");
@@ -309,14 +317,15 @@ namespace hemelb
 
     void SimConfig::DoIOForProperties(const io::xml::Element& propertiesEl)
     {
-      for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput"); !poPtr.AtEnd(); ++poPtr)
+      for (io::xml::ChildIterator poPtr = propertiesEl.IterChildren("propertyoutput");
+          !poPtr.AtEnd(); ++poPtr)
       {
         propertyOutputs.push_back(DoIOForPropertyOutputFile(*poPtr));
       }
     }
 
     extraction::PropertyOutputFile* SimConfig::DoIOForPropertyOutputFile(
-                                                                         const io::xml::Element& propertyoutputEl)
+        const io::xml::Element& propertyoutputEl)
     {
       extraction::PropertyOutputFile* file = new extraction::PropertyOutputFile();
       file->filename = propertyoutputEl.GetAttributeOrThrow("file");
@@ -352,13 +361,15 @@ namespace hemelb
             << "' in element " << geometryEl.GetPath();
       }
 
-      for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field"); !fieldPtr.AtEnd(); ++fieldPtr)
+      for (io::xml::ChildIterator fieldPtr = propertyoutputEl.IterChildren("field");
+          !fieldPtr.AtEnd(); ++fieldPtr)
         file->fields.push_back(DoIOForPropertyField(*fieldPtr));
 
       return file;
     }
 
-    extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(const io::xml::Element& geometryEl)
+    extraction::StraightLineGeometrySelector* SimConfig::DoIOForLineGeometry(
+        const io::xml::Element& geometryEl)
     {
       io::xml::Element point1El = geometryEl.GetChildOrThrow("point");
       io::xml::Element point2El = point1El.NextSiblingOrThrow("point");
@@ -372,7 +383,8 @@ namespace hemelb
       return new extraction::StraightLineGeometrySelector(point1, point2);
     }
 
-    extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(const io::xml::Element& geometryEl)
+    extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
+        const io::xml::Element& geometryEl)
     {
       io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
       io::xml::Element normalEl = geometryEl.GetChildOrThrow("normal");
@@ -398,7 +410,8 @@ namespace hemelb
 
     }
 
-    extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(const io::xml::Element& geometryEl)
+    extraction::SurfacePointSelector* SimConfig::DoIOForSurfacePoint(
+        const io::xml::Element& geometryEl)
     {
       io::xml::Element pointEl = geometryEl.GetChildOrThrow("point");
 
@@ -491,7 +504,8 @@ namespace hemelb
       GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
     }
 
-    lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetCosine* newIolet = new lb::iolets::InOutLetCosine();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -507,7 +521,8 @@ namespace hemelb
       GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", tempP);
       newIolet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(tempP));
 
-      newIolet->SetPhase(GetDimensionalValueInLatticeUnits<Angle>(conditionEl.GetChildOrThrow("phase"), "rad"));
+      newIolet->SetPhase(GetDimensionalValueInLatticeUnits<Angle>(conditionEl.GetChildOrThrow("phase"),
+                                                                  "rad"));
 
       LatticeTime period;
       GetDimensionalValueInLatticeUnits(conditionEl.GetChildOrThrow("period"), "s", period);
@@ -520,7 +535,8 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetFile* SimConfig::DoIOForFilePressureInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetFile* newIolet = new lb::iolets::InOutLetFile();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -532,7 +548,8 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetMultiscale* SimConfig::DoIOForMultiscalePressureInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetMultiscale* newIolet = new lb::iolets::InOutLetMultiscale();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -549,7 +566,8 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetParabolicVelocity* SimConfig::DoIOForParabolicVelocityInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetParabolicVelocity* newIolet = new lb::iolets::InOutLetParabolicVelocity();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -570,7 +588,8 @@ namespace hemelb
       return newIolet;
     }
 
-    lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetWomersleyVelocity* SimConfig::DoIOForWomersleyVelocityInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetWomersleyVelocity* newIolet = new lb::iolets::InOutLetWomersleyVelocity();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -581,18 +600,21 @@ namespace hemelb
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
 
       const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
-      newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits<LatticePressureGradient>(pgAmpEl, "mmHg/m"));
+      newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits<
+          LatticePressureGradient>(pgAmpEl, "mmHg/m"));
 
       const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
       newIolet->SetPeriod(GetDimensionalValueInLatticeUnits<LatticeTime>(periodEl, "s"));
 
       const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
-      newIolet->SetWomersleyNumber(GetDimensionalValueInLatticeUnits<Dimensionless>(womNumEl, "dimensionless"));
+      newIolet->SetWomersleyNumber(GetDimensionalValueInLatticeUnits<Dimensionless>(womNumEl,
+                                                                                    "dimensionless"));
 
       return newIolet;
     }
 
-    lb::iolets::InOutLetFileVelocity* SimConfig::DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl)
+    lb::iolets::InOutLetFileVelocity* SimConfig::DoIOForFileVelocityInOutlet(
+        const io::xml::Element& ioletEl)
     {
       lb::iolets::InOutLetFileVelocity* newIolet = new lb::iolets::InOutLetFileVelocity();
       DoIOForBaseInOutlet(ioletEl, newIolet);
@@ -607,7 +629,6 @@ namespace hemelb
 
       return newIolet;
     }
-
 
     bool SimConfig::HasColloidSection() const
     {
@@ -625,6 +646,25 @@ namespace hemelb
         throw Exception() << "Invalid UnitConverter (NULL)";
 
       return *unitConverter;
+    }
+
+    void SimConfig::DoIOForMonitoring(const io::xml::Element& monEl)
+    {
+      io::xml::Element convEl = monEl.GetChildOrNull("steady_flow_convergence_check");
+      if (convEl != io::xml::Element::Missing())
+      {
+        monitoringConfig.doConvergenceCheck = true;
+        convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceTolerance);
+        monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
+      }
+
+      monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility_check")
+          != io::xml::Element::Missing());
+    }
+
+    const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
+    {
+      return &monitoringConfig;
     }
   }
 }
