@@ -51,4 +51,8 @@
       <maxvelocity value="0.1" units="m/s" />
     </range>
   </visualisation>
+  <monitoring>
+    <steady_flow_convergence_check tolerance="1e-9" terminate="true"/>
+    <incompressibility_check/>
+  </monitoring>
 </hemelbsettings>
