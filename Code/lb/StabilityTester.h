@@ -35,7 +35,7 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        bool checkForConvergence = true, double relativeTolerance = 1e-6) :
+                        bool checkForConvergence, double relativeTolerance) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
                 mSimState(simState), timings(timings), checkForConvergence(checkForConvergence),
                 relativeTolerance(relativeTolerance)
@@ -233,7 +233,7 @@ namespace hemelb
         /** Timing object. */
         reporting::Timers& timings;
 
-        /** Whether to check for steady flow simulation converge */
+        /** Whether to check for steady flow simulation convergence */
         bool checkForConvergence;
 
         /** Relative error tolerance in convergence check */
