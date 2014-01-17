@@ -88,6 +88,8 @@ namespace hemelb
           // sending up a 'Unstable' value anyway.
           if (mUpwardsStability != Unstable)
           {
+            bool unconvergedSitePresent = false;
+
             for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
             {
               for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
@@ -98,28 +100,34 @@ namespace hemelb
                 if (! (value > 0.0))
                 {
                   mUpwardsStability = Unstable;
+                  break;
                 }
               }
-            }
-
-            // If the simulation wasn't found to be unstable, check whether it has converged or not.
-            if ( (mUpwardsStability != Unstable) && checkForConvergence)
-            {
-              mUpwardsStability = StableAndConverged;
-              for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+              ///@todo: If we refactor the previous loop out, we can get away with a single break statement
+              if (mUpwardsStability == Unstable)
               {
-                double relativeDifference =
+                break;
+              }
+
+              if (checkForConvergence)
+              {
+                distribn_t relativeDifference =
                     ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
                                               mLatDat->GetSite(i).GetFOld<LatticeType>());
 
                 if (relativeDifference > relativeTolerance)
                 {
                   // The simulation is stable but hasn't converged in the whole domain yet.
-                  mUpwardsStability = Stable;
-                  break;
+                  unconvergedSitePresent = true;
                 }
-
               }
+            }
+
+            if (mUpwardsStability != Unstable)
+            {
+              mUpwardsStability = unconvergedSitePresent ?
+                Stable :
+                StableAndConverged;
             }
 
             timings[hemelb::reporting::Timers::monitoring].Stop();
@@ -148,7 +156,7 @@ namespace hemelb
             sqFOldNorm += fOld[l] * fOld[l];
           }
 
-          return sqrt(sqDiffNorm) / sqrt(sqFOldNorm);
+          return sqrt(sqDiffNorm / sqFOldNorm);
         }
 
         /**
