@@ -20,6 +20,7 @@ namespace hemelb
   {
     enum Stability
     {
+      UndefinedStability = -1,
       Unstable = 0,
       Stable = 1,
       StableAndConverged = 2

@@ -46,6 +46,13 @@ namespace hemelb
             lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
             CPPUNIT_ASSERT(inlet != NULL);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
+
+            // Check that in the absence of the <monitoring> XML element things get initiliased properly
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+            CPPUNIT_ASSERT(!monConfig->doConvergenceCheck);
+            CPPUNIT_ASSERT(!monConfig->doIncompressibilityCheck);
+            CPPUNIT_ASSERT(!monConfig->convergenceTerminate);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0., monConfig->convergenceTolerance, 1e-6);
           }
 
           void Test_0_2_1_Read()
@@ -57,6 +64,12 @@ namespace hemelb
             lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
             CPPUNIT_ASSERT(inlet != NULL);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
+
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+            CPPUNIT_ASSERT(monConfig->doConvergenceCheck);
+            CPPUNIT_ASSERT(monConfig->doIncompressibilityCheck);
+            CPPUNIT_ASSERT(monConfig->convergenceTerminate);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1e-9, monConfig->convergenceTolerance, 1e-6);
           }
 
           void TestXMLFileContent()
