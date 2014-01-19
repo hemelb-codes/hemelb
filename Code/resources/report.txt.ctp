@@ -10,6 +10,9 @@ With {{TIME_STEP_LENGTH}} seconds per time step.
 {{#UNSTABLE}}
 !! Simulation was unstable !!
 {{/UNSTABLE}}
+{{#SOLUTIONCONVERGED}}
+Detected convergence of steady flow simulation
+{{/SOLUTIONCONVERGED}}
 
 Sub-domains info:
 {{#PROCESSOR}}
