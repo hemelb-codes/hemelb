@@ -123,15 +123,26 @@ namespace hemelb
               }
             }
 
-            if (mUpwardsStability != Unstable)
-            {
-              mUpwardsStability = unconvergedSitePresent ?
-                Stable :
-                StableAndConverged;
-            }
+            // If we are not a leaf node, there's a chance that a child node found an unconverged site but we didn't.
+            bool childFoundUnconverged = (GetChildren().size() != 0)
+                && (mUpwardsStability == Stable);
 
-            timings[hemelb::reporting::Timers::monitoring].Stop();
+            switch (mUpwardsStability)
+            {
+              case UndefinedStability:
+              case Stable:
+              case StableAndConverged:
+                mUpwardsStability =
+                    (checkForConvergence && !unconvergedSitePresent && !childFoundUnconverged) ?
+                      StableAndConverged :
+                      Stable;
+                break;
+              case Unstable:
+                break;
+            }
           }
+
+          timings[hemelb::reporting::Timers::monitoring].Stop();
 
           SendToParent<int>(&mUpwardsStability, 1);
         }
@@ -144,10 +155,10 @@ namespace hemelb
          * @param fOld Distribution function at the end of the previous timestep.
          * @return relative difference between distribution functions fNew and fOld.
          */
-        inline double ComputeRelativeDifference(const double* fNew, const double* fOld) const
+        inline double ComputeRelativeDifference(const distribn_t* fNew, const distribn_t* fOld) const
         {
-          double sqDiffNorm = 0.;
-          double sqFOldNorm = 0.;
+          distribn_t sqDiffNorm = 0.;
+          distribn_t sqFOldNorm = 0.;
 
           for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
           {
@@ -187,17 +198,33 @@ namespace hemelb
               }
             }
 
-            // If the simulation wasn't found to be unstable, check whether it has converged or not.
+            // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
             if ( (mUpwardsStability != Unstable) && checkForConvergence)
             {
-              mUpwardsStability = StableAndConverged;
+              bool anyStableNotConverged = false;
+              bool anyConverged = false;
+
               for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
               {
+                if (mChildrensStability[ii] == StableAndConverged)
+                {
+                  anyConverged = true;
+                }
+
                 if (mChildrensStability[ii] == Stable)
                 {
-                  mUpwardsStability = Stable;
-                  break;
+                  anyStableNotConverged = true;
                 }
+              }
+
+              if (anyConverged)
+              {
+                mUpwardsStability = StableAndConverged;
+              }
+
+              if (anyStableNotConverged)
+              {
+                mUpwardsStability = Stable;
               }
             }
           }
