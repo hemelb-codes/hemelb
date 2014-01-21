@@ -84,8 +84,8 @@ archer: #the ARCHER supercomputer at EPCC
     CMAKE_CXX_COMPILER: "CC"
     CMAKE_C_COMPILER: "cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
-    CTEMPLATE_INCLUDE_DIR: "/work/e283/e283/dgroen/ctemplate-2.2/src"
-    CTEMPLATE_LIBRARIES: "/work/e283/e283/dgroen/ctemplate-2.2/.libs/libctemplate.so"
+    CTEMPLATE_INCLUDE_DIR: "/work/e283/e283/$USER/ctemplate-2.2/src"
+    CTEMPLATE_LIBRARIES: "/work/e283/e283/$USER/ctemplate-2.2/.libs/libctemplate.so"
 #    CTEMPLATE_CONFIGURE_OPTIONS: "-disable-static"
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
