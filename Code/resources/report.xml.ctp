@@ -66,6 +66,10 @@
 		{{#UNSTABLE}}
 			<stability_problem/>
 		{{/UNSTABLE}}
+		{{#SOLUTIONCONVERGED}}
+		<convergence_achieved/>
+        {{/SOLUTIONCONVERGED}}
+		
 	</checks>
 	<timings>
 		{{#TIMER}}

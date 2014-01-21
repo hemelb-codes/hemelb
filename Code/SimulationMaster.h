@@ -93,9 +93,11 @@ class SimulationMaster
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState* simulationState;
+
+    /** Struct containing the configuration of various checkers/testers */
+    const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
     hemelb::lb::StabilityTester<latticeType>* stabilityTester;
     hemelb::lb::EntropyTester<latticeType>* entropyTester;
-
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 

@@ -33,12 +33,14 @@ namespace hemelb
     class StabilityTester : public net::PhasedBroadcastRegular<>
     {
       public:
-        StabilityTester(const geometry::LatticeData * iLatDat,
-                        net::Net* net,
-                        SimulationState* simState,
-                        reporting::Timers& timings) :
-            net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat), mSimState(simState), timings(timings)
+        StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
+                        SimulationState* simState, reporting::Timers& timings,
+                        bool checkForConvergence, double relativeTolerance) :
+            net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
+                mSimState(simState), timings(timings), checkForConvergence(checkForConvergence),
+                relativeTolerance(relativeTolerance)
         {
+
           Reset();
         }
 
@@ -47,15 +49,14 @@ namespace hemelb
          */
         void Reset()
         {
-          // Re-initialise all values to be Stable.
-          mUpwardsStability = Stable;
-          mDownwardsStability = Stable;
+          mUpwardsStability = UndefinedStability;
+          mDownwardsStability = UndefinedStability;
 
-          mSimState->SetStability(Stable);
+          mSimState->SetStability(UndefinedStability);
 
           for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
           {
-            mChildrensStability[ii] = Stable;
+            mChildrensStability[ii] = UndefinedStability;
           }
         }
 
@@ -87,6 +88,8 @@ namespace hemelb
           // sending up a 'Unstable' value anyway.
           if (mUpwardsStability != Unstable)
           {
+            bool unconvergedSitePresent = false;
+
             for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
             {
               for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
@@ -97,14 +100,74 @@ namespace hemelb
                 if (! (value > 0.0))
                 {
                   mUpwardsStability = Unstable;
+                  break;
+                }
+              }
+              ///@todo: If we refactor the previous loop out, we can get away with a single break statement
+              if (mUpwardsStability == Unstable)
+              {
+                break;
+              }
+
+              if (checkForConvergence)
+              {
+                distribn_t relativeDifference =
+                    ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
+                                              mLatDat->GetSite(i).GetFOld<LatticeType>());
+
+                if (relativeDifference > relativeTolerance)
+                {
+                  // The simulation is stable but hasn't converged in the whole domain yet.
+                  unconvergedSitePresent = true;
                 }
               }
             }
 
-            timings[hemelb::reporting::Timers::monitoring].Stop();
+            // If we are not a leaf node, there's a chance that a child node found an unconverged site but we didn't.
+            bool childFoundUnconverged = (GetChildren().size() != 0)
+                && (mUpwardsStability == Stable);
+
+            switch (mUpwardsStability)
+            {
+              case UndefinedStability:
+              case Stable:
+              case StableAndConverged:
+                mUpwardsStability =
+                    (checkForConvergence && !unconvergedSitePresent && !childFoundUnconverged) ?
+                      StableAndConverged :
+                      Stable;
+                break;
+              case Unstable:
+                break;
+            }
           }
 
+          timings[hemelb::reporting::Timers::monitoring].Stop();
+
           SendToParent<int>(&mUpwardsStability, 1);
+        }
+
+        /**
+         * Computes the relative difference between two distribution function vectors,
+         * i.e. |fNew - fOld| / |fOld|, where |.| is the L2 norm of a vector.
+         *
+         * @param fNew Distribution function after stream and collide, i.e. solution of the current timestep.
+         * @param fOld Distribution function at the end of the previous timestep.
+         * @return relative difference between distribution functions fNew and fOld.
+         */
+        inline double ComputeRelativeDifference(const distribn_t* fNew, const distribn_t* fOld) const
+        {
+          distribn_t sqDiffNorm = 0.;
+          distribn_t sqFOldNorm = 0.;
+
+          for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+          {
+            double fDiff = fNew[l] - fOld[l];
+            sqDiffNorm += fDiff * fDiff;
+            sqFOldNorm += fOld[l] * fOld[l];
+          }
+
+          return sqrt(sqDiffNorm / sqFOldNorm);
         }
 
         /**
@@ -124,7 +187,7 @@ namespace hemelb
           timings[hemelb::reporting::Timers::monitoring].Start();
 
           // No need to test children's stability if this node is already unstable.
-          if (mUpwardsStability == Stable)
+          if (mUpwardsStability != Unstable)
           {
             for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
             {
@@ -132,6 +195,36 @@ namespace hemelb
               {
                 mUpwardsStability = Unstable;
                 break;
+              }
+            }
+
+            // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
+            if ( (mUpwardsStability != Unstable) && checkForConvergence)
+            {
+              bool anyStableNotConverged = false;
+              bool anyConverged = false;
+
+              for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
+              {
+                if (mChildrensStability[ii] == StableAndConverged)
+                {
+                  anyConverged = true;
+                }
+
+                if (mChildrensStability[ii] == Stable)
+                {
+                  anyStableNotConverged = true;
+                }
+              }
+
+              if (anyConverged)
+              {
+                mUpwardsStability = StableAndConverged;
+              }
+
+              if (anyStableNotConverged)
+              {
+                mUpwardsStability = Stable;
               }
             }
           }
@@ -174,6 +267,12 @@ namespace hemelb
 
         /** Timing object. */
         reporting::Timers& timings;
+
+        /** Whether to check for steady flow simulation convergence */
+        bool checkForConvergence;
+
+        /** Relative error tolerance in convergence check */
+        double relativeTolerance;
     };
   }
 }
