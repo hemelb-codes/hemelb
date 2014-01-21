@@ -82,6 +82,18 @@ namespace hemelb
 
         void ProgressToParent(unsigned long splayNumber)
         {
+          SendToParent<int>(&mUpwardsStability, 1);
+        }
+
+        /**
+         * The algorithm that checks distribution function convergence must be run in this
+         * method rather than in ProgressToParent to make sure that the current timestep has
+         * finished streaming.
+         *
+         * @param splayNumber
+         */
+        void PostSendToParent(unsigned long splayNumber)
+        {
           timings[hemelb::reporting::Timers::monitoring].Start();
 
           // No need to bother testing out local lattice points if we're going to be
@@ -123,17 +135,12 @@ namespace hemelb
               }
             }
 
-            // If we are not a leaf node, there's a chance that a child node found an unconverged site but we didn't.
-            bool childFoundUnconverged = (GetChildren().size() != 0)
-                && (mUpwardsStability == Stable);
-
             switch (mUpwardsStability)
             {
               case UndefinedStability:
               case Stable:
               case StableAndConverged:
-                mUpwardsStability =
-                    (checkForConvergence && !unconvergedSitePresent && !childFoundUnconverged) ?
+                mUpwardsStability = (checkForConvergence && !unconvergedSitePresent) ?
                       StableAndConverged :
                       Stable;
                 break;
@@ -143,8 +150,6 @@ namespace hemelb
           }
 
           timings[hemelb::reporting::Timers::monitoring].Stop();
-
-          SendToParent<int>(&mUpwardsStability, 1);
         }
 
         /**
@@ -155,7 +160,8 @@ namespace hemelb
          * @param fOld Distribution function at the end of the previous timestep.
          * @return relative difference between distribution functions fNew and fOld.
          */
-        inline double ComputeRelativeDifference(const distribn_t* fNew, const distribn_t* fOld) const
+        inline double ComputeRelativeDifference(const distribn_t* fNew,
+                                                const distribn_t* fOld) const
         {
           distribn_t sqDiffNorm = 0.;
           distribn_t sqFOldNorm = 0.;
@@ -204,6 +210,7 @@ namespace hemelb
               bool anyStableNotConverged = false;
               bool anyConverged = false;
 
+              // mChildrensStability will contain UndefinedStability for non-existent children
               for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
               {
                 if (mChildrensStability[ii] == StableAndConverged)
@@ -217,7 +224,9 @@ namespace hemelb
                 }
               }
 
-              if (anyConverged)
+              // With the current configuration the root node of the tree won't own any fluid sites. Its
+              // state only depends on children nodes not on local state.
+              if (anyConverged && (mUpwardsStability == StableAndConverged || GetParent() == NOPARENT))
               {
                 mUpwardsStability = StableAndConverged;
               }
