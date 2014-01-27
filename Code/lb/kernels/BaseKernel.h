@@ -49,6 +49,8 @@ namespace hemelb
           }
       };
 
+
+
       template<class LatticeType>
       struct HydroVarsBase
       {
@@ -71,7 +73,20 @@ namespace hemelb
           util::Vector3D<distribn_t> velocity;
 
           const distribn_t* const f;
+          // This is pointing to the vector-field of external forces
+          // defined in LatticeData::forceAtSite
           const util::Vector3D<distribn_t>* const force;
+
+          // Guo lattice distribution of external force contributions
+          // as calculated in lattice::CalculateForceDistribution.
+          inline const FVector<LatticeType>& GetForceDist() const
+          {
+            return forceDist;
+          }
+          inline void SetForceDist(Direction i, distribn_t val)
+          {
+             forceDist[i] = val;
+          }
 
           inline const FVector<LatticeType>& GetFEq() const
           {
@@ -117,7 +132,7 @@ namespace hemelb
           }
 
         protected:
-          FVector<LatticeType> f_eq, f_neq, fPostCollision;
+          FVector<LatticeType> f_eq, f_neq, fPostCollision, forceDist;
       };
 
       template<typename KernelImpl>
@@ -129,6 +144,12 @@ namespace hemelb
           {
 
           }
+
+          HydroVars(const distribn_t* const f) :
+                      HydroVarsBase<typename KernelImpl::LatticeType> (f,NULL)
+                    {
+
+                    }
       };
 
       /**
