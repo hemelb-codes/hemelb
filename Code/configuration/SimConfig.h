@@ -38,7 +38,24 @@ namespace hemelb
     class SimConfig
     {
       public:
+        /**
+         * Bundles together various configuration parameters concerning simulation monitoring
+         */
+        struct MonitoringConfig
+        {
+            MonitoringConfig() :
+                doConvergenceCheck(false), convergenceTolerance(0), convergenceTerminate(false),
+                    doIncompressibilityCheck(false)
+            {
+            }
+            bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
+            double convergenceTolerance; ///< Convergence check tolerance
+            bool convergenceTerminate; ///< Whether to terminate a converged run or not
+            bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
+        };
+
         static SimConfig* New(const std::string& path);
+
       protected:
         SimConfig(const std::string& path);
         void Init();
@@ -143,6 +160,12 @@ namespace hemelb
 
         const util::UnitConverter& GetUnitConverter() const;
 
+        /**
+         * Return the configuration of various checks/test
+         * @return monitoring configuration
+         */
+        const MonitoringConfig* GetMonitoringConfiguration() const;
+
       protected:
         /**
          * Protected default ctor to allow derived test fixture classes to create mocks.
@@ -158,10 +181,12 @@ namespace hemelb
          * @param ioletEl
          * @param requiredBC
          */
-        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl, const std::string& requiredBC);
+        virtual void CheckIoletMatchesCMake(const io::xml::Element& ioletEl,
+                                            const std::string& requiredBC);
 
         template<typename T>
-        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem, const std::string& units, T& value)
+        void GetDimensionalValueInLatticeUnits(const io::xml::Element& elem,
+                                               const std::string& units, T& value)
         {
           GetDimensionalValue(elem, units, value);
           value = unitConverter->ConvertToLatticeUnits(units, value);
@@ -187,12 +212,12 @@ namespace hemelb
         lb::iolets::InOutLet* DoIOForPressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetCosine* DoIOForCosinePressureInOutlet(const io::xml::Element& ioletEl);
         lb::iolets::InOutLetFile* DoIOForFilePressureInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetMultiscale
-            * DoIOForMultiscalePressureInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetMultiscale* DoIOForMultiscalePressureInOutlet(
+            const io::xml::Element& ioletEl);
 
         lb::iolets::InOutLet* DoIOForVelocityInOutlet(const io::xml::Element& ioletEl);
-        lb::iolets::InOutLetParabolicVelocity
-            * DoIOForParabolicVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetParabolicVelocity* DoIOForParabolicVelocityInOutlet(
+            const io::xml::Element& ioletEl);
         /**
          * Reads a Womersley velocity iolet definition from the XML config file and returns
          * an InOutLetWomersleyVelocity object
@@ -200,8 +225,8 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetWomersleyVelocity object
          */
-        lb::iolets::InOutLetWomersleyVelocity
-            * DoIOForWomersleyVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetWomersleyVelocity* DoIOForWomersleyVelocityInOutlet(
+            const io::xml::Element& ioletEl);
 
         /**
          * Reads a file velocity iolet definition from the XML config file and returns
@@ -210,20 +235,28 @@ namespace hemelb
          * @param ioletEl in memory representation of <inlet> or <outlet> xml element
          * @return InOutLetFileVelocity object
          */
-        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(const io::xml::Element& ioletEl);
+        lb::iolets::InOutLetFileVelocity* DoIOForFileVelocityInOutlet(
+            const io::xml::Element& ioletEl);
 
         void DoIOForProperties(const io::xml::Element& xmlNode);
         void DoIOForProperty(io::xml::Element xmlNode, bool isLoading);
         extraction::OutputField DoIOForPropertyField(const io::xml::Element& xmlNode);
-        extraction::PropertyOutputFile
-            * DoIOForPropertyOutputFile(const io::xml::Element& propertyoutputEl);
-        extraction::StraightLineGeometrySelector
-            * DoIOForLineGeometry(const io::xml::Element& xmlNode);
+        extraction::PropertyOutputFile* DoIOForPropertyOutputFile(
+            const io::xml::Element& propertyoutputEl);
+        extraction::StraightLineGeometrySelector* DoIOForLineGeometry(
+            const io::xml::Element& xmlNode);
         extraction::PlaneGeometrySelector* DoIOForPlaneGeometry(const io::xml::Element&);
         extraction::SurfacePointSelector* DoIOForSurfacePoint(const io::xml::Element&);
 
         void DoIOForInitialConditions(io::xml::Element parent);
         void DoIOForVisualisation(const io::xml::Element& visEl);
+
+        /**
+         * Reads monitoring configuration from XML file
+         *
+         * @param monEl in memory representation of <monitoring> xml element
+         */
+        void DoIOForMonitoring(const io::xml::Element& monEl);
 
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
@@ -244,6 +277,7 @@ namespace hemelb
          */
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
+        MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
