@@ -241,6 +241,7 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
 
+      timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
@@ -248,6 +249,7 @@ namespace hemelb
     void LBM<LatticeType>::PreReceive()
     {
       timings[hemelb::reporting::Timers::lb].Start();
+      timings[hemelb::reporting::Timers::lb_calc].Start();
 
       /**
        * In the PreReceive phase, we perform LB for all the sites whose neighbours lie on this
@@ -340,10 +342,12 @@ namespace hemelb
     void LBM<LatticeType>::EndIteration()
     {
       timings[hemelb::reporting::Timers::lb].Start();
+      timings[hemelb::reporting::Timers::lb_calc].Start();
 
       // Swap f_old and f_new ready for the next timestep.
       mLatDat->SwapOldAndNew();
 
+      timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 

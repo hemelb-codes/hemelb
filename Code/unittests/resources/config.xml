@@ -5,7 +5,7 @@
     <steps value="3000" units="lattice" />
     <step_length value="0.0001" units="s" />
     <voxel_size value="0.01" units="m" />
-    <origin value="(0.0,0.0,0.0)" units="m" />
+    <origin value="(-1.0,-2.0,-3.0)" units="m" />
   </simulation>
   <geometry>
     <datafile path="./config.dat" />
@@ -51,4 +51,8 @@
       <maxvelocity value="0.1" units="m/s" />
     </range>
   </visualisation>
+  <monitoring>
+    <steady_flow_convergence_check tolerance="1e-9" terminate="true"/>
+    <incompressibility_check/>
+  </monitoring>
 </hemelbsettings>

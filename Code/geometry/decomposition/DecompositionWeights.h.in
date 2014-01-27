@@ -26,19 +26,36 @@ namespace hemelb
       * The weights does not yet differ on different architectures.
       */
       
-      static const int hemelbSiteWeightsSIMPLEBOUNCEBACK = 1250;
-      static const int hemelbSiteWeightsBFL = 2000;
-      static const int hemelbSiteWeightsGZS = 7000;
-      static const int hemelbSiteWeightsJUNKYANG = 10000; 
-      static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET = 4000;
-      static const int hemelbSiteWeightsLADDIOLET = 4000;
+      static const int hemelbSiteWeightsAMDBULLDOZER = 4;
+      static const int hemelbSiteWeightsSIMPLEBOUNCEBACK_AMDBULLDOZER = 5;
+      static const int hemelbSiteWeightsBFL_AMDBULLDOZER = 8;
+      static const int hemelbSiteWeightsGZS_AMDBULLDOZER = 28;
+      static const int hemelbSiteWeightsJUNKYANG_AMDBULLDOZER = 40; 
+      static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_AMDBULLDOZER = 16;
+      static const int hemelbSiteWeightsLADDIOLET_AMDBULLDOZER = 16;
       
-      static const int hemelbSiteWeights[6] = { 1000, 
-                                                hemelbSiteWeights@HEMELB_WALL_BOUNDARY@, 
-                                                hemelbSiteWeights@HEMELB_INLET_BOUNDARY@, 
-                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@, 
-                                                hemelbSiteWeights@HEMELB_INLET_BOUNDARY@, 
-                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@ };
+      static const int hemelbSiteWeightsINTELSANDYBRIDGE = 4;
+      static const int hemelbSiteWeightsSIMPLEBOUNCEBACK_INTELSANDYBRIDGE = 5;
+      static const int hemelbSiteWeightsBFL_INTELSANDYBRIDGE = 8;
+      static const int hemelbSiteWeightsGZS_INTELSANDYBRIDGE = 28;
+      static const int hemelbSiteWeightsJUNKYANG_INTELSANDYBRIDGE = 40; 
+      static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_INTELSANDYBRIDGE = 16;
+      static const int hemelbSiteWeightsLADDIOLET_INTELSANDYBRIDGE = 16;
+      
+      static const int hemelbSiteWeightsNEUTRAL = 1;
+      static const int hemelbSiteWeightsSIMPLEBOUNCEBACK_NEUTRAL = 1;
+      static const int hemelbSiteWeightsBFL_NEUTRAL = 1;
+      static const int hemelbSiteWeightsGZS_NEUTRAL = 1;
+      static const int hemelbSiteWeightsJUNKYANG_NEUTRAL = 1; 
+      static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_NEUTRAL = 1;
+      static const int hemelbSiteWeightsLADDIOLET_NEUTRAL = 1;
+      
+      static const int hemelbSiteWeights[6] = { hemelbSiteWeights@HEMELB_COMPUTE_ARCHITECTURE@, 
+                                                hemelbSiteWeights@HEMELB_WALL_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
+                                                hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
+                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
+                                                hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
+                                                hemelbSiteWeights@HEMELB_OUTLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@ };
                                                 
       static const int hemelbCoresPerNode = 32;
     }
