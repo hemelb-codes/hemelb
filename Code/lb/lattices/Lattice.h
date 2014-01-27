@@ -134,6 +134,40 @@ namespace hemelb
               momentum_z += DmQn::CZ[direction] * f[direction];
             }
           }
+
+          /**
+           * Calculates density and momentum, the original non-SSE version
+           * @param f
+           * @param density
+           * @param momentum_x
+           * @param momentum_y
+           * @param momentum_z
+           * @param force_x
+           * @param force_y
+           * @param force_z
+           */
+          inline static void CalculateDensityAndMomentum(const distribn_t f[],
+                                                         distribn_t &density,
+                                                         distribn_t &momentum_x,
+                                                         distribn_t &momentum_y,
+                                                         distribn_t &momentum_z,
+                                                         const distribn_t &force_x,
+                                                         const distribn_t &force_y,
+                                                         const distribn_t &force_z)
+          {
+            density = momentum_x = momentum_y = momentum_z = 0.0;
+
+            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
+            {
+              density += f[direction];
+              momentum_x += DmQn::CX[direction] * f[direction];
+              momentum_y += DmQn::CY[direction] * f[direction];
+              momentum_z += DmQn::CZ[direction] * f[direction];
+            }
+            momentum_x += 0.5 * force_x;
+            momentum_y += 0.5 * force_y;
+            momentum_z += 0.5 * force_z;
+          }
           #endif                   
 
           #ifdef HEMELB_USE_SSE3
@@ -263,6 +297,37 @@ namespace hemelb
                       + 3. * mom_dot_ei);
             }
           }
+
+          /**
+            * Calculate Force
+            * @param tau
+            * @param force_x
+            * @param force_y
+            * @param force_z
+            * @param forceDist
+            */
+          inline static void CalculateForceDistribution(const distribn_t &tau,
+        		                                        const distribn_t &velocity_x,
+        		                                        const distribn_t &velocity_y,
+        		                                        const distribn_t &velocity_z,
+                                                        const distribn_t &force_x,
+                                                        const distribn_t &force_y,
+                                                        const distribn_t &force_z,
+                                                        distribn_t forceDist[])
+          {
+
+        	distribn_t prefactor = (1.0 - (1.0 / (2.0 * tau))) ;
+            distribn_t vScalarProductF = velocity_x * force_x + velocity_y * force_y + velocity_z * force_z;
+
+            for (Direction i = 0; i < DmQn::NUMVECTORS; ++i)
+            {
+            	distribn_t vScalarProductDirection = velocity_x * DmQn::CX[i] + velocity_y * DmQn::CY[i] + velocity_z * DmQn::CZ[i];
+            	distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i] + force_z * DmQn::CZ[i];
+            	forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i] * (
+            			(1. / 3.) * (FScalarProductDirection - vScalarProductF) +
+            			(1. / 9.) * (FScalarProductDirection * vScalarProductDirection) );
+             }
+          }
           #endif
           
                                         
@@ -286,6 +351,32 @@ namespace hemelb
             velocity_y = momentum_y / density;
             velocity_z = momentum_z / density;
             
+            CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
+          }
+
+          // Calculate density, momentum and the equilibrium distribution
+          // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
+          // and momentum_z are actually density * velocity, because we are using the
+          // compressible model.
+          inline static void CalculateDensityMomentumFEq(const distribn_t f[],
+                                                         distribn_t &density,
+                                                         distribn_t &momentum_x,
+                                                         distribn_t &momentum_y,
+                                                         distribn_t &momentum_z,
+                                                         distribn_t &velocity_x,
+                                                         distribn_t &velocity_y,
+                                                         distribn_t &velocity_z,
+                                                         const distribn_t &force_x,
+                                                         const distribn_t &force_y,
+                                                         const distribn_t &force_z,
+                                                         distribn_t f_eq[])
+          {
+            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z, force_x, force_y, force_z);
+
+            velocity_x = momentum_x / density;
+            velocity_y = momentum_y / density;
+            velocity_z = momentum_z / density;
+
             CalculateFeq(density, momentum_x, momentum_y, momentum_z, f_eq);
           }
 
