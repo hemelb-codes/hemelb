@@ -238,6 +238,7 @@ namespace hemelb
 
           if (isMidDomainSite)
           {
+        	SetForceAtSite(localSiteId, 0.1);
             midDomainBlockNumber[l].push_back(blockId);
             midDomainSiteNumber[l].push_back(localSiteId);
             midDomainSiteData[l].push_back(siteData);
