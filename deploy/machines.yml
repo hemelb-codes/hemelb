@@ -71,7 +71,7 @@ archer: #the ARCHER supercomputer at EPCC
   runtime_path_template: "/work/$project/$project/$username"
   fabric_dir: "FabricHemeLb"
   modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu"]
-  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
+  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
   temp_path_template: "$work_path/tmp"
   regression_test_path_template: "$work_path/regression"
   queue: "standard"
@@ -81,18 +81,13 @@ archer: #the ARCHER supercomputer at EPCC
     CMAKE_CXX_FLAGS: "-dynamic"
     CMAKE_C_FLAGS: "-dynamic"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "CC"
-    CMAKE_C_COMPILER: "cc"
+    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.01/bin/CC"
+    CMAKE_C_COMPILER: "/opt/cray/craype/2.01/bin/cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
-    CTEMPLATE_INCLUDE_DIR: "/work/e283/e283/dgroen/ctemplate-2.2/src"
-    CTEMPLATE_LIBRARIES: "/work/e283/e283/dgroen/ctemplate-2.2/.libs/libctemplate.so"
-#    CTEMPLATE_CONFIGURE_OPTIONS: "-disable-static"
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-    MPWide_INCLUDE_DIR: "/home/e283/e283/dgroen/mpwide"
-    MPWide_LIBRARIES: "/home/e283/e283/dgroen/mpwide/libMPW.a"
     HEMELB_USE_SSE3: "ON"
     CTEMPLATE_PATCH_ALIGN: "ON"
     CTEMPLATE_USE_STATIC: "OFF"
