@@ -141,8 +141,8 @@ namespace hemelb
               case Stable:
               case StableAndConverged:
                 mUpwardsStability = (checkForConvergence && !unconvergedSitePresent) ?
-                      StableAndConverged :
-                      Stable;
+                  StableAndConverged :
+                  Stable;
                 break;
               case Unstable:
                 break;
@@ -153,27 +153,34 @@ namespace hemelb
         }
 
         /**
-         * Computes the relative difference between two distribution function vectors,
-         * i.e. |fNew - fOld| / |fOld|, where |.| is the L2 norm of a vector.
+         * Computes the relative difference between the densities at the beginning and end of a
+         * timestep, i.e. |(rho_new - rho_old) / (rho_old - rho_0)|.
          *
          * @param fNew Distribution function after stream and collide, i.e. solution of the current timestep.
          * @param fOld Distribution function at the end of the previous timestep.
-         * @return relative difference between distribution functions fNew and fOld.
+         * @return relative difference between the densities computed from fNew and fOld.
          */
         inline double ComputeRelativeDifference(const distribn_t* fNew,
                                                 const distribn_t* fOld) const
         {
-          distribn_t sqDiffNorm = 0.;
-          distribn_t sqFOldNorm = 0.;
-
+          distribn_t new_density = 0.;
+          distribn_t old_density = 0.;
           for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
           {
-            double fDiff = fNew[l] - fOld[l];
-            sqDiffNorm += fDiff * fDiff;
-            sqFOldNorm += fOld[l] * fOld[l];
+            new_density += fNew[l];
+            old_density += fOld[l];
           }
 
-          return sqrt(sqDiffNorm / sqFOldNorm);
+          // This is equivalent to REFERENCE_PRESSURE_mmHg in lattice units
+          distribn_t ref_density = 1.0;
+
+          if (old_density == ref_density)
+          {
+            // We want to avoid returning inf if the site is at pressure = REFERENCE_PRESSURE_mmHg
+            return 0.0;
+          }
+
+          return fabs( (new_density - old_density) / (old_density - ref_density));
         }
 
         /**
@@ -226,7 +233,8 @@ namespace hemelb
 
               // With the current configuration the root node of the tree won't own any fluid sites. Its
               // state only depends on children nodes not on local state.
-              if (anyConverged && (mUpwardsStability == StableAndConverged || GetParent() == NOPARENT))
+              if (anyConverged
+                  && (mUpwardsStability == StableAndConverged || GetParent() == NOPARENT))
               {
                 mUpwardsStability = StableAndConverged;
               }
