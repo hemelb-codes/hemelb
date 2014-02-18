@@ -147,7 +147,7 @@ namespace hemelb
         localAdjacencies.reserve(1);
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
-        /*ParMETIS_V3_PartKway(&vtxDistribn[0],
+        ParMETIS_V3_PartKway(&vtxDistribn[0],
          &adjacenciesPerVertex[0],
          &localAdjacencies[0],
          &vertexWeights[0],
@@ -161,8 +161,8 @@ namespace hemelb
          options,
          &edgesCut,
          &partitionVector[0],
-         &communicator);*/
-        ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
+         &communicator);
+        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
                                  &adjacenciesPerVertex[0],
                                  &localAdjacencies[0],
                                  &vertexWeights[0],
@@ -178,7 +178,7 @@ namespace hemelb
                                  options,
                                  &edgesCut,
                                  &partitionVector[0],
-                                 &communicator);
+                                 &communicator);*/
 
         /** Preliminary development code to create a group communicator
          std::vector<int> localRanksInNode;

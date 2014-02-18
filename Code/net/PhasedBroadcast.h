@@ -388,9 +388,10 @@ namespace hemelb
           return mChildren;
         }
 
-      private:
+      protected:
         static const int NOPARENT = -1;
 
+      private:
         /**
          * Note that depths are 0-indexed. I.e. a tree with a single node has
          * a depth of zero, and the node itself is considered to be at depth 0.
