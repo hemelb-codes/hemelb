@@ -49,6 +49,8 @@ namespace hemelb
             {
             }
             bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
+            extraction::OutputField::FieldType convergenceVariable;
+            double convergenceReferenceValue;
             double convergenceTolerance; ///< Convergence check tolerance
             bool convergenceTerminate; ///< Whether to terminate a converged run or not
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
@@ -257,6 +259,10 @@ namespace hemelb
          * @param monEl in memory representation of <monitoring> xml element
          */
         void DoIOForMonitoring(const io::xml::Element& monEl);
+
+        void DoIOForConvergence(const io::xml::Element& convEl);
+
+        void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
