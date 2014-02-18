@@ -653,18 +653,23 @@ namespace hemelb
       io::xml::Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
       if (convEl != io::xml::Element::Missing())
       {
-        DoIOForConvergence(convEl);
+        DoIOForSteadyFlowConvergence(convEl);
       }
 
       monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility")
           != io::xml::Element::Missing());
     }
 
-    void SimConfig::DoIOForConvergence(const io::xml::Element& convEl)
+    void SimConfig::DoIOForSteadyFlowConvergence(const io::xml::Element& convEl)
     {
       monitoringConfig.doConvergenceCheck = true;
-      convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceTolerance);
+      convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceRelativeTolerance);
       monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
+
+      if (convEl.IterChildren("criterion").AtEnd())
+      {
+        throw Exception() << "At least one convergence criterion must be provided in " << convEl.GetPath();
+      }
 
       for (io::xml::ChildIterator criteriaIt = convEl.IterChildren("criterion");
           !criteriaIt.AtEnd(); ++criteriaIt)
@@ -680,7 +685,7 @@ namespace hemelb
       // We only allow velocity-based convergence check for the time being
       if (criterionType != "velocity")
       {
-        throw Exception() << "Invalid convergence criteria type " << criterionType << " in "
+        throw Exception() << "Invalid convergence criterion type " << criterionType << " in "
             << criterionEl.GetPath();
       }
       monitoringConfig.convergenceVariable = extraction::OutputField::Velocity;

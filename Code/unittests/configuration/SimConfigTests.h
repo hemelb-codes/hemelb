@@ -52,7 +52,7 @@ namespace hemelb
             CPPUNIT_ASSERT(!monConfig->doConvergenceCheck);
             CPPUNIT_ASSERT(!monConfig->doIncompressibilityCheck);
             CPPUNIT_ASSERT(!monConfig->convergenceTerminate);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0., monConfig->convergenceTolerance, 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0., monConfig->convergenceRelativeTolerance, 1e-6);
           }
 
           void Test_0_2_1_Read()
@@ -69,7 +69,7 @@ namespace hemelb
             CPPUNIT_ASSERT(monConfig->doConvergenceCheck);
             CPPUNIT_ASSERT(monConfig->doIncompressibilityCheck);
             CPPUNIT_ASSERT(monConfig->convergenceTerminate);
-            CPPUNIT_ASSERT_EQUAL(1e-9, monConfig->convergenceTolerance);
+            CPPUNIT_ASSERT_EQUAL(1e-9, monConfig->convergenceRelativeTolerance);
             CPPUNIT_ASSERT_EQUAL(monConfig->convergenceVariable, extraction::OutputField::Velocity);
             CPPUNIT_ASSERT_EQUAL(0.01, monConfig->convergenceReferenceValue); // 1 m/s * (delta_t / delta_x) = 0.01
           }
