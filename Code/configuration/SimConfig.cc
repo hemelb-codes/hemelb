@@ -650,16 +650,42 @@ namespace hemelb
 
     void SimConfig::DoIOForMonitoring(const io::xml::Element& monEl)
     {
-      io::xml::Element convEl = monEl.GetChildOrNull("steady_flow_convergence_check");
+      io::xml::Element convEl = monEl.GetChildOrNull("steady_flow_convergence");
       if (convEl != io::xml::Element::Missing())
       {
-        monitoringConfig.doConvergenceCheck = true;
-        convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceTolerance);
-        monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
+        DoIOForConvergence(convEl);
       }
 
-      monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility_check")
+      monitoringConfig.doIncompressibilityCheck = (monEl.GetChildOrNull("incompressibility")
           != io::xml::Element::Missing());
+    }
+
+    void SimConfig::DoIOForConvergence(const io::xml::Element& convEl)
+    {
+      monitoringConfig.doConvergenceCheck = true;
+      convEl.GetAttributeOrThrow("tolerance", monitoringConfig.convergenceTolerance);
+      monitoringConfig.convergenceTerminate = (convEl.GetAttributeOrThrow("terminate") == "true");
+
+      for (io::xml::ChildIterator criteriaIt = convEl.IterChildren("criterion");
+          !criteriaIt.AtEnd(); ++criteriaIt)
+      {
+        DoIOForConvergenceCriterion(*criteriaIt);
+      }
+    }
+
+    void SimConfig::DoIOForConvergenceCriterion(const io::xml::Element& criterionEl)
+    {
+      const std::string& criterionType = criterionEl.GetAttributeOrThrow("type");
+
+      // We only allow velocity-based convergence check for the time being
+      if (criterionType != "velocity")
+      {
+        throw Exception() << "Invalid convergence criteria type " << criterionType << " in "
+            << criterionEl.GetPath();
+      }
+      monitoringConfig.convergenceVariable = extraction::OutputField::Velocity;
+      monitoringConfig.convergenceReferenceValue =
+          GetDimensionalValueInLatticeUnits<LatticeSpeed>(criterionEl, "m/s");
     }
 
     const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
