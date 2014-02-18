@@ -35,12 +35,10 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        bool checkForConvergence, double relativeTolerance) :
+                        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
-                mSimState(simState), timings(timings), checkForConvergence(checkForConvergence),
-                relativeTolerance(relativeTolerance)
+                mSimState(simState), timings(timings), testerConfig(testerConfig)
         {
-
           Reset();
         }
 
@@ -121,13 +119,13 @@ namespace hemelb
                 break;
               }
 
-              if (checkForConvergence)
+              if (testerConfig->doConvergenceCheck)
               {
                 distribn_t relativeDifference =
                     ComputeRelativeDifference(mLatDat->GetFNew(i * LatticeType::NUMVECTORS),
                                               mLatDat->GetSite(i).GetFOld<LatticeType>());
 
-                if (relativeDifference > relativeTolerance)
+                if (relativeDifference > testerConfig->convergenceRelativeTolerance)
                 {
                   // The simulation is stable but hasn't converged in the whole domain yet.
                   unconvergedSitePresent = true;
@@ -140,7 +138,7 @@ namespace hemelb
               case UndefinedStability:
               case Stable:
               case StableAndConverged:
-                mUpwardsStability = (checkForConvergence && !unconvergedSitePresent) ?
+                mUpwardsStability = (testerConfig->doConvergenceCheck && !unconvergedSitePresent) ?
                   StableAndConverged :
                   Stable;
                 break;
@@ -163,24 +161,49 @@ namespace hemelb
         inline double ComputeRelativeDifference(const distribn_t* fNew,
                                                 const distribn_t* fOld) const
         {
-          distribn_t new_density = 0.;
-          distribn_t old_density = 0.;
-          for (unsigned int l = 0; l < LatticeType::NUMVECTORS; l++)
+          distribn_t newDensity;
+          distribn_t newMomentumX;
+          distribn_t newMomentumY;
+          distribn_t newMomentumZ;
+          LatticeType::CalculateDensityAndMomentum(fNew,
+                                                   newDensity,
+                                                   newMomentumX,
+                                                   newMomentumY,
+                                                   newMomentumZ);
+
+          distribn_t oldDensity;
+          distribn_t oldMomentumX;
+          distribn_t oldMomentumY;
+          distribn_t oldMomentumZ;
+          LatticeType::CalculateDensityAndMomentum(fOld,
+                                                   oldDensity,
+                                                   oldMomentumX,
+                                                   oldMomentumY,
+                                                   oldMomentumZ);
+
+          distribn_t absoluteError;
+          distribn_t referenceValue;
+
+          switch (testerConfig->convergenceVariable)
           {
-            new_density += fNew[l];
-            old_density += fOld[l];
+            case extraction::OutputField::Velocity:
+            {
+              distribn_t diff_vel_x = newMomentumX / newDensity - oldMomentumX / oldDensity;
+              distribn_t diff_vel_y = newMomentumY / newDensity - oldMomentumY / oldDensity;
+              distribn_t diff_vel_z = newMomentumZ / newDensity - oldMomentumZ / oldDensity;
+
+              absoluteError = sqrt(diff_vel_x * diff_vel_x + diff_vel_y * diff_vel_y
+                  + diff_vel_z * diff_vel_z);
+              referenceValue = testerConfig->convergenceReferenceValue;
+              break;
+            }
+            default:
+              // Never reached
+              throw Exception()
+                  << "Convergence check based on requested variable currently not available";
           }
 
-          // This is equivalent to REFERENCE_PRESSURE_mmHg in lattice units
-          distribn_t ref_density = 1.0;
-
-          if (old_density == ref_density)
-          {
-            // We want to avoid returning inf if the site is at pressure = REFERENCE_PRESSURE_mmHg
-            return 0.0;
-          }
-
-          return fabs( (new_density - old_density) / (old_density - ref_density));
+          return absoluteError / referenceValue;
         }
 
         /**
@@ -212,7 +235,7 @@ namespace hemelb
             }
 
             // If the simulation wasn't found to be unstable and we need to check for convergence, do it now.
-            if ( (mUpwardsStability != Unstable) && checkForConvergence)
+            if ( (mUpwardsStability != Unstable) && testerConfig->doConvergenceCheck)
             {
               bool anyStableNotConverged = false;
               bool anyConverged = false;
@@ -285,11 +308,8 @@ namespace hemelb
         /** Timing object. */
         reporting::Timers& timings;
 
-        /** Whether to check for steady flow simulation convergence */
-        bool checkForConvergence;
-
-        /** Relative error tolerance in convergence check */
-        double relativeTolerance;
+        /** Object containing the user-provided configuration for this class */
+        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig;
     };
   }
 }

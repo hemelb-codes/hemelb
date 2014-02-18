@@ -16,6 +16,7 @@ namespace hemelb
   {
     struct OutputField
     {
+        // #658 Refactor out enum
         enum FieldType
         {
           Pressure,
