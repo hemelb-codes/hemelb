@@ -55,6 +55,44 @@ default:
   manual_ssh: false
   local_templates_path: "$localroot/deploy/templates"
   stat: qstat
+archer: #the ARCHER supercomputer at EPCC
+  import: "archer"
+  max_job_name_chars: 15
+  make_jobs: 4
+  verbose: 1
+  job_dispatch: "qsub"
+  run_command: "aprun -n $cores"
+  batch_header: pbs-archer
+  no_ssh: true # ARCHER doesn't allow outgoing ssh sessions.
+  remote: "login.archer.ac.uk"
+  # On ARCHER, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
+  install_path_template: "$work_path/install"
+  home_path_template: "/home/$project/$project/$username"
+  runtime_path_template: "/work/$project/$project/$username"
+  fabric_dir: "FabricHemeLb"
+  modules: ["load cmake", "swap PrgEnv-cray PrgEnv-gnu"]
+  build_prefix_commands: ["export LDFLAGS=-dynamic","export CXX=CC","export CC=cc", "export LD=CC", "export XTPE_LINK_TYPE=dynamic" ] #Tell autoconf for dependencies where the hector compilers are
+  temp_path_template: "$work_path/tmp"
+  regression_test_path_template: "$work_path/regression"
+  queue: "standard"
+  python_build: "lib64/python2.6"
+  corespernode: 24
+  cmake_options:
+    CMAKE_CXX_FLAGS: "-dynamic"
+    CMAKE_C_FLAGS: "-dynamic"
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.01/bin/CC"
+    CMAKE_C_COMPILER: "/opt/cray/craype/2.01/bin/cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    CPPUNIT_PATCH_LDL: OFF
+    CPPUNIT_PATCH_DYNAMIC: ON
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    HEMELB_USE_SSE3: "ON"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    CTEMPLATE_USE_STATIC: "OFF"
+    HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 legion: 
   job_dispatch: "qsub"
   run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"
@@ -99,38 +137,8 @@ entropy:
   remote: "entropy.chem.ucl.ac.uk"
   python_build: "lib/python2.6"
   runtime_path_template: "/store4/blood/$username"
-hector:
-  max_job_name_chars: 15
-  make_jobs: 4
-  job_dispatch: "qsub"
-  run_command: "aprun -n $cores -N $coresusedpernode"
-  batch_header: pbs
-  no_ssh: true # Hector doesn't allow outgoing ssh sessions.
-  remote: "login.hector.ac.uk"
-  # On hector, *all files* which are needed at runtime, must be on the /work filesystem, so we must make the install location be on the /work filesystem
-  install_path_template: "$work_path/install"
-  home_path_template: "/home/$project/$project/$username"
-  runtime_path_template: "/work/$project/$project/$username"
-  modules: ["load CMake/2.8.6"]
-  build_prefix_commands: ["export CXX=CC","export CC=cc", "export LD=CC"] #Tell autoconf for dependencies where the hector compilers are
-  temp_path_template: "$work_path/tmp"
-  regression_test_path_template: "$work_path/regression"
-  queue: "parallel"
-  python_build: "lib64/python2.6"
-  corespernode: 32
-  cmake_options: 
-    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "CC"
-    CMAKE_C_COMPILER: "cc"
-    CMAKE_CXX_FLAGS_RELEASE: ""
-    HEMELB_OPTIMISATION: "-O3"
-    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    MPWide_INCLUDE_DIR: "/home/e10/e10/derek/mpwide"
-    MPWide_LIBRARIES: "/home/e10/e10/derek/mpwide/libMPW.a"
-    HEMELB_COMPUTE_ARCHITECTURE: "NEUTRAL"
 hector_gnu: #Hector, compiling using GNU compiler
-  import: "hector"
+#  import: "hector"
   max_job_name_chars: 15
   make_jobs: 4
   job_dispatch: "qsub"
@@ -163,7 +171,7 @@ hector_gnu: #Hector, compiling using GNU compiler
     HEMELB_USE_SSE3: "ON"
     CTEMPLATE_PATCH_ALIGN: "OFF"
     CTEMPLATE_USE_STATIC: "OFF"   
-    HEMELB_COMPUTE_ARCHITECTURE: "NEUTRAL" 
+    HEMELB_COMPUTE_ARCHITECTURE: "AMDBULLDOZER" 
 #    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 supermuc:
   max_job_name_chars: 15
