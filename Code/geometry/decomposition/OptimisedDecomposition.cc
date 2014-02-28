@@ -75,6 +75,168 @@ namespace hemelb
         timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Stop();
       }
 
+      void OptimisedDecomposition::CallParmetisTwoLevel(idx_t localVertexCount, int coresInNodePartition)
+      {
+        // From the ParMETIS documentation:
+        // --------------------------------
+        // Processor Pi holds ni consecutive vertices and mi corresponding edges
+        //
+        // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
+        // vwgt[ni] has vertex weight coefficients and can be NULL
+        // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
+        // adjwgt[mi] has edge weights and can be NULL
+        // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
+        //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
+        // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
+        // numflag* is 0 for C-style numbering (1 for Fortran-style)
+        // ncon* is the number of weights on each vertex
+        // nparts* is the number of sub-domains (partition domains) desired
+        // tpwgts* is the fraction of vertex weight to apply to each sub-domain
+        // ubvec* is an array of the imbalance tolerance for each vertex weight
+        // options* is an int array of options
+        //
+        // edgecut[1] will contain the number of edges cut by the partitioning
+        // part[ni] will contain the partition vector of the locally-stored vertices
+        // comm* is a pointer to the MPI communicator of the processes involved
+
+        // Initialise the partition vector.
+        partitionVector = std::vector<idx_t>(localVertexCount, comms.Rank());
+
+        // Weight all vertices evenly.
+        //std::vector < idx_t > vertexWeight(localVertexCount, 1);
+
+        // Populate the vertex weight data arrays (for ParMetis) and print out the number of different fluid sites on each core
+        PopulateVertexWeightData(localVertexCount);
+
+        // Set the weights of each partition to be even, and to sum to 1.
+        idx_t desiredPartitionSize = comms.Size() / coresInNodePartition;
+        if(comms.Size() % coresInNodePartition > 0) {
+          desiredPartitionSize++;
+        }
+
+        std::vector<real_t> domainWeights(desiredPartitionSize,
+                                          (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
+        // A bunch of values ParMetis needs.
+        idx_t noConstraints = 1;
+        idx_t weightFlag = 2;
+        idx_t numberingFlag = 0;
+        idx_t edgesCut = 0;
+        idx_t nDims = 3;
+        idx_t options[4] = { 0, 0, 0, 0 };
+        if (ShouldValidate())
+        {
+          // Specify that some options are set and that we should
+          // debug everything.
+          // Specify that we have set some options
+          options[0] = 1;
+          // From parmetis.h
+          // We get timing info (1)
+          // more timing info (2)
+          // details of the graph-coarsening process (4)
+          // info during graph refinement (8)
+          // NOT info on matching (16)
+          // info on communication during matching (32)
+          // info on remappining (64)
+          options[1] = 1 | 2 | 4 | 8 | 32 | 64;
+        }
+        real_t tolerance = 1.001F;
+        log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+        // Reserve 1 on these vectors so that the reference to their first element
+        // exists (even if it's unused).
+        // Reserve on the vectors to be certain they're at least 1 in capacity (so &vector[0] works)
+        partitionVector.reserve(1);
+        vtxDistribn.reserve(1);
+        adjacenciesPerVertex.reserve(1);
+        localAdjacencies.reserve(1);
+        vertexWeights.reserve(1);
+        MPI_Comm communicator = comms;
+
+        ParMETIS_V3_PartKway(&vtxDistribn[0],
+                             &adjacenciesPerVertex[0],
+                             &localAdjacencies[0],
+                             &vertexWeights[0],
+                             NULL,
+                             &weightFlag,
+                             &numberingFlag,
+                             &noConstraints,
+                             &desiredPartitionSize,
+                             &domainWeights[0],
+                             &tolerance,
+                             options,
+                             &edgesCut,
+                             &partitionVector[0],
+                             &communicator);
+
+        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
+         &adjacenciesPerVertex[0],
+         &localAdjacencies[0],
+         &vertexWeights[0],
+         NULL,
+         &weightFlag,
+         &numberingFlag,
+         &nDims,
+         &vertexCoordinates[0],
+         &noConstraints,
+         &desiredPartitionSize,
+         &domainWeights[0],
+         &tolerance,
+         options,
+         &edgesCut,
+         &partitionVector[0],
+         &communicator);*/
+
+        // Preliminary development code to create a group communicator
+        std::vector<int> localRanksInNode;
+        int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
+        int coresInNodePartition = hemelbCoresPerNode;
+        log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
+
+        if (localBaseRank + hemelbCoresPerNode > comms.Size())
+        {
+          coresInNodePartition = comms.Size() - localBaseRank;
+        }
+
+        for (int i = 0; i < coresInNodePartition; i++)
+        {
+          localRanksInNode.push_back(localBaseRank + i);
+        }
+
+        net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
+        net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);
+
+        /* At this stage vtxdist is still spread over comms.Size()/coresInNodePartition processes.
+         * We need to spread this out accordingly.
+         * */
+        if(comms.Rank() <= desiredPartitionSize) {
+          MPI_ISend(&vtxDistribn[0], numVtx, MPI_INT, ((comms.Rank()-1)*coresInNodePartition)+1, 1, comms, NULL);
+        }
+
+        //TODO: create a receiving idx_t data structure.
+
+        if(comms.Rank()%coresInNodePartition == 1) {
+          MPI_Recv(&vtxDistribn[0], numVtx, MPI_INT, ((comms.Rank()+coresInNodePartition-1)/coresInNodePartition), 1, comms, NULL);
+        }
+
+        //Isend const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
+        //Recv  void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status
+
+        /* Prepare data structures for second ParMETIS call. */
+        desiredPartitionSize = coresInNodePartition;
+
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
+        if (comms.Rank() == comms.Size() - 1)
+        {
+          log::Logger::Log<log::Info, log::OnePerCore>("ParMetis cut %d edges.", edgesCut);
+          if (edgesCut < 1 && comms.Size() > 2)
+          {
+            throw Exception()
+                << "The decomposition using ParMetis returned an edge cut of 0 even though there are multiple processes. "
+                << "This means/implies that ParMETIS cannot properly decompose the system, and no properly load-balanced parallel simulation can be started.";
+          }
+        }
+      }
+
       void OptimisedDecomposition::CallParmetis(idx_t localVertexCount)
       {
         // From the ParMETIS documentation:
@@ -147,13 +309,32 @@ namespace hemelb
         localAdjacencies.reserve(1);
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
+
         ParMETIS_V3_PartKway(&vtxDistribn[0],
+                             &adjacenciesPerVertex[0],
+                             &localAdjacencies[0],
+                             &vertexWeights[0],
+                             NULL,
+                             &weightFlag,
+                             &numberingFlag,
+                             &noConstraints,
+                             &desiredPartitionSize,
+                             &domainWeights[0],
+                             &tolerance,
+                             options,
+                             &edgesCut,
+                             &partitionVector[0],
+                             &communicator);
+
+        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
          &adjacenciesPerVertex[0],
          &localAdjacencies[0],
          &vertexWeights[0],
          NULL,
          &weightFlag,
          &numberingFlag,
+         &nDims,
+         &vertexCoordinates[0],
          &noConstraints,
          &desiredPartitionSize,
          &domainWeights[0],
@@ -161,24 +342,7 @@ namespace hemelb
          options,
          &edgesCut,
          &partitionVector[0],
-         &communicator);
-        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
-                                 &adjacenciesPerVertex[0],
-                                 &localAdjacencies[0],
-                                 &vertexWeights[0],
-                                 NULL,
-                                 &weightFlag,
-                                 &numberingFlag,
-                                 &nDims,
-                                 &vertexCoordinates[0],
-                                 &noConstraints,
-                                 &desiredPartitionSize,
-                                 &domainWeights[0],
-                                 &tolerance,
-                                 options,
-                                 &edgesCut,
-                                 &partitionVector[0],
-                                 &communicator);*/
+         &communicator);*/
 
         /** Preliminary development code to create a group communicator
          std::vector<int> localRanksInNode;
