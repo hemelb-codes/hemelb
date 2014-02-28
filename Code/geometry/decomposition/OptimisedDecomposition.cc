@@ -75,7 +75,8 @@ namespace hemelb
         timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Stop();
       }
 
-      void OptimisedDecomposition::CallParmetisTwoLevel(idx_t localVertexCount, int coresInNodePartition)
+      void OptimisedDecomposition::CallParmetisTwoLevel(idx_t localVertexCount,
+                                                        int coresInNodePartition)
       {
         // From the ParMETIS documentation:
         // --------------------------------
@@ -110,7 +111,8 @@ namespace hemelb
 
         // Set the weights of each partition to be even, and to sum to 1.
         idx_t desiredPartitionSize = comms.Size() / coresInNodePartition;
-        if(comms.Size() % coresInNodePartition > 0) {
+        if (comms.Size() % coresInNodePartition > 0)
+        {
           desiredPartitionSize++;
         }
 
@@ -185,7 +187,7 @@ namespace hemelb
          &partitionVector[0],
          &communicator);*/
 
-        // Preliminary development code to create a group communicator
+        /* 2. create a group communicator */
         std::vector<int> localRanksInNode;
         int localBaseRank = comms.Rank() - (comms.Rank() % hemelbCoresPerNode);
         int coresInNodePartition = hemelbCoresPerNode;
@@ -204,25 +206,56 @@ namespace hemelb
         net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
         net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);
 
-        /* At this stage vtxdist is still spread over comms.Size()/coresInNodePartition processes.
-         * We need to spread this out accordingly.
+        /* 3. Spread the partitionVector to the different nodes.
+         * At this stage partitionVector is only used on the first comms.Size()/coresInNodePartition processes.
+         * We need to spread this out accordingly, putting one copy on each node.
          * */
-        if(comms.Rank() <= desiredPartitionSize) {
-          MPI_ISend(&vtxDistribn[0], numVtx, MPI_INT, ((comms.Rank()-1)*coresInNodePartition)+1, 1, comms, NULL);
+
+        int numVtx = &vtxDistribn[comms.Rank()];
+
+        if (0 < comms.Rank() <= desiredPartitionSize)
+        {
+          int destRank = ( (comms.Rank() - 1) * coresInNodePartition) + 1;
+          // if coresInNodePartition == 24 then [rank,dest] = [1,1],[2,25],[3,49] etc...
+
+          MPI_ISend(&numVtx, 1, MPI_INT, dest_rank, 1, comms, NULL);
+          MPI_ISend(&partitionVector[0],
+                    numVtx,
+                    MPI_INT,
+                    ( (comms.Rank() - 1) * coresInNodePartition) + 1,
+                    2,
+                    comms,
+                    NULL);
         }
 
-        //TODO: create a receiving idx_t data structure.
+        std::vector<idx_t> RecvdPartitionVector;
+        RecvdPartitionVector.reserve(1);
 
-        if(comms.Rank()%coresInNodePartition == 1) {
-          MPI_Recv(&vtxDistribn[0], numVtx, MPI_INT, ((comms.Rank()+coresInNodePartition-1)/coresInNodePartition), 1, comms, NULL);
+        if (comms.Rank() % coresInNodePartition == 1)
+        {
+          int sourceRank = ( (comms.Rank() + coresInNodePartition - 1) / coresInNodePartition);
+          // if coresInNodePartition == 24 then [rank,source] = [1,1],[25,2],[49,3] etc...
+
+          MPI_Recv(&numVtx, 1, MPI_INT, sourceRank, 1, comms, NULL);
+
+          RecvdPartitionVector = std::vector<idx_t>(numVtx, comms.Rank());
+
+          MPI_Recv(&RecvdPartitionVector[0], numVtx, MPI_INT, sourceRank, 2, comms, NULL);
         }
+
+        //TODO: shift this to convention data structures.
+
+        /* 4. Update vtxdist */
+
+        /* 5. Updated adjacency list */
+
+        /* 6. Repartition */
 
         //Isend const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
         //Recv  void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status
 
         /* Prepare data structures for second ParMETIS call. */
         desiredPartitionSize = coresInNodePartition;
-
 
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
         if (comms.Rank() == comms.Size() - 1)
