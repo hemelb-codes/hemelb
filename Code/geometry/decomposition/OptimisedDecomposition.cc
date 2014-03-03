@@ -76,7 +76,7 @@ namespace hemelb
       }
 
       void OptimisedDecomposition::CallParmetisTwoLevel(idx_t localVertexCount,
-                                                        int coresInNodePartition)
+                                                        int coresInNodePartition) //ASSUME: not called by rank 0. Ever.
       {
         // From the ParMETIS documentation:
         // --------------------------------
@@ -206,7 +206,7 @@ namespace hemelb
         net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
         net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);
 
-        /* 3. Spread the partitionVector to the different nodes.
+        /* 3. Spread the partitionVector to a main process in each of the different nodes.
          * At this stage partitionVector is only used on the first comms.Size()/coresInNodePartition processes.
          * We need to spread this out accordingly, putting one copy on each node.
          * */
@@ -215,14 +215,15 @@ namespace hemelb
 
         if (0 < comms.Rank() <= desiredPartitionSize)
         {
-          int destRank = ( (comms.Rank() - 1) * coresInNodePartition) + 1;
-          // if coresInNodePartition == 24 then [rank,dest] = [1,1],[2,25],[3,49] etc...
+          int destRank = ( (comms.Rank() - 1) * coresInNodePartition);
+          if(destRank == 0) { destRank = 1; }
+          // if coresInNodePartition == 24 then [rank,dest] = [1,1],[2,24],[3,48] etc...
 
           MPI_ISend(&numVtx, 1, MPI_INT, dest_rank, 1, comms, NULL);
           MPI_ISend(&partitionVector[0],
                     numVtx,
                     MPI_INT,
-                    ( (comms.Rank() - 1) * coresInNodePartition) + 1,
+                    destRank,
                     2,
                     comms,
                     NULL);
@@ -231,9 +232,9 @@ namespace hemelb
         std::vector<idx_t> RecvdPartitionVector;
         RecvdPartitionVector.reserve(1);
 
-        if (comms.Rank() % coresInNodePartition == 1)
+        if (comms.Rank() == 1 || comms.Rank() % coresInNodePartition == 0)
         {
-          int sourceRank = ( (comms.Rank() + coresInNodePartition - 1) / coresInNodePartition);
+          int sourceRank = ( (comms.Rank() + coresInNodePartition) / coresInNodePartition);
           // if coresInNodePartition == 24 then [rank,source] = [1,1],[25,2],[49,3] etc...
 
           MPI_Recv(&numVtx, 1, MPI_INT, sourceRank, 1, comms, NULL);
