@@ -30,11 +30,11 @@ namespace hemelb
         /**
          * Default constructor initialises internal variables
          */
-        Geometry(const util::Vector3D<site_t>& dimensionsInBlocks,
-                 site_t blockSize) :
-            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), blockCount(dimensionsInBlocks.x
-                * dimensionsInBlocks.y * dimensionsInBlocks.z), sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize,
-                                                                                                                     3)), Blocks(blockCount)
+        Geometry(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
+            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize),
+                blockCount(dimensionsInBlocks.x * dimensionsInBlocks.y * dimensionsInBlocks.z),
+                sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize, 3)),
+                Blocks(blockCount)
         {
 
         }
@@ -86,13 +86,27 @@ namespace hemelb
           return (siteI * blockSize + siteJ) * blockSize + siteK;
         }
 
+        /***
+         * Get the coords of a site, i.e. the three-d coordinate, from the one-d index
+         * TODO: MAKE CORRECT
+         */
+        util::Vector3D<site_t> GetSiteCoordinatesFromSiteId(site_t siteId) const
+        {
+          site_t siteZ = siteId % blockSize;
+          site_t remainder = siteId / blockSize;
+          site_t siteY = remainder % blockSize;
+          site_t siteX = remainder / blockSize;
+          return util::Vector3D<site_t>(siteX, siteY, siteZ);
+        }
+
         /**
          * True if the given block coordinates are within the geometry bounding-box.
          */
         bool AreBlockCoordinatesValid(const util::Vector3D<site_t>& blockCoords) const
         {
-          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0 && blockCoords.x < dimensionsInBlocks.x
-              && blockCoords.y < dimensionsInBlocks.y && blockCoords.z < dimensionsInBlocks.z;
+          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0
+              && blockCoords.x < dimensionsInBlocks.x && blockCoords.y < dimensionsInBlocks.y
+              && blockCoords.z < dimensionsInBlocks.z;
         }
 
         /**
@@ -100,8 +114,8 @@ namespace hemelb
          */
         bool AreLocalSiteCoordinatesValid(const util::Vector3D<site_t>& siteCoords) const
         {
-          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 &&
-                 siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
+          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0
+              && siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
         }
 
         /**
