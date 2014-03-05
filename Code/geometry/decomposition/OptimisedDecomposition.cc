@@ -75,6 +75,164 @@ namespace hemelb
         timers[hemelb::reporting::Timers::PopulateOptimisationMovesList].Stop();
       }
 
+      void OptimisedDecomposition::executeMovesForVerticesAndCoordinates(int numberOfNodes)
+      {
+        //TODO: We need to save the first partition vector separately before proceeding here.
+
+        //We wish to move the vertexCoordinates and the vertexWeights. Then later on we can build new adjacency lists.
+        //This only has to be done over the first p/<core count per node> cores.
+
+        //Needed: construct a separate communicator for the first p/<core count per node> cores (reduce the size of the Alltoall arrays)
+
+        //Needed: prepare the data, by placing it into arrays ordered by receiving rank. Make counts of how much each rank receives.
+
+        //Needed: an MPIAlltoall to exchange sizes
+
+        //Needed: an MPIAlltoallv to exchange the vertexCoordinates
+
+        //Needed: an MPIAlltoallv to exchange the vertexWeights
+
+        //Needed: Log the source rank for all sites on the receiving end.
+
+        //OLD BROKEN CODE BELOW:
+        //---------------------------------------------------------------------
+
+        /* 2. Modify partitionVector so that all sites are moved to separate nodes. */
+         for (int i = 0; i < partitionVector.size(); i++)
+         {
+           int destRank = (partitionVector[i] * hemelbCoresPerNode);
+           int coreCountOnNode = hemelbCoresPerNode;
+           // First node has a smaller partition if there is a steering core.
+           // We need to take that into account.
+           if (destRank != 0)
+           {
+             destRank -= rank_offset;
+           }
+           else if (rank_offset > 0)
+           {
+             coreCountOnNode = hemelbCoresPerNode - rank_offset;
+           }
+
+           //reduce the coreCountOnNode for the last node if HemeLB doesn't fit to exact nodes.
+           if (destRank + coreCountOnNode > comms.size())
+           {
+             coreCountOnNode = comms.size() - destRank;
+           }
+           //destRank += rand() % hemelbCoresPerNode //Not sure if we want this...not for now.
+           partitionVector[i] = destRank;
+         }
+
+         /* 3. Move Vertices and coordinates (we can build neighbour lists from that) to head_node_cores
+          * Spread the vertices and coordinates to a main process in each of the different nodes.
+          * At this stage this data is stored on the first comms.Size()/coresInNodePartition processes.
+          * We need to spread this out accordingly, putting one copy on each node.
+          * */
+
+         //TODO: REPLACE with collective.
+         int numVtx = &vtxDistribn[comms.Rank()];
+
+         if (0 < comms.Rank() <= desiredPartitionSize)
+         {
+           int destRank = (comms.Rank() * hemelbCoresPerNode);
+           if (destRank != 0)
+           {
+             destRank -= rank_offset;
+           }
+           // if coresInNodePartition == 24 and rank_offset == 1 then [rank,dest] = [0,0],[1,23],[2,47] etc...
+
+           MPI_ISend(&numVtx, 1, MPI_INT, dest_rank, 1, comms, NULL);
+           MPI_ISend(&vertexCoordinates[0], numVtx * 3, MPI_INT, destRank, 3, comms, NULL);
+         }
+
+         std::vector<idx_t> RecvdPartitionVector;
+         RecvdPartitionVector.reserve(1);
+
+         if (comms.Rank() == 0 || (comms.Rank() + rank_offset) % coresInNodePartition == 0)
+         {
+           int sourceRank = ( (comms.Rank() + rank_offset) / coresInNodePartition);
+           // if coresInNodePartition == 24 then [rank,source] = [0,0],[23,1],[47,2] etc...
+
+           MPI_Recv(&numVtx, 1, MPI_INT, sourceRank, 1, comms, NULL); //potential issue to still use numVtx here?
+
+           RecvdPartitionVector = std::vector<idx_t>(numVtx, comms.Rank());
+
+           MPI_Recv(&RecvdVertexCoordinates[0], numVtx * 3, MPI_INT, sourceRank, 3, comms, NULL);
+         }
+
+
+      }
+
+      void OptimisedDecomposition::mergePartitionVectors()
+      {
+        //First idea: store the first local partition vector.
+
+        //Needed: All intermediary processes pass their destination ranks for the lattice sites back to the source rank.
+
+        //Needed: Source processes paste in all these destination rank values, ordered by the ranks of the intermediary processes.
+        //We can find out what to receive from the initial partition vector.
+      }
+
+      void OptimisedDecomposition::CallParmetisIntraNode(int rank_offset)
+      {
+        /** Build an intra-node communicator. **/
+
+        std::vector<int> localRanksInNode;
+        int localBaseRank = comms.Rank() - (comms.Rank() + rank_offset % hemelbCoresPerNode);
+        int coresInNodePartition = hemelbCoresPerNode;
+
+        // when there's a steering process the first node only one computing rank less.
+        if (localBaseRank == 0 && rank_offset > 0)
+        {
+          coresInNodePartition--;
+        }
+        log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
+
+        // when HemeLB has a process count that doesn't match the node sizes, then the last node
+        // needs to have a smaller communicator.
+        if (localBaseRank + coresInNodePartition > comms.Size())
+        {
+          coresInNodePartition = comms.Size() - localBaseRank;
+        }
+
+        for (int i = 0; i < coresInNodePartition; i++)
+        {
+          localRanksInNode.push_back(localBaseRank + i);
+        }
+
+        net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
+        net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);
+
+
+        /** Needed: gather all coordinate data on each process (take some memory, but makes the next calculations simpler) **/
+
+        /** Needed: store this intra-node data in an elegant data structure to use for neighbourlist construction. **/
+
+        /** Needed: build vtxDistribn, adjacenciesPerVertex and localAdjacencies from the coordinate data. **/
+
+        int desiredPartitionSize = coresInNodePartition;
+
+
+        /** Do intra-node partitioning **/
+        ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
+                                 &adjacenciesPerVertex[0],
+                                 &localAdjacencies[0],
+                                 &vertexWeights[0],
+                                 NULL,
+                                 &weightFlag,
+                                 &numberingFlag,
+                                 &nDims,
+                                 &vertexCoordinates[0],
+                                 &noConstraints,
+                                 &desiredPartitionSize,
+                                 &domainWeights[0],
+                                 &tolerance,
+                                 options,
+                                 &edgesCut,
+                                 &partitionVector[0],
+                                 &communicator);
+
+      }
+
       void OptimisedDecomposition::CallParmetisTwoLevel(idx_t localVertexCount,
                                                         int hemelbCoresPerNode)
       {
@@ -175,144 +333,11 @@ namespace hemelb
                                &partitionVector[0],
                                &communicator);
 
-          /* Modify partitionVector */
+          executeMovesForVerticesAndCoordinates();
 
+          CallParmetisIntraNode(rank_offset);
 
-
-          /* Do Moves */
-
-
-          /* Reinitialize for next ParMETIS */
-
-
-
-          /* 2. Create a group communicator */
-          std::vector<int> localRanksInNode;
-          int localBaseRank = comms.Rank() - (comms.Rank() + rank_offset % hemelbCoresPerNode);
-          int coresInNodePartition = hemelbCoresPerNode;
-
-          // when there's a steering process the first node only one computing rank less.
-          if (localBaseRank == 0 && rank_offset > 0)
-          {
-            coresInNodePartition--;
-          }
-          log::Logger::Log<log::Info, log::OnePerCore>("Cores per node %d.", hemelbCoresPerNode);
-
-          // when HemeLB has a process count that doesn't match the node sizes, then the last node
-          // needs to have a smaller communicator.
-          if (localBaseRank + coresInNodePartition > comms.Size())
-          {
-            coresInNodePartition = comms.Size() - localBaseRank;
-          }
-
-          for (int i = 0; i < coresInNodePartition; i++)
-          {
-            localRanksInNode.push_back(localBaseRank + i);
-          }
-
-          net::MpiGroup GroupIntraNode = comms.Group().Include(localRanksInNode);
-          net::MpiCommunicator CommsIntraNode = comms.Create(GroupIntraNode);
-
-          /* 3. Spread the partitionVector to a main process in each of the different nodes.
-           * At this stage partitionVector is only used on the first comms.Size()/coresInNodePartition processes.
-           * We need to spread this out accordingly, putting one copy on each node.
-           * */
-
-          int numVtx = &vtxDistribn[comms.Rank()];
-
-          if (0 < comms.Rank() <= desiredPartitionSize)
-          {
-            int destRank = (comms.Rank() * hemelbCoresPerNode);
-            if (destRank != 0)
-            {
-              destRank -= rank_offset;
-            }
-            // if coresInNodePartition == 24 and rank_offset == 1 then [rank,dest] = [0,0],[1,23],[2,47] etc...
-
-            MPI_ISend(&numVtx, 1, MPI_INT, dest_rank, 1, comms, NULL);
-            MPI_ISend(&partitionVector[0], numVtx, MPI_INT, destRank, 2, comms, NULL);
-          }
-
-          std::vector<idx_t> RecvdPartitionVector;
-          RecvdPartitionVector.reserve(1);
-
-          if (comms.Rank() == 0 || (comms.Rank() + rank_offset) % coresInNodePartition == 0)
-          {
-            int sourceRank = ( (comms.Rank() + rank_offset) / coresInNodePartition);
-            // if coresInNodePartition == 24 then [rank,source] = [0,0],[23,1],[47,2] etc...
-
-            MPI_Recv(&numVtx, 1, MPI_INT, sourceRank, 1, comms, NULL); //potential issue to still use numVtx here?
-
-            RecvdPartitionVector = std::vector<idx_t>(numVtx, comms.Rank());
-
-            MPI_Recv(&RecvdPartitionVector[0], numVtx, MPI_INT, sourceRank, 2, comms, NULL);
-          }
-
-          //TODO: shift this to convention data structures.
-
-          /* 4. Update vtxdist: spread it across the processes in a semi-uniform manner. */
-
-          // broadbast numVtx to all cores in communicator.
-          MPI_BCast(&numVtx, 1, MPI_INT, &numVtx, 1, MPI_INT, 0, CommsIntraNode);
-
-          int recv_index = 0;
-          int num_unscattered_vtx = numVtx % coresInNodePartition
-          if (CommsIntraNode.Rank() == 0)
-          {
-            recv_index = num_unscattered_vtx;
-          }
-          MPI_Scatter(&RecvdPartitionVector[recv_index],
-                      numVtx - num_unscattered_vtx,
-                      MPI_INT,
-                      &RecvdPartitionVector[recv_index],
-                      numVtx / coresInNodePartition,
-                      MPI_INT,
-                      0,
-                      CommsIntraNode);
-
-          // repopulate vtxDistrbn. Do we need to define a new array for this?
-          vtxDistribn[0] = 0;
-          vtxDistribn[1] = (numVtx / coresInNodePartition) + num_unscattered_vtx;
-          for (int i = 2; i < coresInNodePartition; i++)
-          {
-            vtxDistribn[i] = vtxDistribn[i - 1] + numVtx / (coresInNodePartition);
-          }
-
-          /* 5. Updated adjacency list */
-          // Populate the adjacency data arrays (for ParMetis) and validate if appropriate
-          idx_t localVertexCount = vtxDistribn[comms.Rank() + 1] - vtxDistribn[comms.Rank()];
-
-          PopulateAdjacencyData(localVertexCount);
-
-          if (ShouldValidate())
-          {
-            ValidateAdjacencyData(localVertexCount);
-          }
-
-          /* 6. Repartition */
-          ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
-                                   &adjacenciesPerVertex[0],
-                                   &localAdjacencies[0],
-                                   &vertexWeights[0],
-                                   NULL,
-                                   &weightFlag,
-                                   &numberingFlag,
-                                   &nDims,
-                                   &vertexCoordinates[0],
-                                   &noConstraints,
-                                   &desiredPartitionSize,
-                                   &domainWeights[0],
-                                   &tolerance,
-                                   options,
-                                   &edgesCut,
-                                   &partitionVector[0],
-                                   &communicator);
-
-          //Isend const void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request *request
-          //Recv  void *buf, int count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status *status
-
-          /* Prepare data structures for second ParMETIS call. */
-          desiredPartitionSize = coresInNodePartition;
+          mergePartitionVectors();
 
           log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
           if (comms.Rank() == comms.Size() - 1)
