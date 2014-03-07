@@ -12,6 +12,10 @@
 #include "log/Logger.h"
 #include "net/net.h"
 
+#define HEMELB_PPSTEE_PARTITIONER_PARMETIS 0
+#define HEMELB_PPSTEE_PARTITIONER_PTSCOTCH 1
+#define HEMELB_PPSTEE_PARTITIONER_ZOLTAN 2
+
 namespace hemelb
 {
   namespace geometry
@@ -23,9 +27,10 @@ namespace hemelb
                                                      const Geometry& geometry,
                                                      const lb::lattices::LatticeInfo& latticeInfo,
                                                      const std::vector<proc_t>& procForEachBlock,
-                                                     const std::vector<site_t>& fluidSitesOnEachBlock) :
+                                                     const std::vector<site_t>& fluidSitesOnEachBlock,
+                                                     const int requestedPartitioner) :
         timers(timers), comms(comms), geometry(geometry), latticeInfo(latticeInfo), procForEachBlock(procForEachBlock),
-            fluidSitesPerBlock(fluidSitesOnEachBlock)
+            fluidSitesPerBlock(fluidSitesOnEachBlock), requestedPartitioner(requestedPartitioner)
       {
         timers[hemelb::reporting::Timers::InitialGeometryRead].Start(); //overall dbg timing
 
@@ -61,9 +66,9 @@ namespace hemelb
 
         // Call parmetis.
         timers[hemelb::reporting::Timers::parmetis].Start();
-        log::Logger::Log<log::Debug, log::OnePerCore>("Making the call to Parmetis");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Making the call to Partitioner");
 
-        CallParmetis(localVertexCount);
+        CallPartitioner(localVertexCount);
 
         timers[hemelb::reporting::Timers::parmetis].Stop();
         log::Logger::Log<log::Debug, log::OnePerCore>("Parmetis has finished.");
@@ -101,8 +106,7 @@ namespace hemelb
         // comm* is a pointer to the MPI communicator of the processes involved
 
         // Initialise the partition vector.
-	// Not needed for PPStee. See below.
-        //partitionVector = std::vector<idx_t>(localVertexCount, comms.GetRank());
+        partitionVector = std::vector<idx_t>(localVertexCount, comms.GetRank());
 
         // Weight all vertices evenly.
         std::vector < idx_t > vertexWeight(localVertexCount, 1);
@@ -138,14 +142,13 @@ namespace hemelb
         // Reserve 1 on these vectors so that the reference to their first element
         // exists (even if it's unused).
         // Reserve on the vectors to be certain they're at least 1 in capacity (so &vector[0] works)
-        //partitionVector.reserve(1);
+        partitionVector.reserve(1);
         vtxDistribn.reserve(1);
         adjacenciesPerVertex.reserve(1);
         localAdjacencies.reserve(1);
         vertexWeight.reserve(1);
         MPI_Comm communicator = comms.GetCommunicator();
 
-        /* replaced by PPStee:
         ParMETIS_V3_PartKway(&vtxDistribn[0],
                              &adjacenciesPerVertex[0],
                              &localAdjacencies[0],
@@ -162,37 +165,56 @@ namespace hemelb
                              &partitionVector[0],
                              &communicator);
         log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
-        */ // replaced by PPStee: END
+      }
 
-        /* PPStee modifications */
+      void OptimisedDecomposition::CallPartitioner(idx_t localVertexCount)
+      {
+        // Weight all vertices evenly.
+        std::vector < idx_t > vertexWeight(localVertexCount, 1);
+
+        // Set the weights of each partition to be even, and to sum to 1.
+        idx_t desiredPartitionSize = comms.GetSize();
+
+        std::vector < real_t > domainWeights(desiredPartitionSize, (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
+        
+        log::Logger::Log<log::Debug, log::OnePerCore>("Calling PPStee");
+
+        // Reserve 1 on these vectors so that the reference to their first element
+        // exists (even if it's unused).
+        // Reserve on the vectors to be certain they're at least 1 in capacity (so &vector[0] works)
+        vtxDistribn.reserve(1);
+        adjacenciesPerVertex.reserve(1);
+        localAdjacencies.reserve(1);
+        vertexWeight.reserve(1);
+        MPI_Comm communicator = comms.GetCommunicator();
+
         // graph
-        /**/
-        // use ParMETIS
-        PPSteeGraphParmetis pgraph = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
-        /**/
-
-        /*
-        // use PTScotch
-        PPSteeGraphParmetis pgraph_prime = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
-        PPSteeGraphiPtscotch pgraph = PPSteeGraphPtscotch(&pgraph_prime);
-        */
-
-        /*
-        // use Zoltan
-        PPSteeGraphParmetis pgraph_prime = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
-        PPSteeGraphZoltan pgraph = PPSteeGraphZoltan(&pgraph_prime);
-        */
+        PPSteeGraph* pgraph;
+        if (requestedPartitioner == HEMELB_PPSTEE_PARTITIONER_PTSCOTCH) {
+          // use PTScotch
+          log::Logger::Log<log::Info, log::OnePerCore>("PPStee uses PTScotch.");
+          PPSteeGraphParmetis pgraph_prime = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+          pgraph = new PPSteeGraphPtscotch(&pgraph_prime);
+        } else if (requestedPartitioner == HEMELB_PPSTEE_PARTITIONER_ZOLTAN) {
+          // use Zoltan
+          log::Logger::Log<log::Info, log::OnePerCore>("PPStee uses Zoltan.");
+          PPSteeGraphParmetis pgraph_prime = PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+          pgraph = new PPSteeGraphZoltan(&pgraph_prime);
+        } else {
+          // HEMELB_PPSTEE_PARTITIONER_PARMETIS:
+          log::Logger::Log<log::Info, log::OnePerCore>("PPStee uses ParMETIS.");
+          pgraph = new PPSteeGraphParmetis(communicator, &vtxDistribn[0], &adjacenciesPerVertex[0], &localAdjacencies[0]);
+        }
 
         // weights for computation
-        PPSteeWeights pweights(&pgraph);
-std::vector < int > adjwgt(pgraph.getEdgeloccnt(), 1);
-pweights.setWeightsData(&vertexWeight[0], &adjwgt[0]);
+        PPSteeWeights pweights(pgraph);
+        pweights.setOnlyVertexWeightsData(&vertexWeight[0]);
 
         // interface
         PPStee ppstee;
 
         // submit graph
-        ppstee.submitGraph(pgraph);
+        ppstee.submitGraph(*pgraph);
 
         // submit weights
         ppstee.submitNewStage(pweights, PPSTEE_STAGE_COMPUTATION);
@@ -202,34 +224,24 @@ pweights.setWeightsData(&vertexWeight[0], &adjwgt[0]);
         ppstee.getPartitioning(&ppart);
 
         // copy partitioning (needs a decent functionality to do so)
-	partitionVector.assign(ppart->getPartData(), ppart->getPartData()+ppart->getVertloccnt());
+        partitionVector.assign(ppart->getPartData(), ppart->getPartData()+ppart->getVertloccnt());
 
         // add debug log message: show number of vertices moving to threads #0 - #mpi_n-1
-        int offrange = 0;
-        std::vector<int> pcounter(12, 0);
-        for (int i=0; i<ppart->getVertloccnt(); ++i) {
-          if (ppart->getPartData()[i] >= 0 && ppart->getPartData()[i] <= 11) {
-            pcounter[ppart->getPartData()[i]]++;
-          } else {
-            offrange++;
+        int numStaying = 0;
+        int numLeaving = 0;
+        for (int i = 0; i < ppart->getVertloccnt(); ++i) {
+          if (ppart->getPartData()[i] == comms.GetRank()) {
+            ++numStaying;
+          } else if (ppart->getPartData()[i] >= 0 && ppart->getPartData()[i] <= comms.GetSize()) {
+            ++numLeaving;
           }
         }
-        log::Logger::Log<log::Debug, log::OnePerCore>("PPStee part counts: %i %i %i %i %i %i %i %i %i %i %i %i (offrange: %i).",
-          pcounter[0],
-          pcounter[1],
-          pcounter[2],
-          pcounter[3],
-          pcounter[4],
-          pcounter[5],
-          pcounter[6],
-          pcounter[7],
-          pcounter[8],
-          pcounter[9],
-          pcounter[10],
-          pcounter[11],
-          offrange
+        log::Logger::Log<log::Info, log::OnePerCore>("PPStee: parts staying/leaving/sum/all: %i %i %i %i.",
+          numStaying,
+          numLeaving,
+          numStaying + numLeaving,
+          ppart->getVertloccnt()
         );
-/*	*/ // PPStee modifications: END
       }
 
       void OptimisedDecomposition::PopulateSiteDistribution()

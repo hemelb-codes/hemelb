@@ -1,11 +1,11 @@
-# 
+#
 # Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+#
+# This file is part of HemeLB and is CONFIDENTIAL. You may not work
 # with, install, use, duplicate, modify, redistribute or share this
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
-# 
+#
 
 """
 Fabric definitions for HemeLB
@@ -140,12 +140,12 @@ def monitor():
     while True:
         execute(stat)
         time.sleep(30)
-        
-        
+
+
 def check_complete():
   """Return true if the user has no queued jobs"""
   return stat() == ""
-     
+
 @task
 def wait_complete():
   """Wait until all jobs currently qsubbed are complete, then return"""
@@ -221,6 +221,17 @@ def build(verbose=False):
         run(template("rm -rf hemelb_prefix/build"))
         with prefix(env.build_prefix):
             if verbose or env.verbose:
+                run(template("make -j$make_jobs VERBOSE=1"))
+            else:
+                run(template("make -j$make_jobs"))
+
+@task
+def build_single_job(verbose=False):
+    """CMake build step for HemeLB and dependencies (single thread)."""
+    with cd(env.build_path):
+        run(template("rm -rf hemelb_prefix/build"))
+        with prefix(env.build_prefix):
+            if verbose or env.verbose:
                 run("make VERBOSE=1")
             else:
                 run("make")
@@ -291,7 +302,7 @@ def sync():
             remote_dir=env.repository_path,
             local_dir=env.localroot + '/',
             exclude=map(lambda x: x.replace('\n', ''),
-            list(open(os.path.join(env.localroot, '.hgignore'))) + 
+            list(open(os.path.join(env.localroot, '.hgignore'))) +
             ['.hg']
             )
     )
@@ -312,7 +323,7 @@ def sync_regression_tests():
             remote_dir=env.regression_test_repo_path,
             local_dir=env.regression_tests_root + '/',
             exclude=map(lambda x: x.replace('\n', ''),
-            list(open(os.path.join(env.localroot, '.hgignore'))) + 
+            list(open(os.path.join(env.localroot, '.hgignore'))) +
             ['.hg']
             )
     )
@@ -582,7 +593,7 @@ def calc_nodes():
     env.coresusedpernode = env.cores
   env.nodes = int(env.cores) / int(env.coresusedpernode)
 
-# 
+#
 def job(*option_dictionaries):
     """Internal low level job launcher.
     Parameters for the job are determined from the prepared fabric environment
@@ -687,7 +698,7 @@ def create_config_impl(p):
     p.OutputXmlFile = os.path.expanduser(os.path.join(env.job_config_path_local, 'config.xml'))
     local(template("mkdir -p $job_config_path_local"))
     generate(p)
- 
+
 @task
 def create_config(profile, VoxelSize=None, Steps=None, Cycles=None, **args):
     """Create a config file
@@ -702,7 +713,7 @@ def create_config(profile, VoxelSize=None, Steps=None, Cycles=None, **args):
 @task
 def modify_config(profile, VoxelSize, Steps=1000, Cycles=3, oldSteps=1000, oldCycles=3):
     """Create a new config by copying an old one, and modifying the steps and cycles"""
-    profile_environment(profile, VoxelSize, oldSteps, oldCycles)           
+    profile_environment(profile, VoxelSize, oldSteps, oldCycles)
     with_template_config()
     env.old_config_path = env.job_config_path_local
     config_path = os.path.expanduser(os.path.join(env.job_config_path_local, 'config.xml'))
@@ -767,13 +778,13 @@ def manual(cmd):
     manual_command = " && ".join(commands)
     pre_cmd = "ssh -Y -p %(port)s %(user)s@%(host)s " % env
     local(pre_cmd + "'" + manual_command + "'", capture=False)
-    
+
 def run(cmd):
     if env.manual_ssh:
         return manual(cmd)
     else:
         return fabric.api.run(cmd)
-        
+
 def put(src, dest):
     if env.manual_ssh:
         env.manual_src = src
@@ -781,7 +792,7 @@ def put(src, dest):
         local(template("scp $manual_src $user@$host:$manual_dest"))
     else:
         fabric.api.put(src, dest)
-        
+
 @task
 def vampir(original_job, *args):
     env.original_job = original_job
@@ -808,7 +819,7 @@ def steer(job, orbit=False, view=False, retry=False, framerate=None):
        env.steering_options += " --retry"
     if framerate:
         env.steering_options += " --MaxFramerate=%s" % framerate
-    command_template = "python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"       
+    command_template = "python $repository_path/Tools/steering/python/hemelb_steering/${steering_client} ${steering_options} ${running_node} >> $job_results/steering_results.txt"
     if retry:
         while True:
             try:

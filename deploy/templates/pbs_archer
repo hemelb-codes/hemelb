@@ -1,3 +1,4 @@
+#!/bin/bash --login
 # 
 # Copyright (C) University College London, 2007-2012, all rights reserved.
 # 
@@ -6,9 +7,7 @@
 # file, or any part thereof, other than as allowed by any agreement
 # specifically made by you with University College London.
 # 
-cd $job_results
-$run_prefix
-rm -rf results
-cp $job_config_path/* .
-#$run_command $install_path/bin/$executable -in config.xml -i $images -ss $steering -p $partitioner
-$run_command $install_path/bin/$executable -in config.xml -i $images -part $partitioner
+#PBS -N $job_name
+#PBS -l select=$nodes
+#PBS -l walltime=$wall_time
+#PBS -A $budget

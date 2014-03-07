@@ -34,7 +34,8 @@ namespace hemelb
                                  const Geometry& geometry,
                                  const lb::lattices::LatticeInfo& latticeInfo,
                                  const std::vector<proc_t>& procForEachBlock,
-                                 const std::vector<site_t>& fluidSitesPerBlock);
+                                 const std::vector<site_t>& fluidSitesPerBlock,
+                                 const int requestedPartitioner);
 
           /**
            * Returns a vector with the number of moves coming from each core
@@ -84,6 +85,15 @@ namespace hemelb
            * @param localVertexCount [in] The number of local fluid sites
            */
           void CallParmetis(idx_t localVertexCount);
+
+          /**
+           * Perform the call to PPStee. Returns the result in the partition vector, other
+           * parameters are input only. These can't be made const because of the API to ParMetis
+           * (and other partitioning libraries) PPStee uses.
+           *
+           * @param localVertexCount [in] The number of local fluid sites
+           */
+          void CallPartitioner(idx_t localVertexCount);
 
           /**
            * Populate the list of moves from each proc that we need locally, using the
@@ -207,6 +217,7 @@ namespace hemelb
           const lb::lattices::LatticeInfo& latticeInfo; //! The lattice info to optimise for.
           const std::vector<proc_t>& procForEachBlock; //! The processor assigned to each block at the moment
           const std::vector<site_t>& fluidSitesPerBlock; //! The number of fluid sites on each block.
+          const int requestedPartitioner; //! The requested partitioner.
           std::vector<idx_t> vtxDistribn; //! The vertex distribution across participating cores.
           std::vector<idx_t> firstSiteIndexPerBlock; //! The global contiguous index of the first fluid site on each block.
           std::vector<idx_t> adjacenciesPerVertex; //! The number of adjacencies for each local fluid site

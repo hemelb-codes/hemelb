@@ -15,7 +15,7 @@ namespace hemelb
   namespace configuration
   {
     CommandLine::CommandLine(int aargc, const char * const * const aargv) :
-        inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
+        inputFile("input.xml"), outputDir(""), images(10), steeringSessionId(1), requestedPartitioner(0), argc(aargc), argv(aargv), ok(false)
     {
 
       // Initialise the network discovery. If this fails, abort.
@@ -63,6 +63,11 @@ namespace hemelb
           char *dummy;
           steeringSessionId = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
+        else if (std::strcmp(paramName, "-part") == 0)
+        {
+          char *dummy;
+          requestedPartitioner = (unsigned int) (strtoul(paramValue, &dummy, 10));
+        }
         else
         {
           PrintUsage();
@@ -82,6 +87,7 @@ namespace hemelb
       printf("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
       printf("-i \t Number of images to create (default is 10)\n");
       printf("-ss \t Steering session identifier (default is 1)\n");
+      printf("-part \t Partitioner selection for PPStee: 0=ParMETIS, 1=PTScotch, 2=Zoltan (default is 0)\n");
       printf("-!-!-!-!-!-!-!-!-!-!-!-!");
     }
   }

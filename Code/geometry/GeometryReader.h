@@ -37,7 +37,7 @@ namespace hemelb
         GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
         ~GeometryReader();
 
-        Geometry LoadAndDecompose(const std::string& dataFilePath);
+        Geometry LoadAndDecompose(const std::string& dataFilePath, const int requestedPartitioner = 0);
 
       private:
         /**
@@ -126,7 +126,7 @@ namespace hemelb
          * @param geometry
          * @param procForEachBlock
          */
-        void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock);
+        void OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock, const int requestedPartitioner = 0);
 
         void ValidateGeometry(const Geometry& geometry);
 

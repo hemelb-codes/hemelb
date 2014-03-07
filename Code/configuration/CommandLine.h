@@ -71,6 +71,13 @@ namespace hemelb
           return (steeringSessionId);
         }
         /**
+         * @return An integer representing the requested partitioning library.
+         */
+        int GetRequestedPartitioner() const
+        {
+          return (requestedPartitioner);
+        }
+        /**
          * @return  Total count of command line arguments.
          */
         int ArgumentCount() const
@@ -100,6 +107,7 @@ namespace hemelb
         std::string outputDir; //! local or full path to input file
         unsigned int images; //! images to produce
         int steeringSessionId; //! unique identifier for steering session
+        int requestedPartitioner; //! requested partitioner
         int argc; //! count of command line arguments, including program name
         const char * const * const argv; //! command line arguments
         bool ok; //! track if the construction went OK.

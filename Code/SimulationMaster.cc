@@ -62,6 +62,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   neighbouringDataManager = NULL;
   imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
+  requestedPartitioner = options.GetRequestedPartitioner();
 
   fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
   if (fileManager->HasProblems())
@@ -158,7 +159,7 @@ void SimulationMaster::Initialise()
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
                                           timings);
-  hemelb::geometry::Geometry readGeometryData = reader.LoadAndDecompose(simConfig->GetDataFilePath());
+  hemelb::geometry::Geometry readGeometryData = reader.LoadAndDecompose(simConfig->GetDataFilePath(), requestedPartitioner);
 
   // Create a new lattice based on that info and return it.
   latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData);

@@ -113,6 +113,7 @@ class SimulationMaster
 
     unsigned int imagesPerSimulation;
     int steeringSessionId;
+    int requestedPartitioner;
     unsigned int imagesPeriod;
     static const hemelb::LatticeTime FORCE_FLUSH_PERIOD=1000;
 };

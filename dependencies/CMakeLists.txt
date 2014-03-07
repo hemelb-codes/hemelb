@@ -34,13 +34,13 @@ else()
 	   tinyxml
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${TINYXML_TARBALL}
-		CONFIGURE_COMMAND cmake <SOURCE_DIR>
+		CONFIGURE_COMMAND ${CMAKE_COMMAND} <SOURCE_DIR>
 		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 		-DTIXML_USE_STL=${TIXML_USE_STL}
 		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 		-DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
 		PATCH_COMMAND cp ${HEMELB_DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    BUILD_COMMAND $(MAKE)
 	)
 endif()
 
@@ -66,7 +66,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		    URL ${MPWIDE_TARBALL}
 		    BUILD_IN_SOURCE 1
             CONFIGURE_COMMAND echo "No configure step for MPWIDE"
-		    BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} 
+          BUILD_COMMAND $(MAKE)
                     PATCH_COMMAND ${PATCH_COMMAND_MPWIDE}
                     INSTALL_COMMAND cp <SOURCE_DIR>/libMPW.a ${HEMELB_DEPENDENCIES_INSTALL_PATH}/lib && cp <SOURCE_DIR>/MPWide.h ${HEMELB_DEPENDENCIES_INSTALL_PATH}/include
 	    )
@@ -96,18 +96,31 @@ else()
 	if(PARMETIS_CXX)
 		set(PARMETIS_CXX_OPTION cxx=${PARMETIS_CXX})
 	endif()
+  if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    #set(PARMETIS_DEBUG_CONTROL debug=1 gdb=1)
+    set(PARMETIS_DEBUG_CONTROL debug=1)
+  endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
 	ExternalProject_Add(
 	  parmetis
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${PARMETIS_TARBALL}
-	  CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION} && 
+    CONFIGURE_COMMAND $(MAKE) config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION} ${PARMETIS_DEBUG_CONTROL} && 
 				cd metis && 
-				make config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION}
+        $(MAKE) config prefix=<INSTALL_DIR> ${PARMETIS_CC_OPTION} ${PARMETIS_CXX_OPTION}
 		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS} MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
-		INSTALL_COMMAND make install MAKEFLAGS= && cd metis && make install MAKEFLAGS=
+    BUILD_COMMAND $(MAKE) MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
+		INSTALL_COMMAND $(MAKE) install MAKEFLAGS= && cd metis && $(MAKE) install MAKEFLAGS=
 	)
 endif()
+
+# ----- check if hector (or archer) is used -----
+string(REGEX MATCH "hector-xe6" HOST_HECTOR_MATCH "$ENV{HOSTNAME}")
+string(REGEX MATCH "eslogin" HOST_ARCHER_MATCH "$ENV{HOSTNAME}")
+if(HOST_HECTOR_MATCH OR HOST_ARCHER_MATCH)
+  message(STATUS "I'm on HECToR (or ARCHER)!")
+else()
+  message(STATUS "I'm not on HECToR (or ARCHER)!")
+endif(HOST_HECTOR_MATCH OR HOST_ARCHER_MATCH)
 
 # ------- ptscotch --------------------
 find_package(PTScotch QUIET)
@@ -124,19 +137,71 @@ else()
 		set(PTSCOTCH_TARBALL https://gforge.inria.fr/frs/download.php/28978/scotch_5.1.12b_esmumps.tar.gz
 		CACHE STRING "Path to download PTScotch (can be local file://)" FORCE)
 	endif()
-	ExternalProject_Add(
-	  ptscotch
-		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
-		URL ${PTSCOTCH_TARBALL}
-	  CONFIGURE_COMMAND cd src &&
-        cp Make.inc/Makefile.inc.x86-64_pc_linux2 Makefile.inc &&
+  set(PTSCOTCH_DEBUG_CONTROL " ")
+  if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    set(PTSCOTCH_DEBUG_CONTROL "/CFLAGS[ \\t]*=/s/[ ]*-O3[ ]*/ -g /")
+  endif(CMAKE_BUILD_TYPE MATCHES DEBUG)
+  if(HOST_HECTOR_MATCH)
+    ExternalProject_Add(
+      ptscotch
+      INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+      URL ${PTSCOTCH_TARBALL}
+      # ----- configure command for cray -----
+      CONFIGURE_COMMAND cd src &&
+        cp Make.inc/Makefile.inc.x86-64_cray-xt4_linux2 Makefile.inc &&
+        sed -i ${PTSCOTCH_DEBUG_CONTROL} Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-c99[ ]*/ -h c99 /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-fast[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-fastsse[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-Pscotchyy[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-olex\\.yy\\.c[ ]*/ /" Makefile.inc &&
         sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /" Makefile.inc &&
         sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DINTSIZE[2346]*[ ]*/ /" Makefile.inc &&
         sed -i "/CFLAGS[ \\t]*=/s/\\\(=\\\)[ ]*/\\1 -DINTSIZE32 /" Makefile.inc
-		BUILD_IN_SOURCE 1
-		BUILD_COMMAND cd src && make ptscotch
-		INSTALL_COMMAND cd src && make install prefix=<INSTALL_DIR>
-	)
+      BUILD_IN_SOURCE 1
+      # PTScotch will NOT compile correctly using multiple jobs
+      BUILD_COMMAND cd src && $(MAKE) -j 1 ptscotch
+      INSTALL_COMMAND cd src && $(MAKE) install prefix=<INSTALL_DIR>
+    )
+  elseif(HOST_ARCHER_MATCH)
+    ExternalProject_Add(
+      ptscotch
+      INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+      URL ${PTSCOTCH_TARBALL}
+      # ----- configure command for cray -----
+      CONFIGURE_COMMAND cd src &&
+        cp Make.inc/Makefile.inc.x86-64_cray-xt4_linux2 Makefile.inc &&
+        sed -i ${PTSCOTCH_DEBUG_CONTROL} Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-O3[ ]*/ -O2 /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-c99[ ]*/ -h c99 /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-fast[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-fastsse[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-Pscotchyy[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-olex\\.yy\\.c[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DINTSIZE[2346]*[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/\\\(=\\\)[ ]*/\\1 -DINTSIZE32 /" Makefile.inc
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND cd src && $(MAKE) -j 1 ptscotch
+      INSTALL_COMMAND cd src && $(MAKE) install prefix=<INSTALL_DIR>
+    )
+  else(HOST_HECTOR_MATCH)
+    ExternalProject_Add(
+      ptscotch
+      INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+      URL ${PTSCOTCH_TARBALL}
+      # ----- configure command for linux -----
+      CONFIGURE_COMMAND cd src &&
+        cp Make.inc/Makefile.inc.x86-64_pc_linux2 Makefile.inc &&
+        sed -i ${PTSCOTCH_DEBUG_CONTROL} Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DSCOTCH_PTHREAD[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/[ ]*-DINTSIZE[2346]*[ ]*/ /" Makefile.inc &&
+        sed -i "/CFLAGS[ \\t]*=/s/\\\(=\\\)[ ]*/\\1 -DINTSIZE32 /" Makefile.inc
+      BUILD_IN_SOURCE 1
+      BUILD_COMMAND cd src && $(MAKE) -j 1 ptscotch
+      INSTALL_COMMAND cd src && $(MAKE) install prefix=<INSTALL_DIR>
+    )
+  endif(HOST_HECTOR_MATCH)
 endif()
 
 # ------- zoltan --------------------
@@ -153,21 +218,42 @@ else()
 	if(NOT TRILINOS_TARBALL)
 		message("No Trilinos source found, please download ${TRILINOS_TARBALL_NAME}.")
 	endif()
-	ExternalProject_Add(
-	  zoltan
-		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
-		URL ${TRILINOS_TARBALL}
-    #		BINARY_DIR "<SOURCE_DIR>/BUILD_DIR"
-	  CONFIGURE_COMMAND cd <BINARY_DIR> &&
-        ${CMAKE_COMMAND}
-        -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR>
-        -DTPL_ENABLE_MPI:BOOL=ON
-        -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
-        -DTrilinos_ENABLE_Zoltan:BOOL=ON
-        <SOURCE_DIR>
-		BUILD_COMMAND make
-		INSTALL_COMMAND make install
-	)
+  if(HOST_HECTOR_MATCH OR HOST_ARCHER_MATCH)
+    ExternalProject_Add(
+      zoltan
+      INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+      URL ${TRILINOS_TARBALL}
+      #		BINARY_DIR "<SOURCE_DIR>/BUILD_DIR"
+      CONFIGURE_COMMAND cd <BINARY_DIR> &&
+          ${CMAKE_COMMAND}
+          -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR>
+          -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+          -DTPL_ENABLE_MPI:BOOL=ON
+          -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+          -DTrilinos_ENABLE_Zoltan:BOOL=ON
+          -DMPI_Fortran_COMPILER:STRING=ftn
+          -DCMAKE_Fortran_COMPILER:STRING=ftn
+          <SOURCE_DIR>
+      BUILD_COMMAND $(MAKE)
+      INSTALL_COMMAND $(MAKE) install
+    )
+  else(HOST_HECTOR_MATCH OR HOST_ARCHER_MATCH)
+    ExternalProject_Add(
+      zoltan
+      INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+      URL ${TRILINOS_TARBALL}
+      #		BINARY_DIR "<SOURCE_DIR>/BUILD_DIR"
+      CONFIGURE_COMMAND cd <BINARY_DIR> &&
+          ${CMAKE_COMMAND}
+          -DCMAKE_INSTALL_PREFIX:FILEPATH=<INSTALL_DIR>
+          -DTPL_ENABLE_MPI:BOOL=ON
+          -DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF
+          -DTrilinos_ENABLE_Zoltan:BOOL=ON
+          <SOURCE_DIR>
+      BUILD_COMMAND $(MAKE)
+      INSTALL_COMMAND $(MAKE) install
+    )
+  endif(HOST_HECTOR_MATCH OR HOST_ARCHER_MATCH)
 endif()
 
 # ------- PPStee --------------------
@@ -176,11 +262,11 @@ if (PPSTEE_FOUND)
 	message("PPStee already installed, no need to download")
 else()
 	message("PPStee not installed, will build from source")
-	find_file(PPSTEE_TARBALL ppstee-0.2.0.tar.gz
+	find_file(PPSTEE_TARBALL ppstee-0.3.0c.tar.gz
 		DOC "Path to PPStee source on disk (can be url http://)"
 		PATHS ${HEMELB_DEPENDENCIES_PATH}/distributions
 	)
-	if(NOT PPPSTEE_TARBALL)
+	if(NOT PPSTEE_TARBALL)
 		message("No PPStee source found, please download.")
 	endif()
 	ExternalProject_Add(
@@ -191,11 +277,19 @@ else()
         ${CMAKE_COMMAND}
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_PREFIX_PATH=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+        -DMPI_C_COMPILER=${MPI_C_COMPILER}
+        -DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
+        -DMPI_C_NO_INTERROGATE=${MPI_C_NO_INTERROGATE}
+        -DMPI_CXX_NO_INTERROGATE=${MPI_CXX_NO_INTERROGATE}
         <SOURCE_DIR>
     #		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make all
-		INSTALL_COMMAND make install
+    BUILD_COMMAND $(MAKE) ppstee
+    INSTALL_COMMAND $(MAKE) install
 	)
+  add_dependencies(ppstee zoltan ptscotch parmetis)
 endif()
 
 # -------CPPUNIT -------------
@@ -235,7 +329,7 @@ else()
 		URL ${CPPUNIT_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot "${CPPUNIT_CONFIGURE_OPTIONS}"
 		BUILD_IN_SOURCE 1
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    BUILD_COMMAND $(MAKE)
 		PATCH_COMMAND ${PATCH_COMMAND_LDL} && ${PATCH_COMMAND_RECONFIGURE}
 	)
 endif()
@@ -312,7 +406,7 @@ else()
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${CTEMPLATE_TARBALL}
 		CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>  ${CTEMPLATE_CONFIGURE_OPTIONS}
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    BUILD_COMMAND $(MAKE)
 		BUILD_IN_SOURCE 1
 		PATCH_COMMAND ${PATCH_COMMAND_ALIGN} && ${PATCH_COMMAND_VACOPY}
 	)
@@ -339,7 +433,7 @@ else()
 		INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
 		URL ${ZLIB_TARBALL}
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR>
-		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
+    BUILD_COMMAND $(MAKE)
 		BUILD_IN_SOURCE 1
 	)
 endif()

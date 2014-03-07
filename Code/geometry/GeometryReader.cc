@@ -80,7 +80,7 @@ namespace hemelb
       }
     }
 
-    Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath)
+    Geometry GeometryReader::LoadAndDecompose(const std::string& dataFilePath, const int requestedPartitioner /* = 0 */)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Starting file read timer");
       timings[hemelb::reporting::Timers::fileRead].Start();
@@ -189,7 +189,7 @@ namespace hemelb
       if (participateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(geometry, principalProcForEachBlock);
+        OptimiseDomainDecomposition(geometry, principalProcForEachBlock, requestedPartitioner);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
 
         if (ShouldValidate())
@@ -812,14 +812,15 @@ namespace hemelb
       return shouldReadBlock;
     }
 
-    void GeometryReader::OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock)
+    void GeometryReader::OptimiseDomainDecomposition(Geometry& geometry, const std::vector<proc_t>& procForEachBlock, const int requestedPartitioner /* = 0 */)
     {
       decomposition::OptimisedDecomposition optimiser(timings,
                                                       topologyComms,
                                                       geometry,
                                                       latticeInfo,
                                                       procForEachBlock,
-                                                      fluidSitesOnEachBlock);
+                                                      fluidSitesOnEachBlock,
+                                                      requestedPartitioner);
 
       timings[hemelb::reporting::Timers::reRead].Start();
       log::Logger::Log<log::Debug, log::OnePerCore>("Rereading blocks");
