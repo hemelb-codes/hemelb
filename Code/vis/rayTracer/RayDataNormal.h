@@ -115,11 +115,14 @@ namespace hemelb
             }
 
             MPI_Datatype type;
-            MPI_Type_struct(lRayDataNormalCount,
-                            lRayDataNormalBlocklengths,
-                            lRayDataNormalDisps,
-                            lRayDataNormalTypes,
-                            &type);
+            HEMELB_MPI_CALL(
+                MPI_Type_create_struct,
+                (lRayDataNormalCount,
+                    lRayDataNormalBlocklengths,
+                    lRayDataNormalDisps,
+                    lRayDataNormalTypes,
+                    &type)
+            );
             return type;
           }
 

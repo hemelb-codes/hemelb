@@ -42,29 +42,7 @@ namespace hemelb
          * Produces an MPI Datatype object but doesn't commit it or manage its memory.
          * @return
          */
-        static MPI_Datatype GetMPIType()
-        {
-          const int typeCount = 2;
-          int blocklengths[typeCount] = { 1, 1 };
-
-          MPI_Datatype types[typeCount] = { MPI_INT, MPI_INT };
-
-          BasicPixel example;
-
-          MPI_Aint displacements[typeCount];
-
-          MPI_Get_address(&example.i, &displacements[0]);
-          MPI_Get_address(&example.j, &displacements[1]);
-
-          displacements[1] -= displacements[0];
-          displacements[0] = 0;
-
-          MPI_Datatype ret;
-
-          MPI_Type_struct(typeCount, blocklengths, displacements, types, &ret);
-
-          return ret;
-        }
+        static MPI_Datatype GetMPIType();
 
       protected:
         int i, j;

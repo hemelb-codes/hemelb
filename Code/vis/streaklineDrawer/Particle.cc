@@ -48,19 +48,22 @@ namespace hemelb
 
       vis::streaklinedrawer::Particle particle[2];
 
-      MPI_Address(&particle[0], &elementDisplacements[0]);
-      MPI_Address(&particle[0].position, &elementDisplacements[1]);
-      MPI_Address(&particle[0].vel, &elementDisplacements[2]);
-      MPI_Address(&particle[0].inletID, &elementDisplacements[3]);
-      MPI_Address(&particle[1], &elementDisplacements[4]);
+      MPI_Get_address(&particle[0], &elementDisplacements[0]);
+      MPI_Get_address(&particle[0].position, &elementDisplacements[1]);
+      MPI_Get_address(&particle[0].vel, &elementDisplacements[2]);
+      MPI_Get_address(&particle[0].inletID, &elementDisplacements[3]);
+      MPI_Get_address(&particle[1], &elementDisplacements[4]);
       for (int element = elementCount - 1; element >= 0; element--)
       {
         elementDisplacements[element] -= elementDisplacements[0];
       }
 
       MPI_Datatype type;
-      MPI_Type_struct(elementCount, elementBlockLengths, elementDisplacements, elementTypes, &type);
-      MPI_Type_commit(&type);
+      HEMELB_MPI_CALL(
+          MPI_Type_create_struct,
+          (elementCount, elementBlockLengths, elementDisplacements, elementTypes, &type)
+      );
+      HEMELB_MPI_CALL(MPI_Type_commit, (&type));
       return type;
     }
   }
