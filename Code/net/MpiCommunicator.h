@@ -61,7 +61,7 @@ namespace hemelb
         virtual int Size() const;
 
         /**
-         * Creates a new communicator
+         * Creates a new communicator - see MPI_COMM_GROUP
          * @param Group which is a subset of the group of this communicator.
          * @return New communicator.
          */
@@ -93,6 +93,12 @@ namespace hemelb
          * @param errCode
          */
         void Abort(int errCode) const;
+
+        /**
+         * Duplicate the communicator - see MPI_COMM_DUP
+         * @return
+         */
+        MpiCommunicator Duplicate() const;
 
         template <typename T>
         void Broadcast(T& val, const int root) const;
