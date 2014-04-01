@@ -18,7 +18,7 @@ namespace hemelb
 
     }
     BasicPixel::BasicPixel(int iIn, int jIn) :
-      i(iIn), j(jIn)
+        i(iIn), j(jIn)
     {
 
     }
@@ -43,6 +43,32 @@ namespace hemelb
       return (i == right.i && j == right.j);
     }
 
+    MPI_Datatype BasicPixel::GetMPIType()
+    {
+      const int typeCount = 2;
+      int blocklengths[typeCount] = { 1, 1 };
+
+      MPI_Datatype types[typeCount] = { MPI_INT, MPI_INT };
+
+      BasicPixel example;
+
+      MPI_Aint displacements[typeCount];
+
+      MPI_Get_address(&example.i, &displacements[0]);
+      MPI_Get_address(&example.j, &displacements[1]);
+
+      displacements[1] -= displacements[0];
+      displacements[0] = 0;
+
+      MPI_Datatype ret;
+
+      HEMELB_MPI_CALL(
+          MPI_Type_create_struct,
+          (typeCount, blocklengths, displacements, types, &ret)
+      );
+
+      return ret;
+    }
   }
 
   namespace net
@@ -51,7 +77,7 @@ namespace hemelb
     MPI_Datatype net::MpiDataTypeTraits<hemelb::vis::BasicPixel>::RegisterMpiDataType()
     {
       MPI_Datatype ret = vis::BasicPixel::GetMPIType();
-      MPI_Type_commit(&ret);
+      HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
       return ret;
     }
   }
