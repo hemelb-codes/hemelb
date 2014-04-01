@@ -52,7 +52,7 @@ namespace hemelb
         }
         else
         {
-          throw OptionError() << "Unknown option";
+          throw OptionError() << "Unknown option: " << paramName;
         }
       }
     }
