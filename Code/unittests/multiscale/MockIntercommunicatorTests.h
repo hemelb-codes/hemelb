@@ -186,6 +186,8 @@ namespace hemelb
           }
           void TestCHemeRun()
           {
+            CPPUNIT_ASSERT_MESSAGE("This test is broken - see ticket #663", 1 == 0);
+
             // TODO: This test is fatal if run with LADDIOLET. See ticket #605.
             LADD_FAIL();
             int argc;
