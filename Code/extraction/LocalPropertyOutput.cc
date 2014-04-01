@@ -70,7 +70,8 @@ namespace hemelb
 
       // Only the root process needs to know the total number of sites written
       // Note this has a garbage value on other procs.
-      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM, 0);
+      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM,
+                                           net::NetworkTopology::Instance()->GetIOProcRank());
 
       unsigned totalHeaderLength = 0;
 
