@@ -28,6 +28,7 @@ namespace hemelb
 
         void Init(MpiCommunicator& commun);
         bool IsCurrentProcTheIOProc() const;
+        int GetIOProcRank() const;
 
         // Functions for getting the rank of this processor and the total size
         // of the topology.
