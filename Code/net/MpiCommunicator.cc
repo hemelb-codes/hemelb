@@ -104,9 +104,17 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Comm_create, (*commPtr, grp, &newComm));
       return MpiCommunicator(newComm, true);
     }
+
     void MpiCommunicator::Abort(int errCode) const
     {
       HEMELB_MPI_CALL(MPI_Abort, (*commPtr, errCode));
+    }
+
+    MpiCommunicator MpiCommunicator::Duplicate() const
+    {
+      MPI_Comm newComm;
+      HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
+      return MpiCommunicator(newComm, true);
     }
   }
 }
