@@ -49,7 +49,12 @@ namespace hemelb
 
     bool NetworkTopology::IsCurrentProcTheIOProc() const
     {
-      return GetLocalRank() == 0;
+      return GetLocalRank() == GetIOProcRank();
+    }
+
+    int NetworkTopology::GetIOProcRank() const
+    {
+      return 0;
     }
 
     proc_t NetworkTopology::GetLocalRank() const
