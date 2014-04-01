@@ -39,17 +39,6 @@ namespace hemelb
         std::fclose(f);
       }
 
-      // Send the steering session id we're using to the rendezvous resource.
-      {
-        char steering_session_id_char[255];
-        std::sprintf(steering_session_id_char, "%i", iSteeringSessionId);
-
-        HttpPost::request("bunsen.chem.ucl.ac.uk",
-                          28080,
-                          "/ahe/test/rendezvous/",
-                          steering_session_id_char);
-      }
-
       mCurrentSocket = -1;
       mIsBroken = false;
 
