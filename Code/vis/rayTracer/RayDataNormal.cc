@@ -136,7 +136,7 @@ namespace hemelb
     MPI_Datatype MpiDataTypeTraits<hemelb::vis::raytracer::RayDataNormal>::RegisterMpiDataType()
     {
       MPI_Datatype ret = vis::raytracer::RayDataNormal::GetMPIType();
-      MPI_Type_commit(&ret);
+      HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
       return ret;
     }
   }

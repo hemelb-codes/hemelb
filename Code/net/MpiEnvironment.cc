@@ -23,7 +23,7 @@ namespace hemelb
       if (!Initialized())
       {
         HEMELB_MPI_CALL(MPI_Init, (&argc, &argv));
-        HEMELB_MPI_CALL(MPI_Errhandler_set, (MPI_COMM_WORLD, MPI_ERRORS_RETURN));
+        HEMELB_MPI_CALL(MPI_Comm_set_errhandler, (MPI_COMM_WORLD, MPI_ERRORS_RETURN));
         doesOwnMpi = true;
       }
     }

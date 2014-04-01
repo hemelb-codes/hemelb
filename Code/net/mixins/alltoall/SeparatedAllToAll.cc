@@ -20,13 +20,16 @@ namespace hemelb
       {
         SimpleRequest & sendreq = allToAllSendProcComms[i];
         SimpleRequest & receivereq = allToAllReceiveProcComms[i];
-        MPI_Alltoall(sendreq.Pointer,
-                     sendreq.Count,
-                     sendreq.Type,
-                     receivereq.Pointer,
-                     receivereq.Count,
-                     receivereq.Type,
-                     communicator);
+        HEMELB_MPI_CALL(
+            MPI_Alltoall,
+            (sendreq.Pointer,
+                sendreq.Count,
+                sendreq.Type,
+                receivereq.Pointer,
+                receivereq.Count,
+                receivereq.Type,
+                communicator)
+        );
       }
 
       allToAllReceiveProcComms.clear();

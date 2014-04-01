@@ -302,11 +302,14 @@ namespace hemelb
             }
 
             MPI_Datatype type;
-            MPI_Type_struct(rayDataEnhancedCount,
-                            rayDataEnhancedBlocklengths,
-                            rayDataEnhancedDisps,
-                            rayDataEnhancedTypes,
-                            &type);
+            HEMELB_MPI_CALL(
+                MPI_Type_create_struct,
+                (rayDataEnhancedCount,
+                    rayDataEnhancedBlocklengths,
+                    rayDataEnhancedDisps,
+                    rayDataEnhancedTypes,
+                    &type)
+            );
             return type;
           }
 
