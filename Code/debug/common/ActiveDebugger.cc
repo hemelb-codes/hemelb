@@ -114,10 +114,7 @@ namespace hemelb
       std::string srcFile(__FILE__);
       std::string debugCommonDir = srcFile.substr(0, srcFile.rfind('/'));
 
-      std::string binaryPath(getcwd(NULL, 0)); // This will leak,
-      // but don't care
-      binaryPath += "/";
-      binaryPath += mExecutable;
+      const std::string binaryPath = GetBinaryPath();
 
       VoS args;
 

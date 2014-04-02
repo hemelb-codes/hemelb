@@ -10,7 +10,7 @@
 #include <string>
 
 #include "debug/OSX/OsxDebugger.h"
-
+#include <mach-o/dyld.h>
 namespace hemelb
 {
   namespace debug
@@ -18,6 +18,21 @@ namespace hemelb
     OsxDebugger::OsxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
       ActiveDebugger(executable, comm)
     {
+    }
+    const std::string OsxDebugger::GetBinaryPath(void) const
+    {
+      char* path = NULL;
+      uint32_t size = 0;
+      _NSGetExecutablePath(path, &size);
+      path = new char[size];
+      int ret = _NSGetExecutablePath(path, &size);
+      if (ret != 0)
+        // error
+        throw Exception() << "Error getting executable path.";
+
+      std::string ans(path, size);
+      delete[] path;
+      return ans;
     }
 
     const std::string OsxDebugger::GetPlatformInterpreter(void) const

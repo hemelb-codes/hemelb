@@ -10,6 +10,7 @@
 #include <string>
 
 #include "debug/linux/LinuxDebugger.h"
+#include <unistd.h>
 
 namespace hemelb
 {
@@ -17,6 +18,19 @@ namespace hemelb
   {
     LinuxDebugger::LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
       ActiveDebugger(executable, comm) {}
+
+    const std::string LinuxDebugger::GetBinaryPath(void) const
+    {
+      char buf[1024];
+      ssize_t len;
+      len = readlink("/proc/self/exe", buf, sizeof(buf)-1);
+
+      if (len == -1)
+        // error
+        throw Exception() << "Error getting executable path. Error code: " << errno;
+      buf[len] = '\0';
+      return std::string(buf, len);
+    }
 
     const std::string LinuxDebugger::GetPlatformInterpreter(void) const {
       return std::string("bash");

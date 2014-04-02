@@ -20,6 +20,7 @@ namespace hemelb
     class LinuxDebugger : public ActiveDebugger {
     protected:
       // Platform specific getters
+      const std::string GetBinaryPath(void) const;
       const std::string GetPlatformInterpreter(void) const;
       const std::string GetPlatformScript(void) const;
       
