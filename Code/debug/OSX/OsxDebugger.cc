@@ -30,15 +30,7 @@ namespace hemelb
       std::string include(__FILE__);
       std::string debugOsxDir = include.substr(0, include.rfind('/'));
 
-      return debugOsxDir + "/MPIdebug.scpt";
-    }
-
-    const std::string OsxDebugger::GetPlatformGdbScript(void) const
-    {
-      std::string include(__FILE__);
-      std::string debugOsxDir = include.substr(0, include.rfind('/'));
-
-      return debugOsxDir + "/resume.gdb";
+      return debugOsxDir + "/MPIdebug.applescript";
     }
 
     Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm)
