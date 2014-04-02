@@ -48,7 +48,6 @@ namespace hemelb
         // Platform specific stuff
         virtual const std::string GetPlatformInterpreter(void) const = 0;
         virtual const std::string GetPlatformScript(void) const = 0;
-        virtual const std::string GetPlatformGdbScript(void) const = 0;
 
         // Helper function
         static std::string ConvertIntToString(int i);
