@@ -1,10 +1,10 @@
 #!/bin/bash
-
-debuggerCommandFile=$1
-binary=$2
+DIR=$(dirname "$0")
+debuggerCommandFile=$DIR/resume.gdb
+binary=$1
 debugger="gdb -q -x $debuggerCommandFile $binary"
 
-shift 2 
+shift
 # Remove the first to params.
 # Positional params now hold the process ids we
 # want to attach to.

@@ -22,7 +22,6 @@ namespace hemelb
       // Platform specific getters
       const std::string GetPlatformInterpreter(void) const;
       const std::string GetPlatformScript(void) const;
-      const std::string GetPlatformGdbScript(void) const;
       
       // C'tor...
       LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm);
