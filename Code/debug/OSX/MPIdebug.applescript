@@ -51,6 +51,7 @@ on CreateTabs(pIds)
 				set newTab to do script
 				set wId to (id of first window whose first tab is newTab)
 			else
+				delay 1
 				tell application "System Events" to tell process "Terminal" to keystroke "t" using command down
 				set newTab to do script in window id wId
 			end if
@@ -73,7 +74,7 @@ on lldbRun(binary, pIds)
 			set curTab to item i of tabList
 			set cmd to debugger & " -f " & binary & " -p " & pId
 			set newTab to do script cmd in curTab
-			delay 0.5
+			delay 1
 			do script ("frame select -r 3") in curTab
 			do script ("expr amWaiting = 0") in curTab
 			do script ("breakpoint set -F hemelb::debug::ActiveDebugger::BreakHere()") in curTab
