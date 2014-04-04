@@ -86,7 +86,7 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+      const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
       std::vector<site_t> mins = comms.AllReduce(localMins, MPI_MIN);
       std::vector<site_t> maxes = comms.AllReduce(localMaxes, MPI_MAX);
 
@@ -500,7 +500,7 @@ namespace hemelb
        *
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
-      net::NetworkTopology* netTop = net::NetworkTopology::Instance();
+      net::IOCommunicator* netTop = net::IOCommunicator::Instance();
       net::Net tempNet;
 
       Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0 ?
@@ -511,16 +511,16 @@ namespace hemelb
         myStreaker->GetUnusedPixelSet());
 
       // Start with a difference in rank of 1, doubling every time.
-      for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
+      for (proc_t deltaRank = 1; deltaRank < netTop->Size(); deltaRank <<= 1)
       {
         // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
-        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank);
+        for (proc_t receivingProc = 1; receivingProc < (netTop->Size() - deltaRank);
             receivingProc += deltaRank << 1)
         {
           proc_t sendingProc = receivingProc + deltaRank;
 
           // If we're the sending proc, do the send.
-          if (netTop->GetLocalRank() == sendingProc)
+          if (netTop->Rank() == sendingProc)
           {
             localBuffer->SendPixelCounts(&tempNet, receivingProc);
 
@@ -533,7 +533,7 @@ namespace hemelb
 
           // If we're the receiving proc, receive.
 
-          else if (netTop->GetLocalRank() == receivingProc)
+          else if (netTop->Rank() == receivingProc)
           {
             receiveBuffer.ReceivePixelCounts(&tempNet, sendingProc);
 
@@ -549,7 +549,7 @@ namespace hemelb
       }
 
       // Send the final image from proc 1 to 0.
-      if (netTop->GetLocalRank() == 1)
+      if (netTop->Rank() == 1)
       {
         localBuffer->SendPixelCounts(&tempNet, 0);
 
@@ -560,7 +560,7 @@ namespace hemelb
         tempNet.Dispatch();
       }
       // Receive the final image on proc 0.
-      else if (netTop->GetLocalRank() == 0 && netTop->GetProcessorCount() > 1)
+      else if (netTop->Rank() == 0 && netTop->Size() > 1)
       {
         receiveBuffer.ReceivePixelCounts(&tempNet, 1);
 
@@ -576,7 +576,7 @@ namespace hemelb
         log::Logger::Log<log::Trace, log::OnePerCore>("Inserting image at it %lu.", startIteration);
       }
 
-      if (netTop->GetLocalRank() != 0)
+      if (netTop->Rank() != 0)
       {
         receiveBuffer.ReleaseAll();
       }

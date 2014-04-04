@@ -7,28 +7,28 @@
 // specifically made by you with University College London.
 // 
 
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "net/mpi.h"
 
 namespace hemelb
 {
   namespace net
   {
-    NetworkTopology NetworkTopology::instance;
-    bool NetworkTopology::initialised = false;
+    IOCommunicator IOCommunicator::instance;
+    bool IOCommunicator::initialised = false;
 
     // Must be specified to prevent the default constructor being public.
-    NetworkTopology::NetworkTopology()
+    IOCommunicator::IOCommunicator()
     {
 
     }
 
-    NetworkTopology* NetworkTopology::Instance()
+    IOCommunicator* IOCommunicator::Instance()
     {
       return &instance;
     }
 
-    void NetworkTopology::Init(MpiCommunicator& commun)
+    void IOCommunicator::Init(MpiCommunicator& commun)
     {
       if (!initialised)
       {
@@ -37,26 +37,26 @@ namespace hemelb
       }
     }
 
-    NetworkTopology::~NetworkTopology()
+    IOCommunicator::~IOCommunicator()
     {
     }
 
-    bool NetworkTopology::IsCurrentProcTheIOProc() const
+    bool IOCommunicator::IsCurrentProcTheIOProc() const
     {
-      return GetLocalRank() == GetIOProcRank();
+      return Rank() == GetIOProcRank();
     }
 
-    int NetworkTopology::GetIOProcRank() const
+    int IOCommunicator::GetIOProcRank() const
     {
       return 0;
     }
 
-    proc_t NetworkTopology::GetLocalRank() const
+    proc_t IOCommunicator::Rank() const
     {
       return comms.Rank();
     }
 
-    proc_t NetworkTopology::GetProcessorCount() const
+    proc_t IOCommunicator::Size() const
     {
       return comms.Size();
     }

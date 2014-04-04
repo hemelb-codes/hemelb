@@ -39,7 +39,7 @@ int main(int argc, char **argv)
   hemelb::net::MpiCommunicator testCommunicator = hemelb::net::MpiCommunicator::World();
   hemelb::debug::Debugger::Init(argv[0], testCommunicator);
 
-  hemelb::net::NetworkTopology::Instance()->Init(testCommunicator);
+  hemelb::net::IOCommunicator::Instance()->Init(testCommunicator);
 
   std::ostream * reportto=&std::cerr;
   std::ofstream reportfile;

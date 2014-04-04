@@ -19,7 +19,7 @@
 
 #include <fstream>
 #include "net/mpi.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -38,7 +38,7 @@ namespace hemelb
          * Stores a pointer to the MPI Network topology singleton.
          */
         MPICommsPolicy() :
-            instance(*net::NetworkTopology::Instance())
+            instance(*net::IOCommunicator::Instance())
         {
         }
       protected:
@@ -64,11 +64,11 @@ namespace hemelb
          */
         proc_t GetProcessorCount() const
         {
-          return instance.GetProcessorCount();
+          return instance.Size();
         }
 
       private:
-        const net::NetworkTopology& instance; //! Reference to the singleton instance of the MPI topology
+        const net::IOCommunicator& instance; //! Reference to the singleton instance of the MPI topology
     };
 
     /**

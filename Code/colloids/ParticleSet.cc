@@ -26,7 +26,7 @@ namespace hemelb
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
                              const std::string& outputPath) :
-        localRank(net::NetworkTopology::Instance()->GetLocalRank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
+        localRank(net::IOCommunicator::Instance()->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -165,7 +165,7 @@ namespace hemelb
     {
       if (log::Logger::ShouldDisplay<log::Debug>())
         log::Logger::Log<log::Debug, log::OnePerCore>("In colloids::ParticleSet::UpdatePositions #particles == %i ...\n",
-                                                      net::NetworkTopology::Instance()->GetLocalRank(),
+                                                      net::IOCommunicator::Instance()->Rank(),
                                                       particles.size());
 
       // only update the position for particles that are locally owned because
