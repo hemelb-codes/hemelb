@@ -15,8 +15,9 @@ namespace hemelb
   {
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                                                const geometry::LatticeData& data,
+                                               int rank_,
                                                const util::UnitConverter& converter) :
-        propertyCache(propertyCache), data(data), converter(converter), position(-1)
+        propertyCache(propertyCache), data(data), rank(rank_), converter(converter), position(-1)
     {
 
     }
@@ -91,7 +92,7 @@ namespace hemelb
 
     bool LbDataSourceIterator::IsAvailable(const util::Vector3D<site_t>& location) const
     {
-      return data.GetProcIdFromGlobalCoords(location) == net::IOCommunicator::Instance()->Rank();
+      return data.GetProcIdFromGlobalCoords(location) == rank;
     }
 
     PhysicalDistance LbDataSourceIterator::GetVoxelSize() const

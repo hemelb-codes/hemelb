@@ -68,6 +68,7 @@ namespace hemelb
                                                             PhysicalPosition::Zero());
             dataSourceIterator = new hemelb::extraction::LbDataSourceIterator(*propertyCache,
                                                                               *latticeData,
+                                                                              0,
                                                                               *unitConverter);
 
             planeGeometrySelector = new hemelb::extraction::PlaneGeometrySelector(planePosition,

@@ -35,7 +35,7 @@ namespace hemelb
          * Initalise the singleton instance.
          * @param commun
          */
-        static void Init(MpiCommunicator& commun);
+        static IOCommunicator& Init(MpiCommunicator& commun);
 
         bool OnIORank() const;
         int GetIORank() const;
