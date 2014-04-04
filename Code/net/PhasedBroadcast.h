@@ -75,22 +75,16 @@ namespace hemelb
       public:
         PhasedBroadcast(Net * iNet,
                         const lb::SimulationState * iSimState,
-                        unsigned int spreadFactor)
+                        unsigned int spreadFactor) :
+                          mSimState(iSimState), mMyDepth(0), mTreeDepth(0), mNet(iNet)
         {
-          mNet = iNet;
-          mSimState = iSimState;
-
-          // Initialise member variables.
-          mTreeDepth = 0;
-          mMyDepth = 0;
-
           // Calculate the correct values for the depth variables.
           proc_t noSeenToThisDepth = 1;
           proc_t noAtCurrentDepth = 1;
 
-          IOCommunicator* netTop = IOCommunicator::Instance();
+          const MpiCommunicator& netTop = mNet->GetCommunicator();
 
-          while (noSeenToThisDepth < netTop->Size())
+          while (noSeenToThisDepth < netTop.Size())
           {
             // Go down a level. I.e. increase the depth of the tree, to a new level which has M times
             // as many nodes on it.
@@ -100,28 +94,28 @@ namespace hemelb
 
             // If this node is at the current depth, it must have a rank lower than or equal to the highest
             // rank at the current depth but greater than the highest rank at the previous depth.
-            if (noSeenToThisDepth > netTop->Rank() && ( (noSeenToThisDepth
-                - noAtCurrentDepth) <= netTop->Rank()))
+            if (noSeenToThisDepth > netTop.Rank() && ( (noSeenToThisDepth
+                - noAtCurrentDepth) <= netTop.Rank()))
             {
               mMyDepth = mTreeDepth;
             }
           }
 
           // In a M-tree, with a root of 0, each node N's parent has rank floor((N-1) / M)
-          if (netTop->Rank() == 0)
+          if (netTop.Rank() == 0)
           {
             mParent = NOPARENT;
           }
           else
           {
-            mParent = (netTop->Rank() - 1) / spreadFactor;
+            mParent = (netTop.Rank() - 1) / spreadFactor;
           }
 
           // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-          for (unsigned int child = (spreadFactor * netTop->Rank()) + 1; child
-              <= spreadFactor * (1 + netTop->Rank()); ++child)
+          for (unsigned int child = (spreadFactor * netTop.Rank()) + 1; child
+              <= spreadFactor * (1 + netTop.Rank()); ++child)
           {
-            if (child < (unsigned int) netTop->Size())
+            if (child < (unsigned int) netTop.Size())
             {
               mChildren.push_back(child);
             }
@@ -407,7 +401,7 @@ namespace hemelb
          * This node's child ranks.
          */
         std::vector<int> mChildren;
-
+      protected:
         Net * mNet;
     };
   }

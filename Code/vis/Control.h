@@ -135,7 +135,6 @@ namespace hemelb
         multimapType childrenResultsByStartIt;
         std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
-        net::Net* net;
         /**
          * Cache of all the macroscopic fluid properties of each lattice site on this core.
          */

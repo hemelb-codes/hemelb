@@ -445,7 +445,8 @@ namespace hemelb
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = net::IOCommunicator::Instance()->Rank();
+      net::IOCommunicator& ioComms = *net::IOCommunicator::Instance();
+      proc_t localRank = ioComms.Rank();
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
       // communication of the locations of the interface-dependent fluid
@@ -453,7 +454,7 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      net::Net tempNet;
+      net::Net tempNet(ioComms);
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
       {
         NeighbouringProcessor* neigh_proc_p = &neighbouringProcs[neighbourId];

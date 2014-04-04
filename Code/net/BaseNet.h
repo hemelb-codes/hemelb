@@ -28,7 +28,7 @@ namespace hemelb
     {
       public:
         BaseNet();
-        BaseNet(MpiCommunicator &communicator);
+        BaseNet(const MpiCommunicator &communicator);
 
         virtual ~BaseNet()
         {
