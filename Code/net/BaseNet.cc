@@ -34,7 +34,7 @@ namespace hemelb
     }
 
     BaseNet::BaseNet() :
-        BytesSent(0), SyncPointsCounted(0), communicator(IOCommunicator::Instance()->GetComms())
+        BytesSent(0), SyncPointsCounted(0), communicator(*IOCommunicator::Instance())
     {
     }
 

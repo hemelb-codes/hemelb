@@ -21,7 +21,7 @@ namespace hemelb
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec) :
-      comms(net::IOCommunicator::Instance()->GetComms()), dataSource(dataSource), outputSpec(outputSpec)
+      comms(*net::IOCommunicator::Instance()), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
@@ -59,7 +59,7 @@ namespace hemelb
       writeLength *= siteCount;
 
       // The IO proc also writes the iteration number
-      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->OnIORank())
       {
         writeLength += 8;
       }
@@ -72,12 +72,12 @@ namespace hemelb
       // Only the root process needs to know the total number of sites written
       // Note this has a garbage value on other procs.
       uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM,
-                                           net::IOCommunicator::Instance()->GetIOProcRank());
+                                           net::IOCommunicator::Instance()->GetIORank());
 
       unsigned totalHeaderLength = 0;
 
       // Write the header information on the IO proc.
-      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->OnIORank())
       {
         // Compute the length of the field header
         unsigned fieldHeaderLength = 0;
@@ -143,7 +143,7 @@ namespace hemelb
       }
 
       // Calculate where each core should start writing
-      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->OnIORank())
       {
         // For core 0 this is easy: it passes the value for core 1 to the core.
         localDataOffsetIntoFile = totalHeaderLength;
@@ -220,7 +220,7 @@ namespace hemelb
       io::writers::xdr::XdrMemWriter xdrWriter(buffer, writeLength);
 
       // Firstly, the IO proc must write the iteration number.
-      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->OnIORank())
       {
         xdrWriter << (uint64_t) timestepNumber;
       }

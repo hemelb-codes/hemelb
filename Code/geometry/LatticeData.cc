@@ -277,7 +277,7 @@ namespace hemelb
 
     void LatticeData::CollectFluidSiteDistribution()
     {
-      const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
+      const net::MpiCommunicator& comms = *net::IOCommunicator::Instance();
       fluidSitesOnEachProcessor.resize(comms.Size());
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
@@ -331,7 +331,7 @@ namespace hemelb
 
       }
 
-      const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
+      const net::MpiCommunicator& comms = *net::IOCommunicator::Instance();
       std::vector<site_t> siteMins = comms.AllReduce(localMins, MPI_MIN);
       std::vector<site_t> siteMaxes = comms.AllReduce(localMaxes, MPI_MAX);
 
