@@ -9,7 +9,7 @@
 
 #include "lb/iolets/InOutLetCosine.h"
 #include "configuration/SimConfig.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 namespace hemelb
 {

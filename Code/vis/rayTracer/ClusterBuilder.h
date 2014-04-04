@@ -195,7 +195,7 @@ namespace hemelb
 
             for (site_t siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit(); siteId++)
             {
-              if (net::NetworkTopology::Instance()->GetLocalRank() == block.GetProcessorRankForSite(siteId))
+              if (net::IOCommunicator::Instance()->Rank() == block.GetProcessorRankForSite(siteId))
               {
                 return true;
               }

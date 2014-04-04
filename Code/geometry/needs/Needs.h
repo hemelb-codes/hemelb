@@ -11,7 +11,7 @@
 #define HEMELB_GEOMETRY_NEEDS_NEEDS_H
 #include <vector>
 #include "net/net.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 namespace hemelb
 {
   namespace geometry

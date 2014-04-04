@@ -13,7 +13,7 @@
 #include "configuration/SimConfig.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/SimulationState.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/OneInOneOutSimConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"

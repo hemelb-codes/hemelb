@@ -94,7 +94,7 @@ namespace hemelb
                   }
                   // If it's on this task, we don't need to request its data.
                   if (neighbourSiteHomeProc
-                      == net::NetworkTopology::Instance()->GetLocalRank())
+                      == net::IOCommunicator::Instance()->Rank())
                     continue;
 
                   // Create a requirements with the info we need.
@@ -306,7 +306,7 @@ namespace hemelb
             LatticeVector neighbourGlobalLocation = site.GetGlobalSiteCoords()
                 + LatticeVector(LatticeType::CX[i], LatticeType::CY[i], LatticeType::CZ[i]);
             proc_t neighbourProcessor = latDat->GetProcIdFromGlobalCoords(neighbourGlobalLocation);
-            if (neighbourProcessor == net::NetworkTopology::Instance()->GetLocalRank())
+            if (neighbourProcessor == net::IOCommunicator::Instance()->Rank())
             {
               // If it's local, get a Site object for it.
               geometry::Site<geometry::LatticeData> nextSiteOut =

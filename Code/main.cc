@@ -8,7 +8,7 @@
 // 
 
 #include "net/mpi.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "configuration/CommandLine.h"
 #include "SimulationMaster.h"
 
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
     hemelb::debug::Debugger::Init(argv[0], hemelbCommunicator);
 
-    hemelb::net::NetworkTopology::Instance()->Init(hemelbCommunicator);
+    hemelb::net::IOCommunicator::Instance()->Init(hemelbCommunicator);
     try
     {
       // Parse command line

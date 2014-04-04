@@ -17,7 +17,7 @@
 #include "net/mpi.h"
 
 #include "geometry/LatticeData.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/Particle.h"

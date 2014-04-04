@@ -141,7 +141,7 @@ namespace hemelb
           geometry::SiteTraverser siteTraverser(latDat);
           do
           {
-            if (net::NetworkTopology::Instance()->GetLocalRank()
+            if (net::IOCommunicator::Instance()->Rank()
                 != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;

@@ -142,7 +142,7 @@ namespace hemelb
                 // in this direction? If not, we must skip it for consistency.
 
                 // TODO: this really must cope with neigh being off process.
-                if (neighbourSiteHomeProc == net::NetworkTopology::Instance()->GetLocalRank())
+                if (neighbourSiteHomeProc == net::IOCommunicator::Instance()->Rank())
                 {
                   site_t
                       neighLocalIdx =
@@ -190,7 +190,7 @@ namespace hemelb
                 extra.hydroVarsCache.insert(RSHV::Map::value_type(neighGlobalIdx, neighHV));
               }
 
-              if (neighbourSiteHomeProc == net::NetworkTopology::Instance()->GetLocalRank())
+              if (neighbourSiteHomeProc == net::IOCommunicator::Instance()->Rank())
               {
                 // Store the cut distance from neigh to the iolet
                 // I.e along the direction opposite to i

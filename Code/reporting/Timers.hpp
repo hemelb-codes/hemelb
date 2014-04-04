@@ -43,7 +43,7 @@ namespace hemelb
       CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(), MPI_MIN, 0, comms);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
-        means[ii] /= (double) (net::NetworkTopology::Instance()->GetProcessorCount());
+        means[ii] /= (double) (net::IOCommunicator::Instance()->Size());
       }
     }
 

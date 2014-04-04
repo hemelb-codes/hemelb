@@ -16,7 +16,7 @@
 #include "net/IteratedAction.h"
 #include "net/net.h"
 #include "lb/SimulationState.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 
 namespace hemelb
 {
@@ -88,9 +88,9 @@ namespace hemelb
           proc_t noSeenToThisDepth = 1;
           proc_t noAtCurrentDepth = 1;
 
-          NetworkTopology* netTop = NetworkTopology::Instance();
+          IOCommunicator* netTop = IOCommunicator::Instance();
 
-          while (noSeenToThisDepth < netTop->GetProcessorCount())
+          while (noSeenToThisDepth < netTop->Size())
           {
             // Go down a level. I.e. increase the depth of the tree, to a new level which has M times
             // as many nodes on it.
@@ -100,28 +100,28 @@ namespace hemelb
 
             // If this node is at the current depth, it must have a rank lower than or equal to the highest
             // rank at the current depth but greater than the highest rank at the previous depth.
-            if (noSeenToThisDepth > netTop->GetLocalRank() && ( (noSeenToThisDepth
-                - noAtCurrentDepth) <= netTop->GetLocalRank()))
+            if (noSeenToThisDepth > netTop->Rank() && ( (noSeenToThisDepth
+                - noAtCurrentDepth) <= netTop->Rank()))
             {
               mMyDepth = mTreeDepth;
             }
           }
 
           // In a M-tree, with a root of 0, each node N's parent has rank floor((N-1) / M)
-          if (netTop->GetLocalRank() == 0)
+          if (netTop->Rank() == 0)
           {
             mParent = NOPARENT;
           }
           else
           {
-            mParent = (netTop->GetLocalRank() - 1) / spreadFactor;
+            mParent = (netTop->Rank() - 1) / spreadFactor;
           }
 
           // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-          for (unsigned int child = (spreadFactor * netTop->GetLocalRank()) + 1; child
-              <= spreadFactor * (1 + netTop->GetLocalRank()); ++child)
+          for (unsigned int child = (spreadFactor * netTop->Rank()) + 1; child
+              <= spreadFactor * (1 + netTop->Rank()); ++child)
           {
-            if (child < (unsigned int) netTop->GetProcessorCount())
+            if (child < (unsigned int) netTop->Size())
             {
               mChildren.push_back(child);
             }

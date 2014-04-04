@@ -21,7 +21,7 @@
 #include "geometry/GeometryReader.h"
 #include "lb/lattices/D3Q27.h"
 #include "net/net.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "constants.h"
@@ -37,7 +37,7 @@ namespace hemelb
       latticeInfo(latticeInfo), timings(atimings)
     {
       // Get the group of all procs.
-      net::MpiCommunicator commWorld = net::NetworkTopology::Instance()->GetComms();
+      net::MpiCommunicator commWorld = net::IOCommunicator::Instance()->GetComms();
       net::MpiGroup worldGroup = commWorld.Group();
 
       // This rank should participate in the domain decomposition if
@@ -91,7 +91,7 @@ namespace hemelb
               const_cast<char*> (buffering.c_str()),
               const_cast<char*> (bufferingValue.c_str())));
 
-      currentComms = net::NetworkTopology::Instance()->GetComms();
+      currentComms = net::IOCommunicator::Instance()->GetComms();
 
       // Open the file.
       // Stupid C-MPI lack of const-correctness
@@ -944,7 +944,7 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (net::NetworkTopology::Instance()->GetLocalRank() == topologyComms.Rank())
+      return (net::IOCommunicator::Instance()->Rank() == topologyComms.Rank())
         ? topologyRankIn
         : (topologyRankIn + 1);
     }

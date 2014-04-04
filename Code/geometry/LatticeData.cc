@@ -12,7 +12,7 @@
 
 #include "debug/Debugger.h"
 #include "log/Logger.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "geometry/neighbouring/NeighbouringLatticeData.h"
@@ -42,7 +42,7 @@ namespace hemelb
       // if debugging then output beliefs regarding geometry and neighbour list
       if (log::Logger::ShouldDisplay<log::Trace>())
       {
-        proc_t localRank = net::NetworkTopology::Instance()->GetLocalRank();
+        proc_t localRank = net::IOCommunicator::Instance()->Rank();
         for (std::vector<NeighbouringProcessor>::iterator itNeighProc = neighbouringProcs.begin();
             itNeighProc != neighbouringProcs.end(); ++itNeighProc)
         {
@@ -85,7 +85,7 @@ namespace hemelb
       std::vector<float> domainEdgeWallDistance[COLLISION_TYPES];
       std::vector<float> midDomainWallDistance[COLLISION_TYPES];
 
-      proc_t localRank = net::NetworkTopology::Instance()->GetLocalRank();
+      proc_t localRank = net::IOCommunicator::Instance()->Rank();
       // Iterate over all blocks in site units
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
@@ -277,7 +277,7 @@ namespace hemelb
 
     void LatticeData::CollectFluidSiteDistribution()
     {
-      const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+      const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
       fluidSitesOnEachProcessor.resize(comms.Size());
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
@@ -316,7 +316,7 @@ namespace hemelb
             siteSet.TraverseOne())
         {
           if (block.GetProcessorRankForSite(siteSet.GetCurrentIndex())
-              == net::NetworkTopology::Instance()->GetLocalRank())
+              == net::IOCommunicator::Instance()->Rank())
           {
             util::Vector3D<site_t> globalCoords = blockSet.GetCurrentLocation() * GetBlockSize()
                 + siteSet.GetCurrentLocation();
@@ -331,7 +331,7 @@ namespace hemelb
 
       }
 
-      const net::MpiCommunicator& comms = net::NetworkTopology::Instance()->GetComms();
+      const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
       std::vector<site_t> siteMins = comms.AllReduce(localMins, MPI_MIN);
       std::vector<site_t> siteMaxes = comms.AllReduce(localMaxes, MPI_MAX);
 
@@ -347,7 +347,7 @@ namespace hemelb
       // Allocate the index in which to put the distribution functions received from the other
       // process.
       std::vector<std::vector<site_t> > sharedDistributionLocationForEachProc =
-          std::vector<std::vector<site_t> >(net::NetworkTopology::Instance()->GetProcessorCount());
+          std::vector<std::vector<site_t> >(net::IOCommunicator::Instance()->Size());
       site_t totalSharedDistributionsSoFar = 0;
       // Set the remaining neighbouring processor data.
       for (size_t neighbourId = 0; neighbourId < neighbouringProcs.size(); neighbourId++)
@@ -365,7 +365,7 @@ namespace hemelb
 
     void LatticeData::InitialiseNeighbourLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      const proc_t localRank = net::NetworkTopology::Instance()->GetLocalRank();
+      const proc_t localRank = net::IOCommunicator::Instance()->Rank();
       neighbourIndices.resize(latticeInfo.GetNumVectors() * localFluidSites);
       for (BlockTraverser blockTraverser(*this); blockTraverser.CurrentLocationValid(); blockTraverser.TraverseOne())
       {
@@ -445,7 +445,7 @@ namespace hemelb
 
     void LatticeData::InitialisePointToPointComms(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = net::NetworkTopology::Instance()->GetLocalRank();
+      proc_t localRank = net::IOCommunicator::Instance()->Rank();
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
       // communication of the locations of the interface-dependent fluid
@@ -477,7 +477,7 @@ namespace hemelb
 
     void LatticeData::InitialiseReceiveLookup(std::vector<std::vector<site_t> >& sharedFLocationForEachProc)
     {
-      proc_t localRank = net::NetworkTopology::Instance()->GetLocalRank();
+      proc_t localRank = net::IOCommunicator::Instance()->Rank();
       streamingIndicesForReceivedDistributions.resize(totalSharedFs);
       site_t f_count = GetLocalFluidSiteCount() * latticeInfo.GetNumVectors();
       site_t sharedSitesSeen = 0;
@@ -606,7 +606,7 @@ namespace hemelb
 
       // get the rank of the processor that owns the site
       procId = block.GetProcessorRankForSite(localSiteIndex);
-      if (procId != net::NetworkTopology::Instance()->GetLocalRank())
+      if (procId != net::IOCommunicator::Instance()->Rank())
         return false;
       if (procId == BIG_NUMBER2) // means that the site is solid
         return false;
