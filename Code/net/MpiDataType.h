@@ -12,6 +12,49 @@
 
 #include <mpi.h>
 
+#define HEMELB_MPI_TYPE_BEGIN(outType, Type, n) \
+  MPI_Datatype outType = MPI_DATATYPE_NULL; \
+  { \
+  Type typeInstances[2]; \
+  MPI_Aint instanceAddr; \
+  HEMELB_MPI_CALL(MPI_Get_address, (typeInstances, &instanceAddr)); \
+  const unsigned elementCount = n; \
+  unsigned elementCounter = 0; \
+  int elementBlockLengths[elementCount]; \
+  MPI_Aint elementDisplacements[elementCount]; \
+  MPI_Datatype elementTypes[elementCount]
+
+#define HEMELB_MPI_TYPE_ADD_MEMBER_N(name, count) \
+  if (elementCounter >= elementCount) throw ::hemelb::Exception() \
+    << "Attempting to define more members than specified"; \
+  elementBlockLengths[elementCounter] = count; \
+  HEMELB_MPI_CALL(MPI_Get_address, \
+		  (&(typeInstances->name), elementDisplacements + elementCounter) \
+		  ); \
+  elementDisplacements[elementCounter] -= instanceAddr; \
+  elementTypes[elementCounter] = ::hemelb::net::MpiDataType(typeInstances->name); \
+  ++elementCounter
+
+#define HEMELB_MPI_TYPE_ADD_MEMBER(name) HEMELB_MPI_TYPE_ADD_MEMBER_N(name, 1)
+
+#define HEMELB_MPI_TYPE_END(outType, Type) \
+  if (elementCounter != elementCount) throw ::hemelb::Exception() \
+    << "Error in type definition: only " << elementCounter << " elements added but specified " << elementCount; \
+  MPI_Datatype tmp_type; \
+  HEMELB_MPI_CALL(MPI_Type_create_struct, \
+                  (elementCount, elementBlockLengths, elementDisplacements, elementTypes, &tmp_type) \
+                  ); \
+  MPI_Aint instanceSize; \
+  HEMELB_MPI_CALL(MPI_Get_address, (&typeInstances[1], &instanceSize)); \
+  instanceSize -= instanceAddr; \
+  HEMELB_MPI_CALL(MPI_Type_create_resized, \
+                  (tmp_type, 0, instanceSize, &outType) \
+                  ); \
+  HEMELB_MPI_CALL(MPI_Type_free, \
+                  (&tmp_type) \
+                  ); \
+  }
+
 namespace hemelb
 {
   namespace net
