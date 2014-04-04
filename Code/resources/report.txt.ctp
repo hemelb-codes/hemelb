@@ -1,7 +1,7 @@
 Configured by file {{CONFIG}} with a {{SITES}} site geometry.
 There were {{BLOCKS}} blocks, each with {{SITESPERBLOCK}} sites (fluid and solid).
 Recorded {{IMAGES}} images.
-Ran with {{THREADS}} threads on {{MACHINES}} machines with {{DEPTHS}} deep topology.
+Ran with {{THREADS}} threads.
 Ran for {{STEPS}} steps of an intended {{TOTAL_TIME_STEPS}}.
 With {{TIME_STEP_LENGTH}} seconds per time step.
 {{#DENSITIES}}
@@ -29,7 +29,6 @@ Name Local Min Mean Max
 Revision number:{{REVISION}}
 Steering mode: {{STEERING}}
 Streaklines: {{STREAKLINES}}
-Multimachine: {{MULTIMACHINE}}
 Build type: {{TYPE}}
 Optimisation level: {{OPTIMISATION}}
 Use SSE3: {{USE_SSE3}}

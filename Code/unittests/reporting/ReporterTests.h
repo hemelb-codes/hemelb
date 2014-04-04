@@ -106,8 +106,6 @@ namespace hemelb
             AssertValue("1000", "TOTAL_TIME_STEPS");
             AssertValue("1000", "STEPS");
             AssertValue("64", "SITES");
-            AssertValue("3", "DEPTHS");
-            AssertValue("4", "MACHINES");
             AssertValue("1", "BLOCKS");
             AssertValue("216", "SITESPERBLOCK");
           }

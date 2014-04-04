@@ -34,27 +34,15 @@ namespace hemelb
         // of the topology.
         proc_t GetLocalRank() const;
         proc_t GetProcessorCount() const;
-        int GetDepths() const;
-        unsigned int GetMachineCount() const;
+
         const MpiCommunicator & GetComms() const {
           return comms;
         }
 
       private:
         NetworkTopology();
-        void InitialiseMachineInfo();
 
         MpiCommunicator comms;
-
-        // Number of depths in the topology.
-        int depths;
-        // Number of machines in the topology.
-        unsigned int machineCount;
-
-        // Number of processors on each machine
-        proc_t* ProcCountOnEachMachine;
-        // Machine Id where each processor is.
-        unsigned int* MachineIdOfEachProc;
 
         /**
          * This variable is necessary, because the destructor for this static object will always

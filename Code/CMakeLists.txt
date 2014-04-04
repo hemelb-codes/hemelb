@@ -6,7 +6,6 @@ project(HemeLB)
 
 option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
 option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
-option(HEMELB_USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
 option(HEMELB_BUILD_TESTS_FUNCTIONAL "Build the functional tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)
