@@ -7,24 +7,24 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_NET_NETWORKTOPOLOGY_H
-#define HEMELB_NET_NETWORKTOPOLOGY_H
+#ifndef HEMELB_NET_IOCOMMUNICATOR_H
+#define HEMELB_NET_IOCOMMUNICATOR_H
 
-#include <vector>
-#include <cstdio>
-
-#include "constants.h"
+//#include <vector>
+//#include <cstdio>
+//
+//#include "constants.h"
 #include "net/MpiCommunicator.h"
 
 namespace hemelb
 {
   namespace net
   {
-    class NetworkTopology
+    class IOCommunicator
     {
       public:
-        static NetworkTopology* Instance();
-        ~NetworkTopology();
+        static IOCommunicator* Instance();
+        ~IOCommunicator();
 
         void Init(MpiCommunicator& commun);
         bool IsCurrentProcTheIOProc() const;
@@ -32,15 +32,15 @@ namespace hemelb
 
         // Functions for getting the rank of this processor and the total size
         // of the topology.
-        proc_t GetLocalRank() const;
-        proc_t GetProcessorCount() const;
+        int Rank() const;
+        int Size() const;
 
         const MpiCommunicator & GetComms() const {
           return comms;
         }
 
       private:
-        NetworkTopology();
+        IOCommunicator();
 
         MpiCommunicator comms;
 
@@ -50,9 +50,9 @@ namespace hemelb
          * environment) is called.
          */
         static bool initialised;
-        static NetworkTopology instance;
+        static IOCommunicator instance;
     };
   }
 }
 
-#endif /* HEMELB_NET_NETWORKTOPOLOGY_H */
+#endif /* HEMELB_NET_IOCOMMUNICATOR_H */

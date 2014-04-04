@@ -10,7 +10,7 @@
 #ifndef HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 #define HEMELB_LB_IOLETS_BOUNDARYVALUES_H
 
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "net/IteratedAction.h"
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"

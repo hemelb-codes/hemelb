@@ -47,7 +47,7 @@ namespace hemelb
           do
           {
             // Only interested if the site lives on this rank.
-            if (net::NetworkTopology::Instance()->GetLocalRank()
+            if (net::IOCommunicator::Instance()->Rank()
                 != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;
@@ -108,7 +108,7 @@ namespace hemelb
                                                neigh_proc_id);
 
                   // If the neighbour is on this rank, ignore it.
-                  if (net::NetworkTopology::Instance()->GetLocalRank() == neigh_proc_id)
+                  if (net::IOCommunicator::Instance()->Rank() == neigh_proc_id)
                   {
                     continue;
                   }
@@ -262,7 +262,7 @@ namespace hemelb
                                               const geometry::LatticeData& latDat,
                                               proc_t* sourceProcessor)
       {
-        const proc_t thisRank = net::NetworkTopology::Instance()->GetLocalRank();
+        const proc_t thisRank = net::IOCommunicator::Instance()->Rank();
 
         if (!latDat.IsValidLatticeSite(location))
         {
@@ -289,7 +289,7 @@ namespace hemelb
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          if (net::NetworkTopology::Instance()->GetLocalRank() != localVelocitySiteData->proc_id)
+          if (net::IOCommunicator::Instance()->Rank() != localVelocitySiteData->proc_id)
           {
             log::Logger::Log<log::Warning, log::OnePerCore>("Got a request for velocity data "
                                                           "that actually seems to be on rank %i",

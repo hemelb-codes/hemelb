@@ -12,7 +12,8 @@
 #include "io/formats/formats.h"
 #include "io/formats/extraction.h"
 #include "io/writers/xdr/XdrMemWriter.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
+#include "constants.h"
 
 namespace hemelb
 {
@@ -20,7 +21,7 @@ namespace hemelb
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec) :
-      comms(net::NetworkTopology::Instance()->GetComms()), dataSource(dataSource), outputSpec(outputSpec)
+      comms(net::IOCommunicator::Instance()->GetComms()), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
@@ -58,7 +59,7 @@ namespace hemelb
       writeLength *= siteCount;
 
       // The IO proc also writes the iteration number
-      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
       {
         writeLength += 8;
       }
@@ -71,12 +72,12 @@ namespace hemelb
       // Only the root process needs to know the total number of sites written
       // Note this has a garbage value on other procs.
       uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM,
-                                           net::NetworkTopology::Instance()->GetIOProcRank());
+                                           net::IOCommunicator::Instance()->GetIOProcRank());
 
       unsigned totalHeaderLength = 0;
 
       // Write the header information on the IO proc.
-      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
       {
         // Compute the length of the field header
         unsigned fieldHeaderLength = 0;
@@ -142,12 +143,12 @@ namespace hemelb
       }
 
       // Calculate where each core should start writing
-      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
       {
         // For core 0 this is easy: it passes the value for core 1 to the core.
         localDataOffsetIntoFile = totalHeaderLength;
 
-        if (net::NetworkTopology::Instance()->GetProcessorCount() > 1)
+        if (net::IOCommunicator::Instance()->Size() > 1)
         {
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, comms);
@@ -160,20 +161,20 @@ namespace hemelb
         MPI_Recv(&localDataOffsetIntoFile,
                  1,
                  net::MpiDataType<uint64_t> (),
-                 net::NetworkTopology::Instance()->GetLocalRank() - 1,
+                 net::IOCommunicator::Instance()->Rank() - 1,
                  1,
                  comms,
                  MPI_STATUS_IGNORE);
 
         // Send the next core its start position.
-        if (net::NetworkTopology::Instance()->GetLocalRank()
-            != (net::NetworkTopology::Instance()->GetProcessorCount() - 1))
+        if (net::IOCommunicator::Instance()->Rank()
+            != (net::IOCommunicator::Instance()->Size() - 1))
         {
           localDataOffsetIntoFile += writeLength;
           MPI_Send(&localDataOffsetIntoFile,
                    1,
                    net::MpiDataType<uint64_t>(),
-                   net::NetworkTopology::Instance()->GetLocalRank() + 1,
+                   net::IOCommunicator::Instance()->Rank() + 1,
                    1,
                    comms);
           localDataOffsetIntoFile -= writeLength;
@@ -219,7 +220,7 @@ namespace hemelb
       io::writers::xdr::XdrMemWriter xdrWriter(buffer, writeLength);
 
       // Firstly, the IO proc must write the iteration number.
-      if (net::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
       {
         xdrWriter << (uint64_t) timestepNumber;
       }
@@ -283,7 +284,7 @@ namespace hemelb
                 break;
               case OutputField::MpiRank:
                 xdrWriter
-                    << static_cast<WrittenDataType> (net::NetworkTopology::Instance()->GetLocalRank());
+                    << static_cast<WrittenDataType> (net::IOCommunicator::Instance()->Rank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no

@@ -20,7 +20,7 @@
 #include "net/BaseNet.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 namespace hemelb
 {
   namespace net
@@ -34,7 +34,7 @@ namespace hemelb
     }
 
     BaseNet::BaseNet() :
-        BytesSent(0), SyncPointsCounted(0), communicator(NetworkTopology::Instance()->GetComms())
+        BytesSent(0), SyncPointsCounted(0), communicator(IOCommunicator::Instance()->GetComms())
     {
     }
 

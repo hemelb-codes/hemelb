@@ -9,7 +9,7 @@
 
 #include "lb/iolets/BoundaryComms.h"
 #include "lb/iolets/BoundaryValues.h"
-#include "net/NetworkTopology.h"
+#include "net/IOCommunicator.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -82,7 +82,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     procsList[proc],
                     100,
-                    net::NetworkTopology::Instance()->GetComms(),
+                    net::IOCommunicator::Instance()->GetComms(),
                     &sendRequest[proc]);
         }
       }
@@ -96,7 +96,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     BoundaryValues::GetBCProcRank(),
                     100,
-                    net::NetworkTopology::Instance()->GetComms(),
+                    net::IOCommunicator::Instance()->GetComms(),
                     &receiveRequest);
         }
       }

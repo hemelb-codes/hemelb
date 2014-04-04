@@ -2,7 +2,7 @@ add_library(hemelb_net
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
   MpiCommunicator.cc MpiGroup.cc
  IteratedAction.cc BaseNet.cc 
-NetworkTopology.cc
+IOCommunicator.cc
 mixins/pointpoint/CoalescePointPoint.cc
 mixins/pointpoint/SeparatedPointPoint.cc
 mixins/pointpoint/ImmediatePointPoint.cc
