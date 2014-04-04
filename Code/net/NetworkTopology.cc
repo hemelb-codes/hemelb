@@ -34,17 +34,11 @@ namespace hemelb
       {
         initialised = true;
         comms = commun;
-        InitialiseMachineInfo();
       }
     }
 
     NetworkTopology::~NetworkTopology()
     {
-      if (initialised)
-      {
-        delete[] ProcCountOnEachMachine;
-        delete[] MachineIdOfEachProc;
-      }
     }
 
     bool NetworkTopology::IsCurrentProcTheIOProc() const
@@ -65,16 +59,6 @@ namespace hemelb
     proc_t NetworkTopology::GetProcessorCount() const
     {
       return comms.Size();
-    }
-
-    int NetworkTopology::GetDepths() const
-    {
-      return depths;
-    }
-
-    unsigned int NetworkTopology::GetMachineCount() const
-    {
-      return machineCount;
     }
 
   }
