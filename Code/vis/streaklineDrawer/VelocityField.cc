@@ -22,9 +22,10 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn,
+      VelocityField::VelocityField(proc_t localRank_,
+                                   std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn,
                                    const lb::MacroscopicPropertyCache& propertyCache) :
-          counter(0), neighbouringProcessors(neighbouringProcessorsIn), propertyCache(propertyCache)
+          counter(0), localRank(localRank_), neighbouringProcessors(neighbouringProcessorsIn), propertyCache(propertyCache)
       {
       }
 
@@ -47,8 +48,7 @@ namespace hemelb
           do
           {
             // Only interested if the site lives on this rank.
-            if (net::IOCommunicator::Instance()->Rank()
-                != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
+            if (localRank != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;
             }
@@ -108,7 +108,7 @@ namespace hemelb
                                                neigh_proc_id);
 
                   // If the neighbour is on this rank, ignore it.
-                  if (net::IOCommunicator::Instance()->Rank() == neigh_proc_id)
+                  if (localRank == neigh_proc_id)
                   {
                     continue;
                   }
@@ -262,8 +262,6 @@ namespace hemelb
                                               const geometry::LatticeData& latDat,
                                               proc_t* sourceProcessor)
       {
-        const proc_t thisRank = net::IOCommunicator::Instance()->Rank();
-
         if (!latDat.IsValidLatticeSite(location))
         {
           return false;
@@ -271,7 +269,7 @@ namespace hemelb
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
+        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == localRank
             || vel_site_data_p->counter == counter)
         {
           return false;
@@ -289,7 +287,7 @@ namespace hemelb
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          if (net::IOCommunicator::Instance()->Rank() != localVelocitySiteData->proc_id)
+          if (localRank != localVelocitySiteData->proc_id)
           {
             log::Logger::Log<log::Warning, log::OnePerCore>("Got a request for velocity data "
                                                           "that actually seems to be on rank %i",

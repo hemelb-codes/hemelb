@@ -42,7 +42,7 @@ namespace hemelb
         template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms);
 
         virtual ~LatticeData();
 
@@ -333,13 +333,14 @@ namespace hemelb
         neighbouring::NeighbouringLatticeData &GetNeighbouringData();
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
 
+        int GetLocalRank() const;
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this
          * class for the purpose of testing.
          * @return
          */
-        LatticeData(const lb::lattices::LatticeInfo& latticeInfo);
+        LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const net::IOCommunicator& comms);
 
         void SetBasicDetails(util::Vector3D<site_t> blocks,
                              site_t blockSize);
@@ -576,6 +577,7 @@ namespace hemelb
         std::vector<site_t> neighbourIndices; //! Data about neighbouring fluid sites.
         std::vector<site_t> streamingIndicesForReceivedDistributions; //! The indices to stream to for distributions received from other processors.
         neighbouring::NeighbouringLatticeData *neighbouringData;
+        const net::IOCommunicator& comms;
     };
   }
 }

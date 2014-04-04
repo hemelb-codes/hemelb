@@ -232,13 +232,13 @@ namespace hemelb
 
       protected:
         FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult)
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, *net::IOCommunicator::Instance())
         {
 
         }
 
         FourCubeLatticeData() :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo())
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), *net::IOCommunicator::Instance())
         {
 
         }

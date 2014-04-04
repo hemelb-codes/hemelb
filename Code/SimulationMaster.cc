@@ -157,7 +157,7 @@ void SimulationMaster::Initialise()
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
   // Create a new lattice based on that info and return it.
-  latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData);
+  latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
 
   timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
