@@ -53,7 +53,7 @@ namespace hemelb
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
-      bool allGood = (localRank == 0) || (neighbourProcessors.size() > 0);
+      bool allGood = net::IOCommunicator::Instance()->OnIORank() || (neighbourProcessors.size() > 0);
       log::Logger::Log<log::Debug, log::OnePerCore>(
         "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
         localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
