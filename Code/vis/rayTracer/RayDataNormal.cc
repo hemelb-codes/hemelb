@@ -126,6 +126,27 @@ namespace hemelb
       {
       }
 
+      MPI_Datatype RayDataNormal::GetMPIType()
+      {
+        HEMELB_MPI_TYPE_BEGIN(type, RayDataNormal, 12);
+
+        HEMELB_MPI_TYPE_ADD_MEMBER(i);
+        HEMELB_MPI_TYPE_ADD_MEMBER(j);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mLengthBeforeRayFirstCluster);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mCumulativeLengthInFluid);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mDensityAtNearestPoint);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mStressAtNearestPoint);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mVelR);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mVelG);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mVelB);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mStressR);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mStressG);
+        HEMELB_MPI_TYPE_ADD_MEMBER(mStressB);
+
+        HEMELB_MPI_TYPE_END(type, RayDataNormal);
+        return type;
+      }
+
       const DomainStats* RayDataNormal::mDomainStats = NULL;
     }
   }

@@ -256,60 +256,20 @@ namespace hemelb
 
           static MPI_Datatype GetMpiType()
           {
-            const int rayDataEnhancedCount = 11;
-            int rayDataEnhancedBlocklengths[rayDataEnhancedCount] = { 1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1,
-                                                                      1 };
-            MPI_Datatype rayDataEnhancedTypes[rayDataEnhancedCount] = { MPI_LB,
-                                                                        net::MpiDataType<int>(),
-                                                                        net::MpiDataType<int>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        net::MpiDataType<float>(),
-                                                                        MPI_UB };
+            HEMELB_MPI_TYPE_BEGIN(type, RayDataEnhanced, 9);
 
-            MPI_Aint rayDataEnhancedDisps[rayDataEnhancedCount];
+            HEMELB_MPI_TYPE_ADD_MEMBER(i);
+            HEMELB_MPI_TYPE_ADD_MEMBER(j);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mLengthBeforeRayFirstCluster);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mCumulativeLengthInFluid);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mDensityAtNearestPoint);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mStressAtNearestPoint);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mSurfaceNormalLightness);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mVelocitySum);
+            HEMELB_MPI_TYPE_ADD_MEMBER(mStressSum);
 
-            RayDataEnhanced example[2];
+            HEMELB_MPI_TYPE_END(type, RayDataEnhanced);
 
-            MPI_Get_address(&example[0], &rayDataEnhancedDisps[0]);
-            MPI_Get_address(&example[0].i, &rayDataEnhancedDisps[1]);
-            MPI_Get_address(&example[0].j, &rayDataEnhancedDisps[2]);
-            MPI_Get_address(&example[0].mLengthBeforeRayFirstCluster, &rayDataEnhancedDisps[3]);
-            MPI_Get_address(&example[0].mCumulativeLengthInFluid, &rayDataEnhancedDisps[4]);
-            MPI_Get_address(&example[0].mDensityAtNearestPoint, &rayDataEnhancedDisps[5]);
-            MPI_Get_address(&example[0].mStressAtNearestPoint, &rayDataEnhancedDisps[6]);
-            MPI_Get_address(&example[0].mSurfaceNormalLightness, &rayDataEnhancedDisps[7]);
-            MPI_Get_address(&example[0].mVelocitySum, &rayDataEnhancedDisps[8]);
-            MPI_Get_address(&example[0].mStressSum, &rayDataEnhancedDisps[9]);
-            MPI_Get_address(&example[1], &rayDataEnhancedDisps[10]);
-
-            for (int index = rayDataEnhancedCount - 1; index >= 0; index--)
-            {
-              rayDataEnhancedDisps[index] -= rayDataEnhancedDisps[0];
-            }
-
-            MPI_Datatype type;
-            HEMELB_MPI_CALL(
-                MPI_Type_create_struct,
-                (rayDataEnhancedCount,
-                    rayDataEnhancedBlocklengths,
-                    rayDataEnhancedDisps,
-                    rayDataEnhancedTypes,
-                    &type)
-            );
             return type;
           }
 

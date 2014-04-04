@@ -58,73 +58,7 @@ namespace hemelb
 
           void DoProcessTangentingVessel();
 
-          static MPI_Datatype GetMPIType()
-          {
-            const int lRayDataNormalCount = 14;
-            int lRayDataNormalBlocklengths[lRayDataNormalCount] = { 1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1,
-                                                                    1 };
-            MPI_Datatype lRayDataNormalTypes[lRayDataNormalCount] = { MPI_LB,
-                                                                      net::MpiDataType<int> (),
-                                                                      net::MpiDataType<int> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      net::MpiDataType<float> (),
-                                                                      MPI_UB };
-
-            MPI_Aint lRayDataNormalDisps[lRayDataNormalCount];
-
-            RayDataNormal example[2];
-
-            MPI_Get_address(&example[0], &lRayDataNormalDisps[0]);
-            MPI_Get_address(&example[0].i, &lRayDataNormalDisps[1]);
-            MPI_Get_address(&example[0].j, &lRayDataNormalDisps[2]);
-            MPI_Get_address(&example[0].mLengthBeforeRayFirstCluster, &lRayDataNormalDisps[3]);
-            MPI_Get_address(&example[0].mCumulativeLengthInFluid, &lRayDataNormalDisps[4]);
-            MPI_Get_address(&example[0].mDensityAtNearestPoint, &lRayDataNormalDisps[5]);
-            MPI_Get_address(&example[0].mStressAtNearestPoint, &lRayDataNormalDisps[6]);
-            MPI_Get_address(&example[0].mVelR, &lRayDataNormalDisps[7]);
-            MPI_Get_address(&example[0].mVelG, &lRayDataNormalDisps[8]);
-            MPI_Get_address(&example[0].mVelB, &lRayDataNormalDisps[9]);
-            MPI_Get_address(&example[0].mStressR, &lRayDataNormalDisps[10]);
-            MPI_Get_address(&example[0].mStressG, &lRayDataNormalDisps[11]);
-            MPI_Get_address(&example[0].mStressB, &lRayDataNormalDisps[12]);
-            MPI_Get_address(&example[1], &lRayDataNormalDisps[13]);
-
-            for (int index = lRayDataNormalCount - 1; index >= 0; index--)
-            {
-              lRayDataNormalDisps[index] -= lRayDataNormalDisps[0];
-            }
-
-            MPI_Datatype type;
-            HEMELB_MPI_CALL(
-                MPI_Type_create_struct,
-                (lRayDataNormalCount,
-                    lRayDataNormalBlocklengths,
-                    lRayDataNormalDisps,
-                    lRayDataNormalTypes,
-                    &type)
-            );
-            return type;
-          }
+          static MPI_Datatype GetMPIType();
 
           // We need this because RayDataNormal uses it for every voxel update
           static const DomainStats* mDomainStats;
