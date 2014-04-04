@@ -31,13 +31,14 @@ namespace hemelb
       return &instance;
     }
 
-    void IOCommunicator::Init(MpiCommunicator& commun)
+    IOCommunicator& IOCommunicator::Init(MpiCommunicator& commun)
     {
       if (!initialised)
       {
         initialised = true;
         instance = commun;
       }
+      return instance;
     }
 
 

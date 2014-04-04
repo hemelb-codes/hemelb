@@ -23,18 +23,18 @@ int main(int argc, char *argv[])
   hemelb::log::Logger::Init();
   try
   {
-    hemelb::net::MpiCommunicator hemelbCommunicator = hemelb::net::MpiCommunicator::World();
+    hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
     // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-    hemelb::debug::Debugger::Init(argv[0], hemelbCommunicator);
+    hemelb::debug::Debugger::Init(argv[0], commWorld);
 
-    hemelb::net::IOCommunicator::Init(hemelbCommunicator);
+    hemelb::net::IOCommunicator& hemelbCommunicator = hemelb::net::IOCommunicator::Init(commWorld);
     try
     {
       // Parse command line
       hemelb::configuration::CommandLine options = hemelb::configuration::CommandLine(argc, argv);
 
       // Prepare main simulation object...
-      SimulationMaster master = SimulationMaster(options);
+      SimulationMaster master = SimulationMaster(options, hemelbCommunicator);
 
       // ..and run it.
       master.RunSimulation();

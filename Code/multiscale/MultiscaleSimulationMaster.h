@@ -21,11 +21,12 @@ namespace hemelb
      * Instead of adding multiscale functionality to the standard simulation master, we keep this here,
      * so the main code can be read without thinking about multiscale.
      */
-    template<class Intercommunicator> class MultiscaleSimulationMaster : public SimulationMaster
+    template<class Intercommunicator>
+    class MultiscaleSimulationMaster : public SimulationMaster
     {
       public:
-        MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options, Intercommunicator & aintercomms) :
-            SimulationMaster(options), intercomms(aintercomms), multiscaleIoletType("inoutlet")
+        MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options, net::IOCommunicator& ioComm, Intercommunicator & aintercomms) :
+            SimulationMaster(options, ioComm), intercomms(aintercomms), multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
           lb::iolets::InOutLetMultiscale::DefineType(multiscaleIoletType);

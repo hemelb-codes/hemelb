@@ -205,7 +205,7 @@ namespace hemelb
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);
             MockIntercommunicator intercomms(*pbuffer,*orchestrationLB);
-            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, intercomms);
+            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, *net::IOCommunicator::Instance(), intercomms);
             // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
             while (heme->GetState()->GetTime() < 20.0 || zerod->GetTime()< 20.0)
             {

@@ -95,7 +95,7 @@ namespace hemelb
               std::string configPath = "../../../config_files/MPWSettings.cfg";
               MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration, configPath);
 
-              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, intercomms);
+              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, *net::IOCommunicator::Instance(), intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
               //std::cout << "HemeLB about to be run..." << std::endl;
               while (heme.GetState()->GetTime() < 20.0)

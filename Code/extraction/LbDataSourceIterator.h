@@ -30,6 +30,7 @@ namespace hemelb
          */
         LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
                              const geometry::LatticeData& data,
+                             int rank,
                              const util::UnitConverter& converter);
 
         /**
@@ -146,6 +147,10 @@ namespace hemelb
          * The object containing information about the lattice.
          */
         const geometry::LatticeData& data;
+        /**
+         * The rank of the current process in the LB communicator.
+         */
+        const int rank;
         /**
          * Object capable of converting from physical to lattice units and vice versa.
          */
