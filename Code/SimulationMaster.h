@@ -33,7 +33,7 @@
 class SimulationMaster
 {
   public:
-    SimulationMaster(hemelb::configuration::CommandLine &options);
+    SimulationMaster(hemelb::configuration::CommandLine &options, hemelb::net::IOCommunicator& ioComms);
     virtual ~SimulationMaster();
 
     void Abort();
@@ -48,6 +48,7 @@ class SimulationMaster
     }
     void Finalise();
   protected:
+
     hemelb::lb::iolets::BoundaryValues* inletValues;
     hemelb::lb::iolets::BoundaryValues* outletValues;
     virtual void DoTimeStep();
@@ -58,6 +59,7 @@ class SimulationMaster
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+    hemelb::net::IOCommunicator& ioComms;
 
   private:
     void Initialise();

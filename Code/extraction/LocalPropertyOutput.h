@@ -16,6 +16,10 @@
 
 namespace hemelb
 {
+  namespace net
+  {
+    class IOCommunicator;
+  }
   namespace extraction
   {
     /**
@@ -70,7 +74,7 @@ namespace hemelb
          */
         double GetOffset(OutputField::FieldType field) const;
 
-        const net::MpiCommunicator& comms;
+        const net::IOCommunicator& comms;
         /**
          * The MPI file to write into.
          */
