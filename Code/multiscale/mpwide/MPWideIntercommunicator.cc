@@ -29,7 +29,7 @@ namespace hemelb
     MPWideIntercommunicator::MPWideIntercommunicator(std::map<std::string, double> & buffer,
                                                      std::map<std::string, bool> &orchestration,
                                                      std::string configFilePathIn) :
-        isCommsProc(net::IOCommunicator::Instance()->Rank() == 0),
+        isCommsProc(net::IOCommunicator::Instance()->OnIORank()),
             configFilePath(configFilePathIn), recv_icand_data_size(0), send_icand_data_size(0),
             doubleContents(buffer), currentTime(0), orchestration(orchestration), channelCount(0)
     {
