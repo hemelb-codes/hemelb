@@ -85,7 +85,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
 SimulationMaster::~SimulationMaster()
 {
 
-  if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::IOCommunicator::Instance()->OnIORank())
   {
     delete imageSendCpt;
   }
@@ -121,7 +121,7 @@ SimulationMaster::~SimulationMaster()
  */
 bool SimulationMaster::IsCurrentProcTheIOProc()
 {
-  return hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc();
+  return hemelb::net::IOCommunicator::Instance()->OnIORank();
 }
 
 /**
@@ -202,7 +202,7 @@ void SimulationMaster::Initialise()
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
   // Initialise and begin the steering.
-  if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::IOCommunicator::Instance()->OnIORank())
   {
     network = new hemelb::steering::Network(steeringSessionId, timings);
   }
@@ -243,7 +243,7 @@ void SimulationMaster::Initialise()
                                latticeData,
                                timings[hemelb::reporting::Timers::visualisation]);
 
-  if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::IOCommunicator::Instance()->OnIORank())
   {
     imageSendCpt = new hemelb::steering::ImageSendComponent(simulationState,
                                                             visualisationControl,
@@ -336,7 +336,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
   }
 
-  if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+  if (hemelb::net::IOCommunicator::Instance()->OnIORank())
   {
     stepManager->RegisterIteratedActorSteps(*network, 1);
   }
@@ -378,7 +378,7 @@ void SimulationMaster::WriteLocalImages()
       it != writtenImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
 
-    if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+    if (hemelb::net::IOCommunicator::Instance()->OnIORank())
     {
       reporter->Image();
       hemelb::io::writers::Writer * writer = fileManager->XdrImageWriter(1
@@ -405,7 +405,7 @@ void SimulationMaster::GenerateNetworkImages()
       networkImagesCompleted.find(simulationState->GetTimeStep());
       it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStep(); ++it)
   {
-    if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc())
+    if (hemelb::net::IOCommunicator::Instance()->OnIORank())
     {
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
@@ -513,7 +513,7 @@ void SimulationMaster::DoTimeStep()
    This is to be done. */
 
   bool renderForNetworkStream = false;
-  if (hemelb::net::IOCommunicator::Instance()->IsCurrentProcTheIOProc()
+  if (hemelb::net::IOCommunicator::Instance()->OnIORank()
       && !steeringCpt->readyForNextImage)
   {
     renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();

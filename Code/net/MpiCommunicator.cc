@@ -50,11 +50,9 @@ namespace hemelb
       }
     }
 
-//    MpiCommunicator& MpiCommunicator::operator=(const MpiCommunicator& rhs)
-//    {
-//      commPtr = rhs.commPtr;
-//      return *this;
-//    }
+    MpiCommunicator::~MpiCommunicator()
+    {
+    }
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2)
     {

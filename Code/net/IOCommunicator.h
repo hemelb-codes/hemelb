@@ -20,29 +20,29 @@ namespace hemelb
 {
   namespace net
   {
-    class IOCommunicator
+    /**
+     * An MPI communicator with a special I/O rank.
+     */
+    class IOCommunicator : public MpiCommunicator
     {
       public:
+        /**
+         * Get the singleton instance.
+         * @return
+         */
         static IOCommunicator* Instance();
-        ~IOCommunicator();
+        /**
+         * Initalise the singleton instance.
+         * @param commun
+         */
+        static void Init(MpiCommunicator& commun);
 
-        void Init(MpiCommunicator& commun);
-        bool IsCurrentProcTheIOProc() const;
-        int GetIOProcRank() const;
-
-        // Functions for getting the rank of this processor and the total size
-        // of the topology.
-        int Rank() const;
-        int Size() const;
-
-        const MpiCommunicator & GetComms() const {
-          return comms;
-        }
+        bool OnIORank() const;
+        int GetIORank() const;
 
       private:
+        IOCommunicator(const MpiCommunicator& comm);
         IOCommunicator();
-
-        MpiCommunicator comms;
 
         /**
          * This variable is necessary, because the destructor for this static object will always
