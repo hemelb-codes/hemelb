@@ -28,7 +28,7 @@ namespace hemelb
         {
 
         }
-        Net(MpiCommunicator &communicator) :
+        Net(const MpiCommunicator &communicator) :
             BaseNet(communicator), StoringNet()
         {
         }

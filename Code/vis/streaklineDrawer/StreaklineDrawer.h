@@ -48,7 +48,8 @@ namespace hemelb
                            const Screen& iScreen,
                            const Viewpoint& iViewpoint,
                            const VisSettings& iVisSettings,
-                           const lb::MacroscopicPropertyCache& propertyCache);
+                           const lb::MacroscopicPropertyCache& propertyCache,
+                           const net::MpiCommunicator& comms);
           ~StreaklineDrawer();
 
           // Method to reset streakline drawer
@@ -83,6 +84,7 @@ namespace hemelb
           VelocityField velocityField;
 
           std::vector<Particle> particleSeeds;
+          net::Net* streakNet;
       };
     }
   }

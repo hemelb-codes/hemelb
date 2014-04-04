@@ -63,7 +63,8 @@ namespace hemelb
       }
 
       // Communicate the particles' current state to other processors.
-      void ParticleManager::CommunicateParticles(const geometry::LatticeData& latticeData,
+      void ParticleManager::CommunicateParticles(net::Net& streakNet,
+                                                 const geometry::LatticeData& latticeData,
                                                  VelocityField& velocityField)
       {
         unsigned int particles_temp = GetNumberOfLocalParticles();
@@ -95,22 +96,17 @@ namespace hemelb
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
-          (*proc).second.ExchangeParticleCounts(net);
+          (*proc).second.ExchangeParticleCounts(streakNet);
         }
-
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet.Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)
         {
-          (*proc).second.ExchangeParticles(net);
+          (*proc).second.ExchangeParticles(streakNet);
         }
 
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet.Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); ++proc)

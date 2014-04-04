@@ -133,7 +133,7 @@ namespace hemelb
         pressure_array[1] = minPressure.GetPayload();
         pressure_array[2] = maxPressure.GetPayload();
 
-        net::Net commsNet;
+        net::Net commsNet(*net::IOCommunicator::Instance());
 
         const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
 

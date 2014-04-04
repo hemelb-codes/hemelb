@@ -30,11 +30,13 @@ namespace hemelb
                                          const Screen& iScreen,
                                          const Viewpoint& iViewpoint,
                                          const VisSettings& iVisSettings,
-                                         const lb::MacroscopicPropertyCache& propertyCache) :
+                                         const lb::MacroscopicPropertyCache& propertyCache,
+                                         const net::MpiCommunicator& comms) :
           latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings),
           // propertyCache(propertyCache),
           particleManager(neighbouringProcessors),
-          velocityField(neighbouringProcessors, propertyCache)
+          velocityField(neighbouringProcessors, propertyCache),
+          streakNet(new net::Net(comms))
       {
         velocityField.BuildVelocityField(iLatDat);
         ChooseSeedParticles();
@@ -43,6 +45,7 @@ namespace hemelb
       // Destructor
       StreaklineDrawer::~StreaklineDrawer()
       {
+        delete streakNet;
       }
 
       // Reset the streakline drawer.
@@ -92,7 +95,7 @@ namespace hemelb
         particleManager.ProcessParticleMovement();
 
         // Communicate any particles that have crossed into the territory of another rank.
-        particleManager.CommunicateParticles(latDat, velocityField);
+        particleManager.CommunicateParticles(*streakNet, latDat, velocityField);
       }
 
       // Render the streaklines
@@ -283,38 +286,31 @@ namespace hemelb
       // Communicate site ids to other processors.
       void StreaklineDrawer::CommunicateSiteIds()
       {
-        net::Net net;
-
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc = neighbouringProcessors.begin();
             proc != neighbouringProcessors.end(); ++proc)
         {
-          (*proc).second.ExchangeSiteIdCounts(net);
+          (*proc).second.ExchangeSiteIdCounts(*streakNet);
         }
 
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet->Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc = neighbouringProcessors.begin();
             proc != neighbouringProcessors.end(); proc++)
         {
-          (*proc).second.ExchangeSiteIds(net);
+          (*proc).second.ExchangeSiteIds(*streakNet);
         }
 
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet->Dispatch();
       }
 
       // Communicate velocities to other processors.
       void StreaklineDrawer::CommunicateVelocities()
       {
-        net::Net net;
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc = neighbouringProcessors.begin();
             proc != neighbouringProcessors.end(); ++proc)
         {
-          (*proc).second.ExchangeVelocitiesForRequestedSites(net);
+          (*proc).second.ExchangeVelocitiesForRequestedSites(*streakNet);
         }
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc = neighbouringProcessors.begin();
@@ -332,9 +328,7 @@ namespace hemelb
           }
         }
 
-        net.Receive();
-        net.Send();
-        net.Wait();
+        streakNet->Dispatch();
 
         for (std::map<proc_t, NeighbouringProcessor>::const_iterator proc = neighbouringProcessors.begin();
             proc != neighbouringProcessors.end(); ++proc)

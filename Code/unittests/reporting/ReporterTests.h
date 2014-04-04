@@ -41,7 +41,7 @@ namespace hemelb
             realTimers = new reporting::Timers();
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net();
+            net = new net::Net(*net::IOCommunicator::Instance());
             latticeData = FourCubeLatticeData::Create(6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
