@@ -32,8 +32,9 @@ namespace hemelb
       class VelocityField
       {
         public:
-          VelocityField(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors
-                        , const lb::MacroscopicPropertyCache& propertyCache);
+          VelocityField(proc_t localRank,
+                        std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors,
+                        const lb::MacroscopicPropertyCache& propertyCache);
 
           void BuildVelocityField(const geometry::LatticeData& latDat);
 
@@ -70,6 +71,7 @@ namespace hemelb
                                             const util::Vector3D<site_t> location,
                                             const proc_t proc_id);
 
+          const proc_t localRank;
           // Vector containing VelocityFields
           std::vector<std::vector<VelocitySiteData> > velocityField;
           std::map<proc_t, NeighbouringProcessor>& neighbouringProcessors;

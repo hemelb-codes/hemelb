@@ -86,7 +86,7 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      const net::MpiCommunicator& comms = *net::IOCommunicator::Instance();
+      const net::MpiCommunicator& comms = this->mNet->GetCommunicator();
       std::vector<site_t> mins = comms.AllReduce(localMins, MPI_MIN);
       std::vector<site_t> maxes = comms.AllReduce(localMaxes, MPI_MAX);
 

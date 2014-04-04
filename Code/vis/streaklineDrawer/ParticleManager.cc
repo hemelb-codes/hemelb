@@ -69,7 +69,7 @@ namespace hemelb
       {
         unsigned int particles_temp = GetNumberOfLocalParticles();
 
-        proc_t thisRank = net::IOCommunicator::Instance()->Rank();
+        proc_t thisRank = streakNet.GetCommunicator().Rank();
 
         for (int n = (int) (particles_temp - 1); n >= 0; n--)
         {
