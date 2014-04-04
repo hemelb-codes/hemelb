@@ -35,8 +35,8 @@ namespace hemelb
       class ClusterBuilder
       {
         public:
-          ClusterBuilder(const geometry::LatticeData* latticeData) :
-              mBlockTraverser(*latticeData)
+          ClusterBuilder(const geometry::LatticeData* latticeData, int localRank_) :
+              mBlockTraverser(*latticeData), localRank(localRank_)
           {
             mLatticeData = latticeData;
 
@@ -195,7 +195,7 @@ namespace hemelb
 
             for (site_t siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit(); siteId++)
             {
-              if (net::IOCommunicator::Instance()->Rank() == block.GetProcessorRankForSite(siteId))
+              if (localRank == block.GetProcessorRankForSite(siteId))
               {
                 return true;
               }
@@ -310,6 +310,8 @@ namespace hemelb
           std::vector<util::Vector3D<site_t> > mClusterBlockMins;
 
           short int *mClusterIdOfBlock;
+
+          int localRank;
 
           static const short int NOTASSIGNEDTOCLUSTER = -1;
 

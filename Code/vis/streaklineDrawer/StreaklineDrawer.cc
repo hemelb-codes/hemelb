@@ -35,7 +35,7 @@ namespace hemelb
           latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings),
           // propertyCache(propertyCache),
           particleManager(neighbouringProcessors),
-          velocityField(neighbouringProcessors, propertyCache),
+          velocityField(comms.Rank(), neighbouringProcessors, propertyCache),
           streakNet(new net::Net(comms))
       {
         velocityField.BuildVelocityField(iLatDat);
@@ -144,7 +144,7 @@ namespace hemelb
           geometry::SiteTraverser siteTraverser(latDat);
           do
           {
-            if (net::IOCommunicator::Instance()->Rank()
+            if (this->streakNet->GetCommunicator().Rank()
                 != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;

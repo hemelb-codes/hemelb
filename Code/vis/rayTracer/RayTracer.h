@@ -55,7 +55,7 @@ namespace hemelb
                     Screen* iScreen,
                     Viewpoint* iViewpoint,
                     VisSettings* iVisSettings) :
-            mClusterBuilder(iLatDat), mLatDat(iLatDat), mDomainStats(iDomainStats),
+            mClusterBuilder(iLatDat, iLatDat->GetLocalRank()), mLatDat(iLatDat), mDomainStats(iDomainStats),
                 mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
           {
             mClusterBuilder.BuildClusters();
