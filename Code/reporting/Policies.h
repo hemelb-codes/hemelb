@@ -66,22 +66,6 @@ namespace hemelb
         {
           return instance.GetProcessorCount();
         }
-        /**
-         * Number of machines, as opposed to processors.
-         * @return Number of machines.
-         */
-        unsigned int GetMachineCount() const
-        {
-          return instance.GetMachineCount();
-        }
-        /**
-         * Max depth of all processors within the machine topology.
-         * @return Greatest processor depth.
-         */
-        int GetDepths() const
-        {
-          return instance.GetDepths();
-        }
 
       private:
         const net::NetworkTopology& instance; //! Reference to the singleton instance of the MPI topology

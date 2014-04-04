@@ -63,14 +63,6 @@ namespace hemelb
           {
             return 5;
           }
-          unsigned int GetMachineCount()
-          {
-            return 4;
-          }
-          int GetDepths()
-          {
-            return 3;
-          }
         private:
           unsigned int calls;
       };

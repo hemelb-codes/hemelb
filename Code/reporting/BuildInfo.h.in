@@ -17,7 +17,6 @@ namespace hemelb
     static const std::string mercurial_revision_number="@HEMELB_REVISION_NUMBER@";
     static const std::string steering_lib="@HEMELB_STEERING_LIB@";
     static const std::string streaklines_on="@HEMELB_USE_STREAKLINES@";
-    static const std::string multimachine_on="@HEMELB_USE_MULTIMACHINE@";
     static const std::string build_type="@CMAKE_BUILD_TYPE@";
     static const std::string optimisation="@HEMELB_OPTIMISATION@";
     static const std::string use_sse3="@HEMELB_USE_SSE3@";
@@ -42,7 +41,6 @@ namespace hemelb
         build->SetValue("REVISION", mercurial_revision_number);
         build->SetValue("STEERING", steering_lib);
         build->SetValue("STREAKLINES", streaklines_on);
-        build->SetValue("MULTIMACHINE", multimachine_on);
         build->SetValue("TYPE", build_type);
         build->SetValue("OPTIMISATION", optimisation);
         build->SetValue("USE_SSE3", use_sse3);

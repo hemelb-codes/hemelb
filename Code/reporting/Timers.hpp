@@ -50,8 +50,6 @@ namespace hemelb
     template<class ClockPolicy, class CommsPolicy> void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
     {
       dictionary.SetIntValue("THREADS", CommsPolicy::GetProcessorCount());
-      dictionary.SetIntValue("MACHINES", CommsPolicy::GetMachineCount());
-      dictionary.SetIntValue("DEPTHS", CommsPolicy::GetDepths());
 
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
