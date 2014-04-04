@@ -82,7 +82,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     procsList[proc],
                     100,
-                    net::IOCommunicator::Instance()->GetComms(),
+                    *net::IOCommunicator::Instance(),
                     &sendRequest[proc]);
         }
       }
@@ -96,7 +96,7 @@ namespace hemelb
                     net::MpiDataType(*density),
                     BoundaryValues::GetBCProcRank(),
                     100,
-                    net::IOCommunicator::Instance()->GetComms(),
+                    *net::IOCommunicator::Instance(),
                     &receiveRequest);
         }
       }

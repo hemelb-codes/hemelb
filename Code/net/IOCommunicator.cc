@@ -18,9 +18,12 @@ namespace hemelb
     bool IOCommunicator::initialised = false;
 
     // Must be specified to prevent the default constructor being public.
-    IOCommunicator::IOCommunicator()
+    IOCommunicator::IOCommunicator() : MpiCommunicator()
     {
 
+    }
+    IOCommunicator::IOCommunicator(const MpiCommunicator& comm) : MpiCommunicator(comm)
+    {
     }
 
     IOCommunicator* IOCommunicator::Instance()
@@ -33,32 +36,19 @@ namespace hemelb
       if (!initialised)
       {
         initialised = true;
-        comms = commun;
+        instance = commun;
       }
     }
 
-    IOCommunicator::~IOCommunicator()
+
+    bool IOCommunicator::OnIORank() const
     {
+      return Rank() == GetIORank();
     }
 
-    bool IOCommunicator::IsCurrentProcTheIOProc() const
-    {
-      return Rank() == GetIOProcRank();
-    }
-
-    int IOCommunicator::GetIOProcRank() const
+    int IOCommunicator::GetIORank() const
     {
       return 0;
-    }
-
-    proc_t IOCommunicator::Rank() const
-    {
-      return comms.Rank();
-    }
-
-    proc_t IOCommunicator::Size() const
-    {
-      return comms.Size();
     }
 
   }

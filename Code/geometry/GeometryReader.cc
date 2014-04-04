@@ -37,7 +37,7 @@ namespace hemelb
       latticeInfo(latticeInfo), timings(atimings)
     {
       // Get the group of all procs.
-      net::MpiCommunicator commWorld = net::IOCommunicator::Instance()->GetComms();
+      net::MpiCommunicator& commWorld = *net::IOCommunicator::Instance();
       net::MpiGroup worldGroup = commWorld.Group();
 
       // This rank should participate in the domain decomposition if
@@ -91,7 +91,7 @@ namespace hemelb
               const_cast<char*> (buffering.c_str()),
               const_cast<char*> (bufferingValue.c_str())));
 
-      currentComms = net::IOCommunicator::Instance()->GetComms();
+      currentComms = *net::IOCommunicator::Instance();
 
       // Open the file.
       // Stupid C-MPI lack of const-correctness

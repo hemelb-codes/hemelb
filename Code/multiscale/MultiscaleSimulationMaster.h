@@ -62,7 +62,7 @@ namespace hemelb
           std::vector<unsigned> GlobalIoletCount;
           GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
           GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
-          net::IOCommunicator::Instance()->GetComms().Broadcast(GlobalIoletCount, 0);
+          net::IOCommunicator::Instance()->Broadcast(GlobalIoletCount, 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -347,11 +347,11 @@ namespace hemelb
                           recvSizes,
                           1,
                           MPI_INT,
-                          hemelb::net::IOCommunicator::Instance()->GetComms());
+                          *hemelb::net::IOCommunicator::Instance());
 
             int64_t totalSize = 0;
 
-            int np = hemelb::net::IOCommunicator::Instance()->GetComms().Size();
+            int np = hemelb::net::IOCommunicator::Instance()->Size();
             int64_t offset = 0;
 
             for (int j = 0; j < np; j++)
@@ -370,7 +370,7 @@ namespace hemelb
                            recvSizes,
                            recvDispls,
                            MPI_LONG_LONG,
-                           hemelb::net::IOCommunicator::Instance()->GetComms());
+                           *hemelb::net::IOCommunicator::Instance());
 
             std::vector<site_t> subList;
             for (int j = 0; j < totalSize; j++)

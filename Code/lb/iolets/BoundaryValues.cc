@@ -110,8 +110,7 @@ namespace hemelb
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
 
-        const net::MpiCommunicator& comms = net::IOCommunicator::Instance()->GetComms();
-        std::vector<int> processorsNeedingIoletFlags = comms.Gather(isIOletOnThisProc, GetBCProcRank());
+        std::vector<int> processorsNeedingIoletFlags = net::IOCommunicator::Instance()->Gather(isIOletOnThisProc, GetBCProcRank());
 
         if (IsCurrentProcTheBCProc())
         {

@@ -37,16 +37,7 @@ namespace hemelb
         /**
          * Class has virtual methods so should have virtual d'tor.
          */
-        virtual ~MpiCommunicator()
-        {
-
-        }
-        /**
-         * Assignment operator.
-         * @param rhs
-         * @return
-         */
-        //MpiCommunicator& operator=(const MpiCommunicator& rhs);
+        virtual ~MpiCommunicator();
 
         /**
          * Returns the local rank on the communicator
@@ -118,7 +109,7 @@ namespace hemelb
         template <typename T>
         std::vector<T> Gather(const T& val, const int root) const;
 
-      private:
+      protected:
         /**
          * Constructor to get data needed from an MPI communicator
          * @param communicator
