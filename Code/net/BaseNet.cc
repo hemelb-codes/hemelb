@@ -33,11 +33,6 @@ namespace hemelb
       Wait();
     }
 
-    BaseNet::BaseNet() :
-        BytesSent(0), SyncPointsCounted(0), communicator(*IOCommunicator::Instance())
-    {
-    }
-
     BaseNet::BaseNet(const MpiCommunicator &commObject) :
         BytesSent(0), SyncPointsCounted(0), communicator(commObject)
     {

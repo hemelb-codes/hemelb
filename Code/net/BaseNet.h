@@ -27,7 +27,6 @@ namespace hemelb
     class BaseNet
     {
       public:
-        BaseNet();
         BaseNet(const MpiCommunicator &communicator);
 
         virtual ~BaseNet()
@@ -48,9 +47,18 @@ namespace hemelb
          */
         void Dispatch();
 
-        const MpiCommunicator &GetCommunicator() const
+        inline const MpiCommunicator &GetCommunicator() const
         {
           return communicator;
+        }
+
+        inline int Rank() const
+        {
+          return communicator.Rank();
+        }
+        inline int Size() const
+        {
+          return communicator.Size();
         }
       protected:
         virtual void SendPointToPoint()=0;
