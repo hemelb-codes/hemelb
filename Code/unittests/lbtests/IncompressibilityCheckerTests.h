@@ -54,7 +54,9 @@ namespace hemelb
 
             eps = 1e-9;
 
-            timings = new hemelb::reporting::Timers(*net::IOCommunicator::Instance());
+            const net::IOCommunicator& comms = *net::IOCommunicator::Instance();
+            timings = new hemelb::reporting::Timers(comms);
+            net = new net::Net(comms);
           }
 
           void tearDown()
@@ -78,7 +80,7 @@ namespace hemelb
           void TestIncompressibilityCheckerRootNode()
           {
             hemelb::lb::IncompressibilityChecker<net::BroadcastMockRootNode> incompChecker(latDat,
-                                                                                           &net,
+                                                                                           net,
                                                                                            simState,
                                                                                            *cache,
                                                                                            *timings,
@@ -123,7 +125,7 @@ namespace hemelb
           void TestIncompressibilityCheckerLeafNode()
           {
             hemelb::lb::IncompressibilityChecker<net::BroadcastMockLeafNode> incompChecker(latDat,
-                                                                                           &net,
+                                                                                           net,
                                                                                            simState,
                                                                                            *cache,
                                                                                            *timings,
@@ -169,7 +171,7 @@ namespace hemelb
           distribn_t largestDefaultDensity;
           distribn_t largestDefaultVelocityMagnitude;
           hemelb::reporting::Timers* timings;
-          net::Net net;
+          net::Net* net;
           distribn_t eps;
       };
 

@@ -23,11 +23,6 @@ namespace hemelb
                 public GathersImpl
     {
       public:
-        Net() :
-            BaseNet(), StoringNet()
-        {
-
-        }
         Net(const MpiCommunicator &communicator) :
             BaseNet(communicator), StoringNet()
         {

@@ -144,7 +144,7 @@ namespace hemelb
           geometry::SiteTraverser siteTraverser(latDat);
           do
           {
-            if (this->streakNet->GetCommunicator().Rank()
+            if (this->streakNet->Rank()
                 != block.GetProcessorRankForSite(siteTraverser.GetCurrentIndex()))
             {
               continue;

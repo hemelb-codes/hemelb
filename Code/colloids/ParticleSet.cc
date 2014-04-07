@@ -26,7 +26,7 @@ namespace hemelb
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
                              const std::string& outputPath) :
-        localRank(net::IOCommunicator::Instance()->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath)
+        localRank(net::IOCommunicator::Instance()->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(*net::IOCommunicator::Instance())
     {
       net::IOCommunicator& comm = *net::IOCommunicator::Instance();
       /**
