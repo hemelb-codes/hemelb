@@ -36,7 +36,7 @@ namespace hemelb
       class MPICommsMock
       {
         public:
-          MPICommsMock() :
+          MPICommsMock(const net::IOCommunicator& ignored) :
               calls(1)
           {
           }
@@ -47,8 +47,7 @@ namespace hemelb
                      int count,
                      MPI_Datatype datatype,
                      MPI_Op op,
-                     int root,
-                     MPI_Comm comm)
+                     int root)
           {
             CPPUNIT_ASSERT_EQUAL((int)hemelb::reporting::Timers::last, count);
             for (int i = 0; i < count; i++)

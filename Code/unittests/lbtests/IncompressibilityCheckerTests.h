@@ -53,11 +53,14 @@ namespace hemelb
             largestDefaultVelocityMagnitude = 0.0433012701892219; // with current configuration of FourCubeLatticeData
 
             eps = 1e-9;
+
+            timings = new hemelb::reporting::Timers(*net::IOCommunicator::Instance());
           }
 
           void tearDown()
           {
             delete cache;
+            FourCubeBasedTestFixture::tearDown();
           }
 
           void AdvanceActorOneTimeStep(net::IteratedAction& actor)
@@ -78,7 +81,7 @@ namespace hemelb
                                                                                            &net,
                                                                                            simState,
                                                                                            *cache,
-                                                                                           timings,
+                                                                                           *timings,
                                                                                            10.0); // Will accept a max/min of (21.45, 12) but not (100,1)
 
             // Not available until the first broadcast has finished
@@ -123,7 +126,7 @@ namespace hemelb
                                                                                            &net,
                                                                                            simState,
                                                                                            *cache,
-                                                                                           timings,
+                                                                                           *timings,
                                                                                            10.0); // Will accept a max/min of (21.45, 12) but not (100,1)
 
             // First pass down the tree (uninitialised values being broadcasted)
@@ -165,7 +168,7 @@ namespace hemelb
           distribn_t smallestDefaultDensity;
           distribn_t largestDefaultDensity;
           distribn_t largestDefaultVelocityMagnitude;
-          hemelb::reporting::Timers timings;
+          hemelb::reporting::Timers* timings;
           net::Net net;
           distribn_t eps;
       };
