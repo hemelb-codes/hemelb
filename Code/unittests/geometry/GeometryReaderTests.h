@@ -33,7 +33,7 @@ namespace hemelb
         public:
 
           GeometryReaderTests() :
-            timings()
+            timings(*net::IOCommunicator::Instance())
           {
           }
 

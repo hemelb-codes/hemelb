@@ -36,12 +36,12 @@ namespace hemelb
         public:
           void setUp()
           {
-            communicator = new MPICommsMock();
-            mockTimers = new TimersMock();
-            realTimers = new reporting::Timers();
+            const net::IOCommunicator& comms = *net::IOCommunicator::Instance();
+            mockTimers = new TimersMock(comms);
+            realTimers = new reporting::Timers(comms);
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net(*net::IOCommunicator::Instance());
+            net = new net::Net(comms);
             latticeData = FourCubeLatticeData::Create(6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
@@ -136,7 +136,7 @@ namespace hemelb
             for (unsigned int row = 0; row < Timers::numberOfTimers; row++)
             {
               expectation << "N" << TimersMock::timerNames[row] << "L" << row * 10.0 << "MI" << row * 15.0 << "ME"
-                  << row * 10.0 << "MA" << row * 5.0 << " " << std::flush;
+                  << row * 2.0 << "MA" << row * 5.0 << " " << std::flush;
             }
             AssertTemplate(expectation.str(), "{{#TIMER}}N{{NAME}}L{{LOCAL}}MI{{MIN}}ME{{MEAN}}MA{{MAX}} {{/TIMER}}");
           }
@@ -147,7 +147,6 @@ namespace hemelb
           // We need two sets of timers because the incompressibility checker is not templated over timing policy.
           TimersMock *mockTimers;
           reporting::Timers* realTimers;
-          MPICommsMock* communicator;
 
           lb::SimulationState *state;
           lb::MacroscopicPropertyCache* cache;
