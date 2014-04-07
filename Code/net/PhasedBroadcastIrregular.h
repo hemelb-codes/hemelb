@@ -229,7 +229,7 @@ namespace hemelb
             // If this node is the root of the tree and we've just finished the upwards half, it
             // must act.
             if (progress == (base::GetRoundTripLength() - 1)
-                && IOCommunicator::Instance()->Rank() == 0)
+                && this->mNet->Rank() == 0)
             {
               TopNodeAction(*it);
             }
