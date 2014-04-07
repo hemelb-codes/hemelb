@@ -36,7 +36,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, hemelb::net::IOCommunicator& ioComm) :
-  ioComms(ioComm), timings(), build_info()
+  ioComms(ioComm), timings(ioComm), build_info()
 {
   timings[hemelb::reporting::Timers::total].Start();
 

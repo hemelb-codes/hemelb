@@ -16,7 +16,8 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class ClockPolicy, class CommsPolicy> void TimersBase<ClockPolicy, CommsPolicy>::Reduce()
+    template<class ClockPolicy, class CommsPolicy>
+    void TimersBase<ClockPolicy, CommsPolicy>::Reduce()
     {
       double timings[numberOfTimers];
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
@@ -24,30 +25,32 @@ namespace hemelb
         timings[ii] = timers[ii].Get();
       }
 
-      // TODO: Should this be World() or NetworkTopology::GetComms()?
-      const net::MpiCommunicator& comms = net::MpiCommunicator::World();
       CommsPolicy::Reduce(timings,
                           &maxes[0],
                           numberOfTimers,
                           net::MpiDataType<double>(),
                           MPI_MAX,
-                          0,
-                          comms);
+                          0);
       CommsPolicy::Reduce(timings,
                           &means[0],
                           numberOfTimers,
                           net::MpiDataType<double>(),
                           MPI_SUM,
-                          0,
-                          comms);
-      CommsPolicy::Reduce(timings, &mins[0], numberOfTimers, net::MpiDataType<double>(), MPI_MIN, 0, comms);
+                          0);
+      CommsPolicy::Reduce(timings,
+                          &mins[0],
+                          numberOfTimers,
+                          net::MpiDataType<double>(),
+                          MPI_MIN,
+                          0);
       for (unsigned int ii = 0; ii < numberOfTimers; ii++)
       {
-        means[ii] /= (double) (net::IOCommunicator::Instance()->Size());
+        means[ii] /= double(CommsPolicy::GetProcessorCount());
       }
     }
 
-    template<class ClockPolicy, class CommsPolicy> void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
+    template<class ClockPolicy, class CommsPolicy>
+    void TimersBase<ClockPolicy, CommsPolicy>::Report(ctemplate::TemplateDictionary& dictionary)
     {
       dictionary.SetIntValue("THREADS", CommsPolicy::GetProcessorCount());
 

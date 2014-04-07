@@ -50,7 +50,7 @@ namespace hemelb
           {
             timer->Start(); // clock mock at 10.0
             timer->Stop(); // clock mock at 20.0
-            CPPUNIT_ASSERT_EQUAL(10.0, timer->Get());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0, timer->Get(), 1e-6);
           }
           void TestMultipleStartStop()
           {
@@ -58,15 +58,15 @@ namespace hemelb
             timer->Stop(); // clock mock at 20.0
             timer->Start(); // clock mock at 30.0
             timer->Stop(); // clock mock at 40.0
-            CPPUNIT_ASSERT_EQUAL(20.0, timer->Get());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(20.0, timer->Get(), 1e-6);
           }
           void TestSetTime()
           {
             timer->Set(15.0);
-            CPPUNIT_ASSERT_EQUAL(15.0, timer->Get());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(15.0, timer->Get(), 1e-6);
             timer->Start(); // clock mock at 10.0
             timer->Stop(); // clock mock at 20.0
-            CPPUNIT_ASSERT_EQUAL(25.0, timer->Get());
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(25.0, timer->Get(), 1e-6);
           }
 
         private:
@@ -85,7 +85,7 @@ namespace hemelb
         public:
           void setUp()
           {
-            timers = new TimersBase<ClockMock, MPICommsMock>();
+            timers = new TimersBase<ClockMock, MPICommsMock>(*net::IOCommunicator::Instance());
           }
 
           void tearDown()
@@ -95,10 +95,10 @@ namespace hemelb
 
           void TestInitialization()
           {
-            CPPUNIT_ASSERT_EQUAL( (*timers)[Timers::total].Get(), 0.0);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, (*timers)[Timers::total].Get(), 1e-6);
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++)
             {
-              CPPUNIT_ASSERT_EQUAL( (*timers)[i].Get(), 0.0);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0.0, (*timers)[i].Get(), 1e-6);
             }
           }
 
@@ -114,7 +114,7 @@ namespace hemelb
             }
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++)
             {
-              CPPUNIT_ASSERT_EQUAL( (*timers)[i].Get(), 10.0 * i);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(10.0 * i, (*timers)[i].Get(), 1e-6);
             }
           }
 
@@ -131,9 +131,9 @@ namespace hemelb
             timers->Reduce(); // trigger the mock
             for (unsigned int i = 0; i < Timers::numberOfTimers; i++)
             {
-              CPPUNIT_ASSERT_EQUAL(timers->Maxes()[i], i * 5.0);
-              CPPUNIT_ASSERT_EQUAL(timers->Means()[i], i * 10.0);
-              CPPUNIT_ASSERT_EQUAL(timers->Mins()[i], i * 15.0);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 5.0, timers->Maxes()[i], 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 2.0, timers->Means()[i], 1e-6);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(i * 15.0, timers->Mins()[i], 1e-6);
             }
           }
 

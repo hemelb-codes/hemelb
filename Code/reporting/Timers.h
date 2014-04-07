@@ -22,7 +22,8 @@ namespace hemelb
      * Timer which manages performance measurement for a single aspect of the code
      * @tparam ClockPolicy Policy defining how to get the current time
      */
-    template<class ClockPolicy> class TimerBase : public ClockPolicy
+    template<class ClockPolicy>
+    class TimerBase : public ClockPolicy
     {
       public:
         /**
@@ -73,8 +74,8 @@ namespace hemelb
      * @tparam ClockPolicy How to get the current time
      * @tparam CommsPolicy How to share information between processes
      */
-    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy,
-                                                                      public Reportable
+    template<class ClockPolicy, class CommsPolicy>
+    class TimersBase : public CommsPolicy, public Reportable
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -129,7 +130,8 @@ namespace hemelb
          */
         static const std::string timerNames[TimersBase::numberOfTimers];
 
-        TimersBase() :
+        TimersBase(const net::IOCommunicator& comms) :
+          CommsPolicy(comms),
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
         }
