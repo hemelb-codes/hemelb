@@ -20,17 +20,14 @@ namespace hemelb
   namespace extraction
   {
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
-                                             const PropertyOutputFile* outputSpec) :
-      comms(*net::IOCommunicator::Instance()), dataSource(dataSource), outputSpec(outputSpec)
+                                             const PropertyOutputFile* outputSpec,
+                                             const net::IOCommunicator& ioComms) :
+      comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
-      MPI_File_open(comms,
-                    const_cast<char*> (outputSpec->filename.c_str()),
-                    MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL,
-                    MPI_INFO_NULL,
-                    &outputFile);
-
+      outputFile = net::MpiFile::Open(comms, outputSpec->filename,
+                                      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
       // Count sites on this task
       uint64_t siteCount = 0;
       dataSource.Reset();
@@ -94,12 +91,12 @@ namespace hemelb
 
         // Create a header buffer
         totalHeaderLength = io::formats::extraction::MainHeaderLength + fieldHeaderLength;
-        char* headerBuffer = new char[totalHeaderLength];
+        std::vector<char> headerBuffer(totalHeaderLength);
 
         {
           // Encoder for ONLY the main header (note shorter length)
           io::writers::xdr::XdrMemWriter
-              mainHeaderWriter(headerBuffer, io::formats::extraction::MainHeaderLength);
+              mainHeaderWriter(&headerBuffer[0], io::formats::extraction::MainHeaderLength);
 
           // Fill it
           mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber)
@@ -118,7 +115,7 @@ namespace hemelb
         {
           // Create the field header writer
           io::writers::xdr::XdrMemWriter
-              fieldHeaderWriter(headerBuffer + io::formats::extraction::MainHeaderLength,
+              fieldHeaderWriter(&headerBuffer[io::formats::extraction::MainHeaderLength],
                                 fieldHeaderLength);
           // Write it
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
@@ -131,15 +128,7 @@ namespace hemelb
         }
 
         // Write from the buffer
-        MPI_File_write_at(outputFile,
-                          0,
-                          headerBuffer,
-                          totalHeaderLength,
-                          MPI_BYTE,
-                          MPI_STATUS_IGNORE);
-
-        // And clear it up.
-        delete[] headerBuffer;
+        outputFile.WriteAt(0, headerBuffer);
       }
 
       // Calculate where each core should start writing
@@ -181,14 +170,12 @@ namespace hemelb
       }
 
       // Create the buffer that we'll write each iteration's data into.
-      buffer = new char[writeLength];
+      buffer.resize(writeLength);
     }
 
     LocalPropertyOutput::~LocalPropertyOutput()
     {
-      // Clean up
-      MPI_File_close(&outputFile);
-      delete[] buffer;
+
     }
 
     bool LocalPropertyOutput::ShouldWrite(unsigned long timestepNumber) const
@@ -216,7 +203,7 @@ namespace hemelb
       }
 
       // Create the buffer.
-      io::writers::xdr::XdrMemWriter xdrWriter(buffer, writeLength);
+      io::writers::xdr::XdrMemWriter xdrWriter(&buffer[0], buffer.size());
 
       // Firstly, the IO proc must write the iteration number.
       if (comms.OnIORank())
@@ -295,12 +282,7 @@ namespace hemelb
       }
 
       // Actually do the MPI writing.
-      MPI_File_write_at(outputFile,
-                        localDataOffsetIntoFile,
-                        buffer,
-                        writeLength,
-                        MPI_BYTE,
-                        MPI_STATUS_IGNORE);
+      outputFile.WriteAt(localDataOffsetIntoFile, buffer);
 
       // Set the offset to the right place for writing on the next iteration.
       localDataOffsetIntoFile += allCoresWriteLength;

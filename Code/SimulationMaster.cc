@@ -302,7 +302,7 @@ void SimulationMaster::Initialise()
     propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
                                                               simConfig->GetPropertyOutputs(),
                                                               *propertyDataSource,
-                                                              timings);
+                                                              timings, ioComms);
   }
 
   imagesPeriod = OutputPeriod(imagesPerSimulation);

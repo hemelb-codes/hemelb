@@ -32,7 +32,7 @@ namespace hemelb
          * @return
          */
         static MpiFile Open(const MpiCommunicator& comm, const std::string& filename, int mode,
-                            const MPI_Info info);
+                            const MPI_Info info = MPI_INFO_NULL);
 
         /**
          * Closes the file with MPI_File_close.
@@ -46,6 +46,8 @@ namespace hemelb
          */
         operator MPI_File() const;
 
+        void SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, const std::string& datarep, MPI_Info info);
+
         const MpiCommunicator& GetCommunicator() const;
 
         template<typename T>
@@ -53,6 +55,10 @@ namespace hemelb
         template<typename T>
         void ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
 
+        template<typename T>
+        void Write(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        template<typename T>
+        void WriteAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
       protected:
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 
@@ -60,23 +66,9 @@ namespace hemelb
         boost::shared_ptr<MPI_File> filePtr;
     };
 
-    template<typename T>
-    void MpiFile::Read(std::vector<T>& buffer, MPI_Status* stat)
-    {
-      HEMELB_MPI_CALL(
-          MPI_File_read,
-          (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
-      );
-    }
-    template<typename T>
-    void MpiFile::ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat)
-    {
-      HEMELB_MPI_CALL(
-          MPI_File_read_at,
-          (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
-      );
-    }
   }
 }
+
+#include "net/MpiFile.hpp"
 
 #endif /* HEMELB_NET_MPIFILE_H */
