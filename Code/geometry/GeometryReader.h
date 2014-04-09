@@ -24,6 +24,8 @@
 #include "geometry/Geometry.h"
 #include "geometry/needs/Needs.h"
 
+#include "net/MpiFile.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -34,7 +36,8 @@ namespace hemelb
       public:
         typedef util::Vector3D<site_t> BlockLocation;
 
-        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&, reporting::Timers &timings);
+        GeometryReader(const bool reserveSteeringCore, const lb::lattices::LatticeInfo&,
+                       reporting::Timers &timings, const net::IOCommunicator& ioComm);
         ~GeometryReader();
 
         Geometry LoadAndDecompose(const std::string& dataFilePath);
@@ -164,14 +167,11 @@ namespace hemelb
         //! Info about the connectivity of the lattice.
         const lb::lattices::LatticeInfo& latticeInfo;
         //! File accessed to read in the geometry data.
-        MPI_File file;
+        net::MpiFile file;
         //! Information about the file, to give cues and hints to MPI.
-        MPI_Info fileInfo;
-        net::MpiGroup topologyGroup; //! New group for ranks in the topology.
-        //net::MpiCommunicator topologyCommunicator; //! New communicator for ranks in the topology.
-        net::MpiCommunicator topologyComms; //! Communication info for all ranks that will need a slice of the geometry.
-        // TODO: This was never a good plan, better code design will avoid the need for it.
-        net::MpiCommunicator currentComms; //! The communicator currently in use.
+
+        const net::IOCommunicator& hemeLbComms; //! HemeLB's main communicator
+        net::MpiCommunicator computeComms; //! Communication info for all ranks that will need a slice of the geometry (i.e. all non-steering cores)
         //! True iff this rank is participating in the domain decomposition.
         bool participateInTopology;
 
