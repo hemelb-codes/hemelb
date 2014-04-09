@@ -103,7 +103,7 @@ namespace hemelb
           void TestWrite()
           {
             // Create the writer object; this should write the headers.
-            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile);
+            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile, *net::IOCommunicator::Instance());
 
             // Open the file
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");

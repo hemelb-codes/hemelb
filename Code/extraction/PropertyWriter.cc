@@ -14,11 +14,12 @@ namespace hemelb
   namespace extraction
   {
     PropertyWriter::PropertyWriter(IterableDataSource& dataSource,
-                                   const std::vector<PropertyOutputFile*>& propertyOutputs)
+                                   const std::vector<PropertyOutputFile*>& propertyOutputs,
+                                   const net::IOCommunicator& ioComms)
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {
-        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource, propertyOutputs[outputNumber]));
+        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource, propertyOutputs[outputNumber], ioComms));
       }
     }
 

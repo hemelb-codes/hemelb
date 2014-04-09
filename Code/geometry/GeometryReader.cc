@@ -93,11 +93,7 @@ namespace hemelb
       fflush( NULL);
 
       // Set the view to the file.
-      std::string mode = "native";
-      HEMELB_MPI_CALL(
-          MPI_File_set_view,
-          (file, 0, MPI_CHAR, MPI_CHAR, const_cast<char*> (mode.c_str()), fileInfo)
-      );
+      file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       Geometry geometry = ReadPreamble();
@@ -215,7 +211,7 @@ namespace hemelb
       if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
       {
         throw Exception() << "This file does not start with the HemeLB magic number."
-            << " Expected: " << io::formats::HemeLbMagicNumber
+            << " Expected: " << unsigned(io::formats::HemeLbMagicNumber)
             << " Actual: " << hlbMagicNumber;
       }
 
@@ -223,14 +219,14 @@ namespace hemelb
       if (gmyMagicNumber != io::formats::geometry::MagicNumber)
       {
         throw Exception() << "This file does not have the geometry magic number."
-            << " Expected: " << io::formats::geometry::MagicNumber
+            << " Expected: " << unsigned(io::formats::geometry::MagicNumber)
             << " Actual: " << gmyMagicNumber;
       }
 
       if (version != io::formats::geometry::VersionNumber)
       {
         throw Exception() << "Version number incorrect."
-            << " Supported: " << io::formats::geometry::VersionNumber
+            << " Supported: " << unsigned(io::formats::geometry::VersionNumber)
             << " Input: " << version;
       }
 
