@@ -26,7 +26,7 @@ namespace hemelb
          * @param propertyOutputs
          * @return
          */
-        PropertyWriter(IterableDataSource& dataSource, const std::vector<PropertyOutputFile*>& propertyOutputs);
+        PropertyWriter(IterableDataSource& dataSource, const std::vector<PropertyOutputFile*>& propertyOutputs, const net::IOCommunicator& ioComms);
 
         /**
          * Destructor; deallocates memory used to store property info.

@@ -62,6 +62,14 @@ namespace hemelb
     {
       return *comm;
     }
+
+    void MpiFile::SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, const std::string& datarep, MPI_Info info)
+    {
+      HEMELB_MPI_CALL(
+          MPI_File_set_view,
+          (*filePtr, disp, etype, filetype, datarep.c_str(), info)
+      );
+    }
   }
 }
 
