@@ -33,7 +33,7 @@ namespace hemelb
         public:
 
           GeometryReaderTests() :
-            timings(*net::IOCommunicator::Instance())
+            comms(*net::IOCommunicator::Instance()), timings(comms)
           {
           }
 
@@ -41,7 +41,7 @@ namespace hemelb
           {
             reader = new GeometryReader(false,
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                        timings);
+                                        timings, comms);
             lattice = NULL;
             fourCube = FourCubeLatticeData::Create();
             FolderTestFixture::setUp();
@@ -110,6 +110,7 @@ namespace hemelb
           }
 
         private:
+          net::IOCommunicator& comms;
           GeometryReader *reader;
           LatticeData* lattice;
           configuration::SimConfig * simConfig;

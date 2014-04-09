@@ -11,7 +11,6 @@
 #define HEMELB_NET_MPIERROR_H
 
 #include <mpi.h>
-#include <string>
 #include "Exception.h"
 
 namespace hemelb

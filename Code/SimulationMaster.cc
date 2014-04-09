@@ -152,7 +152,7 @@ void SimulationMaster::Initialise()
 
   hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           latticeType::GetLatticeInfo(),
-                                          timings);
+                                          timings, ioComms);
   hemelb::geometry::Geometry readGeometryData =
       reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
