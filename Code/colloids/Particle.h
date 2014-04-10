@@ -22,6 +22,8 @@ namespace hemelb
 {
   namespace colloids
   {
+    struct ParticleSorter;
+
     /**
      * represents a single simulated biocolloid particle
      *
@@ -112,7 +114,7 @@ namespace hemelb
          * - grouped by owner rank
          * - with local rank first
          */
-        const bool operator<(const Particle& other) const;
+        //const bool operator<(const Particle& other) const;
 
         /** determines if the owner rank of this particle is an existing key in map */
         const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
@@ -192,6 +194,8 @@ namespace hemelb
         proc_t ownerRank;
 
         bool isValid;
+        // Allow the sorter class to see our private members.
+        friend struct ParticleSorter;
     };
   }
 }

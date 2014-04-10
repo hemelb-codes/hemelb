@@ -33,6 +33,7 @@ namespace hemelb
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
                     std::vector<proc_t>& neighbourProcessors,
+                    const net::IOCommunicator& ioComms_,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -63,6 +64,7 @@ namespace hemelb
         const void OutputInformation(const LatticeTimeStep timestep);
 
       private:
+        const net::IOCommunicator& ioComms;
         /** cached copy of local rank (obtained from topology) */
         const proc_t localRank;
 
@@ -108,7 +110,7 @@ namespace hemelb
         /**
          * MPI File handle to write with
          */
-        MPI_File file;
+        net::MpiFile file;
     };
   }
 }

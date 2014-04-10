@@ -20,27 +20,42 @@ namespace hemelb
 {
   namespace colloids
   {
+    struct ParticleSorter
+    {
+        int localRank;
+        ParticleSorter(int rank) : localRank(rank)
+        {
+        }
+
+        bool operator() (const Particle& a, const Particle& b)
+        {
+          // ORDER BY isLocal, ownerRank, particleId
+          if (a.ownerRank == b.ownerRank)
+            return (a.particleId < b.particleId);
+          else if (a.ownerRank == localRank)
+            return true;
+          else if (b.ownerRank == localRank)
+            return false;
+          else
+            return (a.ownerRank < b.ownerRank);
+        }
+    };
+
     ParticleSet::ParticleSet(const geometry::LatticeData& latDatLBM,
                              io::xml::Element& particlesElem,
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
+                             const net::IOCommunicator& ioComms_,
                              const std::string& outputPath) :
-        localRank(net::IOCommunicator::Instance()->Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(*net::IOCommunicator::Instance())
+        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
     {
-      net::IOCommunicator& comm = *net::IOCommunicator::Instance();
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
        */
-      HEMELB_MPI_CALL(MPI_File_open,
-                      (comm,
-                       const_cast<char*>(path.c_str()),
-                       MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                       MPI_INFO_NULL,
-                       &file)
-      );
+      file = net::MpiFile::Open(ioComms, path, MPI_MODE_EXCL | MPI_MODE_WRONLY | MPI_MODE_CREATE);
 
-      if (comm.OnIORank())
+      if (ioComms.OnIORank())
       {
         // Write out the header information from core 0
         buffer.resize(io::formats::colloids::MagicLength);
@@ -48,7 +63,7 @@ namespace hemelb
         writer << (uint32_t) io::formats::HemeLbMagicNumber;
         writer << (uint32_t) io::formats::colloids::MagicNumber;
         writer << (uint32_t) io::formats::colloids::VersionNumber;
-        HEMELB_MPI_CALL(MPI_File_write, (file, &buffer.front(), io::formats::colloids::MagicLength, MPI_CHAR, MPI_STATUS_IGNORE));
+        file.Write(buffer);
       }
 
       HEMELB_MPI_CALL(MPI_File_seek_shared, (file, 0, MPI_SEEK_END));
@@ -89,7 +104,6 @@ namespace hemelb
 
     ParticleSet::~ParticleSet()
     {
-      HEMELB_MPI_CALL(MPI_File_close, (&file));
       particles.clear();
     }
 
@@ -143,7 +157,7 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("new offsetEOF: %i\n", positionBeforeWriting);
 
       // Now write the header section, only on rank 0.
-      if (net::IOCommunicator::Instance()->OnIORank())
+      if (ioComms.OnIORank())
       {
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
@@ -315,7 +329,7 @@ namespace hemelb
       particles.erase(newEndOfParticles, particles.end());
 
       // sort the particles - local first, then in order of increasing owner rank
-      std::sort(particles.begin(), particles.end());
+      std::sort(particles.begin(), particles.end(), ParticleSorter(latDatLBM.GetLocalRank()));
 
       // re-build the scanMap
       for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)

@@ -37,6 +37,7 @@ namespace hemelb
                           lb::MacroscopicPropertyCache& propertyCache,
                           const hemelb::lb::LbmParameters *lbmParams,
                           const std::string& outputPath,
+                          const net::IOCommunicator& ioComms_,
                           reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */
@@ -51,8 +52,8 @@ namespace hemelb
         const void OutputInformation(const LatticeTimeStep timestep) const;
 
       private:
-        /** cached copy of local rank (obtained from topology) */
-        const proc_t localRank;
+        /** Main code communicator */
+        const net::IOCommunicator& ioComms;
 
         const lb::SimulationState& simulationState;
 
