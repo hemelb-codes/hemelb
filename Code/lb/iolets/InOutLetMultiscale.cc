@@ -121,8 +121,9 @@ namespace hemelb
       }
 
       /* Distribution of internal pressure values */
-      void InOutLetMultiscale::DoComms(bool isIoProc, LatticeTimeStep time_step)
+      void InOutLetMultiscale::DoComms(const BoundaryCommunicator& bcComms, LatticeTimeStep time_step)
       {
+        bool isIoProc = bcComms.IsCurrentProcTheBCProc();
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoComms in IoletMultiscale triggered: %s",
                                                                               isIoProc
                                                                                 ? "true"
@@ -133,12 +134,12 @@ namespace hemelb
         pressure_array[1] = minPressure.GetPayload();
         pressure_array[2] = maxPressure.GetPayload();
 
-        net::Net commsNet(*net::IOCommunicator::Instance());
+        net::Net commsNet(bcComms);
 
         const std::vector<int>& procList = comms->GetListOfProcs(); //TODO: CHECK + IMPROVE!
 
         // If this proc is to do IO, send the pressure array list to all cores that require it.
-        if (isIoProc && procList[0] != BoundaryValues::GetBCProcRank())
+        if (isIoProc && procList[0] != bcComms.GetBCProcRank())
         {
           for (std::vector<int>::const_iterator it = procList.begin(); it != procList.end(); it++)
           {
@@ -146,9 +147,9 @@ namespace hemelb
           }
         }
         // Otherwise, receive the pressure array list from the core.
-        else if (procList[0] != BoundaryValues::GetBCProcRank())
+        else if (procList[0] != bcComms.GetBCProcRank())
         {
-          commsNet.RequestReceive(pressure_array, 3, BoundaryValues::GetBCProcRank());
+          commsNet.RequestReceive(pressure_array, 3, bcComms.GetBCProcRank());
         }
 
         // Perform the send / receive.

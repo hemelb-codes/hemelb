@@ -6,6 +6,11 @@ namespace hemelb
   {
     namespace iolets
     {
+      void InOutLet::DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep)
+      {
+        // pass
+      }
+
       namespace
       {
         unsigned SmallestMagnitudeComponent(const LatticeVector r)

@@ -55,6 +55,7 @@ namespace hemelb
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
+                                          *net::IOCommunicator::Instance(),
                                           *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0), 1e-9);
               delete inlets;
@@ -65,6 +66,7 @@ namespace hemelb
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
+                                          *net::IOCommunicator::Instance(),
                                           *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0), 1e-9);
 
@@ -96,6 +98,7 @@ namespace hemelb
                                           latDat,
                                           fileInletConfig->GetInlets(),
                                           simState,
+                                          *net::IOCommunicator::Instance(),
                                           *unitConverter);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);
