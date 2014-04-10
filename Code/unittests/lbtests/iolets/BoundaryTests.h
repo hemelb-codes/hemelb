@@ -31,23 +31,12 @@ namespace hemelb
          */
         class BoundaryTests : public helpers::FourCubeBasedTestFixture
         {
-          CPPUNIT_TEST_SUITE(BoundaryTests);
-              CPPUNIT_TEST(TestConstruct);
-              CPPUNIT_TEST(TestUpdate);
-              CPPUNIT_TEST(TestUpdateFile);
+            CPPUNIT_TEST_SUITE(BoundaryTests);
+            CPPUNIT_TEST(TestConstruct);
+            CPPUNIT_TEST(TestUpdate);
+            CPPUNIT_TEST(TestUpdateFile);
             CPPUNIT_TEST_SUITE_END();
-          public:
-            void setUp()
-            {
-              FourCubeBasedTestFixture::setUp();
 
-            }
-            void tearDown()
-            {
-
-              FourCubeBasedTestFixture::tearDown();
-            }
-          private:
             void TestConstruct()
             {
               double targetStartDensity = unitConverter->ConvertPressureToLatticeUnits(80.0 - 1.0) / Cs2;
@@ -55,7 +44,7 @@ namespace hemelb
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
-                                          *net::IOCommunicator::Instance(),
+                                          Comms(),
                                           *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(targetStartDensity, inlets->GetBoundaryDensity(0), 1e-9);
               delete inlets;
@@ -66,7 +55,7 @@ namespace hemelb
                                           latDat,
                                           simConfig->GetInlets(),
                                           simState,
-                                          *net::IOCommunicator::Instance(),
+                                          Comms(),
                                           *unitConverter);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(80.0 - 1.0), inlets->GetBoundaryDensity(0), 1e-9);
 
@@ -98,7 +87,7 @@ namespace hemelb
                                           latDat,
                                           fileInletConfig->GetInlets(),
                                           simState,
-                                          *net::IOCommunicator::Instance(),
+                                          Comms(),
                                           *unitConverter);
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL(pressureToDensity(78.0), inlets->GetBoundaryDensity(0), 1e-6);

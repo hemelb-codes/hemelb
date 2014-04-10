@@ -139,6 +139,8 @@ namespace hemelb
         public:
           void setUp()
           {
+            FolderTestFixture::setUp();
+
             pbuffer = new std::map<std::string, double>();
             std::map<std::string, double> &buffer = *pbuffer;
 
@@ -166,6 +168,8 @@ namespace hemelb
             delete mockheme;
             delete pbuffer;
             //delete orchestrationLB;
+            FolderTestFixture::tearDown();
+
           }
         private:
           void TestCRRun()
@@ -200,12 +204,11 @@ namespace hemelb
             argv[4] = "1";
             argv[5] = "-ss";
             argv[6] = "1111";
-            FolderTestFixture::setUp();
             CopyResourceToTempdir("four_cube_multiscale.xml");
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);
             MockIntercommunicator intercomms(*pbuffer,*orchestrationLB);
-            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, *net::IOCommunicator::Instance(), intercomms);
+            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, Comms(), intercomms);
             // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
             while (heme->GetState()->GetTime() < 20.0 || zerod->GetTime()< 20.0)
             {

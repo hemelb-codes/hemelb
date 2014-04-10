@@ -32,19 +32,19 @@ namespace hemelb
 
         public:
 
-          GeometryReaderTests() :
-            comms(*net::IOCommunicator::Instance()), timings(comms)
+          GeometryReaderTests()
           {
           }
 
           void setUp()
           {
+            FolderTestFixture::setUp();
+            timings = new reporting::Timers(Comms());
             reader = new GeometryReader(false,
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                        timings, comms);
+                                        *timings, Comms());
             lattice = NULL;
-            fourCube = FourCubeLatticeData::Create();
-            FolderTestFixture::setUp();
+            fourCube = FourCubeLatticeData::Create(Comms());
             CopyResourceToTempdir("four_cube.xml");
             CopyResourceToTempdir("four_cube.gmy");
             simConfig = NULL;
@@ -54,6 +54,7 @@ namespace hemelb
           void tearDown()
           {
             FolderTestFixture::tearDown();
+            delete timings;
             delete reader;
             delete lattice;
             delete fourCube;
@@ -110,11 +111,10 @@ namespace hemelb
           }
 
         private:
-          net::IOCommunicator& comms;
           GeometryReader *reader;
           LatticeData* lattice;
           configuration::SimConfig * simConfig;
-          reporting::Timers timings;
+          reporting::Timers* timings;
           hemelb::geometry::LatticeData *fourCube;
 
       };

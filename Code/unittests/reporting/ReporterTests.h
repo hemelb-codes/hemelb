@@ -15,8 +15,10 @@
 #include "reporting/Timers.h"
 #include "unittests/FourCubeLatticeData.h"
 #include "unittests/lbtests/LbTestsHelper.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
 #include "reporting/BuildInfo.h"
 #include <iomanip>
+
 namespace hemelb
 {
   namespace unittests
@@ -28,7 +30,7 @@ namespace hemelb
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
       typedef lb::IncompressibilityChecker<net::BroadcastMockRootNode> IncompressibilityCheckerMock;
 
-      class ReporterTests : public CppUnit::TestFixture
+      class ReporterTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (ReporterTests);
           CPPUNIT_TEST (TestInit);
@@ -36,13 +38,13 @@ namespace hemelb
         public:
           void setUp()
           {
-            const net::IOCommunicator& comms = *net::IOCommunicator::Instance();
-            mockTimers = new TimersMock(comms);
-            realTimers = new reporting::Timers(comms);
+            helpers::HasCommsTestFixture::setUp();
+            mockTimers = new TimersMock(Comms());
+            realTimers = new reporting::Timers(Comms());
             buildInfo = new reporting::BuildInfo();
             state = new hemelb::lb::SimulationState(0.0001, 1000);
-            net = new net::Net(comms);
-            latticeData = FourCubeLatticeData::Create(6, 5); // The 5 here is to match the topology size in the MPICommsMock
+            net = new net::Net(Comms());
+            latticeData = FourCubeLatticeData::Create(Comms(), 6, 5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             cache = new lb::MacroscopicPropertyCache(*state, *latticeData);
@@ -66,6 +68,7 @@ namespace hemelb
             delete incompChecker;
             delete net;
             delete buildInfo;
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestInit()

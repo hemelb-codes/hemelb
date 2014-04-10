@@ -31,24 +31,32 @@
 #include "unittests/util/util.h"
 #include <unistd.h>
 
+#include "unittests/helpers/HasCommsTestFixture.h"
+
 int main(int argc, char **argv)
 {
+  // Start MPI and the logger.
   hemelb::net::MpiEnvironment mpi(argc, argv);
   hemelb::log::Logger::Init();
 
-  hemelb::net::MpiCommunicator testCommunicator = hemelb::net::MpiCommunicator::World();
-  hemelb::debug::Debugger::Init(argv[0], testCommunicator);
+  hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
+  // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+  hemelb::debug::Debugger::Init(argv[0], commWorld);
 
-  hemelb::net::IOCommunicator::Init(testCommunicator);
+  // Initialise the global IOCommunicator.
+  hemelb::net::IOCommunicator& testCommunicator = hemelb::net::IOCommunicator::Init(commWorld);
+  hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
-  std::ostream * reportto=&std::cerr;
+  // Read options
+  std::ostream * reportto = &std::cerr;
   std::ofstream reportfile;
   int opt;
-  while((opt=getopt(argc,argv,"o:"))!=-1){
+  while((opt = getopt(argc, argv, "o:")) != -1)
+  {
     switch (opt) {
       case 'o':
         reportfile.open(optarg);
-        reportto=&reportfile;
+        reportto = &reportfile;
         break;
     }
   }
@@ -59,7 +67,7 @@ int main(int argc, char **argv)
   // Create the event manager and test controller
   CppUnit::TestResult controller;
 
-  // Add a listener that colllects test result
+  // Add a listener that collects test result
   CppUnit::TestResultCollector result;
   controller.addListener(&result);
 
@@ -75,7 +83,6 @@ int main(int argc, char **argv)
 
   try
   {
-
     std::cout << "Running " << testPath;
     runner.run(controller, testPath);
     // Print test XML output to stderr
@@ -88,6 +95,7 @@ int main(int argc, char **argv)
     reportfile.close();
     return 1;
   }
+
   reportfile.close();
   return result.wasSuccessful()
     ? 0

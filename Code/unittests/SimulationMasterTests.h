@@ -43,7 +43,7 @@ namespace hemelb
           CopyResourceToTempdir("four_cube.gmy");
           try {
             options = new hemelb::configuration::CommandLine(argc, argv);
-            master = new SimulationMaster(*options, *net::IOCommunicator::Instance());
+            master = new SimulationMaster(*options, Comms());
           } catch (hemelb::io::xml::ChildError& e) {
             std::cout << e.what() << std::endl;
             throw;

@@ -33,7 +33,7 @@
 class SimulationMaster
 {
   public:
-    SimulationMaster(hemelb::configuration::CommandLine &options, hemelb::net::IOCommunicator& ioComms);
+    SimulationMaster(hemelb::configuration::CommandLine &options, const hemelb::net::IOCommunicator& ioComms);
     virtual ~SimulationMaster();
 
     void Abort();
@@ -59,7 +59,7 @@ class SimulationMaster
     hemelb::geometry::LatticeData* latticeData;
     hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-    hemelb::net::IOCommunicator& ioComms;
+    const hemelb::net::IOCommunicator& ioComms;
 
   private:
     void Initialise();

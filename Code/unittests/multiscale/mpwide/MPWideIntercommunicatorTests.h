@@ -25,7 +25,7 @@ namespace hemelb
       namespace mpwide
       {
 
-        class MPWideIntercommunicatorTests : public FolderTestFixture
+        class MPWideIntercommunicatorTests : public helpers::FolderTestFixture
         {
             CPPUNIT_TEST_SUITE (MPWideIntercommunicatorTests);
             // TODO The below test is v important and is not currently being run.
@@ -36,6 +36,8 @@ namespace hemelb
           public:
             void setUp()
             {
+              helpers::FolderTestFixture::setUp();
+
               pbuffer = new std::map<std::string, double>();
 
               LBorchestration = new std::map<std::string, bool>();
@@ -57,6 +59,7 @@ namespace hemelb
               delete mockheme;
               delete pbuffer;
               delete LBorchestration;
+              helpers::FolderTestFixture::tearDown();
             }
 
           private:
@@ -88,14 +91,13 @@ namespace hemelb
               argv[5] = "-ss";
               argv[6] = "1111";
 
-              FolderTestFixture::setUp();
               CopyResourceToTempdir("four_cube_multiscale.xml");
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
               std::string configPath = "../../../config_files/MPWSettings.cfg";
               MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration, configPath);
 
-              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, *net::IOCommunicator::Instance(), intercomms);
+              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, Comms(), intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
               //std::cout << "HemeLB about to be run..." << std::endl;
               while (heme.GetState()->GetTime() < 20.0)

@@ -21,6 +21,7 @@
 #include "extraction/WholeGeometrySelector.h"
 #include "extraction/GeometrySurfaceSelector.h"
 #include "unittests/FourCubeLatticeData.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
 
 namespace hemelb
 {
@@ -28,7 +29,7 @@ namespace hemelb
   {
     namespace extraction
     {
-      class GeometrySelectorTests : public CppUnit::TestFixture
+      class GeometrySelectorTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE ( GeometrySelectorTests);
           CPPUNIT_TEST ( TestStraightLineGeometrySelector);
@@ -60,7 +61,8 @@ namespace hemelb
 
           void setUp()
           {
-            latticeData = FourCubeLatticeData::Create(CubeSize + 2, 1);
+            helpers::HasCommsTestFixture::setUp();
+            latticeData = FourCubeLatticeData::Create(Comms(), CubeSize + 2, 1);
             simState = new lb::SimulationState(60.0 / (70.0 * 5000.0), 1000);
             propertyCache = new hemelb::lb::MacroscopicPropertyCache(*simState, *latticeData);
             unitConverter = new hemelb::util::UnitConverter(simState->GetTimeStepLength(),
@@ -101,6 +103,7 @@ namespace hemelb
             delete propertyCache;
             delete simState;
             delete latticeData;
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestStraightLineGeometrySelector()
