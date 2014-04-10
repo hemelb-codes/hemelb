@@ -14,6 +14,7 @@
 #include "net/IteratedAction.h"
 #include "lb/iolets/InOutLet.h"
 #include "geometry/LatticeData.h"
+#include "lb/iolets/BoundaryCommunicator.h"
 
 namespace hemelb
 {
@@ -44,7 +45,6 @@ namespace hemelb
           LatticeDensity GetDensityMin(int boundaryId);
           LatticeDensity GetDensityMax(int boundaryId);
 
-          static bool IsCurrentProcTheBCProc();
           static proc_t GetBCProcRank();
           iolets::InOutLet* GetLocalIolet(unsigned int index)
           {
@@ -77,7 +77,7 @@ namespace hemelb
 
           SimulationState* state;
           const util::UnitConverter& unitConverter;
-          net::MpiCommunicator privateComms;
+          BoundaryCommunicator bcComms;
       }
       ;
     }

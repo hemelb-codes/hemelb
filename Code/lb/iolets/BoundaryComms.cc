@@ -19,13 +19,13 @@ namespace hemelb
     namespace iolets
     {
 
-      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, const net::MpiCommunicator& boundaryComm, bool iHasBoundary) :
-          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList), comm(boundaryComm)
+      BoundaryComms::BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, const BoundaryCommunicator& boundaryComm, bool iHasBoundary) :
+          hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList), bcComm(boundaryComm)
       {
         /* iProcsList contains the procs containing said Boundary/iolet, but NOT proc 0 (the BoundaryControlling/BC proc)! */
 
         // Only BC proc sends
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           sendRequest = new MPI_Request[nProcs];
           sendStatus = new MPI_Status[nProcs];
@@ -40,7 +40,7 @@ namespace hemelb
       BoundaryComms::~BoundaryComms()
       {
 
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           delete[] sendRequest;
           delete[] sendStatus;
@@ -60,7 +60,7 @@ namespace hemelb
       void BoundaryComms::WaitAllComms()
       {
         // Now wait for all to complete
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           HEMELB_MPI_CALL(
               MPI_Waitall, (nProcs, sendRequest, sendStatus)
@@ -92,7 +92,7 @@ namespace hemelb
                   net::MpiDataType(*density),
                   procsList[proc],
                   100,
-                  comm,
+                  bcComm,
                   &sendRequest[proc]
               ));
         }
@@ -107,9 +107,9 @@ namespace hemelb
                   density,
                   1,
                   net::MpiDataType(*density),
-                  BoundaryValues::GetBCProcRank(),
+                  bcComm.GetBCProcRank(),
                   100,
-                  comm,
+                  bcComm,
                   &receiveRequest
               ));
         }
@@ -119,7 +119,7 @@ namespace hemelb
       {
         // Don't move on to next step with BC proc until all messages have been sent
         // Precautionary measure to make sure proc doesn't overwrite, before message is sent
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        if (bcComm.IsCurrentProcTheBCProc())
         {
           HEMELB_MPI_CALL(
               MPI_Waitall, (nProcs, sendRequest, sendStatus)
