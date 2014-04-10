@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   hemelb::debug::Debugger::Init(argv[0], commWorld);
 
   // Initialise the global IOCommunicator.
-  hemelb::net::IOCommunicator& testCommunicator = hemelb::net::IOCommunicator::Init(commWorld);
+  hemelb::net::IOCommunicator testCommunicator(commWorld);
   hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
   // Read options

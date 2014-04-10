@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
     hemelb::debug::Debugger::Init(argv[0], commWorld);
 
-    hemelb::net::IOCommunicator& hemelbCommunicator = hemelb::net::IOCommunicator::Init(commWorld);
+    hemelb::net::IOCommunicator hemelbCommunicator(commWorld);
 
     try
     {

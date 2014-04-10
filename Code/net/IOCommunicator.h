@@ -26,31 +26,9 @@ namespace hemelb
     class IOCommunicator : public MpiCommunicator
     {
       public:
-        /**
-         * Get the singleton instance.
-         * @return
-         */
-        static IOCommunicator* Instance();
-        /**
-         * Initalise the singleton instance.
-         * @param commun
-         */
-        static IOCommunicator& Init(MpiCommunicator& commun);
-
+        IOCommunicator(const MpiCommunicator& comm);
         bool OnIORank() const;
         int GetIORank() const;
-
-      private:
-        IOCommunicator(const MpiCommunicator& comm);
-        IOCommunicator();
-
-        /**
-         * This variable is necessary, because the destructor for this static object will always
-         * be called, regardless of whether the init method (that actually initialises the MPI
-         * environment) is called.
-         */
-        static bool initialised;
-        static IOCommunicator instance;
     };
   }
 }
