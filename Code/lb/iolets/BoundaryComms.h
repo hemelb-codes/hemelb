@@ -24,7 +24,7 @@ namespace hemelb
       class BoundaryComms
       {
         public:
-          BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, bool iHasBoundary);
+          BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, const net::MpiCommunicator& boundaryComm, bool iHasBoundary);
           ~BoundaryComms();
 
           void Wait();
@@ -50,6 +50,7 @@ namespace hemelb
           // which proc has which IOlet
           int nProcs;
           std::vector<int> procsList;
+          const net::MpiCommunicator& comm;
 
           MPI_Request *sendRequest;
           MPI_Status *sendStatus;

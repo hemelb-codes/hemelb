@@ -25,11 +25,11 @@ namespace hemelb
                                      geometry::LatticeData* latticeData,
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
                                      SimulationState* simulationState,
+                                     const net::MpiCommunicator& comms,
                                      const util::UnitConverter& units) :
         net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
-            state(simulationState), unitConverter(units)
+            state(simulationState), unitConverter(units), privateComms(comms.Duplicate())
       {
-
         std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
 
         // Determine which iolets need comms and create them
@@ -110,7 +110,7 @@ namespace hemelb
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
 
-        std::vector<int> processorsNeedingIoletFlags = net::IOCommunicator::Instance()->Gather(isIOletOnThisProc, GetBCProcRank());
+        std::vector<int> processorsNeedingIoletFlags = privateComms.Gather(isIOletOnThisProc, GetBCProcRank());
 
         if (IsCurrentProcTheBCProc())
         {
@@ -131,7 +131,7 @@ namespace hemelb
 
       bool BoundaryValues::IsCurrentProcTheBCProc()
       {
-        return net::IOCommunicator::Instance()->Rank() == GetBCProcRank();
+        return privateComms.Rank() == GetBCProcRank();
       }
 
       proc_t BoundaryValues::GetBCProcRank()

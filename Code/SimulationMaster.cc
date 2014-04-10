@@ -261,12 +261,14 @@ void SimulationMaster::Initialise()
                                                        latticeData,
                                                        simConfig->GetInlets(),
                                                        simulationState,
+                                                       ioComms,
                                                        *unitConverter);
 
   outletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::OUTLET_TYPE,
                                                         latticeData,
                                                         simConfig->GetOutlets(),
                                                         simulationState,
+                                                        ioComms,
                                                         *unitConverter);
 
   latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
