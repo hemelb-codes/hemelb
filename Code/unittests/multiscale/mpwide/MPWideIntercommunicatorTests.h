@@ -95,7 +95,7 @@ namespace hemelb
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
               std::string configPath = "../../../config_files/MPWSettings.cfg";
-              MPWideIntercommunicator intercomms(*pbuffer, *LBorchestration, configPath);
+              MPWideIntercommunicator intercomms(Comms().OnIORank(), *pbuffer, *LBorchestration, configPath);
 
               MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, Comms(), intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
