@@ -29,6 +29,7 @@ namespace hemelb
                          geometry::LatticeData* latticeData,
                          const std::vector<iolets::InOutLet*> &iolets,
                          SimulationState* simulationState,
+                         const net::MpiCommunicator& comms,
                          const util::UnitConverter& units);
           ~BoundaryValues();
 
@@ -76,6 +77,7 @@ namespace hemelb
 
           SimulationState* state;
           const util::UnitConverter& unitConverter;
+          net::MpiCommunicator privateComms;
       }
       ;
     }
