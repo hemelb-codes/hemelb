@@ -63,7 +63,7 @@ namespace hemelb
           std::vector<unsigned> GlobalIoletCount;
           GlobalIoletCount.push_back(inletValues->GetLocalIoletCount());
           GlobalIoletCount.push_back(outletValues->GetLocalIoletCount());
-          net::IOCommunicator::Instance()->Broadcast(GlobalIoletCount, 0);
+          ioComms.Broadcast(GlobalIoletCount, 0);
 
           std::vector<std::vector<site_t> > invertedInletBoundaryList(GlobalIoletCount[0]);
           std::vector<std::vector<site_t> > invertedOutletBoundaryList(GlobalIoletCount[1]);
@@ -323,10 +323,8 @@ namespace hemelb
             std::vector<std::vector<site_t> > inList)
         {
           std::vector<std::vector<site_t> > outList;
-          int *recvSizes =
-              new int[hemelb::net::IOCommunicator::Instance()->Size()];
-          int *recvDispls =
-              new int[hemelb::net::IOCommunicator::Instance()->Size()];
+          int *recvSizes = new int[ioComms.Size()];
+          int *recvDispls = new int[ioComms.Size()];
 
           /* TODO: ASSUMPTION:
            * inList.size() is equal everywhere. This is not necessarily the case.
@@ -341,18 +339,20 @@ namespace hemelb
             {
               sendList[j] = inList[i][j];
             }
-
-            MPI_Allgather(&sendSize,
-                          1,
-                          MPI_INT,
-                          recvSizes,
-                          1,
-                          MPI_INT,
-                          *hemelb::net::IOCommunicator::Instance());
+            HEMELB_MPI_CALL(
+                MPI_Allgather, (
+                    &sendSize,
+                    1,
+                    MPI_INT,
+                    recvSizes,
+                    1,
+                    MPI_INT,
+                    ioComms
+                ));
 
             int64_t totalSize = 0;
 
-            int np = hemelb::net::IOCommunicator::Instance()->Size();
+            int np = ioComms.Size();
             int64_t offset = 0;
 
             for (int j = 0; j < np; j++)
@@ -364,14 +364,17 @@ namespace hemelb
 
             site_t *recvList = new site_t[totalSize]; //inList[i].size()
 
-            MPI_Allgatherv(sendList,
-                           inList[i].size(),
-                           MPI_LONG_LONG,
-                           recvList,
-                           recvSizes,
-                           recvDispls,
-                           MPI_LONG_LONG,
-                           *hemelb::net::IOCommunicator::Instance());
+            HEMELB_MPI_CALL(
+                MPI_Allgatherv, (
+                    sendList,
+                    inList[i].size(),
+                    MPI_LONG_LONG,
+                    recvList,
+                    recvSizes,
+                    recvDispls,
+                    MPI_LONG_LONG,
+                    ioComms
+                ));
 
             std::vector<site_t> subList;
             for (int j = 0; j < totalSize; j++)

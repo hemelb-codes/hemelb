@@ -60,7 +60,8 @@ namespace hemelb
     class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
     {
       public:
-        MPWideIntercommunicator(std::map<std::string, double> & buffer,
+        MPWideIntercommunicator(bool isCommsRank,
+                                std::map<std::string, double> & buffer,
                                 std::map<std::string, bool> &orchestration,
                                 std::string configFilePathIn);
         /** This is run at the start of the HemeLB simulation. */

@@ -26,10 +26,11 @@ namespace hemelb
     // Initialize the static initialized variable to false.
     bool MPWideIntercommunicator::mpwideInitialized = false;
 
-    MPWideIntercommunicator::MPWideIntercommunicator(std::map<std::string, double> & buffer,
+    MPWideIntercommunicator::MPWideIntercommunicator(bool isCommsRank,
+                                                     std::map<std::string, double> & buffer,
                                                      std::map<std::string, bool> &orchestration,
                                                      std::string configFilePathIn) :
-        isCommsProc(net::IOCommunicator::Instance()->OnIORank()),
+        isCommsProc(isCommsRank),
             configFilePath(configFilePathIn), recv_icand_data_size(0), send_icand_data_size(0),
             doubleContents(buffer), currentTime(0), orchestration(orchestration), channelCount(0)
     {
