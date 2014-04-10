@@ -21,6 +21,7 @@
 #include "extraction/OutputField.h"
 #include "extraction/WholeGeometrySelector.h"
 
+#include "unittests/helpers/HasCommsTestFixture.h"
 #include "unittests/extraction/DummyDataSource.h"
 
 namespace hemelb
@@ -29,7 +30,7 @@ namespace hemelb
   {
     namespace extraction
     {
-      class LocalPropertyOutputTests : public CppUnit::TestFixture
+      class LocalPropertyOutputTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE (LocalPropertyOutputTests);
           CPPUNIT_TEST (TestStringWrittenLength);
@@ -38,6 +39,7 @@ namespace hemelb
         public:
           void setUp()
           {
+            helpers::HasCommsTestFixture::setUp();
             epsilon = 1e-5;
 
             simpleOutFile.filename = tempOutFileName;
@@ -82,6 +84,8 @@ namespace hemelb
             if (writtenFile != NULL)
               std::fclose(writtenFile);
             std::remove(tempOutFileName);
+
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestStringWrittenLength()
@@ -103,7 +107,7 @@ namespace hemelb
           void TestWrite()
           {
             // Create the writer object; this should write the headers.
-            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile, *net::IOCommunicator::Instance());
+            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile, Comms());
 
             // Open the file
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");

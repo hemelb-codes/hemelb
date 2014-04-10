@@ -94,7 +94,7 @@ namespace hemelb
                                                            latDat,
                                                            simConfig->GetInlets(),
                                                            simState,
-                                                           *net::IOCommunicator::Instance(),
+                                                           Comms(),
                                                            *unitConverter);
             InOutLetCosine* inlet = GetIolet(inletBoundary);
             // We have to make the outlet sane and consistent with the geometry now.
@@ -131,7 +131,7 @@ namespace hemelb
                                                             latDat,
                                                             simConfig->GetOutlets(),
                                                             simState,
-                                                            *net::IOCommunicator::Instance(),
+                                                            Comms(),
                                                             *unitConverter);
 
             InOutLetCosine* outlet = GetIolet(outletBoundary);

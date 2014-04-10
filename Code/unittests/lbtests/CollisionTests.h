@@ -38,23 +38,13 @@ namespace hemelb
           CPPUNIT_TEST( TestZeroVelocityEquilibrium);
           CPPUNIT_TEST( TestNormal);CPPUNIT_TEST_SUITE_END();
         public:
-          void setUp()
-          {
-            FourCubeBasedTestFixture::setUp();
-          }
-
-          void tearDown()
-          {
-            FourCubeBasedTestFixture::tearDown();
-          }
-
           void TestNonZeroVelocityEquilibriumFixedDensity()
           {
             lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
                                                          latDat,
                                                          simConfig->GetInlets(),
                                                          simState,
-                                                         *net::IOCommunicator::Instance(),
+                                                         Comms(),
                                                          *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
@@ -126,7 +116,7 @@ namespace hemelb
                                                           latDat,
                                                           simConfig->GetOutlets(),
                                                           simState,
-                                                          *net::IOCommunicator::Instance(),
+                                                          Comms(),
                                                           *unitConverter);
             initParams.boundaryObject = &outletBoundary;
 

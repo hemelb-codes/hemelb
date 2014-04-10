@@ -14,6 +14,7 @@
 #include "reporting/Timers.h"
 #include "reporting/Timers.hpp"
 #include "unittests/reporting/Mocks.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
 
 namespace hemelb
 {
@@ -75,7 +76,7 @@ namespace hemelb
 
       CPPUNIT_TEST_SUITE_REGISTRATION(TimerTests);
 
-      class TimersTests : public CppUnit::TestFixture
+      class TimersTests : public helpers::HasCommsTestFixture
       {
           CPPUNIT_TEST_SUITE(TimersTests);
           CPPUNIT_TEST(TestInitialization);
@@ -85,12 +86,13 @@ namespace hemelb
         public:
           void setUp()
           {
-            timers = new TimersBase<ClockMock, MPICommsMock>(*net::IOCommunicator::Instance());
+            timers = new TimersBase<ClockMock, MPICommsMock>(Comms());
           }
 
           void tearDown()
           {
             delete timers;
+            helpers::HasCommsTestFixture::tearDown();
           }
 
           void TestInitialization()

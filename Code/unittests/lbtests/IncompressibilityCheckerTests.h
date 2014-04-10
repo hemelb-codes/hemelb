@@ -54,9 +54,8 @@ namespace hemelb
 
             eps = 1e-9;
 
-            const net::IOCommunicator& comms = *net::IOCommunicator::Instance();
-            timings = new hemelb::reporting::Timers(comms);
-            net = new net::Net(comms);
+            timings = new hemelb::reporting::Timers(Comms());
+            net = new net::Net(Comms());
           }
 
           void tearDown()

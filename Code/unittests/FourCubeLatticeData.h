@@ -61,7 +61,7 @@ namespace hemelb
          *
          * @return
          */
-        static FourCubeLatticeData* Create(site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
+        static FourCubeLatticeData* Create(const net::IOCommunicator& comm, site_t sitesPerBlockUnit = 6, proc_t rankCount = 1)
         {
           hemelb::geometry::Geometry readResult(util::Vector3D<site_t>::Ones(),
                                                 sitesPerBlockUnit);
@@ -155,7 +155,7 @@ namespace hemelb
             }
           }
 
-          FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult);
+          FourCubeLatticeData* returnable = new FourCubeLatticeData(readResult, comm);
 
           // First, fiddle with the fluid site count, for tests that require this set.
           returnable->fluidSitesOnEachProcessor.resize(rankCount);
@@ -231,14 +231,8 @@ namespace hemelb
         }
 
       protected:
-        FourCubeLatticeData(hemelb::geometry::Geometry& readResult) :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, *net::IOCommunicator::Instance())
-        {
-
-        }
-
-        FourCubeLatticeData() :
-          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), *net::IOCommunicator::Instance())
+        FourCubeLatticeData(hemelb::geometry::Geometry& readResult, const net::IOCommunicator& comms) :
+          hemelb::geometry::LatticeData(lb::lattices::D3Q15::GetLatticeInfo(), readResult, comms)
         {
 
         }
