@@ -14,33 +14,9 @@ namespace hemelb
 {
   namespace net
   {
-    IOCommunicator IOCommunicator::instance;
-    bool IOCommunicator::initialised = false;
-
-    // Must be specified to prevent the default constructor being public.
-    IOCommunicator::IOCommunicator() : MpiCommunicator()
-    {
-
-    }
     IOCommunicator::IOCommunicator(const MpiCommunicator& comm) : MpiCommunicator(comm)
     {
     }
-
-    IOCommunicator* IOCommunicator::Instance()
-    {
-      return &instance;
-    }
-
-    IOCommunicator& IOCommunicator::Init(MpiCommunicator& commun)
-    {
-      if (!initialised)
-      {
-        initialised = true;
-        instance = commun;
-      }
-      return instance;
-    }
-
 
     bool IOCommunicator::OnIORank() const
     {
