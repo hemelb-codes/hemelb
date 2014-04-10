@@ -35,7 +35,7 @@
  * Initialises member variables including the network topology
  * object.
  */
-SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, hemelb::net::IOCommunicator& ioComm) :
+SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, const hemelb::net::IOCommunicator& ioComm) :
   ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm)
 {
   timings[hemelb::reporting::Timers::total].Start();

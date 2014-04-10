@@ -9,11 +9,12 @@
 
 #ifndef HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
 #define HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
-#include <cppunit/TestFixture.h>
+
 #include <cmath>
 #include <iomanip>
 #include "resources/Resource.h"
 #include "util/utilityFunctions.h"
+#include "unittests/helpers/HasCommsTestFixture.h"
 
 namespace hemelb
 {
@@ -21,12 +22,14 @@ namespace hemelb
   {
     namespace helpers
     {
-      class FolderTestFixture : public CppUnit::TestFixture
+      class FolderTestFixture : public HasCommsTestFixture
       {
 
         public:
           void setUp()
           {
+            HasCommsTestFixture::setUp();
+
             std::stringstream tempPathStream;
             // next line is a hack to get the build working again
             // TODO: find a portable uuid solution. BOOST?
@@ -45,6 +48,7 @@ namespace hemelb
           {
             ReturnToOrigin();
             // doesn't matter not to clean up in tempdir.
+            HasCommsTestFixture::tearDown();
           }
 
         protected:

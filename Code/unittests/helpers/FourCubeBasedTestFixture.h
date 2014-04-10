@@ -36,7 +36,9 @@ namespace hemelb
           }
           void setUp()
           {
-            latDat = FourCubeLatticeData::Create();
+            helpers::FolderTestFixture::setUp();
+
+            latDat = FourCubeLatticeData::Create(Comms());
 
             simConfig = new OneInOneOutSimConfig();
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
@@ -57,6 +59,7 @@ namespace hemelb
             delete lbmParams;
             delete simState;
             delete simConfig;
+            helpers::FolderTestFixture::tearDown();
           }
 
         protected:

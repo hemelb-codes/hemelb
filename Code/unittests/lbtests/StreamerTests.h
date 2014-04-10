@@ -779,7 +779,7 @@ namespace hemelb
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     *net::IOCommunicator::Instance(),
+                                                     Comms(),
                                                      *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
@@ -893,7 +893,7 @@ namespace hemelb
                                                      latDat,
                                                      simConfig->GetInlets(),
                                                      simState,
-                                                     *net::IOCommunicator::Instance(),
+                                                     Comms(),
                                                      *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
