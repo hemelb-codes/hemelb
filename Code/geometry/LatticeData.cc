@@ -277,18 +277,8 @@ namespace hemelb
 
     void LatticeData::CollectFluidSiteDistribution()
     {
-      fluidSitesOnEachProcessor.resize(comms.Size());
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Gathering lattice info.");
-      HEMELB_MPI_CALL(
-          MPI_Allgather,
-          (&localFluidSites,
-              1,
-              net::MpiDataType<site_t>(),
-              &fluidSitesOnEachProcessor[0],
-              1,
-              net::MpiDataType<site_t>(),
-              comms)
-      );
+      fluidSitesOnEachProcessor = comms.AllGather(localFluidSites);
       totalFluidSites = 0;
       for (proc_t ii = 0; ii < comms.Size(); ++ii)
       {

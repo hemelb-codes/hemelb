@@ -16,12 +16,17 @@ namespace hemelb
   {
     void ImmediatePointPoint::RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
     {
-      MPI_Ssend(pointer, count, type, rank, 10, communicator);
+      HEMELB_MPI_CALL(
+          MPI_Ssend,
+          (pointer, count, type, rank, 10, communicator)
+      );
     }
     void ImmediatePointPoint::RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
     {
-      MPI_Status status;
-      MPI_Recv(pointer, count, type, rank, 10, communicator, &status);
+      HEMELB_MPI_CALL(
+          MPI_Recv,
+          (pointer, count, type, rank, 10, communicator, MPI_STATUS_IGNORE)
+      );
     }
 
     void ImmediatePointPoint::ReceivePointToPoint()
