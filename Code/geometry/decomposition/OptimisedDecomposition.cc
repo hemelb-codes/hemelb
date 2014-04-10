@@ -640,16 +640,10 @@ namespace hemelb
         }
 
         // Now find how many blocks are being forced upon us from every other core.
-        std::vector<proc_t> blocksForcedOnMe(comms.Size(), 0);
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block numbers");
-        MPI_Alltoall(&numberOfBlocksIForceUponX[0],
-                     1,
-                     net::MpiDataType<proc_t>(),
-                     &blocksForcedOnMe[0],
-                     1,
-                     net::MpiDataType<proc_t>(),
-                     comms);
+        std::vector<proc_t> blocksForcedOnMe = comms.AllToAll(numberOfBlocksIForceUponX);
         timers[hemelb::reporting::Timers::moveForcingNumbers].Stop();
+
         timers[hemelb::reporting::Timers::moveForcingData].Start();
         // Now get all the blocks being forced upon me.
         std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
@@ -758,13 +752,8 @@ namespace hemelb
         }
         // Now perform the exchange s.t. each core knows how many blocks are required of it from
         // each other core.
-        MPI_Alltoall(&numberOfBlocksRequiredFrom[0],
-                     1,
-                     net::MpiDataType<site_t>(),
-                     &numberOfBlocksXRequiresFromMe[0],
-                     1,
-                     net::MpiDataType<site_t>(),
-                     comms);
+        numberOfBlocksXRequiresFromMe = comms.AllToAll(numberOfBlocksRequiredFrom);
+
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
         net::Net netForMoveSending(comms);
@@ -1116,12 +1105,7 @@ namespace hemelb
         {
           // Send the array length.
           neighboursAdjacencyCount = 2 * expectedAdjacencyData.size();
-          MPI_Send(&neighboursAdjacencyCount,
-                   1,
-                   net::MpiDataType(neighboursAdjacencyCount),
-                   neighbouringProc,
-                   42,
-                   comms);
+          comms.Send(neighboursAdjacencyCount, neighbouringProc, 42);
           // Create a sendable array (std::lists aren't organised in a sendable format).
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
           unsigned int adjacencyIndex = 0;
@@ -1133,32 +1117,15 @@ namespace hemelb
             ++adjacencyIndex;
           }
           // Send the data to the neighbouringProc.
-          MPI_Send(&neighboursAdjacencyData[0],
-                   (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   net::MpiDataType<idx_t>(),
-                   neighbouringProc,
-                   43,
-                   comms);
+          comms.Send(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else
         // If this is a greater rank number than the neighbouringProc, receive the data.
         if (neighbouringProc > comms.Rank())
         {
-          MPI_Recv(&neighboursAdjacencyCount,
-                   1,
-                   net::MpiDataType(neighboursAdjacencyCount),
-                   neighbouringProc,
-                   42,
-                   comms,
-                   MPI_STATUS_IGNORE);
+          comms.Receive(neighboursAdjacencyCount, neighbouringProc, 42);
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
-          MPI_Recv(&neighboursAdjacencyData[0],
-                   (int) ( ( ( ( (neighboursAdjacencyCount))))),
-                   net::MpiDataType<idx_t>(),
-                   neighbouringProc,
-                   43,
-                   comms,
-                   MPI_STATUS_IGNORE);
+          comms.Receive(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
         // Duplicate the data.

@@ -139,33 +139,18 @@ namespace hemelb
 
         if (comms.Size() > 1)
         {
-          localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile, 1, net::MpiDataType<uint64_t> (), 1, 1, comms);
-          localDataOffsetIntoFile -= writeLength;
+          comms.Send(localDataOffsetIntoFile+writeLength, 1, 1);
         }
       }
       else
       {
         // Receive the writing start position from the previous core.
-        MPI_Recv(&localDataOffsetIntoFile,
-                 1,
-                 net::MpiDataType<uint64_t> (),
-                 comms.Rank() - 1,
-                 1,
-                 comms,
-                 MPI_STATUS_IGNORE);
+        comms.Receive(localDataOffsetIntoFile, comms.Rank()-1, 1);
 
         // Send the next core its start position.
         if (comms.Rank() != (comms.Size() - 1))
         {
-          localDataOffsetIntoFile += writeLength;
-          MPI_Send(&localDataOffsetIntoFile,
-                   1,
-                   net::MpiDataType<uint64_t>(),
-                   comms.Rank() + 1,
-                   1,
-                   comms);
-          localDataOffsetIntoFile -= writeLength;
+          comms.Send(localDataOffsetIntoFile+writeLength, comms.Rank() + 1, 1);
         }
       }
 
