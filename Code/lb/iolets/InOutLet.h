@@ -23,6 +23,7 @@ namespace hemelb
 
       //forward declare boundary comms class
       class BoundaryComms;
+      class BoundaryCommunicator;
 
       /**
        * Base class for extra data needed by LB BC implementations.
@@ -103,10 +104,8 @@ namespace hemelb
            * Carry out communication necessary
            * @param isIoProcess Is the process the master process?
            */
-          virtual void DoComms(bool isIoProcess, const LatticeTimeStep timeStep)
-          {
-            // pass
-          }
+          virtual void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
+
           /***
            * Set up the Iolet.
            * @param units a UnitConverter instance.

@@ -20,7 +20,6 @@ namespace hemelb
   {
     namespace iolets
     {
-
       BoundaryValues::BoundaryValues(geometry::SiteType ioletType,
                                      geometry::LatticeData* latticeData,
                                      const std::vector<iolets::InOutLet*> &incoming_iolets,
@@ -28,7 +27,7 @@ namespace hemelb
                                      const net::MpiCommunicator& comms,
                                      const util::UnitConverter& units) :
         net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
-            state(simulationState), unitConverter(units), privateComms(comms.Duplicate())
+            state(simulationState), unitConverter(units), bcComms(comms)
       {
         std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
 
@@ -48,7 +47,7 @@ namespace hemelb
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
           // on the BC task we can create the comms
-          if (isIOletOnThisProc || IsCurrentProcTheBCProc())
+          if (isIOletOnThisProc || bcComms.IsCurrentProcTheBCProc())
           {
             localIoletCount++;
             localIoletIDs.push_back(ioletIndex);
@@ -56,7 +55,7 @@ namespace hemelb
 
 //            if (iolet->IsCommsRequired()) //DEREK: POTENTIAL MULTISCALE ISSUE (this if-statement)
 //            {
-              iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], isIOletOnThisProc));
+              iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], bcComms, isIOletOnThisProc));
 //            }
           }
         }
@@ -110,9 +109,9 @@ namespace hemelb
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
 
-        std::vector<int> processorsNeedingIoletFlags = privateComms.Gather(isIOletOnThisProc, GetBCProcRank());
+        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIOletOnThisProc, bcComms.GetBCProcRank());
 
-        if (IsCurrentProcTheBCProc())
+        if (bcComms.IsCurrentProcTheBCProc())
         {
           // Now we have an array for each IOlet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
@@ -129,16 +128,6 @@ namespace hemelb
         return processorsNeedingIoletList; // return by copy
       }
 
-      bool BoundaryValues::IsCurrentProcTheBCProc()
-      {
-        return privateComms.Rank() == GetBCProcRank();
-      }
-
-      proc_t BoundaryValues::GetBCProcRank()
-      {
-        return 0;
-      }
-
       void BoundaryValues::RequestComms()
       {
         for (int i = 0; i < localIoletCount; i++)
@@ -152,7 +141,7 @@ namespace hemelb
 
         if (iolet->IsCommsRequired())
         {
-          iolet->DoComms(IsCurrentProcTheBCProc(), state->GetTimeStep());
+          iolet->DoComms(bcComms, state->GetTimeStep());
         }
 
       }

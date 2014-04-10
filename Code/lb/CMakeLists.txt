@@ -1,5 +1,5 @@
 add_library(hemelb_lb
-	iolets/BoundaryComms.cc iolets/BoundaryValues.cc
+	iolets/BoundaryCommunicator.cc iolets/BoundaryComms.cc iolets/BoundaryValues.cc
 	iolets/InOutLet.cc
 	iolets/InOutLetCosine.cc iolets/InOutLetFile.cc
 	iolets/InOutLetMultiscale.cc

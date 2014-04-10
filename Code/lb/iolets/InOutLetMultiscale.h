@@ -14,6 +14,8 @@
 #include "multiscale/Intercommunicand.h"
 #include "multiscale/SharedValue.h"
 #include "log/Logger.h"
+#include "lb/iolets/BoundaryCommunicator.h"
+
 namespace hemelb
 {
   namespace lb
@@ -87,7 +89,7 @@ namespace hemelb
 
           virtual bool IsCommsRequired() const;
           virtual void SetCommsRequired(bool b);
-          void DoComms(bool isIoProcess, const LatticeTimeStep timeStep);
+          void DoComms(const BoundaryCommunicator& bcComms, const LatticeTimeStep timeStep);
 
         private:
           std::string label;
