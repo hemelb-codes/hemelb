@@ -97,15 +97,16 @@ namespace hemelb
              */
             SimpleRequest toself = send_it->second[gather_index];
 
-            MPI_Gatherv(toself.Pointer,
-                        toself.Count,
-                        toself.Type,
-                        receive_it->Pointer,
-                        receive_it->Counts,
-                        receive_it->Displacements,
-                        receive_it->Type,
-                        communicator.Rank(),
-                        communicator);
+            HEMELB_MPI_CALL(MPI_Gatherv, (
+                toself.Pointer,
+                toself.Count,
+                toself.Type,
+                receive_it->Pointer,
+                receive_it->Counts,
+                receive_it->Displacements,
+                receive_it->Type,
+                communicator.Rank(),
+                communicator));
             ++gather_index;
           }
         }
@@ -114,15 +115,16 @@ namespace hemelb
 
           for (ProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
           {
-            MPI_Gatherv(req->Pointer,
-                        req->Count,
-                        req->Type,
-                        NULL,
-                        NULL,
-                        NULL,
-                        req->Type,
-                        send_it->first,
-                        communicator);
+            HEMELB_MPI_CALL(MPI_Gatherv, (
+                req->Pointer,
+                req->Count,
+                req->Type,
+                NULL,
+                NULL,
+                NULL,
+                req->Type,
+                send_it->first,
+                communicator));
           }
 
         }

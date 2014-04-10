@@ -106,6 +106,68 @@ namespace hemelb
       );
       return ans;
     }
+
+    template<typename T>
+    std::vector<T> MpiCommunicator::AllGather(const T& val) const
+    {
+      std::vector<T> ans(Size());
+      T* recvbuf =  &ans[0];
+
+      HEMELB_MPI_CALL(
+          MPI_Allgather,
+          (const_cast<T*>(&val), 1, MpiDataType<T>(),
+              recvbuf, 1, MpiDataType<T>(),
+              *this)
+          );
+      return ans;
+    }
+
+    template <typename T>
+    std::vector<T> MpiCommunicator::AllToAll(const std::vector<T>& vals) const
+    {
+      std::vector<T> ans(vals.size());
+      HEMELB_MPI_CALL(
+          MPI_Alltoall,
+          (&vals[0], 1, MpiDataType<T>(),
+           &ans[0], 1, MpiDataType<T>(),
+           *this)
+      );
+      return ans;
+    }
+
+    template <typename T>
+    void MpiCommunicator::Send(const T& val, int dest, int tag) const
+    {
+      HEMELB_MPI_CALL(
+          MPI_Send,
+          (&val, 1, MpiDataType<T>(), dest, tag, *this)
+      );
+    }
+    template <typename T>
+    void MpiCommunicator::Send(const std::vector<T>& vals, int dest, int tag) const
+    {
+      HEMELB_MPI_CALL(
+          MPI_Send,
+          (&vals[0], vals.size(), MpiDataType<T>(), dest, tag, *this)
+      );
+    }
+
+    template <typename T>
+    void MpiCommunicator::Receive(T& val, int src, int tag, MPI_Status* stat) const
+    {
+      HEMELB_MPI_CALL(
+          MPI_Recv,
+          (&val, 1, MpiDataType<T>(), src, tag, *this, stat)
+      );
+    }
+    template <typename T>
+    void MpiCommunicator::Receive(std::vector<T>& vals, int src, int tag, MPI_Status* stat) const
+    {
+      HEMELB_MPI_CALL(
+          MPI_Recv,
+          (&vals, vals.size(), MpiDataType<T>(), src, tag, *this, stat)
+      );
+    }
   }
 }
 

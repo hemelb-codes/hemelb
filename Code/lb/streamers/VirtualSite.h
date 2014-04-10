@@ -155,8 +155,7 @@ namespace hemelb
                 }
                 else
                 {
-                  log::Logger::Log<log::Critical, log::OnePerCore>("Need off core site data for VirtualSite neighbour.");
-                  std::exit(1);
+                  throw Exception() << "Need off core site data for VirtualSite neighbour.";
                 }
               }
 
