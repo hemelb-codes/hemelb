@@ -197,6 +197,7 @@ void SimulationMaster::Initialise()
                                                 propertyCache,
                                                 latticeBoltzmannModel->GetLbmParams(),
                                                 fileManager->GetColloidPath(),
+                                                ioComms,
                                                 timings);
   }
   timings[hemelb::reporting::Timers::colloidInitialisation].Stop();

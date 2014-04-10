@@ -37,9 +37,9 @@ namespace hemelb
                                          lb::MacroscopicPropertyCache& propertyCache,
                                          const hemelb::lb::LbmParameters *lbmParams,
                                          const std::string& outputPath,
+                                         const net::IOCommunicator& ioComms_,
                                          reporting::Timers& timers) :
-      localRank(net::IOCommunicator::Instance()->Rank()),
-      simulationState(simulationState), timers(timers)
+      ioComms(ioComms_), simulationState(simulationState), timers(timers)
     {
       // The neighbourhood used here is different to the latticeInfo used to create latDatLBM
       // The portion of the geometry input file that was read in by this proc, i.e. gmyResult
@@ -53,15 +53,15 @@ namespace hemelb
       // determine information about neighbour sites and processors for all local fluid sites
       InitialiseNeighbourList(latDatLBM, gmyResult, neighbourhood);
 
-      bool allGood = net::IOCommunicator::Instance()->OnIORank() || (neighbourProcessors.size() > 0);
+      bool allGood = ioComms.OnIORank() || (neighbourProcessors.size() > 0);
       log::Logger::Log<log::Debug, log::OnePerCore>(
         "[Rank %i]: ColloidController - neighbourhood %i, neighbours %i, allGood %i\n",
-        localRank, neighbourhood.size(), neighbourProcessors.size(), allGood);
+        ioComms.Rank(), neighbourhood.size(), neighbourProcessors.size(), allGood);
 
       io::xml::Element particlesElem = xml.GetRoot().GetChildOrThrow("colloids").GetChildOrThrow("particles");
       particleSet = new ParticleSet(latDatLBM, particlesElem, propertyCache,
                                     lbmParams,
-                                    neighbourProcessors, outputPath);
+                                    neighbourProcessors, ioComms, outputPath);
     }
 
     void ColloidController::InitialiseNeighbourList(
@@ -111,7 +111,7 @@ namespace hemelb
 
           // if site is local
           site_t siteId = siteTraverser.GetCurrentIndex();
-          if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->localRank)
+          if (gmyResult.Blocks[blockId].Sites[siteId].targetProcessor != this->ioComms.Rank())
           {
             log::Logger::Log<log::Trace, log::OnePerCore>(
               "ColloidController: site with id %i and coords (%i,%i,%i) has proc %i (non-local).\n",
@@ -146,7 +146,7 @@ namespace hemelb
                   &neighbourBlockId, &neighbourSiteId, &neighbourRank);
 
             // if neighbour is remote
-            if (!isValid || neighbourRank == this->localRank)
+            if (!isValid || neighbourRank == this->ioComms.Rank())
               continue;
 
             // if new neighbourRank
@@ -162,7 +162,7 @@ namespace hemelb
             // debug message so this neighbour list can be compared to the LatticeData one
             log::Logger::Log<log::Trace, log::OnePerCore>(
                 "ColloidController: added %i as neighbour for %i because site %i in block %i is neighbour to site %i in block %i in direction (%i,%i,%i)\n",
-                (int)neighbourRank, (int)(this->localRank),
+                (int)neighbourRank, (int)(this->ioComms.Rank()),
                 (int)neighbourSiteId, (int)neighbourBlockId,
                 (int)siteId, (int)blockId,
                 (*itDirectionVector).x, (*itDirectionVector).y, (*itDirectionVector).z);

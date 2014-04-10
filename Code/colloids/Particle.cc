@@ -38,18 +38,18 @@ namespace hemelb
           globalPosition.x, globalPosition.y, globalPosition.z);
     }
 
-    const bool Particle::operator<(const Particle& other) const
-    {
-      // ORDER BY isLocal, ownerRank, particleId
-      if (ownerRank == other.ownerRank)
-        return (particleId < other.particleId);
-      else if (ownerRank == net::IOCommunicator::Instance()->Rank())
-        return true;
-      else if (other.ownerRank == net::IOCommunicator::Instance()->Rank())
-        return false;
-      else
-        return (ownerRank < other.ownerRank);
-    }
+//    const bool Particle::operator<(const Particle& other) const
+//    {
+//      // ORDER BY isLocal, ownerRank, particleId
+//      if (ownerRank == other.ownerRank)
+//        return (particleId < other.particleId);
+//      else if (ownerRank == net::IOCommunicator::Instance()->Rank())
+//        return true;
+//      else if (other.ownerRank == net::IOCommunicator::Instance()->Rank())
+//        return false;
+//      else
+//        return (ownerRank < other.ownerRank);
+//    }
 
     const bool Particle::IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const
     {
@@ -208,7 +208,7 @@ namespace hemelb
             proc_t procId;
             site_t siteId;
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
-            bool isSiteLocal = (procId == net::IOCommunicator::Instance()->Rank());
+            bool isSiteLocal = (procId == latDatLBM.GetLocalRank());
 
             log::Logger::Log<log::Trace, log::OnePerCore>(
               "In colloids::Particle::CalculateFeedbackForces, particleId: %i, position: {%g,%g,%g}, siteGlobalPosition: {%i,%i,%i}, got siteId: %i, isSiteValid: %s, isSiteLocal: %s, procId: %i\n",
@@ -283,7 +283,7 @@ namespace hemelb
             proc_t procId;
             site_t siteId;
             bool isSiteValid = latDatLBM.GetContiguousSiteId(siteGlobalPosition, procId, siteId);
-            bool isSiteLocal = (procId == net::IOCommunicator::Instance()->Rank());
+            bool isSiteLocal = (procId == latDatLBM.GetLocalRank());
 
             if (log::Logger::ShouldDisplay<log::Trace>())
             {
@@ -313,7 +313,7 @@ namespace hemelb
                 {
                   siteStatus = 3; // individual site is not simulated, i.e. must be solid
                 }
-                else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == net::IOCommunicator::Instance()->Rank())
+                else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) == latDatLBM.GetLocalRank())
                 {
                   if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).SiteIsSolid(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)))
                   siteStatus = 4; // individual site is local but solid (should not happen?)
@@ -325,7 +325,7 @@ namespace hemelb
                 globalStatus = 1; // invalid - out of range
               else if (blockStatus == 2 || (siteStatus == 3) | (siteStatus == 4))
                 globalStatus = 2; // solid
-              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) != net::IOCommunicator::Instance()->Rank())
+              else if (latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)) != latDatLBM.GetLocalRank())
                 globalStatus = 3; // remote fluid
 
               log::Logger::Log<log::Trace, log::OnePerCore>("ABOUT TO DO STUFF\n");
@@ -366,7 +366,7 @@ namespace hemelb
                 {
                   log::Logger::Log<log::Trace, log::OnePerCore>("MAJOR PROBLEM! isValid: %s, isLocal: %s, procIdForSite: %i, localRank: %i\n", isSiteValid ? "T": "F", isSiteLocal ? "T" : "F",
                     latDatLBM.GetBlock(latDatLBM.GetBlockIdFromBlockCoords(blockCoords)).GetProcessorRankForSite(latDatLBM.GetLocalSiteIdFromLocalSiteCoords(localSiteCoords)),
-                    net::IOCommunicator::Instance()->Rank());
+                    latDatLBM.GetLocalRank());
                 }
             }
 
