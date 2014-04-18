@@ -222,6 +222,28 @@ namespace hemelb
       return Isend(&vals[0], vals.size(), dest, tag);
     }
 
+    // Issend implementations
+    template <typename T>
+    MpiRequest MpiCommunicator::Issend(const T* valPtr, int count, int dest, int tag) const
+    {
+      MPI_Request req;
+      HEMELB_MPI_CALL(
+          MPI_Issend,
+          (const_cast<T*>(valPtr), count, MpiDataType<T>(), dest, tag, *this, &req)
+      );
+      return MpiRequest(req);
+    }
+    template <typename T>
+    MpiRequest MpiCommunicator::Issend(const T& val, int dest, int tag) const
+    {
+      return Issend(&val, 1, dest, tag);
+    }
+    template <typename T>
+    MpiRequest MpiCommunicator::Issend(const std::vector<T>& vals, int dest, int tag) const
+    {
+      return Issend(&vals[0], vals.size(), dest, tag);
+    }
+
     // Irecv implementations
     template <typename T>
     MpiRequest MpiCommunicator::Irecv(T* valPtr, int count, int source, int tag) const

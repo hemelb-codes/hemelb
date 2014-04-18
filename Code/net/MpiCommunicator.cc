@@ -6,6 +6,7 @@
 
 #include "net/MpiCommunicator.h"
 #include "net/MpiGroup.h"
+#include "net/MpiRequest.h"
 
 namespace hemelb
 {
@@ -111,5 +112,28 @@ namespace hemelb
       HEMELB_MPI_CALL(MPI_Comm_dup, (*commPtr, &newComm));
       return MpiCommunicator(newComm, true);
     }
+
+    void MpiCommunicator::Barrier() const
+    {
+      HEMELB_MPI_CALL(MPI_Barrier, (*commPtr));
+    }
+
+    MpiRequest MpiCommunicator::Ibarrier() const
+    {
+      MPI_Request req;
+      HEMELB_MPI_CALL(MPI_Ibarrier, (*commPtr, &req));
+      return MpiRequest(req);
+    }
+
+    bool MpiCommunicator::Iprobe(int source, int tag, MPI_Status* stat) const
+    {
+      int flag;
+      HEMELB_MPI_CALL(
+          MPI_Iprobe,
+          (source, tag, *commPtr, &flag, stat)
+      );
+      return flag;
+    }
+
   }
 }

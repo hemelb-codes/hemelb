@@ -102,5 +102,43 @@ namespace hemelb
       }
     }
     */
+
+    bool MpiRequest::Test()
+    {
+      int flag;
+      HEMELB_MPI_CALL(MPI_Test, (reqPtr.get(), &flag, MPI_STATUS_IGNORE));
+      return flag;
+    }
+
+    bool MpiRequest::TestAll(ReqVec& reqs)
+    {
+      int flag;
+      size_t n = reqs.size();
+      if (n == 0)
+        return true;
+
+      MPI_Request* rawreqs = new MPI_Request[n];
+      try
+      {
+        for (size_t i = 0; i < n; ++i)
+        {
+          rawreqs[i] = reqs[i];
+        }
+
+        HEMELB_MPI_CALL(
+            MPI_Testall,
+            (n, rawreqs, &flag, MPI_STATUSES_IGNORE)
+        );
+      }
+      catch (const std::exception& e)
+      {
+        delete[] rawreqs;
+        throw;
+      }
+
+      delete[] rawreqs;
+      return flag;
+    }
+
   }
 }
