@@ -27,11 +27,6 @@ namespace hemelb
       ans->Init();
       return ans;
     }
-    SimConfig::SimConfig() :
-        xmlFilePath(""), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
-    {
-    }
 
     SimConfig::SimConfig(const std::string& path) :
         xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),

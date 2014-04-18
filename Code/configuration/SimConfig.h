@@ -168,10 +168,6 @@ namespace hemelb
 
       protected:
         /**
-         * Protected default ctor to allow derived test fixture classes to create mocks.
-         */
-        SimConfig();
-        /**
          * Create the unit converter - virtual so that mocks can override it.
          */
         virtual void CreateUnitConverter();
