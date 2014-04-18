@@ -17,6 +17,4 @@
 #include "net/mixins/gathers/SeparatedGathers.h"
 #include "net/mixins/InterfaceDelegationNet.h"
 #include "net/mixins/gathers/ViaPointPointGathers.h"
-#include "net/mixins/alltoall/SeparatedAllToAll.h"
-#include "net/mixins/alltoall/ViaPointPointAllToAll.h"
 #endif

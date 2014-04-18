@@ -42,7 +42,6 @@ namespace hemelb
     {
       ReceiveGathers();
       ReceiveGatherVs();
-      ReceiveAllToAll();
       // Ensure collectives are called before point-to-point, as some implementing mixins implement collectives via point-to-point
       ReceivePointToPoint();
     }
@@ -52,7 +51,6 @@ namespace hemelb
 
       SendGathers();
       SendGatherVs();
-      SendAllToAll();
       // Ensure collectives are called before point-to-point, as some implementing mixins implement collectives via point-to-point
       SendPointToPoint();
     }
@@ -64,7 +62,6 @@ namespace hemelb
       WaitGathers();
       WaitGatherVs();
       WaitPointToPoint();
-      WaitAllToAll();
 
       displacementsBuffer.clear();
       countsBuffer.clear();

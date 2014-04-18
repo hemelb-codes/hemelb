@@ -27,7 +27,6 @@
 		<communications>
 			<implementations>
 				<pointpoint>{{POINTPOINT_IMPLEMENTATION}}</pointpoint>
-				<alltoall>{{ALLTOALL_IMPLEMENTATION}}</alltoall>
 				<gathers>{{GATHERS_IMPLEMENTATION}}</gathers>
 			</implementations>
 			<separated_concerns>{{SEPARATE_CONCERNS}}</separated_concerns>
