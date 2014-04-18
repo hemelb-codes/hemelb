@@ -66,14 +66,5 @@ namespace hemelb
                                                                    counts,
                                                                    type));
     }
-
-    void StoringNet::RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type)
-    {
-      allToAllReceiveProcComms.push_back(SimpleRequest(buffer, count, type, 0));
-    }
-    void StoringNet::RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type)
-    {
-      allToAllSendProcComms.push_back(SimpleRequest(buffer, count, type, 0));
-    }
   }
 }
