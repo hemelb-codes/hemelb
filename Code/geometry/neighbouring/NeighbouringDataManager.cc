@@ -11,8 +11,9 @@
 
 #include "geometry/neighbouring/NeighbouringDataManager.h"
 #include "geometry/LatticeData.h"
-
 #include "log/Logger.h"
+#include "net/MapAllToAll.h"
+
 namespace hemelb
 {
   namespace geometry
@@ -24,8 +25,7 @@ namespace hemelb
           const LatticeData & localLatticeData, NeighbouringLatticeData & neighbouringLatticeData,
           net::InterfaceDelegationNet & net) :
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),
-              net(net), needsEachProcHasFromMe(net.Size()),
-              needsHaveBeenShared(false)
+              net(net), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId,
@@ -53,7 +53,7 @@ namespace hemelb
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
         // by the same order, as the neededSites, so this should be OK.
-        for (std::vector<site_t>::iterator localNeed = neededSites.begin();
+        for (IdVec::iterator localNeed = neededSites.begin();
             localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
@@ -68,22 +68,27 @@ namespace hemelb
                              source);
           net.RequestReceiveR(site.GetWallNormal(), source);
         }
-        for (proc_t other = 0; other < net.Size(); other++)
+
+        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.cbegin();
+            iter != needsEachProcHasFromMe.cend();
+            ++iter)
         {
-          for (std::vector<site_t>::iterator needOnProcFromMe =
-              needsEachProcHasFromMe[other].begin();
-              needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
+          proc_t other = iter->first;
+          const IdVec& neededIds = iter->second;
+          for (IdVec::const_iterator needOnProcFromMe = neededIds.cbegin();
+              needOnProcFromMe != neededIds.cend();
+              ++needOnProcFromMe)
           {
             site_t localContiguousId =
-                localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
+                            localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
 
-            Site<LatticeData> site =
-                const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
-            // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSendR(site.GetSiteData().GetWallIntersectionData(), other);
-            net.RequestSendR(site.GetSiteData().GetIoletIntersectionData(), other);
-            net.RequestSendR(site.GetSiteData().GetIoletId(), other);
-            net.RequestSendR(site.GetSiteData().GetSiteType(), other);
+            const Site<const LatticeData> site = localLatticeData.GetSite(localContiguousId);
+            const SiteData& sd = site.GetSiteData();
+
+            net.RequestSendR(sd.GetWallIntersectionData(), other);
+            net.RequestSendR(sd.GetIoletIntersectionData(), other);
+            net.RequestSendR(sd.GetIoletId(), other);
+            net.RequestSendR(sd.GetSiteType(), other);
             net.RequestSend(site.GetWallDistances(),
                             localLatticeData.GetLatticeInfo().GetNumVectors() - 1,
                             other);
@@ -111,7 +116,7 @@ namespace hemelb
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,
         // by the same order, as the neededSites, so this should be OK.
-        for (std::vector<site_t>::iterator localNeed = neededSites.begin();
+        for (IdVec::iterator localNeed = neededSites.begin();
             localNeed != neededSites.end(); localNeed++)
         {
           proc_t source = ProcForSite(*localNeed);
@@ -121,21 +126,24 @@ namespace hemelb
                              source);
 
         }
-        for (proc_t other = 0; other < net.Size(); other++)
+
+        const unsigned Q = localLatticeData.GetLatticeInfo().GetNumVectors();
+        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.cbegin();
+            iter != needsEachProcHasFromMe.cend();
+            ++iter)
         {
-          for (std::vector<site_t>::iterator needOnProcFromMe =
-              needsEachProcHasFromMe[other].begin();
-              needOnProcFromMe != needsEachProcHasFromMe[other].end(); needOnProcFromMe++)
+          proc_t other = iter->first;
+          const IdVec& neededIds = iter->second;
+          for (IdVec::const_iterator needOnProcFromMe = neededIds.cbegin();
+              needOnProcFromMe != neededIds.end(); ++needOnProcFromMe)
           {
             site_t localContiguousId =
                 localLatticeData.GetLocalContiguousIdFromGlobalNoncontiguousId(*needOnProcFromMe);
-            Site<LatticeData> site =
-                const_cast<LatticeData&>(localLatticeData).GetSite(localContiguousId);
+            const Site<const LatticeData> site = localLatticeData.GetSite(localContiguousId);
             // have to cast away the const, because no respect for const-ness for sends in MPI
-            net.RequestSend(const_cast<distribn_t*>(site.GetFOld(localLatticeData.GetLatticeInfo().GetNumVectors())),
-                            localLatticeData.GetLatticeInfo().GetNumVectors(),
+            net.RequestSend(site.GetFOld(Q),
+                            Q,
                             other);
-
           }
         }
       }
@@ -146,39 +154,48 @@ namespace hemelb
         //if (needsHaveBeenShared == true)
         //  return; //TODO: Fix!
 
-        // build a table of which procs needs can be achieved from which proc
-        std::vector<std::vector<site_t> > needsIHaveFromEachProc(net.Size());
-        std::vector<int> countOfNeedsIHaveFromEachProc(net.Size(), 0);
-        for (std::vector<site_t>::iterator localNeed = neededSites.begin();
+        // build a table of which sites are needed by this rank, by other rank.
+        IdsMap needsIHaveFromEachProc;
+        // This map will count the number per-rank
+        CountMap countOfNeedsIHaveFromEachProc;
+        for (IdVec::iterator localNeed = neededSites.begin();
             localNeed != neededSites.end(); localNeed++)
         {
-          needsIHaveFromEachProc[ProcForSite(*localNeed)].push_back(*localNeed);
-          countOfNeedsIHaveFromEachProc[ProcForSite(*localNeed)]++;
-
+          site_t needId = *localNeed;
+          int needRank = ProcForSite(needId);
+          needsIHaveFromEachProc[needRank].push_back(needId);
+          countOfNeedsIHaveFromEachProc[needRank]++;
         }
 
-        // every proc must send to all procs, how many it needs from that proc
-        net.RequestAllToAllSend(countOfNeedsIHaveFromEachProc);
+        // This will store the numbers of sites other ranks need from this rank
+        CountMap countOfNeedsOnEachProcFromMe;
+        // This is collective
+        const net::MpiCommunicator& comms = net.GetCommunicator();
+        net::MapAllToAll(comms, countOfNeedsIHaveFromEachProc, countOfNeedsOnEachProcFromMe, 1234);
 
-        // every proc must receive from all procs, how many it needs to give that proc
-        std::vector<int> countOfNeedsOnEachProcFromMe(net.Size(), 0);
-        net.RequestAllToAllReceive(countOfNeedsOnEachProcFromMe);
-        net.Dispatch();
-
-        for (proc_t other = 0; other < net.Size(); other++)
+        std::vector<net::MpiRequest> requestQueue;
+        // Now, for every rank, which I need something from, send the ids of those
+        for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.cbegin();
+            countIt != countOfNeedsIHaveFromEachProc.cend();
+            ++countIt)
         {
-
-          // now, for every proc, which I need something from,send the ids of those
-          net.RequestSendV(needsIHaveFromEachProc[other], other);
-          // and, for every proc, which needs something from me, receive those ids
-          needsEachProcHasFromMe[other].resize(countOfNeedsOnEachProcFromMe[other]);
-          net.RequestReceiveV(needsEachProcHasFromMe[other], other);
-          // In principle, this bit could have been implemented as a separate GatherV onto every proc
-          // However, in practice, we expect the needs to be basically local
-          // so using point-to-point will be more efficient.
+          int other = countIt->first;
+          requestQueue.push_back(comms.Isend(needsIHaveFromEachProc[other], other));
         }
 
-        net.Dispatch();
+        // And for every rank, which needs something from me, receive those ids
+        for (CountMap::const_iterator countIt = countOfNeedsOnEachProcFromMe.cbegin();
+            countIt != countOfNeedsOnEachProcFromMe.cend();
+            ++countIt)
+        {
+          int other = countIt->first;
+          int size = countIt->second;
+          IdVec& otherNeeds = needsEachProcHasFromMe[other];
+          otherNeeds.resize(size);
+          requestQueue.push_back(comms.Irecv(otherNeeds, other));
+        }
+
+        net::MpiRequest::WaitAll(requestQueue);
         needsHaveBeenShared = true;
       }
     }

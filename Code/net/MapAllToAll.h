@@ -23,13 +23,22 @@ namespace hemelb
                      std::map<int, T>& receivedVals,
                      const int tag = 1234)
     {
-      std::vector<MpiRequest> sendReqs(valsToSend.size());
       receivedVals.clear();
+
+      std::vector<MpiRequest> sendReqs;
       int localRank = comm.Rank();
+      int nSends = valsToSend.size();
+      // Is localRank in the map of send destinations?
+      if (valsToSend.find(localRank) != valsToSend.end())
+        // If so, reduce the number of sends by 1.
+        nSends -= 1;
+      // Set up a container for all the Status objs
+      sendReqs.resize(nSends);
 
       typename std::map<int, T>::const_iterator iter = valsToSend.cbegin(),
           end = valsToSend.cend();
-      for (int i = 0; iter != end; ++iter, ++i) {
+      int i = 0;
+      for (; iter != end; ++iter) {
         int rank = iter->first;
         const T& val = iter->second;
         if (rank == localRank)
@@ -40,6 +49,7 @@ namespace hemelb
         {
           // Synchronous to ensure we know when this is matched
           sendReqs[i] = comm.Issend(val, rank, tag);
+          i++;
         }
       }
 
