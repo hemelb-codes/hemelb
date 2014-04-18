@@ -47,6 +47,9 @@ namespace hemelb
         static void WaitAll(ReqVec& reqs);
         static void WaitAll(ReqVec& reqs, StatVec& stats);
 
+        bool Test();
+        static bool TestAll(ReqVec& reqs);
+
       private:
 
         boost::shared_ptr<MPI_Request> reqPtr;
