@@ -589,7 +589,7 @@ namespace hemelb
         timers[hemelb::reporting::Timers::moveForcingData].Start();
         // Now get all the blocks being forced upon me.
         std::map<proc_t, std::vector<site_t> > blocksForcedOnMeByEachProc;
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
@@ -609,7 +609,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Moving forcing block ids");
         netForMoveSending.Dispatch();
         // Now go through every block forced upon me and add it to the list of ones I want.
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           if (blocksForcedOnMe[otherProc] > 0)
           {
@@ -683,7 +683,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Calculating block requirements");
         timers[hemelb::reporting::Timers::blockRequirements].Start();
         // Populate numberOfBlocksRequiredFrom
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           numberOfBlocksRequiredFrom[otherProc] = blockIdsIRequireFromX.count(otherProc) == 0 ?
             0 :
@@ -699,7 +699,7 @@ namespace hemelb
         // Awesome. Now we need to get a list of all the blocks wanted from each core by each other
         // core.
         net::Net netForMoveSending(comms);
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           blockIdsXRequiresFromMe[otherProc] =
               std::vector<site_t>(numberOfBlocksXRequiresFromMe[otherProc]);
@@ -732,10 +732,10 @@ namespace hemelb
           }
         }
 
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           for (site_t blockNum = 0;
-              blockNum < (site_t) ( ( ( ( (blockIdsXRequiresFromMe[otherProc].size())))));
+              blockNum < site_t(blockIdsXRequiresFromMe[otherProc].size());
               ++blockNum)
           {
             site_t blockId = blockIdsXRequiresFromMe[otherProc][blockNum];
@@ -751,7 +751,7 @@ namespace hemelb
 
         }
 
-        for (site_t moveNumber = 0; moveNumber < (site_t) ( ( ( ( (moveData.size())))));
+        for (site_t moveNumber = 0; moveNumber < site_t(moveData.size());
             moveNumber += 3)
         {
           site_t blockId = moveData[moveNumber];
@@ -766,7 +766,7 @@ namespace hemelb
         }
 
         net::Net netForMoveSending(comms);
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
               it != blockIdsIRequireFromX[otherProc].end(); ++it)
@@ -812,7 +812,7 @@ namespace hemelb
 
         net::Net netForMoveSending(comms);
 
-        for (proc_t otherProc = 0; otherProc < (proc_t) ( ( ( ( (comms.Size()))))); ++otherProc)
+        for (proc_t otherProc = 0; otherProc < proc_t(comms.Size()); ++otherProc)
         {
           allMoves[otherProc] = 0;
           for (std::vector<site_t>::iterator it = blockIdsIRequireFromX[otherProc].begin();
@@ -1147,7 +1147,7 @@ namespace hemelb
           log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
           // Now spread and compare the adjacency information. Larger ranks send data to smaller
           // ranks which receive the data and compare it.
-          for (proc_t neigh = 0; neigh < (proc_t) ( ( ( ( (comms.Size()))))); ++neigh)
+          for (proc_t neigh = 0; neigh < proc_t(comms.Size()); ++neigh)
           {
             SendAdjacencyDataToLowerRankedProc(neigh,
                                                counts[neigh],
