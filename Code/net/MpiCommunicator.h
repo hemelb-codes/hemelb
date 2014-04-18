@@ -21,6 +21,7 @@ namespace hemelb
   namespace net
   {
     class MpiGroup;
+    class MpiRequest;
 
     class MpiCommunicator
     {
@@ -116,14 +117,32 @@ namespace hemelb
         std::vector<T> AllToAll(const std::vector<T>& vals) const;
 
         template <typename T>
+        void Send(const std::vector<T>& val, int dest, int tag=0) const;
+        template <typename T>
         void Send(const T& val, int dest, int tag=0) const;
         template <typename T>
-        void Send(const std::vector<T>& val, int dest, int tag=0) const;
+        void Send(const T* valPtr, int count, int dest, int tag) const;
 
         template <typename T>
-        void Receive(T& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+        void Recv(std::vector<T>& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
         template <typename T>
-        void Receive(std::vector<T>& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+        void Recv(T& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+        template <typename T>
+        void Recv(T* val, int count, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+
+        template <typename T>
+        MpiRequest Isend(const T& val, int dest, int tag=0) const;
+        template <typename T>
+        MpiRequest Isend(const std::vector<T>& vals, int dest, int tag=0) const;
+        template <typename T>
+        MpiRequest Isend(const T* valPtr, int count, int dest, int tag=0) const;
+
+        template <typename T>
+        MpiRequest Irecv(T& val, int source, int tag=0) const;
+        template <typename T>
+        MpiRequest Irecv(std::vector<T>& vals, int source, int tag=0) const;
+        template <typename T>
+        MpiRequest Irecv(T* valPtr, int count, int source, int tag=0) const;
 
       protected:
         /**
