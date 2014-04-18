@@ -55,8 +55,11 @@ namespace hemelb
           NeighbouringLatticeData & neighbouringLatticeData;
           net::InterfaceDelegationNet & net;
 
-          std::vector<site_t> neededSites;
-          std::vector<std::vector<site_t> > needsEachProcHasFromMe;
+          typedef std::vector<site_t> IdVec;
+          typedef std::map<int, int> CountMap;
+          typedef std::map<proc_t, IdVec > IdsMap;
+          IdVec neededSites;
+          IdsMap needsEachProcHasFromMe;
 
           bool needsHaveBeenShared;
 
