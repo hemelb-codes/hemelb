@@ -39,8 +39,8 @@ namespace hemelb
             helpers::FolderTestFixture::setUp();
 
             latDat = FourCubeLatticeData::Create(Comms());
-
-            simConfig = new OneInOneOutSimConfig();
+            std::string path("");
+            simConfig = new OneInOneOutSimConfig(path);
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
                                                        simConfig->GetTotalTimeSteps());
             lbmParams = new lb::LbmParameters(simState->GetTimeStepLength(),
