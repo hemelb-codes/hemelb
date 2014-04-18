@@ -19,7 +19,6 @@ namespace hemelb
   {
     class Net : public PointPointImpl,
                 public InterfaceDelegationNet,
-                public AllToAllImpl,
                 public GathersImpl
     {
       public:

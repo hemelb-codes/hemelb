@@ -28,7 +28,7 @@ namespace hemelb
       using namespace hemelb::net;
 
       class NetMock : public InterfaceDelegationNet,public RecordingNet,
-                      public ViaPointPointGathers, public ViaPointPointAllToAll
+                      public ViaPointPointGathers
       {
         public:
           NetMock(net::MpiCommunicator & communicator) :
