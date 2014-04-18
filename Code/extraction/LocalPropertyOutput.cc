@@ -163,7 +163,7 @@ namespace hemelb
       else
       {
         // Receive the writing start position from the previous core.
-        comms.Receive(localDataOffsetIntoFile, comms.Rank()-1, 1);
+        comms.Recv(localDataOffsetIntoFile, comms.Rank()-1, 1);
 
         // Send the next core its start position.
         if (comms.Rank() != (comms.Size() - 1))
