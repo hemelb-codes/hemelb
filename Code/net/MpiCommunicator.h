@@ -22,6 +22,7 @@ namespace hemelb
   {
     class MpiGroup;
     class MpiRequest;
+    class MpiStatus;
 
     class MpiCommunicator
     {
@@ -92,6 +93,11 @@ namespace hemelb
          */
         MpiCommunicator Duplicate() const;
 
+        void Barrier() const;
+        MpiRequest Ibarrier() const;
+
+        bool Iprobe(int source, int tag, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+
         template <typename T>
         void Broadcast(T& val, const int root) const;
         template <typename T>
@@ -136,6 +142,13 @@ namespace hemelb
         MpiRequest Isend(const std::vector<T>& vals, int dest, int tag=0) const;
         template <typename T>
         MpiRequest Isend(const T* valPtr, int count, int dest, int tag=0) const;
+
+        template <typename T>
+        MpiRequest Issend(const T& val, int dest, int tag=0) const;
+        template <typename T>
+        MpiRequest Issend(const std::vector<T>& vals, int dest, int tag=0) const;
+        template <typename T>
+        MpiRequest Issend(const T* valPtr, int count, int dest, int tag=0) const;
 
         template <typename T>
         MpiRequest Irecv(T& val, int source, int tag=0) const;
