@@ -34,12 +34,6 @@ namespace hemelb
 
     };
 
-    class AllToAllProcComms : public BaseProcComms<SimpleRequest>
-    // Rank of request is not used - is all-to-all
-    {
-
-    };
-
     class GatherVReceiveProcComms : public BaseProcComms<GatherVReceiveRequest>
     {
 

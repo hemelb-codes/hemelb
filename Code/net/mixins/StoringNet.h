@@ -27,9 +27,6 @@ namespace hemelb
         void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type);
         void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type);
 
-        virtual void RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type);
-        virtual void RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type);
-
       protected:
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
@@ -43,10 +40,6 @@ namespace hemelb
 
         std::map<proc_t, GatherProcComms> gatherSendProcessorComms;
         GatherProcComms gatherReceiveProcessorComms;
-
-        AllToAllProcComms allToAllReceiveProcComms;
-        AllToAllProcComms allToAllSendProcComms;
-
     };
   }
 }

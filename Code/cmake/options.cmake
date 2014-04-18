@@ -126,8 +126,6 @@ hemelb_cachevar(HEMELB_POINTPOINT_IMPLEMENTATION Coalesce
   STRING "Point to point comms implementation, choose 'Coalesce', 'Separated', or 'Immediate'" )
 hemelb_cachevar(HEMELB_GATHERS_IMPLEMENTATION Separated
   STRING "Gather comms implementation, choose 'Separated', or 'ViaPointPoint'" )
-hemelb_cachevar(HEMELB_ALLTOALL_IMPLEMENTATION Separated
-  STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 
 #
 # Specify the variables requiring forwarding
