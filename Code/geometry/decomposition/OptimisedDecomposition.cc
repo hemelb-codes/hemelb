@@ -132,7 +132,6 @@ namespace hemelb
         idx_t weightFlag = 2;
         idx_t numberingFlag = 0;
         idx_t edgesCut = 0;
-        idx_t nDims = 3;
         idx_t options[4] = { 0, 0, 0, 0 };
         if (ShouldValidate())
         {
@@ -1193,9 +1192,9 @@ namespace hemelb
         // If this is a greater rank number than the neighbouringProc, receive the data.
         if (neighbouringProc > comms.Rank())
         {
-          comms.Receive(neighboursAdjacencyCount, neighbouringProc, 42);
+          comms.Recv(neighboursAdjacencyCount, neighbouringProc, 42);
           neighboursAdjacencyData.resize(neighboursAdjacencyCount);
-          comms.Receive(neighboursAdjacencyData, neighbouringProc, 43);
+          comms.Recv(neighboursAdjacencyData, neighbouringProc, 43);
         }
         else // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
         // Duplicate the data.

@@ -1,6 +1,7 @@
 add_library(hemelb_net
   MpiDataType.cc MpiEnvironment.cc MpiError.cc
   MpiCommunicator.cc MpiGroup.cc MpiFile.cc
+  MpiRequest.cc MpiStatus.cc
  IteratedAction.cc BaseNet.cc 
 IOCommunicator.cc
 mixins/pointpoint/CoalescePointPoint.cc
