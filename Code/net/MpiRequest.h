@@ -41,6 +41,8 @@ namespace hemelb
           return *reqPtr;
         }
 
+        operator bool() const;
+
         void Wait();
         void Wait(MpiStatus& stat);
 
