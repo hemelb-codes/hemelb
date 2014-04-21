@@ -99,7 +99,7 @@ namespace hemelb
         /**
          * Request object for the collective
          */
-        MPI_Request collectiveReq;
+        net::MpiRequest collectiveReq;
     };
   }
 }
