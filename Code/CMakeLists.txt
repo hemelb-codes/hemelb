@@ -4,7 +4,10 @@ project(HemeLB)
 
 #---- OPTION switches accepted by the build -------
 
-option(HEMELB_USE_DEBUGGER "Use built in hemelb debugger" OFF)
+option(HEMELB_BUILD_DEBUGGER "Build the built in debugger" ON)
+# option(HEMELB_DEBUGGER_IMPLEMENTATION "Which implementation to use for the debugger" none)
+# mark_as_advanced(HEMELB_DEBUGGER_IMPLEMENTATION)
+
 option(HEMELB_VALIDATE_GEOMETRY "Validate geometry" OFF)
 option(HEMELB_BUILD_TESTS_ALL "Build all the tests" ON)
 option(HEMELB_BUILD_TESTS_UNIT "Build the unit-tests (HEMELB_BUILD_TESTS_ALL takes precedence)" ON)

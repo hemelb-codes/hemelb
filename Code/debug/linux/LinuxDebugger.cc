@@ -43,9 +43,5 @@ namespace hemelb
       return debugLinuxDir + "/launchGdbs.sh";
     }
 
-    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm) {
-      return new LinuxDebugger(executable, comm);
-    }
-
   } // namespace debug
 } // namespace hemelb

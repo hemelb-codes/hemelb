@@ -27,7 +27,7 @@ namespace hemelb
       // C'tor...
       LinuxDebugger(const char* const executable, const net::MpiCommunicator& comm);
       // ... which the factory function needs to be able to get at.
-      friend Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
+      friend class Debugger;
       
     };
     
