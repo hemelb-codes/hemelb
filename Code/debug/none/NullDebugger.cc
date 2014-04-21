@@ -30,9 +30,5 @@ namespace hemelb
     {
     }
 
-    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm)
-    {
-      return new NullDebugger(executable, comm);
-    }
   }
 }

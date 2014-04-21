@@ -27,12 +27,10 @@ namespace hemelb
       // C'tor...
       OsxDebugger(const char* const executable, const net::MpiCommunicator& comm);
       // ... which the factory function needs to be able to get at.
-      friend Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
+      friend class Debugger;
       
     };
     
-    // Factory. Don't be calling this.
-    Debugger* PlatformDebuggerFactory(const char* const executable, const net::MpiCommunicator& comm);
   }
 }
 

@@ -48,10 +48,5 @@ namespace hemelb
       return debugOsxDir + "/MPIdebug.applescript";
     }
 
-    Debugger* PlatformDebuggerFactory(const char * const executable, const net::MpiCommunicator& comm)
-    {
-      return new OsxDebugger(executable, comm);
-    }
-
   } // namespace debug
 } // namespace hemelb

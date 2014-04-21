@@ -8,14 +8,15 @@
 // 
 
 #include "debug/Debugger.h"
-#include "debug/platform.h"
+#include "debug/PlatformDebugger.h"
+#include "debug/none/NullDebugger.h"
 
 namespace hemelb
 {
   namespace debug
   {
 
-    Debugger* Debugger::Init(const char * const executable, const net::MpiCommunicator& comm)
+    Debugger* Debugger::Init(bool active, const char * const executable, const net::MpiCommunicator& comm)
     {
       /* Static member function that implements the singleton pattern.
        * Use the namespace function PlatformDebuggerFactory to
@@ -24,7 +25,10 @@ namespace hemelb
        */
       if (Debugger::singleton == NULL)
       {
-        Debugger::singleton = PlatformDebuggerFactory(executable, comm);
+        if (active)
+          Debugger::singleton = new PlatformDebugger(executable, comm);
+        else
+          Debugger::singleton = new NullDebugger(executable, comm);
       }
       Debugger::singleton->Attach();
       return Debugger::singleton;
