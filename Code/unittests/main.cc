@@ -40,26 +40,31 @@ int main(int argc, char **argv)
   hemelb::log::Logger::Init();
 
   hemelb::net::MpiCommunicator commWorld = hemelb::net::MpiCommunicator::World();
-  // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
-  hemelb::debug::Debugger::Init(argv[0], commWorld);
-
-  // Initialise the global IOCommunicator.
-  hemelb::net::IOCommunicator testCommunicator(commWorld);
-  hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
   // Read options
   std::ostream * reportto = &std::cerr;
   std::ofstream reportfile;
   int opt;
-  while((opt = getopt(argc, argv, "o:")) != -1)
+  bool debug = false;
+
+  while((opt = getopt(argc, argv, "o:d")) != -1)
   {
     switch (opt) {
       case 'o':
         reportfile.open(optarg);
         reportto = &reportfile;
         break;
+      case 'd':
+        debug = true;
+        break;
     }
   }
+  // Start the debugger (no-op if HEMELB_USE_DEBUGGER is OFF)
+  hemelb::debug::Debugger::Init(debug, argv[0], commWorld);
+
+  // Initialise the global IOCommunicator.
+  hemelb::net::IOCommunicator testCommunicator(commWorld);
+  hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
   std::string testPath = (optind < argc)
     ? std::string(argv[optind])

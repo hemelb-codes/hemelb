@@ -1,0 +1,63 @@
+// 
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+// 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+// 
+
+#ifndef HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN
+#define HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN
+
+#cmakedefine HEMELB_BUILD_DEBUGGER
+#ifdef HEMELB_BUILD_DEBUGGER
+
+#cmakedefine HEMELB_DEBUGGER_IMPLEMENTATION_OSX
+#cmakedefine HEMELB_DEBUGGER_IMPLEMENTATION_linux
+
+#ifdef HEMELB_DEBUGGER_IMPLEMENTATION_OSX
+#include "debug/OSX/OsxDebugger.h"
+namespace hemelb
+{
+  namespace debug
+  {
+    typedef OsxDebugger PlatformDebugger;
+  }
+}
+
+#elif defined HEMELB_DEBUGGER_IMPLEMENTATION_linux
+#include "debug/linux/LinuxDebugger.h"
+namespace hemelb
+{
+  namespace debug
+  {
+    typedef LinuxDebugger PlatformDebugger;
+  }
+}
+
+#else
+#include "debug/none/NullDebugger.h"
+namespace hemelb
+{
+  namespace debug
+  {
+    typedef NullDebugger PlatformDebugger;
+  }
+}
+
+#endif
+
+#else
+#include "debug/none/NullDebugger.h"
+namespace hemelb
+{
+  namespace debug
+  {
+    typedef NullDebugger PlatformDebugger;
+  }
+}
+
+#endif
+
+#endif // HEMELB_DEBUG_PLATFORMDEBUGGER_H_IN
