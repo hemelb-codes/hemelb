@@ -213,7 +213,8 @@ void SimulationMaster::Initialise()
                                                                  &communicationNet,
                                                                  simulationState,
                                                                  timings,
-                                                                 monitoringConfig);
+                                                   monitoringConfig->doConvergenceCheck,
+                                                   monitoringConfig->convergenceRelativeTolerance);
   entropyTester = NULL;
 
   if (monitoringConfig->doIncompressibilityCheck)
@@ -321,6 +322,7 @@ void SimulationMaster::Initialise()
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
   stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
   stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
+  stepManager->RegisterCommsSteps(*stabilityTester, 1);
   if (entropyTester != NULL)
   {
     stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
