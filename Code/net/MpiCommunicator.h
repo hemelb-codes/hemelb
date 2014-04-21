@@ -109,6 +109,9 @@ namespace hemelb
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
 
         template <typename T>
+        MpiRequest Iallreduce(const T& val, const MPI_Op& op, T& out) const;
+
+        template <typename T>
         T Reduce(const T& val, const MPI_Op& op, const int root) const;
         template <typename T>
         std::vector<T> Reduce(const std::vector<T>& vals, const MPI_Op& op, const int root) const;
