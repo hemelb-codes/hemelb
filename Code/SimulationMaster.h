@@ -101,7 +101,7 @@ class SimulationMaster
     hemelb::lb::StabilityTester<latticeType>* stabilityTester;
     hemelb::lb::EntropyTester<latticeType>* entropyTester;
     /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
+    hemelb::lb::IncompressibilityChecker* incompressibilityChecker;
 
     hemelb::colloids::ColloidController* colloidController;
     hemelb::net::Net communicationNet;

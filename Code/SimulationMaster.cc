@@ -223,8 +223,7 @@ void SimulationMaster::Initialise()
 
   if (monitoringConfig->doIncompressibilityCheck)
   {
-    incompressibilityChecker = new hemelb::lb::IncompressibilityChecker<
-        hemelb::net::PhasedBroadcastRegular<> >(latticeData,
+    incompressibilityChecker = new hemelb::lb::IncompressibilityChecker(latticeData,
                                                 &communicationNet,
                                                 simulationState,
                                                 latticeBoltzmannModel->GetPropertyCache(),
@@ -635,8 +634,7 @@ void SimulationMaster::Abort()
 
 void SimulationMaster::LogStabilityReport()
 {
-  if (monitoringConfig->doIncompressibilityCheck
-      && incompressibilityChecker->AreDensitiesAvailable())
+  if (monitoringConfig->doIncompressibilityCheck)
   {
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, tau %.6f, max_relative_press_diff %.3f, Ma %.3f, max_vel_phys %e",
                                                                         simulationState->GetTimeStep(),

@@ -3,6 +3,7 @@ add_library(hemelb_net
   MpiCommunicator.cc MpiGroup.cc MpiFile.cc
   MpiRequest.cc MpiStatus.cc
  IteratedAction.cc BaseNet.cc 
+ CollectiveAction.cc
 IOCommunicator.cc
 mixins/pointpoint/CoalescePointPoint.cc
 mixins/pointpoint/SeparatedPointPoint.cc
