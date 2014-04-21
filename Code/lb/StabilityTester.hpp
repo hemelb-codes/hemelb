@@ -125,8 +125,7 @@ namespace hemelb
     void StabilityTester<LatticeType>::Send(void)
     {
       // Begin collective.
-      HEMELB_MPI_CALL(MPI_Iallreduce,
-                      (static_cast<void*>(&localStability), static_cast<void*>(&globalStability), 1, net::MpiDataType(localStability), MPI_MIN, collectiveComm, &collectiveReq));
+      collectiveReq = collectiveComm.Iallreduce(localStability, MPI_MIN, globalStability);
     }
 
     /**
@@ -136,7 +135,7 @@ namespace hemelb
     void StabilityTester<LatticeType>::Wait(void)
     {
       timings[hemelb::reporting::Timers::mpiWait].Start();
-      HEMELB_MPI_CALL(MPI_Wait, (&collectiveReq, MPI_STATUS_IGNORE));
+      collectiveReq.Wait();
       timings[hemelb::reporting::Timers::mpiWait].Stop();
     }
 
