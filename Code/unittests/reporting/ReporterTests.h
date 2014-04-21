@@ -26,7 +26,7 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef lb::IncompressibilityChecker<net::BroadcastMockRootNode> IncompressibilityCheckerMock;
+      typedef lb::IncompressibilityChecker IncompressibilityCheckerMock;
 
       class ReporterTests : public helpers::HasCommsTestFixture
       {
