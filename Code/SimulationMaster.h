@@ -24,7 +24,7 @@
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
 #include "reporting/BuildInfo.h"
-#include "lb/IncompressibilityChecker.hpp"
+#include "lb/IncompressibilityChecker.h"
 #include "colloids/ColloidController.h"
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"

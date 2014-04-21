@@ -63,8 +63,8 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(MPI_Op_create, (&IncompressibilityChecker::MpiOpUpdateFunc, 1, &reduction));
       localDensity.min = std::numeric_limits<double>::max();
-      localDensity.max = std::numeric_limits<double>::min();
-      localDensity.maxVel = std::numeric_limits<double>::min();
+      localDensity.max = std::numeric_limits<double>::lowest();
+      localDensity.maxVel = 0;
       globalDensity = localDensity;
     }
 
@@ -86,7 +86,9 @@ namespace hemelb
     double IncompressibilityChecker::GetMaxRelativeDensityDifference() const
     {
       distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
-      assert(maxDensityDiff >= 0.0);
+      if (maxDensityDiff < 0.0)
+        return std::numeric_limits<double>::quiet_NaN();
+
       return maxDensityDiff / REFERENCE_DENSITY;
     }
 

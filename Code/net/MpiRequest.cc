@@ -24,6 +24,14 @@ namespace hemelb
       reqPtr.reset(new MPI_Request(req));
     }
 
+    MpiRequest::operator bool() const
+    {
+      if ((bool)reqPtr)
+        return *reqPtr != MPI_REQUEST_NULL;
+
+      return false;
+    }
+
     void MpiRequest::Wait()
     {
       HEMELB_MPI_CALL(MPI_Wait, (reqPtr.get(), MPI_STATUS_IGNORE));
