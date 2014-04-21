@@ -27,6 +27,87 @@ namespace hemelb
      */
     static const distribn_t REFERENCE_DENSITY = 1.0;
 
+    class DensityTracker
+    {
+        /**
+         * This is convenience class that encapsulates fluid magnitudes of interest being tracked across the domain. At the
+         * moment it tracks maximum and minimum density, it can be extended to accommodate other magnitudes.
+         */
+      public:
+        /** Number of densities being tracked. Needs to be exposed for send/receive. */
+        static const unsigned DENSITY_TRACKER_SIZE = 3;
+
+        /** Identifiers of the densities being tracked. Cardinality must be kept consistent with DENSITY_TRACKER_SIZE */
+        typedef enum
+        {
+          MIN_DENSITY = 0u,
+          MAX_DENSITY,
+          MAX_VELOCITY_MAGNITUDE
+        } DensityTrackerIndices;
+
+        /**
+         * Default constructor, initialises the tracker with some large/small min/max densities.
+         */
+        DensityTracker();
+
+        /**
+         * Constructor, initialises the tracker with density values provided.
+         *
+         * @param densityValues density values used for initialisation
+         */
+        DensityTracker(distribn_t* const densityValues);
+
+        /**
+         * Destructor
+         */
+        ~DensityTracker();
+
+        /**
+         * Updates densities based on the values of another DensityTracker object.
+         *
+         * @param newValues density tracker object to copy from
+         */
+        void operator=(const DensityTracker& newValues);
+
+        /**
+         * Access individually each of the densities tracked.
+         *
+         * @param index index of the density of interest (see DensityTrackerIndices enum for a list)
+         * @return density value
+         */
+        distribn_t& operator[](DensityTrackerIndices densityIndex) const;
+
+        /**
+         * Returns a pointer to the internal array used to store densities.
+         * Only to be used for sending/receiving. Use [] operator, instead.
+         *
+         * @return pointer to the internal array used to store densities
+         */
+        distribn_t* GetDensitiesArray() const;
+
+        /**
+         * Updates min/max densities with values in newValue object if they are smaller/larger
+         *
+         * @param newValues new values to be considered for an update
+         */
+        void UpdateDensityTracker(const DensityTracker& newValues);
+
+        /**
+         * Updates min/max densities with value newValue if it is smaller/larger
+         *
+         * @param newDensity new density value to be considered for an update
+         * @param newVelocityMagnitude new velocity magnitude to be considered for an update
+         */
+        void UpdateDensityTracker(distribn_t newDensity, distribn_t newVelocityMagnitude);
+
+      private:
+        /** Array storing all the densities being tracked */
+        distribn_t* densitiesArray;
+
+        /** Keeps track on whether densitiesArray was allocated locally */
+        bool allocatedHere;
+    };
+
     template<class BroadcastPolicy>
     class IncompressibilityChecker : public BroadcastPolicy,
                                      public reporting::Reportable
@@ -36,87 +117,6 @@ namespace hemelb
          */
 
       public:
-        class DensityTracker
-        {
-            /**
-             * This is convenience class that encapsulates fluid magnitudes of interest being tracked across the domain. At the
-             * moment it tracks maximum and minimum density, it can be extended to accommodate other magnitudes.
-             */
-          public:
-            /** Number of densities being tracked. Needs to be exposed for send/receive. */
-            static const unsigned DENSITY_TRACKER_SIZE = 3;
-
-            /** Identifiers of the densities being tracked. Cardinality must be kept consistent with DENSITY_TRACKER_SIZE */
-            typedef enum
-            {
-              MIN_DENSITY = 0u,
-              MAX_DENSITY,
-              MAX_VELOCITY_MAGNITUDE
-            } DensityTrackerIndices;
-
-            /**
-             * Default constructor, initialises the tracker with some large/small min/max densities.
-             */
-            DensityTracker();
-
-            /**
-             * Constructor, initialises the tracker with density values provided.
-             *
-             * @param densityValues density values used for initialisation
-             */
-            DensityTracker(distribn_t* const densityValues);
-
-            /**
-             * Destructor
-             */
-            ~DensityTracker();
-
-            /**
-             * Updates densities based on the values of another DensityTracker object.
-             *
-             * @param newValues density tracker object to copy from
-             */
-            void operator=(const DensityTracker& newValues);
-
-            /**
-             * Access individually each of the densities tracked.
-             *
-             * @param index index of the density of interest (see DensityTrackerIndices enum for a list)
-             * @return density value
-             */
-            distribn_t& operator[](DensityTrackerIndices densityIndex) const;
-
-            /**
-             * Returns a pointer to the internal array used to store densities.
-             * Only to be used for sending/receiving. Use [] operator, instead.
-             *
-             * @return pointer to the internal array used to store densities
-             */
-            distribn_t* GetDensitiesArray() const;
-
-            /**
-             * Updates min/max densities with values in newValue object if they are smaller/larger
-             *
-             * @param newValues new values to be considered for an update
-             */
-            void UpdateDensityTracker(const DensityTracker& newValues);
-
-            /**
-             * Updates min/max densities with value newValue if it is smaller/larger
-             *
-             * @param newDensity new density value to be considered for an update
-             * @param newVelocityMagnitude new velocity magnitude to be considered for an update
-             */
-            void UpdateDensityTracker(distribn_t newDensity, distribn_t newVelocityMagnitude);
-
-          private:
-            /** Array storing all the densities being tracked */
-            distribn_t* densitiesArray;
-
-            /** Keeps track on whether densitiesArray was allocated locally */
-            bool allocatedHere;
-        };
-
         /**
          * Constructor
          *
@@ -125,8 +125,7 @@ namespace hemelb
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData,
-                                 net::Net* net,
+        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,
