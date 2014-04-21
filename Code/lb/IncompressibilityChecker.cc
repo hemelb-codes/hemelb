@@ -4,89 +4,143 @@
 // file AUTHORS. This software is provided under the terms of the
 // license in the file LICENSE.
 
-#include "lb/lattices/D3Q15.h"
-#include "lb/IncompressibilityChecker.hpp"
+#include "lb/IncompressibilityChecker.h"
 
 namespace hemelb
 {
+  namespace net
+  {
+    template<>
+    MPI_Datatype MpiDataTypeTraits<lb::DensityEtc>::RegisterMpiDataType()
+    {
+      MPI_Datatype dType = lb::IncompressibilityChecker::GetDensityMpiDatatype();
+      HEMELB_MPI_CALL(MPI_Type_commit, (&dType));
+      return dType;
+    }
+  }
+
   namespace lb
   {
-    DensityTracker::DensityTracker() :
-        allocatedHere(true)
+    /**
+     * Create the MPI Datatype for sending DensityEtc structs.
+     */
+    MPI_Datatype IncompressibilityChecker::GetDensityMpiDatatype()
     {
-      densitiesArray = new distribn_t[DENSITY_TRACKER_SIZE];
-
-      //! @todo #23 do we have a policy on floating point constants?
-      densitiesArray[MIN_DENSITY] = DBL_MAX;
-      densitiesArray[MAX_DENSITY] = -DBL_MAX;
-      densitiesArray[MAX_VELOCITY_MAGNITUDE] = 0.0;
+      HEMELB_MPI_TYPE_BEGIN(dType, ::hemelb::lb::DensityEtc, 3);
+      HEMELB_MPI_TYPE_ADD_MEMBER(min);
+      HEMELB_MPI_TYPE_ADD_MEMBER(max);
+      HEMELB_MPI_TYPE_ADD_MEMBER(maxVel);
+      HEMELB_MPI_TYPE_END(dType, ::hemelb::lb::DensityEtc);
+      return dType;
     }
 
-    DensityTracker::DensityTracker(distribn_t* const densityValues) :
-        densitiesArray(densityValues), allocatedHere(false)
+    void IncompressibilityChecker::UpdateDensityEtc(const DensityEtc& in, DensityEtc& inout)
     {
+      inout.min = std::min(in.min, inout.min);
+      inout.max = std::max(in.max, inout.max);
+      inout.maxVel = std::max(in.maxVel, inout.maxVel);
     }
 
-    DensityTracker::~DensityTracker()
+    void IncompressibilityChecker::MpiOpUpdateFunc(void* invec, void* inoutvec, int *len,
+                                                   MPI_Datatype *datatype)
     {
-      if (allocatedHere)
+      const DensityEtc* iv = static_cast<const DensityEtc*>(invec);
+      DensityEtc* iov = static_cast<DensityEtc*>(inoutvec);
+      for (int i = 0; i < *len; ++i)
       {
-        delete[] densitiesArray;
+        UpdateDensityEtc(iv[i], iov[i]);
       }
     }
 
-    void DensityTracker::operator=(const DensityTracker& newValues)
+    IncompressibilityChecker::IncompressibilityChecker(
+        const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
+        lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
+        distribn_t maximumRelativeDensityDifferenceAllowed) : net::CollectiveAction(net->GetCommunicator(), timings),
+        mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
+            maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed)
     {
-      for (unsigned trackerEntry = 0; trackerEntry < DENSITY_TRACKER_SIZE; trackerEntry++)
+      HEMELB_MPI_CALL(MPI_Op_create, (&IncompressibilityChecker::MpiOpUpdateFunc, 1, &reduction));
+      localDensity.min = std::numeric_limits<double>::max();
+      localDensity.max = std::numeric_limits<double>::min();
+      localDensity.maxVel = std::numeric_limits<double>::min();
+      globalDensity = localDensity;
+    }
+
+    IncompressibilityChecker::~IncompressibilityChecker()
+    {
+      HEMELB_MPI_CALL(MPI_Op_free, (&reduction));
+    }
+
+    distribn_t IncompressibilityChecker::GetGlobalSmallestDensity() const
+    {
+      return globalDensity.min;
+    }
+
+    distribn_t IncompressibilityChecker::GetGlobalLargestDensity() const
+    {
+      return globalDensity.max;
+    }
+
+    double IncompressibilityChecker::GetMaxRelativeDensityDifference() const
+    {
+      distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
+      assert(maxDensityDiff >= 0.0);
+      return maxDensityDiff / REFERENCE_DENSITY;
+    }
+
+    double IncompressibilityChecker::GetMaxRelativeDensityDifferenceAllowed() const
+    {
+      return maximumRelativeDensityDifferenceAllowed;
+    }
+
+    void IncompressibilityChecker::PreSend()
+    {
+      for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
-        densitiesArray[trackerEntry] = newValues.GetDensitiesArray()[trackerEntry];
+        DensityEtc etc;
+        etc.min = propertyCache.densityCache.Get(i);
+        etc.max = propertyCache.densityCache.Get(i);
+        etc.maxVel = propertyCache.velocityCache.Get(i).GetMagnitude();
+        UpdateDensityEtc(etc, localDensity);
+      }
+
+    }
+    /**
+     * Initiate the collective.
+     */
+    void IncompressibilityChecker::Send(void)
+    {
+      // Begin collective.
+      collectiveReq = collectiveComm.Iallreduce(localDensity, reduction, globalDensity);
+    }
+
+
+//    void IncompressibilityChecker::Effect(void)
+//    {
+//      // No-op.
+//    }
+//
+    bool IncompressibilityChecker::IsDensityDiffWithinRange() const
+    {
+      return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);
+    }
+
+    void IncompressibilityChecker::Report(ctemplate::TemplateDictionary& dictionary)
+    {
+      if (!IsDensityDiffWithinRange())
+      {
+        ctemplate::TemplateDictionary *incomp = dictionary.AddSectionDictionary("DENSITIES");
+        incomp->SetFormattedValue("ALLOWED",
+                                  "%.1f%%",
+                                  GetMaxRelativeDensityDifferenceAllowed() * 100);
+        incomp->SetFormattedValue("ACTUAL", "%.1f%%", GetMaxRelativeDensityDifference() * 100);
       }
     }
 
-    distribn_t& DensityTracker::operator[](DensityTrackerIndices densityIndex) const
+    double IncompressibilityChecker::GetGlobalLargestVelocityMagnitude() const
     {
-      return densitiesArray[densityIndex];
+      return globalDensity.maxVel;
     }
 
-    distribn_t* DensityTracker::GetDensitiesArray() const
-    {
-      return densitiesArray;
-    }
-
-    void DensityTracker::UpdateDensityTracker(const DensityTracker& newValues)
-    {
-      if (newValues[MIN_DENSITY] < densitiesArray[MIN_DENSITY])
-      {
-        densitiesArray[MIN_DENSITY] = newValues[MIN_DENSITY];
-      }
-      if (newValues[MAX_DENSITY] > densitiesArray[MAX_DENSITY])
-      {
-        densitiesArray[MAX_DENSITY] = newValues[MAX_DENSITY];
-      }
-      if (newValues[MAX_VELOCITY_MAGNITUDE] > densitiesArray[MAX_VELOCITY_MAGNITUDE])
-      {
-        densitiesArray[MAX_VELOCITY_MAGNITUDE] = newValues[MAX_VELOCITY_MAGNITUDE];
-      }
-    }
-
-    void DensityTracker::UpdateDensityTracker(distribn_t newDensity,
-                                              distribn_t newVelocityMagnitude)
-    {
-      if (newDensity < densitiesArray[MIN_DENSITY])
-      {
-        densitiesArray[MIN_DENSITY] = newDensity;
-      }
-      if (newDensity > densitiesArray[MAX_DENSITY])
-      {
-        densitiesArray[MAX_DENSITY] = newDensity;
-      }
-      if (newVelocityMagnitude > densitiesArray[MAX_VELOCITY_MAGNITUDE])
-      {
-        densitiesArray[MAX_VELOCITY_MAGNITUDE] = newVelocityMagnitude;
-      }
-    }
-
-    // Explicit instantiation
-    template class IncompressibilityChecker<net::PhasedBroadcastRegular<> > ;
   }
 }
