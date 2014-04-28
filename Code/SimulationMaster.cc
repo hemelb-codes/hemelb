@@ -278,7 +278,8 @@ void SimulationMaster::Initialise()
                                                         &communicationNet,
                                                         simulationState,
                                                         simConfig,
-                                                        unitConverter);
+                                                        unitConverter,
+                                                        timings);
 
   // Read in the visualisation parameters.
   latticeBoltzmannModel->ReadVisParameters();

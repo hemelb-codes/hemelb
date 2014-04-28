@@ -21,15 +21,15 @@ namespace hemelb
      * @param iSimState
      * @return
      */
-    SteeringComponent::SteeringComponent(Network* network,
-                                         vis::Control* iVisControl,
+    SteeringComponent::SteeringComponent(Network* network, vis::Control* iVisControl,
                                          steering::ImageSendComponent* imageSendComponent,
-                                         net::Net * iNet,
-                                         lb::SimulationState * iSimState,
+                                         net::Net * iNet, lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
-                                         const util::UnitConverter* iUnits) :
-        net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-        mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent), mUnits(iUnits), simConfig(iSimConfig)
+                                         const util::UnitConverter* iUnits,
+                                         reporting::Timers& timings) :
+        net::CollectiveAction(iNet->GetCommunicator(), timings), mSimState(iSimState),
+            mVisControl(iVisControl), imageSendComponent(imageSendComponent), mUnits(iUnits),
+            simConfig(iSimConfig), privateSteeringParams(STEERABLE_PARAMETERS + 1)
     {
       ClearValues();
       AssignValues();
@@ -40,21 +40,13 @@ namespace hemelb
       return false;
     }
 
-    void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
+    void SteeringComponent::PreSend()
     {
-
     }
-    void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
+    void SteeringComponent::Send()
     {
-
     }
-
-    void SteeringComponent::TopNodeAction()
-    {
-
-    }
-
-    void SteeringComponent::Effect()
+    void SteeringComponent::PostReceive()
     {
       AssignValues();
     }
