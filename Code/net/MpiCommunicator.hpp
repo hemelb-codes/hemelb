@@ -64,6 +64,17 @@ namespace hemelb
       return MpiRequest(req);
     }
 
+    template <typename T>
+    MpiRequest MpiCommunicator::Ireduce(const T& val, const MPI_Op& op, const int root, T& out) const
+    {
+      MPI_Request req;
+      HEMELB_MPI_CALL(
+          MPI_Ireduce,
+          (&val, &out, 1, MpiDataType<T>(), op, root, *commPtr, &req)
+      );
+      return MpiRequest(req);
+    }
+
     template<typename T>
     T MpiCommunicator::Reduce(const T& val, const MPI_Op& op, const int root) const
     {
