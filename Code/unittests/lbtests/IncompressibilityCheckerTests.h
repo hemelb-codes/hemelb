@@ -13,7 +13,6 @@
 #include "net/phased/steps.h"
 
 #include "unittests/FourCubeLatticeData.h"
-#include "unittests/lbtests/BroadcastMocks.h"
 #include "unittests/reporting/Mocks.h"
 
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
