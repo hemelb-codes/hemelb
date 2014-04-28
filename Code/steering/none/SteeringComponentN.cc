@@ -27,9 +27,9 @@ namespace hemelb
                                          configuration::SimConfig* iSimConfig,
                                          const util::UnitConverter* iUnits,
                                          reporting::Timers& timings) :
-        net::CollectiveAction(iNet->GetCommunicator(), timings), mSimState(iSimState),
-            mVisControl(iVisControl), imageSendComponent(imageSendComponent), mUnits(iUnits),
-            simConfig(iSimConfig), privateSteeringParams(STEERABLE_PARAMETERS + 1)
+        net::CollectiveAction(iNet->GetCommunicator(), timings[reporting::Timers::steeringWait]),
+            mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
+            mUnits(iUnits), simConfig(iSimConfig), privateSteeringParams(STEERABLE_PARAMETERS + 1)
     {
       ClearValues();
       AssignValues();
