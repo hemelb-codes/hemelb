@@ -10,7 +10,7 @@
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
-#include "net/PhasedBroadcastRegular.h"
+#include "net/CollectiveAction.h"
 #include "lb/SimulationState.h"
 #include "configuration/SimConfig.h"
 #include "steering/Network.h"
@@ -55,7 +55,7 @@ namespace hemelb
      * we only need to pass from the top-most node (which handles network communication) downwards,
      * on one iteration between each pair of consecutive depths.
      */
-    class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
+    class SteeringComponent : public net::CollectiveAction
     {
       public:
         SteeringComponent(Network* iNetwork,
@@ -64,7 +64,8 @@ namespace hemelb
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
                           configuration::SimConfig* iSimConfig,
-                          const util::UnitConverter* iUnits);
+                          const util::UnitConverter* iUnits,
+                          reporting::Timers& timings);
 
         static bool RequiresSeparateSteeringCore();
 
@@ -78,18 +79,15 @@ namespace hemelb
         bool readyForNextImage;
         bool updatedMouseCoords;
 
-      protected:
-        void ProgressFromParent(unsigned long splayNumber);
-        void ProgressToChildren(unsigned long splayNumber);
-
-        void TopNodeAction();
-        void Effect();
+        void PreSend();
+        void Send();
+        void PostReceive();
 
       private:
         void AssignValues();
 
         const static int STEERABLE_PARAMETERS = 21;
-        const static unsigned int SPREADFACTOR = 10;
+        const static int RootRank = 0;
 
         bool isConnected;
 
@@ -97,7 +95,7 @@ namespace hemelb
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
         steering::ImageSendComponent* imageSendComponent;
-        float privateSteeringParams[STEERABLE_PARAMETERS + 1];
+        std::vector<float> privateSteeringParams;
         const util::UnitConverter* mUnits;
         configuration::SimConfig* simConfig;
     };

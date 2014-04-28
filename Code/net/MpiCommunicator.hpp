@@ -34,6 +34,27 @@ namespace hemelb
       );
     }
 
+    template <typename T>
+    MpiRequest MpiCommunicator::Ibcast(T& val, const int root) const
+    {
+      MPI_Request req;
+      HEMELB_MPI_CALL(
+          MPI_Ibcast,
+          (&val, 1, MpiDataType<T>(), root, *commPtr, &req)
+      );
+      return MpiRequest(req);
+    }
+    template <typename T>
+    MpiRequest MpiCommunicator::Ibcast(std::vector<T>& vals, const int root) const
+    {
+      MPI_Request req;
+      HEMELB_MPI_CALL(
+          MPI_Ibcast,
+          (&vals[0], vals.size(), MpiDataType<T>(), root, *commPtr, &req)
+      );
+      return MpiRequest(req);
+    }
+
     template<typename T>
     T MpiCommunicator::AllReduce(const T& val, const MPI_Op& op) const
     {
