@@ -104,6 +104,11 @@ namespace hemelb
         void Broadcast(std::vector<T>& vals, const int root) const;
 
         template <typename T>
+        MpiRequest Ibcast(T& val, const int root) const;
+        template <typename T>
+        MpiRequest Ibcast(std::vector<T>& vals, const int root) const;
+
+        template <typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;
         template <typename T>
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
