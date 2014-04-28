@@ -7,8 +7,7 @@
 #ifndef HEMELB_LB_STABILITYTESTER_H
 #define HEMELB_LB_STABILITYTESTER_H
 
-#include "net/phased/Concern.h"
-#include "net/phased/steps.h"
+#include "net/CollectiveAction.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -19,7 +18,7 @@ namespace hemelb
      * Class to repeatedly assess the stability of the simulation, using non-blocking collective
      */
     template<class LatticeType>
-    class StabilityTester : public net::phased::Concern
+    class StabilityTester : public net::CollectiveAction
     {
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
@@ -32,8 +31,6 @@ namespace hemelb
          */
         void Reset();
 
-        bool CallAction(int action);
-
       protected:
         /**
          * Compute the local stability/convergence state.
@@ -44,11 +41,6 @@ namespace hemelb
          * Initiate the collective.
          */
         void Send(void);
-
-        /**
-         * Wait on the collectives to finish.
-         */
-        void Wait(void);
 
         /**
          * Computes the relative difference between the densities at the beginning and end of a
@@ -64,11 +56,11 @@ namespace hemelb
         /**
          * Apply the stability value sent by the root node to the simulation logic.
          */
-        void Effect();
+        void PostReceive(void);
 
       private:
 
-        const geometry::LatticeData * mLatDat;
+        const geometry::LatticeData* mLatDat;
 
         /**
          * Local and global stability.
@@ -81,22 +73,11 @@ namespace hemelb
          */
         lb::SimulationState* mSimState;
 
-        /** Timing object. */
-        reporting::Timers& timings;
-
         /** Whether to check for steady flow simulation convergence */
         bool checkForConvergence;
 
         /** Relative error tolerance in convergence check */
         double relativeTolerance;
-        /**
-         * Private communicator for non-blocking collectives.
-         */
-        net::MpiCommunicator collectiveComm;
-        /**
-         * Request object for the collective
-         */
-        net::MpiRequest collectiveReq;
     };
   }
 }
