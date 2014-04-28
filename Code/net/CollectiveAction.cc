@@ -14,8 +14,8 @@ namespace hemelb
 {
   namespace net
   {
-    CollectiveAction::CollectiveAction(const MpiCommunicator& comm, reporting::Timers& timings_)
-    : collectiveComm(comm.Duplicate()), timings(timings_), collectiveReq()
+    CollectiveAction::CollectiveAction(const MpiCommunicator& comm, reporting::Timer& wTimer) :
+        collectiveComm(comm.Duplicate()), waitTimer(wTimer), collectiveReq()
     {
     }
     bool CollectiveAction::CallAction(int action)
@@ -52,9 +52,9 @@ namespace hemelb
      */
     void CollectiveAction::Wait(void)
     {
-      timings[hemelb::reporting::Timers::mpiWait].Start();
+      waitTimer.Start();
       collectiveReq.Wait();
-      timings[hemelb::reporting::Timers::mpiWait].Stop();
+      waitTimer.Stop();
     }
 
   }

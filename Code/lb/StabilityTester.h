@@ -81,6 +81,8 @@ namespace hemelb
 
         /** Relative error tolerance in convergence check */
         double relativeTolerance;
+
+        reporting::Timer& workTimer;
     };
   }
 }

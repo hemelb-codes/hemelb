@@ -23,8 +23,9 @@ namespace hemelb
                                                   reporting::Timers& timings,
                                                   bool checkForConvergence,
                                                   double relativeTolerance) :
-        CollectiveAction(net->GetCommunicator(), timings), mLatDat(iLatDat), mSimState(simState),
-            checkForConvergence(checkForConvergence), relativeTolerance(relativeTolerance)
+        CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+            mLatDat(iLatDat), mSimState(simState), checkForConvergence(checkForConvergence),
+            relativeTolerance(relativeTolerance), workTimer(timings[reporting::Timers::monitoring])
     {
       Reset();
     }
@@ -46,7 +47,7 @@ namespace hemelb
     template<class LatticeType>
     void StabilityTester<LatticeType>::PreSend(void)
     {
-      timings[hemelb::reporting::Timers::monitoring].Start();
+      workTimer.Start();
       bool unconvergedSitePresent = false;
       bool checkConvThisTimeStep = checkForConvergence;
       localStability = Stable;
@@ -92,7 +93,7 @@ namespace hemelb
           localStability = StableAndConverged;
         }
       }
-      timings[hemelb::reporting::Timers::monitoring].Stop();
+      workTimer.Stop();
     }
 
     /**

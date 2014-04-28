@@ -144,6 +144,9 @@ namespace hemelb
 
         /** Custom operator for reduction/ */
         MPI_Op reduction;
+
+        /** Time spent checking stuff */
+        reporting::Timer& workTimer;
     };
 
   }
