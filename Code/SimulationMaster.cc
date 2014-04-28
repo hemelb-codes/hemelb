@@ -332,6 +332,7 @@ void SimulationMaster::Initialise()
   if (monitoringConfig->doIncompressibilityCheck)
   {
     stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
+    stepManager->RegisterCommsSteps(*incompressibilityChecker, 1);
   }
   stepManager->RegisterIteratedActorSteps(*visualisationControl, 1);
   if (propertyExtractor != NULL)
