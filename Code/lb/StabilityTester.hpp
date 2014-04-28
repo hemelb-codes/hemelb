@@ -23,9 +23,8 @@ namespace hemelb
                                                   reporting::Timers& timings,
                                                   bool checkForConvergence,
                                                   double relativeTolerance) :
-        mLatDat(iLatDat), mSimState(simState), timings(timings),
-            checkForConvergence(checkForConvergence), relativeTolerance(relativeTolerance),
-            collectiveComm(net->GetCommunicator().Duplicate())
+        CollectiveAction(net->GetCommunicator(), timings), mLatDat(iLatDat), mSimState(simState),
+            checkForConvergence(checkForConvergence), relativeTolerance(relativeTolerance)
     {
       Reset();
     }
@@ -39,28 +38,6 @@ namespace hemelb
       localStability = UndefinedStability;
       globalStability = UndefinedStability;
       mSimState->SetStability(UndefinedStability);
-    }
-
-    template<class LatticeType>
-    bool StabilityTester<LatticeType>::CallAction(int action)
-    {
-      switch (static_cast<net::phased::steps::Step>(action))
-      {
-        case net::phased::steps::PreSend:
-          PreSend();
-          return true;
-        case net::phased::steps::Send:
-          Send();
-          return true;
-        case net::phased::steps::Wait:
-          Wait();
-          return true;
-        case net::phased::steps::EndPhase:
-          Effect();
-          return true;
-        default:
-          return false;
-      }
     }
 
     /**
@@ -129,17 +106,6 @@ namespace hemelb
     }
 
     /**
-     * Wait on the collectives to finish.
-     */
-    template<class LatticeType>
-    void StabilityTester<LatticeType>::Wait(void)
-    {
-      timings[hemelb::reporting::Timers::mpiWait].Start();
-      collectiveReq.Wait();
-      timings[hemelb::reporting::Timers::mpiWait].Stop();
-    }
-
-    /**
      * Computes the relative difference between the densities at the beginning and end of a
      * timestep, i.e. |(rho_new - rho_old) / (rho_old - rho_0)|.
      *
@@ -175,7 +141,7 @@ namespace hemelb
      * Apply the stability value sent by the root node to the simulation logic.
      */
     template<class LatticeType>
-    void StabilityTester<LatticeType>::Effect()
+    void StabilityTester<LatticeType>::PostReceive()
     {
       mSimState->SetStability((Stability) globalStability);
     }
