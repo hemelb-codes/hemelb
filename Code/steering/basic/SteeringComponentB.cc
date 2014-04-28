@@ -18,29 +18,18 @@ namespace hemelb
 {
   namespace steering
   {
-    SteeringComponent::SteeringComponent(Network* iNetwork,
-                                         vis::Control* iVisControl,
+    SteeringComponent::SteeringComponent(Network* iNetwork, vis::Control* iVisControl,
                                          steering::ImageSendComponent* imageSendComponent,
-                                         net::Net * iNet,
-                                         lb::SimulationState * iSimState,
+                                         net::Net * iNet, lb::SimulationState * iSimState,
                                          configuration::SimConfig* iSimConfig,
-                                         const util::UnitConverter* iUnits) :
-        net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
-        mUnits(iUnits),simConfig(iSimConfig)
+                                         const util::UnitConverter* iUnits,
+                                         reporting::Timers& timings) :
+        net::CollectiveAction(iNet->GetCommunicator(), timings), mNetwork(iNetwork),
+            mSimState(iSimState), mVisControl(iVisControl), imageSendComponent(imageSendComponent),
+            privateSteeringParams(STEERABLE_PARAMETERS + 1), mUnits(iUnits), simConfig(iSimConfig)
     {
       ClearValues();
       AssignValues();
-    }
-
-    void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
-    {
-      ReceiveFromParent<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
-    }
-
-    void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
-    {
-      SendToChildren<float>(privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()
@@ -48,8 +37,11 @@ namespace hemelb
       return true;
     }
 
-    void SteeringComponent::TopNodeAction()
+    void SteeringComponent::PreSend()
     {
+      if (collectiveComm.Rank() != RootRank)
+        return;
+
       /*
        * The final steering parameter is DoRendering, which is true if we're connected and ready
        * for the next frame.
@@ -101,8 +93,12 @@ namespace hemelb
           steeringStream.readFloat(privateSteeringParams[i]);
       }
     }
+    void SteeringComponent::Send()
+    {
+      collectiveReq = collectiveComm.Ibcast(privateSteeringParams, RootRank);
+    }
 
-    void SteeringComponent::Effect()
+    void SteeringComponent::PostReceive()
     {
       // TODO we need to make sure that doing this doesn't overwrite the values in the config.xml file.
       // At the moment, it definitely does.
