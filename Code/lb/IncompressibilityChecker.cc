@@ -57,9 +57,11 @@ namespace hemelb
     IncompressibilityChecker::IncompressibilityChecker(
         const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
         lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
-        distribn_t maximumRelativeDensityDifferenceAllowed) : net::CollectiveAction(net->GetCommunicator(), timings),
-        mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
-            maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed)
+        distribn_t maximumRelativeDensityDifferenceAllowed) :
+        net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+            mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
+            maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
+            workTimer(timings[reporting::Timers::monitoring])
     {
       HEMELB_MPI_CALL(MPI_Op_create, (&IncompressibilityChecker::MpiOpUpdateFunc, 1, &reduction));
       localDensity.min = std::numeric_limits<double>::max();
@@ -118,12 +120,6 @@ namespace hemelb
       collectiveReq = collectiveComm.Iallreduce(localDensity, reduction, globalDensity);
     }
 
-
-//    void IncompressibilityChecker::Effect(void)
-//    {
-//      // No-op.
-//    }
-//
     bool IncompressibilityChecker::IsDensityDiffWithinRange() const
     {
       return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);

@@ -34,7 +34,7 @@ namespace hemelb
         virtual void Wait(void);
 
       protected:
-        CollectiveAction(const MpiCommunicator& comm, reporting::Timers& timings);
+        CollectiveAction(const MpiCommunicator& comm, reporting::Timer& waitTimer);
 
         /**
          * Private communicator for non-blocking collectives.
@@ -43,7 +43,7 @@ namespace hemelb
         /**
          * Timings for the wait etc.
          */
-        reporting::Timers& timings;
+        reporting::Timer& waitTimer;
         /**
          * Request object for the collective
          */

@@ -26,8 +26,9 @@ namespace hemelb
         EntropyTester(int* collisionTypes, unsigned int typesTested,
                       const geometry::LatticeData * iLatDat, net::Net* net,
                       SimulationState* simState, reporting::Timers& timings) :
-            net::CollectiveAction(net->GetCommunicator(), timings), mLatDat(iLatDat),
-                mHPreCollision(mLatDat->GetLocalFluidSiteCount())
+            net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+                mLatDat(iLatDat), mHPreCollision(mLatDat->GetLocalFluidSiteCount()),
+                workTimer(timings[reporting::Timers::monitoring])
         {
           for (unsigned int i = 0; i < COLLISION_TYPES; i++)
           {
@@ -54,7 +55,8 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
-                HFunction<LatticeType> HFuncOldOld(mLatDat->GetFNew(LatticeType::NUMVECTORS*i), NULL);
+                HFunction<LatticeType> HFuncOldOld(mLatDat->GetFNew(LatticeType::NUMVECTORS * i),
+                                                   NULL);
                 mHPreCollision[i] = HFuncOldOld.eval();
               }
             }
@@ -69,7 +71,8 @@ namespace hemelb
               for (site_t i = offset;
                   i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
-                HFunction<LatticeType> HFuncOldOld(mLatDat->GetFNew(LatticeType::NUMVECTORS*i), NULL);
+                HFunction<LatticeType> HFuncOldOld(mLatDat->GetFNew(LatticeType::NUMVECTORS * i),
+                                                   NULL);
                 mHPreCollision[i] = HFuncOldOld.eval();
               }
             }
@@ -175,6 +178,7 @@ namespace hemelb
 
         bool mCollisionTypesTested[COLLISION_TYPES];
         std::vector<double> mHPreCollision;
+        reporting::Timer& workTimer;
     };
 
   }
