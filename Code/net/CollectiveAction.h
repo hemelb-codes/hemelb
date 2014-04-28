@@ -23,18 +23,18 @@ namespace hemelb
       public:
         bool CallAction(int action);
 
-         /**
-          * Initiate the collective.
-          */
-         virtual void Send(void) = 0;
+        /**
+         * Initiate the collective.
+         */
+        virtual void Send(void) = 0;
 
-         /**
-          * Wait on the collectives to finish.
-          */
-         virtual void Wait(void);
+        /**
+         * Wait on the collectives to finish.
+         */
+        virtual void Wait(void);
 
       protected:
-         CollectiveAction(const MpiCommunicator& comm, reporting::Timers& timings);
+        CollectiveAction(const MpiCommunicator& comm, reporting::Timers& timings);
 
         /**
          * Private communicator for non-blocking collectives.

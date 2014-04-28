@@ -22,17 +22,26 @@ namespace hemelb
     {
       switch (static_cast<phased::steps::Step>(action))
       {
+        case phased::steps::BeginPhase:
+          RequestComms();
+          return true;
         case phased::steps::PreSend:
           PreSend();
           return true;
         case phased::steps::Send:
           Send();
           return true;
+        case phased::steps::PreWait:
+          PreReceive();
+          return true;
         case phased::steps::Wait:
           Wait();
           return true;
         case phased::steps::EndPhase:
           PostReceive();
+          return true;
+        case phased::steps::EndAll:
+          EndIteration();
           return true;
         default:
           return false;
