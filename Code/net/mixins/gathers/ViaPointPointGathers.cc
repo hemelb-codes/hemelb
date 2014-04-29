@@ -12,6 +12,11 @@ namespace hemelb
 {
   namespace net
   {
+    ViaPointPointGathers::ViaPointPointGathers(const MpiCommunicator& comms) :
+        BaseNet(comms), StoringNet(comms)
+    {
+    }
+
     void ViaPointPointGathers::ReceiveGathers()
     {
       for (GatherProcComms::iterator receive_it = gatherReceiveProcessorComms.begin();
@@ -26,9 +31,9 @@ namespace hemelb
           // The below use of unsigned char is not formally correct (due to the possibility of char not having alignment 1)
           // But we cannot currently see a better solution to avoid compiler warnings from void* arithmetic.
           RequestReceiveImpl(static_cast<unsigned char *>(receive_it->Pointer) + size * source_rank,
-                         1,
-                         source_rank,
-                         receive_it->Type);
+                             1,
+                             source_rank,
+                             receive_it->Type);
         }
       }
 
@@ -40,7 +45,8 @@ namespace hemelb
           send_it != gatherSendProcessorComms.end(); ++send_it)
       {
 
-        for (GatherProcComms::iterator req = send_it->second.begin(); req != send_it->second.end(); req++)
+        for (GatherProcComms::iterator req = send_it->second.begin(); req != send_it->second.end();
+            req++)
         {
           RequestSendImpl(req->Pointer, 1, send_it->first, req->Type);
         }
@@ -66,10 +72,10 @@ namespace hemelb
           // It will also potentially fail, if the MPI_Datatype used, is a sparse (strided) type.
           // This class is intended for timing and testing use, not production use.
           RequestReceiveImpl(static_cast<unsigned char *>(receive_it->Pointer)
-                             + receive_it->Displacements[source_rank] * size,
-                         receive_it->Counts[source_rank],
-                         source_rank,
-                         receive_it->Type);
+                                 + receive_it->Displacements[source_rank] * size,
+                             receive_it->Counts[source_rank],
+                             source_rank,
+                             receive_it->Type);
         }
       }
 
