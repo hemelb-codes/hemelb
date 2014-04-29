@@ -9,6 +9,7 @@
 
 #include "net/MpiFile.h"
 #include "net/MpiCommunicator.h"
+#include "net/MpiConstness.h"
 
 namespace hemelb
 {
@@ -39,7 +40,7 @@ namespace hemelb
       MPI_File ans;
       HEMELB_MPI_CALL(
           MPI_File_open,
-          (comm, filename.c_str(), mode, info, &ans)
+          (comm, MpiConstCast(filename.c_str()), mode, info, &ans)
       );
       return MpiFile(comm, ans);
     }
@@ -67,7 +68,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_File_set_view,
-          (*filePtr, disp, etype, filetype, datarep.c_str(), info)
+          (*filePtr, disp, etype, filetype, MpiConstCast(datarep.c_str()), info)
       );
     }
   }
