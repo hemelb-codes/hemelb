@@ -56,9 +56,9 @@ namespace hemelb
         void ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
 
         template<typename T>
-        void Write(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void Write(const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
-        void WriteAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
       protected:
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 
