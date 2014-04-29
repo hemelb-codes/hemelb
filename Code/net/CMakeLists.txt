@@ -16,3 +16,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/net/BuildInfo.h.in"
   "${PROJECT_BINARY_DIR}/net/BuildInfo.h"
   )
+configure_file (
+  "${PROJECT_SOURCE_DIR}/net/MpiConstness.h.in"
+  "${PROJECT_BINARY_DIR}/net/MpiConstness.h"
+  )

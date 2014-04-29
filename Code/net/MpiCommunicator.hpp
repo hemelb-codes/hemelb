@@ -11,6 +11,7 @@
 
 #include "net/MpiDataType.h"
 #include "net/MpiRequest.h"
+#include "net/MpiConstness.h"
 
 namespace hemelb
 {
@@ -60,7 +61,7 @@ namespace hemelb
       T ans;
       HEMELB_MPI_CALL(
           MPI_Allreduce,
-          (const_cast<T*>(&val), &ans, 1, MpiDataType<T>(), op, *this)
+          (MpiConstCast(&val), &ans, 1, MpiDataType<T>(), op, *this)
       );
       return ans;
     }
@@ -71,7 +72,7 @@ namespace hemelb
       std::vector<T> ans(vals.size());
       HEMELB_MPI_CALL(
           MPI_Allreduce,
-          (const_cast<T*>(&vals[0]), &ans[0], vals.size(), MpiDataType<T>(), op, *this)
+          (MpiConstCast(&vals[0]), &ans[0], vals.size(), MpiDataType<T>(), op, *this)
       );
       return ans;
     }
@@ -104,7 +105,7 @@ namespace hemelb
       T ans;
       HEMELB_MPI_CALL(
           MPI_Reduce,
-          (const_cast<T*>(&val), &ans, 1, MpiDataType<T>(), op, root, *this)
+          (MpiConstCast(&val), &ans, 1, MpiDataType<T>(), op, root, *this)
       );
       return ans;
     }
@@ -125,7 +126,7 @@ namespace hemelb
 
       HEMELB_MPI_CALL(
           MPI_Reduce,
-          (const_cast<T*>(&vals[0]), recvbuf, vals.size(), MpiDataType<T>(), op, root, *this)
+          (MpiConstCast(&vals[0]), recvbuf, vals.size(), MpiDataType<T>(), op, root, *this)
       );
       return ans;
     }
@@ -144,7 +145,7 @@ namespace hemelb
       }
       HEMELB_MPI_CALL(
           MPI_Gather,
-          (const_cast<T*>(&val), 1, MpiDataType<T>(),
+          (MpiConstCast(&val), 1, MpiDataType<T>(),
               recvbuf, 1, MpiDataType<T>(),
               root, *this)
       );
@@ -159,7 +160,7 @@ namespace hemelb
 
       HEMELB_MPI_CALL(
           MPI_Allgather,
-          (const_cast<T*>(&val), 1, MpiDataType<T>(),
+          (MpiConstCast(&val), 1, MpiDataType<T>(),
               recvbuf, 1, MpiDataType<T>(),
               *this)
           );
@@ -172,7 +173,7 @@ namespace hemelb
       std::vector<T> ans(vals.size());
       HEMELB_MPI_CALL(
           MPI_Alltoall,
-          (&vals[0], 1, MpiDataType<T>(),
+          (MpiConstCast(&vals[0]), 1, MpiDataType<T>(),
            &ans[0], 1, MpiDataType<T>(),
            *this)
       );
@@ -185,7 +186,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(
           MPI_Send,
-          (valPtr, count, MpiDataType<T>(), dest, tag, *this)
+          (MpiConstCast(valPtr), count, MpiDataType<T>(), dest, tag, *this)
       );
     }
     template <typename T>
@@ -226,7 +227,7 @@ namespace hemelb
       MPI_Request req;
       HEMELB_MPI_CALL(
           MPI_Isend,
-          (const_cast<T*>(valPtr), count, MpiDataType<T>(), dest, tag, *this, &req)
+          (MpiConstCast(valPtr), count, MpiDataType<T>(), dest, tag, *this, &req)
       );
       return MpiRequest(req);
     }
@@ -248,7 +249,7 @@ namespace hemelb
       MPI_Request req;
       HEMELB_MPI_CALL(
           MPI_Issend,
-          (const_cast<T*>(valPtr), count, MpiDataType<T>(), dest, tag, *this, &req)
+          (MpiConstCast(valPtr), count, MpiDataType<T>(), dest, tag, *this, &req)
       );
       return MpiRequest(req);
     }

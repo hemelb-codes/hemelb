@@ -8,6 +8,7 @@
 //
 
 #include "net/MpiGroup.h"
+#include "net/MpiConstness.h"
 
 namespace hemelb
 {
@@ -47,7 +48,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
-          (*groupPtr, ranksToExclude.size(), const_cast<int*>(&ranksToExclude.front()), &ans))
+          (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
       return MpiGroup(ans, true);
     }
 
@@ -55,7 +56,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_incl,
-                      (*groupPtr, ranksToInclude.size(), const_cast<int*>(&ranksToInclude.front()), &ans))
+                      (*groupPtr, ranksToInclude.size(), MpiConstCast(&ranksToInclude.front()), &ans))
       return MpiGroup(ans, true);
     }
 
