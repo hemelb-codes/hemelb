@@ -17,6 +17,9 @@ namespace hemelb{
 
     class SeparatedAllToAll : public virtual StoringNet
     {
+    public:
+      SeparatedAllToAll(const MpiCommunicator& comms);
+    private:
       void ReceiveAllToAll(){}
       void SendAllToAll(){}
       void WaitAllToAll();

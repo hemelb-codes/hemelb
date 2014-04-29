@@ -21,6 +21,9 @@ namespace hemelb{
      */
     class ViaPointPointGathers : public virtual StoringNet
     {
+    public:
+      ViaPointPointGathers(const MpiCommunicator& comms);
+    private:
       void ReceiveGathers();
       void SendGathers();
       void ReceiveGatherVs();

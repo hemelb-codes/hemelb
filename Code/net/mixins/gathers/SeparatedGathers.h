@@ -17,6 +17,9 @@ namespace hemelb{
 
     class SeparatedGathers : public virtual StoringNet
     {
+    public:
+      SeparatedGathers(const MpiCommunicator& comms);
+    private:
       void ReceiveGathers(){}
       void SendGathers(){}
       void ReceiveGatherVs(){}
