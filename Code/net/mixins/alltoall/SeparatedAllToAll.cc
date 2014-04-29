@@ -13,23 +13,20 @@ namespace hemelb
 {
   namespace net
   {
+    SeparatedAllToAll::SeparatedAllToAll(const MpiCommunicator& comms) :
+        BaseNet(comms), StoringNet(comms)
+    {
+    }
+
     void SeparatedAllToAll::WaitAllToAll()
     {
-      assert(allToAllReceiveProcComms.size()==allToAllSendProcComms.size());
+      assert(allToAllReceiveProcComms.size() == allToAllSendProcComms.size());
       for (unsigned int i = 0; i < allToAllReceiveProcComms.size(); i++)
       {
         SimpleRequest & sendreq = allToAllSendProcComms[i];
         SimpleRequest & receivereq = allToAllReceiveProcComms[i];
-        HEMELB_MPI_CALL(
-            MPI_Alltoall,
-            (sendreq.Pointer,
-                sendreq.Count,
-                sendreq.Type,
-                receivereq.Pointer,
-                receivereq.Count,
-                receivereq.Type,
-                communicator)
-        );
+        HEMELB_MPI_CALL(MPI_Alltoall,
+                        (sendreq.Pointer, sendreq.Count, sendreq.Type, receivereq.Pointer, receivereq.Count, receivereq.Type, communicator));
       }
 
       allToAllReceiveProcComms.clear();

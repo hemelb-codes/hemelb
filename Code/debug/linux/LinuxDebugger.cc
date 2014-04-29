@@ -11,6 +11,7 @@
 
 #include "debug/linux/LinuxDebugger.h"
 #include <unistd.h>
+#include <errno.h>
 
 namespace hemelb
 {

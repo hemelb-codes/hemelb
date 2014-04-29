@@ -22,7 +22,8 @@ namespace hemelb
     {
 
       public:
-        ImmediatePointPoint()
+        ImmediatePointPoint(const MpiCommunicator& comms) :
+            BaseNet(comms), StoringNet(comms)
         {
         }
         ~ImmediatePointPoint();

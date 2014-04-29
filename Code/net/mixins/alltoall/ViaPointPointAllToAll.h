@@ -17,6 +17,9 @@ namespace hemelb{
 
     class ViaPointPointAllToAll : public virtual StoringNet
     {
+    public:
+      ViaPointPointAllToAll(const MpiCommunicator& comms);
+    private:
       void ReceiveAllToAll();
       void SendAllToAll();
       void WaitAllToAll(){}
