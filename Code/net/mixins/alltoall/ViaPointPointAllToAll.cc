@@ -12,6 +12,10 @@ namespace hemelb
 {
   namespace net
   {
+    ViaPointPointAllToAll::ViaPointPointAllToAll(const MpiCommunicator& comms) :
+        BaseNet(comms), StoringNet(comms)
+    {
+    }
     void ViaPointPointAllToAll::ReceiveAllToAll()
     {
 
@@ -41,8 +45,8 @@ namespace hemelb
     void ViaPointPointAllToAll::SendAllToAll()
     {
 
-      for (AllToAllProcComms::iterator sendreq = allToAllSendProcComms.begin(); sendreq != allToAllSendProcComms.end();
-          sendreq++)
+      for (AllToAllProcComms::iterator sendreq = allToAllSendProcComms.begin();
+          sendreq != allToAllSendProcComms.end(); sendreq++)
       {
 
         int size;

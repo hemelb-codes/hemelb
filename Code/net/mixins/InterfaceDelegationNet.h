@@ -21,6 +21,11 @@ namespace hemelb
     class InterfaceDelegationNet : public virtual BaseNet
     {
       public:
+        InterfaceDelegationNet(const MpiCommunicator& comms) :
+            BaseNet(comms)
+        {
+        }
+
         template<class T>
         void RequestSendV(std::vector<T> &payload, proc_t toRank)
         {
@@ -53,8 +58,8 @@ namespace hemelb
           // between two addresses (by allocating the bigBuffer before the address calculation).
 
           int totalCount = 0;
-          for (std::vector<int>::const_iterator count_iterator = countsIn.begin(); count_iterator != countsIn.end();
-              count_iterator++)
+          for (std::vector<int>::const_iterator count_iterator = countsIn.begin();
+              count_iterator != countsIn.end(); count_iterator++)
           {
             totalCount += *count_iterator;
           }
@@ -69,8 +74,8 @@ namespace hemelb
           // Now store the displacement and count for each sending proc.
           int countSoFar = 0;
 
-          for (std::vector<int>::const_iterator count_iterator = countsIn.begin(); count_iterator != countsIn.end();
-              count_iterator++)
+          for (std::vector<int>::const_iterator count_iterator = countsIn.begin();
+              count_iterator != countsIn.end(); count_iterator++)
           {
             int nextCount = *count_iterator;
 
