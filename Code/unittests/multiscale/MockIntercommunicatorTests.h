@@ -30,8 +30,12 @@ namespace hemelb
       template<class IntercommuniatorImplementation> class MockHemeLB
       {
         public:
-          MockHemeLB(double spaceResolution, double timeResolution, std::map<std::string, double> & buffer,std::map<std::string,bool> &orchestration) :
-              inlet(81.0,0.1), outlet(79.0,0.1), inOutLetType("inoutlet"), intercomms(buffer,orchestration), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
+          MockHemeLB(double spaceResolution, double timeResolution,
+                     std::map<std::string, double> & buffer,
+                     std::map<std::string, bool> &orchestration) :
+              inlet(1.0, 0.1), outlet(-1.0, 0.1), inOutLetType("inoutlet"),
+                  intercomms(buffer, orchestration), timeResolution(timeResolution),
+                  spaceResolution(spaceResolution), currentTime(0)
           {
             // The intercommunicators have a shared buffer which represents imaginary communication
             inOutLetType.template RegisterSharedValue<double>("pressure");
@@ -59,7 +63,11 @@ namespace hemelb
           {
             if (intercomms.DoMultiscale(currentTime))
             {
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("DoLB() MH currentTime: %f time Resolution: %f", currentTime, timeResolution);
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("DoLB() MH currentTime: %f time Resolution: %f P in/out: %f %f",
+                                                                                   currentTime,
+                                                                                   timeResolution,
+                                                                                   inlet.GetPressure(),
+                                                                                   outlet.GetPressure());
               DoLB();
               currentTime += timeResolution;
             }
@@ -72,8 +80,12 @@ namespace hemelb
       template<class IntercommuniatorImplementation> class Mock0DModel
       {
         public:
-          Mock0DModel(double spaceResolution, double timeResolution, std::map<std::string, double> & buffer, std::map<std::string,bool> &orchestration) :
-              inlet(79.0,0.1), outlet(81.0,0.1), inOutLetType("inoutlet"), intercomms(buffer,orchestration), timeResolution(timeResolution), spaceResolution(spaceResolution), currentTime(0)
+          Mock0DModel(double spaceResolution, double timeResolution,
+                      std::map<std::string, double> & buffer,
+                      std::map<std::string, bool> &orchestration) :
+              inlet(-1.0, 0.1), outlet(1.0, 0.1), inOutLetType("inoutlet"),
+                  intercomms(buffer, orchestration), timeResolution(timeResolution),
+                  spaceResolution(spaceResolution), currentTime(0)
           {
             // The intercommunicators have a shared buffer which represents imaginary communication
             inOutLetType.template RegisterSharedValue<double>("pressure");
@@ -101,7 +113,9 @@ namespace hemelb
           {
             double capacitance = 10.0;
             double deltap = -1.0 * inlet.GetVelocity() / capacitance;
-            hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("0D (deltap, inlet vel): %f, %f", deltap , inlet.GetVelocity());
+            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("0D (deltap, inlet vel): %f, %f",
+                                                                                 deltap,
+                                                                                 inlet.GetVelocity());
             outlet.SetPressure(outlet.GetPressure() + deltap);
           }
 
@@ -111,7 +125,9 @@ namespace hemelb
             {
               Do1D();
               currentTime += timeResolution;
-              hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("0D: %f, %f", currentTime , GetOutletPressure());
+              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("0D: %f, %f",
+                                                                                   currentTime,
+                                                                                   GetOutletPressure());
               std::cerr << "0D: " << currentTime << " " << GetOutletPressure() << std::endl;
             }
           }
@@ -122,7 +138,8 @@ namespace hemelb
       std::ostream & operator <<(std::ostream & stream, std::map<std::string, double> buffer)
       {
         stream << " { ";
-        for (std::map<std::string, double>::iterator entry = buffer.begin(); entry != buffer.end(); entry++)
+        for (std::map<std::string, double>::iterator entry = buffer.begin(); entry != buffer.end();
+            entry++)
         {
           stream << entry->first << " : " << entry->second << " , ";
         }
@@ -133,9 +150,9 @@ namespace hemelb
 
       class MockIntercommunicatorTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE(MockIntercommunicatorTests);
-          CPPUNIT_TEST(TestCRRun);
-          CPPUNIT_TEST(TestCHemeRun);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (MockIntercommunicatorTests);
+          CPPUNIT_TEST (TestCRRun);
+          CPPUNIT_TEST (TestCHemeRun);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -144,10 +161,10 @@ namespace hemelb
             pbuffer = new std::map<std::string, double>();
             std::map<std::string, double> &buffer = *pbuffer;
 
-            orchestrationOD=new std::map<std::string,bool>();
-            orchestrationLB=new std::map<std::string,bool>();
-            std::map<std::string,bool> &rorchestrationLB=*orchestrationLB;
-            std::map<std::string,bool> &rorchestration0D=*orchestrationOD;
+            orchestrationOD = new std::map<std::string, bool>();
+            orchestrationLB = new std::map<std::string, bool>();
+            std::map<std::string, bool> &rorchestrationLB = *orchestrationLB;
+            std::map<std::string, bool> &rorchestration0D = *orchestrationOD;
             rorchestrationLB["boundary1_pressure"] = false;
             rorchestrationLB["boundary2_pressure"] = false;
             rorchestrationLB["boundary1_velocity"] = true;
@@ -157,9 +174,8 @@ namespace hemelb
             rorchestration0D["boundary1_velocity"] = false;
             rorchestration0D["boundary2_velocity"] = false;
 
-
-            mockheme = new MockHemeLB<MockIntercommunicator>(25.0, 0.2, buffer,rorchestrationLB);
-            zerod = new Mock0DModel<MockIntercommunicator>(10.0, 0.5, buffer,rorchestration0D);
+            mockheme = new MockHemeLB<MockIntercommunicator>(25.0, 0.2, buffer, rorchestrationLB);
+            zerod = new Mock0DModel<MockIntercommunicator>(10.0, 0.5, buffer, rorchestration0D);
 
           }
           void tearDown()
@@ -184,13 +200,13 @@ namespace hemelb
             }
             // The asserted value here is a result of discretised exponential decay.
             // I have not thought it worth determining this by a formula.
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(80.3258457641491, zerod->GetOutletPressure(), 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.3258457641491, zerod->GetOutletPressure(), 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(mockheme->currentTime, 20.0, 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(zerod->currentTime, 20.5, 1e-6);
           }
           void TestCHemeRun()
           {
-            CPPUNIT_ASSERT_MESSAGE("This test is broken - see ticket #663", 1 == 0);
+            //CPPUNIT_ASSERT_MESSAGE("This test is broken - see ticket #663", 1 == 0);
 
             // TODO: This test is fatal if run with LADDIOLET. See ticket #605.
             LADD_FAIL();
@@ -207,10 +223,12 @@ namespace hemelb
             CopyResourceToTempdir("four_cube_multiscale.xml");
             CopyResourceToTempdir("four_cube.gmy");
             hemelb::configuration::CommandLine options(argc, argv);
-            MockIntercommunicator intercomms(*pbuffer,*orchestrationLB);
-            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options, Comms(), intercomms);
+            MockIntercommunicator intercomms(*pbuffer, *orchestrationLB);
+            heme = new MultiscaleSimulationMaster<MockIntercommunicator>(options,
+                                                                         Comms(),
+                                                                         intercomms);
             // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
-            while (heme->GetState()->GetTime() < 20.0 || zerod->GetTime()< 20.0)
+            while (heme->GetState()->GetTime() < 20.0 || zerod->GetTime() < 20.0)
             {
               heme->DoTimeStep();
               zerod->Simulate();
@@ -219,7 +237,7 @@ namespace hemelb
             // the 0d model with execute 100*2/5=40 times, plus one more step, the one where it communicates the previous step.
             // Each time, the pressure difference will drop by 0.1*0.1=0.01 mmHg.
             // So the final pressure will be 81.0-41*0.01=80.59 mmHg
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(80.59, zerod->GetOutletPressure(), 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.59, zerod->GetOutletPressure(), 1e-6);
             heme->Finalise();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(heme->GetState()->GetTime(), 20.0, 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(zerod->currentTime, 20.5, 1e-6); // does one more step, where it sets the shared time.
@@ -229,11 +247,11 @@ namespace hemelb
           MultiscaleSimulationMaster<MockIntercommunicator> *heme;
           Mock0DModel<MockIntercommunicator> *zerod;
           std::map<std::string, double> *pbuffer;
-          std::map<std::string,bool> *orchestrationLB;
-          std::map<std::string,bool> *orchestrationOD;
+          std::map<std::string, bool> *orchestrationLB;
+          std::map<std::string, bool> *orchestrationOD;
       };
       //class
-      CPPUNIT_TEST_SUITE_REGISTRATION(MockIntercommunicatorTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (MockIntercommunicatorTests);
     } //multiscale
   } //unittests
 } //hemelb
