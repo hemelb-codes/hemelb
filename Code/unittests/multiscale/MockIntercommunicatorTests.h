@@ -128,7 +128,6 @@ namespace hemelb
               hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("0D: %f, %f",
                                                                                    currentTime,
                                                                                    GetOutletPressure());
-              std::cerr << "0D: " << currentTime << " " << GetOutletPressure() << std::endl;
             }
           }
 
