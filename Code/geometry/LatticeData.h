@@ -191,7 +191,6 @@ namespace hemelb
         }
 
         /**
-         * Get the block data for the given block id.
          * @param blockNumber
          * @return
          */
@@ -374,6 +373,7 @@ namespace hemelb
             for (unsigned indexInType = 0; indexInType < midDomainProcCollisions[collisionType]; indexInType++)
             {
               siteData.push_back(midDomainSiteData[collisionType][indexInType]);
+
               wallNormalAtSite.push_back(midDomainWallNormals[collisionType][indexInType]);
               for (Direction direction = 1; direction < latticeInfo.GetNumVectors(); direction++)
               {
@@ -412,7 +412,7 @@ namespace hemelb
 
           oldDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
           newDistributions.resize(localFluidSites * latticeInfo.GetNumVectors() + 1 + totalSharedFs);
-          forceAtSite.resize(localFluidSites);
+
         }
 
         void CollectFluidSiteDistribution();
@@ -469,9 +469,7 @@ namespace hemelb
         // Method should remain protected, intent is to set this information via Site
         inline void SetForceAtSite(site_t iSiteIndex, distribn_t force)
         {
-          forceAtSite[iSiteIndex].x = 0.0;
-          forceAtSite[iSiteIndex].y = force;
-          forceAtSite[iSiteIndex].z = 0.0;
+          forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0,0.0,force);
         }
 
         /**
