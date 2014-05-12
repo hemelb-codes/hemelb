@@ -42,6 +42,9 @@ namespace hemelb
                                                      hydroVars.velocity.x,
                                                      hydroVars.velocity.y,
                                                      hydroVars.velocity.z,
+                                                     hydroVars.force->x,
+                                                     hydroVars.force->y,
+                                                     hydroVars.force->z,
                                                      hydroVars.f_eq.f);
 
             for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
@@ -66,11 +69,20 @@ namespace hemelb
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
           {
+        	LatticeType::CalculateForceDistribution(hydroVars.tau,
+        	                          hydroVars.velocity.x,
+        	                          hydroVars.velocity.y,
+        	                          hydroVars.velocity.z,
+        	                          hydroVars.force->x,
+        	                          hydroVars.force->y,
+        	                          hydroVars.force->z,
+        	                          hydroVars.forceDist.f);
+
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
               hydroVars.SetFPostCollision(direction,
-                                          hydroVars.f[direction]
-                                              + hydroVars.f_neq.f[direction] * lbmParams->GetOmega());
+                                          (hydroVars.f[direction] + hydroVars.f_neq.f[direction] * lbmParams->GetOmega())
+                                          + hydroVars.forceDist.f[direction]);
             }
           }
 
