@@ -66,6 +66,10 @@ namespace hemelb
             f(f), force(force)
           {
           }
+          HydroVarsBase(const distribn_t* const f) :
+                      f(f), force(NULL)
+                    {
+                    }
 
         public:
           distribn_t density, tau;
@@ -146,7 +150,7 @@ namespace hemelb
           }
 
           HydroVars(const distribn_t* const f) :
-                      HydroVarsBase<typename KernelImpl::LatticeType> (f,NULL)
+                      HydroVarsBase<typename KernelImpl::LatticeType> (f)
                     {
 
                     }
