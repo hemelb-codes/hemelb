@@ -236,9 +236,15 @@ namespace hemelb
             blockReadIn.Sites[localSiteId].wallNormal :
             util::Vector3D<float>(NO_VALUE);
 
+          //SiteData siteData(blockReadIn.Sites[localSiteId]);
+          if (siteData.GetCollisionType() == FLUID) {
+        	  forceAtSite.push_back(util::Vector3D<distribn_t>(0.0,0.0,0.00001));
+          } else {
+        	  forceAtSite.push_back(util::Vector3D<distribn_t>(0.0,0.0,0.00001));
+          }
+
           if (isMidDomainSite)
           {
-        	SetForceAtSite(localSiteId, 0.1);
             midDomainBlockNumber[l].push_back(blockId);
             midDomainSiteNumber[l].push_back(localSiteId);
             midDomainSiteData[l].push_back(siteData);
