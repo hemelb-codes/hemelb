@@ -52,7 +52,9 @@
     </range>
   </visualisation>
   <monitoring>
-    <steady_flow_convergence_check tolerance="1e-9" terminate="true"/>
-    <incompressibility_check/>
+    <steady_flow_convergence tolerance="1e-9" terminate="true">
+      <criterion type="velocity" value="1" units="m/s"/>
+    </steady_flow_convergence>
+    <incompressibility/>
   </monitoring>
 </hemelbsettings>

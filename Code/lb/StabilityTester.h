@@ -26,8 +26,7 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        bool checkForConvergence, double relativeTolerance);
-
+                        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig);
 
         /**
          * Override the reset method in the base class, to reset the stability variables.
@@ -76,13 +75,9 @@ namespace hemelb
          */
         lb::SimulationState* mSimState;
 
-        /** Whether to check for steady flow simulation convergence */
-        bool checkForConvergence;
-
-        /** Relative error tolerance in convergence check */
-        double relativeTolerance;
-
         reporting::Timer& workTimer;
+        /** Object containing the user-provided configuration for this class */
+        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig;
     };
   }
 }

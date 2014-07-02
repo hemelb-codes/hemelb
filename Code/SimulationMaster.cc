@@ -212,13 +212,11 @@ void SimulationMaster::Initialise()
     network = NULL;
   }
 
-  stabilityTester =
-      new hemelb::lb::StabilityTester<latticeType>(latticeData,
-                                                   &communicationNet,
-                                                   simulationState,
-                                                   timings,
-                                                   monitoringConfig->doConvergenceCheck,
-                                                   monitoringConfig->convergenceTolerance);
+  stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
+                                                                 &communicationNet,
+                                                                 simulationState,
+                                                                 timings,
+                                                                 monitoringConfig);
   entropyTester = NULL;
 
   if (monitoringConfig->doIncompressibilityCheck)

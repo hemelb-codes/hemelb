@@ -44,12 +44,14 @@ namespace hemelb
         struct MonitoringConfig
         {
             MonitoringConfig() :
-                doConvergenceCheck(false), convergenceTolerance(0), convergenceTerminate(false),
+                doConvergenceCheck(false), convergenceRelativeTolerance(0), convergenceTerminate(false),
                     doIncompressibilityCheck(false)
             {
             }
             bool doConvergenceCheck; ///< Whether to turn on the convergence check or not
-            double convergenceTolerance; ///< Convergence check tolerance
+            extraction::OutputField::FieldType convergenceVariable; ///< Macroscopic variable used to check for convergence
+            double convergenceReferenceValue; ///< Reference value used to normalise an absolute error (making it relative)
+            double convergenceRelativeTolerance; ///< Convergence check relative tolerance
             bool convergenceTerminate; ///< Whether to terminate a converged run or not
             bool doIncompressibilityCheck; ///< Whether to turn on the IncompressibilityChecker or not
         };
@@ -253,6 +255,20 @@ namespace hemelb
          * @param monEl in memory representation of <monitoring> xml element
          */
         void DoIOForMonitoring(const io::xml::Element& monEl);
+
+        /**
+         * Reads configuration of steady state flow convergence check from XML file
+         *
+         * @param convEl in memory representation of the <steady_flow_convergence> XML element
+         */
+        void DoIOForSteadyFlowConvergence(const io::xml::Element& convEl);
+
+        /**
+         * Reads the configuration of one of the possible several converge criteria provided
+         *
+         * @param criterionEl in memory representation of the <criterion> XML element
+         */
+        void DoIOForConvergenceCriterion(const io::xml::Element& criterionEl);
 
         const std::string& xmlFilePath;
         io::xml::Document* rawXmlDoc;
