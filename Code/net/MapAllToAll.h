@@ -35,8 +35,8 @@ namespace hemelb
       // Set up a container for all the Status objs
       sendReqs.resize(nSends);
 
-      typename std::map<int, T>::const_iterator iter = valsToSend.cbegin(),
-          end = valsToSend.cend();
+      typename std::map<int, T>::const_iterator iter = valsToSend.begin(),
+          end = valsToSend.end();
       int i = 0;
       for (; iter != end; ++iter) {
         int rank = iter->first;
