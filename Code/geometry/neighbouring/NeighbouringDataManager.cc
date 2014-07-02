@@ -66,14 +66,14 @@ namespace hemelb
           net.RequestReceiveR(site.GetWallNormal(), source);
         }
 
-        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.cbegin();
-            iter != needsEachProcHasFromMe.cend();
+        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.begin();
+            iter != needsEachProcHasFromMe.end();
             ++iter)
         {
           proc_t other = iter->first;
           const IdVec& neededIds = iter->second;
-          for (IdVec::const_iterator needOnProcFromMe = neededIds.cbegin();
-              needOnProcFromMe != neededIds.cend();
+          for (IdVec::const_iterator needOnProcFromMe = neededIds.begin();
+              needOnProcFromMe != neededIds.end();
               ++needOnProcFromMe)
           {
             site_t localContiguousId =
@@ -125,13 +125,13 @@ namespace hemelb
         }
 
         const unsigned Q = localLatticeData.GetLatticeInfo().GetNumVectors();
-        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.cbegin();
-            iter != needsEachProcHasFromMe.cend();
+        for (IdsMap::const_iterator iter = needsEachProcHasFromMe.begin();
+            iter != needsEachProcHasFromMe.end();
             ++iter)
         {
           proc_t other = iter->first;
           const IdVec& neededIds = iter->second;
-          for (IdVec::const_iterator needOnProcFromMe = neededIds.cbegin();
+          for (IdVec::const_iterator needOnProcFromMe = neededIds.begin();
               needOnProcFromMe != neededIds.end(); ++needOnProcFromMe)
           {
             site_t localContiguousId =
@@ -172,8 +172,8 @@ namespace hemelb
 
         std::vector<net::MpiRequest> requestQueue;
         // Now, for every rank, which I need something from, send the ids of those
-        for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.cbegin();
-            countIt != countOfNeedsIHaveFromEachProc.cend();
+        for (CountMap::const_iterator countIt = countOfNeedsIHaveFromEachProc.begin();
+            countIt != countOfNeedsIHaveFromEachProc.end();
             ++countIt)
         {
           int other = countIt->first;
@@ -181,8 +181,8 @@ namespace hemelb
         }
 
         // And for every rank, which needs something from me, receive those ids
-        for (CountMap::const_iterator countIt = countOfNeedsOnEachProcFromMe.cbegin();
-            countIt != countOfNeedsOnEachProcFromMe.cend();
+        for (CountMap::const_iterator countIt = countOfNeedsOnEachProcFromMe.begin();
+            countIt != countOfNeedsOnEachProcFromMe.end();
             ++countIt)
         {
           int other = countIt->first;

@@ -63,7 +63,7 @@ namespace hemelb
     {
       HEMELB_MPI_CALL(MPI_Op_create, (&IncompressibilityChecker::MpiOpUpdateFunc, 1, &reduction));
       localDensity.min = std::numeric_limits<double>::max();
-      localDensity.max = std::numeric_limits<double>::lowest();
+      localDensity.max = -std::numeric_limits<double>::max();
       localDensity.maxVel = 0;
       globalDensity = localDensity;
     }
