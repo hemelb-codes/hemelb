@@ -103,7 +103,7 @@ class FiPyTriangleMesher(object):
     def GetMesh(self):
         """Create and get the FiPy mesh.
         """
-        return fipy.meshes.mesh2D.Mesh2D(self.vertices, self.faces, self.cells)
+        return fipy.meshes.numMesh.mesh2D.Mesh2D(self.vertices, self.faces, self.cells)
     
     def _InsertUniqueFace(self, a, b):
         """Get the Face ID of the face linking vertices with IDs a and b,
