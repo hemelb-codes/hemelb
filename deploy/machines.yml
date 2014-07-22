@@ -78,21 +78,16 @@ archer: #the ARCHER supercomputer at EPCC
   python_build: "lib64/python2.6"
   corespernode: 24
   cmake_options:
-    CMAKE_CXX_FLAGS: "-dynamic"
-    CMAKE_C_FLAGS: "-dynamic"
+    CMAKE_SKIP_RPATH: "TRUE"
+    CMAKE_SKIP_INSTALL_RPATH: "TRUE"
+    CPPUNIT_USE_STATIC: "ON"
+    CTEMPLATE_USE_STATIC: "ON"
+    CTEMPLATE_PATCH_ALIGN: "ON"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.01/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.01/bin/cc"
-    CMAKE_CXX_FLAGS_RELEASE: ""
-    CPPUNIT_PATCH_LDL: OFF
-    CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
     HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     HEMELB_USE_SSE3: "ON"
-    CTEMPLATE_PATCH_ALIGN: "ON"
-    CTEMPLATE_USE_STATIC: "OFF"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
-#    CMAKE_VERBOSE_MAKEFILE: "TRUE"
 legion: 
   job_dispatch: "qsub"
   run_command: "mpirun -np $cores -machinefile $$TMPDIR/machines"

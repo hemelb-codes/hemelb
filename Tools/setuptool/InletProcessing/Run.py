@@ -36,7 +36,7 @@ def Run(profileFile):
     surfaceFile = profile.StlFile
     surfaceFileScale = profile.StlFileUnit.SizeInMetres
 
-    ipFinder = GeometryInletPointFinder(profile.OutputGeometryFile)
+    ipFinder = GeometryInletPointFinder(profile.OutputXmlFile)
     inletPointIndices = ipFinder.GetInletData()
 
     intersectionFinder = SurfaceIntersectionFinder()
