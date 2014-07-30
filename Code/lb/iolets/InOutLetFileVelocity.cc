@@ -96,6 +96,7 @@ namespace hemelb
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
+
         // v(r) = vMax (1 - r**2 / a**2)
         // where r is the distance from the centreline
         LatticePosition displ = x - position;
@@ -110,9 +111,56 @@ namespace hemelb
         return normal * (max * (1. - rSqOverASq));
       }
 
+      LatticeVelocity InOutLetFileVelocity::GetVelocity(
+          const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
+      {
+        /*
+         // v(r) = vMax (1 - r**2 / a**2)
+         // where r is the distance from the centreline
+         LatticePosition displ = x - position;
+         LatticeDistance z = displ.Dot(normal);
+         Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+         assert(rSqOverASq <= 1.0);
+
+         // Get the max velocity
+         LatticeSpeed max = velocityTable[t];
+
+         // Brackets to ensure that the scalar multiplies are done before vector * scalar.
+         return normal * (max * (1. - rSqOverASq));*/
+        return 0; //leave as dummy for now.
+      }
+
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
         units = unitConverter;
+
+        //if the new velocity approximation is enabled, then we want to create a lookup table here.
+        std::fstream myfile(velocityFilePath + ".weights.txt", std::ios_base::in);
+        std::vector<util::Vector3D<site_t>> Coordinates;
+        std::vector<PhysicalVelocity> VelocityWeights;
+
+        std::string input_line;
+        while (std::getline(myfile, input_line))
+        {
+          if (input_line.find("PointIds") != std::string::npos) //coordinates section of velocity weight file.
+          {
+            site_t x, y, z;
+            while (myfile >> x)
+            {
+              myfile >> y >> z;
+              Coordinates.push_back(util::Vector3D<site_t>( { x, y, z }));
+            }
+          }
+
+          if (input_line.find("LOOKUP_TABLE default") != std::string::npos) //section containing velocities
+          {
+            PhysicalVelocity v;
+            while (myfile >> v)
+            {
+              VelocityWeights.push_back(v);
+            }
+          }
+        }
       }
 
     }
