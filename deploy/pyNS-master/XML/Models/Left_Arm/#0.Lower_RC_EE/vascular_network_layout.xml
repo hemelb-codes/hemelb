@@ -1,0 +1,147 @@
+<!--Vascular Network Model: graph layout description-->
+<NetworkGraphLayout id="1" version ="69"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="vascular_network_v3.2.xsd">
+    <case>
+        <patient_id>00000</patient_id>
+    	<visit>V0 (pre-OP)</visit>
+    </case>
+<nodes_layout>
+<node_layout id="1" x="420" y="160">
+</node_layout>
+<node_layout id="2" x="420" y="60">
+</node_layout>
+<node_layout id="3" x="480" y="20">
+</node_layout>
+<node_layout id="4" x="480" y="-40">
+</node_layout>
+<node_layout id="5" x="540" y="60">
+</node_layout>
+<node_layout id="6" x="540" y="220">
+</node_layout>
+<node_layout id="7" x="600" y="40">
+</node_layout>
+<node_layout id="8" x="560" y="20">
+</node_layout>
+<node_layout id="9" x="660" y="60">
+</node_layout>
+<node_layout id="10" x="660" y="140">
+</node_layout>
+<node_layout id="11" x="660" y="220">
+</node_layout>
+<node_layout id="12" x="660" y="280">
+</node_layout>
+<node_layout id="13" x="625" y="345">
+</node_layout>
+<node_layout id="14" x="640" y="380">
+</node_layout>
+<node_layout id="15" x="608" y="377">
+</node_layout>
+<node_layout id="16" x="698" y="349">
+</node_layout>
+<node_layout id="17" x="716" y="369">
+</node_layout>
+<node_layout id="18" x="360" y="20">
+</node_layout>
+<node_layout id="19" x="610" y="397">
+</node_layout>
+<node_layout id="20" x="702" y="383">
+</node_layout>
+<node_layout id="21" x="684" y="392">
+</node_layout>
+<node_layout id="22" x="665" y="398">
+</node_layout>
+<node_layout id="23" x="647" y="403">
+</node_layout>
+<node_layout id="24" x="629" y="402">
+</node_layout>
+<node_layout id="25" x="709" y="402">
+</node_layout>
+<node_layout id="26" x="684.796" y="411.979">
+</node_layout>
+<node_layout id="27" x="666" y="414">
+</node_layout>
+<node_layout id="28" x="641" y="418">
+</node_layout>
+<node_layout id="29" x="626" y="420">
+</node_layout>
+<node_layout id="30" x="760" y="280">
+</node_layout>
+<node_layout id="31" x="740" y="220">
+</node_layout>
+<node_layout id="32" x="760" y="160">
+</node_layout>
+<node_layout id="33" x="760" y="60">
+</node_layout>
+</nodes_layout>
+<edges_layout>
+<edge_layout id="1" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="2" s="0.465938" d="11.5068">
+</edge_layout>
+<edge_layout id="3" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="4" s="0.404988" d="7.70538">
+</edge_layout>
+<edge_layout id="5" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="6" s="0.59966" d="4.44674">
+</edge_layout>
+<edge_layout id="7" s="0.580649" d="-1.78749">
+</edge_layout>
+<edge_layout id="8" s="0.482543" d="5.12564">
+</edge_layout>
+<edge_layout id="9" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="10" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="11" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="12" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="13" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="14" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="15" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="16" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="17" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="18" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="19" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="20" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="21" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="22" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="23" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="24" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="25" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="26" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="27" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="28" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="29" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="30" s="0.577985" d="-10.1353">
+</edge_layout>
+<edge_layout id="31" s="0.665309" d="5.39735">
+</edge_layout>
+<edge_layout id="32" s="0.496044" d="4.58259">
+</edge_layout>
+<edge_layout id="33" s="0.485098" d="-27.5734">
+</edge_layout>
+<edge_layout id="34" s="0.5" d="0">
+</edge_layout>
+</edges_layout>
+</NetworkGraphLayout>

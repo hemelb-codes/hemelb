@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema version="3.2" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--NetworkGraph: root element-->
+<!--"key" element: specifies attribute "id" as a key within the containing element in the XML instance-->
+<!--"keyref" element: allows to refer to an attribute "id"-->
+	<xsd:element name="NetworkGraph" type="NetworkGraphType">
+		<xsd:annotation>
+			<xsd:documentation>     XML Schema for the Vascular Network Model.
+     The first element declared (root element)is called NetworkGraph.
+     Case, nodes, superedges, edges, transformations elements are the leaf elements; each of these is identified by a unique ID.
+     The rest of the file contains the definition of all used types.
+     Last updated on 2011-01-20 by Simone Manini.</xsd:documentation>
+		</xsd:annotation>
+		<xsd:key name="n_id">
+			<xsd:selector xpath="nodes/node"/>
+			<xsd:field xpath="@id"/>
+		</xsd:key>
+		
+		<xsd:key name="s_id">
+			<xsd:selector xpath="superedges/superedge"/>
+			<xsd:field xpath="@id"/>
+		</xsd:key>
+		
+		<xsd:key name="e_id">
+			<xsd:selector xpath="edges/edge"/>
+			<xsd:field xpath="@id"/>
+		</xsd:key>	
+		<xsd:keyref name="n1_ref" refer="n_id">
+			<xsd:selector xpath="edges/edge"/>
+			<xsd:field xpath="@node1_id"/>
+		</xsd:keyref>
+		<xsd:keyref name="n2_ref" refer="n_id">
+			<xsd:selector xpath="edges/edge"/>
+			<xsd:field xpath="@node2_id"/>
+		</xsd:keyref>
+		
+		<xsd:keyref name="e_ref" refer="e_id">
+			<xsd:selector xpath=".//edgesIds/edgeIds"/>
+			<xsd:field xpath="@edge_id"/>
+		</xsd:keyref>
+		
+		<xsd:key name="t_id">
+			<xsd:selector xpath="transformations/transformation"/>
+			<xsd:field xpath="@id"/>
+		</xsd:key>
+		
+		<xsd:keyref name="t_ref" refer="t_id">
+			<xsd:selector xpath="edges/edge/geometry"/>
+			<xsd:field xpath="@transformation_id"/>
+		</xsd:keyref>
+	</xsd:element>
+<!--NetworkGraph type-->
+	<xsd:complexType name="NetworkGraphType">
+		<xsd:sequence>
+			<xsd:element name="case" type="caseType"/>
+			<xsd:element name="nodes" type="nodesType"/>
+			<xsd:element minOccurs="0" name="superedges" type="superedgesType"/>
+			<xsd:element name="edges" type="edgesType"/>
+			<xsd:element minOccurs="0" name="transformations" type="transformationsType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="version" type="xsd:string" use="required"/>
+	</xsd:complexType>
+<!--Case type-->
+<!--it provides some general information about the dataset-->
+	<xsd:complexType name="caseType">
+		<xsd:sequence>
+			<xsd:element name="patient_id" type="xsd:integer"/>
+			<xsd:element name="visit" type="visitType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="visitType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="V0 (pre-OP)"/>
+			<xsd:enumeration value="V01 BM  (6 hh post OP)"/>
+			<xsd:enumeration value="V02 BM (1 week post OP)"/>
+			<xsd:enumeration value="V03 BM (6 week post OP)"/>
+			<xsd:enumeration value="V01 (t=0)"/>
+			<xsd:enumeration value="V02 (2 weeks)"/>
+			<xsd:enumeration value="V03 (6 weeks)"/>
+			<xsd:enumeration value="V04 (10 weeks)"/>
+			<xsd:enumeration value="V05 (4 months)"/>
+			<xsd:enumeration value="V06 (6 months)"/>
+			<xsd:enumeration value="V07 (8 months)"/>
+			<xsd:enumeration value="V08 (10 months)"/>
+			<xsd:enumeration value="V09 (12 months)"/>
+			<xsd:enumeration value="V10 (14 months)"/>
+			<xsd:enumeration value="V11 (16 months)"/>
+			<xsd:enumeration value="V12 (18 months)"/>
+			<xsd:enumeration value="V13 (20 months)"/>
+			<xsd:enumeration value="END V (22 months or early end)"/>
+			<xsd:enumeration value="END V (22 months)"/>
+			<xsd:enumeration value="END V (early end)"/>
+			<xsd:enumeration value="EV (extra visit)"/>
+			<xsd:enumeration value="EV (extra visit prior to intervention)"/>
+			<xsd:enumeration value="other"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+<!--Nodes type-->
+<!--it contains a sequence of nodes ("node" element)-->
+<!--each node is identified by an ID-->
+<!--at least two nodes are necessary-->
+<!--"node classification" element: specifies a special type of node; it is optional-->
+<!--"node properties" element: specifies parameters for windkessel element; it is optional-->
+<!--"name" attribute: provides a list of possible node classification-->
+	<xsd:complexType name="nodesType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="2" name="node" type="nodeType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="nodeType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="0" name="properties" type="node_propertiesType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="type" type="nodeTypeType"/>
+		<xsd:attribute name="name" type="xsd:string"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="nodeTypeType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="anastomosis"/>
+			<xsd:enumeration value="bifurcation"/>
+			<xsd:enumeration value="inflow"/>
+			<xsd:enumeration value="outflow"/>
+			<xsd:enumeration value="downstream network"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:complexType name="node_propertiesType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="0" name="connections" type="connectionsType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="windkessel" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="arterial_resistance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="venous_resistance" type="nonlinearType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="connectionsType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="1" name="proximal_artery" type="connectionType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="distal_artery" type="connectionType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="proximal_vein" type="connectionType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="connectionType">
+		<xsd:attribute name="edge_id" type="xsd:int" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="nonlinearType">
+		<xsd:choice>
+			<xsd:element name="scalar" type="xsd:float"/>
+			<xsd:element name="expression" type="xsd:string"/>
+		</xsd:choice>
+		<xsd:attributeGroup ref="sharedAttributes"/>
+	</xsd:complexType>
+	
+<!--SuperEdges type-->
+<!--it contains a sequence of super edges-->
+<!--each of these is identified by an unique id, superedge name, one or more edges(Ids)-->
+<!--at least a superedge is necessary-->
+<!--each superedge is described by vessel_classification-->
+	<xsd:complexType name="superedgesType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="superedge" type="superedgeType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="superedgeType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="0" name="superedges" type="superedgesType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="edgesIds" type="edgesIdsType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="name" type="xsd:string" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="edgesIdsType">
+	<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="edgeIds" type="edgeIdsType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="edgeIdsType">
+		<xsd:attribute name="edge_id" type="xsd:integer" use="required"/>
+	</xsd:complexType>
+<!--Edges type-->
+<!--it contains a sequence of edges-->
+<!--each of these is identified by an ID and by two nodes id-->
+<!--at least an edge is necessary-->
+<!--each edge is described by edge_classification, geometry, properties and features-->
+	<xsd:complexType name="edgesType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="edge" type="edgeType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="edgeType">
+		<xsd:sequence>
+			<xsd:element name="geometry" type="geometryType"/>
+			<xsd:element name="properties" type="propertiesType"/>
+			<xsd:element minOccurs="0" name="features" type="featuresType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="node1_id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="node2_id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="side" type="sideType" use="required"/>
+		<xsd:attribute name="name" type="xsd:string" use="required"/>
+		<xsd:attribute name="type" type="elementType"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="sideType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="arterial"/>
+			<xsd:enumeration value="venous"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:simpleType name="elementType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="WavePropagation"/>
+			<xsd:enumeration value="Resistance"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+<!--geometry type: described by a coordinates array (sequence of coordinates), identified by a transformation ID-->
+<!--an edge is given by the interpolation of several coordinates-->
+<!--"s" attribute: specifies the point location-->
+<!--"point" element: its content provides xyz coordinates-->
+<!--"length" element: provide the total length f the edge explicitly-->
+	<xsd:complexType name="geometryType">
+		<xsd:sequence>
+			<xsd:element minOccurs="0" name="coordinates_array" type="coordinates_arrayType"/>
+			<xsd:element name="length" type="parameterType"/>
+		</xsd:sequence>
+		<xsd:attribute name="transformation_id" type="xsd:token"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="coordinates_arrayType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="2" name="coordinates" type="coordinatesType"/>
+		</xsd:sequence>
+		<xsd:attributeGroup ref="sharedAttributes"/>
+		<xsd:attribute name="interpolation" type="xsd:string" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="coordinatesType">
+		<xsd:sequence>
+			<xsd:element name="point" type="vectorType"/>
+		</xsd:sequence>
+		<xsd:attribute name="s" type="xsd:float"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="vectorType">
+		<xsd:restriction>
+			<xsd:simpleType>
+				<xsd:list itemType="xsd:float"/>
+			</xsd:simpleType>
+			<xsd:length value="3"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+<!--sharedAttribute: defines a set of attribute declarations shared by several types-->
+<!--for each attribute declaration it is possible to define a list of useful values-->
+	<xsd:attributeGroup name="sharedAttributes">
+		<xsd:attribute name="unit" type="unitType"/>
+		<xsd:attribute name="accuracy" type="xsd:string"/>
+		<xsd:attribute name="source" type="sourceType"/>
+	</xsd:attributeGroup>
+	
+	<xsd:simpleType name="unitType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="m"/>
+			<xsd:enumeration value="Pa"/>
+			<xsd:enumeration value="Pa-1"/>
+			<xsd:enumeration value="mm-1"/>
+			<xsd:enumeration value="m3/Pa"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:simpleType name="sourceType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="MR"/>
+			<xsd:enumeration value="US"/>
+			<xsd:enumeration value="DM"/>
+			<xsd:enumeration value="MI"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+<!--properties type: radius and distensibility-->
+<!--if specific information are available: array of values in several locations-->
+<!--global value of parameter of interest (useful in default of patient-specific data)-->
+<!--"choice" indicator: it is possible to have a parameter expressed by scalar or vector value-->
+	<xsd:complexType name="propertiesType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="0" name="radius_array" type="arrayType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="distensibility_array" type="arrayType"/>
+			<xsd:element minOccurs="0" name="radius" type="parameterType"/>
+			<xsd:element minOccurs="0" name="radius_a" type="parameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="radius_a_array" type="arrayType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="radius_b_array" type="arrayType"/>
+			<xsd:element minOccurs="0" name="radius_b" type="parameterType"/>
+			<xsd:element minOccurs="0" name="distensibility" type="parameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="wall_thickness_array" type="arrayType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="young_modulus_array" type="arrayType"/>
+			<xsd:element minOccurs="0" name="wall_thickness" type="nonlinearType"/>
+			<xsd:element minOccurs="0" name="young_modulus" type="parameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="resistance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="compliance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="nl_compliance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="leakage" type="nonlinearType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="arrayType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="2" name="value" type="valueType"/>
+		</xsd:sequence>
+		<xsd:attributeGroup ref="sharedAttributes"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="valueType">
+		<xsd:all>
+			<xsd:element maxOccurs="1" minOccurs="0" name="scalar" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="vector" type="vectorType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="expression" type="xsd:string"/>
+		</xsd:all>
+		<xsd:attribute name="s" type="xsd:float"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="parameterType">
+		<xsd:choice>
+			<xsd:element name="scalar" type="xsd:float"/>
+			<xsd:element name="vector" type="vectorType"/>
+			<xsd:element name="expression" type="xsd:string"/>
+		</xsd:choice>
+		<xsd:attributeGroup ref="sharedAttributes"/>
+	</xsd:complexType>
+	
+<!--features: physiological or pathological conditions (unnecessarily present)-->
+<!--each feature is defined as a type-->
+<!--each feature can be described by several elements (parameter of interest)-->
+	<xsd:complexType name="featuresType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="kink" type="kinkfeatureType"/>
+			<xsd:element name="stenosis" type="stenosisfeatureType"/>         		
+		</xsd:choice>
+	</xsd:complexType>
+	
+	<xsd:complexType name="kinkfeatureType">
+		<xsd:sequence>
+			<xsd:element name="radius" type="parameterType"/>
+			<xsd:element name="curvature" type="parameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="resistance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="compliance" type="nonlinearType"/>
+		</xsd:sequence>
+		<xsd:attribute name="s" type="xsd:float"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="stenosisfeatureType">
+		<xsd:sequence>
+			<xsd:element name="radius" type="parameterType"/>
+			<xsd:element name="length" type="parameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="resistance" type="nonlinearType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="compliance" type="nonlinearType"/>
+		</xsd:sequence>
+		<xsd:attribute name="s" type="xsd:float"/>
+	</xsd:complexType>
+
+
+<!--Transformations type-->
+<!--it contains a sequence of tranformations-->
+<!-- each of these is identified by an ID-->
+<!--if the transformation is unknown, there aren't either an ID or a reference space-->
+<!--each transformation is described by a specific matrix 4x4-->
+<!--"matrix 4x4" element: its content is a sequence of 16 elements (if available) or default value (identity matrix)-->
+	<xsd:complexType name="transformationsType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" name="transformation" type="transformationType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="transformationType">
+		<xsd:sequence>
+			<xsd:element default="1.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 0.0 1.0" name="matrix_4x4" type="matrixType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:token" use="required"/>
+		<xsd:attribute name="type" type="xsd:string" use="required"/>
+		<xsd:attribute name="seriesID" type="xsd:integer" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="matrixType">
+		<xsd:restriction>
+			<xsd:simpleType>
+				<xsd:list itemType="xsd:float"/>
+			</xsd:simpleType>
+			<xsd:length value="16"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:schema>

@@ -1,0 +1,157 @@
+<html>
+    <head>
+    <link rel="stylesheet" href="css/styles.css" type="text/css" media="all">
+    <link rel="stylesheet" href="css/menu.css" type="text/css" media="all"/>
+    <link rel="stylesheet" href="css/menu_vertical.css" type="text/css" media="all"/>
+	<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+    <script type="text/javascript" src="js/highcharts.js"></script>
+    <script type="text/javascript" src="js/exporting.js"></script>
+	<script type="text/javascript" src="js/charts.js"></script>
+	<script>
+  $(document).ready(function () {
+ 
+  jQuery.getJSON('json/info.json', function(data) {
+  var elements = []
+  var time = data.time[0];
+  $.each(data.elements, function(key, val) {
+  elements.push('<li id="mesh_'+val+'"><a href="#" onclick="render_charts(\''+time+'_'+val+'\');">'+val+'</a></li>'); 
+    });
+	
+ 	$.each(elements, function(idx, val) {
+    $('#meshes').append(val);
+    });
+    
+    $.each(data.time, function(idx, val) {
+    if (data.time.length ==1){
+    $('#menu').append('<li id="menu_'+val+'"><a href="#" onclick="update_link(\''+val+'\');">Solution</a></li>');
+    }
+    else{
+    $('#menu').append('<li id="menu_'+val+'"><a href="#" onclick="update_link(\''+val+'\');">'+val+'</a></li>');
+    }
+    });
+    $('#menu_-1').children('a').addClass("selected");
+    if (data.adaptation){
+     $('#menu').append('<li id="menu_adapt"><a href="#" onclick="update_link(\'adapt\');">Adaptation</a></li>');} 
+ render_charts('-1_'+data.elements[0]);
+ $('#mesh_'+data.elements[0]).children('a').addClass("selected");
+ });
+ 
+ 
+});
+  </script>
+  <script>
+ function update_link(day) { 
+ 
+ $('[id^="menu_"]').children('a').removeClass("selected");
+ 
+ meshName = ($(".active").text());
+ 
+ $('#meshes').empty();
+ $('#pressure').empty();
+ $('#flow').empty();
+ $('#wss').empty();
+ $('#re').empty();
+ 
+ $('#mesh_info').addClass("hide");
+ $('#length').empty();
+ $('#min_d').empty();
+ $('#max_d').empty();
+ $('#mean_p').empty();
+ $('#mean_q').empty();
+ $('#mean_w').empty();
+ $('#mean_r').empty();
+ 
+ $('#menu_'+day).children('a').addClass("selected");
+ 
+ jQuery.getJSON('json/info.json', function(data) {
+  var elements = []
+  $.each(data.elements, function(key, val) {
+  
+  if (day =='adapt'){
+  
+  elements.push('<li id="mesh_'+val+'"><a href="#" onclick="render_charts_adapt(\''+day+'_'+val+'\');">'+val+'</a></li>');
+  }
+  else {
+  elements.push('<li id="mesh_'+val+'"><a href="#" onclick="render_charts(\''+day+'_'+val+'\');">'+val+'</a></li>');
+  }
+	});
+ 	$.each(elements, function(idx, val) {
+    $('#meshes').append(val);
+    });
+  	if (meshName){
+  		activeTime = ($(".active").attr("id"));
+  		$('#'+meshName).addClass('active');
+  		if (day == 'adapt'){
+  		render_charts_adapt(day+'_'+meshName);
+  		}
+  		else{
+  		render_charts(day+'_'+meshName);}
+  	}
+  	$('#mesh_'+meshName).children('a').addClass("selected");
+  });  
+ 
+ 
+ };
+  </script>
+    </head>
+    <body>
+	<div class="header_container"> 
+	<div class="header"> 	
+	[pyNS] Simulation Results
+	</div>
+	</div>
+	
+	<div class="header_menu_container"> 
+	<ul id="menu">
+  		<li><a href="">View Results</a></li>
+	</ul>
+	</div>
+	<div class="content_box">
+	<div class="side">
+	<ul id="meshes">
+    </ul>
+	</div>
+	
+	<div id="mesh_info" class="content">
+	
+	<table id="hor-minimalist-a">
+	<thead>
+	<tr>
+	 <th>Length</th>
+	 <th>Min diameter</th>
+	 <th>Max diameter</th>
+	 <th>Mean pressure</th>
+	 <th>Mean flow</th>
+	 <th>Mean wss</th>
+	 <th>Mean reynolds</th>
+	</tr>
+	</thead>
+	<tbody>
+	<tr>
+	 <td id="length"></td>
+	 <td id="min_d"></td>
+	 <td id="max_d"></td>
+	 <td id="mean_p"></td>
+	 <td id="mean_q"></td>
+	 <td id="mean_w"></td>
+	 <td id="mean_r"></td>
+	</tr>
+	</tbody>
+	</table>
+	
+	</div>
+	<div class="content_graph">
+	<div id="pressure" class="content_left">
+	</div>
+	<div id="flow" class="content_right">
+	</div>
+	<div id="wss" class="content_left">
+	</div>
+	<div id="re" class="content_right">
+	</div> 
+	</div>
+	</div>
+	
+	
+	</body>
+    </html>

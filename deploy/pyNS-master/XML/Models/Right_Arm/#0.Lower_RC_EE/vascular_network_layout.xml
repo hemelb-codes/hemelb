@@ -1,0 +1,155 @@
+<!--Vascular Network Model: graph layout description-->
+<NetworkGraphLayout id="1" version ="69"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="vascular_network_v3.2.xsd">
+    <case>
+         <patient_id>00000</patient_id>
+    	<visit>V0 (pre-OP)</visit>
+    </case>
+<nodes_layout>
+<node_layout id="1" x="680" y="360">
+</node_layout>
+<node_layout id="2" x="680" y="260">
+</node_layout>
+<node_layout id="3" x="720" y="220">
+</node_layout>
+<node_layout id="4" x="720" y="140">
+</node_layout>
+<node_layout id="5" x="760" y="260">
+</node_layout>
+<node_layout id="6" x="760" y="400">
+</node_layout>
+<node_layout id="7" x="560" y="200">
+</node_layout>
+<node_layout id="8" x="600" y="180">
+</node_layout>
+<node_layout id="9" x="520" y="220">
+</node_layout>
+<node_layout id="10" x="520" y="280">
+</node_layout>
+<node_layout id="11" x="520" y="340">
+</node_layout>
+<node_layout id="12" x="520" y="380">
+</node_layout>
+<node_layout id="13" x="527" y="428">
+</node_layout>
+<node_layout id="14" x="507" y="471">
+</node_layout>
+<node_layout id="15" x="542" y="465">
+</node_layout>
+<node_layout id="16" x="471" y="459">
+</node_layout>
+<node_layout id="17" x="447.741" y="494.199">
+</node_layout>
+<node_layout id="18" x="800" y="240">
+</node_layout>
+<node_layout id="19" x="640" y="220">
+</node_layout>
+<node_layout id="20" x="640" y="140">
+</node_layout>
+<node_layout id="21" x="420" y="380">
+</node_layout>
+<node_layout id="22" x="440" y="360">
+</node_layout>
+<node_layout id="23" x="420" y="240">
+</node_layout>
+<node_layout id="24" x="420" y="180">
+</node_layout>
+<node_layout id="25" x="554" y="502">
+</node_layout>
+<node_layout id="26" x="459" y="505">
+</node_layout>
+<node_layout id="27" x="481.078" y="507.617">
+</node_layout>
+<node_layout id="28" x="503" y="509">
+</node_layout>
+<node_layout id="29" x="521" y="508">
+</node_layout>
+<node_layout id="30" x="539" y="506">
+</node_layout>
+<node_layout id="31" x="453" y="521">
+</node_layout>
+<node_layout id="32" x="478" y="524">
+</node_layout>
+<node_layout id="33" x="501" y="527">
+</node_layout>
+<node_layout id="34" x="520" y="529">
+</node_layout>
+<node_layout id="35" x="542" y="526">
+</node_layout>
+</nodes_layout>
+<edges_layout>
+<edge_layout id="1" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="2" s="0.562703" d="9.1809">
+</edge_layout>
+<edge_layout id="3" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="4" s="0.442495" d="11.6577">
+</edge_layout>
+<edge_layout id="5" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="6" s="0.435103" d="-3.39944">
+</edge_layout>
+<edge_layout id="7" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="8" s="0.539675" d="-5.82104">
+</edge_layout>
+<edge_layout id="9" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="10" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="11" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="12" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="13" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="14" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="15" s="0.496279" d="1.40027">
+</edge_layout>
+<edge_layout id="16" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="17" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="18" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="19" s="0.512297" d="-3.54702">
+</edge_layout>
+<edge_layout id="20" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="21" s="0.399969" d="5.08309">
+</edge_layout>
+<edge_layout id="22" s="0.500406" d="-4.25413">
+</edge_layout>
+<edge_layout id="23" s="0.602681" d="-22.3743">
+</edge_layout>
+<edge_layout id="24" s="0.392857" d="23.9838">
+</edge_layout>
+<edge_layout id="25" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="26" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="27" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="28" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="29" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="30" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="31" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="32" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="33" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="34" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="35" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="36" s="0.5" d="0">
+</edge_layout>
+</edges_layout>
+</NetworkGraphLayout>

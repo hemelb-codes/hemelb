@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema version="3.1" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--NetworkMesh: root element-->
+<!--"key" element: specifies attribute "id" as a key within the containing element in the XML instance-->
+<!--"keyref" element: allows to refer to an attribute "id"-->
+	<xsd:element name="BoundaryConditionsGraph" type="BoundaryConditionsGraphType">
+		<xsd:annotation>
+			<xsd:documentation>     XML Schema for Boundary Conditions.
+     The first element declared (root element) is called BoundaryConditionsGraph.
+     "BoundaryConditions" is the leaf element and is identified by a unique ID.
+     The rest of the file contains the definition of all used types.
+     Last updated on 2011-03-07 by Simone Manini.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:key name="bc_id">
+			<xsd:selector xpath="boundaryconditions/boundarycondition"/>
+			<xsd:field xpath="@id"/>
+		</xsd:key>
+	</xsd:element>
+		
+<!--BoundaryConditionsGraph type-->
+	<xsd:complexType name="BoundaryConditionsGraphType">
+		<xsd:sequence>
+			<xsd:element name="boundary_conditions" type="boundaryconditionsType"/>
+            <xsd:element name="specificdatasets" type="specificdatasetsType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:integer" use="required"/>
+		<xsd:attribute name="version" type="xsd:string" use="required"/>
+	</xsd:complexType>
+
+<!--BoundaryConditions type-->
+<!--it contains a sequence of boundaryconditions-->
+<!--each of these is identified by an ID and by type-->
+<!--at least a boundarycondition is necessary-->
+<!--each boundarycondition is described by  parameters-->
+	<xsd:complexType name="boundaryconditionsType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="1" name="boundary_condition" type="boundaryconditionType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+	<xsd:complexType name="boundaryconditionType">
+		<xsd:all>
+			<xsd:element name="parameters" type="parametersType"/>
+			<xsd:element name="entities" type="entitiesType"/>
+		</xsd:all>
+		<xsd:attribute name="id" type="xsd:string" use="required"/>
+		<xsd:attribute name="type" type="boundaryconditionTypeType" use="required"/>
+		<xsd:attribute name="name" type="xsd:string"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="boundaryconditionTypeType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="transmural pressures"/>
+			<xsd:enumeration value="inflow"/>
+			<xsd:enumeration value="outflow pressure"/>
+			<xsd:enumeration value="input pressure"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+<!--parameters type: prescribed external pressures and inflow's parameters-->
+<!--if specific information are available: array of values in several locations-->
+<!--global value of parameter of interest-->
+	<xsd:complexType name="parametersType">
+		<xsd:all>
+			<xsd:element maxOccurs="1" minOccurs="0" name="pressure_array" type="arrayType"/>
+			<xsd:element minOccurs="0" name="pressure" type="parameterType"/>
+			<xsd:element minOccurs="0" name="A0" type="parameterType"/>						     
+			<xsd:element minOccurs="0" name="fourier_coeffs" type="fourierType"/>
+		</xsd:all>
+	</xsd:complexType>
+	
+    <xsd:complexType name="arrayType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="unbounded" minOccurs="2" name="value" type="valueType"/>
+		</xsd:sequence>
+		<xsd:attribute name="unit" type="xsd:string" use="required"/>
+	</xsd:complexType>
+
+	<xsd:complexType name="valueType">
+		<xsd:choice>
+			<xsd:element name="scalar" type="xsd:float"/>
+			<xsd:element name="vector" type="vectorType"/>
+		</xsd:choice>
+		<xsd:attribute name="t" type="xsd:float"/>
+	</xsd:complexType>
+
+    <xsd:simpleType name="vectorType">
+		<xsd:restriction>
+			<xsd:simpleType>
+				<xsd:list itemType="xsd:float"/>
+			</xsd:simpleType>
+			<xsd:length value="3"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+	<xsd:complexType name="parameterType">
+		<xsd:choice>
+			<xsd:element name="scalar" type="xsd:float"/>
+			<xsd:element name="vector" type="vectorType"/>
+		</xsd:choice>
+		<xsd:attribute name="unit" type="xsd:string"/>
+	</xsd:complexType>
+	
+	<xsd:complexType name="fourierType">
+		<xsd:all>
+			<xsd:element name="matrix_nxm" type="matrixType"/>
+		</xsd:all>
+		<xsd:attribute name="n" type="xsd:int" use="required"/>
+	    <xsd:attribute name="m" type="xsd:int" use="required"/>
+	</xsd:complexType>
+	
+	<xsd:simpleType name="matrixType">
+		<xsd:restriction>
+			<xsd:simpleType>
+				<xsd:list itemType="xsd:float"/>
+			</xsd:simpleType>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+<!--Entities type-->
+<!--it contains a sequence of entities ("entity" element)-->
+<!--each entity is identified by an ID-->
+  <xsd:complexType name="entitiesType">   
+   <xsd:sequence> 
+    <xsd:element name="entity" type="entityType" minOccurs="1" maxOccurs="unbounded"/>
+   </xsd:sequence>
+  </xsd:complexType>
+ 
+  <xsd:complexType name="entityType">    
+   <xsd:attribute name="id" type="xsd:string" use="required"/>
+   <xsd:attribute name="node_id" type="xsd:string"/>
+  </xsd:complexType>
+
+<!--Specific Datasets type-->
+<!--it contains a sequence of patient characteristics-->
+<!--each characteristic is identified by an ID and a type-->
+	<xsd:complexType name="specificdatasetsType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="1" name="patient_data" type="patientDataType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="simulation_parameters" type="simulationParametersType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+
+<!--Patient Data type-->
+<!--it contains a sequence of patient personal data-->
+	<xsd:complexType name="patientDataType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="0" name="dos" type="dateType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="dob" type="dateType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="age" type="simParameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="gender" type="genderType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="arm" type="armType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="ftype" type="ftypeType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="height" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="weight" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="bsa" type="simParameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="sysp" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="diap" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="mean_pressure" type="simParameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="cardiac_output" type="simParameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="period" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="brachial_flow" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="radial_flow" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="ulnar_flow" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="ht" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="cp" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="dynamic_viscosity" type="simParameterType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="hyp" type="yesNoType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="diab" type="yesNoType"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:string" use="required"/>
+	</xsd:complexType>
+
+<!--Simulation Parameters type-->
+<!--it contains a sequence of simulation parameters-->
+<!--each characteristic is identified by an ID and a type-->
+	<xsd:complexType name="simulationParametersType">
+		<xsd:sequence>
+			<xsd:element maxOccurs="1" minOccurs="1" name="blood_density" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="aorta_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="carotid_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="vertebral_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="upper_arm_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="upper_arm_2_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="lower_arm_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="0" name="vein_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="poisson_ratio" type="xsd:float"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="timestep" type="scalarType"/>
+			<xsd:element maxOccurs="1" minOccurs="1" name="cycles" type="xsd:int"/>
+		</xsd:sequence>
+		<xsd:attribute name="id" type="xsd:string" use="required"/>
+	</xsd:complexType>
+	
+<!--Parameter type-->
+<!--Each element can be float or string-->
+	<xsd:complexType name="simParameterType">
+		<xsd:choice>
+			<xsd:element name="scalar" type="xsd:float"/>
+			<xsd:element name="expression" type="xsd:string"/>
+		</xsd:choice>
+		<xsd:attribute name="unit" type="xsd:string"/>
+	</xsd:complexType>
+
+<!--Gender type-->
+	<xsd:simpleType name="genderType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="male"/>
+			<xsd:enumeration value="female"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+<!--Arm type-->
+	<xsd:simpleType name="armType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="left"/>
+			<xsd:enumeration value="right"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+<!--Fistula type-->
+	<xsd:simpleType name="ftypeType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="Radio-Cephalic EndToEnd"/>
+			<xsd:enumeration value="Radio-Cephalic EndToSide"/>
+			<xsd:enumeration value="Radio-Cephalic SideToSide"/>
+			<xsd:enumeration value="Brachio-Cephalic EndToSide"/>
+			<xsd:enumeration value="Brachio-Cephalic SideToSide"/>
+			<xsd:enumeration value="Brachio-Basilic EndToSide"/>
+			<xsd:enumeration value="Brachio-Basilic SideToSide"/>
+			<xsd:enumeration value="Pre-Surgery"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+	
+<!--YesNo type-->	
+	<xsd:simpleType name="yesNoType">
+		<xsd:restriction base="xsd:token">
+			<xsd:enumeration value="yes"/>
+			<xsd:enumeration value="no"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+<!--Date type-->
+<!--European date format, as specified in unitType-->
+	<xsd:complexType name="dateType">
+      <xsd:simpleContent>
+        <xsd:extension base="xsd:string">
+          <xsd:attribute name="unit" type="unitType"/>
+        </xsd:extension>
+      </xsd:simpleContent>
+    </xsd:complexType>
+
+<!--Scalar type-->
+    <xsd:complexType name="scalarType">
+      <xsd:simpleContent>
+        <xsd:extension base="xsd:float">
+          <xsd:attribute name="unit" type="unitType"/>
+        </xsd:extension>
+      </xsd:simpleContent>
+    </xsd:complexType>
+
+<!--Unit type-->
+    <xsd:simpleType name="unitType">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="dd/mm/yyyy"/>
+			<xsd:enumeration value="years"/>
+			<xsd:enumeration value="cm"/>
+			<xsd:enumeration value="kg"/>
+			<xsd:enumeration value="m2"/>
+			<xsd:enumeration value="mmHg"/>
+			<xsd:enumeration value="mL/min"/>
+			<xsd:enumeration value="s"/>
+			<xsd:enumeration value="%"/>
+			<xsd:enumeration value="g/dL"/>
+			<xsd:enumeration value="Pa*s"/>
+			<xsd:enumeration value="kg/m3"/>
+			<xsd:enumeration value="rad"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+  </xsd:schema>
