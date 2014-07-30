@@ -30,16 +30,21 @@ class PoiseuilleSolver(vtkProgrammableFilter):
         self.mesh = FiPyTriangleMesher(input).GetMesh()
         
         self.speed = fipy.CellVariable(name="speed", mesh=self.mesh, value=0.)
-        self.BCs = (fipy.FixedValue(faces=self.mesh.getExteriorFaces(), value=0),)
+        self.speed.constrain(0., where=self.mesh.exteriorFaces)
+#        self.BCs = (fipy.FixedValue(faces=self.mesh.exteriorFaces, value=0),)
         
         self.equation = fipy.DiffusionTerm() + 1. == 0.
-        self.equation.solve(var=self.speed, boundaryConditions=self.BCs)
+
+        self.equation.solve(var=self.speed) #, boundaryConditions=self.BCs)
         # FiPy API doesn't seem to have an integrate method
-        volumeFlux = self.speed.getCellVolumeAverage() * \
-            self.speed.mesh.getCellVolumes().sum()
+        #volumeFlux = self.speed.getCellVolumeAverage() * self.speed.mesh.getCellVolumes().sum()
         # Scale such that the flux will be unity 
-        self.speed /= volumeFlux
-        
+        #self.speed /= volumeFlux
+        self.speed /= self.speed.mesh.getCellVolumes().sum()
+       
+        #print self.speed
+        #print self.speed.getCellVolumeAverage(), self.speed.mesh.getCellVolumes().sum()
+ 
         output = self.GetPolyDataOutput()
         output.ShallowCopy(input)
         speed = convert.numpy_to_vtk(self.speed.getValue())

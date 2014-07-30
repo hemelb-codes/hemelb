@@ -57,11 +57,16 @@ def Run(profileFile):
         cellToPoint = vtk.vtkCellDataToPointData()
         cellToPoint.SetInputConnection(solver.GetOutputPort())
         cellToPoint.Update()
-        writer = vtk.vtkXMLPolyDataWriter()
+        #writer = vtk.vtkXMLPolyDataWriter()
+        writer = vtk.vtkPolyDataWriter()
+        writer.SetFileTypeToASCII()
         writer.SetInputConnection(cellToPoint.GetOutputPort())
-        
+       
+        # print type(cellToPoint) #cellToPoint is of type vtkobject
+        # print dir(cellToPoint)
+ 
         base, gmy = os.path.splitext(profile.OutputGeometryFile)
-        writer.SetFileName(base + '.inlet%d.vtp' % inletId)
+        writer.SetFileName(base + '.inlet%d.txt' % inletId)
         writer.Write()
 
 if __name__ == "__main__":
