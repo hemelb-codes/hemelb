@@ -30,6 +30,8 @@ import re
 import numpy as np
 import yaml
 import tempfile
+from os.path import expanduser
+
 
 @task
 def clone():
@@ -823,3 +825,50 @@ def steer(job, orbit=False, view=False, retry=False, framerate=None):
         get_running_location()
         run(template(command_template))
 
+
+@task
+def ensemble(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python Ensemble.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
+
+
+
+@task
+def run_pyNS(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python pyNS-profiles.py "+config)
+
+
+
+@task
+def generate_LB(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python LB-configs.py "+config)
+
+
+@task
+def submit_jobs(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python hemelb-jobs.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
+
+@task
+def analyze(results):
+    #PAth to home
+    home = expanduser("~")
+    #Path to HemeLB Tools/analysis
+    analysis= home+"/hemelb-dev/hemelb/Tools/analysis/"
+    os.chdir(analysis)
+    os.system("python allPlanes.py "+results)
+    os.system("python vectorField.py "+results)
+    os.system("python vectorMag.py "+results)
+    os.system("python stress.py "+results)
