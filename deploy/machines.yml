@@ -81,8 +81,8 @@ archer: #the ARCHER supercomputer at EPCC
     CMAKE_CXX_FLAGS: "-dynamic"
     CMAKE_C_FLAGS: "-dynamic"
     HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
-    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.01/bin/CC"
-    CMAKE_C_COMPILER: "/opt/cray/craype/2.01/bin/cc"
+    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
+    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
     CMAKE_CXX_FLAGS_RELEASE: ""
     CPPUNIT_PATCH_LDL: OFF
     CPPUNIT_PATCH_DYNAMIC: ON
