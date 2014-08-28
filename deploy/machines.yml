@@ -79,11 +79,51 @@ archer: #the ARCHER supercomputer at EPCC
   queue: "standard"
   python_build: "lib/python2.7"
   corespernode: 24
+  run_prefix_commands:
+    # Changes here must also be made below in archer_dmapp
+    - export MPICH_MAX_THREAD_SAFETY=multiple
+    - export MPICH_NEMESIS_ASYNC_PROGRESS=1
+    - export MPICH_GNI_USE_UNASSIGNED_CPUS=enabled
   cmake_options:
+    # Changes here must also be made below in archer_dmapp
+    CMAKE_CXX_FLAGS: '"-dynamic -Wno-unused-local-typedefs"'
+    CMAKE_C_FLAGS: "-dynamic"
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
+    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    CPPUNIT_PATCH_LDL: OFF
+    CPPUNIT_PATCH_DYNAMIC: ON
     HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
     HEMELB_USE_SSE3: "ON"
     HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
     METIS_ROOT: "$CRAY_TPSL_PREFIX_DIR"
+
+archer_dmapp:
+  import: "archer"
+  cmake_options:
+    CMAKE_EXE_LINKER_FLAGS: '"-dynamic $CRAY_DMAPP_POST_LINK_OPTS -ldmapp"'
+    CMAKE_CXX_FLAGS: '"-dynamic -Wno-unused-local-typedefs"'
+    CMAKE_C_FLAGS: "-dynamic"
+    HEMELB_USE_ALL_WARNINGS_GNU: "OFF"
+    CMAKE_CXX_COMPILER: "/opt/cray/craype/2.1.1/bin/CC"
+    CMAKE_C_COMPILER: "/opt/cray/craype/2.1.1/bin/cc"
+    CMAKE_CXX_FLAGS_RELEASE: ""
+    CPPUNIT_PATCH_LDL: OFF
+    CPPUNIT_PATCH_DYNAMIC: ON
+    HEMELB_OPTIMISATION: "-O3"
+    HEMELB_DEPENDENCIES_SET_RPATH: "OFF"
+    HEMELB_USE_SSE3: "ON"
+    CTEMPLATE_PATCH_ALIGN: "ON"
+    CTEMPLATE_USE_STATIC: "OFF"
+    HEMELB_COMPUTE_ARCHITECTURE: "INTELSANDYBRIDGE"
+    METIS_ROOT: "$CRAY_TPSL_PREFIX_DIR"
+  run_prefix_commands:
+    - export MPICH_MAX_THREAD_SAFETY=multiple
+    - export MPICH_NEMESIS_ASYNC_PROGRESS=1
+    - export MPICH_GNI_USE_UNASSIGNED_CPUS=enabled
+    - export MPICH_USE_DMAPP_COLL=1
 
 legion: 
   job_dispatch: "qsub"
