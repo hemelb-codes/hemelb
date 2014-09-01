@@ -111,7 +111,7 @@ namespace hemelb
         return normal * (max * (1. - rSqOverASq));
       }
 
-      LatticeVelocity InOutLetFileVelocity::GetVelocity(
+      /*LatticeVelocity InOutLetFileVelocity::GetVelocity2(
           const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
       {
         /*
@@ -126,17 +126,19 @@ namespace hemelb
          LatticeSpeed max = velocityTable[t];
 
          // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-         return normal * (max * (1. - rSqOverASq));*/
+         return normal * (max * (1. - rSqOverASq)); //
         return 0; //leave as dummy for now.
-      }
+      }*/
 
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
         units = unitConverter;
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
-        std::fstream myfile(velocityFilePath + ".weights.txt", std::ios_base::in);
-        std::vector<util::Vector3D<site_t>> Coordinates;
+        const std::string in_name = velocityFilePath + ".weights.txt";
+        std::fstream myfile;
+        myfile.open(in_name.c_str(), std::ios_base::in);
+        std::vector<util::Vector3D<site_t> > Coordinates;
         std::vector<PhysicalVelocity> VelocityWeights;
 
         std::string input_line;
