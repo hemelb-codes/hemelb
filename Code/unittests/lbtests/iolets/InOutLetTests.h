@@ -288,7 +288,6 @@ namespace hemelb
               UncheckedSimConfig config(Resource("config_file_velocity_inlet.xml").Path());
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),
                                                               config.GetTotalTimeSteps());
-              double voxelSize = config.GetVoxelSize();
               const util::UnitConverter& converter = config.GetUnitConverter();
               fileVel = static_cast<InOutLetFileVelocity*>(config.GetInlets()[0]);
               // at this stage, Initialise() has not been called, so the unit converter will be invalid, so we will not be able to convert to physical units.
