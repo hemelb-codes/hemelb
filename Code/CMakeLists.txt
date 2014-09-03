@@ -341,6 +341,7 @@ set(package_subdirs
 	io
 	log
         colloids
+    redblood
 	)
 foreach(subdir ${package_subdirs})
 	set(lib "hemelb_${subdir}")
@@ -434,6 +435,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
 		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
 		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
+        unittests/resources/red_blood_cell.txt
 		)
 endif()
 

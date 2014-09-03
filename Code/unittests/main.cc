@@ -28,6 +28,7 @@
 #ifdef HEMELB_BUILD_MULTISCALE
   #include "unittests/multiscale/mpwide/mpwide.h"
 #endif
+#include "unittests/redblood/Mesh.h"
 #include "unittests/util/util.h"
 #include <unistd.h>
 
