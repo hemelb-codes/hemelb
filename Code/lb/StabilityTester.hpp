@@ -22,7 +22,7 @@ namespace hemelb
                                                   net::Net* net, SimulationState* simState,
                                                   reporting::Timers& timings,
                                                  const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig) :
-        CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+        CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
             mLatDat(iLatDat), mSimState(simState),
 	    workTimer(timings[reporting::Timers::monitoring]), testerConfig(testerConfig)
     {
