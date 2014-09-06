@@ -56,7 +56,7 @@ namespace hemelb
         const geometry::LatticeData * latticeData, net::Net* net, SimulationState* simState,
         lb::MacroscopicPropertyCache& propertyCache, reporting::Timers& timings,
         distribn_t maximumRelativeDensityDifferenceAllowed) :
-        net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::monitoring]),
+        net::CollectiveAction(net->GetCommunicator(), timings[reporting::Timers::mpiWait]),
             mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState),
             maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
             workTimer(timings[reporting::Timers::monitoring])
