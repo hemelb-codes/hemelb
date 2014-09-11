@@ -163,6 +163,10 @@ namespace hemelb
             }
           }
         }
+
+        for (int i=0; i<Coordinates.size(); i++) {
+          log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", Coordinates[i].x, Coordinates[i].y, Coordinates[i].z);
+        }
       }
 
     }
