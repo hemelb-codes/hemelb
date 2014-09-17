@@ -436,6 +436,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
 		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
         unittests/resources/red_blood_cell.txt
+        unittests/resources/red_blood_cube.txt
 		)
 endif()
 
