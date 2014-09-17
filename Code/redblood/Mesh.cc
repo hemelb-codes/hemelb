@@ -1,3 +1,12 @@
+//
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
+
 #include <fstream>
 #include <assert.h>
 #include <numeric>
@@ -77,7 +86,7 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
     return result;
 }
 
-t_Real3D Mesh::barycenter() const {
+LatticePosition Mesh::GetBarycenter() const {
     typedef MeshData::t_Vertices::value_type t_Vertex;
     return std::accumulate(
         mesh_->vertices.begin(), mesh_->vertices.end(),
@@ -104,8 +113,8 @@ namespace {
 }
 
 MeshTopology::MeshTopology(MeshData const &_mesh) {
-    vertex_to_facets.resize(_mesh.vertices.size());
-    facet_neighbors.resize(_mesh.facets.size());
+    vertexToFacets.resize(_mesh.vertices.size());
+    facetNeighbors.resize(_mesh.facets.size());
 
     // Loop over facets to create map from vertices to facets
     MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
@@ -113,33 +122,33 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
     for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
         t_Indices::const_iterator i_vertex = i_facet->begin();
         for(; i_vertex != i_facet->end(); ++i_vertex)
-            vertex_to_facets.at(*i_vertex).insert(i);
+            vertexToFacets.at(*i_vertex).insert(i);
     }
 
     // Now creates map of neighboring facets
     unsigned int const Nmax = _mesh.facets.size();
     boost::array<unsigned int, 3> const neg = {{ Nmax, Nmax, Nmax }};
-    for(unsigned int i(0); i < facet_neighbors.size(); ++i)
-        facet_neighbors[i] = neg;
+    for(unsigned int i(0); i < facetNeighbors.size(); ++i)
+        facetNeighbors[i] = neg;
     i_facet = _mesh.facets.begin();
     for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
         t_Indices::const_iterator i_vertex = i_facet->begin();
         for(; i_vertex != i_facet->end(); ++i_vertex) {
             // check facets that this node is attached to
             std::set<unsigned int> const &facets
-                = vertex_to_facets.at(*i_vertex);
+                = vertexToFacets.at(*i_vertex);
             std::set<unsigned int> :: const_iterator i_neigh = facets.begin();
             for(; i_neigh != facets.end(); ++i_neigh) {
                 if(edge_sharing(*i_facet, _mesh.facets.at(*i_neigh)))
-                  insert(facet_neighbors.at(i), *i_neigh, Nmax);
+                  insert(facetNeighbors.at(i), *i_neigh, Nmax);
             }
         }
     }
 #   ifndef NDEBUG
     // Checks there are no uninitialized values
-    for(unsigned int i(0); i < facet_neighbors.size(); ++i)
+    for(unsigned int i(0); i < facetNeighbors.size(); ++i)
         for(unsigned int j(0); j < 3; ++j)
-            assert(facet_neighbors[i][j] < Nmax);
+            assert(facetNeighbors[i][j] < Nmax);
 #   endif
 }
 

@@ -66,6 +66,7 @@ namespace hemelb
 
   typedef util::Vector3D<PhysicalDistance> PhysicalPosition;
 
+  typedef double PhysicalEnergy; // type for energy
   typedef double PhysicalForce; // continuous scalar force in physical units
   typedef double LatticeForce; // continuous scalar force in lattice units
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
