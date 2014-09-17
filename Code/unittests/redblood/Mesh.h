@@ -83,7 +83,7 @@ class TopologyTests : public CppUnit::TestFixture {
     void tearDown() {}
 
     void testNodeToVertex() {
-        CPPUNIT_ASSERT(topo->vertex_to_facets.size() == 8);
+        CPPUNIT_ASSERT(topo->vertexToFacets.size() == 8);
 
         // expected[vertex] = {nfacets, facet indices}
         unsigned int expected[8][6] = {
@@ -97,7 +97,7 @@ class TopologyTests : public CppUnit::TestFixture {
             {4, 4, 5, 7, 11},
         };
         for(unsigned vertex(0); vertex < 8; ++vertex) {
-            std::set<unsigned int> facets = topo->vertex_to_facets[vertex];
+            std::set<unsigned int> facets = topo->vertexToFacets[vertex];
             CPPUNIT_ASSERT(facets.size() == expected[vertex][0]);
             for(unsigned facet(1); facet <= expected[vertex][0]; ++facet) {
                 CPPUNIT_ASSERT(facets.count(expected[vertex][facet]) == 1);
@@ -106,7 +106,7 @@ class TopologyTests : public CppUnit::TestFixture {
     }
 
     void testFacetNeighbors() {
-        CPPUNIT_ASSERT(topo->facet_neighbors.size() == 12);
+        CPPUNIT_ASSERT(topo->facetNeighbors.size() == 12);
 
         // expected[facet] = {nneighbors, neighbor indices}
         unsigned int expected[12][3] = {
@@ -125,7 +125,7 @@ class TopologyTests : public CppUnit::TestFixture {
         };
         for(unsigned facet(0); facet < 12; ++facet) {
             boost::array<unsigned int, 3> const &neighs
-                = topo->facet_neighbors[facet];
+                = topo->facetNeighbors[facet];
             CPPUNIT_ASSERT(neighs.size() == 3);
             for(unsigned neigh(0); neigh < 3; ++neigh)
                 CPPUNIT_ASSERT(contains(neighs, expected[facet][neigh]));

@@ -17,11 +17,10 @@
 #include <string>
 #include <array>
 #include "util/Vector3D.h"
+#include "units.h"
 
 namespace hemelb { namespace redblood {
 
-//! Type of 3D vectors over real space
-typedef util::Vector3D<double> t_Real3D;
 //! Type of containers over indices
 typedef std::set<unsigned int> t_Indices;
 
@@ -31,7 +30,7 @@ struct MeshData {
     //! Facet container type
     typedef std::vector<t_Indices> t_Facets;
     //! Vertex container type
-    typedef std::vector<t_Real3D> t_Vertices;
+    typedef std::vector<LatticePosition> t_Vertices;
     //! Vertex container
     t_Vertices vertices;
     //! Facet container
@@ -40,10 +39,14 @@ struct MeshData {
 
 //! Holds data about facet-facet connections, e.g. neighbors
 struct MeshTopology {
+    //! Type for map from vertices to facets
+    typedef std::vector< std::set<unsigned int> > t_VertexToFacets;
+    //! Type for map from facets to its neighbors
+    typedef std::vector< boost::array<unsigned int, 3> > t_FacetNeighbors;
     //! For each vertex, lists the facet indices
-    std::vector< std::set<unsigned int> > vertex_to_facets;
+    t_VertexToFacets vertexToFacets;
     //! For each facet, lists the neighboring facets
-    std::vector< boost::array<unsigned int, 3> > facet_neighbors;
+    t_FacetNeighbors facetNeighbors;
 
     // Creates mesh topology from mesh data
     MeshTopology(MeshData const &_mesh);
@@ -58,9 +61,9 @@ public:
          : mesh_(_mesh), connectivity_(new MeshTopology(*_mesh)) {}
 
     //! Determines barycenter of mesh
-    t_Real3D barycenter() const;
+    LatticePosition GetBarycenter() const;
     //! Connectivity data
-    boost::shared_ptr<const MeshTopology> connectivity() const
+    boost::shared_ptr<const MeshTopology> GetConnectivity() const
       { return connectivity_; }
 
 protected:
