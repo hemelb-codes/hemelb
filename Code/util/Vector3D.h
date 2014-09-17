@@ -326,7 +326,7 @@ namespace hemelb
          * @param other
          * @return
          */
-        Vector3D Cross(const Vector3D& other)
+        Vector3D Cross(const Vector3D& other) const
         {
           return Cross(*this, other);
         }

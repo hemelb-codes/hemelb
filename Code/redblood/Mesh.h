@@ -21,14 +21,14 @@
 
 namespace hemelb { namespace redblood {
 
-//! Type of containers over indices
-typedef std::set<unsigned int> t_Indices;
 
 //! Holds raw mesh data
 //! Data is separated into vertices and triangular facets
 struct MeshData {
+    //! Type of containers over indices
+    typedef boost::array<size_t, 3> t_Facet;
     //! Facet container type
-    typedef std::vector<t_Indices> t_Facets;
+    typedef std::vector<t_Facet> t_Facets;
     //! Vertex container type
     typedef std::vector<LatticePosition> t_Vertices;
     //! Vertex container
@@ -40,9 +40,9 @@ struct MeshData {
 //! Holds data about facet-facet connections, e.g. neighbors
 struct MeshTopology {
     //! Type for map from vertices to facets
-    typedef std::vector< std::set<unsigned int> > t_VertexToFacets;
+    typedef std::vector< std::set<size_t> > t_VertexToFacets;
     //! Type for map from facets to its neighbors
-    typedef std::vector< boost::array<unsigned int, 3> > t_FacetNeighbors;
+    typedef std::vector< boost::array<size_t, 3> > t_FacetNeighbors;
     //! For each vertex, lists the facet indices
     t_VertexToFacets vertexToFacets;
     //! For each facet, lists the neighboring facets
