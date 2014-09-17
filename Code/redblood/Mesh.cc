@@ -1,5 +1,6 @@
 #include <fstream>
 #include <assert.h>
+#include <numeric>
 
 #include "redblood/Mesh.h"
 #include "util/fileutils.h"
@@ -61,12 +62,11 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
     for(unsigned int i(0), dummy(0); i < num_facets; ++i) {
         file >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
             >> indices[0] >> indices[1] >> indices[2];
-        result->facets[i].x = indices[0] - offset;
-        result->facets[i].y = indices[1] - offset;
-        result->facets[i].z = indices[2] - offset;
+        for(unsigned j(0); j < 3; ++j)
+            result->facets[i].insert(indices[j] - offset);
         log::Logger::Log<log::Trace, log::Singleton>(
-            "Facet %i with %i, %i, %i", i, result->facets[i].x,
-            result->facets[i].y, result->facets[i].z
+            "Facet %i with %i, %i, %i", i, indices[0] - offset,
+            indices[1] - offset, indices[2] - offset
         );
     }
 
@@ -75,6 +75,72 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
             num_facets);
 
     return result;
+}
+
+t_Real3D Mesh::barycenter() const {
+    typedef MeshData::t_Vertices::value_type t_Vertex;
+    return std::accumulate(
+        mesh_->vertices.begin(), mesh_->vertices.end(),
+        t_Vertex(0, 0, 0)
+    ) / t_Vertex::value_type(mesh_->vertices.size());
+}
+
+namespace {
+    bool edge_sharing(std::set<unsigned int> const &_a, 
+        std::set<unsigned int> const &_b ) {
+        unsigned int result(0);
+        std::set<unsigned int> :: const_iterator i_neigh = _a.begin();
+        for(; i_neigh != _a.end(); ++i_neigh)
+            if(_b.count(*i_neigh) == 1) ++result;
+        return result == 2;
+    }
+    // Adds value as first non-negative number, if value not in array yet
+    void insert(boost::array<unsigned, 3> &_container,
+        unsigned _value, unsigned _max) {
+        for(unsigned i(0); i < _container.size(); ++i)
+            if(_container[i] == _max) { _container[i] = _value; return; }
+            else if(_container[i] == _value) return;
+    }
+}
+
+MeshTopology::MeshTopology(MeshData const &_mesh) {
+    vertex_to_facets.resize(_mesh.vertices.size());
+    facet_neighbors.resize(_mesh.facets.size());
+
+    // Loop over facets to create map from vertices to facets
+    MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
+    MeshData::t_Facets::const_iterator const i_facet_end = _mesh.facets.end();
+    for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
+        t_Indices::const_iterator i_vertex = i_facet->begin();
+        for(; i_vertex != i_facet->end(); ++i_vertex)
+            vertex_to_facets.at(*i_vertex).insert(i);
+    }
+
+    // Now creates map of neighboring facets
+    unsigned int const Nmax = _mesh.facets.size();
+    boost::array<unsigned int, 3> const neg = {{ Nmax, Nmax, Nmax }};
+    for(unsigned int i(0); i < facet_neighbors.size(); ++i)
+        facet_neighbors[i] = neg;
+    i_facet = _mesh.facets.begin();
+    for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
+        t_Indices::const_iterator i_vertex = i_facet->begin();
+        for(; i_vertex != i_facet->end(); ++i_vertex) {
+            // check facets that this node is attached to
+            std::set<unsigned int> const &facets
+                = vertex_to_facets.at(*i_vertex);
+            std::set<unsigned int> :: const_iterator i_neigh = facets.begin();
+            for(; i_neigh != facets.end(); ++i_neigh) {
+                if(edge_sharing(*i_facet, _mesh.facets.at(*i_neigh)))
+                  insert(facet_neighbors.at(i), *i_neigh, Nmax);
+            }
+        }
+    }
+#   ifndef NDEBUG
+    // Checks there are no uninitialized values
+    for(unsigned int i(0); i < facet_neighbors.size(); ++i)
+        for(unsigned int j(0); j < 3; ++j)
+            assert(facet_neighbors[i][j] < Nmax);
+#   endif
 }
 
 }} // hemelb::rbc
