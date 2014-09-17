@@ -44,16 +44,19 @@ class RedBloodMeshTests : public CppUnit::TestFixture
         CPPUNIT_ASSERT(compare(mesh->vertices.front() - vfirst));
         CPPUNIT_ASSERT(compare(mesh->vertices.back() - vlast));
 
-        CPPUNIT_ASSERT(mesh->facets.front().count(0) == 1);
-        CPPUNIT_ASSERT(mesh->facets.front().count(12) == 1);
-        CPPUNIT_ASSERT(mesh->facets.front().count(20) == 1);
-        CPPUNIT_ASSERT(mesh->facets.back().count(100) == 1);
-        CPPUNIT_ASSERT(mesh->facets.back().count(811) == 1);
-        CPPUNIT_ASSERT(mesh->facets.back().count(244) == 1);
+        CPPUNIT_ASSERT(any(mesh->facets.front(),  0));
+        CPPUNIT_ASSERT(any(mesh->facets.front(), 12));
+        CPPUNIT_ASSERT(any(mesh->facets.front(), 20));
+        CPPUNIT_ASSERT(any(mesh->facets.back(), 100));
+        CPPUNIT_ASSERT(any(mesh->facets.back(), 811));
+        CPPUNIT_ASSERT(any(mesh->facets.back(), 244));
     }
 
     static bool compare(util::Vector3D<double> const &_in) {
         return _in.GetMagnitudeSquared() < 1e-8;
+    }
+    static bool any(boost::array<size_t, 3> const &_vec, size_t _value) {
+        return _vec[0] == _value or _vec[1] == _value or _vec[2] == _value;
     }
 
   private:
@@ -97,9 +100,9 @@ class TopologyTests : public CppUnit::TestFixture {
             {4, 4, 5, 7, 11},
         };
         for(unsigned vertex(0); vertex < 8; ++vertex) {
-            std::set<unsigned int> facets = topo->vertexToFacets[vertex];
+            std::set<size_t> facets = topo->vertexToFacets[vertex];
             CPPUNIT_ASSERT(facets.size() == expected[vertex][0]);
-            for(unsigned facet(1); facet <= expected[vertex][0]; ++facet) {
+            for(size_t facet(1); facet <= expected[vertex][0]; ++facet) {
                 CPPUNIT_ASSERT(facets.count(expected[vertex][facet]) == 1);
             }
         }
@@ -108,8 +111,8 @@ class TopologyTests : public CppUnit::TestFixture {
     void testFacetNeighbors() {
         CPPUNIT_ASSERT(topo->facetNeighbors.size() == 12);
 
-        // expected[facet] = {nneighbors, neighbor indices}
-        unsigned int expected[12][3] = {
+        // expected[facet] = {neighbor indices}
+        size_t expected[12][3] = {
             { 1, 3,  9},
             { 0, 6, 10},
             { 3, 5,  8},
@@ -124,10 +127,10 @@ class TopologyTests : public CppUnit::TestFixture {
             {10, 5,  7},
         };
         for(unsigned facet(0); facet < 12; ++facet) {
-            boost::array<unsigned int, 3> const &neighs
+            boost::array<size_t, 3> const &neighs
                 = topo->facetNeighbors[facet];
             CPPUNIT_ASSERT(neighs.size() == 3);
-            for(unsigned neigh(0); neigh < 3; ++neigh)
+            for(size_t neigh(0); neigh < 3; ++neigh)
                 CPPUNIT_ASSERT(contains(neighs, expected[facet][neigh]));
         }
     }

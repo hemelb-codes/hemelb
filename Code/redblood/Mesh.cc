@@ -43,7 +43,7 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
     result->vertices.resize(num_vertices);
 
     // Then read in first and subsequent lines
-    unsigned int offset;
+    MeshData::t_Facet::value_type offset;
     file >> offset >> result->vertices[0].x
         >> result->vertices[0].y
         >> result->vertices[0].z;
@@ -65,14 +65,16 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
     for(int i(0); i < 3; ++i) std::getline(file, line);
 
     // Read facet indices
-    unsigned int num_facets, indices[3];
+    unsigned int num_facets;
+    MeshData::t_Facet indices;
     file >> num_facets;
     result->facets.resize(num_facets);
     for(unsigned int i(0), dummy(0); i < num_facets; ++i) {
         file >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
             >> indices[0] >> indices[1] >> indices[2];
-        for(unsigned j(0); j < 3; ++j)
-            result->facets[i].insert(indices[j] - offset);
+        result->facets[i][0] = indices[0] - offset;
+        result->facets[i][1] = indices[1] - offset;
+        result->facets[i][2] = indices[2] - offset;
         log::Logger::Log<log::Trace, log::Singleton>(
             "Facet %i with %i, %i, %i", i, indices[0] - offset,
             indices[1] - offset, indices[2] - offset
@@ -95,18 +97,21 @@ LatticePosition Mesh::GetBarycenter() const {
 }
 
 namespace {
-    bool edge_sharing(std::set<unsigned int> const &_a, 
-        std::set<unsigned int> const &_b ) {
-        unsigned int result(0);
-        std::set<unsigned int> :: const_iterator i_neigh = _a.begin();
-        for(; i_neigh != _a.end(); ++i_neigh)
-            if(_b.count(*i_neigh) == 1) ++result;
-        return result == 2;
+    bool contains(MeshData::t_Facet const &_a,
+            MeshData::t_Facet::value_type _v) {
+        return _a[0] == _v or _a[1] == _v or _a[2] == _v;
+    }
+    bool edge_sharing(MeshData::t_Facet const &_a, 
+        MeshData::t_Facet const &_b ) {
+        return (contains(_b, _a[0]) ? 1: 0)
+            + (contains(_b, _a[1]) ? 1: 0)
+            + (contains(_b, _a[2]) ? 1: 0) == 2;
     }
     // Adds value as first non-negative number, if value not in array yet
-    void insert(boost::array<unsigned, 3> &_container,
-        unsigned _value, unsigned _max) {
-        for(unsigned i(0); i < _container.size(); ++i)
+    void insert(MeshData::t_Facet &_container,
+        MeshData::t_Facet::value_type _value,
+        MeshData::t_Facet::value_type _max) {
+        for(size_t i(0); i < _container.size(); ++i)
             if(_container[i] == _max) { _container[i] = _value; return; }
             else if(_container[i] == _value) return;
     }
@@ -120,9 +125,9 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
     MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
     MeshData::t_Facets::const_iterator const i_facet_end = _mesh.facets.end();
     for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
-        t_Indices::const_iterator i_vertex = i_facet->begin();
-        for(; i_vertex != i_facet->end(); ++i_vertex)
-            vertexToFacets.at(*i_vertex).insert(i);
+        vertexToFacets.at((*i_facet)[0]).insert(i);
+        vertexToFacets.at((*i_facet)[1]).insert(i);
+        vertexToFacets.at((*i_facet)[2]).insert(i);
     }
 
     // Now creates map of neighboring facets
@@ -132,12 +137,12 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
         facetNeighbors[i] = neg;
     i_facet = _mesh.facets.begin();
     for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
-        t_Indices::const_iterator i_vertex = i_facet->begin();
-        for(; i_vertex != i_facet->end(); ++i_vertex) {
+        for(size_t node(0); node != i_facet->size(); ++node) {
             // check facets that this node is attached to
-            std::set<unsigned int> const &facets
-                = vertexToFacets.at(*i_vertex);
-            std::set<unsigned int> :: const_iterator i_neigh = facets.begin();
+            MeshTopology::t_VertexToFacets::const_reference
+                facets = vertexToFacets.at((*i_facet)[node]);
+            MeshTopology::t_VertexToFacets::value_type::const_iterator
+                i_neigh = facets.begin();
             for(; i_neigh != facets.end(); ++i_neigh) {
                 if(edge_sharing(*i_facet, _mesh.facets.at(*i_neigh)))
                   insert(facetNeighbors.at(i), *i_neigh, Nmax);
