@@ -29,6 +29,7 @@
   #include "unittests/multiscale/mpwide/mpwide.h"
 #endif
 #include "unittests/redblood/Mesh.h"
+#include "unittests/redblood/ParticleImpl.h"
 #include "unittests/util/util.h"
 #include <unistd.h>
 
