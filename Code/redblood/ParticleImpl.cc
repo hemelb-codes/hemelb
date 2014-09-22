@@ -208,5 +208,36 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
   return _intensity * (theta - theta0) * (theta - theta0);
 }
 
+PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
+    PhysicalForce _intensity) {
+  PhysicalVolume const vol0 = volume(_orig);
+  PhysicalVolume const deltaV = volume(_mesh) - vol0;
+  return _intensity * 0.5 * deltaV * deltaV / vol0;
+}
+
+PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
+    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces) {
+  MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
+  MeshData::t_Facets::const_iterator const i_facet_end = _mesh.facets.end();
+  assert(_mesh.facets.size() == _orig.facets.size());
+
+  PhysicalVolume const vol0 = volume(_orig);
+  PhysicalVolume const deltaV = volume(_mesh) - vol0;
+  double const strength(_intensity / 12.0 * deltaV / vol0);
+    std::cout << "\n? " << strength << " " << deltaV << "\n";
+  for(; i_facet != i_facet_end; ++i_facet) {
+    // Come aliases to make it easier to refer to vertices
+    size_t const i0((*i_facet)[0]), i1((*i_facet)[1]), i2((*i_facet)[2]);
+    LatticePosition const & a(_mesh.vertices[i0]);
+    LatticePosition const & b(_mesh.vertices[i1]);
+    LatticePosition const & c(_mesh.vertices[i2]);
+
+    _forces[i0] += b.Cross(c) * strength;
+    _forces[i1] += c.Cross(a) * strength;
+    _forces[i2] += a.Cross(b) * strength;
+  }
+  return 0.5 * _intensity * deltaV * deltaV / vol0;
+}
+
 }}}
 

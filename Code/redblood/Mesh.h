@@ -37,7 +37,10 @@ struct MeshData {
   t_Facets facets;
 };
 
-//! Holds data about facet-facet connections, e.g. neighbors
+LatticePosition barycenter(MeshData const &_mesh);
+PhysicalVolume volume(MeshData const &_mesh);
+
+//! Holds raw connectivity data
 struct MeshTopology {
   //! Type for map from vertices to facets
   typedef std::vector< std::set<size_t> > t_VertexToFacets;
@@ -52,16 +55,21 @@ struct MeshTopology {
   MeshTopology(MeshData const &_mesh);
 };
 
-//! Performs 
+//! Triangular mesh
 class Mesh {
 
 public:
   //! Initializes mesh from mesh data
   Mesh   (boost::shared_ptr<MeshData> const & _mesh)
        : mesh_(_mesh), connectivity_(new MeshTopology(*_mesh)) {}
+  //! Initialize mesh by copying data
+  Mesh   (MeshData const &_data)
+       : mesh_(new MeshData(_data)), connectivity_(new MeshTopology(_data)) {}
 
   //! Determines barycenter of mesh
-  LatticePosition GetBarycenter() const;
+  LatticePosition GetBarycenter() const { return barycenter(*mesh_); }
+  //! Computes volume of the mesh
+  PhysicalVolume GetVolume() const { return volume(*mesh_); }
   //! Connectivity data
   boost::shared_ptr<const MeshTopology> GetConnectivity() const
     { return connectivity_; }
