@@ -87,12 +87,26 @@ boost::shared_ptr<redblood::MeshData> read_mesh(std::string const &_filename) {
   return result;
 }
 
-LatticePosition Mesh::GetBarycenter() const {
+LatticePosition barycenter(MeshData const &_mesh) {
   typedef MeshData::t_Vertices::value_type t_Vertex;
   return std::accumulate(
-    mesh_->vertices.begin(), mesh_->vertices.end(), t_Vertex(0, 0, 0)
-  ) / t_Vertex::value_type(mesh_->vertices.size());
+    _mesh.vertices.begin(), _mesh.vertices.end(), t_Vertex(0, 0, 0)
+  ) / t_Vertex::value_type(_mesh.vertices.size());
 }
+PhysicalVolume volume(MeshData const &_mesh) {
+    MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
+    MeshData::t_Facets::const_iterator const i_facet_end(_mesh.facets.end());
+    PhysicalVolume result(0);
+    for(; i_facet != i_facet_end; ++i_facet) {
+        LatticePosition const &v0(_mesh.vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(_mesh.vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(_mesh.vertices[(*i_facet)[2]]);
+        result += v0.Cross(v1).Dot(v2);
+    }
+    // Minus sign comes from outward facing facet orientation
+    return -result / PhysicalVolume(6);
+}
+
 
 namespace {
   bool contains(MeshData::t_Facet const &_a,
@@ -154,5 +168,6 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
       assert(facetNeighbors[i][j] < Nmax);
 # endif
 }
+
 
 }} // hemelb::rbc

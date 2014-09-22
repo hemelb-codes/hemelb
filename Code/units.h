@@ -58,6 +58,7 @@ namespace hemelb
   typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
+  typedef double PhysicalVolume; // continuous volume in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
