@@ -187,7 +187,7 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
   Angle const theta0 = orientedAngle(_orig, _facet_index, _neighbor_index);
   Angle const theta = orientedAngle(_mesh, _facet_index, _neighbor_index);
 
-  const PhysicalForce strength = _intensity * (theta - theta0);
+  const PhysicalForce strength = -_intensity * (theta - theta0);
   // forces on nodes that are in common
   facetA.forces(commons.first) += (
       facetA(singles.first, commons.second).Cross(vecA)
@@ -224,7 +224,6 @@ PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
   PhysicalVolume const vol0 = volume(_orig);
   PhysicalVolume const deltaV = volume(_mesh) - vol0;
   double const strength(_intensity / 12.0 * deltaV / vol0);
-    std::cout << "\n? " << strength << " " << deltaV << "\n";
   for(; i_facet != i_facet_end; ++i_facet) {
     // Come aliases to make it easier to refer to vertices
     size_t const i0((*i_facet)[0]), i1((*i_facet)[1]), i2((*i_facet)[2]);

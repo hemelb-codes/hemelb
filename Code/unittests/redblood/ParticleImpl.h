@@ -166,38 +166,43 @@ class EnergyTests : public TetrahedronFixture {
         CPPUNIT_ASSERT(is_zero(forces[i] / epsilon));
     }
 
-    void bending(LatticePosition const &_normal, size_t _node) {
+    void bending(LatticePosition const &_direction, size_t _node) {
+      LatticeForceVector const response[4] = {
+        LatticeForceVector(0, 0, 1).GetNormalised(),
+        LatticeForceVector(1, 1, -2).GetNormalised(),
+        LatticeForceVector(1, 1, -2).GetNormalised(),
+        LatticeForceVector(1, 1, 1).GetNormalised(),
+      };
       // Only direction perpendicular to first facet will have an effect
       double const epsilon(1e-5);
-      mesh.vertices[_node] += _normal * epsilon;
+      mesh.vertices[_node] += _direction * epsilon;
       PhysicalEnergy const deltaE(
         redblood::facetBending(mesh, original, 0, 3, 1.0, forces)
       );
       mesh.vertices[_node] = original.vertices[_node];
 
-      CPPUNIT_ASSERT(is_zero(forces[_node] + _normal * (deltaE / epsilon)));
+      CPPUNIT_ASSERT(
+          is_zero(forces[_node] + response[_node] * (deltaE / epsilon))
+      );
       for(size_t i(0); i < forces.size(); ++i)
         forces[i] = LatticeForceVector(0, 0, 0);
     }
 
     void testBendingForcesMoveNodes() {
       // Single nodes
-      bending(LatticePosition(0, 0, 1).GetNormalised(), 0);
-      bending(LatticePosition(1, 1, 1).GetNormalised(), 3);
+      bending(LatticeForceVector(0, 0, 1).GetNormalised(), 0);
+      bending(LatticeForceVector(1, 1, 1).GetNormalised(), 3);
       // Common nodes
-      bending(LatticePosition(0, 0, 1).GetNormalised(), 1);
-      bending(LatticePosition(1, 1, 1).GetNormalised(), 1);
-      bending(LatticePosition(0, 0, 1).GetNormalised(), 2);
-      bending(LatticePosition(1, 1, 1).GetNormalised(), 2);
-
+      bending(LatticeForceVector(1, 1, -2).GetNormalised(), 1);
+      bending(LatticeForceVector(1, 1, -2).GetNormalised(), 2);
       // Single nodes
-      noBending(LatticePosition(1, 0, 0).GetNormalised(), 0);
-      noBending(LatticePosition(0, 1, 0).GetNormalised(), 0);
-      noBending(LatticePosition(1, 1, -2).GetNormalised(), 3);
-      noBending(LatticePosition(1, -1, 0).GetNormalised(), 3);
+      noBending(LatticeForceVector(1, 0, 0).GetNormalised(), 0);
+      noBending(LatticeForceVector(0, 1, 0).GetNormalised(), 0);
+      noBending(LatticeForceVector(1, 1, -2).GetNormalised(), 3);
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 3);
       // Common nodes
-      noBending(LatticePosition(1, -1, 0).GetNormalised(), 1);
-      noBending(LatticePosition(1, -1, 0).GetNormalised(), 2);
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 1);
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 2);
     }
 
     void testBendingForcesNoDeformation() {
