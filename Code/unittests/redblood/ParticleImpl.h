@@ -53,11 +53,11 @@ public:
 
   void testUnitNormal() {
     {
-      LatticePosition const actual = unit_normal(*main);
+      LatticePosition const actual = unitNormal(*main);
       LatticePosition const expected(0, 0, -1);
       CPPUNIT_ASSERT(is_zero(actual - expected));
     } {
-      LatticePosition const actual = unit_normal(*neighbor);
+      LatticePosition const actual = unitNormal(*neighbor);
       LatticePosition const expected(1, 1, 1);
       CPPUNIT_ASSERT(is_zero(actual - expected.GetNormalised()));
     }
@@ -94,14 +94,17 @@ public:
 
     // simpler angle
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
+    std::cout << "\n";
     Angle const actual1 = redblood::orientedAngle(*main, *neighbor);
     CPPUNIT_ASSERT(is_zero(actual1 + 3.0*PI/4.0));
 
     // change orientation <==> negative angle
     mesh.facets.front()[1] = 2;
     mesh.facets.front()[2] = 1;
-    Angle const actual2 = redblood::orientedAngle(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(actual2 - 3.0*PI/4.0));
+    Angle const actual2 = redblood::orientedAngle(
+        redblood::Facet(mesh, 0), redblood::Facet(mesh, 3)
+    );
+    CPPUNIT_ASSERT(is_zero(actual2 + PI/4.0));
     mesh.facets.front()[1] = 1;
     mesh.facets.front()[2] = 2;
 
@@ -116,12 +119,9 @@ protected:
 
 class EnergyTests : public TetrahedronFixture {
     CPPUNIT_TEST_SUITE(EnergyTests);
-    CPPUNIT_TEST(testBendingEnergy);
-    CPPUNIT_TEST(testBendingForcesNoDeformation);
-    CPPUNIT_TEST(testBendingForcesMoveNodes);
-    CPPUNIT_TEST(testVolumeEnergy);
-    CPPUNIT_TEST(testVolumeForces);
-    CPPUNIT_TEST(testNoVolumeChange);
+    CPPUNIT_TEST(testBending);
+    CPPUNIT_TEST(testVolume);
+    CPPUNIT_TEST(testSurface);
     CPPUNIT_TEST_SUITE_END();
   public:
     void setUp() {
@@ -132,7 +132,7 @@ class EnergyTests : public TetrahedronFixture {
 
     void tearDown() { TetrahedronFixture::tearDown(); }
 
-    void testBendingEnergy() {
+    void testBending() {
       // No difference between original and current mesh
       // Hence energy is zero
       PhysicalEnergy const actual0(
@@ -153,70 +153,7 @@ class EnergyTests : public TetrahedronFixture {
       CPPUNIT_ASSERT(is_zero(actual1 - expected));
     }
 
-    void noBending(LatticePosition const &_normal, size_t _node) {
-      double const epsilon(1e-5);
-      mesh.vertices[_node] += _normal * epsilon;
-      PhysicalEnergy const deltaE(
-        redblood::facetBending(mesh, original, 0, 3, 1.0, forces)
-      );
-      mesh.vertices[_node] = original.vertices[_node];
-
-      CPPUNIT_ASSERT(is_zero(deltaE / epsilon));
-      for(size_t i(0); i < forces.size(); ++i)
-        CPPUNIT_ASSERT(is_zero(forces[i] / epsilon));
-    }
-
-    void bending(LatticePosition const &_direction, size_t _node) {
-      LatticeForceVector const response[4] = {
-        LatticeForceVector(0, 0, 1).GetNormalised(),
-        LatticeForceVector(1, 1, -2).GetNormalised(),
-        LatticeForceVector(1, 1, -2).GetNormalised(),
-        LatticeForceVector(1, 1, 1).GetNormalised(),
-      };
-      // Only direction perpendicular to first facet will have an effect
-      double const epsilon(1e-5);
-      mesh.vertices[_node] += _direction * epsilon;
-      PhysicalEnergy const deltaE(
-        redblood::facetBending(mesh, original, 0, 3, 1.0, forces)
-      );
-      mesh.vertices[_node] = original.vertices[_node];
-
-      CPPUNIT_ASSERT(
-          is_zero(forces[_node] + response[_node] * (deltaE / epsilon))
-      );
-      for(size_t i(0); i < forces.size(); ++i)
-        forces[i] = LatticeForceVector(0, 0, 0);
-    }
-
-    void testBendingForcesMoveNodes() {
-      // Single nodes
-      bending(LatticeForceVector(0, 0, 1).GetNormalised(), 0);
-      bending(LatticeForceVector(1, 1, 1).GetNormalised(), 3);
-      // Common nodes
-      bending(LatticeForceVector(1, 1, -2).GetNormalised(), 1);
-      bending(LatticeForceVector(1, 1, -2).GetNormalised(), 2);
-      // Single nodes
-      noBending(LatticeForceVector(1, 0, 0).GetNormalised(), 0);
-      noBending(LatticeForceVector(0, 1, 0).GetNormalised(), 0);
-      noBending(LatticeForceVector(1, 1, -2).GetNormalised(), 3);
-      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 3);
-      // Common nodes
-      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 1);
-      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 2);
-    }
-
-    void testBendingForcesNoDeformation() {
-      // No difference between original and current mesh
-      // Hence energy is zero
-      PhysicalEnergy const deltaE(
-        redblood::facetBending(mesh, original, 0, 3, 1e0, forces)
-      );
-      CPPUNIT_ASSERT(is_zero(deltaE));
-      for(size_t i(0); i < forces.size(); ++i)
-        CPPUNIT_ASSERT(is_zero(forces[i]));
-    }
-
-    void testVolumeEnergy() {
+    void testVolume() {
       // No difference between original and current mesh
       // Hence energy is zero
       PhysicalEnergy const actual0(
@@ -235,58 +172,23 @@ class EnergyTests : public TetrahedronFixture {
       mesh.vertices.back()[2] = 1e0;
     }
 
-    void testNoVolumeChange() {
+    void testSurface() {
+      // No difference between original and current mesh
+      // Hence energy is zero
       PhysicalEnergy const actual0(
-        redblood::volumeEnergy(mesh, original, 1e0, forces)
+        redblood::surfaceEnergy(mesh, original, 1e0)
       );
       CPPUNIT_ASSERT(is_zero(actual0));
-      for(size_t i(0); i < 4; ++i) {
-        CPPUNIT_ASSERT(is_zero(forces[i]));
-        forces[i] = LatticeForceVector(0, 0, 0); // remove numerical noise
-      }
-    }
 
-    void volumeChange(LatticePosition const &_normal, size_t _node) {
-      double const epsilon(1e-3);
-      mesh.vertices[_node] += _normal * epsilon;
-      PhysicalEnergy const deltaE(
-        redblood::volumeEnergy(mesh, original, 1.0, forces)
+      // Now modify mesh and check "energy" is square of volume diff
+      mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
+      PhysicalEnergy const actual1(
+        redblood::surfaceEnergy(mesh, original, 2.0*surface(original))
       );
-      mesh.vertices[_node] = original.vertices[_node];
 
-      CPPUNIT_ASSERT(is_zero(forces[_node] + _normal * (deltaE / epsilon)));
-      for(size_t i(0); i < forces.size(); ++i)
-        forces[i] = LatticeForceVector(0, 0, 0);
-    }
-    void noVolumeChange(LatticePosition const &_normal, size_t _node) {
-      double const epsilon(1e-3);
-      mesh.vertices[_node] += _normal * epsilon;
-      PhysicalEnergy const deltaE(
-        redblood::volumeEnergy(mesh, original, 1.0, forces)
-      );
-      mesh.vertices[_node] = original.vertices[_node];
-
-      CPPUNIT_ASSERT(is_zero(forces[_node]));
-      CPPUNIT_ASSERT(is_zero(deltaE));
-      for(size_t i(0); i < forces.size(); ++i)
-        forces[i] = LatticeForceVector(0, 0, 0);
-    }
-
-    void testVolumeForces() {
-      volumeChange(LatticePosition(1, 1, 1).GetNormalised(), 0);
-      volumeChange(LatticePosition(1, 0, 0).GetNormalised(), 1);
-      volumeChange(LatticePosition(0, 1, 0).GetNormalised(), 2);
-      volumeChange(LatticePosition(0, 0, 1).GetNormalised(), 3);
-      // To first order at least.
-      // Note: this only works for tetrahedron fixture.
-      noVolumeChange(LatticePosition(-1, 1, 0).GetNormalised(), 0);
-      noVolumeChange(LatticePosition(1, 1, -2).GetNormalised(), 0);
-      noVolumeChange(LatticePosition(0, 1, 0).GetNormalised(), 1);
-      noVolumeChange(LatticePosition(0, 0, 1).GetNormalised(), 1);
-      noVolumeChange(LatticePosition(1, 0, 0).GetNormalised(), 2);
-      noVolumeChange(LatticePosition(0, 0, 1).GetNormalised(), 2);
-      noVolumeChange(LatticePosition(1, 0, 0).GetNormalised(), 3);
-      noVolumeChange(LatticePosition(0, 1, 0).GetNormalised(), 3);
+      PhysicalEnergy const deltaS(surface(mesh) - surface(original));
+      CPPUNIT_ASSERT(is_zero(actual1 - deltaS * deltaS));
+      mesh.vertices.back()[2] = 1e0;
     }
 
   protected:
@@ -294,8 +196,146 @@ class EnergyTests : public TetrahedronFixture {
     std::vector<LatticeForceVector> forces;
 };
 
+
+
+struct EnergyFunctional {
+  EnergyFunctional(redblood::MeshData const &_original)
+    : original(_original) {};
+  redblood::MeshData const &original;
+};
+#define HEMELB_OP_MACRO(CLASS, FUNCTION)                                     \
+  struct CLASS : public EnergyFunctional {                                   \
+    CLASS(redblood::MeshData const &_original)                               \
+      : EnergyFunctional(_original) {}                                       \
+    PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {       \
+      return redblood::FUNCTION(_mesh, original, 1.0);                       \
+    }                                                                        \
+    PhysicalEnergy operator()(redblood::MeshData const &_mesh,               \
+      std::vector<LatticeForceVector> &_forces) const{                       \
+      return redblood::FUNCTION(_mesh, original, 1.0, _forces);              \
+    }                                                                        \
+  }
+HEMELB_OP_MACRO(VolumeEnergy, volumeEnergy);
+HEMELB_OP_MACRO(SurfaceEnergy, surfaceEnergy);
+#undef HEMELB_OP_MACRO
+
+struct BendingEnergy : public EnergyFunctional {
+  BendingEnergy(redblood::MeshData const &_original)
+    : EnergyFunctional(_original) {}
+  PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {
+    return redblood::facetBending(_mesh, original, 0, 1, 1.0)
+      + redblood::facetBending(_mesh, original, 0, 2, 1.0)
+      + redblood::facetBending(_mesh, original, 0, 3, 1.0)
+      + redblood::facetBending(_mesh, original, 1, 2, 1.0)
+      + redblood::facetBending(_mesh, original, 1, 3, 1.0)
+      + redblood::facetBending(_mesh, original, 2, 3, 1.0);
+  }
+  PhysicalEnergy operator()(redblood::MeshData const &_mesh,
+    std::vector<LatticeForceVector> &_forces) const{
+    return redblood::facetBending(_mesh, original, 0, 1, 1.0, _forces)
+      + redblood::facetBending(_mesh, original, 0, 2, 1.0, _forces)
+      + redblood::facetBending(_mesh, original, 0, 3, 1.0, _forces)
+      + redblood::facetBending(_mesh, original, 1, 2, 1.0, _forces)
+      + redblood::facetBending(_mesh, original, 1, 3, 1.0, _forces)
+      + redblood::facetBending(_mesh, original, 2, 3, 1.0, _forces);
+  }
+};
+
+
+class GradientTests : public EnergyVsGradientFixture {
+    CPPUNIT_TEST_SUITE(GradientTests);
+    CPPUNIT_TEST(testBending);
+    CPPUNIT_TEST(testSurface);
+    CPPUNIT_TEST(testVolume);
+    CPPUNIT_TEST_SUITE_END();
+public:
+
+    void setUp() {
+      TetrahedronFixture::setUp();
+      original = mesh;
+      mesh.vertices[0] += LatticePosition(-0.01, 0.02342, 0.03564);
+      mesh.vertices[1] += LatticePosition(0.0837, -0.012632, 0.0872935);
+      mesh.vertices[2] += LatticePosition(0.02631, -0.00824223, -0.098362);
+    }
+
+    void testBending() { energyVsForces(BendingEnergy(original)); }
+    void testSurface() { energyVsForces(SurfaceEnergy(original)); }
+    void testVolume() { energyVsForces(VolumeEnergy(original)); }
+
+protected:
+    redblood::MeshData original;
+};
+
+// Tests certain node movement that do not result in forces/energy
+class GradientKernTests : public TetrahedronFixture {
+    CPPUNIT_TEST_SUITE(GradientKernTests);
+    CPPUNIT_TEST(testBending);
+    CPPUNIT_TEST(testVolume);
+    CPPUNIT_TEST(testSurface);
+    CPPUNIT_TEST_SUITE_END();
+
+#   define HEMELB_MACRO(NAME, FUNCTION_CALL)                                  \
+    void NAME(LatticePosition const &_normal, size_t _node) {                 \
+      std::vector<LatticeForceVector> forces(4, LatticeForceVector(0, 0, 0)); \
+      double const epsilon(1e-5);                                             \
+      redblood::MeshData newmesh(mesh);                                       \
+      newmesh.vertices[_node] += _normal * epsilon;                           \
+      PhysicalEnergy const deltaE(redblood::FUNCTION_CALL);                   \
+      CPPUNIT_ASSERT(is_zero(deltaE / epsilon));                              \
+      for(size_t i(0); i < forces.size(); ++i)                                \
+        CPPUNIT_ASSERT(is_zero(forces[i]));                                   \
+    }
+
+      HEMELB_MACRO(noBending, facetBending(newmesh, mesh, 0, 3, 1.0, forces));
+      HEMELB_MACRO(noVolume, volumeEnergy(newmesh, mesh, 1.0, forces));
+      HEMELB_MACRO(noSurface, surfaceEnergy(newmesh, mesh, 1.0, forces));
+#   undef HEMELB_MACRO
+
+    void testBending() {
+      // Single nodes
+      noBending(LatticeForceVector(1, 0, 0).GetNormalised(), 0);
+      noBending(LatticeForceVector(0, 1, 0).GetNormalised(), 0);
+      noBending(LatticeForceVector(1, 1, -2).GetNormalised(), 3);
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 3);
+      // Common nodes
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 1);
+      noBending(LatticeForceVector(1, -1, 0).GetNormalised(), 2);
+    }
+
+    void testVolume() {
+      noVolume(LatticePosition(-1, 1, 0).GetNormalised(), 0);
+      noVolume(LatticePosition(1, 1, -2).GetNormalised(), 0);
+      noVolume(LatticePosition(0, 1, 0).GetNormalised(), 1);
+      noVolume(LatticePosition(0, 0, 1).GetNormalised(), 1);
+      noVolume(LatticePosition(1, 0, 0).GetNormalised(), 2);
+      noVolume(LatticePosition(0, 0, 1).GetNormalised(), 2);
+      noVolume(LatticePosition(1, 0, 0).GetNormalised(), 3);
+      noVolume(LatticePosition(0, 1, 0).GetNormalised(), 3);
+    }
+
+    void testSurface() {
+      // Get rid of some surfaces first, to simplify kernel
+      redblood::MeshData const save(mesh);
+      mesh.facets.resize(2);
+      mesh.facets.back() = save.facets.back();
+
+      try {
+        noSurface(LatticePosition(0, 0, 1).GetNormalised(), 0);
+        noSurface(LatticePosition(1, 1, 1).GetNormalised(), 3);
+        noSurface(LatticePosition(-1, 1, 0).GetNormalised(), 0);
+        noSurface(LatticePosition(-1, 1, 0).GetNormalised(), 3);
+      } catch(...) {
+        mesh = save;
+        throw;
+      }
+      mesh = save;
+    }
+};
+
 CPPUNIT_TEST_SUITE_REGISTRATION(FacetTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(EnergyTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(GradientTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(GradientKernTests);
 }}
 
 #endif // ONCE
