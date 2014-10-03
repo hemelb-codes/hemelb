@@ -47,5 +47,53 @@ class TetrahedronFixture : public CppUnit::TestFixture, public Comparisons {
     hemelb::redblood::MeshData mesh;
 };
 
+class EnergyVsGradientFixture : public TetrahedronFixture {
+
+  public:
+  template<class ENERGY, class GRADIENT>
+    void energyVsForces(
+        ENERGY const &_energy,
+        GRADIENT const &_gradient,
+        LatticePosition const &_dir,
+        size_t _node, double _epsilon = 1e-8) {
+
+      std::vector<LatticeForceVector> forces(4, LatticeForceVector(0,0,0));
+      PhysicalEnergy const firstE(_gradient(mesh, forces));
+
+      redblood::MeshData newmesh(mesh);
+      newmesh.vertices[_node] += _dir * _epsilon;
+      PhysicalEnergy const deltaE(_energy(newmesh) - firstE);
+
+      double const tolerance(
+          std::max(std::abs((deltaE / _epsilon) * 1e-4), 1e-8)
+      );
+      CPPUNIT_ASSERT(
+          is_zero(
+            forces[_node].Dot(_dir) + (deltaE / _epsilon),
+            tolerance
+          )
+      );
+    }
+
+  template<class ENERGY, class GRADIENT>
+    void energyVsForces(ENERGY const &_energy,
+        GRADIENT const &_gradient,
+        double _epsilon = 1e-8) {
+
+      for(size_t node(0); node < mesh.vertices.size(); ++node) 
+        for(size_t i(0); i < 3; ++i)
+          energyVsForces(
+            _energy, _gradient,
+            LatticePosition(i==0, i==1, i==2),
+            node, _epsilon
+          );
+    }
+
+  template<class BOTH>
+    void energyVsForces(BOTH const &_both, double _epsilon = 1e-8) {
+      energyVsForces(_both, _both, _epsilon);
+    }
+};
+
 }}
 #endif

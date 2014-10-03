@@ -70,12 +70,12 @@ typedef std::pair<size_t, size_t> t_IndexPair;
 t_IndexPair commonNodes(Facet const &_a, Facet const &_b) {
   // First node differs, hence other two nodes in common
   if(not contains(_b.indices, _a.indices[0]))
-    return t_IndexPair(_a.indices[1], _a.indices[2]);
+    return t_IndexPair(1, 2);
   // First node in common, second node differs
   if(not contains(_b.indices, _a.indices[1]))
-    return t_IndexPair(_a.indices[0], _a.indices[2]);
+    return t_IndexPair(0, 2);
   // First node and second in common
-  return t_IndexPair(_a.indices[0], _a.indices[1]);
+  return t_IndexPair(0, 1);
 }
 // Returns common edge with specific direction
 LatticePosition commonEdge(Facet const &_a, Facet const &_b) {
@@ -107,7 +107,7 @@ LatticePosition normal(Facet const &_facet) {
   return edgeA.Cross(edgeB);
 }
 
-LatticePosition unit_normal(Facet const &_facet) {
+LatticePosition unitNormal(Facet const &_facet) {
   return normal(_facet).Normalise();
 }
 
@@ -119,7 +119,7 @@ Angle angle(LatticePosition const &_a, LatticePosition const &_b) {
   return std::acos(cosine);
 }
 Angle angle(Facet const &_a, Facet const &_b) {
-  return angle(unit_normal(_a), unit_normal(_b));
+  return angle(unitNormal(_a), unitNormal(_b));
 }
 // Angle angle(MeshData const &_mesh, size_t _facet, size_t _neighbor) {
 //   return angle(Facet(_mesh, _facet), Facet(_mesh, _neighbor));
@@ -136,7 +136,7 @@ Angle orientedAngle(LatticePosition const &_a, LatticePosition const &_b,
 }
 Angle orientedAngle(Facet const &_a, Facet const &_b,
         LatticePosition const &_orient) {
-  return orientedAngle(unit_normal(_a), unit_normal(_b), _orient);
+  return orientedAngle(unitNormal(_a), unitNormal(_b), _orient);
 }
 Angle orientedAngle(Facet const &_a, Facet const &_b) {
   return orientedAngle(_a, _b, commonEdge(_a, _b));
@@ -187,7 +187,7 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
   Angle const theta0 = orientedAngle(_orig, _facet_index, _neighbor_index);
   Angle const theta = orientedAngle(_mesh, _facet_index, _neighbor_index);
 
-  const PhysicalForce strength = -_intensity * (theta - theta0);
+  const PhysicalForce strength = -2.0 * _intensity * (theta - theta0);
   // forces on nodes that are in common
   facetA.forces(commons.first) += (
       facetA(singles.first, commons.second).Cross(vecA)
@@ -223,7 +223,7 @@ PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
 
   PhysicalVolume const vol0 = volume(_orig);
   PhysicalVolume const deltaV = volume(_mesh) - vol0;
-  double const strength(_intensity / 12.0 * deltaV / vol0);
+  double const strength(_intensity / 6.0 * deltaV / vol0);
   for(; i_facet != i_facet_end; ++i_facet) {
     // Come aliases to make it easier to refer to vertices
     size_t const i0((*i_facet)[0]), i1((*i_facet)[1]), i2((*i_facet)[2]);
@@ -236,6 +236,30 @@ PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
     _forces[i2] += a.Cross(b) * strength;
   }
   return 0.5 * _intensity * deltaV * deltaV / vol0;
+}
+
+PhysicalEnergy surfaceEnergy(MeshData const &_mesh, MeshData const &_orig,
+    PhysicalForce _intensity) {
+  PhysicalSurface const surf0 = surface(_orig);
+  PhysicalSurface const deltaS = surface(_mesh) - surf0;
+  return _intensity * 0.5 * deltaS * deltaS / surf0;
+}
+
+PhysicalEnergy surfaceEnergy(MeshData const &_mesh, MeshData const &_orig,
+    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces) {
+
+  PhysicalSurface const surf0 = surface(_orig);
+  PhysicalSurface const deltaS = surface(_mesh) - surf0;
+  double const strength = _intensity * 0.5 * deltaS / surf0;
+  for(size_t facetIndex(0); facetIndex < _mesh.facets.size(); ++facetIndex) {
+    ForceFacet facet(_mesh, facetIndex, _forces);
+    LatticePosition const n0 = unitNormal(facet);
+
+    facet.forces(0) += n0.Cross(facet(2, 1)) * strength;
+    facet.forces(1) += n0.Cross(facet(0, 2)) * strength;
+    facet.forces(2) += n0.Cross(facet(1, 0)) * strength;
+  }
+  return _intensity * 0.5 * deltaS * deltaS / surf0;
 }
 
 }}}

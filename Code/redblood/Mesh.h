@@ -39,6 +39,7 @@ struct MeshData {
 
 LatticePosition barycenter(MeshData const &_mesh);
 PhysicalVolume volume(MeshData const &_mesh);
+PhysicalSurface surface(MeshData const &_mesh);
 
 //! Holds raw connectivity data
 struct MeshTopology {
@@ -70,6 +71,8 @@ public:
   LatticePosition GetBarycenter() const { return barycenter(*mesh_); }
   //! Computes volume of the mesh
   PhysicalVolume GetVolume() const { return volume(*mesh_); }
+  //! Computes surface of the mesh
+  PhysicalSurface GetSurface() const { return surface(*mesh_); }
   //! Connectivity data
   boost::shared_ptr<const MeshTopology> GetConnectivity() const
     { return connectivity_; }

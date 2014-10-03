@@ -106,6 +106,18 @@ PhysicalVolume volume(MeshData const &_mesh) {
     // Minus sign comes from outward facing facet orientation
     return -result / PhysicalVolume(6);
 }
+PhysicalSurface surface(MeshData const &_mesh) {
+    MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
+    MeshData::t_Facets::const_iterator const i_facet_end(_mesh.facets.end());
+    PhysicalVolume result(0);
+    for(; i_facet != i_facet_end; ++i_facet) {
+        LatticePosition const &v0(_mesh.vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(_mesh.vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(_mesh.vertices[(*i_facet)[2]]);
+        result += (v0 - v1).Cross(v2 - v1).GetMagnitude();
+    }
+    return result * 0.5;
+}
 
 
 namespace {
