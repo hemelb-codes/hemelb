@@ -11,141 +11,11 @@
 #include <iomanip>
 #include "Mesh.h"
 #include "constants.h"
+#include "facet.h"
 
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
 namespace hemelb { namespace redblood { namespace {
-
-bool contains(MeshData::t_Facet const &_a,
-        MeshData::t_Facet::value_type _v) {
-  return _a[0] == _v or _a[1] == _v or _a[2] == _v;
-}
-
-inline bool is_negative_or_null(double _in) {
-  return _in < 1e-12;
-}
-
-// Helper class to avoid explicit indexing over vertices
-struct Facet {
-  // References nodes of a facet
-  LatticePosition const * nodes[3];
-  // Indices of nodes in original array
-  MeshData::t_Facet const & indices;
-  Facet   (MeshData const &_mesh, size_t _index)
-        : indices(_mesh.facets[_index]) {
-    nodes[0] = &_mesh.vertices[indices[0]];
-    nodes[1] = &_mesh.vertices[indices[1]];
-    nodes[2] = &_mesh.vertices[indices[2]];
-  }
-
-  // returns an edge nodes[i] - nodes[j]
-  LatticePosition operator()(size_t i, size_t j) const {
-    return (*this)(i) - (*this)(j);
-  }
-  // returns node i
-  LatticePosition const &operator()(size_t i) const {
-    return *(nodes[i]);
-  }
-};
-
-// Facet that also includes forces
-struct ForceFacet : public Facet {
-  // References forces on a node
-  LatticeForceVector * forces_[3];
-  ForceFacet   (MeshData const &_mesh, size_t _index,
-          std::vector<LatticeForceVector> &_forces)
-        : Facet(_mesh, _index) {
-    forces_[0] = &_forces[indices[0]];
-    forces_[1] = &_forces[indices[1]];
-    forces_[2] = &_forces[indices[2]];
-  }
-  LatticeForceVector & forces(size_t i) { return *(forces_[i]); }
-  LatticeForceVector const & forces(size_t i) const { return *(forces_[i]); }
-};
-
-
-typedef std::pair<size_t, size_t> t_IndexPair;
-// Computes common nodes for neighboring facets
-// This routine will report nonsense if facets are not neighbors
-t_IndexPair commonNodes(Facet const &_a, Facet const &_b) {
-  // First node differs, hence other two nodes in common
-  if(not contains(_b.indices, _a.indices[0]))
-    return t_IndexPair(1, 2);
-  // First node in common, second node differs
-  if(not contains(_b.indices, _a.indices[1]))
-    return t_IndexPair(0, 2);
-  // First node and second in common
-  return t_IndexPair(0, 1);
-}
-// Returns common edge with specific direction
-LatticePosition commonEdge(Facet const &_a, Facet const &_b) {
-  t_IndexPair common(commonNodes(_a, _b));
-  return _a(common.first, common.second);
-}
-
-// Figures out nodes that are not in common
-// Returns non-sense if the nodes are not neighbors.
-t_IndexPair singleNodes(Facet const &_a, Facet const &_b) {
-  t_IndexPair result;
-  size_t mappingB[3] = {4, 4, 4};
-  for(size_t i(0); i < 3; ++i)
-    if(_a.indices[i] == _b.indices[0]) mappingB[0] = i;
-    else if(_a.indices[i] == _b.indices[1]) mappingB[1] = i;
-    else if(_a.indices[i] == _b.indices[2]) mappingB[2] = i;
-    else result.first = i;
-  for(size_t i(0); i < 3; ++i)
-    if(mappingB[i] == 4) {result.second = i; break;}
-  return result;
-}
-
-// Computes vector normal to facet
-// Order of edges determines direction of normal
-// This is taken straight from T. Krueger's code
-LatticePosition normal(Facet const &_facet) {
-  LatticePosition const edgeA(_facet(0, 1));
-  LatticePosition const edgeB(_facet(2, 1));
-  return edgeA.Cross(edgeB);
-}
-
-LatticePosition unitNormal(Facet const &_facet) {
-  return normal(_facet).Normalise();
-}
-
-// Computes angle between two facets
-Angle angle(LatticePosition const &_a, LatticePosition const &_b) {
-  Angle const cosine(_a.Dot(_b));
-  if(cosine >= (1e0 - 1e-6) )       return 0e0;
-  else if(cosine <= -(1e0 - 1e-6) ) return PI;
-  return std::acos(cosine);
-}
-Angle angle(Facet const &_a, Facet const &_b) {
-  return angle(unitNormal(_a), unitNormal(_b));
-}
-// Angle angle(MeshData const &_mesh, size_t _facet, size_t _neighbor) {
-//   return angle(Facet(_mesh, _facet), Facet(_mesh, _neighbor));
-// }
-
-// Angle with orientation
-// Computes angle between two vectors, including orientation.
-// The orientation should be a vector with an out-of-plane component (eg
-// parallel to the cross product of the two normals)
-Angle orientedAngle(LatticePosition const &_a, LatticePosition const &_b,
-        LatticePosition const &_orient) {
-  Angle const result(angle(_a, _b));
-  return _a.Cross(_b).Dot(_orient) <= 0e0 ? result: -result;
-}
-Angle orientedAngle(Facet const &_a, Facet const &_b,
-        LatticePosition const &_orient) {
-  return orientedAngle(unitNormal(_a), unitNormal(_b), _orient);
-}
-Angle orientedAngle(Facet const &_a, Facet const &_b) {
-  return orientedAngle(_a, _b, commonEdge(_a, _b));
-}
-Angle orientedAngle(MeshData const &_mesh, size_t _facet, size_t _neighbor) {
-  return orientedAngle(Facet(_mesh, _facet), Facet(_mesh, _neighbor));
-}
-
-
 
 // Facet bending energy between two facets
 PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
@@ -167,8 +37,8 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
   t_IndexPair const commons = commonNodes(facetA, facetB);
   t_IndexPair const singles = singleNodes(facetA, facetB);
 
-  LatticePosition const normalA = normal(facetA);
-  LatticePosition const normalB = normal(facetB);
+  LatticePosition const normalA = facetA.normal();
+  LatticePosition const normalB = facetB.normal();
 
   PhysicalDistance const inverseAreaA = 1e0 / normalA.GetMagnitude();
   PhysicalDistance const inverseAreaB = 1e0 / normalB.GetMagnitude();
@@ -253,13 +123,131 @@ PhysicalEnergy surfaceEnergy(MeshData const &_mesh, MeshData const &_orig,
   double const strength = _intensity * 0.5 * deltaS / surf0;
   for(size_t facetIndex(0); facetIndex < _mesh.facets.size(); ++facetIndex) {
     ForceFacet facet(_mesh, facetIndex, _forces);
-    LatticePosition const n0 = unitNormal(facet);
+    LatticePosition const n0 = facet.unitNormal();
 
     facet.forces(0) += n0.Cross(facet(2, 1)) * strength;
     facet.forces(1) += n0.Cross(facet(0, 2)) * strength;
     facet.forces(2) += n0.Cross(facet(1, 0)) * strength;
   }
   return _intensity * 0.5 * deltaS * deltaS / surf0;
+}
+
+PhysicalEnergy strainEnergyDensity(
+    std::pair<Dimensionless, Dimensionless> const &_strainParams,
+    PhysicalForce _shearModulus, PhysicalForce _dilationModulus) {
+  Dimensionless const I1 = _strainParams.first, I2 = _strainParams.second;
+  return _shearModulus / 12. * (I1 * I1 + 2. * I1 - 2. * I2)
+        + _dilationModulus / 12. * I2 * I2;
+}
+PhysicalEnergy strainEnergy(
+    Facet const &_deformed, Facet const &_undeformed,
+    PhysicalForce _shearModulus, PhysicalForce _dilationModulus
+) {
+  return strainEnergyDensity(
+      strainInvariants(_deformed, _undeformed),
+      _shearModulus, _dilationModulus
+  ) * _undeformed.area();
+}
+
+PhysicalEnergy strainEnergy(
+    ForceFacet const &_deformed, Facet const &_undeformed,
+    PhysicalForce _shearModulus, PhysicalForce _dilationModulus
+) {
+  // Shape function parameters
+  Dimensionless const
+    b0 = _undeformed.length(0) * 0.5,
+    b1 = (
+      _undeformed.length(1) * _undeformed.cosine() - _undeformed.length(0)
+    ) * 0.5,
+    a1 = -0.5 * _undeformed.length(1) * _undeformed.sine();
+
+  LatticePosition const disps(displacements(_deformed, _undeformed));
+  LatticePosition const squaredDisps(squaredDisplacements(disps));
+  std::pair<Dimensionless, Dimensionless> const
+    strainInvs(strainInvariants(squaredDisps));
+  Dimensionless const I1 = strainInvs.first, I2 = strainInvs.second;
+  Dimensionless const w = strainEnergyDensity(
+      strainInvs, _shearModulus, _dilationModulus);
+
+  // Skalak Parameters
+  PhysicalForce const
+    dw_dI1 = _shearModulus / 6 * (I1 + 1),
+    dw_dI2 = -_shearModulus / 6. + _dilationModulus / 6. * I2;
+
+  size_t const xx = 0, yy = 1, xy = 2;
+
+  // Derivatives of strain invariants
+  Dimensionless const
+    dI1_dGxx = 1.,
+    dI1_dGyy = 1.,
+    dI2_dGxx = squaredDisps[yy],
+    dI2_dGyy = squaredDisps[xx],
+    dI2_dGxy = -2. * squaredDisps[xy];
+
+  // Derivatives of squared deformation tensor
+  Dimensionless const
+    dGxx_du1x = 2. * a1 * disps[xx],
+    dGxy_du0x = b0 * disps[xx],
+    dGxy_du1x = a1 * disps[xy] + b1 * disps[xx],
+    dGxy_du1y = a1 * disps[yy],
+    dGyy_du0x = 2. * b0 * disps[xy],
+    dGyy_du0y = 2. * b0 * disps[yy],
+    dGyy_du1x = 2. * b1 * disps[xy],
+    dGyy_du1y = 2. * b1 * disps[yy];
+
+  PhysicalForce const
+    force0x = (
+        dw_dI1 * dI1_dGyy * dGyy_du0x
+      + dw_dI2 * (dI2_dGyy * dGyy_du0x + dI2_dGxy * dGxy_du0x)
+    ),
+    force0y = (
+        dw_dI1 * dI1_dGyy * dGyy_du0y
+      + dw_dI2 * dI2_dGyy * dGyy_du0y
+    ),
+    force1x = (
+        dw_dI1 * (dI1_dGxx * dGxx_du1x + dI1_dGyy * dGyy_du1x)
+      + dw_dI2 * (
+          dI2_dGxx * dGxx_du1x + dI2_dGyy * dGyy_du1x + dI2_dGxy * dGxy_du1x
+      )
+    ),
+    force1y = (
+        dw_dI1 * dI1_dGyy * dGyy_du1y
+      + dw_dI2 * (dI2_dGyy * dGyy_du1y + dI2_dGxy * dGxy_du1y)
+    );
+
+    /// Coordinate system
+    LatticePosition const ex = _deformed.edge(0).GetNormalised(),
+      ez = _deformed.edge(0).Cross(_deformed.edge(1)).GetNormalised(),
+      ey = ez.Cross(ex);
+
+    LatticeForceVector const
+      force0 = ex * force0x + ey * force0y,
+      force1 = ex * force1x + ey * force1y;
+    _deformed.forces(0) -= force0;
+    _deformed.forces(1) -= force1;
+    _deformed.forces(2) += force0 + force1;
+
+    return w * _undeformed.area();
+}
+
+PhysicalEnergy strainEnergy(MeshData const &_mesh, MeshData const &_origin,
+      PhysicalForce _shearModulus, PhysicalForce _dilationModulus
+    ) {
+  PhysicalEnergy result(0);
+  for(size_t i(0); i < _mesh.facets.size(); ++i)
+    result += strainEnergy(Facet(_mesh, i), Facet(_origin, i),
+        _shearModulus, _dilationModulus);
+  return result;
+}
+PhysicalEnergy strainEnergy(MeshData const &_mesh, MeshData const &_origin,
+      PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
+      std::vector<LatticeForceVector> &_forces
+    ) {
+  PhysicalEnergy result(0);
+  for(size_t i(0); i < _mesh.facets.size(); ++i)
+    result += strainEnergy(ForceFacet(_mesh, i, _forces), Facet(_origin, i),
+        _shearModulus, _dilationModulus);
+  return result;
 }
 
 }}}
