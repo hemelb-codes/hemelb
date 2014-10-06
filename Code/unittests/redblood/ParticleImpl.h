@@ -40,12 +40,12 @@ public:
 
   void testNormal() {
     {
-      LatticePosition const actual = normal(*main);
+      LatticePosition const actual = main->normal();
       LatticePosition const expected(0, 0, -1);
       CPPUNIT_ASSERT(is_zero(actual - expected));
     }
     {
-      LatticePosition const actual = normal(*neighbor);
+      LatticePosition const actual = neighbor->normal();
       LatticePosition const expected(1, 1, 1);
       CPPUNIT_ASSERT(is_zero(actual - expected));
     }
@@ -53,11 +53,11 @@ public:
 
   void testUnitNormal() {
     {
-      LatticePosition const actual = unitNormal(*main);
+      LatticePosition const actual = main->unitNormal();
       LatticePosition const expected(0, 0, -1);
       CPPUNIT_ASSERT(is_zero(actual - expected));
     } {
-      LatticePosition const actual = unitNormal(*neighbor);
+      LatticePosition const actual = neighbor->unitNormal();
       LatticePosition const expected(1, 1, 1);
       CPPUNIT_ASSERT(is_zero(actual - expected.GetNormalised()));
     }
@@ -94,7 +94,6 @@ public:
 
     // simpler angle
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-    std::cout << "\n";
     Angle const actual1 = redblood::orientedAngle(*main, *neighbor);
     CPPUNIT_ASSERT(is_zero(actual1 + 3.0*PI/4.0));
 
@@ -122,6 +121,7 @@ class EnergyTests : public TetrahedronFixture {
     CPPUNIT_TEST(testBending);
     CPPUNIT_TEST(testVolume);
     CPPUNIT_TEST(testSurface);
+    CPPUNIT_TEST(testStrain);
     CPPUNIT_TEST_SUITE_END();
   public:
     void setUp() {
@@ -191,6 +191,25 @@ class EnergyTests : public TetrahedronFixture {
       mesh.vertices.back()[2] = 1e0;
     }
 
+    void testStrain() {
+      // No difference between original and current mesh
+      // Hence energy is zero
+      PhysicalEnergy const actual0(
+        redblood::strainEnergy(mesh, original, 1e0, 2e0)
+      );
+      CPPUNIT_ASSERT(is_zero(actual0));
+
+      // Now modify mesh and check "energy" is square of volume diff
+      mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
+      PhysicalEnergy const actual1(
+        redblood::strainEnergy(mesh, original, 1e0, 2e0)
+      );
+
+      PhysicalEnergy const regression(0.0865562612162);
+      CPPUNIT_ASSERT(is_zero(actual1 - regression));
+      mesh.vertices.back()[2] = 1e0;
+    }
+
   protected:
     redblood::MeshData original;
     std::vector<LatticeForceVector> forces;
@@ -241,12 +260,25 @@ struct BendingEnergy : public EnergyFunctional {
   }
 };
 
+struct StrainEnergy : public EnergyFunctional {
+  StrainEnergy(redblood::MeshData const &_original)
+    : EnergyFunctional(_original) {}
+  PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {
+    return redblood::strainEnergy(_mesh, original, 1.0, 2.0);
+  }
+  PhysicalEnergy operator()(redblood::MeshData const &_mesh,
+    std::vector<LatticeForceVector> &_forces) const{
+    return redblood::strainEnergy(_mesh, original, 1.0, 2.0, _forces);
+  }
+};
+
 
 class GradientTests : public EnergyVsGradientFixture {
     CPPUNIT_TEST_SUITE(GradientTests);
     CPPUNIT_TEST(testBending);
     CPPUNIT_TEST(testSurface);
     CPPUNIT_TEST(testVolume);
+    CPPUNIT_TEST(testStrain);
     CPPUNIT_TEST_SUITE_END();
 public:
 
@@ -261,6 +293,7 @@ public:
     void testBending() { energyVsForces(BendingEnergy(original)); }
     void testSurface() { energyVsForces(SurfaceEnergy(original)); }
     void testVolume() { energyVsForces(VolumeEnergy(original)); }
+    void testStrain() { energyVsForces(StrainEnergy(original)); }
 
 protected:
     redblood::MeshData original;
