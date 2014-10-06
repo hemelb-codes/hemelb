@@ -30,6 +30,7 @@
 #endif
 #include "unittests/redblood/Mesh.h"
 #include "unittests/redblood/ParticleImpl.h"
+#include "unittests/redblood/Particle.h"
 #include "unittests/util/util.h"
 #include <unistd.h>
 

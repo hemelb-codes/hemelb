@@ -165,9 +165,6 @@ Angle orientedAngle(Facet const &_a, Facet const &_b,
 Angle orientedAngle(Facet const &_a, Facet const &_b) {
   return orientedAngle(_a, _b, commonEdge(_a, _b));
 }
-Angle orientedAngle(MeshData const &_mesh, size_t _facet, size_t _neighbor) {
-  return orientedAngle(Facet(_mesh, _facet), Facet(_mesh, _neighbor));
-}
 
 // Returns Dxx, Dyy, Dxy packed in vector
 LatticePosition displacements(Facet const &_deformed, Facet const &_ref) {
