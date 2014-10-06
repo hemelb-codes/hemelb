@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARTICLEIMLP_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARTICLEIMLP_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARTICLEIMPL_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARTICLEIMPL_H
 
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"

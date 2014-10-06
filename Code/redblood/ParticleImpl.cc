@@ -18,27 +18,26 @@
 namespace hemelb { namespace redblood { namespace {
 
 // Facet bending energy between two facets
-PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
-            size_t _facet_index, size_t _neigh_index,
-            PhysicalForce _intensity) {
-  Angle const theta0 = orientedAngle(_orig, _facet_index, _neigh_index);
-  Angle const theta = orientedAngle(_mesh, _facet_index, _neigh_index);
+PhysicalEnergy facetBending(
+    Facet const& _facetA, Facet const& _facetB,
+    Facet const& _facetA_eq, Facet const& _facetB_eq,
+    PhysicalForce _intensity) {
+  Angle const theta = orientedAngle(_facetA, _facetB);
+  Angle const theta0 = orientedAngle(_facetA_eq, _facetB_eq);
   return _intensity * (theta - theta0) * (theta - theta0);
 }
 
 // Facet bending energy and force between neighboring facets
-PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
-  size_t _facet_index, size_t _neighbor_index, PhysicalForce _intensity,
-  std::vector<LatticeForceVector> &_forces) {
+PhysicalEnergy facetBending(
+    ForceFacet const& _facetA, ForceFacet const& _facetB,
+    Facet const& _facetA_eq, Facet const& _facetB_eq,
+    PhysicalForce _intensity) {
 
-  ForceFacet facetA(_mesh, _facet_index, _forces);
-  ForceFacet facetB(_mesh, _neighbor_index, _forces);
+  t_IndexPair const commons = commonNodes(_facetA, _facetB);
+  t_IndexPair const singles = singleNodes(_facetA, _facetB);
 
-  t_IndexPair const commons = commonNodes(facetA, facetB);
-  t_IndexPair const singles = singleNodes(facetA, facetB);
-
-  LatticePosition const normalA = facetA.normal();
-  LatticePosition const normalB = facetB.normal();
+  LatticePosition const normalA = _facetA.normal();
+  LatticePosition const normalB = _facetB.normal();
 
   PhysicalDistance const inverseAreaA = 1e0 / normalA.GetMagnitude();
   PhysicalDistance const inverseAreaB = 1e0 / normalB.GetMagnitude();
@@ -54,28 +53,51 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
   );
 
   // NOTE: the two lines below could make use of stuff computed previously
-  Angle const theta0 = orientedAngle(_orig, _facet_index, _neighbor_index);
-  Angle const theta = orientedAngle(_mesh, _facet_index, _neighbor_index);
+  Angle const theta = orientedAngle(_facetA, _facetB);
+  Angle const theta0 = orientedAngle(_facetA_eq, _facetB_eq);
 
   const PhysicalForce strength = -2.0 * _intensity * (theta - theta0);
   // forces on nodes that are in common
-  facetA.forces(commons.first) += (
-      facetA(singles.first, commons.second).Cross(vecA)
-      + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)
+  _facetA.forces(commons.first) += (
+      _facetA(singles.first, commons.second).Cross(vecA)
+      + (_facetA(commons.second) - _facetB(singles.second)).Cross(vecB)
   ) * strength;
-  facetA.forces(commons.second) += (
-      (facetB(singles.second) - facetA(commons.first)).Cross(vecB)
-      + (facetA(commons.first, singles.first)).Cross(vecA)
+  _facetA.forces(commons.second) += (
+      (_facetB(singles.second) - _facetA(commons.first)).Cross(vecB)
+      + (_facetA(commons.first, singles.first)).Cross(vecA)
   ) * strength;
   // forces on nodes that are *not* in common
-  facetA.forces(singles.first) += (
-      facetA(commons.second, commons.first).Cross(vecA)
+  _facetA.forces(singles.first) += (
+      _facetA(commons.second, commons.first).Cross(vecA)
   ) * strength;
-  facetB.forces(singles.second) += (
-      facetA(commons.first, commons.second).Cross(vecB)
+  _facetB.forces(singles.second) += (
+      _facetA(commons.first, commons.second).Cross(vecB)
   ) * strength;
 
   return _intensity * (theta - theta0) * (theta - theta0);
+}
+
+PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
+  size_t _facetIndex, size_t _neighborIndex, PhysicalForce _intensity,
+  std::vector<LatticeForceVector> &_forces) {
+  return facetBending(
+      ForceFacet(_mesh, _facetIndex, _forces),
+      ForceFacet(_mesh, _neighborIndex, _forces),
+      Facet(_orig, _facetIndex),
+      Facet(_orig, _neighborIndex),
+      _intensity
+  );
+}
+PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
+            size_t _facetIndex, size_t _neighborIndex,
+            PhysicalForce _intensity) {
+  return facetBending(
+      Facet(_mesh, _facetIndex),
+      Facet(_mesh, _neighborIndex),
+      Facet(_orig, _facetIndex),
+      Facet(_orig, _neighborIndex),
+      _intensity
+  );
 }
 
 PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
