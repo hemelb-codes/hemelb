@@ -7,10 +7,10 @@
 // specifically made by you with University College London.
 //
 
-#include "Particle.h"
+#include "redblood/Particle.h"
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
-#include "ParticleImpl.cc"
+#include "redblood/ParticleImpl.cc"
 
 namespace hemelb { namespace redblood {
 

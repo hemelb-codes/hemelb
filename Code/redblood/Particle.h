@@ -10,7 +10,7 @@
 #ifndef HEMELB_REDBLOOD_PARTICLE_H
 #define HEMELB_REDBLOOD_PARTICLE_H
 
-#include "Mesh.h"
+#include "redblood/Mesh.h"
 #include "units.h"
 
 namespace hemelb { namespace redblood {

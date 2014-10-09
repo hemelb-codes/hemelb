@@ -12,7 +12,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Particle.h"
-#include "fixtures.h"
+#include "unittests/redblood/fixtures.h"
 
 namespace hemelb { namespace unittests {
 
