@@ -15,7 +15,6 @@
 #include <vector>
 #include <set>
 #include <string>
-#include <array>
 #include "util/Vector3D.h"
 #include "units.h"
 
