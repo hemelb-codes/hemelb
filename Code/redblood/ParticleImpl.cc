@@ -9,9 +9,9 @@
 
 #include <cmath>
 #include <iomanip>
-#include "Mesh.h"
+#include "redblood/Mesh.h"
+#include "redblood/facet.h"
 #include "constants.h"
-#include "facet.h"
 
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
