@@ -8,7 +8,7 @@
 //
 
 #include <fstream>
-#include <assert.h>
+#include <cassert>
 #include <numeric>
 
 #include "redblood/Mesh.h"
