@@ -12,7 +12,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/stencil.h"
-#include "unittests/redblood/fixtures.h"
+#include "unittests/redblood/Fixtures.h"
 
 namespace hemelb { namespace unittests {
 
