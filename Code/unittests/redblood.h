@@ -12,4 +12,5 @@
 #include "unittests/redblood/ParticleImpl.h"
 #include "unittests/redblood/Particle.h"
 #include "unittests/redblood/Stencil.h"
+#include "unittests/redblood/Interpolation.h"
 #endif
