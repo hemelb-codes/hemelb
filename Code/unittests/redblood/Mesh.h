@@ -13,7 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
-#include "unittests/redblood/fixtures.h"
+#include "unittests/redblood/Fixtures.h"
 
 namespace hemelb { namespace unittests {
 /**
