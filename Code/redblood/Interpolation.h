@@ -16,13 +16,13 @@
 namespace hemelb { namespace redblood {
 
   //! Iterates over points on the lattice
-  class RegionIterator {
+  class IndexIterator {
 
     public:
-      RegionIterator(LatticeVector const &_center, LatticeCoordinate _width)
+      IndexIterator(LatticeVector const &_center, LatticeCoordinate _width)
           : min_(_center - LatticeVector::Ones() * _width),
             max_(_center + LatticeVector::Ones() * _width), current_(min_) {}
-      RegionIterator(LatticeVector const &_min, LatticeVector const &_max)
+      IndexIterator(LatticeVector const &_min, LatticeVector const &_max)
           : min_(_min), max_(_max), current_(_min) {}
 
       //! Returns current position
@@ -44,6 +44,53 @@ namespace hemelb { namespace redblood {
       //! Current point
       LatticeVector current_;
   };
+
+  //! \brief Interpolates onto an off-lattice point
+  //! \details Given an off-lattice point and a stencil, iterates over the
+  //! points on the lattice which have non-zero weight.
+  class OffLatticeInterpolator : public IndexIterator {
+    public:
+      //! Lattice
+      template<class STENCIL>
+        OffLatticeInterpolator(
+            LatticePosition const &_node, STENCIL const & _stencil);
+
+      //! Returns weight for current point
+      Dimensionless weight() const {
+        return xWeight_[current_[0] - min_[0]]
+          * yWeight_[current_[1] - min_[1]]
+          * zWeight_[current_[2] - min_[2]];
+      }
+
+
+    protected:
+      //! Weight alongst x direction;
+      std::vector<Dimensionless> xWeight_;
+      //! Weight alongst y direction;
+      std::vector<Dimensionless> yWeight_;
+      //! Weight alongst z direction;
+      std::vector<Dimensionless> zWeight_;
+
+      static LatticeVector minimumPosition_(LatticePosition const &_node,
+              size_t _range);
+      static LatticeVector maximumPosition_(LatticePosition const &_node,
+              size_t _range);
+  };
+
+  template<class STENCIL>
+    OffLatticeInterpolator :: OffLatticeInterpolator(
+         LatticePosition const &_node, STENCIL const & _stencil)
+      : IndexIterator(
+          minimumPosition_(_node, STENCIL::range),
+          maximumPosition_(_node, STENCIL::range)
+        ), xWeight_(STENCIL::range), yWeight_(STENCIL::range),
+        zWeight_(STENCIL::range) {
+      for(size_t i(0); i < STENCIL::range; ++i) {
+        xWeight_[i] = _stencil(_node[0] - Dimensionless(min_[0] + i));
+        yWeight_[i] = _stencil(_node[1] - Dimensionless(min_[1] + i));
+        zWeight_[i] = _stencil(_node[2] - Dimensionless(min_[2] + i));
+      }
+    }
 
 }} // hemelb::redblood
 #endif
