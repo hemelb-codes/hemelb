@@ -51,6 +51,28 @@ namespace hemelb { namespace redblood {
       return x < 1 ? 1. - x: 0;
     }
 
+#   define HEMELB_STENCIL_MACRO(NAME, STENCIL)                        \
+      struct NAME {                                                   \
+        NAME() {}                                                     \
+        static Dimensionless stencil(Dimensionless _x) {              \
+          return STENCIL(_x);                                         \
+        }                                                             \
+        static Dimensionless stencil(LatticePosition const &_x) {     \
+          return STENCIL(_x.x) * STENCIL(_x.y) * STENCIL(_x.z);       \
+        }                                                             \
+        Dimensionless operator()(Dimensionless _x) const {            \
+          return NAME::stencil(_x);                                   \
+        }                                                             \
+        Dimensionless operator()(LatticePosition const &_x) {         \
+          return NAME::stencil(_x);                                   \
+        }                                                             \
+        static const size_t range;                                    \
+      }
+      HEMELB_STENCIL_MACRO(FourPoint, fourPoint);
+      HEMELB_STENCIL_MACRO(CosineApprox, cosineApprox);
+      HEMELB_STENCIL_MACRO(ThreePoint, threePoint);
+      HEMELB_STENCIL_MACRO(TwoPoint, twoPoint);
+#   undef HEMELB_STENCIL_MACRO
   }
 
 }}
