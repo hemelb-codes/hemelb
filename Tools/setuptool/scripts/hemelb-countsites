@@ -29,7 +29,7 @@ class CountingLoader(ConfigLoader):
 
 def CountFluidSites(filename, verbosity=1):
     summary = 'FileName = "{filename}"\n'
-    for var in 'BlockCounts BlockSize TotalFluidSites'.split():
+    for var in 'BlockCounts BlockSize TotalFluidSites BlocksWithFluidSites'.split():
         summary += '\t%s = {%s}\n' % (var,var)
         continue
     
@@ -52,7 +52,7 @@ def CountFluidSites(filename, verbosity=1):
     UncompressedBytesPerBlock = ldr.BlockUncompressedDataLength
 
     TotalFluidSites = FluidSitesPerBlock.sum()
-    
+    BlocksWithFluidSites = np.sum(FluidSitesPerBlock>0)
     if verbosity == 0:
         return TotalFluidSites
     elif verbosity == 1:
