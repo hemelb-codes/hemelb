@@ -12,6 +12,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/interpolation.h"
+#include "redblood/VelocityInterpolation.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb { namespace unittests {
@@ -19,8 +20,43 @@ namespace hemelb { namespace unittests {
 class InterpolationTests : public CppUnit::TestFixture, public Comparisons {
     CPPUNIT_TEST_SUITE(InterpolationTests);
     CPPUNIT_TEST(testIndexIterator);
-    CPPUNIT_TEST(testOffLatticeInterpolator);
+    CPPUNIT_TEST(testOffLattice);
+    CPPUNIT_TEST(testOffLatticeZeroOutsideStencil);
+    CPPUNIT_TEST(testInterpolateLinearFunction);
+    CPPUNIT_TEST(testInterpolateQuadraticFunction);
     CPPUNIT_TEST_SUITE_END();
+
+    struct PlanarFunction {
+      LatticePosition operator()(LatticePosition const &_pos) const {
+        return LatticePosition(
+          LatticePosition(1, 1, 1).Dot(_pos),
+          LatticePosition(-1, 2, 1).Dot(_pos),
+          LatticePosition(0, 0, 1).Dot(_pos)
+        );
+      }
+      LatticePosition operator()(Dimensionless _x, Dimensionless _y,
+          Dimensionless _z) const {
+        return operator()(LatticePosition(_x, _y, _z));
+      }
+    };
+
+    struct QuadraticFunction {
+      LatticePosition operator()(LatticePosition const &_pos) const {
+        Dimensionless const offset(0);
+        return LatticePosition(
+          (LatticePosition(1, 1, 1).Dot(_pos) - offset)
+          * (LatticePosition(1, 1, 1).Dot(_pos) - offset),
+          (LatticePosition(0, 1, 0).Dot(_pos) - offset)
+          * (LatticePosition(0, 1, 0).Dot(_pos) - offset),
+          (LatticePosition(0, 0, 1).Dot(_pos) - offset)
+          * (LatticePosition(0, 0, 1).Dot(_pos) - offset)
+        );
+      }
+      LatticePosition operator()(Dimensionless _x, Dimensionless _y,
+          Dimensionless _z) const {
+        return operator()(LatticePosition(_x, _y, _z));
+      }
+    };
 
 public:
 
@@ -54,12 +90,12 @@ public:
       CPPUNIT_ASSERT(not iterator.isValid());
     }
 
-    void testOffLatticeInterpolator() {
-      using hemelb::redblood::OffLatticeInterpolator;
+    void testOffLattice() {
+      using hemelb::redblood::InterpolationIterator;
 
       LatticePosition const pos(56.51, 52.9, 15.2);
       hemelb::redblood::stencil::FourPoint stencil;
-      OffLatticeInterpolator iterator(pos, stencil);
+      InterpolationIterator iterator(pos, stencil);
 
       LatticeVector vectors[] = {
         LatticeVector(55, 51, 14),
@@ -84,7 +120,13 @@ public:
       }
       ++iterator;
       CPPUNIT_ASSERT(not iterator.isValid());
+    }
 
+    void testOffLatticeZeroOutsideStencil() {
+      using hemelb::redblood::InterpolationIterator;
+      LatticePosition const pos(56.51, 52.9, 15.2);
+      hemelb::redblood::stencil::FourPoint stencil;
+      InterpolationIterator iterator(pos, stencil);
       // Checks that outside iteration box, weights are zero
       LatticeVector zero_vecs[] = {
         LatticeVector(57, 53, 13),
@@ -109,9 +151,55 @@ public:
         CPPUNIT_ASSERT(one_non_zero == 1);
       }
     }
+
+    template<class FUNCTION> void check(Dimensionless _x, Dimensionless _y,
+        Dimensionless _z, Dimensionless _tolerance = 1e-8) {
+      using hemelb::redblood::interpolate;
+      using hemelb::redblood::stencil::FOUR_POINT;
+
+      FUNCTION func;
+      LatticePosition expected(func(_x, _y, _z));
+      LatticePosition actual(interpolate(func, _x, _y, _z, FOUR_POINT));
+      CPPUNIT_ASSERT(is_zero(actual - expected, _tolerance));
+    }
+
+    // Test interpolation when the point is on the grid
+    void testInterpolateLinearFunction() {
+      check<PlanarFunction>(0, 0, 0);
+      check<PlanarFunction>(0.1, 0.5, 0.6);
+      check<PlanarFunction>(-5.1, 0.5, 8.7);
+      check<PlanarFunction>(-5, 0, -1);
+    }
+
+    void testInterpolateQuadraticFunction() {
+      QuadraticFunction quad;
+      // Error depends on variation on scale larger than stencil
+      Dimensionless const tolerance(
+          (quad(0, 0, 0) - quad(12, 12, 12)).GetMagnitude() * 1e-2);
+      check<QuadraticFunction>(0, 0, 0, tolerance);
+      check<QuadraticFunction>(0.1, 0.5, 0.6, tolerance);
+      check<QuadraticFunction>(-5.1, 0.5, 8.7, tolerance);
+      check<QuadraticFunction>(-5, 0, -1, tolerance);
+    }
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(InterpolationTests);
+class VelocityInterpolationTests :
+  public helpers::FourCubeBasedTestFixture, public Comparisons {
+    CPPUNIT_TEST_SUITE(VelocityInterpolationTests);
+    CPPUNIT_TEST(testLatticeDataFunctor);
+    CPPUNIT_TEST_SUITE_END();
+
+  public:
+    void setUp() { FourCubeBasedTestFixture::setUp(); }
+    void tearDown() { FourCubeBasedTestFixture::tearDown(); }
+
+    void testLatticeDataFunctor() {
+
+    }
+};
+
+
+CPPUNIT_TEST_SUITE_REGISTRATION(VelocityInterpolationTests);
 }}
 
 #endif // ONCE
