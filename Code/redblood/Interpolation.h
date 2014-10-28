@@ -12,10 +12,28 @@
 
 #include "units.h"
 #include "Exception.h"
+#include "geometry/LatticeData.h"
+#include "redblood/stencil.h"
+
+#include <cassert>
+#include <boost/shared_array.hpp>
 
 namespace hemelb { namespace redblood {
 
   //! Iterates over points on the lattice
+  class IndexIterator;
+  //! \brief Interpolates onto an off-lattice point
+  //! \details Given an off-lattice point and a stencil, iterates over the
+  //! points on the lattice which have non-zero weight.
+  class InterpolationIterator;
+
+  //! Creates an interpolator for a given stencil
+  template<class STENCIL>
+    InterpolationIterator interpolationIterator(LatticePosition const &_in);
+  //! Creates an interpolator for a given stencil
+  InterpolationIterator interpolationIterator(
+      LatticePosition const &_where, stencil::types _stencil);
+
   class IndexIterator {
 
     public:
@@ -45,31 +63,50 @@ namespace hemelb { namespace redblood {
       LatticeVector current_;
   };
 
-  //! \brief Interpolates onto an off-lattice point
-  //! \details Given an off-lattice point and a stencil, iterates over the
-  //! points on the lattice which have non-zero weight.
-  class OffLatticeInterpolator : public IndexIterator {
+  class InterpolationIterator : public IndexIterator {
     public:
       //! Lattice
       template<class STENCIL>
-        OffLatticeInterpolator(
+        InterpolationIterator(
             LatticePosition const &_node, STENCIL const & _stencil);
 
       //! Returns weight for current point
       Dimensionless weight() const {
+        assert(xWeight_ && yWeight_ && zWeight_);
+        assert(current_[0] >= min_[0]);
+        assert(current_[0] <= max_[0]);
+        assert(current_[1] >= min_[1]);
+        assert(current_[1] <= max_[1]);
+        assert(current_[2] >= min_[2]);
+        assert(current_[2] <= max_[2]);
         return xWeight_[current_[0] - min_[0]]
           * yWeight_[current_[1] - min_[1]]
           * zWeight_[current_[2] - min_[2]];
+      }
+      //! Weights for each direction
+      util::Vector3D<Dimensionless> weights() const {
+        assert(xWeight_ && yWeight_ && zWeight_);
+        assert(current_[0] >= min_[0]);
+        assert(current_[0] <= max_[0]);
+        assert(current_[1] >= min_[1]);
+        assert(current_[1] <= max_[1]);
+        assert(current_[2] >= min_[2]);
+        assert(current_[2] <= max_[2]);
+        return util::Vector3D<Dimensionless>(
+            xWeight_[current_[0] - min_[0]],
+            yWeight_[current_[1] - min_[1]],
+            zWeight_[current_[2] - min_[2]]
+        );
       }
 
 
     protected:
       //! Weight alongst x direction;
-      std::vector<Dimensionless> xWeight_;
+      boost::shared_array<Dimensionless> xWeight_;
       //! Weight alongst y direction;
-      std::vector<Dimensionless> yWeight_;
+      boost::shared_array<Dimensionless> yWeight_;
       //! Weight alongst z direction;
-      std::vector<Dimensionless> zWeight_;
+      boost::shared_array<Dimensionless> zWeight_;
 
       static LatticeVector minimumPosition_(LatticePosition const &_node,
               size_t _range);
@@ -78,19 +115,50 @@ namespace hemelb { namespace redblood {
   };
 
   template<class STENCIL>
-    OffLatticeInterpolator :: OffLatticeInterpolator(
+    InterpolationIterator :: InterpolationIterator(
          LatticePosition const &_node, STENCIL const & _stencil)
       : IndexIterator(
           minimumPosition_(_node, STENCIL::range),
           maximumPosition_(_node, STENCIL::range)
-        ), xWeight_(STENCIL::range), yWeight_(STENCIL::range),
-        zWeight_(STENCIL::range) {
-      for(size_t i(0); i < STENCIL::range; ++i) {
+        ), xWeight_(new Dimensionless[STENCIL::range]),
+           yWeight_(new Dimensionless[STENCIL::range]),
+           zWeight_(new Dimensionless[STENCIL::range]) {
+      for(LatticeVector::value_type i(0); i < STENCIL::range; ++i) {
         xWeight_[i] = _stencil(_node[0] - Dimensionless(min_[0] + i));
         yWeight_[i] = _stencil(_node[1] - Dimensionless(min_[1] + i));
         zWeight_[i] = _stencil(_node[2] - Dimensionless(min_[2] + i));
       }
     }
 
+  template<class GRID_FUNCTION>
+    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
+        InterpolationIterator _interpolator) {
+      PhysicalVelocity result(0, 0, 0);
+      for(; _interpolator; ++_interpolator)
+        result += _gridfunc(*_interpolator) * _interpolator.weight();
+      return result;
+    }
+  template<class GRID_FUNCTION, class STENCIL>
+    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
+        LatticePosition const &_pos, STENCIL _stencil) {
+      return interpolate(_gridfunc, OffLatticeIterator(_pos, _stencil));
+    }
+  template<class GRID_FUNCTION>
+    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
+        LatticePosition const &_pos, stencil::types _stencil) {
+      return interpolate(_gridfunc, interpolationIterator(_pos, _stencil));
+    }
+  template<class GRID_FUNCTION>
+    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
+        Dimensionless const &_x, Dimensionless const &_y,
+        Dimensionless const &_z, stencil::types _stencil) {
+      return interpolate(_gridfunc, LatticePosition(_x, _y, _z), _stencil);
+  }
+
+  // Creates an interpolator for a given stencil
+  template<class STENCIL>
+    InterpolationIterator interpolationIterator(LatticePosition const &_in) {
+      return InterpolationIterator(_in, STENCIL());
+    }
 }} // hemelb::redblood
 #endif

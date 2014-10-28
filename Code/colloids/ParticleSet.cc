@@ -48,7 +48,8 @@ namespace hemelb
                              std::vector<proc_t>& neighbourProcessors,
                              const net::IOCommunicator& ioComms_,
                              const std::string& outputPath) :
-        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM), propertyCache(propertyCache), path(outputPath), net(ioComms)
+        ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM),
+        propertyCache(propertyCache), net(ioComms), path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.

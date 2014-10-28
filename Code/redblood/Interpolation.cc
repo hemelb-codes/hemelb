@@ -43,7 +43,7 @@ namespace hemelb { namespace redblood {
     }
   }
 
-  LatticeVector OffLatticeInterpolator :: minimumPosition_(
+  LatticeVector InterpolationIterator :: minimumPosition_(
       LatticePosition const &_node,
       size_t _range) {
     return LatticeVector(
@@ -52,7 +52,7 @@ namespace hemelb { namespace redblood {
         minimumPosImpl(_node.z, _range)
     );
   }
-  LatticeVector OffLatticeInterpolator :: maximumPosition_(
+  LatticeVector InterpolationIterator :: maximumPosition_(
       LatticePosition const &_node,
       size_t _range) {
     return LatticeVector(
@@ -61,5 +61,20 @@ namespace hemelb { namespace redblood {
         maximumPosImpl(_node.z, _range)
     );
   }
+
+  InterpolationIterator interpolationIterator(
+      LatticePosition const &_where, stencil::types _stencil) {
+#   define HEMELB_STENCIL_MACRO(NAME, Name)                     \
+        case stencil::NAME:                                     \
+          return interpolationIterator<stencil::Name>(_where)
+      switch(_stencil) {
+        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint);
+        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
+        HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);
+        HEMELB_STENCIL_MACRO(TWO_POINT, TwoPoint);
+      }
+#   undef HEMELB_STENCIL_MACRO
+  }
+
 
 }}

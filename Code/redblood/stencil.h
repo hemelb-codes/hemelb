@@ -18,6 +18,23 @@
 namespace hemelb { namespace redblood {
 
   namespace stencil {
+    //! Constant to name stencils without referring to type
+    //! Useful to create factories
+    enum types {
+      FOUR_POINT,
+      COSINE_APPROX,
+      THREE_POINT,
+      TWO_POINT
+    };
+    //! Four point stencil
+    struct FourPoint;
+    //! Approximation to the four-point stencil
+    struct CosineApprox;
+    //! Three-point stencil
+    struct ThreePoint;
+    //! Four point stencil
+    struct TwoPoint;
+
     // Four point stencil
     inline Dimensionless fourPoint(Dimensionless const _x) {
       Dimensionless x(std::abs(_x));
