@@ -14,6 +14,7 @@
 #include "redblood/interpolation.h"
 #include "redblood/VelocityInterpolation.h"
 #include "unittests/redblood/Fixtures.h"
+#include "lb/lattices/D3Q15.h"
 
 namespace hemelb { namespace unittests {
 
@@ -185,16 +186,59 @@ public:
 
 class VelocityInterpolationTests :
   public helpers::FourCubeBasedTestFixture, public Comparisons {
+    typedef lb::lattices::D3Q15 t_Lattice;
+    typedef lb::kernels::LBGK<t_Lattice> t_Kernel;
     CPPUNIT_TEST_SUITE(VelocityInterpolationTests);
     CPPUNIT_TEST(testLatticeDataFunctor);
     CPPUNIT_TEST_SUITE_END();
 
   public:
-    void setUp() { FourCubeBasedTestFixture::setUp(); }
+    void setUp() {
+      FourCubeBasedTestFixture::setUp();
+
+      LatticeVector const min(latDat->GetGlobalSiteMins());
+      LatticeVector const max(latDat->GetGlobalSiteMaxes());
+      for(size_t i(min[0]); i <= max[0]; ++i)
+        for(size_t j(min[1]); j <= max[1]; ++j)
+          for(size_t k(min[2]); k <= max[2]; ++k) {
+            distribn_t fold[t_Lattice::NUMVECTORS];
+            for(size_t u(0); u < t_Lattice::NUMVECTORS; ++u) fold[u] = 0e0;
+            fold[2] = i; fold[4] = j; fold[6] = k;
+            site_t const local(
+                latDat->GetContiguousSiteId(LatticeVector(i, j, k))
+            );
+            latDat->SetFOld<t_Lattice>(local, fold);
+          }
+    }
     void tearDown() { FourCubeBasedTestFixture::tearDown(); }
 
     void testLatticeDataFunctor() {
+      LatticeVector sites[] = {
+        LatticeVector(1, 1, 1),
+        LatticeVector(2, 1, 1),
+        LatticeVector(1, 2, 1),
+        LatticeVector(1, 1, 2),
+        LatticeVector(4, 4, 4),
+        LatticeVector(0, 0, 0)
+      };
 
+      typedef lb::lattices::D3Q15 t_Lattice;
+      typedef lb::kernels::LBGK<t_Lattice> t_Kernel;
+      redblood::details::VelocityFromLatticeData<t_Kernel> const functor(*latDat);
+      for(size_t i(0); sites[i][0] != 0; ++i) {
+        LatticeVelocity const expected =
+          LatticeVelocity(
+              t_Lattice::CX[2], t_Lattice::CY[2], t_Lattice::CZ[2]
+          ) * Dimensionless(sites[i][0])
+          + LatticeVelocity(
+              t_Lattice::CX[4], t_Lattice::CY[4], t_Lattice::CZ[4]
+          ) * Dimensionless(sites[i][1])
+          + LatticeVelocity(
+              t_Lattice::CX[6], t_Lattice::CY[6], t_Lattice::CZ[6]
+          ) * Dimensionless(sites[i][2]);
+        LatticeVelocity const actual = functor(sites[i]);
+        CPPUNIT_ASSERT(is_zero(actual - expected));
+      }
     }
 };
 

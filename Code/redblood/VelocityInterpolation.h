@@ -27,40 +27,41 @@ namespace hemelb { namespace redblood {
   //! \param[in] _stencil: stencil to use for interpolation
   //! \tparam KERNEL: Needed to compute velocity
   template<class KERNEL>
-    PhysicalVelocity interpolateVelocity(PhysicalPosition const &_center
-        LatticeData const &_latdat,
-        stencil::type _stencil = stencil::FOUR_POINT);
+    PhysicalVelocity interpolateVelocity(PhysicalPosition const &_center,
+        geometry::LatticeData const &_latdat,
+        stencil::types _stencil = stencil::FOUR_POINT);
 
   namespace details {
     // Computes velocity for a given index on the lattice
     template<class KERNEL> struct VelocityFromLatticeData {
-      Velocity(LatticeData const &_latdata) : latticeData(_latdat) {}
+      VelocityFromLatticeData(geometry::LatticeData const &_latdata)
+            : latticeData(_latdata) {}
       // Computes velocity for given KERNEL and LatticeData
-      LatticeVelocity operator(LatticeVector const &_indices) const {
-        typedef kernels::HydroVars<KERNEL> HydroVars;
+      LatticeVelocity operator()(LatticeVector const &_indices) const {
+        typedef typename KERNEL::KHydroVars HydroVars;
+        typedef typename KERNEL::LatticeType LatticeType;
         site_t const index(latticeData.GetContiguousSiteId(_indices));
-        HydroVars hydroVars(latticeData.GetSite(index));
-        KERNEL::LatticeImpl::CalculateDensityMomentumFEq(
-            hydroVars.f, hydroVars.density,
-            hydroVars.momentum.x, hydroVars.momentum.y, hydroVars.momentum.z,
-            hydroVars.velocity.x, hydroVars.velocity.y, hydroVars.velocity.z,
-            hydroVars.f_eq.f
+        LatticeVelocity result;
+        distribn_t density;
+        LatticeType::CalculateDensityAndMomentum(
+            latticeData.GetSite(index).template GetFOld<LatticeType>(),
+            density, result.x, result.y, result.z
         );
-        return hydroVars.velocity;
+        return result;
       }
       protected:
         //! Lattice data that holds the grid of population and forces
-        LatticeData const & latticeData;
+        geometry::LatticeData const & latticeData;
     };
   }
 
   template<class KERNEL>
     PhysicalVelocity interpolateVelocity(
-        LatticeData const &_latdat, PhysicalPosition const &_center
-        stencil::type _stencil = stencil::FOUR_POINT) {
+        geometry::LatticeData const &_latdat, PhysicalPosition const &_center,
+        stencil::types _stencil = stencil::FOUR_POINT) {
       return interpolate(
           details::VelocityFromLatticeData<KERNEL>(_latdat),
-          interpolation_iterator(_center, _stencil)
+          interpolationIterator(_center, _stencil)
       );
     }
 }} // hemelb::redblood
