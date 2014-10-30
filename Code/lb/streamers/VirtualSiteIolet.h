@@ -154,8 +154,9 @@ namespace hemelb
               geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteIndex);
 
               const distribn_t* fOld = site.GetFOld<LatticeType> ();
+              const util::Vector3D<distribn_t>* force = site.GetForce();
 
-              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(fOld,force);
 
               ///< @todo #126 This value of tau will be updated by some kernels within the collider code (e.g. LBGKNN). It would be nicer if tau is handled in a single place.
               hydroVars.tau = lbmParams->GetTau();

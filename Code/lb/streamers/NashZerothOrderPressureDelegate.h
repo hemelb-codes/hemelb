@@ -44,7 +44,7 @@ namespace hemelb
             // TODO having to give 0 as an argument is also ugly.
             // TODO it's ugly that we have to give hydroVars a nonsense distribution vector
             // that doesn't get used.
-            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site.GetFOld<LatticeType> ());
+            kernels::HydroVars<typename CollisionType::CKernel> ghostHydrovars(site.GetFOld<LatticeType> (),site.GetForce());
 
             ghostHydrovars.density = ghostDensity;
             ghostHydrovars.momentum = ioletNormal * component * ghostDensity;
