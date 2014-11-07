@@ -105,7 +105,6 @@ namespace hemelb
 
                   // Calculate streamerFOld at this site.
                   distribn_t streamerFOld[lb::lattices::D3Q15::NUMVECTORS];
-                  util::Vector3D<distribn_t> force = util::Vector3D<distribn_t>(0.0, 0.0, 0.0);
 
                   LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(streamerSiteId,
                                                                                     streamerFOld);
@@ -113,7 +112,7 @@ namespace hemelb
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> >
-                      streamerHydroVars(streamerFOld,&force);
+                      streamerHydroVars(streamerFOld, latDat->GetSite(streamerSiteId).GetForce());
                   streamerHydroVars.tau = lbmParams->GetTau();
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamedSite);
 
@@ -185,7 +184,7 @@ namespace hemelb
 
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> >
-                      streamerHydroVars(streamerFOld,&force);
+                      streamerHydroVars(streamerFOld, &force);
                   streamerHydroVars.tau = lbmParams->GetTau();
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSite);
 
