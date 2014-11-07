@@ -11,6 +11,7 @@
 #define HEMELB_LB_KERNELS_LBGK_H
 
 #include <cstdlib>
+#include <cmath>
 #include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
@@ -69,21 +70,22 @@ namespace hemelb
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
           {
-        	LatticeType::CalculateForceDistribution(hydroVars.tau,
-        	                          hydroVars.velocity.x,
-        	                          hydroVars.velocity.y,
-        	                          hydroVars.velocity.z,
-        	                          hydroVars.force->x,
-        	                          hydroVars.force->y,
-        	                          hydroVars.force->z,
-        	                          hydroVars.forceDist.f);
+            LatticeType::CalculateForceDistribution(hydroVars.tau,
+                                     hydroVars.velocity.x,
+                                     hydroVars.velocity.y,
+                                     hydroVars.velocity.z,
+                                     hydroVars.force->x,
+                                     hydroVars.force->y,
+                                     hydroVars.force->z,
+                                     hydroVars.forceDist.f);
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
-            {
-              hydroVars.SetFPostCollision(direction,
-                                          (hydroVars.f[direction] + hydroVars.f_neq.f[direction] * lbmParams->GetOmega())
-                                          + hydroVars.forceDist.f[direction]);
-            }
+              hydroVars.SetFPostCollision(
+                  direction,
+                  hydroVars.f[direction]
+                  + hydroVars.f_neq.f[direction] * lbmParams->GetOmega()
+                  + hydroVars.forceDist.f[direction]
+              );
           }
 
       };
