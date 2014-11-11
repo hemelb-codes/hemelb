@@ -26,16 +26,19 @@ namespace hemelb
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
       template<class LatticeType>
-      class LBGK : public BaseKernel<LBGK<LatticeType>, LatticeType>
+      class GuoForcingLBGK : public LBGK<LatticeType>
       {
         public:
-          LBGK(InitParams& initParams)
-          {
-          }
+          GuoForcingLBGK(InitParams& initParams)
+            : LBGK<LatticeType>(initParams) {}
 
-          inline void DoCalculateDensityMomentumFeq(HydroVars<LBGK<LatticeType> >& hydroVars, site_t index)
+          inline void DoCalculateDensityMomentumFeq(
+              HydroVars<GuoForcingLBGK<LatticeType> >& hydroVars, site_t index)
           {
             LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
+                                                     hydroVars.force->x,
+                                                     hydroVars.force->y,
+                                                     hydroVars.force->z,
                                                      hydroVars.density,
                                                      hydroVars.momentum.x,
                                                      hydroVars.momentum.y,
@@ -51,27 +54,31 @@ namespace hemelb
             }
           }
 
-          inline void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
+          inline void DoCalculateFeq(
+              HydroVars<GuoForcingLBGK>& hydroVars, site_t index)
           {
-            LatticeType::CalculateFeq(hydroVars.density,
-                                      hydroVars.momentum.x,
-                                      hydroVars.momentum.y,
-                                      hydroVars.momentum.z,
-                                      hydroVars.f_eq.f);
-
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
-            {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
-            }
+            return LBGK::DoCalculateFeq(
+                HydroVars<LBGK>(hydroVars.f, hydrovars.force), index
+            );
           }
 
           inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
           {
+            LatticeType::CalculateForceDistribution(hydroVars.tau,
+                                     hydroVars.velocity.x,
+                                     hydroVars.velocity.y,
+                                     hydroVars.velocity.z,
+                                     hydroVars.force->x,
+                                     hydroVars.force->y,
+                                     hydroVars.force->z,
+                                     hydroVars.forceDist.f);
+
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
               hydroVars.SetFPostCollision(
                   direction,
                   hydroVars.f[direction]
                   + hydroVars.f_neq.f[direction] * lbmParams->GetOmega()
+                  + hydroVars.forceDist.f[direction]
               );
           }
 
