@@ -470,6 +470,7 @@ namespace hemelb
         // Method should remain protected, intent is to set this information via Site
         inline void SetForceAtSite(site_t iSiteIndex, distribn_t force)
         {
+          assert(forceAtSite.size() > iSiteIndex);
           forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0,0.0,force);
         }
 
