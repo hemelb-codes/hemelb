@@ -15,6 +15,7 @@
 #include "lb/iolets/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "geometry/SiteData.h"
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -62,14 +63,15 @@ namespace hemelb
           template<class LatticeImpl> friend class MRT;
 
         protected:
-          HydroVarsBase(const distribn_t* const f, const util::Vector3D<distribn_t>* const force) :
+          HydroVarsBase(const distribn_t* const f,
+              const util::Vector3D<distribn_t>* const force = &nullForcing ) :
             f(f), force(force)
           {
           }
-          HydroVarsBase(const distribn_t* const f) :
-                      f(f), force(NULL)
-                    {
-                    }
+          template<class DataSource>
+            HydroVarsBase(geometry::Site<DataSource> const &_site)
+                : f(_site.template GetFOld<LatticeType>()),
+                  force(&nullForcing) {};
 
         public:
           distribn_t density, tau;
@@ -137,12 +139,22 @@ namespace hemelb
 
         protected:
           FVector<LatticeType> f_eq, f_neq, fPostCollision, forceDist;
+          //! No-forcing place-holder
+          static const util::Vector3D<distribn_t> nullForcing;
       };
+
+      template<class LatticeType>
+        const util::Vector3D<distribn_t>
+          HydroVarsBase<LatticeType>::nullForcing = util::Vector3D<distribn_t>(0, 0,0);
 
       template<typename KernelImpl>
       struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
       {
         public:
+          template<class DataSource>
+            HydroVars(geometry::Site<DataSource> const &_site)
+              : HydroVarsBase<typename KernelImpl::LatticeType>(_site) {}
+
           HydroVars(const distribn_t* const f, const util::Vector3D<distribn_t>* const force) :
             HydroVarsBase<typename KernelImpl::LatticeType> (f,force)
           {
