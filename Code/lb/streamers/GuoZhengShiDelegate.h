@@ -151,6 +151,7 @@ namespace hemelb
             kernels::HydroVars<typename CollisionType::CKernel> hydroVarsWall(fWall,&force);
 
             hydroVarsWall.density = hydroVars.density;
+            hydroVarsWall.tau = hydroVars.tau;
             hydroVarsWall.momentum = hydroVars.momentum * (1. - 1. / wallDistance);
 
             // Find the non-equilibrium distribution in the unstreamed direction.
