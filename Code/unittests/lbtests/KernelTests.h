@@ -277,15 +277,14 @@ namespace hemelb
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
 
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
-            util::Vector3D<distribn_t> force = util::Vector3D<distribn_t>(0.0, 0.0, 0.0);
             /*
              * Case 0: test the kernel function for calculating density, momentum
              * and f_eq.
              * Case 1: test the function that uses a given density and momentum, and
              * calculates f_eq.
              */
-            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars0(f_original,&force);
-            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars1(f_original,&force);
+            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars0(f_original);
+            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars1(f_original);
 
             hydroVars0.tau = lbmParams->GetTau();
             hydroVars1.tau = lbmParams->GetTau();
