@@ -135,6 +135,8 @@ namespace hemelb
             }
           }
 
+          #endif                   
+
           /**
            * Calculates density and momentum, the original non-SSE version
            * @param f
@@ -155,20 +157,12 @@ namespace hemelb
                                                          const distribn_t &force_y,
                                                          const distribn_t &force_z)
           {
-            density = momentum_x = momentum_y = momentum_z = 0.0;
-
-            for (Direction direction = 0; direction < DmQn::NUMVECTORS; ++direction)
-            {
-              density += f[direction];
-              momentum_x += DmQn::CX[direction] * f[direction];
-              momentum_y += DmQn::CY[direction] * f[direction];
-              momentum_z += DmQn::CZ[direction] * f[direction];
-            }
+            CalculateDensityAndMomentum(
+                f, density, momentum_x, momentum_y, momentum_z);
             momentum_x += 0.5 * force_x;
             momentum_y += 0.5 * force_y;
             momentum_z += 0.5 * force_z;
           }
-          #endif                   
 
           #ifdef HEMELB_USE_SSE3
           /**           
@@ -297,6 +291,7 @@ namespace hemelb
                       + 3. * mom_dot_ei);
             }
           }
+          #endif
 
           /**
             * Calculate Force
@@ -328,7 +323,6 @@ namespace hemelb
             			(1. / 9.) * (FScalarProductDirection * vScalarProductDirection) );
              }
           }
-          #endif
           
                                         
           // Calculate density, momentum and the equilibrium distribution
@@ -359,6 +353,9 @@ namespace hemelb
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
           inline static void CalculateDensityMomentumFEq(const distribn_t f[],
+                                                         const distribn_t &force_x,
+                                                         const distribn_t &force_y,
+                                                         const distribn_t &force_z,
                                                          distribn_t &density,
                                                          distribn_t &momentum_x,
                                                          distribn_t &momentum_y,
@@ -366,9 +363,6 @@ namespace hemelb
                                                          distribn_t &velocity_x,
                                                          distribn_t &velocity_y,
                                                          distribn_t &velocity_z,
-                                                         const distribn_t &force_x,
-                                                         const distribn_t &force_y,
-                                                         const distribn_t &force_z,
                                                          distribn_t f_eq[])
           {
             CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z, force_x, force_y, force_z);
