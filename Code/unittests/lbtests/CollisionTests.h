@@ -235,10 +235,8 @@ namespace hemelb
 
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[lb::lattices::D3Q15::NUMVECTORS];
-            util::Vector3D<distribn_t> force = util::Vector3D<distribn_t>(0.0, 0.0, 0.0);
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, fOld);
-
-            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars(fOld,&force);
+            lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars(fOld);
             hydroVars.tau = lbmParams->GetTau();
 
 
