@@ -842,13 +842,12 @@ namespace hemelb
               {
                 // Calculate the distributions at the chosen site up to post-collision.
                 distribn_t streamerFOld[lb::lattices::D3Q15::NUMVECTORS];
-                util::Vector3D<distribn_t> force = util::Vector3D<distribn_t>(0.0, 0.0, 0.0);
 
                 LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(chosenSite,
                                                                                   streamerFOld);
 
                 lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> >
-                    streamerHydroVars(streamerFOld, &force);
+                    streamerHydroVars(streamerFOld, latDat->GetSite(chosenSite).GetForce());
                 streamerHydroVars.tau=lbmParams->GetTau();
                 normalCollision->CalculatePreCollision(streamerHydroVars, streamer);
                 normalCollision->Collide(lbmParams, streamerHydroVars);
