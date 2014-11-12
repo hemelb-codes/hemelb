@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 // 
 
-#ifndef HEMELB_LB_KERNELS_LBGK_H
-#define HEMELB_LB_KERNELS_LBGK_H
+#ifndef HEMELB_LB_KERNELS_GUO_FORCING_LBGK_H
+#define HEMELB_LB_KERNELS_GUO_FORCING_LBGK_H
 
 #include <cstdlib>
 #include <cmath>
@@ -16,76 +16,115 @@
 #include "util/utilityFunctions.h"
 #include "lb/kernels/BaseKernel.h"
 
-namespace hemelb
-{
-  namespace lb
-  {
-    namespace kernels
-    {
-      /**
-       * LBGK: This class implements the LBGK single-relaxation time kernel.
-       */
-      template<class LatticeType>
-      class GuoForcingLBGK : public LBGK<LatticeType>
-      {
-        public:
-          GuoForcingLBGK(InitParams& initParams)
-            : LBGK<LatticeType>(initParams) {}
+namespace hemelb { namespace lb { namespace kernels {
+  /**
+   * Implements the LBGK single-relaxation time kernel, including Guo Forcing
+   *
+   * Forcing implemented following:
+   * Phys. Rev. E 65, 046308 (2002)
+   * Zhaoli Guo, Chuguang Zheng, and Baochang Shi
+   */
+  template<class LatticeType>
+    class GuoForcingLBGK
+        : public BaseKernel<GuoForcingLBGK<LatticeType>, LatticeType> {
+      public:
+        GuoForcingLBGK(InitParams& initParams)
+          : BaseKernel<GuoForcingLBGK<LatticeType>, LatticeType>(initParams) {}
 
-          inline void DoCalculateDensityMomentumFeq(
-              HydroVars<GuoForcingLBGK<LatticeType> >& hydroVars, site_t index)
-          {
-            LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
-                                                     hydroVars.force->x,
-                                                     hydroVars.force->y,
-                                                     hydroVars.force->z,
-                                                     hydroVars.density,
-                                                     hydroVars.momentum.x,
-                                                     hydroVars.momentum.y,
-                                                     hydroVars.momentum.z,
-                                                     hydroVars.velocity.x,
-                                                     hydroVars.velocity.y,
-                                                     hydroVars.velocity.z,
-                                                     hydroVars.f_eq.f);
+        // Adds forcing to momentum
+        void DoCalculateDensityMomentumFeq(
+            HydroVars<GuoForcingLBGK>& hydroVars, site_t index);
+        // Forwards to LBGK base class
+        void DoCalculateFeq(HydroVars<GuoForcingLBGK>&, site_t);
+        // Adds forcing to collision term
+        void DoCollide(
+          const LbmParameters* const lbmParams,
+          HydroVars<GuoForcingLBGK>& hydroVars
+        );
+    };
 
-            for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
-            {
-              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
-            }
-          }
+  template<class LatticeType>
+    struct HydroVars<GuoForcingLBGK<LatticeType> >
+        : HydroVarsBase<LatticeType> {
 
-          inline void DoCalculateFeq(
-              HydroVars<GuoForcingLBGK>& hydroVars, site_t index)
-          {
-            return LBGK::DoCalculateFeq(
-                HydroVars<LBGK>(hydroVars.f, hydrovars.force), index
-            );
-          }
+      public:
+        // Pointer to force at this site
+        const LatticeForceVector& force;
 
-          inline void DoCollide(const LbmParameters* const lbmParams, HydroVars<LBGK>& hydroVars)
-          {
-            LatticeType::CalculateForceDistribution(hydroVars.tau,
-                                     hydroVars.velocity.x,
-                                     hydroVars.velocity.y,
-                                     hydroVars.velocity.z,
-                                     hydroVars.force->x,
-                                     hydroVars.force->y,
-                                     hydroVars.force->z,
-                                     hydroVars.forceDist.f);
+        template<class DataSource>
+          HydroVars(geometry::Site<DataSource> const &_site)
+            : HydroVarsBase<LatticeType>(_site), force(_site.GetForce()) {}
 
-            for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
-              hydroVars.SetFPostCollision(
-                  direction,
-                  hydroVars.f[direction]
-                  + hydroVars.f_neq.f[direction] * lbmParams->GetOmega()
-                  + hydroVars.forceDist.f[direction]
-              );
-          }
+        HydroVars(
+            const distribn_t* const f,
+            const LatticeForceVector& _force
+        ) : HydroVarsBase<LatticeType>(f), force(_force) {}
 
-      };
+        // Guo lattice distribution of external force contributions
+        // as calculated in lattice::CalculateForceDistribution.
+        inline const FVector<LatticeType>& GetForceDist() const
+          { return forceDist; }
+        inline void SetForceDist(Direction i, distribn_t val)
+          { forceDist[i] = val; }
 
-    }
+      protected:
+          FVector<LatticeType> forceDist;
+    };
+
+  template<class LatticeType>
+    void GuoForcingLBGK<LatticeType> :: DoCalculateDensityMomentumFeq(
+          HydroVars<GuoForcingLBGK<LatticeType> >& hydroVars, site_t index) {
+      LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
+                                               hydroVars.force->x,
+                                               hydroVars.force->y,
+                                               hydroVars.force->z,
+                                               hydroVars.density,
+                                               hydroVars.momentum.x,
+                                               hydroVars.momentum.y,
+                                               hydroVars.momentum.z,
+                                               hydroVars.velocity.x,
+                                               hydroVars.velocity.y,
+                                               hydroVars.velocity.z,
+                                               hydroVars.f_eq.f);
+
+      for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
+        hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
   }
-}
+
+  template<class LatticeType>
+    void GuoForcingLBGK<LatticeType> :: DoCalculateFeq(
+            HydroVars<GuoForcingLBGK>& hydroVars, site_t index) {
+      LatticeType::CalculateFeq(hydroVars.density,
+                                hydroVars.momentum.x,
+                                hydroVars.momentum.y,
+                                hydroVars.momentum.z,
+                                hydroVars.f_eq.f);
+
+      for (unsigned int ii = 0; ii < LatticeType::NUMVECTORS; ++ii)
+        hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+    }
+
+  template<class LatticeType>
+    void GuoForcingLBGK<LatticeType> :: DoCollide(
+        const LbmParameters* const lbmParams,
+        HydroVars<GuoForcingLBGK>& hydroVars
+    ) {
+      LatticeType::CalculateForceDistribution(
+          hydroVars.tau,
+          hydroVars.velocity.x, hydroVars.velocity.y, hydroVars.velocity.z,
+          hydroVars.force->x, hydroVars.force->y, hydroVars.force->z,
+          hydroVars.forceDist.f
+      );
+
+      for (Direction dir(0); dir < LatticeType::NUMVECTORS; ++dir)
+        hydroVars.SetFPostCollision(
+            dir,
+            hydroVars.f[dir]
+            + hydroVars.f_neq.f[dir] * lbmParams->GetOmega()
+            + hydroVars.forceDist.f[dir]
+        );
+  };
+
+}}}
 
 #endif /* HEMELB_LB_KERNELS_LBGK_H */

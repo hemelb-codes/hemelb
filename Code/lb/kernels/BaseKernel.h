@@ -63,15 +63,10 @@ namespace hemelb
           template<class LatticeImpl> friend class MRT;
 
         protected:
-          HydroVarsBase(const distribn_t* const f,
-              const util::Vector3D<distribn_t>* const force = &nullForcing ) :
-            f(f), force(force)
-          {
-          }
+          HydroVarsBase(const distribn_t* const f) : f(f) {}
           template<class DataSource>
             HydroVarsBase(geometry::Site<DataSource> const &_site)
-                : f(_site.template GetFOld<LatticeType>()),
-                  force(&nullForcing) {};
+                : f(_site.template GetFOld<LatticeType>()) {}
 
         public:
           distribn_t density, tau;
@@ -79,20 +74,6 @@ namespace hemelb
           util::Vector3D<distribn_t> velocity;
 
           const distribn_t* const f;
-          // This is pointing to the vector-field of external forces
-          // defined in LatticeData::forceAtSite
-          const util::Vector3D<distribn_t>* const force;
-
-          // Guo lattice distribution of external force contributions
-          // as calculated in lattice::CalculateForceDistribution.
-          inline const FVector<LatticeType>& GetForceDist() const
-          {
-            return forceDist;
-          }
-          inline void SetForceDist(Direction i, distribn_t val)
-          {
-             forceDist[i] = val;
-          }
 
           inline const FVector<LatticeType>& GetFEq() const
           {
@@ -138,14 +119,8 @@ namespace hemelb
           }
 
         protected:
-          FVector<LatticeType> f_eq, f_neq, fPostCollision, forceDist;
-          //! No-forcing place-holder
-          static const util::Vector3D<distribn_t> nullForcing;
+          FVector<LatticeType> f_eq, f_neq, fPostCollision;
       };
-
-      template<class LatticeType>
-        const util::Vector3D<distribn_t>
-          HydroVarsBase<LatticeType>::nullForcing = util::Vector3D<distribn_t>(0, 0,0);
 
       template<typename KernelImpl>
       struct HydroVars : HydroVarsBase<typename KernelImpl::LatticeType>
@@ -155,17 +130,8 @@ namespace hemelb
             HydroVars(geometry::Site<DataSource> const &_site)
               : HydroVarsBase<typename KernelImpl::LatticeType>(_site) {}
 
-          HydroVars(const distribn_t* const f, const util::Vector3D<distribn_t>* const force) :
-            HydroVarsBase<typename KernelImpl::LatticeType> (f,force)
-          {
-
-          }
-
           HydroVars(const distribn_t* const f) :
-                      HydroVarsBase<typename KernelImpl::LatticeType> (f)
-                    {
-
-                    }
+                      HydroVarsBase<typename KernelImpl::LatticeType> (f) {}
       };
 
       /**

@@ -87,13 +87,13 @@ namespace hemelb
         {
           return latticeData.GetNormalToWall(index);
         }
-        inline const util::Vector3D<distribn_t>* GetForce() const
+        const LatticeForceVector& GetForce() const
         {
           return latticeData.GetForceAtSite(index);
         }
-        inline util::Vector3D<distribn_t>* GetForce()
+        void SetForce(LatticeForceVector const &_force)
         {
-          return latticeData.GetForceAtSite(index);
+          return latticeData.SetForceAtSite(index, _force);
         }
         inline site_t GetIndex() const
         {

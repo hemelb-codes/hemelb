@@ -462,30 +462,6 @@ namespace hemelb
         }
 
         /**
-         * Set the force vector at the given site
-         * @param iSiteIndex
-         * @param force
-         * @return
-         */
-        // Method should remain protected, intent is to set this information via Site
-        inline void SetForceAtSite(site_t iSiteIndex, distribn_t force)
-        {
-          assert(forceAtSite.size() > iSiteIndex);
-          forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0,0.0,force);
-        }
-
-        /**
-          * Get the force vector at the given site
-          * @param iSiteIndex
-          * @return
-          */
-        // Method should remain protected, intent is to access this information via Site
-        inline const util::Vector3D<distribn_t>* GetForceAtSite(site_t iSiteIndex) const
-        {
-          return &forceAtSite[iSiteIndex];
-        }
-
-        /**
          * Get a pointer to the fOld array starting at the requested index
          * @param distributionIndex
          * @return
@@ -563,9 +539,33 @@ namespace hemelb
         }
 
         // Method should remain protected, intent is to access this information via Site
-        util::Vector3D<distribn_t>* GetForceAtSite(site_t iSiteIndex)
-		{
-          return &forceAtSite[iSiteIndex];
+        LatticeForceVector const& GetForceAtSite(site_t iSiteIndex) const
+        {
+          return forceAtSite[iSiteIndex];
+        }
+        /**
+         * Set the force vector at the given site
+         * @param iSiteIndex
+         * @param force
+         * @return
+         */
+        // Method should remain protected, intent is to set this information via Site
+        void SetForceAtSite(site_t iSiteIndex, LatticeForceVector const & force)
+        {
+          assert(forceAtSite.size() > iSiteIndex);
+          forceAtSite[iSiteIndex] = force;
+        }
+        /**
+         * Set a vertical force vector at the given site
+         * @param iSiteIndex
+         * @param force
+         * @return
+         */
+        // Method should remain protected, intent is to set this information via Site
+        void SetForceAtSite(site_t iSiteIndex, LatticeForce force)
+        {
+          assert(forceAtSite.size() > iSiteIndex);
+          forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0,0.0,force);
         }
 
         /**
@@ -601,7 +601,7 @@ namespace hemelb
         site_t localFluidSites; //! The number of local fluid sites.
         std::vector<distribn_t> oldDistributions; //! The distribution values for the previous time step.
         std::vector<distribn_t> newDistributions; //! The distribution values for the next time step.
-        std::vector<util::Vector3D<distribn_t> > forceAtSite; //! Holds the force vector at a fluid site
+        std::vector<LatticeForceVector> forceAtSite; //! Holds the force vector at a fluid site
         std::vector<Block> blocks; //! Data where local fluid sites are stored contiguously.
 
         std::vector<distribn_t> distanceToWall; //! Hold the distance to the wall for each fluid site.
