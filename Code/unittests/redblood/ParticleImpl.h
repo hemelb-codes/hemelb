@@ -42,12 +42,12 @@ public:
     {
       LatticePosition const actual = main->normal();
       LatticePosition const expected(0, 0, -1);
-      CPPUNIT_ASSERT(is_zero(actual - expected));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected));
     }
     {
       LatticePosition const actual = neighbor->normal();
       LatticePosition const expected(1, 1, 1);
-      CPPUNIT_ASSERT(is_zero(actual - expected));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected));
     }
   }
 
@@ -55,21 +55,21 @@ public:
     {
       LatticePosition const actual = main->unitNormal();
       LatticePosition const expected(0, 0, -1);
-      CPPUNIT_ASSERT(is_zero(actual - expected));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected));
     } {
       LatticePosition const actual = neighbor->unitNormal();
       LatticePosition const expected(1, 1, 1);
-      CPPUNIT_ASSERT(is_zero(actual - expected.GetNormalised()));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected.GetNormalised()));
     }
   }
 
   void testAngle() {
     Angle const actual0 = redblood::angle(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(actual0 - std::acos(-1.0 /std::sqrt(3.))));
+    CPPUNIT_ASSERT(helpers::is_zero(actual0 - std::acos(-1.0 /std::sqrt(3.))));
 
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
     Angle const actual1 = redblood::angle(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(actual1 - 3.0*PI/4.0));
+    CPPUNIT_ASSERT(helpers::is_zero(actual1 - 3.0*PI/4.0));
     mesh.vertices.back()[1] = 1e0;
   }
 
@@ -78,7 +78,9 @@ public:
         = redblood::commonNodes(*main, *neighbor);
     CPPUNIT_ASSERT(nodes.first == 1 and nodes.second == 2);
     LatticePosition const edge = commonEdge(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(edge - (mesh.vertices[1] - mesh.vertices[2])));
+    CPPUNIT_ASSERT(helpers::is_zero(
+          edge - (mesh.vertices[1] - mesh.vertices[2])
+    ));
   }
   void testSingleNodes() {
     redblood::t_IndexPair const nodes 
@@ -90,12 +92,12 @@ public:
 
   void testOrientedAngle() {
     Angle const actual0 = redblood::orientedAngle(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(actual0 + std::acos(-1.0 /std::sqrt(3.))));
+    CPPUNIT_ASSERT(helpers::is_zero(actual0 + std::acos(-1.0 /std::sqrt(3.))));
 
     // simpler angle
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
     Angle const actual1 = redblood::orientedAngle(*main, *neighbor);
-    CPPUNIT_ASSERT(is_zero(actual1 + 3.0*PI/4.0));
+    CPPUNIT_ASSERT(helpers::is_zero(actual1 + 3.0*PI/4.0));
 
     // change orientation <==> negative angle
     mesh.facets.front()[1] = 2;
@@ -103,7 +105,7 @@ public:
     Angle const actual2 = redblood::orientedAngle(
         redblood::Facet(mesh, 0), redblood::Facet(mesh, 3)
     );
-    CPPUNIT_ASSERT(is_zero(actual2 + PI/4.0));
+    CPPUNIT_ASSERT(helpers::is_zero(actual2 + PI/4.0));
     mesh.facets.front()[1] = 1;
     mesh.facets.front()[2] = 2;
 
@@ -138,7 +140,7 @@ class EnergyTests : public TetrahedronFixture {
       PhysicalEnergy const actual0(
         redblood::facetBending(mesh, original, 0, 3, 1e0)
       );
-      CPPUNIT_ASSERT(is_zero(actual0));
+      CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of angle difference
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
@@ -150,7 +152,7 @@ class EnergyTests : public TetrahedronFixture {
       PhysicalEnergy const expected(
           std::pow((PI / 4e0 - std::acos(1./std::sqrt(3.))), 2)
       );
-      CPPUNIT_ASSERT(is_zero(actual1 - expected));
+      CPPUNIT_ASSERT(helpers::is_zero(actual1 - expected));
     }
 
     void testVolume() {
@@ -159,7 +161,7 @@ class EnergyTests : public TetrahedronFixture {
       PhysicalEnergy const actual0(
         redblood::volumeEnergy(mesh, original, 1e0)
       );
-      CPPUNIT_ASSERT(is_zero(actual0));
+      CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
@@ -168,7 +170,7 @@ class EnergyTests : public TetrahedronFixture {
       );
 
       PhysicalEnergy const deltaV(volume(mesh) - volume(original));
-      CPPUNIT_ASSERT(is_zero(actual1 - deltaV * deltaV));
+      CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaV * deltaV));
       mesh.vertices.back()[2] = 1e0;
     }
 
@@ -178,7 +180,7 @@ class EnergyTests : public TetrahedronFixture {
       PhysicalEnergy const actual0(
         redblood::surfaceEnergy(mesh, original, 1e0)
       );
-      CPPUNIT_ASSERT(is_zero(actual0));
+      CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
@@ -187,7 +189,7 @@ class EnergyTests : public TetrahedronFixture {
       );
 
       PhysicalEnergy const deltaS(surface(mesh) - surface(original));
-      CPPUNIT_ASSERT(is_zero(actual1 - deltaS * deltaS));
+      CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaS * deltaS));
       mesh.vertices.back()[2] = 1e0;
     }
 
@@ -197,7 +199,7 @@ class EnergyTests : public TetrahedronFixture {
       PhysicalEnergy const actual0(
         redblood::strainEnergy(mesh, original, 1e0, 2e0)
       );
-      CPPUNIT_ASSERT(is_zero(actual0));
+      CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
@@ -206,7 +208,7 @@ class EnergyTests : public TetrahedronFixture {
       );
 
       PhysicalEnergy const regression(0.0865562612162);
-      CPPUNIT_ASSERT(is_zero(actual1 - regression));
+      CPPUNIT_ASSERT(helpers::is_zero(actual1 - regression));
       mesh.vertices.back()[2] = 1e0;
     }
 
@@ -314,9 +316,9 @@ class GradientKernTests : public TetrahedronFixture {
       redblood::MeshData newmesh(mesh);                                       \
       newmesh.vertices[_node] += _normal * epsilon;                           \
       PhysicalEnergy const deltaE(redblood::FUNCTION_CALL);                   \
-      CPPUNIT_ASSERT(is_zero(deltaE / epsilon));                              \
+      CPPUNIT_ASSERT(helpers::is_zero(deltaE / epsilon));                     \
       for(size_t i(0); i < forces.size(); ++i)                                \
-        CPPUNIT_ASSERT(is_zero(forces[i]));                                   \
+        CPPUNIT_ASSERT(helpers::is_zero(forces[i]));                          \
     }
 
       HEMELB_MACRO(noBending, facetBending(newmesh, mesh, 0, 3, 1.0, forces));

@@ -13,12 +13,13 @@
 #include <cppunit/TestFixture.h>
 #include "redblood/interpolation.h"
 #include "redblood/VelocityInterpolation.h"
-#include "unittests/redblood/Fixtures.h"
 #include "lb/lattices/D3Q15.h"
+#include "unittests/redblood/Fixtures.h"
+#include "unittests/helpers/Comparisons.h"
 
 namespace hemelb { namespace unittests {
 
-class InterpolationTests : public CppUnit::TestFixture, public Comparisons {
+class InterpolationTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(InterpolationTests);
     CPPUNIT_TEST(testIndexIterator);
     CPPUNIT_TEST(testOffLattice);
@@ -83,7 +84,7 @@ public:
       IndexIterator iterator(LatticeVector(5, 4, 3), 1);
       for(size_t i(0); incs[i] < 666; ++i)  {
         for(size_t j(0); j < incs[i]; ++j, ++iterator);
-        CPPUNIT_ASSERT(is_zero(*iterator - vectors[i]));
+        CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
         CPPUNIT_ASSERT(iterator.isValid());
       }
       // Checks iterator becomes invalid
@@ -115,8 +116,10 @@ public:
       // Checks iteration goes through correct sequence
       for(size_t i(0); incs[i] < 666; ++i)  {
         for(size_t j(0); j < incs[i]; ++j, ++iterator);
-        CPPUNIT_ASSERT(is_zero(*iterator - vectors[i]));
-        CPPUNIT_ASSERT(is_zero(stencil(pos - vectors[i]) - iterator.weight()));
+        CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
+        CPPUNIT_ASSERT(helpers::is_zero(
+              stencil(pos - vectors[i]) - iterator.weight()
+        ));
         CPPUNIT_ASSERT(iterator.isValid());
       }
       ++iterator;
@@ -139,16 +142,16 @@ public:
       };
       for(size_t i(0); i < 6; ++i) {
         LatticeVector const dx(1, 0, 0), dy(0, 1, 0), dz(0, 0, 1);
-        CPPUNIT_ASSERT(is_zero(stencil(pos - zero_vecs[i])));
+        CPPUNIT_ASSERT(helpers::is_zero(stencil(pos - zero_vecs[i])));
         // checks we are one step outside the iteration box only.
         // this is really a test on the zero_vecs data, eg a test of the test.
         size_t const one_non_zero =
-            size_t(not is_zero(stencil(pos + dx - zero_vecs[i])))
-          + size_t(not is_zero(stencil(pos - dx - zero_vecs[i])))
-          + size_t(not is_zero(stencil(pos + dy - zero_vecs[i])))
-          + size_t(not is_zero(stencil(pos - dy - zero_vecs[i])))
-          + size_t(not is_zero(stencil(pos + dz - zero_vecs[i])))
-          + size_t(not is_zero(stencil(pos - dz - zero_vecs[i])));
+            size_t(not helpers::is_zero(stencil(pos + dx - zero_vecs[i])))
+          + size_t(not helpers::is_zero(stencil(pos - dx - zero_vecs[i])))
+          + size_t(not helpers::is_zero(stencil(pos + dy - zero_vecs[i])))
+          + size_t(not helpers::is_zero(stencil(pos - dy - zero_vecs[i])))
+          + size_t(not helpers::is_zero(stencil(pos + dz - zero_vecs[i])))
+          + size_t(not helpers::is_zero(stencil(pos - dz - zero_vecs[i])));
         CPPUNIT_ASSERT(one_non_zero == 1);
       }
     }
@@ -161,7 +164,7 @@ public:
       FUNCTION func;
       LatticePosition expected(func(_x, _y, _z));
       LatticePosition actual(interpolate(func, _x, _y, _z, FOUR_POINT));
-      CPPUNIT_ASSERT(is_zero(actual - expected, _tolerance));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected, _tolerance));
     }
 
     // Test interpolation when the point is on the grid
@@ -185,7 +188,7 @@ public:
 };
 
 class VelocityInterpolationTests :
-  public helpers::FourCubeBasedTestFixture, public Comparisons {
+  public helpers::FourCubeBasedTestFixture {
     typedef lb::lattices::D3Q15 t_Lattice;
     typedef lb::kernels::LBGK<t_Lattice> t_Kernel;
     CPPUNIT_TEST_SUITE(VelocityInterpolationTests);
@@ -237,7 +240,7 @@ class VelocityInterpolationTests :
               t_Lattice::CX[6], t_Lattice::CY[6], t_Lattice::CZ[6]
           ) * Dimensionless(sites[i][2]);
         LatticeVelocity const actual = functor(sites[i]);
-        CPPUNIT_ASSERT(is_zero(actual - expected));
+        CPPUNIT_ASSERT(helpers::is_zero(actual - expected));
       }
     }
 };

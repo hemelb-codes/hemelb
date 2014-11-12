@@ -9,20 +9,13 @@
 
 #ifndef HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
 #define HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
+
+#include <unittests/helpers/Comparisons.h>
+
 namespace hemelb { namespace unittests {
 
 
-// Helper functions for tests.
-struct Comparisons {
-  static bool is_zero(util::Vector3D<double> const &_in, double _tol = 1e-8) {
-    return std::sqrt(_in.GetMagnitudeSquared()) < _tol;
-  }
-  static bool is_zero(double const _in, double _tol = 1e-8) {
-    return std::abs(_in) < _tol;
-  }
-};
-
-class TetrahedronFixture : public CppUnit::TestFixture, public Comparisons {
+class TetrahedronFixture : public CppUnit::TestFixture {
   public:
     void setUp() {
       // facets at something degrees from one another
@@ -68,7 +61,7 @@ class EnergyVsGradientFixture : public TetrahedronFixture {
           std::max(std::abs((deltaE / _epsilon) * 1e-4), 1e-8)
       );
       CPPUNIT_ASSERT(
-          is_zero(
+          helpers::is_zero(
             forces[_node].Dot(_dir) + (deltaE / _epsilon),
             tolerance
           )
