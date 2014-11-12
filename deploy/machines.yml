@@ -257,9 +257,9 @@ julian:
    python_build: "lib/python2.7"
 oppenheimer:
    remote: "oppenheimer.chem.ucl.ac.uk"
-   run_command: "/opt/openmpi/gfortran/1.4.3/bin/mpirun -np $cores"
+   run_command: "/opt/openmpi/gfortran/1.6.5/bin/mpirun -np $cores"
    batch_header: sge_oppenheimer
-   build_prefix_commands: ["export set PATH=$PATH:/home/jamespjh/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/jamespjh/install/lib/python2.6/site-packages"]
+   build_prefix_commands: ["export set PATH=$PATH:/home/$username/install/bin","export set PYTHONPATH=$PYTHONPATH:/home/$username/install/lib/python2.6/site-packages"]
    no_hg: true
    job_dispatch: "qsub"
    python_build: "lib/python2.6"
