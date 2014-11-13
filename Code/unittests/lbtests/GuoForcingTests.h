@@ -16,6 +16,7 @@
 #include "lb/kernels/GuoForcingLBGK.h"
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "unittests/helpers/Comparisons.h"
+#include <iostream>
 
 namespace hemelb { namespace unittests {
 
@@ -29,7 +30,12 @@ namespace hemelb { namespace unittests {
       CPPUNIT_TEST(testForceDistributionBadTau);
       CPPUNIT_TEST(testForceDistributionColinear);
       CPPUNIT_TEST(testForceDistributionZeroVelocity);
+      CPPUNIT_TEST(testDoCollide);
     CPPUNIT_TEST_SUITE_END();
+    typedef lb::lattices::D3Q15 D3Q15;
+    typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
+    typedef Kernel::KHydroVars HydroVars;
+    typedef lb::lattices::Lattice<D3Q15> Lattice;
     public:
       void setUp() {
         FourCubeBasedTestFixture::setUp();
@@ -43,26 +49,21 @@ namespace hemelb { namespace unittests {
       // specialization is used as well.
       void testHydroVarsGetForce() {
         size_t const nFluidSites(latDat->GetLocalFluidSiteCount());
-        typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> t_Kernel;
-        typedef t_Kernel::KHydroVars t_HydroVars;
         for(size_t i(1); i < nFluidSites; i <<= 1)
           CPPUNIT_ASSERT(helpers::is_zero(
-            t_HydroVars(latDat->GetSite(i)).force - GetMeAForce(i)
+            HydroVars(latDat->GetSite(i)).force - GetMeAForce(i)
           ));
       }
 
       // Checks equation 19 of Guo paper (doi: 10.1103/PhysRevE.65.046308)
       void testCalculatDensityAndMomentum() {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
-
         // Create fake density and compute resulting momentum and velocity
         // velocity is not yet corrected for forces
         distribn_t f[D3Q15::NUMVECTORS];
         PhysicalVelocity expected_momentum(0, 0, 0);
         PhysicalDensity expected_density(0);
         for(size_t i(0); i < lb::lattices::D3Q15::NUMVECTORS; ++i) {
-          f[i] = rand();
+          f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
           expected_density += f[i];
           expected_momentum +=
             PhysicalVelocity(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]) * f[i];
@@ -90,13 +91,10 @@ namespace hemelb { namespace unittests {
 
       // Checks Guo Correction is included in FEq and velocity
       void testCalculateDensityMomentumFEq() {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
-
         LatticeForceVector const force(1, 2, 3);
         distribn_t f[D3Q15::NUMVECTORS];
         for(size_t i(0); i < lb::lattices::D3Q15::NUMVECTORS; ++i)
-          f[i] = rand();
+          f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
         // ensures that functions take const value
         distribn_t const * const const_f = f;
 
@@ -145,7 +143,6 @@ namespace hemelb { namespace unittests {
           const LatticeForceVector &_force,
           distribn_t Fi[]
       ) {
-        typedef lb::lattices::D3Q15 D3Q15;
         const distribn_t inv_cs2(1e0 / 3e0);
         const distribn_t inv_cs4(1e0 / 9e0);
         const distribn_t prefactor(1. - 0.5 / _tau);
@@ -162,8 +159,6 @@ namespace hemelb { namespace unittests {
             LatticeVelocity const &_velocity, const distribn_t _tau,
             const LatticeForceVector &_force
       ) {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
         distribn_t expected_Fi[D3Q15::NUMVECTORS];
         distribn_t actual_Fi[D3Q15::NUMVECTORS];
 
@@ -188,8 +183,6 @@ namespace hemelb { namespace unittests {
       }
       // tau = 0.5 => zero force: look at prefactor
       void testForceDistributionBadTau() {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
         distribn_t Fi[D3Q15::NUMVECTORS];
         Lattice::CalculateForceDistribution(
             0.5, 1.0, 10.0, 100.0, 1, 1, 1, Fi);
@@ -200,8 +193,6 @@ namespace hemelb { namespace unittests {
       // velocity and force colinear with CX, CY, CZ:
       // tests second term in eq 20
       void testForceDistributionColinear() {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
         distribn_t Fi[D3Q15::NUMVECTORS];
         for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
           LatticeVelocity const ei(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
@@ -216,8 +207,6 @@ namespace hemelb { namespace unittests {
       // force colinear with CX, CY, CZ, and zero force:
       // tests first term in eq 20
       void testForceDistributionZeroVelocity() {
-        typedef lb::lattices::D3Q15 D3Q15;
-        typedef lb::lattices::Lattice<D3Q15> Lattice;
         distribn_t Fi[D3Q15::NUMVECTORS];
         for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
           LatticeVelocity const ei(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
@@ -227,6 +216,34 @@ namespace hemelb { namespace unittests {
           distribn_t const expected
             = (1. - 0.5/0.25) * D3Q15::EQMWEIGHTS[i] * (ei_norm/3.0);
           CPPUNIT_ASSERT_DOUBLES_EQUAL(Fi[i], expected, 1e-8);
+        }
+      }
+
+      // Checks collision process includes forcing
+      // Assumes that equilibrium and non-equilibrium populations, velocity,
+      // and forces are computed elsewhere.
+      // This just makes sure the force distribution included correctly.
+      void testDoCollide() {
+        distribn_t f[D3Q15::NUMVECTORS], Fi[D3Q15::NUMVECTORS];
+        LatticeForceVector const force(1, 4, 8);
+        HydroVars hydroVars(f, force);
+        for(size_t i(0); i < lb::lattices::D3Q15::NUMVECTORS; ++i) {
+          f[i] = distribn_t(std::rand()) / distribn_t(RAND_MAX);
+          hydroVars.SetFNeq(i, distribn_t(std::rand()) / distribn_t(RAND_MAX));
+        }
+
+        hydroVars.velocity = LatticeVelocity(1, 2, 3);
+        ForceDistribution(hydroVars.velocity, lbmParams->GetTau(),
+            hydroVars.force, Fi);
+
+        Kernel kernel(initParams);
+        kernel.DoCollide(lbmParams, hydroVars);
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(
+              hydroVars.GetFPostCollision()[i],
+              f[i] + hydroVars.GetFNeq()[i] * lbmParams->GetOmega() + Fi[i],
+              1e-8
+          );
         }
       }
 
