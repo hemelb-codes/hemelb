@@ -25,6 +25,10 @@ namespace hemelb { namespace unittests {
       CPPUNIT_TEST(testHydroVarsGetForce);
       CPPUNIT_TEST(testCalculatDensityAndMomentum);
       CPPUNIT_TEST(testCalculateDensityMomentumFEq);
+      CPPUNIT_TEST(testForceDistributionRegression);
+      CPPUNIT_TEST(testForceDistributionBadTau);
+      CPPUNIT_TEST(testForceDistributionColinear);
+      CPPUNIT_TEST(testForceDistributionZeroVelocity);
     CPPUNIT_TEST_SUITE_END();
     public:
       void setUp() {
@@ -136,6 +140,96 @@ namespace hemelb { namespace unittests {
           CPPUNIT_ASSERT_DOUBLES_EQUAL(force_feq[i], feq[i], 1e-8);
       }
 
+      void ForceDistribution(
+          LatticeVelocity const &_velocity, const distribn_t _tau,
+          const LatticeForceVector &_force,
+          distribn_t Fi[]
+      ) {
+        typedef lb::lattices::D3Q15 D3Q15;
+        const distribn_t inv_cs2(1e0 / 3e0);
+        const distribn_t inv_cs4(1e0 / 9e0);
+        const distribn_t prefactor(1. - 0.5 / _tau);
+        LatticeVelocity result(0, 0, 0);
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
+          LatticeVelocity const ei(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
+          LatticeForceVector const forcing(
+            (ei - _velocity) * inv_cs2 + ei * (ei.Dot(_velocity) * inv_cs4)
+          );
+          Fi[i] = forcing.Dot(_force) * D3Q15::EQMWEIGHTS[i] * prefactor;
+        }
+      }
+      void ForceDistributionTest(
+            LatticeVelocity const &_velocity, const distribn_t _tau,
+            const LatticeForceVector &_force
+      ) {
+        typedef lb::lattices::D3Q15 D3Q15;
+        typedef lb::lattices::Lattice<D3Q15> Lattice;
+        distribn_t expected_Fi[D3Q15::NUMVECTORS];
+        distribn_t actual_Fi[D3Q15::NUMVECTORS];
+
+        ForceDistribution(_velocity, _tau, _force, expected_Fi);
+        Lattice :: CalculateForceDistribution(
+            _tau, _velocity[0], _velocity[1], _velocity[2],
+            _force[0], _force[1], _force[2], actual_Fi
+        );
+
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i)
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(actual_Fi[i], expected_Fi[i], 1e-8);
+      }
+
+      // Equation 20 of Guo paper (doi: 10.1103/PhysRevE.65.046308)
+      void testForceDistributionRegression() {
+        ForceDistributionTest(
+            LatticeVelocity(1, 0, 0), 0.25, LatticeForceVector(1.5, 0, 0));
+        ForceDistributionTest(
+            LatticeVelocity(0, 1, 0), 0.25, LatticeForceVector(1.5, 0, 0));
+        ForceDistributionTest(
+            LatticeVelocity(0, 0, 1), 0.25, LatticeForceVector(3.0, 0, 0));
+      }
+      // tau = 0.5 => zero force: look at prefactor
+      void testForceDistributionBadTau() {
+        typedef lb::lattices::D3Q15 D3Q15;
+        typedef lb::lattices::Lattice<D3Q15> Lattice;
+        distribn_t Fi[D3Q15::NUMVECTORS];
+        Lattice::CalculateForceDistribution(
+            0.5, 1.0, 10.0, 100.0, 1, 1, 1, Fi);
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i)
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(Fi[i], 0, 1e-8);
+      }
+
+      // velocity and force colinear with CX, CY, CZ:
+      // tests second term in eq 20
+      void testForceDistributionColinear() {
+        typedef lb::lattices::D3Q15 D3Q15;
+        typedef lb::lattices::Lattice<D3Q15> Lattice;
+        distribn_t Fi[D3Q15::NUMVECTORS];
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
+          LatticeVelocity const ei(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
+          Lattice::CalculateForceDistribution(
+              0.25, ei[0], ei[1], ei[2], ei[0], ei[1], ei[2], Fi);
+          distribn_t ei_norm(ei.Dot(ei));
+          distribn_t const expected
+            = (1. - 0.5/0.25) * D3Q15::EQMWEIGHTS[i] * (ei_norm * ei_norm/9.0);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(Fi[i], expected, 1e-8);
+        }
+      }
+      // force colinear with CX, CY, CZ, and zero force:
+      // tests first term in eq 20
+      void testForceDistributionZeroVelocity() {
+        typedef lb::lattices::D3Q15 D3Q15;
+        typedef lb::lattices::Lattice<D3Q15> Lattice;
+        distribn_t Fi[D3Q15::NUMVECTORS];
+        for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
+          LatticeVelocity const ei(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
+          Lattice::CalculateForceDistribution(
+              0.25, 0, 0, 0, ei[0], ei[1], ei[2], Fi);
+          distribn_t ei_norm(ei.Dot(ei));
+          distribn_t const expected
+            = (1. - 0.5/0.25) * D3Q15::EQMWEIGHTS[i] * (ei_norm/3.0);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(Fi[i], expected, 1e-8);
+        }
+      }
+
     protected:
       LatticeForceVector GetMeAForce(size_t site) {
         return LatticeForceVector(
@@ -146,7 +240,7 @@ namespace hemelb { namespace unittests {
       }
   };
 
-  CPPUNIT_TEST_SUITE_REGISTRATION(GuoForcingTests);
 }}
+  CPPUNIT_TEST_SUITE_REGISTRATION(hemelb::unittests::GuoForcingTests);
 
 #endif
