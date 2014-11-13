@@ -16,6 +16,7 @@
 #endif
 
 #include "constants.h"
+#include "units.h"
 #include "lb/lattices/LatticeInfo.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
@@ -138,7 +139,7 @@ namespace hemelb
           #endif                   
 
           /**
-           * Calculates density and momentum, the original non-SSE version
+           * Calculates density and momentum, including Guo forcing
            * @param f
            * @param density
            * @param momentum_x
@@ -149,16 +150,17 @@ namespace hemelb
            * @param force_z
            */
           inline static void CalculateDensityAndMomentum(const distribn_t f[],
+                                                         const LatticeForce &force_x,
+                                                         const LatticeForce &force_y,
+                                                         const LatticeForce &force_z,
                                                          distribn_t &density,
                                                          distribn_t &momentum_x,
                                                          distribn_t &momentum_y,
-                                                         distribn_t &momentum_z,
-                                                         const distribn_t &force_x,
-                                                         const distribn_t &force_y,
-                                                         const distribn_t &force_z)
+                                                         distribn_t &momentum_z)
           {
             CalculateDensityAndMomentum(
                 f, density, momentum_x, momentum_y, momentum_z);
+            // Assumes Delta t is equal to one
             momentum_x += 0.5 * force_x;
             momentum_y += 0.5 * force_y;
             momentum_z += 0.5 * force_z;
@@ -305,9 +307,9 @@ namespace hemelb
         		                                        const distribn_t &velocity_x,
         		                                        const distribn_t &velocity_y,
         		                                        const distribn_t &velocity_z,
-                                                        const distribn_t &force_x,
-                                                        const distribn_t &force_y,
-                                                        const distribn_t &force_z,
+                                                        const LatticeForce &force_x,
+                                                        const LatticeForce &force_y,
+                                                        const LatticeForce &force_z,
                                                         distribn_t forceDist[])
           {
 
@@ -353,9 +355,9 @@ namespace hemelb
           // and momentum_z are actually density * velocity, because we are using the
           // compressible model.
           inline static void CalculateDensityMomentumFEq(const distribn_t f[],
-                                                         const distribn_t &force_x,
-                                                         const distribn_t &force_y,
-                                                         const distribn_t &force_z,
+                                                         const LatticeForce &force_x,
+                                                         const LatticeForce &force_y,
+                                                         const LatticeForce &force_z,
                                                          distribn_t &density,
                                                          distribn_t &momentum_x,
                                                          distribn_t &momentum_y,
@@ -365,7 +367,7 @@ namespace hemelb
                                                          distribn_t &velocity_z,
                                                          distribn_t f_eq[])
           {
-            CalculateDensityAndMomentum(f, density, momentum_x, momentum_y, momentum_z, force_x, force_y, force_z);
+            CalculateDensityAndMomentum(f, density, force_x, force_y, force_z, momentum_x, momentum_y, momentum_z);
 
             velocity_x = momentum_x / density;
             velocity_y = momentum_y / density;
