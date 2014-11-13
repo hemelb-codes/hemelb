@@ -367,7 +367,7 @@ namespace hemelb
                                                          distribn_t &velocity_z,
                                                          distribn_t f_eq[])
           {
-            CalculateDensityAndMomentum(f, density, force_x, force_y, force_z, momentum_x, momentum_y, momentum_z);
+            CalculateDensityAndMomentum(f, force_x, force_y, force_z, density, momentum_x, momentum_y, momentum_z);
 
             velocity_x = momentum_x / density;
             velocity_y = momentum_y / density;
