@@ -29,7 +29,7 @@ namespace hemelb { namespace lb { namespace kernels {
         : public BaseKernel<GuoForcingLBGK<LatticeType>, LatticeType> {
       public:
         GuoForcingLBGK(InitParams& initParams)
-          : BaseKernel<GuoForcingLBGK<LatticeType>, LatticeType>(initParams) {}
+          : BaseKernel<GuoForcingLBGK<LatticeType>, LatticeType>() {}
 
         // Adds forcing to momentum
         void DoCalculateDensityMomentumFeq(
@@ -47,6 +47,7 @@ namespace hemelb { namespace lb { namespace kernels {
     struct HydroVars<GuoForcingLBGK<LatticeType> >
         : HydroVarsBase<LatticeType> {
 
+        friend class GuoForcingLBGK<LatticeType>;
       public:
         // Pointer to force at this site
         const LatticeForceVector& force;
@@ -60,15 +61,10 @@ namespace hemelb { namespace lb { namespace kernels {
             const LatticeForceVector& _force
         ) : HydroVarsBase<LatticeType>(f), force(_force) {}
 
+      protected:
         // Guo lattice distribution of external force contributions
         // as calculated in lattice::CalculateForceDistribution.
-        inline const FVector<LatticeType>& GetForceDist() const
-          { return forceDist; }
-        inline void SetForceDist(Direction i, distribn_t val)
-          { forceDist[i] = val; }
-
-      protected:
-          FVector<LatticeType> forceDist;
+        FVector<LatticeType> forceDist;
     };
 
   template<class LatticeType>
@@ -110,9 +106,9 @@ namespace hemelb { namespace lb { namespace kernels {
         HydroVars<GuoForcingLBGK>& hydroVars
     ) {
       LatticeType::CalculateForceDistribution(
-          hydroVars.tau,
+          lbmParams->GetTau(),
           hydroVars.velocity.x, hydroVars.velocity.y, hydroVars.velocity.z,
-          hydroVars.force->x, hydroVars.force->y, hydroVars.force->z,
+          hydroVars.force.x, hydroVars.force.y, hydroVars.force.z,
           hydroVars.forceDist.f
       );
 
