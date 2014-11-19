@@ -29,6 +29,10 @@
 
 namespace hemelb
 {
+  namespace unittests { namespace helpers {
+    // Friend class to access all of LatticeData's internals in tests
+    class LatticeDataAccess;
+  }}
   namespace lb
   {
     // Ugly forward definition is currently necessary.
@@ -40,6 +44,7 @@ namespace hemelb
     class LatticeData : public reporting::Reportable
     {
       public:
+        friend class unittests::helpers::LatticeDataAccess;
         template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
@@ -76,7 +81,32 @@ namespace hemelb
         {
           return Site<LatticeData>(localIndex, *this);
         }
-
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<LatticeData> GetSite(LatticeVector const &_pos) {
+          return GetSite(GetContiguousSiteId(_pos));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<const LatticeData> GetSite(LatticeVector const &_pos) const
+        {
+          return GetSite(GetContiguousSiteId(_pos));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<LatticeData> GetSite(site_t _x, site_t _y, site_t _z) {
+          return GetSite(LatticeVector(_x, _y, _z));
+        }
+        /**
+         * Get a site object for the given position.
+         */
+        inline Site<const LatticeData> GetSite(
+            site_t _x, site_t _y, site_t _z) const {
+          return GetSite(LatticeVector(_x, _y, _z));
+        }
         /**
          * Get a const site object for the given index.
          * @param localIndex
@@ -209,6 +239,9 @@ namespace hemelb
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
+        site_t GetContiguousSiteId(site_t _x, site_t _y, site_t _z) const {
+          return GetContiguousSiteId(LatticeVector(_x, _y, _z));
+        }
 
         /**
          * Get both the owner processor id and the local site id (if local)

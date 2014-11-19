@@ -71,9 +71,9 @@ namespace hemelb { namespace lb { namespace kernels {
     void GuoForcingLBGK<LatticeType> :: DoCalculateDensityMomentumFeq(
           HydroVars<GuoForcingLBGK<LatticeType> >& hydroVars, site_t index) {
       LatticeType::CalculateDensityMomentumFEq(hydroVars.f,
-                                               hydroVars.force->x,
-                                               hydroVars.force->y,
-                                               hydroVars.force->z,
+                                               hydroVars.force.x,
+                                               hydroVars.force.y,
+                                               hydroVars.force.z,
                                                hydroVars.density,
                                                hydroVars.momentum.x,
                                                hydroVars.momentum.y,
