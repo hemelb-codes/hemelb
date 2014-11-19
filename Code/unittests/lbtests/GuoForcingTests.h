@@ -242,52 +242,36 @@ class GuoForcingTests : public helpers::FourCubeBasedTestFixture {
     void testSimpleCollideAndStream() {
       // Lattice with a single non-zero distribution in the middle
       // Same for forces
-      helpers::LatticeDataAccess manip(latDat);
-      manip.ZeroOutFOld();
-      manip.ZeroOutForces();
-      LatticeVector const nonZero(2, 2, 2);
-      distribn_t f[D3Q15::NUMVECTORS];
-      site_t const index(latDat->GetContiguousSiteId(nonZero));
-      for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
-        f[i] = 0.5 + i;
-        manip.SetFOld<D3Q15>(nonZero, i, f[i]);
-      }
-      geometry::Site<geometry::LatticeData> nonZeroSite
-        = latDat->GetSite(nonZero);
-      latDat->GetSite(nonZero).SetForce(LatticeForceVector(1, 2, 3));
+      LatticeVector const position(2, 2, 2);
+      geometry::Site<geometry::LatticeData> const
+        site(latDat->GetSite(position));
+      helpers::allZeroButOne<D3Q15>(latDat, position);
 
-      // Get hydrovars at that site
+      // Get collided distributions at this site
+      // Will compare zero and non-zero forces, to make sure they are different
       // Assumes collides works, since tested in TestDoCollide
-      HydroVars hydroVars(f, nonZeroSite.GetForce());
-      Kernel kernel(initParams);
-      kernel.DoCalculateDensityMomentumFeq(hydroVars, nonZeroSite.GetIndex());
-      kernel.DoCollide(lbmParams, hydroVars);
-      // Get streamed values if force was zero at site as well
-      LatticeForceVector const zero(0, 0, 0);
-      HydroVars zeroVars(f, zero);
-      kernel.DoCalculateDensityMomentumFeq(zeroVars, nonZeroSite.GetIndex());
-      kernel.DoCollide(lbmParams, zeroVars);
+      distribn_t withForce[D3Q15::NUMVECTORS], withoutForce[D3Q15::NUMVECTORS];
+      FPostCollision(site.GetFOld<D3Q15>(), site.GetForce(), withForce);
+      FPostCollision(
+          site.GetFOld<D3Q15>(), LatticeForceVector(0, 0, 0), withoutForce);
 
       // Stream that site
-      lb::streamers::SimpleCollideAndStream<
-        lb::collisions::Normal<Kernel>
-      > streamer(initParams);
+      using lb::streamers::SimpleCollideAndStream;
+      using lb::collisions::Normal;
+      SimpleCollideAndStream< Normal<Kernel> > streamer(initParams);
       streamer.StreamAndCollide<false>(
-          index, 1, lbmParams, latDat, *propertyCache);
+          site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
 
       // Now check streaming worked correctly
       for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
         LatticeVector const step(D3Q15::CX[i], D3Q15::CY[i], D3Q15::CZ[i]);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(
-            hydroVars.GetFPostCollision()[i],
-            manip.GetFNew<D3Q15>(nonZero + step)[i],
+            withForce[i],
+            helpers::GetFNew<D3Q15>(latDat, position + step)[i],
             1e-8
         );
-        // And that forces from streaming site were used (rather than zero
-        // force)
-        CPPUNIT_ASSERT(not helpers::is_zero(
-            hydroVars.GetFPostCollision()[i] - zeroVars.GetFPostCollision()[i]
-        ));
+        // And that forces from streaming site were used
+        CPPUNIT_ASSERT(not helpers::is_zero(withForce[i] - withoutForce[i]));
       }
     }
 
@@ -317,6 +301,21 @@ class GuoForcingTests : public helpers::FourCubeBasedTestFixture {
         );
         Fi[i] = forcing.Dot(_force) * D3Q15::EQMWEIGHTS[i] * prefactor;
       }
+    }
+
+    void FPostCollision(distribn_t const *_f, LatticeForceVector const &_force,
+        distribn_t _fout[]) {
+      HydroVars hydroVars(_f, _force);
+      Kernel kernel(initParams);
+      // Index is never used ... so give a fake value
+      kernel.DoCalculateDensityMomentumFeq(hydroVars, 999999);
+      kernel.DoCollide(lbmParams, hydroVars);
+
+      std::copy(
+            hydroVars.GetFPostCollision().f,
+            hydroVars.GetFPostCollision().f + D3Q15::NUMVECTORS,
+            _fout
+      );
     }
 
   private:

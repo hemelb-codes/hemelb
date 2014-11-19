@@ -17,6 +17,16 @@ namespace hemelb { namespace unittests { namespace helpers {
 
   // Empty FOld distribution
   void ZeroOutFOld(geometry::LatticeData * const _latDat);
+  // Initializes a lattice to empty distributions and forces, execpt at one
+  // place
+  template<class LATTICE>
+    void allZeroButOne(
+        geometry::LatticeData *_latDat, LatticeVector const &_pos);
+
+  // FNew at given site
+  template<class Lattice>
+    distribn_t const * GetFNew(
+        geometry::LatticeData *_latDat, LatticeVector const &_pos);
 
   // Class to setup/manipulate lattice data
   class LatticeDataAccess {
@@ -87,5 +97,21 @@ namespace hemelb { namespace unittests { namespace helpers {
     LatticeDataAccess(_latDat).ZeroOutFOld();
   }
 
+  template<class LATTICE>
+    void allZeroButOne(
+        geometry::LatticeData *_latDat, LatticeVector const &_pos) {
+      LatticeDataAccess manip(_latDat);
+      manip.ZeroOutFOld();
+      manip.ZeroOutForces();
+      for(size_t i(0); i < LATTICE::NUMVECTORS; ++i)
+        manip.SetFOld<LATTICE>(_pos, i, 0.5 + i);
+      _latDat->GetSite(_pos).SetForce(LatticeForceVector(1, 2, 3));
+    }
+
+  template<class LATTICE>
+    distribn_t const * GetFNew(
+        geometry::LatticeData *_latDat, LatticeVector const &_pos) {
+      return LatticeDataAccess(_latDat).GetFNew<LATTICE>(_pos);
+    }
 }}}
 #endif
