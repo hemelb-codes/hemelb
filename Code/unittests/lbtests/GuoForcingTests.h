@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "lb/lattices/D3Q15.h"
 #include "lb/lattices/Lattice.h"
+#include "lb/streamers/Streamers.h"
 #include "lb/kernels/GuoForcingLBGK.h"
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "unittests/helpers/Comparisons.h"
@@ -33,6 +34,7 @@ class GuoForcingTests : public helpers::FourCubeBasedTestFixture {
     CPPUNIT_TEST(testForceDistributionZeroVelocity);
     CPPUNIT_TEST(testDoCollide);
     CPPUNIT_TEST(testSimpleCollideAndStream);
+    CPPUNIT_TEST(testSimpleBounceBack);
   CPPUNIT_TEST_SUITE_END();
 
   typedef lb::lattices::D3Q15 D3Q15;
@@ -273,6 +275,46 @@ class GuoForcingTests : public helpers::FourCubeBasedTestFixture {
         // And that forces from streaming site were used
         CPPUNIT_ASSERT(not helpers::is_zero(withForce[i] - withoutForce[i]));
       }
+    }
+
+    void testSimpleBounceBack() {
+      // Lattice with a single non-zero distribution in the middle
+      // Same for forces
+      LatticeVector const position(1, 1, 1);
+      geometry::Site<geometry::LatticeData> const
+        site(latDat->GetSite(position));
+      helpers::allZeroButOne<D3Q15>(latDat, position);
+
+      // Get collided distributions at this site
+      // Will compare zero and non-zero forces, to make sure they are different
+      // Assumes collides works, since tested in TestDoCollide
+      distribn_t withForce[D3Q15::NUMVECTORS], withoutForce[D3Q15::NUMVECTORS];
+      FPostCollision(site.GetFOld<D3Q15>(), site.GetForce(), withForce);
+      FPostCollision(
+          site.GetFOld<D3Q15>(), LatticeForceVector(0, 0, 0), withoutForce);
+
+      // Stream that site
+      using lb::streamers::SimpleBounceBack;
+      using lb::collisions::Normal;
+      SimpleBounceBack< Normal<Kernel> > :: Type streamer(initParams);
+      streamer.StreamAndCollide<false>(
+          site.GetIndex(), 1, lbmParams, latDat, *propertyCache);
+
+      distribn_t const * const actual =
+            helpers::GetFNew<D3Q15>(latDat, position);
+      bool paranoia(false);
+      for(size_t i(0); i < D3Q15::NUMVECTORS; ++i) {
+        if(not site.HasWall(i)) continue;
+        paranoia = true;
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(
+            withForce[i],
+            actual[D3Q15::INVERSEDIRECTIONS[i]],
+            1e-8
+        );
+        // And that forces from streaming site were used
+        CPPUNIT_ASSERT(not helpers::is_zero(withForce[i] - withoutForce[i]));
+      }
+      CPPUNIT_ASSERT(paranoia);
     }
 
   protected:
