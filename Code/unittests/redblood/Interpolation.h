@@ -14,8 +14,11 @@
 #include "redblood/interpolation.h"
 #include "redblood/VelocityInterpolation.h"
 #include "lb/lattices/D3Q15.h"
+#include "lb/kernels/LBGK.h"
+#include "lb/kernels/GuoForcingLBGK.h"
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/helpers/Comparisons.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 
 namespace hemelb { namespace unittests {
 
@@ -189,10 +192,13 @@ public:
 
 class VelocityInterpolationTests :
   public helpers::FourCubeBasedTestFixture {
-    typedef lb::lattices::D3Q15 t_Lattice;
-    typedef lb::kernels::LBGK<t_Lattice> t_Kernel;
+    typedef lb::lattices::D3Q15 D3Q15;
+    typedef lb::kernels::LBGK<D3Q15> LBGK;
+    typedef lb::kernels::GuoForcingLBGK<D3Q15> GuoForcingLBGK;
     CPPUNIT_TEST_SUITE(VelocityInterpolationTests);
-    CPPUNIT_TEST(testLatticeDataFunctor);
+      // CPPUNIT_TEST(testLatticeDataFunctor);
+      CPPUNIT_TEST(testVelocityDataFromLatticeWithForces);
+      CPPUNIT_TEST(testVelocityDataFromLatticeWithoutForces);
     CPPUNIT_TEST_SUITE_END();
 
   public:
@@ -204,44 +210,71 @@ class VelocityInterpolationTests :
       for(size_t i(min[0]); i <= max[0]; ++i)
         for(size_t j(min[1]); j <= max[1]; ++j)
           for(size_t k(min[2]); k <= max[2]; ++k) {
-            distribn_t fold[t_Lattice::NUMVECTORS];
-            for(size_t u(0); u < t_Lattice::NUMVECTORS; ++u) fold[u] = 0e0;
+            distribn_t fold[D3Q15::NUMVECTORS];
+            for(size_t u(0); u < D3Q15::NUMVECTORS; ++u) fold[u] = 0e0;
             fold[2] = i; fold[4] = j; fold[6] = k;
             site_t const local(
                 latDat->GetContiguousSiteId(LatticeVector(i, j, k))
             );
-            latDat->SetFOld<t_Lattice>(local, fold);
+            latDat->SetFOld<D3Q15>(local, fold);
           }
     }
     void tearDown() { FourCubeBasedTestFixture::tearDown(); }
 
-    void testLatticeDataFunctor() {
-      LatticeVector sites[] = {
-        LatticeVector(1, 1, 1),
-        LatticeVector(2, 1, 1),
-        LatticeVector(1, 2, 1),
-        LatticeVector(1, 1, 2),
-        LatticeVector(4, 4, 4),
-        LatticeVector(0, 0, 0)
-      };
+    template<class KERNEL> void velocityFromLatticeDataTester(bool _doforce) {
+      using redblood::details::VelocityFromLatticeData;
+      using redblood::details::HasForce;
 
-      typedef lb::lattices::D3Q15 t_Lattice;
-      typedef lb::kernels::LBGK<t_Lattice> t_Kernel;
-      redblood::details::VelocityFromLatticeData<t_Kernel> const functor(*latDat);
-      for(size_t i(0); sites[i][0] != 0; ++i) {
-        LatticeVelocity const expected =
+      // Check that type traits works as expected
+      CPPUNIT_ASSERT(HasForce<KERNEL>::value == _doforce);
+
+      KERNEL kernel(initParams);
+      VelocityFromLatticeData<KERNEL> velocityFunctor(*latDat);
+      size_t const N(latDat->GetMidDomainCollisionCount(0));
+
+      CPPUNIT_ASSERT(N > 0);
+      for(size_t index(0); index < N; ++index) {
+        geometry::Site<geometry::LatticeData const> const site(index, *latDat);
+
+        // Value to test
+        LatticeVelocity const actual = velocityFunctor(index);
+
+        // Check against directly computed values:
+        // We know how the lattice was setup
+        LatticeVector const position(site.GetGlobalSiteCoords());
+        LatticeVelocity const momentum =
           LatticeVelocity(
-              t_Lattice::CX[2], t_Lattice::CY[2], t_Lattice::CZ[2]
-          ) * Dimensionless(sites[i][0])
+              D3Q15::CX[2], D3Q15::CY[2], D3Q15::CZ[2]
+          ) * Dimensionless(position[0])
           + LatticeVelocity(
-              t_Lattice::CX[4], t_Lattice::CY[4], t_Lattice::CZ[4]
-          ) * Dimensionless(sites[i][1])
+              D3Q15::CX[4], D3Q15::CY[4], D3Q15::CZ[4]
+          ) * Dimensionless(position[1])
           + LatticeVelocity(
-              t_Lattice::CX[6], t_Lattice::CY[6], t_Lattice::CZ[6]
-          ) * Dimensionless(sites[i][2]);
-        LatticeVelocity const actual = functor(sites[i]);
-        CPPUNIT_ASSERT(helpers::is_zero(actual - expected));
+              D3Q15::CX[6], D3Q15::CY[6], D3Q15::CZ[6]
+          ) * Dimensionless(position[2])
+          + (_doforce ? site.GetForce() * 0.5: LatticeVelocity(0, 0, 0));
+        LatticeDensity const density(position[0] + position[1] + position[2]);
+
+        CPPUNIT_ASSERT(helpers::is_zero(actual - momentum / density));
+
+        // Check against Kernel + HydroVars implementation
+        typename KERNEL::KHydroVars hydroVars(site);
+        kernel.DoCalculateDensityMomentumFeq(hydroVars, site.GetIndex());
+
+        CPPUNIT_ASSERT(helpers::is_zero(actual - hydroVars.velocity));
       }
+    }
+
+    void testVelocityDataFromLatticeWithoutForces() {
+      helpers::LatticeDataAccess(latDat).ZeroOutForces();
+      velocityFromLatticeDataTester<LBGK>(false);
+    }
+    void testVelocityDataFromLatticeWithForces() {
+      size_t const N(latDat->GetMidDomainCollisionCount(0));
+      for(size_t i(0); i < N; ++i)
+        latDat->GetSite(i).SetForce(
+            LatticeForceVector(i, 2*i, double(i * i) * 0.0001));
+      velocityFromLatticeDataTester<GuoForcingLBGK>(true);
     }
 };
 
