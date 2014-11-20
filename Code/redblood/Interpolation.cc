@@ -7,7 +7,7 @@
 // specifically made by you with University College London.
 //
 
-#include "redblood/interpolation.h"
+#include "redblood/Interpolation.h"
 #include <cmath>
 
 namespace hemelb { namespace redblood {
