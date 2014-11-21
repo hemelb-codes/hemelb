@@ -36,14 +36,18 @@ def Run(profileFile):
     surfaceFile = profile.StlFile
     surfaceFileScale = profile.StlFileUnit.SizeInMetres
 
+    print profile.OutputXmlFile
     ipFinder = GeometryInletPointFinder(profile.OutputXmlFile)
     inletPointIndices = ipFinder.GetInletData()
+    if len(inletPointIndices) == 0:
+        print "WARNING: no inletPointIndices found. This may mean that HemeLb is run with no inlets inside the simulation domain (e.g., the inlets defined in the xml file reside outside of the physical geometry)."
 
     intersectionFinder = SurfaceIntersectionFinder()
     intersectionFinder.SetFileName(surfaceFile)
     intersectionFinder.SetFileUnitLength(surfaceFileScale)
 
     for inletId, inlet in enumerate(io for io in profile.Iolets if isinstance(io, Inlet)):
+        print inletId, len(profile.Iolets), len(inletPointIndices)
         inletPointPD = inletPointIndices[inletId]
         intersectionFinder.SetIolet(inlet)
         tesselator = Tesselator()
@@ -68,9 +72,48 @@ def Run(profileFile):
         base, gmy = os.path.splitext(profile.OutputGeometryFile)
         writer.SetFileName(base + '.inlet%d.txt' % inletId)
         writer.Write()
+        return base + '.inlet%d.txt' % inletId
+
+def CreateInletWeightsFile(fname):
+    """ This function creates a weighting file for the inlet. It 
+    takes a textual output file and reorganizes this data into a 
+    simpler and more compact form. The format is as follows:
+
+    <lattice x coord> <lattice y coord> <lattice z coord> <weight>
+    """
+
+    RecordVelocities = False
+
+    vels = np.zeros((1))
+    offset_counter = 0
+
+    f = open(fname)
+    for line in f:
+
+        if RecordVelocities == True:
+            vels_line = line.strip().split()
+            for v in vels_line:
+              vels[offset_counter] = float(v)
+              offset_counter += 1
+
+        # Line preceding all the velocity values
+        if "LOOKUP_TABLE default" in line:
+            RecordVelocities = True
+        
+        if "POINT_DATA" in line:
+            p = line.strip().split()
+            print "Number of elements is: ", p[1]
+            vels = np.zeros((int(p[1])))
+
+    print vels
 
 if __name__ == "__main__":
     import sys
+    import time
     for arg in sys.argv[1:]:
-        Run(arg)
+        start = time.time()
+        txtOutputFileName = Run(arg)
+        CreateInletWeightsFile(txtOutputFileName)
+        end = time.time()
+        print end-start," seconds elapsed."
     
