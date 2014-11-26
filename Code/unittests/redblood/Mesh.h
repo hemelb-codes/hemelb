@@ -10,6 +10,7 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_MESH_H
 #define HEMELB_UNITTESTS_REDBLOOD_MESH_H
 
+#include <sstream>
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
@@ -19,10 +20,11 @@ namespace hemelb { namespace unittests {
 /**
  * Class to test the simulation master.
  */
-class RedBloodMeshDataTests : public CppUnit::TestFixture
+class RedBloodMeshDataIOTests : public CppUnit::TestFixture
 {
-  CPPUNIT_TEST_SUITE(RedBloodMeshDataTests);
+  CPPUNIT_TEST_SUITE(RedBloodMeshDataIOTests);
   CPPUNIT_TEST(testReadMesh);
+  CPPUNIT_TEST(testWriteMesh);
   CPPUNIT_TEST_SUITE_END();
 public:
   void setUp() {
@@ -53,6 +55,21 @@ public:
     CPPUNIT_ASSERT(any(mesh->facets.back(), 244));
   }
 
+  void testWriteMesh() {
+    std::ostringstream output;
+    redblood::write_mesh(output, *mesh);
+    std::istringstream input(output.str());
+    boost::shared_ptr<redblood::MeshData> other = redblood::read_mesh(input);
+    CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
+    CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
+    CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
+    CPPUNIT_ASSERT(compare(mesh->vertices.back() - other->vertices.back()));
+    for(size_t i(0); i < 3; ++i) {
+      CPPUNIT_ASSERT(mesh->facets.front()[i] == other->facets.front()[i]);
+      CPPUNIT_ASSERT(mesh->facets.back()[i] == other->facets.back()[i]);
+    }
+  }
+
   static bool compare(util::Vector3D<double> const &_in) {
     return _in.GetMagnitudeSquared() < 1e-8;
   }
@@ -64,7 +81,7 @@ private:
   boost::shared_ptr<hemelb::redblood::MeshData> mesh;
 };
 
-class RedBloodMeshTests : public TetrahedronFixture {
+class RedBloodMeshTests : public BasisFixture {
 
   CPPUNIT_TEST_SUITE(RedBloodMeshTests);
   CPPUNIT_TEST(testVolume);
@@ -72,7 +89,7 @@ class RedBloodMeshTests : public TetrahedronFixture {
   CPPUNIT_TEST_SUITE_END();
   public:
     void setUp() {
-      TetrahedronFixture::setUp();
+      BasisFixture::setUp();
       mesh.vertices.at(0) = LatticePosition(0.1, 0.1, 0.1);
     }
 
@@ -196,7 +213,7 @@ private:
   boost::shared_ptr<hemelb::redblood::MeshTopology> topo;
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshDataTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshDataIOTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(TopologyTests);
 }}

@@ -92,7 +92,19 @@ protected:
 //! Read mesh from file
 //! Format is from T. Krueger's thesis
 boost::shared_ptr<MeshData> read_mesh(std::string const &_filename);
+//! Read mesh from file
+//! Format is from T. Krueger's thesis
+boost::shared_ptr<MeshData> read_mesh(std::istream &_stream);
+//! Write mesh from file
+//! Format is from T. Krueger's thesis
+void write_mesh(std::ostream &_stream, MeshData const &_data);
+//! Write mesh from file
+//! Format is from T. Krueger's thesis
+void write_mesh(std::string const &_filename, MeshData const &_data);
 
+//! Tetrahedron of a depth
+//! Depth refers to the number of triangular subdivision in each facet
+Mesh tetrahedron(unsigned int depth=0);
 
 }}
 #endif
