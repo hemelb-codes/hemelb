@@ -16,14 +16,14 @@ from block import Block
 import numpy as np
 
 class FourCube(LatticeFixture):
-    def __init__(self):
+    def __init__(self, size):
         # Domain is (0,3)x(0,3)X(0,3) length unit
         x_min, y_min, z_min = 1, 1, 1
-        x_max, y_max, z_max = 4, 4, 4
-        
+        x_max, y_max, z_max = size, size, size
+
         # Single block with 4x4x4 sites, 1 length unit apart
         self.size_in_blocks = (1, 1, 1)
-        self.sites_along_block = 6
+        self.sites_along_block = size + 1
         self.space_step = 1
 
         sites = []
@@ -86,7 +86,13 @@ class FourCube(LatticeFixture):
         super(FourCube, self).__init__()
 
 if __name__ == '__main__':
-    # TODO: get the filename from command line
-    filename = "four_cube.gmy"
-    cube = FourCube()
-    cube.write(filename)
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description="creates cubic simulation domains")
+    parser.add_argument('filename', metavar='filename', type=str,
+            default='four_cube.gmy', help="Output gmy file")
+    parser.add_argument('--size', '-s', metavar='N', type=int, default=4,
+            help="Size of the simulation box NxNxN", dest='size')
+    args = parser.parse_args()
+    cube = FourCube(size=args.size)
+    cube.write(args.filename)
