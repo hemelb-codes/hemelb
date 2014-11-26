@@ -46,7 +46,7 @@ class ParticleTests : public EnergyVsGradientFixture {
 public:
 
     void setUp() {
-      TetrahedronFixture::setUp();
+      BasisFixture::setUp();
       original = mesh;
       mesh.vertices[0] += LatticePosition(-0.01, 0.02342, 0.03564);
       mesh.vertices[1] += LatticePosition(0.0837, -0.012632, 0.0872935);

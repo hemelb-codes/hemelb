@@ -20,7 +20,7 @@ namespace hemelb { namespace unittests {
 // Tests functionality that is *not* part of the HemeLB API
 // Checks that we know how to compute geometric properties between facets
 // However, HemeLB only cares about energy and forces
-class FacetTests : public TetrahedronFixture {
+class FacetTests : public BasisFixture {
   CPPUNIT_TEST_SUITE(FacetTests);
   CPPUNIT_TEST(testNormal);
   CPPUNIT_TEST(testUnitNormal);
@@ -31,7 +31,7 @@ class FacetTests : public TetrahedronFixture {
   CPPUNIT_TEST_SUITE_END();
 public:
   void setUp() {
-    TetrahedronFixture::setUp();
+    BasisFixture::setUp();
     main.reset(new redblood::Facet(mesh, 0));
     neighbor.reset(new redblood::Facet(mesh, 3));
   }
@@ -118,7 +118,7 @@ protected:
   boost::shared_ptr<redblood::Facet> main, neighbor;
 };
 
-class EnergyTests : public TetrahedronFixture {
+class EnergyTests : public BasisFixture {
     CPPUNIT_TEST_SUITE(EnergyTests);
     CPPUNIT_TEST(testBending);
     CPPUNIT_TEST(testVolume);
@@ -127,12 +127,12 @@ class EnergyTests : public TetrahedronFixture {
     CPPUNIT_TEST_SUITE_END();
   public:
     void setUp() {
-      TetrahedronFixture::setUp();
+      BasisFixture::setUp();
       original = mesh;
       forces.resize(4, LatticeForceVector(0, 0, 0));
     }
 
-    void tearDown() { TetrahedronFixture::tearDown(); }
+    void tearDown() { BasisFixture::tearDown(); }
 
     void testBending() {
       // No difference between original and current mesh
@@ -285,7 +285,7 @@ class GradientTests : public EnergyVsGradientFixture {
 public:
 
     void setUp() {
-      TetrahedronFixture::setUp();
+      BasisFixture::setUp();
       original = mesh;
       mesh.vertices[0] += LatticePosition(-0.01, 0.02342, 0.03564);
       mesh.vertices[1] += LatticePosition(0.0837, -0.012632, 0.0872935);
@@ -302,7 +302,7 @@ protected:
 };
 
 // Tests certain node movement that do not result in forces/energy
-class GradientKernTests : public TetrahedronFixture {
+class GradientKernTests : public BasisFixture {
     CPPUNIT_TEST_SUITE(GradientKernTests);
     CPPUNIT_TEST(testBending);
     CPPUNIT_TEST(testVolume);
