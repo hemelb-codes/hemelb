@@ -14,8 +14,7 @@
 
 namespace hemelb { namespace unittests {
 
-
-class TetrahedronFixture : public CppUnit::TestFixture {
+class BasisFixture : public CppUnit::TestFixture {
   public:
     void setUp() {
       // facets at something degrees from one another
@@ -40,7 +39,7 @@ class TetrahedronFixture : public CppUnit::TestFixture {
     hemelb::redblood::MeshData mesh;
 };
 
-class EnergyVsGradientFixture : public TetrahedronFixture {
+class EnergyVsGradientFixture : public BasisFixture {
 
   public:
   template<class ENERGY, class GRADIENT>
