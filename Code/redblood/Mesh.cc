@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cassert>
 #include <numeric>
+#include <map>
 
 #include "redblood/Mesh.h"
 #include "util/fileutils.h"
@@ -103,6 +104,14 @@ void write_mesh(
   write_mesh(file, _data);
 }
 
+void write_vtkmesh(
+    std::string const &_filename, MeshData const & _data) {
+  log::Logger::Log<log::Debug, log::Singleton>(
+          "Writing red blood cell from %s", _filename.c_str());
+  std::ofstream file(_filename.c_str());
+  write_vtkmesh(file, _data);
+}
+
 void write_mesh(std::ostream &_stream, MeshData const &_data) {
   // Write Header
   _stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n"
@@ -130,6 +139,42 @@ void write_mesh(std::ostream &_stream, MeshData const &_data) {
       << (*i_facet)[1] + 1 << " "
       << (*i_facet)[2] + 1 << "\n";
   _stream << "$EndElement\n";
+}
+
+void write_vtkmesh(std::ostream &_stream, MeshData const &_data) {
+  // Write Header
+  _stream << "<?xml version=\"1.0\"?>\n"
+    << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+    << "  <PolyData>\n"
+    << "    <Piece NumberOfPoints=\""
+    << _data.vertices.size() << "\" NumberOfPolys=\""
+    << _data.facets.size() << "\">\n"
+    << "      <Points>\n"
+    << "        <DataArray NumberOfComponents=\"3\" type=\"Float32\">\n";
+
+  typedef MeshData::t_Vertices::const_iterator VertexIterator;
+  VertexIterator i_vertex = _data.vertices.begin();
+  VertexIterator const i_vertex_end = _data.vertices.end();
+  for(unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
+    _stream << (*i_vertex)[0] << " "
+      << (*i_vertex)[1] << " "
+      << (*i_vertex)[2] << " ";
+  _stream << "\n        </DataArray>\n" << "      </Points>\n"
+    << "      <Polys>\n"
+    << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
+
+  typedef MeshData::t_Facets::const_iterator FacetIterator;
+  FacetIterator i_facet = _data.facets.begin();
+  FacetIterator const i_facet_end = _data.facets.end();
+  for(; i_facet != i_facet_end; ++i_facet)
+    _stream << (*i_facet)[0] << " " << (*i_facet)[1] << " "
+      << (*i_facet)[2] << " ";
+  _stream << "\n        </DataArray>\n"
+    << "        <DataArray type=\"Int32\" Name=\"offsets\">\n";
+  for(unsigned i(0); i < _data.facets.size(); ++i)
+    _stream << (i+1) * 3 << " ";
+  _stream << "\n        </DataArray>\n" << "      </Polys>\n";
+  _stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
 }
 
 LatticePosition barycenter(MeshData const &_mesh) {
@@ -181,7 +226,7 @@ namespace {
     MeshData::t_Facet::value_type _value,
     MeshData::t_Facet::value_type _max) {
     for(size_t i(0); i < _container.size(); ++i)
-        if(_container[i] == _max) { _container[i] = _value; return; }
+        if(_container[i] >= _max) { _container[i] = _value; return; }
         else if(_container[i] == _value) return;
   }
 }
@@ -201,7 +246,7 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 
   // Now creates map of neighboring facets
   unsigned int const Nmax = _mesh.facets.size();
-  boost::array<unsigned int, 3> const neg = {{ Nmax, Nmax, Nmax }};
+  boost::array<unsigned int, 3> const neg = {{Nmax, Nmax,  Nmax}};
   for(unsigned int i(0); i < facetNeighbors.size(); ++i)
     facetNeighbors[i] = neg;
   i_facet = _mesh.facets.begin();
@@ -221,8 +266,9 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 # ifndef NDEBUG
   // Checks there are no uninitialized values
   for(unsigned int i(0); i < facetNeighbors.size(); ++i)
-    for(unsigned int j(0); j < 3; ++j)
+    for(unsigned int j(0); j < 3; ++j) {
       assert(facetNeighbors[i][j] < Nmax);
+    }
 # endif
 }
 
@@ -230,17 +276,11 @@ namespace {
   boost::shared_ptr<MeshData> initial_tetrahedron() {
     boost::shared_ptr<MeshData> data(new MeshData);
 
-    double theta = 60.0 / 180.0 * PI;
     // facets at something degrees from one another
     data->vertices.push_back(LatticePosition(0, 0, 0));
-    data->vertices.push_back(LatticePosition(1, 0, 0));
-    data->vertices.push_back(
-        LatticePosition(std::cos(theta), std::sin(theta), 0));
-    data->vertices.push_back(LatticePosition(
-          std::cos(theta) * std::cos(theta),
-          std::cos(theta) * std::sin(theta),
-          std::sin(theta)
-    ));
+    data->vertices.push_back(LatticePosition(1, 0, 1));
+    data->vertices.push_back(LatticePosition(1, 1, 0));
+    data->vertices.push_back(LatticePosition(0, 1, 1));
 
     redblood::MeshData::t_Facet indices;
     indices[0] = 0; indices[1] = 1; indices[2] = 2;
@@ -254,14 +294,35 @@ namespace {
     return data;
   }
 
+  size_t vertex(boost::shared_ptr<MeshData> &_data,
+      std::map<std::pair<size_t, size_t>, size_t> &_vertices,
+      size_t const &_i0, size_t const &_i1) {
+    std::pair<size_t, size_t> const indices(_i0, _i1);
+    std::map<std::pair<size_t, size_t>, size_t>:: const_iterator i_found
+      = _vertices.find(indices);
+    if(i_found == _vertices.end())
+      i_found = _vertices.find(std::pair<size_t, size_t>(_i1, _i0));
+    if(i_found == _vertices.end()) {
+      _data->vertices.push_back(
+          (_data->vertices[_i0] + _data->vertices[_i1]) * 0.5);
+      _vertices[indices] = _data->vertices.size() - 1;
+      return _data->vertices.size() - 1;
+    }
+    return i_found->second;
+  }
+
   void refine(boost::shared_ptr<MeshData> &_data) {
     MeshData::t_Facets const facets(_data->facets);
     _data->facets.clear();
     _data->facets.resize(facets.size() * 4);
-    _data->vertices.reserve(_data->vertices.size() * 4);
+    _data->vertices.reserve(_data->facets.size() * 3 + _data->vertices.size());
+
+    // Container with midpoint indices, so midpoints are only added once
+    typedef std::pair<size_t, size_t> t_Pair;
+    std::map<t_Pair, size_t> new_vertices;
 
     MeshData::t_Facets::const_iterator i_orig_facet(facets.begin());
-    MeshData::t_Facets::const_iterator const i_orig_facet_end(facets.begin());
+    MeshData::t_Facets::const_iterator const i_orig_facet_end(facets.end());
     MeshData::t_Facets::iterator i_facet = _data->facets.begin();
     for(; i_orig_facet != i_orig_facet_end; ++i_orig_facet) {
       MeshData::t_Facet::value_type const i0 = (*i_orig_facet)[0];
@@ -269,33 +330,30 @@ namespace {
       MeshData::t_Facet::value_type const i2 = (*i_orig_facet)[2];
 
       // Adds new vertices halfway through edges
-      MeshData::t_Facet::value_type const index = _data->vertices.size();
-      _data->vertices.push_back(
-          (_data->vertices[i0] + _data->vertices[i1]) * 0.5);
-      _data->vertices.push_back(
-          (_data->vertices[i1] + _data->vertices[i2]) * 0.5);
-      _data->vertices.push_back(
-          (_data->vertices[i2] + _data->vertices[i0]) * 0.5);
+      MeshData::t_Facet::value_type
+        mid0(vertex(_data, new_vertices, i0, i1)),
+        mid1(vertex(_data, new_vertices, i1, i2)),
+        mid2(vertex(_data, new_vertices, i2, i0));
 
       // Adds all four new faces
       (*i_facet)[0] = i0;
-      (*i_facet)[1] = index;
-      (*i_facet)[2] = index + 2;
+      (*i_facet)[1] = mid0;
+      (*i_facet)[2] = mid2;
       ++i_facet;
 
-      (*i_facet)[0] = index;
+      (*i_facet)[0] = mid0;
       (*i_facet)[1] = i1;
-      (*i_facet)[2] = index + 1;
+      (*i_facet)[2] = mid1;
       ++i_facet;
 
-      (*i_facet)[0] = index + 1;
+      (*i_facet)[0] = mid1;
       (*i_facet)[1] = i2;
-      (*i_facet)[2] = index + 2;
+      (*i_facet)[2] = mid2;
       ++i_facet;
 
-      (*i_facet)[0] = index;
-      (*i_facet)[1] = index + 1;
-      (*i_facet)[2] = index + 2;
+      (*i_facet)[0] = mid0;
+      (*i_facet)[1] = mid1;
+      (*i_facet)[2] = mid2;
       ++i_facet;
     }
   }
