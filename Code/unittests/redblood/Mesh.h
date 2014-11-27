@@ -86,6 +86,8 @@ class RedBloodMeshTests : public BasisFixture {
   CPPUNIT_TEST_SUITE(RedBloodMeshTests);
   CPPUNIT_TEST(testVolume);
   CPPUNIT_TEST(testBarycenter);
+  CPPUNIT_TEST(testScaling);
+  CPPUNIT_TEST(testTranslation);
   CPPUNIT_TEST_SUITE_END();
   public:
     void setUp() {
@@ -126,6 +128,38 @@ class RedBloodMeshTests : public BasisFixture {
       CPPUNIT_ASSERT(std::abs(barycenter(mesh)[0] - expected[0]) < 1e-8);
       CPPUNIT_ASSERT(std::abs(barycenter(mesh)[1] - expected[1]) < 1e-8);
       CPPUNIT_ASSERT(std::abs(barycenter(mesh)[2] - expected[2]) < 1e-8);
+    }
+
+    void testScaling() {
+      Dimensionless const scale = 2.5;
+      hemelb::redblood::Mesh original(mesh);
+      hemelb::redblood::Mesh scaled(mesh);
+      scaled *= scale;
+
+      CPPUNIT_ASSERT(
+          is_zero(original.GetBarycenter() - scaled.GetBarycenter()));
+      LatticePosition const first
+        = (*original.BeginVertices() - original.GetBarycenter()) * scale
+          + original.GetBarycenter();
+      LatticePosition const second
+        = (*(++original.BeginVertices()) - original.GetBarycenter()) * scale
+          + original.GetBarycenter();
+      CPPUNIT_ASSERT(is_zero(first - *scaled.BeginVertices()));
+      CPPUNIT_ASSERT(is_zero(second - *(++scaled.BeginVertices())));
+    }
+
+    void testTranslation() {
+      LatticePosition const offset(1, 2, 3);
+      hemelb::redblood::Mesh original(mesh);
+      hemelb::redblood::Mesh trans(mesh);
+      trans += offset;
+
+      CPPUNIT_ASSERT(
+          is_zero(original.GetBarycenter() + offset - trans.GetBarycenter()));
+      LatticePosition const first = *original.BeginVertices() + offset;
+      LatticePosition const second = *(++original.BeginVertices()) + offset;
+      CPPUNIT_ASSERT(is_zero(first - *trans.BeginVertices()));
+      CPPUNIT_ASSERT(is_zero(second - *(++trans.BeginVertices())));
     }
 };
 

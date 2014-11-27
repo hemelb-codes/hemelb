@@ -272,6 +272,21 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 # endif
 }
 
+void Mesh::operator*=(Dimensionless const &_scale) {
+  LatticePosition const barycenter = GetBarycenter();
+  MeshData::t_Vertices::iterator i_first = BeginVertices();
+  MeshData::t_Vertices::iterator const i_end = EndVertices();
+  for(; i_first != i_end; ++i_first)
+    (*i_first) = (*i_first - barycenter) * _scale + barycenter;
+}
+
+void Mesh::operator+=(LatticePosition const &_offset) {
+  MeshData::t_Vertices::iterator i_first = BeginVertices();
+  MeshData::t_Vertices::iterator const i_end = EndVertices();
+  for(; i_first != i_end; ++i_first)
+    (*i_first) += _offset;
+}
+
 namespace {
   boost::shared_ptr<MeshData> initial_tetrahedron() {
     boost::shared_ptr<MeshData> data(new MeshData);
