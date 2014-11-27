@@ -57,6 +57,15 @@ struct MeshTopology {
 
 //! Triangular mesh
 class Mesh {
+
+  //! Differentiates between two shallow and deep copy constructors
+  struct deepcopy_tag {};
+
+  //! Deep copy constructor
+  Mesh(Mesh const &_c, deepcopy_tag const &)
+    : mesh_(new MeshData(*_c.mesh_)),
+      topology_(new MeshTopology(*_c.topology_)) {}
+
 public:
   //! Initializes mesh from mesh data
   Mesh(boost::shared_ptr<MeshData> const & _mesh)
@@ -64,6 +73,7 @@ public:
   //! Initialize mesh by copying data
   Mesh(MeshData const &_data)
        : mesh_(new MeshData(_data)), topology_(new MeshTopology(_data)) {}
+  //! Shallow copy constructor
   Mesh(Mesh const &_in) : mesh_(_in.mesh_), topology_(_in.topology_) {}
 
   //! Determines barycenter of mesh
@@ -81,6 +91,30 @@ public:
   boost::shared_ptr<MeshData const> GetData() const { return mesh_; }
   //! Returns mesh data
   void SetData(MeshData const &_data) { mesh_.reset(new MeshData(_data)); }
+
+  //! Makes a copy of the mesh
+  Mesh clone() const { return Mesh(*this, deepcopy_tag()); }
+
+  //! Scale mesh around barycenter
+  void operator*=(Dimensionless const &_scale);
+  //! Translate mesh
+  void operator+=(LatticePosition const &_offset);
+
+  //! Iterator over vertices
+  MeshData::t_Vertices::const_iterator BeginVertices() const {
+    return mesh_->vertices.begin();
+  }
+  //! Iterator over vertices
+  MeshData::t_Vertices::iterator BeginVertices() {
+    return mesh_->vertices.begin();
+  }
+  MeshData::t_Vertices::const_iterator EndVertices() const {
+    return mesh_->vertices.end();
+  }
+  //! Iterator over vertices
+  MeshData::t_Vertices::iterator EndVertices() {
+    return mesh_->vertices.end();
+  }
 
 protected:
   //! Holds actual data about the mesh
