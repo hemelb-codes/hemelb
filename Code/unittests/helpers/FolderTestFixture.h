@@ -10,6 +10,7 @@
 #ifndef HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
 #define HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
 
+#include <cppunit/TestAssert.h>
 #include <cmath>
 #include <iomanip>
 #include "resources/Resource.h"

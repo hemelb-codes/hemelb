@@ -12,6 +12,7 @@
 
 #include "constants.h"
 #include "lb/LbmParameters.h"
+#include "lb/kernels/BaseKernel.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb

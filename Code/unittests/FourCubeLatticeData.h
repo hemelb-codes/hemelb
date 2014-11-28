@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include "units.h"
 #include "geometry/LatticeData.h"
+#include "lb/lattices/D3Q15.h"
 #include "io/formats/geometry.h"
 #include "util/Vector3D.h"
 
