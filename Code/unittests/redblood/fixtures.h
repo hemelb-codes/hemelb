@@ -11,6 +11,8 @@
 #define HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
 
 #include <unittests/helpers/Comparisons.h>
+#include "redblood/Mesh.h"
+#include "redblood/Particle.h"
 
 namespace hemelb { namespace unittests {
 
@@ -85,6 +87,29 @@ class EnergyVsGradientFixture : public BasisFixture {
     void energyVsForces(BOTH const &_both, double _epsilon = 1e-8) {
       energyVsForces(_both, _both, _epsilon);
     }
+};
+
+class SquareDuctTetrahedronFixture : public FourCubeBasedTestFixture {
+  public:
+    SquareDuctTetrahedronFixture()
+      : FourCubeBasedTestFixture(), mesh(redblood::tetrahedron()) {}
+
+    void setUp() {
+      FourCubeBasedTestFixture::setUp();
+      mesh = redblood::refine(initial_mesh(), refinement());
+      mesh *= Dimensionless(CubeSize() - 3) * 0.5;
+      mesh += Dimensionless(CubeSize()) * 0.5;
+    }
+
+  protected:
+    // Functions to parameterize the fizture
+    virtual size_t CubeSize() const { return 32 + 2; }
+    virtual size_t refinement() const { return 3; }
+    virtual redblood::Mesh initial_mesh() const {
+      return redblood::tetrahedron();
+    }
+
+    hemelb::redblood::Particle mesh;
 };
 
 }}

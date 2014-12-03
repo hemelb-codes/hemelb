@@ -215,11 +215,11 @@ namespace {
           MeshData::t_Facet::value_type _v) {
     return _a[0] == _v or _a[1] == _v or _a[2] == _v;
   }
-  bool edge_sharing(MeshData::t_Facet const &_a, 
+  bool edge_sharing(MeshData::t_Facet const &_a,
       MeshData::t_Facet const &_b ) {
     return (contains(_b, _a[0]) ? 1: 0)
         + (contains(_b, _a[1]) ? 1: 0)
-        + (contains(_b, _a[2]) ? 1: 0) == 2;
+        + (contains(_b, _a[2]) ? 1: 0) >= 2;
   }
   // Adds value as first non-negative number, if value not in array yet
   void insert(MeshData::t_Facet &_container,
@@ -247,17 +247,17 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
   // Now creates map of neighboring facets
   unsigned int const Nmax = _mesh.facets.size();
   boost::array<unsigned int, 3> const neg = {{Nmax, Nmax,  Nmax}};
-  for(unsigned int i(0); i < facetNeighbors.size(); ++i)
-    facetNeighbors[i] = neg;
+  std::fill(facetNeighbors.begin(), facetNeighbors.end(), neg);
   i_facet = _mesh.facets.begin();
   for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
     for(size_t node(0); node != i_facet->size(); ++node) {
       // check facets that this node is attached to
       MeshTopology::t_VertexToFacets::const_reference
-        facets = vertexToFacets.at((*i_facet)[node]);
+        neighboringFacets = vertexToFacets.at((*i_facet)[node]);
       MeshTopology::t_VertexToFacets::value_type::const_iterator
-        i_neigh = facets.begin();
-      for(; i_neigh != facets.end(); ++i_neigh) {
+        i_neigh = neighboringFacets.begin();
+      for(; i_neigh != neighboringFacets.end(); ++i_neigh) {
+        if(i == *i_neigh) continue;
         if(edge_sharing(*i_facet, _mesh.facets.at(*i_neigh)))
           insert(facetNeighbors.at(i), *i_neigh, Nmax);
       }
@@ -266,23 +266,22 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 # ifndef NDEBUG
   // Checks there are no uninitialized values
   for(unsigned int i(0); i < facetNeighbors.size(); ++i)
-    for(unsigned int j(0); j < 3; ++j) {
+    for(unsigned int j(0); j < 3; ++j)
       assert(facetNeighbors[i][j] < Nmax);
-    }
 # endif
 }
 
 void Mesh::operator*=(Dimensionless const &_scale) {
   LatticePosition const barycenter = GetBarycenter();
-  MeshData::t_Vertices::iterator i_first = BeginVertices();
-  MeshData::t_Vertices::iterator const i_end = EndVertices();
+  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
+  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
   for(; i_first != i_end; ++i_first)
     (*i_first) = (*i_first - barycenter) * _scale + barycenter;
 }
 
 void Mesh::operator+=(LatticePosition const &_offset) {
-  MeshData::t_Vertices::iterator i_first = BeginVertices();
-  MeshData::t_Vertices::iterator const i_end = EndVertices();
+  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
+  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
   for(; i_first != i_end; ++i_first)
     (*i_first) += _offset;
 }
@@ -374,6 +373,14 @@ namespace {
   }
 }
 
+Mesh refine(Mesh _data, unsigned int _depth) {
+  if(_depth == 0) return _data.clone();
+  boost::shared_ptr<MeshData> data(new MeshData(*_data.GetData()));
+  for(unsigned int i(0); i < _depth; ++i)
+    refine(data);
+  return Mesh(data);
+}
+
 
 Mesh tetrahedron(unsigned int depth) {
   boost::shared_ptr<MeshData> result(initial_tetrahedron());
@@ -382,5 +389,33 @@ Mesh tetrahedron(unsigned int depth) {
   return Mesh(result);
 }
 
+Mesh pancakeSamosa(unsigned int depth) {
+  boost::shared_ptr<redblood::MeshData> mesh(new redblood::MeshData);
+
+  // facets at something degrees from one another
+  mesh->vertices.push_back(LatticePosition(0, 0, 0));
+  mesh->vertices.push_back(LatticePosition(1, 0, 1));
+  mesh->vertices.push_back(LatticePosition(1, 1, 0));
+
+  redblood::MeshData::t_Facet indices;
+  indices[0] = 0; indices[1] = 1; indices[2] = 2;
+  mesh->facets.push_back(indices);
+  indices[0] = 2; indices[1] = 1; indices[2] = 0;
+  mesh->facets.push_back(indices);
+
+  // Create topology by hand cos we generally don't allow for this kind of
+  // ambiguous self-referencing shape.
+  boost::shared_ptr<redblood::MeshTopology> topo(new redblood::MeshTopology);
+  MeshTopology::t_VertexToFacets::value_type v2f;
+  v2f.insert(0); v2f.insert(1);
+  topo->vertexToFacets.resize(3, v2f);
+
+  MeshTopology::t_FacetNeighbors::value_type neighbors[2]
+    = {{{0, 0, 0}}, {{1, 1, 1}}};
+  topo->facetNeighbors.push_back(neighbors[1]);
+  topo->facetNeighbors.push_back(neighbors[0]);
+
+  return refine(Mesh(mesh, topo), depth);
+}
 
 }} // hemelb::rbc

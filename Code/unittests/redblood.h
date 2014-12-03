@@ -13,4 +13,5 @@
 #include "unittests/redblood/Particle.h"
 #include "unittests/redblood/Stencil.h"
 #include "unittests/redblood/Interpolation.h"
+#include "unittests/redblood/MeshAndParticle.h"
 #endif

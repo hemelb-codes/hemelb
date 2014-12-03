@@ -279,7 +279,7 @@ class VelocityInterpolationTests :
 };
 
 
-CPPUNIT_TEST_SUITE_REGISTRATION(VelocityInterpolationTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(InterpolationTests);
 }}
 
 #endif // ONCE

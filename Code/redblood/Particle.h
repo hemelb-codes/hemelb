@@ -43,6 +43,13 @@ public:
       : Mesh(_mesh), template_(_template.GetData()) {}
 
   //! \brief Initializes mesh from mesh data
+  //! \details This version makes it possible to share the unmodified mesh
+  //! across particles.
+  //! \param [in] _mesh: Modifyiable mesh
+  Particle(Mesh const & _mesh)
+      : Mesh(_mesh), template_(new MeshData(*_mesh.GetData())) {}
+
+  //! \brief Initializes mesh from mesh data
   //! On top of taking ownership of the mesh, a unmodifiable copy of the mesh
   //! is also created.
   //! \param [in] _mesh: Modifyiable mesh
@@ -61,7 +68,6 @@ public:
   PhysicalEnergy operator()() const;
   //! Facet bending energy
   PhysicalEnergy operator()(std::vector<LatticeForceVector> &_in) const;
-
 
 protected:
  //! Unmodified original mesh
