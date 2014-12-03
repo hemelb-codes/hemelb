@@ -21,6 +21,7 @@ class MeshAndParticleTests : public SquareDuctTetrahedronFixture {
     CPPUNIT_TEST_SUITE(MeshAndParticleTests);
     CPPUNIT_TEST(testDistributionFixture);
     CPPUNIT_TEST(testLinearVelocityPerpendicularToPancakeSamosa);
+    CPPUNIT_TEST(testLinearVelocityInSamosaPlane);
     CPPUNIT_TEST_SUITE_END();
 
     typedef lb::lattices::D3Q15 D3Q15;
@@ -37,6 +38,10 @@ public:
     // Linear velociy profile on grid, perpendicular to the samosa
     // The interpolated velocities should be constant across the samosa
     void testLinearVelocityPerpendicularToPancakeSamosa();
+    // Linear velociy profile on grid, in-plane with the samosa
+    // The interpolated velocities should evolve linearly with respect to the
+    // input gradient.
+    void testLinearVelocityInSamosaPlane();
 
 protected:
     // Creates a mesh that is a single planar triangle
@@ -44,7 +49,7 @@ protected:
     virtual redblood::Mesh initial_mesh() const {
       return redblood::pancakeSamosa(0);
     }
-    virtual size_t refinement() const { return 0; }
+    virtual size_t refinement() const { return 3; }
 };
 
 // Sets up a linear velocity profile
@@ -108,7 +113,6 @@ void MeshAndParticleTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
   LatticePosition const normal(redblood::Facet(*mesh.GetData(), 0).normal());
-  std::cout << normal << std::endl;
   HEMELB_LINEAR_VELOCITY_PROFILE(normal.x, normal.y, normal.z);
 
   // Perform interpolation
@@ -122,11 +126,41 @@ void MeshAndParticleTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   const_iterator const i_end = displacements.end();
   LatticePosition const expected(*i_disp);
   for(++i_disp; i_disp != i_end; ++i_disp) {
-    std::cout << "diff " << *i_disp << " - " << expected << std::endl;
     CPPUNIT_ASSERT(is_zero(*i_disp - expected));
   }
 }
 
+void MeshAndParticleTests :: testLinearVelocityInSamosaPlane() {
+  // Figures out an in-plane direction
+  helpers::ZeroOutFOld(latDat);
+  redblood::Facet const shapeFacet(*mesh.GetData(), 0);
+  LatticePosition const inplane(shapeFacet.edge(0) + shapeFacet.edge(1) * 0.5);
+  HEMELB_LINEAR_VELOCITY_PROFILE(inplane.x, inplane.y, inplane.z);
+
+  // Perform interpolation
+  std::vector<LatticePosition> displacements;
+  redblood::compute_displacement<Kernel>(
+      mesh, *latDat, redblood::stencil::FOUR_POINT, displacements);
+
+  // Computes what the interpolation should be
+  typedef std::vector<LatticePosition> :: const_iterator const_iterator;
+  LatticeDistance const
+    x0 = gradient.Dot(mesh.GetVertices()[0]),
+    x1 = gradient.Dot(mesh.GetVertices()[1]);
+  PhysicalVelocity const
+    v0 = displacements[0],
+    v1 = displacements[1];
+  redblood::MeshData::t_Vertices::const_iterator
+    i_vertex(mesh.GetVertices().begin() + 2);
+  const_iterator i_disp = displacements.begin() + 2;
+  const_iterator const i_end = displacements.end();
+  for(; i_disp != i_end; ++i_disp, ++i_vertex) {
+    PhysicalVelocity const expected(
+        (v0 - v1) * ((i_vertex->Dot(gradient) - x1) / (x0 - x1)) + v1
+    );
+    CPPUNIT_ASSERT(is_zero(*i_disp - expected));
+  }
+}
 # undef HEMELB_LINEAR_VELOCITY_PROFILE
 
 CPPUNIT_TEST_SUITE_REGISTRATION(MeshAndParticleTests);

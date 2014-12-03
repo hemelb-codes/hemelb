@@ -32,7 +32,6 @@ namespace hemelb { namespace redblood {
         for(; i_current != i_end; ++i_current) {
           PhysicalVelocity const velocity
             = interpolateVelocity<T_KERNEL>(latticeData, *i_current, stencil);
-          std::cout << "   vel: " << velocity << " from " << *i_current << std::endl;
           apply(velocity);
         }
       }
