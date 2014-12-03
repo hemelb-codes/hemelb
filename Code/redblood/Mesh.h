@@ -53,6 +53,8 @@ struct MeshTopology {
 
   // Creates mesh topology from mesh data
   MeshTopology(MeshData const &_mesh);
+  // Empty topology
+  MeshTopology() {}
 };
 
 //! Triangular mesh
@@ -70,6 +72,10 @@ public:
   //! Initializes mesh from mesh data
   Mesh(boost::shared_ptr<MeshData> const & _mesh)
        : mesh_(_mesh), topology_(new MeshTopology(*_mesh)) {}
+  //! Initializes mesh from mesh data and topology
+  Mesh(boost::shared_ptr<MeshData> const & _mesh,
+      boost::shared_ptr<MeshTopology> const &_topo)
+       : mesh_(_mesh), topology_(_topo) {}
   //! Initialize mesh by copying data
   Mesh(MeshData const &_data)
        : mesh_(new MeshData(_data)), topology_(new MeshTopology(_data)) {}
@@ -100,21 +106,12 @@ public:
   //! Translate mesh
   void operator+=(LatticePosition const &_offset);
 
-  //! Iterator over vertices
-  MeshData::t_Vertices::const_iterator BeginVertices() const {
-    return mesh_->vertices.begin();
-  }
-  //! Iterator over vertices
-  MeshData::t_Vertices::iterator BeginVertices() {
-    return mesh_->vertices.begin();
-  }
-  MeshData::t_Vertices::const_iterator EndVertices() const {
-    return mesh_->vertices.end();
-  }
-  //! Iterator over vertices
-  MeshData::t_Vertices::iterator EndVertices() {
-    return mesh_->vertices.end();
-  }
+  //! Number of nodes
+  size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }
+  //! Const access to vertices
+  MeshData::t_Vertices const & GetVertices() const { return mesh_->vertices; }
+  //! Const access to facets
+  MeshData::t_Facets const & GetFacets() const { return mesh_->facets; }
 
 protected:
   //! Holds actual data about the mesh
@@ -143,6 +140,12 @@ void write_vtkmesh(std::string const &_filename, MeshData const &_data);
 //! Tetrahedron of a depth
 //! Depth refers to the number of triangular subdivision in each facet
 Mesh tetrahedron(unsigned int depth=0);
+//! Flat triangular shape
+//! Depth refers to the number of triangular subdivision in each facet
+//! There are two initial facets, referring to the same three vertices.
+Mesh pancakeSamosa(unsigned int depth=0);
+//! Refine a mesh by decomposing each facet into four triangles
+Mesh refine(Mesh _mesh, unsigned int depth=0);
 
 }}
 #endif

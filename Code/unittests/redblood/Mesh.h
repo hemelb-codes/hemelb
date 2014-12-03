@@ -139,13 +139,13 @@ class RedBloodMeshTests : public BasisFixture {
       CPPUNIT_ASSERT(
           is_zero(original.GetBarycenter() - scaled.GetBarycenter()));
       LatticePosition const first
-        = (*original.BeginVertices() - original.GetBarycenter()) * scale
+        = (*original.GetVertices().begin() - original.GetBarycenter()) * scale
           + original.GetBarycenter();
       LatticePosition const second
-        = (*(++original.BeginVertices()) - original.GetBarycenter()) * scale
+        = (*(++original.GetVertices().begin()) - original.GetBarycenter()) * scale
           + original.GetBarycenter();
-      CPPUNIT_ASSERT(is_zero(first - *scaled.BeginVertices()));
-      CPPUNIT_ASSERT(is_zero(second - *(++scaled.BeginVertices())));
+      CPPUNIT_ASSERT(is_zero(first - *scaled.GetVertices().begin()));
+      CPPUNIT_ASSERT(is_zero(second - *(++scaled.GetVertices().begin())));
     }
 
     void testTranslation() {
@@ -156,10 +156,10 @@ class RedBloodMeshTests : public BasisFixture {
 
       CPPUNIT_ASSERT(
           is_zero(original.GetBarycenter() + offset - trans.GetBarycenter()));
-      LatticePosition const first = *original.BeginVertices() + offset;
-      LatticePosition const second = *(++original.BeginVertices()) + offset;
-      CPPUNIT_ASSERT(is_zero(first - *trans.BeginVertices()));
-      CPPUNIT_ASSERT(is_zero(second - *(++trans.BeginVertices())));
+      LatticePosition const first = *original.GetVertices().begin() + offset;
+      LatticePosition const second = *(++original.GetVertices().begin()) + offset;
+      CPPUNIT_ASSERT(is_zero(first - *trans.GetVertices().begin()));
+      CPPUNIT_ASSERT(is_zero(second - *(++trans.GetVertices().begin())));
     }
 };
 

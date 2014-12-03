@@ -38,7 +38,7 @@ namespace hemelb
           {
             helpers::FolderTestFixture::setUp();
 
-            latDat = FourCubeLatticeData::Create(Comms());
+            latDat = FourCubeLatticeData::Create(Comms(), CubeSize());
             std::string path("");
             simConfig = new OneInOneOutSimConfig(path);
             simState = new hemelb::lb::SimulationState(simConfig->GetTimeStepLength(),
@@ -70,6 +70,9 @@ namespace hemelb
           configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
           const util::UnitConverter* unitConverter;
+
+          // Parameterizes the size according to test where fixuter is used
+          virtual size_t CubeSize() const { return 6; }
         private:
 
       };

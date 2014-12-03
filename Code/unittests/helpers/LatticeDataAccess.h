@@ -16,7 +16,7 @@
 namespace hemelb { namespace unittests { namespace helpers {
 
   // Empty FOld distribution
-  void ZeroOutFOld(geometry::LatticeData * const _latDat);
+  void zeroOutFOld(geometry::LatticeData * const _latDat);
   // Initializes a lattice to empty distributions and forces, execpt at one
   // place
   template<class LATTICE>
@@ -27,6 +27,38 @@ namespace hemelb { namespace unittests { namespace helpers {
   template<class Lattice>
     distribn_t const * GetFNew(
         geometry::LatticeData *_latDat, LatticeVector const &_pos);
+
+  // Linear distribution. Lambda pre-c++11.
+  struct Linear {
+    Linear(Dimensionless const _c[]) {
+      for(size_t i(0); i < 4; ++i)
+        c[i] = _c[i];
+    }
+    Linear(Dimensionless _o, Dimensionless _ax, Dimensionless _ay,
+        Dimensionless _az) {
+      c[0] = _o; c[1] = _ax; c[2] = _ay; c[3] = _az;
+    }
+    Linear(Dimensionless _o, LatticePosition const &_pos) {
+      c[0] = _o; c[1] = _pos[0]; c[2] = _pos[1]; c[3] =_pos[2];
+    }
+    Dimensionless c[4];
+    Dimensionless operator()(PhysicalVelocity const &_v) {
+      return c[0] + _v[0] * c[1] + _v[1] * c[2] + _v[2] * c[3];
+    }
+  };
+
+  // Population i set to a linear distribution
+  // f_i(r) = _offset + (_ax, _ay, _az) * r
+  template<class LATTICE>
+    void setUpDistribution(
+        geometry::LatticeData *_latDat, size_t _i, Linear const &_linear);
+  template<class LATTICE>
+    void setUpDistribution(
+        geometry::LatticeData *_latDat, size_t _i, Dimensionless _offset,
+        Dimensionless _ax, Dimensionless _ay, Dimensionless _az) {
+      setUpDistribution<LATTICE>(_latDat, _i, Linear(_offset, _ax, _ay, _az));
+    }
+
 
   // Class to setup/manipulate lattice data
   class LatticeDataAccess {
@@ -56,6 +88,11 @@ namespace hemelb { namespace unittests { namespace helpers {
         }
       template<class LATTICE>
         distribn_t const * GetFNew(LatticeVector const &_pos) const;
+
+      // Sets up linear distribution f_i(coeffs) = (1, x, y, z) * coeffs
+      // Where * is the dot product
+      template<class LATTICE, class FUNCTION>
+        void SetUpDistribution(size_t _i, FUNCTION function);
 
     protected:
       // Reference to the wrapped lattice data.
@@ -97,6 +134,20 @@ namespace hemelb { namespace unittests { namespace helpers {
     LatticeDataAccess(_latDat).ZeroOutFOld();
   }
 
+  template<class LATTICE, class FUNCTION>
+    void LatticeDataAccess :: SetUpDistribution(size_t _i, FUNCTION function) {
+      for(size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i) {
+        geometry::Site<geometry::LatticeData> site = latDat->GetSite(i);
+        LatticeVector const pos = site.GetGlobalSiteCoords();
+        LatticePosition const pos_real(pos[0], pos[1], pos[2]);
+        distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
+        distribn_t const * const firstFOld = &latDat->oldDistributions[0];
+        size_t const indexFOld(siteFOld - firstFOld);
+        latDat->oldDistributions[indexFOld + _i] = function(pos_real);
+      }
+    }
+
+
   template<class LATTICE>
     void allZeroButOne(
         geometry::LatticeData *_latDat, LatticeVector const &_pos) {
@@ -113,5 +164,16 @@ namespace hemelb { namespace unittests { namespace helpers {
         geometry::LatticeData *_latDat, LatticeVector const &_pos) {
       return LatticeDataAccess(_latDat).GetFNew<LATTICE>(_pos);
     }
+
+  // Population i set to a linear distribution
+  // f_i(r) = _offset + (_ax, _ay, _az) * r
+  template<class LATTICE>
+    void setUpDistribution(
+        geometry::LatticeData *_latDat, size_t _i, Linear const &_linear) {
+      LatticeDataAccess(_latDat)
+        .SetUpDistribution<LATTICE, Linear>(_i, _linear);
+    }
+
+
 }}}
 #endif
