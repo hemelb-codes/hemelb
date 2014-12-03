@@ -83,37 +83,95 @@ def CreateInletWeightsFile(fname):
     """
 
     RecordVelocities = False
+    RecordCoordinates = False
 
-    vels = np.zeros((1))
-    offset_counter = 0
-
+    vels = np.zeros((1)) # NP Array which stores all the original velocities (they add up to 1 supposedly)
+    coords = np.zeros ((3))
+    vels_offset_counter = 0
+    coords_offset_counter = 0
+    
+ 
     f = open(fname)
     for line in f:
 
         if RecordVelocities == True:
+            """
+            This branch extracts all the velocity values from the VTK version 3 format file.
+            """
             vels_line = line.strip().split()
             for v in vels_line:
-              vels[offset_counter] = float(v)
-              offset_counter += 1
+                print "offset = ", vels_offset_counter, v
+                vels[vels_offset_counter] = float(v)
+                vels_offset_counter += 1
+                if vels_offset_counter == len(vels):
+                    RecordVelocities = False
+                    break
 
-        # Line preceding all the velocity values
-        if "LOOKUP_TABLE default" in line:
+        elif RecordCoordinates == True:
+            """
+            This branch extracts all the coordinate values from the VTK version 3 format file.
+            """
+            coords_line = line.strip().split()
+            for c in coords_line:
+                coords[coords_offset_counter] = int(c)
+                coords_offset_counter += 1
+                if coords_offset_counter == len(coords):
+                    RecordCoordinates = False
+                    break
+
+        elif "LOOKUP_TABLE default" in line:
+            """
+            Line preceding all the velocity values
+            """
             RecordVelocities = True
         
-        if "POINT_DATA" in line:
+        elif "POINT_DATA" in line:
+            """
+            Line indicating the number of velocity values.
+            Parsing condition looks silly because the VTK version 3 format is generic, but 
+            not very descriptive.
+            """
             p = line.strip().split()
-            print "Number of elements is: ", p[1]
-            vels = np.zeros((int(p[1])))
+            print "Number of elements is: ", int(p[1])
 
-    print vels
+            vels   = np.zeros((int(p[1])))
+            coords = np.zeros((int(p[1])*3))
+
+        elif "PointIds" in line:
+            """
+            TODO: detect the coordinate values.
+            """
+            RecordCoordinates = True
+
+    """
+    We renormalize the velocities, so that the maximum velocity is equal to 1.
+    From now on: we use these values now as _velocity weights_.
+    """
+    print len(vels)
+    coords = coords.reshape(len(coords)/3, 3)
+
+    vels = vels * (1.0 / vels.max()) 
+
+    f = open("%s.weights.txt" % (fname[:-4]),'w')
+    for i in xrange(0, len(vels)):
+        if int(coords[i][0]) != -1:
+            f.write("%i %i %i %f\n" % (int(coords[i][0]), int(coords[i][1]), int(coords[i][2]), vels[i]))
 
 if __name__ == "__main__":
     import sys
     import time
     for arg in sys.argv[1:]:
         start = time.time()
-        txtOutputFileName = Run(arg)
-        CreateInletWeightsFile(txtOutputFileName)
+
+        mode = "full"
+
+        if mode == "full":
+            """ Take a profile file, gmy + input, and create a weights file """
+            txtOutputFileName = Run(arg)
+            CreateInletWeightsFile(txtOutputFileName)
+        elif mode == "weight_only":
+            """ Take an intermediate VTK version 3 ASCII format file and convert it to a smaller inlets weights file. """
+            CreateInletWeightsFile(arg)
         end = time.time()
         print end-start," seconds elapsed."
     
