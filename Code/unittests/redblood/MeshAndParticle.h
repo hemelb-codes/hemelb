@@ -17,8 +17,9 @@
 
 namespace hemelb { namespace unittests {
 
-class MeshAndParticleTests : public SquareDuctTetrahedronFixture {
-    CPPUNIT_TEST_SUITE(MeshAndParticleTests);
+
+class ParticleVelocityInterpolTests : public SquareDuctTetrahedronFixture {
+    CPPUNIT_TEST_SUITE(ParticleVelocityInterpolTests);
     CPPUNIT_TEST(testDistributionFixture);
     CPPUNIT_TEST(testLinearVelocityPerpendicularToPancakeSamosa);
     CPPUNIT_TEST(testLinearVelocityInSamosaPlane);
@@ -64,7 +65,7 @@ protected:
   helpers::setUpDistribution<D3Q15>(latDat, 1, linear_inv)
 
 
-void MeshAndParticleTests::testDistributionFixture() {
+void ParticleVelocityInterpolTests::testDistributionFixture() {
   helpers::ZeroOutFOld(latDat);
 
   HEMELB_LINEAR_VELOCITY_PROFILE(2., 4., 6.);
@@ -109,7 +110,7 @@ void MeshAndParticleTests::testDistributionFixture() {
   }
 }
 
-void MeshAndParticleTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
+void ParticleVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
   LatticePosition const normal(redblood::Facet(*mesh.GetData(), 0).normal());
@@ -130,7 +131,7 @@ void MeshAndParticleTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   }
 }
 
-void MeshAndParticleTests :: testLinearVelocityInSamosaPlane() {
+void ParticleVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   // Figures out an in-plane direction
   helpers::ZeroOutFOld(latDat);
   redblood::Facet const shapeFacet(*mesh.GetData(), 0);
@@ -163,7 +164,7 @@ void MeshAndParticleTests :: testLinearVelocityInSamosaPlane() {
 }
 # undef HEMELB_LINEAR_VELOCITY_PROFILE
 
-CPPUNIT_TEST_SUITE_REGISTRATION(MeshAndParticleTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(ParticleVelocityInterpolTests);
 }}
 
 #endif // ONCE
