@@ -588,6 +588,10 @@ namespace hemelb
           assert(forceAtSite.size() > iSiteIndex);
           forceAtSite[iSiteIndex] = force;
         }
+        void AddToForceAtSite(site_t iSiteIndex, LatticeForceVector const &force) {
+          assert(forceAtSite.size() > iSiteIndex);
+          forceAtSite[iSiteIndex] += force;
+        }
         /**
          * Set a vertical force vector at the given site
          * @param iSiteIndex
