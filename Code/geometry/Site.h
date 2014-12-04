@@ -95,6 +95,9 @@ namespace hemelb
         {
           return latticeData.SetForceAtSite(index, _force);
         }
+        void AddToForce(LatticeForceVector const &_force) {
+          return latticeData.AddToForceAtSite(index, _force);
+        }
         inline site_t GetIndex() const
         {
           return index;

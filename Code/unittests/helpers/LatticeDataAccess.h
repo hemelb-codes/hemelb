@@ -133,6 +133,9 @@ namespace hemelb { namespace unittests { namespace helpers {
   inline void ZeroOutFOld(geometry::LatticeData * const _latDat) {
     LatticeDataAccess(_latDat).ZeroOutFOld();
   }
+  inline void ZeroOutForces(geometry::LatticeData * const _latDat) {
+    LatticeDataAccess(_latDat).ZeroOutForces();
+  }
 
   template<class LATTICE, class FUNCTION>
     void LatticeDataAccess :: SetUpDistribution(size_t _i, FUNCTION function) {

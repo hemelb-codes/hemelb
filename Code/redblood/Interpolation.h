@@ -54,6 +54,21 @@ namespace hemelb { namespace redblood {
       //! True if iterator is still valid
       operator bool() const { return isValid(); }
 
+      //! computes local index
+      site_t ContiguousSiteId(geometry::LatticeData const &_latDat) const{
+        return _latDat.GetContiguousSiteId(current_);
+      }
+      // //! computes local index
+      // geometry::Site<geometry::LatticeData const>
+      //   Site(geometry::LatticeData const &_latDat) const {
+      //     return _latDat.GetSite(current_);
+      // }
+      // //! computes local index
+      // geometry::Site<geometry::LatticeData>
+      //   Site(geometry::LatticeData const &_latDat) const {
+      //     return _latDat.GetSite(current_);
+      // }
+
     protected:
       //! Minimum indices
       LatticeVector const min_;

@@ -14,6 +14,7 @@
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
+#include "resources/resource.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb { namespace unittests {
@@ -28,7 +29,7 @@ class RedBloodMeshDataIOTests : public CppUnit::TestFixture
   CPPUNIT_TEST_SUITE_END();
 public:
   void setUp() {
-    std::string filename = Resource("red_blood_cell.txt").Path();
+    std::string filename = resources::Resource("red_blood_cell.txt").Path();
     mesh = redblood::read_mesh(filename);
   }
 
@@ -137,15 +138,16 @@ class RedBloodMeshTests : public BasisFixture {
       scaled *= scale;
 
       CPPUNIT_ASSERT(
-          is_zero(original.GetBarycenter() - scaled.GetBarycenter()));
+          helpers::is_zero(original.GetBarycenter() - scaled.GetBarycenter()));
       LatticePosition const first
         = (*original.GetVertices().begin() - original.GetBarycenter()) * scale
           + original.GetBarycenter();
       LatticePosition const second
         = (*(++original.GetVertices().begin()) - original.GetBarycenter()) * scale
           + original.GetBarycenter();
-      CPPUNIT_ASSERT(is_zero(first - *scaled.GetVertices().begin()));
-      CPPUNIT_ASSERT(is_zero(second - *(++scaled.GetVertices().begin())));
+      CPPUNIT_ASSERT(helpers::is_zero(first - *scaled.GetVertices().begin()));
+      CPPUNIT_ASSERT(
+          helpers::is_zero(second - *(++scaled.GetVertices().begin())));
     }
 
     void testTranslation() {
@@ -154,12 +156,15 @@ class RedBloodMeshTests : public BasisFixture {
       hemelb::redblood::Mesh trans(mesh);
       trans += offset;
 
-      CPPUNIT_ASSERT(
-          is_zero(original.GetBarycenter() + offset - trans.GetBarycenter()));
+      CPPUNIT_ASSERT(helpers::is_zero(
+            original.GetBarycenter() + offset - trans.GetBarycenter()
+      ));
       LatticePosition const first = *original.GetVertices().begin() + offset;
-      LatticePosition const second = *(++original.GetVertices().begin()) + offset;
-      CPPUNIT_ASSERT(is_zero(first - *trans.GetVertices().begin()));
-      CPPUNIT_ASSERT(is_zero(second - *(++trans.GetVertices().begin())));
+      LatticePosition const second
+        = *(++original.GetVertices().begin()) + offset;
+      CPPUNIT_ASSERT(helpers::is_zero(first - *trans.GetVertices().begin()));
+      CPPUNIT_ASSERT(
+          helpers::is_zero(second - *(++trans.GetVertices().begin())));
     }
 };
 
@@ -171,7 +176,7 @@ class TopologyTests : public CppUnit::TestFixture {
 
 public:
   void setUp() {
-    std::string filename = Resource("red_blood_cube.txt").Path();
+    std::string filename = resources::Resource("red_blood_cube.txt").Path();
     mesh = redblood::read_mesh(filename);
     // Checks the mesh input makes sense
     CPPUNIT_ASSERT(mesh->vertices.size() == 8);

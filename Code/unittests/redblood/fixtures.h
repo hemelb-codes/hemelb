@@ -10,7 +10,8 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
 #define HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
 
-#include <unittests/helpers/Comparisons.h>
+#include "unittests/helpers/FourCubeBasedTestFixture.h"
+#include "unittests/helpers/Comparisons.h"
 #include "redblood/Mesh.h"
 #include "redblood/Particle.h"
 
@@ -89,7 +90,7 @@ class EnergyVsGradientFixture : public BasisFixture {
     }
 };
 
-class SquareDuctTetrahedronFixture : public FourCubeBasedTestFixture {
+class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture {
   public:
     SquareDuctTetrahedronFixture()
       : FourCubeBasedTestFixture(), mesh(redblood::tetrahedron()) {}
