@@ -7,11 +7,11 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_MESH_AND_PARTICLE_H
-#define HEMELB_UNITTESTS_REDBLOOD_MESH_AND_PARTICLE_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_GRID_AND_CELL_H
+#define HEMELB_UNITTESTS_REDBLOOD_GRID_AND_CELL_H
 
 #include <cppunit/TestFixture.h>
-#include "redblood/MeshAndParticle.h"
+#include "redblood/GridAndCell.h"
 #include "redblood/facet.h"
 #include "unittests/redblood/Fixtures.h"
 
@@ -30,8 +30,8 @@ namespace {
   }
 }
 
-class ParticleVelocityInterpolTests : public SquareDuctTetrahedronFixture {
-    CPPUNIT_TEST_SUITE(ParticleVelocityInterpolTests);
+class CellVelocityInterpolTests : public SquareDuctTetrahedronFixture {
+    CPPUNIT_TEST_SUITE(CellVelocityInterpolTests);
     CPPUNIT_TEST(testDistributionFixture);
     CPPUNIT_TEST(testLinearVelocityPerpendicularToPancakeSamosa);
     CPPUNIT_TEST(testLinearVelocityInSamosaPlane);
@@ -64,8 +64,8 @@ protected:
 };
 
 
-class ParticleForceSpreadTests : public SquareDuctTetrahedronFixture {
-    CPPUNIT_TEST_SUITE(ParticleForceSpreadTests);
+class CellForceSpreadTests : public SquareDuctTetrahedronFixture {
+    CPPUNIT_TEST_SUITE(CellForceSpreadTests);
       CPPUNIT_TEST(testIsZeroFarFromMembrane);
       CPPUNIT_TEST(testIsSymmetric);
       CPPUNIT_TEST(testIsIncreasing);
@@ -94,8 +94,8 @@ public:
     virtual size_t refinement() const { return 3; }
 };
 
-class ParticleForceSpreadWithWallTests : public SquareDuctTetrahedronFixture {
-    CPPUNIT_TEST_SUITE(ParticleForceSpreadWithWallTests);
+class CellForceSpreadWithWallTests : public SquareDuctTetrahedronFixture {
+    CPPUNIT_TEST_SUITE(CellForceSpreadWithWallTests);
       CPPUNIT_TEST(testAPIAssumptions);
       CPPUNIT_TEST(testNode2WallCutoff);
     CPPUNIT_TEST_SUITE_END();
@@ -124,7 +124,7 @@ class ParticleForceSpreadWithWallTests : public SquareDuctTetrahedronFixture {
   helpers::setUpDistribution<D3Q15>(latDat, 1, linear_inv)
 
 
-void ParticleVelocityInterpolTests::testDistributionFixture() {
+void CellVelocityInterpolTests::testDistributionFixture() {
   helpers::ZeroOutFOld(latDat);
 
   HEMELB_LINEAR_VELOCITY_PROFILE(2., 4., 6.);
@@ -169,7 +169,7 @@ void ParticleVelocityInterpolTests::testDistributionFixture() {
   }
 }
 
-void ParticleVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
+void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
   LatticePosition const normal(redblood::Facet(*mesh.GetData(), 0).normal());
@@ -190,7 +190,7 @@ void ParticleVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSa
   }
 }
 
-void ParticleVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
+void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   // Figures out an in-plane direction
   helpers::ZeroOutFOld(latDat);
   redblood::Facet const shapeFacet(*mesh.GetData(), 0);
@@ -223,7 +223,7 @@ void ParticleVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
 }
 # undef HEMELB_LINEAR_VELOCITY_PROFILE
 
-LatticeForceVector ParticleForceSpreadTests :: force_at_center(
+LatticeForceVector CellForceSpreadTests :: force_at_center(
     LatticePosition const &_position) {
   mesh += _position - mesh.GetBarycenter();
   helpers::ZeroOutForces(latDat);
@@ -235,12 +235,12 @@ LatticeForceVector ParticleForceSpreadTests :: force_at_center(
 }
 
 
-void ParticleForceSpreadTests :: setUp() {
+void CellForceSpreadTests :: setUp() {
   center = LatticePosition(CubeSize() / 2, CubeSize() / 2, CubeSize() / 2);
   SquareDuctTetrahedronFixture::setUp();
   setUpForces();
 }
-void ParticleForceSpreadTests :: setUpForces() {
+void CellForceSpreadTests :: setUpForces() {
   direction = LatticePosition(1, 2, 3);
   intensity = LatticePosition(3, 2, 1).Normalise();
   forces.resize(mesh.GetNumberOfNodes());
@@ -252,7 +252,7 @@ void ParticleForceSpreadTests :: setUpForces() {
     *i_force = direction * i_vertex->Dot(intensity);
 }
 
-void ParticleForceSpreadTests :: testIsZeroFarFromMembrane() {
+void CellForceSpreadTests :: testIsZeroFarFromMembrane() {
   // Very far away from pancake samosa
   LatticeForceVector const faraway = force_at_center(
       center + LatticePosition(0, 0, 3)
@@ -272,7 +272,7 @@ void ParticleForceSpreadTests :: testIsZeroFarFromMembrane() {
 }
 
 
-void ParticleForceSpreadTests :: testIsSymmetric() {
+void CellForceSpreadTests :: testIsSymmetric() {
   size_t const N(10);
   for(size_t i(0); i < N; ++i) {
     LatticePosition const displacement(
@@ -284,7 +284,7 @@ void ParticleForceSpreadTests :: testIsSymmetric() {
   }
 }
 
-void ParticleForceSpreadTests :: testIsIncreasing() {
+void CellForceSpreadTests :: testIsIncreasing() {
   size_t const N(10);
   LatticeForceVector last(0, 0, 0);
   for(size_t i(0); i < N; ++i) {
@@ -299,9 +299,9 @@ void ParticleForceSpreadTests :: testIsIncreasing() {
   }
 }
 
-void ParticleForceSpreadTests :: testIsLinear() {
+void CellForceSpreadTests :: testIsLinear() {
   size_t const N(5);
-  mesh = redblood::Particle(redblood::refine(mesh, 4));
+  mesh = redblood::Cell(redblood::refine(mesh, 4));
   setUpForces();
   // x0, x1 should be further than 2 from the edges
   // Only linear if samosa appears as infinite plane
@@ -335,19 +335,19 @@ void ParticleForceSpreadTests :: testIsLinear() {
 
 // IsValidLatticeSite doesn't always return false when site is invalid
 // It seems to be more of a quick and innacurate check
-int ParticleForceSpreadWithWallTests :: siteID(
+int CellForceSpreadWithWallTests :: siteID(
     LatticeVector const &_position) const {
   site_t siteid;
   proc_t procid;
   bool const valid = latDat->GetContiguousSiteId(_position, procid, siteid);
   return valid ? siteid: -1;
 }
-LatticeVector ParticleForceSpreadWithWallTests :: GetSolidWall() const {
+LatticeVector CellForceSpreadWithWallTests :: GetSolidWall() const {
   return latDat->GetGlobalSiteMaxes()
      - LatticeVector(CubeSize() / 2, -1, CubeSize() / 2);
 }
 
-void ParticleForceSpreadWithWallTests :: testAPIAssumptions() {
+void CellForceSpreadWithWallTests :: testAPIAssumptions() {
   // Nearest solid node. Does not have associated data.
   LatticeVector const solid = GetSolidWall();
   // Nearest wet wall node. Has fluid particles and is closest node to wall.
@@ -371,7 +371,7 @@ void ParticleForceSpreadWithWallTests :: testAPIAssumptions() {
   CPPUNIT_ASSERT(latDat->GetSite(siteID(right)).IsWall());
 }
 
-void ParticleForceSpreadWithWallTests :: testNode2WallCutoff() {
+void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
   // Fluid sites next to wall
   LatticeVector const solid = GetSolidWall();
   LatticeVector const wetwall = solid + LatticeVector(0, -1, 0);
@@ -380,7 +380,7 @@ void ParticleForceSpreadWithWallTests :: testNode2WallCutoff() {
 
   // Makes sure there are no force except node-Wall interaction
   helpers::ZeroOutForces(latDat);
-  mesh.moduli = redblood::Particle::Moduli();
+  mesh.moduli = redblood::Cell::Moduli();
   mesh.nodeWall.intensity = 1.;
   // Min distance to wall, so we can check cutoff
   helpers::SetWallDistance(latDat, 0.3);
@@ -424,9 +424,9 @@ void ParticleForceSpreadWithWallTests :: testNode2WallCutoff() {
   }
 }
 
-CPPUNIT_TEST_SUITE_REGISTRATION(ParticleVelocityInterpolTests);
-CPPUNIT_TEST_SUITE_REGISTRATION(ParticleForceSpreadTests);
-CPPUNIT_TEST_SUITE_REGISTRATION(ParticleForceSpreadWithWallTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(CellVelocityInterpolTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadWithWallTests);
 }}
 
 #endif // ONCE

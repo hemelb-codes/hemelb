@@ -7,20 +7,20 @@
 // specifically made by you with University College London.
 //
 
-#include "redblood/Particle.h"
+#include "redblood/Cell.h"
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
-#include "redblood/ParticleImpl.cc"
+#include "redblood/Cell.impl.cc"
 
 namespace hemelb { namespace redblood {
 
-PhysicalEnergy Particle::operator()() const {
+PhysicalEnergy Cell::operator()() const {
   return facetBending_()
     + volumeEnergy(*mesh_, *template_, moduli.volume)
     + surfaceEnergy(*mesh_, *template_, moduli.surface)
     + strainEnergy(*mesh_, *template_, moduli.dilation, moduli.strain);
 }
-PhysicalEnergy Particle::operator()(
+PhysicalEnergy Cell::operator()(
     std::vector<LatticeForceVector> &_forces) const {
   assert(_forces.size() == mesh_->vertices.size());
   return facetBending_(_forces)
@@ -30,7 +30,7 @@ PhysicalEnergy Particle::operator()(
         moduli.dilation, moduli.strain, _forces);
 }
 
-PhysicalEnergy Particle::facetBending_() const {
+PhysicalEnergy Cell::facetBending_() const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
   PhysicalEnergy result(0);
@@ -46,7 +46,7 @@ PhysicalEnergy Particle::facetBending_() const {
   return result;
 }
 
-PhysicalEnergy Particle::facetBending_(
+PhysicalEnergy Cell::facetBending_(
     std::vector<LatticeForceVector> &_forces) const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 

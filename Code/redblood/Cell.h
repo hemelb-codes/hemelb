@@ -17,8 +17,8 @@
 namespace hemelb { namespace redblood {
 
 
-//! Deformable particle for which energy and forces can be computed
-class Particle : public Mesh {
+//! Deformable cell for which energy and forces can be computed
+class Cell : public Mesh {
 public:
   //! Holds all physical parameters
   struct Moduli {
@@ -44,14 +44,14 @@ public:
   //! across particles.
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
-  Particle(Mesh const & _mesh, Mesh const &_template)
+  Cell(Mesh const & _mesh, Mesh const &_template)
       : Mesh(_mesh), template_(_template.GetData()) {}
 
   //! \brief Initializes mesh from mesh data
   //! \details This version makes it possible to share the unmodified mesh
   //! across particles.
   //! \param [in] _mesh: Modifyiable mesh
-  Particle(Mesh const & _mesh)
+  Cell(Mesh const & _mesh)
       : Mesh(_mesh), template_(new MeshData(*_mesh.GetData())) {}
 
   //! \brief Initializes mesh from mesh data
@@ -59,7 +59,7 @@ public:
   //! is also created.
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
-  Particle(boost::shared_ptr<MeshData> const & _mesh)
+  Cell(boost::shared_ptr<MeshData> const & _mesh)
        : Mesh(_mesh), template_(new MeshData(*_mesh)) {}
 
   //! Unmodified mesh

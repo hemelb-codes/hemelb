@@ -8,20 +8,20 @@
 //
 
 #include <vector>
-#include "redblood/MeshAndParticle.h"
+#include "redblood/GridAndCell.h"
 
 namespace hemelb { namespace redblood {
 
 //! Spreads the forces from the particle to the lattice
 Dimensionless forcesOnGrid(
-    Particle const &_particle,
+    Cell const &_cell,
     geometry::LatticeData &_latticeData,
     stencil::types _stencil
 ) {
-  std::vector<LatticeForceVector> forces(_particle.GetNumberOfNodes(), 0);
-  Dimensionless const energy = _particle(forces);
+  std::vector<LatticeForceVector> forces(_cell.GetNumberOfNodes(), 0);
+  Dimensionless const energy = _cell(forces);
   details::spreadForce2Grid(
-      _particle, details::SpreadForces(forces, _latticeData), _stencil);
+      _cell, details::SpreadForces(forces, _latticeData), _stencil);
   return energy;
 }
 

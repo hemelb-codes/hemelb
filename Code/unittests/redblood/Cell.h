@@ -11,19 +11,19 @@
 #define HEMELB_UNITTESTS_REDBLOOD_PARTICLE_H
 
 #include <cppunit/TestFixture.h>
-#include "redblood/Particle.h"
+#include "redblood/Cell.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb { namespace unittests {
 
-class ParticleTests : public EnergyVsGradientFixture {
-    CPPUNIT_TEST_SUITE(ParticleTests);
-    CPPUNIT_TEST(testParticleEnergy);
+class CellTests : public EnergyVsGradientFixture {
+    CPPUNIT_TEST_SUITE(CellTests);
+    CPPUNIT_TEST(testCellEnergy);
     CPPUNIT_TEST_SUITE_END();
 
-    struct ParticleEnergy {
-      mutable redblood::Particle particle;
-      ParticleEnergy(redblood::Mesh const &_mesh,
+    struct CellEnergy {
+      mutable redblood::Cell particle;
+      CellEnergy(redblood::Mesh const &_mesh,
           redblood::Mesh const _template)
         : particle(_mesh, _template) {
           particle.moduli.bending = 0.888;
@@ -53,15 +53,15 @@ public:
       mesh.vertices[2] += LatticePosition(0.02631, -0.00824223, -0.098362);
     }
 
-    void testParticleEnergy() {
-      energyVsForces(ParticleEnergy(mesh, original));
+    void testCellEnergy() {
+      energyVsForces(CellEnergy(mesh, original));
     }
 
 protected:
     redblood::MeshData original;
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(ParticleTests);
+CPPUNIT_TEST_SUITE_REGISTRATION(CellTests);
 }}
 
 #endif // ONCE
