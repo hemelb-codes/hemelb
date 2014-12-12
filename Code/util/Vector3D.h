@@ -331,6 +331,11 @@ namespace hemelb
           return Cross(*this, other);
         }
 
+        template<class OTHER> Vector3D<OTHER> cast() const {
+          return Vector3D<OTHER>(*this);
+        }
+
+
         /**
          * Compute the magnitude squared of the vector
          * @return magnitude**2

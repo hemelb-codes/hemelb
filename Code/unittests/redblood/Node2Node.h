@@ -22,7 +22,7 @@ class Node2NodeTests : public CppUnit::TestFixture {
 
 public:
     void testNode2NodeForce() {
-      PhysicalDistance const cutoff = 2e0 * 2e0; // Squared
+      PhysicalDistance const cutoff = 2e0;
       CPPUNIT_ASSERT_DOUBLES_EQUAL(
           redblood::node2NodeForce(cutoff, 1e0, cutoff, 1),
           0e0, 1e-12
@@ -43,21 +43,25 @@ public:
       // Test direction
       LatticePosition const direction = LatticePosition(1, 2, 3).Normalise();
       LatticeForceVector const force = redblood::node2NodeForce(
-          direction, 1, direction.GetMagnitudeSquared() * 1.1
+          direction, 1, direction.GetMagnitude() * 1.1
       );
       CPPUNIT_ASSERT(helpers::is_zero(
           force + direction * force.GetMagnitude()
       ));
 
       LatticePosition const A(0, 0, 0);
-      LatticePosition const B(std::sqrt(0.9*cutoff), 0, 0);
+      LatticePosition const B(std::sqrt(0.9)*cutoff, 0, 0);
+      LatticeForceVector const expected
+        = -B.GetNormalised() * (1.0 / cutoff / cutoff * (1.0 / 0.9 - 1.e0));
       CPPUNIT_ASSERT(helpers::is_zero(
-            redblood::node2NodeForce(B - A, 1.0, cutoff)
-            + B.GetNormalised() * (1.0 / cutoff * (1.0 / 0.9 - 1.e0))
+            redblood::node2NodeForce((B - A).GetMagnitude(), 1.0, cutoff)
+            + expected.GetMagnitude()
       ));
       CPPUNIT_ASSERT(helpers::is_zero(
-            redblood::node2NodeForce(A, B, 1.0, cutoff)
-            + (B - A).GetNormalised() * (1.0 / cutoff * (1.0 / 0.9 - 1.e0))
+            redblood::node2NodeForce(B - A, 1.0, cutoff) - expected
+      ));
+      CPPUNIT_ASSERT(helpers::is_zero(
+            redblood::node2NodeForce(A, B, 1.0, cutoff) - expected
       ));
     }
 };

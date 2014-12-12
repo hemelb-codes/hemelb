@@ -89,6 +89,10 @@ namespace hemelb { namespace unittests { namespace helpers {
       template<class LATTICE>
         distribn_t const * GetFNew(LatticeVector const &_pos) const;
 
+      void SetMinWallDistance(PhysicalDistance _mindist);
+      void SetWallDistance(PhysicalDistance _mindist);
+
+
       // Sets up linear distribution f_i(coeffs) = (1, x, y, z) * coeffs
       // Where * is the dot product
       template<class LATTICE, class FUNCTION>
@@ -130,6 +134,24 @@ namespace hemelb { namespace unittests { namespace helpers {
       size_t const indexFOld(siteFOld - firstFOld);
       return latDat->GetFNew(indexFOld);
     }
+
+  void LatticeDataAccess :: SetMinWallDistance(PhysicalDistance _mindist) {
+    typedef std::vector<distribn_t> :: iterator iterator;
+    iterator i_first = latDat->distanceToWall.begin();
+    iterator const i_end = latDat->distanceToWall.end();
+    for(; i_first != i_end; ++i_first)
+      if(*i_first > 0e0 and *i_first < _mindist)
+        *i_first = _mindist;
+  }
+
+  void LatticeDataAccess :: SetWallDistance(PhysicalDistance _mindist) {
+    typedef std::vector<distribn_t> :: iterator iterator;
+    iterator i_first = latDat->distanceToWall.begin();
+    iterator const i_end = latDat->distanceToWall.end();
+    for(; i_first != i_end; ++i_first)
+      if(*i_first > 0e0) *i_first = _mindist;
+  }
+
   inline void ZeroOutFOld(geometry::LatticeData * const _latDat) {
     LatticeDataAccess(_latDat).ZeroOutFOld();
   }
@@ -177,6 +199,14 @@ namespace hemelb { namespace unittests { namespace helpers {
         .SetUpDistribution<LATTICE, Linear>(_i, _linear);
     }
 
+  void SetMinWallDistance(geometry::LatticeData * const _latDat,
+      PhysicalDistance _mindist) {
+    LatticeDataAccess(_latDat).SetMinWallDistance(_mindist);
+  }
+  void SetWallDistance(geometry::LatticeData * const _latDat,
+      PhysicalDistance _mindist) {
+    LatticeDataAccess(_latDat).SetWallDistance(_mindist);
+  }
 
 }}}
 #endif

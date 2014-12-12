@@ -9,21 +9,19 @@
 
 #include <vector>
 #include "redblood/MeshAndParticle.h"
-// Separated some of the implementation so it can be unit-tested and still
-// remain unexported within an anonymous namespace
-#include "redblood/MeshAndParticle.impl.cc"
 
 namespace hemelb { namespace redblood {
 
 //! Spreads the forces from the particle to the lattice
-Dimensionless forces_on_grid(
+Dimensionless forcesOnGrid(
     Particle const &_particle,
     geometry::LatticeData &_latticeData,
     stencil::types _stencil
 ) {
   std::vector<LatticeForceVector> forces(_particle.GetNumberOfNodes(), 0);
   Dimensionless const energy = _particle(forces);
-  spread_forces_to_grid(_particle, forces, _latticeData, _stencil);
+  details::spreadForce2Grid(
+      _particle, details::SpreadForces(forces, _latticeData), _stencil);
   return energy;
 }
 

@@ -102,6 +102,7 @@ PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
 
 PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
     PhysicalForce _intensity) {
+  if(_intensity <= 1e-12) return 0e0;
   PhysicalVolume const vol0 = volume(_orig);
   PhysicalVolume const deltaV = volume(_mesh) - vol0;
   return _intensity * 0.5 * deltaV * deltaV / vol0;
@@ -109,6 +110,7 @@ PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
 
 PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
     PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces) {
+  if(_intensity <= 1e-12) return 0e0;
   MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
   MeshData::t_Facets::const_iterator const i_facet_end = _mesh.facets.end();
   assert(_mesh.facets.size() == _orig.facets.size());
