@@ -16,21 +16,21 @@
 namespace hemelb { namespace redblood {
 
   //! \brief Force meant to prevent nodes from collapsing one onto the other
-  //! \param[in] _distanceSquared: Square of the distance between the two nodes
+  //! \param[in] _distance: Square of the distance between the two nodes
   //! \param[in] _intensity: K_int, strength of the interaction
-  //! \param[in] _cutoffDistanceSquared: Maximum interaction distance, squared
+  //! \param[in] _cutoffDistance: Maximum interaction distance, squared
   //! \param[in] _exponent
   inline PhysicalForce node2NodeForce(
-      PhysicalDistance const _distanceSquared,
+      PhysicalDistance const _distance,
       PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistanceSquared = 1.0,
-      size_t _exponent = 1
+      PhysicalDistance const _cutoffDistance = 1.0,
+      size_t _exponent = 2
   ) {
-    if(_distanceSquared >= _cutoffDistanceSquared) return 0e0;
-    PhysicalDistance const deltaXSquared = 1;
+    if(_distance >= _cutoffDistance) return 0e0;
+    PhysicalDistance const deltaX = 1;
     return -_intensity * (
-        std::pow(deltaXSquared / _distanceSquared, _exponent)
-        - std::pow(deltaXSquared / _cutoffDistanceSquared, _exponent)
+        std::pow(deltaX / _distance, _exponent)
+        - std::pow(deltaX / _cutoffDistance, _exponent)
     );
   }
 
@@ -38,13 +38,12 @@ namespace hemelb { namespace redblood {
   inline LatticeForceVector node2NodeForce(
       LatticePosition _distance,
       PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistanceSquared = 1.0,
-      size_t _exponent = 1
+      PhysicalDistance const _cutoffDistance = 1.0,
+      size_t _exponent = 2
   ) {
-    PhysicalDistance const d = _distance.GetMagnitudeSquared();
+    PhysicalDistance const d = _distance.GetMagnitude();
     return _distance * (
-        node2NodeForce(d, _intensity, _cutoffDistanceSquared, _exponent)
-        / std::sqrt(d)
+        node2NodeForce(d, _intensity, _cutoffDistance, _exponent) / d
     );
   }
 
@@ -52,13 +51,40 @@ namespace hemelb { namespace redblood {
   inline LatticeForceVector node2NodeForce(
       LatticePosition _A, LatticePosition _B,
       PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistanceSquared = 1.0,
-      size_t _exponent = 1
+      PhysicalDistance const _cutoffDistance = 1.0,
+      size_t _exponent = 2
   ) {
-    return node2NodeForce(
-        _B - _A, _intensity, _cutoffDistanceSquared, _exponent);
+    return node2NodeForce(_B - _A, _intensity, _cutoffDistance, _exponent);
   }
 
+
+  //! Holds node-node interaction parameters
+  struct Node2NodeForce {
+    //! Strength of the interaction
+    PhysicalForce intensity;
+    //! Maximum distance of the interaction
+    PhysicalDistance cutoff;
+    //! Power exponent
+    size_t exponent;
+
+    Node2NodeForce(
+        PhysicalForce _intensity = 0.0,
+        PhysicalDistance _cutoff = 1.0,
+        size_t _exponent = 2
+    ) : intensity(_intensity), cutoff(_cutoff), exponent(_exponent) {}
+
+
+    PhysicalForce operator()(PhysicalDistance const &_distance) const {
+      return node2NodeForce(_distance, intensity, cutoff, exponent);
+    }
+    LatticeForceVector operator()(LatticePosition const &_distance) const {
+      return node2NodeForce(_distance, intensity, cutoff, exponent);
+    }
+    LatticeForceVector operator()(
+        LatticePosition const &_A, LatticePosition const &_B) const {
+      return node2NodeForce(_A, _B, intensity, cutoff, exponent);
+    }
+  };
 }} // hemelb::redblood
 
 #endif

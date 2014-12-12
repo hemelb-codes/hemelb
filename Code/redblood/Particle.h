@@ -11,6 +11,7 @@
 #define HEMELB_REDBLOOD_PARTICLE_H
 
 #include "redblood/Mesh.h"
+#include "redblood/Node2Node.h"
 #include "units.h"
 
 namespace hemelb { namespace redblood {
@@ -21,18 +22,22 @@ class Particle : public Mesh {
 public:
   //! Holds all physical parameters
   struct Moduli {
-    // Bending energy parameter
+    //! Bending energy parameter
     PhysicalPressure bending;
-    // Surface energy parameter
+    //! Surface energy parameter
     PhysicalPressure surface;
-    // Surface volume parameter
+    //! Surface volume parameter
     PhysicalPressure volume;
-    // Skalak dilation modulus
+    //! Skalak dilation modulus
     PhysicalPressure dilation;
-    // Skalak strain modulus
+    //! Skalak strain modulus
     PhysicalPressure strain;
     Moduli() : bending(0), surface(0), volume(0), dilation(0), strain(0) {};
   } moduli;
+  //! Node-node interaction
+  Node2NodeForce nodeNode;
+  //! Node-wall interaction
+  Node2NodeForce nodeWall;
 
   //! \brief Initializes mesh from mesh data
   //! \details This version makes it possible to share the unmodified mesh
@@ -54,7 +59,7 @@ public:
   //! is also created.
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
-  Particle   (boost::shared_ptr<MeshData> const & _mesh)
+  Particle(boost::shared_ptr<MeshData> const & _mesh)
        : Mesh(_mesh), template_(new MeshData(*_mesh)) {}
 
   //! Unmodified mesh

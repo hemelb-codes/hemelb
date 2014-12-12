@@ -19,78 +19,51 @@
 
 
 namespace hemelb { namespace redblood {
+// Implementation details
+#include "redblood/MeshAndParticle.impl.h"
 
 //! Displacement of the particles nodes interpolated from lattice velocities
-template<class T_KERNEL> void velocities_on_mesh(
-    Particle const &_particle,
-    geometry::LatticeData const &_latDat,
-    stencil::types _stencil,
-    std::vector<LatticePosition> &_displacements
-);
-
-//! Computes and Spreads the forces from the particle to the lattice
-//! Returns the energy
-Dimensionless forces_on_grid(
-    Particle const &_particle,
-    geometry::LatticeData &_latticeData,
-    stencil::types _stencil
-);
-
-namespace {
-  // Loops over nodes, computes velocity and does something
-  // struct + member makes up for lack of partial function
-  // specialization in c++ pre 11
-  template<class T_KERNEL> struct VelocityNodeLoop {
-    VelocityNodeLoop(
-        stencil::types _stencil,
-        Particle const &_particle,
-        geometry::LatticeData const &_latDat
-    ) : stencil(_stencil), particle(_particle), latticeData(_latDat) {}
-    // Loop and does something
-    template<class T_FUNCTOR> void loop(T_FUNCTOR apply) {
-      typedef MeshData::t_Vertices::const_iterator const_iterator;
-      const_iterator i_current = particle.GetVertices().begin();
-      const_iterator const i_end = particle.GetVertices().end();
-      for(; i_current != i_end; ++i_current) {
-        PhysicalVelocity const velocity
-          = interpolateVelocity<T_KERNEL>(latticeData, *i_current, stencil);
-        apply(velocity);
-      }
-    }
-
-    stencil::types const stencil;
-    Particle const &particle;
-    geometry::LatticeData const &latticeData;
-  };
-
-  //! Updates an assignable iterator of some kind
-  template<class T_ITERATOR> struct TransformIterator {
-    T_ITERATOR iterator;
-    TransformIterator(T_ITERATOR _iterator) : iterator(_iterator) {}
-    void operator()(typename T_ITERATOR::value_type const & _value) {
-      *(iterator++) = _value;
-    }
-  };
-
-  //! Updates an assignable iterator of some kind
-  template<class T_ITERATOR>
-    TransformIterator<T_ITERATOR> transform_iterator(T_ITERATOR iterator) {
-      return TransformIterator<T_ITERATOR>(iterator);
-    }
-
-}
-
-template<class T_KERNEL> void velocities_on_mesh(
+template<class T_KERNEL> void velocitiesOnMesh(
     Particle const &_particle,
     geometry::LatticeData const &_latDat,
     stencil::types _stencil,
     std::vector<LatticePosition> &_displacements
 ) {
   _displacements.resize(_particle.GetNumberOfNodes());
-  VelocityNodeLoop<T_KERNEL>(_stencil, _particle, _latDat)
-    .loop(transform_iterator(_displacements.begin()));
+  details::VelocityNodeLoop<T_KERNEL>(_stencil, _particle, _latDat)
+    .loop(details::transform_iterator(_displacements.begin()));
 }
 
+//! Computes and Spreads the forces from the particle to the lattice
+//! Returns the energy
+Dimensionless forcesOnGrid(
+    Particle const &_particle,
+    geometry::LatticeData &_latticeData,
+    stencil::types _stencil
+);
+
+//! Computes and Spreads the forces from the particle to the lattice
+//! Adds in the node-wall interaction. It is easier to add here since we
+//! already have a loop over neighboring grid nodes. Assumption is that the
+//! interaction distance is smaller or equal to stencil.
+//! Returns the energy (excluding node-wall interaction)
+template<class LATTICE> Dimensionless forcesOnGridWithWallInteraction(
+    Particle const &_particle,
+    geometry::LatticeData &_latticeData,
+    stencil::types _stencil
+) {
+  std::vector<LatticeForceVector> forces(_particle.GetNumberOfNodes(), 0);
+  Dimensionless const energy = _particle(forces);
+
+  details::spreadForce2Grid(
+      _particle,
+      details::SpreadForcesAndWallForces<LATTICE>(
+        _particle, forces, _latticeData
+      ),
+      _stencil
+  );
+  return energy;
+}
 
 }} // hemelb::redblood
 
