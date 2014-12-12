@@ -9,10 +9,10 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_H
 #define HEMELB_UNITTESTS_REDBLOOD_H
 #include "unittests/redblood/Mesh.h"
-#include "unittests/redblood/ParticleImpl.h"
-#include "unittests/redblood/Particle.h"
+#include "unittests/redblood/Cell.impl.h"
+#include "unittests/redblood/Cell.h"
 #include "unittests/redblood/Stencil.h"
 #include "unittests/redblood/Interpolation.h"
-#include "unittests/redblood/MeshAndParticle.h"
+#include "unittests/redblood/GridAndCell.h"
 #include "unittests/redblood/Node2Node.h"
 #endif

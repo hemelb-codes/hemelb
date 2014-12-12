@@ -1,2 +1,2 @@
-add_library(hemelb_redblood Mesh.h Mesh.cc Particle.cc Interpolation.cc
-  stencil.cc MeshAndParticle.cc)
+add_library(hemelb_redblood Mesh.h Mesh.cc Cell.cc Interpolation.cc
+  stencil.cc GridAndCell.cc)

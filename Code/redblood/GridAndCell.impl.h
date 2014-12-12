@@ -14,14 +14,14 @@ namespace details { namespace {
 template<class T_KERNEL> struct VelocityNodeLoop {
   VelocityNodeLoop(
       stencil::types _stencil,
-      Particle const &_particle,
+      Cell const &_cell,
       geometry::LatticeData const &_latDat
-  ) : stencil(_stencil), particle(_particle), latticeData(_latDat) {}
+  ) : stencil(_stencil), cell(_cell), latticeData(_latDat) {}
   // Loop and does something
   template<class T_FUNCTOR> void loop(T_FUNCTOR apply) {
     typedef MeshData::t_Vertices::const_iterator const_iterator;
-    const_iterator i_current = particle.GetVertices().begin();
-    const_iterator const i_end = particle.GetVertices().end();
+    const_iterator i_current = cell.GetVertices().begin();
+    const_iterator const i_end = cell.GetVertices().end();
     for(; i_current != i_end; ++i_current) {
       PhysicalVelocity const velocity
         = interpolateVelocity<T_KERNEL>(latticeData, *i_current, stencil);
@@ -30,7 +30,7 @@ template<class T_KERNEL> struct VelocityNodeLoop {
   }
 
   stencil::types const stencil;
-  Particle const &particle;
+  Cell const &cell;
   geometry::LatticeData const &latticeData;
 };
 
@@ -53,14 +53,14 @@ template<class T_ITERATOR>
 //! The functor argument is called with the current vertex index, the
 //! global site index triplet, and the associated interpolation weight.
 template<class T_FUNCTOR> void spreadForce2Grid(
-    Particle const &_particle,
+    Cell const &_cell,
     T_FUNCTOR _functor,
     stencil::types _stencil
 ) {
   typedef MeshData::t_Vertices::const_iterator const_iterator;
   // Spread them onto lattice
-  const_iterator i_vertex = _particle.GetVertices().begin();
-  const_iterator const i_end = _particle.GetVertices().end();
+  const_iterator i_vertex = _cell.GetVertices().begin();
+  const_iterator const i_end = _cell.GetVertices().end();
   for(size_t i(0); i_vertex != i_end; ++i_vertex, ++i) {
     InterpolationIterator spreader
       = interpolationIterator(*i_vertex, _stencil);
@@ -95,10 +95,10 @@ template<class LATTICE>
 class SpreadForcesAndWallForces : public SpreadForces {
   public:
     SpreadForcesAndWallForces(
-          Particle const &_particle,
+          Cell const &_cell,
           std::vector<LatticePosition> const &_forces,
           geometry::LatticeData &_latticeData
-    ) : SpreadForces(_forces, _latticeData), particle_(_particle) {}
+    ) : SpreadForces(_forces, _latticeData), cell(_cell) {}
     void operator()(
           size_t _vertex, LatticeVector const &_site,
           Dimensionless _weight) {
@@ -108,7 +108,7 @@ class SpreadForcesAndWallForces : public SpreadForces {
         return;
       geometry::Site<geometry::LatticeData> site(latticeData_.GetSite(siteid));
       site.AddToForce(forces_[_vertex] * _weight);
-      LatticePosition const vertex(particle_.GetVertex(_vertex));
+      LatticePosition const vertex(cell.GetVertex(_vertex));
       // std::cout << "v " << vertex << "\n";
       for(size_t i(1); i < LATTICE::NUMVECTORS; ++i) {
         PhysicalDistance const distance = site.GetWallDistance<LATTICE>(i);
@@ -119,11 +119,11 @@ class SpreadForcesAndWallForces : public SpreadForces {
         );
         LatticePosition const wallnode = LatticePosition(_site)
           + direction.GetNormalised() * distance;
-        site.AddToForce(particle_.nodeWall(vertex, wallnode) * _weight);
+        site.AddToForce(cell.nodeWall(vertex, wallnode) * _weight);
       }
     }
   protected:
-    Particle const &particle_;
+    Cell const &cell;
 };
 
 }} // namespace details::anonymous

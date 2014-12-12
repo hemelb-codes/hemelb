@@ -13,7 +13,7 @@
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "unittests/helpers/Comparisons.h"
 #include "redblood/Mesh.h"
-#include "redblood/Particle.h"
+#include "redblood/Cell.h"
 
 namespace hemelb { namespace unittests {
 
@@ -110,7 +110,7 @@ class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture {
       return redblood::tetrahedron();
     }
 
-    hemelb::redblood::Particle mesh;
+    hemelb::redblood::Cell mesh;
 };
 
 }}
