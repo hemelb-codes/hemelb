@@ -20,7 +20,7 @@
 #include "unittests/helpers/Comparisons.h"
 #include "unittests/helpers/LatticeDataAccess.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 class InterpolationTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(InterpolationTests);
@@ -66,7 +66,6 @@ class InterpolationTests : public CppUnit::TestFixture {
 public:
 
     void testIndexIterator() {
-      using hemelb::redblood::IndexIterator;
 
       LatticeVector vectors[] = {
         LatticeVector(4, 3, 2),
@@ -96,10 +95,8 @@ public:
     }
 
     void testOffLattice() {
-      using hemelb::redblood::InterpolationIterator;
-
       LatticePosition const pos(56.51, 52.9, 15.2);
-      hemelb::redblood::stencil::FourPoint stencil;
+      stencil::FourPoint stencil;
       InterpolationIterator iterator(pos, stencil);
 
       LatticeVector vectors[] = {
@@ -130,9 +127,8 @@ public:
     }
 
     void testOffLatticeZeroOutsideStencil() {
-      using hemelb::redblood::InterpolationIterator;
       LatticePosition const pos(56.51, 52.9, 15.2);
-      hemelb::redblood::stencil::FourPoint stencil;
+      stencil::FourPoint stencil;
       InterpolationIterator iterator(pos, stencil);
       // Checks that outside iteration box, weights are zero
       LatticeVector zero_vecs[] = {
@@ -161,7 +157,6 @@ public:
 
     template<class FUNCTION> void check(Dimensionless _x, Dimensionless _y,
         Dimensionless _z, Dimensionless _tolerance = 1e-8) {
-      using hemelb::redblood::interpolate;
       using hemelb::redblood::stencil::FOUR_POINT;
 
       FUNCTION func;
@@ -222,8 +217,8 @@ class VelocityInterpolationTests :
     void tearDown() { FourCubeBasedTestFixture::tearDown(); }
 
     template<class KERNEL> void velocityFromLatticeDataTester(bool _doforce) {
-      using redblood::details::VelocityFromLatticeData;
-      using redblood::details::HasForce;
+      using hemelb::redblood::details::VelocityFromLatticeData;
+      using hemelb::redblood::details::HasForce;
 
       // Check that type traits works as expected
       CPPUNIT_ASSERT(HasForce<KERNEL>::value == _doforce);
@@ -280,7 +275,7 @@ class VelocityInterpolationTests :
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(InterpolationTests);
-}}
+}}}
 
 #endif // ONCE
 

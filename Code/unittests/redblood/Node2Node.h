@@ -13,7 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "redblood/Node2Node.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 class Node2NodeTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(Node2NodeTests);
@@ -24,25 +24,25 @@ public:
     void testNode2NodeForce() {
       PhysicalDistance const cutoff = 2e0;
       CPPUNIT_ASSERT_DOUBLES_EQUAL(
-          redblood::node2NodeForce(cutoff, 1e0, cutoff, 1),
+          node2NodeForce(cutoff, 1e0, cutoff, 1),
           0e0, 1e-12
       );
       CPPUNIT_ASSERT_DOUBLES_EQUAL(
-          redblood::node2NodeForce(1.1 * cutoff, 1e0, cutoff, 1),
+          node2NodeForce(1.1 * cutoff, 1e0, cutoff, 1),
           0e0, 1e-12
       );
       CPPUNIT_ASSERT_DOUBLES_EQUAL(
-          redblood::node2NodeForce(0.9 * cutoff, 1e0, cutoff, 1),
+          node2NodeForce(0.9 * cutoff, 1e0, cutoff, 1),
           -1.0 / cutoff * (1.0 / 0.9 - 1.e0), 1e-12
       );
       CPPUNIT_ASSERT_DOUBLES_EQUAL(
-          redblood::node2NodeForce(0.9 * cutoff, 1.1, cutoff, 1),
-          1.1 * redblood::node2NodeForce(0.9 * cutoff, 1e0, cutoff, 1), 1e-12
+          node2NodeForce(0.9 * cutoff, 1.1, cutoff, 1),
+          1.1 * node2NodeForce(0.9 * cutoff, 1e0, cutoff, 1), 1e-12
       );
 
       // Test direction
       LatticePosition const direction = LatticePosition(1, 2, 3).Normalise();
-      LatticeForceVector const force = redblood::node2NodeForce(
+      LatticeForceVector const force = node2NodeForce(
           direction, 1, direction.GetMagnitude() * 1.1
       );
       CPPUNIT_ASSERT(helpers::is_zero(
@@ -54,20 +54,20 @@ public:
       LatticeForceVector const expected
         = -B.GetNormalised() * (1.0 / cutoff / cutoff * (1.0 / 0.9 - 1.e0));
       CPPUNIT_ASSERT(helpers::is_zero(
-            redblood::node2NodeForce((B - A).GetMagnitude(), 1.0, cutoff)
+            node2NodeForce((B - A).GetMagnitude(), 1.0, cutoff)
             + expected.GetMagnitude()
       ));
       CPPUNIT_ASSERT(helpers::is_zero(
-            redblood::node2NodeForce(B - A, 1.0, cutoff) - expected
+            node2NodeForce(B - A, 1.0, cutoff) - expected
       ));
       CPPUNIT_ASSERT(helpers::is_zero(
-            redblood::node2NodeForce(A, B, 1.0, cutoff) - expected
+            node2NodeForce(A, B, 1.0, cutoff) - expected
       ));
     }
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(Node2NodeTests);
-}}
+}}}
 
 #endif // ONCE
 
