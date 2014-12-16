@@ -19,4 +19,5 @@ namespace hemelb { namespace unittests { namespace redblood {
 #include "unittests/redblood/Interpolation.h"
 #include "unittests/redblood/GridAndCell.h"
 #include "unittests/redblood/Node2Node.h"
+#include "unittests/redblood/DivideConquer.h"
 #endif
