@@ -15,7 +15,7 @@
 #include "redblood/Cell.impl.cc"
 #include "unittests/redblood/Fixtures.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 // Tests functionality that is *not* part of the HemeLB API
 // Checks that we know how to compute geometric properties between facets
@@ -32,8 +32,8 @@ class FacetTests : public BasisFixture {
 public:
   void setUp() {
     BasisFixture::setUp();
-    main.reset(new redblood::Facet(mesh, 0));
-    neighbor.reset(new redblood::Facet(mesh, 3));
+    main.reset(new Facet(mesh, 0));
+    neighbor.reset(new Facet(mesh, 3));
   }
 
   void tearDown() {}
@@ -64,18 +64,17 @@ public:
   }
 
   void testAngle() {
-    Angle const actual0 = redblood::angle(*main, *neighbor);
+    Angle const actual0 = angle(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(actual0 - std::acos(-1.0 /std::sqrt(3.))));
 
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-    Angle const actual1 = redblood::angle(*main, *neighbor);
+    Angle const actual1 = angle(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(actual1 - 3.0*PI/4.0));
     mesh.vertices.back()[1] = 1e0;
   }
 
   void testCommonNodes() {
-    redblood::t_IndexPair const nodes \
-        = redblood::commonNodes(*main, *neighbor);
+    t_IndexPair const nodes = commonNodes(*main, *neighbor);
     CPPUNIT_ASSERT(nodes.first == 1 and nodes.second == 2);
     LatticePosition const edge = commonEdge(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(
@@ -83,28 +82,25 @@ public:
     ));
   }
   void testSingleNodes() {
-    redblood::t_IndexPair const nodes 
-      = redblood::singleNodes(*main, *neighbor);
+    t_IndexPair const nodes = singleNodes(*main, *neighbor);
     // indices into the list of vertices of each facet,
     // not into list of all vertices.
     CPPUNIT_ASSERT(nodes.first == 0 and nodes.second == 1);
   }
 
   void testOrientedAngle() {
-    Angle const actual0 = redblood::orientedAngle(*main, *neighbor);
+    Angle const actual0 = orientedAngle(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(actual0 + std::acos(-1.0 /std::sqrt(3.))));
 
     // simpler angle
     mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-    Angle const actual1 = redblood::orientedAngle(*main, *neighbor);
+    Angle const actual1 = orientedAngle(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(actual1 + 3.0*PI/4.0));
 
     // change orientation <==> negative angle
     mesh.facets.front()[1] = 2;
     mesh.facets.front()[2] = 1;
-    Angle const actual2 = redblood::orientedAngle(
-        redblood::Facet(mesh, 0), redblood::Facet(mesh, 3)
-    );
+    Angle const actual2 = orientedAngle(Facet(mesh, 0), Facet(mesh, 3));
     CPPUNIT_ASSERT(helpers::is_zero(actual2 + PI/4.0));
     mesh.facets.front()[1] = 1;
     mesh.facets.front()[2] = 2;
@@ -115,7 +111,7 @@ protected:
   LatticePosition nodes[4];
   std::set<size_t> main_indices;
   std::set<size_t> neighbor_indices;
-  boost::shared_ptr<redblood::Facet> main, neighbor;
+  boost::shared_ptr<Facet> main, neighbor;
 };
 
 class EnergyTests : public BasisFixture {
@@ -137,16 +133,12 @@ class EnergyTests : public BasisFixture {
     void testBending() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(
-        redblood::facetBending(mesh, original, 0, 3, 1e0)
-      );
+      PhysicalEnergy const actual0(facetBending(mesh, original, 0, 3, 1e0));
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of angle difference
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-      PhysicalEnergy const actual1(
-        redblood::facetBending(mesh, original, 0, 3, 1e0)
-      );
+      PhysicalEnergy const actual1(facetBending(mesh, original, 0, 3, 1e0));
       mesh.vertices.back()[2] = 1e0;
 
       PhysicalEnergy const expected(
@@ -158,15 +150,13 @@ class EnergyTests : public BasisFixture {
     void testVolume() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(
-        redblood::volumeEnergy(mesh, original, 1e0)
-      );
+      PhysicalEnergy const actual0(volumeEnergy(mesh, original, 1e0));
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
       PhysicalEnergy const actual1(
-        redblood::volumeEnergy(mesh, original, 2.0*volume(original))
+        volumeEnergy(mesh, original, 2.0*volume(original))
       );
 
       PhysicalEnergy const deltaV(volume(mesh) - volume(original));
@@ -177,15 +167,13 @@ class EnergyTests : public BasisFixture {
     void testSurface() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(
-        redblood::surfaceEnergy(mesh, original, 1e0)
-      );
+      PhysicalEnergy const actual0(surfaceEnergy(mesh, original, 1e0));
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
       PhysicalEnergy const actual1(
-        redblood::surfaceEnergy(mesh, original, 2.0*surface(original))
+        surfaceEnergy(mesh, original, 2.0*surface(original))
       );
 
       PhysicalEnergy const deltaS(surface(mesh) - surface(original));
@@ -196,16 +184,12 @@ class EnergyTests : public BasisFixture {
     void testStrain() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(
-        redblood::strainEnergy(mesh, original, 1e0, 2e0)
-      );
+      PhysicalEnergy const actual0(strainEnergy(mesh, original, 1e0, 2e0));
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-      PhysicalEnergy const actual1(
-        redblood::strainEnergy(mesh, original, 1e0, 2e0)
-      );
+      PhysicalEnergy const actual1(strainEnergy(mesh, original, 1e0, 2e0));
 
       PhysicalEnergy const regression(0.0865562612162);
       CPPUNIT_ASSERT(helpers::is_zero(actual1 - regression));
@@ -213,64 +197,62 @@ class EnergyTests : public BasisFixture {
     }
 
   protected:
-    redblood::MeshData original;
+    MeshData original;
     std::vector<LatticeForceVector> forces;
 };
 
 
 
 struct EnergyFunctional {
-  EnergyFunctional(redblood::MeshData const &_original)
-    : original(_original) {};
-  redblood::MeshData const &original;
+  EnergyFunctional(MeshData const &_original) : original(_original) {};
+  MeshData const &original;
 };
-#define HEMELB_OP_MACRO(CLASS, FUNCTION)                                     \
-  struct CLASS : public EnergyFunctional {                                   \
-    CLASS(redblood::MeshData const &_original)                               \
-      : EnergyFunctional(_original) {}                                       \
-    PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {       \
-      return redblood::FUNCTION(_mesh, original, 1.0);                       \
-    }                                                                        \
-    PhysicalEnergy operator()(redblood::MeshData const &_mesh,               \
-      std::vector<LatticeForceVector> &_forces) const{                       \
-      return redblood::FUNCTION(_mesh, original, 1.0, _forces);              \
-    }                                                                        \
+#define HEMELB_OP_MACRO(CLASS, FUNCTION)                     \
+  struct CLASS : public EnergyFunctional {                   \
+    CLASS(MeshData const &_original)                         \
+      : EnergyFunctional(_original) {}                       \
+    PhysicalEnergy operator()(MeshData const &_mesh) const { \
+      return FUNCTION(_mesh, original, 1.0);                 \
+    }                                                        \
+    PhysicalEnergy operator()(MeshData const &_mesh,         \
+      std::vector<LatticeForceVector> &_forces) const{       \
+      return FUNCTION(_mesh, original, 1.0, _forces);        \
+    }                                                        \
   }
 HEMELB_OP_MACRO(VolumeEnergy, volumeEnergy);
 HEMELB_OP_MACRO(SurfaceEnergy, surfaceEnergy);
 #undef HEMELB_OP_MACRO
 
 struct BendingEnergy : public EnergyFunctional {
-  BendingEnergy(redblood::MeshData const &_original)
+  BendingEnergy(MeshData const &_original)
     : EnergyFunctional(_original) {}
-  PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {
-    return redblood::facetBending(_mesh, original, 0, 1, 1.0)
-      + redblood::facetBending(_mesh, original, 0, 2, 1.0)
-      + redblood::facetBending(_mesh, original, 0, 3, 1.0)
-      + redblood::facetBending(_mesh, original, 1, 2, 1.0)
-      + redblood::facetBending(_mesh, original, 1, 3, 1.0)
-      + redblood::facetBending(_mesh, original, 2, 3, 1.0);
+  PhysicalEnergy operator()(MeshData const &_mesh) const {
+    return facetBending(_mesh, original, 0, 1, 1.0)
+      + facetBending(_mesh, original, 0, 2, 1.0)
+      + facetBending(_mesh, original, 0, 3, 1.0)
+      + facetBending(_mesh, original, 1, 2, 1.0)
+      + facetBending(_mesh, original, 1, 3, 1.0)
+      + facetBending(_mesh, original, 2, 3, 1.0);
   }
-  PhysicalEnergy operator()(redblood::MeshData const &_mesh,
+  PhysicalEnergy operator()(MeshData const &_mesh,
     std::vector<LatticeForceVector> &_forces) const{
-    return redblood::facetBending(_mesh, original, 0, 1, 1.0, _forces)
-      + redblood::facetBending(_mesh, original, 0, 2, 1.0, _forces)
-      + redblood::facetBending(_mesh, original, 0, 3, 1.0, _forces)
-      + redblood::facetBending(_mesh, original, 1, 2, 1.0, _forces)
-      + redblood::facetBending(_mesh, original, 1, 3, 1.0, _forces)
-      + redblood::facetBending(_mesh, original, 2, 3, 1.0, _forces);
+    return facetBending(_mesh, original, 0, 1, 1.0, _forces)
+      + facetBending(_mesh, original, 0, 2, 1.0, _forces)
+      + facetBending(_mesh, original, 0, 3, 1.0, _forces)
+      + facetBending(_mesh, original, 1, 2, 1.0, _forces)
+      + facetBending(_mesh, original, 1, 3, 1.0, _forces)
+      + facetBending(_mesh, original, 2, 3, 1.0, _forces);
   }
 };
 
 struct StrainEnergy : public EnergyFunctional {
-  StrainEnergy(redblood::MeshData const &_original)
-    : EnergyFunctional(_original) {}
-  PhysicalEnergy operator()(redblood::MeshData const &_mesh) const {
-    return redblood::strainEnergy(_mesh, original, 1.0, 2.0);
+  StrainEnergy(MeshData const &_original) : EnergyFunctional(_original) {}
+  PhysicalEnergy operator()(MeshData const &_mesh) const {
+    return strainEnergy(_mesh, original, 1.0, 2.0);
   }
-  PhysicalEnergy operator()(redblood::MeshData const &_mesh,
-    std::vector<LatticeForceVector> &_forces) const{
-    return redblood::strainEnergy(_mesh, original, 1.0, 2.0, _forces);
+  PhysicalEnergy operator()(MeshData const &_mesh,
+      std::vector<LatticeForceVector> &_forces) const{
+    return strainEnergy(_mesh, original, 1.0, 2.0, _forces);
   }
 };
 
@@ -298,7 +280,7 @@ public:
     void testStrain() { energyVsForces(StrainEnergy(original)); }
 
 protected:
-    redblood::MeshData original;
+    MeshData original;
 };
 
 // Tests certain node movement that do not result in forces/energy
@@ -313,9 +295,9 @@ class GradientKernTests : public BasisFixture {
     void NAME(LatticePosition const &_normal, size_t _node) {                 \
       std::vector<LatticeForceVector> forces(4, LatticeForceVector(0, 0, 0)); \
       double const epsilon(1e-5);                                             \
-      redblood::MeshData newmesh(mesh);                                       \
+      MeshData newmesh(mesh);                                                 \
       newmesh.vertices[_node] += _normal * epsilon;                           \
-      PhysicalEnergy const deltaE(redblood::FUNCTION_CALL);                   \
+      PhysicalEnergy const deltaE(FUNCTION_CALL);                             \
       CPPUNIT_ASSERT(helpers::is_zero(deltaE / epsilon));                     \
       for(size_t i(0); i < forces.size(); ++i)                                \
         CPPUNIT_ASSERT(helpers::is_zero(forces[i]));                          \
@@ -350,7 +332,7 @@ class GradientKernTests : public BasisFixture {
 
     void testSurface() {
       // Get rid of some surfaces first, to simplify kernel
-      redblood::MeshData const save(mesh);
+      MeshData const save(mesh);
       mesh.facets.resize(2);
       mesh.facets.back() = save.facets.back();
 
@@ -371,6 +353,6 @@ CPPUNIT_TEST_SUITE_REGISTRATION(FacetTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(EnergyTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(GradientTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(GradientKernTests);
-}}
+}}}
 
 #endif // ONCE

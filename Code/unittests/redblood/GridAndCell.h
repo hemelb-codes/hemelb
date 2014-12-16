@@ -15,14 +15,14 @@
 #include "redblood/facet.h"
 #include "unittests/redblood/Fixtures.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 namespace {
   // Creates a mesh that is a single planar triangle
   // It still has two facets so that we can run fake forces on it.
-  redblood::Mesh triangleMesh() {
+  Mesh triangleMesh() {
     // Rotate samosa so it is in xy plane
-    redblood::Mesh result = redblood::pancakeSamosa(0);
+    Mesh result = pancakeSamosa(0);
     result.GetData()->vertices[1] = LatticePosition(0, 1, 0);
     result.GetData()->vertices[2]
       = LatticePosition(std::sqrt(3.0)/2.0, 0.5, 0);
@@ -57,8 +57,8 @@ public:
 protected:
     // Creates a mesh that is a single planar triangle
     // It still has two facets so that we can run fake forces on it.
-    virtual redblood::Mesh initial_mesh() const {
-      return redblood::pancakeSamosa(0);
+    virtual Mesh initial_mesh() const {
+      return pancakeSamosa(0);
     }
     virtual size_t refinement() const { return 3; }
 };
@@ -90,7 +90,7 @@ public:
   protected:
     std::vector<LatticeForceVector> forces;
     LatticePosition direction, intensity, center;
-    virtual redblood::Mesh initial_mesh() const { return triangleMesh(); }
+    virtual Mesh initial_mesh() const { return triangleMesh(); }
     virtual size_t refinement() const { return 3; }
 };
 
@@ -107,7 +107,7 @@ class CellForceSpreadWithWallTests : public SquareDuctTetrahedronFixture {
   protected:
     int siteID(LatticeVector const &) const;
     LatticeVector GetSolidWall() const;
-    virtual redblood::Mesh initial_mesh() const { return triangleMesh(); }
+    virtual Mesh initial_mesh() const { return triangleMesh(); }
     virtual size_t refinement() const { return 3; }
 };
 
@@ -172,13 +172,12 @@ void CellVelocityInterpolTests::testDistributionFixture() {
 void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
-  LatticePosition const normal(redblood::Facet(*mesh.GetData(), 0).normal());
+  LatticePosition const normal(Facet(*mesh.GetData(), 0).normal());
   HEMELB_LINEAR_VELOCITY_PROFILE(normal.x, normal.y, normal.z);
 
   // Perform interpolation
   std::vector<LatticePosition> displacements;
-  redblood::velocitiesOnMesh<Kernel>(
-      mesh, *latDat, redblood::stencil::FOUR_POINT, displacements);
+  velocitiesOnMesh<Kernel>(mesh, *latDat, stencil::FOUR_POINT, displacements);
 
   // Compute expected velocities
   typedef std::vector<LatticePosition> :: const_iterator const_iterator;
@@ -193,14 +192,13 @@ void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa
 void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   // Figures out an in-plane direction
   helpers::ZeroOutFOld(latDat);
-  redblood::Facet const shapeFacet(*mesh.GetData(), 0);
+  Facet const shapeFacet(*mesh.GetData(), 0);
   LatticePosition const inplane(shapeFacet.edge(0) + shapeFacet.edge(1) * 0.5);
   HEMELB_LINEAR_VELOCITY_PROFILE(inplane.x, inplane.y, inplane.z);
 
   // Perform interpolation
   std::vector<LatticePosition> displacements;
-  redblood::velocitiesOnMesh<Kernel>(
-      mesh, *latDat, redblood::stencil::FOUR_POINT, displacements);
+  velocitiesOnMesh<Kernel>(mesh, *latDat, stencil::FOUR_POINT, displacements);
 
   // Computes what the interpolation should be
   typedef std::vector<LatticePosition> :: const_iterator const_iterator;
@@ -210,7 +208,7 @@ void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   PhysicalVelocity const
     v0 = displacements[0],
     v1 = displacements[1];
-  redblood::MeshData::t_Vertices::const_iterator
+  MeshData::t_Vertices::const_iterator
     i_vertex(mesh.GetVertices().begin() + 2);
   const_iterator i_disp = displacements.begin() + 2;
   const_iterator const i_end = displacements.end();
@@ -227,9 +225,9 @@ LatticeForceVector CellForceSpreadTests :: force_at_center(
     LatticePosition const &_position) {
   mesh += _position - mesh.GetBarycenter();
   helpers::ZeroOutForces(latDat);
-  redblood::details::spreadForce2Grid(
-      mesh, redblood::details::SpreadForces(forces, *latDat),
-      redblood::stencil::FOUR_POINT
+  details::spreadForce2Grid(
+      mesh, details::SpreadForces(forces, *latDat),
+      stencil::FOUR_POINT
   );
   return latDat->GetSite(center).GetForce();
 }
@@ -244,7 +242,7 @@ void CellForceSpreadTests :: setUpForces() {
   direction = LatticePosition(1, 2, 3);
   intensity = LatticePosition(3, 2, 1).Normalise();
   forces.resize(mesh.GetNumberOfNodes());
-  typedef redblood::MeshData::t_Vertices::const_iterator const_iterator;
+  typedef MeshData::t_Vertices::const_iterator const_iterator;
   const_iterator i_vertex = mesh.GetVertices().begin();
   const_iterator const i_end = mesh.GetVertices().end();
   std::vector<LatticeForceVector> :: iterator i_force = forces.begin();
@@ -301,7 +299,7 @@ void CellForceSpreadTests :: testIsIncreasing() {
 
 void CellForceSpreadTests :: testIsLinear() {
   size_t const N(5);
-  mesh = redblood::Cell(redblood::refine(mesh, 4));
+  mesh = Cell(refine(mesh, 4));
   setUpForces();
   // x0, x1 should be further than 2 from the edges
   // Only linear if samosa appears as infinite plane
@@ -380,7 +378,7 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
 
   // Makes sure there are no force except node-Wall interaction
   helpers::ZeroOutForces(latDat);
-  mesh.moduli = redblood::Cell::Moduli();
+  mesh.moduli = Cell::Moduli();
   mesh.nodeWall.intensity = 1.;
   // Min distance to wall, so we can check cutoff
   helpers::SetWallDistance(latDat, 0.3);
@@ -412,8 +410,8 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
     mesh += positions[i] - mesh.GetVertex(0);
     mesh.nodeWall.cutoff = cutoffs[i];
 
-    redblood::forcesOnGridWithWallInteraction<D3Q15>(
-        mesh,  *latDat, redblood::stencil::FOUR_POINT);
+    forcesOnGridWithWallInteraction<D3Q15>(
+        mesh,  *latDat, stencil::FOUR_POINT);
 
     bool const atWall = helpers::is_zero(latDat->GetSite(wetwall).GetForce());
     bool const atLeft = helpers::is_zero(latDat->GetSite(left).GetForce());
@@ -427,7 +425,7 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
 CPPUNIT_TEST_SUITE_REGISTRATION(CellVelocityInterpolTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadWithWallTests);
-}}
+}}}
 
 #endif // ONCE
 

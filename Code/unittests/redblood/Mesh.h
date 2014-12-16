@@ -17,7 +17,7 @@
 #include "resources/resource.h"
 #include "unittests/redblood/Fixtures.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 /**
  * Class to test the simulation master.
  */
@@ -30,7 +30,7 @@ class RedBloodMeshDataIOTests : public CppUnit::TestFixture
 public:
   void setUp() {
     std::string filename = resources::Resource("red_blood_cell.txt").Path();
-    mesh = redblood::read_mesh(filename);
+    mesh = read_mesh(filename);
   }
 
   void tearDown() {}
@@ -58,9 +58,9 @@ public:
 
   void testWriteMesh() {
     std::ostringstream output;
-    redblood::write_mesh(output, *mesh);
+    write_mesh(output, *mesh);
     std::istringstream input(output.str());
-    boost::shared_ptr<redblood::MeshData> other = redblood::read_mesh(input);
+    boost::shared_ptr<MeshData> other = read_mesh(input);
     CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
     CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
     CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
@@ -79,7 +79,7 @@ public:
   }
 
 private:
-  boost::shared_ptr<hemelb::redblood::MeshData> mesh;
+  boost::shared_ptr<MeshData> mesh;
 };
 
 class RedBloodMeshTests : public BasisFixture {
@@ -133,8 +133,8 @@ class RedBloodMeshTests : public BasisFixture {
 
     void testScaling() {
       Dimensionless const scale = 2.5;
-      hemelb::redblood::Mesh original(mesh);
-      hemelb::redblood::Mesh scaled(mesh);
+      Mesh original(mesh);
+      Mesh scaled(mesh);
       scaled *= scale;
 
       CPPUNIT_ASSERT(
@@ -152,8 +152,8 @@ class RedBloodMeshTests : public BasisFixture {
 
     void testTranslation() {
       LatticePosition const offset(1, 2, 3);
-      hemelb::redblood::Mesh original(mesh);
-      hemelb::redblood::Mesh trans(mesh);
+      Mesh original(mesh);
+      Mesh trans(mesh);
       trans += offset;
 
       CPPUNIT_ASSERT(helpers::is_zero(
@@ -177,15 +177,13 @@ class TopologyTests : public CppUnit::TestFixture {
 public:
   void setUp() {
     std::string filename = resources::Resource("red_blood_cube.txt").Path();
-    mesh = redblood::read_mesh(filename);
+    mesh = read_mesh(filename);
     // Checks the mesh input makes sense
     CPPUNIT_ASSERT(mesh->vertices.size() == 8);
     CPPUNIT_ASSERT(mesh->facets.size() == 12);
 
     // Creates topology
-    topo = boost::shared_ptr<hemelb::redblood::MeshTopology>(
-        new hemelb::redblood::MeshTopology(*mesh)
-    );
+    topo = boost::shared_ptr<MeshTopology>(new MeshTopology(*mesh));
   }
 
   void tearDown() {}
@@ -248,13 +246,13 @@ public:
     }
 
 private:
-  boost::shared_ptr<hemelb::redblood::MeshData> mesh;
-  boost::shared_ptr<hemelb::redblood::MeshTopology> topo;
+  boost::shared_ptr<MeshData> mesh;
+  boost::shared_ptr<MeshTopology> topo;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshDataIOTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(TopologyTests);
-}}
+}}}
 
 #endif // ONCE

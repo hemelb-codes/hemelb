@@ -14,7 +14,7 @@
 #include "redblood/Cell.h"
 #include "unittests/redblood/Fixtures.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 class CellTests : public EnergyVsGradientFixture {
     CPPUNIT_TEST_SUITE(CellTests);
@@ -22,9 +22,8 @@ class CellTests : public EnergyVsGradientFixture {
     CPPUNIT_TEST_SUITE_END();
 
     struct CellEnergy {
-      mutable redblood::Cell particle;
-      CellEnergy(redblood::Mesh const &_mesh,
-          redblood::Mesh const _template)
+      mutable Cell particle;
+      CellEnergy(Mesh const &_mesh, Mesh const _template)
         : particle(_mesh, _template) {
           particle.moduli.bending = 0.888;
           particle.moduli.surface = 1.127;
@@ -32,14 +31,14 @@ class CellTests : public EnergyVsGradientFixture {
           particle.moduli.strain = 1.047524;
           particle.moduli.dilation = 0.945524;
       }
-      PhysicalEnergy operator()(redblood::MeshData const& _mesh) const {
-        particle.SetData(redblood::MeshData(_mesh));
+      PhysicalEnergy operator()(MeshData const& _mesh) const {
+        particle.SetData(MeshData(_mesh));
         return particle();
       }
       PhysicalEnergy operator()(
-          redblood::MeshData const &_mesh,
+          MeshData const &_mesh,
           std::vector<LatticeForceVector> &_forces) const {
-        particle.SetData(redblood::MeshData(_mesh));
+        particle.SetData(MeshData(_mesh));
         return particle(_forces);
       }
     };
@@ -58,11 +57,11 @@ public:
     }
 
 protected:
-    redblood::MeshData original;
+    MeshData original;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellTests);
-}}
+}}}
 
 #endif // ONCE
 

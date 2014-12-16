@@ -8,6 +8,10 @@
 //
 #ifndef HEMELB_UNITTESTS_REDBLOOD_H
 #define HEMELB_UNITTESTS_REDBLOOD_H
+namespace hemelb { namespace redblood {}};
+namespace hemelb { namespace unittests { namespace redblood {
+  using namespace hemelb::redblood;
+}}}
 #include "unittests/redblood/Mesh.h"
 #include "unittests/redblood/Cell.impl.h"
 #include "unittests/redblood/Cell.h"

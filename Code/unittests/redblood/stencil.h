@@ -14,7 +14,7 @@
 #include "redblood/stencil.h"
 #include "unittests/redblood/Fixtures.h"
 
-namespace hemelb { namespace unittests {
+namespace hemelb { namespace unittests { namespace redblood {
 
 class StencilTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(StencilTests);
@@ -25,7 +25,7 @@ class StencilTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE_END();
 public:
     void test4point() {
-      using redblood::stencil::fourPoint;
+      using stencil::fourPoint;
       Dimensionless const x[] = {
         0,  1.-1e-8, 1.+1e-8,  -1.-1e-8, -1.+1e-8,
         2.-1e-8, 2.+1e-8, -2.-1e-8, -2.+1e-8, 2.1, -2.1,
@@ -40,7 +40,7 @@ public:
       }
     }
     void testCosineApprox() {
-      using redblood::stencil::cosineApprox;
+      using stencil::cosineApprox;
       Dimensionless const x[] = {
         0,  1.-1e-8, -1.+1e-8, 2.-1e-8, -2.+1e-8, 2.1, -2.1,
         1e8 // break value
@@ -54,7 +54,7 @@ public:
       }
     }
     void test3point() {
-      using redblood::stencil::threePoint;
+      using stencil::threePoint;
       Dimensionless const x[] = {
         0,  0.5-1e-8, 0.5+1e-8,  -0.5-1e-8, -0.5+1e-8,
         1.5-1e-8, 1.5+1e-8, -1.5-1e-8, -1.5+1e-8, 1.6, -1.6,
@@ -69,7 +69,7 @@ public:
       }
     }
     void test2point() {
-      using redblood::stencil::twoPoint;
+      using stencil::twoPoint;
       Dimensionless const x[] = {
         0,  0.5,
         1.-1e-9, 1.+1e-9, -1.-1e-9, -1.+1e-9, 1.1, -1.1,
@@ -86,7 +86,7 @@ public:
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(StencilTests);
-}}
+}}}
 
 #endif // ONCE
 
