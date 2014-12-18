@@ -16,6 +16,7 @@
 #include <set>
 #include <string>
 #include "util/Vector3D.h"
+#include "util/Matrix3D.h"
 #include "units.h"
 
 namespace hemelb { namespace redblood {
@@ -103,6 +104,8 @@ public:
 
   //! Scale mesh around barycenter
   void operator*=(Dimensionless const &_scale);
+  //! Scale by matrix around barycenter
+  void operator*=(util::Matrix3D const &_scale);
   //! Translate mesh
   void operator+=(LatticePosition const &_offset);
 

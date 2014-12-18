@@ -12,6 +12,7 @@ namespace hemelb { namespace redblood {}};
 namespace hemelb { namespace unittests { namespace redblood {
   using namespace hemelb::redblood;
 }}}
+#define HEMELB_DOING_UNITTESTS
 #include "unittests/redblood/Mesh.h"
 #include "unittests/redblood/Cell.impl.h"
 #include "unittests/redblood/Cell.h"
@@ -20,4 +21,6 @@ namespace hemelb { namespace unittests { namespace redblood {
 #include "unittests/redblood/GridAndCell.h"
 #include "unittests/redblood/Node2Node.h"
 #include "unittests/redblood/DivideConquer.h"
+#include "unittests/redblood/CellCell.h"
+#undef HEMELB_DOING_UNITTESTS
 #endif
