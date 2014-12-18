@@ -112,6 +112,8 @@ public:
   //! Number of nodes
   size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }
   //! Const access to vertices
+  MeshData::t_Vertices & GetVertices() { return mesh_->vertices; }
+  //! Const access to vertices
   MeshData::t_Vertices const & GetVertices() const { return mesh_->vertices; }
   //! Const access to vertices
   MeshData::t_Vertices::const_reference GetVertex(size_t _site) const {
