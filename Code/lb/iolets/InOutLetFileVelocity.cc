@@ -112,60 +112,58 @@ namespace hemelb
       }
 
       /*LatticeVelocity InOutLetFileVelocity::GetVelocity2(
-          const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
-      {
-        /*
-         // v(r) = vMax (1 - r**2 / a**2)
-         // where r is the distance from the centreline
-         LatticePosition displ = x - position;
-         LatticeDistance z = displ.Dot(normal);
-         Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-         assert(rSqOverASq <= 1.0);
+       const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
+       {
+       // v(r) = vMax (1 - r**2 / a**2)
+       // where r is the distance from the centreline
+       LatticePosition displ = x - position;
+       LatticeDistance z = displ.Dot(normal);
+       Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+       assert(rSqOverASq <= 1.0);
 
-         // Get the max velocity
-         LatticeSpeed max = velocityTable[t];
+       // Get the max velocity
+       LatticeSpeed max =hile (myfile >> x)
+       { velocityTable[t];
 
-         // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-         return normal * (max * (1. - rSqOverASq)); //
-        return 0; //leave as dummy for now.
-      }*/
+       // Brackets to ensure that the scalar multiplies are done before vector * scalar.
+       return normal * (max * (1. - rSqOverASq)); //
+       return 0; //leave as dummy for now.
+       }*/
+
+      std::map<std::vector<int>, PhysicalVelocity> weights_table;
 
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
+        log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
         const std::string in_name = velocityFilePath + ".weights.txt";
+
+        /* Load and read file. */
         std::fstream myfile;
         myfile.open(in_name.c_str(), std::ios_base::in);
-        std::vector<util::Vector3D<site_t> > Coordinates;
-        std::vector<PhysicalVelocity> VelocityWeights;
+        log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s", in_name.c_str());
 
         std::string input_line;
+        /* input files are in ASCII, in format:
+         *
+         * coord_x coord_y coord_z weights_value
+         *
+         * */
         while (std::getline(myfile, input_line))
         {
-          if (input_line.find("PointIds") != std::string::npos) //coordinates section of velocity weight file.
-          {
-            site_t x, y, z;
-            while (myfile >> x)
-            {
-              myfile >> y >> z;
-              Coordinates.push_back(util::Vector3D<site_t>( { x, y, z }));
-            }
-          }
+          int x, y, z;
+          PhysicalVelocity v;
+          myfile >> x >> y >> z >> v;
 
-          if (input_line.find("LOOKUP_TABLE default") != std::string::npos) //section containing velocities
-          {
-            PhysicalVelocity v;
-            while (myfile >> v)
-            {
-              VelocityWeights.push_back(v);
-            }
-          }
-        }
+          std::vector<int> xyz;
+          xyz.push_back(x);
+          xyz.push_back(y);
+          xyz.push_back(z);
+          weights_table[xyz] = v;
 
-        for (int i=0; i<Coordinates.size(); i++) {
-          log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", Coordinates[i].x, Coordinates[i].y, Coordinates[i].z);
+          log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f", x, y, z, v);
         }
       }
 

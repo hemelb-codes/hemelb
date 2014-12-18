@@ -40,8 +40,8 @@ namespace hemelb
           }
 
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
-          //LatticeVelocity InOutLetFileVelocity::GetVelocity2(const util::Vector3D<int64_t> globalCoordinates,
-          //                                                        const LatticeTimeStep t) const;
+          /*LatticeVelocity GetVelocity2(const util::Vector3D<int64_t> globalCoordinates,
+                                                                  const LatticeTimeStep t) const;*/
 
           void Initialise(const util::UnitConverter* unitConverter);
 
