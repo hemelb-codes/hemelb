@@ -64,8 +64,23 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Type of the base class
     typedef DivideConquer<CellReference> base_type;
   public:
+    //! Iterator pair over single box
     typedef DivideConquer<CellReference>::const_range const_range;
-    typedef DivideConquer<CellReference>::const_iterator const_iterator;
+
+    //! Iterates over vertices
+    class iterator;
+    //! Iterates over vertices
+    class const_iterator;
+    // friend class iterator;
+    // friend class const_iterator;
+
+    // Implementation of DivideConquerCell::iterator
+#   define HEMELB_DOING_NONCONST
+#     include "CellCellIterator.impl.h"
+#   undef HEMELB_DOING_NONCONST
+    // Implementation of DivideConquerCell::const_iterator
+#   include "CellCellIterator.impl.h"
+
     //! Constructor
     DivideConquerCells(
         boost::shared_ptr<CellContainer> const &_cells,
@@ -81,8 +96,14 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
       return base_type::equal_range(_pos);
     }
 
-    const_iterator begin() const { return base_type::begin(); }
-    const_iterator end() const { return base_type::end(); }
+    iterator begin() { return iterator(*this, base_type::begin()); }
+    iterator end() { return iterator(*this, base_type::end()); }
+    const_iterator begin() const {
+      return const_iterator(*this, base_type::begin());
+    }
+    const_iterator end() const {
+      return const_iterator(*this, base_type::end());
+    }
     size_t size() const { return base_type::size(); }
 
     //! Distance from border below which an object is in the halo
@@ -97,6 +118,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Container of cells
     boost::shared_ptr<CellContainer> cells_;
 };
+
 
 }} // hemelb::redblood
 

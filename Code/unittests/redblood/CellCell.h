@@ -24,6 +24,7 @@ class CellCellInteractionTests : public CppUnit::TestFixture {
      CPPUNIT_TEST(testBoxHalo);
      CPPUNIT_TEST(testAddNodes);
      CPPUNIT_TEST(testAddMeshes);
+     CPPUNIT_TEST(testIterator);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -31,6 +32,10 @@ public:
     void testBoxHalo();
     void testAddNodes();
     void testAddMeshes();
+    void testIterator();
+
+protected:
+    boost::shared_ptr<CellContainer> fixture(PhysicalDistance) const;
 };
 
 void CellCellInteractionTests :: testBoxHaloTooBig() {
@@ -148,22 +153,58 @@ void check_cell(
   CPPUNIT_ASSERT(nodes.size() == _nbNodes);
 }
 
+boost::shared_ptr<CellContainer> CellCellInteractionTests :: fixture(
+    PhysicalDistance _cutoff) const {
+  boost::shared_ptr<CellContainer> cells(new CellContainer);
+  Mesh pancake = pancakeSamosa();
+  pancake += LatticePosition(1, 1, 1) * _cutoff * 0.5;
+  // safer to clone so cells has its own copy
+  cells->push_back(pancake.clone());
+  pancake += LatticePosition(3, 0, 1) * _cutoff;
+  cells->push_back(pancake.clone());
+
+  return cells;
+}
+
 void CellCellInteractionTests :: testAddMeshes() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-
-  boost::shared_ptr<CellContainer> cells(new CellContainer);
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
   Mesh pancake = pancakeSamosa();
-  pancake += LatticePosition(1, 1, 1) * cutoff * 0.5;
-  // safer to clone so cells has its own copy
-  cells->push_back(pancake.clone());
-  pancake += LatticePosition(3, 0, 1) * cutoff;
-  cells->push_back(pancake.clone());
 
   DivideConquerCells dnc(cells, cutoff, halo);
   check_cell(dnc, LatticeVector(0, 0, 0), 0, pancake.GetVertices().size());
   check_cell(dnc, LatticeVector(3, 0, 1), 1, pancake.GetVertices().size());
 }
+
+void CellCellInteractionTests :: testIterator() {
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  DivideConquerCells dnc(cells, cutoff, halo);
+
+  std::set<LatticePosition const*> allnodes;
+  typedef MeshData::t_Vertices::const_iterator vertex_iterator;
+  vertex_iterator i_vert = cells->begin()->GetVertices().begin();
+  vertex_iterator i_vertend = cells->begin()->GetVertices().end();
+  for(; i_vert != i_vertend; ++i_vert)
+    allnodes.insert(&(*i_vert));
+  i_vert = cells->back().GetVertices().begin();
+  i_vertend = cells->back().GetVertices().end();
+  for(; i_vert != i_vertend; ++i_vert)
+    allnodes.insert(&(*i_vert));
+
+
+  DivideConquerCells::const_iterator i_first = dnc.begin();
+  DivideConquerCells::const_iterator const i_end = dnc.end();
+  for(; i_first != i_end; ++i_first) {
+    CPPUNIT_ASSERT(not helpers::is_zero(*i_first));
+    CPPUNIT_ASSERT(allnodes.count(&(*i_first)) == 1);
+    allnodes.erase(&(*i_first));
+  }
+  CPPUNIT_ASSERT(allnodes.size() == 0);
+}
+
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellCellInteractionTests);
 }}}
