@@ -279,6 +279,16 @@ void Mesh::operator*=(Dimensionless const &_scale) {
     (*i_first) = (*i_first - barycenter) * _scale + barycenter;
 }
 
+void Mesh::operator*=(util::Matrix3D const &_scale) {
+  LatticePosition const barycenter = GetBarycenter();
+  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
+  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
+  for(; i_first != i_end; ++i_first) {
+    _scale.timesVector(*i_first - barycenter, *i_first);
+    *i_first += barycenter;
+  }
+}
+
 void Mesh::operator+=(LatticePosition const &_offset) {
   MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
   MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
