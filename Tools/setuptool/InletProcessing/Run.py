@@ -154,7 +154,8 @@ def CreateInletWeightsFile(fname):
 
     f = open("%s.weights.txt" % (fname[:-4]),'w')
     for i in xrange(0, len(vels)):
-        if int(coords[i][0]) != -1:
+        # take out faulty data points at the origin or with -1,-1,-1 coordinates.
+        if sum(coords[i])>0.5:
             f.write("%i %i %i %f\n" % (int(coords[i][0]), int(coords[i][1]), int(coords[i][2]), vels[i]))
 
 if __name__ == "__main__":
@@ -163,7 +164,7 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         start = time.time()
 
-        mode = "full"
+        mode = "weight_only"
 
         if mode == "full":
             """ Take a profile file, gmy + input, and create a weights file """
