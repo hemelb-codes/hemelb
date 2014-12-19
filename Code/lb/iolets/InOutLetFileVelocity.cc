@@ -96,30 +96,80 @@ namespace hemelb
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
-        std::vector<int> xyz;
-        xyz.push_back((int) x.x);
-        xyz.push_back((int) x.y);
-        xyz.push_back((int) x.z);
-        double v = weights_table.at(xyz);
 
-        // v(r) = vMax (1 - r**2 / a**2)
-        // where r is the distance from the centreline
-        LatticePosition displ = x - position;
-        LatticeDistance z = displ.Dot(normal);
-        Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-        assert(rSqOverASq <= 1.0);
+        if (!useWeightsFromFile)
+        {
+          // v(r) = vMax (1 - r**2 / a**2)
+          // where r is the distance from the centreline
+          LatticePosition displ = x - position;
+          LatticeDistance z = displ.Dot(normal);
+          Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+          assert(rSqOverASq <= 1.0);
 
-        // Get the max velocity
-        LatticeSpeed max = velocityTable[t];
+          // Get the max velocity
+          LatticeSpeed max = velocityTable[t];
 
-        // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-        return normal * (max * (1. - rSqOverASq));
+          // Brackets to ensure that the scalar multiplies are done before vector * scalar.
+          return normal * (max * (1. - rSqOverASq));
+        }
+        else
+        {
+          std::vector<int> xyz;
+          xyz.push_back((int) (x.x + 0.5));
+          xyz.push_back((int) (x.y + 0.5));
+          xyz.push_back((int) (x.z + 0.5));
+
+          int half[3];
+          int valid_count = 1;
+          if (x.x - int(x.x) > 0.1)
+          {
+            half[0] = 1;
+            valid_count *= 2;
+          }
+          if (x.y - int(x.y) > 0.1)
+          {
+            half[1] = 1;
+            valid_count *= 2;
+          }
+          if (x.z - int(x.z) > 0.1)
+          {
+            half[2] = 1;
+            valid_count *= 2;
+          }
+
+          double v[8] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+          double v_tot = 0.0;
+          for (int i = 0; i < half[0]; i++)
+          {
+            for (int j = 0; i < half[1]; i++)
+            {
+              for (int k = 0; i < half[2]; i++)
+              {
+                try
+                {
+                  v[i * 4 + j * 2 + k] = weights_table.at(xyz);
+                  v_tot += v[i * 4 + j * 2 + k];
+                }
+                catch (int e)
+                {
+                  v[i * 4 + j * 2 + k] = 0;
+                  valid_count--; //no matching entry, so we'll drop the valid_count.
+                }
+              }
+            }
+          }
+          return v_tot / valid_count;
+        }
+
       }
 
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
         log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
+
+
+        useWeightsFromFile = true;
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
         const std::string in_name = velocityFilePath + ".weights.txt";
