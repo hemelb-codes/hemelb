@@ -40,16 +40,23 @@ namespace hemelb
           }
 
           LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const;
-          /*LatticeVelocity GetVelocity2(const util::Vector3D<int64_t> globalCoordinates,
+          /*LatticeVelocity GetVelocityWeighted(const util::Vector3D<int64_t> globalCoordinates,
                                                                   const LatticeTimeStep t) const;*/
 
           void Initialise(const util::UnitConverter* unitConverter);
 
         private:
           std::string velocityFilePath;
+          std::string weightsFilePath; // location of the weights file.
+          bool useWeightsFromFile; // if true, then use weights from file. If not, assume circular inlet.
           void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeSpeed> velocityTable;
           const util::UnitConverter* units;
+
+          std::vector<std::string> weight_ids; //weights table (IDs).
+          std::vector<double> weights; //weights table (weights).
+
+          int FindWeightIndex(std::string id) const;
 
       };
 

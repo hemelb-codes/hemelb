@@ -93,48 +93,99 @@ namespace hemelb
 
       }
 
+      int InOutLetFileVelocity::FindWeightIndex(std::string id) const
+      {
+        for (unsigned int i = 0; i < weight_ids.size(); i++)
+        {
+          if ( (weight_ids[i]).compare(id) == 0)
+          {
+            return i;
+          }
+        }
+        //log::Logger::Log<log::Warning, log::OnePerCore>("Error: could not find proper bin: %s",
+        //                                                id.c_str());
+        return -1;
+      }
+
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
-
-        // v(r) = vMax (1 - r**2 / a**2)
-        // where r is the distance from the centreline
-        LatticePosition displ = x - position;
-        LatticeDistance z = displ.Dot(normal);
-        Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-        assert(rSqOverASq <= 1.0);
-
         // Get the max velocity
         LatticeSpeed max = velocityTable[t];
 
-        // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-        return normal * (max * (1. - rSqOverASq));
+        if (!useWeightsFromFile)
+        {
+          // v(r) = vMax (1 - r**2 / a**2)
+          // where r is the distance from the centreline
+          LatticePosition displ = x - position;
+          LatticeDistance z = displ.Dot(normal);
+          Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
+          assert(rSqOverASq <= 1.0);
+
+          // Brackets to ensure that the scalar multiplies are done before vector * scalar.
+          return normal * (max * (1. - rSqOverASq));
+        }
+        else
+        {
+          /* Simplistic and error-prone conversion
+           * TODO: incorporate correct support for .5 position values
+           * by interpolating between entries. */
+          int xyz[3];
+          int xhalf = 0;
+          int yhalf = 0;
+          int zhalf = 0;
+          if (x.x - int(x.x) > 0.1)
+          {
+            xhalf = 1;
+          }
+          if (x.y - int(x.y) > 0.1)
+          {
+            yhalf = 1;
+          }
+          if (x.z - int(x.z) > 0.1)
+          {
+            zhalf = 1;
+          }
+
+          xyz[0] = (int) (x.x + 0.5);
+          xyz[1] = (int) (x.y + 0.5);
+          xyz[2] = (int) (x.z + 0.5);
+
+          log::Logger::Log<log::Warning, log::OnePerCore>("Weight index search: %f %f %f",
+                                                          x.x,
+                                                          x.y,
+                                                          x.z);
+
+          for (int i = 0; i < xhalf; i++)
+          {
+            for (int j = 0; i < yhalf; i++)
+            {
+              for (int k = 0; i < zhalf; i++)
+              {
+                std::ostringstream xyz_str;
+                xyz_str << xyz[0]+i << " " << xyz[1]+j << " " << xyz[2]+k;
+                /* This is very slow, and we can speed this up by building a good/better hash table-like structure. */
+                int index = this->FindWeightIndex(xyz_str.str());
+              }
+            }
+          }
+
+          log::Logger::Log<log::Warning, log::OnePerCore>("Weight index found: %d %d",
+                                                          index,
+                                                          weight_ids.size());
+
+          LatticeSpeed vw = weights[index];
+          return normal * max * vw;
+        }
       }
 
-      /*LatticeVelocity InOutLetFileVelocity::GetVelocity2(
-       const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
-       {
-       // v(r) = vMax (1 - r**2 / a**2)
-       // where r is the distance from the centreline
-       LatticePosition displ = x - position;
-       LatticeDistance z = displ.Dot(normal);
-       Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-       assert(rSqOverASq <= 1.0);
-
-       // Get the max velocity
-       LatticeSpeed max =hile (myfile >> x)
-       { velocityTable[t];
-
-       // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-       return normal * (max * (1. - rSqOverASq)); //
-       return 0; //leave as dummy for now.
-       }*/
-
-      std::map<std::vector<int>, PhysicalVelocity> weights_table;
+      //void PopulateWeightsTableBasedOnCircularInflow() {
+      //  weights_table.insert(std::pair<std::vector<int>, PhysicalVelocity>());
+      //}
 
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
-        log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
@@ -143,7 +194,6 @@ namespace hemelb
         /* Load and read file. */
         std::fstream myfile;
         myfile.open(in_name.c_str(), std::ios_base::in);
-        log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s", in_name.c_str());
 
         std::string input_line;
         /* input files are in ASCII, in format:
@@ -151,19 +201,26 @@ namespace hemelb
          * coord_x coord_y coord_z weights_value
          *
          * */
-        while (std::getline(myfile, input_line))
+
+        /* Temporary for testing. */
+        useWeightsFromFile = true;
+
+        log::Logger::Log<log::Warning, log::OnePerCore>("Reading weights file: %s",
+                                                        in_name.c_str());
+        int x, y, z;
+        double v;
+        while (myfile >> x >> y >> z >> v)
         {
-          int x, y, z;
-          PhysicalVelocity v;
-          myfile >> x >> y >> z >> v;
+          std::ostringstream xyz;
+          xyz << x << " " << y << " " << z;
+          weight_ids.push_back(xyz.str());
+          weights.push_back(v);
 
-          std::vector<int> xyz;
-          xyz.push_back(x);
-          xyz.push_back(y);
-          xyz.push_back(z);
-          weights_table[xyz] = v;
-
-          log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f", x, y, z, v);
+          log::Logger::Log<log::Debug, log::OnePerCore>("Read %d %d %d %f",
+                                                        x,
+                                                        y,
+                                                        z,
+                                                        weights[weights.size() - 1]);
         }
       }
 
