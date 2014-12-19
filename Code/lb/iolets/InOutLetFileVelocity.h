@@ -45,10 +45,11 @@ namespace hemelb
 
           void Initialise(const util::UnitConverter* unitConverter);
 
+          bool useWeightsFromFile;
+
         private:
           std::string velocityFilePath;
           std::string velocityWeightsFilePath;
-          bool useWeightsFromFile;
           void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeSpeed> velocityTable;
           const util::UnitConverter* units;
