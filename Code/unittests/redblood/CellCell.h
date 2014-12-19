@@ -25,6 +25,7 @@ class CellCellInteractionTests : public CppUnit::TestFixture {
      CPPUNIT_TEST(testAddNodes);
      CPPUNIT_TEST(testAddMeshes);
      CPPUNIT_TEST(testIterator);
+     CPPUNIT_TEST(testUpdate);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -33,6 +34,7 @@ public:
     void testAddNodes();
     void testAddMeshes();
     void testIterator();
+    void testUpdate();
 
 protected:
     boost::shared_ptr<CellContainer> fixture(PhysicalDistance) const;
@@ -142,13 +144,14 @@ void check_cell(
 
   std::set<int> nodes;
   for(; omega.first != omega.second; ++omega.first) {
-    CPPUNIT_ASSERT(omega.first->second.cellIndex == _cellIndex);
+    CPPUNIT_ASSERT(omega.first.GetCellReference().cellIndex == _cellIndex);
     CPPUNIT_ASSERT(
-        omega.first->second.nodeIndex >= 0
-        and omega.first->second.nodeIndex <= _nbNodes
+        omega.first.GetCellReference().nodeIndex >= 0
+        and omega.first.GetCellReference().nodeIndex <= _nbNodes
     );
-    CPPUNIT_ASSERT(nodes.count(omega.first->second.nodeIndex) == 0);
-    nodes.insert(omega.first->second.nodeIndex);
+    CPPUNIT_ASSERT(
+        nodes.count(omega.first.GetCellReference().nodeIndex) == 0);
+    nodes.insert(omega.first.GetCellReference().nodeIndex);
   }
   CPPUNIT_ASSERT(nodes.size() == _nbNodes);
 }
@@ -203,6 +206,51 @@ void CellCellInteractionTests :: testIterator() {
     allnodes.erase(&(*i_first));
   }
   CPPUNIT_ASSERT(allnodes.size() == 0);
+}
+
+void CellCellInteractionTests :: testUpdate() {
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  DivideConquerCells dnc(cells, cutoff, halo);
+
+  LatticeVector const zero(0, 0, 0);
+  LatticeVector const notzero(3, 0, 1);
+  CPPUNIT_ASSERT(dnc.size() == 6);
+  CPPUNIT_ASSERT(std::distance(dnc(zero).first, dnc(zero).second) == 3);
+  CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
+
+  // Move to new box
+  LatticeVector const newbox(-1, 1, 2);
+  LatticePosition const center(0.5 * cutoff);
+  LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
+  cells->front().GetVertices().front() = offhalo;
+
+  dnc.update();
+  CPPUNIT_ASSERT(dnc.size() == 6);
+  CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
+  CPPUNIT_ASSERT(std::distance(dnc(zero).first, dnc(zero).second) == 2);
+  CPPUNIT_ASSERT(std::distance(dnc(newbox).first, dnc(newbox).second) == 1);
+  CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - offhalo));
+  CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder());
+
+  // Move near boundary
+  LatticePosition const inhalo
+    = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
+  cells->front().GetVertices().front() = inhalo;
+  dnc.update();
+  CPPUNIT_ASSERT(dnc.size() == 6);
+  CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
+  CPPUNIT_ASSERT(std::distance(dnc(zero).first, dnc(zero).second) == 2);
+  CPPUNIT_ASSERT(std::distance(dnc(newbox).first, dnc(newbox).second) == 1);
+  CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - inhalo));
+  CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder());
+  CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(CellReference::TOP));
+  CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(CellReference::BOTTOM));
+  CPPUNIT_ASSERT(
+      dnc(newbox).first.GetNearBorder()
+      == (CellReference::TOP | CellReference::EAST)
+  );
 }
 
 

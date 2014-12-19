@@ -82,6 +82,15 @@ class HEMELB_ITERATOR {
       return wrappee_->second;
     }
 
+    //! Gets integer coding for whether node is close to boundary
+    int GetNearBorder() const { return GetCellReference().isNearBorder; }
+    //! True if close to given boundary
+    bool IsNearBorder(CellReference::Borders _border) const {
+      return GetNearBorder() & _border;
+    }
+    //! True if close to any boundary
+    bool IsNearBorder() const { return GetNearBorder() != 0; }
+
     operator base_type::HEMELB_ITERATOR() const { return wrappee_; }
 
   protected:
