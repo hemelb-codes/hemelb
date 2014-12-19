@@ -96,6 +96,11 @@ namespace hemelb
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
+        std::vector<int> xyz;
+        xyz.push_back((int) x.x);
+        xyz.push_back((int) x.y);
+        xyz.push_back((int) x.z);
+        double v = weights_table.at(xyz);
 
         // v(r) = vMax (1 - r**2 / a**2)
         // where r is the distance from the centreline
@@ -111,27 +116,6 @@ namespace hemelb
         return normal * (max * (1. - rSqOverASq));
       }
 
-      /*LatticeVelocity InOutLetFileVelocity::GetVelocity2(
-       const util::Vector3D<site_t> globalCoordinates, const LatticeTimeStep t) const
-       {
-       // v(r) = vMax (1 - r**2 / a**2)
-       // where r is the distance from the centreline
-       LatticePosition displ = x - position;
-       LatticeDistance z = displ.Dot(normal);
-       Dimensionless rSqOverASq = (displ.GetMagnitudeSquared() - z * z) / (radius * radius);
-       assert(rSqOverASq <= 1.0);
-
-       // Get the max velocity
-       LatticeSpeed max =hile (myfile >> x)
-       { velocityTable[t];
-
-       // Brackets to ensure that the scalar multiplies are done before vector * scalar.
-       return normal * (max * (1. - rSqOverASq)); //
-       return 0; //leave as dummy for now.
-       }*/
-
-      std::map<std::vector<int>, PhysicalVelocity> weights_table;
-
       void InOutLetFileVelocity::Initialise(const util::UnitConverter* unitConverter)
       {
         log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
@@ -143,7 +127,8 @@ namespace hemelb
         /* Load and read file. */
         std::fstream myfile;
         myfile.open(in_name.c_str(), std::ios_base::in);
-        log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s", in_name.c_str());
+        log::Logger::Log<log::Warning, log::OnePerCore>("Loading weights file: %s",
+                                                        in_name.c_str());
 
         std::string input_line;
         /* input files are in ASCII, in format:
@@ -154,7 +139,7 @@ namespace hemelb
         while (std::getline(myfile, input_line))
         {
           int x, y, z;
-          PhysicalVelocity v;
+          double v;
           myfile >> x >> y >> z >> v;
 
           std::vector<int> xyz;
@@ -163,7 +148,11 @@ namespace hemelb
           xyz.push_back(z);
           weights_table[xyz] = v;
 
-          log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f", x, y, z, v);
+          log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f",
+                                                          x,
+                                                          y,
+                                                          z,
+                                                          weights_table[xyz]);
         }
       }
 

@@ -47,9 +47,13 @@ namespace hemelb
 
         private:
           std::string velocityFilePath;
+          std::string velocityWeightsFilePath;
+          bool useWeightsFromFile;
           void CalculateTable(LatticeTimeStep totalTimeSteps);
           std::vector<LatticeSpeed> velocityTable;
           const util::UnitConverter* units;
+
+          std::map<std::vector<int>, double> weights_table;
 
       };
 
