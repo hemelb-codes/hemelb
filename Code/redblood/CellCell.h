@@ -64,8 +64,6 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Type of the base class
     typedef DivideConquer<CellReference> base_type;
   public:
-    //! Iterator pair over single box
-    typedef DivideConquer<CellReference>::const_range const_range;
 
     //! Iterates over vertices
     //! Wraps a multimap iterator. As such it provides the exact same
@@ -77,6 +75,8 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     class const_iterator;
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    //! Iterator pair over single box
+    typedef std::pair<const_iterator, const_iterator> const_range;
 
     //! Constructor
     DivideConquerCells(
@@ -85,12 +85,10 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     );
 
     //! Gets all nodes in a box
-    const_range operator()(LatticePosition const &_pos) const {
-      return base_type::equal_range(_pos);
-    }
+    const_range operator()(LatticeVector const &_pos) const;
     //! Gets all nodes in a box
-    const_range operator()(LatticeVector const &_pos) const {
-      return base_type::equal_range(_pos);
+    const_range operator()(LatticePosition const &_pos) const {
+      return this->operator()(base_type::DowngradeKey(_pos));
     }
 
     // Implementation of DivideConquerCell::iterator

@@ -99,6 +99,15 @@ void DivideConquerCells :: update() {
       }
    }
 }
+
+DivideConquerCells::const_range DivideConquerCells::operator()(
+    LatticeVector const &_pos) const {
+  base_type::const_range const boxrange = base_type::equal_range(_pos);
+  return const_range(
+      const_iterator(*this, boxrange.first),
+      const_iterator(*this, boxrange.second)
+  );
+}
 #endif
 
 }} // namespace hemelb::redblood
