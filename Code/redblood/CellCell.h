@@ -68,18 +68,15 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     typedef DivideConquer<CellReference>::const_range const_range;
 
     //! Iterates over vertices
+    //! Wraps a multimap iterator. As such it provides the exact same
+    //! garantees.
     class iterator;
     //! Iterates over vertices
+    //! Wraps a multimap iterator. As such it provides the exact same
+    //! garantees.
     class const_iterator;
-    // friend class iterator;
-    // friend class const_iterator;
-
-    // Implementation of DivideConquerCell::iterator
-#   define HEMELB_DOING_NONCONST
-#     include "CellCellIterator.impl.h"
-#   undef HEMELB_DOING_NONCONST
-    // Implementation of DivideConquerCell::const_iterator
-#   include "CellCellIterator.impl.h"
+    typedef std::reverse_iterator<iterator> reverse_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
     //! Constructor
     DivideConquerCells(
@@ -96,6 +93,13 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
       return base_type::equal_range(_pos);
     }
 
+    // Implementation of DivideConquerCell::iterator
+#   define HEMELB_DOING_NONCONST
+#     include "CellCellIterator.impl.h"
+#   undef HEMELB_DOING_NONCONST
+    // Implementation of DivideConquerCell::const_iterator
+#   include "CellCellIterator.impl.h"
+
     iterator begin() { return iterator(*this, base_type::begin()); }
     iterator end() { return iterator(*this, base_type::end()); }
     const_iterator begin() const {
@@ -103,6 +107,14 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     }
     const_iterator end() const {
       return const_iterator(*this, base_type::end());
+    }
+    reverse_iterator rbegin() { return reverse_iterator(end()); }
+    reverse_iterator rend() { return reverse_iterator(begin()); }
+    const_reverse_iterator rbegin() const {
+      return const_reverse_iterator(end());
+    }
+    const_reverse_iterator rend() const {
+      return const_reverse_iterator(begin());
     }
     size_t size() const { return base_type::size(); }
 
@@ -112,6 +124,10 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     PhysicalDistance GetBoxSize() const { return base_type::GetBoxSize(); }
     //! Cells that are present in this object
     boost::shared_ptr<CellContainer const> GetCells() const { return cells_; }
+
+    //! After vertices have moved, update mapping and whether it is near
+    //! boundary
+    void update();
   protected:
     //! Distance from border below which an object is in the halo
     PhysicalDistance const haloLength_;
