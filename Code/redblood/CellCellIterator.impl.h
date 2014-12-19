@@ -30,9 +30,11 @@ class HEMELB_ITERATOR {
   public:
     typedef LatticePosition value_type;
     typedef value_type HEMELB_CONST & reference;
-    typedef value_type HEMELB_CONST * pointer_type;
+    typedef value_type HEMELB_CONST * pointer;
     typedef value_type const & const_reference;
-    typedef value_type const * const_pointer_type;
+    typedef value_type const * const_pointer;
+    typedef wrappee_iterator::difference_type difference_type;
+    typedef wrappee_iterator::iterator_category iterator_category;
 
     HEMELB_ITERATOR(
         DivideConquerCells HEMELB_CONST &_owner,
@@ -50,15 +52,15 @@ class HEMELB_ITERATOR {
               .GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
-    pointer_type operator->() { return &this->operator*(); }
+    pointer operator->() { return &this->operator*(); }
 
     const_reference operator*() const {
         return (*owner_.cells_) HEMELB_GET(wrappee_->second.cellIndex)
               .GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
-    const_pointer_type operator->() const { return &this->operator*(); }
-    LatticeVector const & key() const { return wrappee_->first; }
+    const_pointer operator->() const { return &this->operator*(); }
+    LatticeVector const & GetKey() const { return wrappee_->first; }
     HEMELB_ITERATOR & operator++() { ++wrappee_; return *this; }
     HEMELB_ITERATOR & operator--() { --wrappee_; return *this; }
     HEMELB_ITERATOR operator++(int) {
@@ -74,6 +76,13 @@ class HEMELB_ITERATOR {
     bool operator!=(HEMELB_ITERATOR const &_in) const {
       return not operator==(_in);
     }
+
+    CellReference const & GetCellReference() const { return wrappee_->second; }
+    CellReference HEMELB_CONST & GetCellReference() {
+      return wrappee_->second;
+    }
+
+    operator base_type::HEMELB_ITERATOR() const { return wrappee_; }
 
   protected:
     //! Container from which this object was obtained

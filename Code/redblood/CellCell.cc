@@ -84,6 +84,21 @@ DivideConquerCells :: DivideConquerCells(
     initialize_cells(*static_cast<base_type*>(this), _cells, haloLength_);
   } catch(...) {}
 }
+
+void DivideConquerCells :: update() {
+   iterator i_first = begin();
+   iterator const i_end = end();
+   for(; i_first != i_end; ++i_first) {
+      key_type const key = base_type::DowngradeKey(*i_first);
+      i_first.GetCellReference().isNearBorder = figure_nearness(
+          *this, key, *i_first, haloLength_
+      );
+      if(not (key == i_first.GetKey())) {
+        base_type::insert(key, i_first.GetCellReference());
+        base_type::erase((base_type::iterator) i_first);
+      }
+   }
+}
 #endif
 
 }} // namespace hemelb::redblood
