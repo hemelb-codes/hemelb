@@ -9,6 +9,7 @@
 
 #include <vector>
 #include "redblood/CellCell.h"
+#include "log/Logger.h"
 
 namespace hemelb { namespace redblood {
 
@@ -71,6 +72,20 @@ namespace {
     for(site_t i(0); i_first != i_end; ++i_first, ++i)
       initialize_cells(_dnc, i_first->GetVertices(), i, _haloLength);
   }
+
+  // Compare distance between vertices
+  bool next_dist(
+      DivideConquerCells::const_iterator &_first,
+      DivideConquerCells::const_iterator const & _end,
+      DivideConquerCells::const_iterator const & _main,
+      PhysicalDistance _dist
+  ) {
+    for(; _first != _end; ++_first)
+      if(_first.GetCellIndex() > _main.GetCellIndex()
+          and (*_main - *_first).GetMagnitude() < _dist)
+        return true;
+    return false;
+  }
 }
 
 #ifndef HEMELB_DOING_UNITTESTS
@@ -108,6 +123,85 @@ DivideConquerCells::const_range DivideConquerCells::operator()(
       const_iterator(*this, boxrange.second)
   );
 }
+
+bool DivideConquerCells::pair_range::next_dist_() {
+  return next_dist(currents_.second, ends_.second, currents_.first, maxdist_);
+}
+
+bool DivideConquerCells::pair_range::do_box_() {
+  LatticeVector const key(
+      box_ == CellReference::NONE ?
+        currents_.first.GetKey():
+        currents_.first.GetKey() + CellReference::idirections(box_)
+  );
+  DivideConquerCells::const_range const boxits = owner_(key);
+  if(box_ == CellReference::NONE) {
+    currents_.second = currents_.first;
+    ++currents_.second;
+  } else
+    currents_.second = boxits.first;
+  ends_.second = boxits.second;
+  return next_dist_();
+}
+
+bool DivideConquerCells::pair_range::operator++() {
+
+  if(not is_valid()) return false;
+
+  // First try and finds next pair in current range
+  if(currents_.second != ends_.second) {
+    ++currents_.second;
+    if(next_dist_()) return true;
+  }
+
+  // If reaches here, then should check which box we are currently doing
+  if(currents_.first.GetNearBorder()) {
+    if(box_) box_ = CellReference::Borders(int(box_) << 1);
+    else box_ = CellReference::Borders(1);
+    while(box_ < CellReference::LAST) {
+      if(do_box_()) return true;
+      box_ = CellReference::Borders(int(box_) << 1);
+    }
+  }
+
+  // If reaches here, then should increment main iterator and start with same
+  // box
+  if(++currents_.first == ends_.first) return false;
+  box_ = CellReference::NONE;
+  return do_box_() ? true: operator++();
+}
+
+DivideConquerCells::pair_range::pair_range(
+    DivideConquerCells const &_owner,
+    iterator const &_begin,
+    iterator const &_end,
+    PhysicalDistance _maxdist
+) : maxdist_(_maxdist), box_(CellReference::NONE),
+    currents_(_begin, _end), ends_(_end, _end), owner_(_owner) {
+  // No throw garantee. Makes iterator invalid instead.
+  try {
+    // Could be invalid from start
+    if(not is_valid()) return;
+    // Iterates to first valid item, if any
+    if(not do_box_()) operator++();
+  } catch(std::exception const &_e) {
+    log::Logger::Log<log::Debug, log::OnePerCore>(
+      "*** Encountered error while initializing pair iterator: %s\n",
+      _e.what()
+    );
+    currents_.first = ends_.first;
+  } catch(...) {
+    log::Logger::Log<log::Debug, log::OnePerCore>(
+      "*** Encountered error while initializing pair iterator.");
+    currents_.first = ends_.first;
+  }
+}
+
+DivideConquerCells::pair_range DivideConquerCells::pair_begin(
+    PhysicalDistance _maxdist) const {
+  return pair_range(*this, begin(), end(), _maxdist);
+}
+
 #endif
 
 }} // namespace hemelb::redblood

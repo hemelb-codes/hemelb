@@ -40,6 +40,8 @@ class HEMELB_ITERATOR {
         DivideConquerCells HEMELB_CONST &_owner,
         wrappee_iterator const &_w
     ) : owner_(_owner), wrappee_(_w) {}
+    HEMELB_ITERATOR(HEMELB_ITERATOR const &_in)
+      : owner_(_in.owner_), wrappee_(_in.wrappee_) {}
 #   ifndef HEMELB_DOING_NONCONST
       HEMELB_ITERATOR(iterator const &_in)
         : owner_(_in.owner_), wrappee_(_in.wrappee_) {}
@@ -86,12 +88,19 @@ class HEMELB_ITERATOR {
     int GetNearBorder() const { return GetCellReference().isNearBorder; }
     //! True if close to given boundary
     bool IsNearBorder(CellReference::Borders _border) const {
-      return GetNearBorder() & _border;
+      return GetNearBorder() bitand _border;
     }
     //! True if close to any boundary
     bool IsNearBorder() const { return GetNearBorder() != 0; }
 
+    site_t GetCellIndex() const { return GetCellReference().cellIndex; }
+
     operator base_type::HEMELB_ITERATOR() const { return wrappee_; }
+
+    void operator=(iterator const &_c) { wrappee_ = _c.wrappee_; }
+#   ifndef HEMELB_DOING_NONCONST
+      void operator=(const_iterator const &_c) { wrappee_ = _c.wrappee_; }
+#   endif
 
   protected:
     //! Container from which this object was obtained
