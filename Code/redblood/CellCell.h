@@ -12,6 +12,7 @@
 
 #include <vector>
 #include "units.h"
+#include "Exception.h"
 #include "redblood/Cell.h"
 #include "redblood/DivideConquer.h"
 
@@ -28,30 +29,40 @@ struct CellReference {
 
   //! Names for each border
   enum Borders {
+    NONE = 0,
     TOP = 1,
     BOTTOM = 2,
     NORTH = 4,
     SOUTH = 8,
     WEST = 16,
-    EAST = 32
+    EAST = 32,
+    LAST = 64
   };
 
-  static LatticePosition directions(Borders _border) {
+  static LatticeVector idirections(Borders _border) {
     switch(_border) {
-      case TOP:    return LatticePosition(1, 0, 0);
-      case BOTTOM: return LatticePosition(-1, 0, 0);
-      case NORTH:   return LatticePosition(0, 1, 0);
-      case SOUTH:  return LatticePosition(0, -1, 0);
-      case WEST:  return LatticePosition(0, 0, -1);
-      case EAST:   return LatticePosition(0, 0, 1);
+      case TOP:    return LatticeVector(1, 0, 0);
+      case BOTTOM: return LatticeVector(-1, 0, 0);
+      case NORTH:   return LatticeVector(0, 1, 0);
+      case SOUTH:  return LatticeVector(0, -1, 0);
+      case WEST:  return LatticeVector(0, 0, -1);
+      case EAST:   return LatticeVector(0, 0, 1);
+      default: return LatticeVector(0, 0, 0);
     };
   }
-  static LatticePosition directions(size_t _border) {
+  static LatticePosition directions(Borders _border) {
+    return LatticePosition(idirections(_border));
+  }
+
+  static LatticeVector idirections(size_t _border) {
     assert(
         _border == TOP or _border == BOTTOM or _border == NORTH
         or _border == SOUTH or _border == EAST or  _border == WEST
     );
-    return directions(Borders(_border));
+    return idirections(Borders(_border));
+  }
+  static LatticePosition directions(size_t _border) {
+    return LatticePosition(idirections(_border));
   }
 };
 
@@ -77,6 +88,9 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
     //! Iterator pair over single box
     typedef std::pair<const_iterator, const_iterator> const_range;
+    //! Iterates over pairs of nodes that are close to one another
+    //! Each pair is visited only once.
+    class pair_range;
 
     //! Constructor
     DivideConquerCells(
@@ -116,6 +130,9 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     }
     size_t size() const { return base_type::size(); }
 
+    //! Loops over pair of vertices closer than input distance
+    pair_range pair_begin(PhysicalDistance _maxdist) const;
+
     //! Distance from border below which an object is in the halo
     PhysicalDistance GetHaloLength() const { return haloLength_; }
     //! Size of each box
@@ -131,6 +148,53 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     PhysicalDistance const haloLength_;
     //! Container of cells
     boost::shared_ptr<CellContainer> cells_;
+};
+
+class DivideConquerCells::pair_range {
+    //! Parent iterator
+    typedef DivideConquerCells::const_iterator iterator;
+  public:
+    typedef std::pair<iterator, iterator> value_type;
+
+    //! Constructs a pair range iterator
+    pair_range(
+        DivideConquerCells const &_owner,
+        iterator const &_begin,
+        iterator const &_end,
+        PhysicalDistance _maxdist
+    );
+
+    //! Whether current iteration is valid
+    bool is_valid() const { return currents_.first != ends_.first; }
+    //! Whether current iteration is valid
+    operator bool() const { return is_valid(); }
+
+    value_type const & operator *() const {
+#     ifndef NDEBUG
+      if(not is_valid())
+        throw Exception() << "Iterator is invalid\n";
+#     endif
+      return currents_;
+    }
+    value_type const* operator->() const { return &(this->operator*()); }
+
+    //! Goes to next value and returns true if valid
+    bool operator++();
+
+  protected:
+    //! Maximum distance for which to report pair
+    PhysicalDistance maxdist_;
+    //! Current box we are working on
+    CellReference::Borders box_;
+    //! Iterator for main item
+    value_type currents_;
+    //! range for iteration over second item
+    value_type ends_;
+    //! Container over which this one iterates
+    DivideConquerCells const &owner_;
+
+    bool do_box_();
+    bool next_dist_();
 };
 
 

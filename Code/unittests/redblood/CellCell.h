@@ -26,6 +26,11 @@ class CellCellInteractionTests : public CppUnit::TestFixture {
      CPPUNIT_TEST(testAddMeshes);
      CPPUNIT_TEST(testIterator);
      CPPUNIT_TEST(testUpdate);
+     CPPUNIT_TEST(testPairIteratorNoPairs);
+     CPPUNIT_TEST(testPairIteratorSameMesh);
+     CPPUNIT_TEST(testPairIteratorSinglePair);
+     CPPUNIT_TEST(testPairIteratorOnePairPerBox);
+     CPPUNIT_TEST(testPairIteratorBoxHalo);
     CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -35,6 +40,11 @@ public:
     void testAddMeshes();
     void testIterator();
     void testUpdate();
+    void testPairIteratorNoPairs();
+    void testPairIteratorSameMesh();
+    void testPairIteratorSinglePair();
+    void testPairIteratorOnePairPerBox();
+    void testPairIteratorBoxHalo();
 
 protected:
     boost::shared_ptr<CellContainer> fixture(PhysicalDistance) const;
@@ -69,7 +79,7 @@ void CellCellInteractionTests :: testBoxHalo() {
     + CellReference::directions(CellReference::EAST) * 0.6;
   int const actual = figure_nearness(dnc, key, center + mult, 2.0);
   int const expected
-    = CellReference::TOP | CellReference::NORTH | CellReference::EAST;
+    = CellReference::TOP bitor CellReference::NORTH bitor CellReference::EAST;
   CPPUNIT_ASSERT(actual == expected);
 }
 
@@ -249,10 +259,123 @@ void CellCellInteractionTests :: testUpdate() {
   CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(CellReference::BOTTOM));
   CPPUNIT_ASSERT(
       dnc(newbox).first.GetNearBorder()
-      == (CellReference::TOP | CellReference::EAST)
+      == (CellReference::TOP bitor CellReference::EAST)
   );
 }
 
+void CellCellInteractionTests::testPairIteratorNoPairs() {
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  DivideConquerCells dnc(cells, cutoff, halo);
+
+  // Test when iterating over nothing
+  { DivideConquerCells::pair_range range(dnc, dnc.end(), dnc.end(), 0.5);
+    CPPUNIT_ASSERT(not range.is_valid());
+  }
+
+  // Test when no pair are within given range
+  { DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+    CPPUNIT_ASSERT(not range.is_valid());
+  }
+}
+
+void CellCellInteractionTests::testPairIteratorSameMesh() {
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+
+  // Move one node closer  to the other
+  LatticePosition const n0 = cells->front().GetVertices()[0];
+  LatticePosition const n1 = cells->front().GetVertices()[1];
+  cells->front().GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  DivideConquerCells dnc(cells, cutoff, halo);
+
+  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+  DivideConquerCells::const_iterator iterator(dnc.begin());
+  CPPUNIT_ASSERT(not range.is_valid());
+}
+
+void CellCellInteractionTests::testPairIteratorSinglePair() {
+  // There is only one pair and they are in the same divide and conquer box
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+
+  // Move one node closer  to the other
+  LatticePosition const n0 = cells->front().GetVertices()[0];
+  LatticePosition const n1 = cells->back().GetVertices()[1];
+  cells->back().GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  DivideConquerCells dnc(cells, cutoff, halo);
+
+  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+  CPPUNIT_ASSERT(range.is_valid());
+  CPPUNIT_ASSERT(helpers::is_zero(
+        *range->first - cells->front().GetVertices().front()
+  ));
+  CPPUNIT_ASSERT(helpers::is_zero(
+        *range->second - cells->back().GetVertices()[1]
+  ));
+  CPPUNIT_ASSERT(not ++range);
+  CPPUNIT_ASSERT(not range.is_valid());
+}
+
+void CellCellInteractionTests::testPairIteratorOnePairPerBox() {
+  // There three pairs and they are each in different boxe, but each contained
+  // within one box
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+
+  // Each vertex of triangle is in a separate box
+  // The two triangles are separated by no much
+  cells->front() *= cutoff * 2;
+  cells->back() *= cutoff * 2;
+  cells->front() += LatticePosition(0.5) * cutoff -
+    cells->front().GetVertices().front();
+  cells->back() += cells->front().GetVertices().front()
+    - cells->back().GetVertices().front() + LatticePosition(1e-1);
+
+  DivideConquerCells dnc(cells, cutoff, halo);
+  // Checks that fixture is what I think it is
+  LatticeVector const zero(0, 0, 0);
+  CPPUNIT_ASSERT(std::distance(dnc(zero).first, dnc(zero).second) == 2);
+  // Now checks there are three pairs
+  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+  CPPUNIT_ASSERT(range.is_valid());
+  size_t i(0);
+  if(range.is_valid()) do { ++i; } while(++range);
+  CPPUNIT_ASSERT(i == 3);
+}
+
+void CellCellInteractionTests::testPairIteratorBoxHalo() {
+  // There three pairs and they are each in different boxe, but each contained
+  // within one box
+  PhysicalDistance const cutoff = 5.0;
+  PhysicalDistance const halo = 2.0;
+  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+
+  // Only one pair, and each in a separate box
+  LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
+  LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
+  cells->front().GetVertices().front() = n0;
+  cells->back().GetVertices().front() = n1;
+
+  DivideConquerCells dnc(cells, cutoff, halo);
+  // Checks that fixture is what I think it is
+  LatticeVector const N0(1, 4, 4);
+  LatticeVector const N1(2, 4, 4);
+  CPPUNIT_ASSERT(std::distance(dnc(N0).first, dnc(N0).second) == 1);
+  CPPUNIT_ASSERT(std::distance(dnc(N1).first, dnc(N1).second) == 1);
+
+  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+  CPPUNIT_ASSERT(range.is_valid());
+
+  CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
+  CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+  CPPUNIT_ASSERT(not ++range);
+  CPPUNIT_ASSERT(not range.is_valid());
+}
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellCellInteractionTests);
 }}}
