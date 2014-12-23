@@ -9,6 +9,8 @@
 
 #include <vector>
 #include "redblood/CellCell.h"
+#include "redblood/Cell.h"
+#include "redblood/Interpolation.h"
 #include "log/Logger.h"
 
 namespace hemelb { namespace redblood {
@@ -85,6 +87,20 @@ namespace {
           and (*_main - *_first).GetMagnitude() < _dist)
         return true;
     return false;
+  }
+
+  void spreadForce(
+      LatticePosition const &_node,
+      geometry::LatticeData &_latticeData,
+      stencil::types _stencil,
+      LatticeForceVector const &_force
+  ) {
+    proc_t procid;
+    site_t siteid;
+    InterpolationIterator spreader = interpolationIterator(_node, _stencil);
+    for(; spreader; ++spreader)
+      if(_latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+        _latticeData.GetSite(siteid).AddToForce(_force * spreader.weight());
   }
 }
 
@@ -202,6 +218,21 @@ DivideConquerCells::pair_range DivideConquerCells::pair_begin(
   return pair_range(*this, begin(), end(), _maxdist);
 }
 
+//! Computes cell <-> cell interactions and spread to grid
+void addCell2CellInteractions(
+    DivideConquerCells const &_dnc,
+    Node2NodeForce const &_functional,
+    stencil::types _stencil,
+    geometry::LatticeData &_latticeData
+) {
+  DivideConquerCells :: pair_range range(_dnc.pair_begin(_functional.cutoff));
+  for(; range.is_valid(); ++range) {
+    LatticeForceVector const force(_functional(*range->first, *range->second));
+    // spread to the grid from from one node and from the other
+    spreadForce(*range->first, _latticeData, _stencil, force);
+    spreadForce(*range->second, _latticeData, _stencil, -force);
+  }
+}
 #endif
 
 }} // namespace hemelb::redblood

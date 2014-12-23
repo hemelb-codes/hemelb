@@ -32,9 +32,9 @@ namespace {
 
 class CellVelocityInterpolTests : public SquareDuctTetrahedronFixture {
     CPPUNIT_TEST_SUITE(CellVelocityInterpolTests);
-    CPPUNIT_TEST(testDistributionFixture);
-    CPPUNIT_TEST(testLinearVelocityPerpendicularToPancakeSamosa);
-    CPPUNIT_TEST(testLinearVelocityInSamosaPlane);
+      CPPUNIT_TEST(testDistributionFixture);
+      CPPUNIT_TEST(testLinearVelocityPerpendicularToPancakeSamosa);
+      CPPUNIT_TEST(testLinearVelocityInSamosaPlane);
     CPPUNIT_TEST_SUITE_END();
 
     typedef lb::lattices::D3Q15 D3Q15;

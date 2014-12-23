@@ -34,8 +34,6 @@ public:
     PhysicalPressure strain;
     Moduli() : bending(0), surface(0), volume(0), dilation(0), strain(0) {};
   } moduli;
-  //! Node-node interaction
-  Node2NodeForce nodeNode;
   //! Node-wall interaction
   Node2NodeForce nodeWall;
 

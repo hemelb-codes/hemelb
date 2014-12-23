@@ -11,13 +11,19 @@
 #define HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H_
 
 #include <vector>
+#include <assert.h>
+#include <boost/shared_ptr.hpp>
 #include "units.h"
 #include "Exception.h"
-#include "redblood/Cell.h"
+#include "geometry/LatticeData.h"
 #include "redblood/DivideConquer.h"
-
+#include "redblood/Cell.h"
+#include "redblood/Node2Node.h"
+#include "redblood/stencil.h"
 
 namespace hemelb { namespace redblood {
+
+typedef std::vector<Cell> CellContainer;
 
 struct CellReference {
   //! Index of cell in input container
@@ -65,9 +71,6 @@ struct CellReference {
     return LatticePosition(idirections(_border));
   }
 };
-
-//! Contains all cells...
-typedef std::vector<Cell> CellContainer;
 
 //! Organizes nodes in cells in boxes
 //! The object is to easily check nodes that are within interaction distance
@@ -196,6 +199,18 @@ class DivideConquerCells::pair_range {
     bool do_box_();
     bool next_dist_();
 };
+
+//! Computes cell <-> cell interactions and spread to grid
+//! Given a partition of the cells' nodes and node <-> node interaction
+//! functional, computes the short-range that can occur between cells that are
+//! too close to one another. The interaction forces are computed and spread to
+//! the lattice.
+void addCell2CellInteractions(
+    DivideConquerCells const &_dnc,
+    Node2NodeForce const &_functional,
+    stencil::types _stencil,
+    geometry::LatticeData &_latticeData
+);
 
 
 }} // hemelb::redblood
