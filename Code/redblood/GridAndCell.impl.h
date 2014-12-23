@@ -109,7 +109,6 @@ class SpreadForcesAndWallForces : public SpreadForces {
       geometry::Site<geometry::LatticeData> site(latticeData_.GetSite(siteid));
       site.AddToForce(forces_[_vertex] * _weight);
       LatticePosition const vertex(cell.GetVertex(_vertex));
-      // std::cout << "v " << vertex << "\n";
       for(size_t i(1); i < LATTICE::NUMVECTORS; ++i) {
         PhysicalDistance const distance = site.GetWallDistance<LATTICE>(i);
         if(not site.HasWall(i)) continue;
