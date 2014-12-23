@@ -114,50 +114,70 @@ namespace hemelb
         }
         else
         {
+          //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
           std::vector<int> xyz;
-          xyz.push_back((int) (x.x + 0.5));
-          xyz.push_back((int) (x.y + 0.5));
-          xyz.push_back((int) (x.z + 0.5));
+          xyz.push_back(0);
+          xyz.push_back(0);
+          xyz.push_back(0);
 
-          int half[3];
+          int half[3] = {1,1,1};
           int valid_count = 1;
-          if (x.x - int(x.x) > 0.1)
+          int xint = int(x.x + 0.0000001);
+          int yint = int(x.y + 0.0000001);
+          int zint = int(x.z + 0.0000001);
+
+          if (x.x - ((float) xint) > 0.1)
           {
-            half[0] = 1;
+            half[0] = 2;
             valid_count *= 2;
           }
-          if (x.y - int(x.y) > 0.1)
+          if (x.y - ((float) yint) > 0.1)
           {
-            half[1] = 1;
+            half[1] = 2;
             valid_count *= 2;
           }
-          if (x.z - int(x.z) > 0.1)
+          if (x.z - ((float) zint) > 0.1)
           {
-            half[2] = 1;
+            half[2] = 2;
             valid_count *= 2;
           }
+
+          //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f", x.x, ((float) xint));
 
           double v[8] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
           double v_tot = 0.0;
+
           for (int i = 0; i < half[0]; i++)
           {
-            for (int j = 0; i < half[1]; i++)
+            for (int j = 0; j < half[1]; j++)
             {
-              for (int k = 0; i < half[2]; i++)
+              for (int k = 0; k < half[2]; k++)
               {
-                try
+                xyz[0] = xint + i;
+                xyz[1] = yint + j;
+                xyz[2] = zint + k;
+
+                int v_offset = i * 4 + j * 2 + k;
+
+                if(weights_table.count(xyz)>0)
                 {
-                  v[i * 4 + j * 2 + k] = weights_table.at(xyz);
-                  v_tot += v[i * 4 + j * 2 + k];
+                  v[v_offset] = weights_table.at(xyz);
+                  v_tot += v[v_offset];
+                  //log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d OK.", xyz[0], xyz[1], xyz[2]);
                 }
-                catch (int e)
+                else
                 {
-                  v[i * 4 + j * 2 + k] = 0;
+                  //log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d caught.", xyz[0], xyz[1], xyz[2]);
+                  v[v_offset] = 0;
                   valid_count--; //no matching entry, so we'll drop the valid_count.
                 }
               }
             }
           }
+          /*log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f %d",
+                                                          x.x,
+                                                          x.y,
+                                                          x.z, valid_count);*/
           return v_tot / valid_count;
         }
 
@@ -167,7 +187,6 @@ namespace hemelb
       {
         log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
-
 
         useWeightsFromFile = true;
 
@@ -198,11 +217,11 @@ namespace hemelb
           xyz.push_back(z);
           weights_table[xyz] = v;
 
-          log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f",
-                                                          x,
-                                                          y,
-                                                          z,
-                                                          weights_table[xyz]);
+          /*log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f",
+           x,
+           y,
+           z,
+           weights_table[xyz]);*/
         }
       }
 
