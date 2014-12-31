@@ -93,6 +93,7 @@ namespace hemelb
 
       }
 
+      
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
@@ -120,65 +121,71 @@ namespace hemelb
           xyz.push_back(0);
           xyz.push_back(0);
 
-          int half[3] = {1,1,1};
-          int valid_count = 1;
-          int xint = int(x.x + 0.0000001);
-          int yint = int(x.y + 0.0000001);
-          int zint = int(x.z + 0.0000001);
+          int whole[3] = {1,1,1};
+          int xint = int(x.x - 0.9999999);
+          int yint = int(x.y - 0.9999999);
+          int zint = int(x.z - 0.9999999);
 
           if (x.x - ((float) xint) > 0.1)
           {
-            half[0] = 2;
-            valid_count *= 2;
+            whole[0] = 0;
+            xint += 1;
           }
           if (x.y - ((float) yint) > 0.1)
           {
-            half[1] = 2;
-            valid_count *= 2;
+            whole[1] = 0;
+            yint += 1;
           }
           if (x.z - ((float) zint) > 0.1)
           {
-            half[2] = 2;
-            valid_count *= 2;
+            whole[2] = 0;
+            zint += 1;
           }
 
           //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f", x.x, ((float) xint));
 
-          double v[8] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-          double v_tot = 0.0;
+          std::vector<double> v;
+          v.reserve(27);
+          std::vector<bool> dist_flag;
+          dist_flag.reserve(27);
 
-          for (int i = 0; i < half[0]; i++)
+          int sizes[3] = {whole[0]+2, whole[1]+2, whole[2]+2};
+          int v_tot = 0;
+
+          for (int i = 0; i < sizes[0]; i++)
           {
-            for (int j = 0; j < half[1]; j++)
+            for (int j = 0; j < sizes[1]; j++)
             {
-              for (int k = 0; k < half[2]; k++)
+
+              for (int k = 0; k < sizes[2]; k++)
               {
+
                 xyz[0] = xint + i;
                 xyz[1] = yint + j;
                 xyz[2] = zint + k;
 
-                int v_offset = i * 4 + j * 2 + k;
-
                 if(weights_table.count(xyz)>0)
                 {
-                  v[v_offset] = weights_table.at(xyz);
-                  v_tot += v[v_offset];
+                  int is_dist = (whole[0] * (1-(i%2))) + (whole[1] * (1-(j%2))) + (whole[2] * (1-(k%2)));
+                  v.push_back(weights_table.at(xyz));
+                  dist_flag.push_back(is_dist);
+                  v_tot += weights_table.at(xyz);
                   //log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d OK.", xyz[0], xyz[1], xyz[2]);
-                }
-                else
-                {
-                  //log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d caught.", xyz[0], xyz[1], xyz[2]);
-                  v[v_offset] = 0;
-                  valid_count--; //no matching entry, so we'll drop the valid_count.
                 }
               }
             }
           }
-          /*log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f %d",
-                                                          x.x,
-                                                          x.y,
-                                                          x.z, valid_count);*/
-          return v_tot / valid_count;
+          //log::Logger::Log<log::Warning, log::Singleton>("%f %f %f %d",
+          //                                                x.x,
+          //                                                x.y,
+          //                                                x.z, valid_count);
+         
+          //if(v.size() == 0) {
+          /* local interpolation did not work, so we adopt a wider range. */ 
+
+          //}
+ 
+          return v_tot / v.size();
         }
 
       }
