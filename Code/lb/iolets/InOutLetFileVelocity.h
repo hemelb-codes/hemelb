@@ -56,6 +56,10 @@ namespace hemelb
 
           std::map<std::vector<int>, double> weights_table;
 
+          //double calcVTot(std::vector<double> v);
+
+          //std::vector<double> updateV(std::vector<double> v, std::vector<int> xyz, std::map<std::vector<int>, double> weights_table);
+
       };
 
     }
