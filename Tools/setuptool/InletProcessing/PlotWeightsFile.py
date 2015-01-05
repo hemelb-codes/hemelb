@@ -40,7 +40,8 @@ if __name__ == "__main__":
     ax.set_zlabel('Z')
 
     for i in xrange(1,len(sys.argv)):
-        xyzv = filterLowX(np.loadtxt(sys.argv[i]))
+        xyzv = np.loadtxt(sys.argv[i]) 
+        #xyzv = filterLowX(np.loadtxt(sys.argv[i]))
       
         mode = "xyz"
         cl='red'
