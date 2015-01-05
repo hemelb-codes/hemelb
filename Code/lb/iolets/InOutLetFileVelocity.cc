@@ -183,14 +183,14 @@ namespace hemelb
             xyz_residual[2] = -(ceil(x.z) - x.z);
           }
 
-          double v_tot = 0;
+          LatticeVelocity v_tot = 0;
           int iterations = 0;
 
           while (iterations < 3)
           {
             if (weights_table.count(xyz) > 0)
             {
-              v_tot = weights_table.at(xyz);
+              v_tot = normal * weights_table.at(xyz) * velocityTable[t];
               //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f %f",
               //                                                              x.x,
               //                                                              x.y,
@@ -262,7 +262,7 @@ namespace hemelb
            * If you are unsure, you can increase the log level of this, run HemeLb
            * for 1 time step, and plot these points out. */
           log::Logger::Log<log::Trace, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
-          return 0.0;
+          return normal * 0.0;
         }
 
       }
