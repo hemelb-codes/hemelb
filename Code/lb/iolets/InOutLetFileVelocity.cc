@@ -15,6 +15,7 @@
 #include "util/utilityFunctions.h"
 #include "util/utilityStructs.h"
 #include "configuration/SimConfig.h"
+#include <math.h>
 
 namespace hemelb
 {
@@ -93,7 +94,6 @@ namespace hemelb
 
       }
 
-      
       LatticeVelocity InOutLetFileVelocity::GetVelocity(const LatticePosition& x,
                                                         const LatticeTimeStep t) const
       {
@@ -115,28 +115,37 @@ namespace hemelb
         }
         else
         {
-          //log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
+          bool logging = false;
+          /*if (402.9 < x.x && x.x < 403.1 && 312.9 < x.y && x.y < 313.1 && 160.4 < x.z && x.z < 160.6)
+          {
+            logging = true;
+          }*/
+
+          if (logging)
+          {
+            log::Logger::Log<log::Warning, log::OnePerCore>("%f %f %f", x.x, x.y, x.z);
+          }
           std::vector<int> xyz;
           xyz.push_back(0);
           xyz.push_back(0);
           xyz.push_back(0);
 
-          int whole[3] = {1,1,1};
+          int whole[3] = { 1, 1, 1 };
           int xint = int(x.x - 0.9999999);
           int yint = int(x.y - 0.9999999);
           int zint = int(x.z - 0.9999999);
 
-          if (x.x - ((float) xint) > 0.1)
+          if (x.x - floor(x.x) > 0.1)
           {
             whole[0] = 0;
             xint += 1;
           }
-          if (x.y - ((float) yint) > 0.1)
+          if (x.y - floor(x.y) > 0.1)
           {
             whole[1] = 0;
             yint += 1;
           }
-          if (x.z - ((float) zint) > 0.1)
+          if (x.z - floor(x.z) > 0.1)
           {
             whole[2] = 0;
             zint += 1;
@@ -149,7 +158,7 @@ namespace hemelb
           std::vector<bool> dist_flag;
           dist_flag.reserve(27);
 
-          int sizes[3] = {whole[0]+2, whole[1]+2, whole[2]+2};
+          int sizes[3] = { whole[0] + 2, whole[1] + 2, whole[2] + 2 };
           int v_tot = 0;
 
           for (int i = 0; i < sizes[0]; i++)
@@ -164,27 +173,33 @@ namespace hemelb
                 xyz[1] = yint + j;
                 xyz[2] = zint + k;
 
-                if(weights_table.count(xyz)>0)
+                if (logging)
                 {
-                  int is_dist = (whole[0] * (1-(i%2))) + (whole[1] * (1-(j%2))) + (whole[2] * (1-(k%2)));
+                  log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d %d %d %d", i, j, k, xyz[0], xyz[1], xyz[2]);
+                }
+
+                if (weights_table.count(xyz) > 0)
+                {
+                  //int is_dist = (whole[0] * (1-(i%2))) + (whole[1] * (1-(j%2))) + (whole[2] * (1-(k%2)));
                   v.push_back(weights_table.at(xyz));
-                  dist_flag.push_back(is_dist);
+                  //dist_flag.push_back(is_dist);
                   v_tot += weights_table.at(xyz);
                   //log::Logger::Log<log::Warning, log::OnePerCore>("%d %d %d OK.", xyz[0], xyz[1], xyz[2]);
                 }
               }
             }
           }
-          //log::Logger::Log<log::Warning, log::Singleton>("%f %f %f %d",
-          //                                                x.x,
-          //                                                x.y,
-          //                                                x.z, valid_count);
-         
-          //if(v.size() == 0) {
-          /* local interpolation did not work, so we adopt a wider range. */ 
-
+          //if(logging) {
+          //  log::Logger::Log<log::Warning, log::Singleton>("%f %f %f %d", x.x, x.y, x.z, v.size());
           //}
- 
+
+          if (v.size() == 0)
+          {
+            log::Logger::Log<log::Warning, log::Singleton>("%f %f %f %d", x.x, x.y, x.z, v.size());
+            /* local interpolation did not work, so we adopt a wider range. */
+            return 0.0;
+          }
+
           return v_tot / v.size();
         }
 
