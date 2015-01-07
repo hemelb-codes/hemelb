@@ -245,9 +245,11 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
   }
 
   // Now creates map of neighboring facets
-  unsigned int const Nmax = _mesh.facets.size();
-  boost::array<unsigned int, 3> const neg = {{Nmax, Nmax,  Nmax}};
-  std::fill(facetNeighbors.begin(), facetNeighbors.end(), neg);
+  size_t const Nmax = _mesh.facets.size();
+  std::fill(
+    facetNeighbors.begin(), facetNeighbors.end(),
+    t_FacetNeighbors::value_type{{Nmax, Nmax, Nmax}}
+  );
   i_facet = _mesh.facets.begin();
   for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
     for(size_t node(0); node != i_facet->size(); ++node) {

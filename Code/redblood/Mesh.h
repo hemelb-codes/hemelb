@@ -11,7 +11,7 @@
 #define HEMELB_REDBLOOD_MESH_H
 
 #include <memory>
-#include <boost/array.hpp>
+#include <array>
 #include <vector>
 #include <set>
 #include <string>
@@ -26,7 +26,7 @@ namespace hemelb { namespace redblood {
 //! Data is separated into vertices and triangular facets
 struct MeshData {
   //! Type of containers over indices
-  typedef boost::array<size_t, 3> t_Facet;
+  typedef std::array<size_t, 3> t_Facet;
   //! Facet container type
   typedef std::vector<t_Facet> t_Facets;
   //! Vertex container type
@@ -46,7 +46,7 @@ struct MeshTopology {
   //! Type for map from vertices to facets
   typedef std::vector< std::set<size_t> > t_VertexToFacets;
   //! Type for map from facets to its neighbors
-  typedef std::vector< boost::array<size_t, 3> > t_FacetNeighbors;
+  typedef std::vector< std::array<size_t, 3> > t_FacetNeighbors;
   //! For each vertex, lists the facet indices
   t_VertexToFacets vertexToFacets;
   //! For each facet, lists the neighboring facets
