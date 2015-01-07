@@ -16,9 +16,55 @@
 
 namespace hemelb { namespace redblood {
 
+class CellBase : public Mesh {
+
+  public:
+  //! \brief Initializes mesh from mesh data
+  //! \details This version makes it possible to share the unmodified mesh
+  //! across particles.
+  //! \param [in] _mesh: Modifyiable mesh
+  //! \param [in] _template: Original mesh
+  CellBase(Mesh const & _mesh, Mesh const &_template)
+      : Mesh(_mesh), template_(_template.GetData()) {}
+
+  //! \brief Initializes mesh from mesh data
+  //! \details This version makes it possible to share the unmodified mesh
+  //! across particles.
+  //! \param [in] _mesh: Modifyiable mesh
+  CellBase(Mesh const & _mesh)
+      : Mesh(_mesh), template_(new MeshData(*_mesh.GetData())) {}
+
+  //! \brief Initializes mesh from mesh data
+  //! On top of taking ownership of the mesh, a unmodifiable copy of the mesh
+  //! is also created.
+  //! \param [in] _mesh: Modifyiable mesh
+  //! \param [in] _template: Original mesh
+  CellBase(boost::shared_ptr<MeshData> const & _mesh)
+       : CellBase(Mesh(_mesh)) {}
+
+  //! Because it is good practice
+  virtual ~CellBase() {}
+
+  //! Unmodified mesh
+  boost::shared_ptr<const MeshData> GetTemplateMesh() const
+    { return template_; }
+  //! Current mesh
+  boost::shared_ptr<MeshData> GetCurrentMesh() const
+    { return mesh_; }
+
+  //! Facet bending energy
+  virtual PhysicalEnergy operator()() const = 0;
+  //! Facet bending energy
+  virtual PhysicalEnergy operator()(
+      std::vector<LatticeForceVector> &_in) const = 0;
+
+  protected:
+   //! Unmodified original mesh
+   boost::shared_ptr<MeshData const> template_;
+};
 
 //! Deformable cell for which energy and forces can be computed
-class Cell : public Mesh {
+class Cell : public CellBase {
 public:
   //! Holds all physical parameters
   struct Moduli {
@@ -37,44 +83,14 @@ public:
   //! Node-wall interaction
   Node2NodeForce nodeWall;
 
-  //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
-  Cell(Mesh const & _mesh, Mesh const &_template)
-      : Mesh(_mesh), template_(_template.GetData()) {}
-
-  //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
-  Cell(Mesh const & _mesh)
-      : Mesh(_mesh), template_(new MeshData(*_mesh.GetData())) {}
-
-  //! \brief Initializes mesh from mesh data
-  //! On top of taking ownership of the mesh, a unmodifiable copy of the mesh
-  //! is also created.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
-  Cell(boost::shared_ptr<MeshData> const & _mesh)
-       : Mesh(_mesh), template_(new MeshData(*_mesh)) {}
-
-  //! Unmodified mesh
-  boost::shared_ptr<const MeshData> GetTemplateMesh() const
-    { return template_; }
-  //! Current mesh
-  boost::shared_ptr<MeshData> GetCurrentMesh() const
-    { return mesh_; }
+  // inheriting constructors
+  using CellBase::CellBase;
 
   //! Facet bending energy
-  PhysicalEnergy operator()() const;
+  virtual PhysicalEnergy operator()() const override;
   //! Facet bending energy
-  PhysicalEnergy operator()(std::vector<LatticeForceVector> &_in) const;
-
-protected:
- //! Unmodified original mesh
- boost::shared_ptr<MeshData const> template_;
+  virtual PhysicalEnergy operator()(
+      std::vector<LatticeForceVector> &_in) const override;
 
 private:
   // Computes facet bending energy over all facets
