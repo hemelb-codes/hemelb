@@ -42,6 +42,34 @@ Dimensionless forcesOnGrid(
     stencil::types _stencil
 );
 
+//! \brief Computes and Spreads the forces from the cell to the lattice
+//! \details Adds in the node-wall interaction. It is easier to add here since
+//! already have a loop over neighboring grid nodes. Assumption is that the
+//! interaction distance is smaller or equal to stencil.
+//! \param[in] _cell: the cell for which to compute and spread forces
+//! \param[inout] _forces: a work array, resized and set to zero prior to use
+//! \param[inout] _latticeData: the LB grid
+//! \param[inout] _stencil: type of stencil to use when spreading forces
+//! \returns the energy (excluding node-wall interaction)
+template<class LATTICE> Dimensionless forcesOnGridWithWallInteraction(
+    Cell const &_cell,
+    std::vector<LatticeForceVector> &_forces,
+    geometry::LatticeData &_latticeData,
+    stencil::types _stencil
+) {
+  typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
+  _forces.resize(_cell.GetNumberOfNodes());
+  std::fill(_forces.begin(), _forces.end(), LatticeForceVector(0, 0, 0));
+  Dimensionless const energy = _cell(_forces);
+
+  details::spreadForce2Grid(
+      _cell,
+      Spreader(_cell, _forces, _latticeData),
+      _stencil
+  );
+  return energy;
+}
+
 //! Computes and Spreads the forces from the cell to the lattice
 //! Adds in the node-wall interaction. It is easier to add here since we
 //! already have a loop over neighboring grid nodes. Assumption is that the
@@ -53,16 +81,9 @@ template<class LATTICE> Dimensionless forcesOnGridWithWallInteraction(
     stencil::types _stencil
 ) {
   std::vector<LatticeForceVector> forces(_cell.GetNumberOfNodes(), 0);
-  Dimensionless const energy = _cell(forces);
-
-  details::spreadForce2Grid(
-      _cell,
-      details::SpreadForcesAndWallForces<LATTICE>(
-        _cell, forces, _latticeData
-      ),
-      _stencil
+  return forcesOnGridWithWallInteraction<LATTICE>(
+      _cell, forces, _latticeData, _stencil
   );
-  return energy;
 }
 
 }} // hemelb::redblood

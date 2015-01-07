@@ -355,6 +355,7 @@ void CellForceSpreadWithWallTests :: testAPIAssumptions() {
   LatticeVector const fluid = wetwall + LatticeVector(0, -1, 0);
 
   // Checking I know where walls and fluid sites are.
+  // This is used subsequently in the tests
   CPPUNIT_ASSERT(siteID(solid) < 0);
   CPPUNIT_ASSERT(siteID(wetwall) >= 0);
   CPPUNIT_ASSERT(siteID(left) >= 0);
