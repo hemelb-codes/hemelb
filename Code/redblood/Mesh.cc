@@ -20,7 +20,7 @@
 
 namespace hemelb { namespace redblood {
 
-boost::shared_ptr<MeshData> read_mesh(std::string const &_filename) {
+std::shared_ptr<MeshData> read_mesh(std::string const &_filename) {
   log::Logger::Log<log::Debug, log::Singleton>(
           "Reading red blood cell from %s", _filename.c_str());
 
@@ -33,7 +33,7 @@ boost::shared_ptr<MeshData> read_mesh(std::string const &_filename) {
   return read_mesh(file);
 }
 
-boost::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
+std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
   log::Logger::Log<log::Debug, log::Singleton>(
           "Reading red blood cell from stream");
 
@@ -48,7 +48,7 @@ boost::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
 
 
   // Create Mesh data
-  boost::shared_ptr<MeshData> result(new MeshData);
+  std::shared_ptr<MeshData> result(new MeshData);
   result->vertices.resize(num_vertices);
 
   // Then read in first and subsequent lines
@@ -297,8 +297,8 @@ void Mesh::operator+=(LatticePosition const &_offset) {
 }
 
 namespace {
-  boost::shared_ptr<MeshData> initial_tetrahedron() {
-    boost::shared_ptr<MeshData> data(new MeshData);
+  std::shared_ptr<MeshData> initial_tetrahedron() {
+    std::shared_ptr<MeshData> data(new MeshData);
 
     // facets at something degrees from one another
     data->vertices.push_back(LatticePosition(0, 0, 0));
@@ -318,7 +318,7 @@ namespace {
     return data;
   }
 
-  size_t vertex(boost::shared_ptr<MeshData> &_data,
+  size_t vertex(std::shared_ptr<MeshData> &_data,
       std::map<std::pair<size_t, size_t>, size_t> &_vertices,
       size_t const &_i0, size_t const &_i1) {
     std::pair<size_t, size_t> const indices(_i0, _i1);
@@ -335,7 +335,7 @@ namespace {
     return i_found->second;
   }
 
-  void refine(boost::shared_ptr<MeshData> &_data) {
+  void refine(std::shared_ptr<MeshData> &_data) {
     MeshData::t_Facets const facets(_data->facets);
     _data->facets.clear();
     _data->facets.resize(facets.size() * 4);
@@ -385,7 +385,7 @@ namespace {
 
 Mesh refine(Mesh _data, unsigned int _depth) {
   if(_depth == 0) return _data.clone();
-  boost::shared_ptr<MeshData> data(new MeshData(*_data.GetData()));
+  std::shared_ptr<MeshData> data(new MeshData(*_data.GetData()));
   for(unsigned int i(0); i < _depth; ++i)
     refine(data);
   return Mesh(data);
@@ -393,14 +393,14 @@ Mesh refine(Mesh _data, unsigned int _depth) {
 
 
 Mesh tetrahedron(unsigned int depth) {
-  boost::shared_ptr<MeshData> result(initial_tetrahedron());
+  std::shared_ptr<MeshData> result(initial_tetrahedron());
   for(unsigned int i(0); i < depth; ++i)
     refine(result);
   return Mesh(result);
 }
 
 Mesh pancakeSamosa(unsigned int depth) {
-  boost::shared_ptr<redblood::MeshData> mesh(new redblood::MeshData);
+  std::shared_ptr<redblood::MeshData> mesh(new redblood::MeshData);
 
   // facets at something degrees from one another
   mesh->vertices.push_back(LatticePosition(0, 0, 0));
@@ -415,7 +415,7 @@ Mesh pancakeSamosa(unsigned int depth) {
 
   // Create topology by hand cos we generally don't allow for this kind of
   // ambiguous self-referencing shape.
-  boost::shared_ptr<redblood::MeshTopology> topo(new redblood::MeshTopology);
+  std::shared_ptr<redblood::MeshTopology> topo(new redblood::MeshTopology);
   MeshTopology::t_VertexToFacets::value_type v2f;
   v2f.insert(0); v2f.insert(1);
   topo->vertexToFacets.resize(3, v2f);

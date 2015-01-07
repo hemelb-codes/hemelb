@@ -10,7 +10,7 @@
 #ifndef HEMELB_REDBLOOD_MESH_H
 #define HEMELB_REDBLOOD_MESH_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/array.hpp>
 #include <vector>
 #include <set>
@@ -71,11 +71,11 @@ class Mesh {
 
 public:
   //! Initializes mesh from mesh data
-  Mesh(boost::shared_ptr<MeshData> const & _mesh)
+  Mesh(std::shared_ptr<MeshData> const & _mesh)
        : mesh_(_mesh), topology_(new MeshTopology(*_mesh)) {}
   //! Initializes mesh from mesh data and topology
-  Mesh(boost::shared_ptr<MeshData> const & _mesh,
-      boost::shared_ptr<MeshTopology> const &_topo)
+  Mesh(std::shared_ptr<MeshData> const & _mesh,
+      std::shared_ptr<MeshTopology> const &_topo)
        : mesh_(_mesh), topology_(_topo) {}
   //! Initialize mesh by copying data
   Mesh(MeshData const &_data)
@@ -90,12 +90,12 @@ public:
   //! Computes surface of the mesh
   PhysicalSurface GetSurface() const { return surface(*mesh_); }
   //! Connectivity data
-  boost::shared_ptr<const MeshTopology> GetTopology() const
+  std::shared_ptr<const MeshTopology> GetTopology() const
     { return topology_; }
   //! Returns mesh data
-  boost::shared_ptr<MeshData> GetData() { return mesh_; }
+  std::shared_ptr<MeshData> GetData() { return mesh_; }
   //! Returns mesh data
-  boost::shared_ptr<MeshData const> GetData() const { return mesh_; }
+  std::shared_ptr<MeshData const> GetData() const { return mesh_; }
   //! Returns mesh data
   void SetData(MeshData const &_data) { mesh_.reset(new MeshData(_data)); }
 
@@ -124,17 +124,17 @@ public:
 
 protected:
   //! Holds actual data about the mesh
-  boost::shared_ptr<MeshData> mesh_;
+  std::shared_ptr<MeshData> mesh_;
   //! Holds topology information;
-  boost::shared_ptr<MeshTopology> topology_;
+  std::shared_ptr<MeshTopology> topology_;
 };
 
 //! Read mesh from file
 //! Format is from T. Krueger's thesis
-boost::shared_ptr<MeshData> read_mesh(std::string const &_filename);
+std::shared_ptr<MeshData> read_mesh(std::string const &_filename);
 //! Read mesh from file
 //! Format is from T. Krueger's thesis
-boost::shared_ptr<MeshData> read_mesh(std::istream &_stream);
+std::shared_ptr<MeshData> read_mesh(std::istream &_stream);
 //! Write mesh from file
 //! Format is from T. Krueger's thesis
 void write_mesh(std::ostream &_stream, MeshData const &_data);

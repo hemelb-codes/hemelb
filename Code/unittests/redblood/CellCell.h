@@ -46,7 +46,7 @@ public:
     void testPairIteratorOnePairPerBox();
     void testPairIteratorBoxHalo();
 
-    static boost::shared_ptr<CellContainer> fixture(PhysicalDistance);
+    static std::shared_ptr<CellContainer> fixture(PhysicalDistance);
 };
 
 // THIS SPACE IS NECESSARY SINCE UNITTEST CREATES VARIABLES BASED ON LINE #
@@ -180,9 +180,9 @@ void check_cell(
   CPPUNIT_ASSERT(nodes.size() == _nbNodes);
 }
 
-boost::shared_ptr<CellContainer> CellCellInteractionTests :: fixture(
+std::shared_ptr<CellContainer> CellCellInteractionTests :: fixture(
     PhysicalDistance _cutoff) {
-  boost::shared_ptr<CellContainer> cells(new CellContainer);
+  std::shared_ptr<CellContainer> cells(new CellContainer);
   Mesh pancake = pancakeSamosa();
   pancake += LatticePosition(1, 1, 1) * _cutoff * 0.5;
   // safer to clone so cells has its own copy
@@ -196,7 +196,7 @@ boost::shared_ptr<CellContainer> CellCellInteractionTests :: fixture(
 void CellCellInteractionTests :: testAddMeshes() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
   Mesh pancake = pancakeSamosa();
 
   DivideConquerCells dnc(cells, cutoff, halo);
@@ -207,7 +207,7 @@ void CellCellInteractionTests :: testAddMeshes() {
 void CellCellInteractionTests :: testIterator() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   std::set<LatticePosition const*> allnodes;
@@ -235,7 +235,7 @@ void CellCellInteractionTests :: testIterator() {
 void CellCellInteractionTests :: testUpdate() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   LatticeVector const zero(0, 0, 0);
@@ -280,7 +280,7 @@ void CellCellInteractionTests :: testUpdate() {
 void CellCellInteractionTests::testPairIteratorNoPairs() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   // Test when iterating over nothing
@@ -297,7 +297,7 @@ void CellCellInteractionTests::testPairIteratorNoPairs() {
 void CellCellInteractionTests::testPairIteratorSameMesh() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
 
   // Move one node closer  to the other
   LatticePosition const n0 = cells->front().GetVertices()[0];
@@ -314,7 +314,7 @@ void CellCellInteractionTests::testPairIteratorSinglePair() {
   // There is only one pair and they are in the same divide and conquer box
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
 
   // Move one node closer  to the other
   LatticePosition const n0 = cells->front().GetVertices()[0];
@@ -339,7 +339,7 @@ void CellCellInteractionTests::testPairIteratorOnePairPerBox() {
   // within one box
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
 
   // Each vertex of triangle is in a separate box
   // The two triangles are separated by no much
@@ -367,7 +367,7 @@ void CellCellInteractionTests::testPairIteratorBoxHalo() {
   // within one box
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells(fixture(cutoff));
+  std::shared_ptr<CellContainer> cells(fixture(cutoff));
 
   // Only one pair, and each in a separate box
   LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
@@ -394,7 +394,7 @@ void CellCellInteractionTests::testPairIteratorBoxHalo() {
 void CellCellInteractionWithGridTests::testInteraction() {
   PhysicalDistance const cutoff = 5.0;
   PhysicalDistance const halo = 2.0;
-  boost::shared_ptr<CellContainer> cells
+  std::shared_ptr<CellContainer> cells
     = CellCellInteractionTests::fixture(cutoff);
 
   // Place two nodes close enough for interactions

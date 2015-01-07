@@ -39,17 +39,17 @@ class CellBase : public Mesh {
   //! is also created.
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
-  CellBase(boost::shared_ptr<MeshData> const & _mesh)
+  CellBase(std::shared_ptr<MeshData> const & _mesh)
        : CellBase(Mesh(_mesh)) {}
 
   //! Because it is good practice
   virtual ~CellBase() {}
 
   //! Unmodified mesh
-  boost::shared_ptr<const MeshData> GetTemplateMesh() const
+  std::shared_ptr<const MeshData> GetTemplateMesh() const
     { return template_; }
   //! Current mesh
-  boost::shared_ptr<MeshData> GetCurrentMesh() const
+  std::shared_ptr<MeshData> GetCurrentMesh() const
     { return mesh_; }
 
   //! Facet bending energy
@@ -60,7 +60,7 @@ class CellBase : public Mesh {
 
   protected:
    //! Unmodified original mesh
-   boost::shared_ptr<MeshData const> template_;
+   std::shared_ptr<MeshData const> template_;
 };
 
 //! Deformable cell for which energy and forces can be computed

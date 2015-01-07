@@ -12,7 +12,8 @@
 
 #include <vector>
 #include <assert.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
+
 #include "units.h"
 #include "Exception.h"
 #include "geometry/LatticeData.h"
@@ -97,7 +98,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
 
     //! Constructor
     DivideConquerCells(
-        boost::shared_ptr<CellContainer> const &_cells,
+        std::shared_ptr<CellContainer> const &_cells,
         PhysicalDistance _boxsize, PhysicalDistance _halosize
     );
 
@@ -141,7 +142,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Size of each box
     PhysicalDistance GetBoxSize() const { return base_type::GetBoxSize(); }
     //! Cells that are present in this object
-    boost::shared_ptr<CellContainer const> GetCells() const { return cells_; }
+    std::shared_ptr<CellContainer const> GetCells() const { return cells_; }
 
     //! After vertices have moved, update mapping and whether it is near
     //! boundary
@@ -150,7 +151,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Distance from border below which an object is in the halo
     PhysicalDistance const haloLength_;
     //! Container of cells
-    boost::shared_ptr<CellContainer> cells_;
+    std::shared_ptr<CellContainer> cells_;
 };
 
 class DivideConquerCells::pair_range {

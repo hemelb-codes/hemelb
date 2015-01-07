@@ -60,7 +60,7 @@ public:
     std::ostringstream output;
     write_mesh(output, *mesh);
     std::istringstream input(output.str());
-    boost::shared_ptr<MeshData> other = read_mesh(input);
+    std::shared_ptr<MeshData> other = read_mesh(input);
     CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
     CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
     CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
@@ -79,7 +79,7 @@ public:
   }
 
 private:
-  boost::shared_ptr<MeshData> mesh;
+  std::shared_ptr<MeshData> mesh;
 };
 
 class RedBloodMeshTests : public BasisFixture {
@@ -183,7 +183,7 @@ public:
     CPPUNIT_ASSERT(mesh->facets.size() == 12);
 
     // Creates topology
-    topo = boost::shared_ptr<MeshTopology>(new MeshTopology(*mesh));
+    topo = std::shared_ptr<MeshTopology>(new MeshTopology(*mesh));
   }
 
   void tearDown() {}
@@ -246,8 +246,8 @@ public:
     }
 
 private:
-  boost::shared_ptr<MeshData> mesh;
-  boost::shared_ptr<MeshTopology> topo;
+  std::shared_ptr<MeshData> mesh;
+  std::shared_ptr<MeshTopology> topo;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(RedBloodMeshDataIOTests);

@@ -111,7 +111,7 @@ protected:
   LatticePosition nodes[4];
   std::set<size_t> main_indices;
   std::set<size_t> neighbor_indices;
-  boost::shared_ptr<Facet> main, neighbor;
+  std::shared_ptr<Facet> main, neighbor;
 };
 
 class EnergyTests : public BasisFixture {
