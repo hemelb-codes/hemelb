@@ -13,7 +13,6 @@
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"
 #include "unittests/redblood/Fixtures.h"
-#include "unittests/redblood/CellCell.h"
 #include "redblood/CellCell.cc"
 
 namespace hemelb { namespace unittests { namespace redblood {
