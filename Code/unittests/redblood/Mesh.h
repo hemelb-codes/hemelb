@@ -74,7 +74,7 @@ public:
   static bool compare(util::Vector3D<double> const &_in) {
     return _in.GetMagnitudeSquared() < 1e-8;
   }
-  static bool any(boost::array<size_t, 3> const &_vec, size_t _value) {
+  static bool any(std::array<size_t, 3> const &_vec, size_t _value) {
     return _vec[0] == _value or _vec[1] == _value or _vec[2] == _value;
   }
 
@@ -230,7 +230,7 @@ public:
       {10, 5,  7},
     };
     for(unsigned facet(0); facet < 12; ++facet) {
-      boost::array<size_t, 3> const &neighs
+      std::array<size_t, 3> const &neighs
           = topo->facetNeighbors[facet];
       CPPUNIT_ASSERT(neighs.size() == 3);
       for(size_t neigh(0); neigh < 3; ++neigh)
@@ -239,7 +239,7 @@ public:
   }
 
   template<class T, unsigned long N>
-    static bool contains(boost::array<T, N> const &_facets, T _value) {
+    static bool contains(std::array<T, N> const &_facets, T _value) {
       for(unsigned i(0); i < N; ++i)
         if(_facets[i] == _value) return true;
       return false;
