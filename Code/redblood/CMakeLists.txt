@@ -1,2 +1,9 @@
-add_library(hemelb_redblood Mesh.h Mesh.cc Cell.cc Interpolation.cc
-  stencil.cc GridAndCell.cc CellCell.cc)
+add_library(hemelb_redblood Mesh.h Mesh.cc Cell.cc Interpolation.cc stencil.cc
+  CellCell.cc)
+if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+  target_compile_features( hemelb_redblood
+    PUBLIC
+      cxx_auto_type cxx_lambdas cxx_range_for cxx_override
+      cxx_delegating_constructors cxx_inheriting_constructors
+  )
+endif()
