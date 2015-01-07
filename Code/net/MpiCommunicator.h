@@ -14,7 +14,7 @@
 //#include "net/mpi.h"
 #include <vector>
 #include "net/MpiError.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace hemelb
 {
@@ -132,7 +132,7 @@ namespace hemelb
          */
         MpiCommunicator(MPI_Comm communicator, bool willOwn);
 
-        boost::shared_ptr<MPI_Comm> commPtr;
+        std::shared_ptr<MPI_Comm> commPtr;
     };
 
     bool operator==(const MpiCommunicator& comm1, const MpiCommunicator& comm2);

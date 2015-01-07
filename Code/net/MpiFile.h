@@ -10,7 +10,7 @@
 #ifndef HEMELB_NET_MPIFILE_H
 #define HEMELB_NET_MPIFILE_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "net/MpiError.h"
 #include "net/MpiCommunicator.h"
 
@@ -63,7 +63,7 @@ namespace hemelb
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 
         const MpiCommunicator* comm;
-        boost::shared_ptr<MPI_File> filePtr;
+        std::shared_ptr<MPI_File> filePtr;
     };
 
   }

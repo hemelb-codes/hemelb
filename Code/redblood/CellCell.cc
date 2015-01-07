@@ -67,7 +67,7 @@ namespace {
 
   void initialize_cells(
       DivideConquer<CellReference> &_dnc,
-      boost::shared_ptr<CellContainer const> _cells,
+      std::shared_ptr<CellContainer const> _cells,
       PhysicalDistance _haloLength ) {
     CellContainer::const_iterator i_first = _cells->begin();
     CellContainer::const_iterator const i_end = _cells->end();
@@ -107,7 +107,7 @@ namespace {
 #ifndef HEMELB_DOING_UNITTESTS
 //! Constructor
 DivideConquerCells :: DivideConquerCells(
-    boost::shared_ptr<CellContainer> const &_cells,
+    std::shared_ptr<CellContainer> const &_cells,
     PhysicalDistance _boxsize, PhysicalDistance _halosize
 ) : DivideConquer<CellReference>(_boxsize),
     haloLength_(_halosize), cells_(_cells) {
