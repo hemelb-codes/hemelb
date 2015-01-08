@@ -67,12 +67,12 @@ namespace {
 
   void initialize_cells(
       DivideConquer<CellReference> &_dnc,
-      std::shared_ptr<CellContainer const> _cells,
+      CellContainer const& _cells,
       PhysicalDistance _haloLength ) {
-    CellContainer::const_iterator i_first = _cells->begin();
-    CellContainer::const_iterator const i_end = _cells->end();
+    CellContainer::const_iterator i_first = _cells.begin();
+    CellContainer::const_iterator const i_end = _cells.end();
     for(site_t i(0); i_first != i_end; ++i_first, ++i)
-      initialize_cells(_dnc, i_first->GetVertices(), i, _haloLength);
+      initialize_cells(_dnc, (*i_first)->GetVertices(), i, _haloLength);
   }
 
   // Compare distance between vertices
@@ -107,7 +107,7 @@ namespace {
 #ifndef HEMELB_DOING_UNITTESTS
 //! Constructor
 DivideConquerCells :: DivideConquerCells(
-    std::shared_ptr<CellContainer> const &_cells,
+    CellContainer const &_cells,
     PhysicalDistance _boxsize, PhysicalDistance _halosize
 ) : DivideConquer<CellReference>(_boxsize),
     haloLength_(_halosize), cells_(_cells) {

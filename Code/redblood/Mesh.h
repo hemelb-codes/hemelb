@@ -108,6 +108,8 @@ public:
   void operator*=(util::Matrix3D const &_scale);
   //! Translate mesh
   void operator+=(LatticePosition const &_offset);
+  //! Transform mesh
+  void operator+=(std::vector<LatticePosition> const &_displacements);
 
   //! Number of nodes
   size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }

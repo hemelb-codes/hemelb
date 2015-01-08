@@ -99,5 +99,8 @@ private:
   PhysicalEnergy facetBending_(std::vector<LatticeForceVector> &_forces) const;
 };
 
+//! Typical cell container type
+typedef std::vector<std::shared_ptr<CellBase>> CellContainer;
+
 }} // namespace hemelb::redblood
 #endif

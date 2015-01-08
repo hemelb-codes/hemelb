@@ -24,8 +24,6 @@
 
 namespace hemelb { namespace redblood {
 
-typedef std::vector<Cell> CellContainer;
-
 struct CellReference {
   //! Index of cell in input container
   site_t cellIndex;
@@ -98,7 +96,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
 
     //! Constructor
     DivideConquerCells(
-        std::shared_ptr<CellContainer> const &_cells,
+        CellContainer const &_cells,
         PhysicalDistance _boxsize, PhysicalDistance _halosize
     );
 
@@ -142,7 +140,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Size of each box
     PhysicalDistance GetBoxSize() const { return base_type::GetBoxSize(); }
     //! Cells that are present in this object
-    std::shared_ptr<CellContainer const> GetCells() const { return cells_; }
+    CellContainer const& GetCells() const { return cells_; }
 
     //! After vertices have moved, update mapping and whether it is near
     //! boundary
@@ -151,7 +149,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     //! Distance from border below which an object is in the halo
     PhysicalDistance const haloLength_;
     //! Container of cells
-    std::shared_ptr<CellContainer> cells_;
+    CellContainer cells_;
 };
 
 class DivideConquerCells::pair_range {

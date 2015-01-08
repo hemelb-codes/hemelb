@@ -14,7 +14,7 @@ namespace details { namespace {
 template<class T_KERNEL> struct VelocityNodeLoop {
   VelocityNodeLoop(
       stencil::types _stencil,
-      Cell const &_cell,
+      CellBase const &_cell,
       geometry::LatticeData const &_latDat
   ) : stencil(_stencil), cell(_cell), latticeData(_latDat) {}
   // Loop and does something
@@ -30,7 +30,7 @@ template<class T_KERNEL> struct VelocityNodeLoop {
   }
 
   stencil::types const stencil;
-  Cell const &cell;
+  CellBase const &cell;
   geometry::LatticeData const &latticeData;
 };
 
@@ -53,7 +53,7 @@ template<class T_ITERATOR>
 //! The functor argument is called with the current vertex index, the
 //! global site index triplet, and the associated interpolation weight.
 template<class T_FUNCTOR> void spreadForce2Grid(
-    Cell const &_cell,
+    CellBase const &_cell,
     T_FUNCTOR _functor,
     stencil::types _stencil
 ) {
