@@ -33,6 +33,9 @@ class CellCellInteractionTests : public CppUnit::TestFixture {
      CPPUNIT_TEST(testPairIteratorBoxHalo);
     CPPUNIT_TEST_SUITE_END();
 
+    PhysicalDistance const cutoff = 5.0;
+    PhysicalDistance const halo = 2.0;
+
 public:
     void testBoxHaloTooBig();
     void testBoxHalo();
@@ -46,7 +49,6 @@ public:
     void testPairIteratorOnePairPerBox();
     void testPairIteratorBoxHalo();
 
-    static std::shared_ptr<CellContainer> fixture(PhysicalDistance);
 };
 
 // THIS SPACE IS NECESSARY SINCE UNITTEST CREATES VARIABLES BASED ON LINE #
@@ -58,6 +60,9 @@ class CellCellInteractionWithGridTests
     CPPUNIT_TEST_SUITE(CellCellInteractionWithGridTests);
       CPPUNIT_TEST(testInteraction);
     CPPUNIT_TEST_SUITE_END();
+
+    PhysicalDistance const cutoff = 5.0;
+    PhysicalDistance const halo = 2.0;
   public:
     void testInteraction();
   private:
@@ -65,7 +70,6 @@ class CellCellInteractionWithGridTests
 };
 
 void CellCellInteractionTests :: testBoxHaloTooBig() {
-  PhysicalDistance const cutoff(5.0);
   DivideConquer<int> dnc(cutoff);
   LatticeVector const key(0, 1, -2);
   LatticePosition const position
@@ -98,8 +102,6 @@ void CellCellInteractionTests :: testBoxHalo() {
 }
 
 void CellCellInteractionTests :: testAddNodes() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
   site_t const cellIndex(4);
   DivideConquer<CellReference> dnc(cutoff);
 
@@ -180,23 +182,8 @@ void check_cell(
   CPPUNIT_ASSERT(nodes.size() == _nbNodes);
 }
 
-std::shared_ptr<CellContainer> CellCellInteractionTests :: fixture(
-    PhysicalDistance _cutoff) {
-  std::shared_ptr<CellContainer> cells(new CellContainer);
-  Mesh pancake = pancakeSamosa();
-  pancake += LatticePosition(1, 1, 1) * _cutoff * 0.5;
-  // safer to clone so cells has its own copy
-  cells->push_back(pancake.clone());
-  pancake += LatticePosition(3, 0, 1) * _cutoff;
-  cells->push_back(pancake.clone());
-
-  return cells;
-}
-
 void CellCellInteractionTests :: testAddMeshes() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
   Mesh pancake = pancakeSamosa();
 
   DivideConquerCells dnc(cells, cutoff, halo);
@@ -205,19 +192,17 @@ void CellCellInteractionTests :: testAddMeshes() {
 }
 
 void CellCellInteractionTests :: testIterator() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   std::set<LatticePosition const*> allnodes;
   typedef MeshData::t_Vertices::const_iterator vertex_iterator;
-  vertex_iterator i_vert = cells->begin()->GetVertices().begin();
-  vertex_iterator i_vertend = cells->begin()->GetVertices().end();
+  vertex_iterator i_vert = cells.front()->GetVertices().begin();
+  vertex_iterator i_vertend = cells.front()->GetVertices().end();
   for(; i_vert != i_vertend; ++i_vert)
     allnodes.insert(&(*i_vert));
-  i_vert = cells->back().GetVertices().begin();
-  i_vertend = cells->back().GetVertices().end();
+  i_vert = cells.back()->GetVertices().begin();
+  i_vertend = cells.back()->GetVertices().end();
   for(; i_vert != i_vertend; ++i_vert)
     allnodes.insert(&(*i_vert));
 
@@ -233,9 +218,7 @@ void CellCellInteractionTests :: testIterator() {
 }
 
 void CellCellInteractionTests :: testUpdate() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   LatticeVector const zero(0, 0, 0);
@@ -248,7 +231,7 @@ void CellCellInteractionTests :: testUpdate() {
   LatticeVector const newbox(-1, 1, 2);
   LatticePosition const center(0.5 * cutoff);
   LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
-  cells->front().GetVertices().front() = offhalo;
+  cells.front()->GetVertices().front() = offhalo;
 
   dnc.update();
   CPPUNIT_ASSERT(dnc.size() == 6);
@@ -261,7 +244,7 @@ void CellCellInteractionTests :: testUpdate() {
   // Move near boundary
   LatticePosition const inhalo
     = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
-  cells->front().GetVertices().front() = inhalo;
+  cells.front()->GetVertices().front() = inhalo;
   dnc.update();
   CPPUNIT_ASSERT(dnc.size() == 6);
   CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
@@ -278,9 +261,7 @@ void CellCellInteractionTests :: testUpdate() {
 }
 
 void CellCellInteractionTests::testPairIteratorNoPairs() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
   DivideConquerCells dnc(cells, cutoff, halo);
 
   // Test when iterating over nothing
@@ -295,14 +276,12 @@ void CellCellInteractionTests::testPairIteratorNoPairs() {
 }
 
 void CellCellInteractionTests::testPairIteratorSameMesh() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
 
   // Move one node closer  to the other
-  LatticePosition const n0 = cells->front().GetVertices()[0];
-  LatticePosition const n1 = cells->front().GetVertices()[1];
-  cells->front().GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  LatticePosition const n0 = cells.front()->GetVertices()[0];
+  LatticePosition const n1 = cells.front()->GetVertices()[1];
+  cells.front()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
   DivideConquerCells dnc(cells, cutoff, halo);
 
   DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
@@ -312,23 +291,21 @@ void CellCellInteractionTests::testPairIteratorSameMesh() {
 
 void CellCellInteractionTests::testPairIteratorSinglePair() {
   // There is only one pair and they are in the same divide and conquer box
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
 
   // Move one node closer  to the other
-  LatticePosition const n0 = cells->front().GetVertices()[0];
-  LatticePosition const n1 = cells->back().GetVertices()[1];
-  cells->back().GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  LatticePosition const n0 = cells.front()->GetVertices()[0];
+  LatticePosition const n1 = cells.back()->GetVertices()[1];
+  cells.back()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
   DivideConquerCells dnc(cells, cutoff, halo);
 
   DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
   CPPUNIT_ASSERT(range.is_valid());
   CPPUNIT_ASSERT(helpers::is_zero(
-        *range->first - cells->front().GetVertices().front()
+        *range->first - cells.front()->GetVertices().front()
   ));
   CPPUNIT_ASSERT(helpers::is_zero(
-        *range->second - cells->back().GetVertices()[1]
+        *range->second - cells.back()->GetVertices()[1]
   ));
   CPPUNIT_ASSERT(not ++range);
   CPPUNIT_ASSERT(not range.is_valid());
@@ -337,43 +314,13 @@ void CellCellInteractionTests::testPairIteratorSinglePair() {
 void CellCellInteractionTests::testPairIteratorOnePairPerBox() {
   // There three pairs and they are each in different boxe, but each contained
   // within one box
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
-
-  // Each vertex of triangle is in a separate box
-  // The two triangles are separated by no much
-  cells->front() *= cutoff * 2;
-  cells->back() *= cutoff * 2;
-  cells->front() += LatticePosition(0.5) * cutoff -
-    cells->front().GetVertices().front();
-  cells->back() += cells->front().GetVertices().front()
-    - cells->back().GetVertices().front() + LatticePosition(1e-1);
-
-  DivideConquerCells dnc(cells, cutoff, halo);
-  // Checks that fixture is what I think it is
-  LatticeVector const zero(0, 0, 0);
-  CPPUNIT_ASSERT(std::distance(dnc(zero).first, dnc(zero).second) == 2);
-  // Now checks there are three pairs
-  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
-  CPPUNIT_ASSERT(range.is_valid());
-  size_t i(0);
-  if(range.is_valid()) do { ++i; } while(++range);
-  CPPUNIT_ASSERT(i == 3);
-}
-
-void CellCellInteractionTests::testPairIteratorBoxHalo() {
-  // There three pairs and they are each in different boxe, but each contained
-  // within one box
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells(fixture(cutoff));
+  auto cells(TwoPancakeSamosas<>(cutoff));
 
   // Only one pair, and each in a separate box
   LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
   LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-  cells->front().GetVertices().front() = n0;
-  cells->back().GetVertices().front() = n1;
+  cells.front()->GetVertices().front() = n0;
+  cells.back()->GetVertices().front() = n1;
 
   DivideConquerCells dnc(cells, cutoff, halo);
   // Checks that fixture is what I think it is
@@ -392,16 +339,13 @@ void CellCellInteractionTests::testPairIteratorBoxHalo() {
 }
 
 void CellCellInteractionWithGridTests::testInteraction() {
-  PhysicalDistance const cutoff = 5.0;
-  PhysicalDistance const halo = 2.0;
-  std::shared_ptr<CellContainer> cells
-    = CellCellInteractionTests::fixture(cutoff);
+  auto cells = TwoPancakeSamosas<>(cutoff);
 
   // Place two nodes close enough for interactions
   LatticePosition const n0(15 - 0.1, 15.5, 15.5);
   LatticePosition const n1(15 + 0.1, 15.5, 15.5);
-  cells->front().GetVertices().front() = n0;
-  cells->back().GetVertices().front() = n1;
+  cells.front()->GetVertices().front() = n0;
+  cells.back()->GetVertices().front() = n1;
 
   // Set forces to zero
   helpers::ZeroOutFOld(latDat);
@@ -448,6 +392,34 @@ void CellCellInteractionWithGridTests::testInteraction() {
   // This node is too far away
   CPPUNIT_ASSERT(helpers::is_zero(latDat->GetSite(12, 15, 15).GetForce()));
 }
+
+void CellCellInteractionTests::testPairIteratorBoxHalo() {
+  // There three pairs and they are each in different boxe, but each contained
+  // within one box
+  auto cells = TwoPancakeSamosas<>(cutoff);
+
+  // Only one pair, and each in a separate box
+  LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
+  LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
+  cells.front()->GetVertices().front() = n0;
+  cells.back()->GetVertices().front() = n1;
+
+  DivideConquerCells dnc(cells, cutoff, halo);
+  // Checks that fixture is what I think it is
+  LatticeVector const N0(1, 4, 4);
+  LatticeVector const N1(2, 4, 4);
+  CPPUNIT_ASSERT(std::distance(dnc(N0).first, dnc(N0).second) == 1);
+  CPPUNIT_ASSERT(std::distance(dnc(N1).first, dnc(N1).second) == 1);
+
+  DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+  CPPUNIT_ASSERT(range.is_valid());
+
+  CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
+  CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+  CPPUNIT_ASSERT(not ++range);
+  CPPUNIT_ASSERT(not range.is_valid());
+}
+
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellCellInteractionTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(CellCellInteractionWithGridTests);

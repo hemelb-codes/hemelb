@@ -50,15 +50,15 @@ class HEMELB_ITERATOR {
 #   endif
 
     reference operator*() {
-        return (*owner_.cells_) HEMELB_GET(wrappee_->second.cellIndex)
-              .GetVertices()
+        return owner_.cells_ HEMELB_GET(wrappee_->second.cellIndex)
+              ->GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
     pointer operator->() { return &this->operator*(); }
 
     const_reference operator*() const {
-        return (*owner_.cells_) HEMELB_GET(wrappee_->second.cellIndex)
-              .GetVertices()
+        return owner_.cells_ HEMELB_GET(wrappee_->second.cellIndex)
+              ->GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
     const_pointer operator->() const { return &this->operator*(); }

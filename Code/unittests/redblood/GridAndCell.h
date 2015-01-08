@@ -406,13 +406,12 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
   };
 
   // Loop over test cases breaks on special marker (negative) cutoff
-  for(size_t i(0); cutoffs[i] > 0e0; ++i) {
+  for(size_t i(1); cutoffs[i] > 0e0; ++i) {
     helpers::ZeroOutForces(latDat);
     mesh += positions[i] - mesh.GetVertex(0);
     mesh.nodeWall.cutoff = cutoffs[i];
 
-    forcesOnGridWithWallInteraction<D3Q15>(
-        mesh,  *latDat, stencil::FOUR_POINT);
+    forcesOnGrid<D3Q15>(mesh,  *latDat, stencil::FOUR_POINT);
 
     bool const atWall = helpers::is_zero(latDat->GetSite(wetwall).GetForce());
     bool const atLeft = helpers::is_zero(latDat->GetSite(left).GetForce());
@@ -422,6 +421,8 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
     CPPUNIT_ASSERT(atRight == expected[3*i + 2]);
   }
 }
+
+
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellVelocityInterpolTests);
 CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadTests);

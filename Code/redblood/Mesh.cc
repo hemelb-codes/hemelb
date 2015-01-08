@@ -292,10 +292,19 @@ void Mesh::operator*=(util::Matrix3D const &_scale) {
 }
 
 void Mesh::operator+=(LatticePosition const &_offset) {
-  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
-  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
-  for(; i_first != i_end; ++i_first)
-    (*i_first) += _offset;
+  std::for_each(
+      mesh_->vertices.begin(), mesh_->vertices.end(),
+      [&_offset](LatticePosition &_node) { _node += _offset; }
+  );
+}
+
+void Mesh::operator+=(std::vector<LatticePosition> const &_displacements) {
+  assert(_displacements.size() == mesh_->vertices.size());
+  std::vector<LatticePosition>::const_iterator i_disp = _displacements.begin();
+  std::for_each(
+      mesh_->vertices.begin(), mesh_->vertices.end(),
+      [&i_disp](LatticePosition &_node) { _node += *(i_disp++); }
+  );
 }
 
 namespace {

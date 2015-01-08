@@ -113,5 +113,18 @@ class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture {
     hemelb::redblood::Cell mesh;
 };
 
+template<class CELLTYPE=redblood::Cell>
+  redblood::CellContainer TwoPancakeSamosas(PhysicalDistance _cutoff) {
+    redblood::CellContainer cells;
+    redblood::Mesh pancake = redblood::pancakeSamosa();
+    pancake += LatticePosition(1, 1, 1) * _cutoff * 0.5;
+    // safer to clone so cells has its own copy
+    cells.emplace_back(std::make_shared<CELLTYPE>(pancake.clone()));
+    pancake += LatticePosition(3, 0, 1) * _cutoff;
+    cells.emplace_back(std::make_shared<CELLTYPE>(pancake.clone()));
+
+    return cells;
+  }
+
 }}
 #endif
