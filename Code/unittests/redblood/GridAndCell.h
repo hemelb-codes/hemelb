@@ -114,20 +114,18 @@ class CellForceSpreadWithWallTests : public SquareDuctTetrahedronFixture {
 
 // Sets up a linear velocity profile
 // Uses a macro so we can define a number of variables in one go
-# define HEMELB_LINEAR_VELOCITY_PROFILE(AX, AY, AZ)                        \
-  LatticePosition const gradient= LatticePosition(AX, AY, AZ).Normalise(); \
-  /* any number big enough to avoid negative populations */                \
-  Dimensionless const non_negative_population(CubeSize() * 3);             \
-  helpers::Linear linear(non_negative_population, gradient);               \
-  helpers::Linear linear_inv(2 * non_negative_population, -gradient);      \
-  helpers::setUpDistribution<D3Q15>(latDat, 0, linear);                    \
-  helpers::setUpDistribution<D3Q15>(latDat, 1, linear_inv)
+# define HEMELB_LINEAR_VELOCITY_PROFILE(GRADIENT)                            \
+  LatticePosition gradient;                                                  \
+  Dimensionless non_neg_pop;                                                 \
+  std::function<Dimensionless(PhysicalVelocity const &)> linear, linear_inv; \
+  std::tie(non_neg_pop, gradient, linear, linear_inv)                        \
+    = helpers::makeLinearProfile(CubeSize(), latDat, GRADIENT);
 
 
 void CellVelocityInterpolTests::testDistributionFixture() {
   helpers::ZeroOutFOld(latDat);
 
-  HEMELB_LINEAR_VELOCITY_PROFILE(2., 4., 6.);
+  HEMELB_LINEAR_VELOCITY_PROFILE(PhysicalVelocity(2., 4., 6.));
   // Test assumes static pop at index == 0 as assumed by macro
   CPPUNIT_ASSERT_DOUBLES_EQUAL(D3Q15::CX[0], 0e0, 1e-8);
   CPPUNIT_ASSERT_DOUBLES_EQUAL(D3Q15::CY[0], 0e0, 1e-8);
@@ -161,7 +159,7 @@ void CellVelocityInterpolTests::testDistributionFixture() {
       );
     }
     CPPUNIT_ASSERT_DOUBLES_EQUAL(
-        3.0 * non_negative_population,
+        3.0 * non_neg_pop,
         latDat->GetSite(index).GetFOld<D3Q15>()[0]
         + latDat->GetSite(index).GetFOld<D3Q15>()[1],
         1e-8
@@ -172,8 +170,7 @@ void CellVelocityInterpolTests::testDistributionFixture() {
 void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
-  LatticePosition const normal(Facet(*mesh.GetData(), 0).normal());
-  HEMELB_LINEAR_VELOCITY_PROFILE(normal.x, normal.y, normal.z);
+  HEMELB_LINEAR_VELOCITY_PROFILE(Facet(*mesh.GetData(), 0).normal());
 
   // Perform interpolation
   std::vector<LatticePosition> displacements;
@@ -194,7 +191,7 @@ void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   helpers::ZeroOutFOld(latDat);
   Facet const shapeFacet(*mesh.GetData(), 0);
   LatticePosition const inplane(shapeFacet.edge(0) + shapeFacet.edge(1) * 0.5);
-  HEMELB_LINEAR_VELOCITY_PROFILE(inplane.x, inplane.y, inplane.z);
+  HEMELB_LINEAR_VELOCITY_PROFILE(inplane);
 
   // Perform interpolation
   std::vector<LatticePosition> displacements;
@@ -421,6 +418,8 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
     CPPUNIT_ASSERT(atRight == expected[3*i + 2]);
   }
 }
+
+
 
 
 

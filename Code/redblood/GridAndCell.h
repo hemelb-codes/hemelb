@@ -41,7 +41,7 @@ template<class T_KERNEL> void velocitiesOnMesh(
     std::vector<LatticePosition> &_displacements
 ) {
   return velocitiesOnMesh<T_KERNEL>(
-      _cell.get(), _latDat, _stencil, _displacements);
+      *_cell.get(), _latDat, _stencil, _displacements);
 }
 
 //! \brief Computes and Spreads the forces from the cell to the lattice
