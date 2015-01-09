@@ -66,7 +66,7 @@ template<class KERNEL>
     for(; i_first != i_end; ++i_first) {
       positions.resize((*i_first)->GetVertices().size());
       std::fill(positions.begin(), positions.end(), origin);
-      velocitiesOnMesh(*i_first, latticeData_, stencil, positions);
+      velocitiesOnMesh<KERNEL>(*i_first, latticeData_, stencil, positions);
       (*i_first)->operator+=(positions);
     }
     // Positions have changed: update Divide and Conquer stuff

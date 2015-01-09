@@ -125,6 +125,5 @@ template<class CELLTYPE=redblood::Cell>
 
     return cells;
   }
-
 }}
 #endif
