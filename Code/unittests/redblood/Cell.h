@@ -32,13 +32,13 @@ class CellTests : public EnergyVsGradientFixture {
           particle.moduli.dilation = 0.945524;
       }
       PhysicalEnergy operator()(MeshData const& _mesh) const {
-        particle.SetData(MeshData(_mesh));
+        particle.GetVertices() = _mesh.vertices;
         return particle();
       }
       PhysicalEnergy operator()(
           MeshData const &_mesh,
           std::vector<LatticeForceVector> &_forces) const {
-        particle.SetData(MeshData(_mesh));
+        particle.GetVertices() = _mesh.vertices;
         return particle(_forces);
       }
     };

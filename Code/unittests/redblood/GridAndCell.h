@@ -170,7 +170,8 @@ void CellVelocityInterpolTests::testDistributionFixture() {
 void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa() {
   // direction perpendicular to plane
   helpers::ZeroOutFOld(latDat);
-  HEMELB_LINEAR_VELOCITY_PROFILE(Facet(*mesh.GetData(), 0).normal());
+  HEMELB_LINEAR_VELOCITY_PROFILE(
+      Facet(*mesh.GetTemplateMesh().GetData(), 0).normal());
 
   // Perform interpolation
   std::vector<LatticePosition> displacements;
@@ -189,7 +190,7 @@ void CellVelocityInterpolTests :: testLinearVelocityPerpendicularToPancakeSamosa
 void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   // Figures out an in-plane direction
   helpers::ZeroOutFOld(latDat);
-  Facet const shapeFacet(*mesh.GetData(), 0);
+  Facet const shapeFacet(*mesh.GetTemplateMesh().GetData(), 0);
   LatticePosition const inplane(shapeFacet.edge(0) + shapeFacet.edge(1) * 0.5);
   HEMELB_LINEAR_VELOCITY_PROFILE(inplane);
 
@@ -200,8 +201,8 @@ void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   // Computes what the interpolation should be
   typedef std::vector<LatticePosition> :: const_iterator const_iterator;
   LatticeDistance const
-    x0 = gradient.Dot(mesh.GetVertex(0)),
-    x1 = gradient.Dot(mesh.GetVertex(1));
+    x0 = gradient.Dot(mesh.GetVertices()[0]),
+    x1 = gradient.Dot(mesh.GetVertices()[1]);
   PhysicalVelocity const
     v0 = displacements[0],
     v1 = displacements[1];
@@ -296,7 +297,7 @@ void CellForceSpreadTests :: testIsIncreasing() {
 
 void CellForceSpreadTests :: testIsLinear() {
   size_t const N(5);
-  mesh = Cell(refine(mesh, 4));
+  mesh = Cell(refine(MeshData{mesh.GetVertices(), mesh.GetFacets()}, 4));
   setUpForces();
   // x0, x1 should be further than 2 from the edges
   // Only linear if samosa appears as infinite plane
@@ -405,7 +406,7 @@ void CellForceSpreadWithWallTests :: testNode2WallCutoff() {
   // Loop over test cases breaks on special marker (negative) cutoff
   for(size_t i(1); cutoffs[i] > 0e0; ++i) {
     helpers::ZeroOutForces(latDat);
-    mesh += positions[i] - mesh.GetVertex(0);
+    mesh += positions[i] - mesh.GetVertices()[0];
     mesh.nodeWall.cutoff = cutoffs[i];
 
     forcesOnGrid<D3Q15>(mesh,  *latDat, stencil::FOUR_POINT);

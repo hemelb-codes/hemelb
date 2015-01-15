@@ -133,12 +133,16 @@ class EnergyTests : public BasisFixture {
     void testBending() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(facetBending(mesh, original, 0, 3, 1e0));
+      PhysicalEnergy const actual0(
+          facetBending(mesh.vertices, original, 0, 3, 1e0)
+      );
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of angle difference
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-      PhysicalEnergy const actual1(facetBending(mesh, original, 0, 3, 1e0));
+      PhysicalEnergy const actual1(
+          facetBending(mesh.vertices, original, 0, 3, 1e0)
+      );
       mesh.vertices.back()[2] = 1e0;
 
       PhysicalEnergy const expected(
@@ -150,13 +154,13 @@ class EnergyTests : public BasisFixture {
     void testVolume() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(volumeEnergy(mesh, original, 1e0));
+      PhysicalEnergy const actual0(volumeEnergy(mesh.vertices, original, 1e0));
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
       PhysicalEnergy const actual1(
-        volumeEnergy(mesh, original, 2.0*volume(original))
+        volumeEnergy(mesh.vertices, original, 2.0*volume(original))
       );
 
       PhysicalEnergy const deltaV(volume(mesh) - volume(original));
@@ -167,13 +171,15 @@ class EnergyTests : public BasisFixture {
     void testSurface() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(surfaceEnergy(mesh, original, 1e0));
+      PhysicalEnergy const actual0(
+          surfaceEnergy(mesh.vertices, original, 1e0)
+      );
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
       PhysicalEnergy const actual1(
-        surfaceEnergy(mesh, original, 2.0*surface(original))
+        surfaceEnergy(mesh.vertices, original, 2.0*surface(original))
       );
 
       PhysicalEnergy const deltaS(surface(mesh) - surface(original));
@@ -184,12 +190,16 @@ class EnergyTests : public BasisFixture {
     void testStrain() {
       // No difference between original and current mesh
       // Hence energy is zero
-      PhysicalEnergy const actual0(strainEnergy(mesh, original, 1e0, 2e0));
+      PhysicalEnergy const actual0(
+          strainEnergy(mesh.vertices, original, 1e0, 2e0)
+      );
       CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
       // Now modify mesh and check "energy" is square of volume diff
       mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-      PhysicalEnergy const actual1(strainEnergy(mesh, original, 1e0, 2e0));
+      PhysicalEnergy const actual1(
+          strainEnergy(mesh.vertices, original, 1e0, 2e0)
+      );
 
       PhysicalEnergy const regression(0.0865562612162);
       CPPUNIT_ASSERT(helpers::is_zero(actual1 - regression));
@@ -207,17 +217,17 @@ struct EnergyFunctional {
   EnergyFunctional(MeshData const &_original) : original(_original) {};
   MeshData const &original;
 };
-#define HEMELB_OP_MACRO(CLASS, FUNCTION)                     \
-  struct CLASS : public EnergyFunctional {                   \
-    CLASS(MeshData const &_original)                         \
-      : EnergyFunctional(_original) {}                       \
-    PhysicalEnergy operator()(MeshData const &_mesh) const { \
-      return FUNCTION(_mesh, original, 1.0);                 \
-    }                                                        \
-    PhysicalEnergy operator()(MeshData const &_mesh,         \
-      std::vector<LatticeForceVector> &_forces) const{       \
-      return FUNCTION(_mesh, original, 1.0, _forces);        \
-    }                                                        \
+#define HEMELB_OP_MACRO(CLASS, FUNCTION)                       \
+  struct CLASS : public EnergyFunctional {                     \
+    CLASS(MeshData const &_original)                           \
+      : EnergyFunctional(_original) {}                         \
+    PhysicalEnergy operator()(MeshData const &_mesh) const {   \
+      return FUNCTION(_mesh.vertices, original, 1.0);          \
+    }                                                          \
+    PhysicalEnergy operator()(MeshData const &_mesh,           \
+      std::vector<LatticeForceVector> &_forces) const{         \
+      return FUNCTION(_mesh.vertices, original, 1.0, _forces); \
+    }                                                          \
   }
 HEMELB_OP_MACRO(VolumeEnergy, volumeEnergy);
 HEMELB_OP_MACRO(SurfaceEnergy, surfaceEnergy);
@@ -227,32 +237,32 @@ struct BendingEnergy : public EnergyFunctional {
   BendingEnergy(MeshData const &_original)
     : EnergyFunctional(_original) {}
   PhysicalEnergy operator()(MeshData const &_mesh) const {
-    return facetBending(_mesh, original, 0, 1, 1.0)
-      + facetBending(_mesh, original, 0, 2, 1.0)
-      + facetBending(_mesh, original, 0, 3, 1.0)
-      + facetBending(_mesh, original, 1, 2, 1.0)
-      + facetBending(_mesh, original, 1, 3, 1.0)
-      + facetBending(_mesh, original, 2, 3, 1.0);
+    return facetBending(_mesh.vertices, original, 0, 1, 1.0)
+      + facetBending(_mesh.vertices, original, 0, 2, 1.0)
+      + facetBending(_mesh.vertices, original, 0, 3, 1.0)
+      + facetBending(_mesh.vertices, original, 1, 2, 1.0)
+      + facetBending(_mesh.vertices, original, 1, 3, 1.0)
+      + facetBending(_mesh.vertices, original, 2, 3, 1.0);
   }
   PhysicalEnergy operator()(MeshData const &_mesh,
     std::vector<LatticeForceVector> &_forces) const{
-    return facetBending(_mesh, original, 0, 1, 1.0, _forces)
-      + facetBending(_mesh, original, 0, 2, 1.0, _forces)
-      + facetBending(_mesh, original, 0, 3, 1.0, _forces)
-      + facetBending(_mesh, original, 1, 2, 1.0, _forces)
-      + facetBending(_mesh, original, 1, 3, 1.0, _forces)
-      + facetBending(_mesh, original, 2, 3, 1.0, _forces);
+    return facetBending(_mesh.vertices, original, 0, 1, 1.0, _forces)
+      + facetBending(_mesh.vertices, original, 0, 2, 1.0, _forces)
+      + facetBending(_mesh.vertices, original, 0, 3, 1.0, _forces)
+      + facetBending(_mesh.vertices, original, 1, 2, 1.0, _forces)
+      + facetBending(_mesh.vertices, original, 1, 3, 1.0, _forces)
+      + facetBending(_mesh.vertices, original, 2, 3, 1.0, _forces);
   }
 };
 
 struct StrainEnergy : public EnergyFunctional {
   StrainEnergy(MeshData const &_original) : EnergyFunctional(_original) {}
   PhysicalEnergy operator()(MeshData const &_mesh) const {
-    return strainEnergy(_mesh, original, 1.0, 2.0);
+    return strainEnergy(_mesh.vertices, original, 1.0, 2.0);
   }
   PhysicalEnergy operator()(MeshData const &_mesh,
       std::vector<LatticeForceVector> &_forces) const{
-    return strainEnergy(_mesh, original, 1.0, 2.0, _forces);
+    return strainEnergy(_mesh.vertices, original, 1.0, 2.0, _forces);
   }
 };
 
@@ -303,9 +313,12 @@ class GradientKernTests : public BasisFixture {
         CPPUNIT_ASSERT(helpers::is_zero(forces[i]));                          \
     }
 
-      HEMELB_MACRO(noBending, facetBending(newmesh, mesh, 0, 3, 1.0, forces));
-      HEMELB_MACRO(noVolume, volumeEnergy(newmesh, mesh, 1.0, forces));
-      HEMELB_MACRO(noSurface, surfaceEnergy(newmesh, mesh, 1.0, forces));
+      HEMELB_MACRO(noBending,
+          facetBending(newmesh.vertices, mesh, 0, 3, 1.0, forces));
+      HEMELB_MACRO(noVolume,
+          volumeEnergy(newmesh.vertices, mesh, 1.0, forces));
+      HEMELB_MACRO(noSurface,
+          surfaceEnergy(newmesh.vertices, mesh, 1.0, forces));
 #   undef HEMELB_MACRO
 
     void testBending() {

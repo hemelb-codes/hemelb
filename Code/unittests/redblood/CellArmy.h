@@ -92,7 +92,9 @@ void CellArmyTests::testFluid2Cell() {
   // DNC is.
   auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
   auto const orig = TwoPancakeSamosas<FakeCell>(cutoff);
-  auto const normal = Facet(*cells[0]->GetData(), 0).normal();
+  auto const normal = Facet(
+      cells[0]->GetVertices(), cells[0]->GetFacets()[0]
+  ).normal();
 
   LatticePosition gradient;
   Dimensionless non_neg_pop;
