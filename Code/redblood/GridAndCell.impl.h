@@ -108,7 +108,7 @@ class SpreadForcesAndWallForces : public SpreadForces {
         return;
       geometry::Site<geometry::LatticeData> site(latticeData_.GetSite(siteid));
       site.AddToForce(forces_[_vertex] * _weight);
-      LatticePosition const vertex(cell.GetVertex(_vertex));
+      LatticePosition const vertex(cell.GetVertices()[_vertex]);
       for(size_t i(1); i < LATTICE::NUMVECTORS; ++i) {
         PhysicalDistance const distance = site.GetWallDistance<LATTICE>(i);
         if(not site.HasWall(i)) continue;

@@ -18,10 +18,19 @@ struct Facet {
   // Indices of nodes in original array
   MeshData::t_Facet const & indices;
   Facet   (MeshData const &_mesh, size_t _index)
-        : indices(_mesh.facets[_index]) {
-    nodes[0] = &_mesh.vertices[indices[0]];
-    nodes[1] = &_mesh.vertices[indices[1]];
-    nodes[2] = &_mesh.vertices[indices[2]];
+        : Facet(_mesh.vertices, _mesh.facets[_index]) {}
+  Facet(
+      MeshData::t_Vertices const &_vertices,
+      MeshData::t_Facets const &_facets,
+      size_t _index
+  ) : Facet(_vertices, _facets[_index]) {}
+  Facet(
+      MeshData::t_Vertices const &_vertices,
+      MeshData::t_Facet const &_indices
+  ) : indices(_indices) {
+    nodes[0] = &_vertices[indices[0]];
+    nodes[1] = &_vertices[indices[1]];
+    nodes[2] = &_vertices[indices[2]];
   }
 
   // returns an edge nodes[i] - nodes[j]
@@ -50,13 +59,25 @@ struct Facet {
 struct ForceFacet : public Facet {
   // References forces on a node
   LatticeForceVector * forces_[3];
-  ForceFacet   (MeshData const &_mesh, size_t _index,
-          std::vector<LatticeForceVector> &_forces)
-        : Facet(_mesh, _index) {
+  ForceFacet(
+      MeshData::t_Vertices const &_vertices,
+      MeshData::t_Facet const &_indices,
+      std::vector<LatticeForceVector> &_forces
+  ) : Facet(_vertices, _indices) {
     forces_[0] = &_forces[indices[0]];
     forces_[1] = &_forces[indices[1]];
     forces_[2] = &_forces[indices[2]];
   }
+  ForceFacet(
+      MeshData const &_mesh, size_t _index,
+      std::vector<LatticeForceVector> &_forces
+  ) : ForceFacet(_mesh.vertices, _mesh.facets[_index], _forces) {}
+  ForceFacet(
+      MeshData::t_Vertices const &_vertices,
+      MeshData::t_Facets const &_facets,
+      size_t _index,
+      std::vector<LatticeForceVector> &_forces
+  ) : ForceFacet(_vertices, _facets[_index], _forces) {}
   LatticeForceVector & forces(size_t i) const { return *(forces_[i]); }
 };
 

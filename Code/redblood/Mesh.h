@@ -38,8 +38,17 @@ struct MeshData {
 };
 
 LatticePosition barycenter(MeshData const &_mesh);
+LatticePosition barycenter(MeshData::t_Vertices const &_vertices);
 PhysicalVolume volume(MeshData const &_mesh);
+PhysicalVolume volume(
+    MeshData::t_Vertices const &_vertices,
+    MeshData::t_Facets const &_facets
+);
 PhysicalSurface surface(MeshData const &_mesh);
+PhysicalVolume surface(
+    MeshData::t_Vertices const &_vertices,
+    MeshData::t_Facets const &_facets
+);
 
 //! Holds raw topology data
 struct MeshTopology {

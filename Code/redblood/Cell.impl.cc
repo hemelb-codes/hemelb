@@ -77,53 +77,60 @@ PhysicalEnergy facetBending(
   return _intensity * (theta - theta0) * (theta - theta0);
 }
 
-PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
-  size_t _facetIndex, size_t _neighborIndex, PhysicalForce _intensity,
-  std::vector<LatticeForceVector> &_forces) {
+PhysicalEnergy facetBending(
+    MeshData::t_Vertices const& _vertices, MeshData const& _orig,
+    size_t _facetIndex, size_t _neighborIndex, PhysicalForce _intensity,
+    std::vector<LatticeForceVector> &_forces
+) {
   return facetBending(
-      ForceFacet(_mesh, _facetIndex, _forces),
-      ForceFacet(_mesh, _neighborIndex, _forces),
+      ForceFacet(_vertices, _orig.facets[_facetIndex], _forces),
+      ForceFacet(_vertices, _orig.facets[_neighborIndex], _forces),
       Facet(_orig, _facetIndex),
       Facet(_orig, _neighborIndex),
       _intensity
   );
 }
-PhysicalEnergy facetBending(MeshData const& _mesh, MeshData const& _orig,
-            size_t _facetIndex, size_t _neighborIndex,
-            PhysicalForce _intensity) {
+PhysicalEnergy facetBending(
+    MeshData::t_Vertices const& _vertices, MeshData const& _orig,
+    size_t _facetIndex, size_t _neighborIndex,
+    PhysicalForce _intensity
+) {
   return facetBending(
-      Facet(_mesh, _facetIndex),
-      Facet(_mesh, _neighborIndex),
+      Facet(_vertices, _orig.facets[_facetIndex]),
+      Facet(_vertices, _orig.facets[_neighborIndex]),
       Facet(_orig, _facetIndex),
       Facet(_orig, _neighborIndex),
       _intensity
   );
 }
 
-PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
+PhysicalEnergy volumeEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity) {
   if(_intensity <= 1e-12) return 0e0;
   PhysicalVolume const vol0 = volume(_orig);
-  PhysicalVolume const deltaV = volume(_mesh) - vol0;
+  PhysicalVolume const deltaV = volume(_vertices, _orig.facets) - vol0;
   return _intensity * 0.5 * deltaV * deltaV / vol0;
 }
 
-PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
-    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces) {
+PhysicalEnergy volumeEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces
+) {
   if(_intensity <= 1e-12) return 0e0;
-  MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
-  MeshData::t_Facets::const_iterator const i_facet_end = _mesh.facets.end();
-  assert(_mesh.facets.size() == _orig.facets.size());
+  MeshData::t_Facets::const_iterator i_facet = _orig.facets.begin();
+  MeshData::t_Facets::const_iterator const i_facet_end = _orig.facets.end();
+  assert(_orig.facets.size() == _orig.facets.size());
 
   PhysicalVolume const vol0 = volume(_orig);
-  PhysicalVolume const deltaV = volume(_mesh) - vol0;
+  PhysicalVolume const deltaV = volume(_vertices, _orig.facets) - vol0;
   double const strength(_intensity / 6.0 * deltaV / vol0);
   for(; i_facet != i_facet_end; ++i_facet) {
     // Come aliases to make it easier to refer to vertices
     size_t const i0((*i_facet)[0]), i1((*i_facet)[1]), i2((*i_facet)[2]);
-    LatticePosition const & a(_mesh.vertices[i0]);
-    LatticePosition const & b(_mesh.vertices[i1]);
-    LatticePosition const & c(_mesh.vertices[i2]);
+    LatticePosition const & a(_vertices[i0]);
+    LatticePosition const & b(_vertices[i1]);
+    LatticePosition const & c(_vertices[i2]);
 
     _forces[i0] += b.Cross(c) * strength;
     _forces[i1] += c.Cross(a) * strength;
@@ -132,21 +139,25 @@ PhysicalEnergy volumeEnergy(MeshData const &_mesh, MeshData const &_orig,
   return 0.5 * _intensity * deltaV * deltaV / vol0;
 }
 
-PhysicalEnergy surfaceEnergy(MeshData const &_mesh, MeshData const &_orig,
-    PhysicalForce _intensity) {
+PhysicalEnergy surfaceEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    PhysicalForce _intensity
+) {
   PhysicalSurface const surf0 = surface(_orig);
-  PhysicalSurface const deltaS = surface(_mesh) - surf0;
+  PhysicalSurface const deltaS = surface(_vertices, _orig.facets) - surf0;
   return _intensity * 0.5 * deltaS * deltaS / surf0;
 }
 
-PhysicalEnergy surfaceEnergy(MeshData const &_mesh, MeshData const &_orig,
-    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces) {
+PhysicalEnergy surfaceEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces
+) {
 
   PhysicalSurface const surf0 = surface(_orig);
-  PhysicalSurface const deltaS = surface(_mesh) - surf0;
+  PhysicalSurface const deltaS = surface(_vertices, _orig.facets) - surf0;
   double const strength = _intensity * 0.5 * deltaS / surf0;
-  for(size_t facetIndex(0); facetIndex < _mesh.facets.size(); ++facetIndex) {
-    ForceFacet facet(_mesh, facetIndex, _forces);
+  for(size_t facetIndex(0); facetIndex < _orig.facets.size(); ++facetIndex) {
+    ForceFacet facet(_vertices, _orig.facets, facetIndex, _forces);
     LatticePosition const n0 = facet.unitNormal();
 
     facet.forces(0) += n0.Cross(facet(2, 1)) * strength;
@@ -254,23 +265,31 @@ PhysicalEnergy strainEnergy(
     return w * _undeformed.area();
 }
 
-PhysicalEnergy strainEnergy(MeshData const &_mesh, MeshData const &_origin,
-      PhysicalForce _shearModulus, PhysicalForce _dilationModulus
-    ) {
+PhysicalEnergy strainEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_origin,
+    PhysicalForce _shearModulus, PhysicalForce _dilationModulus
+) {
   PhysicalEnergy result(0);
-  for(size_t i(0); i < _mesh.facets.size(); ++i)
-    result += strainEnergy(Facet(_mesh, i), Facet(_origin, i),
-        _shearModulus, _dilationModulus);
+  for(size_t i(0); i < _origin.facets.size(); ++i)
+    result += strainEnergy(
+        Facet(_vertices, _origin.facets[i]),
+        Facet(_origin, i),
+        _shearModulus, _dilationModulus
+    );
   return result;
 }
-PhysicalEnergy strainEnergy(MeshData const &_mesh, MeshData const &_origin,
-      PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
-      std::vector<LatticeForceVector> &_forces
-    ) {
+PhysicalEnergy strainEnergy(
+    MeshData::t_Vertices const &_vertices, MeshData const &_origin,
+    PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
+    std::vector<LatticeForceVector> &_forces
+) {
   PhysicalEnergy result(0);
-  for(size_t i(0); i < _mesh.facets.size(); ++i)
-    result += strainEnergy(ForceFacet(_mesh, i, _forces), Facet(_origin, i),
-        _shearModulus, _dilationModulus);
+  for(size_t i(0); i < _origin.facets.size(); ++i)
+    result += strainEnergy(
+        ForceFacet(_vertices, _origin.facets[i], _forces),
+        Facet(_origin, i),
+        _shearModulus, _dilationModulus
+    );
   return result;
 }
 

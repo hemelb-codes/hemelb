@@ -16,7 +16,7 @@
 
 namespace hemelb { namespace redblood {
 
-class CellBase : public Mesh {
+class CellBase {
 
   public:
   //! \brief Initializes mesh from mesh data
@@ -24,15 +24,30 @@ class CellBase : public Mesh {
   //! across particles.
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
+  CellBase(MeshData::t_Vertices && _vertices, Mesh const &_template)
+      : vertices_(std::move(_vertices)), template_(_template) {}
+  //! \brief Initializes mesh from mesh data
+  //! \details This version makes it possible to share the unmodified mesh
+  //! across particles.
+  //! \param [in] _mesh: Modifyiable mesh
+  //! \param [in] _template: Original mesh
+  CellBase(MeshData::t_Vertices const & _vertices, Mesh const &_template)
+      : vertices_(_vertices), template_(_template) {}
+
+  //! \brief Initializes mesh from mesh data
+  //! \details This version makes it possible to share the unmodified mesh
+  //! across particles.
+  //! \param [in] _mesh: Modifyiable mesh
+  //! \param [in] _template: Original mesh
   CellBase(Mesh const & _mesh, Mesh const &_template)
-      : Mesh(_mesh), template_(_template.GetData()) {}
+      : CellBase(_mesh.GetVertices(), _template) {}
 
   //! \brief Initializes mesh from mesh data
   //! \details This version makes it possible to share the unmodified mesh
   //! across particles.
   //! \param [in] _mesh: Modifyiable mesh
   CellBase(Mesh const & _mesh)
-      : Mesh(_mesh), template_(new MeshData(*_mesh.GetData())) {}
+      : CellBase(_mesh.GetVertices(), _mesh) {}
 
   //! \brief Initializes mesh from mesh data
   //! On top of taking ownership of the mesh, a unmodifiable copy of the mesh
@@ -40,17 +55,31 @@ class CellBase : public Mesh {
   //! \param [in] _mesh: Modifyiable mesh
   //! \param [in] _template: Original mesh
   CellBase(std::shared_ptr<MeshData> const & _mesh)
-       : CellBase(Mesh(_mesh)) {}
+       : CellBase(_mesh->vertices, Mesh(_mesh)) {}
+
+  void operator=(Mesh const& _mesh) {
+    template_ = _mesh;
+    vertices_ = template_.GetVertices();
+  }
 
   //! Because it is good practice
   virtual ~CellBase() {}
 
   //! Unmodified mesh
-  std::shared_ptr<const MeshData> GetTemplateMesh() const
-    { return template_; }
-  //! Current mesh
-  std::shared_ptr<MeshData> GetCurrentMesh() const
-    { return mesh_; }
+  Mesh const & GetTemplateMesh() const { return template_; }
+  //! Facets for the mesh
+  MeshData::t_Facets const & GetFacets() const {
+    return template_.GetData()->facets;
+  }
+  //! Vertices of the cell
+  MeshData::t_Vertices const & GetVertices() const { return vertices_; }
+  //! Vertices of the cell
+  MeshData::t_Vertices& GetVertices() { return vertices_; }
+  //! Topology of the (template) mesh
+  std::shared_ptr<MeshTopology const> GetTopology() const {
+    return template_.GetTopology();
+  }
+  size_t GetNumberOfNodes() const { return vertices_.size(); }
 
   //! Facet bending energy
   virtual PhysicalEnergy operator()() const = 0;
@@ -58,9 +87,24 @@ class CellBase : public Mesh {
   virtual PhysicalEnergy operator()(
       std::vector<LatticeForceVector> &_in) const = 0;
 
+  //! Scale mesh around barycenter
+  void operator*=(Dimensionless const &_scale);
+  //! Scale by matrix around barycenter
+  void operator*=(util::Matrix3D const &_scale);
+  //! Translate mesh
+  void operator+=(LatticePosition const &_offset);
+  //! Transform mesh
+  void operator+=(std::vector<LatticePosition> const &_displacements);
+
+  MeshData::t_Vertices::value_type GetBarycenter() const {
+    return barycenter(vertices_);
+  }
+
   protected:
+   //! Holds list of vertices for this cell
+   MeshData::t_Vertices vertices_;
    //! Unmodified original mesh
-   std::shared_ptr<MeshData const> template_;
+   Mesh template_;
 };
 
 //! Deformable cell for which energy and forces can be computed

@@ -16,17 +16,18 @@ namespace hemelb { namespace redblood {
 
 PhysicalEnergy Cell::operator()() const {
   return facetBending_()
-    + volumeEnergy(*mesh_, *template_, moduli.volume)
-    + surfaceEnergy(*mesh_, *template_, moduli.surface)
-    + strainEnergy(*mesh_, *template_, moduli.dilation, moduli.strain);
+    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume)
+    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface)
+    + strainEnergy(
+        vertices_, *template_.GetData(), moduli.dilation, moduli.strain);
 }
 PhysicalEnergy Cell::operator()(
     std::vector<LatticeForceVector> &_forces) const {
-  assert(_forces.size() == mesh_->vertices.size());
+  assert(_forces.size() == vertices_.size());
   return facetBending_(_forces)
-    + volumeEnergy(*mesh_, *template_, moduli.volume, _forces)
-    + surfaceEnergy(*mesh_, *template_, moduli.surface, _forces)
-    + strainEnergy(*mesh_, *template_,
+    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume, _forces)
+    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface, _forces)
+    + strainEnergy(vertices_, *template_.GetData(),
         moduli.dilation, moduli.strain, _forces);
 }
 
@@ -35,13 +36,16 @@ PhysicalEnergy Cell::facetBending_() const {
 
   PhysicalEnergy result(0);
   typedef MeshTopology::t_FacetNeighbors::const_iterator t_FacetIterator;
-  t_FacetIterator i_facet = topology_->facetNeighbors.begin();
-  t_FacetIterator const i_facetEnd = topology_->facetNeighbors.end();
+  t_FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
+  t_FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
-        result += facetBending(*mesh_, *template_, current, (*i_facet)[i],
-            moduli.bending);
+        result += facetBending(
+            vertices_, *template_.GetData(),
+            current, (*i_facet)[i],
+            moduli.bending
+        );
   }
   return result;
 }
@@ -52,15 +56,41 @@ PhysicalEnergy Cell::facetBending_(
 
   PhysicalEnergy result(0);
   typedef MeshTopology::t_FacetNeighbors::const_iterator t_FacetIterator;
-  t_FacetIterator i_facet = topology_->facetNeighbors.begin();
-  t_FacetIterator const i_facetEnd = topology_->facetNeighbors.end();
+  t_FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
+  t_FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
-        result += facetBending(*mesh_, *template_, current, (*i_facet)[i],
-            moduli.bending, _forces);
+        result += facetBending(
+            vertices_, *template_.GetData(),
+            current, (*i_facet)[i],
+            moduli.bending, _forces
+        );
   }
   return result;
+}
+
+void CellBase::operator*=(Dimensionless const &_scale) {
+  auto const barycenter = GetBarycenter();
+  for(auto &vertex: vertices_)
+    vertex = (vertex - barycenter) * _scale + barycenter;
+}
+void CellBase::operator*=(util::Matrix3D const &_scale) {
+  auto const barycenter = GetBarycenter();
+  for(auto &vertex: vertices_) {
+    _scale.timesVector(vertex - barycenter, vertex);
+    vertex += barycenter;
+  }
+}
+void CellBase::operator+=(LatticePosition const &_offset) {
+  for(auto &vertex: vertices_)
+    vertex += _offset;
+}
+void CellBase::operator+=(std::vector<LatticePosition> const &_displacements) {
+  assert(_displacements.size() == vertices_.size());
+  auto i_disp = _displacements.begin();
+  for(auto &vertex: vertices_)
+      vertex += *(i_disp++);
 }
 
 }} // hemelb::rbc

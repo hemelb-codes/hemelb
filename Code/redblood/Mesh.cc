@@ -177,36 +177,52 @@ void write_vtkmesh(std::ostream &_stream, MeshData const &_data) {
   _stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
 }
 
-LatticePosition barycenter(MeshData const &_mesh) {
+LatticePosition barycenter(MeshData::t_Vertices const &_vertices) {
   typedef MeshData::t_Vertices::value_type t_Vertex;
   return std::accumulate(
-    _mesh.vertices.begin(), _mesh.vertices.end(), t_Vertex(0, 0, 0)
-  ) / t_Vertex::value_type(_mesh.vertices.size());
+      _vertices.begin(), _vertices.end(), t_Vertex(0, 0, 0)
+  ) / t_Vertex::value_type(_vertices.size());
 }
-PhysicalVolume volume(MeshData const &_mesh) {
-    MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
-    MeshData::t_Facets::const_iterator const i_facet_end(_mesh.facets.end());
+LatticePosition barycenter(MeshData const &_mesh) {
+  return barycenter(_mesh.vertices);
+}
+PhysicalVolume volume(
+    MeshData::t_Vertices const &_vertices,
+    MeshData::t_Facets const &_facets
+) {
+    MeshData::t_Facets::const_iterator i_facet = _facets.begin();
+    MeshData::t_Facets::const_iterator const i_facet_end(_facets.end());
     PhysicalVolume result(0);
     for(; i_facet != i_facet_end; ++i_facet) {
-        LatticePosition const &v0(_mesh.vertices[(*i_facet)[0]]);
-        LatticePosition const &v1(_mesh.vertices[(*i_facet)[1]]);
-        LatticePosition const &v2(_mesh.vertices[(*i_facet)[2]]);
+        LatticePosition const &v0(_vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(_vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(_vertices[(*i_facet)[2]]);
         result += v0.Cross(v1).Dot(v2);
     }
     // Minus sign comes from outward facing facet orientation
     return -result / PhysicalVolume(6);
 }
-PhysicalSurface surface(MeshData const &_mesh) {
-    MeshData::t_Facets::const_iterator i_facet = _mesh.facets.begin();
-    MeshData::t_Facets::const_iterator const i_facet_end(_mesh.facets.end());
+PhysicalVolume volume(MeshData const &_mesh) {
+  return volume(_mesh.vertices, _mesh.facets);
+}
+
+PhysicalVolume surface(
+    MeshData::t_Vertices const &_vertices,
+    MeshData::t_Facets const &_facets
+) {
+    MeshData::t_Facets::const_iterator i_facet = _facets.begin();
+    MeshData::t_Facets::const_iterator const i_facet_end(_facets.end());
     PhysicalVolume result(0);
     for(; i_facet != i_facet_end; ++i_facet) {
-        LatticePosition const &v0(_mesh.vertices[(*i_facet)[0]]);
-        LatticePosition const &v1(_mesh.vertices[(*i_facet)[1]]);
-        LatticePosition const &v2(_mesh.vertices[(*i_facet)[2]]);
+        LatticePosition const &v0(_vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(_vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(_vertices[(*i_facet)[2]]);
         result += (v0 - v1).Cross(v2 - v1).GetMagnitude();
     }
     return result * 0.5;
+}
+PhysicalSurface surface(MeshData const &_mesh) {
+  return surface(_mesh.vertices, _mesh.facets);
 }
 
 
@@ -274,37 +290,29 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 }
 
 void Mesh::operator*=(Dimensionless const &_scale) {
-  LatticePosition const barycenter = GetBarycenter();
-  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
-  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
-  for(; i_first != i_end; ++i_first)
-    (*i_first) = (*i_first - barycenter) * _scale + barycenter;
+  auto const barycenter = GetBarycenter();
+  for(auto &vertex: mesh_->vertices)
+    vertex = (vertex - barycenter) * _scale + barycenter;
 }
 
 void Mesh::operator*=(util::Matrix3D const &_scale) {
-  LatticePosition const barycenter = GetBarycenter();
-  MeshData::t_Vertices::iterator i_first = mesh_->vertices.begin();
-  MeshData::t_Vertices::iterator const i_end = mesh_->vertices.end();
-  for(; i_first != i_end; ++i_first) {
-    _scale.timesVector(*i_first - barycenter, *i_first);
-    *i_first += barycenter;
+  auto const barycenter = GetBarycenter();
+  for(auto &vertex: mesh_->vertices) {
+    _scale.timesVector(vertex - barycenter, vertex);
+    vertex += barycenter;
   }
 }
 
 void Mesh::operator+=(LatticePosition const &_offset) {
-  std::for_each(
-      mesh_->vertices.begin(), mesh_->vertices.end(),
-      [&_offset](LatticePosition &_node) { _node += _offset; }
-  );
+  for(auto &vertex: mesh_->vertices)
+    vertex += _offset;
 }
 
 void Mesh::operator+=(std::vector<LatticePosition> const &_displacements) {
   assert(_displacements.size() == mesh_->vertices.size());
-  std::vector<LatticePosition>::const_iterator i_disp = _displacements.begin();
-  std::for_each(
-      mesh_->vertices.begin(), mesh_->vertices.end(),
-      [&i_disp](LatticePosition &_node) { _node += *(i_disp++); }
-  );
+  auto i_disp = _displacements.begin();
+  for(auto &vertex: mesh_->vertices)
+      vertex += *(i_disp++);
 }
 
 namespace {
