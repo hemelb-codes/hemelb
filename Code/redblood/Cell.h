@@ -20,46 +20,63 @@ class CellBase {
 
   public:
   //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
-  CellBase(MeshData::t_Vertices && _vertices, Mesh const &_template)
-      : vertices_(std::move(_vertices)), template_(_template) {}
+  //! \param [in] _vertices: deformable vertices that define the cell. These
+  //!    values are *not* modified by the scale.
+  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //!    object.
+  //! \param [in] _scale: scales template by a given amount
+  //!    The scale is added during internal operations. The template will still
+  //!    refer to the same data in memory.
+  CellBase(
+      MeshData::t_Vertices && _vertices,
+      Mesh const &_template,
+      Dimensionless _scale = 1e0
+  ) : vertices_(std::move(_vertices)), template_(_template), scale_(_scale) {
+    assert(scale_ > 1e-12);
+  }
   //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
-  CellBase(MeshData::t_Vertices const & _vertices, Mesh const &_template)
-      : vertices_(_vertices), template_(_template) {}
+  //! \param [in] _vertices: deformable vertices that define the cell. These
+  //!    values are *not* modified by the scale.
+  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //!    object.
+  //! \param [in] _scale: scales template by a given amount
+  //!    The scale is added during internal operations. The template will still
+  //!    refer to the same data in memory.
+  CellBase(
+      MeshData::t_Vertices const & _vertices,
+      Mesh const &_template,
+      Dimensionless _scale = 1e0
+  ) : vertices_(_vertices), template_(_template), scale_(_scale) {
+    assert(scale_ > 1e-12);
+  }
 
   //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
-  CellBase(Mesh const & _mesh, Mesh const &_template)
-      : CellBase(_mesh.GetVertices(), _template) {}
+  //! \param [in] _mesh: deformable vertices that define the cell are copied
+  //!    from this mesh. These values are *not* modified by the scale.
+  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //!    object.
+  //! \param [in] _scale: scales template by a given amount
+  //!    The scale is added during internal operations. The template will still
+  //!    refer to the same data in memory.
+  CellBase(Mesh const & _mesh, Mesh const &_template, Dimensionless _scale=1e0)
+      : CellBase(_mesh.GetVertices(), _template, _scale) {}
 
   //! \brief Initializes mesh from mesh data
-  //! \details This version makes it possible to share the unmodified mesh
-  //! across particles.
-  //! \param [in] _mesh: Modifyiable mesh
+  //! \param [in] _mesh: Modifyiable mesh and template. Deep copies are made of
+  //!   both.
   CellBase(Mesh const & _mesh)
-      : CellBase(_mesh.GetVertices(), _mesh) {}
+      : CellBase(_mesh.GetVertices(), _mesh.clone()) {}
 
   //! \brief Initializes mesh from mesh data
-  //! On top of taking ownership of the mesh, a unmodifiable copy of the mesh
-  //! is also created.
-  //! \param [in] _mesh: Modifyiable mesh
-  //! \param [in] _template: Original mesh
+  //! \param [in] _mesh: Modifyiable mesh and template. Deep copies are made of
+  //!   both
   CellBase(std::shared_ptr<MeshData> const & _mesh)
-       : CellBase(_mesh->vertices, Mesh(_mesh)) {}
+       : CellBase(_mesh->vertices, Mesh(*_mesh)) {}
 
   void operator=(Mesh const& _mesh) {
     template_ = _mesh;
     vertices_ = template_.GetVertices();
+    scale_ = 1e0;
   }
 
   //! Because it is good practice
@@ -100,11 +117,21 @@ class CellBase {
     return barycenter(vertices_);
   }
 
+  //! Scale to apply to the template mesh
+  void SetScale(Dimensionless _scale) {
+    assert(_scale > 1e-12);
+    scale_ = _scale;
+  }
+  //! Scale to apply to the template mesh
+  Dimensionless GetScale() const { return scale_; }
+
   protected:
    //! Holds list of vertices for this cell
    MeshData::t_Vertices vertices_;
    //! Unmodified original mesh
    Mesh template_;
+   //! Scale factor for the template;
+   Dimensionless scale_;
 };
 
 //! Deformable cell for which energy and forces can be computed

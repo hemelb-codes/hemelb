@@ -15,20 +15,29 @@
 namespace hemelb { namespace redblood {
 
 PhysicalEnergy Cell::operator()() const {
-  return facetBending_()
-    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume)
-    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface)
+  return facetBending_() // facet bending unaffected by template scale
+    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume, scale_)
+    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface, scale_)
     + strainEnergy(
-        vertices_, *template_.GetData(), moduli.dilation, moduli.strain);
+        vertices_, *template_.GetData(),
+        moduli.dilation, moduli.strain,
+        scale_
+      );
 }
 PhysicalEnergy Cell::operator()(
     std::vector<LatticeForceVector> &_forces) const {
   assert(_forces.size() == vertices_.size());
   return facetBending_(_forces)
-    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume, _forces)
-    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface, _forces)
-    + strainEnergy(vertices_, *template_.GetData(),
-        moduli.dilation, moduli.strain, _forces);
+    + volumeEnergy(
+        vertices_, *template_.GetData(), moduli.volume, _forces, scale_)
+    + surfaceEnergy(
+        vertices_, *template_.GetData(), moduli.surface, _forces, scale_)
+    + strainEnergy(
+        vertices_, *template_.GetData(),
+        moduli.dilation, moduli.strain,
+        _forces,
+        scale_
+      );
 }
 
 PhysicalEnergy Cell::facetBending_() const {

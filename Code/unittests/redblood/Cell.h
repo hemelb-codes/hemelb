@@ -19,6 +19,8 @@ namespace hemelb { namespace unittests { namespace redblood {
 class CellTests : public EnergyVsGradientFixture {
     CPPUNIT_TEST_SUITE(CellTests);
     CPPUNIT_TEST(testCellEnergy);
+    CPPUNIT_TEST(testNullTemplateScaling);
+    CPPUNIT_TEST(testTemplateScaling);
     CPPUNIT_TEST_SUITE_END();
 
     struct CellEnergy {
@@ -56,9 +58,63 @@ public:
       energyVsForces(CellEnergy(mesh, original));
     }
 
+    void testNullTemplateScaling() {
+      Mesh templateMesh(original);
+      std::vector<LatticeForceVector> forces(original.vertices.size(), 0);
+      for(auto const scale: std::vector<Dimensionless>{1.0, 0.8, 1.2}) {
+        auto other = templateMesh.clone();
+        other *= scale;
+        auto cell = GetCellWithEnergy(other, templateMesh, scale);
+
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(cell.GetScale(), scale, 1e-8);
+        auto const zero = cell(forces);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(zero, 0e0, 1e-8);
+        for(auto const &force: forces)
+          CPPUNIT_ASSERT(helpers::is_zero(force));
+      }
+    }
+
+    void testTemplateScaling() {
+      Mesh templateMesh(original);
+      auto scaled = templateMesh.clone();
+      scaled.GetVertices()[0] += LatticePosition(-0.01, 0.02342, 0.03564);
+      scaled.GetVertices()[1] += LatticePosition(0.0837, -0.012632, 0.0872935);
+      scaled.GetVertices()[2]
+        += LatticePosition(0.02631, -0.00824223, -0.098362);
+
+      std::vector<LatticeForceVector>
+        uforces(original.vertices.size(), 0),
+        sforces(original.vertices.size(), 0);
+
+      scaled *= 1.1;
+      auto const uenergy
+        = GetCellWithEnergy(scaled, templateMesh, 1.1)(uforces);
+      auto scaledTemplateMesh = templateMesh.clone();
+      scaledTemplateMesh *= 1.1;
+      auto const senergy
+        = GetCellWithEnergy(scaled, scaledTemplateMesh)(sforces);
+
+      CPPUNIT_ASSERT_DOUBLES_EQUAL(uenergy, senergy, 1e-12);
+      auto i_unscaled = uforces.cbegin();
+      for(auto scaled_force: sforces)
+        CPPUNIT_ASSERT(helpers::is_zero(*(i_unscaled++) - scaled_force));
+    }
+
 protected:
     MeshData original;
+
+    Cell GetCellWithEnergy(
+        Mesh const &_a, Mesh const &_b, Dimensionless _s=1e0) const {
+      Cell cell(_a, _b, _s);
+      cell.moduli.bending = 0.888;
+      cell.moduli.surface = 1.127;
+      cell.moduli.volume = 1.015231;
+      cell.moduli.strain = 1.047524;
+      cell.moduli.dilation = 0.945524;
+      return cell;
+    }
 };
+
 
 CPPUNIT_TEST_SUITE_REGISTRATION(CellTests);
 }}}
