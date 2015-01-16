@@ -37,16 +37,16 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111, projection='3d')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_zlabel('v')
 
     for i in xrange(1,len(sys.argv)):
         xyzv = np.loadtxt(sys.argv[i]) 
         #xyzv = filterLowX(np.loadtxt(sys.argv[i]))
       
-        mode = "xyz"
-        cl='red'
+        mode = "xyv"
+        cl='blue'
         if(i == 2):
-            cl='blue'
+            cl='red'
 
         if len(sys.argv)>2 and len(sys.argv[-1]) == 3:
             mode = sys.argv[-1]
