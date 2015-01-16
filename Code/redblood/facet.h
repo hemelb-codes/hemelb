@@ -188,12 +188,16 @@ Angle orientedAngle(Facet const &_a, Facet const &_b) {
 }
 
 // Returns Dxx, Dyy, Dxy packed in vector
-LatticePosition displacements(Facet const &_deformed, Facet const &_ref) {
+LatticePosition displacements(
+    Facet const &_deformed,
+    Facet const &_ref,
+    Dimensionless _template_scale=1e0
+) {
   PhysicalDistance const
     dlength0 = _deformed.length(0),
-    rlength0 = _ref.length(0),
+    rlength0 = _ref.length(0) * _template_scale,
     dlength1 = _deformed.length(1),
-    rlength1 = _ref.length(1);
+    rlength1 = _ref.length(1) * _template_scale;
   Dimensionless const dsine = _deformed.sine(), rsine = _ref.sine();
   return LatticePosition(
       // Dxx
@@ -219,8 +223,13 @@ LatticePosition squaredDisplacements(LatticePosition const &_disp) {
       _disp[0] * _disp[2]
   );
 }
-LatticePosition squaredDisplacements(Facet const &_deformed, Facet const &_ref)
-  { return squaredDisplacements(displacements(_deformed, _ref)); }
+LatticePosition squaredDisplacements(
+    Facet const &_deformed,
+    Facet const &_ref,
+    Dimensionless _template_scale=1e0
+) {
+  return squaredDisplacements(displacements(_deformed, _ref, _template_scale));
+}
 
 // Strain invariants I1 and I2
 std::pair<Dimensionless, Dimensionless>
@@ -232,9 +241,13 @@ std::pair<Dimensionless, Dimensionless>
     );
   }
 
-std::pair<Dimensionless, Dimensionless>
-  strainInvariants(Facet const &_deformed, Facet const &_ref) {
-    return strainInvariants(squaredDisplacements(_deformed, _ref));
+std::pair<Dimensionless, Dimensionless> strainInvariants(
+    Facet const &_deformed,
+    Facet const &_ref,
+    Dimensionless _template_scale=1e0
+) {
+  return strainInvariants(
+      squaredDisplacements(_deformed, _ref, _template_scale));
 }
 
 }}}
