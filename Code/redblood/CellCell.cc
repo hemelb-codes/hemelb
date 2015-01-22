@@ -36,7 +36,7 @@ namespace {
 
   template<class T> CellReference init_cell_ref(
       DivideConquer<T> &_dnc,
-      site_t _cellid, site_t _nodeid,
+      CellContainer::const_iterator _cellid, site_t _nodeid,
       LatticeVector const &_key,
       LatticePosition const &_vertex,
       PhysicalDistance const &_haloLength
@@ -49,7 +49,7 @@ namespace {
   void initialize_cells(
       DivideConquer<CellReference> &_dnc,
       MeshData::t_Vertices const &_vertices,
-      site_t _cellid,
+      CellContainer::const_iterator _cellid,
       PhysicalDistance _haloLength ) {
     typedef DivideConquer<CellReference> DnC;
     typedef DnC::key_type key_type;
@@ -71,20 +71,28 @@ namespace {
       PhysicalDistance _haloLength ) {
     CellContainer::const_iterator i_first = _cells.begin();
     CellContainer::const_iterator const i_end = _cells.end();
-    for(site_t i(0); i_first != i_end; ++i_first, ++i)
-      initialize_cells(_dnc, (*i_first)->GetVertices(), i, _haloLength);
+    for(; i_first != i_end; ++i_first)
+      initialize_cells(_dnc, (*i_first)->GetVertices(), i_first, _haloLength);
   }
 
   // Compare distance between vertices
-  bool next_dist(
+  template<class T_FUNCTION> bool next_dist(
+      T_FUNCTION const &_strictly_larger,
       DivideConquerCells::const_iterator &_first,
       DivideConquerCells::const_iterator const & _end,
       DivideConquerCells::const_iterator const & _main,
       PhysicalDistance _dist
   ) {
+    auto const mainCell = _main.GetCell();
+    auto goodCellPair = [&mainCell, &_strictly_larger](
+        decltype(_first) const &_i) {
+      return _strictly_larger(_i.GetCell(), mainCell);
+    };
+    auto goodDistance = [&_main, &_dist](decltype(_first) const &_i) {
+        return (*_main - *_i).GetMagnitude() < _dist;
+    };
     for(; _first != _end; ++_first)
-      if(_first.GetCellIndex() > _main.GetCellIndex()
-          and (*_main - *_first).GetMagnitude() < _dist)
+      if(goodCellPair(_first) and goodDistance(_first))
         return true;
     return false;
   }
@@ -112,7 +120,11 @@ DivideConquerCells :: DivideConquerCells(
 ) : DivideConquer<CellReference>(_boxsize),
     haloLength_(_halosize), cells_(_cells) {
   try {
-    initialize_cells(*static_cast<base_type*>(this), _cells, haloLength_);
+    initialize_cells(
+        *static_cast<base_type*>(this),
+        GetCells(),
+        haloLength_
+    );
   } catch(...) {}
 }
 
@@ -141,7 +153,17 @@ DivideConquerCells::const_range DivideConquerCells::operator()(
 }
 
 bool DivideConquerCells::pair_range::next_dist_() {
-  return next_dist(currents_.second, ends_.second, currents_.first, maxdist_);
+  typedef decltype(owner_.cells_)::const_reference t_Input;
+  auto strictly_less = decltype(owner_.cells_)::key_compare();
+  auto strictly_larger = [&strictly_less](t_Input _a, t_Input _b) {
+    return _a != _b and not strictly_less(_a, _b);
+  };
+  return next_dist(
+      strictly_larger,
+      currents_.second, ends_.second,
+      currents_.first,
+      maxdist_
+  );
 }
 
 bool DivideConquerCells::pair_range::do_box_() {

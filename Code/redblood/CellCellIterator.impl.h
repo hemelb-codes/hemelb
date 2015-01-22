@@ -50,15 +50,13 @@ class HEMELB_ITERATOR {
 #   endif
 
     reference operator*() {
-        return owner_.cells_ HEMELB_GET(wrappee_->second.cellIndex)
-              ->GetVertices()
+        return (*wrappee_->second.cellIterator)->GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
     pointer operator->() { return &this->operator*(); }
 
     const_reference operator*() const {
-        return owner_.cells_ HEMELB_GET(wrappee_->second.cellIndex)
-              ->GetVertices()
+        return (*wrappee_->second.cellIterator)->GetVertices()
               HEMELB_GET(wrappee_->second.nodeIndex);
     }
     const_pointer operator->() const { return &this->operator*(); }
@@ -93,7 +91,10 @@ class HEMELB_ITERATOR {
     //! True if close to any boundary
     bool IsNearBorder() const { return GetNearBorder() != 0; }
 
-    site_t GetCellIndex() const { return GetCellReference().cellIndex; }
+    //! Returns shared pointer to cell pointed to by this object
+    CellContainer::const_reference GetCell() const {
+      return *GetCellReference().cellIterator;
+    }
 
     operator base_type::HEMELB_ITERATOR() const { return wrappee_; }
 

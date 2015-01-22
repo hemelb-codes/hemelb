@@ -102,7 +102,6 @@ void CellCellInteractionTests :: testBoxHalo() {
 }
 
 void CellCellInteractionTests :: testAddNodes() {
-  site_t const cellIndex(4);
   DivideConquer<CellReference> dnc(cutoff);
 
   // Adds nodes, last in halo
@@ -118,7 +117,10 @@ void CellCellInteractionTests :: testAddNodes() {
       + CellReference::directions(CellReference::NORTH) * inhalo * cutoff
   );
 
-  initialize_cells(dnc, vertices, cellIndex, halo);
+  CellContainer cells;
+  cells.emplace(new Cell(Mesh(MeshData())));
+
+  initialize_cells(dnc, vertices, cells.begin(), halo);
   CPPUNIT_ASSERT(dnc.size() == vertices.size());
 
   DivideConquer<CellReference>::const_range const omega
@@ -136,33 +138,33 @@ void CellCellInteractionTests :: testAddNodes() {
   CPPUNIT_ASSERT(std::distance(haloed.first, haloed.second) == 1);
 
   CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
-  CPPUNIT_ASSERT(omega.first->second.cellIndex == cellIndex);
+  CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
   CPPUNIT_ASSERT(
       omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1
   );
   CPPUNIT_ASSERT(omega.first->second.isNearBorder == 0);
   DivideConquer<CellReference>::const_iterator other = omega.first; ++other;
   CPPUNIT_ASSERT(helpers::is_zero(other->first));
-  CPPUNIT_ASSERT(other->second.cellIndex == cellIndex);
+  CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
   CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
   CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);
   CPPUNIT_ASSERT(other->second.isNearBorder == 0);
 
   CPPUNIT_ASSERT(alpha.first->first == LatticeVector(2, 3, -2));
   CPPUNIT_ASSERT(alpha.first->second.nodeIndex == 2);
-  CPPUNIT_ASSERT(alpha.first->second.cellIndex == cellIndex);
+  CPPUNIT_ASSERT(alpha.first->second.cellIterator == cells.begin());
   CPPUNIT_ASSERT(alpha.first->second.isNearBorder == 0);
 
   CPPUNIT_ASSERT(haloed.first->first == LatticeVector(1, 0, 0));
   CPPUNIT_ASSERT(haloed.first->second.nodeIndex == 3);
-  CPPUNIT_ASSERT(haloed.first->second.cellIndex == cellIndex);
+  CPPUNIT_ASSERT(haloed.first->second.cellIterator == cells.begin());
   CPPUNIT_ASSERT(haloed.first->second.isNearBorder == CellReference::NORTH);
 }
 
 void check_cell(
     DivideConquerCells const &_dnc,
     LatticeVector const &_key,
-    site_t _cellIndex,
+    CellContainer::const_iterator _cellIterator,
     site_t _nbNodes
 ) {
   DivideConquerCells::const_range omega = _dnc(_key);
@@ -170,7 +172,8 @@ void check_cell(
 
   std::set<int> nodes;
   for(; omega.first != omega.second; ++omega.first) {
-    CPPUNIT_ASSERT(omega.first.GetCellReference().cellIndex == _cellIndex);
+    CPPUNIT_ASSERT(
+        omega.first.GetCellReference().cellIterator == _cellIterator);
     CPPUNIT_ASSERT(
         omega.first.GetCellReference().nodeIndex >= 0
         and omega.first.GetCellReference().nodeIndex <= _nbNodes
@@ -187,8 +190,18 @@ void CellCellInteractionTests :: testAddMeshes() {
   Mesh pancake = pancakeSamosa();
 
   DivideConquerCells dnc(cells, cutoff, halo);
-  check_cell(dnc, LatticeVector(0, 0, 0), 0, pancake.GetVertices().size());
-  check_cell(dnc, LatticeVector(3, 0, 1), 1, pancake.GetVertices().size());
+  check_cell(
+      dnc,
+      LatticeVector(0, 0, 0),
+      dnc.GetCells().begin(),
+      pancake.GetVertices().size()
+  );
+  // check_cell(
+  //     dnc,
+  //     LatticeVector(3, 0, 1),
+  //     std::next(dnc.GetCells().begin()),
+  //     pancake.GetVertices().size()
+  // );
 }
 
 void CellCellInteractionTests :: testIterator() {
@@ -197,12 +210,12 @@ void CellCellInteractionTests :: testIterator() {
 
   std::set<LatticePosition const*> allnodes;
   typedef MeshData::t_Vertices::const_iterator vertex_iterator;
-  vertex_iterator i_vert = cells.front()->GetVertices().begin();
-  vertex_iterator i_vertend = cells.front()->GetVertices().end();
+  vertex_iterator i_vert = (*cells.begin())->GetVertices().begin();
+  vertex_iterator i_vertend = (*cells.begin())->GetVertices().end();
   for(; i_vert != i_vertend; ++i_vert)
     allnodes.insert(&(*i_vert));
-  i_vert = cells.back()->GetVertices().begin();
-  i_vertend = cells.back()->GetVertices().end();
+  i_vert = (*std::next(cells.begin()))->GetVertices().begin();
+  i_vertend = (*std::next(cells.begin()))->GetVertices().end();
   for(; i_vert != i_vertend; ++i_vert)
     allnodes.insert(&(*i_vert));
 
@@ -231,7 +244,7 @@ void CellCellInteractionTests :: testUpdate() {
   LatticeVector const newbox(-1, 1, 2);
   LatticePosition const center(0.5 * cutoff);
   LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
-  cells.front()->GetVertices().front() = offhalo;
+  (*cells.begin())->GetVertices().front() = offhalo;
 
   dnc.update();
   CPPUNIT_ASSERT(dnc.size() == 6);
@@ -244,7 +257,7 @@ void CellCellInteractionTests :: testUpdate() {
   // Move near boundary
   LatticePosition const inhalo
     = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
-  cells.front()->GetVertices().front() = inhalo;
+  (*cells.begin())->GetVertices().front() = inhalo;
   dnc.update();
   CPPUNIT_ASSERT(dnc.size() == 6);
   CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
@@ -279,9 +292,9 @@ void CellCellInteractionTests::testPairIteratorSameMesh() {
   auto cells(TwoPancakeSamosas<>(cutoff));
 
   // Move one node closer  to the other
-  LatticePosition const n0 = cells.front()->GetVertices()[0];
-  LatticePosition const n1 = cells.front()->GetVertices()[1];
-  cells.front()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
+  LatticePosition const n1 = (*cells.begin())->GetVertices()[1];
+  (*cells.begin())->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
   DivideConquerCells dnc(cells, cutoff, halo);
 
   DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
@@ -294,18 +307,18 @@ void CellCellInteractionTests::testPairIteratorSinglePair() {
   auto cells(TwoPancakeSamosas<>(cutoff));
 
   // Move one node closer  to the other
-  LatticePosition const n0 = cells.front()->GetVertices()[0];
-  LatticePosition const n1 = cells.back()->GetVertices()[1];
-  cells.back()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+  LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
+  LatticePosition const n1 = (*std::next(cells.begin()))->GetVertices()[1];
+  (*std::next(cells.begin()))->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
   DivideConquerCells dnc(cells, cutoff, halo);
 
   DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
   CPPUNIT_ASSERT(range.is_valid());
   CPPUNIT_ASSERT(helpers::is_zero(
-        *range->first - cells.front()->GetVertices().front()
+        *range->first - (*cells.begin())->GetVertices().front()
   ));
   CPPUNIT_ASSERT(helpers::is_zero(
-        *range->second - cells.back()->GetVertices()[1]
+        *range->second - (*std::next(cells.begin()))->GetVertices()[1]
   ));
   CPPUNIT_ASSERT(not ++range);
   CPPUNIT_ASSERT(not range.is_valid());
@@ -319,8 +332,8 @@ void CellCellInteractionTests::testPairIteratorOnePairPerBox() {
   // Only one pair, and each in a separate box
   LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
   LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-  cells.front()->GetVertices().front() = n0;
-  cells.back()->GetVertices().front() = n1;
+  (*cells.begin())->GetVertices().front() = n0;
+  (*std::next(cells.begin()))->GetVertices().front() = n1;
 
   DivideConquerCells dnc(cells, cutoff, halo);
   // Checks that fixture is what I think it is
@@ -344,8 +357,8 @@ void CellCellInteractionWithGridTests::testInteraction() {
   // Place two nodes close enough for interactions
   LatticePosition const n0(15 - 0.1, 15.5, 15.5);
   LatticePosition const n1(15 + 0.1, 15.5, 15.5);
-  cells.front()->GetVertices().front() = n0;
-  cells.back()->GetVertices().front() = n1;
+  (*cells.begin())->GetVertices().front() = n0;
+  (*std::next(cells.begin()))->GetVertices().front() = n1;
 
   // Set forces to zero
   helpers::ZeroOutFOld(latDat);
@@ -401,8 +414,8 @@ void CellCellInteractionTests::testPairIteratorBoxHalo() {
   // Only one pair, and each in a separate box
   LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
   LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-  cells.front()->GetVertices().front() = n0;
-  cells.back()->GetVertices().front() = n1;
+  (*cells.begin())->GetVertices().front() = n0;
+  (*std::next(cells.begin()))->GetVertices().front() = n1;
 
   DivideConquerCells dnc(cells, cutoff, halo);
   // Checks that fixture is what I think it is
