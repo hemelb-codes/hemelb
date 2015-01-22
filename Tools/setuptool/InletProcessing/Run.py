@@ -164,7 +164,7 @@ if __name__ == "__main__":
     for arg in sys.argv[1:]:
         start = time.time()
 
-        mode = "weight_only"
+        mode = "full"
 
         if mode == "full":
             """ Take a profile file, gmy + input, and create a weights file """

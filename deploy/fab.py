@@ -861,14 +861,3 @@ def submit_jobs(config,cores,wall_time):
     os.system("python hemelb-jobs.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
 
 
-@task
-def analyze(results):
-    #PAth to home
-    home = expanduser("~")
-    #Path to HemeLB Tools/analysis
-    analysis= home+"/hemelb-dev/hemelb/Tools/analysis/"
-    os.chdir(analysis)
-    os.system("python allPlanes.py "+results)
-    os.system("python vectorField.py "+results)
-    os.system("python vectorMag.py "+results)
-    os.system("python stress.py "+results)

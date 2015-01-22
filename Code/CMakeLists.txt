@@ -21,6 +21,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -109,6 +110,9 @@ if (HEMELB_USE_SSE3)
         set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
 endif()
 
+if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
+    add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+endif()
 
 # Check for a serious compiler bug in GCC
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618
