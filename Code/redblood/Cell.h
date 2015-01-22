@@ -171,7 +171,7 @@ private:
 };
 
 //! Typical cell container type
-typedef std::vector<std::shared_ptr<CellBase>> CellContainer;
+typedef std::set<std::shared_ptr<CellBase>> CellContainer;
 
 }} // namespace hemelb::redblood
 #endif

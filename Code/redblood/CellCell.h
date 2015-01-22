@@ -26,7 +26,7 @@ namespace hemelb { namespace redblood {
 
 struct CellReference {
   //! Index of cell in input container
-  site_t cellIndex;
+  CellContainer::const_iterator cellIterator;
   //! Index of node in mesh
   site_t nodeIndex;
   //! Whether the node is near the border of the cube;
