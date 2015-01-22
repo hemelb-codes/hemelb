@@ -272,7 +272,10 @@ namespace hemelb
         log::Logger::Log<log::Warning, log::OnePerCore>("Initializing vInlet.");
         units = unitConverter;
 
+        useWeightsFromFile = false;
+        #ifdef HEMELB_USE_VELOCITY_WEIGHTS_FILE
         useWeightsFromFile = true;
+        #endif
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
         const std::string in_name = velocityFilePath + ".weights.txt";
@@ -289,23 +292,25 @@ namespace hemelb
          * coord_x coord_y coord_z weights_value
          *
          * */
-        while (std::getline(myfile, input_line))
-        {
-          int x, y, z;
-          double v;
-          myfile >> x >> y >> z >> v;
+        if(useWeightsFromFile) {
+          while (std::getline(myfile, input_line))
+          {
+            int x, y, z;
+            double v;
+            myfile >> x >> y >> z >> v;
 
-          std::vector<int> xyz;
-          xyz.push_back(x);
-          xyz.push_back(y);
-          xyz.push_back(z);
-          weights_table[xyz] = v;
+            std::vector<int> xyz;
+            xyz.push_back(x);
+            xyz.push_back(y);
+            xyz.push_back(z);
+            weights_table[xyz] = v;
 
           /*log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f",
            x,
            y,
            z,
            weights_table[xyz]);*/
+          }
         }
       }
 

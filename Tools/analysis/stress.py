@@ -67,6 +67,8 @@ maxstress=[]
 time=[]
 ang=0
 
+write_ascii = True
+
 iter_list=[period*(i+1) for i in range(int(lattice/period)-1)]
 for i in iter_list:
     if (i*step)<1:    #Ignore time values below 1 sec because our input starts art 1 sec
@@ -77,6 +79,10 @@ for i in iter_list:
     z=[]    
 
 
+    text_file = None
+    if(write_ascii):
+      text_file = open(d+datafile+"."+str(i)+".ascii.txt", "w")
+
     print i
     epTimestep = epSet.GetByTimeStep(i);
 
@@ -86,13 +92,20 @@ for i in iter_list:
             stress.append(epTimestep["d_shearstress"][j])
             x.append(epTimestep["position"][j][0])
             y.append(epTimestep["position"][j][1])
-            z.append(epTimestep["position"][j][2]) 
-                    
+            z.append(epTimestep["position"][j][2])
+
+            if(write_ascii):
+              text_file.write(str(epTimestep["position"][j][0])+" "+str(epTimestep["position"][j][1])+" "+str(epTimestep["position"][j][2])+" "+str(epTimestep["d_shearstress"][j])+"\n")
+    
     maxstress.append(max(stress))
     print "max stress = "+str(max(stress))
     print "min stress = "+str(min(stress))
     time.append(i*step)
     
+    #TEMP: exit after writing ASCII files!
+    if(write_ascii):
+        continue
+
     fig = plt.figure()
     ax = fig.add_subplot(111,projection='3d')
 
