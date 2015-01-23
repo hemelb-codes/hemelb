@@ -11,20 +11,20 @@ namespace details { namespace {
 // Loops over nodes, computes velocity and does something
 // struct + member makes up for lack of partial function
 // specialization in c++ pre 11
-template<class T_KERNEL> struct VelocityNodeLoop {
+template<class KERNEL> struct VelocityNodeLoop {
   VelocityNodeLoop(
       stencil::types stencil,
       CellBase const &cell,
       geometry::LatticeData const &latDat
   ) : stencil(stencil), cell(cell), latticeData(latDat) {}
   // Loop and does something
-  template<class T_FUNCTOR> void loop(T_FUNCTOR apply) {
+  template<class FUNCTOR> void loop(FUNCTOR apply) {
     typedef MeshData::Vertices::const_iterator const_iterator;
     const_iterator i_current = cell.GetVertices().begin();
     const_iterator const i_end = cell.GetVertices().end();
     for(; i_current != i_end; ++i_current) {
       PhysicalVelocity const velocity
-        = interpolateVelocity<T_KERNEL>(latticeData, *i_current, stencil);
+        = interpolateVelocity<KERNEL>(latticeData, *i_current, stencil);
       apply(velocity);
     }
   }
@@ -35,26 +35,26 @@ template<class T_KERNEL> struct VelocityNodeLoop {
 };
 
 //! Updates an assignable iterator of some kind
-template<class T_ITERATOR> struct TransformIterator {
-  T_ITERATOR iterator;
-  TransformIterator(T_ITERATOR iterator) : iterator(iterator) {}
-  void operator()(typename T_ITERATOR::value_type const & value) {
+template<class ITERATOR> struct TransformIterator {
+  ITERATOR iterator;
+  TransformIterator(ITERATOR iterator) : iterator(iterator) {}
+  void operator()(typename ITERATOR::value_type const & value) {
     *(iterator++) = value;
   }
 };
 
 //! Updates an assignable iterator of some kind
-template<class T_ITERATOR>
-  TransformIterator<T_ITERATOR> transform_iterator(T_ITERATOR iterator) {
-    return TransformIterator<T_ITERATOR>(iterator);
+template<class ITERATOR>
+  TransformIterator<ITERATOR> transform_iterator(ITERATOR iterator) {
+    return TransformIterator<ITERATOR>(iterator);
   }
 
 //! Iterates over vertices of a mesh and the nearby nodes of a grid
 //! The functor argument is called with the current vertex index, the
 //! global site index triplet, and the associated interpolation weight.
-template<class T_FUNCTOR> void spreadForce2Grid(
+template<class FUNCTOR> void spreadForce2Grid(
     CellBase const &cell,
-    T_FUNCTOR functor,
+    FUNCTOR functor,
     stencil::types stencil
 ) {
   typedef MeshData::Vertices::const_iterator const_iterator;

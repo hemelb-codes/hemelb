@@ -44,9 +44,9 @@ PhysicalEnergy Cell::facetBending() const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
   PhysicalEnergy result(0);
-  typedef MeshTopology::t_FacetNeighbors::const_iterator t_FacetIterator;
-  t_FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-  t_FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
+  typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
+  FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
+  FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
@@ -64,9 +64,9 @@ PhysicalEnergy Cell::facetBending(
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
   PhysicalEnergy result(0);
-  typedef MeshTopology::t_FacetNeighbors::const_iterator t_FacetIterator;
-  t_FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-  t_FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
+  typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
+  FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
+  FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
