@@ -110,6 +110,7 @@ namespace hemelb
           }
       };
 
+      // empty line courtosy of cppunit
       CPPUNIT_TEST_SUITE_REGISTRATION (StencilTests);
     }
   }
