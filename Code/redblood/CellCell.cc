@@ -19,7 +19,7 @@ namespace hemelb
   {
     namespace
     {
-      template <class T>
+      template<class T>
       int figure_nearness(DivideConquer<T> &dnc, LatticeVector const &key,
                           LatticePosition const &vertex, PhysicalDistance const &haloLength)
       {
@@ -34,7 +34,7 @@ namespace hemelb
         {
           LatticePosition const translated(CellReference::directions(d) * haloLength);
 
-          if (not(key == dnc.DowngradeKey(vertex + translated)))
+          if (not (key == dnc.DowngradeKey(vertex + translated)))
           {
             result |= d;
           }
@@ -43,13 +43,13 @@ namespace hemelb
         return result;
       }
 
-      template <class T>
+      template<class T>
       CellReference init_cell_ref(DivideConquer<T> &dnc, site_t cellid, site_t nodeid,
                                   LatticeVector const &key, LatticePosition const &vertex,
                                   PhysicalDistance const &haloLength)
       {
         int const isNearBorder = figure_nearness(dnc, key, vertex, haloLength);
-        CellReference result = {cellid, nodeid, isNearBorder};
+        CellReference result = { cellid, nodeid, isNearBorder };
         return result;
       }
 
@@ -113,8 +113,8 @@ namespace hemelb
 #ifndef HEMELB_DOING_UNITTESTS
     //! Constructor
     DivideConquerCells::DivideConquerCells(CellContainer const &cells, PhysicalDistance boxsize,
-                                           PhysicalDistance halosize)
-        : DivideConquer<CellReference>(boxsize), haloLength(halosize), cells(cells)
+                                           PhysicalDistance halosize) :
+        DivideConquer<CellReference>(boxsize), haloLength(halosize), cells(cells)
     {
       try
       {
@@ -135,10 +135,10 @@ namespace hemelb
         key_type const key = base_type::DowngradeKey(*i_first);
         i_first.GetCellReference().isNearBorder = figure_nearness(*this, key, *i_first, haloLength);
 
-        if (not(key == i_first.GetKey()))
+        if (not (key == i_first.GetKey()))
         {
           base_type::insert(key, i_first.GetCellReference());
-          base_type::erase((base_type::iterator)i_first);
+          base_type::erase((base_type::iterator) i_first);
         }
       }
     }
@@ -157,9 +157,9 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::doBox()
     {
-      LatticeVector const key(box == CellReference::NONE
-                                ? currents.first.GetKey()
-                                : currents.first.GetKey() + CellReference::idirections(box));
+      LatticeVector const key(box == CellReference::NONE ?
+        currents.first.GetKey() :
+        currents.first.GetKey() + CellReference::idirections(box));
       DivideConquerCells::const_range const boxits = owner(key);
 
       if (box == CellReference::NONE)
@@ -225,14 +225,16 @@ namespace hemelb
       }
 
       box = CellReference::NONE;
-      return doBox() ? true : operator++();
+      return doBox() ?
+        true :
+        operator++();
     }
 
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
-                                               PhysicalDistance maxdist)
-        : maxdist(maxdist), box(CellReference::NONE), currents(begin, end), ends(end, end),
-          owner(owner)
+                                               PhysicalDistance maxdist) :
+        maxdist(maxdist), box(CellReference::NONE), currents(begin, end), ends(end, end),
+            owner(owner)
     {
       // No throw garantee. Makes iterator invalid instead.
       try
@@ -251,14 +253,13 @@ namespace hemelb
       }
       catch (std::exception const &e)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "*** Encountered error while initializing pair iterator: %s\n", e.what());
+        log::Logger::Log<log::Debug, log::OnePerCore>("*** Encountered error while initializing pair iterator: %s\n",
+                                                      e.what());
         currents.first = ends.first;
       }
       catch (...)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>(
-          "*** Encountered error while initializing pair iterator.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("*** Encountered error while initializing pair iterator.");
         currents.first = ends.first;
       }
     }
@@ -284,4 +285,4 @@ namespace hemelb
     }
 #endif
   }
-}  // namespace hemelb::redblood
+} // namespace hemelb::redblood

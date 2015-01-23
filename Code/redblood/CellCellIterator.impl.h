@@ -26,134 +26,142 @@
 
 class HEMELB_ITERATOR
 {
-  typedef base_type::HEMELB_ITERATOR wrappee_iterator;
+    typedef base_type::HEMELB_ITERATOR wrappee_iterator;
 
   public:
-  typedef LatticePosition value_type;
-  typedef value_type HEMELB_CONST &reference;
-  typedef value_type HEMELB_CONST *pointer;
-  typedef value_type const &const_reference;
-  typedef value_type const *const_pointer;
-  typedef wrappee_iterator::difference_type difference_type;
-  typedef wrappee_iterator::iterator_category iterator_category;
+    typedef LatticePosition value_type;
+    typedef value_type HEMELB_CONST &reference;
+    typedef value_type HEMELB_CONST *pointer;
+    typedef value_type const &const_reference;
+    typedef value_type const *const_pointer;
+    typedef wrappee_iterator::difference_type difference_type;
+    typedef wrappee_iterator::iterator_category iterator_category;
 
-  HEMELB_ITERATOR(DivideConquerCells HEMELB_CONST &owner, wrappee_iterator const &w)
-      : owner(owner), wrappee(w)
-  {
-  }
-  HEMELB_ITERATOR(HEMELB_ITERATOR const &in) : owner(in.owner), wrappee(in.wrappee)
-  {
-  }
+    HEMELB_ITERATOR (DivideConquerCells HEMELB_CONST &owner, wrappee_iterator const &w) :
+        owner(owner), wrappee(w)
+    {
+    }
+    HEMELB_ITERATOR (HEMELB_ITERATOR const &in) :
+        owner(in.owner), wrappee(in.wrappee)
+    {
+    }
 #ifndef HEMELB_DOING_NONCONST
-  HEMELB_ITERATOR(iterator const &in) : owner(in.owner), wrappee(in.wrappee)
-  {
-  }
+    HEMELB_ITERATOR (iterator const &in) :
+        owner(in.owner), wrappee(in.wrappee)
+    {
+    }
 #else
-  friend class DivideConquerCells::const_iterator;
+    friend class DivideConquerCells::const_iterator;
 #endif
 
-  reference operator*()
-  {
-    return owner.cells HEMELB_GET(wrappee->second.cellIndex)
-      ->GetVertices() HEMELB_GET(wrappee->second.nodeIndex);
-  }
-  pointer operator->()
-  {
-    return &this->operator*();
-  }
+    reference operator*()
+    {
+      // @formatter:off
+      return owner.cells
+        HEMELB_GET(wrappee->second.cellIndex)->GetVertices()
+        HEMELB_GET(wrappee->second.nodeIndex);
+      // @formatter:on
+    }
+    pointer operator->()
+    {
+      return &this->operator*();
+    }
 
-  const_reference operator*() const
-  {
-    return owner.cells HEMELB_GET(wrappee->second.cellIndex)
-      ->GetVertices() HEMELB_GET(wrappee->second.nodeIndex);
-  }
-  const_pointer operator->() const
-  {
-    return &this->operator*();
-  }
-  LatticeVector const &GetKey() const
-  {
-    return wrappee->first;
-  }
-  HEMELB_ITERATOR &operator++()
-  {
-    ++wrappee;
-    return *this;
-  }
-  HEMELB_ITERATOR &operator--()
-  {
-    --wrappee;
-    return *this;
-  }
-  HEMELB_ITERATOR operator++(int)
-  {
-    return HEMELB_ITERATOR(owner, wrappee++);
-  }
-  HEMELB_ITERATOR operator--(int)
-  {
-    return HEMELB_ITERATOR(owner, wrappee--);
-  }
+    const_reference operator*() const
+    {
+      // @formatter:off
+      return owner.cells
+        HEMELB_GET(wrappee->second.cellIndex)->GetVertices()
+        HEMELB_GET(wrappee->second.nodeIndex);
+      // @formatter:on
+    }
+    const_pointer operator->() const
+    {
+      return &this->operator*();
+    }
+    LatticeVector const &GetKey() const
+    {
+      return wrappee->first;
+    }
+    HEMELB_ITERATOR &operator++()
+    {
+      ++wrappee;
+      return *this;
+    }
+    HEMELB_ITERATOR &operator--()
+    {
+      --wrappee;
+      return *this;
+    }
+    HEMELB_ITERATOR operator++(int)
+    {
+      return HEMELB_ITERATOR(owner, wrappee++);
+    }
+    HEMELB_ITERATOR operator--(int)
+    {
+      return HEMELB_ITERATOR(owner, wrappee--);
+    }
 
-  bool operator==(HEMELB_ITERATOR const &in) const
-  {
-    return in.wrappee == wrappee;
-  }
-  bool operator!=(HEMELB_ITERATOR const &in) const
-  {
-    return not operator==(in);
-  }
+    bool operator==(HEMELB_ITERATOR const &in) const
+    {
+      return in.wrappee == wrappee;
+    }
+    bool operator!=(HEMELB_ITERATOR const &in) const
+    {
+      return not operator==(in);
+    }
 
-  CellReference const &GetCellReference() const
-  {
-    return wrappee->second;
-  }
-  CellReference HEMELB_CONST &GetCellReference()
-  {
-    return wrappee->second;
-  }
+    CellReference const &GetCellReference() const
+    {
+      return wrappee->second;
+    }
+    CellReference HEMELB_CONST &GetCellReference()
+    {
+      return wrappee->second;
+    }
 
-  //! Gets integer coding for whether node is close to boundary
-  int GetNearBorder() const
-  {
-    return GetCellReference().isNearBorder;
-  }
-  //! True if close to given boundary
-  bool IsNearBorder(CellReference::Borders border) const
-  {
-    return GetNearBorder() bitand border;
-  }
-  //! True if close to any boundary
-  bool IsNearBorder() const
-  {
-    return GetNearBorder() != 0;
-  }
+    //! Gets integer coding for whether node is close to boundary
+    int GetNearBorder() const
+    {
+      return GetCellReference().isNearBorder;
+    }
+    //! True if close to given boundary
+    bool IsNearBorder(CellReference::Borders border) const
+    {
+      return GetNearBorder() bitand border;
+    }
+    //! True if close to any boundary
+    bool IsNearBorder() const
+    {
+      return GetNearBorder() != 0;
+    }
 
-  site_t GetCellIndex() const
-  {
-    return GetCellReference().cellIndex;
-  }
+    site_t GetCellIndex() const
+    {
+      return GetCellReference().cellIndex;
+    }
 
-  operator base_type::HEMELB_ITERATOR() const
-  {
-    return wrappee;
-  }
+    operator base_type::HEMELB_ITERATOR() const
+    {
+      return wrappee;
+    }
 
-  void operator=(iterator const &c)
-  {
-    wrappee = c.wrappee;
-  }
+    void operator=(iterator const &c)
+    {
+      wrappee = c.wrappee;
+    }
 #ifndef HEMELB_DOING_NONCONST
-  void operator=(const_iterator const &c)
-  {
-    wrappee = c.wrappee;
-  }
+    void operator=(const_iterator const &c)
+    {
+      wrappee = c.wrappee;
+    }
 #endif
 
   protected:
-  //! Container from which this object was obtained
-  DivideConquerCells HEMELB_CONST &owner;
-  //! Iterator over the mapped objects
-  wrappee_iterator wrappee;
+    //! Container from which this object was obtained
+    DivideConquerCells HEMELB_CONST &owner;
+    //! Iterator over the mapped objects
+    wrappee_iterator wrappee;
 };
 
 #undef HEMELB_ITERATOR

@@ -18,4 +18,4 @@ namespace hemelb
     {
     }
   }
-}  // namespace hemelb::redblood
+} // namespace hemelb::redblood

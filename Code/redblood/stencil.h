@@ -61,7 +61,9 @@ namespace hemelb
       // Approximation to the four-point stencil
       inline Dimensionless cosineApprox(Dimensionless const x)
       {
-        return std::abs(x) < 2 ? 0.25 * (1. + std::cos(PI * x * 0.5)) : 0.;
+        return std::abs(x) < 2 ?
+          0.25 * (1. + std::cos(PI * x * 0.5)) :
+          0.;
       }
 
       // Three-point stencil
@@ -87,7 +89,9 @@ namespace hemelb
       inline Dimensionless twoPoint(Dimensionless const x)
       {
         Dimensionless xAbs(std::abs(x));
-        return xAbs < 1 ? 1. - xAbs : 0;
+        return xAbs < 1 ?
+          1. - xAbs :
+          0;
       }
 
 #define HEMELB_STENCIL_MACRO(NAME, STENCIL)                \
