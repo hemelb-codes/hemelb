@@ -28,11 +28,11 @@ template<class KERNEL> class CellArmy {
     //! Stencil
     stencil::types stencil = stencil::FOUR_POINT;
 
-    CellArmy(geometry::LatticeData &_latDat,
-        CellContainer const &_cells,
-        PhysicalDistance _boxsize=10.0, PhysicalDistance _halo=2.0)
-      : latticeData_(_latDat), cells_(_cells),
-      dnc_(_cells, _boxsize, _halo) {}
+    CellArmy(geometry::LatticeData &latDat,
+        CellContainer const &cells,
+        PhysicalDistance boxsize=10.0, PhysicalDistance halo=2.0)
+      : latticeData_(latDat), cells_(cells),
+      dnc_(cells, boxsize, halo) {}
 
     //! Performs fluid to lattice interactions
     void fluid2CellInteractions();

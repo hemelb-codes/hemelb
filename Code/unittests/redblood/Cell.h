@@ -25,23 +25,23 @@ class CellTests : public EnergyVsGradientFixture {
 
     struct CellEnergy {
       mutable Cell particle;
-      CellEnergy(Mesh const &_mesh, Mesh const origMesh)
-        : particle(_mesh, origMesh) {
+      CellEnergy(Mesh const &mesh, Mesh const origMesh)
+        : particle(mesh, origMesh) {
           particle.moduli.bending = 0.888;
           particle.moduli.surface = 1.127;
           particle.moduli.volume = 1.015231;
           particle.moduli.strain = 1.047524;
           particle.moduli.dilation = 0.945524;
       }
-      PhysicalEnergy operator()(MeshData const& _mesh) const {
-        particle.GetVertices() = _mesh.vertices;
+      PhysicalEnergy operator()(MeshData const& mesh) const {
+        particle.GetVertices() = mesh.vertices;
         return particle();
       }
       PhysicalEnergy operator()(
-          MeshData const &_mesh,
-          std::vector<LatticeForceVector> &_forces) const {
-        particle.GetVertices() = _mesh.vertices;
-        return particle(_forces);
+          MeshData const &mesh,
+          std::vector<LatticeForceVector> &forces) const {
+        particle.GetVertices() = mesh.vertices;
+        return particle(forces);
       }
     };
 public:
@@ -104,8 +104,8 @@ protected:
     MeshData original;
 
     Cell GetCellWithEnergy(
-        Mesh const &_a, Mesh const &_b, Dimensionless _s=1e0) const {
-      Cell cell(_a, _b, _s);
+        Mesh const &a, Mesh const &b, Dimensionless s=1e0) const {
+      Cell cell(a, b, s);
       cell.moduli.bending = 0.888;
       cell.moduli.surface = 1.127;
       cell.moduli.volume = 1.015231;

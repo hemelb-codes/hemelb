@@ -27,14 +27,14 @@
 namespace hemelb { namespace redblood {
 
 //! \brief Returns the interpolated velocity at given point
-//! \param[in] _center: off lattice position for which to interpolate.
-//! \param[in] _latdat: lattice data
-//! \param[in] _stencil: stencil to use for interpolation
+//! \param[in] center: off lattice position for which to interpolate.
+//! \param[in] latdat: lattice data
+//! \param[in] stencil: stencil to use for interpolation
 //! \tparam KERNEL: Needed to compute velocity
 template<class KERNEL>
-  PhysicalVelocity interpolateVelocity(PhysicalPosition const &_center,
-      geometry::LatticeData const &_latdat,
-      stencil::types _stencil = stencil::FOUR_POINT);
+  PhysicalVelocity interpolateVelocity(PhysicalPosition const &center,
+      geometry::LatticeData const &latdat,
+      stencil::types stencil = stencil::FOUR_POINT);
 
 namespace details {
   // Type traits to specialize for kernels with forces
@@ -45,21 +45,21 @@ namespace details {
 
   // Computes velocity for a given index on the lattice
   template<class KERNEL> struct VelocityFromLatticeData {
-    VelocityFromLatticeData(geometry::LatticeData const &_latdata)
-          : latticeData(_latdata) {}
+    VelocityFromLatticeData(geometry::LatticeData const &latdata)
+          : latticeData(latdata) {}
     // Computes velocity for given KERNEL and LatticeData
-    LatticeVelocity operator()(LatticeVector const &_indices) const {
-      return operator()(latticeData.GetContiguousSiteId(_indices));
+    LatticeVelocity operator()(LatticeVector const &indices) const {
+      return operator()(latticeData.GetContiguousSiteId(indices));
     }
-    LatticeVelocity operator()(size_t _index) const {
-      return computeVelocity(_index, HasForce<KERNEL>());
+    LatticeVelocity operator()(size_t index) const {
+      return computeVelocity(index, HasForce<KERNEL>());
     }
     protected:
       //! Implementation with forces correction
-      LatticeVelocity computeVelocity(site_t _index,
+      LatticeVelocity computeVelocity(site_t index,
           boost::mpl::true_ const&) const;
       //! Implementation without forces correction
-      LatticeVelocity computeVelocity(site_t _index,
+      LatticeVelocity computeVelocity(site_t index,
           boost::mpl::false_ const&) const;
       //! Lattice data that holds the grid of population and forces
       geometry::LatticeData const & latticeData;
@@ -67,12 +67,12 @@ namespace details {
 
   template<class KERNEL>
     LatticeVelocity VelocityFromLatticeData<KERNEL>
-    :: computeVelocity(site_t _index, boost::mpl::true_ const &) const {
+    :: computeVelocity(site_t index, boost::mpl::true_ const &) const {
       typedef typename KERNEL::LatticeType LatticeType;
       LatticeVelocity result;
       distribn_t density;
       geometry::Site<geometry::LatticeData const>
-        site(latticeData.GetSite(_index));
+        site(latticeData.GetSite(index));
       LatticeForceVector const &force(site.GetForce());
       LatticeType::CalculateDensityAndMomentum(
           site.GetFOld<LatticeType>(),
@@ -84,12 +84,12 @@ namespace details {
 
   template<class KERNEL>
     LatticeVelocity VelocityFromLatticeData<KERNEL>
-    :: computeVelocity(site_t _index, boost::mpl::false_ const &) const {
+    :: computeVelocity(site_t index, boost::mpl::false_ const &) const {
       typedef typename KERNEL::LatticeType LatticeType;
       LatticeVelocity result(0, 0, 0);
       distribn_t density;
       LatticeType::CalculateDensityAndMomentum(
-          latticeData.GetSite(_index).template GetFOld<LatticeType>(),
+          latticeData.GetSite(index).template GetFOld<LatticeType>(),
           density, result.x, result.y, result.z
       );
       return result / density;
@@ -98,11 +98,11 @@ namespace details {
 
 template<class KERNEL>
   PhysicalVelocity interpolateVelocity(
-      geometry::LatticeData const &_latdat, PhysicalPosition const &_center,
-      stencil::types _stencil = stencil::FOUR_POINT) {
+      geometry::LatticeData const &latdat, PhysicalPosition const &center,
+      stencil::types stencil = stencil::FOUR_POINT) {
     return interpolate(
-        details::VelocityFromLatticeData<KERNEL>(_latdat),
-        interpolationIterator(_center, _stencil)
+        details::VelocityFromLatticeData<KERNEL>(latdat),
+        interpolationIterator(center, stencil)
     );
   }
 

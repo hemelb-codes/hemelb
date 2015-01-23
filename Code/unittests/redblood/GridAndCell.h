@@ -81,7 +81,7 @@ public:
 
     // Moves fixture so barycenter is at given position and computes spread
     // force at origin
-    LatticeForceVector force_at_center(LatticePosition const &_position);
+    LatticeForceVector force_at_center(LatticePosition const &position);
     void testIsZeroFarFromMembrane();
     void testIsSymmetric();
     void testIsIncreasing();
@@ -220,8 +220,8 @@ void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
 # undef HEMELB_LINEAR_VELOCITY_PROFILE
 
 LatticeForceVector CellForceSpreadTests :: force_at_center(
-    LatticePosition const &_position) {
-  mesh += _position - mesh.GetBarycenter();
+    LatticePosition const &position) {
+  mesh += position - mesh.GetBarycenter();
   helpers::ZeroOutForces(latDat);
   details::spreadForce2Grid(
       mesh, details::SpreadForces(forces, *latDat),
@@ -332,10 +332,10 @@ void CellForceSpreadTests :: testIsLinear() {
 // IsValidLatticeSite doesn't always return false when site is invalid
 // It seems to be more of a quick and innacurate check
 int CellForceSpreadWithWallTests :: siteID(
-    LatticeVector const &_position) const {
+    LatticeVector const &position) const {
   site_t siteid;
   proc_t procid;
-  bool const valid = latDat->GetContiguousSiteId(_position, procid, siteid);
+  bool const valid = latDat->GetContiguousSiteId(position, procid, siteid);
   return valid ? siteid: -1;
 }
 LatticeVector CellForceSpreadWithWallTests :: GetSolidWall() const {

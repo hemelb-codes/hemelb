@@ -12,7 +12,7 @@
 
 namespace hemelb { namespace redblood {
 
-void CellArmy :: fluid2CellInteractions(geometry::LatticeData const &_latDat) {
+void CellArmy :: fluid2CellInteractions(geometry::LatticeData const &latDat) {
 }
 
 }} // namespace hemelb::redblood

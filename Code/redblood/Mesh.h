@@ -37,17 +37,17 @@ struct MeshData {
   Facets facets;
 };
 
-LatticePosition barycenter(MeshData const &_mesh);
-LatticePosition barycenter(MeshData::Vertices const &_vertices);
-PhysicalVolume volume(MeshData const &_mesh);
+LatticePosition barycenter(MeshData const &mesh);
+LatticePosition barycenter(MeshData::Vertices const &vertices);
+PhysicalVolume volume(MeshData const &mesh);
 PhysicalVolume volume(
-    MeshData::Vertices const &_vertices,
-    MeshData::Facets const &_facets
+    MeshData::Vertices const &vertices,
+    MeshData::Facets const &facets
 );
-PhysicalSurface surface(MeshData const &_mesh);
+PhysicalSurface surface(MeshData const &mesh);
 PhysicalVolume surface(
-    MeshData::Vertices const &_vertices,
-    MeshData::Facets const &_facets
+    MeshData::Vertices const &vertices,
+    MeshData::Facets const &facets
 );
 
 //! Holds raw topology data
@@ -62,7 +62,7 @@ struct MeshTopology {
   t_FacetNeighbors facetNeighbors;
 
   // Creates mesh topology from mesh data
-  MeshTopology(MeshData const &_mesh);
+  MeshTopology(MeshData const &mesh);
   // Empty topology
   MeshTopology() {}
 };
@@ -74,23 +74,23 @@ class Mesh {
   struct deepcopy_tag {};
 
   //! Deep copy constructor
-  Mesh(Mesh const &_c, deepcopy_tag const &)
-    : mesh_(new MeshData(*_c.mesh_)),
-      topology_(new MeshTopology(*_c.topology_)) {}
+  Mesh(Mesh const &c, deepcopy_tag const &)
+    : mesh_(new MeshData(*c.mesh_)),
+      topology_(new MeshTopology(*c.topology_)) {}
 
 public:
   //! Initializes mesh from mesh data
-  Mesh(std::shared_ptr<MeshData> const & _mesh)
-       : mesh_(_mesh), topology_(new MeshTopology(*_mesh)) {}
+  Mesh(std::shared_ptr<MeshData> const & mesh)
+       : mesh_(mesh), topology_(new MeshTopology(*mesh)) {}
   //! Initializes mesh from mesh data and topology
-  Mesh(std::shared_ptr<MeshData> const & _mesh,
-      std::shared_ptr<MeshTopology> const &_topo)
-       : mesh_(_mesh), topology_(_topo) {}
+  Mesh(std::shared_ptr<MeshData> const & mesh,
+      std::shared_ptr<MeshTopology> const &topo)
+       : mesh_(mesh), topology_(topo) {}
   //! Initialize mesh by copying data
-  Mesh(MeshData const &_data)
-       : mesh_(new MeshData(_data)), topology_(new MeshTopology(_data)) {}
+  Mesh(MeshData const &data)
+       : mesh_(new MeshData(data)), topology_(new MeshTopology(data)) {}
   //! Shallow copy constructor
-  Mesh(Mesh const &_in) : mesh_(_in.mesh_), topology_(_in.topology_) {}
+  Mesh(Mesh const &in) : mesh_(in.mesh_), topology_(in.topology_) {}
 
   //! Determines barycenter of mesh
   LatticePosition GetBarycenter() const { return barycenter(*mesh_); }
@@ -106,19 +106,19 @@ public:
   //! Returns mesh data
   std::shared_ptr<MeshData const> GetData() const { return mesh_; }
   //! Returns mesh data
-  void SetData(MeshData const &_data) { mesh_.reset(new MeshData(_data)); }
+  void SetData(MeshData const &data) { mesh_.reset(new MeshData(data)); }
 
   //! Makes a copy of the mesh
   Mesh clone() const { return Mesh(*this, deepcopy_tag()); }
 
   //! Scale mesh around barycenter
-  void operator*=(Dimensionless const &_scale);
+  void operator*=(Dimensionless const &scale);
   //! Scale by matrix around barycenter
-  void operator*=(util::Matrix3D const &_scale);
+  void operator*=(util::Matrix3D const &scale);
   //! Translate mesh
-  void operator+=(LatticePosition const &_offset);
+  void operator+=(LatticePosition const &offset);
   //! Transform mesh
-  void operator+=(std::vector<LatticePosition> const &_displacements);
+  void operator+=(std::vector<LatticePosition> const &displacements);
 
   //! Number of nodes
   size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }
@@ -127,8 +127,8 @@ public:
   //! Const access to vertices
   MeshData::Vertices const & GetVertices() const { return mesh_->vertices; }
   //! Const access to vertices
-  MeshData::Vertices::const_reference GetVertex(size_t _site) const {
-    return mesh_->vertices[_site];
+  MeshData::Vertices::const_reference GetVertex(size_t site) const {
+    return mesh_->vertices[site];
   }
   //! Const access to facets
   MeshData::Facets const & GetFacets() const { return mesh_->facets; }
@@ -142,20 +142,20 @@ protected:
 
 //! Read mesh from file
 //! Format is from T. Krueger's thesis
-std::shared_ptr<MeshData> read_mesh(std::string const &_filename);
+std::shared_ptr<MeshData> read_mesh(std::string const &filename);
 //! Read mesh from file
 //! Format is from T. Krueger's thesis
-std::shared_ptr<MeshData> read_mesh(std::istream &_stream);
+std::shared_ptr<MeshData> read_mesh(std::istream &stream);
 //! Write mesh from file
 //! Format is from T. Krueger's thesis
-void write_mesh(std::ostream &_stream, MeshData const &_data);
+void write_mesh(std::ostream &stream, MeshData const &data);
 //! Write mesh from file
 //! Format is from T. Krueger's thesis
-void write_mesh(std::string const &_filename, MeshData const &_data);
+void write_mesh(std::string const &filename, MeshData const &data);
 //! Write mesh from file in VTK XML format
-void write_vtkmesh(std::ostream &_stream, MeshData const &_data);
+void write_vtkmesh(std::ostream &stream, MeshData const &data);
 //! Write mesh from file in VTK XML format
-void write_vtkmesh(std::string const &_filename, MeshData const &_data);
+void write_vtkmesh(std::string const &filename, MeshData const &data);
 
 //! Tetrahedron of a depth
 //! Depth refers to the number of triangular subdivision in each facet
@@ -165,7 +165,7 @@ Mesh tetrahedron(unsigned int depth=0);
 //! There are two initial facets, referring to the same three vertices.
 Mesh pancakeSamosa(unsigned int depth=0);
 //! Refine a mesh by decomposing each facet into four triangles
-Mesh refine(Mesh _mesh, unsigned int depth=0);
+Mesh refine(Mesh mesh, unsigned int depth=0);
 
 }}
 #endif

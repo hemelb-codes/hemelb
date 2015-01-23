@@ -29,19 +29,19 @@ namespace hemelb { namespace redblood {
 
   //! Creates an interpolator for a given stencil
   template<class STENCIL>
-    InterpolationIterator interpolationIterator(LatticePosition const &_in);
+    InterpolationIterator interpolationIterator(LatticePosition const &in);
   //! Creates an interpolator for a given stencil
   InterpolationIterator interpolationIterator(
-      LatticePosition const &_where, stencil::types _stencil);
+      LatticePosition const &where, stencil::types stencil);
 
   class IndexIterator {
 
     public:
-      IndexIterator(LatticeVector const &_center, LatticeCoordinate _width)
-          : min_(_center - LatticeVector::Ones() * _width),
-            max_(_center + LatticeVector::Ones() * _width), current_(min_) {}
-      IndexIterator(LatticeVector const &_min, LatticeVector const &_max)
-          : min_(_min), max_(_max), current_(_min) {}
+      IndexIterator(LatticeVector const &center, LatticeCoordinate width)
+          : min_(center - LatticeVector::Ones() * width),
+            max_(center + LatticeVector::Ones() * width), current_(min_) {}
+      IndexIterator(LatticeVector const &min, LatticeVector const &max)
+          : min_(min), max_(max), current_(min) {}
 
       //! Returns current position
       LatticeVector const & operator*() const { return current_; }
@@ -55,18 +55,18 @@ namespace hemelb { namespace redblood {
       operator bool() const { return isValid(); }
 
       //! computes local index
-      site_t ContiguousSiteId(geometry::LatticeData const &_latDat) const{
-        return _latDat.GetContiguousSiteId(current_);
+      site_t ContiguousSiteId(geometry::LatticeData const &latDat) const{
+        return latDat.GetContiguousSiteId(current_);
       }
       // //! computes local index
       // geometry::Site<geometry::LatticeData const>
-      //   Site(geometry::LatticeData const &_latDat) const {
-      //     return _latDat.GetSite(current_);
+      //   Site(geometry::LatticeData const &latDat) const {
+      //     return latDat.GetSite(current_);
       // }
       // //! computes local index
       // geometry::Site<geometry::LatticeData>
-      //   Site(geometry::LatticeData const &_latDat) const {
-      //     return _latDat.GetSite(current_);
+      //   Site(geometry::LatticeData const &latDat) const {
+      //     return latDat.GetSite(current_);
       // }
 
     protected:
@@ -83,7 +83,7 @@ namespace hemelb { namespace redblood {
       //! Lattice
       template<class STENCIL>
         InterpolationIterator(
-            LatticePosition const &_node, STENCIL const & _stencil);
+            LatticePosition const &node, STENCIL const & stencil);
 
       //! Returns weight for current point
       Dimensionless weight() const {
@@ -123,57 +123,57 @@ namespace hemelb { namespace redblood {
       //! Weight alongst z direction;
       boost::shared_array<Dimensionless> zWeight_;
 
-      static LatticeVector minimumPosition_(LatticePosition const &_node,
-              size_t _range);
-      static LatticeVector maximumPosition_(LatticePosition const &_node,
-              size_t _range);
+      static LatticeVector minimumPosition_(LatticePosition const &node,
+              size_t range);
+      static LatticeVector maximumPosition_(LatticePosition const &node,
+              size_t range);
   };
 
   template<class STENCIL>
     InterpolationIterator :: InterpolationIterator(
-         LatticePosition const &_node, STENCIL const & _stencil)
+         LatticePosition const &node, STENCIL const & stencil)
       : IndexIterator(
-          minimumPosition_(_node, STENCIL::range),
-          maximumPosition_(_node, STENCIL::range)
+          minimumPosition_(node, STENCIL::range),
+          maximumPosition_(node, STENCIL::range)
         ), xWeight_(new Dimensionless[STENCIL::range]),
            yWeight_(new Dimensionless[STENCIL::range]),
            zWeight_(new Dimensionless[STENCIL::range]) {
       for(LatticeVector::value_type i(0); i < STENCIL::range; ++i) {
-        xWeight_[i] = _stencil(_node[0] - Dimensionless(min_[0] + i));
-        yWeight_[i] = _stencil(_node[1] - Dimensionless(min_[1] + i));
-        zWeight_[i] = _stencil(_node[2] - Dimensionless(min_[2] + i));
+        xWeight_[i] = stencil(node[0] - Dimensionless(min_[0] + i));
+        yWeight_[i] = stencil(node[1] - Dimensionless(min_[1] + i));
+        zWeight_[i] = stencil(node[2] - Dimensionless(min_[2] + i));
       }
     }
 
   template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
-        InterpolationIterator _interpolator) {
+    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc,
+        InterpolationIterator interpolator) {
       PhysicalVelocity result(0, 0, 0);
-      for(; _interpolator; ++_interpolator)
-        result += _gridfunc(*_interpolator) * _interpolator.weight();
+      for(; interpolator; ++interpolator)
+        result += gridfunc(*interpolator) * interpolator.weight();
       return result;
     }
   template<class GRID_FUNCTION, class STENCIL>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
-        LatticePosition const &_pos, STENCIL _stencil) {
-      return interpolate(_gridfunc, OffLatticeIterator(_pos, _stencil));
+    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc,
+        LatticePosition const &pos, STENCIL stencil) {
+      return interpolate(gridfunc, OffLatticeIterator(pos, stencil));
     }
   template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
-        LatticePosition const &_pos, stencil::types _stencil) {
-      return interpolate(_gridfunc, interpolationIterator(_pos, _stencil));
+    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc,
+        LatticePosition const &pos, stencil::types stencil) {
+      return interpolate(gridfunc, interpolationIterator(pos, stencil));
     }
   template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &_gridfunc,
-        Dimensionless const &_x, Dimensionless const &_y,
-        Dimensionless const &_z, stencil::types _stencil) {
-      return interpolate(_gridfunc, LatticePosition(_x, _y, _z), _stencil);
+    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc,
+        Dimensionless const &x, Dimensionless const &y,
+        Dimensionless const &z, stencil::types stencil) {
+      return interpolate(gridfunc, LatticePosition(x, y, z), stencil);
   }
 
   // Creates an interpolator for a given stencil
   template<class STENCIL>
-    InterpolationIterator interpolationIterator(LatticePosition const &_in) {
-      return InterpolationIterator(_in, STENCIL());
+    InterpolationIterator interpolationIterator(LatticePosition const &in) {
+      return InterpolationIterator(in, STENCIL());
     }
 }} // hemelb::redblood
 #endif

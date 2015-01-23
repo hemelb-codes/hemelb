@@ -84,15 +84,15 @@ namespace hemelb
         /**
          * Get a site object for the given position.
          */
-        inline Site<LatticeData> GetSite(LatticeVector const &_pos) {
-          return GetSite(GetContiguousSiteId(_pos));
+        inline Site<LatticeData> GetSite(LatticeVector const &pos) {
+          return GetSite(GetContiguousSiteId(pos));
         }
         /**
          * Get a site object for the given position.
          */
-        inline Site<const LatticeData> GetSite(LatticeVector const &_pos) const
+        inline Site<const LatticeData> GetSite(LatticeVector const &pos) const
         {
-          return GetSite(GetContiguousSiteId(_pos));
+          return GetSite(GetContiguousSiteId(pos));
         }
         /**
          * Get a site object for the given position.

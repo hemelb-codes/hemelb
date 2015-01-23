@@ -20,31 +20,31 @@
 
 namespace hemelb { namespace redblood {
 
-std::shared_ptr<MeshData> read_mesh(std::string const &_filename) {
+std::shared_ptr<MeshData> read_mesh(std::string const &filename) {
   log::Logger::Log<log::Debug, log::Singleton>(
-          "Reading red blood cell from %s", _filename.c_str());
+          "Reading red blood cell from %s", filename.c_str());
 
   // Open file if it exists
   std::ifstream file;
-  if (!util::file_exists(_filename.c_str()))
+  if (!util::file_exists(filename.c_str()))
     throw Exception() << "Red-blood-cell mesh file '"
-      << _filename.c_str() << "' does not exist";
-  file.open(_filename.c_str());
+      << filename.c_str() << "' does not exist";
+  file.open(filename.c_str());
   return read_mesh(file);
 }
 
-std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
+std::shared_ptr<MeshData> read_mesh(std::istream &stream) {
   log::Logger::Log<log::Debug, log::Singleton>(
           "Reading red blood cell from stream");
 
   std::string line;
   // Drop header
   for(int i(0); i < 4; ++i)
-    std::getline(_stream, line);
+    std::getline(stream, line);
 
   // Number of vertices
   unsigned int num_vertices;
-  _stream >> num_vertices;
+  stream >> num_vertices;
 
 
   // Create Mesh data
@@ -53,7 +53,7 @@ std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
 
   // Then read in first and subsequent lines
   MeshData::Facet::value_type offset;
-  _stream >> offset >> result->vertices[0].x
+  stream >> offset >> result->vertices[0].x
     >> result->vertices[0].y
     >> result->vertices[0].z;
   log::Logger::Log<log::Trace, log::Singleton>(
@@ -61,7 +61,7 @@ std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
     result->vertices[0].y, result->vertices[0].z
   );
   for(unsigned int i(1), index(0); i < num_vertices; ++i) {
-    _stream >> index >> result->vertices[i].x
+    stream >> index >> result->vertices[i].x
       >> result->vertices[i].y
       >> result->vertices[i].z;
     log::Logger::Log<log::Trace, log::Singleton>(
@@ -71,15 +71,15 @@ std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
   }
 
   // Drop mid-file headers
-  for(int i(0); i < 3; ++i) std::getline(_stream, line);
+  for(int i(0); i < 3; ++i) std::getline(stream, line);
 
   // Read facet indices
   unsigned int num_facets;
   MeshData::Facet indices;
-  _stream >> num_facets;
+  stream >> num_facets;
   result->facets.resize(num_facets);
   for(unsigned int i(0), dummy(0); i < num_facets; ++i) {
-    _stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+    stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
       >> indices[0] >> indices[1] >> indices[2];
     result->facets[i][0] = indices[0] - offset;
     result->facets[i][1] = indices[1] - offset;
@@ -97,163 +97,163 @@ std::shared_ptr<MeshData> read_mesh(std::istream &_stream) {
 }
 
 void write_mesh(
-    std::string const &_filename, MeshData const & _data) {
+    std::string const &filename, MeshData const & data) {
   log::Logger::Log<log::Debug, log::Singleton>(
-          "Writing red blood cell from %s", _filename.c_str());
-  std::ofstream file(_filename.c_str());
-  write_mesh(file, _data);
+          "Writing red blood cell from %s", filename.c_str());
+  std::ofstream file(filename.c_str());
+  write_mesh(file, data);
 }
 
 void write_vtkmesh(
-    std::string const &_filename, MeshData const & _data) {
+    std::string const &filename, MeshData const & data) {
   log::Logger::Log<log::Debug, log::Singleton>(
-          "Writing red blood cell from %s", _filename.c_str());
-  std::ofstream file(_filename.c_str());
-  write_vtkmesh(file, _data);
+          "Writing red blood cell from %s", filename.c_str());
+  std::ofstream file(filename.c_str());
+  write_vtkmesh(file, data);
 }
 
-void write_mesh(std::ostream &_stream, MeshData const &_data) {
+void write_mesh(std::ostream &stream, MeshData const &data) {
   // Write Header
-  _stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n"
+  stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n"
     << "$Nodes\n"
-    << _data.vertices.size() << "\n";
+    << data.vertices.size() << "\n";
 
   typedef MeshData::Vertices::const_iterator VertexIterator;
-  VertexIterator i_vertex = _data.vertices.begin();
-  VertexIterator const i_vertex_end = _data.vertices.end();
+  VertexIterator i_vertex = data.vertices.begin();
+  VertexIterator const i_vertex_end = data.vertices.end();
   for(unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-    _stream << i << " "
+    stream << i << " "
       << (*i_vertex)[0] << " "
       << (*i_vertex)[1] << " "
       << (*i_vertex)[2] << "\n";
-  _stream << "$EndNode\n"
+  stream << "$EndNode\n"
        << "$Elements\n"
-       << _data.facets.size() << "\n";
+       << data.facets.size() << "\n";
 
   typedef MeshData::Facets::const_iterator FacetIterator;
-  FacetIterator i_facet = _data.facets.begin();
-  FacetIterator const i_facet_end = _data.facets.end();
+  FacetIterator i_facet = data.facets.begin();
+  FacetIterator const i_facet_end = data.facets.end();
   for(unsigned i(1); i_facet != i_facet_end; ++i_facet, ++i)
-    _stream << i << " 1 2 3 4 5 "
+    stream << i << " 1 2 3 4 5 "
       << (*i_facet)[0] + 1 << " "
       << (*i_facet)[1] + 1 << " "
       << (*i_facet)[2] + 1 << "\n";
-  _stream << "$EndElement\n";
+  stream << "$EndElement\n";
 }
 
-void write_vtkmesh(std::ostream &_stream, MeshData const &_data) {
+void write_vtkmesh(std::ostream &stream, MeshData const &data) {
   // Write Header
-  _stream << "<?xml version=\"1.0\"?>\n"
+  stream << "<?xml version=\"1.0\"?>\n"
     << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
     << "  <PolyData>\n"
     << "    <Piece NumberOfPoints=\""
-    << _data.vertices.size() << "\" NumberOfPolys=\""
-    << _data.facets.size() << "\">\n"
+    << data.vertices.size() << "\" NumberOfPolys=\""
+    << data.facets.size() << "\">\n"
     << "      <Points>\n"
     << "        <DataArray NumberOfComponents=\"3\" type=\"Float32\">\n";
 
   typedef MeshData::Vertices::const_iterator VertexIterator;
-  VertexIterator i_vertex = _data.vertices.begin();
-  VertexIterator const i_vertex_end = _data.vertices.end();
+  VertexIterator i_vertex = data.vertices.begin();
+  VertexIterator const i_vertex_end = data.vertices.end();
   for(unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-    _stream << (*i_vertex)[0] << " "
+    stream << (*i_vertex)[0] << " "
       << (*i_vertex)[1] << " "
       << (*i_vertex)[2] << " ";
-  _stream << "\n        </DataArray>\n" << "      </Points>\n"
+  stream << "\n        </DataArray>\n" << "      </Points>\n"
     << "      <Polys>\n"
     << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
 
   typedef MeshData::Facets::const_iterator FacetIterator;
-  FacetIterator i_facet = _data.facets.begin();
-  FacetIterator const i_facet_end = _data.facets.end();
+  FacetIterator i_facet = data.facets.begin();
+  FacetIterator const i_facet_end = data.facets.end();
   for(; i_facet != i_facet_end; ++i_facet)
-    _stream << (*i_facet)[0] << " " << (*i_facet)[1] << " "
+    stream << (*i_facet)[0] << " " << (*i_facet)[1] << " "
       << (*i_facet)[2] << " ";
-  _stream << "\n        </DataArray>\n"
+  stream << "\n        </DataArray>\n"
     << "        <DataArray type=\"Int32\" Name=\"offsets\">\n";
-  for(unsigned i(0); i < _data.facets.size(); ++i)
-    _stream << (i+1) * 3 << " ";
-  _stream << "\n        </DataArray>\n" << "      </Polys>\n";
-  _stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
+  for(unsigned i(0); i < data.facets.size(); ++i)
+    stream << (i+1) * 3 << " ";
+  stream << "\n        </DataArray>\n" << "      </Polys>\n";
+  stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
 }
 
-LatticePosition barycenter(MeshData::Vertices const &_vertices) {
+LatticePosition barycenter(MeshData::Vertices const &vertices) {
   typedef MeshData::Vertices::value_type t_Vertex;
   return std::accumulate(
-      _vertices.begin(), _vertices.end(), t_Vertex(0, 0, 0)
-  ) / t_Vertex::value_type(_vertices.size());
+      vertices.begin(), vertices.end(), t_Vertex(0, 0, 0)
+  ) / t_Vertex::value_type(vertices.size());
 }
-LatticePosition barycenter(MeshData const &_mesh) {
-  return barycenter(_mesh.vertices);
+LatticePosition barycenter(MeshData const &mesh) {
+  return barycenter(mesh.vertices);
 }
 PhysicalVolume volume(
-    MeshData::Vertices const &_vertices,
-    MeshData::Facets const &_facets
+    MeshData::Vertices const &vertices,
+    MeshData::Facets const &facets
 ) {
-    MeshData::Facets::const_iterator i_facet = _facets.begin();
-    MeshData::Facets::const_iterator const i_facet_end(_facets.end());
+    MeshData::Facets::const_iterator i_facet = facets.begin();
+    MeshData::Facets::const_iterator const i_facet_end(facets.end());
     PhysicalVolume result(0);
     for(; i_facet != i_facet_end; ++i_facet) {
-        LatticePosition const &v0(_vertices[(*i_facet)[0]]);
-        LatticePosition const &v1(_vertices[(*i_facet)[1]]);
-        LatticePosition const &v2(_vertices[(*i_facet)[2]]);
+        LatticePosition const &v0(vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(vertices[(*i_facet)[2]]);
         result += v0.Cross(v1).Dot(v2);
     }
     // Minus sign comes from outward facing facet orientation
     return -result / PhysicalVolume(6);
 }
-PhysicalVolume volume(MeshData const &_mesh) {
-  return volume(_mesh.vertices, _mesh.facets);
+PhysicalVolume volume(MeshData const &mesh) {
+  return volume(mesh.vertices, mesh.facets);
 }
 
 PhysicalVolume surface(
-    MeshData::Vertices const &_vertices,
-    MeshData::Facets const &_facets
+    MeshData::Vertices const &vertices,
+    MeshData::Facets const &facets
 ) {
-    MeshData::Facets::const_iterator i_facet = _facets.begin();
-    MeshData::Facets::const_iterator const i_facet_end(_facets.end());
+    MeshData::Facets::const_iterator i_facet = facets.begin();
+    MeshData::Facets::const_iterator const i_facet_end(facets.end());
     PhysicalVolume result(0);
     for(; i_facet != i_facet_end; ++i_facet) {
-        LatticePosition const &v0(_vertices[(*i_facet)[0]]);
-        LatticePosition const &v1(_vertices[(*i_facet)[1]]);
-        LatticePosition const &v2(_vertices[(*i_facet)[2]]);
+        LatticePosition const &v0(vertices[(*i_facet)[0]]);
+        LatticePosition const &v1(vertices[(*i_facet)[1]]);
+        LatticePosition const &v2(vertices[(*i_facet)[2]]);
         result += (v0 - v1).Cross(v2 - v1).GetMagnitude();
     }
     return result * 0.5;
 }
-PhysicalSurface surface(MeshData const &_mesh) {
-  return surface(_mesh.vertices, _mesh.facets);
+PhysicalSurface surface(MeshData const &mesh) {
+  return surface(mesh.vertices, mesh.facets);
 }
 
 
 namespace {
-  bool contains(MeshData::Facet const &_a,
-          MeshData::Facet::value_type _v) {
-    return _a[0] == _v or _a[1] == _v or _a[2] == _v;
+  bool contains(MeshData::Facet const &a,
+          MeshData::Facet::value_type v) {
+    return a[0] == v or a[1] == v or a[2] == v;
   }
-  bool edge_sharing(MeshData::Facet const &_a,
-      MeshData::Facet const &_b ) {
-    return (contains(_b, _a[0]) ? 1: 0)
-        + (contains(_b, _a[1]) ? 1: 0)
-        + (contains(_b, _a[2]) ? 1: 0) >= 2;
+  bool edge_sharing(MeshData::Facet const &a,
+      MeshData::Facet const &b ) {
+    return (contains(b, a[0]) ? 1: 0)
+        + (contains(b, a[1]) ? 1: 0)
+        + (contains(b, a[2]) ? 1: 0) >= 2;
   }
   // Adds value as first non-negative number, if value not in array yet
-  void insert(MeshData::Facet &_container,
-    MeshData::Facet::value_type _value,
-    MeshData::Facet::value_type _max) {
-    for(size_t i(0); i < _container.size(); ++i)
-        if(_container[i] >= _max) { _container[i] = _value; return; }
-        else if(_container[i] == _value) return;
+  void insert(MeshData::Facet &container,
+    MeshData::Facet::value_type value,
+    MeshData::Facet::value_type max) {
+    for(size_t i(0); i < container.size(); ++i)
+        if(container[i] >= max) { container[i] = value; return; }
+        else if(container[i] == value) return;
   }
 }
 
-MeshTopology::MeshTopology(MeshData const &_mesh) {
-  vertexToFacets.resize(_mesh.vertices.size());
-  facetNeighbors.resize(_mesh.facets.size());
+MeshTopology::MeshTopology(MeshData const &mesh) {
+  vertexToFacets.resize(mesh.vertices.size());
+  facetNeighbors.resize(mesh.facets.size());
 
   // Loop over facets to create map from vertices to facets
-  MeshData::Facets::const_iterator i_facet = _mesh.facets.begin();
-  MeshData::Facets::const_iterator const i_facet_end = _mesh.facets.end();
+  MeshData::Facets::const_iterator i_facet = mesh.facets.begin();
+  MeshData::Facets::const_iterator const i_facet_end = mesh.facets.end();
   for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
     vertexToFacets.at((*i_facet)[0]).insert(i);
     vertexToFacets.at((*i_facet)[1]).insert(i);
@@ -261,12 +261,12 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
   }
 
   // Now creates map of neighboring facets
-  size_t const Nmax = _mesh.facets.size();
+  size_t const Nmax = mesh.facets.size();
   std::fill(
     facetNeighbors.begin(), facetNeighbors.end(),
     t_FacetNeighbors::value_type{{Nmax, Nmax, Nmax}}
   );
-  i_facet = _mesh.facets.begin();
+  i_facet = mesh.facets.begin();
   for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
     for(size_t node(0); node != i_facet->size(); ++node) {
       // check facets that this node is attached to
@@ -276,7 +276,7 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
         i_neigh = neighboringFacets.begin();
       for(; i_neigh != neighboringFacets.end(); ++i_neigh) {
         if(i == *i_neigh) continue;
-        if(edge_sharing(*i_facet, _mesh.facets.at(*i_neigh)))
+        if(edge_sharing(*i_facet, mesh.facets.at(*i_neigh)))
           insert(facetNeighbors.at(i), *i_neigh, Nmax);
       }
     }
@@ -289,28 +289,28 @@ MeshTopology::MeshTopology(MeshData const &_mesh) {
 # endif
 }
 
-void Mesh::operator*=(Dimensionless const &_scale) {
+void Mesh::operator*=(Dimensionless const &scale) {
   auto const barycenter = GetBarycenter();
   for(auto &vertex: mesh_->vertices)
-    vertex = (vertex - barycenter) * _scale + barycenter;
+    vertex = (vertex - barycenter) * scale + barycenter;
 }
 
-void Mesh::operator*=(util::Matrix3D const &_scale) {
+void Mesh::operator*=(util::Matrix3D const &scale) {
   auto const barycenter = GetBarycenter();
   for(auto &vertex: mesh_->vertices) {
-    _scale.timesVector(vertex - barycenter, vertex);
+    scale.timesVector(vertex - barycenter, vertex);
     vertex += barycenter;
   }
 }
 
-void Mesh::operator+=(LatticePosition const &_offset) {
+void Mesh::operator+=(LatticePosition const &offset) {
   for(auto &vertex: mesh_->vertices)
-    vertex += _offset;
+    vertex += offset;
 }
 
-void Mesh::operator+=(std::vector<LatticePosition> const &_displacements) {
-  assert(_displacements.size() == mesh_->vertices.size());
-  auto i_disp = _displacements.begin();
+void Mesh::operator+=(std::vector<LatticePosition> const &displacements) {
+  assert(displacements.size() == mesh_->vertices.size());
+  auto i_disp = displacements.begin();
   for(auto &vertex: mesh_->vertices)
       vertex += *(i_disp++);
 }
@@ -337,28 +337,28 @@ namespace {
     return data;
   }
 
-  size_t vertex(std::shared_ptr<MeshData> &_data,
-      std::map<std::pair<size_t, size_t>, size_t> &_vertices,
-      size_t const &_i0, size_t const &_i1) {
-    std::pair<size_t, size_t> const indices(_i0, _i1);
+  size_t vertex(std::shared_ptr<MeshData> &data,
+      std::map<std::pair<size_t, size_t>, size_t> &vertices,
+      size_t const &i0, size_t const &i1) {
+    std::pair<size_t, size_t> const indices(i0, i1);
     std::map<std::pair<size_t, size_t>, size_t>:: const_iterator i_found
-      = _vertices.find(indices);
-    if(i_found == _vertices.end())
-      i_found = _vertices.find(std::pair<size_t, size_t>(_i1, _i0));
-    if(i_found == _vertices.end()) {
-      _data->vertices.push_back(
-          (_data->vertices[_i0] + _data->vertices[_i1]) * 0.5);
-      _vertices[indices] = _data->vertices.size() - 1;
-      return _data->vertices.size() - 1;
+      = vertices.find(indices);
+    if(i_found == vertices.end())
+      i_found = vertices.find(std::pair<size_t, size_t>(i1, i0));
+    if(i_found == vertices.end()) {
+      data->vertices.push_back(
+          (data->vertices[i0] + data->vertices[i1]) * 0.5);
+      vertices[indices] = data->vertices.size() - 1;
+      return data->vertices.size() - 1;
     }
     return i_found->second;
   }
 
-  void refine(std::shared_ptr<MeshData> &_data) {
-    MeshData::Facets const facets(_data->facets);
-    _data->facets.clear();
-    _data->facets.resize(facets.size() * 4);
-    _data->vertices.reserve(_data->facets.size() * 3 + _data->vertices.size());
+  void refine(std::shared_ptr<MeshData> &data) {
+    MeshData::Facets const facets(data->facets);
+    data->facets.clear();
+    data->facets.resize(facets.size() * 4);
+    data->vertices.reserve(data->facets.size() * 3 + data->vertices.size());
 
     // Container with midpoint indices, so midpoints are only added once
     typedef std::pair<size_t, size_t> t_Pair;
@@ -366,7 +366,7 @@ namespace {
 
     MeshData::Facets::const_iterator i_orig_facet(facets.begin());
     MeshData::Facets::const_iterator const i_orig_facet_end(facets.end());
-    MeshData::Facets::iterator i_facet = _data->facets.begin();
+    MeshData::Facets::iterator i_facet = data->facets.begin();
     for(; i_orig_facet != i_orig_facet_end; ++i_orig_facet) {
       MeshData::Facet::value_type const i0 = (*i_orig_facet)[0];
       MeshData::Facet::value_type const i1 = (*i_orig_facet)[1];
@@ -374,9 +374,9 @@ namespace {
 
       // Adds new vertices halfway through edges
       MeshData::Facet::value_type
-        mid0(vertex(_data, new_vertices, i0, i1)),
-        mid1(vertex(_data, new_vertices, i1, i2)),
-        mid2(vertex(_data, new_vertices, i2, i0));
+        mid0(vertex(data, new_vertices, i0, i1)),
+        mid1(vertex(data, new_vertices, i1, i2)),
+        mid2(vertex(data, new_vertices, i2, i0));
 
       // Adds all four new faces
       (*i_facet)[0] = i0;
@@ -402,12 +402,12 @@ namespace {
   }
 }
 
-Mesh refine(Mesh _data, unsigned int _depth) {
-  if(_depth == 0) return _data.clone();
-  std::shared_ptr<MeshData> data(new MeshData(*_data.GetData()));
-  for(unsigned int i(0); i < _depth; ++i)
-    refine(data);
-  return Mesh(data);
+Mesh refine(Mesh data, unsigned int depth) {
+  if(depth == 0) return data.clone();
+  std::shared_ptr<MeshData> newData(new MeshData(*data.GetData()));
+  for(unsigned int i(0); i < depth; ++i)
+    refine(newData);
+  return Mesh(newData);
 }
 
 

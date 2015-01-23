@@ -36,8 +36,8 @@ namespace hemelb { namespace redblood {
     struct TwoPoint;
 
     // Four point stencil
-    inline Dimensionless fourPoint(Dimensionless const _x) {
-      Dimensionless xAbs(std::abs(_x));
+    inline Dimensionless fourPoint(Dimensionless const x) {
+      Dimensionless xAbs(std::abs(x));
       if(xAbs < 1)
         return 1./8. * (3. - 2*xAbs + std::sqrt(1. + 4.*xAbs - 4.*xAbs*xAbs));
       else if(xAbs < 2)
@@ -47,13 +47,13 @@ namespace hemelb { namespace redblood {
     }
 
     // Approximation to the four-point stencil
-    inline Dimensionless cosineApprox(Dimensionless const _x) {
-      return std::abs(_x) < 2 ? 0.25 * (1. + std::cos(PI * _x * 0.5)): 0.;
+    inline Dimensionless cosineApprox(Dimensionless const x) {
+      return std::abs(x) < 2 ? 0.25 * (1. + std::cos(PI * x * 0.5)): 0.;
     }
 
     // Three-point stencil
-    inline Dimensionless threePoint(Dimensionless const _x) {
-      Dimensionless xAbs(std::abs(_x));
+    inline Dimensionless threePoint(Dimensionless const x) {
+      Dimensionless xAbs(std::abs(x));
       if(xAbs < 0.5)
         return 1./3. * (1 + std::sqrt(1. - 3.*xAbs*xAbs));
       else if(xAbs < 1.5)
@@ -63,25 +63,25 @@ namespace hemelb { namespace redblood {
     }
 
     // Two-point stencil
-    inline Dimensionless twoPoint(Dimensionless const _x) {
-      Dimensionless xAbs(std::abs(_x));
+    inline Dimensionless twoPoint(Dimensionless const x) {
+      Dimensionless xAbs(std::abs(x));
       return xAbs < 1 ? 1. - xAbs: 0;
     }
 
 #   define HEMELB_STENCIL_MACRO(NAME, STENCIL)                        \
       struct NAME {                                                   \
         NAME() {}                                                     \
-        static Dimensionless stencil(Dimensionless _x) {              \
-          return STENCIL(_x);                                         \
+        static Dimensionless stencil(Dimensionless x) {               \
+          return STENCIL(x);                                          \
         }                                                             \
-        static Dimensionless stencil(LatticePosition const &_x) {     \
-          return STENCIL(_x.x) * STENCIL(_x.y) * STENCIL(_x.z);       \
+        static Dimensionless stencil(LatticePosition const &x) {      \
+          return STENCIL(x.x) * STENCIL(x.y) * STENCIL(x.z);          \
         }                                                             \
-        Dimensionless operator()(Dimensionless _x) const {            \
-          return NAME::stencil(_x);                                   \
+        Dimensionless operator()(Dimensionless x) const {             \
+          return NAME::stencil(x);                                    \
         }                                                             \
-        Dimensionless operator()(LatticePosition const &_x) {         \
-          return NAME::stencil(_x);                                   \
+        Dimensionless operator()(LatticePosition const &x) {          \
+          return NAME::stencil(x);                                    \
         }                                                             \
         static const size_t range;                                    \
       }

@@ -32,34 +32,34 @@ class InterpolationTests : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE_END();
 
     struct PlanarFunction {
-      LatticePosition operator()(LatticePosition const &_pos) const {
+      LatticePosition operator()(LatticePosition const &pos) const {
         return LatticePosition(
-          LatticePosition(1, 1, 1).Dot(_pos),
-          LatticePosition(-1, 2, 1).Dot(_pos),
-          LatticePosition(0, 0, 1).Dot(_pos)
+          LatticePosition(1, 1, 1).Dot(pos),
+          LatticePosition(-1, 2, 1).Dot(pos),
+          LatticePosition(0, 0, 1).Dot(pos)
         );
       }
-      LatticePosition operator()(Dimensionless _x, Dimensionless _y,
-          Dimensionless _z) const {
-        return operator()(LatticePosition(_x, _y, _z));
+      LatticePosition operator()(Dimensionless x, Dimensionless y,
+          Dimensionless z) const {
+        return operator()(LatticePosition(x, y, z));
       }
     };
 
     struct QuadraticFunction {
-      LatticePosition operator()(LatticePosition const &_pos) const {
+      LatticePosition operator()(LatticePosition const &pos) const {
         Dimensionless const offset(0);
         return LatticePosition(
-          (LatticePosition(1, 1, 1).Dot(_pos) - offset)
-          * (LatticePosition(1, 1, 1).Dot(_pos) - offset),
-          (LatticePosition(0, 1, 0).Dot(_pos) - offset)
-          * (LatticePosition(0, 1, 0).Dot(_pos) - offset),
-          (LatticePosition(0, 0, 1).Dot(_pos) - offset)
-          * (LatticePosition(0, 0, 1).Dot(_pos) - offset)
+          (LatticePosition(1, 1, 1).Dot(pos) - offset)
+          * (LatticePosition(1, 1, 1).Dot(pos) - offset),
+          (LatticePosition(0, 1, 0).Dot(pos) - offset)
+          * (LatticePosition(0, 1, 0).Dot(pos) - offset),
+          (LatticePosition(0, 0, 1).Dot(pos) - offset)
+          * (LatticePosition(0, 0, 1).Dot(pos) - offset)
         );
       }
-      LatticePosition operator()(Dimensionless _x, Dimensionless _y,
-          Dimensionless _z) const {
-        return operator()(LatticePosition(_x, _y, _z));
+      LatticePosition operator()(Dimensionless x, Dimensionless y,
+          Dimensionless z) const {
+        return operator()(LatticePosition(x, y, z));
       }
     };
 
@@ -155,14 +155,14 @@ public:
       }
     }
 
-    template<class FUNCTION> void check(Dimensionless _x, Dimensionless _y,
-        Dimensionless _z, Dimensionless _tolerance = 1e-8) {
+    template<class FUNCTION> void check(Dimensionless x, Dimensionless y,
+        Dimensionless z, Dimensionless tolerance = 1e-8) {
       using hemelb::redblood::stencil::FOUR_POINT;
 
       FUNCTION func;
-      LatticePosition expected(func(_x, _y, _z));
-      LatticePosition actual(interpolate(func, _x, _y, _z, FOUR_POINT));
-      CPPUNIT_ASSERT(helpers::is_zero(actual - expected, _tolerance));
+      LatticePosition expected(func(x, y, z));
+      LatticePosition actual(interpolate(func, x, y, z, FOUR_POINT));
+      CPPUNIT_ASSERT(helpers::is_zero(actual - expected, tolerance));
     }
 
     // Test interpolation when the point is on the grid
@@ -216,12 +216,12 @@ class VelocityInterpolationTests :
     }
     void tearDown() { FourCubeBasedTestFixture::tearDown(); }
 
-    template<class KERNEL> void velocityFromLatticeDataTester(bool _doforce) {
+    template<class KERNEL> void velocityFromLatticeDataTester(bool doforce) {
       using hemelb::redblood::details::VelocityFromLatticeData;
       using hemelb::redblood::details::HasForce;
 
       // Check that type traits works as expected
-      CPPUNIT_ASSERT(HasForce<KERNEL>::value == _doforce);
+      CPPUNIT_ASSERT(HasForce<KERNEL>::value == doforce);
 
       KERNEL kernel(initParams);
       VelocityFromLatticeData<KERNEL> velocityFunctor(*latDat);
@@ -247,7 +247,7 @@ class VelocityInterpolationTests :
           + LatticeVelocity(
               D3Q15::CX[6], D3Q15::CY[6], D3Q15::CZ[6]
           ) * Dimensionless(position[2])
-          + (_doforce ? site.GetForce() * 0.5: LatticeVelocity(0, 0, 0));
+          + (doforce ? site.GetForce() * 0.5: LatticeVelocity(0, 0, 0));
         LatticeDensity const density(position[0] + position[1] + position[2]);
 
         CPPUNIT_ASSERT(helpers::is_zero(actual - momentum / density));
