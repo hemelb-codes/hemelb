@@ -50,3 +50,6 @@ Tools/hemeTools/utils/xdr.so
 hemelb-prefix/src/hemelb-stamp/hemelb-urlinfo.txt
 .*.sw[p, o, n]
 tags
+i
+.astyle
+.clang-format
