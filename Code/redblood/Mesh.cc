@@ -22,18 +22,16 @@ namespace hemelb
 {
   namespace redblood
   {
-
     std::shared_ptr<MeshData> read_mesh(std::string const &filename)
     {
-      log::Logger::Log<log::Debug, log::Singleton>(
-        "Reading red blood cell from %s", filename.c_str());
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
+                                                   filename.c_str());
 
       // Open file if it exists
       std::ifstream file;
 
       if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '"
-                          << filename.c_str() << "' does not exist";
+        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
 
       file.open(filename.c_str());
       return read_mesh(file);
@@ -41,13 +39,12 @@ namespace hemelb
 
     std::shared_ptr<MeshData> read_mesh(std::istream &stream)
     {
-      log::Logger::Log<log::Debug, log::Singleton>(
-        "Reading red blood cell from stream");
+      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
       std::string line;
 
       // Drop header
-      for(int i(0); i < 4; ++i)
+      for (int i(0); i < 4; ++i)
       {
         std::getline(stream, line);
       }
@@ -56,34 +53,26 @@ namespace hemelb
       unsigned int num_vertices;
       stream >> num_vertices;
 
-
       // Create Mesh data
       std::shared_ptr<MeshData> result(new MeshData);
       result->vertices.resize(num_vertices);
 
       // Then read in first and subsequent lines
       MeshData::Facet::value_type offset;
-      stream >> offset >> result->vertices[0].x
-             >> result->vertices[0].y
-             >> result->vertices[0].z;
-      log::Logger::Log<log::Trace, log::Singleton>(
-        "Vertex 0 at %d, %d, %d", result->vertices[0].x,
-        result->vertices[0].y, result->vertices[0].z
-      );
+      stream >> offset >> result->vertices[0].x >> result->vertices[0].y >> result->vertices[0].z;
+      log::Logger::Log<log::Trace, log::Singleton>("Vertex 0 at %d, %d, %d", result->vertices[0].x,
+                                                   result->vertices[0].y, result->vertices[0].z);
 
-      for(unsigned int i(1), index(0); i < num_vertices; ++i)
+      for (unsigned int i(1), index(0); i < num_vertices; ++i)
       {
-        stream >> index >> result->vertices[i].x
-               >> result->vertices[i].y
-               >> result->vertices[i].z;
-        log::Logger::Log<log::Trace, log::Singleton>(
-          "Vertex %i at %d, %d, %d", i, result->vertices[i].x,
-          result->vertices[i].y, result->vertices[i].z
-        );
+        stream >> index >> result->vertices[i].x >> result->vertices[i].y >> result->vertices[i].z;
+        log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %d, %d, %d", i,
+                                                     result->vertices[i].x, result->vertices[i].y,
+                                                     result->vertices[i].z);
       }
 
       // Drop mid-file headers
-      for(int i(0); i < 3; ++i)
+      for (int i(0); i < 3; ++i)
       {
         std::getline(stream, line);
       }
@@ -94,39 +83,36 @@ namespace hemelb
       stream >> num_facets;
       result->facets.resize(num_facets);
 
-      for(unsigned int i(0), dummy(0); i < num_facets; ++i)
+      for (unsigned int i(0), dummy(0); i < num_facets; ++i)
       {
-        stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
-               >> indices[0] >> indices[1] >> indices[2];
+        stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> indices[0] >> indices[1]
+          >> indices[2];
         result->facets[i][0] = indices[0] - offset;
         result->facets[i][1] = indices[1] - offset;
         result->facets[i][2] = indices[2] - offset;
-        log::Logger::Log<log::Trace, log::Singleton>(
-          "Facet %i with %i, %i, %i", i, indices[0] - offset,
-          indices[1] - offset, indices[2] - offset
-        );
+        log::Logger::Log<log::Trace, log::Singleton>("Facet %i with %i, %i, %i", i,
+                                                     indices[0] - offset, indices[1] - offset,
+                                                     indices[2] - offset);
       }
 
-      log::Logger::Log<log::Debug, log::Singleton>(
-        "Read %i vertices and %i triangular facets", num_vertices, num_facets);
+      log::Logger::Log<log::Debug, log::Singleton>("Read %i vertices and %i triangular facets",
+                                                   num_vertices, num_facets);
 
       return result;
     }
 
-    void write_mesh(
-      std::string const &filename, MeshData const & data)
+    void write_mesh(std::string const &filename, MeshData const &data)
     {
-      log::Logger::Log<log::Debug, log::Singleton>(
-        "Writing red blood cell from %s", filename.c_str());
+      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell from %s",
+                                                   filename.c_str());
       std::ofstream file(filename.c_str());
       write_mesh(file, data);
     }
 
-    void write_vtkmesh(
-      std::string const &filename, MeshData const & data)
+    void write_vtkmesh(std::string const &filename, MeshData const &data)
     {
-      log::Logger::Log<log::Debug, log::Singleton>(
-        "Writing red blood cell from %s", filename.c_str());
+      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell from %s",
+                                                   filename.c_str());
       std::ofstream file(filename.c_str());
       write_vtkmesh(file, data);
     }
@@ -135,31 +121,25 @@ namespace hemelb
     {
       // Write Header
       stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n"
-             << "$Nodes\n"
-             << data.vertices.size() << "\n";
+             << "$Nodes\n" << data.vertices.size() << "\n";
 
       typedef MeshData::Vertices::const_iterator VertexIterator;
       VertexIterator i_vertex = data.vertices.begin();
       VertexIterator const i_vertex_end = data.vertices.end();
 
-      for(unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-        stream << i << " "
-               << (*i_vertex)[0] << " "
-               << (*i_vertex)[1] << " "
-               << (*i_vertex)[2] << "\n";
+      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
+        stream << i << " " << (*i_vertex)[0] << " " << (*i_vertex)[1] << " " << (*i_vertex)[2]
+               << "\n";
 
       stream << "$EndNode\n"
-             << "$Elements\n"
-             << data.facets.size() << "\n";
+             << "$Elements\n" << data.facets.size() << "\n";
 
       typedef MeshData::Facets::const_iterator FacetIterator;
       FacetIterator i_facet = data.facets.begin();
       FacetIterator const i_facet_end = data.facets.end();
 
-      for(unsigned i(1); i_facet != i_facet_end; ++i_facet, ++i)
-        stream << i << " 1 2 3 4 5 "
-               << (*i_facet)[0] + 1 << " "
-               << (*i_facet)[1] + 1 << " "
+      for (unsigned i(1); i_facet != i_facet_end; ++i_facet, ++i)
+        stream << i << " 1 2 3 4 5 " << (*i_facet)[0] + 1 << " " << (*i_facet)[1] + 1 << " "
                << (*i_facet)[2] + 1 << "\n";
 
       stream << "$EndElement\n";
@@ -171,8 +151,7 @@ namespace hemelb
       stream << "<?xml version=\"1.0\"?>\n"
              << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
              << "  <PolyData>\n"
-             << "    <Piece NumberOfPoints=\""
-             << data.vertices.size() << "\" NumberOfPolys=\""
+             << "    <Piece NumberOfPoints=\"" << data.vertices.size() << "\" NumberOfPolys=\""
              << data.facets.size() << "\">\n"
              << "      <Points>\n"
              << "        <DataArray NumberOfComponents=\"3\" type=\"Float32\">\n";
@@ -181,12 +160,11 @@ namespace hemelb
       VertexIterator i_vertex = data.vertices.begin();
       VertexIterator const i_vertex_end = data.vertices.end();
 
-      for(unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-        stream << (*i_vertex)[0] << " "
-               << (*i_vertex)[1] << " "
-               << (*i_vertex)[2] << " ";
+      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
+        stream << (*i_vertex)[0] << " " << (*i_vertex)[1] << " " << (*i_vertex)[2] << " ";
 
-      stream << "\n        </DataArray>\n" << "      </Points>\n"
+      stream << "\n        </DataArray>\n"
+             << "      </Points>\n"
              << "      <Polys>\n"
              << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
 
@@ -194,43 +172,39 @@ namespace hemelb
       FacetIterator i_facet = data.facets.begin();
       FacetIterator const i_facet_end = data.facets.end();
 
-      for(; i_facet != i_facet_end; ++i_facet)
-        stream << (*i_facet)[0] << " " << (*i_facet)[1] << " "
-               << (*i_facet)[2] << " ";
+      for (; i_facet != i_facet_end; ++i_facet)
+        stream << (*i_facet)[0] << " " << (*i_facet)[1] << " " << (*i_facet)[2] << " ";
 
       stream << "\n        </DataArray>\n"
              << "        <DataArray type=\"Int32\" Name=\"offsets\">\n";
 
-      for(unsigned i(0); i < data.facets.size(); ++i)
+      for (unsigned i(0); i < data.facets.size(); ++i)
       {
         stream << (i + 1) * 3 << " ";
       }
 
-      stream << "\n        </DataArray>\n" << "      </Polys>\n";
+      stream << "\n        </DataArray>\n"
+             << "      </Polys>\n";
       stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
     }
 
     LatticePosition barycenter(MeshData::Vertices const &vertices)
     {
       typedef MeshData::Vertices::value_type Vertex;
-      return std::accumulate(
-               vertices.begin(), vertices.end(), Vertex(0, 0, 0)
-             ) / Vertex::value_type(vertices.size());
+      return std::accumulate(vertices.begin(), vertices.end(), Vertex(0, 0, 0))
+             / Vertex::value_type(vertices.size());
     }
     LatticePosition barycenter(MeshData const &mesh)
     {
       return barycenter(mesh.vertices);
     }
-    PhysicalVolume volume(
-      MeshData::Vertices const &vertices,
-      MeshData::Facets const &facets
-    )
+    PhysicalVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
       PhysicalVolume result(0);
 
-      for(; i_facet != i_facet_end; ++i_facet)
+      for (; i_facet != i_facet_end; ++i_facet)
       {
         LatticePosition const &v0(vertices[(*i_facet)[0]]);
         LatticePosition const &v1(vertices[(*i_facet)[1]]);
@@ -246,16 +220,13 @@ namespace hemelb
       return volume(mesh.vertices, mesh.facets);
     }
 
-    PhysicalVolume surface(
-      MeshData::Vertices const &vertices,
-      MeshData::Facets const &facets
-    )
+    PhysicalVolume surface(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
       PhysicalVolume result(0);
 
-      for(; i_facet != i_facet_end; ++i_facet)
+      for (; i_facet != i_facet_end; ++i_facet)
       {
         LatticePosition const &v0(vertices[(*i_facet)[0]]);
         LatticePosition const &v1(vertices[(*i_facet)[1]]);
@@ -270,33 +241,28 @@ namespace hemelb
       return surface(mesh.vertices, mesh.facets);
     }
 
-
     namespace
     {
-      bool contains(MeshData::Facet const &a,
-                    MeshData::Facet::value_type v)
+      bool contains(MeshData::Facet const &a, MeshData::Facet::value_type v)
       {
         return a[0] == v or a[1] == v or a[2] == v;
       }
-      bool edge_sharing(MeshData::Facet const &a,
-                        MeshData::Facet const &b )
+      bool edge_sharing(MeshData::Facet const &a, MeshData::Facet const &b)
       {
-        return (contains(b, a[0]) ? 1 : 0)
-               + (contains(b, a[1]) ? 1 : 0)
+        return (contains(b, a[0]) ? 1 : 0) + (contains(b, a[1]) ? 1 : 0)
                + (contains(b, a[2]) ? 1 : 0) >= 2;
       }
       // Adds value as first non-negative number, if value not in array yet
-      void insert(MeshData::Facet &container,
-                  MeshData::Facet::value_type value,
+      void insert(MeshData::Facet &container, MeshData::Facet::value_type value,
                   MeshData::Facet::value_type max)
       {
-        for(size_t i(0); i < container.size(); ++i)
-          if(container[i] >= max)
+        for (size_t i(0); i < container.size(); ++i)
+          if (container[i] >= max)
           {
             container[i] = value;
             return;
           }
-          else if(container[i] == value)
+          else if (container[i] == value)
           {
             return;
           }
@@ -312,7 +278,7 @@ namespace hemelb
       MeshData::Facets::const_iterator i_facet = mesh.facets.begin();
       MeshData::Facets::const_iterator const i_facet_end = mesh.facets.end();
 
-      for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
+      for (unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
       {
         vertexToFacets.at((*i_facet)[0]).insert(i);
         vertexToFacets.at((*i_facet)[1]).insert(i);
@@ -321,30 +287,28 @@ namespace hemelb
 
       // Now creates map of neighboring facets
       size_t const Nmax = mesh.facets.size();
-      std::fill(
-        facetNeighbors.begin(), facetNeighbors.end(),
-      FacetNeighbors::value_type{{Nmax, Nmax, Nmax}}
-      );
+      std::fill(facetNeighbors.begin(), facetNeighbors.end(),
+                FacetNeighbors::value_type{{Nmax, Nmax, Nmax}});
       i_facet = mesh.facets.begin();
 
-      for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
+      for (unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
       {
-        for(size_t node(0); node != i_facet->size(); ++node)
+        for (size_t node(0); node != i_facet->size(); ++node)
         {
           // check facets that this node is attached to
-          MeshTopology::VertexToFacets::const_reference
-          neighboringFacets = vertexToFacets.at((*i_facet)[node]);
-          MeshTopology::VertexToFacets::value_type::const_iterator
-          i_neigh = neighboringFacets.begin();
+          MeshTopology::VertexToFacets::const_reference neighboringFacets =
+            vertexToFacets.at((*i_facet)[node]);
+          MeshTopology::VertexToFacets::value_type::const_iterator i_neigh =
+            neighboringFacets.begin();
 
-          for(; i_neigh != neighboringFacets.end(); ++i_neigh)
+          for (; i_neigh != neighboringFacets.end(); ++i_neigh)
           {
-            if(i == *i_neigh)
+            if (i == *i_neigh)
             {
               continue;
             }
 
-            if(edge_sharing(*i_facet, mesh.facets.at(*i_neigh)))
+            if (edge_sharing(*i_facet, mesh.facets.at(*i_neigh)))
             {
               insert(facetNeighbors.at(i), *i_neigh, Nmax);
             }
@@ -352,23 +316,23 @@ namespace hemelb
         }
       }
 
-# ifndef NDEBUG
+#ifndef NDEBUG
 
       // Checks there are no uninitialized values
-      for(unsigned int i(0); i < facetNeighbors.size(); ++i)
-        for(unsigned int j(0); j < 3; ++j)
+      for (unsigned int i(0); i < facetNeighbors.size(); ++i)
+        for (unsigned int j(0); j < 3; ++j)
         {
           assert(facetNeighbors[i][j] < Nmax);
         }
 
-# endif
+#endif
     }
 
     void Mesh::operator*=(Dimensionless const &scale)
     {
       auto const barycenter = GetBarycenter();
 
-      for(auto &vertex : mesh->vertices)
+      for (auto &vertex : mesh->vertices)
       {
         vertex = (vertex - barycenter) * scale + barycenter;
       }
@@ -378,7 +342,7 @@ namespace hemelb
     {
       auto const barycenter = GetBarycenter();
 
-      for(auto &vertex : mesh->vertices)
+      for (auto &vertex : mesh->vertices)
       {
         scale.timesVector(vertex - barycenter, vertex);
         vertex += barycenter;
@@ -387,7 +351,7 @@ namespace hemelb
 
     void Mesh::operator+=(LatticePosition const &offset)
     {
-      for(auto &vertex : mesh->vertices)
+      for (auto &vertex : mesh->vertices)
       {
         vertex += offset;
       }
@@ -398,7 +362,7 @@ namespace hemelb
       assert(displacements.size() == mesh->vertices.size());
       auto i_disp = displacements.begin();
 
-      for(auto &vertex : mesh->vertices)
+      for (auto &vertex : mesh->vertices)
       {
         vertex += *(i_disp++);
       }
@@ -437,22 +401,21 @@ namespace hemelb
       }
 
       size_t vertex(std::shared_ptr<MeshData> &data,
-                    std::map<std::pair<size_t, size_t>, size_t> &vertices,
-                    size_t const &i0, size_t const &i1)
+                    std::map<std::pair<size_t, size_t>, size_t> &vertices, size_t const &i0,
+                    size_t const &i1)
       {
         std::pair<size_t, size_t> const indices(i0, i1);
-        std::map<std::pair<size_t, size_t>, size_t>:: const_iterator i_found
-          = vertices.find(indices);
+        std::map<std::pair<size_t, size_t>, size_t>::const_iterator i_found =
+          vertices.find(indices);
 
-        if(i_found == vertices.end())
+        if (i_found == vertices.end())
         {
           i_found = vertices.find(std::pair<size_t, size_t>(i1, i0));
         }
 
-        if(i_found == vertices.end())
+        if (i_found == vertices.end())
         {
-          data->vertices.push_back(
-            (data->vertices[i0] + data->vertices[i1]) * 0.5);
+          data->vertices.push_back((data->vertices[i0] + data->vertices[i1]) * 0.5);
           vertices[indices] = data->vertices.size() - 1;
           return data->vertices.size() - 1;
         }
@@ -475,17 +438,15 @@ namespace hemelb
         MeshData::Facets::const_iterator const i_orig_facet_end(facets.end());
         MeshData::Facets::iterator i_facet = data->facets.begin();
 
-        for(; i_orig_facet != i_orig_facet_end; ++i_orig_facet)
+        for (; i_orig_facet != i_orig_facet_end; ++i_orig_facet)
         {
           MeshData::Facet::value_type const i0 = (*i_orig_facet)[0];
           MeshData::Facet::value_type const i1 = (*i_orig_facet)[1];
           MeshData::Facet::value_type const i2 = (*i_orig_facet)[2];
 
           // Adds new vertices halfway through edges
-          MeshData::Facet::value_type
-          mid0(vertex(data, new_vertices, i0, i1)),
-               mid1(vertex(data, new_vertices, i1, i2)),
-               mid2(vertex(data, new_vertices, i2, i0));
+          MeshData::Facet::value_type mid0(vertex(data, new_vertices, i0, i1)),
+            mid1(vertex(data, new_vertices, i1, i2)), mid2(vertex(data, new_vertices, i2, i0));
 
           // Adds all four new faces
           (*i_facet)[0] = i0;
@@ -513,14 +474,14 @@ namespace hemelb
 
     Mesh refine(Mesh data, unsigned int depth)
     {
-      if(depth == 0)
+      if (depth == 0)
       {
         return data.clone();
       }
 
       std::shared_ptr<MeshData> newData(new MeshData(*data.GetData()));
 
-      for(unsigned int i(0); i < depth; ++i)
+      for (unsigned int i(0); i < depth; ++i)
       {
         refine(newData);
       }
@@ -528,12 +489,11 @@ namespace hemelb
       return Mesh(newData);
     }
 
-
     Mesh tetrahedron(unsigned int depth)
     {
       std::shared_ptr<MeshData> result(initial_tetrahedron());
 
-      for(unsigned int i(0); i < depth; ++i)
+      for (unsigned int i(0); i < depth; ++i)
       {
         refine(result);
       }
@@ -568,13 +528,11 @@ namespace hemelb
       v2f.insert(1);
       topo->vertexToFacets.resize(3, v2f);
 
-      MeshTopology::FacetNeighbors::value_type neighbors[2]
-      = {{{0, 0, 0}}, {{1, 1, 1}}};
+      MeshTopology::FacetNeighbors::value_type neighbors[2] = {{{0, 0, 0}}, {{1, 1, 1}}};
       topo->facetNeighbors.push_back(neighbors[1]);
       topo->facetNeighbors.push_back(neighbors[0]);
 
       return refine(Mesh(mesh, topo), depth);
     }
-
   }
-} // hemelb::rbc
+}  // hemelb::rbc

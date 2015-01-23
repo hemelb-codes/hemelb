@@ -14,10 +14,8 @@ namespace hemelb
 {
   namespace redblood
   {
-
-    void CellArmy :: fluid2CellInteractions(geometry::LatticeData const &latDat)
+    void CellArmy::fluid2CellInteractions(geometry::LatticeData const &latDat)
     {
     }
-
   }
-} // namespace hemelb::redblood
+}  // namespace hemelb::redblood
