@@ -75,38 +75,38 @@ class Mesh {
 
   //! Deep copy constructor
   Mesh(Mesh const &c, deepcopy_tag const &)
-    : mesh_(new MeshData(*c.mesh_)),
-      topology_(new MeshTopology(*c.topology_)) {}
+    : mesh(new MeshData(*c.mesh)),
+      topology(new MeshTopology(*c.topology)) {}
 
 public:
   //! Initializes mesh from mesh data
   Mesh(std::shared_ptr<MeshData> const & mesh)
-       : mesh_(mesh), topology_(new MeshTopology(*mesh)) {}
+       : mesh(mesh), topology(new MeshTopology(*mesh)) {}
   //! Initializes mesh from mesh data and topology
   Mesh(std::shared_ptr<MeshData> const & mesh,
       std::shared_ptr<MeshTopology> const &topo)
-       : mesh_(mesh), topology_(topo) {}
+       : mesh(mesh), topology(topo) {}
   //! Initialize mesh by copying data
   Mesh(MeshData const &data)
-       : mesh_(new MeshData(data)), topology_(new MeshTopology(data)) {}
+       : mesh(new MeshData(data)), topology(new MeshTopology(data)) {}
   //! Shallow copy constructor
-  Mesh(Mesh const &in) : mesh_(in.mesh_), topology_(in.topology_) {}
+  Mesh(Mesh const &in) : mesh(in.mesh), topology(in.topology) {}
 
   //! Determines barycenter of mesh
-  LatticePosition GetBarycenter() const { return barycenter(*mesh_); }
+  LatticePosition GetBarycenter() const { return barycenter(*mesh); }
   //! Computes volume of the mesh
-  PhysicalVolume GetVolume() const { return volume(*mesh_); }
+  PhysicalVolume GetVolume() const { return volume(*mesh); }
   //! Computes surface of the mesh
-  PhysicalSurface GetSurface() const { return surface(*mesh_); }
+  PhysicalSurface GetSurface() const { return surface(*mesh); }
   //! Connectivity data
   std::shared_ptr<const MeshTopology> GetTopology() const
-    { return topology_; }
+    { return topology; }
   //! Returns mesh data
-  std::shared_ptr<MeshData> GetData() { return mesh_; }
+  std::shared_ptr<MeshData> GetData() { return mesh; }
   //! Returns mesh data
-  std::shared_ptr<MeshData const> GetData() const { return mesh_; }
+  std::shared_ptr<MeshData const> GetData() const { return mesh; }
   //! Returns mesh data
-  void SetData(MeshData const &data) { mesh_.reset(new MeshData(data)); }
+  void SetData(MeshData const &data) { mesh.reset(new MeshData(data)); }
 
   //! Makes a copy of the mesh
   Mesh clone() const { return Mesh(*this, deepcopy_tag()); }
@@ -121,23 +121,23 @@ public:
   void operator+=(std::vector<LatticePosition> const &displacements);
 
   //! Number of nodes
-  size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }
+  size_t GetNumberOfNodes() const { return mesh->vertices.size(); }
   //! Const access to vertices
-  MeshData::Vertices & GetVertices() { return mesh_->vertices; }
+  MeshData::Vertices & GetVertices() { return mesh->vertices; }
   //! Const access to vertices
-  MeshData::Vertices const & GetVertices() const { return mesh_->vertices; }
+  MeshData::Vertices const & GetVertices() const { return mesh->vertices; }
   //! Const access to vertices
   MeshData::Vertices::const_reference GetVertex(size_t site) const {
-    return mesh_->vertices[site];
+    return mesh->vertices[site];
   }
   //! Const access to facets
-  MeshData::Facets const & GetFacets() const { return mesh_->facets; }
+  MeshData::Facets const & GetFacets() const { return mesh->facets; }
 
 protected:
   //! Holds actual data about the mesh
-  std::shared_ptr<MeshData> mesh_;
+  std::shared_ptr<MeshData> mesh;
   //! Holds topology information;
-  std::shared_ptr<MeshTopology> topology_;
+  std::shared_ptr<MeshTopology> topology;
 };
 
 //! Read mesh from file

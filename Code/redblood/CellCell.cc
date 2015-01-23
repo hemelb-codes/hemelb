@@ -46,7 +46,7 @@ namespace {
     return result;
   }
 
-  void initialize_cells(
+  void initializeCells(
       DivideConquer<CellReference> &dnc,
       MeshData::Vertices const &vertices,
       site_t cellid,
@@ -65,18 +65,18 @@ namespace {
     }
   }
 
-  void initialize_cells(
+  void initializeCells(
       DivideConquer<CellReference> &dnc,
       CellContainer const& cells,
       PhysicalDistance haloLength ) {
     CellContainer::const_iterator i_first = cells.begin();
     CellContainer::const_iterator const i_end = cells.end();
     for(site_t i(0); i_first != i_end; ++i_first, ++i)
-      initialize_cells(dnc, (*i_first)->GetVertices(), i, haloLength);
+      initializeCells(dnc, (*i_first)->GetVertices(), i, haloLength);
   }
 
   // Compare distance between vertices
-  bool next_dist(
+  bool nextDist(
       DivideConquerCells::const_iterator &first,
       DivideConquerCells::const_iterator const & end,
       DivideConquerCells::const_iterator const & main,
@@ -110,9 +110,9 @@ DivideConquerCells :: DivideConquerCells(
     CellContainer const &cells,
     PhysicalDistance boxsize, PhysicalDistance halosize
 ) : DivideConquer<CellReference>(boxsize),
-    haloLength_(halosize), cells_(cells) {
+    haloLength(halosize), cells(cells) {
   try {
-    initialize_cells(*static_cast<base_type*>(this), cells, haloLength_);
+    initializeCells(*static_cast<base_type*>(this), cells, haloLength);
   } catch(...) {}
 }
 
@@ -122,7 +122,7 @@ void DivideConquerCells :: update() {
    for(; i_first != i_end; ++i_first) {
       key_type const key = base_type::DowngradeKey(*i_first);
       i_first.GetCellReference().isNearBorder = figure_nearness(
-          *this, key, *i_first, haloLength_
+          *this, key, *i_first, haloLength
       );
       if(not (key == i_first.GetKey())) {
         base_type::insert(key, i_first.GetCellReference());
@@ -140,24 +140,24 @@ DivideConquerCells::const_range DivideConquerCells::operator()(
   );
 }
 
-bool DivideConquerCells::pair_range::next_dist_() {
-  return next_dist(currents_.second, ends_.second, currents_.first, maxdist_);
+bool DivideConquerCells::pair_range::nextDist() {
+  return hemelb::redblood::nextDist(currents.second, ends.second, currents.first, maxdist);
 }
 
-bool DivideConquerCells::pair_range::do_box_() {
+bool DivideConquerCells::pair_range::doBox() {
   LatticeVector const key(
-      box_ == CellReference::NONE ?
-        currents_.first.GetKey():
-        currents_.first.GetKey() + CellReference::idirections(box_)
+      box == CellReference::NONE ?
+        currents.first.GetKey():
+        currents.first.GetKey() + CellReference::idirections(box)
   );
-  DivideConquerCells::const_range const boxits = owner_(key);
-  if(box_ == CellReference::NONE) {
-    currents_.second = currents_.first;
-    ++currents_.second;
+  DivideConquerCells::const_range const boxits = owner(key);
+  if(box == CellReference::NONE) {
+    currents.second = currents.first;
+    ++currents.second;
   } else
-    currents_.second = boxits.first;
-  ends_.second = boxits.second;
-  return next_dist_();
+    currents.second = boxits.first;
+  ends.second = boxits.second;
+  return nextDist();
 }
 
 bool DivideConquerCells::pair_range::operator++() {
@@ -165,26 +165,26 @@ bool DivideConquerCells::pair_range::operator++() {
   if(not is_valid()) return false;
 
   // First try and finds next pair in current range
-  if(currents_.second != ends_.second) {
-    ++currents_.second;
-    if(next_dist_()) return true;
+  if(currents.second != ends.second) {
+    ++currents.second;
+    if(nextDist()) return true;
   }
 
   // If reaches here, then should check which box we are currently doing
-  if(currents_.first.GetNearBorder()) {
-    if(box_) box_ = CellReference::Borders(int(box_) << 1);
-    else box_ = CellReference::Borders(1);
-    while(box_ < CellReference::LAST) {
-      if(do_box_()) return true;
-      box_ = CellReference::Borders(int(box_) << 1);
+  if(currents.first.GetNearBorder()) {
+    if(box) box = CellReference::Borders(int(box) << 1);
+    else box = CellReference::Borders(1);
+    while(box < CellReference::LAST) {
+      if(doBox()) return true;
+      box = CellReference::Borders(int(box) << 1);
     }
   }
 
   // If reaches here, then should increment main iterator and start with same
   // box
-  if(++currents_.first == ends_.first) return false;
-  box_ = CellReference::NONE;
-  return do_box_() ? true: operator++();
+  if(++currents.first == ends.first) return false;
+  box = CellReference::NONE;
+  return doBox() ? true: operator++();
 }
 
 DivideConquerCells::pair_range::pair_range(
@@ -192,24 +192,24 @@ DivideConquerCells::pair_range::pair_range(
     iterator const &begin,
     iterator const &end,
     PhysicalDistance maxdist
-) : maxdist_(maxdist), box_(CellReference::NONE),
-    currents_(begin, end), ends_(end, end), owner_(owner) {
+) : maxdist(maxdist), box(CellReference::NONE),
+    currents(begin, end), ends(end, end), owner(owner) {
   // No throw garantee. Makes iterator invalid instead.
   try {
     // Could be invalid from start
     if(not is_valid()) return;
     // Iterates to first valid item, if any
-    if(not do_box_()) operator++();
+    if(not doBox()) operator++();
   } catch(std::exception const &e) {
     log::Logger::Log<log::Debug, log::OnePerCore>(
       "*** Encountered error while initializing pair iterator: %s\n",
       e.what()
     );
-    currents_.first = ends_.first;
+    currents.first = ends.first;
   } catch(...) {
     log::Logger::Log<log::Debug, log::OnePerCore>(
       "*** Encountered error while initializing pair iterator.");
-    currents_.first = ends_.first;
+    currents.first = ends.first;
   }
 }
 

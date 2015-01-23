@@ -15,32 +15,32 @@
 namespace hemelb { namespace redblood {
 
 PhysicalEnergy Cell::operator()() const {
-  return facetBending_() // facet bending unaffected by template scale
-    + volumeEnergy(vertices_, *templateMesh.GetData(), moduli.volume, scale_)
-    + surfaceEnergy(vertices_, *templateMesh.GetData(), moduli.surface, scale_)
+  return facetBending() // facet bending unaffected by template scale
+    + volumeEnergy(vertices, *templateMesh.GetData(), moduli.volume, scale)
+    + surfaceEnergy(vertices, *templateMesh.GetData(), moduli.surface, scale)
     + strainEnergy(
-        vertices_, *templateMesh.GetData(),
+        vertices, *templateMesh.GetData(),
         moduli.dilation, moduli.strain,
-        scale_
+        scale
       );
 }
 PhysicalEnergy Cell::operator()(
     std::vector<LatticeForceVector> &forces) const {
-  assert(forces.size() == vertices_.size());
-  return facetBending_(forces)
+  assert(forces.size() == vertices.size());
+  return facetBending(forces)
     + volumeEnergy(
-        vertices_, *templateMesh.GetData(), moduli.volume, forces, scale_)
+        vertices, *templateMesh.GetData(), moduli.volume, forces, scale)
     + surfaceEnergy(
-        vertices_, *templateMesh.GetData(), moduli.surface, forces, scale_)
+        vertices, *templateMesh.GetData(), moduli.surface, forces, scale)
     + strainEnergy(
-        vertices_, *templateMesh.GetData(),
+        vertices, *templateMesh.GetData(),
         moduli.dilation, moduli.strain,
         forces,
-        scale_
+        scale
       );
 }
 
-PhysicalEnergy Cell::facetBending_() const {
+PhysicalEnergy Cell::facetBending() const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
   PhysicalEnergy result(0);
@@ -50,8 +50,8 @@ PhysicalEnergy Cell::facetBending_() const {
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
-        result += facetBending(
-            vertices_, *templateMesh.GetData(),
+        result += hemelb::redblood::facetBending(
+            vertices, *templateMesh.GetData(),
             current, (*i_facet)[i],
             moduli.bending
         );
@@ -59,7 +59,7 @@ PhysicalEnergy Cell::facetBending_() const {
   return result;
 }
 
-PhysicalEnergy Cell::facetBending_(
+PhysicalEnergy Cell::facetBending(
     std::vector<LatticeForceVector> &forces) const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
@@ -70,8 +70,8 @@ PhysicalEnergy Cell::facetBending_(
   for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current) {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
-        result += facetBending(
-            vertices_, *templateMesh.GetData(),
+        result += hemelb::redblood::facetBending(
+            vertices, *templateMesh.GetData(),
             current, (*i_facet)[i],
             moduli.bending, forces
         );
@@ -79,26 +79,26 @@ PhysicalEnergy Cell::facetBending_(
   return result;
 }
 
-void CellBase::operator*=(Dimensionless const &scale) {
+void CellBase::operator*=(Dimensionless const &scaleIn) {
   auto const barycenter = GetBarycenter();
-  for(auto &vertex: vertices_)
-    vertex = (vertex - barycenter) * scale + barycenter;
+  for(auto &vertex: vertices)
+    vertex = (vertex - barycenter) * scaleIn + barycenter;
 }
-void CellBase::operator*=(util::Matrix3D const &scale) {
+void CellBase::operator*=(util::Matrix3D const &rotation) {
   auto const barycenter = GetBarycenter();
-  for(auto &vertex: vertices_) {
-    scale.timesVector(vertex - barycenter, vertex);
+  for(auto &vertex: vertices) {
+    rotation.timesVector(vertex - barycenter, vertex);
     vertex += barycenter;
   }
 }
 void CellBase::operator+=(LatticePosition const &offset) {
-  for(auto &vertex: vertices_)
+  for(auto &vertex: vertices)
     vertex += offset;
 }
 void CellBase::operator+=(std::vector<LatticePosition> const &displacements) {
-  assert(displacements.size() == vertices_.size());
+  assert(displacements.size() == vertices.size());
   auto i_disp = displacements.begin();
-  for(auto &vertex: vertices_)
+  for(auto &vertex: vertices)
       vertex += *(i_disp++);
 }
 

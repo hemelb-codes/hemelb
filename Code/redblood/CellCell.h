@@ -7,8 +7,8 @@
 // specifically made by you with University College London.
 //
 
-#ifndef HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H_
-#define HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H_
+#ifndef HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H
+#define HEMELB_REDBLOOD_CELL_CELL_INTERACTION_H
 
 #include <vector>
 #include <assert.h>
@@ -136,20 +136,20 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     pair_range pair_begin(PhysicalDistance maxdist) const;
 
     //! Distance from border below which an object is in the halo
-    PhysicalDistance GetHaloLength() const { return haloLength_; }
+    PhysicalDistance GetHaloLength() const { return haloLength; }
     //! Size of each box
     PhysicalDistance GetBoxSize() const { return base_type::GetBoxSize(); }
     //! Cells that are present in this object
-    CellContainer const& GetCells() const { return cells_; }
+    CellContainer const& GetCells() const { return cells; }
 
     //! After vertices have moved, update mapping and whether it is near
     //! boundary
     void update();
   protected:
     //! Distance from border below which an object is in the halo
-    PhysicalDistance const haloLength_;
+    PhysicalDistance const haloLength;
     //! Container of cells
-    CellContainer cells_;
+    CellContainer cells;
 };
 
 class DivideConquerCells::pair_range {
@@ -167,7 +167,7 @@ class DivideConquerCells::pair_range {
     );
 
     //! Whether current iteration is valid
-    bool is_valid() const { return currents_.first != ends_.first; }
+    bool is_valid() const { return currents.first != ends.first; }
     //! Whether current iteration is valid
     operator bool() const { return is_valid(); }
 
@@ -176,7 +176,7 @@ class DivideConquerCells::pair_range {
       if(not is_valid())
         throw Exception() << "Iterator is invalid\n";
 #     endif
-      return currents_;
+      return currents;
     }
     value_type const* operator->() const { return &(this->operator*()); }
 
@@ -185,18 +185,18 @@ class DivideConquerCells::pair_range {
 
   protected:
     //! Maximum distance for which to report pair
-    PhysicalDistance maxdist_;
+    PhysicalDistance maxdist;
     //! Current box we are working on
-    CellReference::Borders box_;
+    CellReference::Borders box;
     //! Iterator for main item
-    value_type currents_;
+    value_type currents;
     //! range for iteration over second item
-    value_type ends_;
+    value_type ends;
     //! Container over which this one iterates
-    DivideConquerCells const &owner_;
+    DivideConquerCells const &owner;
 
-    bool do_box_();
-    bool next_dist_();
+    bool doBox();
+    bool nextDist();
 };
 
 //! Computes cell <-> cell interactions and spread to grid

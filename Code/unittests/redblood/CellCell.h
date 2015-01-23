@@ -118,7 +118,7 @@ void CellCellInteractionTests :: testAddNodes() {
       + CellReference::directions(CellReference::NORTH) * inhalo * cutoff
   );
 
-  initialize_cells(dnc, vertices, cellIndex, halo);
+  initializeCells(dnc, vertices, cellIndex, halo);
   CPPUNIT_ASSERT(dnc.size() == vertices.size());
 
   DivideConquer<CellReference>::const_range const omega

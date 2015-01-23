@@ -74,21 +74,21 @@ class SpreadForces {
     SpreadForces(
         std::vector<LatticePosition> const &forces,
         geometry::LatticeData &latticeData
-    ) : latticeData_(latticeData), forces_(forces) {}
+    ) : latticeData(latticeData), forces(forces) {}
 
     void operator()(
         size_t vertex, LatticeVector const &site,
         Dimensionless weight) {
       proc_t procid;
       site_t siteid;
-      if(latticeData_.GetContiguousSiteId(site, procid, siteid))
-        geometry::Site<geometry::LatticeData>(latticeData_.GetSite(site))
-          .AddToForce(forces_[vertex] * weight);
+      if(latticeData.GetContiguousSiteId(site, procid, siteid))
+        geometry::Site<geometry::LatticeData>(latticeData.GetSite(site))
+          .AddToForce(forces[vertex] * weight);
     }
 
   protected:
-    geometry::LatticeData &latticeData_;
-    std::vector<LatticeForceVector> const & forces_;
+    geometry::LatticeData &latticeData;
+    std::vector<LatticeForceVector> const & forces;
 };
 
 template<class LATTICE>
@@ -104,10 +104,10 @@ class SpreadForcesAndWallForces : public SpreadForces {
           Dimensionless weight) {
       proc_t procid;
       site_t siteid;
-      if(not latticeData_.GetContiguousSiteId(siteIn, procid, siteid))
+      if(not latticeData.GetContiguousSiteId(siteIn, procid, siteid))
         return;
-      geometry::Site<geometry::LatticeData> site(latticeData_.GetSite(siteid));
-      site.AddToForce(forces_[vertexIn] * weight);
+      geometry::Site<geometry::LatticeData> site(latticeData.GetSite(siteid));
+      site.AddToForce(forces[vertexIn] * weight);
       LatticePosition const vertex(cell.GetVertices()[vertexIn]);
       for(size_t i(1); i < LATTICE::NUMVECTORS; ++i) {
         PhysicalDistance const distance = site.GetWallDistance<LATTICE>(i);

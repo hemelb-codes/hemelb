@@ -31,8 +31,8 @@ template<class KERNEL> class CellArmy {
     CellArmy(geometry::LatticeData &latDat,
         CellContainer const &cells,
         PhysicalDistance boxsize=10.0, PhysicalDistance halo=2.0)
-      : latticeData_(latDat), cells_(cells),
-      dnc_(cells, boxsize, halo) {}
+      : latticeData(latDat), cells(cells),
+      dnc(cells, boxsize, halo) {}
 
     //! Performs fluid to lattice interactions
     void fluid2CellInteractions();
@@ -42,49 +42,49 @@ template<class KERNEL> class CellArmy {
 
 #   ifdef HEMELB_DOING_UNITTESTS
       //! Updates divide and conquer
-      void updateDNC() { dnc_.update(); }
+      void updateDNC() { dnc.update(); }
 #   endif
 
   protected:
     //! All lattice information and then some
-    geometry::LatticeData &latticeData_;
+    geometry::LatticeData &latticeData;
     //! Contains all cells
-    CellContainer cells_;
+    CellContainer cells;
     //! Divide and conquer object
-    DivideConquerCells dnc_;
+    DivideConquerCells dnc;
     //! A work array with forces/positions
-    std::vector<LatticePosition> work_;
+    std::vector<LatticePosition> work;
 };
 
 template<class KERNEL>
   void CellArmy<KERNEL> :: fluid2CellInteractions() {
-    std::vector<LatticePosition> & positions = work_;
+    std::vector<LatticePosition> & positions = work;
     LatticePosition const origin(0, 0, 0);
 
-    CellContainer::const_iterator i_first = cells_.begin();
-    CellContainer::const_iterator const i_end = cells_.end();
+    CellContainer::const_iterator i_first = cells.begin();
+    CellContainer::const_iterator const i_end = cells.end();
     for(; i_first != i_end; ++i_first) {
       positions.resize((*i_first)->GetVertices().size());
       std::fill(positions.begin(), positions.end(), origin);
-      velocitiesOnMesh<KERNEL>(*i_first, latticeData_, stencil, positions);
+      velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
       (*i_first)->operator+=(positions);
     }
     // Positions have changed: update Divide and Conquer stuff
-    dnc_.update();
+    dnc.update();
   }
 
 template<class KERNEL>
   void CellArmy<KERNEL> :: cell2FluidInteractions() {
-    std::vector<LatticeForceVector> &forces = work_;
+    std::vector<LatticeForceVector> &forces = work;
 
-    CellContainer::const_iterator i_first = cells_.begin();
-    CellContainer::const_iterator const i_end = cells_.end();
+    CellContainer::const_iterator i_first = cells.begin();
+    CellContainer::const_iterator const i_end = cells.end();
     for(; i_first != i_end; ++i_first)
       forcesOnGrid<
         typename KERNEL::LatticeType
-      >(*i_first, forces, latticeData_, stencil);
+      >(*i_first, forces, latticeData, stencil);
 
-    addCell2CellInteractions(dnc_, cell2Cell, stencil, latticeData_);
+    addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
   }
 
 
