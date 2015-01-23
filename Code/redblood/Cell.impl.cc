@@ -106,11 +106,11 @@ PhysicalEnergy facetBending(
 
 PhysicalEnergy volumeEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_orig,
-    PhysicalForce _intensity, Dimensionless _template_scale = 1e0
+    PhysicalForce _intensity, Dimensionless origMesh_scale = 1e0
 ) {
   if(_intensity <= 1e-12) return 0e0;
   PhysicalVolume const vol0
-    = volume(_orig) * _template_scale * _template_scale * _template_scale;
+    = volume(_orig) * origMesh_scale * origMesh_scale * origMesh_scale;
   PhysicalVolume const deltaV = volume(_vertices, _orig.facets) - vol0;
   return _intensity * 0.5 * deltaV * deltaV / vol0;
 }
@@ -118,12 +118,12 @@ PhysicalEnergy volumeEnergy(
 PhysicalEnergy volumeEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces,
-    Dimensionless _template_scale = 1e0
+    Dimensionless origMesh_scale = 1e0
 ) {
   if(_intensity <= 1e-12) return 0e0;
   assert(_orig.vertices.size() == _vertices.size());
   PhysicalVolume const vol0
-    = volume(_orig) * _template_scale * _template_scale * _template_scale;
+    = volume(_orig) * origMesh_scale * origMesh_scale * origMesh_scale;
   PhysicalVolume const deltaV = volume(_vertices, _orig.facets) - vol0;
   double const strength(_intensity / 6.0 * deltaV / vol0);
   for(auto const &facet: _orig.facets) {
@@ -142,10 +142,10 @@ PhysicalEnergy volumeEnergy(
 
 PhysicalEnergy surfaceEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_orig,
-    PhysicalForce _intensity, Dimensionless _template_scale = 1e0
+    PhysicalForce _intensity, Dimensionless origMesh_scale = 1e0
 ) {
   PhysicalSurface const surf0
-    = surface(_orig) * _template_scale * _template_scale;
+    = surface(_orig) * origMesh_scale * origMesh_scale;
   PhysicalSurface const deltaS = surface(_vertices, _orig.facets) - surf0;
   return _intensity * 0.5 * deltaS * deltaS / surf0;
 }
@@ -153,12 +153,12 @@ PhysicalEnergy surfaceEnergy(
 PhysicalEnergy surfaceEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces,
-    Dimensionless _template_scale=1e0
+    Dimensionless origMesh_scale=1e0
 ) {
   assert(_orig.vertices.size() == _vertices.size());
 
   PhysicalSurface const surf0
-    = surface(_orig) * _template_scale * _template_scale;
+    = surface(_orig) * origMesh_scale * origMesh_scale;
   PhysicalSurface const deltaS = surface(_vertices, _orig.facets) - surf0;
   double const strength = _intensity * 0.5 * deltaS / surf0;
   for(size_t facetIndex(0); facetIndex < _orig.facets.size(); ++facetIndex) {
@@ -182,10 +182,10 @@ PhysicalEnergy strainEnergyDensity(
 PhysicalEnergy strainEnergy(
     Facet const &_deformed, Facet const &_undeformed,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
-    Dimensionless _template_scale=1e0
+    Dimensionless origMesh_scale=1e0
 ) {
   return strainEnergyDensity(
-      strainInvariants(_deformed, _undeformed, _template_scale),
+      strainInvariants(_deformed, _undeformed, origMesh_scale),
       _shearModulus, _dilationModulus
   ) * _undeformed.area();
 }
@@ -193,18 +193,18 @@ PhysicalEnergy strainEnergy(
 PhysicalEnergy strainEnergy(
     ForceFacet const &_deformed, Facet const &_undeformed,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
-    Dimensionless _template_scale=1e0
+    Dimensionless origMesh_scale=1e0
 ) {
   // Shape function parameters
   Dimensionless const
-    b0 = _undeformed.length(0) * 0.5 * _template_scale,
+    b0 = _undeformed.length(0) * 0.5 * origMesh_scale,
     b1 = (
       _undeformed.length(1) * _undeformed.cosine() - _undeformed.length(0)
-    ) * 0.5 * _template_scale,
-    a1 = -0.5 * _undeformed.length(1) * _undeformed.sine() * _template_scale;
+    ) * 0.5 * origMesh_scale,
+    a1 = -0.5 * _undeformed.length(1) * _undeformed.sine() * origMesh_scale;
 
   LatticePosition const disps
-    = displacements(_deformed, _undeformed, _template_scale);
+    = displacements(_deformed, _undeformed, origMesh_scale);
   LatticePosition const squaredDisps(squaredDisplacements(disps));
   std::pair<Dimensionless, Dimensionless> const
     strainInvs(strainInvariants(squaredDisps));
@@ -270,13 +270,13 @@ PhysicalEnergy strainEnergy(
     _deformed.forces(1) -= force1;
     _deformed.forces(2) += force0 + force1;
 
-    return w * _undeformed.area() * _template_scale * _template_scale;
+    return w * _undeformed.area() * origMesh_scale * origMesh_scale;
 }
 
 PhysicalEnergy strainEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_origin,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
-    Dimensionless _template_scale=1e0
+    Dimensionless origMesh_scale=1e0
 ) {
   PhysicalEnergy result(0);
   for(size_t i(0); i < _origin.facets.size(); ++i)
@@ -284,7 +284,7 @@ PhysicalEnergy strainEnergy(
         Facet(_vertices, _origin.facets[i]),
         Facet(_origin, i),
         _shearModulus, _dilationModulus,
-        _template_scale
+        origMesh_scale
     );
   return result;
 }
@@ -292,7 +292,7 @@ PhysicalEnergy strainEnergy(
     MeshData::Vertices const &_vertices, MeshData const &_origin,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
     std::vector<LatticeForceVector> &_forces,
-    Dimensionless _template_scale=1e0
+    Dimensionless origMesh_scale=1e0
 ) {
   PhysicalEnergy result(0);
   for(size_t i(0); i < _origin.facets.size(); ++i)
@@ -300,7 +300,7 @@ PhysicalEnergy strainEnergy(
         ForceFacet(_vertices, _origin.facets[i], _forces),
         Facet(_origin, i),
         _shearModulus, _dilationModulus,
-        _template_scale
+        origMesh_scale
     );
   return result;
 }
