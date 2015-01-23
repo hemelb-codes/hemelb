@@ -291,27 +291,27 @@ MeshTopology::MeshTopology(MeshData const &mesh) {
 
 void Mesh::operator*=(Dimensionless const &scale) {
   auto const barycenter = GetBarycenter();
-  for(auto &vertex: mesh_->vertices)
+  for(auto &vertex: mesh->vertices)
     vertex = (vertex - barycenter) * scale + barycenter;
 }
 
 void Mesh::operator*=(util::Matrix3D const &scale) {
   auto const barycenter = GetBarycenter();
-  for(auto &vertex: mesh_->vertices) {
+  for(auto &vertex: mesh->vertices) {
     scale.timesVector(vertex - barycenter, vertex);
     vertex += barycenter;
   }
 }
 
 void Mesh::operator+=(LatticePosition const &offset) {
-  for(auto &vertex: mesh_->vertices)
+  for(auto &vertex: mesh->vertices)
     vertex += offset;
 }
 
 void Mesh::operator+=(std::vector<LatticePosition> const &displacements) {
-  assert(displacements.size() == mesh_->vertices.size());
+  assert(displacements.size() == mesh->vertices.size());
   auto i_disp = displacements.begin();
-  for(auto &vertex: mesh_->vertices)
+  for(auto &vertex: mesh->vertices)
       vertex += *(i_disp++);
 }
 

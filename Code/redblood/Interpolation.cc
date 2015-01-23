@@ -17,17 +17,17 @@ namespace hemelb { namespace redblood {
         if(not isValid())
           throw Exception() << "Cannot increment invalid iterator\n";
 #     endif
-      if(current_[2] < max_[2]) {
-        ++current_[2];
+      if(current[2] < max[2]) {
+        ++current[2];
         return;
       }
-      current_[2] = min_[2];
-      if(current_[1] < max_[1]) {
-        ++current_[1];
+      current[2] = min[2];
+      if(current[1] < max[1]) {
+        ++current[1];
         return;
       }
-      current_[1] = min_[1];
-      ++current_[0];
+      current[1] = min[1];
+      ++current[0];
   }
 
   namespace {
@@ -43,7 +43,7 @@ namespace hemelb { namespace redblood {
     }
   }
 
-  LatticeVector InterpolationIterator :: minimumPosition_(
+  LatticeVector InterpolationIterator :: minimumPosition(
       LatticePosition const &node,
       size_t range) {
     return LatticeVector(
@@ -52,7 +52,7 @@ namespace hemelb { namespace redblood {
         minimumPosImpl(node.z, range)
     );
   }
-  LatticeVector InterpolationIterator :: maximumPosition_(
+  LatticeVector InterpolationIterator :: maximumPosition(
       LatticePosition const &node,
       size_t range) {
     return LatticeVector(

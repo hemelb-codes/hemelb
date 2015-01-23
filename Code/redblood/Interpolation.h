@@ -38,44 +38,44 @@ namespace hemelb { namespace redblood {
 
     public:
       IndexIterator(LatticeVector const &center, LatticeCoordinate width)
-          : min_(center - LatticeVector::Ones() * width),
-            max_(center + LatticeVector::Ones() * width), current_(min_) {}
+          : min(center - LatticeVector::Ones() * width),
+            max(center + LatticeVector::Ones() * width), current(min) {}
       IndexIterator(LatticeVector const &min, LatticeVector const &max)
-          : min_(min), max_(max), current_(min) {}
+          : min(min), max(max), current(min) {}
 
       //! Returns current position
-      LatticeVector const & operator*() const { return current_; }
+      LatticeVector const & operator*() const { return current; }
 
       //! Increments to next position on lattice
       void operator++();
 
       //! True if iterator is still valid
-      bool isValid() const { return current_[0] <= max_[0]; }
+      bool isValid() const { return current[0] <= max[0]; }
       //! True if iterator is still valid
       operator bool() const { return isValid(); }
 
       //! computes local index
       site_t ContiguousSiteId(geometry::LatticeData const &latDat) const{
-        return latDat.GetContiguousSiteId(current_);
+        return latDat.GetContiguousSiteId(current);
       }
       // //! computes local index
       // geometry::Site<geometry::LatticeData const>
       //   Site(geometry::LatticeData const &latDat) const {
-      //     return latDat.GetSite(current_);
+      //     return latDat.GetSite(current);
       // }
       // //! computes local index
       // geometry::Site<geometry::LatticeData>
       //   Site(geometry::LatticeData const &latDat) const {
-      //     return latDat.GetSite(current_);
+      //     return latDat.GetSite(current);
       // }
 
     protected:
       //! Minimum indices
-      LatticeVector const min_;
+      LatticeVector const min;
       //! Maximum indices
-      LatticeVector const max_;
+      LatticeVector const max;
       //! Current point
-      LatticeVector current_;
+      LatticeVector current;
   };
 
   class InterpolationIterator : public IndexIterator {
@@ -87,45 +87,45 @@ namespace hemelb { namespace redblood {
 
       //! Returns weight for current point
       Dimensionless weight() const {
-        assert(xWeight_ && yWeight_ && zWeight_);
-        assert(current_[0] >= min_[0]);
-        assert(current_[0] <= max_[0]);
-        assert(current_[1] >= min_[1]);
-        assert(current_[1] <= max_[1]);
-        assert(current_[2] >= min_[2]);
-        assert(current_[2] <= max_[2]);
-        return xWeight_[current_[0] - min_[0]]
-          * yWeight_[current_[1] - min_[1]]
-          * zWeight_[current_[2] - min_[2]];
+        assert(xWeight && yWeight && zWeight);
+        assert(current[0] >= min[0]);
+        assert(current[0] <= max[0]);
+        assert(current[1] >= min[1]);
+        assert(current[1] <= max[1]);
+        assert(current[2] >= min[2]);
+        assert(current[2] <= max[2]);
+        return xWeight[current[0] - min[0]]
+          * yWeight[current[1] - min[1]]
+          * zWeight[current[2] - min[2]];
       }
       //! Weights for each direction
       util::Vector3D<Dimensionless> weights() const {
-        assert(xWeight_ && yWeight_ && zWeight_);
-        assert(current_[0] >= min_[0]);
-        assert(current_[0] <= max_[0]);
-        assert(current_[1] >= min_[1]);
-        assert(current_[1] <= max_[1]);
-        assert(current_[2] >= min_[2]);
-        assert(current_[2] <= max_[2]);
+        assert(xWeight && yWeight && zWeight);
+        assert(current[0] >= min[0]);
+        assert(current[0] <= max[0]);
+        assert(current[1] >= min[1]);
+        assert(current[1] <= max[1]);
+        assert(current[2] >= min[2]);
+        assert(current[2] <= max[2]);
         return util::Vector3D<Dimensionless>(
-            xWeight_[current_[0] - min_[0]],
-            yWeight_[current_[1] - min_[1]],
-            zWeight_[current_[2] - min_[2]]
+            xWeight[current[0] - min[0]],
+            yWeight[current[1] - min[1]],
+            zWeight[current[2] - min[2]]
         );
       }
 
 
     protected:
       //! Weight alongst x direction;
-      boost::shared_array<Dimensionless> xWeight_;
+      boost::shared_array<Dimensionless> xWeight;
       //! Weight alongst y direction;
-      boost::shared_array<Dimensionless> yWeight_;
+      boost::shared_array<Dimensionless> yWeight;
       //! Weight alongst z direction;
-      boost::shared_array<Dimensionless> zWeight_;
+      boost::shared_array<Dimensionless> zWeight;
 
-      static LatticeVector minimumPosition_(LatticePosition const &node,
+      static LatticeVector minimumPosition(LatticePosition const &node,
               size_t range);
-      static LatticeVector maximumPosition_(LatticePosition const &node,
+      static LatticeVector maximumPosition(LatticePosition const &node,
               size_t range);
   };
 
@@ -133,15 +133,15 @@ namespace hemelb { namespace redblood {
     InterpolationIterator :: InterpolationIterator(
          LatticePosition const &node, STENCIL const & stencil)
       : IndexIterator(
-          minimumPosition_(node, STENCIL::range),
-          maximumPosition_(node, STENCIL::range)
-        ), xWeight_(new Dimensionless[STENCIL::range]),
-           yWeight_(new Dimensionless[STENCIL::range]),
-           zWeight_(new Dimensionless[STENCIL::range]) {
+          minimumPosition(node, STENCIL::range),
+          maximumPosition(node, STENCIL::range)
+        ), xWeight(new Dimensionless[STENCIL::range]),
+           yWeight(new Dimensionless[STENCIL::range]),
+           zWeight(new Dimensionless[STENCIL::range]) {
       for(LatticeVector::value_type i(0); i < STENCIL::range; ++i) {
-        xWeight_[i] = stencil(node[0] - Dimensionless(min_[0] + i));
-        yWeight_[i] = stencil(node[1] - Dimensionless(min_[1] + i));
-        zWeight_[i] = stencil(node[2] - Dimensionless(min_[2] + i));
+        xWeight[i] = stencil(node[0] - Dimensionless(min[0] + i));
+        yWeight[i] = stencil(node[1] - Dimensionless(min[1] + i));
+        zWeight[i] = stencil(node[2] - Dimensionless(min[2] + i));
       }
     }
 

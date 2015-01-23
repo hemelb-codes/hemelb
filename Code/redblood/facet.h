@@ -58,27 +58,27 @@ struct Facet {
 // Facet that also includes forces
 struct ForceFacet : public Facet {
   // References forces on a node
-  LatticeForceVector * forces_[3];
+  LatticeForceVector * forces[3];
   ForceFacet(
       MeshData::Vertices const &vertices,
       MeshData::Facet const &indices,
-      std::vector<LatticeForceVector> &forces
+      std::vector<LatticeForceVector> &forcesIn
   ) : Facet(vertices, indices) {
-    forces_[0] = &forces[indices[0]];
-    forces_[1] = &forces[indices[1]];
-    forces_[2] = &forces[indices[2]];
+    forces[0] = &forcesIn[indices[0]];
+    forces[1] = &forcesIn[indices[1]];
+    forces[2] = &forcesIn[indices[2]];
   }
   ForceFacet(
       MeshData const &mesh, size_t index,
-      std::vector<LatticeForceVector> &forces
-  ) : ForceFacet(mesh.vertices, mesh.facets[index], forces) {}
+      std::vector<LatticeForceVector> &forcesIn
+  ) : ForceFacet(mesh.vertices, mesh.facets[index], forcesIn) {}
   ForceFacet(
       MeshData::Vertices const &vertices,
       MeshData::Facets const &facets,
       size_t index,
-      std::vector<LatticeForceVector> &forces
-  ) : ForceFacet(vertices, facets[index], forces) {}
-  LatticeForceVector & forces(size_t i) const { return *(forces_[i]); }
+      std::vector<LatticeForceVector> &forcesIn
+  ) : ForceFacet(vertices, facets[index], forcesIn) {}
+  LatticeForceVector & GetForce(size_t i) const { return *(forces[i]); }
 };
 
 LatticePosition Facet::operator()(size_t i, size_t j) const {

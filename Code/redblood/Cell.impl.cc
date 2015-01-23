@@ -58,19 +58,19 @@ PhysicalEnergy facetBending(
 
   const PhysicalForce strength = -2.0 * intensity * (theta - theta0);
   // forces on nodes that are in common
-  facetA.forces(commons.first) += (
+  facetA.GetForce(commons.first) += (
       facetA(singles.first, commons.second).Cross(vecA)
       + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)
   ) * strength;
-  facetA.forces(commons.second) += (
+  facetA.GetForce(commons.second) += (
       (facetB(singles.second) - facetA(commons.first)).Cross(vecB)
       + (facetA(commons.first, singles.first)).Cross(vecA)
   ) * strength;
   // forces on nodes that are *not* in common
-  facetA.forces(singles.first) += (
+  facetA.GetForce(singles.first) += (
       facetA(commons.second, commons.first).Cross(vecA)
   ) * strength;
-  facetB.forces(singles.second) += (
+  facetB.GetForce(singles.second) += (
       facetA(commons.first, commons.second).Cross(vecB)
   ) * strength;
 
@@ -165,9 +165,9 @@ PhysicalEnergy surfaceEnergy(
     ForceFacet facet(vertices, orig.facets, facetIndex, forces);
     LatticePosition const n0 = facet.unitNormal();
 
-    facet.forces(0) += n0.Cross(facet(2, 1)) * strength;
-    facet.forces(1) += n0.Cross(facet(0, 2)) * strength;
-    facet.forces(2) += n0.Cross(facet(1, 0)) * strength;
+    facet.GetForce(0) += n0.Cross(facet(2, 1)) * strength;
+    facet.GetForce(1) += n0.Cross(facet(0, 2)) * strength;
+    facet.GetForce(2) += n0.Cross(facet(1, 0)) * strength;
   }
   return intensity * 0.5 * deltaS * deltaS / surf0;
 }
@@ -266,9 +266,9 @@ PhysicalEnergy strainEnergy(
     LatticeForceVector const
       force0 = ex * force0x + ey * force0y,
       force1 = ex * force1x + ey * force1y;
-    deformed.forces(0) -= force0;
-    deformed.forces(1) -= force1;
-    deformed.forces(2) += force0 + force1;
+    deformed.GetForce(0) -= force0;
+    deformed.GetForce(1) -= force1;
+    deformed.GetForce(2) += force0 + force1;
 
     return w * undeformed.area() * origMesh_scale * origMesh_scale;
 }

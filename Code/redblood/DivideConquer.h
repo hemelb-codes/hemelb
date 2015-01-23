@@ -53,7 +53,7 @@ template<class T> class DivideConquer : public details::DnCBase<T>::type {
     typedef std::pair<const_iterator, const_iterator> const_range;
 
     //! Constructor sets size of cutoff
-    DivideConquer(PhysicalDistance boxsize) : base_type(), boxsize_(boxsize) {}
+    DivideConquer(PhysicalDistance boxsize) : base_type(), boxsize(boxsize) {}
     //! Insert into divide and conquer container
     iterator insert(LatticePosition const&pos, T const &value) {
       return base_type::insert(value_type(DowngradeKey(pos), value));
@@ -80,20 +80,20 @@ template<class T> class DivideConquer : public details::DnCBase<T>::type {
     }
 
     //! Length of each box
-    PhysicalDistance GetBoxSize() const { return boxsize_; }
+    PhysicalDistance GetBoxSize() const { return boxsize; }
 
     //! Converts from position to box index
     key_type DowngradeKey(LatticePosition const &pos) const {
       return key_type(
-        static_cast<LatticeCoordinate>(std::floor(pos.x / boxsize_)),
-        static_cast<LatticeCoordinate>(std::floor(pos.y / boxsize_)),
-        static_cast<LatticeCoordinate>(std::floor(pos.z / boxsize_))
+        static_cast<LatticeCoordinate>(std::floor(pos.x / boxsize)),
+        static_cast<LatticeCoordinate>(std::floor(pos.y / boxsize)),
+        static_cast<LatticeCoordinate>(std::floor(pos.z / boxsize))
       );
     }
     //! No conversion since in box index type already
     key_type DowngradeKey(key_type const &pos) const { return pos; }
   protected:
-    PhysicalDistance const boxsize_;
+    PhysicalDistance const boxsize;
 };
 
 }} // hemelb::redblood
