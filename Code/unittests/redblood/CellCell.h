@@ -109,7 +109,7 @@ void CellCellInteractionTests :: testAddNodes() {
   LatticePosition const center = LatticePosition(1, 1, 1) * (0.5 * cutoff);
   PhysicalDistance const offhalo = (cutoff * 0.5 - 1.1 * halo) / cutoff;
   PhysicalDistance const inhalo = (cutoff * 0.5 - 0.9 * halo) / cutoff;
-  MeshData::t_Vertices vertices;
+  MeshData::Vertices vertices;
   vertices.push_back(center);
   vertices.push_back(center + LatticePosition(offhalo, 0, 0) * cutoff);
   vertices.push_back(center + LatticePosition(2, offhalo + 3.0, -2) * cutoff);
@@ -196,7 +196,7 @@ void CellCellInteractionTests :: testIterator() {
   DivideConquerCells dnc(cells, cutoff, halo);
 
   std::set<LatticePosition const*> allnodes;
-  typedef MeshData::t_Vertices::const_iterator vertex_iterator;
+  typedef MeshData::Vertices::const_iterator vertex_iterator;
   vertex_iterator i_vert = cells.front()->GetVertices().begin();
   vertex_iterator i_vertend = cells.front()->GetVertices().end();
   for(; i_vert != i_vertend; ++i_vert)

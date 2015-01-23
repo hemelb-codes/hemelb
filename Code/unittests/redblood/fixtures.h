@@ -27,7 +27,7 @@ class BasisFixture : public CppUnit::TestFixture {
       mesh.vertices.push_back(LatticePosition(0, 0, 1));
 
 
-      redblood::MeshData::t_Facet indices;
+      redblood::MeshData::Facet indices;
       indices[0] = 0; indices[1] = 1; indices[2] = 2;
       mesh.facets.push_back(indices);
       indices[0] = 0; indices[1] = 2; indices[2] = 3;

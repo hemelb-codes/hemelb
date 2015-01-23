@@ -78,7 +78,7 @@ PhysicalEnergy facetBending(
 }
 
 PhysicalEnergy facetBending(
-    MeshData::t_Vertices const& _vertices, MeshData const& _orig,
+    MeshData::Vertices const& _vertices, MeshData const& _orig,
     size_t _facetIndex, size_t _neighborIndex, PhysicalForce _intensity,
     std::vector<LatticeForceVector> &_forces
 ) {
@@ -91,7 +91,7 @@ PhysicalEnergy facetBending(
   );
 }
 PhysicalEnergy facetBending(
-    MeshData::t_Vertices const& _vertices, MeshData const& _orig,
+    MeshData::Vertices const& _vertices, MeshData const& _orig,
     size_t _facetIndex, size_t _neighborIndex,
     PhysicalForce _intensity
 ) {
@@ -105,7 +105,7 @@ PhysicalEnergy facetBending(
 }
 
 PhysicalEnergy volumeEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, Dimensionless _template_scale = 1e0
 ) {
   if(_intensity <= 1e-12) return 0e0;
@@ -116,7 +116,7 @@ PhysicalEnergy volumeEnergy(
 }
 
 PhysicalEnergy volumeEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces,
     Dimensionless _template_scale = 1e0
 ) {
@@ -141,7 +141,7 @@ PhysicalEnergy volumeEnergy(
 }
 
 PhysicalEnergy surfaceEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, Dimensionless _template_scale = 1e0
 ) {
   PhysicalSurface const surf0
@@ -151,7 +151,7 @@ PhysicalEnergy surfaceEnergy(
 }
 
 PhysicalEnergy surfaceEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_orig,
+    MeshData::Vertices const &_vertices, MeshData const &_orig,
     PhysicalForce _intensity, std::vector<LatticeForceVector> &_forces,
     Dimensionless _template_scale=1e0
 ) {
@@ -274,7 +274,7 @@ PhysicalEnergy strainEnergy(
 }
 
 PhysicalEnergy strainEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_origin,
+    MeshData::Vertices const &_vertices, MeshData const &_origin,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
     Dimensionless _template_scale=1e0
 ) {
@@ -289,7 +289,7 @@ PhysicalEnergy strainEnergy(
   return result;
 }
 PhysicalEnergy strainEnergy(
-    MeshData::t_Vertices const &_vertices, MeshData const &_origin,
+    MeshData::Vertices const &_vertices, MeshData const &_origin,
     PhysicalForce _shearModulus, PhysicalForce _dilationModulus,
     std::vector<LatticeForceVector> &_forces,
     Dimensionless _template_scale=1e0

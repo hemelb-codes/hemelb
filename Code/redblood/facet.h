@@ -16,17 +16,17 @@ struct Facet {
   // References nodes of a facet
   LatticePosition const * nodes[3];
   // Indices of nodes in original array
-  MeshData::t_Facet const & indices;
+  MeshData::Facet const & indices;
   Facet   (MeshData const &_mesh, size_t _index)
         : Facet(_mesh.vertices, _mesh.facets[_index]) {}
   Facet(
-      MeshData::t_Vertices const &_vertices,
-      MeshData::t_Facets const &_facets,
+      MeshData::Vertices const &_vertices,
+      MeshData::Facets const &_facets,
       size_t _index
   ) : Facet(_vertices, _facets[_index]) {}
   Facet(
-      MeshData::t_Vertices const &_vertices,
-      MeshData::t_Facet const &_indices
+      MeshData::Vertices const &_vertices,
+      MeshData::Facet const &_indices
   ) : indices(_indices) {
     nodes[0] = &_vertices[indices[0]];
     nodes[1] = &_vertices[indices[1]];
@@ -60,8 +60,8 @@ struct ForceFacet : public Facet {
   // References forces on a node
   LatticeForceVector * forces_[3];
   ForceFacet(
-      MeshData::t_Vertices const &_vertices,
-      MeshData::t_Facet const &_indices,
+      MeshData::Vertices const &_vertices,
+      MeshData::Facet const &_indices,
       std::vector<LatticeForceVector> &_forces
   ) : Facet(_vertices, _indices) {
     forces_[0] = &_forces[indices[0]];
@@ -73,8 +73,8 @@ struct ForceFacet : public Facet {
       std::vector<LatticeForceVector> &_forces
   ) : ForceFacet(_mesh.vertices, _mesh.facets[_index], _forces) {}
   ForceFacet(
-      MeshData::t_Vertices const &_vertices,
-      MeshData::t_Facets const &_facets,
+      MeshData::Vertices const &_vertices,
+      MeshData::Facets const &_facets,
       size_t _index,
       std::vector<LatticeForceVector> &_forces
   ) : ForceFacet(_vertices, _facets[_index], _forces) {}
@@ -116,8 +116,8 @@ PhysicalSurface Facet::area() const { return normal().GetMagnitude() * 0.5; }
 
 
 // Just a helper function to check whether _v is in _a
-bool contains(MeshData::t_Facet const &_a,
-        MeshData::t_Facet::value_type _v) {
+bool contains(MeshData::Facet const &_a,
+        MeshData::Facet::value_type _v) {
   return _a[0] == _v or _a[1] == _v or _a[2] == _v;
 }
 

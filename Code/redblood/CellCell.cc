@@ -48,12 +48,12 @@ namespace {
 
   void initialize_cells(
       DivideConquer<CellReference> &_dnc,
-      MeshData::t_Vertices const &_vertices,
+      MeshData::Vertices const &_vertices,
       site_t _cellid,
       PhysicalDistance _haloLength ) {
     typedef DivideConquer<CellReference> DnC;
     typedef DnC::key_type key_type;
-    typedef MeshData::t_Vertices::const_iterator vertex_iterator;
+    typedef MeshData::Vertices::const_iterator vertex_iterator;
     vertex_iterator i_first = _vertices.begin();
     vertex_iterator const i_end = _vertices.end();
     for(site_t i(0); i_first != i_end; ++i_first, ++i) {
