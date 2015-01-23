@@ -23,25 +23,24 @@ namespace hemelb
     {
       class DivideAndConquerTests : public CppUnit::TestFixture
       {
-        CPPUNIT_TEST_SUITE(DivideAndConquerTests);
-        CPPUNIT_TEST(testDowngradeKey);
-        CPPUNIT_TEST(testNoDowngradeKey);
-        CPPUNIT_TEST(testAddToBox);
-        CPPUNIT_TEST(testAddToBoxAsKey);
-        CPPUNIT_TEST(testBoxRange);
-        CPPUNIT_TEST(testBoxRangeAsKey);
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (DivideAndConquerTests);
+          CPPUNIT_TEST (testDowngradeKey);
+          CPPUNIT_TEST (testNoDowngradeKey);
+          CPPUNIT_TEST (testAddToBox);
+          CPPUNIT_TEST (testAddToBoxAsKey);
+          CPPUNIT_TEST (testBoxRange);
+          CPPUNIT_TEST (testBoxRangeAsKey);CPPUNIT_TEST_SUITE_END();
 
-        typedef DivideConquer<int> DnC;
+          typedef DivideConquer<int> DnC;
 
         public:
-        void testDowngradeKey();
-        void testAddToBox();
-        void testBoxRange();
-        // Checks downgrading does not occur if type is already a key
-        void testNoDowngradeKey();
-        void testAddToBoxAsKey();
-        void testBoxRangeAsKey();
+          void testDowngradeKey();
+          void testAddToBox();
+          void testBoxRange();
+          // Checks downgrading does not occur if type is already a key
+          void testNoDowngradeKey();
+          void testAddToBoxAsKey();
+          void testBoxRangeAsKey();
       };
 
       void DivideAndConquerTests::testDowngradeKey()
@@ -50,13 +49,18 @@ namespace hemelb
         DnC dnc(cutoff);
 
         size_t const N = 5;
-        LatticePosition const inputs[N] = {
-          LatticePosition(2.5, 1.1, 3.3), LatticePosition(5.5, 1.1, 3.3),
-          LatticePosition(5.5, -5.1, -3.3), LatticePosition(5.5, -5.1, 10.3),
-          LatticePosition(5.000000000001, -5.1, 10.3)};
-        LatticeVector const expected[N] = {LatticeVector(0, 0, 0), LatticeVector(1, 0, 0),
-                                           LatticeVector(1, -2, -1), LatticeVector(1, -2, 2),
-                                           LatticeVector(1, -2, 2)};
+        LatticePosition const inputs[N] = { LatticePosition(2.5, 1.1, 3.3), LatticePosition(5.5,
+                                                                                            1.1,
+                                                                                            3.3),
+                                            LatticePosition(5.5, -5.1, -3.3), LatticePosition(5.5,
+                                                                                              -5.1,
+                                                                                              10.3),
+                                            LatticePosition(5.000000000001, -5.1, 10.3) };
+        LatticeVector const expected[N] = { LatticeVector(0, 0, 0),
+                                            LatticeVector(1, 0, 0),
+                                            LatticeVector(1, -2, -1),
+                                            LatticeVector(1, -2, 2),
+                                            LatticeVector(1, -2, 2) };
 
         for (size_t i(0); i < N; ++i)
           CPPUNIT_ASSERT(helpers::is_zero(dnc.DowngradeKey(inputs[i]) - expected[i]));
@@ -154,7 +158,7 @@ namespace hemelb
         CPPUNIT_ASSERT(crange == const_cast<DnC const&>(dnc).equal_range(key));
       }
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(DivideAndConquerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (DivideAndConquerTests);
     }
   }
 }

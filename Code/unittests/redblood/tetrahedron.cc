@@ -7,8 +7,9 @@
 
 int get_depth(std::vector<std::string> const &_args)
 {
-  std::vector<std::string>::const_iterator i_found =
-    std::find(_args.begin(), _args.end(), std::string("--depth"));
+  std::vector<std::string>::const_iterator i_found = std::find(_args.begin(),
+                                                               _args.end(),
+                                                               std::string("--depth"));
 
   if (i_found == _args.end())
   {
@@ -20,7 +21,7 @@ int get_depth(std::vector<std::string> const &_args)
     return 0;
   }
 
-  if ((++i_found) == _args.end())
+  if ( (++i_found) == _args.end())
   {
     std::cerr << "Incorrect command-line argument";
     throw std::exception();
@@ -38,11 +39,11 @@ std::string get_output(std::vector<std::string> const &_args)
   std::vector<std::string>::const_iterator const i_end = _args.end();
 
   for (; i_current != i_end; ++i_current)
-    if ((*i_current)[0] != '-')
+    if ( (*i_current)[0] != '-')
     {
       return *i_current;
     }
-    else if ((++i_current) == i_end)
+    else if ( (++i_current) == i_end)
     {
       break;
     }

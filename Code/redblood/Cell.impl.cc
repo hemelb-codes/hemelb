@@ -47,10 +47,10 @@ namespace hemelb
         // Orthogonalize normal vectors and normalize to inverse area of other facet
         LatticePosition const unitA(normalA.GetNormalised());
         LatticePosition const unitB(normalB.GetNormalised());
-        LatticePosition const vecA((unitB - unitA * unitA.Dot(unitB)).GetNormalised()
-                                   * inverseAreaA);
-        LatticePosition const vecB((unitA - unitB * unitA.Dot(unitB)).GetNormalised()
-                                   * inverseAreaB);
+        LatticePosition const vecA( (unitB - unitA * unitA.Dot(unitB)).GetNormalised()
+            * inverseAreaA);
+        LatticePosition const vecB( (unitA - unitB * unitA.Dot(unitB)).GetNormalised()
+            * inverseAreaB);
 
         // NOTE: the two lines below could make use of stuff computed previously
         Angle const theta = orientedAngle(facetA, facetB);
@@ -58,17 +58,16 @@ namespace hemelb
 
         const PhysicalForce strength = -2.0 * intensity * (theta - theta0);
         // forces on nodes that are in common
-        facetA.GetForce(commons.first) +=
-          (facetA(singles.first, commons.second).Cross(vecA)
-           + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)) * strength;
+        facetA.GetForce(commons.first) += (facetA(singles.first, commons.second).Cross(vecA)
+            + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)) * strength;
         facetA.GetForce(commons.second) +=
-          ((facetB(singles.second) - facetA(commons.first)).Cross(vecB)
-           + (facetA(commons.first, singles.first)).Cross(vecA)) * strength;
+            ( (facetB(singles.second) - facetA(commons.first)).Cross(vecB)
+                + (facetA(commons.first, singles.first)).Cross(vecA)) * strength;
         // forces on nodes that are *not* in common
-        facetA.GetForce(singles.first) +=
-          (facetA(commons.second, commons.first).Cross(vecA)) * strength;
-        facetB.GetForce(singles.second) +=
-          (facetA(commons.first, commons.second).Cross(vecB)) * strength;
+        facetA.GetForce(singles.first) += (facetA(commons.second, commons.first).Cross(vecA))
+            * strength;
+        facetB.GetForce(singles.second) += (facetA(commons.first, commons.second).Cross(vecB))
+            * strength;
 
         return intensity * (theta - theta0) * (theta - theta0);
       }
@@ -79,14 +78,18 @@ namespace hemelb
       {
         return facetBending(ForceFacet(vertices, orig.facets[facetIndex], forces),
                             ForceFacet(vertices, orig.facets[neighborIndex], forces),
-                            Facet(orig, facetIndex), Facet(orig, neighborIndex), intensity);
+                            Facet(orig, facetIndex),
+                            Facet(orig, neighborIndex),
+                            intensity);
       }
       PhysicalEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
                                   size_t facetIndex, size_t neighborIndex, PhysicalForce intensity)
       {
         return facetBending(Facet(vertices, orig.facets[facetIndex]),
-                            Facet(vertices, orig.facets[neighborIndex]), Facet(orig, facetIndex),
-                            Facet(orig, neighborIndex), intensity);
+                            Facet(vertices, orig.facets[neighborIndex]),
+                            Facet(orig, facetIndex),
+                            Facet(orig, neighborIndex),
+                            intensity);
       }
 
       PhysicalEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
@@ -164,8 +167,8 @@ namespace hemelb
       }
 
       PhysicalEnergy strainEnergyDensity(
-        std::pair<Dimensionless, Dimensionless> const &strainParams, PhysicalForce shearModulus,
-        PhysicalForce dilationModulus)
+          std::pair<Dimensionless, Dimensionless> const &strainParams, PhysicalForce shearModulus,
+          PhysicalForce dilationModulus)
       {
         Dimensionless const I1 = strainParams.first, I2 = strainParams.second;
         return shearModulus / 12. * (I1 * I1 + 2. * I1 - 2. * I2) + dilationModulus / 12. * I2 * I2;
@@ -175,7 +178,8 @@ namespace hemelb
                                   Dimensionless origMesh_scale = 1e0)
       {
         return strainEnergyDensity(strainInvariants(deformed, undeformed, origMesh_scale),
-                                   shearModulus, dilationModulus) * undeformed.area();
+                                   shearModulus,
+                                   dilationModulus) * undeformed.area();
       }
 
       PhysicalEnergy strainEnergy(ForceFacet const &deformed, Facet const &undeformed,
@@ -183,10 +187,10 @@ namespace hemelb
                                   Dimensionless origMesh_scale = 1e0)
       {
         // Shape function parameters
-        Dimensionless const b0 = undeformed.length(0) * 0.5 * origMesh_scale,
-                            b1 = (undeformed.length(1) * undeformed.cosine() - undeformed.length(0))
-                                 * 0.5 * origMesh_scale,
-                            a1 = -0.5 * undeformed.length(1) * undeformed.sine() * origMesh_scale;
+        Dimensionless const b0 = undeformed.length(0) * 0.5 * origMesh_scale, b1 =
+            (undeformed.length(1) * undeformed.cosine() - undeformed.length(0)) * 0.5
+                * origMesh_scale, a1 = -0.5 * undeformed.length(1) * undeformed.sine()
+            * origMesh_scale;
 
         LatticePosition const disps = displacements(deformed, undeformed, origMesh_scale);
         LatticePosition const squaredDisps(squaredDisplacements(disps));
@@ -195,38 +199,35 @@ namespace hemelb
         Dimensionless const w = strainEnergyDensity(strainInvs, shearModulus, dilationModulus);
 
         // Skalak Parameters
-        PhysicalForce const dw_dI1 = shearModulus / 6 * (I1 + 1),
-                            dw_dI2 = -shearModulus / 6. + dilationModulus / 6. * I2;
+        PhysicalForce const dw_dI1 = shearModulus / 6 * (I1 + 1), dw_dI2 = -shearModulus / 6.
+            + dilationModulus / 6. * I2;
 
         size_t const xx = 0, yy = 1, xy = 2;
 
         // Derivatives of strain invariants
-        Dimensionless const dI1_dGxx = 1., dI1_dGyy = 1., dI2_dGxx = squaredDisps[yy],
-                            dI2_dGyy = squaredDisps[xx], dI2_dGxy = -2. * squaredDisps[xy];
+        Dimensionless const dI1_dGxx = 1., dI1_dGyy = 1., dI2_dGxx = squaredDisps[yy], dI2_dGyy =
+            squaredDisps[xx], dI2_dGxy = -2. * squaredDisps[xy];
 
         // Derivatives of squared deformation tensor
-        Dimensionless const dGxx_du1x = 2. * a1 * disps[xx], dGxy_du0x = b0 * disps[xx],
-                            dGxy_du1x = a1 * disps[xy] + b1 * disps[xx], dGxy_du1y = a1 * disps[yy],
-                            dGyy_du0x = 2. * b0 * disps[xy], dGyy_du0y = 2. * b0 * disps[yy],
-                            dGyy_du1x = 2. * b1 * disps[xy], dGyy_du1y = 2. * b1 * disps[yy];
+        Dimensionless const dGxx_du1x = 2. * a1 * disps[xx], dGxy_du0x = b0 * disps[xx], dGxy_du1x =
+            a1 * disps[xy] + b1 * disps[xx], dGxy_du1y = a1 * disps[yy], dGyy_du0x = 2. * b0
+            * disps[xy], dGyy_du0y = 2. * b0 * disps[yy], dGyy_du1x = 2. * b1 * disps[xy],
+            dGyy_du1y = 2. * b1 * disps[yy];
 
         PhysicalForce const force0x = (dw_dI1 * dI1_dGyy * dGyy_du0x
-                                       + dw_dI2 * (dI2_dGyy * dGyy_du0x + dI2_dGxy * dGxy_du0x)),
-                            force0y =
-                              (dw_dI1 * dI1_dGyy * dGyy_du0y + dw_dI2 * dI2_dGyy * dGyy_du0y),
-                            force1x = (dw_dI1 * (dI1_dGxx * dGxx_du1x + dI1_dGyy * dGyy_du1x)
-                                       + dw_dI2 * (dI2_dGxx * dGxx_du1x + dI2_dGyy * dGyy_du1x
-                                                   + dI2_dGxy * dGxy_du1x)),
-                            force1y = (dw_dI1 * dI1_dGyy * dGyy_du1y
-                                       + dw_dI2 * (dI2_dGyy * dGyy_du1y + dI2_dGxy * dGxy_du1y));
+            + dw_dI2 * (dI2_dGyy * dGyy_du0x + dI2_dGxy * dGxy_du0x)), force0y = (dw_dI1 * dI1_dGyy
+            * dGyy_du0y + dw_dI2 * dI2_dGyy * dGyy_du0y), force1x = (dw_dI1
+            * (dI1_dGxx * dGxx_du1x + dI1_dGyy * dGyy_du1x)
+            + dw_dI2 * (dI2_dGxx * dGxx_du1x + dI2_dGyy * dGyy_du1x + dI2_dGxy * dGxy_du1x)),
+            force1y = (dw_dI1 * dI1_dGyy * dGyy_du1y
+                + dw_dI2 * (dI2_dGyy * dGyy_du1y + dI2_dGxy * dGxy_du1y));
 
         /// Coordinate system
-        LatticePosition const ex = deformed.edge(0).GetNormalised(),
-                              ez = deformed.edge(0).Cross(deformed.edge(1)).GetNormalised(),
-                              ey = ez.Cross(ex);
+        LatticePosition const ex = deformed.edge(0).GetNormalised(), ez =
+            deformed.edge(0).Cross(deformed.edge(1)).GetNormalised(), ey = ez.Cross(ex);
 
-        LatticeForceVector const force0 = ex * force0x + ey * force0y,
-                                 force1 = ex * force1x + ey * force1y;
+        LatticeForceVector const force0 = ex * force0x + ey * force0y, force1 = ex * force1x
+            + ey * force1y;
         deformed.GetForce(0) -= force0;
         deformed.GetForce(1) -= force1;
         deformed.GetForce(2) += force0 + force1;
@@ -241,8 +242,11 @@ namespace hemelb
         PhysicalEnergy result(0);
 
         for (size_t i(0); i < origin.facets.size(); ++i)
-          result += strainEnergy(Facet(vertices, origin.facets[i]), Facet(origin, i), shearModulus,
-                                 dilationModulus, origMesh_scale);
+          result += strainEnergy(Facet(vertices, origin.facets[i]),
+                                 Facet(origin, i),
+                                 shearModulus,
+                                 dilationModulus,
+                                 origMesh_scale);
 
         return result;
       }
@@ -254,8 +258,11 @@ namespace hemelb
         PhysicalEnergy result(0);
 
         for (size_t i(0); i < origin.facets.size(); ++i)
-          result += strainEnergy(ForceFacet(vertices, origin.facets[i], forces), Facet(origin, i),
-                                 shearModulus, dilationModulus, origMesh_scale);
+          result += strainEnergy(ForceFacet(vertices, origin.facets[i], forces),
+                                 Facet(origin, i),
+                                 shearModulus,
+                                 dilationModulus,
+                                 origMesh_scale);
 
         return result;
       }

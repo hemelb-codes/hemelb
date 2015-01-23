@@ -25,16 +25,15 @@ namespace hemelb
 #include "redblood/GridAndCell.impl.h"
 
     //! Displacement of the cell nodes interpolated from lattice velocities
-    template <class KERNEL>
+    template<class KERNEL>
     void velocitiesOnMesh(CellBase const &cell, geometry::LatticeData const &latDat,
                           stencil::types stencil, std::vector<LatticePosition> &displacements)
     {
       displacements.resize(cell.GetNumberOfNodes());
-      details::VelocityNodeLoop<KERNEL>(stencil, cell, latDat)
-        .loop(details::transform_iterator(displacements.begin()));
+      details::VelocityNodeLoop<KERNEL>(stencil, cell, latDat).loop(details::transform_iterator(displacements.begin()));
     }
     //! Displacement of the cell nodes interpolated from lattice velocities
-    template <class KERNEL>
+    template<class KERNEL>
     void velocitiesOnMesh(std::shared_ptr<CellBase const> const &cell,
                           geometry::LatticeData const &latDat, stencil::types stencil,
                           std::vector<LatticePosition> &displacements)
@@ -51,7 +50,7 @@ namespace hemelb
     //! \param[inout] latticeData: the LB grid
     //! \param[inout] stencil: type of stencil to use when spreading forces
     //! \returns the energy (excluding node-wall interaction)
-    template <class LATTICE>
+    template<class LATTICE>
     Dimensionless forcesOnGrid(CellBase const &cell, std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
     {
@@ -69,12 +68,14 @@ namespace hemelb
     //! \param[inout] latticeData: the LB grid
     //! \param[inout] stencil: type of stencil to use when spreading forces
     //! \returns the energy (excluding node-wall interaction)
-    template <class LATTICE>
+    template<class LATTICE>
     Dimensionless forcesOnGrid(Cell const &cell, std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
     {
-      Dimensionless const energy =
-        forcesOnGrid<LATTICE>(*static_cast<CellBase const *>(&cell), forces, latticeData, stencil);
+      Dimensionless const energy = forcesOnGrid<LATTICE>(*static_cast<CellBase const *>(&cell),
+                                                         forces,
+                                                         latticeData,
+                                                         stencil);
 
       typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
       details::spreadForce2Grid(cell, Spreader(cell, forces, latticeData), stencil);
@@ -82,7 +83,7 @@ namespace hemelb
     }
 
     //! \brief Computes and Spreads the forces from the cell to the lattice
-    template <class LATTICE>
+    template<class LATTICE>
     Dimensionless forcesOnGrid(std::shared_ptr<Cell const> const &cell,
                                std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
@@ -90,7 +91,7 @@ namespace hemelb
       return forcesOnGrid<LATTICE>(*cell, forces, latticeData, stencil);
     }
     //! \brief Computes and Spreads the forces from the cell to the lattice
-    template <class LATTICE>
+    template<class LATTICE>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> const &cell,
                                std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
@@ -103,7 +104,7 @@ namespace hemelb
     //! already have a loop over neighboring grid nodes. Assumption is that the
     //! interaction distance is smaller or equal to stencil.
     //! Returns the energy (excluding node-wall interaction)
-    template <class LATTICE>
+    template<class LATTICE>
     Dimensionless forcesOnGrid(Cell const &cell, geometry::LatticeData &latticeData,
                                stencil::types stencil)
     {
@@ -111,6 +112,6 @@ namespace hemelb
       return forcesOnGrid<LATTICE>(cell, forces, latticeData, stencil);
     }
   }
-}  // hemelb::redblood
+} // hemelb::redblood
 
 #endif

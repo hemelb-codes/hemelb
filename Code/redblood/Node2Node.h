@@ -32,8 +32,8 @@ namespace hemelb
       }
 
       PhysicalDistance const deltaX = 1;
-      return -intensity * (std::pow(deltaX / distance, exponent)
-                           - std::pow(deltaX / cutoffDistance, exponent));
+      return -intensity
+          * (std::pow(deltaX / distance, exponent) - std::pow(deltaX / cutoffDistance, exponent));
     }
 
     // Repulsive force between two nodes
@@ -58,33 +58,33 @@ namespace hemelb
     //! Holds node-node interaction parameters
     struct Node2NodeForce
     {
-      //! Strength of the interaction
-      PhysicalForce intensity;
-      //! Maximum distance of the interaction
-      PhysicalDistance cutoff;
-      //! Power exponent
-      size_t exponent;
+        //! Strength of the interaction
+        PhysicalForce intensity;
+        //! Maximum distance of the interaction
+        PhysicalDistance cutoff;
+        //! Power exponent
+        size_t exponent;
 
-      Node2NodeForce(PhysicalForce intensity = 0.0, PhysicalDistance cutoff = 1.0,
-                     size_t exponent = 2)
-          : intensity(intensity), cutoff(cutoff), exponent(exponent)
-      {
-      }
+        Node2NodeForce(PhysicalForce intensity = 0.0, PhysicalDistance cutoff = 1.0,
+                       size_t exponent = 2) :
+            intensity(intensity), cutoff(cutoff), exponent(exponent)
+        {
+        }
 
-      PhysicalForce operator()(PhysicalDistance const &distance) const
-      {
-        return node2NodeForce(distance, intensity, cutoff, exponent);
-      }
-      LatticeForceVector operator()(LatticePosition const &distance) const
-      {
-        return node2NodeForce(distance, intensity, cutoff, exponent);
-      }
-      LatticeForceVector operator()(LatticePosition const &A, LatticePosition const &B) const
-      {
-        return node2NodeForce(A, B, intensity, cutoff, exponent);
-      }
+        PhysicalForce operator()(PhysicalDistance const &distance) const
+        {
+          return node2NodeForce(distance, intensity, cutoff, exponent);
+        }
+        LatticeForceVector operator()(LatticePosition const &distance) const
+        {
+          return node2NodeForce(distance, intensity, cutoff, exponent);
+        }
+        LatticeForceVector operator()(LatticePosition const &A, LatticePosition const &B) const
+        {
+          return node2NodeForce(A, B, intensity, cutoff, exponent);
+        }
     };
   }
-}  // hemelb::redblood
+} // hemelb::redblood
 
 #endif

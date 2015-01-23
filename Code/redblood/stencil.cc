@@ -23,4 +23,4 @@ namespace hemelb
 #undef HEMELB_STENCIL_MACRO
     }
   }
-}  // hemelb::redblood::stencil
+} // hemelb::redblood::stencil

@@ -23,47 +23,47 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template <class KERNEL>
+    template<class KERNEL>
     class CellArmy
     {
       public:
-      //! Interaction terms between cells
-      Node2NodeForce cell2Cell;
-      //! Stencil
-      stencil::types stencil = stencil::FOUR_POINT;
+        //! Interaction terms between cells
+        Node2NodeForce cell2Cell;
+        //! Stencil
+        stencil::types stencil = stencil::FOUR_POINT;
 
-      CellArmy(geometry::LatticeData &latDat, CellContainer const &cells,
-               PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0)
-          : latticeData(latDat), cells(cells), dnc(cells, boxsize, halo)
-      {
-      }
+        CellArmy(geometry::LatticeData &latDat, CellContainer const &cells,
+                 PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0) :
+            latticeData(latDat), cells(cells), dnc(cells, boxsize, halo)
+        {
+        }
 
-      //! Performs fluid to lattice interactions
-      void fluid2CellInteractions();
+        //! Performs fluid to lattice interactions
+        void fluid2CellInteractions();
 
-      //! Performs lattice to fluid interactions
-      void cell2FluidInteractions();
+        //! Performs lattice to fluid interactions
+        void cell2FluidInteractions();
 
 #ifdef HEMELB_DOING_UNITTESTS
-      //! Updates divide and conquer
-      void updateDNC()
-      {
-        dnc.update();
-      }
+        //! Updates divide and conquer
+        void updateDNC()
+        {
+          dnc.update();
+        }
 #endif
 
       protected:
-      //! All lattice information and then some
-      geometry::LatticeData &latticeData;
-      //! Contains all cells
-      CellContainer cells;
-      //! Divide and conquer object
-      DivideConquerCells dnc;
-      //! A work array with forces/positions
-      std::vector<LatticePosition> work;
+        //! All lattice information and then some
+        geometry::LatticeData &latticeData;
+        //! Contains all cells
+        CellContainer cells;
+        //! Divide and conquer object
+        DivideConquerCells dnc;
+        //! A work array with forces/positions
+        std::vector<LatticePosition> work;
     };
 
-    template <class KERNEL>
+    template<class KERNEL>
     void CellArmy<KERNEL>::fluid2CellInteractions()
     {
       std::vector<LatticePosition> &positions = work;
@@ -74,7 +74,7 @@ namespace hemelb
 
       for (; i_first != i_end; ++i_first)
       {
-        positions.resize((*i_first)->GetVertices().size());
+        positions.resize( (*i_first)->GetVertices().size());
         std::fill(positions.begin(), positions.end(), origin);
         velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
         (*i_first)->operator+=(positions);
@@ -84,7 +84,7 @@ namespace hemelb
       dnc.update();
     }
 
-    template <class KERNEL>
+    template<class KERNEL>
     void CellArmy<KERNEL>::cell2FluidInteractions()
     {
       std::vector<LatticeForceVector> &forces = work;

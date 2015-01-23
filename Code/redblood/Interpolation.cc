@@ -57,12 +57,14 @@ namespace hemelb
 
     LatticeVector InterpolationIterator::minimumPosition(LatticePosition const &node, size_t range)
     {
-      return LatticeVector(minimumPosImpl(node.x, range), minimumPosImpl(node.y, range),
+      return LatticeVector(minimumPosImpl(node.x, range),
+                           minimumPosImpl(node.y, range),
                            minimumPosImpl(node.z, range));
     }
     LatticeVector InterpolationIterator::maximumPosition(LatticePosition const &node, size_t range)
     {
-      return LatticeVector(maximumPosImpl(node.x, range), maximumPosImpl(node.y, range),
+      return LatticeVector(maximumPosImpl(node.x, range),
+                           maximumPosImpl(node.y, range),
                            maximumPosImpl(node.z, range));
     }
 
@@ -75,8 +77,8 @@ namespace hemelb
 
       switch (stencil)
       {
-        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint);
-        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
+        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint)
+;        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
         HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);
         HEMELB_STENCIL_MACRO(TWO_POINT, TwoPoint);
       }

@@ -21,182 +21,188 @@ namespace hemelb
     class CellBase
     {
       public:
-      //! \brief Initializes mesh from mesh data
-      //! \param [in] verticesIn: deformable vertices that define the cell. These
-      //!    values are *not* modified by the scale.
-      //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-      //!    object.
-      //! \param [in] scaleIn: scales template by a given amount
-      //!    The scale is added during internal operations. The template will still
-      //!    refer to the same data in memory.
-      CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
-          : vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
-      {
-        assert(scale > 1e-12);
-      }
-      //! \brief Initializes mesh from mesh data
-      //! \param [in] verticesIn: deformable vertices that define the cell. These
-      //!    values are *not* modified by the scale.
-      //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-      //!    object.
-      //! \param [in] scaleIn: scales template by a given amount
-      //!    The scale is added during internal operations. The template will still
-      //!    refer to the same data in memory.
-      CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-               Dimensionless scaleIn = 1e0)
-          : vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
-      {
-        assert(scale > 1e-12);
-      }
+        //! \brief Initializes mesh from mesh data
+        //! \param [in] verticesIn: deformable vertices that define the cell. These
+        //!    values are *not* modified by the scale.
+        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
+        //!    object.
+        //! \param [in] scaleIn: scales template by a given amount
+        //!    The scale is added during internal operations. The template will still
+        //!    refer to the same data in memory.
+        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
+        {
+          assert(scale > 1e-12);
+        }
+        //! \brief Initializes mesh from mesh data
+        //! \param [in] verticesIn: deformable vertices that define the cell. These
+        //!    values are *not* modified by the scale.
+        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
+        //!    object.
+        //! \param [in] scaleIn: scales template by a given amount
+        //!    The scale is added during internal operations. The template will still
+        //!    refer to the same data in memory.
+        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+                     1e0) :
+            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
+        {
+          assert(scale > 1e-12);
+        }
 
-      //! \brief Initializes mesh from mesh data
-      //! \param [in] mesh: deformable vertices that define the cell are copied
-      //!    from this mesh. These values are *not* modified by the scale.
-      //! \param [in] origMesh: Original mesh. A shallow copy is made of this
-      //!    object.
-      //! \param [in] scale: scales template by a given amount
-      //!    The scale is added during internal operations. The template will still
-      //!    refer to the same data in memory.
-      CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
-          : CellBase(mesh.GetVertices(), origMesh, scaleIn)
-      {
-      }
+        //! \brief Initializes mesh from mesh data
+        //! \param [in] mesh: deformable vertices that define the cell are copied
+        //!    from this mesh. These values are *not* modified by the scale.
+        //! \param [in] origMesh: Original mesh. A shallow copy is made of this
+        //!    object.
+        //! \param [in] scale: scales template by a given amount
+        //!    The scale is added during internal operations. The template will still
+        //!    refer to the same data in memory.
+        CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+            CellBase(mesh.GetVertices(), origMesh, scaleIn)
+        {
+        }
 
-      //! \brief Initializes mesh from mesh data
-      //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
-      //!   both.
-      CellBase(Mesh const &mesh) : CellBase(mesh.GetVertices(), mesh.clone())
-      {
-      }
+        //! \brief Initializes mesh from mesh data
+        //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
+        //!   both.
+        CellBase(Mesh const &mesh) :
+            CellBase(mesh.GetVertices(), mesh.clone())
+        {
+        }
 
-      //! \brief Initializes mesh from mesh data
-      //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
-      //!   both
-      CellBase(std::shared_ptr<MeshData> const &mesh) : CellBase(mesh->vertices, Mesh(*mesh))
-      {
-      }
+        //! \brief Initializes mesh from mesh data
+        //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
+        //!   both
+        CellBase(std::shared_ptr<MeshData> const &mesh) :
+            CellBase(mesh->vertices, Mesh(*mesh))
+        {
+        }
 
-      void operator=(Mesh const &mesh)
-      {
-        templateMesh = mesh;
-        vertices = templateMesh.GetVertices();
-        scale = 1e0;
-      }
+        void operator=(Mesh const &mesh)
+        {
+          templateMesh = mesh;
+          vertices = templateMesh.GetVertices();
+          scale = 1e0;
+        }
 
-      //! Because it is good practice
-      virtual ~CellBase()
-      {
-      }
+        //! Because it is good practice
+        virtual ~CellBase()
+        {
+        }
 
-      //! Unmodified mesh
-      Mesh const &GetTemplateMesh() const
-      {
-        return templateMesh;
-      }
-      //! Facets for the mesh
-      MeshData::Facets const &GetFacets() const
-      {
-        return templateMesh.GetData()->facets;
-      }
-      //! Vertices of the cell
-      MeshData::Vertices const &GetVertices() const
-      {
-        return vertices;
-      }
-      //! Vertices of the cell
-      MeshData::Vertices &GetVertices()
-      {
-        return vertices;
-      }
-      //! Topology of the (template) mesh
-      std::shared_ptr<MeshTopology const> GetTopology() const
-      {
-        return templateMesh.GetTopology();
-      }
-      size_t GetNumberOfNodes() const
-      {
-        return vertices.size();
-      }
+        //! Unmodified mesh
+        Mesh const &GetTemplateMesh() const
+        {
+          return templateMesh;
+        }
+        //! Facets for the mesh
+        MeshData::Facets const &GetFacets() const
+        {
+          return templateMesh.GetData()->facets;
+        }
+        //! Vertices of the cell
+        MeshData::Vertices const &GetVertices() const
+        {
+          return vertices;
+        }
+        //! Vertices of the cell
+        MeshData::Vertices &GetVertices()
+        {
+          return vertices;
+        }
+        //! Topology of the (template) mesh
+        std::shared_ptr<MeshTopology const> GetTopology() const
+        {
+          return templateMesh.GetTopology();
+        }
+        size_t GetNumberOfNodes() const
+        {
+          return vertices.size();
+        }
 
-      //! Facet bending energy
-      virtual PhysicalEnergy operator()() const = 0;
-      //! Facet bending energy
-      virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()() const = 0;
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
 
-      //! Scale mesh around barycenter
-      void operator*=(Dimensionless const &);
-      //! Scale by matrix around barycenter
-      void operator*=(util::Matrix3D const &);
-      //! Translate mesh
-      void operator+=(LatticePosition const &offset);
-      //! Transform mesh
-      void operator+=(std::vector<LatticePosition> const &displacements);
+        //! Scale mesh around barycenter
+        void operator*=(Dimensionless const &);
+        //! Scale by matrix around barycenter
+        void operator*=(util::Matrix3D const &);
+        //! Translate mesh
+        void operator+=(LatticePosition const &offset);
+        //! Transform mesh
+        void operator+=(std::vector<LatticePosition> const &displacements);
 
-      MeshData::Vertices::value_type GetBarycenter() const
-      {
-        return barycenter(vertices);
-      }
+        MeshData::Vertices::value_type GetBarycenter() const
+        {
+          return barycenter(vertices);
+        }
 
-      //! Scale to apply to the template mesh
-      void SetScale(Dimensionless scaleIn)
-      {
-        assert(scale > 1e-12);
-        scale = scaleIn;
-      }
-      //! Scale to apply to the template mesh
-      Dimensionless GetScale() const
-      {
-        return scale;
-      }
+        //! Scale to apply to the template mesh
+        void SetScale(Dimensionless scaleIn)
+        {
+          assert(scale > 1e-12);
+          scale = scaleIn;
+        }
+        //! Scale to apply to the template mesh
+        Dimensionless GetScale() const
+        {
+          return scale;
+        }
 
       protected:
-      //! Holds list of vertices for this cell
-      MeshData::Vertices vertices;
-      //! Unmodified original mesh
-      Mesh templateMesh;
-      //! Scale factor for the template;
-      Dimensionless scale;
+        //! Holds list of vertices for this cell
+        MeshData::Vertices vertices;
+        //! Unmodified original mesh
+        Mesh templateMesh;
+        //! Scale factor for the template;
+        Dimensionless scale;
     };
 
     //! Deformable cell for which energy and forces can be computed
     class Cell : public CellBase
     {
       public:
-      //! Holds all physical parameters
-      struct Moduli
-      {
-        //! Bending energy parameter
-        PhysicalPressure bending;
-        //! Surface energy parameter
-        PhysicalPressure surface;
-        //! Surface volume parameter
-        PhysicalPressure volume;
-        //! Skalak dilation modulus
-        PhysicalPressure dilation;
-        //! Skalak strain modulus
-        PhysicalPressure strain;
-        Moduli() : bending(0), surface(0), volume(0), dilation(0), strain(0){};
-      } moduli;
-      //! Node-wall interaction
-      Node2NodeForce nodeWall;
+        //! Holds all physical parameters
+        struct Moduli
+        {
+            //! Bending energy parameter
+            PhysicalPressure bending;
+            //! Surface energy parameter
+            PhysicalPressure surface;
+            //! Surface volume parameter
+            PhysicalPressure volume;
+            //! Skalak dilation modulus
+            PhysicalPressure dilation;
+            //! Skalak strain modulus
+            PhysicalPressure strain;
+            Moduli() :
+                bending(0), surface(0), volume(0), dilation(0), strain(0)
+            {
+            }
+            ;
+        } moduli;
+        //! Node-wall interaction
+        Node2NodeForce nodeWall;
 
-      // inheriting constructors
-      using CellBase::CellBase;
+        // inheriting constructors
+        using CellBase::CellBase;
 
-      //! Facet bending energy
-      virtual PhysicalEnergy operator()() const override;
-      //! Facet bending energy
-      virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()() const override;
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
 
       private:
-      // Computes facet bending energy over all facets
-      PhysicalEnergy facetBending() const;
-      // Computes facet bending energy over all facets
-      PhysicalEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
+        // Computes facet bending energy over all facets
+        PhysicalEnergy facetBending() const;
+        // Computes facet bending energy over all facets
+        PhysicalEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
     };
 
     //! Typical cell container type
     typedef std::vector<std::shared_ptr<CellBase>> CellContainer;
   }
-}  // namespace hemelb::redblood
+} // namespace hemelb::redblood
 #endif
