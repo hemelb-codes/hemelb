@@ -25,8 +25,8 @@ class CellTests : public EnergyVsGradientFixture {
 
     struct CellEnergy {
       mutable Cell particle;
-      CellEnergy(Mesh const &_mesh, Mesh const _template)
-        : particle(_mesh, _template) {
+      CellEnergy(Mesh const &_mesh, Mesh const origMesh)
+        : particle(_mesh, origMesh) {
           particle.moduli.bending = 0.888;
           particle.moduli.surface = 1.127;
           particle.moduli.volume = 1.015231;

@@ -22,44 +22,44 @@ class CellBase {
   //! \brief Initializes mesh from mesh data
   //! \param [in] _vertices: deformable vertices that define the cell. These
   //!    values are *not* modified by the scale.
-  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //! \param [in] origMesh: Original mesh. A shallow copy is made of this
   //!    object.
   //! \param [in] _scale: scales template by a given amount
   //!    The scale is added during internal operations. The template will still
   //!    refer to the same data in memory.
   CellBase(
       MeshData::Vertices && _vertices,
-      Mesh const &_template,
+      Mesh const &origMesh,
       Dimensionless _scale = 1e0
-  ) : vertices_(std::move(_vertices)), template_(_template), scale_(_scale) {
+  ) : vertices_(std::move(_vertices)), template_(origMesh), scale_(_scale) {
     assert(scale_ > 1e-12);
   }
   //! \brief Initializes mesh from mesh data
   //! \param [in] _vertices: deformable vertices that define the cell. These
   //!    values are *not* modified by the scale.
-  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //! \param [in] origMesh: Original mesh. A shallow copy is made of this
   //!    object.
   //! \param [in] _scale: scales template by a given amount
   //!    The scale is added during internal operations. The template will still
   //!    refer to the same data in memory.
   CellBase(
       MeshData::Vertices const & _vertices,
-      Mesh const &_template,
+      Mesh const &origMesh,
       Dimensionless _scale = 1e0
-  ) : vertices_(_vertices), template_(_template), scale_(_scale) {
+  ) : vertices_(_vertices), template_(origMesh), scale_(_scale) {
     assert(scale_ > 1e-12);
   }
 
   //! \brief Initializes mesh from mesh data
   //! \param [in] _mesh: deformable vertices that define the cell are copied
   //!    from this mesh. These values are *not* modified by the scale.
-  //! \param [in] _template: Original mesh. A shallow copy is made of this
+  //! \param [in] origMesh: Original mesh. A shallow copy is made of this
   //!    object.
   //! \param [in] _scale: scales template by a given amount
   //!    The scale is added during internal operations. The template will still
   //!    refer to the same data in memory.
-  CellBase(Mesh const & _mesh, Mesh const &_template, Dimensionless _scale=1e0)
-      : CellBase(_mesh.GetVertices(), _template, _scale) {}
+  CellBase(Mesh const & _mesh, Mesh const &origMesh, Dimensionless _scale=1e0)
+      : CellBase(_mesh.GetVertices(), origMesh, _scale) {}
 
   //! \brief Initializes mesh from mesh data
   //! \param [in] _mesh: Modifyiable mesh and template. Deep copies are made of
