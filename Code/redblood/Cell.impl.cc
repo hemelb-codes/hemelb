@@ -33,8 +33,8 @@ PhysicalEnergy facetBending(
     Facet const& facetA_eq, Facet const& facetB_eq,
     PhysicalForce intensity) {
 
-  t_IndexPair const commons = commonNodes(facetA, facetB);
-  t_IndexPair const singles = singleNodes(facetA, facetB);
+  IndexPair const commons = commonNodes(facetA, facetB);
+  IndexPair const singles = singleNodes(facetA, facetB);
 
   LatticePosition const normalA = facetA.normal();
   LatticePosition const normalB = facetB.normal();

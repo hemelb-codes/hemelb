@@ -23,24 +23,24 @@ namespace hemelb { namespace redblood {
 #include "redblood/GridAndCell.impl.h"
 
 //! Displacement of the cell nodes interpolated from lattice velocities
-template<class T_KERNEL> void velocitiesOnMesh(
+template<class KERNEL> void velocitiesOnMesh(
     CellBase const &cell,
     geometry::LatticeData const &latDat,
     stencil::types stencil,
     std::vector<LatticePosition> &displacements
 ) {
   displacements.resize(cell.GetNumberOfNodes());
-  details::VelocityNodeLoop<T_KERNEL>(stencil, cell, latDat)
+  details::VelocityNodeLoop<KERNEL>(stencil, cell, latDat)
     .loop(details::transform_iterator(displacements.begin()));
 }
 //! Displacement of the cell nodes interpolated from lattice velocities
-template<class T_KERNEL> void velocitiesOnMesh(
+template<class KERNEL> void velocitiesOnMesh(
     std::shared_ptr<CellBase const> const &cell,
     geometry::LatticeData const &latDat,
     stencil::types stencil,
     std::vector<LatticePosition> &displacements
 ) {
-  return velocitiesOnMesh<T_KERNEL>(
+  return velocitiesOnMesh<KERNEL>(
       *cell.get(), latDat, stencil, displacements);
 }
 

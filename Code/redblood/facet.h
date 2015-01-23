@@ -123,27 +123,27 @@ bool contains(MeshData::Facet const &a,
 
 // Computes common nodes for neighboring facets
 // This routine will report nonsense if facets are not neighbors
-typedef std::pair<size_t, size_t> t_IndexPair;
-t_IndexPair commonNodes(Facet const &a, Facet const &b) {
+typedef std::pair<size_t, size_t> IndexPair;
+IndexPair commonNodes(Facet const &a, Facet const &b) {
   // First node differs, hence other two nodes in common
   if(not contains(b.indices, a.indices[0]))
-    return t_IndexPair(1, 2);
+    return IndexPair(1, 2);
   // First node in common, second node differs
   if(not contains(b.indices, a.indices[1]))
-    return t_IndexPair(0, 2);
+    return IndexPair(0, 2);
   // First node and second in common
-  return t_IndexPair(0, 1);
+  return IndexPair(0, 1);
 }
 // Returns common edge with specific direction
 LatticePosition commonEdge(Facet const &a, Facet const &b) {
-  t_IndexPair common(commonNodes(a, b));
+  IndexPair common(commonNodes(a, b));
   return a(common.first, common.second);
 }
 
 // Figures out nodes that are not in common
 // Returns non-sense if the nodes are not neighbors.
-t_IndexPair singleNodes(Facet const &a, Facet const &b) {
-  t_IndexPair result;
+IndexPair singleNodes(Facet const &a, Facet const &b) {
+  IndexPair result;
   size_t mappingB[3] = {4, 4, 4};
   for(size_t i(0); i < 3; ++i)
     if(a.indices[i] == b.indices[0]) mappingB[0] = i;

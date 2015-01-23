@@ -74,7 +74,7 @@ public:
   }
 
   void testCommonNodes() {
-    t_IndexPair const nodes = commonNodes(*main, *neighbor);
+    IndexPair const nodes = commonNodes(*main, *neighbor);
     CPPUNIT_ASSERT(nodes.first == 1 and nodes.second == 2);
     LatticePosition const edge = commonEdge(*main, *neighbor);
     CPPUNIT_ASSERT(helpers::is_zero(
@@ -82,7 +82,7 @@ public:
     ));
   }
   void testSingleNodes() {
-    t_IndexPair const nodes = singleNodes(*main, *neighbor);
+    IndexPair const nodes = singleNodes(*main, *neighbor);
     // indices into the list of vertices of each facet,
     // not into list of all vertices.
     CPPUNIT_ASSERT(nodes.first == 0 and nodes.second == 1);

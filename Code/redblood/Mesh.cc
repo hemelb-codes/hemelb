@@ -178,10 +178,10 @@ void write_vtkmesh(std::ostream &stream, MeshData const &data) {
 }
 
 LatticePosition barycenter(MeshData::Vertices const &vertices) {
-  typedef MeshData::Vertices::value_type t_Vertex;
+  typedef MeshData::Vertices::value_type Vertex;
   return std::accumulate(
-      vertices.begin(), vertices.end(), t_Vertex(0, 0, 0)
-  ) / t_Vertex::value_type(vertices.size());
+      vertices.begin(), vertices.end(), Vertex(0, 0, 0)
+  ) / Vertex::value_type(vertices.size());
 }
 LatticePosition barycenter(MeshData const &mesh) {
   return barycenter(mesh.vertices);
@@ -264,15 +264,15 @@ MeshTopology::MeshTopology(MeshData const &mesh) {
   size_t const Nmax = mesh.facets.size();
   std::fill(
     facetNeighbors.begin(), facetNeighbors.end(),
-    t_FacetNeighbors::value_type{{Nmax, Nmax, Nmax}}
+    FacetNeighbors::value_type{{Nmax, Nmax, Nmax}}
   );
   i_facet = mesh.facets.begin();
   for(unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i) {
     for(size_t node(0); node != i_facet->size(); ++node) {
       // check facets that this node is attached to
-      MeshTopology::t_VertexToFacets::const_reference
+      MeshTopology::VertexToFacets::const_reference
         neighboringFacets = vertexToFacets.at((*i_facet)[node]);
-      MeshTopology::t_VertexToFacets::value_type::const_iterator
+      MeshTopology::VertexToFacets::value_type::const_iterator
         i_neigh = neighboringFacets.begin();
       for(; i_neigh != neighboringFacets.end(); ++i_neigh) {
         if(i == *i_neigh) continue;
@@ -361,8 +361,8 @@ namespace {
     data->vertices.reserve(data->facets.size() * 3 + data->vertices.size());
 
     // Container with midpoint indices, so midpoints are only added once
-    typedef std::pair<size_t, size_t> t_Pair;
-    std::map<t_Pair, size_t> new_vertices;
+    typedef std::pair<size_t, size_t> Pair;
+    std::map<Pair, size_t> new_vertices;
 
     MeshData::Facets::const_iterator i_orig_facet(facets.begin());
     MeshData::Facets::const_iterator const i_orig_facet_end(facets.end());
@@ -435,11 +435,11 @@ Mesh pancakeSamosa(unsigned int depth) {
   // Create topology by hand cos we generally don't allow for this kind of
   // ambiguous self-referencing shape.
   std::shared_ptr<redblood::MeshTopology> topo(new redblood::MeshTopology);
-  MeshTopology::t_VertexToFacets::value_type v2f;
+  MeshTopology::VertexToFacets::value_type v2f;
   v2f.insert(0); v2f.insert(1);
   topo->vertexToFacets.resize(3, v2f);
 
-  MeshTopology::t_FacetNeighbors::value_type neighbors[2]
+  MeshTopology::FacetNeighbors::value_type neighbors[2]
     = {{{0, 0, 0}}, {{1, 1, 1}}};
   topo->facetNeighbors.push_back(neighbors[1]);
   topo->facetNeighbors.push_back(neighbors[0]);

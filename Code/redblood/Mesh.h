@@ -53,13 +53,13 @@ PhysicalVolume surface(
 //! Holds raw topology data
 struct MeshTopology {
   //! Type for map from vertices to facets
-  typedef std::vector< std::set<size_t> > t_VertexToFacets;
+  typedef std::vector< std::set<size_t> > VertexToFacets;
   //! Type for map from facets to its neighbors
-  typedef std::vector< std::array<size_t, 3> > t_FacetNeighbors;
+  typedef std::vector< std::array<size_t, 3> > FacetNeighbors;
   //! For each vertex, lists the facet indices
-  t_VertexToFacets vertexToFacets;
+  VertexToFacets vertexToFacets;
   //! For each facet, lists the neighboring facets
-  t_FacetNeighbors facetNeighbors;
+  FacetNeighbors facetNeighbors;
 
   // Creates mesh topology from mesh data
   MeshTopology(MeshData const &mesh);
