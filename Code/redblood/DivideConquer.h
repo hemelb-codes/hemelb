@@ -25,12 +25,12 @@ namespace details { namespace {
   template<class T> struct DnCBase{
     typedef LatticeVector key_type;
     struct CompareKeys {
-      bool operator()(key_type const &_a, key_type const &_b) const {
-        if(_a.x > _b.x) return false;
-        else if(_a.x < _b.x) return true;
-        if(_a.y > _b.y) return false;
-        else if(_a.y < _b.y) return true;
-        return _a.z < _b.z;
+      bool operator()(key_type const &a, key_type const &b) const {
+        if(a.x > b.x) return false;
+        else if(a.x < b.x) return true;
+        if(a.y > b.y) return false;
+        else if(a.y < b.y) return true;
+        return a.z < b.z;
       }
     };
     typedef std::multimap<key_type, T, CompareKeys> type;
@@ -53,45 +53,45 @@ template<class T> class DivideConquer : public details::DnCBase<T>::type {
     typedef std::pair<const_iterator, const_iterator> const_range;
 
     //! Constructor sets size of cutoff
-    DivideConquer(PhysicalDistance _boxsize) : base_type(), boxsize_(_boxsize) {}
+    DivideConquer(PhysicalDistance boxsize) : base_type(), boxsize_(boxsize) {}
     //! Insert into divide and conquer container
-    iterator insert(LatticePosition const&_pos, T const &_value) {
-      return base_type::insert(value_type(DowngradeKey(_pos), _value));
+    iterator insert(LatticePosition const&pos, T const &value) {
+      return base_type::insert(value_type(DowngradeKey(pos), value));
     }
     //! Insert into divide and conquer container
-    iterator insert(key_type const&_pos, T const &_value) {
-      return base_type::insert(value_type(_pos, _value));
+    iterator insert(key_type const&pos, T const &value) {
+      return base_type::insert(value_type(pos, value));
     }
     //! All objects in a single divide and conquer box
-    range equal_range(LatticePosition const &_pos) {
-      return DivideConquer<T>::equal_range(DowngradeKey(_pos));
+    range equal_range(LatticePosition const &pos) {
+      return DivideConquer<T>::equal_range(DowngradeKey(pos));
     }
     //! All objects in a single divide and conquer box
-    range equal_range(key_type const &_pos) {
-      return base_type::equal_range(_pos);
+    range equal_range(key_type const &pos) {
+      return base_type::equal_range(pos);
     }
     //! All objects in a single divide and conquer box
-    const_range equal_range(LatticePosition const &_pos) const {
-      return DivideConquer<T>::equal_range(DowngradeKey(_pos));
+    const_range equal_range(LatticePosition const &pos) const {
+      return DivideConquer<T>::equal_range(DowngradeKey(pos));
     }
     //! All objects in a single divide and conquer box
-    const_range equal_range(key_type const &_pos) const {
-      return base_type::equal_range(_pos);
+    const_range equal_range(key_type const &pos) const {
+      return base_type::equal_range(pos);
     }
 
     //! Length of each box
     PhysicalDistance GetBoxSize() const { return boxsize_; }
 
     //! Converts from position to box index
-    key_type DowngradeKey(LatticePosition const &_pos) const {
+    key_type DowngradeKey(LatticePosition const &pos) const {
       return key_type(
-        static_cast<LatticeCoordinate>(std::floor(_pos.x / boxsize_)),
-        static_cast<LatticeCoordinate>(std::floor(_pos.y / boxsize_)),
-        static_cast<LatticeCoordinate>(std::floor(_pos.z / boxsize_))
+        static_cast<LatticeCoordinate>(std::floor(pos.x / boxsize_)),
+        static_cast<LatticeCoordinate>(std::floor(pos.y / boxsize_)),
+        static_cast<LatticeCoordinate>(std::floor(pos.z / boxsize_))
       );
     }
     //! No conversion since in box index type already
-    key_type DowngradeKey(key_type const &_pos) const { return _pos; }
+    key_type DowngradeKey(key_type const &pos) const { return pos; }
   protected:
     PhysicalDistance const boxsize_;
 };

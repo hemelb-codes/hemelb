@@ -25,17 +25,17 @@ PhysicalEnergy Cell::operator()() const {
       );
 }
 PhysicalEnergy Cell::operator()(
-    std::vector<LatticeForceVector> &_forces) const {
-  assert(_forces.size() == vertices_.size());
-  return facetBending_(_forces)
+    std::vector<LatticeForceVector> &forces) const {
+  assert(forces.size() == vertices_.size());
+  return facetBending_(forces)
     + volumeEnergy(
-        vertices_, *templateMesh.GetData(), moduli.volume, _forces, scale_)
+        vertices_, *templateMesh.GetData(), moduli.volume, forces, scale_)
     + surfaceEnergy(
-        vertices_, *templateMesh.GetData(), moduli.surface, _forces, scale_)
+        vertices_, *templateMesh.GetData(), moduli.surface, forces, scale_)
     + strainEnergy(
         vertices_, *templateMesh.GetData(),
         moduli.dilation, moduli.strain,
-        _forces,
+        forces,
         scale_
       );
 }
@@ -60,7 +60,7 @@ PhysicalEnergy Cell::facetBending_() const {
 }
 
 PhysicalEnergy Cell::facetBending_(
-    std::vector<LatticeForceVector> &_forces) const {
+    std::vector<LatticeForceVector> &forces) const {
   if(std::abs(moduli.bending) < 1e-8) return 0e0;
 
   PhysicalEnergy result(0);
@@ -73,31 +73,31 @@ PhysicalEnergy Cell::facetBending_(
         result += facetBending(
             vertices_, *templateMesh.GetData(),
             current, (*i_facet)[i],
-            moduli.bending, _forces
+            moduli.bending, forces
         );
   }
   return result;
 }
 
-void CellBase::operator*=(Dimensionless const &_scale) {
+void CellBase::operator*=(Dimensionless const &scale) {
   auto const barycenter = GetBarycenter();
   for(auto &vertex: vertices_)
-    vertex = (vertex - barycenter) * _scale + barycenter;
+    vertex = (vertex - barycenter) * scale + barycenter;
 }
-void CellBase::operator*=(util::Matrix3D const &_scale) {
+void CellBase::operator*=(util::Matrix3D const &scale) {
   auto const barycenter = GetBarycenter();
   for(auto &vertex: vertices_) {
-    _scale.timesVector(vertex - barycenter, vertex);
+    scale.timesVector(vertex - barycenter, vertex);
     vertex += barycenter;
   }
 }
-void CellBase::operator+=(LatticePosition const &_offset) {
+void CellBase::operator+=(LatticePosition const &offset) {
   for(auto &vertex: vertices_)
-    vertex += _offset;
+    vertex += offset;
 }
-void CellBase::operator+=(std::vector<LatticePosition> const &_displacements) {
-  assert(_displacements.size() == vertices_.size());
-  auto i_disp = _displacements.begin();
+void CellBase::operator+=(std::vector<LatticePosition> const &displacements) {
+  assert(displacements.size() == vertices_.size());
+  auto i_disp = displacements.begin();
   for(auto &vertex: vertices_)
       vertex += *(i_disp++);
 }

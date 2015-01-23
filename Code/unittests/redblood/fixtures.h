@@ -47,46 +47,46 @@ class EnergyVsGradientFixture : public BasisFixture {
   public:
   template<class ENERGY, class GRADIENT>
     void energyVsForces(
-        ENERGY const &_energy,
-        GRADIENT const &_gradient,
-        LatticePosition const &_dir,
-        size_t _node, double _epsilon = 1e-8) {
+        ENERGY const &energy,
+        GRADIENT const &gradient,
+        LatticePosition const &dir,
+        size_t node, double epsilon = 1e-8) {
 
       std::vector<LatticeForceVector> forces(4, LatticeForceVector(0,0,0));
-      PhysicalEnergy const firstE(_gradient(mesh, forces));
+      PhysicalEnergy const firstE(gradient(mesh, forces));
 
       redblood::MeshData newmesh(mesh);
-      newmesh.vertices[_node] += _dir * _epsilon;
-      PhysicalEnergy const deltaE(_energy(newmesh) - firstE);
+      newmesh.vertices[node] += dir * epsilon;
+      PhysicalEnergy const deltaE(energy(newmesh) - firstE);
 
       double const tolerance(
-          std::max(std::abs((deltaE / _epsilon) * 1e-4), 1e-8)
+          std::max(std::abs((deltaE / epsilon) * 1e-4), 1e-8)
       );
       CPPUNIT_ASSERT(
           helpers::is_zero(
-            forces[_node].Dot(_dir) + (deltaE / _epsilon),
+            forces[node].Dot(dir) + (deltaE / epsilon),
             tolerance
           )
       );
     }
 
   template<class ENERGY, class GRADIENT>
-    void energyVsForces(ENERGY const &_energy,
-        GRADIENT const &_gradient,
-        double _epsilon = 1e-8) {
+    void energyVsForces(ENERGY const &energy,
+        GRADIENT const &gradient,
+        double epsilon = 1e-8) {
 
       for(size_t node(0); node < mesh.vertices.size(); ++node) 
         for(size_t i(0); i < 3; ++i)
           energyVsForces(
-            _energy, _gradient,
+            energy, gradient,
             LatticePosition(i==0, i==1, i==2),
-            node, _epsilon
+            node, epsilon
           );
     }
 
   template<class BOTH>
-    void energyVsForces(BOTH const &_both, double _epsilon = 1e-8) {
-      energyVsForces(_both, _both, _epsilon);
+    void energyVsForces(BOTH const &both, double epsilon = 1e-8) {
+      energyVsForces(both, both, epsilon);
     }
 };
 
@@ -114,13 +114,13 @@ class SquareDuctTetrahedronFixture : public helpers::FourCubeBasedTestFixture {
 };
 
 template<class CELLTYPE=redblood::Cell>
-  redblood::CellContainer TwoPancakeSamosas(PhysicalDistance _cutoff) {
+  redblood::CellContainer TwoPancakeSamosas(PhysicalDistance cutoff) {
     redblood::CellContainer cells;
     redblood::Mesh pancake = redblood::pancakeSamosa();
-    pancake += LatticePosition(1, 1, 1) * _cutoff * 0.5;
+    pancake += LatticePosition(1, 1, 1) * cutoff * 0.5;
     // safer to clone so cells has its own copy
     cells.emplace_back(std::make_shared<CELLTYPE>(pancake.clone()));
-    pancake += LatticePosition(3, 0, 1) * _cutoff;
+    pancake += LatticePosition(3, 0, 1) * cutoff;
     cells.emplace_back(std::make_shared<CELLTYPE>(pancake.clone()));
 
     return cells;

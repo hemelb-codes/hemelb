@@ -37,14 +37,14 @@ class HEMELB_ITERATOR {
     typedef wrappee_iterator::iterator_category iterator_category;
 
     HEMELB_ITERATOR(
-        DivideConquerCells HEMELB_CONST &_owner,
-        wrappee_iterator const &_w
-    ) : owner_(_owner), wrappee_(_w) {}
-    HEMELB_ITERATOR(HEMELB_ITERATOR const &_in)
-      : owner_(_in.owner_), wrappee_(_in.wrappee_) {}
+        DivideConquerCells HEMELB_CONST &owner,
+        wrappee_iterator const &w
+    ) : owner_(owner), wrappee_(w) {}
+    HEMELB_ITERATOR(HEMELB_ITERATOR const &in)
+      : owner_(in.owner_), wrappee_(in.wrappee_) {}
 #   ifndef HEMELB_DOING_NONCONST
-      HEMELB_ITERATOR(iterator const &_in)
-        : owner_(_in.owner_), wrappee_(_in.wrappee_) {}
+      HEMELB_ITERATOR(iterator const &in)
+        : owner_(in.owner_), wrappee_(in.wrappee_) {}
 #   else
       friend class DivideConquerCells::const_iterator;
 #   endif
@@ -72,11 +72,11 @@ class HEMELB_ITERATOR {
       return HEMELB_ITERATOR(owner_, wrappee_--);
     }
 
-    bool operator==(HEMELB_ITERATOR const &_in) const {
-      return _in.wrappee_ == wrappee_;
+    bool operator==(HEMELB_ITERATOR const &in) const {
+      return in.wrappee_ == wrappee_;
     }
-    bool operator!=(HEMELB_ITERATOR const &_in) const {
-      return not operator==(_in);
+    bool operator!=(HEMELB_ITERATOR const &in) const {
+      return not operator==(in);
     }
 
     CellReference const & GetCellReference() const { return wrappee_->second; }
@@ -87,8 +87,8 @@ class HEMELB_ITERATOR {
     //! Gets integer coding for whether node is close to boundary
     int GetNearBorder() const { return GetCellReference().isNearBorder; }
     //! True if close to given boundary
-    bool IsNearBorder(CellReference::Borders _border) const {
-      return GetNearBorder() bitand _border;
+    bool IsNearBorder(CellReference::Borders border) const {
+      return GetNearBorder() bitand border;
     }
     //! True if close to any boundary
     bool IsNearBorder() const { return GetNearBorder() != 0; }
@@ -97,9 +97,9 @@ class HEMELB_ITERATOR {
 
     operator base_type::HEMELB_ITERATOR() const { return wrappee_; }
 
-    void operator=(iterator const &_c) { wrappee_ = _c.wrappee_; }
+    void operator=(iterator const &c) { wrappee_ = c.wrappee_; }
 #   ifndef HEMELB_DOING_NONCONST
-      void operator=(const_iterator const &_c) { wrappee_ = _c.wrappee_; }
+      void operator=(const_iterator const &c) { wrappee_ = c.wrappee_; }
 #   endif
 
   protected:

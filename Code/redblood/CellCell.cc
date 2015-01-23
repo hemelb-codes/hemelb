@@ -17,102 +17,102 @@ namespace hemelb { namespace redblood {
 
 namespace {
   template<class T> int figure_nearness(
-      DivideConquer<T> &_dnc,
-      LatticeVector const &_key,
-      LatticePosition const &_vertex,
-      PhysicalDistance const &_haloLength
+      DivideConquer<T> &dnc,
+      LatticeVector const &key,
+      LatticePosition const &vertex,
+      PhysicalDistance const &haloLength
   ) {
-    if(_haloLength + _haloLength > _dnc.GetBoxSize()) return 0;
+    if(haloLength + haloLength > dnc.GetBoxSize()) return 0;
     int result = 0;
     for(size_t d(1); d < (1 << 6); d <<= 1) {
       LatticePosition const translated(
-         CellReference::directions(d) * _haloLength
+         CellReference::directions(d) * haloLength
       );
-      if(not (_key == _dnc.DowngradeKey(_vertex + translated)))
+      if(not (key == dnc.DowngradeKey(vertex + translated)))
         result |= d;
     }
     return result;
   }
 
   template<class T> CellReference init_cell_ref(
-      DivideConquer<T> &_dnc,
-      site_t _cellid, site_t _nodeid,
-      LatticeVector const &_key,
-      LatticePosition const &_vertex,
-      PhysicalDistance const &_haloLength
+      DivideConquer<T> &dnc,
+      site_t cellid, site_t nodeid,
+      LatticeVector const &key,
+      LatticePosition const &vertex,
+      PhysicalDistance const &haloLength
   ) {
-    int const isNearBorder = figure_nearness(_dnc, _key, _vertex, _haloLength);
-    CellReference result = {_cellid, _nodeid, isNearBorder};
+    int const isNearBorder = figure_nearness(dnc, key, vertex, haloLength);
+    CellReference result = {cellid, nodeid, isNearBorder};
     return result;
   }
 
   void initialize_cells(
-      DivideConquer<CellReference> &_dnc,
-      MeshData::Vertices const &_vertices,
-      site_t _cellid,
-      PhysicalDistance _haloLength ) {
+      DivideConquer<CellReference> &dnc,
+      MeshData::Vertices const &vertices,
+      site_t cellid,
+      PhysicalDistance haloLength ) {
     typedef DivideConquer<CellReference> DnC;
     typedef DnC::key_type key_type;
     typedef MeshData::Vertices::const_iterator vertex_iterator;
-    vertex_iterator i_first = _vertices.begin();
-    vertex_iterator const i_end = _vertices.end();
+    vertex_iterator i_first = vertices.begin();
+    vertex_iterator const i_end = vertices.end();
     for(site_t i(0); i_first != i_end; ++i_first, ++i) {
-      key_type const key = _dnc.DowngradeKey(*i_first);
-      _dnc.insert(
+      key_type const key = dnc.DowngradeKey(*i_first);
+      dnc.insert(
           key,
-          init_cell_ref(_dnc, _cellid, i, key, *i_first, _haloLength)
+          init_cell_ref(dnc, cellid, i, key, *i_first, haloLength)
       );
     }
   }
 
   void initialize_cells(
-      DivideConquer<CellReference> &_dnc,
-      CellContainer const& _cells,
-      PhysicalDistance _haloLength ) {
-    CellContainer::const_iterator i_first = _cells.begin();
-    CellContainer::const_iterator const i_end = _cells.end();
+      DivideConquer<CellReference> &dnc,
+      CellContainer const& cells,
+      PhysicalDistance haloLength ) {
+    CellContainer::const_iterator i_first = cells.begin();
+    CellContainer::const_iterator const i_end = cells.end();
     for(site_t i(0); i_first != i_end; ++i_first, ++i)
-      initialize_cells(_dnc, (*i_first)->GetVertices(), i, _haloLength);
+      initialize_cells(dnc, (*i_first)->GetVertices(), i, haloLength);
   }
 
   // Compare distance between vertices
   bool next_dist(
-      DivideConquerCells::const_iterator &_first,
-      DivideConquerCells::const_iterator const & _end,
-      DivideConquerCells::const_iterator const & _main,
-      PhysicalDistance _dist
+      DivideConquerCells::const_iterator &first,
+      DivideConquerCells::const_iterator const & end,
+      DivideConquerCells::const_iterator const & main,
+      PhysicalDistance dist
   ) {
-    for(; _first != _end; ++_first)
-      if(_first.GetCellIndex() > _main.GetCellIndex()
-          and (*_main - *_first).GetMagnitude() < _dist)
+    for(; first != end; ++first)
+      if(first.GetCellIndex() > main.GetCellIndex()
+          and (*main - *first).GetMagnitude() < dist)
         return true;
     return false;
   }
 
   void spreadForce(
-      LatticePosition const &_node,
-      geometry::LatticeData &_latticeData,
-      stencil::types _stencil,
-      LatticeForceVector const &_force
+      LatticePosition const &node,
+      geometry::LatticeData &latticeData,
+      stencil::types stencil,
+      LatticeForceVector const &force
   ) {
     proc_t procid;
     site_t siteid;
-    InterpolationIterator spreader = interpolationIterator(_node, _stencil);
+    InterpolationIterator spreader = interpolationIterator(node, stencil);
     for(; spreader; ++spreader)
-      if(_latticeData.GetContiguousSiteId(*spreader, procid, siteid))
-        _latticeData.GetSite(siteid).AddToForce(_force * spreader.weight());
+      if(latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+        latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
   }
 }
 
 #ifndef HEMELB_DOING_UNITTESTS
 //! Constructor
 DivideConquerCells :: DivideConquerCells(
-    CellContainer const &_cells,
-    PhysicalDistance _boxsize, PhysicalDistance _halosize
-) : DivideConquer<CellReference>(_boxsize),
-    haloLength_(_halosize), cells_(_cells) {
+    CellContainer const &cells,
+    PhysicalDistance boxsize, PhysicalDistance halosize
+) : DivideConquer<CellReference>(boxsize),
+    haloLength_(halosize), cells_(cells) {
   try {
-    initialize_cells(*static_cast<base_type*>(this), _cells, haloLength_);
+    initialize_cells(*static_cast<base_type*>(this), cells, haloLength_);
   } catch(...) {}
 }
 
@@ -132,8 +132,8 @@ void DivideConquerCells :: update() {
 }
 
 DivideConquerCells::const_range DivideConquerCells::operator()(
-    LatticeVector const &_pos) const {
-  base_type::const_range const boxrange = base_type::equal_range(_pos);
+    LatticeVector const &pos) const {
+  base_type::const_range const boxrange = base_type::equal_range(pos);
   return const_range(
       const_iterator(*this, boxrange.first),
       const_iterator(*this, boxrange.second)
@@ -188,22 +188,22 @@ bool DivideConquerCells::pair_range::operator++() {
 }
 
 DivideConquerCells::pair_range::pair_range(
-    DivideConquerCells const &_owner,
-    iterator const &_begin,
-    iterator const &_end,
-    PhysicalDistance _maxdist
-) : maxdist_(_maxdist), box_(CellReference::NONE),
-    currents_(_begin, _end), ends_(_end, _end), owner_(_owner) {
+    DivideConquerCells const &owner,
+    iterator const &begin,
+    iterator const &end,
+    PhysicalDistance maxdist
+) : maxdist_(maxdist), box_(CellReference::NONE),
+    currents_(begin, end), ends_(end, end), owner_(owner) {
   // No throw garantee. Makes iterator invalid instead.
   try {
     // Could be invalid from start
     if(not is_valid()) return;
     // Iterates to first valid item, if any
     if(not do_box_()) operator++();
-  } catch(std::exception const &_e) {
+  } catch(std::exception const &e) {
     log::Logger::Log<log::Debug, log::OnePerCore>(
       "*** Encountered error while initializing pair iterator: %s\n",
-      _e.what()
+      e.what()
     );
     currents_.first = ends_.first;
   } catch(...) {
@@ -214,23 +214,23 @@ DivideConquerCells::pair_range::pair_range(
 }
 
 DivideConquerCells::pair_range DivideConquerCells::pair_begin(
-    PhysicalDistance _maxdist) const {
-  return pair_range(*this, begin(), end(), _maxdist);
+    PhysicalDistance maxdist) const {
+  return pair_range(*this, begin(), end(), maxdist);
 }
 
 //! Computes cell <-> cell interactions and spread to grid
 void addCell2CellInteractions(
-    DivideConquerCells const &_dnc,
-    Node2NodeForce const &_functional,
-    stencil::types _stencil,
-    geometry::LatticeData &_latticeData
+    DivideConquerCells const &dnc,
+    Node2NodeForce const &functional,
+    stencil::types stencil,
+    geometry::LatticeData &latticeData
 ) {
-  DivideConquerCells :: pair_range range(_dnc.pair_begin(_functional.cutoff));
+  DivideConquerCells :: pair_range range(dnc.pair_begin(functional.cutoff));
   for(; range.is_valid(); ++range) {
-    LatticeForceVector const force(_functional(*range->first, *range->second));
+    LatticeForceVector const force(functional(*range->first, *range->second));
     // spread to the grid from from one node and from the other
-    spreadForce(*range->first, _latticeData, _stencil, force);
-    spreadForce(*range->second, _latticeData, _stencil, -force);
+    spreadForce(*range->first, latticeData, stencil, force);
+    spreadForce(*range->second, latticeData, stencil, -force);
   }
 }
 #endif

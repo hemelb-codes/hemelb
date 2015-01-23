@@ -31,43 +31,43 @@ namespace hemelb { namespace redblood {
   }
 
   namespace {
-    int minimumPosImpl(Dimensionless _x, size_t _range) {
+    int minimumPosImpl(Dimensionless x, size_t range) {
         return static_cast<int>(
-          std::floor(_x - 0.5 * Dimensionless(_range)) + 1
+          std::floor(x - 0.5 * Dimensionless(range)) + 1
         );
     }
-    int maximumPosImpl(Dimensionless _x, size_t _range) {
+    int maximumPosImpl(Dimensionless x, size_t range) {
         return static_cast<int>(
-          std::floor(_x + 0.5 * Dimensionless(_range))
+          std::floor(x + 0.5 * Dimensionless(range))
         );
     }
   }
 
   LatticeVector InterpolationIterator :: minimumPosition_(
-      LatticePosition const &_node,
-      size_t _range) {
+      LatticePosition const &node,
+      size_t range) {
     return LatticeVector(
-        minimumPosImpl(_node.x, _range),
-        minimumPosImpl(_node.y, _range),
-        minimumPosImpl(_node.z, _range)
+        minimumPosImpl(node.x, range),
+        minimumPosImpl(node.y, range),
+        minimumPosImpl(node.z, range)
     );
   }
   LatticeVector InterpolationIterator :: maximumPosition_(
-      LatticePosition const &_node,
-      size_t _range) {
+      LatticePosition const &node,
+      size_t range) {
     return LatticeVector(
-        maximumPosImpl(_node.x, _range),
-        maximumPosImpl(_node.y, _range),
-        maximumPosImpl(_node.z, _range)
+        maximumPosImpl(node.x, range),
+        maximumPosImpl(node.y, range),
+        maximumPosImpl(node.z, range)
     );
   }
 
   InterpolationIterator interpolationIterator(
-      LatticePosition const &_where, stencil::types _stencil) {
+      LatticePosition const &where, stencil::types stencil) {
 #   define HEMELB_STENCIL_MACRO(NAME, Name)                     \
         case stencil::NAME:                                     \
-          return interpolationIterator<stencil::Name>(_where)
-      switch(_stencil) {
+          return interpolationIterator<stencil::Name>(where)
+      switch(stencil) {
         HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint);
         HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
         HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);

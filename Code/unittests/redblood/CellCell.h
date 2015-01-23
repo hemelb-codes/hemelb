@@ -160,26 +160,26 @@ void CellCellInteractionTests :: testAddNodes() {
 }
 
 void check_cell(
-    DivideConquerCells const &_dnc,
-    LatticeVector const &_key,
-    site_t _cellIndex,
-    site_t _nbNodes
+    DivideConquerCells const &dnc,
+    LatticeVector const &key,
+    site_t cellIndex,
+    site_t nbNodes
 ) {
-  DivideConquerCells::const_range omega = _dnc(_key);
-  CPPUNIT_ASSERT(std::distance(omega.first, omega.second) == _nbNodes);
+  DivideConquerCells::const_range omega = dnc(key);
+  CPPUNIT_ASSERT(std::distance(omega.first, omega.second) == nbNodes);
 
   std::set<int> nodes;
   for(; omega.first != omega.second; ++omega.first) {
-    CPPUNIT_ASSERT(omega.first.GetCellReference().cellIndex == _cellIndex);
+    CPPUNIT_ASSERT(omega.first.GetCellReference().cellIndex == cellIndex);
     CPPUNIT_ASSERT(
         omega.first.GetCellReference().nodeIndex >= 0
-        and omega.first.GetCellReference().nodeIndex <= _nbNodes
+        and omega.first.GetCellReference().nodeIndex <= nbNodes
     );
     CPPUNIT_ASSERT(
         nodes.count(omega.first.GetCellReference().nodeIndex) == 0);
     nodes.insert(omega.first.GetCellReference().nodeIndex);
   }
-  CPPUNIT_ASSERT(nodes.size() == _nbNodes);
+  CPPUNIT_ASSERT(nodes.size() == nbNodes);
 }
 
 void CellCellInteractionTests :: testAddMeshes() {

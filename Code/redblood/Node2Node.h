@@ -16,45 +16,45 @@
 namespace hemelb { namespace redblood {
 
   //! \brief Force meant to prevent nodes from collapsing one onto the other
-  //! \param[in] _distance: Square of the distance between the two nodes
-  //! \param[in] _intensity: K_int, strength of the interaction
-  //! \param[in] _cutoffDistance: Maximum interaction distance, squared
-  //! \param[in] _exponent
+  //! \param[in] distance: Square of the distance between the two nodes
+  //! \param[in] intensity: K_int, strength of the interaction
+  //! \param[in] cutoffDistance: Maximum interaction distance, squared
+  //! \param[in] exponent
   inline PhysicalForce node2NodeForce(
-      PhysicalDistance const _distance,
-      PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistance = 1.0,
-      size_t _exponent = 2
+      PhysicalDistance const distance,
+      PhysicalForce const intensity,
+      PhysicalDistance const cutoffDistance = 1.0,
+      size_t exponent = 2
   ) {
-    if(_distance >= _cutoffDistance) return 0e0;
+    if(distance >= cutoffDistance) return 0e0;
     PhysicalDistance const deltaX = 1;
-    return -_intensity * (
-        std::pow(deltaX / _distance, _exponent)
-        - std::pow(deltaX / _cutoffDistance, _exponent)
+    return -intensity * (
+        std::pow(deltaX / distance, exponent)
+        - std::pow(deltaX / cutoffDistance, exponent)
     );
   }
 
   // Repulsive force between two nodes
   inline LatticeForceVector node2NodeForce(
-      LatticePosition _distance,
-      PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistance = 1.0,
-      size_t _exponent = 2
+      LatticePosition distance,
+      PhysicalForce const intensity,
+      PhysicalDistance const cutoffDistance = 1.0,
+      size_t exponent = 2
   ) {
-    PhysicalDistance const d = _distance.GetMagnitude();
-    return _distance * (
-        node2NodeForce(d, _intensity, _cutoffDistance, _exponent) / d
+    PhysicalDistance const d = distance.GetMagnitude();
+    return distance * (
+        node2NodeForce(d, intensity, cutoffDistance, exponent) / d
     );
   }
 
   // Repulsive force felt by A from interaction with B
   inline LatticeForceVector node2NodeForce(
-      LatticePosition _A, LatticePosition _B,
-      PhysicalForce const _intensity,
-      PhysicalDistance const _cutoffDistance = 1.0,
-      size_t _exponent = 2
+      LatticePosition A, LatticePosition B,
+      PhysicalForce const intensity,
+      PhysicalDistance const cutoffDistance = 1.0,
+      size_t exponent = 2
   ) {
-    return node2NodeForce(_B - _A, _intensity, _cutoffDistance, _exponent);
+    return node2NodeForce(B - A, intensity, cutoffDistance, exponent);
   }
 
 
@@ -68,21 +68,21 @@ namespace hemelb { namespace redblood {
     size_t exponent;
 
     Node2NodeForce(
-        PhysicalForce _intensity = 0.0,
-        PhysicalDistance _cutoff = 1.0,
-        size_t _exponent = 2
-    ) : intensity(_intensity), cutoff(_cutoff), exponent(_exponent) {}
+        PhysicalForce intensity = 0.0,
+        PhysicalDistance cutoff = 1.0,
+        size_t exponent = 2
+    ) : intensity(intensity), cutoff(cutoff), exponent(exponent) {}
 
 
-    PhysicalForce operator()(PhysicalDistance const &_distance) const {
-      return node2NodeForce(_distance, intensity, cutoff, exponent);
+    PhysicalForce operator()(PhysicalDistance const &distance) const {
+      return node2NodeForce(distance, intensity, cutoff, exponent);
     }
-    LatticeForceVector operator()(LatticePosition const &_distance) const {
-      return node2NodeForce(_distance, intensity, cutoff, exponent);
+    LatticeForceVector operator()(LatticePosition const &distance) const {
+      return node2NodeForce(distance, intensity, cutoff, exponent);
     }
     LatticeForceVector operator()(
-        LatticePosition const &_A, LatticePosition const &_B) const {
-      return node2NodeForce(_A, _B, intensity, cutoff, exponent);
+        LatticePosition const &A, LatticePosition const &B) const {
+      return node2NodeForce(A, B, intensity, cutoff, exponent);
     }
   };
 }} // hemelb::redblood

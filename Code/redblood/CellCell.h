@@ -44,8 +44,8 @@ struct CellReference {
     LAST = 64
   };
 
-  static LatticeVector idirections(Borders _border) {
-    switch(_border) {
+  static LatticeVector idirections(Borders border) {
+    switch(border) {
       case TOP:    return LatticeVector(1, 0, 0);
       case BOTTOM: return LatticeVector(-1, 0, 0);
       case NORTH:   return LatticeVector(0, 1, 0);
@@ -55,19 +55,19 @@ struct CellReference {
       default: return LatticeVector(0, 0, 0);
     };
   }
-  static LatticePosition directions(Borders _border) {
-    return LatticePosition(idirections(_border));
+  static LatticePosition directions(Borders border) {
+    return LatticePosition(idirections(border));
   }
 
-  static LatticeVector idirections(size_t _border) {
+  static LatticeVector idirections(size_t border) {
     assert(
-        _border == TOP or _border == BOTTOM or _border == NORTH
-        or _border == SOUTH or _border == EAST or  _border == WEST
+        border == TOP or border == BOTTOM or border == NORTH
+        or border == SOUTH or border == EAST or  border == WEST
     );
-    return idirections(Borders(_border));
+    return idirections(Borders(border));
   }
-  static LatticePosition directions(size_t _border) {
-    return LatticePosition(idirections(_border));
+  static LatticePosition directions(size_t border) {
+    return LatticePosition(idirections(border));
   }
 };
 
@@ -96,15 +96,15 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
 
     //! Constructor
     DivideConquerCells(
-        CellContainer const &_cells,
-        PhysicalDistance _boxsize, PhysicalDistance _halosize
+        CellContainer const &cells,
+        PhysicalDistance boxsize, PhysicalDistance halosize
     );
 
     //! Gets all nodes in a box
-    const_range operator()(LatticeVector const &_pos) const;
+    const_range operator()(LatticeVector const &pos) const;
     //! Gets all nodes in a box
-    const_range operator()(LatticePosition const &_pos) const {
-      return this->operator()(base_type::DowngradeKey(_pos));
+    const_range operator()(LatticePosition const &pos) const {
+      return this->operator()(base_type::DowngradeKey(pos));
     }
 
     // Implementation of DivideConquerCell::iterator
@@ -133,7 +133,7 @@ class DivideConquerCells : protected DivideConquer<CellReference> {
     size_t size() const { return base_type::size(); }
 
     //! Loops over pair of vertices closer than input distance
-    pair_range pair_begin(PhysicalDistance _maxdist) const;
+    pair_range pair_begin(PhysicalDistance maxdist) const;
 
     //! Distance from border below which an object is in the halo
     PhysicalDistance GetHaloLength() const { return haloLength_; }
@@ -160,10 +160,10 @@ class DivideConquerCells::pair_range {
 
     //! Constructs a pair range iterator
     pair_range(
-        DivideConquerCells const &_owner,
-        iterator const &_begin,
-        iterator const &_end,
-        PhysicalDistance _maxdist
+        DivideConquerCells const &owner,
+        iterator const &begin,
+        iterator const &end,
+        PhysicalDistance maxdist
     );
 
     //! Whether current iteration is valid
@@ -205,10 +205,10 @@ class DivideConquerCells::pair_range {
 //! too close to one another. The interaction forces are computed and spread to
 //! the lattice.
 void addCell2CellInteractions(
-    DivideConquerCells const &_dnc,
-    Node2NodeForce const &_functional,
-    stencil::types _stencil,
-    geometry::LatticeData &_latticeData
+    DivideConquerCells const &dnc,
+    Node2NodeForce const &functional,
+    stencil::types stencil,
+    geometry::LatticeData &latticeData
 );
 
 

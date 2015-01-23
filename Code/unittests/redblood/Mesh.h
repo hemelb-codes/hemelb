@@ -71,11 +71,11 @@ public:
     }
   }
 
-  static bool compare(util::Vector3D<double> const &_in) {
-    return _in.GetMagnitudeSquared() < 1e-8;
+  static bool compare(util::Vector3D<double> const &in) {
+    return in.GetMagnitudeSquared() < 1e-8;
   }
-  static bool any(std::array<size_t, 3> const &_vec, size_t _value) {
-    return _vec[0] == _value or _vec[1] == _value or _vec[2] == _value;
+  static bool any(std::array<size_t, 3> const &vec, size_t value) {
+    return vec[0] == value or vec[1] == value or vec[2] == value;
   }
 
 private:
@@ -239,9 +239,9 @@ public:
   }
 
   template<class T, unsigned long N>
-    static bool contains(std::array<T, N> const &_facets, T _value) {
+    static bool contains(std::array<T, N> const &facets, T value) {
       for(unsigned i(0); i < N; ++i)
-        if(_facets[i] == _value) return true;
+        if(facets[i] == value) return true;
       return false;
     }
 

@@ -214,19 +214,19 @@ class EnergyTests : public BasisFixture {
 
 
 struct EnergyFunctional {
-  EnergyFunctional(MeshData const &_original) : original(_original) {};
+  EnergyFunctional(MeshData const &original) : original(original) {};
   MeshData const &original;
 };
 #define HEMELB_OP_MACRO(CLASS, FUNCTION)                       \
   struct CLASS : public EnergyFunctional {                     \
-    CLASS(MeshData const &_original)                           \
-      : EnergyFunctional(_original) {}                         \
-    PhysicalEnergy operator()(MeshData const &_mesh) const {   \
-      return FUNCTION(_mesh.vertices, original, 1.0);          \
+    CLASS(MeshData const &original)                           \
+      : EnergyFunctional(original) {}                         \
+    PhysicalEnergy operator()(MeshData const &mesh) const {   \
+      return FUNCTION(mesh.vertices, original, 1.0);          \
     }                                                          \
-    PhysicalEnergy operator()(MeshData const &_mesh,           \
-      std::vector<LatticeForceVector> &_forces) const{         \
-      return FUNCTION(_mesh.vertices, original, 1.0, _forces); \
+    PhysicalEnergy operator()(MeshData const &mesh,           \
+      std::vector<LatticeForceVector> &forces) const{         \
+      return FUNCTION(mesh.vertices, original, 1.0, forces); \
     }                                                          \
   }
 HEMELB_OP_MACRO(VolumeEnergy, volumeEnergy);
@@ -234,35 +234,35 @@ HEMELB_OP_MACRO(SurfaceEnergy, surfaceEnergy);
 #undef HEMELB_OP_MACRO
 
 struct BendingEnergy : public EnergyFunctional {
-  BendingEnergy(MeshData const &_original)
-    : EnergyFunctional(_original) {}
-  PhysicalEnergy operator()(MeshData const &_mesh) const {
-    return facetBending(_mesh.vertices, original, 0, 1, 1.0)
-      + facetBending(_mesh.vertices, original, 0, 2, 1.0)
-      + facetBending(_mesh.vertices, original, 0, 3, 1.0)
-      + facetBending(_mesh.vertices, original, 1, 2, 1.0)
-      + facetBending(_mesh.vertices, original, 1, 3, 1.0)
-      + facetBending(_mesh.vertices, original, 2, 3, 1.0);
+  BendingEnergy(MeshData const &original)
+    : EnergyFunctional(original) {}
+  PhysicalEnergy operator()(MeshData const &mesh) const {
+    return facetBending(mesh.vertices, original, 0, 1, 1.0)
+      + facetBending(mesh.vertices, original, 0, 2, 1.0)
+      + facetBending(mesh.vertices, original, 0, 3, 1.0)
+      + facetBending(mesh.vertices, original, 1, 2, 1.0)
+      + facetBending(mesh.vertices, original, 1, 3, 1.0)
+      + facetBending(mesh.vertices, original, 2, 3, 1.0);
   }
-  PhysicalEnergy operator()(MeshData const &_mesh,
-    std::vector<LatticeForceVector> &_forces) const{
-    return facetBending(_mesh.vertices, original, 0, 1, 1.0, _forces)
-      + facetBending(_mesh.vertices, original, 0, 2, 1.0, _forces)
-      + facetBending(_mesh.vertices, original, 0, 3, 1.0, _forces)
-      + facetBending(_mesh.vertices, original, 1, 2, 1.0, _forces)
-      + facetBending(_mesh.vertices, original, 1, 3, 1.0, _forces)
-      + facetBending(_mesh.vertices, original, 2, 3, 1.0, _forces);
+  PhysicalEnergy operator()(MeshData const &mesh,
+    std::vector<LatticeForceVector> &forces) const{
+    return facetBending(mesh.vertices, original, 0, 1, 1.0, forces)
+      + facetBending(mesh.vertices, original, 0, 2, 1.0, forces)
+      + facetBending(mesh.vertices, original, 0, 3, 1.0, forces)
+      + facetBending(mesh.vertices, original, 1, 2, 1.0, forces)
+      + facetBending(mesh.vertices, original, 1, 3, 1.0, forces)
+      + facetBending(mesh.vertices, original, 2, 3, 1.0, forces);
   }
 };
 
 struct StrainEnergy : public EnergyFunctional {
-  StrainEnergy(MeshData const &_original) : EnergyFunctional(_original) {}
-  PhysicalEnergy operator()(MeshData const &_mesh) const {
-    return strainEnergy(_mesh.vertices, original, 1.0, 2.0);
+  StrainEnergy(MeshData const &original) : EnergyFunctional(original) {}
+  PhysicalEnergy operator()(MeshData const &mesh) const {
+    return strainEnergy(mesh.vertices, original, 1.0, 2.0);
   }
-  PhysicalEnergy operator()(MeshData const &_mesh,
-      std::vector<LatticeForceVector> &_forces) const{
-    return strainEnergy(_mesh.vertices, original, 1.0, 2.0, _forces);
+  PhysicalEnergy operator()(MeshData const &mesh,
+      std::vector<LatticeForceVector> &forces) const{
+    return strainEnergy(mesh.vertices, original, 1.0, 2.0, forces);
   }
 };
 
@@ -302,11 +302,11 @@ class GradientKernTests : public BasisFixture {
     CPPUNIT_TEST_SUITE_END();
 
 #   define HEMELB_MACRO(NAME, FUNCTION_CALL)                                  \
-    void NAME(LatticePosition const &_normal, size_t _node) {                 \
+    void NAME(LatticePosition const &normal, size_t node) {                 \
       std::vector<LatticeForceVector> forces(4, LatticeForceVector(0, 0, 0)); \
       double const epsilon(1e-5);                                             \
       MeshData newmesh(mesh);                                                 \
-      newmesh.vertices[_node] += _normal * epsilon;                           \
+      newmesh.vertices[node] += normal * epsilon;                           \
       PhysicalEnergy const deltaE(FUNCTION_CALL);                             \
       CPPUNIT_ASSERT(helpers::is_zero(deltaE / epsilon));                     \
       for(size_t i(0); i < forces.size(); ++i)                                \
