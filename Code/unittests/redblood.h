@@ -13,15 +13,23 @@ namespace hemelb { namespace unittests { namespace redblood {
   using namespace hemelb::redblood;
 }}}
 #define HEMELB_DOING_UNITTESTS
-#include "unittests/redblood/CellCell.h"
-#include "unittests/redblood/Mesh.h"
-#include "unittests/redblood/Cell.impl.h"
-#include "unittests/redblood/Cell.h"
-#include "unittests/redblood/Stencil.h"
-#include "unittests/redblood/Interpolation.h"
-#include "unittests/redblood/GridAndCell.h"
-#include "unittests/redblood/Node2Node.h"
-#include "unittests/redblood/DivideConquer.h"
-#include "unittests/redblood/CellArmy.h"
+#include "unittests/redblood/CellCellInteractionTests.h"
+#include "unittests/redblood/CellCellInteractionWithGridTests.h"
+#include "unittests/redblood/RedBloodMeshTests.h"
+#include "unittests/redblood/RedBloodMeshDataIOTests.h"
+#include "unittests/redblood/TopologyTests.h"
+#include "unittests/redblood/FacetTests.h"
+#include "unittests/redblood/EnergyTests.h"
+#include "unittests/redblood/GradientTests.h"
+#include "unittests/redblood/GradientKernTests.h"
+#include "unittests/redblood/CellTests.h"
+#include "unittests/redblood/StencilTests.h"
+#include "unittests/redblood/InterpolationTests.h"
+#include "unittests/redblood/CellVelocityInterpolTests.h"
+#include "unittests/redblood/CellForceSpreadTests.h"
+#include "unittests/redblood/CellForceSpreadWithWallTests.h"
+#include "unittests/redblood/Node2NodeTests.h"
+#include "unittests/redblood/DivideConquerTests.h"
+#include "unittests/redblood/CellArmyTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif
