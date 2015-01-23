@@ -19,7 +19,7 @@ template<class T_KERNEL> struct VelocityNodeLoop {
   ) : stencil(_stencil), cell(_cell), latticeData(_latDat) {}
   // Loop and does something
   template<class T_FUNCTOR> void loop(T_FUNCTOR apply) {
-    typedef MeshData::t_Vertices::const_iterator const_iterator;
+    typedef MeshData::Vertices::const_iterator const_iterator;
     const_iterator i_current = cell.GetVertices().begin();
     const_iterator const i_end = cell.GetVertices().end();
     for(; i_current != i_end; ++i_current) {
@@ -57,7 +57,7 @@ template<class T_FUNCTOR> void spreadForce2Grid(
     T_FUNCTOR _functor,
     stencil::types _stencil
 ) {
-  typedef MeshData::t_Vertices::const_iterator const_iterator;
+  typedef MeshData::Vertices::const_iterator const_iterator;
   // Spread them onto lattice
   const_iterator i_vertex = _cell.GetVertices().begin();
   const_iterator const i_end = _cell.GetVertices().end();

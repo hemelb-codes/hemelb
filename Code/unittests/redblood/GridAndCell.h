@@ -206,7 +206,7 @@ void CellVelocityInterpolTests :: testLinearVelocityInSamosaPlane() {
   PhysicalVelocity const
     v0 = displacements[0],
     v1 = displacements[1];
-  MeshData::t_Vertices::const_iterator
+  MeshData::Vertices::const_iterator
     i_vertex(mesh.GetVertices().begin() + 2);
   const_iterator i_disp = displacements.begin() + 2;
   const_iterator const i_end = displacements.end();
@@ -240,7 +240,7 @@ void CellForceSpreadTests :: setUpForces() {
   direction = LatticePosition(1, 2, 3);
   intensity = LatticePosition(3, 2, 1).Normalise();
   forces.resize(mesh.GetNumberOfNodes());
-  typedef MeshData::t_Vertices::const_iterator const_iterator;
+  typedef MeshData::Vertices::const_iterator const_iterator;
   const_iterator i_vertex = mesh.GetVertices().begin();
   const_iterator const i_end = mesh.GetVertices().end();
   std::vector<LatticeForceVector> :: iterator i_force = forces.begin();

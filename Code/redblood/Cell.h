@@ -28,7 +28,7 @@ class CellBase {
   //!    The scale is added during internal operations. The template will still
   //!    refer to the same data in memory.
   CellBase(
-      MeshData::t_Vertices && _vertices,
+      MeshData::Vertices && _vertices,
       Mesh const &_template,
       Dimensionless _scale = 1e0
   ) : vertices_(std::move(_vertices)), template_(_template), scale_(_scale) {
@@ -43,7 +43,7 @@ class CellBase {
   //!    The scale is added during internal operations. The template will still
   //!    refer to the same data in memory.
   CellBase(
-      MeshData::t_Vertices const & _vertices,
+      MeshData::Vertices const & _vertices,
       Mesh const &_template,
       Dimensionless _scale = 1e0
   ) : vertices_(_vertices), template_(_template), scale_(_scale) {
@@ -85,13 +85,13 @@ class CellBase {
   //! Unmodified mesh
   Mesh const & GetTemplateMesh() const { return template_; }
   //! Facets for the mesh
-  MeshData::t_Facets const & GetFacets() const {
+  MeshData::Facets const & GetFacets() const {
     return template_.GetData()->facets;
   }
   //! Vertices of the cell
-  MeshData::t_Vertices const & GetVertices() const { return vertices_; }
+  MeshData::Vertices const & GetVertices() const { return vertices_; }
   //! Vertices of the cell
-  MeshData::t_Vertices& GetVertices() { return vertices_; }
+  MeshData::Vertices& GetVertices() { return vertices_; }
   //! Topology of the (template) mesh
   std::shared_ptr<MeshTopology const> GetTopology() const {
     return template_.GetTopology();
@@ -113,7 +113,7 @@ class CellBase {
   //! Transform mesh
   void operator+=(std::vector<LatticePosition> const &_displacements);
 
-  MeshData::t_Vertices::value_type GetBarycenter() const {
+  MeshData::Vertices::value_type GetBarycenter() const {
     return barycenter(vertices_);
   }
 
@@ -127,7 +127,7 @@ class CellBase {
 
   protected:
    //! Holds list of vertices for this cell
-   MeshData::t_Vertices vertices_;
+   MeshData::Vertices vertices_;
    //! Unmodified original mesh
    Mesh template_;
    //! Scale factor for the template;

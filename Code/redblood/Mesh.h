@@ -26,28 +26,28 @@ namespace hemelb { namespace redblood {
 //! Data is separated into vertices and triangular facets
 struct MeshData {
   //! Type of containers over indices
-  typedef std::array<size_t, 3> t_Facet;
+  typedef std::array<size_t, 3> Facet;
   //! Facet container type
-  typedef std::vector<t_Facet> t_Facets;
+  typedef std::vector<Facet> Facets;
   //! Vertex container type
-  typedef std::vector<LatticePosition> t_Vertices;
+  typedef std::vector<LatticePosition> Vertices;
   //! Vertex container
-  t_Vertices vertices;
+  Vertices vertices;
   //! Facet container
-  t_Facets facets;
+  Facets facets;
 };
 
 LatticePosition barycenter(MeshData const &_mesh);
-LatticePosition barycenter(MeshData::t_Vertices const &_vertices);
+LatticePosition barycenter(MeshData::Vertices const &_vertices);
 PhysicalVolume volume(MeshData const &_mesh);
 PhysicalVolume volume(
-    MeshData::t_Vertices const &_vertices,
-    MeshData::t_Facets const &_facets
+    MeshData::Vertices const &_vertices,
+    MeshData::Facets const &_facets
 );
 PhysicalSurface surface(MeshData const &_mesh);
 PhysicalVolume surface(
-    MeshData::t_Vertices const &_vertices,
-    MeshData::t_Facets const &_facets
+    MeshData::Vertices const &_vertices,
+    MeshData::Facets const &_facets
 );
 
 //! Holds raw topology data
@@ -123,15 +123,15 @@ public:
   //! Number of nodes
   size_t GetNumberOfNodes() const { return mesh_->vertices.size(); }
   //! Const access to vertices
-  MeshData::t_Vertices & GetVertices() { return mesh_->vertices; }
+  MeshData::Vertices & GetVertices() { return mesh_->vertices; }
   //! Const access to vertices
-  MeshData::t_Vertices const & GetVertices() const { return mesh_->vertices; }
+  MeshData::Vertices const & GetVertices() const { return mesh_->vertices; }
   //! Const access to vertices
-  MeshData::t_Vertices::const_reference GetVertex(size_t _site) const {
+  MeshData::Vertices::const_reference GetVertex(size_t _site) const {
     return mesh_->vertices[_site];
   }
   //! Const access to facets
-  MeshData::t_Facets const & GetFacets() const { return mesh_->facets; }
+  MeshData::Facets const & GetFacets() const { return mesh_->facets; }
 
 protected:
   //! Holds actual data about the mesh
