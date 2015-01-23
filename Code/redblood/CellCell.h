@@ -26,7 +26,6 @@ namespace hemelb
 {
   namespace redblood
   {
-
     struct CellReference
     {
       //! Index of cell in input container
@@ -51,7 +50,7 @@ namespace hemelb
 
       static LatticeVector idirections(Borders border)
       {
-        switch(border)
+        switch (border)
         {
           case TOP:
             return LatticeVector(1, 0, 0);
@@ -82,10 +81,8 @@ namespace hemelb
 
       static LatticeVector idirections(size_t border)
       {
-        assert(
-          border == TOP or border == BOTTOM or border == NORTH
-          or border == SOUTH or border == EAST or  border == WEST
-        );
+        assert(border == TOP or border == BOTTOM or border == NORTH or border == SOUTH
+               or border == EAST or border == WEST);
         return idirections(Borders(border));
       }
       static LatticePosition directions(size_t border)
@@ -98,173 +95,169 @@ namespace hemelb
     //! The object is to easily check nodes that are within interaction distance
     class DivideConquerCells : protected DivideConquer<CellReference>
     {
-        //! Type of the base class
-        typedef DivideConquer<CellReference> base_type;
+      //! Type of the base class
+      typedef DivideConquer<CellReference> base_type;
+
       public:
+      //! Iterates over vertices
+      //! Wraps a multimap iterator. As such it provides the exact same
+      //! garantees.
+      class iterator;
+      //! Iterates over vertices
+      //! Wraps a multimap iterator. As such it provides the exact same
+      //! garantees.
+      class const_iterator;
+      typedef std::reverse_iterator<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+      //! Iterator pair over single box
+      typedef std::pair<const_iterator, const_iterator> const_range;
+      //! Iterates over pairs of nodes that are close to one another
+      //! Each pair is visited only once.
+      class pair_range;
 
-        //! Iterates over vertices
-        //! Wraps a multimap iterator. As such it provides the exact same
-        //! garantees.
-        class iterator;
-        //! Iterates over vertices
-        //! Wraps a multimap iterator. As such it provides the exact same
-        //! garantees.
-        class const_iterator;
-        typedef std::reverse_iterator<iterator> reverse_iterator;
-        typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-        //! Iterator pair over single box
-        typedef std::pair<const_iterator, const_iterator> const_range;
-        //! Iterates over pairs of nodes that are close to one another
-        //! Each pair is visited only once.
-        class pair_range;
+      //! Constructor
+      DivideConquerCells(CellContainer const &cells, PhysicalDistance boxsize,
+                         PhysicalDistance halosize);
 
-        //! Constructor
-        DivideConquerCells(
-          CellContainer const &cells,
-          PhysicalDistance boxsize, PhysicalDistance halosize
-        );
+      //! Gets all nodes in a box
+      const_range operator()(LatticeVector const &pos) const;
+      //! Gets all nodes in a box
+      const_range operator()(LatticePosition const &pos) const
+      {
+        return this->operator()(base_type::DowngradeKey(pos));
+      }
 
-        //! Gets all nodes in a box
-        const_range operator()(LatticeVector const &pos) const;
-        //! Gets all nodes in a box
-        const_range operator()(LatticePosition const &pos) const
-        {
-          return this->operator()(base_type::DowngradeKey(pos));
-        }
+// Implementation of DivideConquerCell::iterator
+#define HEMELB_DOING_NONCONST
+#include "CellCellIterator.impl.h"
+#undef HEMELB_DOING_NONCONST
+// Implementation of DivideConquerCell::const_iterator
+#include "CellCellIterator.impl.h"
 
-        // Implementation of DivideConquerCell::iterator
-#   define HEMELB_DOING_NONCONST
-#     include "CellCellIterator.impl.h"
-#   undef HEMELB_DOING_NONCONST
-        // Implementation of DivideConquerCell::const_iterator
-#   include "CellCellIterator.impl.h"
+      iterator begin()
+      {
+        return iterator(*this, base_type::begin());
+      }
+      iterator end()
+      {
+        return iterator(*this, base_type::end());
+      }
+      const_iterator begin() const
+      {
+        return const_iterator(*this, base_type::begin());
+      }
+      const_iterator end() const
+      {
+        return const_iterator(*this, base_type::end());
+      }
+      reverse_iterator rbegin()
+      {
+        return reverse_iterator(end());
+      }
+      reverse_iterator rend()
+      {
+        return reverse_iterator(begin());
+      }
+      const_reverse_iterator rbegin() const
+      {
+        return const_reverse_iterator(end());
+      }
+      const_reverse_iterator rend() const
+      {
+        return const_reverse_iterator(begin());
+      }
+      size_t size() const
+      {
+        return base_type::size();
+      }
 
-        iterator begin()
-        {
-          return iterator(*this, base_type::begin());
-        }
-        iterator end()
-        {
-          return iterator(*this, base_type::end());
-        }
-        const_iterator begin() const
-        {
-          return const_iterator(*this, base_type::begin());
-        }
-        const_iterator end() const
-        {
-          return const_iterator(*this, base_type::end());
-        }
-        reverse_iterator rbegin()
-        {
-          return reverse_iterator(end());
-        }
-        reverse_iterator rend()
-        {
-          return reverse_iterator(begin());
-        }
-        const_reverse_iterator rbegin() const
-        {
-          return const_reverse_iterator(end());
-        }
-        const_reverse_iterator rend() const
-        {
-          return const_reverse_iterator(begin());
-        }
-        size_t size() const
-        {
-          return base_type::size();
-        }
+      //! Loops over pair of vertices closer than input distance
+      pair_range pair_begin(PhysicalDistance maxdist) const;
 
-        //! Loops over pair of vertices closer than input distance
-        pair_range pair_begin(PhysicalDistance maxdist) const;
+      //! Distance from border below which an object is in the halo
+      PhysicalDistance GetHaloLength() const
+      {
+        return haloLength;
+      }
+      //! Size of each box
+      PhysicalDistance GetBoxSize() const
+      {
+        return base_type::GetBoxSize();
+      }
+      //! Cells that are present in this object
+      CellContainer const &GetCells() const
+      {
+        return cells;
+      }
 
-        //! Distance from border below which an object is in the halo
-        PhysicalDistance GetHaloLength() const
-        {
-          return haloLength;
-        }
-        //! Size of each box
-        PhysicalDistance GetBoxSize() const
-        {
-          return base_type::GetBoxSize();
-        }
-        //! Cells that are present in this object
-        CellContainer const& GetCells() const
-        {
-          return cells;
-        }
+      //! After vertices have moved, update mapping and whether it is near
+      //! boundary
+      void update();
 
-        //! After vertices have moved, update mapping and whether it is near
-        //! boundary
-        void update();
       protected:
-        //! Distance from border below which an object is in the halo
-        PhysicalDistance const haloLength;
-        //! Container of cells
-        CellContainer cells;
+      //! Distance from border below which an object is in the halo
+      PhysicalDistance const haloLength;
+      //! Container of cells
+      CellContainer cells;
     };
 
     class DivideConquerCells::pair_range
     {
-        //! Parent iterator
-        typedef DivideConquerCells::const_iterator iterator;
+      //! Parent iterator
+      typedef DivideConquerCells::const_iterator iterator;
+
       public:
-        typedef std::pair<iterator, iterator> value_type;
+      typedef std::pair<iterator, iterator> value_type;
 
-        //! Constructs a pair range iterator
-        pair_range(
-          DivideConquerCells const &owner,
-          iterator const &begin,
-          iterator const &end,
-          PhysicalDistance maxdist
-        );
+      //! Constructs a pair range iterator
+      pair_range(DivideConquerCells const &owner, iterator const &begin, iterator const &end,
+                 PhysicalDistance maxdist);
 
-        //! Whether current iteration is valid
-        bool is_valid() const
+      //! Whether current iteration is valid
+      bool is_valid() const
+      {
+        return currents.first != ends.first;
+      }
+      //! Whether current iteration is valid
+      operator bool() const
+      {
+        return is_valid();
+      }
+
+      value_type const &operator*() const
+      {
+#ifndef NDEBUG
+
+        if (not is_valid())
         {
-          return currents.first != ends.first;
-        }
-        //! Whether current iteration is valid
-        operator bool() const
-        {
-          return is_valid();
-        }
-
-        value_type const & operator *() const
-        {
-#     ifndef NDEBUG
-
-          if(not is_valid())
-          {
-            throw Exception() << "Iterator is invalid\n";
-          }
-
-#     endif
-          return currents;
-        }
-        value_type const* operator->() const
-        {
-          return &(this->operator*());
+          throw Exception() << "Iterator is invalid\n";
         }
 
-        //! Goes to next value and returns true if valid
-        bool operator++();
+#endif
+        return currents;
+      }
+      value_type const *operator->() const
+      {
+        return &(this->operator*());
+      }
+
+      //! Goes to next value and returns true if valid
+      bool operator++();
 
       protected:
-        //! Maximum distance for which to report pair
-        PhysicalDistance maxdist;
-        //! Current box we are working on
-        CellReference::Borders box;
-        //! Iterator for main item
-        value_type currents;
-        //! range for iteration over second item
-        value_type ends;
-        //! Container over which this one iterates
-        DivideConquerCells const &owner;
+      //! Maximum distance for which to report pair
+      PhysicalDistance maxdist;
+      //! Current box we are working on
+      CellReference::Borders box;
+      //! Iterator for main item
+      value_type currents;
+      //! range for iteration over second item
+      value_type ends;
+      //! Container over which this one iterates
+      DivideConquerCells const &owner;
 
-        bool doBox();
-        bool nextDist();
+      bool doBox();
+      bool nextDist();
     };
 
     //! Computes cell <-> cell interactions and spread to grid
@@ -272,15 +265,9 @@ namespace hemelb
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
-    void addCell2CellInteractions(
-      DivideConquerCells const &dnc,
-      Node2NodeForce const &functional,
-      stencil::types stencil,
-      geometry::LatticeData &latticeData
-    );
-
-
+    void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
+                                  stencil::types stencil, geometry::LatticeData &latticeData);
   }
-} // hemelb::redblood
+}  // hemelb::redblood
 
 #endif

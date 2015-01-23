@@ -15,25 +15,21 @@ namespace hemelb
   {
     namespace
     {
-
       // Helper class to avoid explicit indexing over vertices
       struct Facet
       {
         // References nodes of a facet
-        LatticePosition const * nodes[3];
+        LatticePosition const *nodes[3];
         // Indices of nodes in original array
-        MeshData::Facet const & indices;
-        Facet   (MeshData const &mesh, size_t index)
-          : Facet(mesh.vertices, mesh.facets[index]) {}
-        Facet(
-          MeshData::Vertices const &vertices,
-          MeshData::Facets const &facets,
-          size_t index
-        ) : Facet(vertices, facets[index]) {}
-        Facet(
-          MeshData::Vertices const &vertices,
-          MeshData::Facet const &indices
-        ) : indices(indices)
+        MeshData::Facet const &indices;
+        Facet(MeshData const &mesh, size_t index) : Facet(mesh.vertices, mesh.facets[index])
+        {
+        }
+        Facet(MeshData::Vertices const &vertices, MeshData::Facets const &facets, size_t index)
+            : Facet(vertices, facets[index])
+        {
+        }
+        Facet(MeshData::Vertices const &vertices, MeshData::Facet const &indices) : indices(indices)
         {
           nodes[0] = &vertices[indices[0]];
           nodes[1] = &vertices[indices[1]];
@@ -66,28 +62,25 @@ namespace hemelb
       struct ForceFacet : public Facet
       {
         // References forces on a node
-        LatticeForceVector * forces[3];
-        ForceFacet(
-          MeshData::Vertices const &vertices,
-          MeshData::Facet const &indices,
-          std::vector<LatticeForceVector> &forcesIn
-        ) : Facet(vertices, indices)
+        LatticeForceVector *forces[3];
+        ForceFacet(MeshData::Vertices const &vertices, MeshData::Facet const &indices,
+                   std::vector<LatticeForceVector> &forcesIn)
+            : Facet(vertices, indices)
         {
           forces[0] = &forcesIn[indices[0]];
           forces[1] = &forcesIn[indices[1]];
           forces[2] = &forcesIn[indices[2]];
         }
-        ForceFacet(
-          MeshData const &mesh, size_t index,
-          std::vector<LatticeForceVector> &forcesIn
-        ) : ForceFacet(mesh.vertices, mesh.facets[index], forcesIn) {}
-        ForceFacet(
-          MeshData::Vertices const &vertices,
-          MeshData::Facets const &facets,
-          size_t index,
-          std::vector<LatticeForceVector> &forcesIn
-        ) : ForceFacet(vertices, facets[index], forcesIn) {}
-        LatticeForceVector & GetForce(size_t i) const
+        ForceFacet(MeshData const &mesh, size_t index, std::vector<LatticeForceVector> &forcesIn)
+            : ForceFacet(mesh.vertices, mesh.facets[index], forcesIn)
+        {
+        }
+        ForceFacet(MeshData::Vertices const &vertices, MeshData::Facets const &facets, size_t index,
+                   std::vector<LatticeForceVector> &forcesIn)
+            : ForceFacet(vertices, facets[index], forcesIn)
+        {
+        }
+        LatticeForceVector &GetForce(size_t i) const
         {
           return *(forces[i]);
         }
@@ -103,7 +96,7 @@ namespace hemelb
       }
       LatticePosition Facet::edge(size_t i) const
       {
-        switch(i)
+        switch (i)
         {
           case 0:
             return operator()(2, 1);
@@ -147,10 +140,8 @@ namespace hemelb
         return normal().GetMagnitude() * 0.5;
       }
 
-
       // Just a helper function to check whether v is in a
-      bool contains(MeshData::Facet const &a,
-                    MeshData::Facet::value_type v)
+      bool contains(MeshData::Facet const &a, MeshData::Facet::value_type v)
       {
         return a[0] == v or a[1] == v or a[2] == v;
       }
@@ -161,13 +152,13 @@ namespace hemelb
       IndexPair commonNodes(Facet const &a, Facet const &b)
       {
         // First node differs, hence other two nodes in common
-        if(not contains(b.indices, a.indices[0]))
+        if (not contains(b.indices, a.indices[0]))
         {
           return IndexPair(1, 2);
         }
 
         // First node in common, second node differs
-        if(not contains(b.indices, a.indices[1]))
+        if (not contains(b.indices, a.indices[1]))
         {
           return IndexPair(0, 2);
         }
@@ -189,16 +180,16 @@ namespace hemelb
         IndexPair result;
         size_t mappingB[3] = {4, 4, 4};
 
-        for(size_t i(0); i < 3; ++i)
-          if(a.indices[i] == b.indices[0])
+        for (size_t i(0); i < 3; ++i)
+          if (a.indices[i] == b.indices[0])
           {
             mappingB[0] = i;
           }
-          else if(a.indices[i] == b.indices[1])
+          else if (a.indices[i] == b.indices[1])
           {
             mappingB[1] = i;
           }
-          else if(a.indices[i] == b.indices[2])
+          else if (a.indices[i] == b.indices[2])
           {
             mappingB[2] = i;
           }
@@ -207,8 +198,8 @@ namespace hemelb
             result.first = i;
           }
 
-        for(size_t i(0); i < 3; ++i)
-          if(mappingB[i] == 4)
+        for (size_t i(0); i < 3; ++i)
+          if (mappingB[i] == 4)
           {
             result.second = i;
             break;
@@ -217,17 +208,16 @@ namespace hemelb
         return result;
       }
 
-
       // Computes angle between two facets
       Angle angle(LatticePosition const &a, LatticePosition const &b)
       {
         Angle const cosine(a.Dot(b));
 
-        if(cosine >= (1e0 - 1e-6) )
+        if (cosine >= (1e0 - 1e-6))
         {
           return 0e0;
         }
-        else if(cosine <= -(1e0 - 1e-6) )
+        else if (cosine <= -(1e0 - 1e-6))
         {
           return PI;
         }
@@ -252,8 +242,7 @@ namespace hemelb
         Angle const result(angle(a, b));
         return a.Cross(b).Dot(orient) <= 0e0 ? result : -result;
       }
-      Angle orientedAngle(Facet const &a, Facet const &b,
-                          LatticePosition const &orient)
+      Angle orientedAngle(Facet const &a, Facet const &b, LatticePosition const &orient)
       {
         return orientedAngle(a.unitNormal(), b.unitNormal(), orient);
       }
@@ -263,73 +252,54 @@ namespace hemelb
       }
 
       // Returns Dxx, Dyy, Dxy packed in vector
-      LatticePosition displacements(
-        Facet const &deformed,
-        Facet const &ref,
-        Dimensionless origMesh_scale = 1e0
-      )
+      LatticePosition displacements(Facet const &deformed, Facet const &ref,
+                                    Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalDistance const
-        dlength0 = deformed.length(0),
-        rlength0 = ref.length(0) * origMesh_scale,
-        dlength1 = deformed.length(1),
-        rlength1 = ref.length(1) * origMesh_scale;
+        PhysicalDistance const dlength0 = deformed.length(0),
+                               rlength0 = ref.length(0) * origMesh_scale,
+                               dlength1 = deformed.length(1),
+                               rlength1 = ref.length(1) * origMesh_scale;
         Dimensionless const dsine = deformed.sine(), rsine = ref.sine();
         return LatticePosition(
-                 // Dxx
-                 dlength0 / rlength0,
-                 // Dyy
-                 (dlength1 * dsine) / (rlength1 * rsine),
-                 // Dxy
-                 (
-                   dlength1 / rlength1 * deformed.cosine()
-                   - dlength0 / rlength0 * ref.cosine()
-                 ) / rsine
-               );
+          // Dxx
+          dlength0 / rlength0,
+          // Dyy
+          (dlength1 * dsine) / (rlength1 * rsine),
+          // Dxy
+          (dlength1 / rlength1 * deformed.cosine() - dlength0 / rlength0 * ref.cosine()) / rsine);
       }
 
       // Returns Gxx, Gyy, Gxy packed in vector
       LatticePosition squaredDisplacements(LatticePosition const &disp)
       {
         return LatticePosition(
-                 // Gxx
-                 disp[0] * disp[0],
-                 // Gyy
-                 disp[2] * disp[2] + disp[1] * disp[1],
-                 // Gxy
-                 disp[0] * disp[2]
-               );
+          // Gxx
+          disp[0] * disp[0],
+          // Gyy
+          disp[2] * disp[2] + disp[1] * disp[1],
+          // Gxy
+          disp[0] * disp[2]);
       }
-      LatticePosition squaredDisplacements(
-        Facet const &deformed,
-        Facet const &ref,
-        Dimensionless origMesh_scale = 1e0
-      )
+      LatticePosition squaredDisplacements(Facet const &deformed, Facet const &ref,
+                                           Dimensionless origMesh_scale = 1e0)
       {
         return squaredDisplacements(displacements(deformed, ref, origMesh_scale));
       }
 
       // Strain invariants I1 and I2
-      std::pair<Dimensionless, Dimensionless>
-      strainInvariants(LatticePosition const &squaredDisp)
+      std::pair<Dimensionless, Dimensionless> strainInvariants(LatticePosition const &squaredDisp)
       {
         return std::pair<Dimensionless, Dimensionless>(
-                 squaredDisp[0] + squaredDisp[1] - 2.0,
-                 squaredDisp[0] * squaredDisp[1]
-                 - squaredDisp[2] * squaredDisp[2] - 1e0
-               );
+          squaredDisp[0] + squaredDisp[1] - 2.0,
+          squaredDisp[0] * squaredDisp[1] - squaredDisp[2] * squaredDisp[2] - 1e0);
       }
 
-      std::pair<Dimensionless, Dimensionless> strainInvariants(
-        Facet const &deformed,
-        Facet const &ref,
-        Dimensionless origMesh_scale = 1e0
-      )
+      std::pair<Dimensionless, Dimensionless> strainInvariants(Facet const &deformed,
+                                                               Facet const &ref,
+                                                               Dimensionless origMesh_scale = 1e0)
       {
-        return strainInvariants(
-                 squaredDisplacements(deformed, ref, origMesh_scale));
+        return strainInvariants(squaredDisplacements(deformed, ref, origMesh_scale));
       }
-
     }
   }
 }

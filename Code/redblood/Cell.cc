@@ -16,37 +16,27 @@ namespace hemelb
 {
   namespace redblood
   {
-
     PhysicalEnergy Cell::operator()() const
     {
-      return facetBending() // facet bending unaffected by template scale
+      return facetBending()  // facet bending unaffected by template scale
              + volumeEnergy(vertices, *templateMesh.GetData(), moduli.volume, scale)
              + surfaceEnergy(vertices, *templateMesh.GetData(), moduli.surface, scale)
-             + strainEnergy(
-               vertices, *templateMesh.GetData(),
-               moduli.dilation, moduli.strain,
-               scale
-             );
+             + strainEnergy(vertices, *templateMesh.GetData(), moduli.dilation, moduli.strain,
+                            scale);
     }
     PhysicalEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
     {
       assert(forces.size() == vertices.size());
       return facetBending(forces)
-             + volumeEnergy(
-               vertices, *templateMesh.GetData(), moduli.volume, forces, scale)
-             + surfaceEnergy(
-               vertices, *templateMesh.GetData(), moduli.surface, forces, scale)
-             + strainEnergy(
-               vertices, *templateMesh.GetData(),
-               moduli.dilation, moduli.strain,
-               forces,
-               scale
-             );
+             + volumeEnergy(vertices, *templateMesh.GetData(), moduli.volume, forces, scale)
+             + surfaceEnergy(vertices, *templateMesh.GetData(), moduli.surface, forces, scale)
+             + strainEnergy(vertices, *templateMesh.GetData(), moduli.dilation, moduli.strain,
+                            forces, scale);
     }
 
     PhysicalEnergy Cell::facetBending() const
     {
-      if(std::abs(moduli.bending) < 1e-8)
+      if (std::abs(moduli.bending) < 1e-8)
       {
         return 0e0;
       }
@@ -56,15 +46,12 @@ namespace hemelb
       FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
       FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
 
-      for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
       {
-        for(size_t i(0); i < 3; ++i)
-          if((*i_facet)[i] > current)
-            result += hemelb::redblood::facetBending(
-                        vertices, *templateMesh.GetData(),
-                        current, (*i_facet)[i],
-                        moduli.bending
-                      );
+        for (size_t i(0); i < 3; ++i)
+          if ((*i_facet)[i] > current)
+            result += hemelb::redblood::facetBending(vertices, *templateMesh.GetData(), current,
+                                                     (*i_facet)[i], moduli.bending);
       }
 
       return result;
@@ -72,7 +59,7 @@ namespace hemelb
 
     PhysicalEnergy Cell::facetBending(std::vector<LatticeForceVector> &forces) const
     {
-      if(std::abs(moduli.bending) < 1e-8)
+      if (std::abs(moduli.bending) < 1e-8)
       {
         return 0e0;
       }
@@ -82,15 +69,12 @@ namespace hemelb
       FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
       FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
 
-      for(size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
       {
-        for(size_t i(0); i < 3; ++i)
-          if((*i_facet)[i] > current)
-            result += hemelb::redblood::facetBending(
-                        vertices, *templateMesh.GetData(),
-                        current, (*i_facet)[i],
-                        moduli.bending, forces
-                      );
+        for (size_t i(0); i < 3; ++i)
+          if ((*i_facet)[i] > current)
+            result += hemelb::redblood::facetBending(vertices, *templateMesh.GetData(), current,
+                                                     (*i_facet)[i], moduli.bending, forces);
       }
 
       return result;
@@ -100,7 +84,7 @@ namespace hemelb
     {
       auto const barycenter = GetBarycenter();
 
-      for(auto &vertex : vertices)
+      for (auto &vertex : vertices)
       {
         vertex = (vertex - barycenter) * scaleIn + barycenter;
       }
@@ -109,7 +93,7 @@ namespace hemelb
     {
       auto const barycenter = GetBarycenter();
 
-      for(auto &vertex : vertices)
+      for (auto &vertex : vertices)
       {
         rotation.timesVector(vertex - barycenter, vertex);
         vertex += barycenter;
@@ -117,7 +101,7 @@ namespace hemelb
     }
     void CellBase::operator+=(LatticePosition const &offset)
     {
-      for(auto &vertex : vertices)
+      for (auto &vertex : vertices)
       {
         vertex += offset;
       }
@@ -127,11 +111,10 @@ namespace hemelb
       assert(displacements.size() == vertices.size());
       auto i_disp = displacements.begin();
 
-      for(auto &vertex : vertices)
+      for (auto &vertex : vertices)
       {
         vertex += *(i_disp++);
       }
     }
-
   }
-} // hemelb::redblood
+}  // hemelb::redblood

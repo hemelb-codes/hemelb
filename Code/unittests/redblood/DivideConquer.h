@@ -21,60 +21,48 @@ namespace hemelb
   {
     namespace redblood
     {
-
       class DivideAndConquerTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(DivideAndConquerTests);
-          CPPUNIT_TEST(testDowngradeKey);
-          CPPUNIT_TEST(testNoDowngradeKey);
-          CPPUNIT_TEST(testAddToBox);
-          CPPUNIT_TEST(testAddToBoxAsKey);
-          CPPUNIT_TEST(testBoxRange);
-          CPPUNIT_TEST(testBoxRangeAsKey);
-          CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(DivideAndConquerTests);
+        CPPUNIT_TEST(testDowngradeKey);
+        CPPUNIT_TEST(testNoDowngradeKey);
+        CPPUNIT_TEST(testAddToBox);
+        CPPUNIT_TEST(testAddToBoxAsKey);
+        CPPUNIT_TEST(testBoxRange);
+        CPPUNIT_TEST(testBoxRangeAsKey);
+        CPPUNIT_TEST_SUITE_END();
 
-          typedef DivideConquer<int> DnC;
+        typedef DivideConquer<int> DnC;
+
         public:
-          void testDowngradeKey();
-          void testAddToBox();
-          void testBoxRange();
-          // Checks downgrading does not occur if type is already a key
-          void testNoDowngradeKey();
-          void testAddToBoxAsKey();
-          void testBoxRangeAsKey();
+        void testDowngradeKey();
+        void testAddToBox();
+        void testBoxRange();
+        // Checks downgrading does not occur if type is already a key
+        void testNoDowngradeKey();
+        void testAddToBoxAsKey();
+        void testBoxRangeAsKey();
       };
 
-
-      void DivideAndConquerTests :: testDowngradeKey()
+      void DivideAndConquerTests::testDowngradeKey()
       {
         PhysicalDistance const cutoff = 5e0;
         DnC dnc(cutoff);
 
         size_t const N = 5;
-        LatticePosition const inputs[N] =
-        {
-          LatticePosition(2.5, 1.1, 3.3),
-          LatticePosition(5.5, 1.1, 3.3),
-          LatticePosition(5.5, -5.1, -3.3),
-          LatticePosition(5.5, -5.1, 10.3),
-          LatticePosition(5.000000000001, -5.1, 10.3)
-        };
-        LatticeVector const expected[N] =
-        {
-          LatticeVector(0, 0, 0),
-          LatticeVector(1, 0, 0),
-          LatticeVector(1, -2, -1),
-          LatticeVector(1, -2, 2),
-          LatticeVector(1, -2, 2)
-        };
+        LatticePosition const inputs[N] = {
+          LatticePosition(2.5, 1.1, 3.3), LatticePosition(5.5, 1.1, 3.3),
+          LatticePosition(5.5, -5.1, -3.3), LatticePosition(5.5, -5.1, 10.3),
+          LatticePosition(5.000000000001, -5.1, 10.3)};
+        LatticeVector const expected[N] = {LatticeVector(0, 0, 0), LatticeVector(1, 0, 0),
+                                           LatticeVector(1, -2, -1), LatticeVector(1, -2, 2),
+                                           LatticeVector(1, -2, 2)};
 
-        for(size_t i(0); i < N; ++i)
-          CPPUNIT_ASSERT(helpers::is_zero(
-                           dnc.DowngradeKey(inputs[i]) - expected[i]
-                         ));
+        for (size_t i(0); i < N; ++i)
+          CPPUNIT_ASSERT(helpers::is_zero(dnc.DowngradeKey(inputs[i]) - expected[i]));
       }
 
-      void DivideAndConquerTests :: testNoDowngradeKey()
+      void DivideAndConquerTests::testNoDowngradeKey()
       {
         PhysicalDistance const cutoff = 5e0;
         DnC dnc(cutoff);
@@ -83,7 +71,7 @@ namespace hemelb
         CPPUNIT_ASSERT(dnc.DowngradeKey(key) == key);
       }
 
-      void DivideAndConquerTests :: testAddToBox()
+      void DivideAndConquerTests::testAddToBox()
       {
         PhysicalDistance const cutoff = 5e0;
         DnC dnc(cutoff);
@@ -101,7 +89,7 @@ namespace hemelb
         CPPUNIT_ASSERT(i_other->second == 2);
       }
 
-      void DivideAndConquerTests :: testAddToBoxAsKey()
+      void DivideAndConquerTests::testAddToBoxAsKey()
       {
         PhysicalDistance const cutoff = 5e0;
         DnC dnc(cutoff);
@@ -114,7 +102,7 @@ namespace hemelb
         CPPUNIT_ASSERT(i_inserted->second == 2);
       }
 
-      void DivideAndConquerTests :: testBoxRange()
+      void DivideAndConquerTests::testBoxRange()
       {
         PhysicalDistance const cutoff = 5e0;
         DnC dnc(cutoff);
@@ -137,7 +125,6 @@ namespace hemelb
         CPPUNIT_ASSERT(i_other->second != asInt.first->second);
         CPPUNIT_ASSERT(i_other->second == 2 or i_other->second == 4);
 
-
         // Checks we can access range using position
         DnC::const_range asFloat = dnc.equal_range(LatticePosition(-3.5, 0.1, 5.1));
         CPPUNIT_ASSERT(asInt.first == asFloat.first);
@@ -148,7 +135,7 @@ namespace hemelb
         CPPUNIT_ASSERT(empty.first == empty.second);
       }
 
-      void DivideAndConquerTests :: testBoxRangeAsKey()
+      void DivideAndConquerTests::testBoxRangeAsKey()
       {
         PhysicalDistance const cutoff = 5e0;
 
@@ -167,11 +154,9 @@ namespace hemelb
         CPPUNIT_ASSERT(crange == const_cast<DnC const&>(dnc).equal_range(key));
       }
 
-
       CPPUNIT_TEST_SUITE_REGISTRATION(DivideAndConquerTests);
     }
   }
 }
 
-#endif // ONCE
-
+#endif  // ONCE

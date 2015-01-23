@@ -15,15 +15,12 @@ namespace hemelb
   {
     namespace stencil
     {
-
-# define HEMELB_STENCIL_MACRO(NAME, RANGE) const size_t NAME::range = RANGE;
+#define HEMELB_STENCIL_MACRO(NAME, RANGE) const size_t NAME::range = RANGE;
       HEMELB_STENCIL_MACRO(FourPoint, 4u);
       HEMELB_STENCIL_MACRO(CosineApprox, 4u);
       HEMELB_STENCIL_MACRO(ThreePoint, 3u);
       HEMELB_STENCIL_MACRO(TwoPoint, 2u);
-# undef HEMELB_STENCIL_MACRO
-
-
+#undef HEMELB_STENCIL_MACRO
     }
   }
-} // hemelb::redblood::stencil
+}  // hemelb::redblood::stencil

@@ -21,48 +21,46 @@ namespace hemelb
   {
     namespace redblood
     {
-
       //! Mock cell for ease of use
       class FakeCell : public hemelb::redblood::CellBase
       {
         public:
-          mutable size_t nbcalls = 0;
-          using hemelb::redblood::CellBase::CellBase;
-          //! Facet bending energy
-          virtual PhysicalEnergy operator()() const override
-          {
-            return 0;
-          }
-          //! Facet bending energy
-          virtual PhysicalEnergy operator()(
-            std::vector<LatticeForceVector> &) const override
-          {
-            ++nbcalls;
-            return 0;
-          }
+        mutable size_t nbcalls = 0;
+        using hemelb::redblood::CellBase::CellBase;
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()() const override
+        {
+          return 0;
+        }
+        //! Facet bending energy
+        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &) const override
+        {
+          ++nbcalls;
+          return 0;
+        }
       };
-
 
       class CellArmyTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE(CellArmyTests);
-          CPPUNIT_TEST(testCell2Fluid);
-          CPPUNIT_TEST(testFluid2Cell);
-          CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(CellArmyTests);
+        CPPUNIT_TEST(testCell2Fluid);
+        CPPUNIT_TEST(testFluid2Cell);
+        CPPUNIT_TEST_SUITE_END();
 
-          PhysicalDistance const cutoff = 5.0;
-          PhysicalDistance const halo = 2.0;
-          typedef lb::lattices::D3Q15 D3Q15;
-          typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
+        PhysicalDistance const cutoff = 5.0;
+        PhysicalDistance const halo = 2.0;
+        typedef lb::lattices::D3Q15 D3Q15;
+        typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
 
         public:
-          void testCell2Fluid();
-          void testFluid2Cell();
+        void testCell2Fluid();
+        void testFluid2Cell();
+
         private:
-          virtual size_t CubeSize() const
-          {
-            return 32 + 2;
-          }
+        virtual size_t CubeSize() const
+        {
+          return 32 + 2;
+        }
       };
 
       void CellArmyTests::testCell2Fluid()
@@ -81,12 +79,10 @@ namespace hemelb
         army.cell2Cell.intensity = 1.0;
         army.cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(
-          std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 1);
-        CPPUNIT_ASSERT(
-          std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 1);
 
-        for(size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
+        for (size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
         {
           CPPUNIT_ASSERT(helpers::is_zero(latDat->GetSite(i).GetForce()));
         }
@@ -98,10 +94,8 @@ namespace hemelb
         army.updateDNC();
         army.cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(
-          std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 2);
-        CPPUNIT_ASSERT(
-          std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 2);
         CPPUNIT_ASSERT(not helpers::is_zero(latDat->GetSite(15, 15, 15).GetForce()));
       }
 
@@ -111,28 +105,25 @@ namespace hemelb
         // DNC is.
         auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
         auto const orig = TwoPancakeSamosas<FakeCell>(cutoff);
-        auto const normal = Facet(
-                              cells[0]->GetVertices(), cells[0]->GetFacets()[0]
-                            ).normal();
+        auto const normal = Facet(cells[0]->GetVertices(), cells[0]->GetFacets()[0]).normal();
 
         LatticePosition gradient;
         Dimensionless non_neg_pop;
         std::function<Dimensionless(PhysicalVelocity const &)> linear, linear_inv;
-        std::tie(non_neg_pop, gradient, linear, linear_inv)
-          = helpers::makeLinearProfile(CubeSize(), latDat, normal);
+        std::tie(non_neg_pop, gradient, linear, linear_inv) =
+          helpers::makeLinearProfile(CubeSize(), latDat, normal);
 
         redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
         army.fluid2CellInteractions();
 
-        for(size_t i(0); i < cells.size(); ++i)
+        for (size_t i(0); i < cells.size(); ++i)
         {
-          auto const disp = cells[i]->GetVertices().front()
-                            - orig[i]->GetVertices().front();
+          auto const disp = cells[i]->GetVertices().front() - orig[i]->GetVertices().front();
           auto i_nodeA = cells[i]->GetVertices().begin();
           auto i_nodeB = orig[i]->GetVertices().begin();
           auto const i_end = cells[i]->GetVertices().end();
 
-          for(; i_nodeA != i_end; ++i_nodeA, ++i_nodeB)
+          for (; i_nodeA != i_end; ++i_nodeA, ++i_nodeB)
           {
             CPPUNIT_ASSERT(helpers::is_zero((*i_nodeA - *i_nodeB) - disp));
           }
@@ -145,4 +136,4 @@ namespace hemelb
   }
 }
 
-#endif // ONCE
+#endif  // ONCE

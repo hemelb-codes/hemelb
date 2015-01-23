@@ -7,20 +7,20 @@
 
 int get_depth(std::vector<std::string> const &_args)
 {
-  std::vector<std::string>::const_iterator i_found
-    = std::find(_args.begin(), _args.end(), std::string("--depth"));
+  std::vector<std::string>::const_iterator i_found =
+    std::find(_args.begin(), _args.end(), std::string("--depth"));
 
-  if(i_found == _args.end())
+  if (i_found == _args.end())
   {
     i_found = std::find(_args.begin(), _args.end(), std::string("-d"));
   }
 
-  if(i_found == _args.end())
+  if (i_found == _args.end())
   {
     return 0;
   }
 
-  if((++i_found) == _args.end())
+  if ((++i_found) == _args.end())
   {
     std::cerr << "Incorrect command-line argument";
     throw std::exception();
@@ -37,12 +37,12 @@ std::string get_output(std::vector<std::string> const &_args)
   std::vector<std::string>::const_iterator i_current = _args.begin();
   std::vector<std::string>::const_iterator const i_end = _args.end();
 
-  for(; i_current != i_end; ++i_current)
-    if((*i_current)[0] != '-')
+  for (; i_current != i_end; ++i_current)
+    if ((*i_current)[0] != '-')
     {
       return *i_current;
     }
-    else if((++i_current) == i_end)
+    else if ((++i_current) == i_end)
     {
       break;
     }
@@ -50,13 +50,11 @@ std::string get_output(std::vector<std::string> const &_args)
   return "";
 }
 
-bool pop_option(
-  std::vector<std::string> &_args, std::string const &_option)
+bool pop_option(std::vector<std::string> &_args, std::string const &_option)
 {
-  std::vector<std::string>::const_iterator i_found
-    = std::find(_args.begin(), _args.end(), _option);
+  std::vector<std::string>::const_iterator i_found = std::find(_args.begin(), _args.end(), _option);
 
-  if(i_found == _args.end())
+  if (i_found == _args.end())
   {
     return false;
   }
@@ -68,7 +66,6 @@ bool pop_option(
 // Usage is $ tetrahedron [filename] [-d, --depth positive integer] [--vtk]
 int main(int argc, char const *argv[])
 {
-
   std::vector<std::string> args;
   std::copy(argv + 1, argv + argc, std::back_inserter(args));
 
@@ -78,15 +75,15 @@ int main(int argc, char const *argv[])
 
   hemelb::redblood::Mesh result = hemelb::redblood::tetrahedron(depth);
 
-  if(output != "" and not dovtk)
+  if (output != "" and not dovtk)
   {
     hemelb::redblood::write_mesh(output, *result.GetData());
   }
-  else if(output == "" and not dovtk)
+  else if (output == "" and not dovtk)
   {
     hemelb::redblood::write_mesh(std::cout, *result.GetData());
   }
-  else if(output != "")
+  else if (output != "")
   {
     hemelb::redblood::write_vtkmesh(output, *result.GetData());
   }
