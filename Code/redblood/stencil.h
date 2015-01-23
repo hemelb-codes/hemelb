@@ -37,11 +37,11 @@ namespace hemelb { namespace redblood {
 
     // Four point stencil
     inline Dimensionless fourPoint(Dimensionless const _x) {
-      Dimensionless x(std::abs(_x));
-      if(x < 1)
-        return 1./8. * (3. - 2*x + std::sqrt(1. + 4.*x - 4.*x*x));
-      else if(x < 2)
-        return 1./8. * (5. - 2*x - std::sqrt(-7. + 12.*x - 4.*x*x));
+      Dimensionless xAbs(std::abs(_x));
+      if(xAbs < 1)
+        return 1./8. * (3. - 2*xAbs + std::sqrt(1. + 4.*xAbs - 4.*xAbs*xAbs));
+      else if(xAbs < 2)
+        return 1./8. * (5. - 2*xAbs - std::sqrt(-7. + 12.*xAbs - 4.*xAbs*xAbs));
       else
         return 0.;
     }
@@ -53,19 +53,19 @@ namespace hemelb { namespace redblood {
 
     // Three-point stencil
     inline Dimensionless threePoint(Dimensionless const _x) {
-      Dimensionless x(std::abs(_x));
-      if(x < 0.5)
-        return 1./3. * (1 + std::sqrt(1. - 3.*x*x));
-      else if(x < 1.5)
-        return 1./6. * (5. - 3.*x - std::sqrt(-2. + 6.*x - 3.*x*x));
+      Dimensionless xAbs(std::abs(_x));
+      if(xAbs < 0.5)
+        return 1./3. * (1 + std::sqrt(1. - 3.*xAbs*xAbs));
+      else if(xAbs < 1.5)
+        return 1./6. * (5. - 3.*xAbs - std::sqrt(-2. + 6.*xAbs - 3.*xAbs*xAbs));
       else
         return 0.;
     }
 
     // Two-point stencil
     inline Dimensionless twoPoint(Dimensionless const _x) {
-      Dimensionless x(std::abs(_x));
-      return x < 1 ? 1. - x: 0;
+      Dimensionless xAbs(std::abs(_x));
+      return xAbs < 1 ? 1. - xAbs: 0;
     }
 
 #   define HEMELB_STENCIL_MACRO(NAME, STENCIL)                        \
