@@ -31,7 +31,7 @@ class CellBase {
       MeshData::Vertices && _vertices,
       Mesh const &origMesh,
       Dimensionless _scale = 1e0
-  ) : vertices_(std::move(_vertices)), template_(origMesh), scale_(_scale) {
+  ) : vertices_(std::move(_vertices)), templateMesh(origMesh), scale_(_scale) {
     assert(scale_ > 1e-12);
   }
   //! \brief Initializes mesh from mesh data
@@ -46,7 +46,7 @@ class CellBase {
       MeshData::Vertices const & _vertices,
       Mesh const &origMesh,
       Dimensionless _scale = 1e0
-  ) : vertices_(_vertices), template_(origMesh), scale_(_scale) {
+  ) : vertices_(_vertices), templateMesh(origMesh), scale_(_scale) {
     assert(scale_ > 1e-12);
   }
 
@@ -74,8 +74,8 @@ class CellBase {
        : CellBase(_mesh->vertices, Mesh(*_mesh)) {}
 
   void operator=(Mesh const& _mesh) {
-    template_ = _mesh;
-    vertices_ = template_.GetVertices();
+    templateMesh = _mesh;
+    vertices_ = templateMesh.GetVertices();
     scale_ = 1e0;
   }
 
@@ -83,10 +83,10 @@ class CellBase {
   virtual ~CellBase() {}
 
   //! Unmodified mesh
-  Mesh const & GetTemplateMesh() const { return template_; }
+  Mesh const & GetTemplateMesh() const { return templateMesh; }
   //! Facets for the mesh
   MeshData::Facets const & GetFacets() const {
-    return template_.GetData()->facets;
+    return templateMesh.GetData()->facets;
   }
   //! Vertices of the cell
   MeshData::Vertices const & GetVertices() const { return vertices_; }
@@ -94,7 +94,7 @@ class CellBase {
   MeshData::Vertices& GetVertices() { return vertices_; }
   //! Topology of the (template) mesh
   std::shared_ptr<MeshTopology const> GetTopology() const {
-    return template_.GetTopology();
+    return templateMesh.GetTopology();
   }
   size_t GetNumberOfNodes() const { return vertices_.size(); }
 
@@ -129,7 +129,7 @@ class CellBase {
    //! Holds list of vertices for this cell
    MeshData::Vertices vertices_;
    //! Unmodified original mesh
-   Mesh template_;
+   Mesh templateMesh;
    //! Scale factor for the template;
    Dimensionless scale_;
 };

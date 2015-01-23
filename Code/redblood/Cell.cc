@@ -16,10 +16,10 @@ namespace hemelb { namespace redblood {
 
 PhysicalEnergy Cell::operator()() const {
   return facetBending_() // facet bending unaffected by template scale
-    + volumeEnergy(vertices_, *template_.GetData(), moduli.volume, scale_)
-    + surfaceEnergy(vertices_, *template_.GetData(), moduli.surface, scale_)
+    + volumeEnergy(vertices_, *templateMesh.GetData(), moduli.volume, scale_)
+    + surfaceEnergy(vertices_, *templateMesh.GetData(), moduli.surface, scale_)
     + strainEnergy(
-        vertices_, *template_.GetData(),
+        vertices_, *templateMesh.GetData(),
         moduli.dilation, moduli.strain,
         scale_
       );
@@ -29,11 +29,11 @@ PhysicalEnergy Cell::operator()(
   assert(_forces.size() == vertices_.size());
   return facetBending_(_forces)
     + volumeEnergy(
-        vertices_, *template_.GetData(), moduli.volume, _forces, scale_)
+        vertices_, *templateMesh.GetData(), moduli.volume, _forces, scale_)
     + surfaceEnergy(
-        vertices_, *template_.GetData(), moduli.surface, _forces, scale_)
+        vertices_, *templateMesh.GetData(), moduli.surface, _forces, scale_)
     + strainEnergy(
-        vertices_, *template_.GetData(),
+        vertices_, *templateMesh.GetData(),
         moduli.dilation, moduli.strain,
         _forces,
         scale_
@@ -51,7 +51,7 @@ PhysicalEnergy Cell::facetBending_() const {
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
         result += facetBending(
-            vertices_, *template_.GetData(),
+            vertices_, *templateMesh.GetData(),
             current, (*i_facet)[i],
             moduli.bending
         );
@@ -71,7 +71,7 @@ PhysicalEnergy Cell::facetBending_(
     for(size_t i(0); i < 3; ++i)
       if((*i_facet)[i] > current)
         result += facetBending(
-            vertices_, *template_.GetData(),
+            vertices_, *templateMesh.GetData(),
             current, (*i_facet)[i],
             moduli.bending, _forces
         );
