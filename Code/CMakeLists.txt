@@ -336,7 +336,8 @@ target_link_libraries(${HEMELB_EXECUTABLE}
 	${Boost_LIBRARIES}
 	${CTEMPLATE_LIBRARIES}
 	${ZLIB_LIBRARIES}
-    ${MPWide_LIBRARIES}
+    	${MPWide_LIBRARIES}
+	pthread
 	)
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
 list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
@@ -407,7 +408,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		${CTEMPLATE_LIBRARIES}
 		${ZLIB_LIBRARIES}
 		${MPWide_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
+		${CMAKE_DL_LIBS}
+		pthread) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
 		unittests/resources/config.xml unittests/resources/config0_2_0.xml
@@ -421,11 +423,13 @@ endif()
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
+#	find_package(Thread REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
 	add_executable(functionaltests_hemelb ${root_sources})
 	add_subdirectory(functionaltests/cpptests)
 	target_link_libraries(functionaltests_hemelb 
 		hemelb_functionaltests 
+		pthread
 		${heme_libraries}
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}
