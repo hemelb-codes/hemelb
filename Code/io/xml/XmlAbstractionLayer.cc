@@ -27,7 +27,7 @@ namespace hemelb
       Document::~Document()
       {
         delete xmlDoc;
-        xmlDoc = NULL;
+        xmlDoc = nullptr;
       }
 
       Element Document::GetRoot()
@@ -45,7 +45,7 @@ namespace hemelb
       }
       const Element Element::Missing()
       {
-        return Element(NULL);
+        return Element(nullptr);
       }
       const std::string& Element::GetName() const
       {
@@ -71,7 +71,7 @@ namespace hemelb
       Element Element::GetChildOrThrow(const std::string& name)
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
@@ -79,7 +79,7 @@ namespace hemelb
       const Element Element::GetChildOrThrow(const std::string& name) const
       {
         TiXmlElement* ans = el->FirstChildElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw ChildError(*this, name);
 
         return Element(ans);
@@ -93,8 +93,8 @@ namespace hemelb
       Element Element::NextSiblingOrNull(const std::string name)
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
-        if (ans == NULL)
-          return NULL;
+        if (ans == nullptr)
+          return nullptr;
 
         return Element(ans);
       }
@@ -102,7 +102,7 @@ namespace hemelb
       Element Element::NextSiblingOrThrow(const std::string name)
       {
         TiXmlElement* ans = el->NextSiblingElement(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw SiblingError(*this, name);
 
         return Element(ans);
@@ -114,7 +114,7 @@ namespace hemelb
       const std::string& Element::GetAttributeOrThrow(const std::string& name) const
       {
         const std::string* ans = el->Attribute(name);
-        if (ans == NULL)
+        if (ans == nullptr)
           throw AttributeError(*this, name);
 
         return *ans;
@@ -127,7 +127,7 @@ namespace hemelb
       Element Element::GetParentOrThrow()
       {
         TiXmlElement* parent = el->Parent()->ToElement();
-        if (parent == NULL)
+        if (parent == nullptr)
           throw ParentError(*this);
         return Element(parent);
       }
@@ -151,14 +151,14 @@ namespace hemelb
       {
         const TiXmlNode* parent = el->Parent();
         const TiXmlElement* parentEl = parent->ToElement();
-        if (parentEl != NULL)
+        if (parentEl != nullptr)
         {
           GetPathWorker(parentEl, ans);
         }
         else
         {
           const TiXmlDocument* doc = parent->ToDocument();
-          if (doc != NULL)
+          if (doc != nullptr)
           {
             ans << doc->Value() << ":";
           }

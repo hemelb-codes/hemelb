@@ -38,7 +38,7 @@ namespace hemelb
 
           public:
             NeighbouringDataManagerTests() :
-              data(NULL)
+              data(nullptr)
             {
             }
 

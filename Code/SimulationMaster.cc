@@ -40,18 +40,18 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options,
 {
   timings[hemelb::reporting::Timers::total].Start();
 
-  latticeData = NULL;
+  latticeData = nullptr;
 
-  colloidController = NULL;
-  latticeBoltzmannModel = NULL;
-  steeringCpt = NULL;
-  propertyDataSource = NULL;
-  visualisationControl = NULL;
-  propertyExtractor = NULL;
-  simulationState = NULL;
-  stepManager = NULL;
-  netConcern = NULL;
-  neighbouringDataManager = NULL;
+  colloidController = nullptr;
+  latticeBoltzmannModel = nullptr;
+  steeringCpt = nullptr;
+  propertyDataSource = nullptr;
+  visualisationControl = nullptr;
+  propertyExtractor = nullptr;
+  simulationState = nullptr;
+  stepManager = nullptr;
+  netConcern = nullptr;
+  neighbouringDataManager = nullptr;
   imagesPerSimulation = options.NumberOfImages();
   steeringSessionId = options.GetSteeringSessionId();
 
@@ -209,7 +209,7 @@ void SimulationMaster::Initialise()
   }
   else
   {
-    network = NULL;
+    network = nullptr;
   }
 
   stabilityTester = new hemelb::lb::StabilityTester<latticeType>(latticeData,
@@ -217,7 +217,7 @@ void SimulationMaster::Initialise()
                                                                  simulationState,
                                                                  timings,
                                                                  monitoringConfig);
-  entropyTester = NULL;
+  entropyTester = nullptr;
 
   if (monitoringConfig->doIncompressibilityCheck)
   {
@@ -230,7 +230,7 @@ void SimulationMaster::Initialise()
   }
   else
   {
-    incompressibilityChecker = NULL;
+    incompressibilityChecker = nullptr;
   }
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising visualisation controller.");
@@ -253,7 +253,7 @@ void SimulationMaster::Initialise()
   }
   else
   {
-    imageSendCpt = NULL;
+    imageSendCpt = nullptr;
   }
 
   inletValues = new hemelb::lb::iolets::BoundaryValues(hemelb::geometry::INLET_TYPE,
@@ -313,7 +313,7 @@ void SimulationMaster::Initialise()
                                                      hemelb::net::separate_communications);
   netConcern = new hemelb::net::phased::NetConcern(communicationNet);
   stepManager->RegisterIteratedActorSteps(*neighbouringDataManager, 0);
-  if (colloidController != NULL)
+  if (colloidController != nullptr)
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
   }
@@ -323,7 +323,7 @@ void SimulationMaster::Initialise()
   stepManager->RegisterIteratedActorSteps(*outletValues, 1);
   stepManager->RegisterIteratedActorSteps(*steeringCpt, 1);
   stepManager->RegisterIteratedActorSteps(*stabilityTester, 1);
-  if (entropyTester != NULL)
+  if (entropyTester != nullptr)
   {
     stepManager->RegisterIteratedActorSteps(*entropyTester, 1);
   }
@@ -333,7 +333,7 @@ void SimulationMaster::Initialise()
     stepManager->RegisterIteratedActorSteps(*incompressibilityChecker, 1);
   }
   stepManager->RegisterIteratedActorSteps(*visualisationControl, 1);
-  if (propertyExtractor != NULL)
+  if (propertyExtractor != nullptr)
   {
     stepManager->RegisterIteratedActorSteps(*propertyExtractor, 1);
   }
@@ -550,7 +550,7 @@ void SimulationMaster::DoTimeStep()
     simulationState->SetIsTerminating(true);
   }
 
-  if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != NULL)
+  if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != nullptr)
     colloidController->OutputInformation(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
@@ -571,7 +571,7 @@ void SimulationMaster::DoTimeStep()
 
   if (simulationState->GetTimeStep() % FORCE_FLUSH_PERIOD == 0 && IsCurrentProcTheIOProc())
   {
-    fflush(NULL);
+    fflush(nullptr);
   }
   simulationState->Increment();
 }
@@ -606,7 +606,7 @@ void SimulationMaster::RecalculatePropertyRequirements()
   }
 
   // If extracting property results, check what's required by them.
-  if (propertyExtractor != NULL)
+  if (propertyExtractor != nullptr)
   {
     propertyExtractor->SetRequiredProperties(propertyCache);
   }

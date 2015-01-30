@@ -53,7 +53,7 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                MockNetHelper(),stepManager(NULL), action(NULL), concern(NULL), netConcern(NULL), action2(NULL), concern2(NULL)
+                MockNetHelper(),stepManager(nullptr), action(nullptr), concern(nullptr), netConcern(nullptr), action2(nullptr), concern2(nullptr)
             {
             }
 

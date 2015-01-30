@@ -97,11 +97,11 @@ namespace hemelb
     {
       const char *dirname;
       dirname = std::getenv("TMP");
-      if (NULL == dirname)
+      if (nullptr == dirname)
         dirname = std::getenv("TMPDIR");
-      if (NULL == dirname)
+      if (nullptr == dirname)
         dirname = std::getenv("TEMP");
-      if (NULL == dirname)
+      if (nullptr == dirname)
       {
         //assert(false); // no temp directory found
         return GetCurrentDir();

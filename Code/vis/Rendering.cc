@@ -23,17 +23,17 @@ namespace hemelb
 
     void Rendering::ReleaseAll()
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult-> Release();
       }
 
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->Release();
       }
 
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult-> Release();
       }
@@ -41,15 +41,15 @@ namespace hemelb
 
     void Rendering::ReceivePixelCounts(net::Net* inNet, proc_t source)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult->ReceiveQuantity(inNet, source);
       }
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->ReceiveQuantity(inNet, source);
       }
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult->ReceiveQuantity(inNet, source);
       }
@@ -57,15 +57,15 @@ namespace hemelb
 
     void Rendering::ReceivePixelData(net::Net* inNet, proc_t source)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult->ReceivePixels(inNet, source);
       }
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->ReceivePixels(inNet, source);
       }
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult->ReceivePixels(inNet, source);
       }
@@ -73,15 +73,15 @@ namespace hemelb
 
     void Rendering::SendPixelCounts(net::Net* inNet, proc_t destination)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult->SendQuantity(inNet, destination);
       }
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->SendQuantity(inNet, destination);
       }
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult->SendQuantity(inNet, destination);
       }
@@ -89,15 +89,15 @@ namespace hemelb
 
     void Rendering::SendPixelData(net::Net* inNet, proc_t destination)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult->SendPixels(inNet, destination);
       }
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->SendPixels(inNet, destination);
       }
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult->SendPixels(inNet, destination);
       }
@@ -105,15 +105,15 @@ namespace hemelb
 
     void Rendering::Combine(const Rendering& other)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         glyphResult->Combine(*other.glyphResult);
       }
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         rayResult->Combine(*other.rayResult);
       }
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         streakResult->Combine(*other.streakResult);
       }
@@ -121,17 +121,17 @@ namespace hemelb
 
     void Rendering::PopulateResultSet(PixelSet<ResultPixel>* resultSet)
     {
-      if (glyphResult != NULL)
+      if (glyphResult != nullptr)
       {
         AddPixelsToResultSet(resultSet, glyphResult->GetPixels());
       }
 
-      if (rayResult != NULL)
+      if (rayResult != nullptr)
       {
         AddPixelsToResultSet(resultSet, rayResult->GetPixels());
       }
 
-      if (streakResult != NULL)
+      if (streakResult != nullptr)
       {
         AddPixelsToResultSet(resultSet, streakResult->GetPixels());
       }

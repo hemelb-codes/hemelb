@@ -82,9 +82,9 @@ namespace hemelb
         // Processor Pi holds ni consecutive vertices and mi corresponding edges
         //
         // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
-        // vwgt[ni] has vertex weight coefficients and can be NULL
+        // vwgt[ni] has vertex weight coefficients and can be nullptr
         // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
-        // adjwgt[mi] has edge weights and can be NULL
+        // adjwgt[mi] has edge weights and can be nullptr
         // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
         //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
         // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
@@ -151,7 +151,7 @@ namespace hemelb
          &adjacenciesPerVertex[0],
          &localAdjacencies[0],
          &vertexWeights[0],
-         NULL,
+         nullptr,
          &weightFlag,
          &numberingFlag,
          &noConstraints,
@@ -166,7 +166,7 @@ namespace hemelb
                                  &adjacenciesPerVertex[0],
                                  &localAdjacencies[0],
                                  &vertexWeights[0],
-                                 NULL,
+                                 nullptr,
                                  &weightFlag,
                                  &numberingFlag,
                                  &nDims,

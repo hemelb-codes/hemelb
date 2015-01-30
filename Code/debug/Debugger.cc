@@ -23,7 +23,7 @@ namespace hemelb
        * actually construct the instance. It should be defined in the
        * appropriate platform subdirectory.
        */
-      if (Debugger::singleton == NULL)
+      if (Debugger::singleton == nullptr)
       {
         if (active)
           Debugger::singleton = new PlatformDebugger(executable, comm);
@@ -41,7 +41,7 @@ namespace hemelb
     }
 
     // Init static members
-    Debugger* Debugger::singleton = NULL;
+    Debugger* Debugger::singleton = nullptr;
 
     Debugger::Debugger(const char* const executable, const net::MpiCommunicator& comm) :
       mExecutable(executable), mCommunicator(comm)

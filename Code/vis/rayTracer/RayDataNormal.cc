@@ -147,7 +147,7 @@ namespace hemelb
         return type;
       }
 
-      const DomainStats* RayDataNormal::mDomainStats = NULL;
+      const DomainStats* RayDataNormal::mDomainStats = nullptr;
     }
   }
 

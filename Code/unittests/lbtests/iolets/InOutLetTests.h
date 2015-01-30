@@ -174,7 +174,7 @@ namespace hemelb
               // Bootstrap ourselves a in inoutlet, by loading config.xml.
               UncheckedSimConfig config(Resource("config-velocity-iolet.xml").Path());
               p_vel = dynamic_cast<InOutLetParabolicVelocity*>(config.GetInlets()[0]);
-              CPPUNIT_ASSERT(p_vel != NULL);
+              CPPUNIT_ASSERT(p_vel != nullptr);
 
               // Bootstrap ourselves a unit converter, which the cosine needs in initialisation
               lb::SimulationState state = lb::SimulationState(config.GetTimeStepLength(),

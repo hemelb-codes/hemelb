@@ -48,7 +48,7 @@ namespace hemelb
       {
         protected:
           MockNetHelper() :
-            communicatorMock(NULL), netMock(NULL)
+            communicatorMock(nullptr), netMock(nullptr)
           {
           }
           void setUp(const proc_t core_count, const proc_t current_core)

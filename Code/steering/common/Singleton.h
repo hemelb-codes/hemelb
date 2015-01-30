@@ -32,7 +32,7 @@ namespace hemelb
         public:
           static Derived* Init()
           {
-            if (Singleton<Derived>::singleton == NULL)
+            if (Singleton<Derived>::singleton == nullptr)
             {
               Singleton<Derived>::singleton = new Derived();
             }
@@ -41,7 +41,7 @@ namespace hemelb
       };
 
       template<typename Derived>
-      Singleton<Derived>* Singleton<Derived>::singleton = NULL;
+      Singleton<Derived>* Singleton<Derived>::singleton = nullptr;
 
     }
   }

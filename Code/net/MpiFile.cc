@@ -23,7 +23,7 @@ namespace hemelb
         delete fh;
       }
     }
-    MpiFile::MpiFile() : comm(NULL)
+    MpiFile::MpiFile() : comm(nullptr)
     {
 
     }

@@ -169,7 +169,7 @@ namespace hemelb
       FILE *fp = fopen(path, mode);
 
       // If there was a problem, print the error and exit
-      if (fp == NULL)
+      if (fp == nullptr)
       {
         perror(path);
         exit(EXIT_FAILURE);

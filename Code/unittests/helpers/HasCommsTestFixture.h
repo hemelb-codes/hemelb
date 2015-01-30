@@ -29,7 +29,7 @@ namespace hemelb
 
           void tearDown()
           {
-            //hemelbCommunicator = NULL;
+            //hemelbCommunicator = nullptr;
           }
 
           static void Init(const net::IOCommunicator& inst)
@@ -46,7 +46,7 @@ namespace hemelb
           static const net::IOCommunicator* hemelbCommunicator;
       };
 
-      const net::IOCommunicator* HasCommsTestFixture::hemelbCommunicator = NULL;
+      const net::IOCommunicator* HasCommsTestFixture::hemelbCommunicator = nullptr;
     }
   }
 }

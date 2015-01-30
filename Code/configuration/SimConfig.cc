@@ -29,8 +29,8 @@ namespace hemelb
     }
 
     SimConfig::SimConfig(const std::string& path) :
-        xmlFilePath(path), rawXmlDoc(NULL), hasColloidSection(false), warmUpSteps(0),
-            unitConverter(NULL)
+        xmlFilePath(path), rawXmlDoc(nullptr), hasColloidSection(false), warmUpSteps(0),
+            unitConverter(nullptr)
     {
     }
     void SimConfig::Init()
@@ -53,10 +53,10 @@ namespace hemelb
       }
 
       delete rawXmlDoc;
-      rawXmlDoc = NULL;
+      rawXmlDoc = nullptr;
 
       delete unitConverter;
-      unitConverter = NULL;
+      unitConverter = nullptr;
     }
 
     void SimConfig::DoIO(io::xml::Element topNode)
@@ -216,7 +216,7 @@ namespace hemelb
         io::xml::Element conditionEl = currentIoletNode.GetChildOrThrow("condition");
         const std::string& conditionType = conditionEl.GetAttributeOrThrow("type");
 
-        lb::iolets::InOutLet* newIolet = NULL;
+        lb::iolets::InOutLet* newIolet = nullptr;
 
         if (conditionType == "pressure")
         {
@@ -242,7 +242,7 @@ namespace hemelb
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
       const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
-      lb::iolets::InOutLet* newIolet = NULL;
+      lb::iolets::InOutLet* newIolet = nullptr;
       if (conditionSubtype == "cosine")
       {
         newIolet = DoIOForCosinePressureInOutlet(ioletEl);
@@ -270,7 +270,7 @@ namespace hemelb
       io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
       const std::string& conditionSubtype = conditionEl.GetAttributeOrThrow("subtype");
 
-      lb::iolets::InOutLet* newIolet = NULL;
+      lb::iolets::InOutLet* newIolet = nullptr;
       if (conditionSubtype == "parabolic")
       {
         newIolet = DoIOForParabolicVelocityInOutlet(ioletEl);
@@ -422,7 +422,7 @@ namespace hemelb
       const std::string* name = fieldEl.GetAttributeOrNull("name");
 
       // Default name is identical to type.
-      if (name == NULL)
+      if (name == nullptr)
       {
         field.name = type;
       }
@@ -637,8 +637,8 @@ namespace hemelb
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const
     {
-      if (unitConverter == NULL)
-        throw Exception() << "Invalid UnitConverter (NULL)";
+      if (unitConverter == nullptr)
+        throw Exception() << "Invalid UnitConverter (nullptr)";
 
       return *unitConverter;
     }

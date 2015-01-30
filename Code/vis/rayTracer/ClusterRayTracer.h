@@ -336,7 +336,7 @@ namespace hemelb
                   const util::Vector3D<double>* lWallData = iCluster.GetWallData(blockNumberOnCluster,
                                                                                  siteTraverser.GetCurrentIndex());
 
-                  if (lWallData == NULL || lWallData->x == NO_VALUE)
+                  if (lWallData == nullptr || lWallData->x == NO_VALUE)
                   {
                     ioRay.UpdateDataForNormalFluidSite(siteData,
                                                        manhattanRayLengthThroughVoxel

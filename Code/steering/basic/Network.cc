@@ -123,7 +123,7 @@ namespace hemelb
     void Network::PreReceive()
     {
       // Calling send_all will attempt to flush the send buffer.
-      send_all(NULL, 0);
+      send_all(nullptr, 0);
     }
 
     bool Network::IsConnected()

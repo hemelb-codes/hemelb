@@ -23,7 +23,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFileVelocity::InOutLetFileVelocity() :
-          units(NULL)
+          units(nullptr)
       {
       }
 

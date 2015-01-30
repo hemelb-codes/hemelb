@@ -406,7 +406,7 @@ namespace hemelb
 
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
-            lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
+            lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = nullptr, *hydroVars1 = nullptr;
 
             distribn_t momentumSetA[] = { 0.4, 0.5, 0.6 };
             distribn_t momentumSetB[] = { -0.4, -0.5, -0.6 };

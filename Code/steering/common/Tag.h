@@ -62,7 +62,7 @@ namespace hemelb
             DerivedTag* self = static_cast<DerivedTag*> (Singleton<Tag<T,
                 DerivedTag, SteererClass> >::Init());
 
-            if (steerer == NULL)
+            if (steerer == nullptr)
               steerer = SteererClass::Init();
 
             steerer->SteererClass::RegisterTag(self);

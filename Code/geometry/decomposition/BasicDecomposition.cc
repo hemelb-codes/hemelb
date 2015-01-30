@@ -109,7 +109,7 @@ namespace hemelb
               // Block number is the number of the block we're currently on.
               blockNumber++;
 
-              // If the array of proc rank for each site is NULL, we're on an all-solid block.
+              // If the array of proc rank for each site is nullptr, we're on an all-solid block.
               // Alternatively, if this block has already been assigned, move on.
               if (fluidSitesPerBlock[blockNumber] == 0)
               {
@@ -200,7 +200,7 @@ namespace hemelb
             }
 
             // Move on if the neighbour is in a block of solids (in which case
-            // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
+            // the pointer to ProcessorRankForEachBlockSite is nullptr) or it is solid or has already
             // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
             // was initialized in lbmReadConfig in io.cc.
 

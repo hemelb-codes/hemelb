@@ -60,7 +60,7 @@ namespace hemelb
       {
         public:
           InOutLet() :
-            comms(NULL), extraData(NULL)
+            comms(nullptr), extraData(nullptr)
           {
           }
           virtual ~InOutLet()

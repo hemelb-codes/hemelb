@@ -106,7 +106,7 @@ namespace hemelb
                                                                         lb::MacroscopicPropertyCache& propertyCache,
                                                                         reporting::Timers& timings,
                                                                         distribn_t maximumRelativeDensityDifferenceAllowed) :
-        BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState), timings(timings), maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed), globalDensityTracker(NULL)
+        BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), propertyCache(propertyCache), mSimState(simState), timings(timings), maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed), globalDensityTracker(nullptr)
     {
       /*
        *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
@@ -237,7 +237,7 @@ namespace hemelb
     template<class BroadcastPolicy>
     bool IncompressibilityChecker<BroadcastPolicy>::AreDensitiesAvailable() const
     {
-      return (globalDensityTracker != NULL);
+      return (globalDensityTracker != nullptr);
     }
 
     template<class BroadcastPolicy>
