@@ -35,7 +35,7 @@ namespace hemelb
 
       const util::Vector3D<double>* ClusterNormal::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
       {
-        return NULL;
+        return nullptr;
       }
 
       void ClusterNormal::DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData)

@@ -35,7 +35,7 @@ namespace hemelb
            */
           static inline const geometry& Get()
           {
-            if (geometry::singleton == NULL)
+            if (geometry::singleton == nullptr)
               geometry::singleton = new geometry();
 
             return *geometry::singleton;

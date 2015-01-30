@@ -36,7 +36,7 @@ namespace hemelb
 
           public:
             NeighbouringLatticeDataTests() :
-                FourCubeBasedTestFixture(),data(NULL), exampleSite(NULL), dummyId(54)
+                FourCubeBasedTestFixture(),data(nullptr), exampleSite(nullptr), dummyId(54)
             {
             }
 

@@ -42,7 +42,7 @@ namespace hemelb
         }
         else
         {
-          return NULL;
+          return nullptr;
         }
       }
 
@@ -52,7 +52,7 @@ namespace hemelb
       {
         if (WallNormals[blockNumber].size() <= (size_t) siteNumber)
         {
-          WallNormals[blockNumber].resize(siteNumber + 1, NULL);
+          WallNormals[blockNumber].resize(siteNumber + 1, nullptr);
         }
 
         WallNormals[blockNumber][siteNumber] = &data;

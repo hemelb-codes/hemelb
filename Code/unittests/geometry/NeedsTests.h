@@ -30,7 +30,7 @@ namespace hemelb
 
         public:
           NeedsTests() :
-              mockedNeeds(NULL)
+              mockedNeeds(nullptr)
           {
           }
 

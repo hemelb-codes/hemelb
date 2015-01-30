@@ -159,14 +159,14 @@ namespace hemelb
         return velocityField[blockNumber][siteNumber];
       }
 
-      // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
+      // Returns the velocity site data for a given index, or nullptr if the index isn't valid / has
       // no data.
       VelocitySiteData* VelocityField::GetVelocitySiteData(const geometry::LatticeData& latDat,
                                                            const util::Vector3D<site_t>& location)
       {
         if (!latDat.IsValidLatticeSite(location))
         {
-          return NULL;
+          return nullptr;
         }
 
         util::Vector3D<site_t> blockCoords, siteCoords;
@@ -176,7 +176,7 @@ namespace hemelb
 
         if (!BlockContainsData(static_cast<size_t>(block_id)))
         {
-          return NULL;
+          return nullptr;
         }
 
         site_t site_id = latDat.GetLocalSiteIdFromLocalSiteCoords(siteCoords);
@@ -239,7 +239,7 @@ namespace hemelb
                                                                                              neighbourJ,
                                                                                              neighbourK));
 
-              if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
+              if (vel_site_data_p == nullptr || vel_site_data_p->proc_id == -1)
               {
                 // it is a solid site and the velocity is
                 // assumed to be zero
@@ -269,7 +269,7 @@ namespace hemelb
 
         VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
 
-        if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == localRank
+        if (vel_site_data_p == nullptr || vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == localRank
             || vel_site_data_p->counter == counter)
         {
           return false;

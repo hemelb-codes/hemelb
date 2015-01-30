@@ -106,7 +106,7 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       myStreaker = new streaklinedrawer::StreaklineDrawer(*latticeData, screen, viewpoint, visSettings, propertyCache, mNet->GetCommunicator());
 #else
-      myStreaker = NULL;
+      myStreaker = nullptr;
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -171,7 +171,7 @@ namespace hemelb
 
       PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render(propertyCache);
 
-      PixelSet<BasicPixel> *glyph = NULL;
+      PixelSet<BasicPixel> *glyph = nullptr;
 
       if (visSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
@@ -183,9 +183,9 @@ namespace hemelb
         glyph->Clear();
       }
 
-      PixelSet<streaklinedrawer::StreakPixel> *streak = NULL;
+      PixelSet<streaklinedrawer::StreakPixel> *streak = nullptr;
 
-      if (myStreaker != NULL
+      if (myStreaker != nullptr
           && (visSettings.mStressType == lb::ShearStress || visSettings.mode == VisSettings::WALLANDSTREAKLINES))
       {
         streak = myStreaker->Render();
@@ -279,9 +279,9 @@ namespace hemelb
         {
           Rendering lRendering(myGlypher->GetUnusedPixelSet(),
                                normalRayTracer->GetUnusedPixelSet(),
-                               myStreaker != NULL ?
+                               myStreaker != nullptr ?
                                  myStreaker->GetUnusedPixelSet() :
-                                 NULL);
+                                 nullptr);
 
           lRendering.ReceivePixelCounts(mNet, GetChildren()[ii]);
 
@@ -476,7 +476,7 @@ namespace hemelb
       }
       else
       {
-        return NULL;
+        return nullptr;
       }
     }
 
@@ -506,9 +506,9 @@ namespace hemelb
 
       Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0 ?
         & (*localResultsByStartIt.find(startIteration)).second :
-        NULL;
-      Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(), normalRayTracer->GetUnusedPixelSet(), myStreaker == NULL ?
-        NULL :
+        nullptr;
+      Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(), normalRayTracer->GetUnusedPixelSet(), myStreaker == nullptr ?
+        nullptr :
         myStreaker->GetUnusedPixelSet());
 
       // Start with a difference in rank of 1, doubling every time.
@@ -602,7 +602,7 @@ namespace hemelb
 
       for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); ++it)
       {
-        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == visSettings.mouse_x && (*it).GetJ() == visSettings.mouse_y)
+        if ( (*it).GetRayPixel() != nullptr && (*it).GetI() == visSettings.mouse_x && (*it).GetJ() == visSettings.mouse_y)
         {
           *density = (*it).GetRayPixel()->GetNearestDensity();
           *stress = (*it).GetRayPixel()->GetNearestStress();
@@ -616,7 +616,7 @@ namespace hemelb
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
-      if (myStreaker != NULL)
+      if (myStreaker != nullptr)
       {
         timer.Start();
         myStreaker->ProgressStreaklines(time_step, period);

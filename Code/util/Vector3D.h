@@ -605,7 +605,7 @@ namespace hemelb
          * Default constructor
          */
         Vector3DIterator() :
-            vec(NULL), i(0)
+            vec(nullptr), i(0)
         {
         }
 

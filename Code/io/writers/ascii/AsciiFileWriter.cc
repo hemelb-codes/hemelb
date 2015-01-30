@@ -30,7 +30,7 @@ namespace hemelb
         // Destructor closes the file and cleans up the stream object.
         AsciiFileWriter::~AsciiFileWriter()
         {
-          if (outStream != NULL)
+          if (outStream != nullptr)
           {
             // Since we know the member std::ostream* outStream is actually an
             // instance of std::ofstream, cast it to that so we can close it.

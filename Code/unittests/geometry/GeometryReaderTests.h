@@ -43,11 +43,11 @@ namespace hemelb
             reader = new GeometryReader(false,
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
                                         *timings, Comms());
-            lattice = NULL;
+            lattice = nullptr;
             fourCube = FourCubeLatticeData::Create(Comms());
             CopyResourceToTempdir("four_cube.xml");
             CopyResourceToTempdir("four_cube.gmy");
-            simConfig = NULL;
+            simConfig = nullptr;
             simConfig = configuration::SimConfig::New("four_cube.xml");
           }
 

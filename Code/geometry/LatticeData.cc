@@ -519,7 +519,7 @@ namespace hemelb
       GetBlockAndLocalSiteCoords(globalSiteCoords, blockCoords, localSiteCoords);
       // Get the block from the block identifiers.
       const Block& block = GetBlock(GetBlockIdFromBlockCoords(blockCoords));
-      // If an empty (solid) block is addressed, return a NULL pointer.
+      // If an empty (solid) block is addressed, return a nullptr pointer.
       if (block.IsEmpty())
       {
         return BIG_NUMBER2;

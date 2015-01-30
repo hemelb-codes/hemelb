@@ -59,7 +59,7 @@ namespace hemelb
         // D'tor is trivial here.
       }
 
-      geometry* geometry::singleton = NULL;
+      geometry* geometry::singleton = nullptr;
     }
   }
 }

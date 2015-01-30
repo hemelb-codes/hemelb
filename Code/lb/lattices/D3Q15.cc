@@ -16,7 +16,7 @@ namespace hemelb
     namespace lattices
     {
       template<>
-      lb::lattices::LatticeInfo* lb::lattices::Lattice<D3Q15>::singletonInfo = NULL;
+      lb::lattices::LatticeInfo* lb::lattices::Lattice<D3Q15>::singletonInfo = nullptr;
            
       const int D3Q15::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
       const int D3Q15::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };

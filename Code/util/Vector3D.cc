@@ -23,7 +23,7 @@ namespace hemelb
 
     void Vector3DBase::HandleIndexError(int direction)
     {
-      if (Vector3DBase::handler == NULL)
+      if (Vector3DBase::handler == nullptr)
       {
         std::cout << "Vector3D index error handler not set when index error "
           "occurred" << std::endl;

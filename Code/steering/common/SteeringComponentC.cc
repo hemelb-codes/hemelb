@@ -87,7 +87,7 @@ namespace hemelb
                                  longitude,
                                  latitude,
                                  zoom);
-      if (imageSendComponent != NULL)
+      if (imageSendComponent != nullptr)
       {
         imageSendComponent->SetMaxFramerate(privateSteeringParams[MaxFramerate]);
       }

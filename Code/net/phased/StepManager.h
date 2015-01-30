@@ -75,7 +75,7 @@ namespace hemelb
            * @param The number of phases, default 1.
            * @param timers, Record the times for the steps to this timers object, if given
            */
-          StepManager(Phase phases = 1, reporting::Timers * timers = NULL, bool separate_concerns = false);
+          StepManager(Phase phases = 1, reporting::Timers * timers = nullptr, bool separate_concerns = false);
 
           /***
            * Register an action of a concern

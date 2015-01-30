@@ -21,7 +21,7 @@ namespace hemelb
     }
     const std::string OsxDebugger::GetBinaryPath(void) const
     {
-      char* path = NULL;
+      char* path = nullptr;
       uint32_t size = 0;
       _NSGetExecutablePath(path, &size);
       path = new char[size];

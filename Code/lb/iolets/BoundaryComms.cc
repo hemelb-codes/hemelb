@@ -32,8 +32,8 @@ namespace hemelb
         }
         else
         {
-          sendRequest = NULL;
-          sendStatus = NULL;
+          sendRequest = nullptr;
+          sendStatus = nullptr;
         }
       }
 

@@ -71,7 +71,7 @@ namespace hemelb
                                            const int root) const
     {
       std::vector<T> ans;
-      T* recvbuf = NULL;
+      T* recvbuf = nullptr;
 
       if (Rank() == root)
       {
@@ -91,7 +91,7 @@ namespace hemelb
     std::vector<T> MpiCommunicator::Gather(const T& val, const int root) const
     {
       std::vector<T> ans;
-      T* recvbuf = NULL;
+      T* recvbuf = nullptr;
 
       if (Rank() == root)
       {

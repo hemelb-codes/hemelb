@@ -90,7 +90,7 @@ namespace hemelb
       file = net::MpiFile::Open(hemeLbComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
       log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       // TODO: Why is there this fflush?
-      fflush( NULL);
+      fflush( nullptr);
 
       // Set the view to the file.
       file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);

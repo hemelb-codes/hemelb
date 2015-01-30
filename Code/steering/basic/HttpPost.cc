@@ -77,7 +77,7 @@ namespace hemelb
       for (int address_id = 0; address_id < 4; address_id++)
       {
         // If no address, break.
-        if (host->h_addr_list[address_id] == NULL)
+        if (host->h_addr_list[address_id] == nullptr)
           break;
 
         std::printf("checking Address ID %i...\n", address_id);
@@ -161,7 +161,7 @@ namespace hemelb
       // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);
 
-      if (host_addr == NULL)
+      if (host_addr == nullptr)
       {
         return -103;
       }

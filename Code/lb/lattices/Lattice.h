@@ -722,7 +722,7 @@ namespace hemelb
 
           inline static LatticeInfo& GetLatticeInfo()
           {
-            if (singletonInfo == NULL)
+            if (singletonInfo == nullptr)
             {
               util::Vector3D<int> vectors[DmQn::NUMVECTORS];
               Direction inverseVectorIndices[DmQn::NUMVECTORS];

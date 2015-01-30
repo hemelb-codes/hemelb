@@ -16,7 +16,7 @@ namespace hemelb
     namespace lattices
     {
       template<>
-      LatticeInfo* Lattice<D3Q19>::singletonInfo = NULL;
+      LatticeInfo* Lattice<D3Q19>::singletonInfo = nullptr;
 
       const int D3Q19::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1, 0, 0, 0, 0 };
       const int D3Q19::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 0, 0, 1, -1, 1, -1 };

@@ -72,7 +72,7 @@ namespace hemelb
             for (unsigned iIolet = 0; iIolet < nIolets; ++iIolet)
             {
               InOutLet& iolet = *bValues->GetLocalIolet(iIolet);
-              if (iolet.GetExtraData() == NULL)
+              if (iolet.GetExtraData() == nullptr)
                 iolet.SetExtraData(new VSExtra<LatticeType> (iolet));
             }
 
@@ -304,7 +304,7 @@ namespace hemelb
           {
             // Get the extra data for this iolet
             VSExtra<LatticeType>* ans = dynamic_cast<VSExtra<LatticeType>*> (iolet->GetExtraData());
-            if (ans == NULL)
+            if (ans == nullptr)
             {
               // panic
               log::Logger::Log<log::Critical, log::OnePerCore>("Extra data not available for in/outlet. Aborting.\n");

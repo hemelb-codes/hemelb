@@ -90,7 +90,7 @@ namespace hemelb
       if (mCommunicator.Rank() == 0)
       {
         // Reap the spawner
-        int deadPid = waitpid(childPid, NULL, 0);
+        int deadPid = waitpid(childPid, nullptr, 0);
         if (deadPid != childPid)
           std::cerr << "Error in waitpid, code: " << errno << std::endl;
       }
@@ -130,7 +130,7 @@ namespace hemelb
         args.push_back(ConvertIntToString(*i));
       }
 
-      // +1 to include required NULL pointer for execvp()
+      // +1 to include required nullptr pointer for execvp()
       char **argv = new char *[args.size() + 1];
 
       // convert to C array of char arrays.
@@ -140,8 +140,8 @@ namespace hemelb
         std::strcpy(argv[i], args[i].c_str());
       }
 
-      // Terminating NULL
-      argv[args.size()] = NULL;
+      // Terminating nullptr
+      argv[args.size()] = nullptr;
 
       // Exec to replace hemelb with osascript
       int code = execvp(argv[0], argv);

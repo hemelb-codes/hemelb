@@ -24,7 +24,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFile::InOutLetFile() :
-        InOutLet(), densityTable(0), units(NULL)
+        InOutLet(), densityTable(0), units(nullptr)
       {
 
       }

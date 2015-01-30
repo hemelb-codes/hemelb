@@ -62,8 +62,8 @@ namespace hemelb
 
             simpleDataSource = new DummyDataSource();
 
-            writtenFile = NULL;
-            propertyWriter = NULL;
+            writtenFile = nullptr;
+            propertyWriter = nullptr;
             writtenMainHeader = new char[hemelb::io::formats::extraction::MainHeaderLength];
 
             fieldHeaderLength = 0x30;
@@ -78,10 +78,10 @@ namespace hemelb
             delete[] writtenFieldHeader;
 
             // Delete the LocalPropertyOutput
-            if (propertyWriter != NULL)
+            if (propertyWriter != nullptr)
               delete propertyWriter;
             // Close the file and delete it
-            if (writtenFile != NULL)
+            if (writtenFile != nullptr)
               std::fclose(writtenFile);
             std::remove(tempOutFileName);
 
@@ -113,7 +113,7 @@ namespace hemelb
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");
 
             // Assert that the file is there
-            CPPUNIT_ASSERT(writtenFile != NULL);
+            CPPUNIT_ASSERT(writtenFile != nullptr);
 
             // Read the main header.
             size_t nRead = std::fread(writtenMainHeader,

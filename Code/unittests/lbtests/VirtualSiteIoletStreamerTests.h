@@ -79,7 +79,7 @@ namespace hemelb
           {
             InOutLetCosine* ans =
                 dynamic_cast<lb::iolets::InOutLetCosine*> (iolets->GetLocalIolet(0));
-            CPPUNIT_ASSERT(ans != NULL);
+            CPPUNIT_ASSERT(ans != nullptr);
             return ans;
           }
           void setUp()
@@ -284,7 +284,7 @@ namespace hemelb
             // All the sites at the outlet plane (x, y, 3) should be in the cache.
             InOutLetCosine& outlet = *GetIolet(outletBoundary);
             VSExtra<Lattice>* extra = dynamic_cast<VSExtra<Lattice>*> (outlet.GetExtraData());
-            CPPUNIT_ASSERT(extra != NULL);
+            CPPUNIT_ASSERT(extra != nullptr);
 
             for (unsigned i = 1; i <= 4; ++i)
             {

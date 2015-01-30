@@ -175,7 +175,7 @@ namespace hemelb
                 int boundaryId = site.GetIoletId();
                 iolets::InOutLetVelocity* iolet =
                     dynamic_cast<iolets::InOutLetVelocity*> (bValues->GetLocalIolet(boundaryId));
-                if (iolet == NULL)
+                if (iolet == nullptr)
                 {
                   // SBB
                   return bbDelegate.StreamLink(lbmParams, latDat, site, hydroVars, iPrime);

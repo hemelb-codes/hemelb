@@ -14,19 +14,19 @@ namespace hemelb
   namespace vis
   {
     ResultPixel::ResultPixel(const BasicPixel* glyph) :
-      BasicPixel(glyph->GetI(), glyph->GetJ()), hasGlyph(true), normalRayPixel(NULL), streakPixel(NULL)
+      BasicPixel(glyph->GetI(), glyph->GetJ()), hasGlyph(true), normalRayPixel(nullptr), streakPixel(nullptr)
     {
 
     }
 
     ResultPixel::ResultPixel(const raytracer::RayDataNormal* ray) :
-      BasicPixel(ray->GetI(), ray->GetJ()), hasGlyph(false), normalRayPixel(ray), streakPixel(NULL)
+      BasicPixel(ray->GetI(), ray->GetJ()), hasGlyph(false), normalRayPixel(ray), streakPixel(nullptr)
     {
 
     }
 
     ResultPixel::ResultPixel(const streaklinedrawer::StreakPixel* streak) :
-      BasicPixel(streak->GetI(), streak->GetJ()), hasGlyph(false), normalRayPixel(NULL), streakPixel(streak)
+      BasicPixel(streak->GetI(), streak->GetJ()), hasGlyph(false), normalRayPixel(nullptr), streakPixel(streak)
     {
 
     }
@@ -43,12 +43,12 @@ namespace hemelb
         hasGlyph = true;
       }
 
-      if (other.normalRayPixel != NULL)
+      if (other.normalRayPixel != nullptr)
       {
         normalRayPixel = other.normalRayPixel;
       }
 
-      if (other.streakPixel != NULL)
+      if (other.streakPixel != nullptr)
       {
         streakPixel = other.streakPixel;
       }
@@ -62,7 +62,7 @@ namespace hemelb
       const int bits_per_char = sizeof(char) * 8;
       *pixel_index = (i << (2 * bits_per_char)) + j;
 
-      if (normalRayPixel != NULL)
+      if (normalRayPixel != nullptr)
       {
         // store velocity volume rendering colour
         normalRayPixel->GetVelocityColour(rgb_data, visSettings, iDomainStats);
@@ -97,10 +97,10 @@ namespace hemelb
         }
       }
 
-      float density = normalRayPixel == NULL
+      float density = normalRayPixel == nullptr
         ? 0.0F
         : normalRayPixel->GetNearestDensity();
-      float stress = normalRayPixel == NULL
+      float stress = normalRayPixel == nullptr
         ? 0.0F
         : normalRayPixel->GetNearestStress();
 
@@ -129,7 +129,7 @@ namespace hemelb
         PickColour(density, density_col);
         PickColour(stress, stress_col);
 
-        if (normalRayPixel != NULL)
+        if (normalRayPixel != nullptr)
         {
           if (!hasGlyph)
           {
@@ -163,7 +163,7 @@ namespace hemelb
         }
 
       }
-      else if (streakPixel != NULL)
+      else if (streakPixel != nullptr)
       {
         float scaled_vel = (float) (streakPixel->GetParticleVelocity() * iDomainStats.velocity_threshold_max_inv);
         float particle_col[3];
@@ -218,16 +218,16 @@ namespace hemelb
       log::Logger::Log<log::Trace, log::OnePerCore>("Pixel at (%i,%i) with (ray,streak,glyph)=(%i,%i,%i)",
                                                     GetI(),
                                                     GetJ(),
-                                                    normalRayPixel != NULL,
-                                                    streakPixel != NULL,
+                                                    normalRayPixel != nullptr,
+                                                    streakPixel != nullptr,
                                                     hasGlyph);
 
-      if (normalRayPixel != NULL)
+      if (normalRayPixel != nullptr)
       {
         normalRayPixel->LogDebuggingInformation();
       }
 
-      if (streakPixel != NULL)
+      if (streakPixel != nullptr)
       {
         streakPixel->LogDebuggingInformation();
       }

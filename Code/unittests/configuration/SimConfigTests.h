@@ -44,7 +44,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
             lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
-            CPPUNIT_ASSERT(inlet != NULL);
+            CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
 
             // Check that in the absence of the <monitoring> XML element things get initiliased properly
@@ -62,7 +62,7 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
             lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
-            CPPUNIT_ASSERT(inlet != NULL);
+            CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
 
             const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
