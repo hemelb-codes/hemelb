@@ -295,7 +295,8 @@ namespace hemelb
               fileVel->Initialise(&converter);
               fileVel->Reset(state);
 
-              CPPUNIT_ASSERT_EQUAL(fileVel->GetFilePath(), std::string("./velocity_inlet.txt"));
+              int FilePath_length = fileVel->GetFilePath().length();
+              CPPUNIT_ASSERT_EQUAL(fileVel->GetFilePath().substr(FilePath_length-19), std::string("/velocity_inlet.txt"));
               CPPUNIT_ASSERT_EQUAL(fileVel->GetRadius(), 20.0);
               PhysicalPosition expected(0, 0, -0.05);
               PhysicalPosition actual =

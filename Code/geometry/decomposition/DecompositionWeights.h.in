@@ -50,6 +50,14 @@ namespace hemelb
       static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_NEUTRAL = 1;
       static const int hemelbSiteWeightsLADDIOLET_NEUTRAL = 1;
       
+      static const int hemelbSiteWeightsISBFILEVELOCITYINLET = 4;
+      static const int hemelbSiteWeightsSIMPLEBOUNCEBACK_ISBFILEVELOCITYINLET = 5;
+      static const int hemelbSiteWeightsBFL_ISBFILEVELOCITYINLET = 8;
+      static const int hemelbSiteWeightsGZS_ISBFILEVELOCITYINLET = 28;
+      static const int hemelbSiteWeightsJUNKYANG_ISBFILEVELOCITYINLET = 40; 
+      static const int hemelbSiteWeightsNASHZEROTHORDERPRESSUREIOLET_ISBFILEVELOCITYINLET = 16;
+      static const int hemelbSiteWeightsLADDIOLET_ISBFILEVELOCITYINLET = 48;
+
       static const int hemelbSiteWeights[6] = { hemelbSiteWeights@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_WALL_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
                                                 hemelbSiteWeights@HEMELB_INLET_BOUNDARY@_@HEMELB_COMPUTE_ARCHITECTURE@, 
