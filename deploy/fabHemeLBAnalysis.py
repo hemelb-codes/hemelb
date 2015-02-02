@@ -41,7 +41,8 @@ import matplotlib.pyplot as plt
 import sys
 import glob
 
-
+def full_context(cmd):
+    return ". ~/.profile && "+cmd
 
 @task
 def analyze_stress(results):
@@ -54,7 +55,7 @@ def analyze_stress(results):
     #analysis= home+"/hemelb-dev/hemelb/Tools/analysis/"
     print env.analysis_path
     print template("python $analysis_path/stress.py $results_path/"+results+"/")
-    run(template("python $analysis_path/stress.py $results_path/"+results+"/"))
+    local(template("python $analysis_path/stress.py $results_path/"+results+"/"))
 
 #    os.chdir(env.analysis_path)
 #    os.system("python stress.py "env.results_path+results+"/")
@@ -118,16 +119,17 @@ def plot_4col_file(filename,columns="012",color='blue'):
 
 
 @task
-def analyze(results):
-    #Path to home
-    home = expanduser("~")
-    #Path to HemeLB Tools/analysis
-    analysis= home+"/hemelb-dev/hemelb/Tools/analysis/"
-    os.chdir(analysis)
-    os.system("python allPlanes.py "+results)
-    os.system("python vectorField.py "+results)
-    os.system("python vectorMag.py "+results)
-    os.system("python stress.py "+results)
+def analyze_velocities(results):
+
+#    local(template("python $analysis_path/allPlanes.py $results_path/"+results+"/"))
+#    local(template("python $analysis_path/velocityField.py $results_path/"+results+"/"))
+    local(template("python $analysis_path/velocityMag.py $results_path/"+results+"/"))
+
+
+#    os.system("python allPlanes.py "+results)
+#    os.system("python vectorField.py "+results)
+#    os.system("python vectorMag.py "+results)
+#    os.system("python stress.py "+results)
 
 
 
