@@ -31,5 +31,6 @@ namespace hemelb { namespace unittests { namespace redblood {
 #include "unittests/redblood/Node2NodeTests.h"
 #include "unittests/redblood/DivideConquerTests.h"
 #include "unittests/redblood/CellArmyTests.h"
+#include "unittests/redblood/CellIntegrationTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif

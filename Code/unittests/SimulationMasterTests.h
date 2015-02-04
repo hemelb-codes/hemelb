@@ -32,8 +32,8 @@ namespace hemelb
         {
           argc = 7;
           argv[0] = "hemelb";
-          argv[2] = "four_cube.xml";
           argv[1] = "-in";
+          argv[2] = "four_cube.xml";
           argv[3] = "-i";
           argv[4] = "1";
           argv[5] = "-ss";
