@@ -20,6 +20,7 @@
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
 #include "lb/BuildSystemInterface.h"
+#include "traits.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -33,23 +34,27 @@ namespace hemelb
      * Class providing core Lattice Boltzmann functionality.
      * Implements the IteratedAction interface.
      */
-    template<class LatticeType>
+    template<class TRAITS = hemelb::Traits<>>
     class LBM : public net::IteratedAction
     {
+      public:
+        //! Instanciation type
+        typedef TRAITS Traits;
       private:
+        typedef typename Traits::Lattice LatticeType;
         // Use the kernel specified through the build system. This will select one of the above classes.
-        typedef typename HEMELB_KERNEL<LatticeType>::Type LB_KERNEL;
+        typedef typename Traits::Kernel LBKernel;
 
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> > tMidFluidCollision;
+        typedef typename Traits::Streamer tMidFluidCollision;
         // Use the wall boundary condition specified through the build system.
-        typedef typename HEMELB_WALL_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tWallCollision;
+        typedef typename Traits::WallBoundary tWallCollision;
         // Use the inlet BC specified by the build system
-        typedef typename HEMELB_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletCollision;
+        typedef typename Traits::InletBoundary tInletCollision;
         // Use the outlet BC specified by the build system
-        typedef typename HEMELB_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletCollision;
+        typedef typename Traits::OutletBoundary tOutletCollision;
         // And again but for sites that are both in-/outlet and wall
-        typedef typename HEMELB_WALL_INLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tInletWallCollision;
-        typedef typename HEMELB_WALL_OUTLET_BOUNDARY<collisions::Normal<LB_KERNEL> >::Type tOutletWallCollision;
+        typedef typename Traits::WallInletBoundary tInletWallCollision;
+        typedef typename Traits::WallOutletBoundary tOutletWallCollision;
 
       public:
         /**

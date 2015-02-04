@@ -166,7 +166,7 @@ void SimulationMaster::Initialise()
                                                                   latticeData->GetNeighbouringData(),
                                                                   communicationNet);
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
-  latticeBoltzmannModel = new hemelb::lb::LBM<latticeType>(simConfig,
+  latticeBoltzmannModel = new hemelb::lb::LBM<>(simConfig,
                                                            &communicationNet,
                                                            latticeData,
                                                            simulationState,

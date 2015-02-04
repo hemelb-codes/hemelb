@@ -36,7 +36,7 @@ namespace hemelb
   namespace lb
   {
     // Ugly forward definition is currently necessary.
-    template<class LatticeType> class LBM;
+    template<class TRAITS> class LBM;
   }
 
   namespace geometry
@@ -45,7 +45,7 @@ namespace hemelb
     {
       public:
         friend class unittests::helpers::LatticeDataAccess;
-        template<class Lattice> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
+        template<class TRAITS> friend class lb::LBM; //! Let the LBM have access to internals so it can initialise the distribution arrays.
         template<class LatticeData> friend class Site; //! Let the inner classes have access to site-related data that's otherwise private.
 
         LatticeData(const lb::lattices::LatticeInfo& latticeInfo, const Geometry& readResult, const net::IOCommunicator& comms);
