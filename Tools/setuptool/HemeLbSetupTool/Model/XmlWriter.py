@@ -96,8 +96,16 @@ class XmlWriter(object):
             else:
                 continue
             
-            condition = SubElement(iolet, 'condition')
-            condition.text = 'You must define the condition to be enforced by hand. Sorry!'
+            # At the moment the GUI only allows specification of cosine pressure 
+            # iolets. Add code here if other types (pressure file, velocity 
+            # poiseuille/womersley/file) become supported.
+            condition = SubElement(iolet, 'condition', type='pressure',  
+                                   subtype='cosine')
+            QuantityElement(condition, 'amplitude', io.Pressure.x,  'mmHg')
+            QuantityElement(condition, 'mean', io.Pressure.y,  'mmHg')
+            QuantityElement(condition, 'phase', io.Pressure.z,  'rad')
+            QuantityElement(condition, 'period', 1,  's')
+
             QuantityElement(iolet, 'normal', io.Normal, 'dimensionless')
             
             # Scale the centre to metres
