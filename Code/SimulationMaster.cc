@@ -36,7 +36,7 @@
  * object.
  */
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options, const hemelb::net::IOCommunicator& ioComm) :
-  ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm)
+  ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm), cellController(nullptr)
 {
   timings[hemelb::reporting::Timers::total].Start();
 
@@ -316,6 +316,10 @@ void SimulationMaster::Initialise()
   if (colloidController != nullptr)
   {
     stepManager->RegisterIteratedActorSteps(*colloidController, 1);
+  }
+  if (cellController)
+  {
+    stepManager->RegisterIteratedActorSteps(*cellController, 1);
   }
   stepManager->RegisterIteratedActorSteps(*latticeBoltzmannModel, 1);
 

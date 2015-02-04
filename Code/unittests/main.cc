@@ -7,6 +7,7 @@
 // specifically made by you with University College London.
 // 
 
+#define HEMELB_DOING_UNITTESTS
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
@@ -33,6 +34,7 @@
 #include <unistd.h>
 
 #include "unittests/helpers/HasCommsTestFixture.h"
+#undef HEMELB_DOING_UNITTESTS
 
 int main(int argc, char **argv)
 {

@@ -435,13 +435,14 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 		${MPWide_LIBRARIES}
 		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml unittests/resources/four_cube_multiscale.xml
-		unittests/resources/config.xml unittests/resources/config0_2_0.xml
-		unittests/resources/config_file_inlet.xml unittests/resources/iolet.txt 
-		unittests/resources/config-velocity-iolet.xml unittests/resources/config_new_velocity_inlets.xml
-		unittests/resources/xmltest.xml unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt 
-        unittests/resources/red_blood_cell.txt
-        unittests/resources/red_blood_cube.txt
+  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml
+    unittests/resources/four_cube_multiscale.xml unittests/resources/config.xml
+    unittests/resources/config0_2_0.xml unittests/resources/config_file_inlet.xml
+    unittests/resources/iolet.txt unittests/resources/config-velocity-iolet.xml
+    unittests/resources/config_new_velocity_inlets.xml unittests/resources/xmltest.xml
+    unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt
+    unittests/resources/red_blood_cell.txt unittests/resources/red_blood_cube.txt
+    unittests/resources/large_cylinder.gmy unittests/resources/large_cylinder.xml
 		)
 endif()
 

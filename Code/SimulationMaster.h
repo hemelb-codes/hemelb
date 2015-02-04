@@ -26,6 +26,7 @@
 #include "reporting/BuildInfo.h"
 #include "lb/IncompressibilityChecker.hpp"
 #include "colloids/ColloidController.h"
+#include "redblood/CellController.h"
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
@@ -47,6 +48,18 @@ class SimulationMaster
       return simulationState;
     }
     void Finalise();
+#   ifdef HEMELB_DOING_UNITTESTS
+      //! Makes it easy to add cell controller without messy input files
+      void SetCellController(std::shared_ptr<hemelb::net::IteratedAction> _controller)
+      {
+        cellController = _controller;
+      }
+      //! Access to lattice data for debugging
+      hemelb::geometry::LatticeData & GetLatticeData()
+      {
+        return *latticeData;
+      }
+#   endif
   protected:
 
     hemelb::lb::iolets::BoundaryValues* inletValues;
@@ -103,6 +116,7 @@ class SimulationMaster
     /** Actor in charge of checking the maximum density difference across the domain */
     hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
+    std::shared_ptr<hemelb::net::IteratedAction> cellController;
     hemelb::colloids::ColloidController* colloidController;
     hemelb::net::Net communicationNet;
 

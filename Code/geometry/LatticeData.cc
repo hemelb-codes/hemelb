@@ -237,7 +237,7 @@ namespace hemelb
             util::Vector3D<float>(NO_VALUE);
 
           //SiteData siteData(blockReadIn.Sites[localSiteId]);
-        	forceAtSite.push_back(util::Vector3D<distribn_t>(0,0,0));
+        	forceAtSite.push_back(LatticeForceVector(0,0,0));
 
           if (isMidDomainSite)
           {
