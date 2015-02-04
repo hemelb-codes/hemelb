@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
       hemelb::debug::Debugger::Init(options.GetDebug(), argv[0], commWorld);
 
       // Prepare main simulation object...
-      SimulationMaster master = SimulationMaster(options, hemelbCommunicator);
+      hemelb::SimulationMaster<> master(options, hemelbCommunicator);
 
       // ..and run it.
       master.RunSimulation();

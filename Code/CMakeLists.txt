@@ -328,8 +328,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
-set(root_sources SimulationMaster.cc)
-add_executable(${HEMELB_EXECUTABLE} main.cc ${root_sources})
+add_executable(${HEMELB_EXECUTABLE} main.cc)
 
 include_directories(${PROJECT_SOURCE_DIR})
 set(package_subdirs
@@ -377,8 +376,7 @@ if (HEMELB_BUILD_MULTISCALE)
 		set(CMAKE_BUILD_TYPE DEBUG)
 	endif()
 	
-	set(root_sources SimulationMaster.cc multiscale/MultiscaleSimulationMaster.h)
-	add_executable(multiscale_hemelb mainMultiscale.cc ${root_sources})
+	add_executable(multiscale_hemelb mainMultiscale.cc)
 	include_directories(${PROJECT_SOURCE_DIR})
 	set(package_subdirs
 		configuration
@@ -420,10 +418,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(unittests_hemelb ${root_sources})
-	add_subdirectory(unittests)
+	add_executable(unittests_hemelb unittests/main.cc)
 	target_link_libraries(unittests_hemelb 
-		hemelb_unittests 
 		${heme_libraries}
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}
@@ -451,10 +447,8 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	#------CPPUnit ---------------
 	find_package(CPPUnit REQUIRED)
 	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(functionaltests_hemelb ${root_sources})
-	add_subdirectory(functionaltests/cpptests)
+	add_executable(functionaltests_hemelb functionaltests/cpptests/main.cc)
 	target_link_libraries(functionaltests_hemelb 
-		hemelb_functionaltests 
 		${heme_libraries}
 		${MPI_LIBRARIES}
 		${PARMETIS_LIBRARIES}

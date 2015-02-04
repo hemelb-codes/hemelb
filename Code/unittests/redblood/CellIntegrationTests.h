@@ -58,7 +58,7 @@ namespace hemelb
 
           void testIntegration()
           {
-            auto master = std::make_shared<SimulationMaster>(*options, Comms());
+            auto master = std::make_shared<SimulationMaster<>>(*options, Comms());
             auto controller
               = std::make_shared<CellController<Kernel>>(master->GetLatticeData(), cells);
             master->SetCellController(controller);

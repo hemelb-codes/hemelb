@@ -22,7 +22,7 @@ namespace hemelb
      * so the main code can be read without thinking about multiscale.
      */
     template<class Intercommunicator>
-    class MultiscaleSimulationMaster : public SimulationMaster
+    class MultiscaleSimulationMaster : public SimulationMaster<>
     {
       public:
         MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options,

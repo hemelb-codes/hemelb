@@ -30,109 +30,118 @@
 #include "net/phased/StepManager.h"
 #include "net/phased/NetConcern.h"
 #include "geometry/neighbouring/NeighbouringDataManager.h"
+#include "Traits.h"
 
-class SimulationMaster
+namespace hemelb
 {
-  public:
-    SimulationMaster(hemelb::configuration::CommandLine &options, const hemelb::net::IOCommunicator& ioComms);
-    virtual ~SimulationMaster();
+  template<class TRAITS = Traits<>>
+  class SimulationMaster
+  {
+    public:
+      typedef TRAITS Traits;
 
-    void Abort();
+      SimulationMaster(
+          hemelb::configuration::CommandLine &options, const hemelb::net::IOCommunicator& ioComms);
+      virtual ~SimulationMaster();
 
-    bool IsCurrentProcTheIOProc();
+      void Abort();
 
-    int GetProcessorCount();
+      bool IsCurrentProcTheIOProc();
 
-    void RunSimulation();
-    hemelb::lb::SimulationState const * GetState() const {
-      return simulationState;
-    }
-    void Finalise();
-#   ifdef HEMELB_DOING_UNITTESTS
-      //! Makes it easy to add cell controller without messy input files
-      void SetCellController(std::shared_ptr<hemelb::net::IteratedAction> _controller)
-      {
-        cellController = _controller;
+      int GetProcessorCount();
+
+      void RunSimulation();
+      hemelb::lb::SimulationState const * GetState() const {
+        return simulationState;
       }
-      //! Access to lattice data for debugging
-      hemelb::geometry::LatticeData & GetLatticeData()
-      {
-        return *latticeData;
-      }
-#   endif
-  protected:
+      void Finalise();
+#     ifdef HEMELB_DOING_UNITTESTS
+          //! Makes it easy to add cell controller without messy input files
+          void SetCellController(std::shared_ptr<hemelb::net::IteratedAction> _controller)
+          {
+            cellController = _controller;
+          }
+          //! Access to lattice data for debugging
+          hemelb::geometry::LatticeData & GetLatticeData()
+          {
+            return *latticeData;
+          }
+#     endif
+    protected:
 
-    hemelb::lb::iolets::BoundaryValues* inletValues;
-    hemelb::lb::iolets::BoundaryValues* outletValues;
-    virtual void DoTimeStep();
-    
-    /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
-    // Set the lattice type via a build parameter
-    typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
-    hemelb::geometry::LatticeData* latticeData;
-    hemelb::lb::LBM<>* latticeBoltzmannModel;
-    hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
-    const hemelb::net::IOCommunicator& ioComms;
+      hemelb::lb::iolets::BoundaryValues* inletValues;
+      hemelb::lb::iolets::BoundaryValues* outletValues;
+      virtual void DoTimeStep();
 
-  private:
-    void Initialise();
-    void SetupReporting(); // set up the reporting file
-    unsigned int OutputPeriod(unsigned int frequency);
-    void HandleActors();
-    void OnUnstableSimulation();
-    void WriteLocalImages();
-    void GenerateNetworkImages();
-    /**
-     * Updates the property caches record of which properties need to be calculated
-     * and cached on this iteration.
-     */
-    void RecalculatePropertyRequirements();
+      /* The next quantities are protected because they are used by MultiscaleSimulationMaster */
+      // Set the lattice type via a build parameter
+      typedef typename Traits::Lattice latticeType;
+      hemelb::geometry::LatticeData* latticeData;
+      hemelb::lb::LBM<Traits>* latticeBoltzmannModel;
+      hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
+      const hemelb::net::IOCommunicator& ioComms;
 
-    /**
-     * Helper method to log simulation parameters related to stability and accuracy
-     */
-    void LogStabilityReport();
+    private:
+      void Initialise();
+      void SetupReporting(); // set up the reporting file
+      unsigned int OutputPeriod(unsigned int frequency);
+      void HandleActors();
+      void OnUnstableSimulation();
+      void WriteLocalImages();
+      void GenerateNetworkImages();
+      /**
+       * Updates the property caches record of which properties need to be calculated
+       * and cached on this iteration.
+       */
+      void RecalculatePropertyRequirements();
 
-    hemelb::configuration::SimConfig *simConfig;
-    hemelb::io::PathManager* fileManager;
-    hemelb::reporting::Timers timings;
-    hemelb::reporting::Reporter* reporter;
-    hemelb::reporting::BuildInfo build_info;
-    typedef std::multimap<unsigned long, unsigned long> MapType;
+      /**
+       * Helper method to log simulation parameters related to stability and accuracy
+       */
+      void LogStabilityReport();
 
-    MapType writtenImagesCompleted;
-    MapType networkImagesCompleted;
+      hemelb::configuration::SimConfig *simConfig;
+      hemelb::io::PathManager* fileManager;
+      hemelb::reporting::Timers timings;
+      hemelb::reporting::Reporter* reporter;
+      hemelb::reporting::BuildInfo build_info;
+      typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    hemelb::steering::Network* network;
-    hemelb::steering::ImageSendComponent *imageSendCpt;
-    hemelb::steering::SteeringComponent* steeringCpt;
+      MapType writtenImagesCompleted;
+      MapType networkImagesCompleted;
 
-    hemelb::lb::SimulationState* simulationState;
+      hemelb::steering::Network* network;
+      hemelb::steering::ImageSendComponent *imageSendCpt;
+      hemelb::steering::SteeringComponent* steeringCpt;
 
-    /** Struct containing the configuration of various checkers/testers */
-    const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
-    hemelb::lb::StabilityTester<latticeType>* stabilityTester;
-    hemelb::lb::EntropyTester<latticeType>* entropyTester;
-    /** Actor in charge of checking the maximum density difference across the domain */
-    hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
+      hemelb::lb::SimulationState* simulationState;
 
-    std::shared_ptr<hemelb::net::IteratedAction> cellController;
-    hemelb::colloids::ColloidController* colloidController;
-    hemelb::net::Net communicationNet;
+      /** Struct containing the configuration of various checkers/testers */
+      const hemelb::configuration::SimConfig::MonitoringConfig* monitoringConfig;
+      hemelb::lb::StabilityTester<latticeType>* stabilityTester;
+      hemelb::lb::EntropyTester<latticeType>* entropyTester;
+      /** Actor in charge of checking the maximum density difference across the domain */
+      hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
-    const hemelb::util::UnitConverter* unitConverter;
+      std::shared_ptr<hemelb::net::IteratedAction> cellController;
+      hemelb::colloids::ColloidController* colloidController;
+      hemelb::net::Net communicationNet;
 
-    hemelb::vis::Control* visualisationControl;
-    hemelb::extraction::IterableDataSource* propertyDataSource;
-    hemelb::extraction::PropertyActor* propertyExtractor;
+      const hemelb::util::UnitConverter* unitConverter;
 
-    hemelb::net::phased::StepManager* stepManager;
-    hemelb::net::phased::NetConcern* netConcern;
+      hemelb::vis::Control* visualisationControl;
+      hemelb::extraction::IterableDataSource* propertyDataSource;
+      hemelb::extraction::PropertyActor* propertyExtractor;
 
-    unsigned int imagesPerSimulation;
-    int steeringSessionId;
-    unsigned int imagesPeriod;
-    static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
-};
+      hemelb::net::phased::StepManager* stepManager;
+      hemelb::net::phased::NetConcern* netConcern;
 
+      unsigned int imagesPerSimulation;
+      int steeringSessionId;
+      unsigned int imagesPeriod;
+      static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
+  };
+}
+
+#include "SimulationMaster.impl.h"
 #endif /* HEMELB_SIMULATIONMASTER_H */
