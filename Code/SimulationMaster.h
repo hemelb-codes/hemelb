@@ -70,7 +70,7 @@ class SimulationMaster
     // Set the lattice type via a build parameter
     typedef hemelb::lb::lattices:: HEMELB_LATTICE latticeType;
     hemelb::geometry::LatticeData* latticeData;
-    hemelb::lb::LBM<latticeType>* latticeBoltzmannModel;
+    hemelb::lb::LBM<>* latticeBoltzmannModel;
     hemelb::geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager;
     const hemelb::net::IOCommunicator& ioComms;
 

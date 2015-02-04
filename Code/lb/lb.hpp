@@ -18,20 +18,20 @@ namespace hemelb
   namespace lb
   {
 
-    template<class LatticeType>
-    hemelb::lb::LbmParameters* LBM<LatticeType>::GetLbmParams()
+    template<class TRAITS>
+    hemelb::lb::LbmParameters* LBM<TRAITS>::GetLbmParams()
     {
       return &mParams;
     }
 
-    template<class LatticeType>
-    lb::MacroscopicPropertyCache& LBM<LatticeType>::GetPropertyCache()
+    template<class TRAITS>
+    lb::MacroscopicPropertyCache& LBM<TRAITS>::GetPropertyCache()
     {
       return propertyCache;
     }
 
-    template<class LatticeType>
-    LBM<LatticeType>::LBM(configuration::SimConfig *iSimulationConfig,
+    template<class TRAITS>
+    LBM<TRAITS>::LBM(configuration::SimConfig *iSimulationConfig,
                           net::Net* net,
                           geometry::LatticeData* latDat,
                           SimulationState* simState,
@@ -44,8 +44,8 @@ namespace hemelb
       ReadParameters();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::CalculateMouseFlowField(const ScreenDensity densityIn,
+    template<class TRAITS>
+    void LBM<TRAITS>::CalculateMouseFlowField(const ScreenDensity densityIn,
                                                    const ScreenStress stressIn,
                                                    const LatticeDensity density_threshold_min,
                                                    const LatticeDensity density_threshold_minmax_inv,
@@ -60,8 +60,8 @@ namespace hemelb
       mouse_stress = mUnits->ConvertStressToPhysicalUnits(stress);
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    template<class TRAITS>
+    void LBM<TRAITS>::InitInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
       initParams.siteRanges.resize(2);
 
@@ -74,8 +74,8 @@ namespace hemelb
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>:: AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    template<class TRAITS>
+    void LBM<TRAITS>:: AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
       initParams.siteRanges[0].first += mLatDat->GetMidDomainCollisionCount(state);
       initParams.siteRanges[1].first += mLatDat->GetDomainEdgeCollisionCount(state);
@@ -86,8 +86,8 @@ namespace hemelb
       initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::InitCollisions()
+    template<class TRAITS>
+    void LBM<TRAITS>::InitCollisions()
     {
       /**
        * Ensure the boundary objects have all info necessary.
@@ -128,8 +128,8 @@ namespace hemelb
       mOutletWallCollision = new tOutletWallCollision(initParams);
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::Initialise(vis::Control* iControl,
+    template<class TRAITS>
+    void LBM<TRAITS>::Initialise(vis::Control* iControl,
                                       iolets::BoundaryValues* iInletValues,
                                       iolets::BoundaryValues* iOutletValues,
                                       const util::UnitConverter* iUnits)
@@ -145,8 +145,8 @@ namespace hemelb
       mVisControl = iControl;
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::PrepareBoundaryObjects()
+    template<class TRAITS>
+    void LBM<TRAITS>::PrepareBoundaryObjects()
     {
       // First, iterate through all of the inlet and outlet objects, finding out the minimum density seen in the simulation.
       distribn_t minDensity = std::numeric_limits<distribn_t>::max();
@@ -173,8 +173,8 @@ namespace hemelb
       }
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::SetInitialConditions()
+    template<class TRAITS>
+    void LBM<TRAITS>::SetInitialConditions()
     {
       distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
 
@@ -194,8 +194,8 @@ namespace hemelb
       }
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::RequestComms()
+    template<class TRAITS>
+    void LBM<TRAITS>::RequestComms()
     {
       timings[hemelb::reporting::Timers::lb].Start();
 
@@ -208,8 +208,8 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::PreSend()
+    template<class TRAITS>
+    void LBM<TRAITS>::PreSend()
     {
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();
@@ -245,8 +245,8 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::PreReceive()
+    template<class TRAITS>
+    void LBM<TRAITS>::PreReceive()
     {
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();
@@ -282,8 +282,8 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::PostReceive()
+    template<class TRAITS>
+    void LBM<TRAITS>::PostReceive()
     {
       timings[hemelb::reporting::Timers::lb].Start();
 
@@ -338,8 +338,8 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::EndIteration()
+    template<class TRAITS>
+    void LBM<TRAITS>::EndIteration()
     {
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();
@@ -351,8 +351,8 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Stop();
     }
 
-    template<class LatticeType>
-    LBM<LatticeType>::~LBM()
+    template<class TRAITS>
+    LBM<TRAITS>::~LBM()
     {
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
@@ -363,8 +363,8 @@ namespace hemelb
       delete mOutletWallCollision;
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::ReadParameters()
+    template<class TRAITS>
+    void LBM<TRAITS>::ReadParameters()
     {
       std::vector<lb::iolets::InOutLet*> inlets = mSimConfig->GetInlets();
       std::vector<lb::iolets::InOutLet*> outlets = mSimConfig->GetOutlets();
@@ -373,8 +373,8 @@ namespace hemelb
       mParams.StressType = mSimConfig->GetStressType();
     }
 
-    template<class LatticeType>
-    void LBM<LatticeType>::ReadVisParameters()
+    template<class TRAITS>
+    void LBM<TRAITS>::ReadVisParameters()
     {
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
