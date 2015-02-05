@@ -21,11 +21,11 @@ namespace hemelb
     namespace redblood
     {
       //! Mock cell for ease of use
-      class FakeCell : public hemelb::redblood::CellBase
+      class FakeCell : public hemelb::redblood::Cell
       {
         public:
           mutable size_t nbcalls = 0;
-          using hemelb::redblood::CellBase::CellBase;
+          using hemelb::redblood::Cell::Cell;
           //! Facet bending energy
           virtual PhysicalEnergy operator()() const override
           {
@@ -35,6 +35,11 @@ namespace hemelb
           virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &) const override
           {
             ++nbcalls;
+            return 0;
+          }
+          virtual LatticeForceVector WallInteractionForce(
+              LatticePosition const &vertex, LatticePosition const &wall) const
+          {
             return 0;
           }
       };

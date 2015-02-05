@@ -57,9 +57,9 @@ namespace hemelb
       void Finalise();
 #     ifdef HEMELB_DOING_UNITTESTS
           //! Makes it easy to add cell controller without messy input files
-          void SetCellController(std::shared_ptr<hemelb::net::IteratedAction> _controller)
+          void RegisterActor(net::phased::Concern &concern, net::phased::StepManager::Phase phase)
           {
-            cellController = _controller;
+            stepManager->RegisterIteratedActorSteps(concern, phase);
           }
           //! Access to lattice data for debugging
           hemelb::geometry::LatticeData & GetLatticeData()

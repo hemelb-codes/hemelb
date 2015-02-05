@@ -40,7 +40,8 @@ namespace hemelb
   template<class TRAITS>
   SimulationMaster<TRAITS>::SimulationMaster(
       hemelb::configuration::CommandLine & options, const hemelb::net::IOCommunicator& ioComm) :
-    ioComms(ioComm), timings(ioComm), build_info(), communicationNet(ioComm), cellController(nullptr)
+    ioComms(ioComm), timings(ioComm), build_info(), cellController(nullptr),
+    communicationNet(ioComm)
   {
     timings[hemelb::reporting::Timers::total].Start();
 
@@ -173,7 +174,7 @@ namespace hemelb
                                                                     latticeData->GetNeighbouringData(),
                                                                     communicationNet);
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
-    latticeBoltzmannModel = new hemelb::lb::LBM<>(simConfig,
+    latticeBoltzmannModel = new hemelb::lb::LBM<Traits>(simConfig,
                                                              &communicationNet,
                                                              latticeData,
                                                              simulationState,

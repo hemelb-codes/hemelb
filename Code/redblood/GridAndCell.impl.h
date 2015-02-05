@@ -147,7 +147,7 @@ namespace details
                                                               LATTICE::CZ[i]);
             LatticePosition const wallnode = LatticePosition(siteIn)
                 + direction.GetNormalised() * distance;
-            site.AddToForce(cell.nodeWall(vertex, wallnode) * weight);
+            site.AddToForce(cell.WallInteractionForce(vertex, wallnode) * weight);
           }
         }
 

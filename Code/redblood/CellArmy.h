@@ -36,7 +36,7 @@ namespace hemelb
         CellArmy(geometry::LatticeData &_latDat,
             CellContainer const &_cells,
             PhysicalDistance _boxsize=10.0, PhysicalDistance _halo=2.0)
-          : latticeData_(_latDat), cells_(_cells),
+          : latticeData(_latDat), cells_(_cells),
           dnc_(_cells, _boxsize, _halo) {}
 
         //! Performs fluid to lattice interactions
@@ -55,7 +55,7 @@ namespace hemelb
 
       protected:
         //! All lattice information and then some
-        geometry::LatticeData &latticeData_;
+        geometry::LatticeData &latticeData;
         //! Contains all cells
         CellContainer cells_;
         //! Divide and conquer object
@@ -76,7 +76,7 @@ namespace hemelb
         {
           positions.resize((*i_first)->GetVertices().size());
           std::fill(positions.begin(), positions.end(), origin);
-          velocitiesOnMesh<KERNEL>(*i_first, latticeData_, stencil, positions);
+          velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
           (*i_first)->operator+=(positions);
         }
         // Positions have changed: update Divide and Conquer stuff
@@ -92,10 +92,10 @@ namespace hemelb
         CellContainer::const_iterator const i_end = cells_.end();
         for(; i_first != i_end; ++i_first)
         {
-          forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData_, stencil);
+          forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, stencil);
         }
 
-        addCell2CellInteractions(dnc_, cell2Cell, stencil, latticeData_);
+        addCell2CellInteractions(dnc_, cell2Cell, stencil, latticeData);
       }
 
 

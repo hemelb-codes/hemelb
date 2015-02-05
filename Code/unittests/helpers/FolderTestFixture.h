@@ -13,9 +13,12 @@
 #include <cppunit/TestAssert.h>
 #include <cmath>
 #include <iomanip>
+#include <sstream>
+#include <fstream>
 #include "resources/Resource.h"
 #include "util/utilityFunctions.h"
 #include "unittests/helpers/HasCommsTestFixture.h"
+#include <tinyxml.h>
 
 namespace hemelb
 {
@@ -65,6 +68,37 @@ namespace hemelb
                                      (tempPath + "/" + resource).c_str());
             CPPUNIT_ASSERT(ok);
           }
+
+          //! \brief Modify XML resource
+          //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
+          //! these hoops to test it.
+          //! \param[in] resource: Name of the resource.
+          //!   Should exist in the temp dir prior to call.
+          //! \param[in] elements: hierarchy of elements + attribute (last item)
+          //!   Should not include "hemelbsettings"
+          //! \param[in] value: Value to set the attribute to
+          template<class T>
+            void ModifyXMLInput(
+                std::string const &resource , std::vector<std::string>&& elements, T const &_value)
+            {
+              std::string const filename = tempPath + "/" + resource;
+              std::string const attribute = elements.back();
+              elements.pop_back();
+              TiXmlDocument document(filename.c_str());
+              document.LoadFile();
+              auto child = document.FirstChildElement("hemelbsettings");
+              for(std::string const &name: elements)
+              {
+                child = child->FirstChildElement(name);
+              }
+              std::ostringstream attr_value;
+              attr_value << _value;
+              child->SetAttribute(attribute, attr_value.str().c_str());
+
+              std::ofstream output(filename);
+              output << document;
+            }
+
           void MoveToTempdir()
           {
             util::ChangeDirectory(GetTempdir());

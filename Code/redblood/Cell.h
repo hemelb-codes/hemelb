@@ -177,11 +177,17 @@ namespace hemelb
             PhysicalPressure dilation;
             //! Skalak strain modulus
             PhysicalPressure strain;
-            Moduli() :
-                bending(0), surface(0), volume(0), dilation(0), strain(0)
+            Moduli() : Moduli{0, 0, 0, 0, 0}
             {
             }
-            ;
+            Moduli(std::initializer_list<PhysicalPressure> const &l)
+            {
+              bending = l.size() > 0 ? *l.begin(): 0;
+              surface = l.size() > 1 ? *(l.begin() + 1): 0;
+              volume = l.size() > 2 ? *(l.begin() + 2): 0;
+              dilation = l.size() > 3 ? *(l.begin() + 3): 0;
+              strain = l.size() > 4 ? *(l.begin() + 4): 0;
+            }
         } moduli;
         //! Node-wall interaction
         Node2NodeForce nodeWall;
@@ -193,6 +199,12 @@ namespace hemelb
         virtual PhysicalEnergy operator()() const override;
         //! Facet bending energy
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
+        //! Node-Wall interaction
+        virtual LatticeForceVector WallInteractionForce(
+            LatticePosition const &vertex, LatticePosition const &wall) const
+        {
+          return nodeWall(vertex, wall);
+        }
 
       private:
         // Computes facet bending energy over all facets
@@ -202,7 +214,7 @@ namespace hemelb
     };
 
     //! Typical cell container type
-    typedef std::vector<std::shared_ptr<CellBase>> CellContainer;
+    typedef std::vector<std::shared_ptr<Cell>> CellContainer;
   }
 } // namespace hemelb::redblood
 #endif
