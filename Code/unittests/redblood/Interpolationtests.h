@@ -90,12 +90,12 @@ namespace hemelb
                 ;
 
               CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
-              CPPUNIT_ASSERT(iterator.isValid());
+              CPPUNIT_ASSERT(iterator.IsValid());
             }
 
             // Checks iterator becomes invalid
             ++iterator;
-            CPPUNIT_ASSERT(not iterator.isValid());
+            CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
           void testOffLattice()
@@ -122,11 +122,11 @@ namespace hemelb
 
               CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
               CPPUNIT_ASSERT(helpers::is_zero(stencil(pos - vectors[i]) - iterator.weight()));
-              CPPUNIT_ASSERT(iterator.isValid());
+              CPPUNIT_ASSERT(iterator.IsValid());
             }
 
             ++iterator;
-            CPPUNIT_ASSERT(not iterator.isValid());
+            CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
           void testOffLatticeZeroOutsideStencil()

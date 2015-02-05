@@ -18,7 +18,7 @@ namespace hemelb
     {
 #ifndef NDEBUG
 
-      if (not isValid())
+      if (not IsValid())
       {
         throw Exception() << "Cannot increment invalid iterator\n";
       }
@@ -77,8 +77,8 @@ namespace hemelb
 
       switch (stencil)
       {
-        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint)
-;        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
+        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint);
+        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
         HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);
         HEMELB_STENCIL_MACRO(TWO_POINT, TwoPoint);
       }

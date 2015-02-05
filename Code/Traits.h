@@ -20,8 +20,8 @@ namespace hemelb
   <
     typename LATTICE = lb::lattices::HEMELB_LATTICE,
     template<class> class KERNEL = lb::HEMELB_KERNEL,
-    template<class> class STREAMER = lb::streamers::SimpleCollideAndStream,
     template<class> class COLLISION = lb::collisions::Normal,
+    template<class> class STREAMER = lb::streamers::SimpleCollideAndStream,
     template<class> class WALL_BOUNDARY = lb::HEMELB_WALL_BOUNDARY,
     template<class> class INLET_BOUNDARY = lb::HEMELB_INLET_BOUNDARY,
     template<class> class OUTLET_BOUNDARY = lb::HEMELB_OUTLET_BOUNDARY,
@@ -38,6 +38,24 @@ namespace hemelb
     typedef typename OUTLET_BOUNDARY<Collision>::Type OutletBoundary;
     typedef typename WALL_INLET_BOUNDARY<Collision>::Type WallInletBoundary;
     typedef typename WALL_OUTLET_BOUNDARY<Collision>::Type WallOutletBoundary;
+
+    //! Changes only kernel type
+    //! This is a convenience function to limit the amount of explicit resintantiation
+    template<template<class> class NEW_KERNEL> struct ChangeKernel
+    {
+      typedef Traits
+      <
+        Lattice,
+        NEW_KERNEL,
+        COLLISION,
+        STREAMER,
+        WALL_BOUNDARY,
+        INLET_BOUNDARY,
+        OUTLET_BOUNDARY,
+        WALL_INLET_BOUNDARY,
+        WALL_OUTLET_BOUNDARY
+      > Type;
+    };
   };
 }
 #endif /* HEMELB_TRAITS */

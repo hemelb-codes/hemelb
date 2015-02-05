@@ -36,6 +36,10 @@ namespace hemelb
     InterpolationIterator interpolationIterator(LatticePosition const &where,
                                                 stencil::types stencil);
 
+    //! \brief Iterates over lattice points surrounding a given coordinate
+    //! \details Given a coordinate :math:`\Omega`, this object iterates over integer coordinates
+    //! that are less than a given distance from it. The distance is an L1 norm (iteration is over a
+    //! cube)
     class IndexIterator
     {
       public:
@@ -59,14 +63,14 @@ namespace hemelb
         void operator++();
 
         //! True if iterator is still valid
-        bool isValid() const
+        bool IsValid() const
         {
           return current[0] <= max[0];
         }
         //! True if iterator is still valid
         operator bool() const
         {
-          return isValid();
+          return IsValid();
         }
 
         //! computes local index
@@ -94,6 +98,8 @@ namespace hemelb
         LatticeVector current;
     };
 
+    //! \brief Iterates over lattice points close to a given coordinate
+    //! \details Adds knowledge of weights for iteration
     class InterpolationIterator : public IndexIterator
     {
       public:

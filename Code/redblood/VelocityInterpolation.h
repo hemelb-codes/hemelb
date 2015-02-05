@@ -30,12 +30,12 @@ namespace hemelb
   {
     //! \brief Returns the interpolated velocity at given point
     //! \param[in] center: off lattice position for which to interpolate.
-    //! \param[in] latdat: lattice data
+    //! \param[in] latDat: lattice data
     //! \param[in] stencil: stencil to use for interpolation
     //! \tparam KERNEL: Needed to compute velocity
     template<class KERNEL>
     PhysicalVelocity interpolateVelocity(PhysicalPosition const &center,
-                                         geometry::LatticeData const &latdat,
+                                         geometry::LatticeData const &latDat,
                                          stencil::types stencil = stencil::FOUR_POINT);
 
     namespace details
@@ -54,8 +54,8 @@ namespace hemelb
       template<class KERNEL>
       struct VelocityFromLatticeData
       {
-          VelocityFromLatticeData(geometry::LatticeData const &latdata) :
-              latticeData(latdata)
+          VelocityFromLatticeData(geometry::LatticeData const &latDat) :
+              latticeData(latDat)
           {
           }
           // Computes velocity for given KERNEL and LatticeData
@@ -115,12 +115,26 @@ namespace hemelb
     }
 
     template<class KERNEL>
-    PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latdat,
+    PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
                                          PhysicalPosition const &center, stencil::types stencil =
                                              stencil::FOUR_POINT)
     {
-      return interpolate(details::VelocityFromLatticeData<KERNEL>(latdat),
-                         interpolationIterator(center, stencil));
+      proc_t procid;
+      site_t siteid;
+      auto iterator = interpolationIterator(center, stencil);
+      // Computes velocity for a given site index
+      // Branches to one or another function depending on whether forces are available (since
+      // velocity depends on forces)
+      auto const gridfunc = details::VelocityFromLatticeData<KERNEL>(latDat);
+      LatticeForceVector result(0, 0, 0);
+      for(; iterator.IsValid(); ++iterator)
+      {
+        if (latDat.GetContiguousSiteId(*iterator, procid, siteid))
+        {
+          result += gridfunc(siteid) * iterator.weight();
+        }
+      }
+      return result;
     }
   }
 } // hemelb::redblood

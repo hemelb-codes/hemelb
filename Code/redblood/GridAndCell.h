@@ -11,6 +11,7 @@
 #define HEMELB_REDBLOOD_GRID_AND_CELL_H
 
 #include <vector>
+#include <numeric>
 #include "units.h"
 #include "redblood/Cell.h"
 #include "redblood/stencil.h"
@@ -56,7 +57,11 @@ namespace hemelb
     {
       forces.resize(cell.GetNumberOfNodes());
       std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
-      return cell(forces);
+      auto const energy = cell(forces);
+
+      typedef details::SpreadForces Spreader;
+      details::spreadForce2Grid(cell, Spreader(forces, latticeData), stencil);
+      return energy;
     }
 
     //! \brief Computes and Spreads the forces from the cell to the lattice
@@ -72,10 +77,9 @@ namespace hemelb
     Dimensionless forcesOnGrid(Cell const &cell, std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
     {
-      Dimensionless const energy = forcesOnGrid<LATTICE>(*static_cast<CellBase const *>(&cell),
-                                                         forces,
-                                                         latticeData,
-                                                         stencil);
+      forces.resize(cell.GetNumberOfNodes());
+      std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
+      auto const energy = cell(forces);
 
       typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
       details::spreadForce2Grid(cell, Spreader(cell, forces, latticeData), stencil);
@@ -85,14 +89,6 @@ namespace hemelb
     //! \brief Computes and Spreads the forces from the cell to the lattice
     template<class LATTICE>
     Dimensionless forcesOnGrid(std::shared_ptr<Cell const> const &cell,
-                               std::vector<LatticeForceVector> &forces,
-                               geometry::LatticeData &latticeData, stencil::types stencil)
-    {
-      return forcesOnGrid<LATTICE>(*cell, forces, latticeData, stencil);
-    }
-    //! \brief Computes and Spreads the forces from the cell to the lattice
-    template<class LATTICE>
-    Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> const &cell,
                                std::vector<LatticeForceVector> &forces,
                                geometry::LatticeData &latticeData, stencil::types stencil)
     {

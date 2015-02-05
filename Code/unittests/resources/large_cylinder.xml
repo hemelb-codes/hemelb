@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="0.0001" />
-    <steps units="lattice" value="1" />
+    <step_length units="s" value="0.225" />
+    <steps units="lattice" value="50000" />
     <stresstype value="1" />
-    <voxel_size units="m" value="0.0110336551666" />
-    <origin units="m" value="(-0.0331009654999,-0.0331009654999,-0.0275841379166)" />
+    <voxel_size units="m" value="0.003" />
+    <origin units="m" value="(-0.0315,-0.0315,-0.0255)" />
   </simulation>
   <geometry>
     <datafile path="large_cylinder.gmy" />
@@ -14,12 +14,12 @@
     <inlet>
       <condition type="pressure" subtype="cosine">
         <amplitude value="0" units="mmHg" />
-        <mean value="50.67" units="mmHg" />
+        <mean value="1e-5" units="mmHg" />
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,1.0)" />
-      <position units="m" value="(0.0,0.0,-0.025)" />
+      <position units="m" value="(0.0,0.0,-0.024)" />
     </inlet>
   </inlets>
   <outlets>
@@ -30,8 +30,8 @@
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
-      <normal units="dimensionless" value="(0.0,0.0,1.0)" />
-      <position units="m" value="(0.0,0.0,0.025)" />
+      <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
+      <position units="m" value="(0.0,0.0,0.024)" />
     </outlet>
   </outlets>
   <visualisation>
@@ -51,4 +51,7 @@
       <uniform units="mmHg" value="0.0" />
     </pressure>
   </initialconditions>
+  <monitoring>
+    <incompressibility/>
+  </monitoring>
 </hemelbsettings>
