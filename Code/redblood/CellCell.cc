@@ -20,8 +20,8 @@ namespace hemelb
     namespace
     {
       template<class T>
-      int figure_nearness(DivideConquer<T> &dnc, LatticeVector const &key,
-                          LatticePosition const &vertex, PhysicalDistance const &haloLength)
+      int figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
+                         LatticePosition const &vertex, PhysicalDistance const &haloLength)
       {
         if (haloLength + haloLength > dnc.GetBoxSize())
         {
@@ -44,17 +44,17 @@ namespace hemelb
       }
 
       template<class T>
-      CellReference init_cell_ref(DivideConquer<T> &dnc, site_t cellid, site_t nodeid,
-                                  LatticeVector const &key, LatticePosition const &vertex,
-                                  PhysicalDistance const &haloLength)
+      CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
+          site_t nodeid, LatticeVector const &key, LatticePosition const &vertex,
+          PhysicalDistance const &haloLength)
       {
-        int const isNearBorder = figure_nearness(dnc, key, vertex, haloLength);
+        int const isNearBorder = figureNearness(dnc, key, vertex, haloLength);
         CellReference result = { cellid, nodeid, isNearBorder };
         return result;
       }
 
       void initializeCells(DivideConquer<CellReference> &dnc, MeshData::Vertices const &vertices,
-                           site_t cellid, PhysicalDistance haloLength)
+                           CellContainer::const_iterator cellid, PhysicalDistance haloLength)
       {
         typedef DivideConquer<CellReference> DnC;
         typedef DnC::key_type key_type;
@@ -65,7 +65,7 @@ namespace hemelb
         for (site_t i(0); i_first != i_end; ++i_first, ++i)
         {
           key_type const key = dnc.DowngradeKey(*i_first);
-          dnc.insert(key, init_cell_ref(dnc, cellid, i, key, *i_first, haloLength));
+          dnc.insert(key, initCellRef(dnc, cellid, i, key, *i_first, haloLength));
         }
       }
 
@@ -77,21 +77,35 @@ namespace hemelb
 
         for (site_t i(0); i_first != i_end; ++i_first, ++i)
         {
-          initializeCells(dnc, (*i_first)->GetVertices(), i, haloLength);
+          initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
 
       // Compare distance between vertices
-      bool nextDist(DivideConquerCells::const_iterator &first,
-                    DivideConquerCells::const_iterator const &end,
-                    DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
+      template<class T_FUNCTION>
+        bool nextDistance(
+            T_FUNCTION const &strictlyLarger,
+            DivideConquerCells::const_iterator &first,
+            DivideConquerCells::const_iterator const &end,
+            DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
       {
-        for (; first != end; ++first)
-          if (first.GetCellIndex() > main.GetCellIndex() and (*main - *first).GetMagnitude() < dist)
+        auto const mainCell = main.GetCell();
+        auto goodCellPair = [&mainCell, &strictlyLarger](
+            decltype(first) const &i)
+        {
+          return strictlyLarger(i.GetCell(), mainCell);
+        };
+        auto goodDistance = [&main, &dist](decltype(first) const &i)
+        {
+          return (*main - *i).GetMagnitude() < dist;
+        };
+        for(; first != end; ++first)
+        {
+          if(goodCellPair(first) and goodDistance(first))
           {
             return true;
           }
-
+        }
         return false;
       }
 
@@ -103,26 +117,21 @@ namespace hemelb
         InterpolationIterator spreader = interpolationIterator(node, stencil);
 
         for (; spreader; ++spreader)
+        {
           if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
           {
             latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
           }
+        }
       }
-    }
-
+    } // anonymous namespace
 #ifndef HEMELB_DOING_UNITTESTS
     //! Constructor
     DivideConquerCells::DivideConquerCells(CellContainer const &cells, PhysicalDistance boxsize,
                                            PhysicalDistance halosize) :
         DivideConquer<CellReference>(boxsize), haloLength(halosize), cells(cells)
     {
-      try
-      {
-        initializeCells(*static_cast<base_type *>(this), cells, haloLength);
-      }
-      catch (...)
-      {
-      }
+        initializeCells(*static_cast<base_type *>(this), GetCells(), haloLength);
     }
 
     void DivideConquerCells::update()
@@ -133,7 +142,7 @@ namespace hemelb
       for (; i_first != i_end; ++i_first)
       {
         key_type const key = base_type::DowngradeKey(*i_first);
-        i_first.GetCellReference().isNearBorder = figure_nearness(*this, key, *i_first, haloLength);
+        i_first.GetCellReference().isNearBorder = figureNearness(*this, key, *i_first, haloLength);
 
         if (not (key == i_first.GetKey()))
         {
@@ -152,7 +161,17 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::nextDist()
     {
-      return hemelb::redblood::nextDist(currents.second, ends.second, currents.first, maxdist);
+      typedef decltype(owner.cells)::const_reference Input;
+      auto strictly_less = decltype(owner.cells)::key_compare();
+      auto strictlyLarger = [&strictly_less](Input _a, Input _b) {
+        return _a != _b and not strictly_less(_a, _b);
+      };
+      return nextDistance(
+          strictlyLarger,
+          currents.second, ends.second,
+          currents.first,
+          maxdist
+      );
     }
 
     bool DivideConquerCells::pair_range::doBox()

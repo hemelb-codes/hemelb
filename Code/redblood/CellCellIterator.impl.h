@@ -57,9 +57,8 @@ class HEMELB_ITERATOR
     reference operator*()
     {
       // @formatter:off
-      return owner.cells
-        HEMELB_GET(wrappee->second.cellIndex)->GetVertices()
-        HEMELB_GET(wrappee->second.nodeIndex);
+      return (*wrappee->second.cellIterator)->GetVertices()
+            HEMELB_GET(wrappee->second.nodeIndex);
       // @formatter:on
     }
     pointer operator->()
@@ -70,9 +69,8 @@ class HEMELB_ITERATOR
     const_reference operator*() const
     {
       // @formatter:off
-      return owner.cells
-        HEMELB_GET(wrappee->second.cellIndex)->GetVertices()
-        HEMELB_GET(wrappee->second.nodeIndex);
+      return (*wrappee->second.cellIterator)->GetVertices()
+            HEMELB_GET(wrappee->second.nodeIndex);
       // @formatter:on
     }
     const_pointer operator->() const
@@ -136,9 +134,10 @@ class HEMELB_ITERATOR
       return GetNearBorder() != 0;
     }
 
-    site_t GetCellIndex() const
+    //! Returns shared pointer to cell pointed to by this object
+    CellContainer::const_reference GetCell() const
     {
-      return GetCellReference().cellIndex;
+      return *GetCellReference().cellIterator;
     }
 
     operator base_type::HEMELB_ITERATOR() const

@@ -71,8 +71,8 @@ namespace hemelb
         // Fixture all pairs far from one another
         auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
         assert(cells.size() == 2);
-        assert(std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 0);
-        assert(std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 0);
+        assert(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 0);
+        assert(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 0);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
@@ -82,8 +82,8 @@ namespace hemelb
         army.cell2Cell.intensity = 1.0;
         army.cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 1);
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 1);
 
         for (size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
         {
@@ -92,13 +92,13 @@ namespace hemelb
 
         LatticePosition const n0(15 - 0.1, 15.5, 15.5);
         LatticePosition const n1(15 + 0.2, 15.5, 15.5);
-        cells.front()->GetVertices().front() = n0;
-        cells.back()->GetVertices().front() = n1;
+        (*cells.begin())->GetVertices().front() = n0;
+        (*std::next(cells.begin()))->GetVertices().front() = n1;
         army.updateDNC();
         army.cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.front())->nbcalls == 2);
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>(cells.back())->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 2);
         CPPUNIT_ASSERT(not helpers::is_zero(latDat->GetSite(15, 15, 15).GetForce()));
       }
 
@@ -108,7 +108,8 @@ namespace hemelb
         // DNC is.
         auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
         auto const orig = TwoPancakeSamosas<FakeCell>(cutoff);
-        auto const normal = Facet(cells[0]->GetVertices(), cells[0]->GetFacets()[0]).normal();
+        auto const normal
+          = Facet((*cells.begin())->GetVertices(), (*cells.begin())->GetFacets()[0]).normal();
 
         LatticePosition gradient;
         Dimensionless non_neg_pop;
@@ -122,10 +123,12 @@ namespace hemelb
 
         for (size_t i(0); i < cells.size(); ++i)
         {
-          auto const disp = cells[i]->GetVertices().front() - orig[i]->GetVertices().front();
-          auto i_nodeA = cells[i]->GetVertices().begin();
-          auto i_nodeB = orig[i]->GetVertices().begin();
-          auto const i_end = cells[i]->GetVertices().end();
+          auto const disp
+            = (*std::next(cells.begin(), i))->GetVertices().front()
+            - (*std::next(orig.begin(), i))->GetVertices().front();
+          auto i_nodeA = (*std::next(cells.begin(), i))->GetVertices().begin();
+          auto i_nodeB = (*std::next(orig.begin(), i))->GetVertices().begin();
+          auto const i_end = (*std::next(cells.begin(), i))->GetVertices().end();
 
           for (; i_nodeA != i_end; ++i_nodeA, ++i_nodeB)
           {
