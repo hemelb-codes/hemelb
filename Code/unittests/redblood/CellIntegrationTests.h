@@ -51,7 +51,7 @@ namespace hemelb
 
             auto cell = std::make_shared<Cell>(icoSphere(4));
             cell->moduli = {1e-6, 1e-6, 1e-6, 1e-6};
-            cells.emplace_back(cell);
+            cells.emplace(cell);
 
             master = std::make_shared<SimulationMaster>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
@@ -66,7 +66,7 @@ namespace hemelb
           // No errors when interpolation/spreading hits nodes out of bounds
           void testCellOutOfBounds()
           {
-            (*cells.front()) += master->GetLatticeData().GetGlobalSiteMins() * 2;
+            (*cells.begin())->operator+=(master->GetLatticeData().GetGlobalSiteMins() * 2);
             auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
             master->RegisterActor(*controller, 1);
             master->RunSimulation();
@@ -81,18 +81,18 @@ namespace hemelb
             auto const &latticeData = master->GetLatticeData();
             auto const mid = LatticePosition(latticeData.GetGlobalSiteMaxes()
                   + latticeData.GetGlobalSiteMins()) * 0.5;
-            (*cells.front()) += mid - cells.front()->GetBarycenter();
-            (*cells.front()) += LatticePosition(0, 0, 8 - mid.z);
-            (*cells.front()) *= 5.0;
+            (**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
+            (**cells.begin()) += LatticePosition(0, 0, 8 - mid.z);
+            (**cells.begin()) *= 5.0;
             auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
-            auto const barycenter = cells.front()->GetBarycenter();
+            auto const barycenter = (*cells.begin())->GetBarycenter();
 
             // run
             master->RegisterActor(*controller, 1);
             master->RunSimulation();
 
             // check position of cell has changed
-            auto const moved = cells.front()->GetBarycenter();
+            auto const moved = (*cells.begin())->GetBarycenter();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.x - moved.x, 0e0, 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.y - moved.y, 0e0, 1e-6);
             CPPUNIT_ASSERT(std::abs(barycenter.z - moved.z) > 1e-3);
@@ -115,19 +115,19 @@ namespace hemelb
             auto const &latticeData = master->GetLatticeData();
             auto const mid = LatticePosition(latticeData.GetGlobalSiteMaxes()
                   + latticeData.GetGlobalSiteMins()) * 0.5;
-            (*cells.front()) += mid - cells.front()->GetBarycenter();
-            (*cells.front()) += LatticePosition(0, 0, 8 - mid.z);
-            (*cells.front()) *= 5.0;
+            (*(*cells.begin())) += mid - (*cells.begin())->GetBarycenter();
+            (*(*cells.begin())) += LatticePosition(0, 0, 8 - mid.z);
+            (*(*cells.begin())) *= 5.0;
             auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
-            auto const barycenter = cells.front()->GetBarycenter();
-            cells.front()->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
+            auto const barycenter = (*cells.begin())->GetBarycenter();
+            (*cells.begin())->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
 
             // run
             master->RegisterActor(*controller, 1);
             master->RunSimulation();
 
             // check position of cell has *not* changed
-            auto const moved = cells.front()->GetBarycenter();
+            auto const moved = (*cells.begin())->GetBarycenter();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.x - moved.x, 0e0, 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.y - moved.y, 0e0, 1e-6);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.z - moved.z, 0e0, 1e-6);

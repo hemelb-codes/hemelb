@@ -10,6 +10,7 @@
 #ifndef HEMELB_REDBLOOD_PARTICLE_H
 #define HEMELB_REDBLOOD_PARTICLE_H
 
+#include <set>
 #include "redblood/Mesh.h"
 #include "redblood/Node2Node.h"
 #include "units.h"
@@ -214,7 +215,7 @@ namespace hemelb
     };
 
     //! Typical cell container type
-    typedef std::vector<std::shared_ptr<Cell>> CellContainer;
+    typedef std::set<std::shared_ptr<Cell>> CellContainer;
   }
 } // namespace hemelb::redblood
 #endif

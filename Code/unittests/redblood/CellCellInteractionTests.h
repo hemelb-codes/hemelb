@@ -60,8 +60,8 @@ namespace hemelb
         LatticePosition const position = (LatticePosition(key) + LatticePosition(0.6, 0.5, 0.5))
             * cutoff;
 
-        CPPUNIT_ASSERT(not figure_nearness(dnc, key, position, cutoff * 0.501));
-        CPPUNIT_ASSERT(figure_nearness(dnc, key, position, cutoff * 0.499));
+        CPPUNIT_ASSERT(not figureNearness(dnc, key, position, cutoff * 0.501));
+        CPPUNIT_ASSERT(figureNearness(dnc, key, position, cutoff * 0.499));
       }
 
       void CellCellInteractionTests::testBoxHalo()
@@ -70,19 +70,19 @@ namespace hemelb
         LatticeVector const key(0, 1, -2);
         LatticePosition const center = (LatticePosition(key) + LatticePosition(0.5, 0.5, 0.5))
             * dnc.GetBoxSize();
-        CPPUNIT_ASSERT(figure_nearness(dnc, key, center, 2.0) == 0);
+        CPPUNIT_ASSERT(figureNearness(dnc, key, center, 2.0) == 0);
 
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
           LatticePosition const disp = CellReference::directions(d) * 0.6;
-          int const nearness = figure_nearness(dnc, key, center + disp, 2.0);
+          int const nearness = figureNearness(dnc, key, center + disp, 2.0);
           CPPUNIT_ASSERT(nearness == d);
         }
 
         LatticePosition const mult = CellReference::directions(CellReference::TOP) * 0.6
             + CellReference::directions(CellReference::NORTH) * 0.6
             + CellReference::directions(CellReference::EAST) * 0.6;
-        int const actual = figure_nearness(dnc, key, center + mult, 2.0);
+        int const actual = figureNearness(dnc, key, center + mult, 2.0);
         int const expected = CellReference::TOP bitor CellReference::NORTH
             bitor CellReference::EAST;
         CPPUNIT_ASSERT(actual == expected);
@@ -90,7 +90,6 @@ namespace hemelb
 
       void CellCellInteractionTests::testAddNodes()
       {
-        site_t const cellIndex(4);
         DivideConquer < CellReference > dnc(cutoff);
 
         // Adds nodes, last in halo
@@ -104,21 +103,20 @@ namespace hemelb
         vertices.push_back(center + LatticePosition(1, 0, 0) * cutoff
             + CellReference::directions(CellReference::NORTH) * inhalo * cutoff);
 
-        initializeCells(dnc, vertices, cellIndex, halo);
+        CellContainer cells;
+        cells.emplace(new Cell(Mesh(MeshData())));
+
+        initializeCells(dnc, vertices, cells.begin(), halo);
         CPPUNIT_ASSERT(dnc.size() == vertices.size());
 
-        DivideConquer<CellReference>::const_range const omega = dnc.equal_range(LatticeVector(0,
-                                                                                              0,
-                                                                                              0));
-        DivideConquer<CellReference>::const_range const empty = dnc.equal_range(LatticeVector(10,
-                                                                                              10,
-                                                                                              10));
-        DivideConquer<CellReference>::const_range const alpha = dnc.equal_range(LatticeVector(2,
-                                                                                              3,
-                                                                                              -2));
-        DivideConquer<CellReference>::const_range const haloed = dnc.equal_range(LatticeVector(1,
-                                                                                               0,
-                                                                                               0));
+        DivideConquer<CellReference>::const_range const omega
+          = dnc.equal_range(LatticeVector(0, 0, 0));
+        DivideConquer<CellReference>::const_range const empty
+          = dnc.equal_range(LatticeVector(10, 10, 10));
+        DivideConquer<CellReference>::const_range const alpha
+          = dnc.equal_range(LatticeVector(2, 3, -2));
+        DivideConquer<CellReference>::const_range const haloed
+          = dnc.equal_range(LatticeVector(1, 0, 0));
 
         CPPUNIT_ASSERT(std::distance(omega.first, omega.second) == 2);
         CPPUNIT_ASSERT(std::distance(alpha.first, alpha.second) == 1);
@@ -126,30 +124,31 @@ namespace hemelb
         CPPUNIT_ASSERT(std::distance(haloed.first, haloed.second) == 1);
 
         CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
-        CPPUNIT_ASSERT(omega.first->second.cellIndex == cellIndex);
-        CPPUNIT_ASSERT(omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1);
+        CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
+        CPPUNIT_ASSERT(
+            omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1
+        );
         CPPUNIT_ASSERT(omega.first->second.isNearBorder == 0);
-        DivideConquer<CellReference>::const_iterator other = omega.first;
-        ++other;
+        DivideConquer<CellReference>::const_iterator other = omega.first; ++other;
         CPPUNIT_ASSERT(helpers::is_zero(other->first));
-        CPPUNIT_ASSERT(other->second.cellIndex == cellIndex);
+        CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
         CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);
         CPPUNIT_ASSERT(other->second.isNearBorder == 0);
 
         CPPUNIT_ASSERT(alpha.first->first == LatticeVector(2, 3, -2));
         CPPUNIT_ASSERT(alpha.first->second.nodeIndex == 2);
-        CPPUNIT_ASSERT(alpha.first->second.cellIndex == cellIndex);
+        CPPUNIT_ASSERT(alpha.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(alpha.first->second.isNearBorder == 0);
 
         CPPUNIT_ASSERT(haloed.first->first == LatticeVector(1, 0, 0));
         CPPUNIT_ASSERT(haloed.first->second.nodeIndex == 3);
-        CPPUNIT_ASSERT(haloed.first->second.cellIndex == cellIndex);
+        CPPUNIT_ASSERT(haloed.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(haloed.first->second.isNearBorder == CellReference::NORTH);
       }
 
-      void check_cell(DivideConquerCells const &dnc, LatticeVector const &key, site_t cellIndex,
-                      site_t nbNodes)
+      void checkCell(DivideConquerCells const &dnc, LatticeVector const &key,
+          CellContainer::const_iterator cellIterator, site_t nbNodes)
       {
         DivideConquerCells::const_range omega = dnc(key);
         CPPUNIT_ASSERT(std::distance(omega.first, omega.second) == nbNodes);
@@ -158,7 +157,7 @@ namespace hemelb
 
         for (; omega.first != omega.second; ++omega.first)
         {
-          CPPUNIT_ASSERT(omega.first.GetCellReference().cellIndex == cellIndex);
+          CPPUNIT_ASSERT(omega.first.GetCellReference().cellIterator == cellIterator);
           CPPUNIT_ASSERT(omega.first.GetCellReference().nodeIndex >= 0
               and omega.first.GetCellReference().nodeIndex <= nbNodes);
           CPPUNIT_ASSERT(nodes.count(omega.first.GetCellReference().nodeIndex) == 0);
@@ -174,8 +173,11 @@ namespace hemelb
         Mesh pancake = pancakeSamosa();
 
         DivideConquerCells dnc(cells, cutoff, halo);
-        check_cell(dnc, LatticeVector(0, 0, 0), 0, pancake.GetVertices().size());
-        check_cell(dnc, LatticeVector(3, 0, 1), 1, pancake.GetVertices().size());
+        checkCell(
+            dnc, LatticeVector(0, 0, 0), dnc.GetCells().begin(), pancake.GetVertices().size());
+        checkCell(
+            dnc, LatticeVector(3, 0, 1), std::next(dnc.GetCells().begin()),
+            pancake.GetVertices().size());
       }
 
       void CellCellInteractionTests::testIterator()
@@ -185,16 +187,16 @@ namespace hemelb
 
         std::set<LatticePosition const *> allnodes;
         typedef MeshData::Vertices::const_iterator vertex_iterator;
-        vertex_iterator i_vert = cells.front()->GetVertices().begin();
-        vertex_iterator i_vertend = cells.front()->GetVertices().end();
+        vertex_iterator i_vert = (*cells.begin())->GetVertices().begin();
+        vertex_iterator i_vertend = (*cells.begin())->GetVertices().end();
 
         for (; i_vert != i_vertend; ++i_vert)
         {
           allnodes.insert(& (*i_vert));
         }
 
-        i_vert = cells.back()->GetVertices().begin();
-        i_vertend = cells.back()->GetVertices().end();
+        i_vert = (*std::next(cells.begin()))->GetVertices().begin();
+        i_vertend = (*std::next(cells.begin()))->GetVertices().end();
 
         for (; i_vert != i_vertend; ++i_vert)
         {
@@ -229,7 +231,7 @@ namespace hemelb
         LatticeVector const newbox(-1, 1, 2);
         LatticePosition const center(0.5 * cutoff);
         LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
-        cells.front()->GetVertices().front() = offhalo;
+        (*cells.begin())->GetVertices().front() = offhalo;
 
         dnc.update();
         CPPUNIT_ASSERT(dnc.size() == 6);
@@ -241,7 +243,7 @@ namespace hemelb
 
         // Move near boundary
         LatticePosition const inhalo = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
-        cells.front()->GetVertices().front() = inhalo;
+        (*cells.begin())->GetVertices().front() = inhalo;
         dnc.update();
         CPPUNIT_ASSERT(dnc.size() == 6);
         CPPUNIT_ASSERT(std::distance(dnc(notzero).first, dnc(notzero).second) == 3);
@@ -278,9 +280,9 @@ namespace hemelb
         auto cells(TwoPancakeSamosas<>(cutoff));
 
         // Move one node closer  to the other
-        LatticePosition const n0 = cells.front()->GetVertices()[0];
-        LatticePosition const n1 = cells.front()->GetVertices()[1];
-        cells.front()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+        LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
+        LatticePosition const n1 = (*cells.begin())->GetVertices()[1];
+        (*cells.begin())->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
         DivideConquerCells dnc(cells, cutoff, halo);
 
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
@@ -294,15 +296,15 @@ namespace hemelb
         auto cells(TwoPancakeSamosas<>(cutoff));
 
         // Move one node closer  to the other
-        LatticePosition const n0 = cells.front()->GetVertices()[0];
-        LatticePosition const n1 = cells.back()->GetVertices()[1];
-        cells.back()->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
+        LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
+        LatticePosition const n1 = (*std::next(cells.begin()))->GetVertices()[1];
+        (*std::next(cells.begin()))->GetVertices()[1] = (n1 - n0).GetNormalised() * 0.3 + n0;
         DivideConquerCells dnc(cells, cutoff, halo);
 
         DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
         CPPUNIT_ASSERT(range.is_valid());
-        CPPUNIT_ASSERT(helpers::is_zero(*range->first - cells.front()->GetVertices().front()));
-        CPPUNIT_ASSERT(helpers::is_zero(*range->second - cells.back()->GetVertices()[1]));
+        CPPUNIT_ASSERT(helpers::is_zero(*range->first - (*cells.begin())->GetVertices().front()));
+        CPPUNIT_ASSERT(helpers::is_zero(*range->second - (*std::next(cells.begin()))->GetVertices()[1]));
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
       }
@@ -316,8 +318,8 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        cells.front()->GetVertices().front() = n0;
-        cells.back()->GetVertices().front() = n1;
+        (*cells.begin())->GetVertices().front() = n0;
+        (*std::next(cells.begin()))->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is
@@ -344,8 +346,8 @@ namespace hemelb
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
         LatticePosition const n1(2 * cutoff + 0.1, 4.5 * cutoff, 4.5 * cutoff);
-        cells.front()->GetVertices().front() = n0;
-        cells.back()->GetVertices().front() = n1;
+        (*cells.begin())->GetVertices().front() = n0;
+        (*std::next(cells.begin()))->GetVertices().front() = n1;
 
         DivideConquerCells dnc(cells, cutoff, halo);
         // Checks that fixture is what I think it is

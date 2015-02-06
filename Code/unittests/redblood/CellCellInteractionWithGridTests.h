@@ -45,8 +45,8 @@ namespace hemelb
         // Place two nodes close enough for interactions
         LatticePosition const n0(15 - 0.1, 15.5, 15.5);
         LatticePosition const n1(15 + 0.1, 15.5, 15.5);
-        cells.front()->GetVertices().front() = n0;
-        cells.back()->GetVertices().front() = n1;
+        (*cells.begin())->GetVertices().front() = n0;
+        (*std::next(cells.begin()))->GetVertices().front() = n1;
 
         // Set forces to zero
         helpers::ZeroOutFOld(latDat);
