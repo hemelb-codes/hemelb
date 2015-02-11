@@ -84,7 +84,8 @@ namespace hemelb
         /**
          * Get a site object for the given position.
          */
-        inline Site<LatticeData> GetSite(LatticeVector const &pos) {
+        inline Site<LatticeData> GetSite(LatticeVector const &pos)
+        {
           return GetSite(GetContiguousSiteId(pos));
         }
         /**
@@ -239,7 +240,8 @@ namespace hemelb
         }
 
         site_t GetContiguousSiteId(util::Vector3D<site_t> location) const;
-        site_t GetContiguousSiteId(site_t x, site_t y, site_t z) const {
+        site_t GetContiguousSiteId(site_t x, site_t y, site_t z) const
+        {
           return GetContiguousSiteId(LatticeVector(x, y, z));
         }
 
