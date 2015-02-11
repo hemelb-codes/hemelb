@@ -300,10 +300,16 @@ find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIR})
 
 #-------------Resources -----------------------
-
 set(BUILD_RESOURCE_PATH ${PROJECT_BINARY_DIR}/resources)
 file(MAKE_DIRECTORY ${BUILD_RESOURCE_PATH})
 set(INSTALL_RESOURCE_PATH ${CMAKE_INSTALL_PREFIX}/share/hemelb/resources)
+function(add_to_resources)
+  foreach(resource ${ARGN})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
+    get_filename_component(resource_leaf ${resource} NAME)
+    INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
+  endforeach()
+endfunction()
 
 configure_file (
   "${PROJECT_SOURCE_DIR}/resources/path_parameters.h.in"
@@ -364,7 +370,7 @@ target_link_libraries(${HEMELB_EXECUTABLE}
     ${MPWide_LIBRARIES}
 	)
 INSTALL(TARGETS ${HEMELB_EXECUTABLE} RUNTIME DESTINATION bin)
-list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
 
 # ----------- HemeLB Multiscale ------------------
 if (HEMELB_BUILD_MULTISCALE)
@@ -410,36 +416,13 @@ if (HEMELB_BUILD_MULTISCALE)
                 ${MPWide_LIBRARIES}
 		)
 	INSTALL(TARGETS multiscale_hemelb RUNTIME DESTINATION bin)
-	list(APPEND RESOURCES resources/report.txt.ctp resources/report.xml.ctp)
+	add_to_resources(resources/report.txt.ctp resources/report.xml.ctp)
 endif()
 
 # ----------- HEMELB unittests ---------------
 if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_UNIT)
-	#------CPPUnit ---------------
-	find_package(CPPUnit REQUIRED)
-	include_directories(${CPPUNIT_INCLUDE_DIR})
-	add_executable(unittests_hemelb unittests/main.cc)
-	target_link_libraries(unittests_hemelb 
-		${heme_libraries}
-		${MPI_LIBRARIES}
-		${PARMETIS_LIBRARIES}
-		${TINYXML_LIBRARIES}
-		${CPPUNIT_LIBRARY}
-		${Boost_LIBRARIES}
-		${CTEMPLATE_LIBRARIES}
-		${ZLIB_LIBRARIES}
-		${MPWide_LIBRARIES}
-		${CMAKE_DL_LIBS}) #Because on some systems CPPUNIT needs to be linked to libdl
-	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
-  list(APPEND RESOURCES unittests/resources/four_cube.gmy unittests/resources/four_cube.xml
-    unittests/resources/four_cube_multiscale.xml unittests/resources/config.xml
-    unittests/resources/config0_2_0.xml unittests/resources/config_file_inlet.xml
-    unittests/resources/iolet.txt unittests/resources/config-velocity-iolet.xml
-    unittests/resources/config_new_velocity_inlets.xml unittests/resources/xmltest.xml
-    unittests/resources/config_file_velocity_inlet.xml unittests/resources/velocity_inlet.txt
-    unittests/resources/red_blood_cell.txt unittests/resources/red_blood_cube.txt
-    unittests/resources/large_cylinder.gmy unittests/resources/large_cylinder.xml
-		)
+  enable_testing()
+  add_subdirectory(unittests)
 endif()
 
 # ----------- HEMELB functionaltests ---------------
@@ -462,10 +445,3 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	INSTALL(TARGETS functionaltests_hemelb RUNTIME DESTINATION bin)
 endif()
 
-#-------- Copy and install resources --------------
-
-foreach(resource ${RESOURCES})
-	configure_file(${PROJECT_SOURCE_DIR}/${resource} ${BUILD_RESOURCE_PATH} COPYONLY)
-	get_filename_component(resource_leaf ${resource} NAME)
-	INSTALL(FILES ${BUILD_RESOURCE_PATH}/${resource_leaf} DESTINATION share/hemelb/resources)
-endforeach()
