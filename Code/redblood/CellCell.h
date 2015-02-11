@@ -166,7 +166,7 @@ namespace hemelb
         {
           return const_reverse_iterator(begin());
         }
-        size_t size() const
+        base_type::size_type size() const
         {
           return base_type::size();
         }
