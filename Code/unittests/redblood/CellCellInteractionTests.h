@@ -172,12 +172,15 @@ namespace hemelb
         auto cells(TwoPancakeSamosas<>(cutoff));
         Mesh pancake = pancakeSamosa();
 
+        auto first = *cells.begin();
+        auto second = *std::next(cells.begin());
+        if(first->GetBarycenter().GetMagnitude() > second->GetBarycenter().GetMagnitude())
+          std::swap(first, second);
+
         DivideConquerCells dnc(cells, cutoff, halo);
+        checkCell(dnc, LatticeVector(0, 0, 0), first, pancake.GetVertices().size());
         checkCell(
-            dnc, LatticeVector(0, 0, 0), *cells.begin(), pancake.GetVertices().size());
-        checkCell(
-            dnc, LatticeVector(3, 0, 1), *std::next(cells.begin()),
-            pancake.GetVertices().size());
+            dnc, LatticeVector(3, 0, 1), second, pancake.GetVertices().size());
       }
 
       void CellCellInteractionTests::testIterator()
