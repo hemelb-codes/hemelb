@@ -30,13 +30,13 @@ namespace hemelb
         {
           using namespace log;
           Logger::Log<Info, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::fluid2CellInteractions();
+          CellArmy<KERNEL>::Fluid2CellInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
           Logger::Log<Info, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::cell2FluidInteractions(); 
+          CellArmy<KERNEL>::Cell2FluidInteractions(); 
         }
     };
   }
