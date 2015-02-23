@@ -8,9 +8,13 @@
 //
 #ifndef HEMELB_UNITTESTS_REDBLOOD_H
 #define HEMELB_UNITTESTS_REDBLOOD_H
-namespace hemelb { namespace redblood {}};
+namespace hemelb { namespace redblood { namespace parallel {}}};
 namespace hemelb { namespace unittests { namespace redblood {
   using namespace hemelb::redblood;
+}}}
+namespace hemelb { namespace unittests { namespace redblood_parallel {
+  using namespace hemelb::redblood;
+  using namespace hemelb::redblood::parallel;
 }}}
 #define HEMELB_DOING_UNITTESTS
 #include "unittests/redblood/CellCellInteractionTests.h"
@@ -32,5 +36,6 @@ namespace hemelb { namespace unittests { namespace redblood {
 #include "unittests/redblood/DivideConquerTests.h"
 #include "unittests/redblood/CellArmyTests.h"
 #include "unittests/redblood/CellIntegrationTests.h"
+#include "unittests/redblood/parallelization/ParticleShufflerTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif

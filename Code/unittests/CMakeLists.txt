@@ -34,6 +34,7 @@ macro(add_test_executable target includename)
     ${CMAKE_DL_LIBS}
   )
   add_include_to_test(${target} ${includename})
+  set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
   INSTALL(TARGETS ${target} RUNTIME DESTINATION bin)
   set(testdir "${PROJECT_BINARY_DIR}/test_results/")
   file(MAKE_DIRECTORY "${testdir}")

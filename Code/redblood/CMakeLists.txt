@@ -1,5 +1,5 @@
 add_library(hemelb_redblood Mesh.h Mesh.cc Cell.cc Interpolation.cc stencil.cc
-  CellCell.cc)
+  CellCell.cc parallelization/ParticleShuffler.cc)
 if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
   target_compile_features( hemelb_redblood
     PUBLIC
