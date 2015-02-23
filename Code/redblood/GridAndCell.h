@@ -31,7 +31,13 @@ namespace hemelb
                           stencil::types stencil, std::vector<LatticePosition> &displacements)
     {
       displacements.resize(cell.GetNumberOfNodes());
-      details::VelocityNodeLoop<KERNEL>(stencil, cell, latDat).loop(details::transform_iterator(displacements.begin()));
+      std::transform(
+          cell.GetVertices().begin(), cell.GetVertices().end(), displacements.begin(),
+          [&stencil, &latDat](LatticePosition const &position)
+          {
+            return interpolateVelocity<KERNEL>(latDat, position, stencil);
+          }
+      );
     }
     //! Displacement of the cell nodes interpolated from lattice velocities
     template<class KERNEL>
