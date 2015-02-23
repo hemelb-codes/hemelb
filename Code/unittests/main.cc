@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <unistd.h>
 
+#include "unittests/helpers/helpers.h"
 #include HEMELB_UNITTEST_INCLUDE
 
 int main(int argc, char **argv)
