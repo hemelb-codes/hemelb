@@ -10,60 +10,6 @@ namespace details
 {
   namespace
   {
-    // Loops over nodes, computes velocity and does something
-    // struct + member makes up for lack of partial function
-    // specialization in c++ pre 11
-    template<class KERNEL>
-    struct VelocityNodeLoop
-    {
-        VelocityNodeLoop(stencil::types stencil, CellBase const &cell,
-                         geometry::LatticeData const &latDat) :
-            stencil(stencil), cell(cell), latticeData(latDat)
-        {
-        }
-        // Loop and does something
-        template<class FUNCTOR>
-        void loop(FUNCTOR apply)
-        {
-          typedef MeshData::Vertices::const_iterator const_iterator;
-          const_iterator i_current = cell.GetVertices().begin();
-          const_iterator const i_end = cell.GetVertices().end();
-
-          for (; i_current != i_end; ++i_current)
-          {
-            PhysicalVelocity const velocity = interpolateVelocity < KERNEL
-                > (latticeData, *i_current, stencil);
-            apply(velocity);
-          }
-        }
-
-        stencil::types const stencil;
-        CellBase const &cell;
-        geometry::LatticeData const &latticeData;
-    };
-
-    //! Updates an assignable iterator of some kind
-    template<class ITERATOR>
-    struct TransformIterator
-    {
-        ITERATOR iterator;
-        TransformIterator(ITERATOR iterator) :
-            iterator(iterator)
-        {
-        }
-        void operator()(typename ITERATOR::value_type const &value)
-        {
-          * (iterator++) = value;
-        }
-    };
-
-    //! Updates an assignable iterator of some kind
-    template<class ITERATOR>
-    TransformIterator<ITERATOR> transform_iterator(ITERATOR iterator)
-    {
-      return TransformIterator<ITERATOR>(iterator);
-    }
-
     //! Iterates over vertices of a mesh and the nearby nodes of a grid
     //! The functor argument is called with the current vertex index, the
     //! global site index triplet, and the associated interpolation weight.
