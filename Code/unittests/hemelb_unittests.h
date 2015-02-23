@@ -7,7 +7,6 @@
 // specifically made by you with University College London.
 // 
 
-#include "unittests/helpers/helpers.h"
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
 #include "unittests/io/io.h"
