@@ -174,12 +174,6 @@ namespace hemelb
 
       return result;
     }
-    template<class GRID_FUNCTION, class STENCIL>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc, LatticePosition const &pos,
-                                 STENCIL stencil)
-    {
-      return interpolate(gridfunc, OffLatticeIterator(pos, stencil));
-    }
     template<class GRID_FUNCTION>
     PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc, LatticePosition const &pos,
                                  stencil::types stencil)
