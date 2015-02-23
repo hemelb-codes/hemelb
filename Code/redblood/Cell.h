@@ -70,7 +70,6 @@ namespace hemelb
             CellBase(mesh.GetVertices(), mesh.clone())
         {
         }
-
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
         //!   both
@@ -78,6 +77,12 @@ namespace hemelb
             CellBase(mesh->vertices, Mesh(*mesh))
         {
         }
+        //! Copy constructor
+        //! References same template mesh
+        CellBase(CellBase const &cell) : CellBase(cell.vertices, cell.templateMesh, cell.scale)
+        {
+        }
+
 
         void operator=(Mesh const &mesh)
         {
@@ -132,6 +137,11 @@ namespace hemelb
         void operator*=(util::Matrix3D const &);
         //! Translate mesh
         void operator+=(LatticePosition const &offset);
+        //! Translate mesh
+        void operator-=(LatticePosition const &offset)
+        {
+          return operator+=(-offset);
+        }
         //! Transform mesh
         void operator+=(std::vector<LatticePosition> const &displacements);
 
@@ -195,6 +205,11 @@ namespace hemelb
 
         // inheriting constructors
         using CellBase::CellBase;
+        //! Copy constructor
+        //! Copy refers to the same template mesh
+        Cell(Cell const &cell) : CellBase(cell), moduli(cell.moduli), nodeWall(cell.nodeWall)
+        {
+        }
 
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const override;
@@ -206,6 +221,7 @@ namespace hemelb
         {
           return nodeWall(vertex, wall);
         }
+
 
       private:
         // Computes facet bending energy over all facets
