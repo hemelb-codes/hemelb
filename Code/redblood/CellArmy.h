@@ -31,7 +31,7 @@ namespace hemelb
         //! Interaction terms between cells
         Node2NodeForce cell2Cell;
         //! Stencil
-        stencil::types stencil = stencil::FOUR_POINT;
+        stencil::types stencil = stencil::types::FOUR_POINT;
 
         CellArmy(geometry::LatticeData &_latDat,
             CellContainer const &cells,

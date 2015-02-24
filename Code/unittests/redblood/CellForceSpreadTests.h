@@ -63,7 +63,7 @@ namespace hemelb
         helpers::ZeroOutForces(latDat);
         details::spreadForce2Grid(mesh,
                                   details::SpreadForces(forces, *latDat),
-                                  stencil::FOUR_POINT);
+                                  stencil::types::FOUR_POINT);
         return latDat->GetSite(center).GetForce();
       }
 
