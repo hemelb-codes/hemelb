@@ -72,7 +72,7 @@ namespace hemelb
                                                 stencil::types stencil)
     {
 #define HEMELB_STENCIL_MACRO(NAME, Name) \
-  case stencil::NAME:                    \
+  case stencil::types::NAME:             \
     return interpolationIterator<stencil::Name>(where)
 
       switch (stencil)

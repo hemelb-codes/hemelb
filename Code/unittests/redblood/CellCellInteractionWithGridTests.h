@@ -54,7 +54,7 @@ namespace hemelb
         // Finds pairs, computes interaction, spread forces to lattice
         addCell2CellInteractions(DivideConquerCells(cells, cutoff, halo),
                                  Node2NodeForce(1.0, halo),
-                                 stencil::FOUR_POINT,
+                                 stencil::types::FOUR_POINT,
                                  *latDat);
 
         // By symmetry, there are no forces on the lattice points equidistant from
