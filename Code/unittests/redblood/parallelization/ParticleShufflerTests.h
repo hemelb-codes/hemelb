@@ -111,7 +111,7 @@ namespace hemelb
           void testSloshing();
 
         private:
-          enum class Stepper
+          enum class Stepper : unsigned
           {
             IDENTIFY,
             NEXTCELLMESSAGE,
@@ -172,8 +172,7 @@ namespace hemelb
       {
         auto doThisStep = [&start, &last](Stepper const &step)
         {
-          return last == Stepper::NONE ?
-            start == step: (int(start) <= int(step) and int(last) >= int(step));
+          return last == Stepper::NONE ? start == step: (start <= step and last >= step);
         };
         if(doThisStep(Stepper::IDENTIFY))
         {
