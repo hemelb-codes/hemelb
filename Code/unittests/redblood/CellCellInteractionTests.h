@@ -223,30 +223,37 @@ namespace hemelb
       {
         auto cells(TwoPancakeSamosas<>(cutoff));
         DivideConquerCells dnc(cells, cutoff, halo);
+        // Figures out which cell is which
+        auto firstCell = *cells.begin();
+        auto secondCell = *std::next(cells.begin());
+        if(firstCell->GetBarycenter().GetMagnitude() > secondCell->GetBarycenter().GetMagnitude())
+        {
+          std::swap(firstCell, secondCell);
+        }
 
         LatticeVector const zero(0, 0, 0);
         LatticeVector const notzero(3, 0, 1);
         CPPUNIT_ASSERT_EQUAL(dnc.size(), static_cast<unsigned long>(6));
-        CPPUNIT_ASSERT_EQUAL(std::distance(dnc(zero).first, dnc(zero).second), 3l);
-        CPPUNIT_ASSERT_EQUAL(std::distance(dnc(notzero).first, dnc(notzero).second), 3l);
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(zero).first, dnc(zero).second));
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(notzero).first, dnc(notzero).second));
 
         // Move to new box
         LatticeVector const newbox(-1, 1, 2);
         LatticePosition const center(0.5 * cutoff);
         LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
-        (*cells.begin())->GetVertices().front() = offhalo;
+        firstCell->GetVertices().front() = offhalo;
 
         dnc.update();
         CPPUNIT_ASSERT_EQUAL(dnc.size(), static_cast<unsigned long>(6));
-        CPPUNIT_ASSERT_EQUAL(std::distance(dnc(notzero).first, dnc(notzero).second), 3l);
-        CPPUNIT_ASSERT_EQUAL(std::distance(dnc(zero).first, dnc(zero).second), 2l);
-        CPPUNIT_ASSERT_EQUAL(std::distance(dnc(newbox).first, dnc(newbox).second), 1l);
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(notzero).first, dnc(notzero).second));
+        CPPUNIT_ASSERT_EQUAL(2l, std::distance(dnc(zero).first, dnc(zero).second));
+        CPPUNIT_ASSERT_EQUAL(1l, std::distance(dnc(newbox).first, dnc(newbox).second));
         CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - offhalo));
         CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder());
 
         // Move near boundary
         LatticePosition const inhalo = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
-        (*cells.begin())->GetVertices().front() = inhalo;
+        firstCell->GetVertices().front() = inhalo;
         dnc.update();
         CPPUNIT_ASSERT_EQUAL(dnc.size(), static_cast<unsigned long>(6));
         CPPUNIT_ASSERT_EQUAL(std::distance(dnc(notzero).first, dnc(notzero).second), 3l);
