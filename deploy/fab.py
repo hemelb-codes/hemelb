@@ -137,11 +137,11 @@ def stat():
     return run(template("$stat -u $username"))
 
 @task
-def monitor():
+def monitor(delay=30):
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
-        time.sleep(30)
+        time.sleep(float(delay))
         
         
 def check_complete():

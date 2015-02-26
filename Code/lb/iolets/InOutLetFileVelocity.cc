@@ -279,6 +279,7 @@ namespace hemelb
 
         //if the new velocity approximation is enabled, then we want to create a lookup table here.
         const std::string in_name = velocityFilePath + ".weights.txt";
+        util::check_file(in_name.c_str());
 
         /* Load and read file. */
         std::fstream myfile;
@@ -293,7 +294,7 @@ namespace hemelb
          *
          * */
         if(useWeightsFromFile) {
-          while (std::getline(myfile, input_line))
+          while (myfile.good()) //(std::getline(myfile, input_line))
           {
             int x, y, z;
             double v;
@@ -305,12 +306,13 @@ namespace hemelb
             xyz.push_back(z);
             weights_table[xyz] = v;
 
-          /*log::Logger::Log<log::Warning, log::OnePerCore>("%lld %lld %lld %f",
-           x,
-           y,
-           z,
-           weights_table[xyz]);*/
+            log::Logger::Log<log::Trace, log::OnePerCore>("%lld %lld %lld %f",
+            x,
+            y,
+            z,
+            weights_table[xyz]);
           }
+          myfile.close();
         }
       }
 
