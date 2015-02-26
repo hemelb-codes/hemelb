@@ -38,7 +38,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF) 
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 #------- Dependencies -----------
