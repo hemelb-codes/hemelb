@@ -14,6 +14,9 @@
 #include "unittests/helpers/Comparisons.h"
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
+#include "redblood/FlowExtension.h"
+#include "util/Vector3D.h"
+#include "units.h"
 
 namespace hemelb
 {
@@ -122,6 +125,18 @@ namespace hemelb
         }
 
         hemelb::redblood::Cell mesh;
+    };
+
+    class FlowExtensionFixture : public CppUnit::TestFixture {
+      public:
+        void setUp() {
+          flowExt.normal = util::Vector3D<LatticeDistance>(1.0, 0.0, 0.0);
+          flowExt.position = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
+          flowExt.length = 10.0;
+          flowExt.radius = 1.0;
+        }
+      protected:
+        hemelb::redblood::FlowExtension flowExt;
     };
 
     template<class CELLTYPE = redblood::Cell>
