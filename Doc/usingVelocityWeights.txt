@@ -1,0 +1,9 @@
+How to use proper velocity inlets for your (non-cylindrical) geometry:
+
+Step 1:
+Execute the script to generate the weights file itself
+python <base_dir>/hemelb-dev/hemelb/Tools/setuptool/InletProcessing/CreateWeightsFile.py <name of the profile file in your configuration directory>
+
+Please note that the script will also look for your XML and GMY files, so those should reside in the locations indicated in the profile file.
+
+
