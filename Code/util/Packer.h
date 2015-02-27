@@ -25,10 +25,10 @@ namespace hemelb
     class Packer;
 
     //! packs object to packer
-    template<class T> typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+    template<class T> typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
       operator<<(Packer& buffer, T const & packme);
     //! unpacks object from packer
-    template<class T> typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+    template<class T> typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
       operator>>(Packer& buffer, T & packme);
 
     //! \brief Packs and unpacks to an internal stream
@@ -38,9 +38,11 @@ namespace hemelb
     class Packer
     {
       // These two should be sufficient to build other streaming operators.
-      template<class T> friend typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+      template<class T>
+        friend typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
         operator<<(Packer& buffer, T const & packme);
-      template<class T> friend typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+      template<class T>
+        friend typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
         operator>>(Packer& buffer, T & packme);
 
       public:
@@ -109,7 +111,7 @@ namespace hemelb
     };
 
     //! packs object to packer
-    template<class T> typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+    template<class T> typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
       operator<<(Packer& packer, T const & packme)
       {
         if(sizeof(T) == sizeof(Packer::StreamByte))
@@ -131,7 +133,7 @@ namespace hemelb
         return packer;
       }
     //! unpacks object from packer
-    template<class T> typename std::enable_if<std::is_scalar<T>::value, Packer&> :: type
+    template<class T> typename std::enable_if<std::is_arithmetic<T>::value, Packer&> :: type
       operator>>(Packer& packer, T & packme)
       {
         assert(packer.pos != packer.buffer->end());
@@ -293,9 +295,35 @@ namespace hemelb
         Packer::Buffer::size_type accumulated;
     };
 
+    namespace details
+    {
+      //! True if a type has fixed memory footprint
+      template<class T, class V = void> struct FixedMemoryFootPrint : std::false_type
+      {
+      };
+
+      //! True if a type has fixed memory footprint
+      template<class T>
+        struct FixedMemoryFootPrint<
+          T,
+          typename std::enable_if<std::is_arithmetic<T>::value, void>::type
+        > : std::true_type
+      {
+      };
+
+      //! True if a type has fixed memory footprint
+      template<class T>
+        struct FixedMemoryFootPrint<
+          util::Vector3D<T>,
+          typename std::enable_if<FixedMemoryFootPrint<T>::value, void>::type
+        > : std::true_type
+        {
+        };
+    }
+
     //! figures out size of message in bytes
     template<class T>
-      typename std::enable_if<std::is_scalar<T>::value, Packer::Sizer&> :: type
+      typename std::enable_if<std::is_arithmetic<T>::value, Packer::Sizer&> :: type
       operator<<(Packer::Sizer& sizer, T const & packme)
       {
         sizer += std::max(sizeof(T), sizeof(Packer::StreamByte));
@@ -307,13 +335,32 @@ namespace hemelb
       return sizer;
     }
     template<class T, class D>
-      typename std::enable_if<std::is_default_constructible<T>::value, Packer::Sizer&>::type
-      operator<<(Packer::Sizer& sizer, std::vector<T, D> const &vector)
+      typename std::enable_if<
+        std::is_default_constructible<T>::value
+        and details::FixedMemoryFootPrint<T>::value, 
+        Packer::Sizer&
+      >::type operator<<(Packer::Sizer& sizer, std::vector<T, D> const &vector)
     {
       auto const N = vector.size();
       sizer << N;
       if(N != 0)
         sizer.addNElements(N, vector.front());
+      return sizer;
+    }
+    template<class T, class D>
+      typename std::enable_if<
+        std::is_default_constructible<T>::value
+        and not details::FixedMemoryFootPrint<T>::value,
+        Packer::Sizer&
+      >::type
+      operator<<(Packer::Sizer& sizer, std::vector<T, D> const &vector)
+    {
+      auto const N = vector.size();
+      sizer << N;
+      for(auto const& element: vector)
+      {
+        sizer << element;
+      }
       return sizer;
     }
     template<class A, class B>
@@ -328,7 +375,9 @@ namespace hemelb
     template<class KEY, class T, class COMPARE, class ALLOC>
       typename std::enable_if<
         std::is_default_constructible<KEY>::value
-        and std::is_default_constructible<T>::value,
+        and std::is_default_constructible<T>::value
+        and details::FixedMemoryFootPrint<T>::value
+        and details::FixedMemoryFootPrint<KEY>::value,
         Packer::Sizer&
       >::type operator<<(Packer::Sizer& sizer, std::map<KEY, T, COMPARE, ALLOC> const &map)
     {
@@ -337,6 +386,24 @@ namespace hemelb
       sizer << N;
       if(N != 0)
         sizer.addNElements(N, *map.begin());
+      return sizer;
+    }
+    template<class KEY, class T, class COMPARE, class ALLOC>
+      typename std::enable_if<
+        std::is_default_constructible<KEY>::value
+        and std::is_default_constructible<T>::value
+        and not (
+            details::FixedMemoryFootPrint<T>::value and details::FixedMemoryFootPrint<KEY>::value),
+        Packer::Sizer&
+      >::type operator<<(Packer::Sizer& sizer, std::map<KEY, T, COMPARE, ALLOC> const &map)
+    {
+      typedef typename std::map<KEY, T, COMPARE, ALLOC>::value_type value_type;
+      auto const N = map.size();
+      sizer << N;
+      for(auto const & element: map)
+      {
+        sizer << element;
+      }
       return sizer;
     }
     template<class T>
