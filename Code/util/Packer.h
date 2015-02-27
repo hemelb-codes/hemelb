@@ -48,13 +48,20 @@ namespace hemelb
         typedef int8_t StreamByte;
         //! type underlying the packer
         typedef std::vector<StreamByte> Buffer;
+        //! type for sizes
+        typedef Buffer::size_type size_type;
+
+        //! Convenience class to sum up sizes
+        class Sizer;
 
         //! New empty buffer
         Packer() : buffer(new Buffer), pos(buffer->begin())
         {
         }
-        //! New empty buffer
-        Packer(size_t n) : buffer(new Buffer(n)), pos(buffer->begin())
+        Packer(Buffer const &b) : buffer(new Buffer(b)), pos(buffer->begin())
+        {
+        }
+        Packer(Buffer &&b) : buffer(new Buffer(std::move(b))), pos(buffer->begin())
         {
         }
         //! Shallow copy constructor
@@ -76,6 +83,16 @@ namespace hemelb
         Buffer::size_type size()
         {
           return buffer->size();
+        }
+        //! current buffer size in bytes
+        Buffer::size_type messageSize()
+        {
+          return buffer->size() * sizeof(StreamByte);
+        }
+        //! Clears current buffer
+        void clear()
+        {
+          buffer->clear();
         }
 
         //! current read position at beginning
@@ -131,6 +148,7 @@ namespace hemelb
         }
         return packer;
       }
+
 
     //! packing for 3d vectors
     template<class T> Packer& operator<<(Packer &packer, Vector3D<T> const &vector)
@@ -213,6 +231,7 @@ namespace hemelb
       typedef typename std::remove_const<typename Map::mapped_type>::type mapped_type;
       typename Map::size_type n;
       packer >> n;
+      map.clear();
       for(typename Map::size_type i(0); i < n; ++i)
       {
         std::pair<key_type, mapped_type> value;
@@ -245,6 +264,134 @@ namespace hemelb
         }
         return packer;
       }
+
+    class Packer::Sizer
+    {
+      public:
+        Sizer(Packer::Buffer::size_type i = 0) : accumulated(i)
+        {
+        }
+        Packer::Buffer::size_type cast() const
+        {
+          return accumulated;
+        }
+        void operator+=(Packer::Buffer::size_type i)
+        {
+          accumulated += i;
+        }
+        // Adds one size n times
+        template<class T> void addNElements(Packer::Buffer::size_type n, T const& value)
+        {
+          if(n != 0)
+          {
+            Sizer other;
+            other << value;
+            accumulated += n * other.cast();
+          }
+        }
+      private:
+        Packer::Buffer::size_type accumulated;
+    };
+
+    //! figures out size of message in bytes
+    template<class T>
+      typename std::enable_if<std::is_scalar<T>::value, Packer::Sizer&> :: type
+      operator<<(Packer::Sizer& sizer, T const & packme)
+      {
+        sizer += std::max(sizeof(T), sizeof(Packer::StreamByte));
+        return sizer;
+      }
+    template<class T> Packer::Sizer& operator<<(Packer::Sizer& sizer, Vector3D<T> const &v)
+    {
+      sizer.addNElements(3, v.x);
+      return sizer;
+    }
+    template<class T, class D>
+      typename std::enable_if<std::is_default_constructible<T>::value, Packer::Sizer&>::type
+      operator<<(Packer::Sizer& sizer, std::vector<T, D> const &vector)
+    {
+      auto const N = vector.size();
+      sizer << N;
+      if(N != 0)
+        sizer.addNElements(N, vector.front());
+      return sizer;
+    }
+    template<class A, class B>
+      typename std::enable_if<
+        std::is_default_constructible<A>::value
+        and std::is_default_constructible<B>::value,
+        Packer::Sizer&
+      >::type operator<<(Packer::Sizer& sizer, std::pair<A, B> const &pair)
+    {
+      return sizer << pair.first << pair.second;
+    }
+    template<class KEY, class T, class COMPARE, class ALLOC>
+      typename std::enable_if<
+        std::is_default_constructible<KEY>::value
+        and std::is_default_constructible<T>::value,
+        Packer::Sizer&
+      >::type operator<<(Packer::Sizer& sizer, std::map<KEY, T, COMPARE, ALLOC> const &map)
+    {
+      typedef typename std::map<KEY, T, COMPARE, ALLOC>::value_type value_type;
+      auto const N = map.size();
+      sizer << N;
+      if(N != 0)
+        sizer.addNElements(N, *map.begin());
+      return sizer;
+    }
+    template<class T>
+      Packer::Sizer& operator<<(Packer::Sizer& sizer, std::basic_string<T> const &string)
+      {
+        auto const N = string.size();
+        sizer << N;
+        if(N != 0)
+          sizer.addNElements(N, string[0]);
+        return sizer;
+      }
+
+    namespace details
+    {
+      template<class T, class... Arguments>
+        Packer::size_type
+        packerMessageSizeImpl(Packer::Sizer &sizer, T const &value, Arguments const &... args)
+      {
+        sizer << value;
+        packerMessageSizeImpl(sizer, args...);
+        return sizer.cast();
+      }
+      template<class T>
+        Packer::size_type packerMessageSizeImpl(Packer::Sizer &sizer, T const &value)
+      {
+        sizer << value;
+        return sizer.cast();
+      }
+    }
+
+    // Convenience function to compute message size of multiple argument
+    template<class T, class... Arguments>
+      typename std::enable_if<
+        not std::is_same<typename std::remove_all_extents<T>::type, Packer::Sizer>::value,
+        Packer::size_type
+      >::type packerMessageSize(T const &value, Arguments const &... args)
+    {
+      Packer::Sizer sizer;
+      sizer << value;
+      details::packerMessageSizeImpl(sizer, args...);
+      return sizer.cast();
+    }
+
+    // Convenience function to compute message size of single argument
+    template<class T>
+      typename std::enable_if<
+        not std::is_same<typename std::remove_all_extents<T>::type, Packer::Sizer>::value,
+        Packer::size_type
+      >::type packerMessageSize(T const &value)
+    {
+      Packer::Sizer sizer;
+      sizer << value;
+      return sizer.cast();
+    }
+
   } // util
 } // hemelb
 
