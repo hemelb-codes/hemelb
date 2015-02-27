@@ -27,6 +27,7 @@ namespace hemelb
           CPPUNIT_TEST(TestDouble);
           CPPUNIT_TEST(TestVector3D);
           CPPUNIT_TEST(TestVector);
+          CPPUNIT_TEST(TestMap);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -74,6 +75,9 @@ namespace hemelb
           void TestVector3D()
           {
             using namespace hemelb::util;
+            static_assert(
+                details::FixedMemoryFootPrint<Vector3D<int>>::value,
+                "Vector should have fixed size");
             Vector3D<int> const v0 = {0, 1, 2};
             Vector3D<int> v = {2, 1, 0};
             Packer send;
@@ -109,6 +113,9 @@ namespace hemelb
           void TestMap()
           {
             using namespace hemelb::util;
+            static_assert(
+                not details::FixedMemoryFootPrint<std::string>::value,
+                "string has variable memory footprint");
             std::map<int, std::string> const m0 = {{0, "zero"}, {1, "one"}};
             std::map<int, std::string> m;
             Packer packer;
