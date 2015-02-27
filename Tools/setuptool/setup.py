@@ -34,12 +34,111 @@ def GetVtkVersion():
     minor = v.GetVTKMinorVersion()
     return major, minor
 
-def DarwinGrep(results):
+def GetVtkLibDirDarwin(aVtkSharedLibrary):
+    def IterRpaths(obj):
+        """Iterator that yields the @rpaths added to the object.
+        """
+        # Run otool -l $obj.
+
+        # Find each load command and check if it's
+        # 'cmd LC_RPATH'. If so, it should be followed by
+        # 'cmdsize <integer>' and then by 'path <path> (offset
+        # <integer>)'. Note there may be zero or more of these!
+        cmd = "otool -l %s" % obj
+        lines = os.popen(cmd).read().split('\n')
+
+        # Very simple state machine to parse the output of otool
+        state = 'top'
+        for line in lines:
+            if state == 'top':
+                if line.startswith('Load command'):
+                    state = 'start command'
+                    pass
+                continue
+
+            if state == 'start command':
+                cmd, cmdName = line.split()
+                assert cmd == 'cmd', "error parsing otool output, expected 'cmd $CMD_NAME'"
+                if cmdName == 'LC_RPATH':
+                    state = 'in rpath size'
+                else:
+                    state = 'in other'
+                    pass
+                continue
+
+            if state == 'in other':
+                if line.startswith('Load command'):
+                    state = 'start command'
+                    pass
+                continue
+
+            if state == 'in rpath size':
+                state = 'in rpath path'
+                continue
+
+            if state == 'in rpath path':
+                cmd, path, offset = line.split(None, 2)
+                assert cmd == 'path'
+                yield path
+                state = top
+                continue
+        return
+    
+    def DealWithLinkOptions(libDir, libBase, loaderPaths):
+        
+        if libDir.startswith('/'):
+            # It's an absolute path - easy!
+            if os.path.exists(os.path.join(libDir, libBase)):
+                return os.path.normpath(libDir)
+            raise ValueEror("Can't find library")
+            
+        elif libDir.startswith('@loader_path'):
+            # Path relative to the library or executable
+            for pth in loaderPaths:
+                ans = libDir.replace('@loader_path', pth)
+                if os.path.exists(os.path.join(ans,libBase)):
+                    return os.path.normpath(ans)
+                continue
+            raise ValueError("Can't find library '%s'" % libDir)
+        
+        elif libDir.startswith('@rpath'):
+            # Need to examine the rpaths set in the executable and
+            # shared libraries. Potentially all the loaded ones, but
+            # python and the vtk extension *should* be enough.
+            for obj in (sys.executable, aVtkSharedLibrary):
+                for rpath in IterRpaths(obj):
+                    # replace @rpath with <path> and try to search again
+                    try:
+                        return DealWithLinkOptions(
+                            libDir.replace("@rpath", rpath),
+                            libBase, loaderPaths + (os.path.dirname(sys.executable),)
+                        )
+                    except ValueError:
+                        pass
+                    continue
+                continue
+            raise ValueError("Could not find actual directory in RPATH for '%s'" % libDir)
+        elif libDir == '':
+            # On DYLD_LIBRARY_PATH
+            dyld_library_path = os.environ.get('DYLD_LIBRARY_PATH', '')
+            for pth in dyld_library_path.split(':'):
+                if pth == '': continue
+                potential = os.path.join(pth, libBase)
+                if os.path.exists(potential):
+                    return os.path.normpath(pth)
+                continue
+            # Wasn't there....
+            pass
+        # Don't know how to deal with this one
+        raise ValueError("Can't deduce actual directory from otool output '{}'".format(line))
+
+    # End of helper functions.
+    results = os.popen('otool -L %s' % aVtkSharedLibrary).read()
     lines = results.split('\n')
     # Ditch first line
-    libpath = lines.pop(0)
-    libdir = os.path.dirname(libpath)
-    
+    extLibPath = lines.pop(0)
+    extLibDir = os.path.dirname(extLibPath)
+
     for line in lines:
         # Split on whitespace
         words = line.split()
@@ -52,29 +151,19 @@ def DarwinGrep(results):
         
         try:
             # pdb.set_trace()
-            dir, base = os.path.split(libPath)
+            libDir, libBase = os.path.split(libPath)
+            if libBase.startswith('libvtkCommon'):
+                return DealWithLinkOptions(libDir, libBase, (extLibDir,))
             
-            # Do a string split rather than os.path.splitext as the latter splits on the last dot
-            base, rest = base.split('.', 1)
-            
-            if base.startswith('libvtkCommon'):
-                # it's the right directory. Now deal with OS X linking options
-                if dir.startswith('/'):
-                    # It's an absolute path - easy!
-                    ans = dir
-                elif dir.startswith('@loader_path'):
-                    # Relative to the library path
-                    ans = dir.replace('@loader_path', libdir)
-                else:
-                    raise ValueError("Can't deduce actual directory from otool output '{}'".format(line))
-                return os.path.normpath(ans)
         except ValueError:
             pass
         continue
     # Searched them all without finding a match!
     raise ValueError("Can't figure out the VTK include dir")
 
-def LinuxGrep(results):
+def GetVtkLibDirLinux(aVtkSharedLibrary):
+    results = os.popen('ldd %s' % aVtkSharedLibrary).read()
+
     lines = results.split('\n')
     
     for line in lines:
@@ -126,16 +215,11 @@ def GetVtkLibDir():
                 aVtkSharedLibrary = vtkCommonPython.__file__
     osName = platform.system()
     if osName == 'Darwin':
-        sharedLibCmd = 'otool -L %s'
-        grep = DarwinGrep
+        return GetVtkLibDirDarwin(aVtkSharedLibrary)
     elif osName == 'Linux':
-        sharedLibCmd = 'ldd %s'
-        grep = LinuxGrep
+        return GetVtkLibDirLinux(aVtkSharedLibrary)
     else:
         raise ValueError("Don't know how to determing VTK path on OS '%s'" % osName)
-
-    results = os.popen(sharedLibCmd % aVtkSharedLibrary).read()
-    return grep(results)
 
 def GetBoostDir(hemeLbDir):
     boostDir = os.path.join(hemeLbDir, '../dependencies/include/') 
