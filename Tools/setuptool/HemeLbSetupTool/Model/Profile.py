@@ -12,14 +12,14 @@ import os.path
 import cPickle
 from copy import copy
 import numpy as np
+import yaml
 
 from vtk import vtkSTLReader
 
-from HemeLbSetupTool.Util.Observer import Observable, ObservableList
+from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-
-#import pdb
+from HemeLbSetupTool.Model.Iolets import ObservableListOfIolets, IoletLoader
 
 class LengthUnit(Observable):
     def __init__(self, sizeInMetres, name, abbrv):
@@ -45,7 +45,7 @@ class Profile(Observable):
     _CloneOrder = ['StlFileUnitId', 'StlFile', 'VoxelSize']
     _Args = {'StlFile': None,
              'StlFileUnitId': 1,
-             'Iolets': ObservableList(),
+             'Iolets': ObservableListOfIolets(),
              'VoxelSize': 0.,
              'TimeStepSeconds': 1e-4,
              'DurationSeconds': 5.0,
@@ -166,34 +166,51 @@ class Profile(Observable):
         return
     
     def LoadFromFile(self, filename):
+        root, ext = os.path.splitext(filename)
+        if ext == '.pro':
+            return self.LoadProfileV1(filename)
+        elif ext == '.pr2':
+            return self.LoadProfileV2(filename)
+        else:
+            raise ValueError("Unexpected extension on profile file: " + ext)
+        
+    def LoadProfileV2(self, filename):
+        state = yaml.load(file(filename))
+        self.LoadFrom(state)
+        return
+    
+    def LoadProfileV1(self, filename):
         restored = cPickle.Unpickler(file(filename)).load()
+        restored._ResetPaths(filename)
+        self.CloneFrom(restored)
+        return
+    
+    def _ResetPaths(self, filename):
         # Now adjust the paths of filenames relative to the Profile file.
         # Note that this will work if an absolute path has been pickled as
         # os.path.join will discard previous path elements when it gets an
         # absolute path. (Of course, this will only work if that path is
         # correct!)
         basePath = os.path.dirname(os.path.abspath(filename))
-        restored.StlFile = os.path.abspath(
-            os.path.join(basePath, restored.StlFile)
+        self.StlFile = os.path.abspath(
+            os.path.join(basePath, self.StlFile)
         )
-        restored.OutputGeometryFile = os.path.abspath(
-            os.path.join(basePath, restored.OutputGeometryFile)
+        self.OutputGeometryFile = os.path.abspath(
+            os.path.join(basePath, self.OutputGeometryFile)
         )
-        restored.OutputXmlFile = os.path.abspath(
-            os.path.join(basePath, restored.OutputXmlFile)
+        self.OutputXmlFile = os.path.abspath(
+            os.path.join(basePath, self.OutputXmlFile)
         )
-        
-        self.CloneFrom(restored)
         return
     
     def Save(self, filename):
-        outfile = file(filename, 'w')
-        self.BasePath = os.path.dirname(filename)
-        try:
-            pickler = cPickle.Pickler(outfile, protocol=2)
-            pickler.dump(self)
-        finally:
-            del self.BasePath
+        basePath = str(os.path.dirname(filename))
+        state = self.Yamlify()
+        state['StlFile'] = os.path.relpath(state['StlFile'], basePath)
+        state['OutputXmlFile'] = os.path.relpath(state['OutputXmlFile'], basePath)
+        state['OutputGeometryFile'] = os.path.relpath(state['OutputGeometryFile'], basePath)
+        with file(filename, 'w') as outfile:
+            yaml.dump(state, stream=outfile)
             
         return
     
@@ -208,16 +225,7 @@ class Profile(Observable):
         """
         self.VoxelSize = self.SideLengthCalculator.GetOutputValue()
         return
-    
-    def __getstate__(self):
-        # First, use the superclass's getstate        
-        state = Observable.__getstate__(self)
-        # Now we need to make the paths relative to the directory of the pickle file
-        state['StlFile'] = os.path.relpath(self.StlFile, self.BasePath)
-        state['OutputXmlFile'] = os.path.relpath(self.OutputXmlFile, self.BasePath)
-        state['OutputGeometryFile'] = os.path.relpath(self.OutputGeometryFile, self.BasePath)
-        return state
-    
+       
     pass
     
 def IsFileValid(path, ext=None, exists=None):
