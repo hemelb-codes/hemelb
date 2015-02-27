@@ -12,10 +12,25 @@ from copy import copy
 from vtk import vtkPlaneSource
 import numpy as np
 
-from HemeLbSetupTool.Util.Observer import Observable
+from HemeLbSetupTool.Util.Observer import Observable, ObservableListOf
 from HemeLbSetupTool.Model.Vector import Vector
 
+class AutoReg(type):
+    """Quick metaclass to have subclasses register themselves on definition.
+    """
+    def __init__(cls, name, bases, dct):
+        if not hasattr(cls, '_registry'):
+            # Base - create an empty one
+            cls._registry = {}
+        else:
+            # Derived, add to registry
+            cls._registry[name] = cls
+            pass
+        type.__init__(cls, name, bases, dict)
+        return
+    
 class Iolet(Observable):
+    __metaclass__ = AutoReg
     """Represent boundary across which there can be flow.
     Do not instantiate
     """
@@ -38,14 +53,7 @@ class Iolet(Observable):
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
 
         return
-    
-    def __getstate__(self):
-        picdic = {}
-        for attr in self._Args:
-            picdic[attr] = getattr(self, attr)
-            continue
-        return picdic
-    
+        
     @property
     def Plane(self):
         p = vtkPlaneSource()
@@ -98,8 +106,13 @@ class Iolet(Observable):
         
         return np.finfo(float).max, None
 
+    def Yamlify(self):
+        dic = Observable.Yamlify(self)
+        dic['Type'] = self.__class__.__name__
+        return dic
+    
     pass
-
+    
 class SinusoidalPressureIolet(Iolet):
     """Do not instantiate
     """
@@ -133,3 +146,17 @@ class Inlet(SinusoidalPressureIolet):
 
 class Outlet(SinusoidalPressureIolet):
     pass
+
+class ObservableListOfIolets(ObservableListOf):
+    ElementType = Iolet
+    def _FindType(self, attr, source):
+        cls = source['Type']
+        return Iolet._registry[cls]
+    
+def IoletLoader(d):
+    className = d.pop('Type')
+    cls = Iolet._registry[className]
+    inst = cls()
+    inst.LoadFrom(d)
+    return inst
+
