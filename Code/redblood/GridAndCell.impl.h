@@ -14,12 +14,13 @@ namespace details
     //! The functor argument is called with the current vertex index, the
     //! global site index triplet, and the associated interpolation weight.
     template<class FUNCTOR>
-    void spreadForce2Grid(CellBase const &cell, FUNCTOR functor, stencil::types stencil)
+    void spreadForce2Grid(std::shared_ptr<CellBase const> cell,
+        FUNCTOR functor, stencil::types stencil)
     {
       typedef MeshData::Vertices::const_iterator const_iterator;
       // Spread them onto lattice
-      const_iterator i_vertex = cell.GetVertices().begin();
-      const_iterator const i_end = cell.GetVertices().end();
+      const_iterator i_vertex = cell->GetVertices().begin();
+      const_iterator const i_end = cell->GetVertices().end();
 
       for (size_t i(0); i_vertex != i_end; ++i_vertex, ++i)
       {
@@ -35,7 +36,8 @@ namespace details
     class SpreadForces
     {
       public:
-        SpreadForces(std::vector<LatticePosition> const &forces, geometry::LatticeData &latticeData) :
+        SpreadForces(
+            std::vector<LatticePosition> const &forces, geometry::LatticeData &latticeData) :
             latticeData(latticeData), forces(forces)
         {
         }
@@ -59,7 +61,7 @@ namespace details
     class SpreadForcesAndWallForces : public SpreadForces
     {
       public:
-        SpreadForcesAndWallForces(Cell const &cell, std::vector<LatticePosition> const &forces,
+        SpreadForcesAndWallForces(std::shared_ptr<CellBase const> cell, std::vector<LatticePosition> const &forces,
                                   geometry::LatticeData &latticeData) :
             SpreadForces(forces, latticeData), cell(cell)
         {
@@ -76,7 +78,7 @@ namespace details
 
           geometry::Site < geometry::LatticeData > site(latticeData.GetSite(siteid));
           site.AddToForce(forces[vertexIn] * weight);
-          LatticePosition const vertex(cell.GetVertices()[vertexIn]);
+          LatticePosition const vertex(cell->GetVertices()[vertexIn]);
 
           for (size_t i(1); i < LATTICE::NUMVECTORS; ++i)
           {
@@ -93,12 +95,12 @@ namespace details
                                                               LATTICE::CZ[i]);
             LatticePosition const wallnode = LatticePosition(siteIn)
                 + direction.GetNormalised() * distance;
-            site.AddToForce(cell.WallInteractionForce(vertex, wallnode) * weight);
+            site.AddToForce(cell->WallInteractionForce(vertex, wallnode) * weight);
           }
         }
 
       protected:
-        Cell const &cell;
+        std::shared_ptr<CellBase const> cell;
     };
   }
 } // namespace details::anonymous
