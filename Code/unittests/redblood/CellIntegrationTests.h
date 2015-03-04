@@ -120,7 +120,7 @@ namespace hemelb
             (*(*cells.begin())) *= 5.0;
             auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
             auto const barycenter = (*cells.begin())->GetBarycenter();
-            (*cells.begin())->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
+            std::dynamic_pointer_cast<Cell>(*cells.begin())->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
 
             // run
             master->RegisterActor(*controller, 1);

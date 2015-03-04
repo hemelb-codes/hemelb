@@ -128,8 +128,28 @@ namespace hemelb
 
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const = 0;
+        //! Facet bending energy - pretty printing for shared ptr
+        PhysicalEnergy energy() const
+        {
+          return operator()();
+        }
         //! Facet bending energy
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
+        //! Facet bending energy - pretty printing for shared ptr
+        PhysicalEnergy energy(std::vector<LatticeForceVector> &in) const
+        {
+          return operator()(in);
+        }
+        //! Interaction between wall and a node
+        virtual LatticeForceVector WallInteractionForce(
+            LatticePosition const &vertex, LatticePosition const &wall) const
+        {
+          return LatticeForceVector(0, 0, 0);
+        }
+        virtual bool HasWallForces() const
+        {
+          return false;
+        }
 
         //! Scale mesh around barycenter
         void operator*=(Dimensionless const &);
@@ -217,9 +237,13 @@ namespace hemelb
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
         //! Node-Wall interaction
         virtual LatticeForceVector WallInteractionForce(
-            LatticePosition const &vertex, LatticePosition const &wall) const
+            LatticePosition const &vertex, LatticePosition const &wall) const override
         {
           return nodeWall(vertex, wall);
+        }
+        virtual bool HasWallForces() const override
+        {
+          return true;
         }
 
 
@@ -231,7 +255,7 @@ namespace hemelb
     };
 
     //! Typical cell container type
-    typedef std::set<std::shared_ptr<Cell>> CellContainer;
+    typedef std::set<std::shared_ptr<CellBase>> CellContainer;
   }
 } // namespace hemelb::redblood
 #endif

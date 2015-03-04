@@ -66,7 +66,7 @@ namespace hemelb
 
           proc_t rank = 0;
           CellContainer cells;
-          CellContainer::value_type refcell;
+          std::shared_ptr<Cell> refcell;
       };
 
       class ParticleShufflerTests : public CppUnit::TestFixture
@@ -92,8 +92,8 @@ namespace hemelb
             templateMesh += 2.5;
             shuffler0.cells.emplace(new Cell(templateMesh.GetVertices(), templateMesh));
 
-            shuffler0.refcell = *shuffler0.cells.begin();
-            shuffler1.refcell = *shuffler0.cells.begin();
+            shuffler0.refcell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
+            shuffler1.refcell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
 
             messageSizeFor0 = 0;
             messageSizeFor1 = 0;
@@ -140,7 +140,7 @@ namespace hemelb
       void ParticleShufflerTests :: testPackUnpackCell()
       {
         // Cell to pack and later unpack
-        auto const cell = *shuffler0.cells.begin();
+        auto const cell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
         // First figure out size
         auto const bufferSize = cellPackSize(cell);
         CPPUNIT_ASSERT(bufferSize > 0);
