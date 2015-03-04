@@ -16,25 +16,121 @@ namespace hemelb
 {
   namespace redblood
   {
+    struct CellBase::CellData
+    {
+      CellData(
+          MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+          vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
+      {
+        assert(scale > 1e-12);
+      }
+      CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+          Dimensionless scaleIn = 1e0) :
+          vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
+      {
+        assert(scale > 1e-12);
+      }
+      //! Holds list of vertices for this cell
+      MeshData::Vertices vertices;
+      //! Unmodified original mesh
+      Mesh templateMesh;
+      //! Scale factor for the template;
+      Dimensionless scale;
+    };
+
+
+    CellBase::CellBase(
+        MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
+        data(new CellData(std::move(verticesIn), origMesh, scaleIn))
+    {
+    }
+    CellBase::CellBase(
+        MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn)
+      : data(new CellData(verticesIn, origMesh, scaleIn))
+    {
+    }
+    CellBase::CellBase(CellBase const& cell) : data(new CellData(*cell.data))
+    {
+    }
+
+    void CellBase::operator=(Mesh const &mesh)
+    {
+      data->templateMesh = mesh;
+      data->vertices = data->templateMesh.GetVertices();
+      data->scale = 1e0;
+    }
+
+
+    //! Unmodified mesh
+    Mesh const &CellBase::GetTemplateMesh() const
+    {
+      return data->templateMesh;
+    }
+    //! Facets for the mesh
+    MeshData::Facets const &CellBase::GetFacets() const
+    {
+      return data->templateMesh.GetData()->facets;
+    }
+    //! Vertices of the cell
+    MeshData::Vertices const &CellBase::GetVertices() const
+    {
+      return data->vertices;
+    }
+    //! Vertices of the cell
+    MeshData::Vertices &CellBase::GetVertices()
+    {
+      return data->vertices;
+    }
+    //! Topology of the (template) mesh
+    std::shared_ptr<MeshTopology const> CellBase::GetTopology() const
+    {
+      return data->templateMesh.GetTopology();
+    }
+    size_t CellBase::GetNumberOfNodes() const
+    {
+      return data->vertices.size();
+    }
+    MeshData::Vertices::value_type CellBase::GetBarycenter() const
+    {
+      return barycenter(data->vertices);
+    }
+
+    //! Scale to apply to the template mesh
+    void CellBase::SetScale(Dimensionless scaleIn)
+    {
+      assert(data->scale > 1e-12);
+      data->scale = scaleIn;
+    }
+    //! Scale to apply to the template mesh
+    Dimensionless CellBase::GetScale() const
+    {
+      return data->scale;
+    }
+
+
     PhysicalEnergy Cell::operator()() const
     {
       return facetBending() // facet bending unaffected by template scale
-      + volumeEnergy(vertices, *templateMesh.GetData(), moduli.volume, scale)
-          + surfaceEnergy(vertices, *templateMesh.GetData(), moduli.surface, scale)
-          + strainEnergy(vertices, *templateMesh.GetData(), moduli.dilation, moduli.strain, scale);
+        + volumeEnergy(data->vertices, *data->templateMesh.GetData(), moduli.volume, data->scale)
+        + surfaceEnergy(data->vertices, *data->templateMesh.GetData(), moduli.surface, data->scale)
+        + strainEnergy(
+            data->vertices, *data->templateMesh.GetData(),
+            moduli.dilation, moduli.strain, data->scale);
     }
     PhysicalEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
     {
-      assert(forces.size() == vertices.size());
+      assert(forces.size() == data->vertices.size());
       return facetBending(forces)
-          + volumeEnergy(vertices, *templateMesh.GetData(), moduli.volume, forces, scale)
-          + surfaceEnergy(vertices, *templateMesh.GetData(), moduli.surface, forces, scale)
-          + strainEnergy(vertices,
-                         *templateMesh.GetData(),
+          + volumeEnergy(
+              data->vertices, *data->templateMesh.GetData(), moduli.volume, forces, data->scale)
+          + surfaceEnergy(
+              data->vertices, *data->templateMesh.GetData(), moduli.surface, forces, data->scale)
+          + strainEnergy(data->vertices,
+                         *data->templateMesh.GetData(),
                          moduli.dilation,
                          moduli.strain,
                          forces,
-                         scale);
+                         data->scale);
     }
 
     PhysicalEnergy Cell::facetBending() const
@@ -53,8 +149,8 @@ namespace hemelb
       {
         for (size_t i(0); i < 3; ++i)
           if ( (*i_facet)[i] > current)
-            result += hemelb::redblood::facetBending(vertices,
-                                                     *templateMesh.GetData(),
+            result += hemelb::redblood::facetBending(data->vertices,
+                                                     *data->templateMesh.GetData(),
                                                      current,
                                                      (*i_facet)[i],
                                                      moduli.bending);
@@ -79,8 +175,8 @@ namespace hemelb
       {
         for (size_t i(0); i < 3; ++i)
           if ( (*i_facet)[i] > current)
-            result += hemelb::redblood::facetBending(vertices,
-                                                     *templateMesh.GetData(),
+            result += hemelb::redblood::facetBending(data->vertices,
+                                                     *data->templateMesh.GetData(),
                                                      current,
                                                      (*i_facet)[i],
                                                      moduli.bending,
@@ -94,7 +190,7 @@ namespace hemelb
     {
       auto const barycenter = GetBarycenter();
 
-      for (auto &vertex : vertices)
+      for (auto &vertex : data->vertices)
       {
         vertex = (vertex - barycenter) * scaleIn + barycenter;
       }
@@ -103,7 +199,7 @@ namespace hemelb
     {
       auto const barycenter = GetBarycenter();
 
-      for (auto &vertex : vertices)
+      for (auto &vertex : data->vertices)
       {
         rotation.timesVector(vertex - barycenter, vertex);
         vertex += barycenter;
@@ -111,17 +207,17 @@ namespace hemelb
     }
     void CellBase::operator+=(LatticePosition const &offset)
     {
-      for (auto &vertex : vertices)
+      for (auto &vertex : data->vertices)
       {
         vertex += offset;
       }
     }
     void CellBase::operator+=(std::vector<LatticePosition> const &displacements)
     {
-      assert(displacements.size() == vertices.size());
+      assert(displacements.size() == data->vertices.size());
       auto i_disp = displacements.begin();
 
-      for (auto &vertex : vertices)
+      for (auto &vertex : data->vertices)
       {
         vertex += * (i_disp++);
       }

@@ -30,11 +30,8 @@ namespace hemelb
         //! \param [in] scaleIn: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
-            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
-        {
-          assert(scale > 1e-12);
-        }
+        CellBase(
+            MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0);
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
@@ -43,12 +40,9 @@ namespace hemelb
         //! \param [in] scaleIn: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
-                     1e0) :
-            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
-        {
-          assert(scale > 1e-12);
-        }
+        CellBase(
+            MeshData::Vertices const &verticesIn,
+            Mesh const &origMesh, Dimensionless scaleIn = 1e0);
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: deformable vertices that define the cell are copied
@@ -79,52 +73,37 @@ namespace hemelb
         }
         //! Copy constructor
         //! References same template mesh
-        CellBase(CellBase const &cell) : CellBase(cell.vertices, cell.templateMesh, cell.scale)
+        CellBase(CellBase const &cell);
+
+        //! Tag to choose shallow clone constructor
+        struct shallow_clone
+        {
+        };
+        //! Shallow copy constructor
+        //! References same data
+        CellBase(CellBase const &cell, shallow_clone const&) : data(cell.data)
         {
         }
-
-
-        void operator=(Mesh const &mesh)
-        {
-          templateMesh = mesh;
-          vertices = templateMesh.GetVertices();
-          scale = 1e0;
-        }
-
+        //! Because it is good practice
         //! Because it is good practice
         virtual ~CellBase()
         {
         }
 
+
+        void operator=(Mesh const &mesh);
+
         //! Unmodified mesh
-        Mesh const &GetTemplateMesh() const
-        {
-          return templateMesh;
-        }
+        Mesh const &GetTemplateMesh() const;
         //! Facets for the mesh
-        MeshData::Facets const &GetFacets() const
-        {
-          return templateMesh.GetData()->facets;
-        }
+        MeshData::Facets const &GetFacets() const;
         //! Vertices of the cell
-        MeshData::Vertices const &GetVertices() const
-        {
-          return vertices;
-        }
+        MeshData::Vertices const &GetVertices() const;
         //! Vertices of the cell
-        MeshData::Vertices &GetVertices()
-        {
-          return vertices;
-        }
+        MeshData::Vertices &GetVertices();
         //! Topology of the (template) mesh
-        std::shared_ptr<MeshTopology const> GetTopology() const
-        {
-          return templateMesh.GetTopology();
-        }
-        size_t GetNumberOfNodes() const
-        {
-          return vertices.size();
-        }
+        std::shared_ptr<MeshTopology const> GetTopology() const;
+        size_t GetNumberOfNodes() const;
 
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const = 0;
@@ -165,30 +144,18 @@ namespace hemelb
         //! Transform mesh
         void operator+=(std::vector<LatticePosition> const &displacements);
 
-        MeshData::Vertices::value_type GetBarycenter() const
-        {
-          return barycenter(vertices);
-        }
+        MeshData::Vertices::value_type GetBarycenter() const;
 
         //! Scale to apply to the template mesh
-        void SetScale(Dimensionless scaleIn)
-        {
-          assert(scale > 1e-12);
-          scale = scaleIn;
-        }
+        void SetScale(Dimensionless scaleIn);
         //! Scale to apply to the template mesh
-        Dimensionless GetScale() const
-        {
-          return scale;
-        }
+        Dimensionless GetScale() const;
 
       protected:
-        //! Holds list of vertices for this cell
-        MeshData::Vertices vertices;
-        //! Unmodified original mesh
-        Mesh templateMesh;
-        //! Scale factor for the template;
-        Dimensionless scale;
+        //! allows separation of data and behaviors
+        struct CellData;
+        //! Holds data
+        std::shared_ptr<CellData> data;
     };
 
     //! Deformable cell for which energy and forces can be computed
