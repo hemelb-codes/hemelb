@@ -182,7 +182,7 @@ namespace hemelb
       protected:
         //! Holds actual data about the mesh
         std::shared_ptr<MeshData> mesh;
-        //! Holds topology information;
+        //! Holds topology information
         std::shared_ptr<MeshTopology> topology;
     };
 
