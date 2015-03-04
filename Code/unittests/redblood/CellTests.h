@@ -23,6 +23,7 @@ namespace hemelb
       class CellTests : public EnergyVsGradientFixture
       {
           CPPUNIT_TEST_SUITE (CellTests);
+          CPPUNIT_TEST (testCellCopyShallowness);
           CPPUNIT_TEST (testCellEnergy);
           CPPUNIT_TEST (testNullTemplateScaling);
           CPPUNIT_TEST (testTemplateScaling);CPPUNIT_TEST_SUITE_END();
@@ -113,6 +114,18 @@ namespace hemelb
             {
               CPPUNIT_ASSERT(helpers::is_zero(* (i_unscaled++) - scaled_force));
             }
+          }
+
+          void testCellCopyShallowness()
+          {
+            Cell cell0(original);
+            Cell cell1(cell0);
+            CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell1.GetTemplateMesh().GetData());
+            CPPUNIT_ASSERT(&cell0.GetVertices() != &cell1.GetVertices());
+
+            Cell cell2(cell0, CellBase::shallow_clone());
+            CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell2.GetTemplateMesh().GetData());
+            CPPUNIT_ASSERT(&cell0.GetVertices() == &cell2.GetVertices());
           }
 
         protected:
