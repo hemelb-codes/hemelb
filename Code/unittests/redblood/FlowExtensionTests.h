@@ -22,7 +22,6 @@ namespace hemelb
   {
     namespace redblood
     {
-
       class FlowExtensionTests : public FlowExtensionFixture {
         CPPUNIT_TEST_SUITE (FlowExtensionTests);
         CPPUNIT_TEST (testAxis);
