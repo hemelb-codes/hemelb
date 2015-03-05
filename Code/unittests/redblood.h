@@ -38,5 +38,6 @@ namespace hemelb { namespace unittests { namespace redblood_parallel {
 #include "unittests/redblood/CellIntegrationTests.h"
 #include "unittests/redblood/parallelization/ParticleShufflerTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"
+#include "unittests/redblood/FaderCellTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif
