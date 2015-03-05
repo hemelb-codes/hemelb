@@ -57,7 +57,7 @@ namespace hemelb
     {
       forces.resize(cell->GetNumberOfNodes());
       std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
-      auto const energy = cell->energy(forces);
+      auto const energy = cell->Energy(forces);
 
       if(cell->HasWallForces())
       {

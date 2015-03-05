@@ -108,14 +108,14 @@ namespace hemelb
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const = 0;
         //! Facet bending energy - pretty printing for shared ptr
-        PhysicalEnergy energy() const
+        PhysicalEnergy Energy() const
         {
           return operator()();
         }
         //! Facet bending energy
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
         //! Facet bending energy - pretty printing for shared ptr
-        PhysicalEnergy energy(std::vector<LatticeForceVector> &in) const
+        PhysicalEnergy Energy(std::vector<LatticeForceVector> &in) const
         {
           return operator()(in);
         }
