@@ -18,18 +18,15 @@ namespace hemelb
   {
 
     //! Checks whether a cell is inside a flow extension
-    bool contains(const FlowExtension & flowExt, const MeshData::Vertices::value_type & point) {
+    bool contains(const FlowExtension & flowExt, const LatticePosition& point) {
       assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
       assert(flowExt.length > 1e-12);
       assert(flowExt.radius > 1e-12);
-      // Vector from centre of start to end of cylinder
-      util::Vector3D<LatticeDistance> const d = flowExt.normal;
-
       // Vector from centre of start of cylinder to point
-      util::Vector3D<LatticeDistance> const pd = point - flowExt.position;
+      LatticePosition const pd = point - flowExt.origin;
 
-      // (Squared) distance from pos to point
-      LatticeDistance const dot = pd.Dot(d);
+      // distance from pos to point
+      LatticeDistance const dot = pd.Dot(flowExt.normal);
 
       // If the (squared) distance is less than 0 then the point is behind the
       // cylinder cap at pos.
@@ -44,5 +41,17 @@ namespace hemelb
       return (dist <= flowExt.radius * flowExt.radius);
     }
 
+    Dimensionless linearWeight(FlowExtension const& flowExt, LatticePosition const& position)
+    {
+      assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
+      assert(flowExt.length > 1e-12);
+      assert(flowExt.radius > 1e-12);
+
+      if(not contains(flowExt, position))
+        return 0e0;
+
+      auto const z = flowExt.normal.Dot(position - flowExt.origin);
+      return std::max(0e0, 1e0 - z/flowExt.fadeLength);
+    }
   } // namespace hemelb::redblood
 } // namespace hemelb

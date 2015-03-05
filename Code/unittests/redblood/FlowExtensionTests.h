@@ -27,6 +27,7 @@ namespace hemelb
         CPPUNIT_TEST_SUITE (FlowExtensionTests);
         CPPUNIT_TEST (testAxis);
         CPPUNIT_TEST (testCircumference);
+        CPPUNIT_TEST (testLinearWeight);
         CPPUNIT_TEST_SUITE_END();
 
         typedef util::Vector3D<LatticeDistance> Point;
@@ -61,6 +62,23 @@ namespace hemelb
             CPPUNIT_ASSERT_MESSAGE("Point(0.0,  1.0, -1.0) is outside the cylinder", !contains(flowExt, Point(0.0,  1.0, -1.0)));
             CPPUNIT_ASSERT_MESSAGE("Point(0.0, -1.0, -1.0) is outside the cylinder", !contains(flowExt, Point(0.0, -1.0, -1.0)));
             CPPUNIT_ASSERT_MESSAGE("Point(0.0, -1.0,  1.0) is outside the cylinder", !contains(flowExt, Point(0.0, -1.0, 1.0)));
+          }
+          void testLinearWeight()
+          {
+            FlowExtension const flow = {{-1.0, 0, 0}, {0.5, 0.5, 0.5}, 2.0, 0.5, 1.5};
+            for(auto y: {0.5, 0.7})
+            {
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, {2.4, y, 0.5}), 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, {0.5, y, 0.5}), 1e-8);
+              for(auto epsilon: {0.3, 0.5, 0.7, 1.0})
+              {
+                auto const pos = flow.origin + flow.normal * flow.fadeLength * epsilon
+                  + LatticePosition{0, y - 0.5, 0};
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0 - epsilon, linearWeight(flow, pos), 1e-8);
+              }
+            }
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, {0.5, 0.5, 1.0 + 1e-8}), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, {0.5, 0.5, 1.0 - 1e-8}), 1e-8);
           }
       };
 

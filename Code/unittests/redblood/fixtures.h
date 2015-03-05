@@ -131,7 +131,7 @@ namespace hemelb
       public:
         void setUp() {
           flowExt.normal = util::Vector3D<LatticeDistance>(1.0, 0.0, 0.0);
-          flowExt.position = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
+          flowExt.origin = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
           flowExt.length = 10.0;
           flowExt.radius = 1.0;
         }
