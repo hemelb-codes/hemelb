@@ -49,6 +49,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellArmyTests);
           CPPUNIT_TEST (testCell2Fluid);
           CPPUNIT_TEST (testCellInsertion);
+          CPPUNIT_TEST (testCellRemoval);
           CPPUNIT_TEST (testFluid2Cell);CPPUNIT_TEST_SUITE_END();
 
           PhysicalDistance const cutoff = 5.0;
@@ -60,6 +61,7 @@ namespace hemelb
           void testCell2Fluid();
           void testFluid2Cell();
           void testCellInsertion();
+          void testCellRemoval();
 
         private:
           virtual size_t CubeSize() const
@@ -159,6 +161,33 @@ namespace hemelb
             CPPUNIT_ASSERT(helpers::is_zero( (*i_nodeA - *i_nodeB) - disp));
           }
         }
+      }
+
+      void CellArmyTests::testCellRemoval()
+      {
+        FlowExtension const outlet = {{1, 0, 0}, {8, 2, 2}, 4.0, 4, 1.8};
+        auto cell = std::make_shared<FakeCell>(pancakeSamosa());
+
+        helpers::ZeroOutFOld(latDat);
+        helpers::ZeroOutForces(latDat);
+
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
+        army.SetOutlets({outlet});
+
+        // Check status before attempting to remove cell that should *not* be removed
+        CPPUNIT_ASSERT_EQUAL(3ul, army.GetDNC().size());
+        CPPUNIT_ASSERT_EQUAL(1ul, army.GetCells().size());
+
+        // Check status after attempting to remove cell that should *not* be removed
+        army.CellRemoval();
+        CPPUNIT_ASSERT_EQUAL(3ul, army.GetDNC().size());
+        CPPUNIT_ASSERT_EQUAL(1ul, army.GetCells().size());
+
+        // Check status after attempting to remove cell that should be removed
+        *cell += LatticePosition(outlet.origin + outlet.normal * outlet.length * 0.5);
+        army.CellRemoval();
+        CPPUNIT_ASSERT_EQUAL(0ul, army.GetDNC().size());
+        CPPUNIT_ASSERT_EQUAL(0ul, army.GetCells().size());
       }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellArmyTests);
