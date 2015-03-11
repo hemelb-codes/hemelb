@@ -64,6 +64,12 @@ namespace hemelb
             cells.erase(found);
           }
 
+          // For testing packing/unpacking
+          void AllCellsToSwap(proc_t proc)
+          {
+            currentCellSwap[proc] = cells;
+          }
+
           proc_t rank = 0;
           CellContainer cells;
           std::shared_ptr<Cell> refcell;
@@ -72,7 +78,6 @@ namespace hemelb
       class ParticleShufflerTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (ParticleShufflerTests);
-          CPPUNIT_TEST (testPackUnpackCell);
           CPPUNIT_TEST (testNoMovement);
           CPPUNIT_TEST (testShuffleOneCell);
           CPPUNIT_TEST (testShuffleTwoCellsAndBack);
@@ -95,16 +100,15 @@ namespace hemelb
             shuffler0.refcell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
             shuffler1.refcell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
 
-            messageSizeFor0 = 0;
-            messageSizeFor1 = 0;
-            nextMessageSizeFor0 = 0;
-            nextMessageSizeFor1 = 0;
-            messageFor0.resize(1);
-            messageFor1.resize(1);
+            messageSizeFor0 = sizeof(CellContainer::size_type);
+            messageSizeFor1 = sizeof(CellContainer::size_type);
+            nextMessageSizeFor0 = sizeof(CellContainer::size_type);
+            nextMessageSizeFor1 = sizeof(CellContainer::size_type);
+            messageFor0.clear();
+            messageFor1.clear();
           }
 
 
-          void testPackUnpackCell();
           void testNoMovement();
           void testShuffleOneCell();
           void testShuffleTwoCellsAndBack();
@@ -129,44 +133,13 @@ namespace hemelb
 
           Shuffler shuffler0;
           Shuffler shuffler1;
-          size_t messageSizeFor0 = 0;
-          size_t messageSizeFor1 = 0;
-          size_t nextMessageSizeFor0 = 0;
-          size_t nextMessageSizeFor1 = 0;
-          std::vector<int8_t> messageFor0;
-          std::vector<int8_t> messageFor1;
+          util::Packer::size_type messageSizeFor0 = sizeof(CellContainer::size_type);
+          util::Packer::size_type messageSizeFor1 = sizeof(CellContainer::size_type);
+          util::Packer::size_type nextMessageSizeFor0 = sizeof(CellContainer::size_type);
+          util::Packer::size_type nextMessageSizeFor1 = sizeof(CellContainer::size_type);
+          util::Packer messageFor0;
+          util::Packer messageFor1;
       };
-
-      void ParticleShufflerTests :: testPackUnpackCell()
-      {
-        // Cell to pack and later unpack
-        auto const cell = std::dynamic_pointer_cast<Cell>(*shuffler0.cells.begin());
-        // First figure out size
-        auto const bufferSize = cellPackSize(cell);
-        CPPUNIT_ASSERT(bufferSize > 0);
-        // Create a larger buffer, just in case
-        std::vector<int8_t> buffer(bufferSize * 2, 0);
-        // pack the cell
-        int8_t* endBuffer = (buffer.data() << cell);
-        decltype(bufferSize) const diff(endBuffer - buffer.data());
-        CPPUNIT_ASSERT_EQUAL(diff, bufferSize);
-
-        CellContainer::value_type newCell(new Cell(*cell));
-        newCell->GetVertices().clear();
-        newCell->SetScale(2e12);
-        CPPUNIT_ASSERT(newCell->GetNumberOfNodes() != cell->GetNumberOfNodes());
-        CPPUNIT_ASSERT(std::abs(newCell->GetScale() - cell->GetScale()) > 0.1);
-        endBuffer = buffer.data();
-        endBuffer = (buffer.data() >> newCell);
-        CPPUNIT_ASSERT_EQUAL(diff, bufferSize);
-        CPPUNIT_ASSERT_EQUAL(newCell->GetNumberOfNodes(), cell->GetNumberOfNodes());
-        CPPUNIT_ASSERT_DOUBLES_EQUAL(newCell->GetScale(), cell->GetScale(), 1e-8);
-        for(size_t i(0); i < newCell->GetNumberOfNodes(); ++i) {
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(newCell->GetVertices()[i].x, cell->GetVertices()[i].x, 1e-8);
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(newCell->GetVertices()[i].y, cell->GetVertices()[i].y, 1e-8);
-          CPPUNIT_ASSERT_DOUBLES_EQUAL(newCell->GetVertices()[i].z, cell->GetVertices()[i].z, 1e-8);
-        }
-      }
 
       void ParticleShufflerTests :: stepper(Stepper const & start, Stepper const & last)
       {
@@ -191,21 +164,17 @@ namespace hemelb
         }
         if(doThisStep(Stepper::PACK))
         {
-          messageFor0.resize(std::max(1ul, messageSizeFor0), 0);
-          messageFor1.resize(std::max(1ul, messageSizeFor1), 0);
-          int8_t* const advanced1 = shuffler0.Pack(1, messageFor1.data());
-          int8_t* const advanced0 = shuffler1.Pack(0, messageFor0.data());
-          CPPUNIT_ASSERT_EQUAL(int(messageSizeFor0), int(advanced0 - messageFor0.data()));
-          CPPUNIT_ASSERT_EQUAL(int(messageSizeFor1), int(advanced1 - messageFor1.data()));
+          shuffler0.Pack(1, messageFor1);
+          shuffler1.Pack(0, messageFor0);
+          CPPUNIT_ASSERT_EQUAL(messageSizeFor0, messageFor0.messageSize());
+          CPPUNIT_ASSERT_EQUAL(messageSizeFor1, messageFor1.messageSize());
         }
         if(doThisStep(Stepper::UNPACK))
         {
-          CPPUNIT_ASSERT_EQUAL(messageFor0.size(), std::max(1ul, messageSizeFor0));
-          CPPUNIT_ASSERT_EQUAL(messageFor1.size(), std::max(1ul, messageSizeFor1));
-          int8_t* const advanced0 = shuffler0.Unpack(1, messageFor0.data());
-          int8_t* const advanced1 = shuffler1.Unpack(0, messageFor1.data());
-          CPPUNIT_ASSERT_EQUAL(int(advanced0 - messageFor0.data()), int(messageSizeFor0));
-          CPPUNIT_ASSERT_EQUAL(int(advanced1 - messageFor1.data()), int(messageSizeFor1));
+          messageFor0.reset_read(); // because debugging
+          messageFor1.reset_read(); // because debugging
+          shuffler0.Unpack(1, messageFor0);
+          shuffler1.Unpack(0, messageFor1);
         }
         if(doThisStep(Stepper::NEXT))
         {
@@ -225,8 +194,8 @@ namespace hemelb
 
         stepper(Stepper::IDENTIFY);
         stepper(Stepper::NEXTCELLMESSAGE);
-        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor0, size_t(0));
-        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor1, size_t(0));
+        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor0, sizeof(CellContainer::size_type));
+        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor1, sizeof(CellContainer::size_type));
 
         stepper(Stepper::SETCELLMESSAGE, Stepper::END);
         CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
@@ -254,33 +223,34 @@ namespace hemelb
 
         // Moves one particle
         **shuffler0.cells.begin() += LatticePosition(50, 50, 50);
-        size_t const messageSize = cellPackSize(*shuffler0.cells.begin());
+        size_t const messageSize = cellSetPackSize({*shuffler0.cells.begin()});
+        size_t const emptyMessageSize = util::packerMessageSize(shuffler0.cells.size());
         stepper(Stepper::IDENTIFY);
         stepper(Stepper::NEXTCELLMESSAGE);
         CPPUNIT_ASSERT(nextMessageSizeFor1 != 0);
         // One cell will be moved in *next* iteration ...
-        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor1, messageSize);
-        CPPUNIT_ASSERT_EQUAL(nextMessageSizeFor0, size_t(0));
+        CPPUNIT_ASSERT_EQUAL(messageSize, nextMessageSizeFor1);
+        CPPUNIT_ASSERT_EQUAL(emptyMessageSize, nextMessageSizeFor0);
 
         // ... where *next* iteration means not this one
         stepper(Stepper::SETCELLMESSAGE, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1, shuffler1.cells.size());
 
         // Allright, this is the iteration where stuff happens!
-        CPPUNIT_ASSERT_EQUAL(messageSizeFor1, messageSize);
-        CPPUNIT_ASSERT_EQUAL(messageSizeFor0, size_t(0));
+        CPPUNIT_ASSERT_EQUAL(messageSize, messageSizeFor1);
+        CPPUNIT_ASSERT_EQUAL(util::packerMessageSize(shuffler0.cells.size()), messageSizeFor0);
         stepper(Stepper::IDENTIFY, Stepper::PACK);
-        CPPUNIT_ASSERT_EQUAL(messageFor1.size(), messageSize);
-        CPPUNIT_ASSERT_EQUAL(messageFor0.size(), size_t(1));
+        CPPUNIT_ASSERT_EQUAL(messageSize, messageFor1.size());
+        CPPUNIT_ASSERT_EQUAL(emptyMessageSize, messageFor0.size());
         // unpack should copy cell to one (but cell still in zero)
         stepper(Stepper::UNPACK);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 1, shuffler1.cells.size());
         // next should remove cell from zero
         stepper(Stepper::NEXT);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 1);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 1, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 1, shuffler1.cells.size());
 
         // Checking nothing further happens
         checkNoMovement();
@@ -299,26 +269,26 @@ namespace hemelb
         **shuffler0.cells.begin() += LatticePosition(50, 50, 50);
         **std::next(shuffler0.cells.begin()) += LatticePosition(50, 50, 50);
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1, shuffler1.cells.size());
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 2);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 2);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 2, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 2, shuffler1.cells.size());
 
         checkNoMovement();
 
         // Move one particles at a time
         **shuffler1.cells.begin() -= LatticePosition(50, 50, 50);
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 2);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 2);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 2, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 2, shuffler1.cells.size());
         **std::next(shuffler1.cells.begin()) -= LatticePosition(50, 50, 50);
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 1);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 1, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 1, shuffler1.cells.size());
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1, shuffler1.cells.size());
 
         checkNoMovement();
       }
@@ -335,20 +305,20 @@ namespace hemelb
         // it.
         **shuffler0.cells.begin() += LatticePosition(50, 50, 50);
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1, shuffler1.cells.size());
         **shuffler0.cells.begin() -= LatticePosition(50, 50, 50);
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 1);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 1, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 1, shuffler1.cells.size());
 
         // Now the particle will actually move back
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0 - 1);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0 - 1, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1 + 1, shuffler1.cells.size());
         stepper(Stepper::START, Stepper::END);
-        CPPUNIT_ASSERT_EQUAL(shuffler0.cells.size(), cellSize0);
-        CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
+        CPPUNIT_ASSERT_EQUAL(cellSize0, shuffler0.cells.size());
+        CPPUNIT_ASSERT_EQUAL(cellSize1, shuffler1.cells.size());
 
         checkNoMovement();
       }
