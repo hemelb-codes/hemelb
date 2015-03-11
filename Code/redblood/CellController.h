@@ -29,6 +29,8 @@ namespace hemelb
         void RequestComms() override
         {
           using namespace log;
+          Logger::Log<Info, Singleton>("Cell insertion");
+          CellArmy<KERNEL>::CallCellInsertion();
           Logger::Log<Info, Singleton>("Fluid interaction with cells");
           CellArmy<KERNEL>::Fluid2CellInteractions();
         }
