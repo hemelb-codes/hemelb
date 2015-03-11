@@ -17,6 +17,7 @@
 #include "redblood/Cell.h"
 #include "redblood/CellCell.h"
 #include "redblood/GridAndCell.h"
+#include "redblood/FlowExtension.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -74,21 +75,24 @@ namespace hemelb
         void CallCellInsertion()
         {
           if(cellInsertionCallBack)
-            cellInsertionCallBack([this](CellContainer::value_type cell) { this->addCell(cell); });
+            cellInsertionCallBack([this](CellContainer::value_type cell) { this->AddCell(cell); });
         }
+
+        //! Sets outlets within which cells disapear
+        void SetOutlets(std::vector<FlowExtension> const & olets)
+        {
+          outlets = olets;
+        }
+
+        //! Remove cells if they have reached outlets
+        void CellRemoval();
 
       protected:
         //! Adds input cell to simulation
-        void addCell(CellContainer::value_type cell)
+        void AddCell(CellContainer::value_type cell)
         {
           dnc.insert(cell);
           cells.insert(cell);
-        }
-        //! Remove cell from simulation
-        void removeCell(CellContainer::value_type cell)
-        {
-          dnc.remove(cell);
-          cells.erase(cell);
         }
 
         //! All lattice information and then some
@@ -103,6 +107,9 @@ namespace hemelb
         //! It should insert cells using the call back passed to it.
         std::function<void(std::function<void(CellContainer::value_type)>)>
           cellInsertionCallBack;
+
+        //! Remove cells if they reach these outlets
+        std::vector<FlowExtension> outlets;
     };
 
     template<class KERNEL>
@@ -137,6 +144,30 @@ namespace hemelb
         }
 
         addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
+      }
+
+    template<class KERNEL>
+      void CellArmy<KERNEL> :: CellRemoval()
+      {
+        auto i_first = cells.cbegin();
+        auto const i_end = cells.cend();
+        while(i_first != i_end)
+        {
+          auto const barycenter = (*i_first)->GetBarycenter();
+          auto checkCell = [&barycenter](FlowExtension const &flow)
+          {
+            return contains(flow, barycenter);
+          };
+          // save current iterator and increment before potential removal.
+          // removing the cell from the set should invalidate only the relevant iterator.
+          auto const i_current = i_first;
+          ++i_first;
+          if(std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
+          {
+            dnc.remove(*i_current);
+            cells.erase(i_current);
+          }
+        }
       }
 }}
 
