@@ -13,6 +13,8 @@
 #include <vector>
 #include <assert.h>
 #include <memory>
+#include <initializer_list>
+#include <type_traits>
 
 #include "units.h"
 #include "Exception.h"
@@ -126,6 +128,26 @@ namespace hemelb
         {
           return this->operator()(base_type::DowngradeKey(pos));
         }
+        template<class T>
+          typename std::enable_if<std::is_integral<T>::value, const_range>::type
+            operator()(std::initializer_list<T> pos) const
+            {
+              assert(pos.size() == 3);
+              return operator()(
+                  LatticeVector(
+                    *pos.begin(), *std::next(pos.begin()), *std::next(std::next(pos.begin())))
+              );
+            }
+        template<class T>
+          typename std::enable_if<std::is_floating_point<T>::value, const_range>::type
+            operator()(std::initializer_list<T> pos) const
+            {
+              assert(pos.size() == 3);
+              return operator()(
+                  LatticePosition(
+                    *pos.begin(), *std::next(pos.begin()), *std::next(std::next(pos.begin())))
+              );
+            }
 
 // Implementation of DivideConquerCell::iterator
 #define HEMELB_DOING_NONCONST
@@ -193,6 +215,13 @@ namespace hemelb
         //! After vertices have moved, update mapping and whether it is near
         //! boundary
         void update();
+
+        //! Insert a new cell
+        //! Returns true if the cell was inserted, false if it already existed.
+        bool insert(CellContainer::value_type cell);
+        //! Removes a cell
+        //! Returns true if the cell did exist.
+        bool remove(CellContainer::value_type cell);
 
       protected:
         //! Distance from border below which an object is in the halo
