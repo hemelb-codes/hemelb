@@ -31,66 +31,42 @@ namespace hemelb
           return {thisrank == node, node};
         }
 
-        // size of the message holding this cell
-        site_t cellPackSize(CellContainer::const_reference cell)
-        {
-          // scale + number of nodes + nodes
-          return sizeof(decltype(cell->GetScale()))
-            + sizeof(site_t)
-            + sizeof(decltype(cell->GetVertices()[0])) * cell->GetNumberOfNodes();
-        }
-
         // packs a single cell
-        int8_t* operator<<(int8_t *buffer, CellContainer::const_reference cell)
+        util::Packer& pack(util::Packer& packer, CellContainer::const_reference cell)
         {
           typedef decltype(cell->GetScale()) ScaleType;
           typedef decltype(cell->GetVertices()[0].x) LatticeCoodinateType;
-          *reinterpret_cast<ScaleType*>(buffer) = cell->GetScale();
-          buffer += sizeof(ScaleType);
-          *reinterpret_cast<site_t*>(buffer) = static_cast<site_t>(cell->GetNumberOfNodes());
-          buffer += sizeof(site_t);
-          for(auto const& vertex: cell->GetVertices())
-          {
-            *reinterpret_cast<LatticeCoodinateType*>(buffer) = vertex.x;
-            buffer += sizeof(LatticeCoodinateType);
-            *reinterpret_cast<LatticeCoodinateType*>(buffer) = vertex.y;
-            buffer += sizeof(LatticeCoodinateType);
-            *reinterpret_cast<LatticeCoodinateType*>(buffer) = vertex.z;
-            buffer += sizeof(LatticeCoodinateType);
-          }
-          return buffer;
+          packer << cell->GetScale();
+          packer << cell->GetVertices();
+          return packer;
         }
 
         // unpacks a cell
-        int8_t* operator>>(int8_t *buffer, CellContainer::reference cell)
+        util::Packer& unpack(util::Packer& packer, CellContainer::reference cell)
         {
-          typedef decltype(cell->GetScale()) ScaleType;
-          typedef decltype(cell->GetVertices()[0].x) LatticeCoodinateType;
-          cell->SetScale(*reinterpret_cast<ScaleType*>(buffer));
-          buffer += sizeof(ScaleType);
-          cell->GetVertices().resize(*reinterpret_cast<site_t*>(buffer));
-          buffer += sizeof(site_t);
-          for(auto & vertex: cell->GetVertices())
-          {
-            vertex.x = *reinterpret_cast<LatticeCoodinateType*>(buffer);
-            buffer += sizeof(LatticeCoodinateType);
-            vertex.y = *reinterpret_cast<LatticeCoodinateType*>(buffer);
-            buffer += sizeof(LatticeCoodinateType);
-            vertex.z = *reinterpret_cast<LatticeCoodinateType*>(buffer);
-            buffer += sizeof(LatticeCoodinateType);
-          }
-          return buffer;
+          decltype(cell->GetScale()) scale;
+          packer >> scale >> cell->GetVertices();
+          cell->SetScale(scale);
+          return packer;
         }
 
+        site_t cellSetPackSize(CellContainer const &cells)
+        {
+          util::Packer::Sizer sizer;
+          auto const N = cells.size();
+          sizer << N;
+          for(auto const& element: cells)
+          {
+            sizer << element->GetScale() << element->GetVertices();
+          }
+          return sizer.cast();
+        }
         site_t cellSetPackSize(std::map<proc_t, CellContainer> const &cellSet, proc_t node)
         {
-          auto cSize = [](site_t p, CellContainer::const_reference cell)
-          {
-            return p + cellPackSize(cell);
-          };
+          util::Packer::Sizer sizer;
           auto const cells = cellSet.find(node);
           assert(cells != cellSet.end());
-          return std::accumulate(cells->second.begin(), cells->second.end(), site_t(0), cSize);
+          return  cellSetPackSize(cells->second);
         }
       } // anonymous namespace
 
@@ -151,7 +127,7 @@ namespace hemelb
         return cellSetPackSize(nextCellSwap, node);
       }
 
-      int8_t* ParticleShuffler::Pack(proc_t node, int8_t* buffer) const
+      util::Packer& ParticleShuffler::Pack(proc_t node, util::Packer& packer) const
       {
 #       ifndef NDEBUG
           assert(callOrder == CallOrder::IDENTIFY_CELLS or callOrder == CallOrder::PACK);
@@ -163,14 +139,15 @@ namespace hemelb
 #       endif
         auto const cells = currentCellSwap.find(node);
         assert(cells != currentCellSwap.end());
+        packer << cells->second.size();
         for(auto const &cell: cells->second)
         {
-          buffer = (buffer << cell);
+          pack(packer, cell);
         }
-        return buffer;
+        return packer;
       }
 
-      int8_t* ParticleShuffler::Unpack(proc_t node, int8_t* buffer)
+      util::Packer& ParticleShuffler::Unpack(proc_t node, util::Packer& packer)
       {
 #       ifndef NDEBUG
           auto const check = inCommCallOrder.find(node);
@@ -178,15 +155,15 @@ namespace hemelb
           assert(check->second == true);
           check->second = false;
 #       endif
-        auto const bufferSize = incommingCommSize.find(node)->second;
-        int8_t * const buffer_end = buffer + bufferSize;
-        while(buffer < buffer_end)
+        decltype(currentCellSwap.find(0)->second.size()) n;
+        packer >> n;
+        for (decltype(n) i = 0; i < n; ++i)
         {
           CellContainer::value_type cell = GetEmptyCell();
-          buffer = (buffer >> cell);
+          unpack(packer, cell);
           AddToOwnedCells(std::move(cell));
         }
-        return buffer;
+        return packer;
       }
 
       void ParticleShuffler::SetThisCellMessageSize(proc_t node, site_t messageLength)

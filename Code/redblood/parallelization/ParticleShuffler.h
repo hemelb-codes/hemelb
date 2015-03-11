@@ -12,6 +12,7 @@
 
 #include <tuple>
 
+#include "util/Packer.h"
 #include "geometry/LatticeData.h"
 #include "redblood/Cell.h"
 
@@ -42,7 +43,7 @@ namespace hemelb
           //! \param[in] node: node for which to pack a message
           //! \param[in] buffer: must have correct size, given by call to GetNextCellMessageSize for
           //! given proc.
-          int8_t* Pack(proc_t node, int8_t *buffer) const;
+          util::Packer& Pack(proc_t node, util::Packer& packer) const;
           //! Unpack's cell message received from given proc
           //!
           //! It is assumed that the size of the message to unpack has been set previously by a call
@@ -51,7 +52,7 @@ namespace hemelb
           //! \param[in] node: node from which to unpack a message
           //! \param[in] buffer: must have correct size, given by call to GetNextCellMessageSize for
           //!            given proc.
-          int8_t* Unpack(proc_t node, int8_t* buffer);
+          util::Packer& Unpack(proc_t node, util::Packer& packer);
           //! Prepares for next iteration
           void Next();
 
