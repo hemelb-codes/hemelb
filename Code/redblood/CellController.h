@@ -39,6 +39,8 @@ namespace hemelb
           using namespace log;
           Logger::Log<Info, Singleton>("Cell interaction with fluid");
           CellArmy<KERNEL>::Cell2FluidInteractions(); 
+          Logger::Log<Info, Singleton>("Removed cells that have reached outlets");
+          CellArmy<KERNEL>::CellRemoval(); 
         }
     };
   }
