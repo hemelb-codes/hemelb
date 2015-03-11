@@ -53,9 +53,44 @@ namespace hemelb
           {
             dnc.update();
           }
+          CellContainer const & GetCells() const
+          {
+            return cells;
+          }
+          DivideConquerCells const & GetDNC() const
+          {
+            return dnc;
+          }
     #   endif
 
+        //! Sets up call for cell insertion
+        //! Called everytime CallCellInsertion is called
+        void SetCellInsertion(std::function<void(std::function<void(CellContainer::value_type)>)> f)
+        {
+          cellInsertionCallBack = f;
+        }
+
+        //! Calls cell insertion
+        void CallCellInsertion()
+        {
+          if(cellInsertionCallBack)
+            cellInsertionCallBack([this](CellContainer::value_type cell) { this->addCell(cell); });
+        }
+
       protected:
+        //! Adds input cell to simulation
+        void addCell(CellContainer::value_type cell)
+        {
+          dnc.insert(cell);
+          cells.insert(cell);
+        }
+        //! Remove cell from simulation
+        void removeCell(CellContainer::value_type cell)
+        {
+          dnc.remove(cell);
+          cells.erase(cell);
+        }
+
         //! All lattice information and then some
         geometry::LatticeData &latticeData;
         //! Contains all cells
@@ -64,6 +99,10 @@ namespace hemelb
         DivideConquerCells dnc;
         //! A work array with forces/positions
         std::vector<LatticePosition> work;
+        //! This function is called every lb turn
+        //! It should insert cells using the call back passed to it.
+        std::function<void(std::function<void(CellContainer::value_type)>)>
+          cellInsertionCallBack;
     };
 
     template<class KERNEL>
@@ -99,8 +138,6 @@ namespace hemelb
 
         addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
       }
-
-
 }}
 
 #endif

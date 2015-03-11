@@ -302,6 +302,36 @@ namespace hemelb
         spreadForce(*range->second, latticeData, stencil, -force);
       }
     }
+
+    bool DivideConquerCells::insert(CellContainer::value_type cell)
+    {
+        auto inserted = cells.insert(cell);
+        if(inserted.second)
+          initializeCells(*this, (*inserted.first)->GetVertices(), inserted.first, haloLength);
+        return true;
+    }
+
+    bool DivideConquerCells::remove(CellContainer::value_type cell)
+    {
+        auto const cellIterator = cells.find(cell);
+        if(cellIterator == cells.end())
+          return false;
+        auto i_first = base_type::cbegin();
+        auto const i_end = base_type::cend();
+        while(i_first != i_end)
+        {
+          auto const i_current = i_first;
+          // Move to next element *before* possibly erasing current element
+          // Not sure whether i_first can be incremented after an erase.
+          ++i_first;
+          if(*i_current->second.cellIterator == cell)
+          {
+            base_type::erase(i_current);
+          }
+        }
+        cells.erase(cellIterator);
+        return true;
+    }
 #endif
   }
 } // namespace hemelb::redblood

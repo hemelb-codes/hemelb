@@ -48,6 +48,7 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellArmyTests);
           CPPUNIT_TEST (testCell2Fluid);
+          CPPUNIT_TEST (testCellInsertion);
           CPPUNIT_TEST (testFluid2Cell);CPPUNIT_TEST_SUITE_END();
 
           PhysicalDistance const cutoff = 5.0;
@@ -58,6 +59,7 @@ namespace hemelb
         public:
           void testCell2Fluid();
           void testFluid2Cell();
+          void testCellInsertion();
 
         private:
           virtual size_t CubeSize() const
@@ -100,6 +102,28 @@ namespace hemelb
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 2);
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 2);
         CPPUNIT_ASSERT(not helpers::is_zero(latDat->GetSite(15, 15, 15).GetForce()));
+      }
+
+      void CellArmyTests::testCellInsertion()
+      {
+        auto cell = std::make_shared<FakeCell>(pancakeSamosa());
+
+        helpers::ZeroOutFOld(latDat);
+        helpers::ZeroOutForces(latDat);
+
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer{}, cutoff, halo);
+        int called = 0;
+        auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
+        {
+          ++called;
+          inserter(cell);
+        };
+        army.SetCellInsertion(callback);
+
+        army.CallCellInsertion();
+        CPPUNIT_ASSERT_EQUAL(1, called);
+        CPPUNIT_ASSERT_EQUAL(3ul, army.GetDNC().size());
+        CPPUNIT_ASSERT_EQUAL(1ul, army.GetCells().size());
       }
 
       void CellArmyTests::testFluid2Cell()
