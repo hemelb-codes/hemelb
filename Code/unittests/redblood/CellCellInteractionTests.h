@@ -28,6 +28,8 @@ namespace hemelb
           CPPUNIT_TEST (testBoxHalo);
           CPPUNIT_TEST (testAddNodes);
           CPPUNIT_TEST (testAddMeshes);
+          CPPUNIT_TEST (testAddCell);
+          CPPUNIT_TEST (testRemoveCell);
           CPPUNIT_TEST (testIterator);
           CPPUNIT_TEST (testUpdate);
           CPPUNIT_TEST (testPairIteratorNoPairs);
@@ -44,6 +46,8 @@ namespace hemelb
           void testBoxHalo();
           void testAddNodes();
           void testAddMeshes();
+          void testAddCell();
+          void testRemoveCell();
           void testIterator();
           void testUpdate();
           void testPairIteratorNoPairs();
@@ -373,6 +377,42 @@ namespace hemelb
         CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
         CPPUNIT_ASSERT(not ++range);
         CPPUNIT_ASSERT(not range.is_valid());
+      }
+
+      void CellCellInteractionTests::testAddCell()
+      {
+        auto cell = std::make_shared<Cell>(pancakeSamosa());
+        *cell += LatticePosition(1, 1, 1) * cutoff * 0.5;
+
+        DivideConquerCells dnc({std::make_shared<Cell>(*cell)}, cutoff, halo);
+        CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({0., 0., 0.}).first, dnc({0., 0., 0.}).second));
+
+        *cell += LatticePosition(1, 1, 1) * cutoff * 1.5;
+        dnc.insert(cell);
+        CPPUNIT_ASSERT_EQUAL(6ul, dnc.size());
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({0., 0., 0.}).first, dnc({0., 0., 0.}).second));
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({1., 1., 1.}).first, dnc({1., 1., 1.}).second));
+
+        // verifies calling update does nothing
+        dnc.update();
+        CPPUNIT_ASSERT_EQUAL(6ul, dnc.size());
+      }
+
+      void CellCellInteractionTests::testRemoveCell()
+      {
+        auto cells = TwoPancakeSamosas<>(cutoff);
+        DivideConquerCells dnc(cells, cutoff, halo);
+        auto const zeroBox = dnc({0, 0, 0});
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(zeroBox.first, zeroBox.second));
+        auto const cell = zeroBox.first.GetCell();
+        dnc.remove(cell);
+        CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
+        CPPUNIT_ASSERT(dnc({0., 0., 0.}).first == dnc({0., 0., 0.}).second);
+
+        // verifies calling update does nothing
+        dnc.update();
+        CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
       }
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellCellInteractionTests);
