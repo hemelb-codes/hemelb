@@ -36,13 +36,13 @@ namespace hemelb
           void testAxis() {
             // Check points along the axis from just outside the start of the cylinder (x = 0) to just inside
             CPPUNIT_ASSERT_MESSAGE("Point (-0.001, 0, 0) is outside the cylinder", !contains(flowExt, Point(-0.001, 0, 0)));
-            CPPUNIT_ASSERT_MESSAGE("Point ( 0.000, 0, 0) is inside the cylinder",  contains(flowExt, Point( 0.000, 0, 0)));
-            CPPUNIT_ASSERT_MESSAGE("Point ( 0.001, 0, 0) is inside the cylinder",  contains(flowExt, Point( 0.001, 0, 0)));
+            CPPUNIT_ASSERT_MESSAGE("Point ( 0.000, 0, 0) is inside the cylinder",   contains(flowExt, Point( 0.000, 0, 0)));
+            CPPUNIT_ASSERT_MESSAGE("Point ( 0.001, 0, 0) is inside the cylinder",   contains(flowExt, Point( 0.001, 0, 0)));
 
             // Check points along the axis from just inside the end of the cylinder (x = 10) to just outside
-            CPPUNIT_ASSERT_MESSAGE("Point (-0.001, 0, 0) is outside the cylinder", !contains(flowExt, Point(-0.001, 0, 0)));
-            CPPUNIT_ASSERT_MESSAGE("Point ( 0.000, 0, 0) is inside the cylinder",  contains(flowExt, Point( 0.000, 0, 0)));
-            CPPUNIT_ASSERT_MESSAGE("Point ( 0.001, 0, 0) is inside the cylinder",  contains(flowExt, Point( 0.001, 0, 0)));
+            CPPUNIT_ASSERT_MESSAGE("Point ( 9.999, 0, 0) is inside the cylinder",   contains(flowExt, Point( 9.999, 0, 0)));
+            CPPUNIT_ASSERT_MESSAGE("Point (10.000, 0, 0) is inside the cylinder",   contains(flowExt, Point(10.000, 0, 0)));
+            CPPUNIT_ASSERT_MESSAGE("Point (10.001, 0, 0) is outside the cylinder", !contains(flowExt, Point(10.001, 0, 0)));
           }
 
           void testCircumference() {
@@ -62,6 +62,7 @@ namespace hemelb
             CPPUNIT_ASSERT_MESSAGE("Point(0.0, -1.0, -1.0) is outside the cylinder", !contains(flowExt, Point(0.0, -1.0, -1.0)));
             CPPUNIT_ASSERT_MESSAGE("Point(0.0, -1.0,  1.0) is outside the cylinder", !contains(flowExt, Point(0.0, -1.0, 1.0)));
           }
+
           void testLinearWeight()
           {
             FlowExtension const flow = {{-1.0, 0, 0}, {0.5, 0.5, 0.5}, 2.0, 0.5, 1.5};
