@@ -108,12 +108,14 @@ class MyApp(wx.App):
 
 
         self.SetTopWindow(self.view.frame)
+        self.view.frame.Close()
         return True
     pass
 
 def test():
     app = MyApp(0)
     app.MainLoop()
+    
 
 if __name__ == "__main__":
     test()
