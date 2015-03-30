@@ -20,6 +20,9 @@ class NodeBase(object):
         if not np.all(self.offset == other.offset):
             return False
         return True
+    
+    def __ne__(self, other):
+        return not (self == other)
     pass
 
 class NodeError(LookupError):
@@ -203,5 +206,8 @@ class Tree(object):
     
     def __eq__(self, other):
         return self.root == other.root
+    def __ne__(self, other):
+        return not (self == other)
+
     pass
 
