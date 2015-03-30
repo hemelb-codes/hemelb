@@ -17,21 +17,23 @@ def trees_with_triIds_equal(t1, t2, tri_level):
         
 def mk_trivial():
     # Put the tri points on a square, in the (0,0,0) octant
-    points = np.array([(1,1,1),
-                       (1,1,2),
-                       (1,2,1),
-                       (1,2,2)], dtype=float)
+    points = np.array([(1.2, 1.2, 1.2),
+                       (1.2, 1.2, 2.2),
+                       (1.2, 2.2, 1.2),
+                       (1.2, 2.2, 2.2)], dtype=float)
     # Define the tris
     triangles = np.array([(0,1,2),
                           (2,1,3)], dtype=int)
-    return points, triangles
+    normals = np.array([[-1, 0, 0],
+                        [-1, 0, 0]], dtype=float)
+    return points, triangles, normals
 
 def test_trivial():
     # 16 cube
     levels = 4
     # put triangles onto the 8 cube level
     tri_level = 3
-    points, triangles = mk_trivial()
+    points, triangles, normals = mk_trivial()
     
     # Sort!
     tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
@@ -89,7 +91,7 @@ def test_merge_identity():
     levels = 4
     # put triangles onto the 8 cube level
     tri_level = 3
-    points, triangles = mk_trivial()
+    points, triangles, normals = mk_trivial()
     
     tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
     nulltree = Tree(levels)
@@ -106,7 +108,7 @@ def test_merge_simple():
     levels = 4
     # put triangles onto the 8 cube level
     tri_level = 3
-    points, triangles = mk_trivial()
+    points, triangles, normals = mk_trivial()
     
     t1 = TriangleSorter.TrianglesToTree_Worker(levels, tri_level, points, triangles[:1], 0)
     t2 = TriangleSorter.TrianglesToTree_Worker(levels, tri_level, points, triangles[1:], 1)
@@ -130,7 +132,7 @@ def test_merge_self():
     levels = 4
     # put triangles onto the 8 cube level
     tri_level = 3
-    points, triangles = mk_trivial()
+    points, triangles, normals = mk_trivial()
     
     t1 = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
     
