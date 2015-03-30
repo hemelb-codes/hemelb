@@ -215,7 +215,7 @@ class Profile(Observable):
         return
     
     def Generate(self):
-        from HemeLbSetupTool.Model.OutputGeneration import PolyDataGenerator
+        from HemeLbSetupTool.Model.PolyDataGenerator import PolyDataGenerator
         generator = PolyDataGenerator(self)
         generator.Execute()
         return
