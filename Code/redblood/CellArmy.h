@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #include "redblood/Cell.h"
 #include "redblood/CellCell.h"
@@ -38,7 +39,7 @@ namespace hemelb
             CellContainer const &cells,
             PhysicalDistance boxsize=10.0, PhysicalDistance halo=2.0)
           : latticeData(_latDat), cells(cells),
-          dnc(cells, boxsize, halo)
+          dnc(cells, boxsize, halo), stream(nullptr)
         {
         }
 
@@ -49,7 +50,7 @@ namespace hemelb
         void Cell2FluidInteractions();
 
         //! Outputs cell positions
-        void CellOutput(std::ostream &) const;
+        void CellOutput() const;
 
     #   ifdef HEMELB_DOING_UNITTESTS
           //! Updates divide and conquer
@@ -66,6 +67,11 @@ namespace hemelb
             return dnc;
           }
     #   endif
+
+        //! Sets cell position output stream
+        void SetCellOutputStream(std::ostream * o) {
+          stream = o;
+        }
 
         //! Sets up call for cell insertion
         //! Called everytime CallCellInsertion is called
@@ -113,6 +119,9 @@ namespace hemelb
 
         //! Remove cells if they reach these outlets
         std::vector<FlowExtension> outlets;
+
+        //! Output cell positions at each iteration on this stream
+        std::ostream * stream;
     };
 
     template<class KERNEL>
@@ -150,13 +159,16 @@ namespace hemelb
       }
 
     template<class KERNEL>
-      void CellArmy<KERNEL> :: CellOutput(std::ostream & out) const
+      void CellArmy<KERNEL> :: CellOutput() const
       {
-        CellContainer::const_iterator end = cells.cend();
-        for (CellContainer::const_iterator i = cells.cbegin(); i != end; ++i)
+        if (stream != nullptr)
         {
-          MeshData::Vertices::value_type centre = (*i)->GetBarycenter();
-          out << centre << std::endl;
+          CellContainer::const_iterator end = cells.cend();
+          for (CellContainer::const_iterator i = cells.cbegin(); i != end; ++i)
+          {
+            MeshData::Vertices::value_type centre = (*i)->GetBarycenter();
+            *stream << centre << std::endl;
+          }
         }
       }
 
