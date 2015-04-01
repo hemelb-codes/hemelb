@@ -50,6 +50,7 @@ namespace hemelb
           CPPUNIT_TEST (testCell2Fluid);
           CPPUNIT_TEST (testCellInsertion);
           CPPUNIT_TEST (testCellRemoval);
+          CPPUNIT_TEST (testCellOutput);
           CPPUNIT_TEST (testFluid2Cell);CPPUNIT_TEST_SUITE_END();
 
           PhysicalDistance const cutoff = 5.0;
@@ -62,6 +63,7 @@ namespace hemelb
           void testFluid2Cell();
           void testCellInsertion();
           void testCellRemoval();
+          void testCellOutput();
 
         private:
           virtual size_t CubeSize() const
@@ -161,6 +163,31 @@ namespace hemelb
             CPPUNIT_ASSERT(helpers::is_zero( (*i_nodeA - *i_nodeB) - disp));
           }
         }
+      }
+
+      void CellArmyTests::testCellOutput()
+      {
+        std::stringstream ostream;
+        auto cell = std::make_shared<FakeCell>(tetrahedron());
+
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
+
+        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
+        army.CellOutput();
+        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
+
+        army.SetCellOutputStream(&ostream);
+        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
+        army.CellOutput();
+        CPPUNIT_ASSERT_EQUAL(std::string("(0.5,0.5,0.5)\n"), ostream.str());
+        *cell += LatticePosition(1.0);
+        army.CellOutput();
+        CPPUNIT_ASSERT_EQUAL(std::string("(0.5,0.5,0.5)\n(1.5,1.5,1.5)\n"), ostream.str());
+
+        army.SetCellOutputStream(nullptr);
+        CPPUNIT_ASSERT_EQUAL(std::string::size_type(28), ostream.str().size());
+        army.CellOutput();
+        CPPUNIT_ASSERT_EQUAL(std::string::size_type(28), ostream.str().size());
       }
 
       void CellArmyTests::testCellRemoval()
