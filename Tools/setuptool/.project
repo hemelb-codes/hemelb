@@ -3,6 +3,7 @@
 	<name>HemeLbSetupTool</name>
 	<comment></comment>
 	<projects>
+		<project>HemeTools</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
