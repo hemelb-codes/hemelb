@@ -48,9 +48,6 @@ namespace hemelb
         //! Performs lattice to fluid interactions
         void Cell2FluidInteractions();
 
-        //! Outputs cell positions
-        void CellOutput(std::ostream &) const;
-
     #   ifdef HEMELB_DOING_UNITTESTS
           //! Updates divide and conquer
           void updateDNC()
@@ -147,17 +144,6 @@ namespace hemelb
         }
 
         addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
-      }
-
-    template<class KERNEL>
-      void CellArmy<KERNEL> :: CellOutput(std::ostream & out) const
-      {
-        CellContainer::const_iterator end = cells.cend();
-        for (CellContainer::const_iterator i = cells.cbegin(); i != end; ++i)
-        {
-          MeshData::Vertices::value_type centre = (*i)->GetBarycenter();
-          out << centre << std::endl;
-        }
       }
 
     template<class KERNEL>
