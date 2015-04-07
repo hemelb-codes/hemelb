@@ -1,7 +1,7 @@
 import numpy as np
 from .HitFinder import HitFinder
 from .TriangleSorter import TrianglesToTree
-from .test_TriangleSorter import mk_trivial
+from .test_TriangleSorter import mk_trivial, mk_trivial2
 from .Neighbours import neighbours, inverses
 from TestResources.sphere import GetSphereNumpy, InsidePerfectSphere
 
@@ -46,6 +46,44 @@ def test_square():
         m += 1
         continue
     assert m == 13
+
+
+def test_rectangle():
+    # 16 cube
+    levels = 4
+    # put triangles onto the 8 cube level
+    tri_level = 3
+
+    points, triangles, normals = mk_trivial2()
+    tree = TrianglesToTree(levels, tri_level, points, triangles)
+    
+    tri_node = tree.GetNode(tri_level, np.array([0,0,0]))
+    finder = HitFinder(points, triangles, normals)
+    
+    finder(tri_node)
+    m = 0
+    for vox in tri_node.IterDepthFirst(0,0):
+        
+        for i_vec, hits in vox.intersections.iteritems():
+            vec = neighbours[i_vec]
+            neigh_offset = vox.offset + vec
+            neigh = tri_node.GetNode(0, neigh_offset)
+            opp = inverses[i_vec]
+            # There must be a hit coming in the other direction
+            assert opp in neigh.intersections, "Neighbour must have a hit for the reverse link"
+            opp_hits = neigh.intersections[opp]
+            assert len(hits) == len(opp_hits), "Must have the same number of hits"
+            
+            # Sort them based on the t, the distance along the link
+            hits.sort(key=lambda x: x[0])
+            opp_hits.sort(key=lambda x: x[0])
+            n = len(hits)
+            for i in xrange(n):
+                assert approx_eq(hits[i][0] + opp_hits[n-1-i][0], 1.0, 1e-8), "The lengths along the vector must sum to 1"
+                assert hits[i][1] != opp_hits[n-1-i][1], "The normal flags must be opposite"
+                assert hits[i][2] == opp_hits[n-1-i][2], "Must hit the same triangle"
+        m += 1
+        continue
     
 def test_sphere():
     levels = 5
