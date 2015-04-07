@@ -28,11 +28,50 @@ def mk_trivial():
                         [-1, 0, 0]], dtype=float)
     return points, triangles, normals
 
+def mk_trivial2():
+
+    points = np.array([(1.2, 1.2, 1.2),
+                       (1.2, 1.2, 2.2),
+                       (1.2, 2.2, 1.2),
+                       (1.2, 2.2, 2.2),
+                       (1.2, 1.2, 3.2),
+                       (1.2, 2.2, 3.2)], dtype=float)
+
+    triangles = np.array([(0,1,2),
+                          (2,1,3),(0,4,2)], dtype=int)
+    normals = np.array([[-1, 0, 0],
+                        [-1, 0, 0],[-1, 0, 0]], dtype=float)
+
+    return points, triangles, normals
+
 def test_trivial():
     # 16 cube
     levels = 4
     # put triangles onto the 8 cube level
     tri_level = 3
+    points, triangles, normals = mk_trivial()
+    
+    # Sort!
+    tree = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
+    
+    assert tree.levels == levels
+    i = tri_level
+    for node in tree.IterDepthFirst():
+        assert np.all(node.offset == 0)
+        assert node.levels == i
+        i += 1
+        continue
+    assert i == levels +1
+    
+    node = tree.GetNode(tri_level, np.array((0,0,0)))
+    ids = node.triIds
+    assert np.all(ids == (0,1))
+
+def test_trivial_deep():
+    # 1,024 cube
+    levels = 18
+    # put triangles onto the 8 cube level
+    tri_level = 17
     points, triangles, normals = mk_trivial()
     
     # Sort!
@@ -152,10 +191,14 @@ def test_parallel():
     points, triangles, normals = GetSphereNumpy()
     serial = TriangleSorter.TrianglesToTree(levels, tri_level, points, triangles)
     
+    p1 = TriangleSorter.TrianglesToTreeParallel(levels, tri_level, points, triangles, 1)
     p2 = TriangleSorter.TrianglesToTreeParallel(levels, tri_level, points, triangles, 2)
+    p3 = TriangleSorter.TrianglesToTreeParallel(levels, tri_level, points, triangles, 3)
     p4 = TriangleSorter.TrianglesToTreeParallel(levels, tri_level, points, triangles, 4)
     p8 = TriangleSorter.TrianglesToTreeParallel(levels, tri_level, points, triangles, 8)
+    assert trees_with_triIds_equal(serial, p1, tri_level)
     assert trees_with_triIds_equal(serial, p2, tri_level)
+    assert trees_with_triIds_equal(serial, p3, tri_level)
     assert trees_with_triIds_equal(serial, p4, tri_level)
     assert trees_with_triIds_equal(serial, p8, tri_level)
     

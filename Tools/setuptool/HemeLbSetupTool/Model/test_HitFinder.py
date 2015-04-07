@@ -21,7 +21,7 @@ def test_square():
     finder = HitFinder(points, triangles, normals)
     
     finder(tri_node)
-    n = 0
+    m = 0
     for vox in tri_node.IterDepthFirst(0,0):
         
         for i_vec, hits in vox.intersections.iteritems():
@@ -42,9 +42,10 @@ def test_square():
                 assert approx_eq(hits[i][0] + opp_hits[n-1-i][0], 1.0, 1e-8), "The lengths along the vector must sum to 1"
                 assert hits[i][1] != opp_hits[n-1-i][1], "The normal flags must be opposite"
                 assert hits[i][2] == opp_hits[n-1-i][2], "Must hit the same triangle"
-        n += 1
-        
+            
+        m += 1
         continue
+    assert m == 13
     
 def test_sphere():
     levels = 5
