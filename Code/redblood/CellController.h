@@ -33,6 +33,8 @@ namespace hemelb
           CellArmy<KERNEL>::CallCellInsertion();
           Logger::Log<Info, Singleton>("Fluid interaction with cells");
           CellArmy<KERNEL>::Fluid2CellInteractions();
+          Logger::Log<Info, Singleton>("Output cell positions");
+          CellArmy<KERNEL>::CallCellOutput();
         }
         void EndIteration() override
         {
@@ -41,6 +43,8 @@ namespace hemelb
           CellArmy<KERNEL>::Cell2FluidInteractions(); 
           Logger::Log<Info, Singleton>("Removed cells that have reached outlets");
           CellArmy<KERNEL>::CellRemoval(); 
+          Logger::Log<Info, Singleton>("Output cell positions");
+          CellArmy<KERNEL>::CallCellOutput();
         }
     };
   }

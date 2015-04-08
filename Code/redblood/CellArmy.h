@@ -78,6 +78,20 @@ namespace hemelb
             cellInsertionCallBack([this](CellContainer::value_type cell) { this->AddCell(cell); });
         }
 
+        //! Sets up call for cell output
+        //! Called everytime CallCellOutput is called
+        void SetCellOutput(std::function<void(const CellContainer &)> f)
+        {
+          cellOutputCallBack = f;
+        }
+
+        //! Invokes the callback function to output cell positions
+        void CallCellOutput()
+        {
+          if (cellOutputCallBack)
+            cellOutputCallBack(this->cells);
+        }
+
         //! Sets outlets within which cells disapear
         void SetOutlets(std::vector<FlowExtension> const & olets)
         {
@@ -107,6 +121,7 @@ namespace hemelb
         //! It should insert cells using the call back passed to it.
         std::function<void(std::function<void(CellContainer::value_type)>)>
           cellInsertionCallBack;
+        std::function<void(const CellContainer &)> cellOutputCallBack;
 
         //! Remove cells if they reach these outlets
         std::vector<FlowExtension> outlets;
