@@ -167,27 +167,17 @@ namespace hemelb
 
       void CellArmyTests::testCellOutput()
       {
-        std::stringstream ostream;
         auto cell = std::make_shared<FakeCell>(tetrahedron());
+        MeshData::Vertices::value_type barycentre;
+        auto callback = [&barycentre](const CellContainer & container) {
+          barycentre = (*(container.begin()))->GetBarycenter();
+        };
 
         redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
+        army.SetCellOutput(callback);
 
-        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
-        army.CellOutput();
-        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
-
-        army.SetCellOutputStream(&ostream);
-        CPPUNIT_ASSERT_EQUAL(std::string::size_type(0), ostream.str().size());
-        army.CellOutput();
-        CPPUNIT_ASSERT_EQUAL(std::string("(0.5,0.5,0.5)\n"), ostream.str());
-        *cell += LatticePosition(1.0);
-        army.CellOutput();
-        CPPUNIT_ASSERT_EQUAL(std::string("(0.5,0.5,0.5)\n(1.5,1.5,1.5)\n"), ostream.str());
-
-        army.SetCellOutputStream(nullptr);
-        CPPUNIT_ASSERT_EQUAL(std::string::size_type(28), ostream.str().size());
-        army.CellOutput();
-        CPPUNIT_ASSERT_EQUAL(std::string::size_type(28), ostream.str().size());
+        army.CallCellOutput();
+        CPPUNIT_ASSERT_EQUAL(barycentre, cell->GetBarycenter());
       }
 
       void CellArmyTests::testCellRemoval()
