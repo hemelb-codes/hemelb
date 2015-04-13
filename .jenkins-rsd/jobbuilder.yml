@@ -1,0 +1,22 @@
+- job:
+    name: setup-jenkins-jobs-heme
+    disabled: true
+    node: master
+
+    builders:
+        - shell: |
+            # In practice, this jobs runs something like-this.
+            # We do not do it here for security reasons
+            # if [[ -d .jenkins-rsd ]]; then
+            #     python -m virtualenv --system-site-packages env
+            #     . env/bin/activate
+            #     # this an rsd plugin for jenkins job builder. It will also install
+            #     # the latter.
+            #     pip install --uprade git+https://www.github.com/UCL/JenJobs.git
+            #
+            #     env/bin/jenkins-jobs --conf jenkins.conf .jenkins-rsd
+            # fi
+
+    publishers:
+        - trigger:
+            project: hemelb-jobs-publisher

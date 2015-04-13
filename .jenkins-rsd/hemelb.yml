@@ -1,0 +1,100 @@
+# only compile dependencies
+- job:
+    name: dependencies-heme
+    disabled: false
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "intel").implies(os == "Legion")
+            && (os == "OSX").implies(compiler == "clang")
+            && (compiler == "clang").implies(os == "OSX")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - clang
+                - intel
+                - gnu
+
+    builders:
+        - heme-remove-build
+        - heme-configure:
+            source_dir: "$WORKSPACE/dependencies"
+            build_type: "Release"
+            extra_args: "-DHEMELB_USE_BOOST=ON"
+        - heme-build
+
+    publishers:
+        - trigger:
+            project: "development-heme"
+
+# default build across compilers and machines
+- job:
+    name: development-heme
+    disabled: false
+    block-upstream: true
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "intel").implies(os == "Legion")
+            && (os == "OSX").implies(compiler == "clang")
+            && (compiler == "clang").implies(os == "OSX")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - clang
+                - intel
+                - gnu
+        - axis:
+            type: user-defined
+            name: sse3
+            values:
+                - "ON"
+                - "OFF"
+
+    builders:
+        - heme-remove-build
+        - shell: |
+            # Add a configuration file
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+
+            deps="$WORKSPACE/../../../../../../../"
+            deps="$deps/dependencies-heme/compiler/$compiler/os/$os/dependencies"
+
+            cat > $WORKSPACE/build/vars.conf <<EOF
+            set(CMAKE_PREFIX_PATH "deps" CACHE PATH "" FORCE)
+            set(HEMELB_USE_STREAKLINES FALSE CACHE BOOL "" FORCE)
+            set(HEMELB_USE_SSE3 "$sse3" CACHE BOOL "" FORCE)
+            set(HEMELB_DEPENDENCIES_PATH "$deps" CACHE PATH "" FORCE)
+            EOF
+        - heme-configure:
+            source_dir: "$WORKSPACE/Code"
+            build_type: "RelWithDebInfo"
+            extra_args: "-C vars.conf"
+        - heme-build
+        - heme-test
+
+    publishers:
+        - xunit:
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"

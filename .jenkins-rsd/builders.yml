@@ -1,0 +1,67 @@
+# small bash-scripts that will be invoked one after the other in the jobs
+- builder:
+    name: heme-remove-build
+    builders:
+        - shell: |
+            cd $WORKSPACE
+            rm -rf build RegressionTests
+            mkdir build
+
+- builder:
+    name: heme-configure
+    builders:
+        - shell: |
+            case $os in
+                "Legion")
+                    module load rsd-modules
+                    module load hemelb-dev/$compiler
+                    export CC=mpicc
+                    export CXX=mpiCC
+                ;;
+                "OSX")
+                    case $compiler in 
+                        "gnu")
+                            export CC=gcc-4.7
+                            export CXX=g++-4.7
+                        ;;
+                        "clang")
+                            export CC=/usr/bin/cc
+                            export CXX=/usr/bin/c++
+                        ;;
+                    esac
+                ;;
+            esac
+
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+            cd $WORKSPACE/build
+            cmake -DCMAKE_BUILD_TYPE={build_type} \
+                  -DCMAKE_INSTALL_PREFIX=$(pwd)/fake_install \
+                  {extra_args} \
+                  {source_dir}
+
+- builder:
+    name: heme-build
+    builders:
+        - shell: |
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+            cd $WORKSPACE/build
+
+            if [ "$os" == "Legion" ] ; then
+                export MAKEFLAGS=-j4
+                module load rsd-modules hemelb-dev/$compiler
+            else
+                export MAKEFLAGS=-j2
+            fi
+            make
+
+- builder:
+    name: heme-test
+    builders:
+        - shell: |
+            cd $WORKSPACE/build/
+            [[ "$os" == "Legion" ]] && module load rsd-modules hemelb-dev/$compiler
+            [[ ! -e tests ]] && mkdir tests
+            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/results.xml
+
+
+

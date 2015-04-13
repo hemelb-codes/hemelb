@@ -1,0 +1,23 @@
+- job:
+    name: streaklines-heme
+    disabled: false
+    node: OSX
+
+    builders:
+        - heme-remove-build
+        - shell: |
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+            cd $WORKSPACE/build
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                  -DCMAKE_INSTALL_PREFIX=$(pwd)/fake_install \
+                  ..
+            make -j 2
+            [[ ! -e tests ]] && mkdir tests
+            cd hemelb-prefix/src/hemelb-build/
+            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/results.xml
+
+    publishers:
+        - xunit:
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
