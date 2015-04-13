@@ -1,6 +1,6 @@
 - job:
     name: setup-jenkins-jobs-heme
-    disabled: true
+    disabled: false
     node: master
 
     builders:
