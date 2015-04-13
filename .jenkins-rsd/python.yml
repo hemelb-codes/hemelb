@@ -1,0 +1,23 @@
+- job:
+    name: python-heme
+    description: disabled until vtk works somewhere...
+    disabled: false
+    node: Legion
+
+    builders:
+        - shell: |
+            module load rsd-modules
+            module load hemelb-dev/intel boost/1.56_cxx11 CGAL/4.6
+            module load python/enthought/7.3-2_2015-03-02
+
+            export CFLAGS="-I$CGAL_DIR/include -I$BOOST_ROOT/include"
+            export LDFLAGS="-L$CGAL_DIR/lib"
+            export LD_LIBRARY_PATH=/shared/ucl/apps/epd/epd-7.3-2-rh5-x86_64_2015-03-02/lib:$LD_LIBRARY_PATH
+
+            cd $WORKSPACE/Tools
+            rm -rf build
+            python setup.py build
+
+            cd setuptool
+            rm -rf build
+            python setup.py build

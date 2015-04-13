@@ -1,0 +1,19 @@
+- defaults:
+    name: global
+    # where to get the code from
+    scm:
+        - hg:
+            url: ssh://hg@entropy.chem.ucl.ac.uk/hemelb
+            revision-type: branch
+            revision: default
+            wipe-workspace: false
+
+    # when to trigger a build
+    triggers:
+        - pollscm: "H/15 * * * *"
+
+    properties:
+        - trac:
+            url: http://pauli.chem.ucl.ac.uk/trac/hemelb/
+
+
