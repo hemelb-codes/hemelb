@@ -69,6 +69,14 @@ if(HEMELB_OPTIMISATION)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${HEMELB_OPTIMISATION}")
 endif()
 
+# Makes this a c++11 project
+list(APPEND  CMAKE_PREFIX_PATH "${HEMELB_DEPENDENCIES_PATH}")
+find_package(GreatCMakeCookOff REQUIRED)
+initialize_cookoff()
+include(AddCPP11Flags)
+include(CheckCXX11Features)
+cxx11_feature_check(REQUIRED unique_ptr nullptr override constructor_delegate lambda)
+
 
 
 add_definitions(-DHEMELB_READING_GROUP_SIZE=${HEMELB_READING_GROUP_SIZE})
