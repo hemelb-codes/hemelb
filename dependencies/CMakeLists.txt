@@ -208,7 +208,7 @@ else()
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
+		set(CTEMPLATE_TARBALL https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
