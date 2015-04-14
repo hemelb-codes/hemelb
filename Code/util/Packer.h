@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <cassert>
 #include <string>
+#include <memory>
 #include "util/Vector3D.h"
 
 namespace hemelb
