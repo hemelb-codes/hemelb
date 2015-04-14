@@ -257,3 +257,16 @@ else()
 		BUILD_IN_SOURCE 1
 	)
 endif()
+
+find_package(GreatCMakeCookOff)
+if(GreatCMakeCookOff_FOUND)
+    message("Found cmake cookoff.")
+else()
+    message("CMake cookoff not installed, will build from source")
+    ExternalProject_Add(
+        cookoff
+        INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+        URL https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    )
+endif()
