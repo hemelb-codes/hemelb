@@ -145,7 +145,7 @@ namespace hemelb { namespace unittests { namespace helpers {
             size_t _i,
             std::function<Dimensionless(PhysicalVelocity const &)> _function
      ) {
-      for(size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i) {
+      for(site_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i) {
         geometry::Site<geometry::LatticeData> site = latDat->GetSite(i);
         LatticeVector const pos = site.GetGlobalSiteCoords();
         LatticePosition const pos_real(pos[0], pos[1], pos[2]);
@@ -217,7 +217,7 @@ template<class LATTICE = lb::lattices::D3Q15>
     setUpDistribution<LATTICE>(_latDat, 0, linear);
     setUpDistribution<LATTICE>(_latDat, 1, linear_inv);
 
-    return {non_neg_pop, gradient, linear, linear_inv};
+    return std::make_tuple(non_neg_pop, gradient, linear, linear_inv);
   }
 
 

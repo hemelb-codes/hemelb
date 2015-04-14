@@ -82,6 +82,7 @@ namespace hemelb
         HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);
         HEMELB_STENCIL_MACRO(TWO_POINT, TwoPoint);
       }
+      return interpolationIterator<stencil::TwoPoint>(where);
 
 #undef HEMELB_STENCIL_MACRO
     }

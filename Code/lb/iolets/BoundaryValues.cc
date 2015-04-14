@@ -116,7 +116,7 @@ namespace hemelb
           // Now we have an array for each IOlet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
           // of ints which store a list of processor ranks.
-          for (proc_t process = 0; process < processorsNeedingIoletFlags.size(); ++process)
+          for (proc_t process = 0; process < proc_t(processorsNeedingIoletFlags.size()); ++process)
           {
             if (processorsNeedingIoletFlags[process])
             {
