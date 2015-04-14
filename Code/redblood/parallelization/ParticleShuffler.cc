@@ -28,7 +28,7 @@ namespace hemelb
           auto const node = latticeData.GetProcIdFromGlobalCoords(barycenter);
           assert(node != BIG_NUMBER2);
           auto const thisrank = latticeData.GetLocalRank();
-          return {thisrank == node, node};
+          return std::make_tuple(bool(thisrank == node), proc_t(node));
         }
 
         // packs a single cell

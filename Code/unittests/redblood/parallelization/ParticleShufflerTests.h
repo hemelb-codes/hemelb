@@ -36,7 +36,7 @@ namespace hemelb
           std::tuple<bool, proc_t> GetCellOwner(CellContainer::const_reference cell) const override
           {
             auto const in0 = cell->GetBarycenter().GetMagnitude() < 5.0;
-            return {not ((rank == 0) xor in0), in0 ? 0: 1};
+            return std::make_tuple(not ((rank == 0) xor in0), in0 ? 0: 1);
           }
           //! Const reference to cells owned by this proc
           CellContainer const& GetOwnedCells() const override

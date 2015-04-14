@@ -154,7 +154,7 @@ namespace hemelb
             xWeight(new Dimensionless[STENCIL::range]), yWeight(new Dimensionless[STENCIL::range]),
             zWeight(new Dimensionless[STENCIL::range])
     {
-      for (LatticeVector::value_type i(0); i < STENCIL::range; ++i)
+      for (LatticeVector::value_type i(0); i < LatticeVector::value_type(STENCIL::range); ++i)
       {
         xWeight[i] = stencil(node[0] - Dimensionless(min[0] + i));
         yWeight[i] = stencil(node[1] - Dimensionless(min[1] + i));
