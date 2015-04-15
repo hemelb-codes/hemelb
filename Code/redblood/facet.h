@@ -57,7 +57,7 @@ namespace hemelb
           // Unit vector normal to facet
           LatticePosition unitNormal() const;
           // Area of the facet
-          PhysicalSurface area() const;
+          PhysicalArea area() const;
       };
 
       // Facet that also includes forces
@@ -137,7 +137,7 @@ namespace hemelb
       {
         return normal().Normalise();
       }
-      PhysicalSurface Facet::area() const
+      PhysicalArea Facet::area() const
       {
         return normal().GetMagnitude() * 0.5;
       }

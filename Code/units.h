@@ -59,7 +59,7 @@ namespace hemelb
 
   typedef double PhysicalDistance; // continuous distance in physical units
   typedef double PhysicalVolume; // continuous volume in physical units
-  typedef double PhysicalSurface; // continuous surface in physical units
+  typedef double PhysicalArea; // continuous area in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
