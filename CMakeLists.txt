@@ -87,4 +87,8 @@ ExternalProject_Add(
     -DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE}
 )
 
-add_dependencies(hemelb cppunit parmetis tinyxml boost ctemplate zlib mpwide)
+foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff)
+  if(TARGET ${dep})
+    add_dependencies(hemelb ${cookoff})
+  endif()
+endif()
