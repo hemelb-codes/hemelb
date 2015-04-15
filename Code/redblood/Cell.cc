@@ -51,6 +51,18 @@ namespace hemelb
         data(new CellData(*cell.data))
     {
     }
+    CellBase::CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn) :
+        data(new CellData(mesh.GetVertices(), origMesh, scaleIn))
+    {
+    }
+    CellBase::CellBase(Mesh const &mesh) :
+        data(new CellData(mesh.GetVertices(), mesh.clone()))
+    {
+    }
+    CellBase::CellBase(std::shared_ptr<MeshData> const &mesh) :
+        data(new CellData(mesh->vertices, Mesh(*mesh)))
+    {
+    }
 
     void CellBase::operator=(Mesh const &mesh)
     {
