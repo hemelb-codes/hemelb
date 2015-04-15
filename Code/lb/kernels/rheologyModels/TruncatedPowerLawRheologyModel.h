@@ -30,7 +30,8 @@ namespace hemelb
         static const double M_CONSTANT = BLOOD_VISCOSITY_Pa_s; // Pa_s
         static const double N_CONSTANT = 0.5; // dimensionless, n<1 shear thinning, n>1 shear thickening, n=1 Newtonian with nu=M_CONSTANT
 
-        class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<TruncatedPowerLawRheologyModel>
+        class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<
+            TruncatedPowerLawRheologyModel>
         {
           public:
             /*

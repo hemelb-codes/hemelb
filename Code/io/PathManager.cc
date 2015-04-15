@@ -14,10 +14,9 @@ namespace hemelb
 {
   namespace io
   {
-    PathManager::PathManager(const configuration::CommandLine & commandLine,
-                             const bool & io,
+    PathManager::PathManager(const configuration::CommandLine & commandLine, const bool & io,
                              const int & processorCount) :
-      options(commandLine), doIo(io)
+        options(commandLine), doIo(io)
     {
 
       inputFile = options.GetInputFile();
@@ -32,7 +31,7 @@ namespace hemelb
       if (doIo)
       {
         if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
-          throw Exception() << "Output directory '"<< outputDir <<"' already exists.";
+          throw Exception() << "Output directory '" << outputDir << "' already exists.";
 
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);

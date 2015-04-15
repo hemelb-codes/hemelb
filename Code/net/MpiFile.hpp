@@ -20,35 +20,26 @@ namespace hemelb
     template<typename T>
     void MpiFile::Read(std::vector<T>& buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(
-          MPI_File_read,
-          (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
-      );
+      HEMELB_MPI_CALL(MPI_File_read, (*filePtr, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
     }
     template<typename T>
     void MpiFile::ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(
-          MPI_File_read_at,
-          (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat)
-      );
+      HEMELB_MPI_CALL(MPI_File_read_at,
+                      (*filePtr, offset, &buffer[0], buffer.size(), MpiDataType<T>(), stat));
     }
 
     template<typename T>
     void MpiFile::Write(const std::vector<T>& buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(
-          MPI_File_write,
-          (*filePtr, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat)
-      );
+      HEMELB_MPI_CALL(MPI_File_write,
+                      (*filePtr, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat));
     }
     template<typename T>
     void MpiFile::WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat)
     {
-      HEMELB_MPI_CALL(
-          MPI_File_write_at,
-          (*filePtr, offset, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat)
-      );
+      HEMELB_MPI_CALL(MPI_File_write_at,
+                      (*filePtr, offset, MpiConstCast(&buffer[0]), buffer.size(), MpiDataType<T>(), stat));
 
     }
 

@@ -25,7 +25,8 @@ namespace hemelb
       }
       bool RequiredSiteInformation::RequiresAny()
       {
-        for (std::vector<bool>::iterator choice = choices.begin(); choice != choices.end(); choice++)
+        for (std::vector<bool>::iterator choice = choices.begin(); choice != choices.end();
+            choice++)
         {
           if (*choice)
           {
@@ -72,14 +73,14 @@ namespace hemelb
       {
         for (int choice = terms::SiteData; choice < terms::Length; choice++)
         {
-          choices[choice]=choices[choice] || other.choices[choice];
+          choices[choice] = choices[choice] || other.choices[choice];
         }
       }
       void RequiredSiteInformation::And(const RequiredSiteInformation& other)
       {
         for (int choice = terms::SiteData; choice < terms::Length; choice++)
         {
-         choices[choice]=choices[choice] && other.choices[choice];
+          choices[choice] = choices[choice] && other.choices[choice];
         }
       }
     }

@@ -52,8 +52,8 @@ namespace hemelb
           {
             wallIntersection |= 1 << (direction - 1);
           }
-          else if (link.type == GeometrySiteLink::INLET_INTERSECTION || link.type
-              == GeometrySiteLink::OUTLET_INTERSECTION)
+          else if (link.type == GeometrySiteLink::INLET_INTERSECTION
+              || link.type == GeometrySiteLink::OUTLET_INTERSECTION)
           {
             ioletIntersection |= 1 << (direction - 1);
           }
@@ -72,23 +72,23 @@ namespace hemelb
           }
         }
 
-        type = hadInlet
-          ? INLET_TYPE
-          : (hadOutlet
-            ? OUTLET_TYPE
-            : FLUID_TYPE);
+        type = hadInlet ?
+          INLET_TYPE :
+          (hadOutlet ?
+            OUTLET_TYPE :
+            FLUID_TYPE);
 
       }
     }
 
     SiteData::SiteData(const SiteData& other) :
-      wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection),
-          type(other.type), ioletId(other.ioletId)
+        wallIntersection(other.wallIntersection), ioletIntersection(other.ioletIntersection),
+            type(other.type), ioletId(other.ioletId)
     {
     }
 
     SiteData::SiteData() :
-      wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1)
+        wallIntersection(0), ioletIntersection(0), type(SOLID_TYPE), ioletId(-1)
     {
     }
 

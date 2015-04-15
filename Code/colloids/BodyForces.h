@@ -25,19 +25,23 @@ namespace hemelb
       public:
         virtual const LatticeForceVector GetForceForParticle(const Particle&) const =0;
       protected:
-        virtual ~BodyForce() {};
+        virtual ~BodyForce()
+        {
+        }
+        ;
     };
 
     typedef BodyForce*(*BodyForceFactory_Create)(io::xml::Element& xml);
 
-    template <class TClass>
+    template<class TClass>
     class BodyForceFactory
     {
       public:
         static BodyForce* Create(io::xml::Element& xml)
         {
           return TClass::ReadFromXml(xml);
-        };
+        }
+        ;
     };
 
     /** container for all body forces currently active in the simulation */
@@ -73,7 +77,7 @@ namespace hemelb
          * the value type must be a base class pointer
          * as only pointers are type-compatible in C++
          */
-        static std::map<std::string, const BodyForce* const> bodyForces;
+        static std::map<std::string, const BodyForce* const > bodyForces;
         static std::map<site_t, LatticeForceVector> forceForEachSite;
     };
   }

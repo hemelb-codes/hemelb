@@ -25,7 +25,7 @@ namespace hemelb
          */
       public:
         // the singleton pattern
-        static Debugger* Init(bool active, const char *const, const net::MpiCommunicator& comm);
+        static Debugger* Init(bool active, const char * const, const net::MpiCommunicator& comm);
         static Debugger* Get(void);
 
         virtual void BreakHere(void) = 0;

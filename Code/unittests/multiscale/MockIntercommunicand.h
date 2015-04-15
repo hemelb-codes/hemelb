@@ -28,24 +28,28 @@ namespace hemelb
       class MockIntercommunicand : public Intercommunicand
       {
         public:
-          MockIntercommunicand(double pressure=0,double velocity=0) :
-          Intercommunicand(), pressure(this,pressure), velocity(this,velocity)
+          MockIntercommunicand(double pressure = 0, double velocity = 0) :
+              Intercommunicand(), pressure(this, pressure), velocity(this, velocity)
           {
           }
           virtual ~MockIntercommunicand()
           {
           }
           ;
-          double GetPressure(){
+          double GetPressure()
+          {
             return pressure;
           }
-          double GetVelocity(){
+          double GetVelocity()
+          {
             return velocity;
           }
-          void SetPressure(double aPressure){
+          void SetPressure(double aPressure)
+          {
             pressure.SetPayload(aPressure);
           }
-          void SetVelocity(double aVelocity){
+          void SetVelocity(double aVelocity)
+          {
             velocity.SetPayload(aVelocity);
           }
         private:

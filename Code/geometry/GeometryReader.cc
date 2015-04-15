@@ -33,7 +33,7 @@ namespace hemelb
     GeometryReader::GeometryReader(const bool reserveSteeringCore,
                                    const lb::lattices::LatticeInfo& latticeInfo,
                                    reporting::Timers &atimings, const net::IOCommunicator& ioComm) :
-      latticeInfo(latticeInfo), hemeLbComms(ioComm), timings(atimings)
+        latticeInfo(latticeInfo), hemeLbComms(ioComm), timings(atimings)
     {
       // This rank should participate in the domain decomposition if
       //  - there's no steering core (then all ranks are involved)
@@ -77,20 +77,16 @@ namespace hemelb
       std::string buffering = "collective_buffering";
       std::string bufferingValue = "true";
 
-      HEMELB_MPI_CALL(MPI_Info_set, (fileInfo,
-          const_cast<char*> (accessStyle.c_str()),
-          const_cast<char*> (accessStyleValue.c_str()))
-      );
-      HEMELB_MPI_CALL(MPI_Info_set, (fileInfo,
-          const_cast<char*> (buffering.c_str()),
-          const_cast<char*> (bufferingValue.c_str()))
-      );
+      HEMELB_MPI_CALL(MPI_Info_set,
+                      (fileInfo, const_cast<char*> (accessStyle.c_str()), const_cast<char*> (accessStyleValue.c_str())));
+      HEMELB_MPI_CALL(MPI_Info_set,
+                      (fileInfo, const_cast<char*> (buffering.c_str()), const_cast<char*> (bufferingValue.c_str())));
 
       // Open the file.
       file = net::MpiFile::Open(hemeLbComms, dataFilePath, MPI_MODE_RDONLY, fileInfo);
       log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       // TODO: Why is there this fflush?
-      fflush( nullptr);
+      fflush(nullptr);
 
       // Set the view to the file.
       file.SetView(0, MPI_CHAR, MPI_CHAR, "native", fileInfo);
@@ -198,8 +194,8 @@ namespace hemelb
       std::vector<char> preambleBuffer = ReadOnAllTasks(preambleBytes);
 
       // Create an Xdr translator based on the read-in data.
-      io::writers::xdr::XdrReader preambleReader = io::writers::xdr::XdrMemReader(&preambleBuffer[0],
-                                                                                  preambleBytes);
+      io::writers::xdr::XdrReader preambleReader =
+          io::writers::xdr::XdrMemReader(&preambleBuffer[0], preambleBytes);
 
       unsigned hlbMagicNumber, gmyMagicNumber, version;
       // Read in housekeeping values
@@ -211,23 +207,21 @@ namespace hemelb
       if (hlbMagicNumber != io::formats::HemeLbMagicNumber)
       {
         throw Exception() << "This file does not start with the HemeLB magic number."
-            << " Expected: " << unsigned(io::formats::HemeLbMagicNumber)
-            << " Actual: " << hlbMagicNumber;
+            << " Expected: " << unsigned(io::formats::HemeLbMagicNumber) << " Actual: "
+            << hlbMagicNumber;
       }
 
       // Check the value of the geometry file magic number.
       if (gmyMagicNumber != io::formats::geometry::MagicNumber)
       {
-        throw Exception() << "This file does not have the geometry magic number."
-            << " Expected: " << unsigned(io::formats::geometry::MagicNumber)
-            << " Actual: " << gmyMagicNumber;
+        throw Exception() << "This file does not have the geometry magic number." << " Expected: "
+            << unsigned(io::formats::geometry::MagicNumber) << " Actual: " << gmyMagicNumber;
       }
 
       if (version != io::formats::geometry::VersionNumber)
       {
-        throw Exception() << "Version number incorrect."
-            << " Supported: " << unsigned(io::formats::geometry::VersionNumber)
-            << " Input: " << version;
+        throw Exception() << "Version number incorrect." << " Supported: "
+            << unsigned(io::formats::geometry::VersionNumber) << " Input: " << version;
       }
 
       // Variables we'll read.
@@ -252,8 +246,7 @@ namespace hemelb
       unsigned paddingValue;
       preambleReader.readUnsignedInt(paddingValue);
 
-      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ),
-                      blockSize);
+      return Geometry(util::Vector3D<site_t>(blocksX, blocksY, blocksZ), blockSize);
     }
 
     /**
@@ -341,7 +334,8 @@ namespace hemelb
           + GetHeaderLength(geometry.GetBlockCount());
 
       // Iterate over each block.
-      for (site_t nextBlockToRead = 0; nextBlockToRead < geometry.GetBlockCount(); ++nextBlockToRead)
+      for (site_t nextBlockToRead = 0; nextBlockToRead < geometry.GetBlockCount();
+          ++nextBlockToRead)
       {
         // Read in the block on all cores (nothing will be done if this core doesn't need the block).
         ReadInBlock(offset,
@@ -379,8 +373,8 @@ namespace hemelb
         file.ReadAt(offsetSoFar, compressedBlockData);
 
         // Spread it.
-        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin(); receiver
-            != procsWantingThisBlock.end(); receiver++)
+        for (std::vector<proc_t>::const_iterator receiver = procsWantingThisBlock.begin();
+            receiver != procsWantingThisBlock.end(); receiver++)
         {
           if (*receiver != computeComms.Rank())
           {
@@ -459,14 +453,14 @@ namespace hemelb
       stream.zfree = Z_NULL;
       stream.opaque = Z_NULL;
       stream.avail_in = compressed.size();
-      stream.next_in = reinterpret_cast<unsigned char*> (const_cast<char*> (&compressed.front()));
+      stream.next_in = reinterpret_cast<unsigned char*>(const_cast<char*>(&compressed.front()));
 
       ret = inflateInit(&stream);
       if (ret != Z_OK)
         throw Exception() << "Decompression error for block";
 
       stream.avail_out = uncompressed.size();
-      stream.next_out = reinterpret_cast<unsigned char*> (&uncompressed.front());
+      stream.next_out = reinterpret_cast<unsigned char*>(&uncompressed.front());
 
       ret = inflate(&stream, Z_FINISH);
       if (ret != Z_STREAM_END)
@@ -488,7 +482,8 @@ namespace hemelb
       // optimisation and once after), so there can be sites on the block from the previous read.
       geometry.Blocks[block].Sites.clear();
 
-      for (site_t localSiteIndex = 0; localSiteIndex < geometry.GetSitesPerBlock(); ++localSiteIndex)
+      for (site_t localSiteIndex = 0; localSiteIndex < geometry.GetSitesPerBlock();
+          ++localSiteIndex)
       {
         geometry.Blocks[block].Sites.push_back(ParseSite(reader));
       }
@@ -555,7 +550,8 @@ namespace hemelb
         // Now, attempt to match the direction read from the local neighbourhood to one in the
         // lattice being used for simulation. If a match is found, assign the link to the read
         // site.
-        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors(); usedLatticeDirection++)
+        for (Direction usedLatticeDirection = 1; usedLatticeDirection < latticeInfo.GetNumVectors();
+            usedLatticeDirection++)
         {
           if (latticeInfo.GetVector(usedLatticeDirection) == neighbourhood[readDirection])
           {
@@ -573,11 +569,11 @@ namespace hemelb
 
       if (readInSite.wallNormalAvailable != isGmyWallSite)
       {
-        std::string msg = isGmyWallSite
-          ? "wall fluid site without"
-          : "bulk fluid site with";
-        throw Exception() << "Malformed GMY file, "
-            << msg << " a defined wall normal currently not allowed.";
+        std::string msg = isGmyWallSite ?
+          "wall fluid site without" :
+          "bulk fluid site with";
+        throw Exception() << "Malformed GMY file, " << msg
+            << " a defined wall normal currently not allowed.";
       }
 
       if (readInSite.wallNormalAvailable)
@@ -592,8 +588,8 @@ namespace hemelb
 
     proc_t GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
     {
-      return proc_t(blockNumber % util::NumericalFunctions::min(READING_GROUP_SIZE,
-                                                                computeComms.Size()));
+      return proc_t(blockNumber
+          % util::NumericalFunctions::min(READING_GROUP_SIZE, computeComms.Size()));
     }
 
     /**
@@ -664,8 +660,8 @@ namespace hemelb
                                                              site,
                                                              block);
           }
-          else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site]
-              != myProcForSite[site])
+          else if (myProcForSite[site] != BIG_NUMBER2
+              && procForSiteRecv[site] != myProcForSite[site])
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                              myProcForSite[site],
@@ -676,8 +672,8 @@ namespace hemelb
 
           if (geometry.Blocks[block].Sites.size() > 0)
           {
-            if (dummySiteData[site * latticeInfo.GetNumVectors()] != siteDataRecv[site
-                * latticeInfo.GetNumVectors()])
+            if (dummySiteData[site * latticeInfo.GetNumVectors()]
+                != siteDataRecv[site * latticeInfo.GetNumVectors()])
             {
               log::Logger::Log<log::Critical, log::OnePerCore>("Different fluid state was found for site %li on block %li. One: %li, Two: %li .",
                                                                site,
@@ -712,9 +708,7 @@ namespace hemelb
     }
 
     std::vector<bool> GeometryReader::DecideWhichBlocksToReadIncludingHalo(
-                                                                           const Geometry& geometry,
-                                                                           const std::vector<proc_t>& unitForEachBlock,
-                                                                           proc_t localRank)
+        const Geometry& geometry, const std::vector<proc_t>& unitForEachBlock, proc_t localRank)
     {
       std::vector<bool> shouldReadBlock(geometry.GetBlockCount(), false);
 
@@ -734,14 +728,15 @@ namespace hemelb
             }
 
             // Read in all neighbouring blocks.
-            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI
-                <= (blockI + 1)) && (neighI < geometry.GetBlockDimensions().x); ++neighI)
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1);
+                (neighI <= (blockI + 1)) && (neighI < geometry.GetBlockDimensions().x); ++neighI)
             {
-              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ
-                  <= (blockJ + 1)) && (neighJ < geometry.GetBlockDimensions().y); ++neighJ)
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1);
+                  (neighJ <= (blockJ + 1)) && (neighJ < geometry.GetBlockDimensions().y); ++neighJ)
               {
-                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK
-                    <= (blockK + 1)) && (neighK < geometry.GetBlockDimensions().z); ++neighK)
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1);
+                    (neighK <= (blockK + 1)) && (neighK < geometry.GetBlockDimensions().z);
+                    ++neighK)
                 {
                   site_t lNeighId = geometry.GetBlockIdFromBlockCoordinates(neighI, neighJ, neighK);
 
@@ -849,8 +844,8 @@ namespace hemelb
             if (geometry.Blocks[block].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
             {
               // ... set its rank to be the rank it had before optimisation.
-              geometry.Blocks[block].Sites[siteIndex].targetProcessor
-                  = ConvertTopologyRankToGlobalRank(originalProc);
+              geometry.Blocks[block].Sites[siteIndex].targetProcessor =
+                  ConvertTopologyRankToGlobalRank(originalProc);
             }
           }
         }
@@ -889,8 +884,8 @@ namespace hemelb
             }
 
             // Implement the move.
-            geometry.Blocks[block].Sites[site].targetProcessor
-                = ConvertTopologyRankToGlobalRank((proc_t) toProc);
+            geometry.Blocks[block].Sites[site].targetProcessor =
+                ConvertTopologyRankToGlobalRank((proc_t) toProc);
           }
 
           ++moveIndex;
@@ -902,9 +897,9 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (hemeLbComms.Rank() == computeComms.Rank())
-        ? topologyRankIn
-        : (topologyRankIn + 1);
+      return (hemeLbComms.Rank() == computeComms.Rank()) ?
+        topologyRankIn :
+        (topologyRankIn + 1);
     }
 
     bool GeometryReader::ShouldValidate() const

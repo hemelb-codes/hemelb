@@ -27,11 +27,7 @@ namespace hemelb
         Screen();
         ~Screen();
 
-        void Set(float maxX,
-                 float maxY,
-                 int pixelsX,
-                 int pixelsY,
-                 float rad,
+        void Set(float maxX, float maxY, int pixelsX, int pixelsY, float rad,
                  const Viewpoint* viewpoint);
 
         void Resize(unsigned int pixelsX, unsigned int pixelsY);
@@ -47,8 +43,8 @@ namespace hemelb
         template<typename T>
         XYCoordinates<T> TransformScreenToPixelCoordinates(const XYCoordinates<float>& iXYIn) const
         {
-          return XYCoordinates<T> (static_cast<T> (mPixelsPerUnitX * (iXYIn.x + MaxXValue)),
-                                   static_cast<T> (mPixelsPerUnitY * (iXYIn.y + MaxYValue)));
+          return XYCoordinates<T>(static_cast<T>(mPixelsPerUnitX * (iXYIn.x + MaxXValue)),
+                                  static_cast<T>(mPixelsPerUnitY * (iXYIn.y + MaxYValue)));
         }
 
         const util::Vector3D<float>& GetCameraToBottomLeftOfScreenVector() const;

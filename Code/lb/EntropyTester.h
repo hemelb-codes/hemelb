@@ -23,12 +23,11 @@ namespace hemelb
     class EntropyTester : public net::PhasedBroadcastRegular<false, 1, 1, false, true>
     {
       public:
-        EntropyTester(int* collisionTypes,
-                      unsigned int typesTested,
-                      const geometry::LatticeData * iLatDat,
-                      net::Net* net,
+        EntropyTester(int* collisionTypes, unsigned int typesTested,
+                      const geometry::LatticeData * iLatDat, net::Net* net,
                       SimulationState* simState) :
-            net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR), mLatDat(iLatDat)
+            net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
+                mLatDat(iLatDat)
         {
           for (unsigned int i = 0; i < COLLISION_TYPES; i++)
           {
@@ -64,7 +63,8 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
+              for (site_t i = offset;
+                  i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
                 const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
 
@@ -80,7 +80,8 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
+              for (site_t i = offset;
+                  i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
                 const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
 
@@ -137,7 +138,8 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
+              for (site_t i = offset;
+                  i < offset + mLatDat->GetMidDomainCollisionCount(collision_type); i++)
               {
                 const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);
@@ -152,7 +154,8 @@ namespace hemelb
           {
             if (mCollisionTypesTested[collision_type])
             {
-              for (site_t i = offset; i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
+              for (site_t i = offset;
+                  i < offset + mLatDat->GetDomainEdgeCollisionCount(collision_type); i++)
               {
                 const geometry::Site<const geometry::LatticeData> site = mLatDat->GetSite(i);
                 HFunction<LatticeType> HFunc(site.GetFOld<LatticeType>(), nullptr);

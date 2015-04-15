@@ -9,14 +9,23 @@
 
 #ifndef HEMELB_UNITTESTS_COMPARISONS_H
 #define HEMELB_UNITTESTS_COMPARISONS_H
-namespace hemelb { namespace unittests { namespace helpers {
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace helpers
+    {
 
-  inline bool is_zero(util::Vector3D<double> const &_in, double _tol = 1e-8) {
-    return std::sqrt(_in.GetMagnitudeSquared()) < _tol;
-  }
-  inline  bool is_zero(double const _in, double _tol = 1e-8) {
-    return std::abs(_in) < _tol;
-  }
+      inline bool is_zero(util::Vector3D<double> const &_in, double _tol = 1e-8)
+      {
+        return std::sqrt(_in.GetMagnitudeSquared()) < _tol;
+      }
+      inline bool is_zero(double const _in, double _tol = 1e-8)
+      {
+        return std::abs(_in) < _tol;
+      }
 
-}}}
+    }
+  }
+}
 #endif

@@ -32,25 +32,25 @@ namespace hemelb
        */
       class CollisionTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE( CollisionTests);
-          CPPUNIT_TEST( TestNonZeroVelocityEquilibriumFixedDensity);
-          CPPUNIT_TEST( TestZeroVelocityEquilibriumFixedDensity);
-          CPPUNIT_TEST( TestZeroVelocityEquilibrium);
-          CPPUNIT_TEST( TestNormal);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (CollisionTests);
+          CPPUNIT_TEST (TestNonZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST (TestZeroVelocityEquilibriumFixedDensity);
+          CPPUNIT_TEST (TestZeroVelocityEquilibrium);
+          CPPUNIT_TEST (TestNormal);CPPUNIT_TEST_SUITE_END();
         public:
           void TestNonZeroVelocityEquilibriumFixedDensity()
           {
             lb::iolets::BoundaryValues inletBoundary(geometry::INLET_TYPE,
-                                                         latDat,
-                                                         simConfig->GetInlets(),
-                                                         simState,
-                                                         Comms(),
-                                                         *unitConverter);
+                                                     latDat,
+                                                     simConfig->GetInlets(),
+                                                     simState,
+                                                     Comms(),
+                                                     *unitConverter);
 
             initParams.boundaryObject = &inletBoundary;
 
-            lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
-                nonZeroVFixedDensityILet(initParams);
+            lb::collisions::NonZeroVelocityEquilibriumFixedDensity<
+                lb::kernels::LBGK<lb::lattices::D3Q15> > nonZeroVFixedDensityILet(initParams);
 
             distribn_t allowedError = 1e-10;
 
@@ -73,7 +73,9 @@ namespace hemelb
             distribn_t expectedMomentum[3];
 
             distribn_t originalRho;
-            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld, originalRho, expectedMomentum);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld,
+                                                                     originalRho,
+                                                                     expectedMomentum);
 
             // Now need to scale the momentum, expectedV, to account for the difference between
             // original and enforced densities.
@@ -113,15 +115,15 @@ namespace hemelb
           void TestZeroVelocityEquilibriumFixedDensity()
           {
             lb::iolets::BoundaryValues outletBoundary(geometry::OUTLET_TYPE,
-                                                          latDat,
-                                                          simConfig->GetOutlets(),
-                                                          simState,
-                                                          Comms(),
-                                                          *unitConverter);
+                                                      latDat,
+                                                      simConfig->GetOutlets(),
+                                                      simState,
+                                                      Comms(),
+                                                      *unitConverter);
             initParams.boundaryObject = &outletBoundary;
 
-            lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK<lb::lattices::D3Q15> >
-                zeroVFixedDensityOLet(initParams);
+            lb::collisions::ZeroVelocityEquilibriumFixedDensity<
+                lb::kernels::LBGK<lb::lattices::D3Q15> > zeroVFixedDensityOLet(initParams);
 
             distribn_t allowedError = 1e-10;
 
@@ -239,7 +241,6 @@ namespace hemelb
             lb::kernels::HydroVars<lb::kernels::LBGK<lb::lattices::D3Q15> > hydroVars(fOld);
             hydroVars.tau = lbmParams->GetTau();
 
-
             // Test the pre-collision step, which should calculate the correct
             // post-collisional density, velocity and equilibrium distribution.
             normal.CalculatePreCollision(hydroVars, latDat->GetSite(0));
@@ -248,7 +249,9 @@ namespace hemelb
             distribn_t expectedRho;
             distribn_t expectedMomentum[3];
 
-            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld, expectedRho, expectedMomentum);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(fOld,
+                                                                     expectedRho,
+                                                                     expectedMomentum);
 
             distribn_t expectedFeq[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedRho,
@@ -285,7 +288,7 @@ namespace hemelb
             }
           }
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (CollisionTests);
     }
   }
 }

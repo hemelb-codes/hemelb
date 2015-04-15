@@ -27,10 +27,7 @@ namespace hemelb
 
       MPI_Datatype ret;
 
-      HEMELB_MPI_CALL(
-          MPI_Type_create_struct,
-          (typeCount, blocklengths, displacements, types, &ret)
-      );
+      HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
 
       HEMELB_MPI_CALL(MPI_Type_commit, (&ret));
       return ret;
@@ -38,19 +35,19 @@ namespace hemelb
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<float> >::RegisterMpiDataType()
     {
-      return GenerateTypeForVector<float> ();
+      return GenerateTypeForVector<float>();
     }
 
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<site_t> >::RegisterMpiDataType()
     {
-      return GenerateTypeForVector<site_t> ();
+      return GenerateTypeForVector<site_t>();
     }
 
     template<>
     MPI_Datatype MpiDataTypeTraits<hemelb::util::Vector3D<distribn_t> >::RegisterMpiDataType()
     {
-      return GenerateTypeForVector<distribn_t> ();
+      return GenerateTypeForVector<distribn_t>();
     }
   }
   namespace util

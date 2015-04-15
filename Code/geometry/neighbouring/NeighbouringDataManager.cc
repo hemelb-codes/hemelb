@@ -24,8 +24,7 @@ namespace hemelb
           const LatticeData & localLatticeData, NeighbouringLatticeData & neighbouringLatticeData,
           net::InterfaceDelegationNet & net) :
           localLatticeData(localLatticeData), neighbouringLatticeData(neighbouringLatticeData),
-              net(net), needsEachProcHasFromMe(net.Size()),
-              needsHaveBeenShared(false)
+              net(net), needsEachProcHasFromMe(net.Size()), needsHaveBeenShared(false)
       {
       }
       void NeighbouringDataManager::RegisterNeededSite(site_t globalId,
@@ -102,11 +101,10 @@ namespace hemelb
       void NeighbouringDataManager::RequestComms()
       {
         /*if (needsHaveBeenShared == false)
-        {
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
-          ShareNeeds();
-        }*/ ///TODO: Re-enable!
-
+         {
+         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("NDM needs are shared now.");
+         ShareNeeds();
+         }*/ ///TODO: Re-enable!
         // Ordering is important here, to ensure the requests are registered in the same order
         // on the sending and receiving procs.
         // But, the needsEachProcHasFromMe is always ordered,

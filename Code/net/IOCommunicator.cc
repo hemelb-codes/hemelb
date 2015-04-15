@@ -14,7 +14,8 @@ namespace hemelb
 {
   namespace net
   {
-    IOCommunicator::IOCommunicator(const MpiCommunicator& comm) : MpiCommunicator(comm)
+    IOCommunicator::IOCommunicator(const MpiCommunicator& comm) :
+        MpiCommunicator(comm)
     {
     }
 

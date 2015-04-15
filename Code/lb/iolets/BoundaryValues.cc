@@ -26,8 +26,8 @@ namespace hemelb
                                      SimulationState* simulationState,
                                      const net::MpiCommunicator& comms,
                                      const util::UnitConverter& units) :
-        net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()), localIoletCount(0),
-            state(simulationState), unitConverter(units), bcComms(comms)
+          net::IteratedAction(), ioletType(ioletType), totalIoletCount(incoming_iolets.size()),
+              localIoletCount(0), state(simulationState), unitConverter(units), bcComms(comms)
       {
         std::vector<int> *procsList = new std::vector<int>[totalIoletCount];
 
@@ -42,7 +42,8 @@ namespace hemelb
           iolets.push_back(iolet);
 
           bool isIOletOnThisProc = IsIOletOnThisProc(ioletType, latticeData, ioletIndex);
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d", isIOletOnThisProc);
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.CC - isioletonthisproc? : %d",
+                                                                                isIOletOnThisProc);
           procsList[ioletIndex] = GatherProcList(isIOletOnThisProc);
 
           // With information on whether a proc has an IOlet and the list of procs for each IOlte
@@ -55,7 +56,10 @@ namespace hemelb
 
 //            if (iolet->IsCommsRequired()) //DEREK: POTENTIAL MULTISCALE ISSUE (this if-statement)
 //            {
-              iolet->SetComms(new BoundaryComms(state, procsList[ioletIndex], bcComms, isIOletOnThisProc));
+            iolet->SetComms(new BoundaryComms(state,
+                                              procsList[ioletIndex],
+                                              bcComms,
+                                              isIOletOnThisProc));
 //            }
           }
         }
@@ -66,7 +70,9 @@ namespace hemelb
         // Clear up
         delete[] procsList;
 
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletCount: %d, first iolet ID %d", localIoletCount, localIoletIDs[0]);
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("BOUNDARYVALUES.H - ioletCount: %d, first iolet ID %d",
+                                                                              localIoletCount,
+                                                                              localIoletIDs[0]);
 
       }
 
@@ -80,8 +86,7 @@ namespace hemelb
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::SiteType ioletType,
-                                             geometry::LatticeData* latticeData,
-                                             int boundaryId)
+                                             geometry::LatticeData* latticeData, int boundaryId)
       {
         for (site_t i = 0; i < latticeData->GetLocalFluidSiteCount(); i++)
         {
@@ -109,7 +114,8 @@ namespace hemelb
         // Each stores true/false value. True if proc of rank equal to the index contains
         // the given inlet/outlet.
 
-        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIOletOnThisProc, bcComms.GetBCProcRank());
+        std::vector<int> processorsNeedingIoletFlags = bcComms.Gather(isIOletOnThisProc,
+                                                                      bcComms.GetBCProcRank());
 
         if (bcComms.IsCurrentProcTheBCProc())
         {

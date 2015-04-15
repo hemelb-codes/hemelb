@@ -16,7 +16,7 @@ namespace hemelb
   namespace debug
   {
     OsxDebugger::OsxDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      ActiveDebugger(executable, comm)
+        ActiveDebugger(executable, comm)
     {
     }
     const std::string OsxDebugger::GetBinaryPath(void) const

@@ -22,12 +22,12 @@ namespace hemelb
     LocalPropertyOutput::LocalPropertyOutput(IterableDataSource& dataSource,
                                              const PropertyOutputFile* outputSpec,
                                              const net::IOCommunicator& ioComms) :
-      comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
+        comms(ioComms), dataSource(dataSource), outputSpec(outputSpec)
     {
       // Open the file as write-only, create it if it doesn't exist, don't create if the file
       // already exists.
       outputFile = net::MpiFile::Open(comms, outputSpec->filename,
-                                      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
+      MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL);
       // Count sites on this task
       uint64_t siteCount = 0;
       dataSource.Reset();
@@ -68,8 +68,7 @@ namespace hemelb
 
       // Only the root process needs to know the total number of sites written
       // Note this has a garbage value on other procs.
-      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM,
-                                           comms.GetIORank());
+      uint64_t allSiteCount = comms.Reduce(siteCount, MPI_SUM, comms.GetIORank());
 
       unsigned totalHeaderLength = 0;
 
@@ -81,8 +80,8 @@ namespace hemelb
         for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
         {
           // Name
-          fieldHeaderLength
-              += io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
+          fieldHeaderLength +=
+              io::formats::extraction::GetStoredLengthOfString(outputSpec->fields[outputNumber].name);
           // Uint32 for number of fields
           fieldHeaderLength += 4;
           // Double for the offset in each field
@@ -95,8 +94,8 @@ namespace hemelb
 
         {
           // Encoder for ONLY the main header (note shorter length)
-          io::writers::xdr::XdrMemWriter
-              mainHeaderWriter(&headerBuffer[0], io::formats::extraction::MainHeaderLength);
+          io::writers::xdr::XdrMemWriter mainHeaderWriter(&headerBuffer[0],
+                                                          io::formats::extraction::MainHeaderLength);
 
           // Fill it
           mainHeaderWriter << uint32_t(io::formats::HemeLbMagicNumber)
@@ -114,9 +113,8 @@ namespace hemelb
         }
         {
           // Create the field header writer
-          io::writers::xdr::XdrMemWriter
-              fieldHeaderWriter(&headerBuffer[io::formats::extraction::MainHeaderLength],
-                                fieldHeaderLength);
+          io::writers::xdr::XdrMemWriter fieldHeaderWriter(&headerBuffer[io::formats::extraction::MainHeaderLength],
+                                                           fieldHeaderLength);
           // Write it
           for (unsigned outputNumber = 0; outputNumber < outputSpec->fields.size(); ++outputNumber)
           {
@@ -139,18 +137,18 @@ namespace hemelb
 
         if (comms.Size() > 1)
         {
-          comms.Send(localDataOffsetIntoFile+writeLength, 1, 1);
+          comms.Send(localDataOffsetIntoFile + writeLength, 1, 1);
         }
       }
       else
       {
         // Receive the writing start position from the previous core.
-        comms.Receive(localDataOffsetIntoFile, comms.Rank()-1, 1);
+        comms.Receive(localDataOffsetIntoFile, comms.Rank() - 1, 1);
 
         // Send the next core its start position.
         if (comms.Rank() != (comms.Size() - 1))
         {
-          comms.Send(localDataOffsetIntoFile+writeLength, comms.Rank() + 1, 1);
+          comms.Send(localDataOffsetIntoFile + writeLength, comms.Rank() + 1, 1);
         }
       }
 
@@ -212,50 +210,50 @@ namespace hemelb
             switch (outputSpec->fields[outputNumber].type)
             {
               case OutputField::Pressure:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetPressure()
-                    - REFERENCE_PRESSURE_mmHg);
+                xdrWriter
+                    << static_cast<WrittenDataType>(dataSource.GetPressure()
+                        - REFERENCE_PRESSURE_mmHg);
                 break;
               case OutputField::Velocity:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetVelocity().x)
-                    << static_cast<WrittenDataType> (dataSource.GetVelocity().y)
-                    << static_cast<WrittenDataType> (dataSource.GetVelocity().z);
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVelocity().x)
+                    << static_cast<WrittenDataType>(dataSource.GetVelocity().y)
+                    << static_cast<WrittenDataType>(dataSource.GetVelocity().z);
                 break;
                 //! @TODO: Work out how to handle the different stresses.
               case OutputField::VonMisesStress:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetVonMisesStress());
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetVonMisesStress());
                 break;
               case OutputField::ShearStress:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetShearStress());
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearStress());
                 break;
               case OutputField::ShearRate:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetShearRate());
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetShearRate());
                 break;
               case OutputField::StressTensor:
               {
                 util::Matrix3D tensor = dataSource.GetStressTensor();
                 // Only the upper triangular part of the symmetric tensor is stored. Storage is row-wise.
-                xdrWriter << static_cast<WrittenDataType> (tensor[0][0])
-                    << static_cast<WrittenDataType> (tensor[0][1])
-                    << static_cast<WrittenDataType> (tensor[0][2])
-                    << static_cast<WrittenDataType> (tensor[1][1])
-                    << static_cast<WrittenDataType> (tensor[1][2])
-                    << static_cast<WrittenDataType> (tensor[2][2]);
+                xdrWriter << static_cast<WrittenDataType>(tensor[0][0])
+                    << static_cast<WrittenDataType>(tensor[0][1])
+                    << static_cast<WrittenDataType>(tensor[0][2])
+                    << static_cast<WrittenDataType>(tensor[1][1])
+                    << static_cast<WrittenDataType>(tensor[1][2])
+                    << static_cast<WrittenDataType>(tensor[2][2]);
                 break;
               }
               case OutputField::Traction:
-                xdrWriter << static_cast<WrittenDataType> (dataSource.GetTraction().x)
-                    << static_cast<WrittenDataType> (dataSource.GetTraction().y)
-                    << static_cast<WrittenDataType> (dataSource.GetTraction().z);
+                xdrWriter << static_cast<WrittenDataType>(dataSource.GetTraction().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTraction().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTraction().z);
                 break;
               case OutputField::TangentialProjectionTraction:
                 xdrWriter
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().x)
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().y)
-                    << static_cast<WrittenDataType> (dataSource.GetTangentialProjectionTraction().z);
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().x)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().y)
+                    << static_cast<WrittenDataType>(dataSource.GetTangentialProjectionTraction().z);
                 break;
               case OutputField::MpiRank:
-                xdrWriter
-                    << static_cast<WrittenDataType> (comms.Rank());
+                xdrWriter << static_cast<WrittenDataType>(comms.Rank());
                 break;
               default:
                 // This should never trip. It only occurs when a new OutputField field is added and no

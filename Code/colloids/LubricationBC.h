@@ -28,71 +28,70 @@ namespace hemelb
         }
 
         virtual const bool DoSomethingToParticle(
-                             Particle& particle,
-                             const std::vector<LatticePosition> particleToWallVectors)
+            Particle& particle, const std::vector<LatticePosition> particleToWallVectors)
         {
           const bool keep = true;
 
-          log::Logger::Log<log::Trace, log::OnePerCore>(
-            "*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***\n",
-            particle.GetParticleId());
+          log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle for particleId: %lu ***\n",
+                                                        particle.GetParticleId());
 
           LatticeVelocity lubricationVelocityAdjustment;
           particle.SetLubricationVelocityAdjustment(lubricationVelocityAdjustment);
 
           for (std::vector<LatticePosition>::const_iterator iter = particleToWallVectors.begin();
-               iter != particleToWallVectors.end();
-               iter++)
+              iter != particleToWallVectors.end(); iter++)
           {
             const LatticePosition particleToWallVector = *iter;
             const LatticeDistance separation_h = particleToWallVector.GetMagnitude()
-                                               - particle.GetRadius();
+                - particle.GetRadius();
 
-            log::Logger::Log<log::Trace, log::OnePerCore>(
-              "*** In LubricationBC::DoSomethingToParticle - wall vector: {%g,%g,%g}, mag: %g, particle radius: %g, separation_h: %g\n",
-              particleToWallVector.x,
-              particleToWallVector.y,
-              particleToWallVector.z,
-              particleToWallVector.GetMagnitude(),
-              particle.GetRadius(),
-              separation_h);
+            log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - wall vector: {%g,%g,%g}, mag: %g, particle radius: %g, separation_h: %g\n",
+                                                          particleToWallVector.x,
+                                                          particleToWallVector.y,
+                                                          particleToWallVector.z,
+                                                          particleToWallVector.GetMagnitude(),
+                                                          particle.GetRadius(),
+                                                          separation_h);
 
             if (separation_h <= effectiveRange)
             {
-              lubricationVelocityAdjustment +=
-                particleToWallVector.GetNormalised()
-                * particle.GetVelocity().Dot(particleToWallVector.GetNormalised())
-                * ( (separation_h - effectiveRange) / (separation_h * effectiveRange) )
-                * particle.GetRadius() * particle.GetRadius()
-                * particle.GetInverseNormalisedRadius();
+              lubricationVelocityAdjustment += particleToWallVector.GetNormalised()
+                  * particle.GetVelocity().Dot(particleToWallVector.GetNormalised())
+                  * ( (separation_h - effectiveRange) / (separation_h * effectiveRange))
+                  * particle.GetRadius() * particle.GetRadius()
+                  * particle.GetInverseNormalisedRadius();
 
-              log::Logger::Log<log::Trace, log::OnePerCore>(
-                "*** In LubricationBC::DoSomethingToParticle - radius: %g, separation: %g, adj: {%g,%g,%g}\n",
-                particle.GetInverseNormalisedRadius(),
-                ( (effectiveRange - separation_h) / (separation_h * effectiveRange) ),
-                lubricationVelocityAdjustment.x,
-                lubricationVelocityAdjustment.y,
-                lubricationVelocityAdjustment.z);
-            } else {
-              log::Logger::Log<log::Trace, log::OnePerCore>(
-                "*** In LubricationBC::DoSomethingToParticle - separation: %g, range: %g\n",
-                separation_h, effectiveRange);
+              log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - radius: %g, separation: %g, adj: {%g,%g,%g}\n",
+                                                            particle.GetInverseNormalisedRadius(),
+                                                            ( (effectiveRange - separation_h)
+                                                                / (separation_h * effectiveRange)),
+                                                            lubricationVelocityAdjustment.x,
+                                                            lubricationVelocityAdjustment.y,
+                                                            lubricationVelocityAdjustment.z);
+            }
+            else
+            {
+              log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - separation: %g, range: %g\n",
+                                                            separation_h,
+                                                            effectiveRange);
             }
           }
           particle.SetLubricationVelocityAdjustment(lubricationVelocityAdjustment);
 
-          log::Logger::Log<log::Trace, log::OnePerCore>(
-            "*** In LubricationBC::DoSomethingToParticle - particleId: %lu, vel before: {%g,%g,%g}, total adj: {%g,%g,%g}, vel after: {%g,%g,%g}\n",
-            particle.GetParticleId(),
-            particle.GetVelocity().x - lubricationVelocityAdjustment.x,
-            particle.GetVelocity().y - lubricationVelocityAdjustment.y,
-            particle.GetVelocity().z - lubricationVelocityAdjustment.z,
-            lubricationVelocityAdjustment.x,
-            lubricationVelocityAdjustment.y,
-            lubricationVelocityAdjustment.z,
-            particle.GetVelocity().x,
-            particle.GetVelocity().y,
-            particle.GetVelocity().z);
+          log::Logger::Log<log::Trace, log::OnePerCore>("*** In LubricationBC::DoSomethingToParticle - particleId: %lu, vel before: {%g,%g,%g}, total adj: {%g,%g,%g}, vel after: {%g,%g,%g}\n",
+                                                        particle.GetParticleId(),
+                                                        particle.GetVelocity().x
+                                                            - lubricationVelocityAdjustment.x,
+                                                        particle.GetVelocity().y
+                                                            - lubricationVelocityAdjustment.y,
+                                                        particle.GetVelocity().z
+                                                            - lubricationVelocityAdjustment.z,
+                                                        lubricationVelocityAdjustment.x,
+                                                        lubricationVelocityAdjustment.y,
+                                                        lubricationVelocityAdjustment.z,
+                                                        particle.GetVelocity().x,
+                                                        particle.GetVelocity().y,
+                                                        particle.GetVelocity().z);
 
           return keep;
         }
@@ -103,11 +102,17 @@ namespace hemelb
         }
 
       protected:
-        LubricationBC(const LatticeDistance effectiveRange) : effectiveRange(effectiveRange) {};
+        LubricationBC(const LatticeDistance effectiveRange) :
+            effectiveRange(effectiveRange)
+        {
+        }
+        ;
         LatticeDistance effectiveRange;
     };
 
-    class LubricationBoundaryConditionFactory : public BoundaryConditionFactory<LubricationBC> { };
+    class LubricationBoundaryConditionFactory : public BoundaryConditionFactory<LubricationBC>
+    {
+    };
   }
 }
 #endif /* HEMELB_COLLOIDS_LUBRICATIONBC_H */

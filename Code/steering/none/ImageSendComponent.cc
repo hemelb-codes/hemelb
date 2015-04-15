@@ -13,11 +13,10 @@ namespace hemelb
 {
   namespace steering
   {
-    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState,
-                                           vis::Control* iControl,
-                                           const lb::LbmParameters* iLbmParams,
-                                           Network* iNetwork,
-                                           unsigned int inletCountIn): inletCount(inletCountIn), MaxFramerate(25.0)
+    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
+                                           const lb::LbmParameters* iLbmParams, Network* iNetwork,
+                                           unsigned int inletCountIn) :
+        inletCount(inletCountIn), MaxFramerate(25.0)
     {
 
     }

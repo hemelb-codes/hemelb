@@ -34,8 +34,7 @@ namespace hemelb
          * @param io Set to true if this MPI node is the I/O process and files should be written from this node.
          * @param processorCount The total count of processors, used in generating file-names for report files.
          */
-        PathManager(const configuration::CommandLine & commandLine,
-                    const bool &io,
+        PathManager(const configuration::CommandLine & commandLine, const bool &io,
                     const int &processorCount);
 
         /**

@@ -15,12 +15,11 @@ namespace hemelb
 {
   namespace geometry
   {
-    Needs::Needs(const site_t blockCount,
-                 const std::vector<bool>& readBlock,
-                 const proc_t readingGroupSize,
-                 net::InterfaceDelegationNet & net,
+    Needs::Needs(const site_t blockCount, const std::vector<bool>& readBlock,
+                 const proc_t readingGroupSize, net::InterfaceDelegationNet & net,
                  bool shouldValidate_) :
-        procsWantingBlocksBuffer(blockCount), communicator(net.GetCommunicator()), readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
+        procsWantingBlocksBuffer(blockCount), communicator(net.GetCommunicator()),
+            readingGroupSize(readingGroupSize), shouldValidate(shouldValidate_)
     {
       // Compile the blocks needed here into an array of indices, instead of an array of bools
       std::vector<std::vector<site_t> > blocksNeededHere(readingGroupSize);
@@ -67,8 +66,8 @@ namespace hemelb
         // Transpose the blocks needed on cores matrix
         for (proc_t sendingCore = 0; sendingCore < communicator.Size(); sendingCore++)
         {
-          for (int needForThisSendingCore = 0; needForThisSendingCore < blocksNeededSizes[sendingCore];
-              ++needForThisSendingCore)
+          for (int needForThisSendingCore = 0;
+              needForThisSendingCore < blocksNeededSizes[sendingCore]; ++needForThisSendingCore)
           {
             procsWantingBlocksBuffer[blocksNeededOn[needsPassed]].push_back(sendingCore);
 
@@ -98,7 +97,8 @@ namespace hemelb
           for (proc_t needingProcOld = 0; needingProcOld < communicator.Size(); needingProcOld++)
           {
             bool found = false;
-            for (std::vector<proc_t>::iterator needingProc = procsWantingBlocksBuffer[block].begin();
+            for (std::vector<proc_t>::iterator needingProc =
+                procsWantingBlocksBuffer[block].begin();
                 needingProc != procsWantingBlocksBuffer[block].end(); needingProc++)
             {
               if (*needingProc == needingProcOld)
@@ -109,14 +109,15 @@ namespace hemelb
             if (found && (!procsWantingThisBlockBuffer[needingProcOld]))
             {
               log::Logger::Log<log::Critical, log::OnePerCore>("Was not expecting block %i to be needed on proc %i, but was",
-                                                            block,
-                                                            needingProcOld);
+                                                               block,
+                                                               needingProcOld);
             }
-            if ( (!found) && procsWantingThisBlockBuffer[needingProcOld] && (needingProcOld != readingCore))
+            if ( (!found) && procsWantingThisBlockBuffer[needingProcOld]
+                && (needingProcOld != readingCore))
             {
               log::Logger::Log<log::Critical, log::OnePerCore>("Was expecting block %i to be needed on proc %i, but was not",
-                                                            block,
-                                                            needingProcOld);
+                                                               block,
+                                                               needingProcOld);
             } //if problem
           } // for old proc
         } // if reading group

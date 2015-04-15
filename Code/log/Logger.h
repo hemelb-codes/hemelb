@@ -58,7 +58,7 @@ namespace hemelb
           {
             va_list args;
             va_start(args, format);
-            LogInternal<logType> (format, args);
+            LogInternal<logType>(format, args);
             va_end(args);
           }
         }

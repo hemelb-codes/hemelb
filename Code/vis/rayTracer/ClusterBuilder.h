@@ -61,7 +61,8 @@ namespace hemelb
             LocateClusters();
 
             // Process the flow field for every cluster
-            for (unsigned int lThisClusterId = 0; lThisClusterId < mClusters.size(); lThisClusterId++)
+            for (unsigned int lThisClusterId = 0; lThisClusterId < mClusters.size();
+                lThisClusterId++)
             {
               ProcessCluster(lThisClusterId);
             }
@@ -212,18 +213,18 @@ namespace hemelb
                           util::Vector3D<site_t> clusterVoxelMin,
                           util::Vector3D<site_t> clusterVoxelMax)
           {
-            const util::Vector3D<float> halfLatticeSiteCount = util::Vector3D<float>(mLatticeData->GetSiteDimensions())
-                * 0.5F;
+            const util::Vector3D<float> halfLatticeSiteCount =
+                util::Vector3D<float>(mLatticeData->GetSiteDimensions()) * 0.5F;
 
             //The friendly locations must be turned into a format usable by the ray tracer
             ClusterType lNewCluster((unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x),
                                     (unsigned short) (1 + clusterBlockMax.y - clusterBlockMin.y),
                                     (unsigned short) (1 + clusterBlockMax.z - clusterBlockMin.z),
                                     util::Vector3D<float>(clusterVoxelMin) - halfLatticeSiteCount,
-                                    util::Vector3D<float>(clusterVoxelMax + util::Vector3D<site_t>(1))
-                                        - halfLatticeSiteCount,
-                                    util::Vector3D<float>(clusterBlockMin * mLatticeData->GetBlockSize())
-                                        - halfLatticeSiteCount,
+                                    util::Vector3D<float>(clusterVoxelMax
+                                        + util::Vector3D<site_t>(1)) - halfLatticeSiteCount,
+                                    util::Vector3D<float>(clusterBlockMin
+                                        * mLatticeData->GetBlockSize()) - halfLatticeSiteCount,
                                     clusterBlockMin);
 
             mClusters.push_back(lNewCluster);
@@ -260,15 +261,16 @@ namespace hemelb
             geometry::SiteTraverser siteTraverser(*mLatticeData);
             do
             {
-              UpdateSiteDataAtSite(blockId, blockIndexWithinCluster, cluster, siteTraverser.GetCurrentIndex());
+              UpdateSiteDataAtSite(blockId,
+                                   blockIndexWithinCluster,
+                                   cluster,
+                                   siteTraverser.GetCurrentIndex());
             }
             while (siteTraverser.TraverseOne());
           }
 
-          virtual void UpdateSiteDataAtSite(site_t blockId,
-                                            site_t blockIndexWithinCluster,
-                                            ClusterType& cluster,
-                                            site_t siteIdOnBlock)
+          virtual void UpdateSiteDataAtSite(site_t blockId, site_t blockIndexWithinCluster,
+                                            ClusterType& cluster, site_t siteIdOnBlock)
           {
             const geometry::Block& block = mLatticeData->GetBlock(blockId);
 
@@ -282,14 +284,13 @@ namespace hemelb
             }
           }
 
-          void UpdateWallNormalAtSite(const geometry::Block& block,
-                                      site_t blockNum,
-                                      ClusterType& cluster,
-                                      site_t siteIdOnBlock)
+          void UpdateWallNormalAtSite(const geometry::Block& block, site_t blockNum,
+                                      ClusterType& cluster, site_t siteIdOnBlock)
           {
             site_t localIndex = block.GetLocalContiguousIndexForSite(siteIdOnBlock);
 
-            const geometry::Site<const geometry::LatticeData> site = mLatticeData->GetSite(localIndex);
+            const geometry::Site<const geometry::LatticeData> site =
+                mLatticeData->GetSite(localIndex);
 
             if (site.IsWall())
             {
@@ -320,21 +321,111 @@ namespace hemelb
       ;
 
       template<typename ClusterType>
-      const util::Vector3D<site_t> ClusterBuilder<ClusterType>::mNeighbours[26] = {
-          util::Vector3D<site_t>(-1, -1, -1), util::Vector3D<site_t>(-1, -1, 0), util::Vector3D<site_t>(-1, -1, 1),
-          util::Vector3D<site_t>(-1, 0, -1), util::Vector3D<site_t>(-1, 0, 0), util::Vector3D<site_t>(-1, 0, 1),
-          util::Vector3D<site_t>(-1, 1, -1), util::Vector3D<site_t>(-1, 1, 0),
-          util::Vector3D<site_t>(-1, 1, 1),
-          util::Vector3D<site_t>(0, -1, -1),
-          util::Vector3D<site_t>(0, -1, 0),
-          util::Vector3D<site_t>(0, -1, 1),
-          util::Vector3D<site_t>(0, 0, -1),
-          // 0 0 0 is same site
-          util::Vector3D<site_t>(0, 0, 1), util::Vector3D<site_t>(0, 1, -1), util::Vector3D<site_t>(0, 1, 0),
-          util::Vector3D<site_t>(0, 1, 1), util::Vector3D<site_t>(1, -1, -1), util::Vector3D<site_t>(1, -1, 0),
-          util::Vector3D<site_t>(1, -1, 1), util::Vector3D<site_t>(1, 0, -1), util::Vector3D<site_t>(1, 0, 0),
-          util::Vector3D<site_t>(1, 0, 1), util::Vector3D<site_t>(1, 1, -1), util::Vector3D<site_t>(1, 1, 0),
-          util::Vector3D<site_t>(1, 1, 1) };
+      const util::Vector3D<site_t> ClusterBuilder<ClusterType>::mNeighbours[26] = { util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                -1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                -1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                -1,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                0,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                0,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                0,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(-1,
+                                                                                                1,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                -1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                -1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                -1,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                0,
+                                                                                                -1),
+                                                                                    // 0 0 0 is same site
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                0,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(0,
+                                                                                                1,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                -1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                -1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                -1,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                0,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                0,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                0,
+                                                                                                1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                1,
+                                                                                                -1),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                1,
+                                                                                                0),
+                                                                                    util::Vector3D<
+                                                                                        site_t>(1,
+                                                                                                1,
+                                                                                                1) };
 
     }
   }

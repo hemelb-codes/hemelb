@@ -25,12 +25,11 @@ namespace hemelb
       using namespace hemelb::reporting;
       class TimerTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(TimerTests);
-          CPPUNIT_TEST(TestInitialization);
-          CPPUNIT_TEST(TestStartStop);
-          CPPUNIT_TEST(TestSetTime);
-          CPPUNIT_TEST(TestMultipleStartStop);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (TimerTests);
+          CPPUNIT_TEST (TestInitialization);
+          CPPUNIT_TEST (TestStartStop);
+          CPPUNIT_TEST (TestSetTime);
+          CPPUNIT_TEST (TestMultipleStartStop);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -74,15 +73,14 @@ namespace hemelb
           TimerBase<ClockMock> *timer;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(TimerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (TimerTests);
 
       class TimersTests : public helpers::HasCommsTestFixture
       {
-          CPPUNIT_TEST_SUITE(TimersTests);
-          CPPUNIT_TEST(TestInitialization);
-          CPPUNIT_TEST(TestTimersSeparate);
-          CPPUNIT_TEST(TestReduce);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (TimersTests);
+          CPPUNIT_TEST (TestInitialization);
+          CPPUNIT_TEST (TestTimersSeparate);
+          CPPUNIT_TEST (TestReduce);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -143,7 +141,7 @@ namespace hemelb
           TimersBase<ClockMock, MPICommsMock> *timers;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(TimersTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (TimersTests);
     }
   }
 }

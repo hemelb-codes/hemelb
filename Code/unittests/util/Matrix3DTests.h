@@ -23,10 +23,9 @@ namespace hemelb
 
       class Matrix3DTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(Matrix3DTests);
-          CPPUNIT_TEST(TestMatrix3D);
-          CPPUNIT_TEST(TestMatrix3DScalarProduct);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (Matrix3DTests);
+          CPPUNIT_TEST (TestMatrix3D);
+          CPPUNIT_TEST (TestMatrix3DScalarProduct);CPPUNIT_TEST_SUITE_END();
 
           // Returns the entries of the following 3X3 matrix:
           //     [1 2 3]
@@ -34,8 +33,8 @@ namespace hemelb
           //     [7 8 9]
           double ComputeMatrixElement(unsigned row, unsigned column)
           {
-            CPPUNIT_ASSERT(row<3);
-            CPPUNIT_ASSERT(column<3);
+            CPPUNIT_ASSERT(row < 3);
+            CPPUNIT_ASSERT(column < 3);
             return row * 3.0 + (column + 1.0);
           }
 
@@ -69,7 +68,8 @@ namespace hemelb
             matrix.addDiagonal(3);
             for (unsigned diag = 0; diag < 3; diag++)
             {
-              CPPUNIT_ASSERT_EQUAL(matrix[diag][diag], 3.0 + 2.0 * ComputeMatrixElement(diag, diag));
+              CPPUNIT_ASSERT_EQUAL(matrix[diag][diag],
+                                   3.0 + 2.0 * ComputeMatrixElement(diag, diag));
             }
 
             // Test the matrix-vector product
@@ -89,7 +89,8 @@ namespace hemelb
             {
               for (unsigned column = 0; column < 3; column++)
               {
-                CPPUNIT_ASSERT_EQUAL(halfMatrix[row][column], 0.5 * ComputeMatrixElement(row, column));
+                CPPUNIT_ASSERT_EQUAL(halfMatrix[row][column],
+                                     0.5 * ComputeMatrixElement(row, column));
               }
             }
           }
@@ -99,7 +100,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(Matrix3DTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (Matrix3DTests);
 
     }
   }

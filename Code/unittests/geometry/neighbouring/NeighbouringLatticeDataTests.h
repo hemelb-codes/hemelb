@@ -36,7 +36,7 @@ namespace hemelb
 
           public:
             NeighbouringLatticeDataTests() :
-                FourCubeBasedTestFixture(),data(nullptr), exampleSite(nullptr), dummyId(54)
+                FourCubeBasedTestFixture(), data(nullptr), exampleSite(nullptr), dummyId(54)
             {
             }
 
@@ -66,15 +66,20 @@ namespace hemelb
 
             void TestInsertAndRetrieveDistance()
             {
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1;
+                  direction++)
               {
-                data->GetCutDistances(dummyId)[direction]=exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1);
+                data->GetCutDistances(dummyId)[direction] = exampleSite->GetWallDistance
+                    < lb::lattices::D3Q15 > (direction + 1);
               }
 
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1;
+                  direction++)
               {
-                CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1),
-                                     data->GetCutDistance<lb::lattices::D3Q15>(dummyId, direction + 1));
+                CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallDistance < lb::lattices::D3Q15
+                                         > (direction + 1),
+                                     data->GetCutDistance<lb::lattices::D3Q15>(dummyId,
+                                                                               direction + 1));
               }
             }
 
@@ -87,14 +92,16 @@ namespace hemelb
             void TestInsertAndRetrieveDistributions()
             {
               std::vector<distribn_t> distribution;
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 distribution.push_back(exampleSite->GetFOld<lb::lattices::D3Q15>()[direction]);
               }
 
               data->GetDistribution(dummyId) = distribution;
 
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 CPPUNIT_ASSERT_EQUAL(exampleSite->GetFOld<lb::lattices::D3Q15>()[direction],
                                      data->GetFOld(dummyId * lb::lattices::D3Q15::NUMVECTORS)[direction]);
@@ -105,13 +112,16 @@ namespace hemelb
             {
 
               std::vector<distribn_t> distances;
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1;
+                  direction++)
               {
-                distances.push_back(exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1));
+                distances.push_back(exampleSite->GetWallDistance < lb::lattices::D3Q15
+                    > (direction + 1));
               }
 
               std::vector<distribn_t> distribution;
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 distribution.push_back(exampleSite->GetFOld<lb::lattices::D3Q15>()[direction]);
               }
@@ -124,13 +134,17 @@ namespace hemelb
               NeighbouringSite neighbouringSite = data->GetSite(dummyId);
 
               CPPUNIT_ASSERT_EQUAL(exampleSite->GetSiteData(), neighbouringSite.GetSiteData());
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1;
+                  direction++)
               {
-                CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallDistance < lb::lattices::D3Q15 > (direction + 1),
-                                     neighbouringSite.GetWallDistance<lb::lattices::D3Q15>(direction + 1));
+                CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallDistance < lb::lattices::D3Q15
+                                         > (direction + 1),
+                                     neighbouringSite.GetWallDistance<lb::lattices::D3Q15>(direction
+                                         + 1));
               }
               CPPUNIT_ASSERT_EQUAL(exampleSite->GetWallNormal(), neighbouringSite.GetWallNormal());
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 CPPUNIT_ASSERT_EQUAL(exampleSite->GetFOld<lb::lattices::D3Q15>()[direction],
                                      neighbouringSite.GetFOld<lb::lattices::D3Q15>()[direction]);

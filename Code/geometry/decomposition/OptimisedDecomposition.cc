@@ -112,7 +112,7 @@ namespace hemelb
         idx_t desiredPartitionSize = comms.Size();
 
         std::vector<real_t> domainWeights(desiredPartitionSize,
-                                          (real_t)(1.0) / ( (real_t)(desiredPartitionSize)));
+                                          (real_t) (1.0) / ((real_t) (desiredPartitionSize)));
         // A bunch of values ParMetis needs.
         idx_t noConstraints = 1;
         idx_t weightFlag = 2;
@@ -147,12 +147,29 @@ namespace hemelb
         vertexWeights.reserve(1);
         MPI_Comm communicator = comms;
         ParMETIS_V3_PartKway(&vtxDistribn[0],
+                             &adjacenciesPerVertex[0],
+                             &localAdjacencies[0],
+                             &vertexWeights[0],
+                             nullptr,
+                             &weightFlag,
+                             &numberingFlag,
+                             &noConstraints,
+                             &desiredPartitionSize,
+                             &domainWeights[0],
+                             &tolerance,
+                             options,
+                             &edgesCut,
+                             &partitionVector[0],
+                             &communicator);
+        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
          &adjacenciesPerVertex[0],
          &localAdjacencies[0],
          &vertexWeights[0],
          nullptr,
          &weightFlag,
          &numberingFlag,
+         &nDims,
+         &vertexCoordinates[0],
          &noConstraints,
          &desiredPartitionSize,
          &domainWeights[0],
@@ -160,24 +177,7 @@ namespace hemelb
          options,
          &edgesCut,
          &partitionVector[0],
-         &communicator);
-        /*ParMETIS_V3_PartGeomKway(&vtxDistribn[0],
-                                 &adjacenciesPerVertex[0],
-                                 &localAdjacencies[0],
-                                 &vertexWeights[0],
-                                 nullptr,
-                                 &weightFlag,
-                                 &numberingFlag,
-                                 &nDims,
-                                 &vertexCoordinates[0],
-                                 &noConstraints,
-                                 &desiredPartitionSize,
-                                 &domainWeights[0],
-                                 &tolerance,
-                                 options,
-                                 &edgesCut,
-                                 &partitionVector[0],
-                                 &communicator);*/
+         &communicator);*/
 
         /** Preliminary development code to create a group communicator
          std::vector<int> localRanksInNode;
@@ -343,7 +343,7 @@ namespace hemelb
         {
           if (procForEachBlock[block] >= 0)
           {
-            vtxDistribn[1 + procForEachBlock[block]] += (idx_t)(fluidSitesPerBlock[block]);
+            vtxDistribn[1 + procForEachBlock[block]] += (idx_t) (fluidSitesPerBlock[block]);
           }
         }
 
@@ -371,7 +371,7 @@ namespace hemelb
           else
           {
             firstSiteIndexPerBlock.push_back(firstSiteOnProc[proc]);
-            firstSiteOnProc[proc] += (idx_t)(fluidSitesPerBlock[block]);
+            firstSiteOnProc[proc] += (idx_t) (fluidSitesPerBlock[block]);
           }
         }
 
@@ -469,7 +469,7 @@ namespace hemelb
                       }
 
                       // then add this to the list of adjacencies.
-                      localAdjacencies.push_back( (idx_t)(neighGlobalSiteId));
+                      localAdjacencies.push_back((idx_t) (neighGlobalSiteId));
                     }
 
                     // The cumulative count of adjacencies for this vertex is equal to the total
@@ -622,7 +622,7 @@ namespace hemelb
         // block they didn't previously want to know about.
         std::map<proc_t, std::vector<site_t> > blockForcedUponX;
         std::vector<proc_t> numberOfBlocksIForceUponX(comms.Size(), 0);
-        for (idx_t moveNumber = 0; moveNumber < (idx_t)(moveData.size()); moveNumber += 3)
+        for (idx_t moveNumber = 0; moveNumber < (idx_t) (moveData.size()); moveNumber += 3)
         {
           proc_t target_proc = moveData[moveNumber + 2];
           site_t blockId = moveData[moveNumber];
@@ -1202,7 +1202,7 @@ namespace hemelb
         // because some cores will have -1 for a block (indicating that it has no neighbours on
         // that block.
         std::vector<idx_t> firstSiteIndexPerBlockRecv = comms.AllReduce(firstSiteIndexPerBlock,
-                                                                        MPI_MAX);
+        MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {

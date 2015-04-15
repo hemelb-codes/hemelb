@@ -36,13 +36,13 @@ namespace hemelb
        */
       class KernelTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE ( KernelTests);
-          CPPUNIT_TEST ( TestAnsumaliEntropicCalculationsAndCollision);
-          CPPUNIT_TEST ( TestChikatamarlaEntropicCalculationsAndCollision);
-          CPPUNIT_TEST ( TestLBGKCalculationsAndCollision);
-          CPPUNIT_TEST ( TestLBGKNNCalculationsAndCollision);
-          CPPUNIT_TEST ( TestMRTConstantRelaxationTimeEqualsLBGK);
-          CPPUNIT_TEST ( TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (KernelTests);
+          CPPUNIT_TEST (TestAnsumaliEntropicCalculationsAndCollision);
+          CPPUNIT_TEST (TestChikatamarlaEntropicCalculationsAndCollision);
+          CPPUNIT_TEST (TestLBGKCalculationsAndCollision);
+          CPPUNIT_TEST (TestLBGKNNCalculationsAndCollision);
+          CPPUNIT_TEST (TestMRTConstantRelaxationTimeEqualsLBGK);
+          CPPUNIT_TEST (TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -289,7 +289,6 @@ namespace hemelb
             hydroVars0.tau = lbmParams->GetTau();
             hydroVars1.tau = lbmParams->GetTau();
 
-
             // Calculate density, momentum, equilibrium f.
             lbgk.CalculateDensityMomentumFeq(hydroVars0, 0);
 
@@ -378,8 +377,8 @@ namespace hemelb
 
           void TestLBGKNNCalculationsAndCollision()
           {
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, lb::lattices::D3Q15>
-                LB_KERNEL;
+            typedef lb::kernels::LBGKNN<
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModelHumanFit, lb::lattices::D3Q15> LB_KERNEL;
 
             /*
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
@@ -394,7 +393,8 @@ namespace hemelb
              *
              * Using {f_, velocities}setA for odd site indices and {f_, velocities}setB for the even ones
              */
-            distribn_t f_setA[lb::lattices::D3Q15::NUMVECTORS], f_setB[lb::lattices::D3Q15::NUMVECTORS];
+            distribn_t f_setA[lb::lattices::D3Q15::NUMVECTORS],
+                f_setB[lb::lattices::D3Q15::NUMVECTORS];
             distribn_t* f_original;
 
             for (unsigned int ii = 0; ii < lb::lattices::D3Q15::NUMVECTORS; ++ii)
@@ -402,7 +402,6 @@ namespace hemelb
               f_setA[ii] = ((float) (1 + ii)) / 10.0;
               f_setB[ii] = ((float) (lb::lattices::D3Q15::NUMVECTORS - ii)) / 10.0;
             }
-
 
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
@@ -459,7 +458,8 @@ namespace hemelb
               distribn_t expectedDensity1 = 1.0; // Unchanged
 
               distribn_t expectedMomentum0[3];
-              LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0->f, expectedMomentum0);
+              LbTestsHelper::CalculateMomentum<lb::lattices::D3Q15>(hydroVars0->f,
+                                                                    expectedMomentum0);
               distribn_t *expectedMomentum1 = momentum;
 
               distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
@@ -508,26 +508,36 @@ namespace hemelb
               lbgknn1.CalculateFeq(*hydroVars1, site_index);
 
               distribn_t computedTau0 = hydroVars0->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0.GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
+                                           numSites,
+                                           (site_t) lbgknn0.GetTauValues().size());
 
-              distribn_t expectedTau0 = site_index % 2
-                ? 0.50009134451
-                : 0.50009285237;
+              distribn_t expectedTau0 = site_index % 2 ?
+                0.50009134451 :
+                0.50009285237;
 
               std::stringstream message;
               message << "Tau array [" << site_index << "] for dataset 0";
-              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), expectedTau0, computedTau0, numTolerance);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                   expectedTau0,
+                                                   computedTau0,
+                                                   numTolerance);
 
               distribn_t computedTau1 = hydroVars1->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1.GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
+                                           numSites,
+                                           (site_t) lbgknn1.GetTauValues().size());
 
-              distribn_t expectedTau1 = site_index % 2
-                ? 0.50009013551
-                : 0.50009021207;
+              distribn_t expectedTau1 = site_index % 2 ?
+                0.50009013551 :
+                0.50009021207;
 
               message.str("");
               message << "Tau array [" << site_index << "] for dataset 1";
-              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), expectedTau1, computedTau1, numTolerance);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                   expectedTau1,
+                                                   computedTau1,
+                                                   numTolerance);
 
               /*
                * Test part 3: Collision depends on the local relaxation time
@@ -588,8 +598,8 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q15::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q15>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> >
-                hydroVars0(f_original);
+            lb::kernels::HydroVars<
+                lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q15MRTBasis> > hydroVars0(f_original);
 
             // Calculate density, momentum, equilibrium f.
             mrtLbgkEquivalentKernel.CalculateDensityMomentumFeq(hydroVars0, 0);
@@ -598,7 +608,9 @@ namespace hemelb
             distribn_t expectedDensity0;
             distribn_t expectedMomentum0[3];
             distribn_t expectedFEq0[lb::lattices::D3Q15::NUMVECTORS];
-            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(hydroVars0.f, expectedDensity0, expectedMomentum0);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q15>(hydroVars0.f,
+                                                                     expectedDensity0,
+                                                                     expectedMomentum0);
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q15>(expectedDensity0,
                                                                   expectedMomentum0[0],
                                                                   expectedMomentum0[1],
@@ -655,8 +667,8 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[lb::lattices::D3Q19::NUMVECTORS];
             LbTestsHelper::InitialiseAnisotropicTestData<lb::lattices::D3Q19>(0, f_original);
-            lb::kernels::HydroVars<lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> >
-                hydroVars0(f_original);
+            lb::kernels::HydroVars<
+                lb::kernels::MRT<lb::kernels::momentBasis::DHumieresD3Q19MRTBasis> > hydroVars0(f_original);
 
             // Calculate density, momentum, equilibrium f.
             mrtLbgkEquivalentKernel19.CalculateDensityMomentumFeq(hydroVars0, 0);
@@ -665,7 +677,9 @@ namespace hemelb
             distribn_t expectedDensity0;
             distribn_t expectedMomentum0[3];
             distribn_t expectedFEq0[lb::lattices::D3Q19::NUMVECTORS];
-            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q19>(hydroVars0.f, expectedDensity0, expectedMomentum0);
+            LbTestsHelper::CalculateRhoMomentum<lb::lattices::D3Q19>(hydroVars0.f,
+                                                                     expectedDensity0,
+                                                                     expectedMomentum0);
             LbTestsHelper::CalculateLBGKEqmF<lb::lattices::D3Q19>(expectedDensity0,
                                                                   expectedMomentum0[0],
                                                                   expectedMomentum0[1],
@@ -706,7 +720,7 @@ namespace hemelb
             }
           }
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION ( KernelTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (KernelTests);
     }
   }
 }

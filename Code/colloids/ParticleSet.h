@@ -28,12 +28,10 @@ namespace hemelb
     {
       public:
         /** constructor - gets local particle information from xml config file */
-        ParticleSet(const geometry::LatticeData& latDatLBM,
-                    io::xml::Element& xml,
+        ParticleSet(const geometry::LatticeData& latDatLBM, io::xml::Element& xml,
                     lb::MacroscopicPropertyCache& propertyCache,
                     const hemelb::lb::LbmParameters *lbmParams,
-                    std::vector<proc_t>& neighbourProcessors,
-                    const net::IOCommunicator& ioComms_,
+                    std::vector<proc_t>& neighbourProcessors, const net::IOCommunicator& ioComms_,
                     const std::string& outputPath);
 
         /** destructor - de-allocates all Particle objects created by this Set */
@@ -49,8 +47,7 @@ namespace hemelb
         const void CalculateFeedbackForces();
 
         /** applies boundary conditions to all particles **/
-        const void ApplyBoundaryConditions(
-                     const LatticeTimeStep currentTimestep);
+        const void ApplyBoundaryConditions(const LatticeTimeStep currentTimestep);
 
         /** interpolates the fluid velocity to the location of each particle */
         const void InterpolateFluidVelocity();
@@ -80,7 +77,7 @@ namespace hemelb
         typedef std::map<proc_t, scanMapElementType>::const_iterator scanMapConstIterType;
         typedef std::map<proc_t, scanMapElementType>::iterator scanMapIterType;
         typedef std::pair<proc_t, scanMapElementType> scanMapContentType;
-        
+
         /** contiguous buffer into which MPI can write all the velocities from neighbours */
         std::vector<std::pair<unsigned long, util::Vector3D<double> > > velocityBuffer;
 

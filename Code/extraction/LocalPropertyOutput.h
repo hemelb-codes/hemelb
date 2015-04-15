@@ -35,7 +35,8 @@ namespace hemelb
          * @param offset
          * @return
          */
-        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec, const net::IOCommunicator& ioComms);
+        LocalPropertyOutput(IterableDataSource& dataSource, const PropertyOutputFile* outputSpec,
+                            const net::IOCommunicator& ioComms);
 
         /**
          * Tidies up the LocalPropertyOutput (close files etc).

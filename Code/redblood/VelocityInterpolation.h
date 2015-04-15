@@ -117,7 +117,7 @@ namespace hemelb
     template<class KERNEL>
     PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
                                          PhysicalPosition const &center, stencil::types stencil =
-                                         stencil::types::FOUR_POINT)
+                                             stencil::types::FOUR_POINT)
     {
       auto iterator = interpolationIterator(center, stencil);
       // Computes velocity for a given site index
@@ -125,7 +125,7 @@ namespace hemelb
       // velocity depends on forces)
       auto const gridfunc = details::VelocityFromLatticeData<KERNEL>(latDat);
       LatticeForceVector result(0, 0, 0);
-      for(; iterator.IsValid(); ++iterator)
+      for (; iterator.IsValid(); ++iterator)
       {
         proc_t procid;
         site_t siteid;

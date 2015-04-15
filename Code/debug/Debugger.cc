@@ -16,7 +16,8 @@ namespace hemelb
   namespace debug
   {
 
-    Debugger* Debugger::Init(bool active, const char * const executable, const net::MpiCommunicator& comm)
+    Debugger* Debugger::Init(bool active, const char * const executable,
+                             const net::MpiCommunicator& comm)
     {
       /* Static member function that implements the singleton pattern.
        * Use the namespace function PlatformDebuggerFactory to
@@ -44,7 +45,7 @@ namespace hemelb
     Debugger* Debugger::singleton = nullptr;
 
     Debugger::Debugger(const char* const executable, const net::MpiCommunicator& comm) :
-      mExecutable(executable), mCommunicator(comm)
+        mExecutable(executable), mCommunicator(comm)
     {
     }
 

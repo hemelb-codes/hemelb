@@ -14,8 +14,8 @@ namespace details
     //! The functor argument is called with the current vertex index, the
     //! global site index triplet, and the associated interpolation weight.
     template<class FUNCTOR>
-    void spreadForce2Grid(std::shared_ptr<CellBase const> cell,
-        FUNCTOR functor, stencil::types stencil)
+    void spreadForce2Grid(std::shared_ptr<CellBase const> cell, FUNCTOR functor,
+                          stencil::types stencil)
     {
       typedef MeshData::Vertices::const_iterator const_iterator;
       // Spread them onto lattice
@@ -36,8 +36,7 @@ namespace details
     class SpreadForces
     {
       public:
-        SpreadForces(
-            std::vector<LatticePosition> const &forces, geometry::LatticeData &latticeData) :
+        SpreadForces(std::vector<LatticePosition> const &forces, geometry::LatticeData &latticeData) :
             latticeData(latticeData), forces(forces)
         {
         }
@@ -61,7 +60,8 @@ namespace details
     class SpreadForcesAndWallForces : public SpreadForces
     {
       public:
-        SpreadForcesAndWallForces(std::shared_ptr<CellBase const> cell, std::vector<LatticePosition> const &forces,
+        SpreadForcesAndWallForces(std::shared_ptr<CellBase const> cell,
+                                  std::vector<LatticePosition> const &forces,
                                   geometry::LatticeData &latticeData) :
             SpreadForces(forces, latticeData), cell(cell)
         {

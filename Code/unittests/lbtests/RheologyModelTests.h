@@ -30,8 +30,8 @@ namespace hemelb
        */
       class RheologyModelTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(RheologyModelTests);
-          CPPUNIT_TEST(TestRheologyModels);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (RheologyModelTests);
+          CPPUNIT_TEST (TestRheologyModels);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -111,7 +111,7 @@ namespace hemelb
           std::vector<distribn_t> powerLawViscosities;
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION(RheologyModelTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (RheologyModelTests);
     }
   }
 }

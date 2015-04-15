@@ -34,11 +34,9 @@ namespace hemelb
         //! Stencil
         stencil::types stencil = stencil::types::FOUR_POINT;
 
-        CellArmy(geometry::LatticeData &_latDat,
-            CellContainer const &cells,
-            PhysicalDistance boxsize=10.0, PhysicalDistance halo=2.0)
-          : latticeData(_latDat), cells(cells),
-          dnc(cells, boxsize, halo)
+        CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
+                 PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0) :
+            latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
         {
         }
 
@@ -48,21 +46,21 @@ namespace hemelb
         //! Performs lattice to fluid interactions
         void Cell2FluidInteractions();
 
-    #   ifdef HEMELB_DOING_UNITTESTS
-          //! Updates divide and conquer
-          void updateDNC()
-          {
-            dnc.update();
-          }
-          CellContainer const & GetCells() const
-          {
-            return cells;
-          }
-          DivideConquerCells const & GetDNC() const
-          {
-            return dnc;
-          }
-    #   endif
+#   ifdef HEMELB_DOING_UNITTESTS
+        //! Updates divide and conquer
+        void updateDNC()
+        {
+          dnc.update();
+        }
+        CellContainer const & GetCells() const
+        {
+          return cells;
+        }
+        DivideConquerCells const & GetDNC() const
+        {
+          return dnc;
+        }
+#   endif
 
         //! Sets up call for cell insertion
         //! Called everytime CallCellInsertion is called
@@ -74,8 +72,9 @@ namespace hemelb
         //! Calls cell insertion
         void CallCellInsertion()
         {
-          if(cellInsertionCallBack)
-            cellInsertionCallBack([this](CellContainer::value_type cell) { this->AddCell(cell); });
+          if (cellInsertionCallBack)
+            cellInsertionCallBack([this](CellContainer::value_type cell)
+            { this->AddCell(cell);});
         }
 
         //! Sets up call for cell output
@@ -119,8 +118,7 @@ namespace hemelb
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
         //! It should insert cells using the call back passed to it.
-        std::function<void(std::function<void(CellContainer::value_type)>)>
-          cellInsertionCallBack;
+        std::function<void(std::function<void(CellContainer::value_type)>)> cellInsertionCallBack;
         std::function<void(const CellContainer &)> cellOutputCallBack;
 
         //! Remove cells if they reach these outlets
@@ -128,62 +126,63 @@ namespace hemelb
     };
 
     template<class KERNEL>
-      void CellArmy<KERNEL> :: Fluid2CellInteractions()
-      {
-        std::vector<LatticePosition> & positions = work;
-        LatticePosition const origin(0, 0, 0);
+    void CellArmy<KERNEL>::Fluid2CellInteractions()
+    {
+      std::vector<LatticePosition> & positions = work;
+      LatticePosition const origin(0, 0, 0);
 
-        CellContainer::const_iterator i_first = cells.begin();
-        CellContainer::const_iterator const i_end = cells.end();
-        for(; i_first != i_end; ++i_first)
-        {
-          positions.resize((*i_first)->GetVertices().size());
-          std::fill(positions.begin(), positions.end(), origin);
-          velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
-          (*i_first)->operator+=(positions);
-        }
-        // Positions have changed: update Divide and Conquer stuff
-        dnc.update();
+      CellContainer::const_iterator i_first = cells.begin();
+      CellContainer::const_iterator const i_end = cells.end();
+      for (; i_first != i_end; ++i_first)
+      {
+        positions.resize( (*i_first)->GetVertices().size());
+        std::fill(positions.begin(), positions.end(), origin);
+        velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
+        (*i_first)->operator+=(positions);
       }
+      // Positions have changed: update Divide and Conquer stuff
+      dnc.update();
+    }
 
     template<class KERNEL>
-      void CellArmy<KERNEL> :: Cell2FluidInteractions()
+    void CellArmy<KERNEL>::Cell2FluidInteractions()
+    {
+      std::vector<LatticeForceVector> &forces = work;
+
+      CellContainer::const_iterator i_first = cells.begin();
+      CellContainer::const_iterator const i_end = cells.end();
+      for (; i_first != i_end; ++i_first)
       {
-        std::vector<LatticeForceVector> &forces = work;
-
-        CellContainer::const_iterator i_first = cells.begin();
-        CellContainer::const_iterator const i_end = cells.end();
-        for(; i_first != i_end; ++i_first)
-        {
-          forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, stencil);
-        }
-
-        addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
+        forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, stencil);
       }
+
+      addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
+    }
 
     template<class KERNEL>
-      void CellArmy<KERNEL> :: CellRemoval()
+    void CellArmy<KERNEL>::CellRemoval()
+    {
+      auto i_first = cells.cbegin();
+      auto const i_end = cells.cend();
+      while (i_first != i_end)
       {
-        auto i_first = cells.cbegin();
-        auto const i_end = cells.cend();
-        while(i_first != i_end)
+        auto const barycenter = (*i_first)->GetBarycenter();
+        auto checkCell = [&barycenter](FlowExtension const &flow)
         {
-          auto const barycenter = (*i_first)->GetBarycenter();
-          auto checkCell = [&barycenter](FlowExtension const &flow)
-          {
-            return contains(flow, barycenter);
-          };
-          // save current iterator and increment before potential removal.
-          // removing the cell from the set should invalidate only the relevant iterator.
-          auto const i_current = i_first;
-          ++i_first;
-          if(std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
-          {
-            dnc.remove(*i_current);
-            cells.erase(i_current);
-          }
+          return contains(flow, barycenter);
+        };
+        // save current iterator and increment before potential removal.
+        // removing the cell from the set should invalidate only the relevant iterator.
+        auto const i_current = i_first;
+        ++i_first;
+        if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
+        {
+          dnc.remove(*i_current);
+          cells.erase(i_current);
         }
       }
-}}
+    }
+  }
+}
 
 #endif

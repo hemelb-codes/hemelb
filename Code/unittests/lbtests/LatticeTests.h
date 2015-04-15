@@ -93,8 +93,8 @@ namespace hemelb
               CPPUNIT_ASSERT(LatticeType::CYD[direction] <= 1);
               CPPUNIT_ASSERT(LatticeType::CZD[direction] <= 1);
 
-              
-              for (Direction otherDirection = 0; otherDirection < LatticeType::NUMVECTORS; ++otherDirection)
+              for (Direction otherDirection = 0; otherDirection < LatticeType::NUMVECTORS;
+                  ++otherDirection)
               {
                 if (otherDirection == direction)
                 {
@@ -104,7 +104,7 @@ namespace hemelb
                 CPPUNIT_ASSERT(LatticeType::CX[direction] != LatticeType::CX[otherDirection]
                     || LatticeType::CY[direction] != LatticeType::CY[otherDirection]
                     || LatticeType::CZ[direction] != LatticeType::CZ[otherDirection]);
-                
+
                 CPPUNIT_ASSERT(LatticeType::CXD[direction] != LatticeType::CXD[otherDirection]
                     || LatticeType::CYD[direction] != LatticeType::CYD[otherDirection]
                     || LatticeType::CZD[direction] != LatticeType::CZD[otherDirection]);
@@ -137,12 +137,18 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData<LatticeType>(3, f_data);
 
             distribn_t density, momentum[3], expectedDensity, expectedMomentum[3];
-            LatticeType::CalculateDensityAndMomentum(f_data, density, momentum[0], momentum[1], momentum[2]);
+            LatticeType::CalculateDensityAndMomentum(f_data,
+                                                     density,
+                                                     momentum[0],
+                                                     momentum[1],
+                                                     momentum[2]);
 
-            LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data, expectedDensity, expectedMomentum);
-            
+            LbTestsHelper::CalculateRhoMomentum<LatticeType>(f_data,
+                                                             expectedDensity,
+                                                             expectedMomentum);
+
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedDensity, density, epsilon);
-            
+
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[0], momentum[0], epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[1], momentum[1], epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedMomentum[2], momentum[2], epsilon);
@@ -160,7 +166,8 @@ namespace hemelb
              const distribn_t &v_z,
              distribn_t f_eq[]);
              */
-            distribn_t equilibriumF[LatticeType::NUMVECTORS], expectedEquilibriumF[LatticeType::NUMVECTORS],
+            distribn_t equilibriumF[LatticeType::NUMVECTORS],
+                expectedEquilibriumF[LatticeType::NUMVECTORS],
                 equilibriumEntropicFAnsumali[LatticeType::NUMVECTORS],
                 expectedEquilibriumEntropicFAnsumali[LatticeType::NUMVECTORS],
                 equilibriumEntropicFChikatamarla[LatticeType::NUMVECTORS];
@@ -168,7 +175,11 @@ namespace hemelb
             // These values chosen as they're pairwise coprime. Probably doesn't matter.
             distribn_t targetDensity = 0.95, targetH[3] = { 0.002, 0.003, 0.004 };
 
-            LatticeType::CalculateFeq(targetDensity, targetH[0], targetH[1], targetH[2], equilibriumF);
+            LatticeType::CalculateFeq(targetDensity,
+                                      targetH[0],
+                                      targetH[1],
+                                      targetH[2],
+                                      equilibriumF);
             LatticeType::CalculateEntropicFeqAnsumali(targetDensity,
                                                       targetH[0],
                                                       targetH[1],
@@ -194,7 +205,9 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction], equilibriumF[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumF[direction],
+                                           equilibriumF[direction],
+                                           epsilon);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(expectedEquilibriumEntropicFAnsumali[direction],
                                            equilibriumEntropicFAnsumali[direction],
                                            epsilon);
@@ -204,8 +217,8 @@ namespace hemelb
              * It's also the case that these should be invertible (i.e. the density and velocity should be what we started with).
              */
             distribn_t entropicCalculatedDensityAnsumali, entropicCalculatedMomentumAnsumali[3],
-                entropicCalculatedDensityChikatamarla, entropicCalculatedMomentumChikatamarla[3], calculatedDensity,
-                calculatedMomentum[3];
+                entropicCalculatedDensityChikatamarla, entropicCalculatedMomentumChikatamarla[3],
+                calculatedDensity, calculatedMomentum[3];
 
             LatticeType::CalculateDensityAndMomentum(equilibriumF,
                                                      calculatedDensity,
@@ -227,12 +240,18 @@ namespace hemelb
 
             CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedDensity, targetDensity, epsilon);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityAnsumali, targetDensity, epsilon);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityChikatamarla, targetDensity, epsilon);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedDensityChikatamarla,
+                                         targetDensity,
+                                         epsilon);
 
             for (Direction direction = 0; direction < 3; direction++)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedMomentum[direction], targetH[direction], epsilon);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedMomentumAnsumali[direction], targetH[direction], epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(calculatedMomentum[direction],
+                                           targetH[direction],
+                                           epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedMomentumAnsumali[direction],
+                                           targetH[direction],
+                                           epsilon);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(entropicCalculatedMomentumChikatamarla[direction],
                                            targetH[direction],
                                            epsilon);
@@ -249,13 +268,15 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; direction++)
             {
-              CPPUNIT_ASSERT(latticeInfo.GetInverseIndex(direction) == LatticeType::INVERSEDIRECTIONS[direction]);
+              CPPUNIT_ASSERT(latticeInfo.GetInverseIndex(direction)
+                  == LatticeType::INVERSEDIRECTIONS[direction]);
 
               const util::Vector3D<int>& velocityVector = latticeInfo.GetVector(direction);
 
               for (Direction index = 0; index < 3; index++)
               {
-                CPPUNIT_ASSERT(velocityVector[index] == LatticeType::discreteVelocityVectors[index][direction]);
+                CPPUNIT_ASSERT(velocityVector[index]
+                    == LatticeType::discreteVelocityVectors[index][direction]);
               }
             }
 
@@ -283,7 +304,11 @@ namespace hemelb
               LatticeDensity density = 3.0;
               util::Vector3D<Dimensionless> wallNormal(1, 0, 0);
               util::Vector3D<LatticeStress> traction;
-              LatticeType::CalculateTractionOnAPoint(density, 1.0, nonEquilibriumF.data(), wallNormal, traction);
+              LatticeType::CalculateTractionOnAPoint(density,
+                                                     1.0,
+                                                     nonEquilibriumF.data(),
+                                                     wallNormal,
+                                                     traction);
 
               CPPUNIT_ASSERT_EQUAL(traction[0], (density - 1) * Cs2);
               CPPUNIT_ASSERT_EQUAL(traction[1], 0.0);
@@ -326,7 +351,10 @@ namespace hemelb
 
               util::Vector3D<Dimensionless> wallNormal(1.0, 0.0, 0.0);
               util::Matrix3D stressTensor;
-              LatticeType::CalculateStressTensor(density, tau, nonEquilibriumF.data(), stressTensor);
+              LatticeType::CalculateStressTensor(density,
+                                                 tau,
+                                                 nonEquilibriumF.data(),
+                                                 stressTensor);
 
               for (unsigned rowIndex = 0; rowIndex < 3; ++rowIndex)
               {
@@ -341,7 +369,8 @@ namespace hemelb
                     }
                     else
                     {
-                      CPPUNIT_ASSERT_EQUAL( (density - 1) * Cs2, stressTensor[rowIndex][columnIndex]);
+                      CPPUNIT_ASSERT_EQUAL( (density - 1) * Cs2,
+                                           stressTensor[rowIndex][columnIndex]);
                     }
                   }
                   else

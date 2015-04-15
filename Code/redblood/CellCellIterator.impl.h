@@ -57,8 +57,7 @@ class HEMELB_ITERATOR
     reference operator*()
     {
       // @formatter:off
-      return (*wrappee->second.cellIterator)->GetVertices()
-            HEMELB_GET(wrappee->second.nodeIndex);
+      return (*wrappee->second.cellIterator)->GetVertices()HEMELB_GET(wrappee->second.nodeIndex);
       // @formatter:on
     }
     pointer operator->()
@@ -69,8 +68,7 @@ class HEMELB_ITERATOR
     const_reference operator*() const
     {
       // @formatter:off
-      return (*wrappee->second.cellIterator)->GetVertices()
-            HEMELB_GET(wrappee->second.nodeIndex);
+      return (*wrappee->second.cellIterator)->GetVertices()HEMELB_GET(wrappee->second.nodeIndex);
       // @formatter:on
     }
     const_pointer operator->() const

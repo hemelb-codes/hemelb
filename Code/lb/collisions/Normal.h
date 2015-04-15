@@ -45,7 +45,6 @@ namespace hemelb
             kernel.Collide(lbmParams, iHydroVars);
           }
 
-
           KernelType kernel;
 
       };

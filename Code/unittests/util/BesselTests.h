@@ -22,8 +22,8 @@ namespace hemelb
 
       class BesselTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( BesselTests);
-          CPPUNIT_TEST( TestUsedRange);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (BesselTests);
+          CPPUNIT_TEST (TestUsedRange);CPPUNIT_TEST_SUITE_END();
 
         public:
           typedef std::complex<double> Complex;
@@ -257,7 +257,7 @@ namespace hemelb
           }
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(BesselTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (BesselTests);
 
     }
   }

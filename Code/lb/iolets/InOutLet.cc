@@ -49,14 +49,13 @@ namespace hemelb
       }
 
       IoletExtraData::IoletExtraData(InOutLet& iolet) :
-        n(iolet.GetNormal()),
-            centre(iolet.GetPosition())
+          n(iolet.GetNormal()), centre(iolet.GetPosition())
       {
         // Arbitrary vector - chosen as the direction mutually perpendicular
         // to the normal and a Cartesian direction that has the largest
         // magnitude.
         unsigned minInd = SmallestMagnitudeComponent(n);
-        util::Vector3D < Dimensionless > v(0);
+        util::Vector3D<Dimensionless> v(0);
         v[minInd] = 1.;
         e1 = UnitVec::Cross(v, n).Normalise();
         e2 = UnitVec::Cross(n, e1);

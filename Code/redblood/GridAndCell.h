@@ -27,18 +27,17 @@ namespace hemelb
 
     //! Displacement of the cell nodes interpolated from lattice velocities
     template<class KERNEL>
-    void velocitiesOnMesh(std::shared_ptr<CellBase const> cell,
-                          geometry::LatticeData const &latDat, stencil::types stencil,
-                          std::vector<LatticePosition> &displacements)
+    void velocitiesOnMesh(std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latDat,
+                          stencil::types stencil, std::vector<LatticePosition> &displacements)
     {
       displacements.resize(cell->GetNumberOfNodes());
-      std::transform(
-          cell->GetVertices().begin(), cell->GetVertices().end(), displacements.begin(),
-          [&stencil, &latDat](LatticePosition const &position)
-          {
-            return interpolateVelocity<KERNEL>(latDat, position, stencil);
-          }
-      );
+      std::transform(cell->GetVertices().begin(),
+                     cell->GetVertices().end(),
+                     displacements.begin(),
+                     [&stencil, &latDat](LatticePosition const &position)
+                     {
+                       return interpolateVelocity<KERNEL>(latDat, position, stencil);
+                     });
     }
 
     //! \brief Computes and Spreads the forces from the cell to the lattice
@@ -51,15 +50,15 @@ namespace hemelb
     //! \param[inout] stencil: type of stencil to use when spreading forces
     //! \returns the energy (excluding node-wall interaction)
     template<class LATTICE>
-    Dimensionless forcesOnGrid(
-        std::shared_ptr<CellBase const> cell, std::vector<LatticeForceVector> &forces,
-        geometry::LatticeData &latticeData, stencil::types stencil)
+    Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
+                               std::vector<LatticeForceVector> &forces,
+                               geometry::LatticeData &latticeData, stencil::types stencil)
     {
       forces.resize(cell->GetNumberOfNodes());
       std::fill(forces.begin(), forces.end(), LatticeForceVector(0, 0, 0));
       auto const energy = cell->Energy(forces);
 
-      if(cell->HasWallForces())
+      if (cell->HasWallForces())
       {
         typedef details::SpreadForcesAndWallForces<LATTICE> Spreader;
         details::spreadForce2Grid(cell, Spreader(cell, forces, latticeData), stencil);
@@ -79,7 +78,8 @@ namespace hemelb
     //! Returns the energy (excluding node-wall interaction)
     template<class LATTICE>
     Dimensionless forcesOnGrid(std::shared_ptr<CellBase const> cell,
-        geometry::LatticeData &latticeData, stencil::types stencil = stencil::types::FOUR_POINT)
+                               geometry::LatticeData &latticeData, stencil::types stencil =
+                                   stencil::types::FOUR_POINT)
     {
       std::vector<LatticeForceVector> forces(cell->GetNumberOfNodes(), 0);
       return forcesOnGrid<LATTICE>(cell, forces, latticeData, stencil);
