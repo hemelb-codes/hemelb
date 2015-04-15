@@ -233,9 +233,6 @@ namespace hemelb
       {
         return angle(a.unitNormal(), b.unitNormal());
       }
-      // Angle angle(MeshData const &mesh, size_t facet, size_t neighbor) {
-      //   return angle(Facet(mesh, facet), Facet(mesh, neighbor));
-      // }
 
       // Angle with orientation
       // Computes angle between two vectors, including orientation.
