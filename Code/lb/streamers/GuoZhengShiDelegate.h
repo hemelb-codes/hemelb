@@ -35,10 +35,9 @@ namespace hemelb
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
           GuoZhengShiDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            collider(delegatorCollider),
-                neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
-                bValues(initParams.boundaryObject),
-                bbDelegate(delegatorCollider, initParams)
+              collider(delegatorCollider),
+                  neighbouringLatticeData(initParams.latDat->GetNeighbouringData()),
+                  bValues(initParams.boundaryObject), bbDelegate(delegatorCollider, initParams)
           {
             // Want to loop over each site this streamer is responsible for,
             // as specified in the siteRanges.
@@ -136,7 +135,7 @@ namespace hemelb
           {
             Direction i = LatticeType::INVERSEDIRECTIONS[iPrime];
             // Get the distance to the boundary.
-            double wallDistance = site.GetWallDistance<LatticeType> (iPrime);
+            double wallDistance = site.GetWallDistance<LatticeType>(iPrime);
 
             // Set up for GZS - do the extrapolation from this site - u_w1
 
@@ -174,7 +173,7 @@ namespace hemelb
               {
                 int boundaryId = site.GetIoletId();
                 iolets::InOutLetVelocity* iolet =
-                    dynamic_cast<iolets::InOutLetVelocity*> (bValues->GetLocalIolet(boundaryId));
+                    dynamic_cast<iolets::InOutLetVelocity*>(bValues->GetLocalIolet(boundaryId));
                 if (iolet == nullptr)
                 {
                   // SBB
@@ -192,22 +191,24 @@ namespace hemelb
                   neighPos.y += LatticeType::CY[i];
                   neighPos.z += LatticeType::CZ[i];
 
-                  LatticeVelocity neighbourVelocity(iolet->GetVelocity(neighPos, bValues->GetTimeStep()));
+                  LatticeVelocity neighbourVelocity(iolet->GetVelocity(neighPos,
+                                                                       bValues->GetTimeStep()));
 
                   // Obtain a second estimate, this time ignoring the fluid site closest to
                   // the wall. Interpolating the next site away and the site within the wall
                   // to the point on the wall itself (velocity 0):
                   // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
                   // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-                  LatticeVelocity velocityWallSecondEstimate = neighbourVelocity * (wallDistance - 1)
-                      / (wallDistance + 1);
+                  LatticeVelocity velocityWallSecondEstimate = neighbourVelocity
+                      * (wallDistance - 1) / (wallDistance + 1);
                   // Next, we interpolate between the first and second estimates to improve the estimate.
                   // Extrapolate to obtain the velocity at the wall site.
                   for (int dimension = 0; dimension < 3; dimension++)
                   {
                     hydroVarsWall.momentum[dimension] = wallDistance
-                        * hydroVarsWall.momentum[dimension] + (1. - wallDistance) * hydroVars.density
-                        * velocityWallSecondEstimate[dimension];
+                        * hydroVarsWall.momentum[dimension]
+                        + (1. - wallDistance) * hydroVars.density
+                            * velocityWallSecondEstimate[dimension];
                   }
                   // Should interpolate in the same way to get f_neq - skip since not available
                 }
@@ -247,22 +248,23 @@ namespace hemelb
                   // to the point on the wall itself (velocity 0):
                   // 0 = velocityWall * (1 + wallDistance) / 2 + velocityNextFluid * (1 - wallDistance)/2
                   // Rearranging gives velocityWall = velocityNextFluid * (wallDistance - 1)/(wallDistance+1)
-                  LatticeVelocity velocityWallSecondEstimate = neighbourVelocity * (wallDistance - 1)
-                      / (wallDistance + 1);
+                  LatticeVelocity velocityWallSecondEstimate = neighbourVelocity
+                      * (wallDistance - 1) / (wallDistance + 1);
                   // Next, we interpolate between the first and second estimates to improve the estimate.
                   // Extrapolate to obtain the velocity at the wall site.
                   for (int dimension = 0; dimension < 3; dimension++)
                   {
                     hydroVarsWall.momentum[dimension] = wallDistance
-                        * hydroVarsWall.momentum[dimension] + (1. - wallDistance) * hydroVars.density
-                        * velocityWallSecondEstimate[dimension];
+                        * hydroVarsWall.momentum[dimension]
+                        + (1. - wallDistance) * hydroVars.density
+                            * velocityWallSecondEstimate[dimension];
                   }
                   // Interpolate in the same way to get f_neq.
                   distribn_t* fNeqWall = hydroVarsWall.GetFNeqPtr();
                   for (unsigned j = 0; j < LatticeType::NUMVECTORS; ++j)
                   {
-                    fNeqWall[j] = wallDistance * fNeqWall[j] + (1. - wallDistance) * (neighbourFOld[j]
-                        - neighbourFEq[j]);
+                    fNeqWall[j] = wallDistance * fNeqWall[j]
+                        + (1. - wallDistance) * (neighbourFOld[j] - neighbourFEq[j]);
                   }
                 }
               }
@@ -312,14 +314,13 @@ namespace hemelb
               // If it's local, get a Site object for it.
               geometry::Site<geometry::LatticeData> nextSiteOut =
                   latDat->GetSite(latDat->GetContiguousSiteId(neighbourGlobalLocation));
-              neighbourFOld = nextSiteOut.GetFOld<LatticeType> ();
+              neighbourFOld = nextSiteOut.GetFOld<LatticeType>();
             }
             else
             {
-              const geometry::neighbouring::ConstNeighbouringSite
-                  neighbourSite =
-                      neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
-              neighbourFOld = neighbourSite.GetFOld<LatticeType> ();
+              const geometry::neighbouring::ConstNeighbouringSite neighbourSite =
+                  neighbouringLatticeData.GetSite(latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(neighbourGlobalLocation));
+              neighbourFOld = neighbourSite.GetFOld<LatticeType>();
             }
             return neighbourFOld;
 

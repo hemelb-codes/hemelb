@@ -40,8 +40,11 @@ namespace hemelb
             FourCubeBasedTestFixture::setUp();
             data = &latDat->GetNeighbouringData();
             MockNetHelper::setUp(1, 0);
-            manager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*latDat, *data, *netMock);
-            TestableIterableDataSource = new hemelb::extraction::ArbitrarySiteListIterableDataSource();
+            manager = new hemelb::geometry::neighbouring::NeighbouringDataManager(*latDat,
+                                                                                  *data,
+                                                                                  *netMock);
+            TestableIterableDataSource =
+                new hemelb::extraction::ArbitrarySiteListIterableDataSource();
           }
 
           void tearDown()
@@ -60,8 +63,9 @@ namespace hemelb
           void TestVelocityExtraction()
           {
             TestableIterableDataSource->SetManager(manager);
-            util::Vector3D<float> normal = util::Vector3D<float>(1.0,1.0,1.0);
-            float velocity = TestableIterableDataSource->GetVelocityRelativeToNormal(manager, normal);
+            util::Vector3D<float> normal = util::Vector3D<float>(1.0, 1.0, 1.0);
+            float velocity = TestableIterableDataSource->GetVelocityRelativeToNormal(manager,
+                                                                                     normal);
             std::cout << "Obtained velocity is: " << velocity << std::endl;
           }
 

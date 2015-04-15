@@ -30,7 +30,8 @@ namespace hemelb
          * @param point
          * @param normal
          */
-        PlaneGeometrySelector(const util::Vector3D<float>& point, const util::Vector3D<float>& normal);
+        PlaneGeometrySelector(const util::Vector3D<float>& point,
+                              const util::Vector3D<float>& normal);
 
         /**
          * Constructor makes a plane geometry object with given normal, about a given
@@ -39,7 +40,8 @@ namespace hemelb
          * @param normal
          * @param radius
          */
-        PlaneGeometrySelector(const util::Vector3D<float>& point, const util::Vector3D<float>& normal, float radius);
+        PlaneGeometrySelector(const util::Vector3D<float>& point,
+                              const util::Vector3D<float>& normal, float radius);
 
         /**
          * Returns a point that lies on the plane.
@@ -65,7 +67,8 @@ namespace hemelb
          * @param location
          * @return
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data,
+                              const util::Vector3D<site_t>& location);
 
       private:
         /**

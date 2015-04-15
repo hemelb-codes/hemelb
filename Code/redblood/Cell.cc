@@ -19,14 +19,13 @@ namespace hemelb
     class CellBase::CellData
     {
       public:
-        CellData(
-            MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+        CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
             vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
         {
           assert(scale > 1e-12);
         }
-        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-            Dimensionless scaleIn = 1e0) :
+        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+                     1e0) :
             vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
         {
           assert(scale > 1e-12);
@@ -39,18 +38,17 @@ namespace hemelb
         Dimensionless scale;
     };
 
-
-    CellBase::CellBase(
-        MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
+    CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
         data(new CellData(std::move(verticesIn), origMesh, scaleIn))
     {
     }
-    CellBase::CellBase(
-        MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn)
-      : data(new CellData(verticesIn, origMesh, scaleIn))
+    CellBase::CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+                       Dimensionless scaleIn) :
+        data(new CellData(verticesIn, origMesh, scaleIn))
     {
     }
-    CellBase::CellBase(CellBase const& cell) : data(new CellData(*cell.data))
+    CellBase::CellBase(CellBase const& cell) :
+        data(new CellData(*cell.data))
     {
     }
 
@@ -60,7 +58,6 @@ namespace hemelb
       data->vertices = data->templateMesh.GetVertices();
       data->scale = 1e0;
     }
-
 
     //! Unmodified mesh
     Mesh const &CellBase::GetTemplateMesh() const
@@ -108,24 +105,34 @@ namespace hemelb
       return data->scale;
     }
 
-
     PhysicalEnergy Cell::operator()() const
     {
       return facetBending() // facet bending unaffected by template scale
-        + volumeEnergy(data->vertices, *data->templateMesh.GetData(), moduli.volume, data->scale)
-        + surfaceEnergy(data->vertices, *data->templateMesh.GetData(), moduli.surface, data->scale)
-        + strainEnergy(
-            data->vertices, *data->templateMesh.GetData(),
-            moduli.dilation, moduli.strain, data->scale);
+      + volumeEnergy(data->vertices, *data->templateMesh.GetData(), moduli.volume, data->scale)
+          + surfaceEnergy(data->vertices,
+                          *data->templateMesh.GetData(),
+                          moduli.surface,
+                          data->scale)
+          + strainEnergy(data->vertices,
+                         *data->templateMesh.GetData(),
+                         moduli.dilation,
+                         moduli.strain,
+                         data->scale);
     }
     PhysicalEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
     {
       assert(forces.size() == data->vertices.size());
       return facetBending(forces)
-          + volumeEnergy(
-              data->vertices, *data->templateMesh.GetData(), moduli.volume, forces, data->scale)
-          + surfaceEnergy(
-              data->vertices, *data->templateMesh.GetData(), moduli.surface, forces, data->scale)
+          + volumeEnergy(data->vertices,
+                         *data->templateMesh.GetData(),
+                         moduli.volume,
+                         forces,
+                         data->scale)
+          + surfaceEnergy(data->vertices,
+                          *data->templateMesh.GetData(),
+                          moduli.surface,
+                          forces,
+                          data->scale)
           + strainEnergy(data->vertices,
                          *data->templateMesh.GetData(),
                          moduli.dilation,

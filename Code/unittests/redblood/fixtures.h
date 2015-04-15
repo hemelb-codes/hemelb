@@ -127,9 +127,11 @@ namespace hemelb
         hemelb::redblood::Cell mesh;
     };
 
-    class FlowExtensionFixture : public CppUnit::TestFixture {
+    class FlowExtensionFixture : public CppUnit::TestFixture
+    {
       public:
-        void setUp() {
+        void setUp()
+        {
           flowExt.normal = util::Vector3D<LatticeDistance>(1.0, 0.0, 0.0);
           flowExt.origin = util::Vector3D<LatticeDistance>(0.0, 0.0, 0.0);
           flowExt.length = 10.0;

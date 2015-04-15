@@ -35,7 +35,7 @@ namespace hemelb
         public:
           //typedef hemelb::lb::streamers::VSExtra::UnitVec UnitVec;
           LocalVSExtra(lb::iolets::InOutLet& iolet) :
-            VSExtra<lb::lattices::D3Q15> (iolet)
+              VSExtra<lb::lattices::D3Q15>(iolet)
           {
           }
           const UnitVec& GetE1() const
@@ -61,11 +61,11 @@ namespace hemelb
        */
       class VirtualSiteIoletStreamerTests : public helpers::FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE( VirtualSiteIoletStreamerTests);
-          CPPUNIT_TEST( TestVirtualSiteMatrixInverse);
-          CPPUNIT_TEST( TestVirtualSiteConstruction);
-          CPPUNIT_TEST( TestStreamerInitialisation);
-          CPPUNIT_TEST( TestStep);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (VirtualSiteIoletStreamerTests);
+          CPPUNIT_TEST (TestVirtualSiteMatrixInverse);
+          CPPUNIT_TEST (TestVirtualSiteConstruction);
+          CPPUNIT_TEST (TestStreamerInitialisation);
+          CPPUNIT_TEST (TestStep);CPPUNIT_TEST_SUITE_END();
 
         public:
           typedef lb::lattices::D3Q15 Lattice;
@@ -78,7 +78,7 @@ namespace hemelb
           InOutLetCosine* GetIolet(lb::iolets::BoundaryValues* iolets)
           {
             InOutLetCosine* ans =
-                dynamic_cast<lb::iolets::InOutLetCosine*> (iolets->GetLocalIolet(0));
+                dynamic_cast<lb::iolets::InOutLetCosine*>(iolets->GetLocalIolet(0));
             CPPUNIT_ASSERT(ans != nullptr);
             return ans;
           }
@@ -113,7 +113,7 @@ namespace hemelb
               for (unsigned j = 1; j <= 4; ++j)
               {
                 site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 1));
-                geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
+                geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteId);
                 for (Direction p = 0; p < lattice->GetNumVectors(); ++p)
                 {
                   if (lattice->GetVector(p).z < 0.)
@@ -149,7 +149,7 @@ namespace hemelb
               for (unsigned j = 1; j <= 4; ++j)
               {
                 site_t siteId = latDat->GetContiguousSiteId(LatticeVector(i, j, 4));
-                geometry::Site < geometry::LatticeData > site = latDat->GetSite(siteId);
+                geometry::Site<geometry::LatticeData> site = latDat->GetSite(siteId);
                 for (Direction p = 0; p < lattice->GetNumVectors(); ++p)
                 {
                   if (lattice->GetVector(p).z > 0.)
@@ -246,8 +246,8 @@ namespace hemelb
             //                             { 2.5, -2.5,  5.0 } };
             // It's inverse is
             distribn_t velMatInv[3][3] = { { 0.25, 0., -0.125 }, { 0., 0.25, 0.125 }, { -0.125,
-                                                                                         0.125,
-                                                                                         0.325 } };
+                                                                                        0.125,
+                                                                                        0.325 } };
             for (unsigned i = 0; i < 3; ++i)
             {
               for (unsigned j = 0; j < 3; ++j)
@@ -283,7 +283,7 @@ namespace hemelb
 
             // All the sites at the outlet plane (x, y, 3) should be in the cache.
             InOutLetCosine& outlet = *GetIolet(outletBoundary);
-            VSExtra<Lattice>* extra = dynamic_cast<VSExtra<Lattice>*> (outlet.GetExtraData());
+            VSExtra<Lattice>* extra = dynamic_cast<VSExtra<Lattice>*>(outlet.GetExtraData());
             CPPUNIT_ASSERT(extra != nullptr);
 
             for (unsigned i = 1; i <= 4; ++i)
@@ -301,8 +301,8 @@ namespace hemelb
             }
 
             // And the reverse is true: every cache entry should be a site at the outlet plane
-            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin(); hvPtr
-                != extra->hydroVarsCache.end(); ++hvPtr)
+            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin();
+                hvPtr != extra->hydroVarsCache.end(); ++hvPtr)
             {
               site_t globalIdx = hvPtr->first;
               LatticeVector pos;
@@ -330,32 +330,32 @@ namespace hemelb
             site_t offset = 0;
             offset += latDat->GetMidDomainCollisionCount(0);
             offset += latDat->GetMidDomainCollisionCount(1);
-            inletStreamer.DoStreamAndCollide<false> (offset,
-                                                     latDat->GetMidDomainCollisionCount(2),
-                                                     lbmParams,
-                                                     static_cast<geometry::LatticeData*> (latDat),
-                                                     *propertyCache);
+            inletStreamer.DoStreamAndCollide<false>(offset,
+                                                    latDat->GetMidDomainCollisionCount(2),
+                                                    lbmParams,
+                                                    static_cast<geometry::LatticeData*>(latDat),
+                                                    *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(2);
 
-            outletStreamer.StreamAndCollide<false> (offset,
-                                                    latDat->GetMidDomainCollisionCount(3),
-                                                    lbmParams,
-                                                    latDat,
-                                                    *propertyCache);
-            offset += latDat->GetMidDomainCollisionCount(3);
-
-            inletStreamer.StreamAndCollide<false> (offset,
-                                                   latDat->GetMidDomainCollisionCount(4),
+            outletStreamer.StreamAndCollide<false>(offset,
+                                                   latDat->GetMidDomainCollisionCount(3),
                                                    lbmParams,
                                                    latDat,
                                                    *propertyCache);
+            offset += latDat->GetMidDomainCollisionCount(3);
+
+            inletStreamer.StreamAndCollide<false>(offset,
+                                                  latDat->GetMidDomainCollisionCount(4),
+                                                  lbmParams,
+                                                  latDat,
+                                                  *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(4);
 
-            outletStreamer.StreamAndCollide<false> (offset,
-                                                    latDat->GetMidDomainCollisionCount(5),
-                                                    lbmParams,
-                                                    latDat,
-                                                    *propertyCache);
+            outletStreamer.StreamAndCollide<false>(offset,
+                                                   latDat->GetMidDomainCollisionCount(5),
+                                                   lbmParams,
+                                                   latDat,
+                                                   *propertyCache);
 
             // Now every entry in the RSHV cache should have been updated
             CheckAllHVUpdated(inletBoundary, 1);
@@ -365,39 +365,39 @@ namespace hemelb
             offset = 0;
             offset += latDat->GetMidDomainCollisionCount(0);
             offset += latDat->GetMidDomainCollisionCount(1);
-            inletStreamer.DoPostStep<false> (offset,
-                                             latDat->GetMidDomainCollisionCount(2),
-                                             lbmParams,
-                                             static_cast<geometry::LatticeData*> (latDat),
-                                             *propertyCache);
+            inletStreamer.DoPostStep<false>(offset,
+                                            latDat->GetMidDomainCollisionCount(2),
+                                            lbmParams,
+                                            static_cast<geometry::LatticeData*>(latDat),
+                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(2);
 
-            outletStreamer.DoPostStep<false> (offset,
-                                              latDat->GetMidDomainCollisionCount(3),
-                                              lbmParams,
-                                              latDat,
-                                              *propertyCache);
-            offset += latDat->GetMidDomainCollisionCount(3);
-
-            inletStreamer.DoPostStep<false> (offset,
-                                             latDat->GetMidDomainCollisionCount(4),
+            outletStreamer.DoPostStep<false>(offset,
+                                             latDat->GetMidDomainCollisionCount(3),
                                              lbmParams,
                                              latDat,
                                              *propertyCache);
+            offset += latDat->GetMidDomainCollisionCount(3);
+
+            inletStreamer.DoPostStep<false>(offset,
+                                            latDat->GetMidDomainCollisionCount(4),
+                                            lbmParams,
+                                            latDat,
+                                            *propertyCache);
             offset += latDat->GetMidDomainCollisionCount(4);
 
-            outletStreamer.DoPostStep<false> (offset,
-                                              latDat->GetMidDomainCollisionCount(5),
-                                              lbmParams,
-                                              latDat,
-                                              *propertyCache);
+            outletStreamer.DoPostStep<false>(offset,
+                                             latDat->GetMidDomainCollisionCount(5),
+                                             lbmParams,
+                                             latDat,
+                                             *propertyCache);
 
             // Check that all the vsites have sensible hydro values
             InOutLetCosine* inlet = GetIolet(inletBoundary);
-            VSExtra<Lattice> * inExtra = dynamic_cast<VSExtra<Lattice>*> (inlet->GetExtraData());
+            VSExtra<Lattice> * inExtra = dynamic_cast<VSExtra<Lattice>*>(inlet->GetExtraData());
 
-            for (VirtualSite::Map::iterator vsIt = inExtra->vSites.begin(); vsIt
-                != inExtra->vSites.end(); ++vsIt)
+            for (VirtualSite::Map::iterator vsIt = inExtra->vSites.begin();
+                vsIt != inExtra->vSites.end(); ++vsIt)
             {
               site_t vSiteGlobalIdx = vsIt->first;
               VirtualSite& vSite = vsIt->second;
@@ -414,10 +414,10 @@ namespace hemelb
             }
 
             InOutLetCosine* outlet = GetIolet(outletBoundary);
-            VSExtra<Lattice> * outExtra = dynamic_cast<VSExtra<Lattice>*> (outlet->GetExtraData());
+            VSExtra<Lattice> * outExtra = dynamic_cast<VSExtra<Lattice>*>(outlet->GetExtraData());
 
-            for (VirtualSite::Map::iterator vsIt = outExtra->vSites.begin(); vsIt
-                != outExtra->vSites.end(); ++vsIt)
+            for (VirtualSite::Map::iterator vsIt = outExtra->vSites.begin();
+                vsIt != outExtra->vSites.end(); ++vsIt)
             {
               site_t vSiteGlobalIdx = vsIt->first;
               VirtualSite& vSite = vsIt->second;
@@ -442,9 +442,9 @@ namespace hemelb
           void CheckAllHVUpdated(lb::iolets::BoundaryValues* iolets, LatticeTimeStep expectedT)
           {
             VSExtra<Lattice> * extra =
-                dynamic_cast<VSExtra<Lattice>*> (iolets->GetLocalIolet(0)->GetExtraData());
-            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin(); hvPtr
-                != extra->hydroVarsCache.end(); ++hvPtr)
+                dynamic_cast<VSExtra<Lattice>*>(iolets->GetLocalIolet(0)->GetExtraData());
+            for (RSHV::Map::iterator hvPtr = extra->hydroVarsCache.begin();
+                hvPtr != extra->hydroVarsCache.end(); ++hvPtr)
             {
               site_t siteGlobalIdx = hvPtr->first;
               LatticeVector sitePos;
@@ -508,7 +508,7 @@ namespace hemelb
             latDat->SwapOldAndNew();
           }
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION( VirtualSiteIoletStreamerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (VirtualSiteIoletStreamerTests);
     }
   }
 }

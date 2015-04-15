@@ -21,12 +21,11 @@ namespace hemelb
   namespace steering
   {
     // Use initialisation list to do the work.
-    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState,
-                                           vis::Control* iControl,
-                                           const lb::LbmParameters* iLbmParams,
-                                           Network* iNetwork,
+    ImageSendComponent::ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
+                                           const lb::LbmParameters* iLbmParams, Network* iNetwork,
                                            unsigned inletCountIn) :
-        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), inletCount(inletCountIn), MaxFramerate(25.0)
+        mNetwork(iNetwork), mSimState(iSimState), mVisControl(iControl), inletCount(inletCountIn),
+            MaxFramerate(25.0)
     {
       xdrSendBuffer = new char[maxSendSize];
 
@@ -53,7 +52,8 @@ namespace hemelb
         return;
       }
 
-      io::writers::xdr::XdrMemWriter imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer, maxSendSize);
+      io::writers::xdr::XdrMemWriter imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer,
+                                                                                  maxSendSize);
 
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
@@ -64,7 +64,10 @@ namespace hemelb
       imageWriter << (int) (pix->GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->WritePixels(&imageWriter, *pix, mVisControl->domainStats, mVisControl->visSettings);
+      mVisControl->WritePixels(&imageWriter,
+                               *pix,
+                               mVisControl->domainStats,
+                               mVisControl->visSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
@@ -84,7 +87,8 @@ namespace hemelb
       }
 
       // Send to the client.
-      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",mSimState->GetTimeStep());
+      log::Logger::Log<log::Debug, log::Singleton>("Sending network image at timestep %d",
+                                                   mSimState->GetTimeStep());
       mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
     }
 
@@ -110,7 +114,9 @@ namespace hemelb
         else
         {
           log::Logger::Log<log::Trace, log::Singleton>("Image-send component requesting new render, %f seconds since last one at step %d max rate is %f.",
-                                                        deltaTime, mSimState->GetTimeStep(), MaxFramerate);
+                                                       deltaTime,
+                                                       mSimState->GetTimeStep(),
+                                                       MaxFramerate);
           lastRender = frameTimeStart;
           return true;
         }

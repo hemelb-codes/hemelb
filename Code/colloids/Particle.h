@@ -34,24 +34,38 @@ namespace hemelb
     {
       public:
         /** constructor - gets initial values from an xml configuration file */
-        Particle(const geometry::LatticeData& latDatLBM,
-                 const hemelb::lb::LbmParameters *lbmParams,
+        Particle(const geometry::LatticeData& latDatLBM, const hemelb::lb::LbmParameters *lbmParams,
                  io::xml::Element& xml);
 
         /** constructor - gets an invalid particle for making MPI data types */
-        Particle() {};
+        Particle()
+        {
+        }
+        ;
 
         /** property getter for particleId */
-        const unsigned long GetParticleId() const { return particleId; }
-        const LatticePosition& GetGlobalPosition() const { return globalPosition; }
+        const unsigned long GetParticleId() const
+        {
+          return particleId;
+        }
+        const LatticePosition& GetGlobalPosition() const
+        {
+          return globalPosition;
+        }
 
         const LatticeVelocity GetVelocity() const
         {
           return velocity + bodyForces * CalculateDragCoefficient() + lubricationVelocityAdjustment;
         }
 
-        const PhysicalMass GetMass() const { return mass; }
-        const LatticeDistance GetRadius() const { return smallRadius_a0; }
+        const PhysicalMass GetMass() const
+        {
+          return mass;
+        }
+        const LatticeDistance GetRadius() const
+        {
+          return smallRadius_a0;
+        }
 
         /**
          * normalised particle radius
@@ -60,8 +74,7 @@ namespace hemelb
          */
         const LatticeDistance GetNormalisedRadius() const
         {
-          return ( smallRadius_a0 * largeRadius_ah )
-               / ( largeRadius_ah - smallRadius_a0 );
+          return (smallRadius_a0 * largeRadius_ah) / (largeRadius_ah - smallRadius_a0);
         }
 
         /**
@@ -71,8 +84,7 @@ namespace hemelb
          */
         const LatticeDistance GetInverseNormalisedRadius() const
         {
-          return ( largeRadius_ah - smallRadius_a0 )
-               / ( smallRadius_a0 * largeRadius_ah );
+          return (largeRadius_ah - smallRadius_a0) / (smallRadius_a0 * largeRadius_ah);
         }
 
         const LatticeTimeStep& GetLastCheckpointTimestep() const
@@ -100,10 +112,16 @@ namespace hemelb
         }
 
         /** property getter for ownerRank */
-        const proc_t GetOwnerRank() const { return ownerRank; }
+        const proc_t GetOwnerRank() const
+        {
+          return ownerRank;
+        }
 
         /** property getter for isValid */
-        const bool IsValid() const { return isValid; }
+        const bool IsValid() const
+        {
+          return isValid;
+        }
 
         /**
          * less than operator for comparing particle objects
@@ -115,9 +133,9 @@ namespace hemelb
          * - with local rank first
          */
         //const bool operator<(const Particle& other) const;
-
         /** determines if the owner rank of this particle is an existing key in map */
-        const bool IsOwnerRankKnown(std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
+        const bool IsOwnerRankKnown(
+            std::map<proc_t, std::pair<unsigned int, unsigned int> > map) const;
 
         const bool IsReadyToBeDeleted() const;
 
@@ -125,9 +143,8 @@ namespace hemelb
         const void OutputInformation() const;
 
         /** for serialisation into output file */
-        const void WriteToStream(
-                     const LatticeTimeStep currentTimestep,
-                     io::writers::Writer& writer);
+        const void WriteToStream(const LatticeTimeStep currentTimestep,
+                                 io::writers::Writer& writer);
 
         /** obtains the fluid viscosity at the position of this particle */
         // TODO: currently returns BLOOD_VISCOSITY_Pa_s, which has the wrong units
@@ -146,15 +163,15 @@ namespace hemelb
         const void CalculateFeedbackForces(const geometry::LatticeData& latDatLBM) const;
 
         /** interpolates the fluid velocity to the location of each particle */
-        const void InterpolateFluidVelocity(
-                     const geometry::LatticeData& latDatLBM,
-                     const lb::MacroscopicPropertyCache& propertyCache);
+        const void InterpolateFluidVelocity(const geometry::LatticeData& latDatLBM,
+                                            const lb::MacroscopicPropertyCache& propertyCache);
 
         /** accumulate contributions to velocity from remote processes */
         const void AccumulateVelocity(util::Vector3D<double>& contribution)
         {
           velocity += contribution;
-        };
+        }
+        ;
 
         /** sets the value for the velocity adjustment due to the lubrication BC */
         const void SetLubricationVelocityAdjustment(const LatticeVelocity adjustment)

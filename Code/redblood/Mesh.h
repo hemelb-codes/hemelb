@@ -216,7 +216,7 @@ namespace hemelb
     //! Refine a mesh by decomposing each facet into four triangles
     Mesh refine(Mesh mesh, unsigned int depth = 0);
     //! Creates an ico sphere (regular triangular mesh over a sphere)
-    Mesh icoSphere(unsigned int depth=0);
+    Mesh icoSphere(unsigned int depth = 0);
   }
 }
 #endif

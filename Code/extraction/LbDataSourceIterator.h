@@ -29,8 +29,7 @@ namespace hemelb
          * @return
          */
         LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                             const geometry::LatticeData& data,
-                             int rank,
+                             const geometry::LatticeData& data, int rank,
                              const util::UnitConverter& converter);
 
         /**
@@ -136,7 +135,6 @@ namespace hemelb
          * @return whether there is a boundary site at location
          */
         bool IsWallSite(const util::Vector3D<site_t>& location) const;
-
 
       private:
         /**

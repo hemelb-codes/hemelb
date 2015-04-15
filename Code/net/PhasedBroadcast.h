@@ -73,10 +73,9 @@ namespace hemelb
     class PhasedBroadcast : public IteratedAction
     {
       public:
-        PhasedBroadcast(Net * iNet,
-                        const lb::SimulationState * iSimState,
+        PhasedBroadcast(Net * iNet, const lb::SimulationState * iSimState,
                         unsigned int spreadFactor) :
-                          mSimState(iSimState), mMyDepth(0), mTreeDepth(0), mNet(iNet)
+            mSimState(iSimState), mMyDepth(0), mTreeDepth(0), mNet(iNet)
         {
           // Calculate the correct values for the depth variables.
           proc_t noSeenToThisDepth = 1;
@@ -94,8 +93,8 @@ namespace hemelb
 
             // If this node is at the current depth, it must have a rank lower than or equal to the highest
             // rank at the current depth but greater than the highest rank at the previous depth.
-            if (noSeenToThisDepth > netTop.Rank() && ( (noSeenToThisDepth
-                - noAtCurrentDepth) <= netTop.Rank()))
+            if (noSeenToThisDepth > netTop.Rank()
+                && ( (noSeenToThisDepth - noAtCurrentDepth) <= netTop.Rank()))
             {
               mMyDepth = mTreeDepth;
             }
@@ -112,8 +111,8 @@ namespace hemelb
           }
 
           // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-          for (unsigned int child = (spreadFactor * netTop.Rank()) + 1; child
-              <= spreadFactor * (1 + netTop.Rank()); ++child)
+          for (unsigned int child = (spreadFactor * netTop.Rank()) + 1;
+              child <= spreadFactor * (1 + netTop.Rank()); ++child)
           {
             if (child < (unsigned int) netTop.Size())
             {
@@ -134,7 +133,7 @@ namespace hemelb
         {
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestSend<T> (data, count, *it);
+            mNet->RequestSend<T>(data, count, *it);
           }
         }
 
@@ -146,7 +145,7 @@ namespace hemelb
         {
           if (mParent != NOPARENT)
           {
-            mNet ->RequestReceive<T> (data, count, mParent);
+            mNet->RequestReceive<T>(data, count, mParent);
           }
         }
 
@@ -166,7 +165,7 @@ namespace hemelb
           T* data = dataStart;
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestReceive<T> (data, countPerChild, *it);
+            mNet->RequestReceive<T>(data, countPerChild, *it);
             data += countPerChild;
           }
         }
@@ -187,7 +186,7 @@ namespace hemelb
           unsigned int childNum = 0;
           for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
           {
-            mNet->RequestReceive<T> (dataStart[childNum], countPerChild[childNum], *it);
+            mNet->RequestReceive<T>(dataStart[childNum], countPerChild[childNum], *it);
             ++childNum;
           }
         }
@@ -200,7 +199,7 @@ namespace hemelb
         {
           if (mParent != NOPARENT)
           {
-            mNet->RequestSend<T> (data, count, mParent);
+            mNet->RequestSend<T>(data, count, mParent);
           }
         }
 
@@ -212,15 +211,15 @@ namespace hemelb
          */
         unsigned long GetRoundTripLength() const
         {
-          unsigned long delayTime = initialAction
-            ? 1
-            : 0;
+          unsigned long delayTime = initialAction ?
+            1 :
+            0;
 
-          unsigned long multiplier = (down
-            ? 1
-            : 0) + (up
-            ? 1
-            : 0);
+          unsigned long multiplier = (down ?
+            1 :
+            0) + (up ?
+            1 :
+            0);
 
           return delayTime + multiplier * GetTraverseTime();
         }
@@ -232,9 +231,9 @@ namespace hemelb
          */
         unsigned long GetFirstDescending() const
         {
-          return (initialAction
-            ? 1
-            : 0);
+          return (initialAction ?
+            1 :
+            0);
         }
 
         /**
@@ -244,9 +243,9 @@ namespace hemelb
          */
         unsigned long GetFirstAscending() const
         {
-          return GetFirstDescending() + (down
-            ? GetTraverseTime()
-            : 0);
+          return GetFirstDescending() + (down ?
+            GetTraverseTime() :
+            0);
         }
 
         /**

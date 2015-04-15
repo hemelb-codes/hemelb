@@ -32,6 +32,7 @@ namespace hemelb
 
       lastCheckpointTimestep = 0;
       markedForDeletionTimestep = BIG_NUMBER2;
-    };
+    }
+    ;
   }
 }

@@ -325,8 +325,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexIncomingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)
@@ -367,8 +369,10 @@ namespace hemelb
                     + LatticeType::CZ[*rowIndexIncomingVelocity]
                         * LatticeType::CZ[*columnIndexOutgoingVelocity];
 
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) >= 0);
-                assert(site.template GetWallDistance<LatticeType> (LatticeType::INVERSEDIRECTIONS[(Direction) *rowIndexIncomingVelocity]) < 1);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    >= 0);
+                assert(site.template GetWallDistance<LatticeType>(LatticeType::INVERSEDIRECTIONS[(Direction ) *rowIndexIncomingVelocity])
+                    < 1);
 
                 kMatrices[contiguousSiteIndex](rowIndex, columnIndex) =
                     (-3.0 / 2.0)

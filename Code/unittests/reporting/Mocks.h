@@ -42,14 +42,10 @@ namespace hemelb
           }
           ;
         protected:
-          int Reduce(double *sendbuf,
-                     double *recvbuf,
-                     int count,
-                     MPI_Datatype datatype,
-                     MPI_Op op,
+          int Reduce(double *sendbuf, double *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
                      int root)
           {
-            CPPUNIT_ASSERT_EQUAL((int)hemelb::reporting::Timers::last, count);
+            CPPUNIT_ASSERT_EQUAL((int) hemelb::reporting::Timers::last, count);
             for (int i = 0; i < count; i++)
             {
               CPPUNIT_ASSERT_EQUAL(10.0 * i, sendbuf[i]);

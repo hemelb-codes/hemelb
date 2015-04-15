@@ -33,11 +33,8 @@ namespace hemelb
     {
       public:
         // Constructor and destructor
-        GlyphDrawer(geometry::LatticeData* iLatDat,
-                    Screen* iScreen,
-                    DomainStats* iDomainStats,
-                    Viewpoint* iViewpoint,
-                    VisSettings* iVisSettings);
+        GlyphDrawer(geometry::LatticeData* iLatDat, Screen* iScreen, DomainStats* iDomainStats,
+                    Viewpoint* iViewpoint, VisSettings* iVisSettings);
         ~GlyphDrawer();
 
         // Function to perform the rendering.
@@ -47,9 +44,9 @@ namespace hemelb
         // A struct to represent a single glyph.
         struct Glyph
         {
-          /**
-           * The 3D coordinates of the glyph.
-           */
+            /**
+             * The 3D coordinates of the glyph.
+             */
             float x, y, z;
             /**
              * The local contiguous site id near there.
@@ -58,18 +55,12 @@ namespace hemelb
         };
 
         void RenderLine(const XYCoordinates<float>& endPoint1,
-                        const XYCoordinates<float>& endPoint2,
-                        const VisSettings* visSettings,
+                        const XYCoordinates<float>& endPoint2, const VisSettings* visSettings,
                         PixelSet<BasicPixel>*);
 
         template<bool xLimited>
-        void RenderLineHelper(int x,
-                              int y,
-                              int incE,
-                              int incNE,
-                              int limit,
-                              const VisSettings* visSettings,
-                              PixelSet<BasicPixel>*);
+        void RenderLineHelper(int x, int y, int incE, int incNE, int limit,
+                              const VisSettings* visSettings, PixelSet<BasicPixel>*);
 
         geometry::LatticeData* mLatDat;
 

@@ -14,8 +14,7 @@ namespace hemelb
   namespace extraction
   {
     LbDataSourceIterator::LbDataSourceIterator(const lb::MacroscopicPropertyCache& propertyCache,
-                                               const geometry::LatticeData& data,
-                                               int rank_,
+                                               const geometry::LatticeData& data, int rank_,
                                                const util::UnitConverter& converter) :
         propertyCache(propertyCache), data(data), rank(rank_), converter(converter), position(-1)
     {
@@ -41,7 +40,8 @@ namespace hemelb
 
     FloatingType LbDataSourceIterator::GetPressure() const
     {
-      return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position) * Cs2);
+      return converter.ConvertPressureToPhysicalUnits(propertyCache.densityCache.Get(position)
+          * Cs2);
     }
 
     util::Vector3D<FloatingType> LbDataSourceIterator::GetVelocity() const

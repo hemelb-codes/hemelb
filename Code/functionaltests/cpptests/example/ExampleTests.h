@@ -21,9 +21,8 @@ namespace hemelb
 
       class ExampleTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(ExampleTests);
-          CPPUNIT_TEST(TestTrivialTest);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (ExampleTests);
+          CPPUNIT_TEST (TestTrivialTest);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -41,7 +40,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(ExampleTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (ExampleTests);
     }
   }
 }

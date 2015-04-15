@@ -86,10 +86,10 @@ namespace hemelb
         virtual void ShareInitialConditions()=0;
 
         void RegisterIntercommunicand(IntercommunicandTypeT & resolver,
-                                      Intercommunicand & intercommunicand,
-                                      const std::string &label)
+                                      Intercommunicand & intercommunicand, const std::string &label)
         {
-          registeredObjects.insert(std::make_pair(&intercommunicand, std::make_pair(&resolver, label)));
+          registeredObjects.insert(std::make_pair(&intercommunicand,
+                                                  std::make_pair(&resolver, label)));
 
         }
 

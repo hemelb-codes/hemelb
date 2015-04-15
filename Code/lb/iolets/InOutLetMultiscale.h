@@ -25,7 +25,9 @@ namespace hemelb
       namespace multiscale_constants
       {
         const PhysicalPressure HEMELB_MULTISCALE_REFERENCE_PRESSURE = 0.0;
-        const PhysicalVelocity HEMELB_MULTISCALE_REFERENCE_VELOCITY = PhysicalVelocity(0.0, 0.0, 0.0);
+        const PhysicalVelocity HEMELB_MULTISCALE_REFERENCE_VELOCITY = PhysicalVelocity(0.0,
+                                                                                       0.0,
+                                                                                       0.0);
       }
 
       /***
@@ -69,8 +71,9 @@ namespace hemelb
           multiscale::SharedValue<PhysicalPressure> & GetPressureReference();
           multiscale::SharedValue<PhysicalVelocity> & GetVelocityReference();
 
-          template<class Intercommunicator> void Register(Intercommunicator &intercomms,
-                                                          typename Intercommunicator::IntercommunicandTypeT &type)
+          template<class Intercommunicator> void Register(
+              Intercommunicator &intercomms,
+              typename Intercommunicator::IntercommunicandTypeT &type)
           {
             intercomms.RegisterIntercommunicand(type, *this, label);
           }
@@ -78,9 +81,9 @@ namespace hemelb
           template<class IntercommunicandType> static void DefineType(IntercommunicandType &type)
           {
             // The intercommunicators have a shared buffer which represents imaginary communication
-            type.template RegisterSharedValue<PhysicalPressure> ("pressure");
-            type.template RegisterSharedValue<PhysicalPressure> ("minPressure");
-            type.template RegisterSharedValue<PhysicalPressure> ("maxPressure");
+            type.template RegisterSharedValue<PhysicalPressure>("pressure");
+            type.template RegisterSharedValue<PhysicalPressure>("minPressure");
+            type.template RegisterSharedValue<PhysicalPressure>("maxPressure");
             //type.template RegisterSharedValue<PhysicalPressure>("velocity");
           }
           // This should be const, and we should have a setter.

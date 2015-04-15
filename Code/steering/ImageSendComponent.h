@@ -24,16 +24,15 @@ namespace hemelb
     class ImageSendComponent
     {
       public:
-        ImageSendComponent(lb::SimulationState* iSimState,
-                           vis::Control* iControl,
-                           const lb::LbmParameters* iLbmParams,
-                           Network* iNetwork,
+        ImageSendComponent(lb::SimulationState* iSimState, vis::Control* iControl,
+                           const lb::LbmParameters* iLbmParams, Network* iNetwork,
                            unsigned inletCount);
         ~ImageSendComponent();
 
         void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
-        void SetMaxFramerate(float maxFramerate){
-          MaxFramerate=maxFramerate;
+        void SetMaxFramerate(float maxFramerate)
+        {
+          MaxFramerate = maxFramerate;
         }
         bool ShouldRenderNewNetworkImage();
 
@@ -61,7 +60,8 @@ namespace hemelb
         // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
         static const unsigned int XdrIntLength = 4;
         static const unsigned int maxSendSize = 2 * XdrIntLength + 1 * XdrIntLength
-            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
+            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data
+            + SimulationParameters::paramsSizeB;
     };
   }
 }

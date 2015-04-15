@@ -70,8 +70,8 @@ namespace hemelb
             void testMPWidePresent()
             {
               std::string host = "localhost";
-              std::cout << "IP address for localhost is: " << MPW_DNSResolve(const_cast<char*>(host.c_str()))
-                  << std::endl;
+              std::cout << "IP address for localhost is: "
+                  << MPW_DNSResolve(const_cast<char*>(host.c_str())) << std::endl;
               std::cout << "MPWide is present." << std::endl;
             }
             void testMPWideInit()
@@ -95,9 +95,14 @@ namespace hemelb
               CopyResourceToTempdir("four_cube.gmy");
               hemelb::configuration::CommandLine options(argc, argv);
               std::string configPath = "../../../config_files/MPWSettings.cfg";
-              MPWideIntercommunicator intercomms(Comms().OnIORank(), *pbuffer, *LBorchestration, configPath);
+              MPWideIntercommunicator intercomms(Comms().OnIORank(),
+                                                 *pbuffer,
+                                                 *LBorchestration,
+                                                 configPath);
 
-              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options, Comms(), intercomms);
+              MultiscaleSimulationMaster<MPWideIntercommunicator> heme(options,
+                                                                       Comms(),
+                                                                       intercomms);
               // Mock out the behaviour of the simulation master iteration, but with the other model linked in.
               //std::cout << "HemeLB about to be run..." << std::endl;
               while (heme.GetState()->GetTime() < 20.0)

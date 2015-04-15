@@ -34,9 +34,10 @@ int main(int argc, char **argv)
   int opt;
   bool debug = false;
 
-  while((opt = getopt(argc, argv, "o:d")) != -1)
+  while ( (opt = getopt(argc, argv, "o:d")) != -1)
   {
-    switch (opt) {
+    switch (opt)
+    {
       case 'o':
         reportfile.open(optarg);
         reportto = &reportfile;
@@ -53,9 +54,9 @@ int main(int argc, char **argv)
   hemelb::net::IOCommunicator testCommunicator(commWorld);
   hemelb::unittests::helpers::HasCommsTestFixture::Init(testCommunicator);
 
-  std::string testPath = (optind < argc)
-    ? std::string(argv[optind])
-    : "";
+  std::string testPath = (optind < argc) ?
+    std::string(argv[optind]) :
+    "";
   // Create the event manager and test controller
   CppUnit::TestResult controller;
 
@@ -71,7 +72,7 @@ int main(int argc, char **argv)
   CppUnit::TestRunner runner;
 
   CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-  runner.addTest( registry.makeTest() );
+  runner.addTest(registry.makeTest());
 
   try
   {
@@ -89,8 +90,8 @@ int main(int argc, char **argv)
   }
 
   reportfile.close();
-  return result.wasSuccessful()
-    ? 0
-    : 1;
+  return result.wasSuccessful() ?
+    0 :
+    1;
 }
 

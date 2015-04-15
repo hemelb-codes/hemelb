@@ -18,7 +18,7 @@ namespace hemelb
   {
 
     MpiEnvironment::MpiEnvironment(int& argc, char**& argv) :
-      doesOwnMpi(false)
+        doesOwnMpi(false)
     {
       if (!Initialized())
       {
@@ -40,18 +40,18 @@ namespace hemelb
     {
       int flag;
       MPI_Initialized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     bool MpiEnvironment::Finalized()
     {
       int flag;
       MPI_Finalized(&flag);
-      return flag
-        ? true
-        : false;
+      return flag ?
+        true :
+        false;
     }
 
     void MpiEnvironment::Abort(int errorCode)

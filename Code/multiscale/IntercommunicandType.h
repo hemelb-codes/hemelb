@@ -50,7 +50,8 @@ namespace hemelb
           return fields;
         }
 
-        void RegisterSharedValue(const std::string &label, typename RuntimeTypeImplementation::RuntimeType type)
+        void RegisterSharedValue(const std::string &label,
+                                 typename RuntimeTypeImplementation::RuntimeType type)
         {
           fields.push_back(std::make_pair(label, type));
           hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("shared value created with label %s",

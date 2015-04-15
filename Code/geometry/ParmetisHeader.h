@@ -16,5 +16,4 @@ typedef idxtype idx_t;
 typedef float real_t;
 #endif
 
-
 #endif /* HEMELB_GEOMETRY_PARMETISHEADER_H */

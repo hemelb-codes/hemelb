@@ -60,8 +60,7 @@ namespace hemelb
     class MPWideIntercommunicator : public hemelb::multiscale::Intercommunicator<MPWideRuntimeType>
     {
       public:
-        MPWideIntercommunicator(bool isCommsRank,
-                                std::map<std::string, double> & buffer,
+        MPWideIntercommunicator(bool isCommsRank, std::map<std::string, double> & buffer,
                                 std::map<std::string, bool> &orchestration,
                                 std::string configFilePathIn);
         /** This is run at the start of the HemeLB simulation. */
@@ -117,8 +116,7 @@ namespace hemelb
          * @param url
          * @param server_side_ports
          */
-        void ReadInputFile(const char* sockets_file,
-                           std::vector<std::string>& url,
+        void ReadInputFile(const char* sockets_file, std::vector<std::string>& url,
                            std::vector<int>& server_side_ports);
 
         /**

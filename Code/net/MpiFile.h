@@ -46,19 +46,22 @@ namespace hemelb
          */
         operator MPI_File() const;
 
-        void SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, const std::string& datarep, MPI_Info info);
+        void SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
+                     const std::string& datarep, MPI_Info info);
 
         const MpiCommunicator& GetCommunicator() const;
 
         template<typename T>
         void Read(std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
-        void ReadAt(MPI_Offset offset, std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void ReadAt(MPI_Offset offset, std::vector<T>& buffer,
+                    MPI_Status* stat = MPI_STATUS_IGNORE);
 
         template<typename T>
         void Write(const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
         template<typename T>
-        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat = MPI_STATUS_IGNORE);
+        void WriteAt(MPI_Offset offset, const std::vector<T>& buffer, MPI_Status* stat =
+                         MPI_STATUS_IGNORE);
       protected:
         MpiFile(const MpiCommunicator& parentComm, MPI_File fh);
 

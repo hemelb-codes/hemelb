@@ -46,7 +46,8 @@ namespace hemelb
       class MockIntercommunicator : public hemelb::multiscale::Intercommunicator<MPIRuntimeType>
       {
         public:
-          MockIntercommunicator(std::map<std::string, double> & buffer, std::map<std::string, bool> &orchestration) :
+          MockIntercommunicator(std::map<std::string, double> & buffer,
+                                std::map<std::string, bool> &orchestration) :
               doubleContents(buffer), currentTime(0), orchestration(orchestration)
           {
 
@@ -92,8 +93,8 @@ namespace hemelb
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
 
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
-                  sharedFieldIndex++)
+              for (unsigned int sharedFieldIndex = 0;
+                  sharedFieldIndex < sharedObject.SharedValues().size(); sharedFieldIndex++)
               {
                 Receive(resolver.Fields()[sharedFieldIndex].first,
                         resolver.Fields()[sharedFieldIndex].second,
@@ -111,8 +112,8 @@ namespace hemelb
               hemelb::multiscale::Intercommunicand &sharedObject = *intercommunicandData->first;
               std::string &label = intercommunicandData->second.second;
               IntercommunicandTypeT &resolver = *intercommunicandData->second.first;
-              for (unsigned int sharedFieldIndex = 0; sharedFieldIndex < sharedObject.SharedValues().size();
-                  sharedFieldIndex++)
+              for (unsigned int sharedFieldIndex = 0;
+                  sharedFieldIndex < sharedObject.SharedValues().size(); sharedFieldIndex++)
               {
                 Send(resolver.Fields()[sharedFieldIndex].first,
                      resolver.Fields()[sharedFieldIndex].second,
@@ -121,10 +122,8 @@ namespace hemelb
               }
             }
           }
-          void Receive(const std::string & fieldLabel,
-                       RuntimeType type,
-                       const std::string objectLabel,
-                       hemelb::multiscale::BaseSharedValue & value)
+          void Receive(const std::string & fieldLabel, RuntimeType type,
+                       const std::string objectLabel, hemelb::multiscale::BaseSharedValue & value)
           {
 
             std::string label(objectLabel + "_" + fieldLabel);
@@ -136,9 +135,7 @@ namespace hemelb
             }
 
           }
-          void Send(const std::string & fieldLabel,
-                    RuntimeType type,
-                    const std::string objectLabel,
+          void Send(const std::string & fieldLabel, RuntimeType type, const std::string objectLabel,
                     hemelb::multiscale::BaseSharedValue & value)
           {
             std::string label(objectLabel + "_" + fieldLabel);

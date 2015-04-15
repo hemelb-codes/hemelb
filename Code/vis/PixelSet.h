@@ -66,8 +66,7 @@ namespace hemelb
           {
             pixels.push_back(PixelType(newPixel));
             pixelLookup.insert(std::pair<BasicPixel, unsigned int>(location,
-                                                                   (unsigned int) (pixels.size()
-                                                                       - 1)));
+                                                                   (unsigned int) (pixels.size() - 1)));
           }
         }
 
@@ -95,7 +94,7 @@ namespace hemelb
 
         void ReceiveQuantity(net::Net* net, proc_t source)
         {
-          net->RequestReceiveR(count,source);
+          net->RequestReceiveR(count, source);
         }
 
         void SendPixels(net::Net* net, proc_t destination)

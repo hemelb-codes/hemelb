@@ -30,8 +30,7 @@ namespace hemelb
             CPPUNIT_TEST_SUITE (ConcernTests);
             CPPUNIT_TEST (TestConstruct);
             CPPUNIT_TEST (TestCallAction);
-            CPPUNIT_TEST (TestCallActorAsConcern);
-            CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST (TestCallActorAsConcern);CPPUNIT_TEST_SUITE_END();
 
           public:
             ConcernTests()
@@ -80,16 +79,18 @@ namespace hemelb
             {
               actor->CallAction(steps::BeginPhase);
 
-              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, "),actor->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, "), actor->CallsSoFar());
 
               actor->CallAction(steps::PreSend);
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, "), actor->CallsSoFar());
 
               actor->CallAction(steps::PreWait);
-              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, "), actor->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, "),
+                                   actor->CallsSoFar());
 
               actor->CallAction(steps::EndPhase);
-              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "), actor->CallsSoFar());
+              CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, "),
+                                   actor->CallsSoFar());
 
               actor->CallAction(steps::EndAll);
               CPPUNIT_ASSERT_EQUAL(std::string("RequestComms, PreSend, PreReceive, PostReceive, EndIteration, "),

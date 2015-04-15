@@ -23,8 +23,7 @@ namespace hemelb
       class LatticeInfo
       {
         public:
-          inline LatticeInfo(unsigned numberOfVectors,
-                             const util::Vector3D<int>* vectors,
+          inline LatticeInfo(unsigned numberOfVectors, const util::Vector3D<int>* vectors,
                              const Direction* inverseVectorIndicesIn) :
               numVectors(numberOfVectors), vectorSet(), inverseVectorIndices()
           {

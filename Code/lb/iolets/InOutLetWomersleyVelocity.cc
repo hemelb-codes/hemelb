@@ -42,7 +42,8 @@ namespace hemelb
         return pressureGradientAmplitude;
       }
 
-      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(const LatticePressureGradient& pressGradAmp)
+      void InOutLetWomersleyVelocity::SetPressureGradientAmplitude(
+          const LatticePressureGradient& pressGradAmp)
       {
         pressureGradientAmplitude = pressGradAmp;
       }

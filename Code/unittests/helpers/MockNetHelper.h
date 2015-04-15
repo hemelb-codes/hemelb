@@ -27,7 +27,7 @@ namespace hemelb
            * @param size
            */
           MockMpiCommunicator(int rank_, int size_) :
-            MpiCommunicator(), rank(rank_), size(size_)
+              MpiCommunicator(), rank(rank_), size(size_)
           {
 
           }
@@ -48,7 +48,7 @@ namespace hemelb
       {
         protected:
           MockNetHelper() :
-            communicatorMock(nullptr), netMock(nullptr)
+              communicatorMock(nullptr), netMock(nullptr)
           {
           }
           void setUp(const proc_t core_count, const proc_t current_core)

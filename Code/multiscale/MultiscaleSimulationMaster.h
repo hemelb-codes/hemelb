@@ -362,7 +362,7 @@ namespace hemelb
             {
               sendList[j] = inList[i][j];
             }
-            HEMELB_MPI_CALL( MPI_Allgather,
+            HEMELB_MPI_CALL(MPI_Allgather,
                             ( &sendSize, 1, MPI_INT, recvSizes, 1, MPI_INT, ioComms ));
 
             int64_t totalSize = 0;
@@ -379,7 +379,7 @@ namespace hemelb
 
             site_t *recvList = new site_t[totalSize]; //inList[i].size()
 
-            HEMELB_MPI_CALL( MPI_Allgatherv,
+            HEMELB_MPI_CALL(MPI_Allgatherv,
                             ( sendList, inList[i].size(), MPI_LONG_LONG, recvList, recvSizes, recvDispls, MPI_LONG_LONG, ioComms ));
 
             std::vector<site_t> subList;

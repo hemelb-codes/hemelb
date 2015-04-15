@@ -24,7 +24,7 @@ namespace hemelb
     namespace iolets
     {
       InOutLetFile::InOutLetFile() :
-        InOutLet(), densityTable(0), units(nullptr)
+          InOutLet(), densityTable(0), units(nullptr)
       {
 
       }
@@ -52,7 +52,7 @@ namespace hemelb
       {
         // First read in values from file
         // Used to be complex code here to keep a vector unique, but this is just achieved by using a map.
-        std::map < PhysicalTime, PhysicalPressure > timeValuePairs;
+        std::map<PhysicalTime, PhysicalPressure> timeValuePairs;
 
         double timeTemp, valueTemp;
 
@@ -76,8 +76,8 @@ namespace hemelb
         // Determine min and max pressure on the way
         PhysicalPressure pMin = timeValuePairs.begin()->second;
         PhysicalPressure pMax = timeValuePairs.begin()->second;
-        for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin(); entry
-            != timeValuePairs.end(); entry++)
+        for (std::map<PhysicalTime, PhysicalPressure>::iterator entry = timeValuePairs.begin();
+            entry != timeValuePairs.end(); entry++)
         {
           pMin = util::NumericalFunctions::min(pMin, entry->second);
           pMax = util::NumericalFunctions::max(pMax, entry->second);
@@ -89,15 +89,17 @@ namespace hemelb
 
         // Check if last point's value matches the first
         if (values.back() != values.front())
-          throw Exception() << "Last point's value does not match the first point's value in " <<pressureFilePath;
+          throw Exception() << "Last point's value does not match the first point's value in "
+              << pressureFilePath;
 
         // extend the table to one past the total time steps, so that the table is valid in the end-state, where the zero indexed time step is equal to the limit.
         densityTable.resize(totalTimeSteps + 1);
         // Now convert these vectors into arrays using linear interpolation
         for (unsigned int timeStep = 0; timeStep <= totalTimeSteps; timeStep++)
         {
-          double point = times.front() + (static_cast<double> (timeStep)
-              / static_cast<double> (totalTimeSteps)) * (times.back() - times.front());
+          double point = times.front()
+              + (static_cast<double>(timeStep) / static_cast<double>(totalTimeSteps))
+                  * (times.back() - times.front());
 
           double pressure = util::NumericalFunctions::LinearInterpolate(times, values, point);
 

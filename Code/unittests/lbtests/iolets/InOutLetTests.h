@@ -49,13 +49,13 @@ namespace hemelb
          */
         class InOutLetTests : public helpers::FolderTestFixture
         {
-            CPPUNIT_TEST_SUITE(InOutLetTests);
-            CPPUNIT_TEST(TestCosineConstruct);
-            CPPUNIT_TEST(TestFileConstruct);
-            CPPUNIT_TEST(TestIoletCoordinates);
-            CPPUNIT_TEST(TestParabolicVelocityConstruct);
-            CPPUNIT_TEST(TestWomersleyVelocityConstruct);
-            CPPUNIT_TEST(TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
+            CPPUNIT_TEST_SUITE (InOutLetTests);
+            CPPUNIT_TEST (TestCosineConstruct);
+            CPPUNIT_TEST (TestFileConstruct);
+            CPPUNIT_TEST (TestIoletCoordinates);
+            CPPUNIT_TEST (TestParabolicVelocityConstruct);
+            CPPUNIT_TEST (TestWomersleyVelocityConstruct);
+            CPPUNIT_TEST (TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
@@ -398,7 +398,7 @@ namespace hemelb
             InOutLetWomersleyVelocity* womersVel;
             InOutLetFileVelocity* fileVel;
         };
-        CPPUNIT_TEST_SUITE_REGISTRATION(InOutLetTests);
+        CPPUNIT_TEST_SUITE_REGISTRATION (InOutLetTests);
       }
     }
   }

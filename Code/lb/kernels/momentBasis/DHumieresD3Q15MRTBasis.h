@@ -56,7 +56,8 @@ namespace hemelb
              * @param collisionMatrix MRT collision matrix, diagonal
              * @param tau LB relaxation time used to relax some of the moments
              */
-            static void SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix, distribn_t tau);
+            static void SetUpCollisionMatrix(std::vector<distribn_t>& collisionMatrix,
+                                             distribn_t tau);
         };
       }
     }

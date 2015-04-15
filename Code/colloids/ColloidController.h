@@ -32,13 +32,10 @@ namespace hemelb
         /** constructor - currently only initialises the neighbour list */
         ColloidController(const geometry::LatticeData& latDatLBM,
                           const lb::SimulationState& simulationState,
-                          const geometry::Geometry& gmyResult,
-                          io::xml::Document& xml,
+                          const geometry::Geometry& gmyResult, io::xml::Document& xml,
                           lb::MacroscopicPropertyCache& propertyCache,
-                          const hemelb::lb::LbmParameters *lbmParams,
-                          const std::string& outputPath,
-                          const net::IOCommunicator& ioComms_,
-                          reporting::Timers& timers);
+                          const hemelb::lb::LbmParameters *lbmParams, const std::string& outputPath,
+                          const net::IOCommunicator& ioComms_, reporting::Timers& timers);
 
         /** destructor - releases resources allocated by this class */
         ~ColloidController();
@@ -64,10 +61,10 @@ namespace hemelb
         reporting::Timers& timers;
 
         /** maximum separation from a colloid of sites used in its fluid velocity interpolation */
-        const static site_t REGION_OF_INFLUENCE = (site_t)2;
+        const static site_t REGION_OF_INFLUENCE = (site_t) 2;
 
         /** a vector of the processors that might be interested in
-            particles near the edge of this processor's sub-domain */
+         particles near the edge of this processor's sub-domain */
         std::vector<proc_t> neighbourProcessors;
 
         /** a list of relative 3D vectors that defines the sites within a region of influence */
@@ -77,8 +74,8 @@ namespace hemelb
         const Neighbourhood GetNeighbourhoodVectors(site_t distance);
 
         /** determines the list of neighbour processors
-            i.e. processors that are within the region of influence of the local domain's edge
-            i.e. processors that own at least one site in the neighbourhood of a local site */
+         i.e. processors that are within the region of influence of the local domain's edge
+         i.e. processors that own at least one site in the neighbourhood of a local site */
         void InitialiseNeighbourList(const geometry::LatticeData& latDatLBM,
                                      const geometry::Geometry& gmyResult,
                                      const Neighbourhood& neighbourhood);
@@ -86,8 +83,7 @@ namespace hemelb
         /** get local coordinates and the owner rank for a site from its global coordinates */
         bool GetLocalInformationForGlobalSite(const geometry::Geometry& gmyResult,
                                               const util::Vector3D<site_t>& globalLocationForSite,
-                                              site_t* blockIdForSite,
-                                              site_t* localSiteIdForSite,
+                                              site_t* blockIdForSite, site_t* localSiteIdForSite,
                                               proc_t* ownerRankForSite);
     };
   }

@@ -36,10 +36,8 @@ namespace hemelb
 
         void Combine(const ResultPixel& other);
 
-        void WritePixel(unsigned* pixel_index,
-                        unsigned char rgb_data[12],
-                        const DomainStats& iDomainStats,
-                        const VisSettings& visSettings) const;
+        void WritePixel(unsigned* pixel_index, unsigned char rgb_data[12],
+                        const DomainStats& iDomainStats, const VisSettings& visSettings) const;
 
         /*
          * Debugging function to output details about the pixel to the logger.

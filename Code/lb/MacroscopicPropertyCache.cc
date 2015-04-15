@@ -15,15 +15,15 @@ namespace hemelb
   {
     MacroscopicPropertyCache::MacroscopicPropertyCache(const SimulationState& simState,
                                                        const geometry::LatticeData& latticeData) :
-      densityCache(simState, latticeData.GetLocalFluidSiteCount()),
-      velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
-      wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
-      vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
-      shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
-      stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-      tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
-      siteCount(latticeData.GetLocalFluidSiteCount())
+        densityCache(simState, latticeData.GetLocalFluidSiteCount()),
+            velocityCache(simState, latticeData.GetLocalFluidSiteCount()),
+            wallShearStressMagnitudeCache(simState, latticeData.GetLocalFluidSiteCount()),
+            vonMisesStressCache(simState, latticeData.GetLocalFluidSiteCount()),
+            shearRateCache(simState, latticeData.GetLocalFluidSiteCount()),
+            stressTensorCache(simState, latticeData.GetLocalFluidSiteCount()),
+            tractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+            tangentialProjectionTractionCache(simState, latticeData.GetLocalFluidSiteCount()),
+            siteCount(latticeData.GetLocalFluidSiteCount())
     {
       ResetRequirements();
     }

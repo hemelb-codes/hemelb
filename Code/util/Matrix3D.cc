@@ -45,7 +45,8 @@ namespace hemelb
       }
     }
 
-    void Matrix3D::timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result) const
+    void Matrix3D::timesVector(const util::Vector3D<double>& multiplier,
+                               util::Vector3D<double>& result) const
     {
       for (unsigned row = 0; row < 3; row++)
       {
@@ -69,7 +70,6 @@ namespace hemelb
       }
       return returnMatrix;
     }
-
 
   } /* namespace util */
 } /* namespace hemelb */

@@ -25,7 +25,8 @@ namespace hemelb
       class BoundaryComms
       {
         public:
-          BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList, const BoundaryCommunicator& boundaryComm, bool iHasBoundary);
+          BoundaryComms(SimulationState* iSimState, std::vector<int> &iProcsList,
+                        const BoundaryCommunicator& boundaryComm, bool iHasBoundary);
           ~BoundaryComms();
 
           void Wait();
