@@ -25,12 +25,18 @@ namespace hemelb
           // Indices of nodes in original array
           MeshData::Facet const &indices;
           Facet(MeshData const &mesh, size_t index) :
-              Facet(mesh.vertices, mesh.facets[index])
+              indices(mesh.facets[index])
           {
+            nodes[0] = &mesh.vertices[indices[0]];
+            nodes[1] = &mesh.vertices[indices[1]];
+            nodes[2] = &mesh.vertices[indices[2]];
           }
           Facet(MeshData::Vertices const &vertices, MeshData::Facets const &facets, size_t index) :
-              Facet(vertices, facets[index])
+              indices(facets[index])
           {
+            nodes[0] = &vertices[indices[0]];
+            nodes[1] = &vertices[indices[1]];
+            nodes[2] = &vertices[indices[2]];
           }
           Facet(MeshData::Vertices const &vertices, MeshData::Facet const &indices) :
               indices(indices)

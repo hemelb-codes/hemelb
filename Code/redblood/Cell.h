@@ -51,25 +51,16 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
-            CellBase(mesh.GetVertices(), origMesh, scaleIn)
-        {
-        }
+        CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0);
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
         //!   both.
-        CellBase(Mesh const &mesh) :
-            CellBase(mesh.GetVertices(), mesh.clone())
-        {
-        }
+        CellBase(Mesh const &mesh);
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
         //!   both
-        CellBase(std::shared_ptr<MeshData> const &mesh) :
-            CellBase(mesh->vertices, Mesh(*mesh))
-        {
-        }
+        CellBase(std::shared_ptr<MeshData> const &mesh);
         //! Copy constructor
         //! References same template mesh
         CellBase(CellBase const &cell);
