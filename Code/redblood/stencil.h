@@ -12,6 +12,7 @@
 
 #include <boost/core/enable_if.hpp>
 #include <cmath>
+#include <type_traits>
 #include "units.h"
 #include "constants.h"
 
@@ -94,30 +95,28 @@ namespace hemelb
           0;
       }
 
-#define HEMELB_STENCIL_MACRO(NAME, STENCIL)                \
-  struct NAME                                              \
-  {                                                        \
-    NAME()                                                 \
-    {                                                      \
-    }                                                      \
-    static Dimensionless stencil(Dimensionless x)          \
-    {                                                      \
-      return STENCIL(x);                                   \
-    }                                                      \
-    static Dimensionless stencil(LatticePosition const &x) \
-    {                                                      \
-      return STENCIL(x.x) * STENCIL(x.y) * STENCIL(x.z);   \
-    }                                                      \
-    Dimensionless operator()(Dimensionless x) const        \
-    {                                                      \
-      return NAME::stencil(x);                             \
-    }                                                      \
-    Dimensionless operator()(LatticePosition const &x)     \
-    {                                                      \
-      return NAME::stencil(x);                             \
-    }                                                      \
-    static const size_t range;                             \
-  }
+#define HEMELB_STENCIL_MACRO(NAME, STENCIL)                  \
+  struct NAME                                                \
+  {                                                          \
+    static Dimensionless stencil(Dimensionless x)            \
+    {                                                        \
+      return STENCIL(x);                                     \
+    }                                                        \
+    static Dimensionless stencil(LatticePosition const &x)   \
+    {                                                        \
+      return STENCIL(x.x) * STENCIL(x.y) * STENCIL(x.z);     \
+    }                                                        \
+    Dimensionless operator()(Dimensionless x) const          \
+    {                                                        \
+      return NAME::stencil(x);                               \
+    }                                                        \
+    Dimensionless operator()(LatticePosition const &x)       \
+    {                                                        \
+      return NAME::stencil(x);                               \
+    }                                                        \
+    static const size_t range;                               \
+  };                                                         \
+  static_assert(std::is_pod<NAME>::value, "Can be a struct")
       HEMELB_STENCIL_MACRO(FourPoint, fourPoint);
       HEMELB_STENCIL_MACRO(CosineApprox, cosineApprox);
       HEMELB_STENCIL_MACRO(ThreePoint, threePoint);

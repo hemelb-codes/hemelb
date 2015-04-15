@@ -15,6 +15,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <type_traits>
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 #include "units.h"
@@ -25,8 +26,9 @@ namespace hemelb
   {
     //! Holds raw mesh data
     //! Data is separated into vertices and triangular facets
-    struct MeshData
+    class MeshData
     {
+      public:
         //! Type of containers over indices
         typedef std::array<size_t, 3> Facet;
         //! Facet container type
@@ -47,8 +49,9 @@ namespace hemelb
     PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
 
     //! Holds raw topology data
-    struct MeshTopology
+    class MeshTopology
     {
+      public:
         //! Type for map from vertices to facets
         typedef std::vector<std::set<size_t> > VertexToFacets;
         //! Type for map from facets to its neighbors
