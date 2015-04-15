@@ -17,8 +17,9 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      ParticleManager::ParticleManager(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
-        neighbouringProcessors(iNeighbouringProcessors)
+      ParticleManager::ParticleManager(
+          std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors) :
+          neighbouringProcessors(iNeighbouringProcessors)
       {
       }
 
@@ -39,7 +40,7 @@ namespace hemelb
 
       void ParticleManager::DeleteParticle(site_t iIndex)
       {
-        assert(particles.size() > static_cast<size_t> (iIndex));
+        assert(particles.size() > static_cast<size_t>(iIndex));
 
         //Move the particle at the end to position
         particles[iIndex] = particles.back();

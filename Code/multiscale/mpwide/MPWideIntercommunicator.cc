@@ -30,9 +30,9 @@ namespace hemelb
                                                      std::map<std::string, double> & buffer,
                                                      std::map<std::string, bool> &orchestration,
                                                      std::string configFilePathIn) :
-        isCommsProc(isCommsRank),
-            configFilePath(configFilePathIn), recv_icand_data_size(0), send_icand_data_size(0),
-            doubleContents(buffer), currentTime(0), orchestration(orchestration), channelCount(0)
+        isCommsProc(isCommsRank), configFilePath(configFilePathIn), recv_icand_data_size(0),
+            send_icand_data_size(0), doubleContents(buffer), currentTime(0),
+            orchestration(orchestration), channelCount(0)
     {
     }
 
@@ -43,7 +43,7 @@ namespace hemelb
         log::Logger::Log<log::Info, log::Singleton>("Initializing MPWide.");
 
         // 1. Read the file with MPWide settings.
-        std::vector < std::string > hosts;
+        std::vector<std::string> hosts;
         std::vector<int> server_side_ports;
 
         ReadInputFile(configFilePath.c_str(), hosts, server_side_ports);

@@ -26,7 +26,7 @@ namespace hemelb
     }
 
     NullDebugger::NullDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      Debugger(executable, comm)
+        Debugger(executable, comm)
     {
     }
 

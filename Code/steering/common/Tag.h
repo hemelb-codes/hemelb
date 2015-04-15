@@ -34,8 +34,7 @@ namespace hemelb
        * specialization when we don't have a subclass.
        */
 
-      template<typename T, typename DerivedTag,
-          typename SteererClass = class Steerer>
+      template<typename T, typename DerivedTag, typename SteererClass = class Steerer>
       class Tag : public TagBase,
                   public Singleton<Tag<T, DerivedTag, SteererClass> >
       {
@@ -59,8 +58,8 @@ namespace hemelb
           {
             // Wrap the singleton behaviour, registering the instance with the
             // steerer. Note have to use static polymorphism pattern here.
-            DerivedTag* self = static_cast<DerivedTag*> (Singleton<Tag<T,
-                DerivedTag, SteererClass> >::Init());
+            DerivedTag* self =
+                static_cast<DerivedTag*>(Singleton<Tag<T, DerivedTag, SteererClass> >::Init());
 
             if (steerer == nullptr)
               steerer = SteererClass::Init();
@@ -84,8 +83,7 @@ namespace hemelb
           // Called by the Steerer to update our instances with the new value
           void SetInstanceValues(const T value)
           {
-            for (typename ContainerType::iterator i = Instances.begin(); i
-                != Instances.end(); ++i)
+            for (typename ContainerType::iterator i = Instances.begin(); i != Instances.end(); ++i)
             {
               (*i)->Set(value);
             }
@@ -99,15 +97,14 @@ namespace hemelb
 
       // Template static initializers
       template<typename T, typename DerivedTag, typename SteererClass>
-      SteererClass* Tag<T, DerivedTag, SteererClass>::steerer =
-          SteererClass::Init();
+      SteererClass* Tag<T, DerivedTag, SteererClass>::steerer = SteererClass::Init();
 
       template<typename T, typename DerivedTag, typename SteererClass>
       const std::string Tag<T, DerivedTag, SteererClass>::TagString = "";
 
       template<typename T, typename DerivedTag, typename SteererClass>
-      const typename Tag<T, DerivedTag, SteererClass>::WrappedType Tag<T,
-          DerivedTag, SteererClass>::InitialValue = 0;
+      const typename Tag<T, DerivedTag, SteererClass>::WrappedType Tag<T, DerivedTag, SteererClass>::InitialValue =
+          0;
 
     }
   }

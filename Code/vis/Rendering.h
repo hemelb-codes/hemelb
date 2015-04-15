@@ -27,8 +27,7 @@ namespace hemelb
     class Rendering
     {
       public:
-        Rendering(PixelSet<BasicPixel>* glyph,
-                  PixelSet<raytracer::RayDataNormal>* ray,
+        Rendering(PixelSet<BasicPixel>* glyph, PixelSet<raytracer::RayDataNormal>* ray,
                   PixelSet<streaklinedrawer::StreakPixel>* streak);
         void ReleaseAll();
 
@@ -47,10 +46,10 @@ namespace hemelb
         void AddPixelsToResultSet(PixelSet<ResultPixel>* resultSet,
                                   const std::vector<pixelType>& inPixels)
         {
-          for (typename std::vector<pixelType>::const_iterator it = inPixels.begin(); it
-              != inPixels.end(); it++)
+          for (typename std::vector<pixelType>::const_iterator it = inPixels.begin();
+              it != inPixels.end(); it++)
           {
-            resultSet ->AddPixel(ResultPixel(&*it));
+            resultSet->AddPixel(ResultPixel(&*it));
           }
         }
 

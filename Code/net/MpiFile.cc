@@ -23,7 +23,8 @@ namespace hemelb
         delete fh;
       }
     }
-    MpiFile::MpiFile() : comm(nullptr)
+    MpiFile::MpiFile() :
+        comm(nullptr)
     {
 
     }
@@ -38,13 +39,9 @@ namespace hemelb
                           const MPI_Info info)
     {
       MPI_File ans;
-      HEMELB_MPI_CALL(
-          MPI_File_open,
-          (comm, MpiConstCast(filename.c_str()), mode, info, &ans)
-      );
+      HEMELB_MPI_CALL(MPI_File_open, (comm, MpiConstCast(filename.c_str()), mode, info, &ans));
       return MpiFile(comm, ans);
     }
-
 
     void MpiFile::Close()
     {
@@ -64,12 +61,11 @@ namespace hemelb
       return *comm;
     }
 
-    void MpiFile::SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype, const std::string& datarep, MPI_Info info)
+    void MpiFile::SetView(MPI_Offset disp, MPI_Datatype etype, MPI_Datatype filetype,
+                          const std::string& datarep, MPI_Info info)
     {
-      HEMELB_MPI_CALL(
-          MPI_File_set_view,
-          (*filePtr, disp, etype, filetype, MpiConstCast(datarep.c_str()), info)
-      );
+      HEMELB_MPI_CALL(MPI_File_set_view,
+                      (*filePtr, disp, etype, filetype, MpiConstCast(datarep.c_str()), info));
     }
   }
 }

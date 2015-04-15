@@ -43,12 +43,14 @@ namespace hemelb
             SimConfig* config = SimConfig::New(Resource("config0_2_0.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
-            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            lb::iolets::InOutLetCosine* inlet =
+                dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
             CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
 
             // Check that in the absence of the <monitoring> XML element things get initiliased properly
-            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig =
+                config->GetMonitoringConfiguration();
             CPPUNIT_ASSERT(!monConfig->doConvergenceCheck);
             CPPUNIT_ASSERT(!monConfig->doIncompressibilityCheck);
             CPPUNIT_ASSERT(!monConfig->convergenceTerminate);
@@ -61,11 +63,13 @@ namespace hemelb
             SimConfig* config = SimConfig::New(Resource("config.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
             CPPUNIT_ASSERT_EQUAL(0.0001, config->GetTimeStepLength());
-            lb::iolets::InOutLetCosine* inlet = dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
+            lb::iolets::InOutLetCosine* inlet =
+                dynamic_cast<lb::iolets::InOutLetCosine*>(config->GetInlets()[0]);
             CPPUNIT_ASSERT(inlet != nullptr);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(6000.0, inlet->GetPeriod(), 1e-6);
 
-            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig = config->GetMonitoringConfiguration();
+            const hemelb::configuration::SimConfig::MonitoringConfig* monConfig =
+                config->GetMonitoringConfiguration();
             CPPUNIT_ASSERT(monConfig->doConvergenceCheck);
             CPPUNIT_ASSERT(monConfig->doIncompressibilityCheck);
             CPPUNIT_ASSERT(monConfig->convergenceTerminate);

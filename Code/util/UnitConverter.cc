@@ -17,11 +17,10 @@ namespace hemelb
 
     UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
                                  PhysicalPosition latticeOrigin) :
-      latticeDistance(voxelSize), latticeTime(timeStep),
-          latticeMass(BLOOD_DENSITY_Kg_per_m3 * voxelSize * voxelSize * voxelSize),
-          latticeSpeed(voxelSize / latticeTime),
-          latticeOrigin(latticeOrigin),
-          latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
+        latticeDistance(voxelSize), latticeTime(timeStep),
+            latticeMass(BLOOD_DENSITY_Kg_per_m3 * voxelSize * voxelSize * voxelSize),
+            latticeSpeed(voxelSize / latticeTime), latticeOrigin(latticeOrigin),
+            latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
     {
 
     }
@@ -37,19 +36,19 @@ namespace hemelb
     }
 
     LatticePressure UnitConverter::ConvertPressureDifferenceToLatticeUnits(
-                                                                           PhysicalPressure pressure_diff) const
+        PhysicalPressure pressure_diff) const
     {
       return pressure_diff * mmHg_TO_PASCAL / latticePressure;
     }
 
     PhysicalPressure UnitConverter::ConvertPressureDifferenceToPhysicalUnits(
-                                                                             LatticePressure pressure_diff) const
+        LatticePressure pressure_diff) const
     {
       return pressure_diff * latticePressure / mmHg_TO_PASCAL;
     }
 
     PhysicalReciprocalTime UnitConverter::ConvertShearRateToPhysicalUnits(
-                                                                          LatticeReciprocalTime shearRate) const
+        LatticeReciprocalTime shearRate) const
     {
       return shearRate / latticeTime;
     }

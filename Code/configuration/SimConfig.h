@@ -44,8 +44,8 @@ namespace hemelb
         struct MonitoringConfig
         {
             MonitoringConfig() :
-                doConvergenceCheck(false), convergenceRelativeTolerance(0), convergenceTerminate(false),
-                    doIncompressibilityCheck(false)
+                doConvergenceCheck(false), convergenceRelativeTolerance(0),
+                    convergenceTerminate(false), doIncompressibilityCheck(false)
             {
             }
             bool doConvergenceCheck; ///< Whether to turn on the convergence check or not

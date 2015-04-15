@@ -36,7 +36,7 @@ namespace hemelb
       }
 
       Element::Element(TiXmlElement* el_) :
-        el(el_)
+          el(el_)
       {
       }
 
@@ -175,7 +175,7 @@ namespace hemelb
        * Default constructor
        */
       ChildIterator::ChildIterator() :
-        parent(Element::Missing()), current(Element::Missing()), name()
+          parent(Element::Missing()), current(Element::Missing()), name()
       {
       }
 
@@ -185,7 +185,7 @@ namespace hemelb
        * @param subElemName
        */
       ChildIterator::ChildIterator(const Element& elem, const std::string& subElemName) :
-        parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
+          parent(elem), current(elem.GetChildOrNull(subElemName)), name(subElemName)
       {
       }
 
@@ -194,7 +194,7 @@ namespace hemelb
        * @param other
        */
       ChildIterator::ChildIterator(const ChildIterator& other) :
-        parent(other.parent), current(other.current), name(other.name)
+          parent(other.parent), current(other.current), name(other.name)
       {
       }
 
@@ -269,7 +269,7 @@ namespace hemelb
       {
         // increment and return the value pre-increment
         ChildIterator ans = *this;
-        ++(*this);
+        ++ (*this);
         return ans;
       }
 
@@ -280,14 +280,14 @@ namespace hemelb
 
       // XML exception base class
       XmlError::XmlError(const Element& el) :
-        elem(el), elemPath(el.GetPath())
+          elem(el), elemPath(el.GetPath())
       {
         *this << "xml::";
       }
 
       // Missing attribute
       AttributeError::AttributeError(const Element& n, const std::string& attr_) :
-        XmlError(n), attr(attr_)
+          XmlError(n), attr(attr_)
       {
         *this << "AttributeError: '" << elemPath << "' has no attribute '" << attr << "'";
       }
@@ -295,30 +295,30 @@ namespace hemelb
       // Attribute parsing error
       ParseError::ParseError(const Element& el, const std::string& attrName,
                              const std::string& attrVal) :
-        XmlError(el), name(attrName), val(attrVal)
+          XmlError(el), name(attrName), val(attrVal)
       {
         *this << "ParseError: '" << elemPath << "' Cannot convert attribute '" << name << "=\""
             << val << "\"'";
       }
 
       ElementError::ElementError(const Element& el, const std::string& elName) :
-        XmlError(el), elemName(elName)
+          XmlError(el), elemName(elName)
       {
       }
       ChildError::ChildError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+          ElementError(elem, subElemName)
       {
         *this << "ChildError: '" << elemPath << "' has no child '" << elemName << "'";
       }
 
       ParentError::ParentError(const Element& elem) :
-        ElementError(elem, "")
+          ElementError(elem, "")
       {
         *this << "ParentError: '" << elemPath << "' is root element";
       }
 
       SiblingError::SiblingError(const Element& elem, const std::string& subElemName) :
-        ElementError(elem, subElemName)
+          ElementError(elem, subElemName)
       {
         *this << "SiblingError: '" << elemPath << "' has no later sibling '" << elemName << "'";
       }

@@ -27,7 +27,7 @@ namespace hemelb
        * fluids. Implements support for relaxation time not constant across the domain.
        */
       template<class tRheologyModel, class LatticeType>
-      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType> , LatticeType>
+      class LBGKNN : public BaseKernel<LBGKNN<tRheologyModel, LatticeType>, LatticeType>
       {
         public:
 
@@ -54,7 +54,7 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size()));
+            assert( (index < (site_t ) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
@@ -75,7 +75,7 @@ namespace hemelb
             }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
-            assert( (index < (site_t) mTau.size()));
+            assert( (index < (site_t ) mTau.size()));
             hydroVars.tau = mTau[index];
 
             // Compute the local relaxation time that will be used in the next time step
@@ -88,7 +88,9 @@ namespace hemelb
 
             for (Direction direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              hydroVars.SetFPostCollision(direction, hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega);
+              hydroVars.SetFPostCollision(direction,
+                                          hydroVars.f[direction]
+                                              + hydroVars.GetFNeq().f[direction] * omega);
             }
           }
 
@@ -123,7 +125,8 @@ namespace hemelb
           void InitState(const InitParams& initParams)
           {
             // Initialise relaxation time across the domain to HemeLB's default value.
-            mTau.resize(initParams.latDat->GetLocalFluidSiteCount(), initParams.lbmParams->GetTau());
+            mTau.resize(initParams.latDat->GetLocalFluidSiteCount(),
+                        initParams.lbmParams->GetTau());
             mTimeStep = initParams.lbmParams->GetTimeStep();
             mSpaceStep = initParams.lbmParams->GetVoxelSize();
           }
@@ -143,11 +146,15 @@ namespace hemelb
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}
              */
-            double shear_rate = LatticeType::CalculateShearRate(localTau, hydroVars.f_neq.f, hydroVars.density)
-                / mTimeStep;
+            double shear_rate = LatticeType::CalculateShearRate(localTau,
+                                                                hydroVars.f_neq.f,
+                                                                hydroVars.density) / mTimeStep;
 
             // Update tau
-            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate, hydroVars.density, mSpaceStep, mTimeStep);
+            localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
+                                                                hydroVars.density,
+                                                                mSpaceStep,
+                                                                mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
             /// @todo: #633 refactor

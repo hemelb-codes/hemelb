@@ -43,7 +43,7 @@ namespace hemelb
 
       public:
         Steerable() :
-          mValue(TagClass::InitialValue)
+            mValue(TagClass::InitialValue)
         {
           Steerable::tag->AddInstance(this);
         }

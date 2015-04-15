@@ -75,7 +75,8 @@ namespace hemelb
      * @tparam CommsPolicy How to share information between processes
      */
     template<class ClockPolicy, class CommsPolicy>
-    class TimersBase : public CommsPolicy, public Reportable
+    class TimersBase : public CommsPolicy,
+                       public Reportable
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -131,8 +132,8 @@ namespace hemelb
         static const std::string timerNames[TimersBase::numberOfTimers];
 
         TimersBase(const net::IOCommunicator& comms) :
-          CommsPolicy(comms),
-            timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
+            CommsPolicy(comms), timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers),
+                means(numberOfTimers)
         {
         }
         /**
@@ -215,16 +216,45 @@ namespace hemelb
     typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
 
     template<class ClockPolicy, class CommsPolicy>
-    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy, CommsPolicy>::numberOfTimers] =
+    const std::string TimersBase<ClockPolicy, CommsPolicy>::timerNames[TimersBase<ClockPolicy,
+        CommsPolicy>::numberOfTimers] =
 
-    { "Total", "Seed Decomposition", "Domain Decomposition", "File Read", "Re Read", "Unzip", "Moves", "Parmetis",
-      "Lattice Data initialisation", "Lattice Boltzmann", "LB calc only", "Visualisation", "Monitoring", "MPI Send",
-      "MPI Wait", "Simulation total", "Reading communications", "Parsing", "Read IO", "Read Blocks prelim",
-      "Read blocks all", "Steering Client Wait", "Move Forcing Counts", "Move Forcing Data", "Block Requirements",
-      "Move Counts Sending", "Move Data Sending", "Populating moves list for decomposition optimisation",
-      "Initial geometry reading", "Colloid initialisation", "Colloid position communication",
-      "Colloid velocity communication", "Colloid force calculations", "Colloid calculations for updating",
-      "Colloid outputting", "Extraction writing" };
+    { "Total",
+      "Seed Decomposition",
+      "Domain Decomposition",
+      "File Read",
+      "Re Read",
+      "Unzip",
+      "Moves",
+      "Parmetis",
+      "Lattice Data initialisation",
+      "Lattice Boltzmann",
+      "LB calc only",
+      "Visualisation",
+      "Monitoring",
+      "MPI Send",
+      "MPI Wait",
+      "Simulation total",
+      "Reading communications",
+      "Parsing",
+      "Read IO",
+      "Read Blocks prelim",
+      "Read blocks all",
+      "Steering Client Wait",
+      "Move Forcing Counts",
+      "Move Forcing Data",
+      "Block Requirements",
+      "Move Counts Sending",
+      "Move Data Sending",
+      "Populating moves list for decomposition optimisation",
+      "Initial geometry reading",
+      "Colloid initialisation",
+      "Colloid position communication",
+      "Colloid velocity communication",
+      "Colloid force calculations",
+      "Colloid calculations for updating",
+      "Colloid outputting",
+      "Extraction writing" };
   }
 
 }

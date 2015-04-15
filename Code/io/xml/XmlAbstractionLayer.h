@@ -214,7 +214,6 @@ namespace hemelb
            */
           std::string GetPath() const;
 
-
         private:
           TiXmlElement* el;
 
@@ -273,7 +272,6 @@ namespace hemelb
            * @return
            */
           ChildIterator& operator=(const ChildIterator& other);
-
 
           /**
            * Dereference
@@ -383,7 +381,7 @@ namespace hemelb
           template<typename T>
           XmlError& operator<<(const T& t)
           {
-            return static_cast<XmlError&> (Exception::operator<<(t));
+            return static_cast<XmlError&>(Exception::operator<<(t));
           }
 
         protected:
@@ -406,7 +404,7 @@ namespace hemelb
           template<typename T>
           AttributeError& operator<<(const T& t)
           {
-            return static_cast<AttributeError&> (XmlError::operator<<(t));
+            return static_cast<AttributeError&>(XmlError::operator<<(t));
           }
 
         private:
@@ -424,7 +422,7 @@ namespace hemelb
           template<typename T>
           ParseError& operator<<(const T& t)
           {
-            return static_cast<ParseError&> (XmlError::operator<<(t));
+            return static_cast<ParseError&>(XmlError::operator<<(t));
           }
 
         private:
@@ -447,7 +445,7 @@ namespace hemelb
           template<typename T>
           ElementError& operator<<(const T& t)
           {
-            return static_cast<ElementError&> (XmlError::operator<<(t));
+            return static_cast<ElementError&>(XmlError::operator<<(t));
           }
 
         protected:
@@ -463,7 +461,7 @@ namespace hemelb
           template<typename T>
           ChildError& operator<<(const T& t)
           {
-            return static_cast<ChildError&> (ElementError::operator<<(t));
+            return static_cast<ChildError&>(ElementError::operator<<(t));
           }
 
       };
@@ -478,7 +476,7 @@ namespace hemelb
           template<typename T>
           ParentError& operator<<(const T& t)
           {
-            return static_cast<ParentError&> (ElementError::operator<<(t));
+            return static_cast<ParentError&>(ElementError::operator<<(t));
           }
 
       };
@@ -493,7 +491,7 @@ namespace hemelb
           template<typename T>
           SiblingError& operator<<(const T& t)
           {
-            return static_cast<SiblingError&> (ElementError::operator<<(t));
+            return static_cast<SiblingError&>(ElementError::operator<<(t));
           }
 
       };

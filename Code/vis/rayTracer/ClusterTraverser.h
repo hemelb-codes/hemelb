@@ -25,7 +25,7 @@ namespace hemelb
       {
         public:
           ClusterTraverser(const ClusterType& iCluster) :
-            mCluster(iCluster)
+              mCluster(iCluster)
           {
           }
 

@@ -31,30 +31,28 @@ namespace hemelb
     {
       class GeometrySelectorTests : public helpers::HasCommsTestFixture
       {
-          CPPUNIT_TEST_SUITE ( GeometrySelectorTests);
-          CPPUNIT_TEST ( TestStraightLineGeometrySelector);
-          CPPUNIT_TEST ( TestPlaneGeometrySelector);
-          CPPUNIT_TEST ( TestWholeGeometrySelector);
-          CPPUNIT_TEST ( TestGeometrySurfaceSelector);
-          CPPUNIT_TEST ( TestSurfacePointSelector);
-          CPPUNIT_TEST ( TestSurfacePointSelectorMultipleHits);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (GeometrySelectorTests);
+          CPPUNIT_TEST (TestStraightLineGeometrySelector);
+          CPPUNIT_TEST (TestPlaneGeometrySelector);
+          CPPUNIT_TEST (TestWholeGeometrySelector);
+          CPPUNIT_TEST (TestGeometrySurfaceSelector);
+          CPPUNIT_TEST (TestSurfacePointSelector);
+          CPPUNIT_TEST (TestSurfacePointSelectorMultipleHits);CPPUNIT_TEST_SUITE_END();
 
         public:
           GeometrySelectorTests() :
-                VoxelSize(0.01),
-                CubeSize(10),
-                CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0),
-                planeNormal(1.0),
+              VoxelSize(0.01), CubeSize(10), CentreCoordinate( ((distribn_t) CubeSize - 1.0) / 2.0),
+                  planeNormal(1.0),
 
-                planePosition(CentreCoordinate * VoxelSize),
-                planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0),
-                lineEndPoint1(CentreCoordinate * VoxelSize),
-                lineEndPoint2( (CubeSize + 1) * VoxelSize),
-                surfacePoint( (CubeSize + 1) * VoxelSize),
+                  planePosition(CentreCoordinate * VoxelSize),
+                  planeRadius(distribn_t(CubeSize) * VoxelSize / 3.0),
+                  lineEndPoint1(CentreCoordinate * VoxelSize),
+                  lineEndPoint2( (CubeSize + 1) * VoxelSize),
+                  surfacePoint( (CubeSize + 1) * VoxelSize),
 
-                surfacePointMultipleHits( (CubeSize + 1) * VoxelSize,
-                                         CubeSize * VoxelSize,
-                                         CubeSize * VoxelSize)
+                  surfacePointMultipleHits( (CubeSize + 1) * VoxelSize,
+                                           CubeSize * VoxelSize,
+                                           CubeSize * VoxelSize)
           {
 
           }
@@ -75,19 +73,19 @@ namespace hemelb
 
             planeGeometrySelector = new hemelb::extraction::PlaneGeometrySelector(planePosition,
                                                                                   planeNormal);
-            planeGeometrySelectorWithRadius
-                = new hemelb::extraction::PlaneGeometrySelector(planePosition,
-                                                                planeNormal,
-                                                                planeRadius);
-            straightLineGeometrySelector
-                = new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1, lineEndPoint2);
+            planeGeometrySelectorWithRadius =
+                new hemelb::extraction::PlaneGeometrySelector(planePosition,
+                                                              planeNormal,
+                                                              planeRadius);
+            straightLineGeometrySelector =
+                new hemelb::extraction::StraightLineGeometrySelector(lineEndPoint1, lineEndPoint2);
             wholeGeometrySelector = new hemelb::extraction::WholeGeometrySelector();
 
             geometrySurfaceSelector = new hemelb::extraction::GeometrySurfaceSelector();
 
             surfacePointSelector = new hemelb::extraction::SurfacePointSelector(surfacePoint);
-            surfacePointSelectorMultipleHits
-                = new hemelb::extraction::SurfacePointSelector(surfacePointMultipleHits);
+            surfacePointSelectorMultipleHits =
+                new hemelb::extraction::SurfacePointSelector(surfacePointMultipleHits);
           }
 
           void tearDown()
@@ -158,8 +156,9 @@ namespace hemelb
                                                                                zCoord));
 
                   // Compute the distance from the centre point, include the site if it is within the radius.
-                  if ( (util::Vector3D<distribn_t>(xCoord, yCoord, zCoord) - util::Vector3D<
-                      distribn_t>(CentreCoordinate)).GetMagnitude() < distribn_t(CubeSize) / 3.0)
+                  if ( (util::Vector3D<distribn_t>(xCoord, yCoord, zCoord)
+                      - util::Vector3D<distribn_t>(CentreCoordinate)).GetMagnitude()
+                      < distribn_t(CubeSize) / 3.0)
                   {
                     includedCoordsWithRadius.push_back(util::Vector3D<site_t>(xCoord,
                                                                               yCoord,
@@ -287,7 +286,8 @@ namespace hemelb
 
               msg << "expected to be included but actually was";
 
-              if (!geometrySelector->Include(*dataSourceIterator, dataSourceIterator->GetPosition()))
+              if (!geometrySelector->Include(*dataSourceIterator,
+                                             dataSourceIterator->GetPosition()))
               {
                 msg << " not.";
               }
@@ -330,7 +330,7 @@ namespace hemelb
           hemelb::extraction::SurfacePointSelector* surfacePointSelectorMultipleHits;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometrySelectorTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GeometrySelectorTests);
 
     }
   }

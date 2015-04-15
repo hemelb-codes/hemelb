@@ -663,7 +663,8 @@ namespace hemelb
 
       if (convEl.IterChildren("criterion").AtEnd())
       {
-        throw Exception() << "At least one convergence criterion must be provided in " << convEl.GetPath();
+        throw Exception() << "At least one convergence criterion must be provided in "
+            << convEl.GetPath();
       }
 
       for (io::xml::ChildIterator criteriaIt = convEl.IterChildren("criterion");

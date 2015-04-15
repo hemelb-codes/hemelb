@@ -30,8 +30,8 @@ namespace hemelb
         //! \param [in] scaleIn: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(
-            MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0);
+        CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+                 Dimensionless scaleIn = 1e0);
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
@@ -40,9 +40,8 @@ namespace hemelb
         //! \param [in] scaleIn: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(
-            MeshData::Vertices const &verticesIn,
-            Mesh const &origMesh, Dimensionless scaleIn = 1e0);
+        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+                     1e0);
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: deformable vertices that define the cell are copied
@@ -81,7 +80,8 @@ namespace hemelb
         };
         //! Shallow copy constructor
         //! References same data
-        CellBase(CellBase const &cell, shallow_clone const&) : data(cell.data)
+        CellBase(CellBase const &cell, shallow_clone const&) :
+            data(cell.data)
         {
         }
         //! Because it is good practice
@@ -89,7 +89,6 @@ namespace hemelb
         virtual ~CellBase()
         {
         }
-
 
         void operator=(Mesh const &mesh);
 
@@ -120,8 +119,8 @@ namespace hemelb
           return operator()(in);
         }
         //! Interaction between wall and a node
-        virtual LatticeForceVector WallInteractionForce(
-            LatticePosition const &vertex, LatticePosition const &wall) const
+        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
+                                                        LatticePosition const &wall) const
         {
           return LatticeForceVector(0, 0, 0);
         }
@@ -153,7 +152,7 @@ namespace hemelb
 
       protected:
         //! allows separation of data and behaviors
-        struct CellData;
+        class CellData;
         //! Holds data
         std::shared_ptr<CellData> data;
     };
@@ -163,28 +162,41 @@ namespace hemelb
     {
       public:
         //! Holds all physical parameters
-        struct Moduli
+        class Moduli
         {
+          public:
             //! Bending energy parameter
             PhysicalPressure bending;
             //! Surface energy parameter
             PhysicalPressure surface;
-            //! Surface volume parameter
+            //! Volume energy parameter
             PhysicalPressure volume;
             //! Skalak dilation modulus
             PhysicalPressure dilation;
             //! Skalak strain modulus
             PhysicalPressure strain;
-            Moduli() : Moduli{0, 0, 0, 0, 0}
+
+            Moduli() :
+                bending(0), surface(0), volume(0), dilation(0), strain(0)
             {
             }
             Moduli(std::initializer_list<PhysicalPressure> const &l)
             {
-              bending = l.size() > 0 ? *l.begin(): 0;
-              surface = l.size() > 1 ? *(l.begin() + 1): 0;
-              volume = l.size() > 2 ? *(l.begin() + 2): 0;
-              dilation = l.size() > 3 ? *(l.begin() + 3): 0;
-              strain = l.size() > 4 ? *(l.begin() + 4): 0;
+              bending = l.size() > 0 ?
+                *l.begin() :
+                0;
+              surface = l.size() > 1 ?
+                * (l.begin() + 1) :
+                0;
+              volume = l.size() > 2 ?
+                * (l.begin() + 2) :
+                0;
+              dilation = l.size() > 3 ?
+                * (l.begin() + 3) :
+                0;
+              strain = l.size() > 4 ?
+                * (l.begin() + 4) :
+                0;
             }
         } moduli;
         //! Node-wall interaction
@@ -194,7 +206,8 @@ namespace hemelb
         using CellBase::CellBase;
         //! Copy constructor
         //! Copy refers to the same template mesh
-        Cell(Cell const &cell) : CellBase(cell), moduli(cell.moduli), nodeWall(cell.nodeWall)
+        Cell(Cell const &cell) :
+            CellBase(cell), moduli(cell.moduli), nodeWall(cell.nodeWall)
         {
         }
 
@@ -203,8 +216,8 @@ namespace hemelb
         //! Facet bending energy
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
         //! Node-Wall interaction
-        virtual LatticeForceVector WallInteractionForce(
-            LatticePosition const &vertex, LatticePosition const &wall) const override
+        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
+                                                        LatticePosition const &wall) const override
         {
           return nodeWall(vertex, wall);
         }
@@ -212,7 +225,6 @@ namespace hemelb
         {
           return true;
         }
-
 
       private:
         // Computes facet bending energy over all facets

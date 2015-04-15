@@ -15,7 +15,7 @@ namespace hemelb
   namespace geometry
   {
     SiteTraverser::SiteTraverser(const geometry::LatticeData& iLatticeData) :
-      mLatticeData(iLatticeData)
+        mLatticeData(iLatticeData)
 
     {
     }

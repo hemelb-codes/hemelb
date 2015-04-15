@@ -36,7 +36,7 @@ namespace hemelb
       {
         public:
           RayData(int i, int j) :
-            BasicPixel(i, j)
+              BasicPixel(i, j)
           {
             // A cheap way of indicating no ray data
             mCumulativeLengthInFluid = 0.0F;
@@ -105,10 +105,12 @@ namespace hemelb
             ((Derived*) (this))->DoCombine(iOtherRayData);
 
             // Sum length in fluid
-            SetCumulativeLengthInFluid(GetCumulativeLengthInFluid() + iOtherRayData.GetCumulativeLengthInFluid());
+            SetCumulativeLengthInFluid(GetCumulativeLengthInFluid()
+                + iOtherRayData.GetCumulativeLengthInFluid());
 
             // Update data relating to site nearest to viewpoint
-            if (iOtherRayData.GetLengthBeforeRayFirstCluster() < this->GetLengthBeforeRayFirstCluster())
+            if (iOtherRayData.GetLengthBeforeRayFirstCluster()
+                < this->GetLengthBeforeRayFirstCluster())
             {
               SetLengthBeforeRayFirstCluster(iOtherRayData.GetLengthBeforeRayFirstCluster());
 
@@ -118,8 +120,7 @@ namespace hemelb
           }
 
           // Obtains the colour representing the velocity ray trace
-          void GetVelocityColour(unsigned char oColour[3],
-                                 const VisSettings& iVisSettings,
+          void GetVelocityColour(unsigned char oColour[3], const VisSettings& iVisSettings,
                                  const DomainStats& iDomainStats) const
           {
             ((const Derived*) (this))->DoGetVelocityColour(oColour,
@@ -129,8 +130,7 @@ namespace hemelb
           }
 
           // Obtains the colour representing the stress ray trace
-          void GetStressColour(unsigned char oColour[3],
-                               const VisSettings& iVisSettings,
+          void GetStressColour(unsigned char oColour[3], const VisSettings& iVisSettings,
                                const DomainStats& iDomainStats) const
           {
             ((const Derived*) (this))->DoGetStressColour(oColour,
@@ -169,7 +169,7 @@ namespace hemelb
           void LogDebuggingInformation() const
           {
             log::Logger::Log<log::Trace, log::OnePerCore>("Ray data at (%i,%i) with "
-                                                            "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
+                                                          "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
                                                           GetI(),
                                                           GetJ(),
                                                           GetLengthBeforeRayFirstCluster(),
@@ -184,8 +184,12 @@ namespace hemelb
           static void PickColour(float value, float colour[3])
           {
             colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
-            colour[1]
-                = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * (float) fabs(value - 0.5F), 0.F, 1.F);
+            colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F
+                                                                           - 4.F
+                                                                               * (float) fabs(value
+                                                                                   - 0.5F),
+                                                                       0.F,
+                                                                       1.F);
             colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
           }
 
@@ -203,8 +207,7 @@ namespace hemelb
                                    const util::Vector3D<float>& iRayDirection,
                                    const float iRayLengthInVoxel,
                                    const float iAbsoluteDistanceFromViewpoint,
-                                   const DomainStats& iDomainStats,
-                                   const VisSettings& iVisSettings)
+                                   const DomainStats& iDomainStats, const VisSettings& iVisSettings)
           {
             if (GetCumulativeLengthInFluid() == 0.0F)
             {
@@ -214,10 +217,12 @@ namespace hemelb
               SetNearestDensity( (iSiteData.density - (float) iDomainStats.density_threshold_min)
                   * (float) iDomainStats.density_threshold_minmax_inv);
 
-              if (iVisSettings.mStressType == lb::VonMises || iVisSettings.mStressType == lb::ShearStress)
+              if (iVisSettings.mStressType == lb::VonMises
+                  || iVisSettings.mStressType == lb::ShearStress)
               {
                 // Keep track of the stress nearest to the viewpoint
-                SetNearestStress(iSiteData.stress * (float) (iDomainStats.stress_threshold_max_inv));
+                SetNearestStress(iSiteData.stress
+                    * (float) (iDomainStats.stress_threshold_max_inv));
               }
             }
 

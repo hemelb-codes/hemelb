@@ -31,27 +31,26 @@ namespace hemelb
     }
 
     template<class TRAITS>
-    LBM<TRAITS>::LBM(configuration::SimConfig *iSimulationConfig,
-                          net::Net* net,
-                          geometry::LatticeData* latDat,
-                          SimulationState* simState,
-                          reporting::Timers &atimings,
-                          geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState), 
-          mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()), timings(atimings),
-          propertyCache(*simState, *latDat), neighbouringDataManager(neighbouringDataManager)
+    LBM<TRAITS>::LBM(configuration::SimConfig *iSimulationConfig, net::Net* net,
+                     geometry::LatticeData* latDat, SimulationState* simState,
+                     reporting::Timers &atimings,
+                     geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager) :
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+            mParams(iSimulationConfig->GetTimeStepLength(), iSimulationConfig->GetVoxelSize()),
+            timings(atimings), propertyCache(*simState, *latDat),
+            neighbouringDataManager(neighbouringDataManager)
     {
       ReadParameters();
     }
 
     template<class TRAITS>
     void LBM<TRAITS>::CalculateMouseFlowField(const ScreenDensity densityIn,
-                                                   const ScreenStress stressIn,
-                                                   const LatticeDensity density_threshold_min,
-                                                   const LatticeDensity density_threshold_minmax_inv,
-                                                   const LatticeStress stress_threshold_max_inv,
-                                                   PhysicalPressure &mouse_pressure,
-                                                   PhysicalStress &mouse_stress)
+                                              const ScreenStress stressIn,
+                                              const LatticeDensity density_threshold_min,
+                                              const LatticeDensity density_threshold_minmax_inv,
+                                              const LatticeStress stress_threshold_max_inv,
+                                              PhysicalPressure &mouse_pressure,
+                                              PhysicalStress &mouse_stress)
     {
       LatticeDensity density = density_threshold_min + densityIn / density_threshold_minmax_inv;
       LatticeStress stress = stressIn / stress_threshold_max_inv;
@@ -68,22 +67,28 @@ namespace hemelb
       initParams.siteRanges[0].first = 0;
       initParams.siteRanges[1].first = mLatDat->GetMidDomainSiteCount();
       state = 0;
-      initParams.siteRanges[0].second = initParams.siteRanges[0].first + mLatDat->GetMidDomainCollisionCount(state);
-      initParams.siteRanges[1].second = initParams.siteRanges[1].first + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteRanges[0].second = initParams.siteRanges[0].first
+          + mLatDat->GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].second = initParams.siteRanges[1].first
+          + mLatDat->GetDomainEdgeCollisionCount(state);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state)
+          + mLatDat->GetDomainEdgeCollisionCount(state);
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>:: AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
+    void LBM<TRAITS>::AdvanceInitParamsSiteRanges(kernels::InitParams& initParams, unsigned& state)
     {
       initParams.siteRanges[0].first += mLatDat->GetMidDomainCollisionCount(state);
       initParams.siteRanges[1].first += mLatDat->GetDomainEdgeCollisionCount(state);
       ++state;
-      initParams.siteRanges[0].second = initParams.siteRanges[0].first + mLatDat->GetMidDomainCollisionCount(state);
-      initParams.siteRanges[1].second = initParams.siteRanges[1].first + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteRanges[0].second = initParams.siteRanges[0].first
+          + mLatDat->GetMidDomainCollisionCount(state);
+      initParams.siteRanges[1].second = initParams.siteRanges[1].first
+          + mLatDat->GetDomainEdgeCollisionCount(state);
 
-      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state) + mLatDat->GetDomainEdgeCollisionCount(state);
+      initParams.siteCount = mLatDat->GetMidDomainCollisionCount(state)
+          + mLatDat->GetDomainEdgeCollisionCount(state);
     }
 
     template<class TRAITS>
@@ -129,10 +134,9 @@ namespace hemelb
     }
 
     template<class TRAITS>
-    void LBM<TRAITS>::Initialise(vis::Control* iControl,
-                                      iolets::BoundaryValues* iInletValues,
-                                      iolets::BoundaryValues* iOutletValues,
-                                      const util::UnitConverter* iUnits)
+    void LBM<TRAITS>::Initialise(vis::Control* iControl, iolets::BoundaryValues* iInletValues,
+                                 iolets::BoundaryValues* iOutletValues,
+                                 const util::UnitConverter* iUnits)
     {
       mInletValues = iInletValues;
       mOutletValues = iOutletValues;
@@ -176,7 +180,8 @@ namespace hemelb
     template<class TRAITS>
     void LBM<TRAITS>::SetInitialConditions()
     {
-      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure()) / Cs2;
+      distribn_t density = mUnits->ConvertPressureToLatticeUnits(mSimConfig->GetInitialPressure())
+          / Cs2;
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
@@ -379,7 +384,8 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->GetMaximumVelocity());
+      distribn_t velocity_max =
+          mUnits->ConvertVelocityToLatticeUnits(mSimConfig->GetMaximumVelocity());
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->GetMaximumStress());
 
       for (int i = 0; i < InletCount(); i++)

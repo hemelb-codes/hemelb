@@ -26,7 +26,8 @@ namespace hemelb
       {
         public:
           template<typename Lattice>
-          static void CalculateRhoMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho, distribn_t v[3])
+          static void CalculateRhoMomentum(const distribn_t f[Lattice::NUMVECTORS], distribn_t& rho,
+                                           distribn_t v[3])
           {
             rho = 0.0;
 
@@ -53,14 +54,13 @@ namespace hemelb
           }
 
           template<typename Lattice>
-          static void CalculateAnsumaliEntropicEqmF(distribn_t density,
-                                                    distribn_t momentum_x,
-                                                    distribn_t momentum_y,
-                                                    distribn_t momentum_z,
+          static void CalculateAnsumaliEntropicEqmF(distribn_t density, distribn_t momentum_x,
+                                                    distribn_t momentum_y, distribn_t momentum_z,
                                                     distribn_t f[Lattice::NUMVECTORS])
           {
             // Calculate velocity.
-            distribn_t velocity[3] = { momentum_x / density, momentum_y / density, momentum_z / density };
+            distribn_t velocity[3] = { momentum_x / density, momentum_y / density, momentum_z
+                                           / density };
 
             distribn_t B[3];
             distribn_t term1[3];
@@ -83,20 +83,19 @@ namespace hemelb
           }
 
           template<typename Lattice>
-          static void CalculateLBGKEqmF(distribn_t density,
-                                        distribn_t momentum,
-                                        distribn_t momentum_y,
-                                        distribn_t momentum_z,
+          static void CalculateLBGKEqmF(distribn_t density, distribn_t momentum,
+                                        distribn_t momentum_y, distribn_t momentum_z,
                                         distribn_t f[Lattice::NUMVECTORS])
           {
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = momentum * (float) Lattice::CX[ii] + momentum_y * (float) Lattice::CY[ii] + momentum_z
-                  * (float) Lattice::CZ[ii];
+              distribn_t vSum = momentum * (float) Lattice::CX[ii]
+                  + momentum_y * (float) Lattice::CY[ii] + momentum_z * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
-              distribn_t momentum2Sum = momentum * momentum + momentum_y * momentum_y + momentum_z * momentum_z;
+              distribn_t momentum2Sum = momentum * momentum + momentum_y * momentum_y
+                  + momentum_z * momentum_z;
 
               // F eqm = density proportional component...
               f[ii] = density;
@@ -115,8 +114,7 @@ namespace hemelb
           template<typename Lattice>
           static void CalculateEntropicCollision(const distribn_t f[Lattice::NUMVECTORS],
                                                  const distribn_t f_eq[Lattice::NUMVECTORS],
-                                                 distribn_t tau,
-                                                 distribn_t beta,
+                                                 distribn_t tau, distribn_t beta,
                                                  distribn_t f_collided[Lattice::NUMVECTORS])
           {
             lb::HFunction<Lattice> HFunc(f, f_eq);
@@ -142,17 +140,17 @@ namespace hemelb
           }
 
           template<typename Kernel>
-          static void CompareHydros(distribn_t expectedDensity,
-                                    distribn_t expectedMomentumX,
-                                    distribn_t expectedMomentumY,
-                                    distribn_t expectedMomentumZ,
+          static void CompareHydros(distribn_t expectedDensity, distribn_t expectedMomentumX,
+                                    distribn_t expectedMomentumY, distribn_t expectedMomentumZ,
                                     distribn_t expectedFEq[lb::lattices::D3Q15::NUMVECTORS],
-                                    std::string id,
-                                    lb::kernels::HydroVars<Kernel> &hydroVars,
+                                    std::string id, lb::kernels::HydroVars<Kernel> &hydroVars,
                                     distribn_t allowedError)
           {
             // Compare density
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id, expectedDensity, hydroVars.density, allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id,
+                                                 expectedDensity,
+                                                 hydroVars.density,
+                                                 allowedError);
 
             // Compare momentum
             CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Momentum x " + id,
@@ -187,7 +185,7 @@ namespace hemelb
             for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
             {
               distribn_t fOld[LatticeType::NUMVECTORS];
-              InitialiseAnisotropicTestData<LatticeType> (site, fOld);
+              InitialiseAnisotropicTestData<LatticeType>(site, fOld);
               latticeData->SetFOld<LatticeType>(site, fOld);
             }
           }
@@ -197,7 +195,8 @@ namespace hemelb
           {
             for (unsigned int direction = 0; direction < LatticeType::NUMVECTORS; ++direction)
             {
-              distribution[direction] = ((distribn_t) (direction + 1)) / 10.0 + ((distribn_t) (site)) / 100.0;
+              distribution[direction] = ((distribn_t) (direction + 1)) / 10.0
+                  + ((distribn_t) (site)) / 100.0;
             }
           }
 
@@ -220,7 +219,7 @@ namespace hemelb
               util::Vector3D<distribn_t> momentum;
               util::Vector3D<distribn_t> velocity;
 
-              Lattice::CalculateDensityMomentumFEq(latDat.GetSite(site).GetFOld<Lattice> (),
+              Lattice::CalculateDensityMomentumFEq(latDat.GetSite(site).GetFOld<Lattice>(),
                                                    density,
                                                    momentum[0],
                                                    momentum[1],
@@ -251,7 +250,8 @@ namespace hemelb
            * @param wallDistance Distance to the wall in lattice units and in [0,1)
            */
           template<typename Lattice>
-          static void SetWallAndIoletDistances(FourCubeLatticeData& latticeData, distribn_t wallDistance)
+          static void SetWallAndIoletDistances(FourCubeLatticeData& latticeData,
+                                               distribn_t wallDistance)
           {
             assert(wallDistance >= 0);
             assert(wallDistance < 1);
@@ -261,7 +261,8 @@ namespace hemelb
               for (Direction direction = 1; direction < Lattice::NUMVECTORS; direction++)
               {
                 // -1 means that the a given link does not cross any boundary
-                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice> (direction) != (distribn_t) -1)
+                if (latticeData.GetSite(siteIndex).template GetWallDistance<Lattice>(direction)
+                    != (distribn_t) -1)
                 {
                   latticeData.SetBoundaryDistance(siteIndex, direction, wallDistance);
                 }

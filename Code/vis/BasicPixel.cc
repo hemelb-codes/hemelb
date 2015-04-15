@@ -62,10 +62,7 @@ namespace hemelb
 
       MPI_Datatype ret;
 
-      HEMELB_MPI_CALL(
-          MPI_Type_create_struct,
-          (typeCount, blocklengths, displacements, types, &ret)
-      );
+      HEMELB_MPI_CALL(MPI_Type_create_struct, (typeCount, blocklengths, displacements, types, &ret));
 
       return ret;
     }

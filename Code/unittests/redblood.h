@@ -8,14 +8,37 @@
 //
 #ifndef HEMELB_UNITTESTS_REDBLOOD_H
 #define HEMELB_UNITTESTS_REDBLOOD_H
-namespace hemelb { namespace redblood { namespace parallel {}}};
-namespace hemelb { namespace unittests { namespace redblood {
-  using namespace hemelb::redblood;
-}}}
-namespace hemelb { namespace unittests { namespace redblood_parallel {
-  using namespace hemelb::redblood;
-  using namespace hemelb::redblood::parallel;
-}}}
+namespace hemelb
+{
+  namespace redblood
+  {
+    namespace parallel
+    {
+    }
+  }
+}
+;
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace redblood
+    {
+      using namespace hemelb::redblood;
+    }
+  }
+}
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace redblood_parallel
+    {
+      using namespace hemelb::redblood;
+      using namespace hemelb::redblood::parallel;
+    }
+  }
+}
 #define HEMELB_DOING_UNITTESTS
 #include "unittests/redblood/CellCellInteractionTests.h"
 #include "unittests/redblood/CellCellInteractionWithGridTests.h"

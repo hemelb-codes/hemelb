@@ -27,10 +27,12 @@ namespace hemelb
       mVisControl->visSettings.brightness = privateSteeringParams[Brightness];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->domainStats.physical_velocity_threshold_max = privateSteeringParams[PhysicalVelocityThresholdMax];
+      mVisControl->domainStats.physical_velocity_threshold_max =
+          privateSteeringParams[PhysicalVelocityThresholdMax];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->domainStats.physical_stress_threshold_max = privateSteeringParams[PhysicalStressThrehsholdMaximum];
+      mVisControl->domainStats.physical_stress_threshold_max =
+          privateSteeringParams[PhysicalStressThrehsholdMaximum];
 
       mVisControl->domainStats.physical_pressure_threshold_min =
           privateSteeringParams[PhysicalPressureThresholdMinimum];
@@ -44,7 +46,8 @@ namespace hemelb
       int newMouseX = int(privateSteeringParams[NewMouseX]);
       int newMouseY = int(privateSteeringParams[NewMouseY]);
 
-      if (newMouseX != mVisControl->visSettings.mouse_x || newMouseY != mVisControl->visSettings.mouse_y)
+      if (newMouseX != mVisControl->visSettings.mouse_x
+          || newMouseY != mVisControl->visSettings.mouse_y)
       {
         updatedMouseCoords = true;
         mVisControl->visSettings.mouse_x = newMouseX;
@@ -59,7 +62,8 @@ namespace hemelb
       // 2 - Wall pattern streak lines
       mVisControl->visSettings.mode = (vis::VisSettings::Mode) (privateSteeringParams[Mode]);
 
-      mVisControl->visSettings.streaklines_per_simulation = privateSteeringParams[StreaklinePerSimulation];
+      mVisControl->visSettings.streaklines_per_simulation =
+          privateSteeringParams[StreaklinePerSimulation];
       mVisControl->visSettings.streakline_length = privateSteeringParams[StreaklineLength];
 
       mSimState->SetIsRendering(1 == (int) privateSteeringParams[SetDoRendering]);
@@ -71,9 +75,11 @@ namespace hemelb
       mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 
       distribn_t lattice_density_min =
-          mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_min) / Cs2;
+          mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_min)
+              / Cs2;
       distribn_t lattice_density_max =
-          mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_max) / Cs2;
+          mUnits->ConvertPressureToLatticeUnits(mVisControl->domainStats.physical_pressure_threshold_max)
+              / Cs2;
       distribn_t lattice_velocity_max =
           mUnits->ConvertVelocityToLatticeUnits(mVisControl->domainStats.physical_velocity_threshold_max);
       distribn_t lattice_stress_max =
@@ -92,7 +98,8 @@ namespace hemelb
         imageSendComponent->SetMaxFramerate(privateSteeringParams[MaxFramerate]);
       }
       mVisControl->domainStats.density_threshold_min = lattice_density_min;
-      mVisControl->domainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max - lattice_density_min);
+      mVisControl->domainStats.density_threshold_minmax_inv = 1.0F
+          / (lattice_density_max - lattice_density_min);
       mVisControl->domainStats.velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
       mVisControl->domainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }

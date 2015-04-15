@@ -27,7 +27,8 @@ namespace CPPUNIT_NS
       {
         std::stringstream output;
         output << "[ " << std::flush;
-        for (typename std::vector<T>::const_iterator value = values.begin(); value != values.end(); value++)
+        for (typename std::vector<T>::const_iterator value = values.begin(); value != values.end();
+            value++)
         {
           output << *value << ", " << std::flush;
         }

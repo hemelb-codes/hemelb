@@ -37,7 +37,8 @@ namespace hemelb
           {
             return InstallPath();
           }
-          std::cerr << "Resource " << resourceName  << " not found either at: " << BuildPath() << " or: " << InstallPath() << std::endl;
+          std::cerr << "Resource " << resourceName << " not found either at: " << BuildPath()
+              << " or: " << InstallPath() << std::endl;
           return "";
         }
         std::string BuildPath() const

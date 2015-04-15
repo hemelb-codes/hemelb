@@ -22,14 +22,16 @@ namespace hemelb
       {
       }
 
-      void StepManager::Register(Phase phase, steps::Step step, Concern & concern, MethodLabel method)
+      void StepManager::Register(Phase phase, steps::Step step, Concern & concern,
+                                 MethodLabel method)
       {
         if (step == steps::BeginAll || step == steps::EndAll)
         {
           phase = 0; // special actions are always recorded in the phase zero registry
         }
         registry[phase][step].push_back(Action(concern, method));
-        if (std::find(concerns.begin(),concerns.end(),&concern)==concerns.end()){
+        if (std::find(concerns.begin(), concerns.end(), &concern) == concerns.end())
+        {
           concerns.push_back(&concern);
         }
       }
@@ -70,12 +72,13 @@ namespace hemelb
       unsigned int StepManager::ActionCount() const
       {
         unsigned int total = 0;
-        for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end(); phase++)
+        for (std::vector<Registry>::const_iterator phase = registry.begin(); phase < registry.end();
+            phase++)
         {
           for (Registry::const_iterator step = phase->begin(); step != phase->end(); step++)
           {
-            for (std::vector<Action>::const_iterator action = step->second.begin(); action != step->second.end();
-                action++)
+            for (std::vector<Action>::const_iterator action = step->second.begin();
+                action != step->second.end(); action++)
             {
               total++;
             }
@@ -96,7 +99,8 @@ namespace hemelb
 
       void StepManager::CallActionsForPhaseSeparatedConcerns(Phase phase)
       {
-        for (std::vector<Concern*>::iterator concern = concerns.begin(); concern != concerns.end(); concern++)
+        for (std::vector<Concern*>::iterator concern = concerns.begin(); concern != concerns.end();
+            concern++)
         {
           for (int step = steps::BeginPhase; step <= steps::EndPhase; step++)
           {
@@ -156,18 +160,21 @@ namespace hemelb
       {
         StartTimer(step);
         std::vector<Action> &actionsForStep = registry[phase][step];
-        for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
+        for (std::vector<Action>::iterator action = actionsForStep.begin();
+            action != actionsForStep.end(); action++)
         {
           action->Call();
         }
         StopTimer(step);
       }
 
-      void StepManager::CallActionsForStepForConcern(steps::Step step,  Concern * concern, Phase phase)
+      void StepManager::CallActionsForStepForConcern(steps::Step step, Concern * concern,
+                                                     Phase phase)
       {
         StartTimer(step);
         std::vector<Action> &actionsForStep = registry[phase][step];
-        for (std::vector<Action>::iterator action = actionsForStep.begin(); action != actionsForStep.end(); action++)
+        for (std::vector<Action>::iterator action = actionsForStep.begin();
+            action != actionsForStep.end(); action++)
         {
           if (action->concern == concern)
           {

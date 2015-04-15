@@ -21,8 +21,8 @@ namespace hemelb
                                              const lb::lattices::LatticeInfo& latticeInfo,
                                              const net::MpiCommunicator& communicator,
                                              const std::vector<site_t>& fluidSitesOnEachBlock) :
-        geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
-            fluidSitesOnEachBlock(fluidSitesOnEachBlock)
+          geometry(geometry), latticeInfo(latticeInfo), communicator(communicator),
+              fluidSitesOnEachBlock(fluidSitesOnEachBlock)
       {
       }
 
@@ -53,23 +53,23 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
 
-        std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock, MPI_MAX);
+        std::vector<proc_t> procForEachBlockRecv = communicator.AllReduce(procAssignedToEachBlock,
+                                                                          MPI_MAX);
 
         for (site_t block = 0; block < geometry.GetBlockCount(); ++block)
         {
           if (procAssignedToEachBlock[block] != procForEachBlockRecv[block])
           {
             log::Logger::Log<log::Critical, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
-                                                          block,
-                                                          procAssignedToEachBlock[block],
-                                                          procForEachBlockRecv[block]);
+                                                             block,
+                                                             procAssignedToEachBlock[block],
+                                                             procForEachBlockRecv[block]);
           }
         }
       }
 
       void BasicDecomposition::DivideBlocks(std::vector<proc_t>& unitForEachBlock,
-                                            site_t unassignedBlocks,
-                                            const Geometry& geometry,
+                                            site_t unassignedBlocks, const Geometry& geometry,
                                             const proc_t unitCount,
                                             const std::vector<site_t>& fluidSitesPerBlock)
       {
@@ -77,7 +77,8 @@ namespace hemelb
         // required on each unit.
         proc_t currentUnit = 0;
 
-        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (communicator.Size()));
+        site_t targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks
+            / (double) (communicator.Size()));
 
         // Create an array to monitor whether each block has been assigned yet.
         std::vector<bool> blockAssigned(geometry.GetBlockCount(), false);
@@ -104,7 +105,8 @@ namespace hemelb
         {
           for (site_t blockCoordJ = 0; blockCoordJ < geometry.GetBlockDimensions().y; blockCoordJ++)
           {
-            for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z; blockCoordK++)
+            for (site_t blockCoordK = 0; blockCoordK < geometry.GetBlockDimensions().z;
+                blockCoordK++)
             {
               // Block number is the number of the block we're currently on.
               blockNumber++;
@@ -161,7 +163,8 @@ namespace hemelb
                 ++currentUnit;
 
                 unassignedBlocks -= blocksOnCurrentProc;
-                targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (unitCount - currentUnit));
+                targetBlocksPerUnit = (site_t) ceil((double) unassignedBlocks
+                    / (double) (unitCount - currentUnit));
 
                 blocksOnCurrentProc = 0;
               }
@@ -178,17 +181,20 @@ namespace hemelb
                                       std::vector<proc_t>& unitForEachBlock,
                                       site_t &blocksOnCurrentUnit,
                                       const std::vector<BlockLocation>& edgeBlocks,
-                                      const proc_t currentUnit,
-                                      const site_t blocksPerUnit)
+                                      const proc_t currentUnit, const site_t blocksPerUnit)
       {
         bool regionExpanded = false;
 
         // For sites on the edge of the domain (sites_a), deal with the neighbours.
-        for (unsigned int edgeBlockId = 0; (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit); edgeBlockId++)
+        for (unsigned int edgeBlockId = 0;
+            (edgeBlockId < edgeBlocks.size()) && (blocksOnCurrentUnit < blocksPerUnit);
+            edgeBlockId++)
         {
           const BlockLocation& edgeBlockCoords = edgeBlocks[edgeBlockId];
 
-          for (Direction direction = 1; direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit; direction++)
+          for (Direction direction = 1;
+              direction < latticeInfo.GetNumVectors() && blocksOnCurrentUnit < blocksPerUnit;
+              direction++)
           {
             // Record neighbour location.
             BlockLocation neighbourCoords = edgeBlockCoords + latticeInfo.GetVector(direction);

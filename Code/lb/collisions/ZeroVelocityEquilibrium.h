@@ -24,7 +24,8 @@ namespace hemelb
        * to equilibrium.
        */
       template<typename KernelType>
-      class ZeroVelocityEquilibrium : public BaseCollision<ZeroVelocityEquilibrium<KernelType>, KernelType>
+      class ZeroVelocityEquilibrium : public BaseCollision<ZeroVelocityEquilibrium<KernelType>,
+          KernelType>
       {
         public:
           typedef KernelType CKernel;
@@ -50,7 +51,8 @@ namespace hemelb
             kernel.CalculateFeq(hydroVars, site.GetIndex());
           }
 
-          inline void DoCollide(const LbmParameters* lbmParams, kernels::HydroVars<KernelType>& iHydroVars)
+          inline void DoCollide(const LbmParameters* lbmParams,
+                                kernels::HydroVars<KernelType>& iHydroVars)
           {
             for (Direction direction = 0; direction < CKernel::LatticeType::NUMVECTORS; ++direction)
             {

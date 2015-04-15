@@ -26,7 +26,8 @@ namespace hemelb
       }
     }
 
-    MpiGroup::MpiGroup(): groupPtr()
+    MpiGroup::MpiGroup() :
+        groupPtr()
     {
     }
 
@@ -48,7 +49,7 @@ namespace hemelb
     {
       MPI_Group ans;
       HEMELB_MPI_CALL(MPI_Group_excl,
-          (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
+                      (*groupPtr, ranksToExclude.size(), MpiConstCast(&ranksToExclude.front()), &ans))
       return MpiGroup(ans, true);
     }
 

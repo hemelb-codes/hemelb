@@ -50,8 +50,6 @@ namespace hemelb
           }
       };
 
-
-
       template<class LatticeType>
       struct HydroVarsBase
       {
@@ -63,10 +61,15 @@ namespace hemelb
           template<class LatticeImpl> friend class MRT;
 
         protected:
-          HydroVarsBase(const distribn_t* const f) : f(f) {}
+          HydroVarsBase(const distribn_t* const f) :
+              f(f)
+          {
+          }
           template<class DataSource>
-            HydroVarsBase(geometry::Site<DataSource> const &_site)
-                : f(_site.template GetFOld<LatticeType>()) {}
+          HydroVarsBase(geometry::Site<DataSource> const &_site) :
+              f(_site.template GetFOld<LatticeType>())
+          {
+          }
 
         public:
           distribn_t density, tau;
@@ -127,11 +130,15 @@ namespace hemelb
       {
         public:
           template<class DataSource>
-            HydroVars(geometry::Site<DataSource> const &_site)
-              : HydroVarsBase<typename KernelImpl::LatticeType>(_site) {}
+          HydroVars(geometry::Site<DataSource> const &_site) :
+              HydroVarsBase<typename KernelImpl::LatticeType>(_site)
+          {
+          }
 
           HydroVars(const distribn_t* const f) :
-                      HydroVarsBase<typename KernelImpl::LatticeType> (f) {}
+              HydroVarsBase<typename KernelImpl::LatticeType>(f)
+          {
+          }
       };
 
       /**
@@ -207,17 +214,17 @@ namespace hemelb
 
           inline void CalculateDensityMomentumFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateDensityMomentumFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateDensityMomentumFeq(hydroVars, index);
           }
 
           inline void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
+            static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
           }
 
           inline void Collide(const LbmParameters* lbmParams, KHydroVars& hydroVars)
           {
-            static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars);
+            static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars);
           }
 
       };

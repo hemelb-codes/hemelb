@@ -56,7 +56,8 @@ namespace hemelb
            * @param localContiguousIndex
            * @param latticeData
            */
-          ConstNeighbouringSite(site_t localContiguousIndex, const NeighbouringLatticeData& latticeData) :
+          ConstNeighbouringSite(site_t localContiguousIndex,
+                                const NeighbouringLatticeData& latticeData) :
               Site<const NeighbouringLatticeData>(localContiguousIndex, latticeData)
           {
           }

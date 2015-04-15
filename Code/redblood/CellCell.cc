@@ -45,8 +45,8 @@ namespace hemelb
 
       template<class T>
       CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
-          site_t nodeid, LatticeVector const &key, LatticePosition const &vertex,
-          PhysicalDistance const &haloLength)
+                                site_t nodeid, LatticeVector const &key,
+                                LatticePosition const &vertex, PhysicalDistance const &haloLength)
       {
         int const isNearBorder = figureNearness(dnc, key, vertex, haloLength);
         CellReference result = { cellid, nodeid, isNearBorder };
@@ -83,14 +83,12 @@ namespace hemelb
 
       // Compare distance between vertices
       template<class T_FUNCTION>
-        bool nextDistance(
-            T_FUNCTION const &strictlyLarger,
-            DivideConquerCells::const_iterator &first,
-            DivideConquerCells::const_iterator const &end,
-            DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
+      bool nextDistance(T_FUNCTION const &strictlyLarger, DivideConquerCells::const_iterator &first,
+                        DivideConquerCells::const_iterator const &end,
+                        DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
       {
         auto const mainCell = main.GetCell();
-	typedef DivideConquerCells::const_iterator cit;
+        typedef DivideConquerCells::const_iterator cit;
         auto goodCellPair = [&mainCell, &strictlyLarger](cit const &i)
         {
           return strictlyLarger(i.GetCell(), mainCell);
@@ -99,9 +97,9 @@ namespace hemelb
         {
           return (*main - *i).GetMagnitude() < dist;
         };
-        for(; first != end; ++first)
+        for (; first != end; ++first)
         {
-          if(goodCellPair(first) and goodDistance(first))
+          if (goodCellPair(first) and goodDistance(first))
           {
             return true;
           }
@@ -131,7 +129,7 @@ namespace hemelb
                                            PhysicalDistance halosize) :
         DivideConquer<CellReference>(boxsize), haloLength(halosize), cells(cells)
     {
-        initializeCells(*static_cast<base_type *>(this), GetCells(), haloLength);
+      initializeCells(*static_cast<base_type *>(this), GetCells(), haloLength);
     }
 
     void DivideConquerCells::update()
@@ -163,15 +161,11 @@ namespace hemelb
     {
       typedef decltype(owner.cells)::const_reference Input;
       auto strictly_less = decltype(owner.cells)::key_compare();
-      auto strictlyLarger = [&strictly_less](Input _a, Input _b) {
+      auto strictlyLarger = [&strictly_less](Input _a, Input _b)
+      {
         return _a != _b and not strictly_less(_a, _b);
       };
-      return nextDistance(
-          strictlyLarger,
-          currents.second, ends.second,
-          currents.first,
-          maxdist
-      );
+      return nextDistance(strictlyLarger, currents.second, ends.second, currents.first, maxdist);
     }
 
     bool DivideConquerCells::pair_range::doBox()
@@ -305,32 +299,32 @@ namespace hemelb
 
     bool DivideConquerCells::insert(CellContainer::value_type cell)
     {
-        auto inserted = cells.insert(cell);
-        if(inserted.second)
-          initializeCells(*this, (*inserted.first)->GetVertices(), inserted.first, haloLength);
-        return true;
+      auto inserted = cells.insert(cell);
+      if (inserted.second)
+        initializeCells(*this, (*inserted.first)->GetVertices(), inserted.first, haloLength);
+      return true;
     }
 
     bool DivideConquerCells::remove(CellContainer::value_type cell)
     {
-        auto const cellIterator = cells.find(cell);
-        if(cellIterator == cells.end())
-          return false;
-        auto i_first = base_type::cbegin();
-        auto const i_end = base_type::cend();
-        while(i_first != i_end)
+      auto const cellIterator = cells.find(cell);
+      if (cellIterator == cells.end())
+        return false;
+      auto i_first = base_type::cbegin();
+      auto const i_end = base_type::cend();
+      while (i_first != i_end)
+      {
+        auto const i_current = i_first;
+        // Move to next element *before* possibly erasing current element
+        // Not sure whether i_first can be incremented after an erase.
+        ++i_first;
+        if (*i_current->second.cellIterator == cell)
         {
-          auto const i_current = i_first;
-          // Move to next element *before* possibly erasing current element
-          // Not sure whether i_first can be incremented after an erase.
-          ++i_first;
-          if(*i_current->second.cellIterator == cell)
-          {
-            base_type::erase(i_current);
-          }
+          base_type::erase(i_current);
         }
-        cells.erase(cellIterator);
-        return true;
+      }
+      cells.erase(cellIterator);
+      return true;
     }
 #endif
   }

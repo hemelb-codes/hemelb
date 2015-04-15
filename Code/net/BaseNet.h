@@ -80,20 +80,20 @@ namespace hemelb
         virtual void RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
         virtual void RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)=0;
 
-
         /*
          * Blocking gathers are implemented in MPI as a single call for both send/receive
          * But, here we separate send and receive parts, since this interface may one day be used for
          * nonblocking collectives.
          */
-        virtual void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank, MPI_Datatype type)=0;
+        virtual void RequestGatherVSendImpl(void* buffer, int count, proc_t toRank,
+                                            MPI_Datatype type)=0;
         virtual void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type)=0;
         virtual void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type)=0;
-        virtual void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type)=0;
+        virtual void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts,
+                                               MPI_Datatype type)=0;
 
-
-        virtual void RequestAllToAllReceiveImpl(void * buffer,int count,MPI_Datatype type)=0;
-        virtual void RequestAllToAllSendImpl(void * buffer,int count,MPI_Datatype type)=0;
+        virtual void RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type)=0;
+        virtual void RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type)=0;
 
         std::vector<int> & GetDisplacementsBuffer();
         std::vector<int> & GetCountsBuffer();

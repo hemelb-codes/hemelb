@@ -22,7 +22,8 @@ namespace hemelb
     class OneInOneOutSimConfig : public configuration::SimConfig
     {
       public:
-        OneInOneOutSimConfig(const std::string& path) : configuration::SimConfig(path)
+        OneInOneOutSimConfig(const std::string& path) :
+            configuration::SimConfig(path)
         {
           totalTimeSteps = 10000;
           timeStepSeconds = 60.0 / (70.0 * 1000.0);

@@ -63,11 +63,8 @@ namespace hemelb
          * Must have Initialise(...) called also. Constructor separated due to need to access
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
-        LBM(hemelb::configuration::SimConfig *iSimulationConfig,
-            net::Net* net,
-            geometry::LatticeData* latDat,
-            SimulationState* simState,
-            reporting::Timers &atimings,
+        LBM(hemelb::configuration::SimConfig *iSimulationConfig, net::Net* net,
+            geometry::LatticeData* latDat, SimulationState* simState, reporting::Timers &atimings,
             geometry::neighbouring::NeighbouringDataManager *neighbouringDataManager);
         ~LBM();
 
@@ -92,15 +89,12 @@ namespace hemelb
          * Second constructor.
          *
          */
-        void Initialise(vis::Control* iControl,
-                        iolets::BoundaryValues* iInletValues,
-                        iolets::BoundaryValues* iOutletValues,
-                        const util::UnitConverter* iUnits);
+        void Initialise(vis::Control* iControl, iolets::BoundaryValues* iInletValues,
+                        iolets::BoundaryValues* iOutletValues, const util::UnitConverter* iUnits);
 
         void ReadVisParameters();
 
-        void CalculateMouseFlowField(const ScreenDensity densityIn,
-                                     const ScreenStress stressIn,
+        void CalculateMouseFlowField(const ScreenDensity densityIn, const ScreenStress stressIn,
                                      const LatticeDensity density_threshold_min,
                                      const LatticeDensity density_threshold_minmax_inv,
                                      const LatticeStress stress_threshold_max_inv,
@@ -135,15 +129,24 @@ namespace hemelb
         tOutletWallCollision* mOutletWallCollision;
 
         template<typename Collision>
-        void StreamAndCollide(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        void StreamAndCollide(Collision* collision, const site_t iFirstIndex,
+                              const site_t iSiteCount)
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<true>(iFirstIndex,
+                                                       iSiteCount,
+                                                       &mParams,
+                                                       mLatDat,
+                                                       propertyCache);
           }
           else
           {
-            collision->template StreamAndCollide<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template StreamAndCollide<false>(iFirstIndex,
+                                                        iSiteCount,
+                                                        &mParams,
+                                                        mLatDat,
+                                                        propertyCache);
           }
         }
 
@@ -152,11 +155,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<true>(iFirstIndex,
+                                                 iSiteCount,
+                                                 &mParams,
+                                                 mLatDat,
+                                                 propertyCache);
           }
           else
           {
-            collision->template DoPostStep<false> (iFirstIndex, iSiteCount, &mParams, mLatDat, propertyCache);
+            collision->template DoPostStep<false>(iFirstIndex,
+                                                  iSiteCount,
+                                                  &mParams,
+                                                  mLatDat,
+                                                  propertyCache);
           }
         }
 

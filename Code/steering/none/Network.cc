@@ -28,7 +28,7 @@ namespace hemelb
   namespace steering
   {
     Network::Network(int steeringSessionId, reporting::Timers & timings) :
-      clientConnection(steeringSessionId, timings)
+        clientConnection(steeringSessionId, timings)
     {
 
     }

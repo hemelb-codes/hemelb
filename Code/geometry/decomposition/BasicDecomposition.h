@@ -37,8 +37,7 @@ namespace hemelb
            * @param communicator
            * @param fluidSitesOnEachBlock
            */
-          BasicDecomposition(const Geometry& geometry,
-                             const lb::lattices::LatticeInfo& latticeInfo,
+          BasicDecomposition(const Geometry& geometry, const lb::lattices::LatticeInfo& latticeInfo,
                              const net::MpiCommunicator& communicator,
                              const std::vector<site_t>& fluidSitesOnEachBlock);
 
@@ -84,10 +83,8 @@ namespace hemelb
            * @param unitCount [in] The total number of processors
            * @param fluidSitesPerBlock [in] The number of fluid sites in each block
            */
-          void DivideBlocks(std::vector<proc_t>& unitForEachBlock,
-                            site_t unassignedBlocks,
-                            const Geometry& geometry,
-                            const proc_t unitCount,
+          void DivideBlocks(std::vector<proc_t>& unitForEachBlock, site_t unassignedBlocks,
+                            const Geometry& geometry, const proc_t unitCount,
                             const std::vector<site_t>& fluidSitesPerBlock);
 
           /**
@@ -104,12 +101,9 @@ namespace hemelb
            * @param blocksPerUnit
            * @return Returns true if the region was expanded.
            */
-          bool Expand(std::vector<BlockLocation>& expansionBlocks,
-                      std::vector<bool>& blockAssigned,
-                      std::vector<proc_t>& unitForEachBlock,
-                      site_t &blocksOnCurrentUnit,
-                      const std::vector<BlockLocation>& edgeBlocks,
-                      const proc_t currentUnit,
+          bool Expand(std::vector<BlockLocation>& expansionBlocks, std::vector<bool>& blockAssigned,
+                      std::vector<proc_t>& unitForEachBlock, site_t &blocksOnCurrentUnit,
+                      const std::vector<BlockLocation>& edgeBlocks, const proc_t currentUnit,
                       const site_t blocksPerUnit);
 
           const Geometry& geometry; //! The geometry being decomposed.

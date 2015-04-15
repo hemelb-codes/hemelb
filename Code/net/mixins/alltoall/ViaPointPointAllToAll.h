@@ -12,17 +12,21 @@
 
 #include "net/mixins/StoringNet.h"
 
-namespace hemelb{
-  namespace net{
+namespace hemelb
+{
+  namespace net
+  {
 
     class ViaPointPointAllToAll : public virtual StoringNet
     {
-    public:
-      ViaPointPointAllToAll(const MpiCommunicator& comms);
-    private:
-      void ReceiveAllToAll();
-      void SendAllToAll();
-      void WaitAllToAll(){}
+      public:
+        ViaPointPointAllToAll(const MpiCommunicator& comms);
+      private:
+        void ReceiveAllToAll();
+        void SendAllToAll();
+        void WaitAllToAll()
+        {
+        }
     };
   }
 }

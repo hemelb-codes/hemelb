@@ -26,9 +26,9 @@ namespace hemelb
 
       class GeometryReaderTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE ( GeometryReaderTests);
-          CPPUNIT_TEST ( TestRead);
-          CPPUNIT_TEST ( TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (GeometryReaderTests);
+          CPPUNIT_TEST (TestRead);
+          CPPUNIT_TEST (TestSameAsFourCube);CPPUNIT_TEST_SUITE_END();
 
         public:
 
@@ -42,7 +42,8 @@ namespace hemelb
             timings = new reporting::Timers(Comms());
             reader = new GeometryReader(false,
                                         hemelb::lb::lattices::D3Q15::GetLatticeInfo(),
-                                        *timings, Comms());
+                                        *timings,
+                                        Comms());
             lattice = nullptr;
             fourCube = FourCubeLatticeData::Create(Comms());
             CopyResourceToTempdir("four_cube.xml");
@@ -119,7 +120,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION ( GeometryReaderTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (GeometryReaderTests);
     }
   }
 }

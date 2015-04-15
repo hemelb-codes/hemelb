@@ -28,7 +28,8 @@ namespace hemelb
         void RequestGatherReceiveImpl(void* buffer, MPI_Datatype type);
 
         void RequestGatherSendImpl(void* buffer, proc_t toRank, MPI_Datatype type);
-        void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts, MPI_Datatype type);
+        void RequestGatherVReceiveImpl(void* buffer, int * displacements, int *counts,
+                                       MPI_Datatype type);
 
         virtual void RequestAllToAllReceiveImpl(void * buffer, int count, MPI_Datatype type);
         virtual void RequestAllToAllSendImpl(void * buffer, int count, MPI_Datatype type);

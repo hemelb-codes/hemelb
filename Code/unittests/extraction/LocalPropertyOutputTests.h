@@ -92,22 +92,27 @@ namespace hemelb
           {
             // Check the zero length string
             std::string s0;
-            CPPUNIT_ASSERT_EQUAL(size_t(4), hemelb::io::formats::extraction::GetStoredLengthOfString(s0));
+            CPPUNIT_ASSERT_EQUAL(size_t(4),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s0));
 
             // This should have no padding
             std::string s1("Fish");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s1));
+            CPPUNIT_ASSERT_EQUAL(size_t(8),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s1));
 
             // This must be padded up to 8 bytes
             std::string s2("A");
-            CPPUNIT_ASSERT_EQUAL(size_t(8), hemelb::io::formats::extraction::GetStoredLengthOfString(s2));
+            CPPUNIT_ASSERT_EQUAL(size_t(8),
+                                 hemelb::io::formats::extraction::GetStoredLengthOfString(s2));
 
           }
 
           void TestWrite()
           {
             // Create the writer object; this should write the headers.
-            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource, &simpleOutFile, Comms());
+            propertyWriter = new hemelb::extraction::LocalPropertyOutput(*simpleDataSource,
+                                                                         &simpleOutFile,
+                                                                         Comms());
 
             // Open the file
             writtenFile = std::fopen(simpleOutFile.filename.c_str(), "r");
@@ -242,7 +247,9 @@ namespace hemelb
               float pressure;
               reader.readFloat(pressure);
 
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(), (REFERENCE_PRESSURE_mmHg + (double) pressure), epsilon);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(datasource->GetPressure(),
+                                           (REFERENCE_PRESSURE_mmHg + (double) pressure),
+                                           epsilon);
 
               // Read the velocity and compare
               PhysicalVelocity velocity = datasource->GetVelocity();

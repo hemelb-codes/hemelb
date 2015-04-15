@@ -21,7 +21,8 @@ namespace hemelb
     {
       protected:
 
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data,
+                              const util::Vector3D<site_t>& location);
     };
 
   } /* namespace extraction */

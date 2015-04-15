@@ -26,7 +26,8 @@ namespace hemelb
       {
         using namespace hemelb::net::phased;
         using namespace hemelb::unittests::helpers;
-        class StepManagerTests : public CppUnit::TestFixture, public MockNetHelper
+        class StepManagerTests : public CppUnit::TestFixture,
+                                 public MockNetHelper
         {
             CPPUNIT_TEST_SUITE (StepManagerTests);
             CPPUNIT_TEST (TestConstruct);
@@ -53,7 +54,8 @@ namespace hemelb
 
           public:
             StepManagerTests() :
-                MockNetHelper(),stepManager(nullptr), action(nullptr), concern(nullptr), netConcern(nullptr), action2(nullptr), concern2(nullptr)
+                MockNetHelper(), stepManager(nullptr), action(nullptr), concern(nullptr),
+                    netConcern(nullptr), action2(nullptr), concern2(nullptr)
             {
             }
 
@@ -459,7 +461,7 @@ namespace hemelb
 
             void SetupMocks(const proc_t core_count, const proc_t current_core)
             {
-              MockNetHelper::setUp(core_count,current_core);
+              MockNetHelper::setUp(core_count, current_core);
               netConcern = new NetConcern(*netMock);
             }
 

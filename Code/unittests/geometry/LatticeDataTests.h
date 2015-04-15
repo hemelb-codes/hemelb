@@ -22,10 +22,10 @@ namespace hemelb
       using namespace hemelb::geometry;
       class NeighbouringLatticeDataTests : public FourCubeBasedTestFixture
       {
-          CPPUNIT_TEST_SUITE ( NeighbouringLatticeDataTests);
-          CPPUNIT_TEST ( TestConstruct);
-          CPPUNIT_TEST ( TestConvertGlobalId);
-          CPPUNIT_TEST ( TestGetProcFromGlobalId);
+          CPPUNIT_TEST_SUITE (NeighbouringLatticeDataTests);
+          CPPUNIT_TEST (TestConstruct);
+          CPPUNIT_TEST (TestConvertGlobalId);
+          CPPUNIT_TEST (TestGetProcFromGlobalId);
 
           CPPUNIT_TEST_SUITE_END();
 
@@ -73,7 +73,7 @@ namespace hemelb
 
         private:
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION ( NeighbouringLatticeDataTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (NeighbouringLatticeDataTests);
     }
   }
 }

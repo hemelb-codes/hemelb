@@ -12,20 +12,30 @@
 
 #include "net/mixins/StoringNet.h"
 
-namespace hemelb{
-  namespace net{
+namespace hemelb
+{
+  namespace net
+  {
 
     class SeparatedGathers : public virtual StoringNet
     {
-    public:
-      SeparatedGathers(const MpiCommunicator& comms);
-    private:
-      void ReceiveGathers(){}
-      void SendGathers(){}
-      void ReceiveGatherVs(){}
-      void SendGatherVs(){}
-      void WaitGathers();
-      void WaitGatherVs();
+      public:
+        SeparatedGathers(const MpiCommunicator& comms);
+      private:
+        void ReceiveGathers()
+        {
+        }
+        void SendGathers()
+        {
+        }
+        void ReceiveGatherVs()
+        {
+        }
+        void SendGatherVs()
+        {
+        }
+        void WaitGathers();
+        void WaitGatherVs();
     };
 
   }

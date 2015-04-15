@@ -28,9 +28,8 @@ namespace hemelb
       class MpiTests : public CppUnit::TestFixture
       {
         public:
-        CPPUNIT_TEST_SUITE (MpiTests);
-        CPPUNIT_TEST (TestMpiComm);
-        CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (MpiTests);
+          CPPUNIT_TEST (TestMpiComm);CPPUNIT_TEST_SUITE_END();
 
           void TestMpiComm()
           {
@@ -40,7 +39,7 @@ namespace hemelb
             MpiCommunicator commWorld = MpiCommunicator::World();
             CPPUNIT_ASSERT(commWorld);
 
-            CPPUNIT_ASSERT(commNull== commNull);
+            CPPUNIT_ASSERT(commNull == commNull);
             CPPUNIT_ASSERT(commWorld == commWorld);
             CPPUNIT_ASSERT(commWorld != commNull);
 

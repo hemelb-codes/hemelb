@@ -43,8 +43,6 @@ namespace hemelb
       return true;
     }
 
-
-
     // Check the existence of a critical file - exit if it's not there
     void check_file(const char * filename)
     {
@@ -119,7 +117,7 @@ namespace hemelb
       for (int i = 0; i < file_count; i++)
       {
         std::stringstream filename;
-        filename << pathname.c_str() << "/" << files[i]->d_name <<std::flush;
+        filename << pathname.c_str() << "/" << files[i]->d_name << std::flush;
         unlink(filename.str().c_str());
       }
       return 0;

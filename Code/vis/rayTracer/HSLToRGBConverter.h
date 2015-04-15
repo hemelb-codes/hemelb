@@ -25,9 +25,7 @@ namespace hemelb
            * iHue must be between 0.0F and 360.0F in degrees
            * and the other two between 0.0F and 1.0F
            */
-          static void Convert(float iHue,
-                              float iSaturation,
-                              float iLightness,
+          static void Convert(float iHue, float iSaturation, float iLightness,
                               unsigned char oRGBColour[3]);
       };
     }

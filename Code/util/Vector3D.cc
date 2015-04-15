@@ -26,7 +26,7 @@ namespace hemelb
       if (Vector3DBase::handler == nullptr)
       {
         std::cout << "Vector3D index error handler not set when index error "
-          "occurred" << std::endl;
+            "occurred" << std::endl;
         std::exit(1);
       }
       else

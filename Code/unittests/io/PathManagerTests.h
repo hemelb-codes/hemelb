@@ -22,12 +22,11 @@ namespace hemelb
 
       class PathManagerTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE(PathManagerTests);
-          CPPUNIT_TEST(TestCreateLocalConfig);
-          CPPUNIT_TEST(TestNameInventionLocalConfig);
-          CPPUNIT_TEST(TestCreatePathConfig);
-          CPPUNIT_TEST(TestNameInventionPathConfig);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (PathManagerTests);
+          CPPUNIT_TEST (TestCreateLocalConfig);
+          CPPUNIT_TEST (TestNameInventionLocalConfig);
+          CPPUNIT_TEST (TestCreatePathConfig);
+          CPPUNIT_TEST (TestNameInventionPathConfig);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -59,8 +58,7 @@ namespace hemelb
           void TestNameInventionLocalConfig()
           {
             ConstructManager();
-            CPPUNIT_ASSERT_EQUAL(std::string("./results"),
-                                 fileManager->GetReportPath());
+            CPPUNIT_ASSERT_EQUAL(std::string("./results"), fileManager->GetReportPath());
           }
 
           void TestCreatePathConfig()
@@ -73,8 +71,7 @@ namespace hemelb
           void TestNameInventionPathConfig()
           {
             ConstructPathConfigManager();
-            CPPUNIT_ASSERT_EQUAL(GetTempdir() + "/results",
-                                 fileManager->GetReportPath());
+            CPPUNIT_ASSERT_EQUAL(GetTempdir() + "/results", fileManager->GetReportPath());
           }
 
         private:
@@ -100,7 +97,7 @@ namespace hemelb
           PathManager *fileManager;
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(PathManagerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (PathManagerTests);
     }
   }
 }
