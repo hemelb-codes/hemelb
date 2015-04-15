@@ -169,7 +169,7 @@ namespace hemelb
             PhysicalPressure bending;
             //! Surface energy parameter
             PhysicalPressure surface;
-            //! Surface volume parameter
+            //! Volume energy parameter
             PhysicalPressure volume;
             //! Skalak dilation modulus
             PhysicalPressure dilation;
