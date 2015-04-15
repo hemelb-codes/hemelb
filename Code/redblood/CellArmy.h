@@ -29,6 +29,10 @@ namespace hemelb
     template<class KERNEL> class CellArmy
     {
       public:
+
+        //! Type of callback for listening to changes to cells
+        typedef std::function<void(const CellContainer &)> CellChangeListener;
+
         //! Interaction terms between cells
         Node2NodeForce cell2Cell;
         //! Stencil
@@ -77,18 +81,17 @@ namespace hemelb
             { this->AddCell(cell);});
         }
 
-        //! Sets up call for cell output
-        //! Called everytime CallCellOutput is called
-        void SetCellOutput(std::function<void(const CellContainer &)> f)
+        //! Adds a cell change listener to be notified when cell positions change
+        void AddCellChangeListener(CellChangeListener & ccl)
         {
-          cellOutputCallBack = f;
+          cellChangeListeners.push_back(ccl);
         }
 
         //! Invokes the callback function to output cell positions
-        void CallCellOutput()
+        void NotifyCellChangeListeners()
         {
-          if (cellOutputCallBack)
-            cellOutputCallBack(this->cells);
+          for (CellChangeListener ccl: cellChangeListeners)
+            ccl(cells);
         }
 
         //! Sets outlets within which cells disapear
@@ -118,8 +121,10 @@ namespace hemelb
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
         //! It should insert cells using the call back passed to it.
-        std::function<void(std::function<void(CellContainer::value_type)>)> cellInsertionCallBack;
-        std::function<void(const CellContainer &)> cellOutputCallBack;
+        std::function<void(std::function<void(CellContainer::value_type)>)>
+          cellInsertionCallBack;
+        //! Observers to be notified when cell positions change
+        std::vector<CellChangeListener> cellChangeListeners;
 
         //! Remove cells if they reach these outlets
         std::vector<FlowExtension> outlets;
