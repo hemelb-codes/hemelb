@@ -221,7 +221,7 @@ namespace hemelb
       return volume(mesh.vertices, mesh.facets);
     }
 
-    PhysicalVolume surface(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
@@ -237,9 +237,9 @@ namespace hemelb
 
       return result * 0.5;
     }
-    PhysicalArea surface(MeshData const &mesh)
+    PhysicalArea area(MeshData const &mesh)
     {
-      return surface(mesh.vertices, mesh.facets);
+      return area(mesh.vertices, mesh.facets);
     }
 
     namespace

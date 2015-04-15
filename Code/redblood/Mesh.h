@@ -43,8 +43,8 @@ namespace hemelb
     LatticePosition barycenter(MeshData::Vertices const &vertices);
     PhysicalVolume volume(MeshData const &mesh);
     PhysicalVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
-    PhysicalArea surface(MeshData const &mesh);
-    PhysicalVolume surface(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
+    PhysicalArea area(MeshData const &mesh);
+    PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
 
     //! Holds raw topology data
     struct MeshTopology
@@ -112,10 +112,10 @@ namespace hemelb
         {
           return volume(*mesh);
         }
-        //! Computes surface of the mesh
-        PhysicalArea GetSurface() const
+        //! Computes area of the mesh
+        PhysicalArea GetArea() const
         {
-          return surface(*mesh);
+          return area(*mesh);
         }
         //! Connectivity data
         std::shared_ptr<const MeshTopology> GetTopology() const
