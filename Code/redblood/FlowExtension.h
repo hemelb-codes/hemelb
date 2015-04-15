@@ -19,22 +19,23 @@ namespace hemelb
   {
 
     //! Cylindrical extension at an in/outlet of the vascular system
-    struct FlowExtension
+    class FlowExtension
     {
-      //! \brief Direction of the axis
-      //! \details Should be normalized
-      util::Vector3D<Dimensionless> normal;
-      //! \brief Point on the axis giving the origin
-      //! \details Whether this is the left-most or right-most point on the axis depends on the
-      //! direction of the normal. In practice, it should be at the intersection between the
-      //! cylinder axis and the surface separating the extension from the real flow.
-      LatticePosition origin;
-      //! Length of the cylinder
-      LatticeDistance length;
-      //! Radius of the cylinder
-      LatticeDistance radius;
-      //! Distance within which to fade in/out
-      LatticeDistance fadeLength;
+      public:
+        //! \brief Direction of the axis
+        //! \details Should be normalized
+        util::Vector3D<Dimensionless> normal;
+        //! \brief Point on the axis giving the origin
+        //! \details Whether this is the left-most or right-most point on the axis depends on the
+        //! direction of the normal. In practice, it should be at the intersection between the
+        //! cylinder axis and the surface separating the extension from the real flow.
+        LatticePosition origin;
+        //! Length of the cylinder
+        LatticeDistance length;
+        //! Radius of the cylinder
+        LatticeDistance radius;
+        //! Distance within which to fade in/out
+        LatticeDistance fadeLength;
     };
 
     //! Checks whether a cell is inside a flow extension

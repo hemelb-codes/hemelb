@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iomanip>
 #include "constants.h"
+#include "redblood/Mesh.h"
 
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
@@ -16,8 +17,9 @@ namespace hemelb
     namespace
     {
       // Helper class to avoid explicit indexing over vertices
-      struct Facet
+      class Facet
       {
+        public:
           // References nodes of a facet
           LatticePosition const *nodes[3];
           // Indices of nodes in original array
@@ -61,8 +63,9 @@ namespace hemelb
       };
 
       // Facet that also includes forces
-      struct ForceFacet : public Facet
+      class ForceFacet : public Facet
       {
+        public:
           // References forces on a node
           LatticeForceVector *forces[3];
           ForceFacet(MeshData::Vertices const &vertices, MeshData::Facet const &indices,

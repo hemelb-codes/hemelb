@@ -28,8 +28,9 @@ namespace hemelb
 {
   namespace redblood
   {
-    struct CellReference
+    class CellReference
     {
+      public:
         //! Index of cell in input container
         CellContainer::const_iterator cellIterator;
         //! Index of node in mesh

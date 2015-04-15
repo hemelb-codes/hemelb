@@ -153,7 +153,7 @@ namespace hemelb
 
       protected:
         //! allows separation of data and behaviors
-        struct CellData;
+        class CellData;
         //! Holds data
         std::shared_ptr<CellData> data;
     };
@@ -163,8 +163,9 @@ namespace hemelb
     {
       public:
         //! Holds all physical parameters
-        struct Moduli
+        class Moduli
         {
+          public:
             //! Bending energy parameter
             PhysicalPressure bending;
             //! Surface energy parameter
@@ -175,7 +176,8 @@ namespace hemelb
             PhysicalPressure dilation;
             //! Skalak strain modulus
             PhysicalPressure strain;
-            Moduli() : Moduli{0, 0, 0, 0, 0}
+
+            Moduli() : bending(0), surface(0), volume(0), dilation(0), strain(0)
             {
             }
             Moduli(std::initializer_list<PhysicalPressure> const &l)

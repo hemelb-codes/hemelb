@@ -56,8 +56,9 @@ namespace hemelb
     }
 
     //! Holds node-node interaction parameters
-    struct Node2NodeForce
+    class Node2NodeForce
     {
+      public:
         //! Strength of the interaction
         PhysicalForce intensity;
         //! Maximum distance of the interaction

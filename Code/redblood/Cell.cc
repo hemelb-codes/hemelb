@@ -16,26 +16,27 @@ namespace hemelb
 {
   namespace redblood
   {
-    struct CellBase::CellData
+    class CellBase::CellData
     {
-      CellData(
-          MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
-          vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
-      {
-        assert(scale > 1e-12);
-      }
-      CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-          Dimensionless scaleIn = 1e0) :
-          vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
-      {
-        assert(scale > 1e-12);
-      }
-      //! Holds list of vertices for this cell
-      MeshData::Vertices vertices;
-      //! Unmodified original mesh
-      Mesh templateMesh;
-      //! Scale factor for the template;
-      Dimensionless scale;
+      public:
+        CellData(
+            MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
+        {
+          assert(scale > 1e-12);
+        }
+        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+            Dimensionless scaleIn = 1e0) :
+            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
+        {
+          assert(scale > 1e-12);
+        }
+        //! Holds list of vertices for this cell
+        MeshData::Vertices vertices;
+        //! Unmodified original mesh
+        Mesh templateMesh;
+        //! Scale factor for the template;
+        Dimensionless scale;
     };
 
 
