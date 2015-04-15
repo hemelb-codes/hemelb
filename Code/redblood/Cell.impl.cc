@@ -138,8 +138,8 @@ namespace hemelb
       PhysicalEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
                                    PhysicalForce intensity, Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalSurface const surf0 = surface(orig) * origMesh_scale * origMesh_scale;
-        PhysicalSurface const deltaS = surface(vertices, orig.facets) - surf0;
+        PhysicalArea const surf0 = surface(orig) * origMesh_scale * origMesh_scale;
+        PhysicalArea const deltaS = surface(vertices, orig.facets) - surf0;
         return intensity * 0.5 * deltaS * deltaS / surf0;
       }
 
@@ -149,8 +149,8 @@ namespace hemelb
       {
         assert(orig.vertices.size() == vertices.size());
 
-        PhysicalSurface const surf0 = surface(orig) * origMesh_scale * origMesh_scale;
-        PhysicalSurface const deltaS = surface(vertices, orig.facets) - surf0;
+        PhysicalArea const surf0 = surface(orig) * origMesh_scale * origMesh_scale;
+        PhysicalArea const deltaS = surface(vertices, orig.facets) - surf0;
         double const strength = intensity * 0.5 * deltaS / surf0;
 
         for (size_t facetIndex(0); facetIndex < orig.facets.size(); ++facetIndex)

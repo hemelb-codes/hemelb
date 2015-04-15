@@ -237,7 +237,7 @@ namespace hemelb
 
       return result * 0.5;
     }
-    PhysicalSurface surface(MeshData const &mesh)
+    PhysicalArea surface(MeshData const &mesh)
     {
       return surface(mesh.vertices, mesh.facets);
     }
