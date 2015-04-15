@@ -11,7 +11,6 @@
 #define HEMELB_MULTISCALE_INTERCOMMUNICAND_H
 #include <vector>
 
-
 namespace hemelb
 {
   namespace multiscale
@@ -33,15 +32,25 @@ namespace hemelb
          * The constructor for shared values calls back to the intercommunicand, providing syntactic sugar for this.
          * @param value
          */
-        void RegisterSharedValue(BaseSharedValue *value){
+        void RegisterSharedValue(BaseSharedValue *value)
+        {
           values.push_back(value);
         }
-        Intercommunicand(): values(){}
+        Intercommunicand() :
+            values()
+        {
+        }
         /* For the copy constructor, do not copy the references to the values
          * These will need to be registered by the deriving copy constructor.
          */
-        Intercommunicand(const Intercommunicand &other): values(){}
-        std::vector<BaseSharedValue *> & SharedValues(){return values;}
+        Intercommunicand(const Intercommunicand &other) :
+            values()
+        {
+        }
+        std::vector<BaseSharedValue *> & SharedValues()
+        {
+          return values;
+        }
       private:
         std::vector<BaseSharedValue *> values;
     };

@@ -23,11 +23,12 @@ namespace hemelb
     struct ParticleSorter
     {
         int localRank;
-        ParticleSorter(int rank) : localRank(rank)
+        ParticleSorter(int rank) :
+            localRank(rank)
         {
         }
 
-        bool operator() (const Particle& a, const Particle& b)
+        bool operator()(const Particle& a, const Particle& b)
         {
           // ORDER BY isLocal, ownerRank, particleId
           if (a.ownerRank == b.ownerRank)
@@ -46,10 +47,9 @@ namespace hemelb
                              lb::MacroscopicPropertyCache& propertyCache,
                              const hemelb::lb::LbmParameters *lbmParams,
                              std::vector<proc_t>& neighbourProcessors,
-                             const net::IOCommunicator& ioComms_,
-                             const std::string& outputPath) :
+                             const net::IOCommunicator& ioComms_, const std::string& outputPath) :
         ioComms(ioComms_), localRank(ioComms.Rank()), latDatLBM(latDatLBM),
-        propertyCache(propertyCache), net(ioComms), path(outputPath)
+            propertyCache(propertyCache), net(ioComms), path(outputPath)
     {
       /**
        * Open the file, unless it already exists, for writing only, creating it if it doesn't exist.
@@ -74,16 +74,16 @@ namespace hemelb
       // & giving the correct position in the map makes insertion significantly faster
       // the local rank is added last, because its position cannot be easily predicted
       std::sort(neighbourProcessors.begin(), neighbourProcessors.end());
-      for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin(); iter != neighbourProcessors.end();
-          iter++)
+      for (std::vector<proc_t>::const_iterator iter = neighbourProcessors.begin();
+          iter != neighbourProcessors.end(); iter++)
         scanMap.insert(scanMap.end(), scanMapContentType(*iter, scanMapElementType(0, 0)));
       scanMap.insert(scanMapContentType(localRank, scanMapElementType(0, 0)));
 
       // assume we are at the <Particles> node
       bool first = true;
       for (io::xml::Element particleElem = particlesElem.GetChildOrNull("subgridParticle");
-           particleElem != io::xml::Element::Missing();
-           particleElem = particleElem.NextSiblingOrNull("subgridParticle"))
+          particleElem != io::xml::Element::Missing(); particleElem =
+              particleElem.NextSiblingOrNull("subgridParticle"))
       {
         if (first)
         {
@@ -121,7 +121,8 @@ namespace hemelb
       // Create an XDR writer and write all the particles for this processor.
       io::writers::xdr::XdrMemWriter writer(&buffer.front(), maxSize);
 
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -147,7 +148,8 @@ namespace hemelb
       // Collective write: the effect is as though all writes are done
       // in serialised order, i.e. as if rank 0 writes first, followed
       // by rank 1, and so on, until all ranks have written their data
-      HEMELB_MPI_CALL(MPI_File_write_ordered, (file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE));
+      HEMELB_MPI_CALL(MPI_File_write_ordered,
+                      (file, &buffer.front(), count, MPI_CHAR, MPI_STATUS_IGNORE));
 
       // the collective ordered write modifies the shared file pointer
       // it should point to the byte following the highest rank's data
@@ -162,9 +164,12 @@ namespace hemelb
       {
         writer << (uint32_t) io::formats::colloids::HeaderLength;
         writer << (uint32_t) io::formats::colloids::RecordLength;
-        writer << (uint64_t) (positionAferWriting - positionBeforeWriting - io::formats::colloids::HeaderLength);
+        writer
+            << (uint64_t) (positionAferWriting - positionBeforeWriting
+                - io::formats::colloids::HeaderLength);
         writer << (uint64_t) timestep;
-        HEMELB_MPI_CALL(MPI_File_write_at, (file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE));
+        HEMELB_MPI_CALL(MPI_File_write_at,
+                        (file, positionBeforeWriting, &buffer[count], sizeOfHeader, MPI_CHAR, MPI_STATUS_IGNORE));
       }
 
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
@@ -188,7 +193,8 @@ namespace hemelb
 
       // only update the position for particles that are locally owned because
       // only the owner has velocity contributions from all neighbouring ranks
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -198,7 +204,8 @@ namespace hemelb
 
     const void ParticleSet::CalculateBodyForces()
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -208,7 +215,8 @@ namespace hemelb
 
     const void ParticleSet::ApplyBoundaryConditions(const LatticeTimeStep currentTimestep)
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -250,7 +258,8 @@ namespace hemelb
     const void ParticleSet::CalculateFeedbackForces()
     {
       BodyForces::ClearBodyForcesForAllSiteIds();
-      for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::const_iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         const Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)
@@ -260,7 +269,8 @@ namespace hemelb
 
     const void ParticleSet::InterpolateFluidVelocity()
     {
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         particle.InterpolateFluidVelocity(latDatLBM, propertyCache);
@@ -315,8 +325,12 @@ namespace hemelb
         if (neighbourRank != localRank)
         {
           const unsigned int& numberOfParticlesToRecv = iterMap->second.first;
-          net.RequestSend(& ((PersistedParticle&) *iterSendBegin), numberOfParticlesToSend, neighbourRank);
-          net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)), numberOfParticlesToRecv, neighbourRank);
+          net.RequestSend(& ((PersistedParticle&) *iterSendBegin),
+                          numberOfParticlesToSend,
+                          neighbourRank);
+          net.RequestReceive(& ((PersistedParticle&) * (iterRecvBegin)),
+                             numberOfParticlesToRecv,
+                             neighbourRank);
           iterRecvBegin += numberOfParticlesToRecv;
         }
       }
@@ -335,8 +349,8 @@ namespace hemelb
       // re-build the scanMap
       for (scanMapIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
         iterMap->second.first = 0;
-      for (std::vector<Particle>::const_iterator iterParticles = particles.begin(); iterParticles != particles.end();
-          iterParticles++)
+      for (std::vector<Particle>::const_iterator iterParticles = particles.begin();
+          iterParticles != particles.end(); iterParticles++)
         scanMap[iterParticles->GetOwnerRank()].first++;
     }
 
@@ -378,7 +392,8 @@ namespace hemelb
 
       // exchange velocities
       std::vector<Particle>::iterator iterSendBegin = particles.begin();
-      std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator iterRecvBegin = velocityBuffer.begin();
+      std::vector<std::pair<unsigned long, util::Vector3D<double> > >::iterator iterRecvBegin =
+          velocityBuffer.begin();
       for (scanMapConstIterType iterMap = scanMap.begin(); iterMap != scanMap.end(); iterMap++)
       {
         const proc_t& neighbourRank = iterMap->first;
@@ -404,7 +419,8 @@ namespace hemelb
       }
 
       // update local particles
-      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end(); iter++)
+      for (std::vector<Particle>::iterator iter = particles.begin(); iter != particles.end();
+          iter++)
       {
         Particle& particle = *iter;
         if (particle.GetOwnerRank() == localRank)

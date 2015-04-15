@@ -53,7 +53,8 @@ namespace hemelb
          * @param multiplier vector to be multiplied by the matrix
          * @param result matrix-vector product result.
          */
-        void timesVector(const util::Vector3D<double>& multiplier, util::Vector3D<double>& result) const;
+        void timesVector(const util::Vector3D<double>& multiplier,
+                         util::Vector3D<double>& result) const;
 
         /**
          * Computes the product of a matrix and a scalar.

@@ -24,7 +24,7 @@ namespace CPPUNIT_NS
         return (x - y).GetMagnitudeSquared() < 1e-9;
       }
 
-      static std::string toString( const hemelb::util::Vector3D<double>& x )
+      static std::string toString(const hemelb::util::Vector3D<double>& x)
       {
         OStringStream ost;
         ost << x;
@@ -41,8 +41,8 @@ namespace hemelb
     {
       class Vector3DTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE( Vector3DTests);
-          CPPUNIT_TEST( TestCastsInVector3DProduct);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE (Vector3DTests);
+          CPPUNIT_TEST (TestCastsInVector3DProduct);CPPUNIT_TEST_SUITE_END();
         public:
           void TestCastsInVector3DProduct()
           {
@@ -82,7 +82,7 @@ namespace hemelb
           }
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION( Vector3DTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (Vector3DTests);
 
     }
   }

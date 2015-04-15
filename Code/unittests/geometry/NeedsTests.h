@@ -22,7 +22,8 @@ namespace hemelb
     {
       using namespace hemelb::geometry;
       using namespace hemelb::unittests::helpers;
-      class NeedsTests : public CppUnit::TestFixture, MockNetHelper
+      class NeedsTests : public CppUnit::TestFixture,
+                         MockNetHelper
       {
           CPPUNIT_TEST_SUITE (NeedsTests);
           CPPUNIT_TEST (TestReadingOne);
@@ -47,7 +48,7 @@ namespace hemelb
           void TestReadingOne()
           {
             SetupMocks(6, 2, 5, 0);
-            CPPUNIT_ASSERT_EQUAL(communicatorMock->Size(),5);
+            CPPUNIT_ASSERT_EQUAL(communicatorMock->Size(), 5);
             // Start to record the expected communications calls.
             // First will come, sending to the reading cores, each of the lengths.
             // I would expect to send to the other reading core, my count of needed cores
@@ -182,33 +183,28 @@ namespace hemelb
             netMock->ExpectationsAllCompleted();
           }
 
-          void SetupMocks(const site_t block_count,
-                          const proc_t reading_cores,
-                          const proc_t core_count,
-                          const proc_t current_core)
+          void SetupMocks(const site_t block_count, const proc_t reading_cores,
+                          const proc_t core_count, const proc_t current_core)
           {
             blockCount = block_count;
             readingCores = reading_cores;
             rank = current_core;
             size = core_count;
-            MockNetHelper::setUp(core_count,current_core);
+            MockNetHelper::setUp(core_count, current_core);
 
             inputNeededBlocks = std::vector<bool>(block_count);
 
             for (site_t i = 0; i < block_count; i++)
             {
               // Mock with a tridiagonal needs example
-              inputNeededBlocks[i] = (current_core == i || current_core + 1 == i || current_core - 1 == i);
+              inputNeededBlocks[i] = (current_core == i || current_core + 1 == i
+                  || current_core - 1 == i);
             }
           }
 
           void ShareMockNeeds()
           {
-            mockedNeeds = new Needs(blockCount,
-                                          inputNeededBlocks,
-                                          readingCores,
-                                          *netMock,
-                                          false);
+            mockedNeeds = new Needs(blockCount, inputNeededBlocks, readingCores, *netMock, false);
           }
 
         private:

@@ -86,9 +86,9 @@ namespace hemelb
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
             PhysicalEnergy const actual1(surfaceEnergy(mesh.vertices,
                                                        original,
-                                                       2.0 * surface(original)));
+                                                       2.0 * area(original)));
 
-            PhysicalEnergy const deltaS(surface(mesh) - surface(original));
+            PhysicalEnergy const deltaS(area(mesh) - area(original));
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaS * deltaS));
             mesh.vertices.back()[2] = 1e0;
           }

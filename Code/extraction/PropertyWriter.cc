@@ -19,7 +19,9 @@ namespace hemelb
     {
       for (unsigned outputNumber = 0; outputNumber < propertyOutputs.size(); ++outputNumber)
       {
-        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource, propertyOutputs[outputNumber], ioComms));
+        localPropertyOutputs.push_back(new LocalPropertyOutput(dataSource,
+                                                               propertyOutputs[outputNumber],
+                                                               ioComms));
       }
     }
 

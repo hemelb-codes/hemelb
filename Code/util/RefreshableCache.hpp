@@ -23,7 +23,8 @@ namespace hemelb
      * @param size
      */
     template<typename CacheType>
-    RefreshableCache<CacheType>::RefreshableCache(const lb::SimulationState& simulationState, unsigned long size) :
+    RefreshableCache<CacheType>::RefreshableCache(const lb::SimulationState& simulationState,
+                                                  unsigned long size) :
         CheckingCache<CacheType>(simulationState, size), requiresRefreshing(false), cacheSize(size)
     {
 

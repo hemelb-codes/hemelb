@@ -54,7 +54,7 @@ namespace hemelb
 
         public:
           RandomSource(uint32_t seed) :
-            state(seed)
+              state(seed)
           {
 
           }

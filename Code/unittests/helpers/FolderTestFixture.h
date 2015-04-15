@@ -78,26 +78,26 @@ namespace hemelb
           //!   Should not include "hemelbsettings"
           //! \param[in] value: Value to set the attribute to
           template<class T>
-            void ModifyXMLInput(
-                std::string const &resource , std::vector<std::string>&& elements, T const &_value)
+          void ModifyXMLInput(std::string const &resource, std::vector<std::string>&& elements,
+                              T const &_value)
+          {
+            std::string const filename = tempPath + "/" + resource;
+            std::string const attribute = elements.back();
+            elements.pop_back();
+            TiXmlDocument document(filename.c_str());
+            document.LoadFile();
+            auto child = document.FirstChildElement("hemelbsettings");
+            for (std::string const &name : elements)
             {
-              std::string const filename = tempPath + "/" + resource;
-              std::string const attribute = elements.back();
-              elements.pop_back();
-              TiXmlDocument document(filename.c_str());
-              document.LoadFile();
-              auto child = document.FirstChildElement("hemelbsettings");
-              for(std::string const &name: elements)
-              {
-                child = child->FirstChildElement(name);
-              }
-              std::ostringstream attr_value;
-              attr_value << _value;
-              child->SetAttribute(attribute, attr_value.str().c_str());
-
-              std::ofstream output(filename);
-              output << document;
+              child = child->FirstChildElement(name);
             }
+            std::ostringstream attr_value;
+            attr_value << _value;
+            child->SetAttribute(attribute, attr_value.str().c_str());
+
+            std::ofstream output(filename);
+            output << document;
+          }
 
           void MoveToTempdir()
           {

@@ -221,7 +221,7 @@ namespace hemelb
       return volume(mesh.vertices, mesh.facets);
     }
 
-    PhysicalVolume surface(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
@@ -237,9 +237,9 @@ namespace hemelb
 
       return result * 0.5;
     }
-    PhysicalSurface surface(MeshData const &mesh)
+    PhysicalArea area(MeshData const &mesh)
     {
-      return surface(mesh.vertices, mesh.facets);
+      return area(mesh.vertices, mesh.facets);
     }
 
     namespace
@@ -549,24 +549,71 @@ namespace hemelb
       // Dumbly copied from
       // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
       PhysicalDistance const t = 0.5 * (1. + std::sqrt(5.0));
-      mesh->vertices = {
-        {-1,  t,  0}, { 1,  t,  0}, {-1, -t,  0}, { 1, -t,  0},
-        { 0, -1,  t}, { 0,  1,  t}, { 0, -1, -t}, { 0,  1, -t},
-        { t,  0, -1}, { t,  0,  1}, {-t,  0, -1}, {-t,  0,  1},
+      mesh->vertices =
+      {
+        { -1, t, 0},
+        { 1, t, 0},
+        { -1, -t, 0},
+        { 1, -t, 0},
+        { 0, -1, t},
+        { 0, 1, t},
+        { 0, -1, -t},
+        { 0, 1, -t},
+        { t, 0, -1},
+        { t, 0, 1},
+        { -t, 0, -1},
+        { -t, 0, 1},
       };
-      mesh->facets = {
-        {{0, 11, 5}}, {{0,  5,  1}}, {{ 0,  1,  7}}, {{ 0, 7, 10}}, {{0, 10, 11}},
-        {{1,  5, 9}}, {{5, 11,  4}}, {{11, 10,  2}}, {{10, 7,  6}}, {{7,  1,  8}},
-        {{3,  9, 4}}, {{3,  4,  2}}, {{ 3,  2,  6}}, {{ 3, 6,  8}}, {{3,  8,  9}},
-        {{4,  9, 5}}, {{2,  4, 11}}, {{ 6,  2, 10}}, {{ 8, 6,  7}}, {{9,  8,  1}},
+      mesh->facets =
+      {
+        {
+          { 0, 11, 5}},
+        {
+          { 0, 5, 1}},
+        {
+          { 0, 1, 7}},
+        {
+          { 0, 7, 10}},
+        {
+          { 0, 10, 11}},
+        {
+          { 1, 5, 9}},
+        {
+          { 5, 11, 4}},
+        {
+          { 11, 10, 2}},
+        {
+          { 10, 7, 6}},
+        {
+          { 7, 1, 8}},
+        {
+          { 3, 9, 4}},
+        {
+          { 3, 4, 2}},
+        {
+          { 3, 2, 6}},
+        {
+          { 3, 6, 8}},
+        {
+          { 3, 8, 9}},
+        {
+          { 4, 9, 5}},
+        {
+          { 2, 4, 11}},
+        {
+          { 6, 2, 10}},
+        {
+          { 8, 6, 7}},
+        {
+          { 9, 8, 1}},
       };
       // Then refines it
-      for(unsigned int i(0); i < depth; ++i)
+      for (unsigned int i(0); i < depth; ++i)
       {
         refine(mesh);
       }
       // Finally, makes sure vertices are on unit-sphere
-      for(auto &vertex: mesh->vertices)
+      for (auto &vertex : mesh->vertices)
       {
         vertex.Normalise();
       }

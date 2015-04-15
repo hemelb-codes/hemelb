@@ -42,8 +42,8 @@ namespace hemelb
         const distribn_t DHumieresD3Q15MRTBasis::BASIS_TIMES_BASIS_TRANSPOSED[NUM_KINETIC_MOMENTS] =
             { 18., 360., 40., 40., 40., 12., 4., 8., 8., 8., 8. };
 
-        void DHumieresD3Q15MRTBasis::ProjectVelsIntoMomentSpace(const distribn_t * const velDistributions,
-                                                                distribn_t * const moments)
+        void DHumieresD3Q15MRTBasis::ProjectVelsIntoMomentSpace(
+            const distribn_t * const velDistributions, distribn_t * const moments)
         {
           for (unsigned momentIndex = 0; momentIndex < NUM_KINETIC_MOMENTS; momentIndex++)
           {

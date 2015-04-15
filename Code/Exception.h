@@ -33,7 +33,8 @@ namespace hemelb
        */
       Exception()
       {
-      };
+      }
+      ;
       /**
        * Copy ctor required -- note that it appends the old content of the
        * stream to the message of the new one and gives the new one an empty
@@ -47,7 +48,8 @@ namespace hemelb
       }
       virtual ~Exception() throw ()
       {
-      };
+      }
+      ;
 
       /**
        * Return combined error string.

@@ -29,7 +29,8 @@ namespace hemelb
        * template on WallLinkImpl.
        */
       template<typename CollisionImpl, typename WallLinkImpl>
-      class WallStreamerTypeFactory : public BaseStreamer<WallStreamerTypeFactory<CollisionImpl, WallLinkImpl> >
+      class WallStreamerTypeFactory : public BaseStreamer<
+          WallStreamerTypeFactory<CollisionImpl, WallLinkImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -43,14 +44,14 @@ namespace hemelb
 
         public:
           WallStreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams),
+                  wallLinkDelegate(collider, initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -89,8 +90,7 @@ namespace hemelb
             }
           }
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t firstIndex,
-                                 const site_t siteCount,
+          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
@@ -119,7 +119,8 @@ namespace hemelb
        * template on IoletLinkImpl.
        */
       template<typename CollisionImpl, typename IoletLinkImpl>
-      class IoletStreamerTypeFactory : public BaseStreamer<IoletStreamerTypeFactory<CollisionImpl, IoletLinkImpl> >
+      class IoletStreamerTypeFactory : public BaseStreamer<
+          IoletStreamerTypeFactory<CollisionImpl, IoletLinkImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -133,14 +134,14 @@ namespace hemelb
 
         public:
           IoletStreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams),
+                  ioletLinkDelegate(collider, initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -177,8 +178,7 @@ namespace hemelb
             }
           }
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t firstIndex,
-                                 const site_t siteCount,
+          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
                                  const LbmParameters* lbmParameters,
                                  geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
@@ -208,8 +208,8 @@ namespace hemelb
        * template on WallLinkImpl and IoletLinkImpl.
        */
       template<typename CollisionImpl, typename WallLinkImpl, typename IoletLinkImpl>
-      class WallIoletStreamerTypeFactory : public BaseStreamer<WallIoletStreamerTypeFactory<CollisionImpl,
-          WallLinkImpl, IoletLinkImpl> >
+      class WallIoletStreamerTypeFactory : public BaseStreamer<
+          WallIoletStreamerTypeFactory<CollisionImpl, WallLinkImpl, IoletLinkImpl> >
       {
         public:
           typedef CollisionImpl CollisionType;
@@ -223,15 +223,14 @@ namespace hemelb
 
         public:
           WallIoletStreamerTypeFactory(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams), wallLinkDelegate(collider, initParams),
-                ioletLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams),
+                  wallLinkDelegate(collider, initParams), ioletLinkDelegate(collider, initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -273,10 +272,8 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t firstIndex,
-                                 const site_t siteCount,
-                                 const LbmParameters* lbmParams,
-                                 geometry::LatticeData* latticeData,
+          inline void DoPostStep(const site_t firstIndex, const site_t siteCount,
+                                 const LbmParameters* lbmParams, geometry::LatticeData* latticeData,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
             for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)

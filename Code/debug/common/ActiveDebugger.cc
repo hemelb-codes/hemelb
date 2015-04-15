@@ -32,7 +32,7 @@ namespace hemelb
   {
 
     ActiveDebugger::ActiveDebugger(const char* const executable, const net::MpiCommunicator& comm) :
-      Debugger(executable, comm), mAmAttached(false), mPIds()
+        Debugger(executable, comm), mAmAttached(false), mPIds()
     {
     }
 
@@ -148,7 +148,8 @@ namespace hemelb
 
       // OK- that didn't work if we get here, better die (since we're
       // the extra process). Print the error code too.
-      std::cerr << "Couldn't exec() script to launch debuggers. Return value: " << code << "; error code: " << errno << std::endl;
+      std::cerr << "Couldn't exec() script to launch debuggers. Return value: " << code
+          << "; error code: " << errno << std::endl;
       // Now print the command we wanted to exec()
       for (VoS::iterator it = args.begin(); it < args.end(); it++)
       {

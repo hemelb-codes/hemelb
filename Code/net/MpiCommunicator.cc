@@ -31,11 +31,13 @@ namespace hemelb
       return MpiCommunicator(MPI_COMM_WORLD, false);
     }
 
-    MpiCommunicator::MpiCommunicator() : commPtr()
+    MpiCommunicator::MpiCommunicator() :
+        commPtr()
     {
     }
 
-    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) : commPtr()
+    MpiCommunicator::MpiCommunicator(MPI_Comm communicator, bool owner) :
+        commPtr()
     {
       if (communicator == MPI_COMM_NULL)
         return;
@@ -61,8 +63,7 @@ namespace hemelb
         if (comm2)
         {
           int result;
-          HEMELB_MPI_CALL(MPI_Comm_compare,
-              (comm1, comm2, &result));
+          HEMELB_MPI_CALL(MPI_Comm_compare, (comm1, comm2, &result));
           return result == MPI_IDENT;
         }
         return false;

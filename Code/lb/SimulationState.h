@@ -44,8 +44,14 @@ namespace hemelb
         bool IsRendering() const;
         Stability GetStability() const;
 
-        PhysicalTime GetTime() const {return GetTimeStepLength()*Get0IndexedTimeStep();}
-        PhysicalTime GetTimeStepLength() const {return timeStepLength;}
+        PhysicalTime GetTime() const
+        {
+          return GetTimeStepLength() * Get0IndexedTimeStep();
+        }
+        PhysicalTime GetTimeStepLength() const
+        {
+          return timeStepLength;
+        }
 
         void Report(ctemplate::TemplateDictionary& dictionary);
 

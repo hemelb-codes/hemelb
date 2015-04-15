@@ -71,7 +71,7 @@ namespace hemelb
          */
         operator bool() const
         {
-          return (bool)commPtr;
+          return (bool) commPtr;
         }
         /**
          * Returns the MPI group being used.
@@ -91,39 +91,40 @@ namespace hemelb
          */
         MpiCommunicator Duplicate() const;
 
-        template <typename T>
+        template<typename T>
         void Broadcast(T& val, const int root) const;
-        template <typename T>
+        template<typename T>
         void Broadcast(std::vector<T>& vals, const int root) const;
 
-        template <typename T>
+        template<typename T>
         T AllReduce(const T& val, const MPI_Op& op) const;
-        template <typename T>
+        template<typename T>
         std::vector<T> AllReduce(const std::vector<T>& vals, const MPI_Op& op) const;
 
-        template <typename T>
+        template<typename T>
         T Reduce(const T& val, const MPI_Op& op, const int root) const;
-        template <typename T>
+        template<typename T>
         std::vector<T> Reduce(const std::vector<T>& vals, const MPI_Op& op, const int root) const;
 
-        template <typename T>
+        template<typename T>
         std::vector<T> Gather(const T& val, const int root) const;
 
-        template <typename T>
+        template<typename T>
         std::vector<T> AllGather(const T& val) const;
 
-        template <typename T>
+        template<typename T>
         std::vector<T> AllToAll(const std::vector<T>& vals) const;
 
-        template <typename T>
-        void Send(const T& val, int dest, int tag=0) const;
-        template <typename T>
-        void Send(const std::vector<T>& val, int dest, int tag=0) const;
+        template<typename T>
+        void Send(const T& val, int dest, int tag = 0) const;
+        template<typename T>
+        void Send(const std::vector<T>& val, int dest, int tag = 0) const;
 
-        template <typename T>
-        void Receive(T& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
-        template <typename T>
-        void Receive(std::vector<T>& val, int src, int tag=0, MPI_Status* stat=MPI_STATUS_IGNORE) const;
+        template<typename T>
+        void Receive(T& val, int src, int tag = 0, MPI_Status* stat = MPI_STATUS_IGNORE) const;
+        template<typename T>
+        void Receive(std::vector<T>& val, int src, int tag = 0,
+                     MPI_Status* stat = MPI_STATUS_IGNORE) const;
 
       protected:
         /**

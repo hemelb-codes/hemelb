@@ -21,7 +21,8 @@ namespace hemelb
     }
 
     Block::Block(site_t sitesPerBlock) :
-        processorRankForEachBlockSite(sitesPerBlock, BIG_NUMBER2), localContiguousIndex(sitesPerBlock, SOLID_SITE_ID)
+        processorRankForEachBlockSite(sitesPerBlock, BIG_NUMBER2),
+            localContiguousIndex(sitesPerBlock, SOLID_SITE_ID)
     {
     }
 

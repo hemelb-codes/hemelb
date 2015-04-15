@@ -35,14 +35,13 @@ namespace hemelb
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-            collider(initParams), bulkLinkDelegate(collider, initParams)
+              collider(initParams), bulkLinkDelegate(collider, initParams)
           {
 
           }
 
           template<bool tDoRayTracing>
-          inline void DoStreamAndCollide(const site_t firstIndex,
-                                         const site_t siteCount,
+          inline void DoStreamAndCollide(const site_t firstIndex, const site_t siteCount,
                                          const LbmParameters* lbmParams,
                                          geometry::LatticeData* latDat,
                                          lb::MacroscopicPropertyCache& propertyCache)
@@ -73,10 +72,8 @@ namespace hemelb
           }
 
           template<bool tDoRayTracing>
-          inline void DoPostStep(const site_t iFirstIndex,
-                                 const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams,
-                                 geometry::LatticeData* bLatDat,
+          inline void DoPostStep(const site_t iFirstIndex, const site_t iSiteCount,
+                                 const LbmParameters* iLbmParams, geometry::LatticeData* bLatDat,
                                  lb::MacroscopicPropertyCache& propertyCache)
           {
 

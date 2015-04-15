@@ -32,18 +32,19 @@ namespace hemelb
       class Cluster
       {
         public:
-          Cluster(unsigned short xBlockCount,
-                  unsigned short yBlockCount,
-                  unsigned short zBlockCount,
-                  const util::Vector3D<float>& minimalSite,
+          Cluster(unsigned short xBlockCount, unsigned short yBlockCount,
+                  unsigned short zBlockCount, const util::Vector3D<float>& minimalSite,
                   const util::Vector3D<float>& maximalSite,
                   const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                   const util::Vector3D<site_t>& minimalBlock) :
-              blocksX(xBlockCount), blocksY(yBlockCount), blocksZ(zBlockCount), minSite(minimalSite), maxSite(maximalSite), leastSiteOnLeastBlockInImage(minimalSiteOnMinimalBlock), minBlock(minimalBlock)
+              blocksX(xBlockCount), blocksY(yBlockCount), blocksZ(zBlockCount),
+                  minSite(minimalSite), maxSite(maximalSite),
+                  leastSiteOnLeastBlockInImage(minimalSiteOnMinimalBlock), minBlock(minimalBlock)
           {
           }
 
-          unsigned int GetBlockIdFrom3DBlockLocation(const util::Vector3D<unsigned int>& iLocation) const
+          unsigned int GetBlockIdFrom3DBlockLocation(
+              const util::Vector3D<unsigned int>& iLocation) const
           {
             return iLocation.x * blocksY * blocksZ + iLocation.y * blocksZ + iLocation.z;
           }
@@ -53,7 +54,8 @@ namespace hemelb
             return ((const Derived*) (this))->DoGetWallData(iBlockNumber, iSiteNumber);
           }
 
-          void SetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData)
+          void SetWallData(site_t iBlockNumber, site_t iSiteNumber,
+                           const util::Vector3D<double>& iData)
           {
             return ((Derived*) (this))->DoSetWallData(iBlockNumber, iSiteNumber, iData);
           }

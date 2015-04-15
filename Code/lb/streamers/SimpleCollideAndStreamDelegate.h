@@ -24,7 +24,8 @@ namespace hemelb
           typedef CollisionImpl CollisionType;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
-          SimpleCollideAndStreamDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams)
+          SimpleCollideAndStreamDelegate(CollisionType& delegatorCollider,
+                                         kernels::InitParams& initParams)
           {
           }
 
@@ -34,8 +35,8 @@ namespace hemelb
                                  kernels::HydroVars<typename CollisionType::CKernel>& hydroVars,
                                  const Direction& direction)
           {
-            * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType> (direction)))
-                = hydroVars.GetFPostCollision()[direction];
+            * (latticeData->GetFNew(site.GetStreamedIndex<LatticeType>(direction))) =
+                hydroVars.GetFPostCollision()[direction];
           }
 
       };

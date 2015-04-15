@@ -18,7 +18,8 @@ namespace hemelb
     {
 
       NeighbouringLatticeData::NeighbouringLatticeData(const lb::lattices::LatticeInfo& latticeInfo) :
-          distributions(), distanceToWall(), wallNormalAtSite(), siteData(), latticeInfo(latticeInfo)
+          distributions(), distanceToWall(), wallNormalAtSite(), siteData(),
+              latticeInfo(latticeInfo)
       {
       }
 
@@ -47,7 +48,8 @@ namespace hemelb
         return ConstNeighbouringSite(globalIndex, *this);
       }
 
-      const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(site_t globalIndex) const
+      const util::Vector3D<distribn_t>& NeighbouringLatticeData::GetNormalToWall(
+          site_t globalIndex) const
       {
         return wallNormalAtSite.find(globalIndex)->second;
       }

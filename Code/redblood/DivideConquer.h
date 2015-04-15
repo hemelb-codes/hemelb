@@ -13,6 +13,7 @@
 #include <vector>
 #include <map>
 #include <cmath>
+#include <type_traits>
 #include "units.h"
 #include "util/Vector3D.h"
 
@@ -55,7 +56,8 @@ namespace hemelb
           };
           typedef std::multimap<key_type, T, CompareKeys> type;
       };
-      
+      static_assert(std::is_pod<DnCBase<int>>::value, "Can be a struct");
+      static_assert(std::is_pod<DnCBase<int>::CompareKeys>::value, "Can be a struct");
     }
 
     //! \brief Multimap for divide and conquer algorithms

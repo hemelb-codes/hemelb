@@ -14,19 +14,15 @@ namespace hemelb
 {
   namespace net
   {
-    void ImmediatePointPoint::RequestSendImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
+    void ImmediatePointPoint::RequestSendImpl(void* pointer, int count, proc_t rank,
+                                              MPI_Datatype type)
     {
-      HEMELB_MPI_CALL(
-          MPI_Ssend,
-          (pointer, count, type, rank, 10, communicator)
-      );
+      HEMELB_MPI_CALL(MPI_Ssend, (pointer, count, type, rank, 10, communicator));
     }
-    void ImmediatePointPoint::RequestReceiveImpl(void* pointer, int count, proc_t rank, MPI_Datatype type)
+    void ImmediatePointPoint::RequestReceiveImpl(void* pointer, int count, proc_t rank,
+                                                 MPI_Datatype type)
     {
-      HEMELB_MPI_CALL(
-          MPI_Recv,
-          (pointer, count, type, rank, 10, communicator, MPI_STATUS_IGNORE)
-      );
+      HEMELB_MPI_CALL(MPI_Recv, (pointer, count, type, rank, 10, communicator, MPI_STATUS_IGNORE));
     }
 
     void ImmediatePointPoint::ReceivePointToPoint()

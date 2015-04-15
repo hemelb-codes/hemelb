@@ -22,17 +22,18 @@ namespace hemelb
       class ClusterWithWallNormals : public Cluster<ClusterWithWallNormals>
       {
         public:
-          ClusterWithWallNormals(unsigned short xBlockCount,
-                                 unsigned short yBlockCount,
+          ClusterWithWallNormals(unsigned short xBlockCount, unsigned short yBlockCount,
                                  unsigned short zBlockCount,
                                  const util::Vector3D<float>& minimalSite,
                                  const util::Vector3D<float>& maximalSite,
                                  const util::Vector3D<float>& minimalSiteOnMinimalBlock,
                                  const util::Vector3D<site_t>& minimalBlock);
 
-          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          const util::Vector3D<double>* DoGetWallData(site_t iBlockNumber,
+                                                      site_t iSiteNumber) const;
 
-          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const util::Vector3D<double>& iData);
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber,
+                             const util::Vector3D<double>& iData);
 
           static bool DoNeedsWallNormals();
 

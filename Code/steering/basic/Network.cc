@@ -29,7 +29,7 @@ namespace hemelb
   namespace steering
   {
     Network::Network(int steeringSessionId, reporting::Timers & timings) :
-      clientConnection(steeringSessionId, timings)
+        clientConnection(steeringSessionId, timings)
     {
 
     }
@@ -99,7 +99,8 @@ namespace hemelb
         else
         {
           bytesGot += n;
-          log::Logger::Log<log::Trace, log::Singleton>("Steering component: received bytes... (New total %d)", bytesGot);
+          log::Logger::Log<log::Trace, log::Singleton>("Steering component: received bytes... (New total %d)",
+                                                       bytesGot);
         }
       }
       log::Logger::Log<log::Debug, log::Singleton>("Steering component is happy with what it has received");
@@ -241,7 +242,8 @@ namespace hemelb
           }
           else
           {
-            log::Logger::Log<log::Info, log::Singleton>("Network send had broken pipe... (%s)", strerror(errno));
+            log::Logger::Log<log::Info, log::Singleton>("Network send had broken pipe... (%s)",
+                                                        strerror(errno));
             Break(socket);
 
             return -1;

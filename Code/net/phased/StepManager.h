@@ -75,7 +75,8 @@ namespace hemelb
            * @param The number of phases, default 1.
            * @param timers, Record the times for the steps to this timers object, if given
            */
-          StepManager(Phase phases = 1, reporting::Timers * timers = nullptr, bool separate_concerns = false);
+          StepManager(Phase phases = 1, reporting::Timers * timers = nullptr,
+                      bool separate_concerns = false);
 
           /***
            * Register an action of a concern
@@ -125,7 +126,7 @@ namespace hemelb
            * @param step
            * @param phase (Default the first phase)
            */
-          void CallActionsForStepForConcern(steps::Step step,Concern * concern, Phase phase = 0);
+          void CallActionsForStepForConcern(steps::Step step, Concern * concern, Phase phase = 0);
 
           /***
            * Call all registered actions for a given phase in a given step

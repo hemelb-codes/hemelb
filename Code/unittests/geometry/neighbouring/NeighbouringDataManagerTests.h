@@ -26,19 +26,19 @@ namespace hemelb
         class NeighbouringDataManagerTests : public FourCubeBasedTestFixture,
                                              public MockNetHelper
         {
-            CPPUNIT_TEST_SUITE ( NeighbouringDataManagerTests);
-            CPPUNIT_TEST ( TestConstruct);
-            CPPUNIT_TEST ( TestRegisterNeedOneProc);
-            CPPUNIT_TEST ( TestShareNeedsOneProc);
-            CPPUNIT_TEST ( TestShareConstantDataOneProc);
-            CPPUNIT_TEST ( TestShareFieldDataOneProc);
-            CPPUNIT_TEST ( TestShareFieldDataOneProcViaIterableAction);
+            CPPUNIT_TEST_SUITE (NeighbouringDataManagerTests);
+            CPPUNIT_TEST (TestConstruct);
+            CPPUNIT_TEST (TestRegisterNeedOneProc);
+            CPPUNIT_TEST (TestShareNeedsOneProc);
+            CPPUNIT_TEST (TestShareConstantDataOneProc);
+            CPPUNIT_TEST (TestShareFieldDataOneProc);
+            CPPUNIT_TEST (TestShareFieldDataOneProcViaIterableAction);
 
             CPPUNIT_TEST_SUITE_END();
 
           public:
             NeighbouringDataManagerTests() :
-              data(nullptr)
+                data(nullptr)
             {
             }
 
@@ -77,18 +77,17 @@ namespace hemelb
                                                                            exampleBlockLocalCoord);
               // to illustrate a typical use, we now add a displacement to the global coords of the local site, which in a real example
               // would take it off-proc
-              util::Vector3D<site_t> desiredGlobalCoord = globalCoord + util::Vector3D<site_t>(1,
-                                                                                               0,
-                                                                                               0);
+              util::Vector3D<site_t> desiredGlobalCoord = globalCoord
+                  + util::Vector3D<site_t>(1, 0, 0);
               // desiredGC = (2,2,3) => id = (2*block + 2) * block + 3
               site_t desiredId =
                   latDat->GetGlobalNoncontiguousSiteIdFromGlobalCoords(desiredGlobalCoord);
               CPPUNIT_ASSERT_EQUAL(site_t(87), desiredId);
 
               manager->RegisterNeededSite(desiredId);
-              CPPUNIT_ASSERT_EQUAL(static_cast<std::vector<site_t>::size_type> (1),
+              CPPUNIT_ASSERT_EQUAL(static_cast<std::vector<site_t>::size_type>(1),
                                    manager->GetNeededSites().size());
-              CPPUNIT_ASSERT_EQUAL(static_cast<site_t> (87), manager->GetNeededSites()[0]);
+              CPPUNIT_ASSERT_EQUAL(static_cast<site_t>(87), manager->GetNeededSites()[0]);
             }
 
             void TestShareNeedsOneProc()
@@ -115,8 +114,8 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).size(),
-                                   static_cast<std::vector<int>::size_type> (1));
-              CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).front(), static_cast<site_t> (43));
+                                   static_cast<std::vector<int>::size_type>(1));
+              CPPUNIT_ASSERT_EQUAL(manager->GetNeedsForProc(0).front(), static_cast<site_t>(43));
             }
 
             void TestShareConstantDataOneProc()
@@ -141,8 +140,8 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               // Now, transfer the data about that site.
-              Site < LatticeData > exampleSite
-                  = latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
+              Site < LatticeData > exampleSite =
+                  latDat->GetSite(latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(43));
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
               // We should send/receive the site data
@@ -184,7 +183,8 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
               NeighbouringSite transferredSite = data->GetSite(43);
               CPPUNIT_ASSERT_EQUAL(exampleSite.GetSiteData(), transferredSite.GetSiteData());
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS - 1;
+                  direction++)
               {
                 CPPUNIT_ASSERT_EQUAL(exampleSite.GetWallDistances()[direction],
                                      transferredSite.GetWallDistances()[direction]);
@@ -195,8 +195,10 @@ namespace hemelb
             void TestShareFieldDataOneProc()
             {
               site_t targetGlobalOneDIdx = 43;
-              LatticeVector targetGlobalThreeDIdx = latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
-              site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
+              LatticeVector targetGlobalThreeDIdx =
+                  latDat->GetSiteCoordsFromSiteId(targetGlobalOneDIdx);
+              site_t targetLocalIdx =
+                  latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
               for (unsigned int direction = 0; direction < 3; direction++)
                 CPPUNIT_ASSERT_EQUAL(site_t(1), targetGlobalThreeDIdx[direction]);
@@ -225,13 +227,13 @@ namespace hemelb
 
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
-              netMock->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
+              netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
                                    lb::lattices::D3Q15::NUMVECTORS,
                                    0,
                                    "IntersectionDataToSelf");
 
               std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
-              netMock->RequireReceive(&(receivedFOld[0]),
+              netMock->RequireReceive(& (receivedFOld[0]),
                                       lb::lattices::D3Q15::NUMVECTORS,
                                       0,
                                       "IntersectionDataFromSelf");
@@ -240,17 +242,19 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               NeighbouringSite transferredSite = data->GetSite(targetGlobalOneDIdx);
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
-                                     transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
+                                     transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }
             }
 
             void TestShareFieldDataOneProcViaIterableAction()
             {
               site_t targetGlobalOneDIdx = 43;
-              site_t targetLocalIdx = latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
+              site_t targetLocalIdx =
+                  latDat->GetLocalContiguousIdFromGlobalNoncontiguousId(targetGlobalOneDIdx);
 
               // begin by setting up mocks for the required site
               std::vector<int> countOfNeedsToZeroFromZero;
@@ -275,12 +279,12 @@ namespace hemelb
               Site < LatticeData > exampleSite = latDat->GetSite(targetLocalIdx);
               // It should arrive in the NeighbouringDataManager, from the values sent from the localLatticeData
 
-              netMock->RequireSend(const_cast<distribn_t*> (exampleSite.GetFOld<lb::lattices::D3Q15> ()),
+              netMock->RequireSend(const_cast<distribn_t*>(exampleSite.GetFOld<lb::lattices::D3Q15>()),
                                    lb::lattices::D3Q15::NUMVECTORS,
                                    0,
                                    "IntersectionDataToSelf");
               std::vector<distribn_t> receivedFOld(lb::lattices::D3Q15::NUMVECTORS, 53.0);
-              netMock->RequireReceive(&(receivedFOld[0]),
+              netMock->RequireReceive(& (receivedFOld[0]),
                                       lb::lattices::D3Q15::NUMVECTORS,
                                       0,
                                       "IntersectionDataFromSelf");
@@ -293,10 +297,11 @@ namespace hemelb
               netMock->ExpectationsAllCompleted();
 
               NeighbouringSite transferredSite = data->GetSite(targetGlobalOneDIdx);
-              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS; direction++)
+              for (unsigned int direction = 0; direction < lb::lattices::D3Q15::NUMVECTORS;
+                  direction++)
               {
                 CPPUNIT_ASSERT_EQUAL(receivedFOld[direction],
-                                     transferredSite.GetFOld<lb::lattices::D3Q15> ()[direction]);
+                                     transferredSite.GetFOld<lb::lattices::D3Q15>()[direction]);
               }
             }
 
@@ -306,7 +311,7 @@ namespace hemelb
 
         };
         // CPPUNIT_EXTRA_LINE
-        CPPUNIT_TEST_SUITE_REGISTRATION ( NeighbouringDataManagerTests);
+        CPPUNIT_TEST_SUITE_REGISTRATION (NeighbouringDataManagerTests);
       }
     }
   }

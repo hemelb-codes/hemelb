@@ -28,8 +28,9 @@ namespace hemelb
 {
   namespace redblood
   {
-    struct CellReference
+    class CellReference
     {
+      public:
         //! Index of cell in input container
         CellContainer::const_iterator cellIterator;
         //! Index of node in mesh
@@ -75,6 +76,7 @@ namespace hemelb
             default:
               return LatticeVector(0, 0, 0);
           };
+          return LatticeVector(0, 0, 0);
         }
         static LatticePosition directions(Borders border)
         {
@@ -129,25 +131,23 @@ namespace hemelb
           return this->operator()(base_type::DowngradeKey(pos));
         }
         template<class T>
-          typename std::enable_if<std::is_integral<T>::value, const_range>::type
-            operator()(std::initializer_list<T> pos) const
-            {
-              assert(pos.size() == 3);
-              return operator()(
-                  LatticeVector(
-                    *pos.begin(), *std::next(pos.begin()), *std::next(std::next(pos.begin())))
-              );
-            }
+        typename std::enable_if<std::is_integral<T>::value, const_range>::type operator()(
+            std::initializer_list<T> pos) const
+        {
+          assert(pos.size() == 3);
+          return operator()(LatticeVector(*pos.begin(),
+                                          *std::next(pos.begin()),
+                                          *std::next(std::next(pos.begin()))));
+        }
         template<class T>
-          typename std::enable_if<std::is_floating_point<T>::value, const_range>::type
-            operator()(std::initializer_list<T> pos) const
-            {
-              assert(pos.size() == 3);
-              return operator()(
-                  LatticePosition(
-                    *pos.begin(), *std::next(pos.begin()), *std::next(std::next(pos.begin())))
-              );
-            }
+        typename std::enable_if<std::is_floating_point<T>::value, const_range>::type operator()(
+            std::initializer_list<T> pos) const
+        {
+          assert(pos.size() == 3);
+          return operator()(LatticePosition(*pos.begin(),
+                                            *std::next(pos.begin()),
+                                            *std::next(std::next(pos.begin()))));
+        }
 
 // Implementation of DivideConquerCell::iterator
 #define HEMELB_DOING_NONCONST

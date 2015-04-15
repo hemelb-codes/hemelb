@@ -40,8 +40,8 @@ namespace hemelb
     public:
       typedef TRAITS Traits;
 
-      SimulationMaster(
-          hemelb::configuration::CommandLine &options, const hemelb::net::IOCommunicator& ioComms);
+      SimulationMaster(hemelb::configuration::CommandLine &options,
+                       const hemelb::net::IOCommunicator& ioComms);
       virtual ~SimulationMaster();
 
       void Abort();
@@ -51,21 +51,22 @@ namespace hemelb
       int GetProcessorCount();
 
       void RunSimulation();
-      hemelb::lb::SimulationState const * GetState() const {
+      hemelb::lb::SimulationState const * GetState() const
+      {
         return simulationState;
       }
       void Finalise();
 #     ifdef HEMELB_DOING_UNITTESTS
-          //! Makes it easy to add cell controller without messy input files
-          void RegisterActor(net::phased::Concern &concern, net::phased::StepManager::Phase phase)
-          {
-            stepManager->RegisterIteratedActorSteps(concern, phase);
-          }
-          //! Access to lattice data for debugging
-          hemelb::geometry::LatticeData & GetLatticeData()
-          {
-            return *latticeData;
-          }
+      //! Makes it easy to add cell controller without messy input files
+      void RegisterActor(net::phased::Concern &concern, net::phased::StepManager::Phase phase)
+      {
+        stepManager->RegisterIteratedActorSteps(concern, phase);
+      }
+      //! Access to lattice data for debugging
+      hemelb::geometry::LatticeData & GetLatticeData()
+      {
+        return *latticeData;
+      }
 #     endif
     protected:
 
@@ -139,7 +140,7 @@ namespace hemelb
       unsigned int imagesPerSimulation;
       int steeringSessionId;
       unsigned int imagesPeriod;
-      static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD=1000;
+      static const hemelb::LatticeTimeStep FORCE_FLUSH_PERIOD = 1000;
   };
 }
 

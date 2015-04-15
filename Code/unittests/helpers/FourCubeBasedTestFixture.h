@@ -31,7 +31,7 @@ namespace hemelb
 
         public:
           FourCubeBasedTestFixture() :
-            initParams()
+              initParams()
           {
           }
           void setUp()
@@ -72,7 +72,10 @@ namespace hemelb
           const util::UnitConverter* unitConverter;
 
           // Parameterizes the size according to test where fixuter is used
-          virtual size_t CubeSize() const { return 6; }
+          virtual size_t CubeSize() const
+          {
+            return 6;
+          }
         private:
 
       };

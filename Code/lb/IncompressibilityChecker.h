@@ -125,8 +125,7 @@ namespace hemelb
          * @param simState simulation state
          * @param maximumRelativeDensityDifferenceAllowed maximum density difference allowed in the domain (relative to reference density, default 5%)
          */
-        IncompressibilityChecker(const geometry::LatticeData * latticeData,
-                                 net::Net* net,
+        IncompressibilityChecker(const geometry::LatticeData * latticeData, net::Net* net,
                                  SimulationState* simState,
                                  lb::MacroscopicPropertyCache& propertyCache,
                                  reporting::Timers& timings,

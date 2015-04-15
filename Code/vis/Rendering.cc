@@ -13,10 +13,9 @@ namespace hemelb
 {
   namespace vis
   {
-    Rendering::Rendering(PixelSet<BasicPixel>* glyph,
-                         PixelSet<raytracer::RayDataNormal>* ray,
+    Rendering::Rendering(PixelSet<BasicPixel>* glyph, PixelSet<raytracer::RayDataNormal>* ray,
                          PixelSet<streaklinedrawer::StreakPixel>* streak) :
-      glyphResult(glyph), rayResult(ray), streakResult(streak)
+        glyphResult(glyph), rayResult(ray), streakResult(streak)
     {
 
     }
@@ -25,7 +24,7 @@ namespace hemelb
     {
       if (glyphResult != nullptr)
       {
-        glyphResult-> Release();
+        glyphResult->Release();
       }
 
       if (rayResult != nullptr)
@@ -35,7 +34,7 @@ namespace hemelb
 
       if (streakResult != nullptr)
       {
-        streakResult-> Release();
+        streakResult->Release();
       }
     }
 

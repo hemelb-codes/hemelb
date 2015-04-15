@@ -44,10 +44,8 @@ namespace hemelb
       {
         public:
           // Constructor and destructor.
-          StreaklineDrawer(const geometry::LatticeData& iLatDat,
-                           const Screen& iScreen,
-                           const Viewpoint& iViewpoint,
-                           const VisSettings& iVisSettings,
+          StreaklineDrawer(const geometry::LatticeData& iLatDat, const Screen& iScreen,
+                           const Viewpoint& iViewpoint, const VisSettings& iVisSettings,
                            const lb::MacroscopicPropertyCache& propertyCache,
                            const net::MpiCommunicator& comms);
           ~StreaklineDrawer();

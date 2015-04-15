@@ -36,11 +36,9 @@ namespace hemelb
           {
           }
 
-          void SaveSite(site_t index,
-                        const std::vector<distribn_t> &distribution,
+          void SaveSite(site_t index, const std::vector<distribn_t> &distribution,
                         const std::vector<distribn_t> &distances,
-                        const util::Vector3D<distribn_t> &normal,
-                        const SiteData & data);
+                        const util::Vector3D<distribn_t> &normal, const SiteData & data);
 
           /**
            * Get a site object for the given index.

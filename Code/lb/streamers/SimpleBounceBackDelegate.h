@@ -32,7 +32,8 @@ namespace hemelb
             return (siteIndex * LatticeType::NUMVECTORS) + LatticeType::INVERSEDIRECTIONS[direction];
           }
 
-          SimpleBounceBackDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams)
+          SimpleBounceBackDelegate(CollisionType& delegatorCollider,
+                                   kernels::InitParams& initParams)
           {
           }
 
@@ -43,7 +44,8 @@ namespace hemelb
                                  const Direction& direction)
           {
             // Propagate the outgoing post-collisional f into the opposite direction.
-            * (latticeData->GetFNew(GetBBIndex(site.GetIndex(), direction))) = hydroVars.GetFPostCollision()[direction];
+            * (latticeData->GetFNew(GetBBIndex(site.GetIndex(), direction))) =
+                hydroVars.GetFPostCollision()[direction];
           }
 
       };

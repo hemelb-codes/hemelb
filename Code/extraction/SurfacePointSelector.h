@@ -37,7 +37,8 @@ namespace hemelb
          * @param location lattice site coordinates to evaluate the selector on
          * @return whether location is within the selection
          */
-        bool IsWithinGeometry(const extraction::IterableDataSource& data, const util::Vector3D<site_t>& location);
+        bool IsWithinGeometry(const extraction::IterableDataSource& data,
+                              const util::Vector3D<site_t>& location);
 
       private:
         /** Coordinates of the surface point to be selected. */

@@ -17,8 +17,9 @@ namespace hemelb
           typedef CollisionImpl CollisionType;
           typedef typename CollisionType::CKernel::LatticeType LatticeType;
 
-          NashZerothOrderPressureDelegate(CollisionType& delegatorCollider, kernels::InitParams& initParams) :
-            collider(delegatorCollider), iolet(*initParams.boundaryObject)
+          NashZerothOrderPressureDelegate(CollisionType& delegatorCollider,
+                                          kernels::InitParams& initParams) :
+              collider(delegatorCollider), iolet(*initParams.boundaryObject)
           {
           }
 
@@ -53,8 +54,8 @@ namespace hemelb
 
             Direction unstreamed = LatticeType::INVERSEDIRECTIONS[direction];
 
-            *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed)
-                = ghostHydrovars.GetFEq()[unstreamed];
+            *latticeData->GetFNew(site.GetIndex() * LatticeType::NUMVECTORS + unstreamed) =
+                ghostHydrovars.GetFEq()[unstreamed];
           }
         protected:
           CollisionType& collider;

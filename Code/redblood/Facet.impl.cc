@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iomanip>
 #include "constants.h"
+#include "redblood/Mesh.h"
 
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
@@ -16,8 +17,9 @@ namespace hemelb
     namespace
     {
       // Helper class to avoid explicit indexing over vertices
-      struct Facet
+      class Facet
       {
+        public:
           // References nodes of a facet
           LatticePosition const *nodes[3];
           // Indices of nodes in original array
@@ -57,12 +59,13 @@ namespace hemelb
           // Unit vector normal to facet
           LatticePosition unitNormal() const;
           // Area of the facet
-          PhysicalSurface area() const;
+          PhysicalArea area() const;
       };
 
       // Facet that also includes forces
-      struct ForceFacet : public Facet
+      class ForceFacet : public Facet
       {
+        public:
           // References forces on a node
           LatticeForceVector *forces[3];
           ForceFacet(MeshData::Vertices const &vertices, MeshData::Facet const &indices,
@@ -137,7 +140,7 @@ namespace hemelb
       {
         return normal().Normalise();
       }
-      PhysicalSurface Facet::area() const
+      PhysicalArea Facet::area() const
       {
         return normal().GetMagnitude() * 0.5;
       }
@@ -230,9 +233,6 @@ namespace hemelb
       {
         return angle(a.unitNormal(), b.unitNormal());
       }
-      // Angle angle(MeshData const &mesh, size_t facet, size_t neighbor) {
-      //   return angle(Facet(mesh, facet), Facet(mesh, neighbor));
-      // }
 
       // Angle with orientation
       // Computes angle between two vectors, including orientation.

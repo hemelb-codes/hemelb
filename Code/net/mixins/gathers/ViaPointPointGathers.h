@@ -12,8 +12,10 @@
 
 #include "net/mixins/StoringNet.h"
 
-namespace hemelb{
-  namespace net{
+namespace hemelb
+{
+  namespace net
+  {
     /***
      * Reimplement gathers via point-point calls
      * This code is not robust for working with gathers of complex defined datatypes.
@@ -21,15 +23,19 @@ namespace hemelb{
      */
     class ViaPointPointGathers : public virtual StoringNet
     {
-    public:
-      ViaPointPointGathers(const MpiCommunicator& comms);
-    private:
-      void ReceiveGathers();
-      void SendGathers();
-      void ReceiveGatherVs();
-      void SendGatherVs();
-      void WaitGathers(){}
-      void WaitGatherVs(){}
+      public:
+        ViaPointPointGathers(const MpiCommunicator& comms);
+      private:
+        void ReceiveGathers();
+        void SendGathers();
+        void ReceiveGatherVs();
+        void SendGatherVs();
+        void WaitGathers()
+        {
+        }
+        void WaitGatherVs()
+        {
+        }
     };
   }
 }
