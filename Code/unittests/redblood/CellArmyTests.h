@@ -169,14 +169,15 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         MeshData::Vertices::value_type barycentre;
-        auto callback = [&barycentre](const CellContainer & container) {
-          barycentre = (*(container.begin()))->GetBarycenter();
+        typename CellArmy<Kernel>::CellChangeListener callback =
+            [&barycentre](const CellContainer & container) {
+              barycentre = (*(container.begin()))->GetBarycenter();
         };
 
         redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
-        army.SetCellOutput(callback);
+        army.AddCellChangeListener(callback);
 
-        army.CallCellOutput();
+        army.NotifyCellChangeListeners();
         CPPUNIT_ASSERT_EQUAL(barycentre, cell->GetBarycenter());
       }
 
