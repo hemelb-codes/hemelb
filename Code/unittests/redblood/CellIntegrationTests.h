@@ -30,8 +30,8 @@ namespace hemelb
           CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
-          typedef CellController<Traits::Kernel> CellController;
-          typedef SimulationMaster<Traits> SimulationMaster;
+          typedef CellController<Traits::Kernel> CellControll;
+          typedef SimulationMaster<Traits> MasterSim;
         public:
           void setUp()
           {
@@ -53,7 +53,7 @@ namespace hemelb
             cell->moduli = {1e-6, 1e-6, 1e-6, 1e-6};
             cells.emplace(cell);
 
-            master = std::make_shared<SimulationMaster>(*options, Comms());
+            master = std::make_shared<MasterSim>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
           }
 
@@ -67,7 +67,7 @@ namespace hemelb
           void testCellOutOfBounds()
           {
             (*cells.begin())->operator+=(master->GetLatticeData().GetGlobalSiteMins() * 2);
-            auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
             master->RegisterActor(*controller, 1);
             master->RunSimulation();
             AssertPresent("results/report.txt");
@@ -84,7 +84,7 @@ namespace hemelb
             (**cells.begin()) += mid - (*cells.begin())->GetBarycenter();
             (**cells.begin()) += LatticePosition(0, 0, 8 - mid.z);
             (**cells.begin()) *= 5.0;
-            auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
             auto const barycenter = (*cells.begin())->GetBarycenter();
 
             // run
@@ -118,7 +118,7 @@ namespace hemelb
             (*(*cells.begin())) += mid - (*cells.begin())->GetBarycenter();
             (*(*cells.begin())) += LatticePosition(0, 0, 8 - mid.z);
             (*(*cells.begin())) *= 5.0;
-            auto controller = std::make_shared<CellController>(master->GetLatticeData(), cells);
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
             auto const barycenter = (*cells.begin())->GetBarycenter();
             std::dynamic_pointer_cast<Cell>(*cells.begin())->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
 
@@ -142,7 +142,7 @@ namespace hemelb
           }
 
         private:
-          std::shared_ptr<SimulationMaster> master;
+          std::shared_ptr<MasterSim> master;
           std::shared_ptr<hemelb::configuration::CommandLine> options;
           hemelb::redblood::CellContainer cells;
           int const argc = 7;
