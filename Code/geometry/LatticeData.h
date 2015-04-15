@@ -587,11 +587,13 @@ namespace hemelb
         // Method should remain protected, intent is to set this information via Site
         void SetForceAtSite(site_t iSiteIndex, LatticeForceVector const & force)
         {
-          assert(forceAtSite.size() > iSiteIndex);
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
           forceAtSite[iSiteIndex] = force;
         }
         void AddToForceAtSite(site_t iSiteIndex, LatticeForceVector const &force) {
-          assert(forceAtSite.size() > iSiteIndex);
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
           forceAtSite[iSiteIndex] += force;
         }
         /**
@@ -603,7 +605,8 @@ namespace hemelb
         // Method should remain protected, intent is to set this information via Site
         void SetForceAtSite(site_t iSiteIndex, LatticeForce force)
         {
-          assert(forceAtSite.size() > iSiteIndex);
+          assert(iSiteIndex >= site_t(0));
+          assert(forceAtSite.size() > size_t(iSiteIndex));
           forceAtSite[iSiteIndex] = util::Vector3D<distribn_t>(0.0,0.0,force);
         }
 

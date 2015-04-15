@@ -90,12 +90,12 @@ namespace hemelb
             DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
       {
         auto const mainCell = main.GetCell();
-        auto goodCellPair = [&mainCell, &strictlyLarger](
-            decltype(first) const &i)
+	typedef DivideConquerCells::const_iterator cit;
+        auto goodCellPair = [&mainCell, &strictlyLarger](cit const &i)
         {
           return strictlyLarger(i.GetCell(), mainCell);
         };
-        auto goodDistance = [&main, &dist](decltype(first) const &i)
+        auto goodDistance = [&main, &dist](cit const &i)
         {
           return (*main - *i).GetMagnitude() < dist;
         };

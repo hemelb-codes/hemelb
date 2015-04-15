@@ -162,11 +162,11 @@ namespace hemelb
           void check(Dimensionless x, Dimensionless y, Dimensionless z, Dimensionless tolerance =
                          1e-8)
           {
-            using hemelb::redblood::stencil::types::FOUR_POINT;
+            using hemelb::redblood::stencil::types;
 
             FUNCTION func;
             LatticePosition expected(func(x, y, z));
-            LatticePosition actual(interpolate(func, x, y, z, FOUR_POINT));
+            LatticePosition actual(interpolate(func, x, y, z, types::FOUR_POINT));
             CPPUNIT_ASSERT(helpers::is_zero(actual - expected, tolerance));
           }
 

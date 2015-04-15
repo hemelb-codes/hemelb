@@ -208,7 +208,7 @@ else()
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL http://ctemplate.googlecode.com/files/ctemplate-2.2.tar.gz
+		set(CTEMPLATE_TARBALL https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
@@ -256,4 +256,17 @@ else()
 		BUILD_COMMAND make -j${HEMELB_SUBPROJECT_MAKE_JOBS}
 		BUILD_IN_SOURCE 1
 	)
+endif()
+
+find_package(GreatCMakeCookOff)
+if(GreatCMakeCookOff_FOUND)
+    message("Found cmake cookoff.")
+else()
+    message("CMake cookoff not installed, will build from source")
+    ExternalProject_Add(
+        cookoff
+        INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
+        URL https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+    )
 endif()

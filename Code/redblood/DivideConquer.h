@@ -22,42 +22,40 @@ namespace hemelb
   {
     namespace details
     {
-      namespace
+      // Short-hand to get type of the base of Divide and Conquer class
+      // Also aggregates key type and compare functor
+      template<class T>
+      struct DnCBase
       {
-        // Short-hand to get type of the base of Divide and Conquer class
-        // Also aggregates key type and compare functor
-        template<class T>
-        struct DnCBase
-        {
-            typedef LatticeVector key_type;
-            struct CompareKeys
-            {
-                bool operator()(key_type const &a, key_type const &b) const
+          typedef LatticeVector key_type;
+          struct CompareKeys
+          {
+              bool operator()(key_type const &a, key_type const &b) const
+              {
+                if (a.x > b.x)
                 {
-                  if (a.x > b.x)
-                  {
-                    return false;
-                  }
-                  else if (a.x < b.x)
-                  {
-                    return true;
-                  }
-
-                  if (a.y > b.y)
-                  {
-                    return false;
-                  }
-                  else if (a.y < b.y)
-                  {
-                    return true;
-                  }
-
-                  return a.z < b.z;
+                  return false;
                 }
-            };
-            typedef std::multimap<key_type, T, CompareKeys> type;
-        };
-      }
+                else if (a.x < b.x)
+                {
+                  return true;
+                }
+
+                if (a.y > b.y)
+                {
+                  return false;
+                }
+                else if (a.y < b.y)
+                {
+                  return true;
+                }
+
+                return a.z < b.z;
+              }
+          };
+          typedef std::multimap<key_type, T, CompareKeys> type;
+      };
+      
     }
 
     //! \brief Multimap for divide and conquer algorithms
