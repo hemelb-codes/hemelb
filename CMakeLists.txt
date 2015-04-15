@@ -89,6 +89,6 @@ ExternalProject_Add(
 
 foreach(dep cppunit parmetis tinyxml boost ctemplate zlib mpwide cookoff)
   if(TARGET ${dep})
-    add_dependencies(hemelb ${cookoff})
+    add_dependencies(hemelb ${dep})
   endif()
 endforeach()
