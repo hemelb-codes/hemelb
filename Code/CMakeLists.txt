@@ -75,7 +75,10 @@ find_package(GreatCMakeCookOff REQUIRED)
 initialize_cookoff()
 include(AddCPP11Flags)
 include(CheckCXX11Features)
-cxx11_feature_check(REQUIRED unique_ptr nullptr override constructor_delegate lambda)
+cxx11_feature_check(override REQUIRED unique_ptr nullptr lambda)
+if(HAS_CXX11_OVERRIDE)
+    add_definitions(-Doverride= )
+endif()
 
 
 
