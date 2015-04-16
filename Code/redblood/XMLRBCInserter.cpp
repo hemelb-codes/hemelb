@@ -6,34 +6,43 @@ namespace hemelb
   namespace redblood
   {
 
-XMLRBCInserter::XMLRBCInserter(const std::string & xml_path,
-                               const std::string & mesh_path) {
+XMLRBCInserter::XMLRBCInserter(std::function<bool()> condition,
+                               const std::string & xml_path,
+                               const std::string & mesh_path) :
+                                   condition(condition) {
   this->shape = read_mesh(mesh_path);
   read_position_and_scale_from_xml(xml_path, this->position, this->scale);
 }
 
-XMLRBCInserter::XMLRBCInserter(const std::string & xml_path,
-                               std::istream & mesh_stream) {
+XMLRBCInserter::XMLRBCInserter(std::function<bool()> condition,
+                               const std::string & xml_path,
+                               std::istream & mesh_stream) :
+                                   condition(condition) {
   this->shape = read_mesh(mesh_stream);
   read_position_and_scale_from_xml(xml_path, this->position, this->scale);
 }
 
-XMLRBCInserter::XMLRBCInserter(const std::string & xml_path,
+XMLRBCInserter::XMLRBCInserter(std::function<bool()> condition,
+                               const std::string & xml_path,
                                const MeshData & shape) :
-  shape(new MeshData(shape)) {
+    condition(condition), shape(new MeshData(shape)) {
   read_position_and_scale_from_xml(xml_path, this->position, this->scale);
 }
 
-XMLRBCInserter::XMLRBCInserter(const MeshData::Vertices::value_type & position,
+XMLRBCInserter::XMLRBCInserter(std::function<bool()> condition,
+                               const MeshData::Vertices::value_type & position,
                                Dimensionless scale, const MeshData & shape) :
-    position(position), scale(scale), shape(new MeshData(shape))
+    condition(condition), position(position), scale(scale),
+    shape(new MeshData(shape))
 {
 }
 
 void XMLRBCInserter::InsertCell(std::function<void(CellContainer::value_type)> insertFn) {
-  Cell cell(this->shape->vertices, this->shape, this->scale);
-  cell += this->position;
-  insertFn(cell);
+  if (condition()) {
+    Cell cell(this->shape->vertices, this->shape, this->scale);
+    cell += this->position;
+    insertFn(cell);
+  }
 }
 
 void XMLRBCInserter::SetShape(const MeshData & shape)
@@ -69,6 +78,15 @@ void XMLRBCInserter::SetScale(Dimensionless scale)
 Dimensionless XMLRBCInserter::GetScale() const
 {
   return this->scale;
+}
+
+void XMLRBCInserter::SetCondition(std::function<bool()> condition)
+{
+  this->condition = condition;
+}
+std::function<bool()> XMLRBCInserter::GetCondition() const
+{
+  return this->condition;
 }
 
 void XMLRBCInserter::read_position_and_scale_from_xml(const std::string & xml_path,

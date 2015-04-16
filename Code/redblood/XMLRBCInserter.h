@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <functional>
 #include "Mesh.h"
 #include "Cell.h"
 #include "units.h"
@@ -13,10 +14,9 @@ namespace hemelb
   {
 
     /**
-     * The XML RBC Inserter listens for red blood cells leaving outlets and
-     * inserts an equal number of cells into an inlet.  The cell position and
-     * scale are read from XML while the cell shape is read from a text file or
-     * input stream.
+     * The XML RBC Inserter inserts cells into the simulation when some
+     * condition evaluates to true.  The cell position and scale are read from
+     * XML while the cell shape is read from a text file or input stream.
      */
     class XMLRBCInserter
     {
@@ -25,39 +25,53 @@ namespace hemelb
         /**
          * Creates an XML RBC Inserter.
          *
+         * @param condition a cell will only be inserted on a LB step if this
+         * condition evaluates to true
          * @param xml_path the path to the XML file to read the cell scale and
          * position from
          * @param mesh_path the path to the mesh text file to read the cell
          * shape from
          */
-        XMLRBCInserter(const std::string & xml_path, const std::string & mesh_path);
+        XMLRBCInserter(std::function<bool()> condition,
+                       const std::string & xml_path,
+                       const std::string & mesh_path);
 
         /**
          * Creates an XML RBC Inserter.
          *
+         * @param condition a cell will only be inserted on a LB step if this
+         * condition evaluates to true
          * @param xml_path the path to the XML file to read the cell scale and
          * position from
          * @param mesh_stream an input stream to read the cell shape from
          */
-        XMLRBCInserter(const std::string & xml_path, std::istream & mesh_stream);
+        XMLRBCInserter(std::function<bool()> condition,
+                       const std::string & xml_path,
+                       std::istream & mesh_stream);
 
         /**
          * Creates an XML RBC Inserter.
          *
+         * @param condition a cell will only be inserted on a LB step if this
+         * condition evaluates to true
          * @param xml_path the path to the XML file to read the cell scale and
          * position from
          * @param shape the shape of the cells to create
          */
-        XMLRBCInserter(const std::string & xml_path, const MeshData & shape);
+        XMLRBCInserter(std::function<bool()> condition,
+                       const std::string & xml_path, const MeshData & shape);
 
         /**
          * Creates an XML RBC Inserter.
          *
+         * @param condition a cell will only be inserted on a LB step if this
+         * condition evaluates to true
          * @param position the position to insert new cells into the simulation
          * @param scale the initial scale of the new cells
          * @param shape the shape of the cells to create
          */
-        XMLRBCInserter(const MeshData::Vertices::value_type & position,
+        XMLRBCInserter(std::function<bool()> condition,
+                       const MeshData::Vertices::value_type & position,
                        Dimensionless scale, const MeshData & shape);
 
         /**
@@ -83,6 +97,9 @@ namespace hemelb
         void SetScale(Dimensionless scale);
         Dimensionless GetScale() const;
 
+        void SetCondition(std::function<bool()> condition);
+        std::function<bool()> GetCondition() const;
+
       private:
         /**
          * Reads the position and scale from an XML file.
@@ -94,6 +111,9 @@ namespace hemelb
         void read_position_and_scale_from_xml(const std::string & xml_path,
                                               MeshData::Vertices::value_type & position,
                                               Dimensionless & scale);
+
+        //! When to insert cells
+        std::function<bool()> condition;
 
         //! The shape of the cells to insert
         std::shared_ptr<MeshData> shape;
