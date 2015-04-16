@@ -16,7 +16,7 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "Exception.h"
-#include "Constants.h"
+#include "constants.h"
 
 namespace hemelb
 {
@@ -293,9 +293,10 @@ namespace hemelb
 
       // Now creates map of neighboring facets
       size_t const Nmax = mesh.facets.size();
-      std::fill(facetNeighbors.begin(),
-                facetNeighbors.end(),
-                FacetNeighbors::value_type { { Nmax, Nmax, Nmax } });
+      FacetNeighbors::value_type intelcompiler;
+      // intel compiler without parameter list initialization
+      intelcompiler[0] = Nmax; intelcompiler[1] = Nmax; intelcompiler[2] = Nmax; 
+      std::fill(facetNeighbors.begin(), facetNeighbors.end(), intelcompiler);
       i_facet = mesh.facets.begin();
 
       for (unsigned int i(0); i_facet != i_facet_end; ++i_facet, ++i)
@@ -549,64 +550,46 @@ namespace hemelb
       // Dumbly copied from
       // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
       PhysicalDistance const t = 0.5 * (1. + std::sqrt(5.0));
-      mesh->vertices =
+      mesh->vertices.clear();
+      mesh->vertices.emplace_back(-1, t, 0);
+      mesh->vertices.emplace_back( 1, t, 0);
+      mesh->vertices.emplace_back(-1, -t, 0);
+      mesh->vertices.emplace_back( 1, -t, 0);
+      mesh->vertices.emplace_back( 0, -1, t);
+      mesh->vertices.emplace_back( 0, 1, t);
+      mesh->vertices.emplace_back( 0, -1, -t);
+      mesh->vertices.emplace_back( 0, 1, -t);
+      mesh->vertices.emplace_back( t, 0, -1);
+      mesh->vertices.emplace_back(t, 0, 1);
+      mesh->vertices.emplace_back(-t, 0, -1);
+      mesh->vertices.emplace_back(-t, 0, 1);
+      auto intel_compiler = [](size_t i, size_t j, size_t k) -> MeshData::Facet
       {
-        { -1, t, 0},
-        { 1, t, 0},
-        { -1, -t, 0},
-        { 1, -t, 0},
-        { 0, -1, t},
-        { 0, 1, t},
-        { 0, -1, -t},
-        { 0, 1, -t},
-        { t, 0, -1},
-        { t, 0, 1},
-        { -t, 0, -1},
-        { -t, 0, 1},
+        MeshData::Facet result;
+        result[0] = i; result[1] = j; result[2] = k;
+        return result;
       };
-      mesh->facets =
-      {
-        {
-          { 0, 11, 5}},
-        {
-          { 0, 5, 1}},
-        {
-          { 0, 1, 7}},
-        {
-          { 0, 7, 10}},
-        {
-          { 0, 10, 11}},
-        {
-          { 1, 5, 9}},
-        {
-          { 5, 11, 4}},
-        {
-          { 11, 10, 2}},
-        {
-          { 10, 7, 6}},
-        {
-          { 7, 1, 8}},
-        {
-          { 3, 9, 4}},
-        {
-          { 3, 4, 2}},
-        {
-          { 3, 2, 6}},
-        {
-          { 3, 6, 8}},
-        {
-          { 3, 8, 9}},
-        {
-          { 4, 9, 5}},
-        {
-          { 2, 4, 11}},
-        {
-          { 6, 2, 10}},
-        {
-          { 8, 6, 7}},
-        {
-          { 9, 8, 1}},
-      };
+      mesh->facets.clear();
+      mesh->facets.push_back(intel_compiler(0, 11, 5));
+      mesh->facets.push_back(intel_compiler(0, 5, 1));
+      mesh->facets.push_back(intel_compiler(0, 1, 7));
+      mesh->facets.push_back(intel_compiler(0, 7, 10));
+      mesh->facets.push_back(intel_compiler(0, 10, 11));
+      mesh->facets.push_back(intel_compiler(1, 5, 9));
+      mesh->facets.push_back(intel_compiler(5, 11, 4));
+      mesh->facets.push_back(intel_compiler(11, 10, 2));
+      mesh->facets.push_back(intel_compiler(10, 7, 6));
+      mesh->facets.push_back(intel_compiler(7, 1, 8));
+      mesh->facets.push_back(intel_compiler(3, 9, 4));
+      mesh->facets.push_back(intel_compiler(3, 4, 2));
+      mesh->facets.push_back(intel_compiler(3, 2, 6));
+      mesh->facets.push_back(intel_compiler(3, 6, 8));
+      mesh->facets.push_back(intel_compiler(3, 8, 9));
+      mesh->facets.push_back(intel_compiler(4, 9, 5));
+      mesh->facets.push_back(intel_compiler(2, 4, 11));
+      mesh->facets.push_back(intel_compiler(6, 2, 10));
+      mesh->facets.push_back(intel_compiler(8, 6, 7));
+      mesh->facets.push_back(intel_compiler(9, 8, 1));
       // Then refines it
       for (unsigned int i(0); i < depth; ++i)
       {

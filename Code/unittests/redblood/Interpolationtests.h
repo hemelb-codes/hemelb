@@ -11,7 +11,7 @@
 #define HEMELB_UNITTESTS_REDBLOOD_INTERPOLATION_H
 
 #include <cppunit/TestFixture.h>
-#include "redblood/interpolation.h"
+#include "redblood/Interpolation.h"
 #include "redblood/VelocityInterpolation.h"
 #include "lb/lattices/D3Q15.h"
 #include "lb/kernels/LBGK.h"

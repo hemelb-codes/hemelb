@@ -159,8 +159,9 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::nextDist()
     {
-      typedef decltype(owner.cells)::const_reference Input;
-      auto strictly_less = decltype(owner.cells)::key_compare();
+      typedef decltype(owner.cells) Cells;
+      typedef Cells::const_reference Input;
+      auto strictly_less = Cells::key_compare();
       auto strictlyLarger = [&strictly_less](Input _a, Input _b)
       {
         return _a != _b and not strictly_less(_a, _b);

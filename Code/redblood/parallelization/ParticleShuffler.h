@@ -11,6 +11,7 @@
 #define HEMELB_REDBLOOD_PARALLEL_PARTICLESHUFFLER_H
 
 #include <tuple>
+#include <type_traits>
 
 #include "util/Packer.h"
 #include "geometry/LatticeData.h"

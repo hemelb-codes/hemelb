@@ -11,6 +11,7 @@
 #define HEMELB_REDBLOOD_PARTICLE_H
 
 #include <set>
+#include <utility>
 #include "redblood/Mesh.h"
 #include "redblood/Node2Node.h"
 #include "units.h"
@@ -193,8 +194,33 @@ namespace hemelb
         //! Node-wall interaction
         Node2NodeForce nodeWall;
 
-        // inheriting constructors
-        using CellBase::CellBase;
+#       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
+		Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+		     Dimensionless scaleIn = 1e0)
+                    : CellBase(std::move(verticesIn), origMesh, scaleIn)
+                {
+                }
+		Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+		         1e0)
+                    : CellBase(verticesIn, origMesh, scaleIn)
+                {
+                }
+		Cell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
+                    : CellBase(mesh, origMesh, scaleIn)
+                {
+                }
+		Cell(Mesh const &mesh)
+                    : CellBase(mesh)
+                {
+                }
+		Cell(std::shared_ptr<MeshData> const &mesh)
+                    : CellBase(mesh)
+                {
+                }
+#       else
+          // inheriting constructors
+          using CellBase::CellBase;
+#       endif
         //! Copy constructor
         //! Copy refers to the same template mesh
         Cell(Cell const &cell) :

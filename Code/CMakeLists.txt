@@ -76,7 +76,7 @@ initialize_cookoff()
 include(AddCPP11Flags)
 include(CheckCXX11Features)
 cxx11_feature_check(override REQUIRED unique_ptr nullptr lambda)
-if(HAS_CXX11_OVERRIDE)
+if(NOT HAS_CXX11_OVERRIDE)
     add_definitions(-Doverride= )
 endif()
 

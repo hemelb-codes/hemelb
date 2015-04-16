@@ -22,14 +22,14 @@ function(get_tarball URL OUTPUT_VAR)
         get_filename_component(filename "${URL}" NAME)
         set(output ${CMAKE_CURRENT_BINARY_DIR}/${filename})
         if(NOT EXISTS "${output}")
-       execute_process(COMMAND ${WGET_EXECUTABLE} ${URL} -O ${output}
-           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-           ERROR_VARIABLE got_tarball
-       )
-       if(got_tarball)
-           set(URL ${output})
-       endif()
-         endif()
+            execute_process(COMMAND ${WGET_EXECUTABLE} ${URL} -O ${output}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                ERROR_VARIABLE got_tarball
+            )
+        endif()
+        if(got_tarball OR EXISTS "${output}")
+            set(URL ${output})
+        endif()
     endif()
     set(${OUTPUT_VAR} "${URL}" PARENT_SCOPE)
 endfunction()
@@ -299,5 +299,6 @@ else()
         INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
         URL ${cooktar}
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH}
+               -Dtests=OFF
     )
 endif()

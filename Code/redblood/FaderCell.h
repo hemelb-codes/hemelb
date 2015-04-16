@@ -30,7 +30,7 @@ namespace hemelb
         //! \param[in] wrappee object to which we are adding fade-in fade-out behaviour
         //! \param[in] flowExtensions iolet descriptions. A copy is made of this object.
         FaderCell(std::shared_ptr<CellBase> cell,
-          std::vector<FlowExtension> const &flowExtensions = {})
+          std::vector<FlowExtension> const &flowExtensions = std::vector<FlowExtension>())
           : CellBase(*cell, shallow_clone()),
             iolets(std::make_shared<std::vector<FlowExtension>>(flowExtensions)),
             wrappee(cell)
@@ -52,8 +52,35 @@ namespace hemelb
           : CellBase(*cell, shallow_clone()), iolets(flowExtensions), wrappee(cell)
         {
         }
+#       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
+	    FaderCell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+	         Dimensionless scaleIn = 1e0)
+                : CellBase(std::move(verticesIn), origMesh, scaleIn)
+            {
+            }
+	    FaderCell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+	             1e0)
+                : CellBase(verticesIn, origMesh, scaleIn)
+            {
+            }
+	    FaderCell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
+                : CellBase(mesh, origMesh, scaleIn)
+            {
+            }
+	    FaderCell(Mesh const &mesh)
+                : CellBase(mesh)
+            {
+            }
+	    FaderCell(std::shared_ptr<MeshData> const &mesh)
+                : CellBase(mesh)
+            {
+            }
+#       else
+          // inheriting constructors
+          using CellBase::CellBase;
+#       endif
+
         // inheriting constructors
-        using CellBase::CellBase;
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const override;
         //! Facet bending energy
@@ -73,7 +100,6 @@ namespace hemelb
         {
           return iolets;
         }
-
       private:
         //! Pointer to shared data
         std::shared_ptr<std::vector<FlowExtension>> iolets;

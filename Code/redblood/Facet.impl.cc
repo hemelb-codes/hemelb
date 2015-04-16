@@ -83,13 +83,19 @@ namespace hemelb
             forces[2] = &forcesIn[indices[2]];
           }
           ForceFacet(MeshData const &mesh, size_t index, std::vector<LatticeForceVector> &forcesIn) :
-              ForceFacet(mesh.vertices, mesh.facets[index], forcesIn)
+              Facet(mesh.vertices, indices)
           {
+            forces[0] = &forcesIn[indices[0]];
+            forces[1] = &forcesIn[indices[1]];
+            forces[2] = &forcesIn[indices[2]];
           }
           ForceFacet(MeshData::Vertices const &vertices, MeshData::Facets const &facets,
                      size_t index, std::vector<LatticeForceVector> &forcesIn) :
-              ForceFacet(vertices, facets[index], forcesIn)
+              Facet(vertices, facets[index])
           {
+            forces[0] = &forcesIn[indices[0]];
+            forces[1] = &forcesIn[indices[1]];
+            forces[2] = &forcesIn[indices[2]];
           }
           LatticeForceVector &GetForce(size_t i) const
           {
