@@ -12,6 +12,29 @@ set(CTEMPLATE_CONFIGURE_OPTIONS "" CACHE STRING "Extra configurations options fo
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
 
+
+# cmake often compiled without SSL support, so can't download over https
+# Download by hand using Wget if possible
+find_package(Wget)
+function(get_tarball URL OUTPUT_VAR)
+    if(WGET_FOUND AND NOT APPLE)
+        # By default, cmake can't work with https. So work around...
+        get_filename_component(filename "${URL}" NAME)
+        set(output ${CMAKE_CURRENT_BINARY_DIR}/${filename})
+        if(NOT EXISTS "${output}")
+       execute_process(COMMAND ${WGET_EXECUTABLE} ${URL} -O ${output}
+           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+           ERROR_VARIABLE got_tarball
+       )
+       if(got_tarball)
+           set(URL ${output})
+       endif()
+         endif()
+    endif()
+    set(${OUTPUT_VAR} "${URL}" PARENT_SCOPE)
+endfunction()
+
+
 # --------- tinyxml -------------------
 find_package(TinyXML QUIET)
 if (TINYXML_FOUND)
@@ -208,7 +231,11 @@ else()
 	)
 	if(NOT CTEMPLATE_TARBALL)
 		message("No ctemplate source found, will download.")
-		set(CTEMPLATE_TARBALL https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
+        get_tarball(
+                     https://github.com/OlafvdSpek/ctemplate/archive/ctemplate-2.3.tar.gz
+                     ctemptar
+        )
+        set(CTEMPLATE_TARBALL "${ctemptar}"
 			CACHE STRING "Path to download CTemplate (can be local file://)" FORCE)
 	endif()
 	if (CTEMPLATE_PATCH_VACOPY)
@@ -258,7 +285,11 @@ else()
 	)
 endif()
 
-find_package(GreatCMakeCookOff)
+find_package(GreatCMakeCookOff QUIET)
+get_tarball(
+       https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+       cooktar
+)
 if(GreatCMakeCookOff_FOUND)
     message("Found cmake cookoff.")
 else()
@@ -266,7 +297,7 @@ else()
     ExternalProject_Add(
         cookoff
         INSTALL_DIR ${HEMELB_DEPENDENCIES_INSTALL_PATH}
-        URL https://github.com/UCL/GreatCMakeCookOff/archive/v2.0.4.tar.gz
+        URL ${cooktar}
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${HEMELB_DEPENDENCIES_INSTALL_PATH}
     )
 endif()
