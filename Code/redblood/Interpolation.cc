@@ -71,20 +71,23 @@ namespace hemelb
     InterpolationIterator interpolationIterator(LatticePosition const &where,
                                                 stencil::types stencil)
     {
-#define HEMELB_STENCIL_MACRO(NAME, Name) \
-  case stencil::types::NAME:             \
-    return interpolationIterator<stencil::Name>(where)
-
-      switch (stencil)
-      {
-        HEMELB_STENCIL_MACRO(FOUR_POINT, FourPoint)
-;        HEMELB_STENCIL_MACRO(COSINE_APPROX, CosineApprox);
-        HEMELB_STENCIL_MACRO(THREE_POINT, ThreePoint);
-        HEMELB_STENCIL_MACRO(TWO_POINT, TwoPoint);
-      }
-      return interpolationIterator<stencil::TwoPoint>(where);
-
-#undef HEMELB_STENCIL_MACRO
+        // faff because intel
+        const unsigned int a = static_cast<unsigned int>(stencil::types::FOUR_POINT);
+        const unsigned int b = static_cast<unsigned int>(stencil::types::COSINE_APPROX);
+        const unsigned int c = static_cast<unsigned int>(stencil::types::THREE_POINT);
+        const unsigned int d = static_cast<unsigned int>(stencil::types::TWO_POINT);
+        switch (static_cast<unsigned int>(stencil))
+        {
+            case a:
+                return interpolationIterator<stencil::FourPoint>(where);
+            case b:
+                return interpolationIterator<stencil::CosineApprox>(where);
+            case c:
+                return interpolationIterator<stencil::ThreePoint>(where);
+            case d:
+                return interpolationIterator<stencil::TwoPoint>(where);
+        }
+        return interpolationIterator<stencil::TwoPoint>(where);
     }
   }
 }

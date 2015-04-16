@@ -20,7 +20,7 @@
 #include "configuration/SimConfig.h"
 #include "reporting/Timers.h"
 #include "lb/BuildSystemInterface.h"
-#include "traits.h"
+#include "Traits.h"
 #include <typeinfo>
 
 namespace hemelb

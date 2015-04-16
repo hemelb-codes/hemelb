@@ -10,7 +10,6 @@
 #ifndef HEMELB_REDBLOOD_STENCIL_H
 #define HEMELB_REDBLOOD_STENCIL_H
 
-#include <boost/core/enable_if.hpp>
 #include <cmath>
 #include <type_traits>
 #include "units.h"
@@ -24,7 +23,7 @@ namespace hemelb
     {
       //! Constant to name stencils without referring to type
       //! Useful to create factories
-      enum class types
+      enum class types : unsigned int
       {
         FOUR_POINT,
         COSINE_APPROX,

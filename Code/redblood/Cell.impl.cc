@@ -10,7 +10,7 @@
 #include <cmath>
 #include <iomanip>
 #include "redblood/Mesh.h"
-#include "redblood/facet.impl.cc"
+#include "redblood/Facet.impl.cc"
 #include "constants.h"
 
 // Helper functions in anonymous namespace.
