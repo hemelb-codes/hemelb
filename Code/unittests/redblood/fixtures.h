@@ -148,9 +148,9 @@ namespace hemelb
       redblood::Mesh pancake = redblood::pancakeSamosa();
       pancake += LatticePosition(1, 1, 1) * cutoff * 0.5;
       // safer to clone so cells has its own copy
-      cells.emplace(std::make_shared<CELLTYPE>(pancake.clone()));
+      cells.insert(std::make_shared<CELLTYPE>(pancake.clone()));
       pancake += LatticePosition(3, 0, 1) * cutoff;
-      cells.emplace(std::make_shared<CELLTYPE>(pancake.clone()));
+      cells.insert(std::make_shared<CELLTYPE>(pancake.clone()));
 
       return cells;
     }
