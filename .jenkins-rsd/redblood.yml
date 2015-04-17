@@ -1,0 +1,63 @@
+# default build across compilers and machines
+- job:
+    name: redblood-heme
+    disabled: false
+    block-upstream: true
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "gnu").implies(os == "OSX")
+            && (compiler == "intel").implies(os == "Legion")
+            && (compiler == "clang").implies(os == "OSX")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - gnu
+                - intel
+                - clang
+
+    builders:
+        # env vars are not passed to external projects
+        # so can't tell intel to build with c++11 on legion if compiling heme
+        # proper via external project. so build explicitely.
+        - heme-remove-build
+        - heme-configure:
+            source_dir: "$WORKSPACE/dependencies"
+            build_type: "RelWithDebInfo"
+            extra_args: |
+                -DHEMELB_USE_BOOST=$([[ \"$os\" == \"Legion\" ]] && echo \"ON\" || echo \"OFF\")
+            build_dir: "dependencies"
+        - heme-build:
+            build_dir: "dependencies"
+        - heme-configure:
+            source_dir: "$WORKSPACE/Code"
+            build_type: "RelWithDebInfo"
+            extra_args: ""
+            build_dir: "Code"
+        - heme-build:
+            build_dir: "Code"
+        - heme-test:
+            unittests_dir: "Code"
+
+    scm:
+        - hg:
+            url: ssh://hg@entropy.chem.ucl.ac.uk/hemelb
+            revision-type: branch
+            revision: red_blood_cells
+            wipe-workspace: true
+
+    publishers:
+        - xunit:
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
