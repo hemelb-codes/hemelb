@@ -25,7 +25,18 @@ namespace hemelb
       {
         public:
           mutable size_t nbcalls = 0;
-          using hemelb::redblood::Cell::Cell;
+#         ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
+	      FakeCell(Mesh const &mesh)
+                  : Cell(mesh)
+              {
+              }
+	      FakeCell(std::shared_ptr<MeshData> const &mesh)
+                  : Cell(mesh)
+              {
+              }
+#         else
+              using hemelb::redblood::Cell::Cell;
+#         endif 
           //! Facet bending energy
           virtual PhysicalEnergy operator()() const override
           {
@@ -174,7 +185,8 @@ namespace hemelb
               barycentre = (*(container.begin()))->GetBarycenter();
         };
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer(1, cell), cutoff, halo);
+        CellContainer intel; intel.insert(cell);
+        redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -190,7 +202,8 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer(1, cell), cutoff, halo);
+        CellContainer intel; intel.insert(cell);
+        redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed
