@@ -36,7 +36,7 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorSameMesh);
           CPPUNIT_TEST (testPairIteratorSinglePair);
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
-          CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
+           CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
 
           PhysicalDistance const cutoff = 5.0;
           PhysicalDistance const halo = 2.0;
@@ -108,7 +108,8 @@ namespace hemelb
             + CellReference::directions(CellReference::NORTH) * inhalo * cutoff);
 
         CellContainer cells;
-        cells.emplace(new Cell(Mesh(MeshData())));
+        std::shared_ptr<Cell> intel(new Cell(Mesh(MeshData())));
+        cells.insert(intel);
 
         initializeCells(dnc, vertices, cells.begin(), halo);
         CPPUNIT_ASSERT(dnc.size() == vertices.size());
@@ -173,13 +174,14 @@ namespace hemelb
 
       void CellCellInteractionTests::testAddMeshes()
       {
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
         Mesh pancake = pancakeSamosa();
 
+        CPPUNIT_ASSERT_EQUAL(size_t(2), cells.size());
         auto first = *cells.begin();
         auto second = *std::next(cells.begin());
         if(first->GetBarycenter().GetMagnitude() > second->GetBarycenter().GetMagnitude())
-          std::swap(first, second);
+           std::swap(first, second);
 
         DivideConquerCells dnc(cells, cutoff, halo);
         checkCell(dnc, LatticeVector(0, 0, 0), first, pancake.GetVertices().size());
@@ -189,7 +191,7 @@ namespace hemelb
 
       void CellCellInteractionTests::testIterator()
       {
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
         DivideConquerCells dnc(cells, cutoff, halo);
 
         std::set<LatticePosition const *> allnodes;
@@ -225,7 +227,7 @@ namespace hemelb
 
       void CellCellInteractionTests::testUpdate()
       {
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
         DivideConquerCells dnc(cells, cutoff, halo);
         // Figures out which cell is which
         auto firstCell = *cells.begin();
@@ -240,13 +242,13 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(dnc.size(), static_cast<unsigned long>(6));
         CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(zero).first, dnc(zero).second));
         CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(notzero).first, dnc(notzero).second));
-
+ 
         // Move to new box
         LatticeVector const newbox(-1, 1, 2);
         LatticePosition const center(0.5 * cutoff);
         LatticePosition const offhalo = LatticePosition(newbox) * cutoff + center;
         firstCell->GetVertices().front() = offhalo;
-
+ 
         dnc.update();
         CPPUNIT_ASSERT_EQUAL(dnc.size(), static_cast<unsigned long>(6));
         CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(notzero).first, dnc(notzero).second));
@@ -254,7 +256,7 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(1l, std::distance(dnc(newbox).first, dnc(newbox).second));
         CPPUNIT_ASSERT(helpers::is_zero(*dnc(newbox).first - offhalo));
         CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder());
-
+ 
         // Move near boundary
         LatticePosition const inhalo = LatticePosition(0.25, 0, 0.25) * cutoff + offhalo;
         firstCell->GetVertices().front() = inhalo;
@@ -273,7 +275,7 @@ namespace hemelb
 
       void CellCellInteractionTests::testPairIteratorNoPairs()
       {
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
         DivideConquerCells dnc(cells, cutoff, halo);
 
         // Test when iterating over nothing
@@ -291,7 +293,7 @@ namespace hemelb
 
       void CellCellInteractionTests::testPairIteratorSameMesh()
       {
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Move one node closer  to the other
         LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
@@ -307,7 +309,7 @@ namespace hemelb
       void CellCellInteractionTests::testPairIteratorSinglePair()
       {
         // There is only one pair and they are in the same divide and conquer box
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Move one node closer  to the other
         LatticePosition const n0 = (*cells.begin())->GetVertices()[0];
@@ -327,7 +329,7 @@ namespace hemelb
       {
         // There three pairs and they are each in different boxe, but each contained
         // within one box
-        auto cells(TwoPancakeSamosas<>(cutoff));
+        auto cells = TwoPancakeSamosas<>(cutoff);
 
         // Only one pair, and each in a separate box
         LatticePosition const n0(2 * cutoff - 0.1, 4.5 * cutoff, 4.5 * cutoff);
@@ -384,15 +386,20 @@ namespace hemelb
         auto cell = std::make_shared<Cell>(pancakeSamosa());
         *cell += LatticePosition(1, 1, 1) * cutoff * 0.5;
 
-        DivideConquerCells dnc({std::make_shared<Cell>(*cell)}, cutoff, halo);
+        CellContainer intelWay;
+        auto intelPtr = std::make_shared<Cell>(*cell);
+        intelWay.insert(intelPtr);
+        DivideConquerCells dnc(intelWay, cutoff, halo);
+        const LatticePosition zero(0, 0, 0);
+        const LatticePosition one(1, 1, 1);
         CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
-        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({0., 0., 0.}).first, dnc({0., 0., 0.}).second));
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(zero).first, dnc(zero).second));
 
         *cell += LatticePosition(1, 1, 1) * cutoff * 1.5;
         dnc.insert(cell);
         CPPUNIT_ASSERT_EQUAL(6ul, dnc.size());
-        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({0., 0., 0.}).first, dnc({0., 0., 0.}).second));
-        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc({1., 1., 1.}).first, dnc({1., 1., 1.}).second));
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(zero).first, dnc(zero).second));
+        CPPUNIT_ASSERT_EQUAL(3l, std::distance(dnc(one).first, dnc(one).second));
 
         // verifies calling update does nothing
         dnc.update();
@@ -401,14 +408,15 @@ namespace hemelb
 
       void CellCellInteractionTests::testRemoveCell()
       {
+	const LatticePosition zero(0, 0, 0);
         auto cells = TwoPancakeSamosas<>(cutoff);
         DivideConquerCells dnc(cells, cutoff, halo);
-        auto const zeroBox = dnc({0, 0, 0});
+        auto const zeroBox = dnc(zero);
         CPPUNIT_ASSERT_EQUAL(3l, std::distance(zeroBox.first, zeroBox.second));
         auto const cell = zeroBox.first.GetCell();
         dnc.remove(cell);
         CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
-        CPPUNIT_ASSERT(dnc({0., 0., 0.}).first == dnc({0., 0., 0.}).second);
+        CPPUNIT_ASSERT(dnc(zero).first == dnc(zero).second);
 
         // verifies calling update does nothing
         dnc.update();
