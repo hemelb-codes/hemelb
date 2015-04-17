@@ -24,7 +24,15 @@ namespace hemelb
       class CellController : public CellArmy<KERNEL>, public net::IteratedAction
     {
       public:
-        using CellArmy<KERNEL>::CellArmy;
+#       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
+            CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
+                     PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0)
+                : CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
+            {
+            }
+#       else
+            using CellArmy<KERNEL>::CellArmy;
+#       endif
 
         void RequestComms() override
         {
