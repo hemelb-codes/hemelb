@@ -7,7 +7,6 @@
     execution-strategy:
         combination-filter: >
             (compiler == "intel").implies(os == "Legion")
-            && (os == "OSX").implies(compiler == "clang")
             && (compiler == "clang").implies(os == "OSX")
         sequential: false
     axes:
@@ -31,7 +30,9 @@
             source_dir: "$WORKSPACE/dependencies"
             build_type: "Release"
             extra_args: "-DHEMELB_USE_BOOST=ON"
-        - heme-build
+            build_dir: ""
+        - heme-build:
+            build_dir: ""
 
     publishers:
         - trigger:
@@ -47,7 +48,6 @@
     execution-strategy:
         combination-filter: >
             (compiler == "intel").implies(os == "Legion")
-            && (os == "OSX").implies(compiler == "clang")
             && (compiler == "clang").implies(os == "OSX")
         sequential: false
     axes:
@@ -90,8 +90,11 @@
             source_dir: "$WORKSPACE/Code"
             build_type: "RelWithDebInfo"
             extra_args: "-C vars.conf"
-        - heme-build
-        - heme-test
+            build_dir: ""
+        - heme-build:
+            build_dir: ""
+        - heme-test:
+            unittests_dir: ""
 
     publishers:
         - xunit:
