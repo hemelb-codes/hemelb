@@ -24,9 +24,9 @@ namespace hemelb
       class CellIntegrationTests : public FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (CellIntegrationTests);
-          CPPUNIT_TEST (testCellOutOfBounds);
-          CPPUNIT_TEST (testIntegration);
-          CPPUNIT_TEST (testSwamped);
+            CPPUNIT_TEST (testCellOutOfBounds);
+            CPPUNIT_TEST (testIntegration);
+            CPPUNIT_TEST (testSwamped);
           CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
@@ -45,14 +45,16 @@ namespace hemelb
             FolderTestFixture::setUp();
             TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
             CopyResourceToTempdir("large_cylinder.xml");
-            ModifyXMLInput("large_cylinder.xml", {"simulation", "steps", "value"}, 8);
+            std::vector<std::string> intel;
+            intel.push_back("simulation"); intel.push_back("steps"); intel.push_back("value");
+            ModifyXMLInput("large_cylinder.xml", std::move(intel), 8);
             CopyResourceToTempdir("large_cylinder.gmy");
             options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
-
+ 
             auto cell = std::make_shared<Cell>(icoSphere(4));
-            cell->moduli = {1e-6, 1e-6, 1e-6, 1e-6};
-            cells.emplace(cell);
-
+            cell->moduli = Cell::Moduli(1e-6, 1e-6, 1e-6, 1e-6);
+            cells.insert(cell);
+ 
             master = std::make_shared<MasterSim>(*options, Comms());
             helpers::LatticeDataAccess(&master->GetLatticeData()).ZeroOutForces();
           }
@@ -73,7 +75,7 @@ namespace hemelb
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");
           }
-
+  
           // Check that the particles move and result in some force acting on the fluid
           void testIntegration()
           {
@@ -99,7 +101,7 @@ namespace hemelb
 
             // check there is force on one of the lattice site near a node
             // node position is guessed at from geometry
-            auto const nodepos = mid + LatticePosition{0, 0, 8 - 5 - mid.z};
+            auto const nodepos = mid + LatticePosition(0, 0, 8 - 5 - mid.z);
             auto const force = latticeData.GetSite(nodepos).GetForce() ;
             CPPUNIT_ASSERT(std::abs(force.z) > 1e-4);
 
@@ -120,7 +122,8 @@ namespace hemelb
             (*(*cells.begin())) *= 5.0;
             auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
             auto const barycenter = (*cells.begin())->GetBarycenter();
-            std::dynamic_pointer_cast<Cell>(*cells.begin())->moduli = {1e0, 1e0, 1e0, 1e0, 1e0};
+            std::dynamic_pointer_cast<Cell>(*cells.begin())->moduli
+                = Cell::Moduli(1e0, 1e0, 1e0, 1e0, 1e0);
 
             // run
             master->RegisterActor(*controller, 1);
@@ -133,7 +136,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.z - moved.z, 0e0, 1e-6);
 
             // check that force on lattice is very large
-            auto const nodepos = mid + LatticePosition{0, 0, 8 - 5 - mid.z};
+            auto const nodepos = mid + LatticePosition(0, 0, 8 - 5 - mid.z);
             auto const force = latticeData.GetSite(nodepos).GetForce() ;
             CPPUNIT_ASSERT(std::abs(force.z) > 1e2);
 

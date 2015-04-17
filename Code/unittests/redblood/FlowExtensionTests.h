@@ -65,20 +65,24 @@ namespace hemelb
 
           void testLinearWeight()
           {
-            FlowExtension const flow = {{-1.0, 0, 0}, {0.5, 0.5, 0.5}, 2.0, 0.5, 1.5};
-            for(auto y: {0.5, 0.7})
+            FlowExtension const flow(util::Vector3D<Dimensionless>(-1.0, 0, 0),
+                LatticePosition(0.5, 0.5, 0.5), 2.0, 0.5, 1.5);
+            std::vector<Dimensionless> ys; ys.push_back(0.5); ys.push_back(0.7);
+            std::vector<Dimensionless> epsilons; 
+            epsilons.push_back(0.3);epsilons.push_back(0.5);epsilons.push_back(0.7);epsilons.push_back(1.);
+            for(auto y: ys)
             {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, {2.4, y, 0.5}), 1e-8);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, {0.5, y, 0.5}), 1e-8);
-              for(auto epsilon: {0.3, 0.5, 0.7, 1.0})
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, LatticePosition(2.4, y, 0.5)), 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, LatticePosition(0.5, y, 0.5)), 1e-8);
+              for(auto epsilon: epsilons)
               {
                 auto const pos = flow.origin + flow.normal * flow.fadeLength * epsilon
-                  + LatticePosition{0, y - 0.5, 0};
+                  + LatticePosition(0, y - 0.5, 0);
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0 - epsilon, linearWeight(flow, pos), 1e-8);
               }
             }
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, {0.5, 0.5, 1.0 + 1e-8}), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, {0.5, 0.5, 1.0 - 1e-8}), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, LatticePosition(0.5, 0.5, 1.0 + 1e-8)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, LatticePosition(0.5, 0.5, 1.0 - 1e-8)), 1e-8);
           }
       };
 

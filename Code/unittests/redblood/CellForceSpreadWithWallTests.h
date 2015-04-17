@@ -145,6 +145,10 @@ namespace hemelb
         }
       }
 
+
+
+
+
       CPPUNIT_TEST_SUITE_REGISTRATION(CellForceSpreadWithWallTests);
     }
   }
