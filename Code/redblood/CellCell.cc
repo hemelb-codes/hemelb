@@ -137,7 +137,7 @@ namespace hemelb
       iterator i_first = begin();
       iterator const i_end = end();
 
-      for (; i_first != i_end; ++i_first)
+      for (; i_first != i_end;)
       {
         key_type const key = base_type::DowngradeKey(*i_first);
         i_first.GetCellReference().isNearBorder = figureNearness(*this, key, *i_first, haloLength);
@@ -145,7 +145,12 @@ namespace hemelb
         if (not (key == i_first.GetKey()))
         {
           base_type::insert(key, i_first.GetCellReference());
-          base_type::erase((base_type::iterator) i_first);
+          base_type::iterator const next_iter = base_type::erase((base_type::iterator) i_first);
+          i_first = iterator(*this, next_iter);
+        }
+        else
+	{
+          ++i_first;
         }
       }
     }
