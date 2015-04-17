@@ -217,6 +217,10 @@ namespace hemelb
                     : CellBase(mesh)
                 {
                 }
+		Cell(Cell const &cell, CellBase::shallow_clone const&)
+		    : CellBase(cell, CellBase::shallow_clone())
+                {
+                }
 #       else
           // inheriting constructors
           using CellBase::CellBase;
