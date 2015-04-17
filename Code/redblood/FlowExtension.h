@@ -36,6 +36,16 @@ namespace hemelb
         LatticeDistance radius;
         //! Distance within which to fade in/out
         LatticeDistance fadeLength;
+        FlowExtension(util::Vector3D<Dimensionless> const &n0,
+            LatticePosition const &gamma, LatticeDistance l, LatticeDistance r,
+            LatticeDistance fl)
+            : normal(n0), origin(gamma), length(l), radius(r), fadeLength(fl)
+        {
+        }
+        FlowExtension()
+            : normal(1, 0, 0), origin(0, 0, 0), length(1), radius(1), fadeLength(1)
+        {
+        }
     };
 
     //! Checks whether a cell is inside a flow extension

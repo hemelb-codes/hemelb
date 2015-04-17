@@ -115,7 +115,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer{}, cutoff, halo);
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer(), cutoff, halo);
         int called = 0;
         auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
         {
@@ -174,7 +174,7 @@ namespace hemelb
               barycentre = (*(container.begin()))->GetBarycenter();
         };
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer(1, cell), cutoff, halo);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -183,14 +183,15 @@ namespace hemelb
 
       void CellArmyTests::testCellRemoval()
       {
-        FlowExtension const outlet = {{1, 0, 0}, {8, 2, 2}, 4.0, 4, 1.8};
+        FlowExtension const outlet(util::Vector3D<Dimensionless>(1, 0, 0),
+             LatticePosition(8, 2, 2), 4.0, 4, 1.8);
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        redblood::CellArmy<Kernel> army(*latDat, CellContainer{cell}, cutoff, halo);
-        army.SetOutlets({outlet});
+        redblood::CellArmy<Kernel> army(*latDat, CellContainer(1, cell), cutoff, halo);
+        army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed
         CPPUNIT_ASSERT_EQUAL(3ul, army.GetDNC().size());
