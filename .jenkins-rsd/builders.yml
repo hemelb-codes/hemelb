@@ -19,22 +19,8 @@
                     export CXX=mpiCC
                 ;;
                 "OSX")
-                    case $compiler in 
-                        "gnu")
-                            export CC=gcc-4.9
-                            export CXX=g++-4.9
-                            inc=/Applications/Xcode.app/Contents/Developer//Toolchains/XcodeDefault.xctoolchain
-                            inc=$(dirname $(find $inc -name type_traits))
-                            cdir=$(dirname $(find /usr/local/lib/gcc -name libgcc_s.1.dylib))
-                            export CXXFLAGS="-nodefaultlibs -nostdinc++ -isystem$inc -std=c++11"
-                            export LDFLAGS="-L$cdir -lc++ -lc -std=c++11"
-                        ;;
-                        "clang")
-                            export CC=/usr/bin/cc
-                            export CXX=/usr/bin/c++
-                            $CXX --version
-                        ;;
-                    esac
+                    export CC=/usr/bin/cc
+                    export CXX=/usr/bin/c++
                 ;;
             esac
 
