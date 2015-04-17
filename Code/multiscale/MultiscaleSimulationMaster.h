@@ -28,7 +28,7 @@ namespace hemelb
         MultiscaleSimulationMaster(hemelb::configuration::CommandLine &options,
                                    const net::IOCommunicator& ioComm,
                                    Intercommunicator & aintercomms) :
-            SimulationMaster(options, ioComm), intercomms(aintercomms),
+            SimulationMaster<>(options, ioComm), intercomms(aintercomms),
                 multiscaleIoletType("inoutlet")
         {
           // We only have one shared object type so far, an iolet.
