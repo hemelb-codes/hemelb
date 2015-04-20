@@ -6,7 +6,7 @@
             url: ssh://hg@entropy.chem.ucl.ac.uk/hemelb
             revision-type: branch
             revision: default
-            wipe-workspace: false
+            wipe-workspace: true
 
     # when to trigger a build
     triggers:

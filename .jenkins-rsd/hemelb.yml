@@ -49,7 +49,6 @@
     execution-strategy:
         combination-filter: >
             (compiler == "intel").implies(os == "Legion")
-            && (compiler == "gnu").implies(os == "Legion")
             && (compiler == "clang").implies(os == "OSX")
         sequential: false
     axes:
