@@ -31,6 +31,9 @@
         # so can't tell intel to build with c++11 on legion if compiling heme
         # proper via external project. so build explicitely.
         - heme-remove-build
+        - heme-ctemplate:
+            build_type: "RelWithDebInfo"
+            build_dir: "dependencies"
         - heme-configure:
             source_dir: "$WORKSPACE/dependencies"
             build_type: "RelWithDebInfo"

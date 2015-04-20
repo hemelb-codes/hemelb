@@ -4,25 +4,35 @@
     builders:
         - shell: |
             cd $WORKSPACE
-            rm -rf build RegressionTests
+            rm -rf build RegressionTests dependencies
+            hg revert dependencies
             mkdir build
+
+- builder:
+    name: heme-ctemplate
+    builders:
+        - shell: |
+            if [[ "$os" == "OSX" && "$compiler" == "clang" ]] ; then
+                export CC=/usr/bin/cc
+                # put everything in CXX because ctemplate + autotools
+                export CXX="/usr/bin/c++ -stdlib=libc++ "
+
+                builddir=$WORKSPACE/build/{build_dir}
+                [[ -e $builddir ]] || mkdir -p $builddir
+                cd $builddir
+                cmake -DCMAKE_BUILD_TYPE={build_type} \
+                      -DCMAKE_INSTALL_PREFIX=$WORKSPACE/build/fake_install \
+                      -DCMAKE_PREFIX_PATH=$WORKSPACE/dependencies          \
+                      $WORKSPACE/dependencies
+                make ctemplate
+                rm -rf CMakeCache.txt CMakeFiles
+            fi
 
 - builder:
     name: heme-configure
     builders:
         - shell: |
-            case $os in
-                "Legion")
-                    module load rsd-modules
-                    module load hemelb-dev/$compiler
-                    export CC=mpicc
-                    export CXX=mpiCC
-                ;;
-                "OSX")
-                    export CC=/usr/bin/cc
-                    export CXX=/usr/bin/c++
-                ;;
-            esac
+            . $WORKSPACE/compile_flags.sh
 
             builddir=$WORKSPACE/build/{build_dir}
             [[ -e $builddir ]] || mkdir -p $builddir
@@ -36,16 +46,12 @@
     name: heme-build
     builders:
         - shell: |
+            . $WORKSPACE/compile_flags.sh
             builddir=$WORKSPACE/build/{build_dir}
             [[ -e $builddir ]] || mkdir -p $builddir
             cd $builddir
 
-            if [ "$os" == "Legion" ] ; then
-                export MAKEFLAGS=-j4
-                module load rsd-modules hemelb-dev/$compiler
-            else
-                export MAKEFLAGS=-j2
-            fi
+
             make
 
 - builder:
