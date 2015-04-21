@@ -1,5 +1,69 @@
 # small bash-scripts that will be invoked one after the other in the jobs
 - builder:
+    name: heme-flags
+    builders:
+        - shell: |
+            cat > $WORKSPACE/compile_flags.sh <<EOF
+            case $os in
+                "Legion")
+                    module load rsd-modules
+                    module load hemelb-dev/$compiler
+                    export CC=mpicc
+                    export CXX=mpiCC
+                    export MAKEFLAGS=-j4
+                ;;
+                "OSX")
+                    case $compiler in 
+                        "gnu")
+                            inc=/Applications/Xcode.app/Contents/Developer//Toolchains/XcodeDefault.xctoolchain
+                            inc=\$(dirname \$(find \$inc -name type_traits))
+                            export CXXFLAGS="-nodefaultlibs -nostdinc++ -isystem\$inc -std=c++11"
+                            export LDFLAGS="-lc++ -lc"
+                            export CXX=g++-4.9
+                            export CC=gcc-4.9
+                        ;;
+                        "clang")
+                            export CC=/usr/bin/cc
+                            export CXX=/usr/bin/c++
+                        ;;
+                    esac
+                    export MAKEFLAGS=-j2
+                ;;
+            esac
+            EOF
+
+- builder:
+    name: heme-flagscpp11
+    builders:
+        - shell: |
+            cat > $WORKSPACE/compile_flags.sh <<EOF
+            case $os in
+                "Legion")
+                    module load rsd-modules
+                    module load hemelb-dev/$compiler
+                    export CC=mpicc
+                    export CXX=mpiCC
+                    export MAKEFLAGS=-j4
+                ;;
+                "OSX")
+                    case $compiler in 
+                        "gnu")
+                            export CXX=g++-4.9
+                            export CC=gcc-4.9
+                        ;;
+                        "clang")
+                            export CC=/usr/bin/cc
+                            export CXX=/usr/bin/c++
+                            export CXXFLAGS="-std=c++11 -stdlib=libc++"
+                            export LDFLAGS="-stdlib=libc++"
+                        ;;
+                    esac
+                    export MAKEFLAGS=-j2
+                ;;
+            esac
+            EOF
+
+- builder:
     name: heme-remove-build
     builders:
         - shell: |
@@ -15,7 +79,7 @@
             if [[ "$os" == "OSX" && "$compiler" == "clang" ]] ; then
                 export CC=/usr/bin/cc
                 # put everything in CXX because ctemplate + autotools
-                export CXX="/usr/bin/c++ -stdlib=libc++ "
+                export CXX="/usr/bin/c++ -stdlib=libc++"
 
                 builddir=$WORKSPACE/build/{build_dir}
                 [[ -e $builddir ]] || mkdir -p $builddir
@@ -61,4 +125,4 @@
             cd $WORKSPACE/build/{unittests_dir}
             [[ "$os" == "Legion" ]] && module load rsd-modules hemelb-dev/$compiler
             [[ ! -e $WORKSPACE/build/tests ]] && mkdir $WORKSPACE/build/tests
-            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/results.xml
+            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/results.xml || true
