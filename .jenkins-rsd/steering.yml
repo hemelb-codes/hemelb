@@ -1,0 +1,55 @@
+- job:
+    name: steering-heme
+    description: |
+        Compiles with steering.
+        There are no unittests for steering, so tests are not run.
+    disabled: false
+    block-upstream: true
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "intel").implies(os == "Legion")
+            && (compiler == "clang").implies(os == "OSX")
+            && (compiler == "gnu").implies(os == "Legion")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - clang
+                - intel
+                - gnu
+
+    builders:
+        - heme-remove-build
+        - heme-flags
+        - shell: |
+            # Add a configuration file
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+
+            alljobs=$(pwd | sed "s/\/workspace\/.*$//")/workspace
+            deps=$(find $alljobs/dependencies-heme -name dependencies -type d)
+            deps=$(echo "$deps" | grep $compiler | grep "$os/dependencies")
+
+            cat > $WORKSPACE/build/vars.conf <<EOF
+            set(CMAKE_PREFIX_PATH "$deps" CACHE PATH "" FORCE)
+            set(HEMELB_USE_STREAKLINES FALSE CACHE BOOL "" FORCE)
+            set(HEMELB_USE_SSE3 "OFF" CACHE BOOL "" FORCE)
+            set(HEMELB_DEPENDENCIES_PATH "$deps" CACHE PATH "" FORCE)
+            set(HEMELB_STEERING_LIB "basic" CACHE PATH "" FORCE)
+            EOF
+        - heme-configure:
+            source_dir: "$WORKSPACE/Code"
+            build_type: "RelWithDebInfo"
+            extra_args: "-C vars.conf"
+            build_dir: ""
+        - heme-build:
+            build_dir: ""
