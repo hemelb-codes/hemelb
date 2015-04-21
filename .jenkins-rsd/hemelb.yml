@@ -1,14 +1,17 @@
 # only compile dependencies
 - job:
     name: dependencies-heme
+    description: |
+        Compiles only the dependencies of hemelb.
+        Triggers development and steering jobs.
     disabled: false
     project-type: matrix
     concurrent: true
     execution-strategy:
         combination-filter: >
             (compiler == "intel").implies(os == "Legion")
-            && (compiler == "gnu").implies(os == "Legion")
             && (compiler == "clang").implies(os == "OSX")
+            && (compiler == "gnu").implies(os == "Legion")
         sequential: false
     axes:
         - axis:
@@ -27,6 +30,7 @@
 
     builders:
         - heme-remove-build
+        - heme-flags
         - heme-configure:
             source_dir: "$WORKSPACE/dependencies"
             build_type: "Release"
@@ -38,10 +42,19 @@
     publishers:
         - trigger:
             project: "development-heme"
+        - trigger:
+            project: "steering-heme"
 
 # default build across compilers and machines
 - job:
     name: development-heme
+    description: |
+        Compiles and runs units tests for hemelb.
+        The dependencies are obtained from another job.
+        Since steering does not have unittests and since it prevents running
+        multiple instances of heme on the same node (because port is hard
+        coded), steering is disabled.
+        Triggers regression job.
     disabled: false
     block-upstream: true
     project-type: matrix
@@ -50,6 +63,7 @@
         combination-filter: >
             (compiler == "intel").implies(os == "Legion")
             && (compiler == "clang").implies(os == "OSX")
+            && (compiler == "gnu").implies(os == "Legion")
         sequential: false
     axes:
         - axis:
@@ -74,18 +88,21 @@
 
     builders:
         - heme-remove-build
+        - heme-flags
         - shell: |
             # Add a configuration file
             [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
 
-            deps="$WORKSPACE/../../../../../../../"
-            deps="$deps/dependencies-heme/compiler/$compiler/os/$os/dependencies"
+            alljobs=$(pwd | sed "s/\/workspace\/.*$//")/workspace
+            deps=$(find $alljobs/dependencies-heme -name dependencies -type d)
+            deps=$(echo "$deps" | grep $compiler | grep "$os/dependencies")
 
             cat > $WORKSPACE/build/vars.conf <<EOF
-            set(CMAKE_PREFIX_PATH "deps" CACHE PATH "" FORCE)
+            set(CMAKE_PREFIX_PATH "$deps" CACHE PATH "" FORCE)
             set(HEMELB_USE_STREAKLINES FALSE CACHE BOOL "" FORCE)
             set(HEMELB_USE_SSE3 "$sse3" CACHE BOOL "" FORCE)
             set(HEMELB_DEPENDENCIES_PATH "$deps" CACHE PATH "" FORCE)
+            set(HEMELB_STEERING_LIB "none" CACHE PATH "" FORCE)
             EOF
         - heme-configure:
             source_dir: "$WORKSPACE/Code"
@@ -102,3 +119,5 @@
             types:
                 - cppunit:
                     pattern: "build/tests/*.xml"
+        - trigger:
+            project: "regression-heme"

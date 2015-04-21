@@ -1,6 +1,10 @@
 # default build across compilers and machines
 - job:
     name: redblood-heme
+    description: |
+        Compiles dependencies and heme for the red_blood_cells branch.
+        This is a c++11 build, so we compile dependencies independently from
+        other jobs.
     disabled: false
     block-upstream: true
     project-type: matrix
@@ -30,6 +34,7 @@
         # env vars are not passed to external projects
         # so can't tell intel to build with c++11 on legion if compiling heme
         # proper via external project. so build explicitely.
+        - heme-flagscpp11
         - heme-remove-build
         - heme-ctemplate:
             build_type: "RelWithDebInfo"
