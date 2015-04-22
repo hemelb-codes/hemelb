@@ -1,50 +1,3 @@
-# only compile dependencies
-- job:
-    name: dependencies-heme
-    description: |
-        Compiles only the dependencies of hemelb.
-        Triggers development and steering jobs.
-    disabled: false
-    project-type: matrix
-    concurrent: true
-    execution-strategy:
-        combination-filter: >
-            (compiler == "intel").implies(os == "Legion")
-            && (compiler == "clang").implies(os == "OSX")
-            && (compiler == "gnu").implies(os == "Legion")
-        sequential: false
-    axes:
-        - axis:
-            type: slave
-            name: os
-            values:
-                - OSX
-                - Legion
-        - axis:
-            type: user-defined
-            name: compiler
-            values:
-                - clang
-                - intel
-                - gnu
-
-    builders:
-        - heme-remove-build
-        - heme-flags
-        - heme-configure:
-            source_dir: "$WORKSPACE/dependencies"
-            build_type: "Release"
-            extra_args: "-DHEMELB_USE_BOOST=ON"
-            build_dir: ""
-        - heme-build:
-            build_dir: ""
-
-    publishers:
-        - trigger:
-            project: "development-heme"
-        - trigger:
-            project: "steering-heme"
-
 # default build across compilers and machines
 - job:
     name: development-heme
@@ -79,45 +32,43 @@
                 - clang
                 - intel
                 - gnu
-        - axis:
-            type: user-defined
-            name: sse3
-            values:
-                - "ON"
-                - "OFF"
 
     builders:
         - heme-remove-build
         - heme-flags
-        - shell: |
-            # Add a configuration file
-            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+        # build dependencies
+        - heme-dependencies
+        # build with/without streak-lines, with/whithout sse3
+        - heme-Code:
+            buildname: streak_and_steering
+            sse3: OFF
+            streaks: ON
+            steering: basic
+        - heme-Code:
+            buildname: sse3
+            sse3: ON
+            streaks: OFF
+            steering: none
+        - heme-Code:
+            buildname: nosse3
+            sse3: OFF
+            streaks: OFF
+            steering: none
 
-            alljobs=$(pwd | sed "s/\/workspace\/.*$//")/workspace
-            deps=$(find $alljobs/dependencies-heme -name dependencies -type d)
-            deps=$(echo "$deps" | grep $compiler | grep "$os/dependencies")
-
-            cat > $WORKSPACE/build/vars.conf <<EOF
-            set(CMAKE_PREFIX_PATH "$deps" CACHE PATH "" FORCE)
-            set(HEMELB_USE_STREAKLINES FALSE CACHE BOOL "" FORCE)
-            set(HEMELB_USE_SSE3 "$sse3" CACHE BOOL "" FORCE)
-            set(HEMELB_DEPENDENCIES_PATH "$deps" CACHE PATH "" FORCE)
-            set(HEMELB_STEERING_LIB "none" CACHE PATH "" FORCE)
-            EOF
-        - heme-configure:
-            source_dir: "$WORKSPACE/Code"
-            build_type: "RelWithDebInfo"
-            extra_args: "-C vars.conf"
-            build_dir: ""
-        - heme-build:
-            build_dir: ""
         - heme-test:
-            unittests_dir: ""
+            buildname: "sse3"
+        - heme-test:
+            buildname: "nosse3"
+
+        - heme-regression-setup
+        - heme-regression-run:
+            buildname: "sse3"
+        - heme-regression-run:
+            buildname: "nosse3"
 
     publishers:
         - xunit:
+            test-time-margin: 120000
             types:
                 - cppunit:
                     pattern: "build/tests/*.xml"
-        - trigger:
-            project: "regression-heme"

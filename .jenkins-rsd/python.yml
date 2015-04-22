@@ -6,39 +6,17 @@
     node: Legion
 
     builders:
+        - heme-python-setup
         - shell: |
-            cat > $WORKSPACE/SetupEnv.sh <<EOF
-            module load rsd-modules
-            module load hemelb-dev/intel boost/1.56_cxx11 CGAL/4.6
-            module load python/enthought/7.3-2_2015-03-02
-            module load virtualenv/1.11.6/enthought
-            [[ -d $WORKSPACE/virtualenv ]] \
-                || python -m virtualenv virtualenv --system-site-packages
-            . $WORKSPACE/virtualenv/bin/activate
+            . $WORKSPACE/build/SetupEnv.sh
 
-            export CFLAGS="-I\$CGAL_DIR/include -I\$BOOST_ROOT/include"
-            export LDFLAGS="-L\$CGAL_DIR/lib"
-            epdlib=/shared/ucl/apps/epd/epd-7.3-2-rh5-x86_64_2015-03-02/lib
-            export LD_LIBRARY_PATH=\$epdlib:\$LD_LIBRARY_PATH
-            EOF
-
-        - shell: |
-            . $WORKSPACE/SetupEnv.sh
-            cd $WORKSPACE/Tools
-            rm -rf build
-            python setup.py build
-            python setup.py install
-
-            cd setuptool
+            cd $WORKSPACE/Tools/setuptool
             rm -rf build
             python setup.py build
             python setup.py install
 
         - shell: |
-            . SetupEnv.sh
-
-            pip install --upgrade pytest
-            pip install --upgrade mock
+            . $WORKSPACE/build/SetupEnv.sh
 
             for package in hemeTools HemeLBSetupTool ; do
                dirname=$(python -c "import $package; print($package.__file__)")
