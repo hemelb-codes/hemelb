@@ -8,6 +8,7 @@
                 "Legion")
                     module load rsd-modules
                     module load hemelb-dev/$compiler
+
                     export CC=mpicc
                     export CXX=mpiCC
                     export MAKEFLAGS=-j4
@@ -101,8 +102,10 @@
             builddir=$WORKSPACE/build/{build_dir}
             [[ -e $builddir ]] || mkdir -p $builddir
             cd $builddir
+            with_boost=$([[ "$os" == "Legion" ]] && echo "ON" || echo "OFF")
             cmake -DCMAKE_BUILD_TYPE={build_type} \
                   -DCMAKE_INSTALL_PREFIX=$WORKSPACE/build/fake_install \
+                  -DHEMELB_USE_BOOST=$with_boost \
                   {extra_args} \
                   {source_dir}
 
@@ -114,15 +117,116 @@
             builddir=$WORKSPACE/build/{build_dir}
             [[ -e $builddir ]] || mkdir -p $builddir
             cd $builddir
-
-
             make
 
 - builder:
     name: heme-test
     builders:
         - shell: |
-            cd $WORKSPACE/build/{unittests_dir}
+            . $WORKSPACE/compile_flags.sh
+            cd $WORKSPACE/build/{buildname}
             [[ "$os" == "Legion" ]] && module load rsd-modules hemelb-dev/$compiler
             [[ ! -e $WORKSPACE/build/tests ]] && mkdir $WORKSPACE/build/tests
-            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/results.xml || true
+            mpirun -n 1 ./unittests_hemelb -o $WORKSPACE/build/tests/{buildname}.xml || true
+
+- builder:
+    name: heme-dependencies
+    builders:
+        - heme-configure:
+            source_dir: "$WORKSPACE/dependencies"
+            build_type: "Release"
+            extra_args: ""
+            build_dir: "dependencies"
+        - heme-build:
+            build_dir: "dependencies"
+
+- builder:
+    name: heme-Code
+    builders:
+        - shell: |
+            cat > $WORKSPACE/{buildname}.conf <<EOF
+            set(HEMELB_USE_STREAKLINES {streaks} CACHE BOOL "" FORCE)
+            set(HEMELB_USE_SSE3 {sse3} CACHE BOOL "" FORCE)
+            set(HEMELB_STEERING_LIB {steering} CACHE STRING "" FORCE)
+            EOF
+        - heme-configure:
+            source_dir: "$WORKSPACE/Code"
+            build_type: "Release"
+            extra_args: "-C $WORKSPACE/{buildname}.conf"
+            build_dir: "{buildname}"
+        - heme-build:
+            build_dir: "{buildname}"
+
+- builder:
+    name: heme-python-setup
+    builders:
+        - shell: |
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+
+            cat > $WORKSPACE/build/SetupEnv.sh <<EOF
+            if [[ "$os" == "Legion" ]] ; then
+                module load rsd-modules
+                [[ "$compiler" == "" ]] && module load hemelb-dev \
+                                    || module load hemelb-dev/$compiler
+                module load boost/1.56_cxx11 CGAL/4.6
+                module load python/enthought/7.3-2_2015-03-02
+                module load virtualenv/12.1.1
+                export CFLAGS="-I\$CGAL_DIR/include -I\$BOOST_ROOT/include"
+                export LDFLAGS="-L\$CGAL_DIR/lib"
+                epdlib=/shared/ucl/apps/epd/epd-7.3-2-rh5-x86_64_2015-03-02/lib
+                export LD_LIBRARY_PATH=\$epdlib:\$LD_LIBRARY_PATH
+            fi
+            [[ -d $WORKSPACE/virtualenv ]] \
+                || python -m virtualenv $WORKSPACE/virtualenv --system-site-packages
+            . $WORKSPACE/virtualenv/bin/activate
+            EOF
+
+            . $WORKSPACE/build/SetupEnv.sh
+
+            pip install --upgrade pytest
+            pip install --upgrade mock
+
+
+        - shell: |
+            . $WORKSPACE/build/SetupEnv.sh
+            cd $WORKSPACE/Tools
+            rm -rf build
+            python setup.py build
+            python setup.py install
+
+- builder:
+    name: heme-regression-setup
+    builders:
+        - heme-python-setup
+        - shell: |
+            . $WORKSPACE/build/SetupEnv.sh
+
+            dir=$WORKSPACE/regression/hemelb-inputs
+            [[ -e $(dirname $dir) ]] || mkdir -p $(dirname $dir)
+            entropy=hg@entropy.chem.ucl.ac.uk
+            [[ -e $dir ]] || hg clone ssh://$entropy/hemelb-input $dir
+
+            cd $dir
+            hg update
+
+- builder:
+    name: heme-regression-run
+    builders:
+        - shell: |
+            . $WORKSPACE/build/SetupEnv.sh
+
+            if [[ "$os" == "Legion" ]] ; then
+                mpi="mpiexec -np 3"
+            else
+                mpi="mpiexec -np 2"
+            fi
+
+            result_dir=$WORKSPACE/regression/{buildname}
+            hemelb=$WORKSPACE/build/{buildname}/hemelb
+            [[ ! -e $result_dir ]] || rm -rf $result_dir
+            [[ -e $(dirname $result_dir) ]] || mkdir $(dirname $result_dir)
+
+            cd $WORKSPACE/regression/hemelb-inputs/diffTest/
+            $mpi $hemelb -in config.xml -out $result_dir -i 0
+            ./ImageComparison CleanImages $result_dir/Images
+            ./NumericalComparison CleanExtracted $result_dir/Extracted
