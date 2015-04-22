@@ -34,28 +34,34 @@
         # env vars are not passed to external projects
         # so can't tell intel to build with c++11 on legion if compiling heme
         # proper via external project. so build explicitely.
-        - heme-flagscpp11
         - heme-remove-build
+        - heme-flagscpp11
         - heme-ctemplate:
             build_type: "RelWithDebInfo"
             build_dir: "dependencies"
-        - heme-configure:
-            source_dir: "$WORKSPACE/dependencies"
-            build_type: "RelWithDebInfo"
-            extra_args: |
-                -DHEMELB_USE_BOOST=$([[ \"$os\" == \"Legion\" ]] && echo \"ON\" || echo \"OFF\")
-            build_dir: "dependencies"
-        - heme-build:
-            build_dir: "dependencies"
-        - heme-configure:
-            source_dir: "$WORKSPACE/Code"
-            build_type: "RelWithDebInfo"
-            extra_args: ""
-            build_dir: "Code"
-        - heme-build:
-            build_dir: "Code"
+        - heme-dependencies
+
+        - heme-Code:
+            buildname: sse3
+            sse3: ON
+            streaks: OFF
+            steering: none
+        - heme-Code:
+            buildname: nosse3
+            sse3: OFF
+            streaks: OFF
+            steering: none
+
         - heme-test:
-            unittests_dir: "Code"
+            buildname: "sse3"
+        - heme-test:
+            buildname: "nosse3"
+
+        - heme-regression-setup
+        - heme-regression-run:
+            buildname: "sse3"
+        - heme-regression-run:
+            buildname: "nosse3"
 
     scm:
         - hg:
@@ -66,6 +72,7 @@
 
     publishers:
         - xunit:
+            test-time-margin: 120000
             types:
                 - cppunit:
                     pattern: "build/tests/*.xml"
