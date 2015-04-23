@@ -2,12 +2,12 @@
 - job:
     name: development-heme
     description: |
-        Compiles and runs units tests for hemelb.
-        The dependencies are obtained from another job.
+        Compiles, runs units tests, and runs regressions for several types of
+        builds.
+
         Since steering does not have unittests and since it prevents running
         multiple instances of heme on the same node (because port is hard
-        coded), steering is disabled.
-        Triggers regression job.
+        coded), steering build is not unittested.
     disabled: false
     block-upstream: true
     project-type: matrix

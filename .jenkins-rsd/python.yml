@@ -6,8 +6,33 @@
     node: Legion
 
     builders:
-        - heme-python-setup
         - shell: |
+            [[ -e $WORKSPACE/build ]] || mkdir $WORKSPACE/build
+
+            cat > $WORKSPACE/build/SetupEnv.sh <<EOF
+            module load rsd-modules
+            module load hemelb-dev/intel
+            module load boost/1.56_cxx11 CGAL/4.6
+            module load python/enthought/7.3-2_2015-03-02
+            module load virtualenv/12.1.1
+            export CFLAGS="-I\${CGAL_DIR}/include -I\${BOOST_ROOT}/include"
+            export LDFLAGS="-L\${CGAL_DIR}/lib"
+            epdlib=/shared/ucl/apps/epd/epd-7.3-2-rh5-x86_64_2015-03-02/lib
+            export LD_LIBRARY_PATH=\$epdlib:\${LD_LIBRARY_PATH}
+            export LD_RUN_PATH=\$epdlib:\${LD_RUN_PATH}
+
+            [[ -d $WORKSPACE/virtualenv ]] \
+                || python -m virtualenv $WORKSPACE/virtualenv --system-site-packages
+            . $WORKSPACE/virtualenv/bin/activate
+            EOF
+        - shell: |
+            . $WORKSPACE/build/SetupEnv.sh
+
+            pip install --upgrade pytest
+            pip install --upgrade mock
+
+        - shell: |
+            cat $WORKSPACE/build/SetupEnv.sh
             . $WORKSPACE/build/SetupEnv.sh
 
             cd $WORKSPACE/Tools/setuptool
@@ -25,6 +50,6 @@
             #    python -m pytest --junitxml=$WORKSPACE/${package}Tests.xml $dirname || true
             # done
 
-    publishers:
-        - junit:
-            results: "*Tests.xml"
+#   publishers:
+#       - junit:
+#           results: "*Tests.xml"
