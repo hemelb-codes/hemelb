@@ -20,6 +20,9 @@
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,1.0)" />
       <position units="m" value="(0.0,0.0,-0.024)" />
+      <length units="m" value="0.1" />
+      <radius units="m" value="0.01" />
+      <fadelength units="m" value="0.5" />
     </inlet>
   </inlets>
   <outlets>
@@ -32,6 +35,9 @@
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
       <position units="m" value="(0.0,0.0,0.024)" />
+      <length units="m" value="0.1" />
+      <radius units="m" value="0.01" />
+      <fadelength units="m" value="0.5" />
     </outlet>
   </outlets>
   <visualisation>
