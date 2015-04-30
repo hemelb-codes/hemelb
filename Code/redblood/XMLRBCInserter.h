@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <functional>
+#include "lb/iolets/InOutLet.h"
 #include "Mesh.h"
 #include "Cell.h"
 #include "units.h"
@@ -15,8 +16,8 @@ namespace hemelb
 
     /**
      * The XML RBC Inserter inserts cells into the simulation when some
-     * condition evaluates to true.  The cell position and scale are read from
-     * XML while the cell shape is read from a text file or input stream.
+     * condition evaluates to true.  The cell is inserted at the start of an
+     * inlet.  The shape of the cell is read from a text file.
      */
     class XMLRBCInserter
     {
@@ -27,52 +28,40 @@ namespace hemelb
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
-         * @param xml_path the path to the XML file to read the cell scale and
-         * position from
          * @param mesh_path the path to the mesh text file to read the cell
          * shape from
+         * @param scale the scale of the cell to insert
          */
         XMLRBCInserter(std::function<bool()> condition,
-                       const std::string & xml_path,
-                       const std::string & mesh_path);
+                       const std::string & mesh_path,
+                       const lb::iolets::InOutLet * inlet,
+                       Dimensionless scale = 1.0);
 
         /**
          * Creates an XML RBC Inserter.
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
-         * @param xml_path the path to the XML file to read the cell scale and
-         * position from
          * @param mesh_stream an input stream to read the cell shape from
+         * @param scale the scale of the cell to insert
          */
         XMLRBCInserter(std::function<bool()> condition,
-                       const std::string & xml_path,
-                       std::istream & mesh_stream);
+                       std::istream & mesh_stream,
+                       const lb::iolets::InOutLet * inlet,
+                       Dimensionless scale = 1.0);
 
         /**
          * Creates an XML RBC Inserter.
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
-         * @param xml_path the path to the XML file to read the cell scale and
-         * position from
          * @param shape the shape of the cells to create
+         * @param scale the scale of the cell to insert
          */
         XMLRBCInserter(std::function<bool()> condition,
-                       const std::string & xml_path, const MeshData & shape);
-
-        /**
-         * Creates an XML RBC Inserter.
-         *
-         * @param condition a cell will only be inserted on a LB step if this
-         * condition evaluates to true
-         * @param position the position to insert new cells into the simulation
-         * @param scale the initial scale of the new cells
-         * @param shape the shape of the cells to create
-         */
-        XMLRBCInserter(std::function<bool()> condition,
-                       const MeshData::Vertices::value_type & position,
-                       Dimensionless scale, const MeshData & shape);
+                       const MeshData & shape,
+                       const lb::iolets::InOutLet * inlet,
+                       Dimensionless scale = 1.0);
 
         /**
          * Cell insertion callback called on each step of the simulation.  If
@@ -84,15 +73,13 @@ namespace hemelb
          * @see hemelb::redblood::CellArmy::SetCellInsertion
          * @see hemelb::redblood::CellArmy::CallCellInsertion
          */
-        void InsertCell(std::function<void(CellContainer::value_type)> insertFn);
+        void operator()(std::function<void(CellContainer::value_type)> insertFn);
 
         void SetShape(const MeshData & shape);
-        std::shared_ptr<MeshData> GetShape();
         std::shared_ptr<const MeshData> GetShape() const;
 
-        void SetPosition(const MeshData::Vertices::value_type & position);
-        MeshData::Vertices::value_type & GetPosition();
-        const MeshData::Vertices::value_type & GetPosition() const;
+        void SetInLet(const lb::iolets::InOutLet *);
+        const lb::iolets::InOutLet * GetInLet() const;
 
         void SetScale(Dimensionless scale);
         Dimensionless GetScale() const;
@@ -101,25 +88,15 @@ namespace hemelb
         std::function<bool()> GetCondition() const;
 
       private:
-        /**
-         * Reads the position and scale from an XML file.
-         *
-         * @param [in]  xml_path the xml file to read
-         * @param [out] position the position to insert cells into the simulation
-         * @param [out] scale the initial scale of the new cells
-         */
-        void read_position_and_scale_from_xml(const std::string & xml_path,
-                                              MeshData::Vertices::value_type & position,
-                                              Dimensionless & scale);
 
         //! When to insert cells
         std::function<bool()> condition;
 
         //! The shape of the cells to insert
-        std::shared_ptr<MeshData> shape;
+        std::shared_ptr<const MeshData> shape;
 
-        //! The position to insert cells into the simulation
-        MeshData::Vertices::value_type position;
+        //! The iolet to insert the cell into
+        const lb::iolets::InOutLet * inlet;
 
         //! The initial scale of the new cells
         Dimensionless scale;
