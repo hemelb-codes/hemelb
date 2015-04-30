@@ -1,5 +1,5 @@
-#ifndef HEMELB_REDBLOOD_XML_RBC_INSERTER_H
-#define HEMELB_REDBLOOD_XML_RBC_INSERTER_H
+#ifndef HEMELB_REDBLOOD_RBC_INSERTER_H
+#define HEMELB_REDBLOOD_RBC_INSERTER_H
 
 #include <iostream>
 #include <memory>
@@ -15,16 +15,17 @@ namespace hemelb
   {
 
     /**
-     * The XML RBC Inserter inserts cells into the simulation when some
-     * condition evaluates to true.  The cell is inserted at the start of an
-     * inlet.  The shape of the cell is read from a text file.
+     * The RBC Inserter inserts cells into the simulation while some condition
+     * evaluates to true.  The cell is inserted into an inlet or the start of a
+     * flow extension (if the inlet has a flow extension defined).
+     * The shape of the cell is read from a text file.
      */
-    class XMLRBCInserter
+    class RBCInserter
     {
       public:
 
         /**
-         * Creates an XML RBC Inserter.
+         * Creates an RBC Inserter.
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
@@ -32,41 +33,39 @@ namespace hemelb
          * shape from
          * @param scale the scale of the cell to insert
          */
-        XMLRBCInserter(std::function<bool()> condition,
-                       const std::string & mesh_path,
-                       const lb::iolets::InOutLet * inlet,
-                       Dimensionless scale = 1.0);
+        RBCInserter(std::function<bool()> condition,
+                    const std::string & mesh_path,
+                    const lb::iolets::InOutLet * inlet,
+                    Dimensionless scale = 1.0);
 
         /**
-         * Creates an XML RBC Inserter.
+         * Creates an RBC Inserter.
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
          * @param mesh_stream an input stream to read the cell shape from
          * @param scale the scale of the cell to insert
          */
-        XMLRBCInserter(std::function<bool()> condition,
-                       std::istream & mesh_stream,
-                       const lb::iolets::InOutLet * inlet,
+        RBCInserter(std::function<bool()> condition, std::istream & mesh_stream,
+                    const lb::iolets::InOutLet * inlet,
                        Dimensionless scale = 1.0);
 
         /**
-         * Creates an XML RBC Inserter.
+         * Creates an RBC Inserter.
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
          * @param shape the shape of the cells to create
          * @param scale the scale of the cell to insert
          */
-        XMLRBCInserter(std::function<bool()> condition,
-                       const MeshData & shape,
-                       const lb::iolets::InOutLet * inlet,
-                       Dimensionless scale = 1.0);
+        RBCInserter(std::function<bool()> condition, const MeshData & shape,
+                    const lb::iolets::InOutLet * inlet,
+                    Dimensionless scale = 1.0);
 
         /**
-         * Cell insertion callback called on each step of the simulation.  If
-         * a cell has left the flow domain through an outlet then this method
-         * will add a new cell via an inlet.
+         * Cell insertion callback called on each step of the simulation.  Cells
+         * are inserted into the simulation while condition() evaluates to true.
+         * Multiple cells are potentially inserted on each iteration.
          *
          * @param insertFn the function to insert a new cell into the simulation
          *
