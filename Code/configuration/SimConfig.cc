@@ -16,6 +16,7 @@
 #include "configuration/SimConfig.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "redblood/flowextension.h"
 
 namespace hemelb
 {
@@ -231,10 +232,28 @@ namespace hemelb
           throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
               << conditionEl.GetPath();
         }
+//        DoIOForFlowExtension(newIolet, currentIoletNode);
         ioletList.push_back(newIolet);
       }
       return ioletList;
     }
+
+//    void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
+//                                         const io::xml::Element & ioletNode) {
+//      // Flow extension normal points opposite direction from iolet normal
+//      const util::Vector3D<Dimensionless> normal = -iolet->GetNormal();
+//      // Flow extension shares origin with iolet
+//      const LatticePosition origin = iolet->GetPosition();
+//
+//      // Read length, radius and fadelength of flow extension from XML
+//      LatticeDistance length, radius, fadelength;
+//      GetDimensionalValue(ioletNode, "m", length);
+//      GetDimensionalValue(ioletNode, "m", radius);
+//      GetDimensionalValue(ioletNode, "m", fadelength);
+//
+//      // Set the IOlet's flow extension
+//      iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(normal, origin, length, radius, fadelength));
+//    }
 
     lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
     {
