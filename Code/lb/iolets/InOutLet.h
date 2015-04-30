@@ -13,6 +13,7 @@
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
+#include "redblood/flowextension.h"
 
 namespace hemelb
 {
@@ -193,12 +194,21 @@ namespace hemelb
             extraData = ed;
           }
 
+          void SetFlowExtension(std::shared_ptr<redblood::FlowExtension> flowExt) {
+            this->flowExtension = flowExt;
+          }
+
+          const std::shared_ptr<redblood::FlowExtension> GetFlowExtension() const {
+            return this->flowExtension;
+          }
+
         protected:
           LatticeDensity minimumSimulationDensity;
           LatticePosition position;
           util::Vector3D<Dimensionless> normal;
           BoundaryComms* comms;
           IoletExtraData* extraData;
+          std::shared_ptr<redblood::FlowExtension> flowExtension;
           friend class IoletExtraData;
       };
 

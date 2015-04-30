@@ -204,6 +204,7 @@ namespace hemelb
         void DoIOForGeometry(const io::xml::Element geometryEl);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
+//        void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
 
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
