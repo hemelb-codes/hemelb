@@ -26,6 +26,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellIntegrationTests);
             CPPUNIT_TEST (testCellOutOfBounds);
             CPPUNIT_TEST (testIntegration);
+            CPPUNIT_TEST (testIntegrationWithoutCells);
             CPPUNIT_TEST (testSwamped);
           CPPUNIT_TEST_SUITE_END();
 
@@ -104,6 +105,21 @@ namespace hemelb
             auto const nodepos = mid + LatticePosition(0, 0, 8 - 5 - mid.z);
             auto const force = latticeData.GetSite(nodepos).GetForce() ;
             CPPUNIT_ASSERT(std::abs(force.z) > 1e-4);
+
+            AssertPresent("results/report.txt");
+            AssertPresent("results/report.xml");
+          }
+
+          // Check that the particles move and result in some force acting on the fluid
+          void testIntegrationWithoutCells()
+          {
+            // setup cell position
+            cells.clear();
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
+
+            // run
+            master->RegisterActor(*controller, 1);
+            master->RunSimulation();
 
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");
