@@ -168,7 +168,7 @@ namespace hemelb
             //! Skalak strain modulus
             PhysicalPressure strain;
 
-	    Moduli(PhysicalPressure b=0, PhysicalPressure s=0,
+            Moduli(PhysicalPressure b=0, PhysicalPressure s=0,
                 PhysicalPressure v=0, PhysicalPressure d=0, PhysicalPressure st=0)
                 : bending(b), surface(s), volume(v), dilation(d), strain(s)
             {
@@ -196,32 +196,32 @@ namespace hemelb
         Node2NodeForce nodeWall;
 
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-	    Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-	         Dimensionless scaleIn = 1e0)
-                : CellBase(std::move(verticesIn), origMesh, scaleIn)
-            {
-            }
-	    Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
-	             1e0)
-                : CellBase(verticesIn, origMesh, scaleIn)
-            {
-            }
-	    Cell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
-                : CellBase(mesh, origMesh, scaleIn)
-            {
-            }
-	    Cell(Mesh const &mesh)
-                : CellBase(mesh)
-            {
-            }
-	    Cell(std::shared_ptr<MeshData> const &mesh)
-                : CellBase(mesh)
-            {
-            }
-	    Cell(Cell const &cell, CellBase::shallow_clone const&)
-	        : CellBase(cell, CellBase::shallow_clone())
-            {
-            }
+        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+             Dimensionless scaleIn = 1e0)
+                  : CellBase(std::move(verticesIn), origMesh, scaleIn)
+              {
+              }
+        Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+                 1e0)
+                  : CellBase(verticesIn, origMesh, scaleIn)
+              {
+              }
+        Cell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
+                  : CellBase(mesh, origMesh, scaleIn)
+              {
+              }
+        Cell(Mesh const &mesh)
+                  : CellBase(mesh)
+              {
+              }
+        Cell(std::shared_ptr<MeshData> const &mesh)
+                  : CellBase(mesh)
+              {
+              }
+        Cell(Cell const &cell, CellBase::shallow_clone const&)
+            : CellBase(cell, CellBase::shallow_clone())
+              {
+              }
 #       else
           // inheriting constructors
           using CellBase::CellBase;

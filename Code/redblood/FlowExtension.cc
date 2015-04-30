@@ -8,7 +8,7 @@
 //
 
 #include "redblood/FlowExtension.h"
-#include <redblood/Mesh.h>
+#include "redblood/Mesh.h"
 #include "util/Vector3D.h"
 #include "units.h"
 
