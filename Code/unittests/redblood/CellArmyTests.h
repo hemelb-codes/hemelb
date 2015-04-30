@@ -59,6 +59,7 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellArmyTests);
           CPPUNIT_TEST (testCell2Fluid);
+          CPPUNIT_TEST (testCell2FluidWithoutCells);
           CPPUNIT_TEST (testCellInsertion);
           CPPUNIT_TEST (testCellRemoval);
           CPPUNIT_TEST (testCellOutput);
@@ -71,6 +72,7 @@ namespace hemelb
 
         public:
           void testCell2Fluid();
+          void testCell2FluidWithoutCells();
           void testFluid2Cell();
           void testCellInsertion();
           void testCellRemoval();
@@ -82,6 +84,15 @@ namespace hemelb
             return 32 + 2;
           }
       };
+
+      void CellArmyTests::testCell2FluidWithoutCells()
+      {
+        CellContainer cells;
+        redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
+        army.cell2Cell.cutoff = 0.5;
+        army.cell2Cell.intensity = 1.0;
+        army.Cell2FluidInteractions();
+      }
 
       void CellArmyTests::testCell2Fluid()
       {
