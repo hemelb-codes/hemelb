@@ -124,7 +124,7 @@ namespace hemelb
       /** Actor in charge of checking the maximum density difference across the domain */
       hemelb::lb::IncompressibilityChecker<hemelb::net::PhasedBroadcastRegular<> >* incompressibilityChecker;
 
-      std::shared_ptr<hemelb::net::IteratedAction> cellController;
+      std::shared_ptr<hemelb::redblood::CellController<hemelb::Traits<>::Kernel>> cellController;
       hemelb::colloids::ColloidController* colloidController;
       hemelb::net::Net communicationNet;
 

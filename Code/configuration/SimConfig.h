@@ -17,6 +17,8 @@
 #include "extraction/PropertyOutputFile.h"
 #include "extraction/GeometrySelectors.h"
 #include "io/xml/XmlAbstractionLayer.h"
+#include "redblood/Cell.h"
+#include "redblood/RBCInserter.h"
 
 namespace hemelb
 {
@@ -168,6 +170,42 @@ namespace hemelb
          */
         const MonitoringConfig* GetMonitoringConfiguration() const;
 
+        /**
+         * True if the XML file has a section specifying red blood cells.
+         * @return
+         */
+        bool HasRBCSection() const
+        {
+          return hasRBCSection;
+        }
+
+        /**
+         * Returns the object used to insert red blood cells into the simulation.
+         * @return
+         */
+        std::function<void(std::function<void(redblood::CellContainer::value_type)>)> GetInserter() const
+        {
+          return rbcinserter;
+        }
+
+        /**
+         * Gets the box size for the RBC CellController.
+         * @return
+         */
+        PhysicalDistance GetBoxSize() const
+        {
+          return boxSize;
+        }
+
+        /**
+         * Gets the halo for the RBC CellController.
+         * @return
+         */
+        PhysicalDistance GetHalo() const
+        {
+          return halo;
+        }
+
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -202,8 +240,10 @@ namespace hemelb
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
+        void DoIOForRedBloodCells(const io::xml::Element & rbcNode);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
+        void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
 
         void DoIOForBaseInOutlet(const io::xml::Element& ioletEl, lb::iolets::InOutLet* value);
 
@@ -290,6 +330,12 @@ namespace hemelb
         bool hasColloidSection;
         PhysicalPressure initialPressure_mmHg; ///< Pressure used to initialise the domain
         MonitoringConfig monitoringConfig; ///< Configuration of various checks/tests
+        /**
+         * True if the file has a redbloodcells section.
+         */
+        bool hasRBCSection;
+        std::function<void(std::function<void(redblood::CellContainer::value_type)>)> rbcinserter;
+        PhysicalDistance boxSize, halo;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
