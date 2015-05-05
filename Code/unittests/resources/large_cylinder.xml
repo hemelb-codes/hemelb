@@ -20,9 +20,11 @@
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,1.0)" />
       <position units="m" value="(0.0,0.0,-0.024)" />
-      <length units="m" value="0.1" />
-      <radius units="m" value="0.01" />
-      <fadelength units="m" value="0.5" />
+      <flowextension>
+        <length units="m" value="0.1" />
+        <radius units="m" value="0.01" />
+        <fadelength units="m" value="0.05" />
+      </flowextension>
     </inlet>
   </inlets>
   <outlets>
@@ -35,9 +37,11 @@
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
       <position units="m" value="(0.0,0.0,0.024)" />
-      <length units="m" value="0.1" />
-      <radius units="m" value="0.01" />
-      <fadelength units="m" value="0.5" />
+      <flowextension>
+        <length units="m" value="0.1" />
+        <radius units="m" value="0.01" />
+        <fadelength units="m" value="0.05" />
+      </flowextension>
     </outlet>
   </outlets>
   <visualisation>
@@ -52,6 +56,31 @@
       <maxstress units="Pa" value="0.1" />
     </range>
   </visualisation>
+  <redbloodcells>
+    <controller>
+      <halo units="m" value="0.01" />
+      <boxsize units="m" value="0.2" />
+    </controller>
+    <cell>
+      <moduli>
+        <bending units="mmHg" value="40000" />
+        <surface units="mmHg" value="50000" />
+        <volume units="mmHg" value="60000" />
+        <dilation units="mmHg" value="70000" />
+        <strain units="mmHg" value="80000" />
+      </moduli>
+      <interaction>
+        <intensity units="m" value="0.0" />
+        <cutoffdistance units="m" value="1.0" />
+        <exponent value="2"/>
+      </interaction>
+      <shape mesh_path="red_blood_cell.txt" />
+      <scale units="m" value="1.0" />
+    </cell>
+    <insertcondition>
+      <iterations value="10" />
+    </insertcondition>
+  </redbloodcells>
   <initialconditions>
     <pressure>
       <uniform units="mmHg" value="0.0" />
