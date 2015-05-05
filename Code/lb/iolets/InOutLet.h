@@ -10,6 +10,7 @@
 #ifndef HEMELB_LB_IOLETS_INOUTLET_H
 #define HEMELB_LB_IOLETS_INOUTLET_H
 
+#include <memory>
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
