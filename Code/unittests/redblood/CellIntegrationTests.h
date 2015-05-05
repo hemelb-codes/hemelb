@@ -44,6 +44,7 @@ namespace hemelb
             argv[5] = "-ss";
             argv[6] = "1111";
             FolderTestFixture::setUp();
+            CopyResourceToTempdir("red_blood_cell.txt");
             TiXmlDocument doc(resources::Resource("large_cylinder.xml").Path());
             CopyResourceToTempdir("large_cylinder.xml");
             std::vector<std::string> intel;

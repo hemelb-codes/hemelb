@@ -50,6 +50,8 @@ namespace hemelb
         //! Performs lattice to fluid interactions
         void Cell2FluidInteractions();
 
+        CellContainer::size_type size() { return cells.size(); }
+
 #   ifdef HEMELB_DOING_UNITTESTS
         //! Updates divide and conquer
         void updateDNC()
