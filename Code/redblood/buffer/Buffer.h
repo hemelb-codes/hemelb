@@ -31,12 +31,12 @@ namespace hemelb
           //!     is co-linear with the axis of the cylinder.
           //! \param[in] cells: Current cells in the buffer
           Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer())
-            : geometry(cyl), virtuals(cells), offset(cyl->origin)
+            : geometry(cyl), virtuals(cells), offset(0), interactionRadius(0)
           {
           }
           //! Constructs buffer from geometry only
           Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer())
-            : geometry(new Cylinder(cyl)), virtuals(cells), offset(cyl.origin)
+            : geometry(new Cylinder(cyl)), virtuals(cells), offset(0)
           {
           }
           //! Destroys buffer
@@ -54,32 +54,28 @@ namespace hemelb
           //! Drops the next nearest cell
           CellContainer::value_type drop();
 
-          LatticePosition const & GetOffset() const
-          {
-            return offset;
-          }
-          void SetOffset(LatticePosition const &off)
-          {
-            offset = off;
-          }
-#         ifdef HEMELB_DOING_UNITTESTS
-          CellContainer::value_type GetJustDropped() const
-          {
-            return justDropped;
-          }
-#         endif
+          //! Updates offset between LB and offset
+          void updateOffset();
 
 
         protected:
+          //! Returns next cell to drop
+          CellContainer::value_type nextCell() const;
+
           //! Geometry of the buffer
           std::shared_ptr<Cylinder> geometry;
           //! Container of virtual cells
           CellContainer virtuals;
           //! Offset between LB and buffer coordinate systems.
-          LatticePosition offset;
+          LatticeDistance offset;
           //! Last dropped
           CellContainer::value_type justDropped;
+          //! Last dropped cell's position
+          LatticeDistance lastZ;
+          //! Cell interaction distance
+          PhysicalDistance interactionRadius;
       };
+
     }
   }
 } // namespace hemelb::redblood
