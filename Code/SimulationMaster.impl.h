@@ -210,6 +210,12 @@ namespace hemelb
     }
     timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
+    if (simConfig->HasRBCSection()) {
+      hemelb::redblood::CellContainer cells;
+      cellController = std::make_shared<hemelb::redblood::CellController<hemelb::Traits<>::Kernel>>(*latticeData, cells, simConfig->GetBoxSize(), simConfig->GetHalo());
+      cellController->SetCellInsertion(simConfig->GetInserter());
+    }
+
     // Initialise and begin the steering.
     if (ioComms.OnIORank())
     {
