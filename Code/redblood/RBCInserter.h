@@ -35,7 +35,8 @@ namespace hemelb
          */
         RBCInserter(std::function<bool()> condition,
                     const std::string & mesh_path,
-                    const lb::iolets::InOutLet * inlet,
+                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(),
                     Dimensionless scale = 1.0);
 
         /**
@@ -47,8 +48,9 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, std::istream & mesh_stream,
-                    const lb::iolets::InOutLet * inlet,
-                       Dimensionless scale = 1.0);
+                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(),
+                    Dimensionless scale = 1.0);
 
         /**
          * Creates an RBC Inserter.
@@ -59,12 +61,13 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, const MeshData & shape,
-                    const lb::iolets::InOutLet * inlet,
+                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(),
                     Dimensionless scale = 1.0);
 
         /**
          * Cell insertion callback called on each step of the simulation.  Cells
-         * are inserted into the simulation while condition() evaluates to true.
+         * are inserted into the inlets while condition() evaluates to true.
          * Multiple cells are potentially inserted on each iteration.
          *
          * @param insertFn the function to insert a new cell into the simulation
@@ -72,16 +75,19 @@ namespace hemelb
          * @see hemelb::redblood::CellArmy::SetCellInsertion
          * @see hemelb::redblood::CellArmy::CallCellInsertion
          */
-        void operator()(std::function<void(CellContainer::value_type)> insertFn);
+        void operator()(std::function<void(CellContainer::value_type)> insertFn) const;
 
         void SetShape(const MeshData & shape);
         std::shared_ptr<const MeshData> GetShape() const;
 
-        void SetInLet(const lb::iolets::InOutLet *);
-        const lb::iolets::InOutLet * GetInLet() const;
+        void AddInLet(lb::iolets::InOutLet *);
+        void RemoveInLet(lb::iolets::InOutLet *);
 
         void SetScale(Dimensionless scale);
         Dimensionless GetScale() const;
+
+        void SetModuli(Cell::Moduli & moduli);
+        const Cell::Moduli & GetModuli() const;
 
         void SetCondition(std::function<bool()> condition);
         std::function<bool()> GetCondition() const;
@@ -94,8 +100,11 @@ namespace hemelb
         //! The shape of the cells to insert
         std::shared_ptr<const MeshData> shape;
 
-        //! The iolet to insert the cell into
-        const lb::iolets::InOutLet * inlet;
+        //! The iolets to insert cells into
+        std::vector<lb::iolets::InOutLet *> inlets;
+
+        //! The cell moduli
+        Cell::Moduli moduli;
 
         //! The initial scale of the new cells
         Dimensionless scale;

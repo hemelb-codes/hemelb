@@ -8,40 +8,49 @@ namespace hemelb
 
 RBCInserter::RBCInserter(std::function<bool()> condition,
                          const std::string & mesh_path,
-                         const lb::iolets::InOutLet * inlet,
+                         std::vector<lb::iolets::InOutLet *> inlets,
+                         Cell::Moduli moduli,
                          Dimensionless scale) :
-    condition(condition), inlet(inlet), scale(scale)
+    condition(condition), inlets(inlets), moduli(moduli), scale(scale)
 {
   this->shape = read_mesh(mesh_path);
 }
 
 RBCInserter::RBCInserter(std::function<bool()> condition,
                          std::istream & mesh_stream,
-                         const lb::iolets::InOutLet * inlet,
+                         std::vector<lb::iolets::InOutLet *> inlets,
+                         Cell::Moduli moduli,
                          Dimensionless scale) :
-    condition(condition), inlet(inlet), scale(scale)
+    condition(condition), inlets(inlets), moduli(moduli), scale(scale)
 {
   this->shape = read_mesh(mesh_stream);
 }
 
 RBCInserter::RBCInserter(std::function<bool()> condition,
                          const MeshData & shape,
-                         const lb::iolets::InOutLet * inlet,
+                         std::vector<lb::iolets::InOutLet *> inlets,
+                         Cell::Moduli moduli,
                          Dimensionless scale) :
-    condition(condition), shape(new MeshData(shape)), inlet(inlet), scale(scale)
+    condition(condition), shape(new MeshData(shape)), inlets(inlets), moduli(moduli), scale(scale)
 {
 }
 
-void RBCInserter::operator()(std::function<void(CellContainer::value_type)> insertFn) {
-  while (condition()) {
-    std::shared_ptr<Cell> cell = std::make_shared<Cell>(this->shape->vertices,
-                                                        Mesh(*this->shape),
-                                                        this->scale);
-    const std::shared_ptr<FlowExtension> flowExt = this->inlet->GetFlowExtension();
-    *cell += this->inlet->GetPosition();
-    if (flowExt)
-      *cell += flowExt->normal * flowExt->length;
-    insertFn(cell);
+void RBCInserter::operator()(std::function<void(CellContainer::value_type)> insertFn) const
+{
+  for (auto inlet: inlets) {
+    if (condition()) {
+      std::shared_ptr<Cell> cell = std::make_shared<Cell>(this->shape->vertices,
+                                                          Mesh(*this->shape),
+                                                          this->scale);
+      cell->moduli = this->moduli;
+      const std::shared_ptr<FlowExtension> flowExt = inlet->GetFlowExtension();
+      *cell += inlet->GetPosition();
+      if (flowExt)
+        *cell += flowExt->normal * flowExt->length;
+      insertFn(cell);
+    }
+    else
+      break;
   }
 }
 
@@ -54,11 +63,15 @@ std::shared_ptr<const MeshData> RBCInserter::GetShape() const
   return this->shape;
 }
 
-void RBCInserter::SetInLet(const lb::iolets::InOutLet * inlet) {
-  this->inlet = inlet;
+void RBCInserter::AddInLet(lb::iolets::InOutLet * inlet)
+{
+  this->inlets.push_back(inlet);
 }
-const lb::iolets::InOutLet * RBCInserter::GetInLet() const {
-  return this->inlet;
+void RBCInserter::RemoveInLet(lb::iolets::InOutLet * inlet)
+{
+  this->inlets.erase(
+      std::remove(std::begin(this->inlets), std::end(this->inlets), inlet),
+      std::end(this->inlets));
 }
 
 void RBCInserter::SetScale(Dimensionless scale)
@@ -68,6 +81,14 @@ void RBCInserter::SetScale(Dimensionless scale)
 Dimensionless RBCInserter::GetScale() const
 {
   return this->scale;
+}
+
+void RBCInserter::SetModuli(Cell::Moduli & moduli)
+{
+  this->moduli = moduli;
+}
+const Cell::Moduli & RBCInserter::GetModuli() const {
+  return this->moduli;
 }
 
 void RBCInserter::SetCondition(std::function<bool()> condition)
