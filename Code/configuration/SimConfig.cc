@@ -262,9 +262,11 @@ namespace hemelb
       GetDimensionalValue(moduliNode.GetChildOrThrow("strain"), "mmHg", moduli.strain);
       const io::xml::Element nodeNode = cellNode.GetChildOrThrow("interaction");
       redblood::Node2NodeForce nodeWall;
-      GetDimensionalValue(nodeNode.GetChildOrThrow("intensity"), "m", nodeWall.intensity);
+      GetDimensionalValue(nodeNode.GetChildOrThrow("intensity"),
+                          "dimensionless",
+                          nodeWall.intensity);
       GetDimensionalValue(nodeNode.GetChildOrThrow("cutoffdistance"), "m", nodeWall.cutoff);
-      nodeNode.GetChildOrThrow("exponent").GetAttributeOrThrow("value", nodeWall.exponent);
+      GetDimensionalValue(nodeNode.GetChildOrThrow("exponent"), "dimensionless", nodeWall.exponent);
       std::string mesh_path = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       LatticeDistance scale;
       GetDimensionalValue(cellNode.GetChildOrThrow("scale"), "m", scale);
