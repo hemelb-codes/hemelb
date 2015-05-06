@@ -210,10 +210,16 @@ namespace hemelb
     }
     timings[hemelb::reporting::Timers::colloidInitialisation].Stop();
 
-    if (simConfig->HasRBCSection()) {
+    if (simConfig->HasRBCSection())
+    {
       hemelb::redblood::CellContainer cells;
-      cellController = std::make_shared<hemelb::redblood::CellController<hemelb::Traits<>::Kernel>>(*latticeData, cells, simConfig->GetBoxSize(), simConfig->GetHalo());
-      cellController->SetCellInsertion(simConfig->GetInserter());
+      hemelb::redblood::CellController<hemelb::Traits<>::Kernel> * controller =
+          new hemelb::redblood::CellController<hemelb::Traits<>::Kernel>(*latticeData,
+                                                                         cells,
+                                                                         simConfig->GetBoxSize(),
+                                                                         simConfig->GetHalo());
+      controller->SetCellInsertion(simConfig->GetInserter());
+      cellController = std::shared_ptr(controller);
     }
 
     // Initialise and begin the steering.
