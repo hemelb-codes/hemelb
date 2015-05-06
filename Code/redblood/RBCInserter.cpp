@@ -11,7 +11,7 @@ namespace hemelb
                              Dimensionless scale) :
         condition(condition), inlets(inlets), moduli(moduli), scale(scale)
     {
-      this->shape = read_mesh(mesh_path);
+      shape = read_mesh(mesh_path);
     }
 
     RBCInserter::RBCInserter(std::function<bool()> condition, std::istream & mesh_stream,
@@ -19,7 +19,7 @@ namespace hemelb
                              Dimensionless scale) :
         condition(condition), inlets(inlets), moduli(moduli), scale(scale)
     {
-      this->shape = read_mesh(mesh_stream);
+      shape = read_mesh(mesh_stream);
     }
 
     RBCInserter::RBCInserter(std::function<bool()> condition, const MeshData & shape,
@@ -36,10 +36,9 @@ namespace hemelb
       {
         if (condition())
         {
-          std::shared_ptr<Cell> cell = std::make_shared<Cell>(this->shape->vertices,
-                                                              Mesh(*this->shape),
-                                                              this->scale);
-          cell->moduli = this->moduli;
+          std::shared_ptr < Cell > cell = std::make_shared < Cell
+              > (shape->vertices, Mesh(*shape), scale);
+          cell->moduli = moduli;
           const std::shared_ptr<FlowExtension> flowExt = inlet->GetFlowExtension();
           *cell += inlet->GetPosition();
           if (flowExt)
@@ -51,50 +50,49 @@ namespace hemelb
       }
     }
 
-    void RBCInserter::SetShape(const MeshData & shape)
+    void RBCInserter::SetShape(const MeshData & s)
     {
-      this->shape.reset(new MeshData(shape));
+      shape.reset(new MeshData(s));
     }
     std::shared_ptr<const MeshData> RBCInserter::GetShape() const
     {
-      return this->shape;
+      return shape;
     }
 
     void RBCInserter::AddInLet(lb::iolets::InOutLet * inlet)
     {
-      this->inlets.push_back(inlet);
+      inlets.push_back(inlet);
     }
     void RBCInserter::RemoveInLet(lb::iolets::InOutLet * inlet)
     {
-      this->inlets.erase(std::remove(std::begin(this->inlets), std::end(this->inlets), inlet),
-                         std::end(this->inlets));
+      inlets.erase(std::remove(std::begin(inlets), std::end(inlets), inlet), std::end(inlets));
     }
 
-    void RBCInserter::SetScale(Dimensionless scale)
+    void RBCInserter::SetScale(Dimensionless s)
     {
-      this->scale = scale;
+      scale = s;
     }
     Dimensionless RBCInserter::GetScale() const
     {
-      return this->scale;
+      return scale;
     }
 
-    void RBCInserter::SetModuli(Cell::Moduli & moduli)
+    void RBCInserter::SetModuli(Cell::Moduli & mod)
     {
-      this->moduli = moduli;
+      moduli = mod;
     }
     const Cell::Moduli & RBCInserter::GetModuli() const
     {
-      return this->moduli;
+      return moduli;
     }
 
-    void RBCInserter::SetCondition(std::function<bool()> condition)
+    void RBCInserter::SetCondition(std::function<bool()> cond)
     {
-      this->condition = condition;
+      condition = cond;
     }
     std::function<bool()> RBCInserter::GetCondition() const
     {
-      return this->condition;
+      return condition;
     }
 
   }
