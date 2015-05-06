@@ -70,7 +70,7 @@
         <strain units="mmHg" value="80000" />
       </moduli>
       <interaction>
-        <intensity units="m" value="0.0" />
+        <intensity units="dimensionless" value="0.0" />
         <cutoffdistance units="m" value="1.0" />
         <exponent value="2"/>
       </interaction>

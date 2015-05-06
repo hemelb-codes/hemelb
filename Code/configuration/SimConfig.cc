@@ -266,7 +266,7 @@ namespace hemelb
                           "dimensionless",
                           nodeWall.intensity);
       GetDimensionalValue(nodeNode.GetChildOrThrow("cutoffdistance"), "m", nodeWall.cutoff);
-      GetDimensionalValue(nodeNode.GetChildOrThrow("exponent"), "dimensionless", nodeWall.exponent);
+      nodeNode.GetChildOrThrow("exponent").GetAttributeOrThrow("value", nodeWall.exponent);
       std::string mesh_path = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       LatticeDistance scale;
       GetDimensionalValue(cellNode.GetChildOrThrow("scale"), "m", scale);
