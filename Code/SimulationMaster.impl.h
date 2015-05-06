@@ -38,10 +38,10 @@ namespace hemelb
    * object.
    */
   template<class TRAITS>
-  SimulationMaster<TRAITS>::SimulationMaster(
-      hemelb::configuration::CommandLine & options, const hemelb::net::IOCommunicator& ioComm) :
-    ioComms(ioComm), timings(ioComm), build_info(), cellController(nullptr),
-    communicationNet(ioComm)
+  SimulationMaster<TRAITS>::SimulationMaster(hemelb::configuration::CommandLine & options,
+                                             const hemelb::net::IOCommunicator& ioComm) :
+      ioComms(ioComm), timings(ioComm), build_info(), cellController(nullptr),
+          communicationNet(ioComm)
   {
     timings[hemelb::reporting::Timers::total].Start();
 
@@ -60,7 +60,9 @@ namespace hemelb
     imagesPerSimulation = options.NumberOfImages();
     steeringSessionId = options.GetSteeringSessionId();
 
-    fileManager = new hemelb::io::PathManager(options, IsCurrentProcTheIOProc(), GetProcessorCount());
+    fileManager = new hemelb::io::PathManager(options,
+                                              IsCurrentProcTheIOProc(),
+                                              GetProcessorCount());
     simConfig = hemelb::configuration::SimConfig::New(fileManager->GetInputFile());
     unitConverter = &simConfig->GetUnitConverter();
     monitoringConfig = simConfig->GetMonitoringConfiguration();
@@ -160,12 +162,15 @@ namespace hemelb
 
     hemelb::geometry::GeometryReader reader(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                             latticeType::GetLatticeInfo(),
-                                            timings, ioComms);
+                                            timings,
+                                            ioComms);
     hemelb::geometry::Geometry readGeometryData =
         reader.LoadAndDecompose(simConfig->GetDataFilePath());
 
     // Create a new lattice based on that info and return it.
-    latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(), readGeometryData, ioComms);
+    latticeData = new hemelb::geometry::LatticeData(latticeType::GetLatticeInfo(),
+                                                    readGeometryData,
+                                                    ioComms);
 
     timings[hemelb::reporting::Timers::latDatInitialise].Stop();
 
@@ -175,11 +180,11 @@ namespace hemelb
                                                                     communicationNet);
     hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Initialising LBM.");
     latticeBoltzmannModel = new hemelb::lb::LBM<Traits>(simConfig,
-                                                             &communicationNet,
-                                                             latticeData,
-                                                             simulationState,
-                                                             timings,
-                                                             neighbouringDataManager);
+                                                        &communicationNet,
+                                                        latticeData,
+                                                        simulationState,
+                                                        timings,
+                                                        neighbouringDataManager);
 
     hemelb::lb::MacroscopicPropertyCache& propertyCache = latticeBoltzmannModel->GetPropertyCache();
 
@@ -213,13 +218,14 @@ namespace hemelb
     if (simConfig->HasRBCSection())
     {
       hemelb::redblood::CellContainer cells;
-      hemelb::redblood::CellController<hemelb::Traits<>::Kernel> * controller =
+      hemelb::redblood::CellController < hemelb::Traits<>::Kernel > *controller =
           new hemelb::redblood::CellController<hemelb::Traits<>::Kernel>(*latticeData,
                                                                          cells,
                                                                          simConfig->GetBoxSize(),
                                                                          simConfig->GetHalo());
       controller->SetCellInsertion(simConfig->GetInserter());
-      cellController = std::shared_ptr(controller);
+      cellController = std::shared_ptr < hemelb::redblood::CellController
+          < hemelb::Traits<>::Kernel >> (controller);
     }
 
     // Initialise and begin the steering.
@@ -290,7 +296,10 @@ namespace hemelb
                                                           ioComms,
                                                           *unitConverter);
 
-    latticeBoltzmannModel->Initialise(visualisationControl, inletValues, outletValues, unitConverter);
+    latticeBoltzmannModel->Initialise(visualisationControl,
+                                      inletValues,
+                                      outletValues,
+                                      unitConverter);
     neighbouringDataManager->ShareNeeds();
     neighbouringDataManager->TransferNonFieldDependentInformation();
 
@@ -314,7 +323,8 @@ namespace hemelb
     if (simConfig->PropertyOutputCount() > 0)
     {
 
-      for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount(); ++outputNumber)
+      for (unsigned outputNumber = 0; outputNumber < simConfig->PropertyOutputCount();
+          ++outputNumber)
       {
         simConfig->GetPropertyOutput(outputNumber)->filename = fileManager->GetDataExtractionPath()
             + simConfig->GetPropertyOutput(outputNumber)->filename;
@@ -323,7 +333,8 @@ namespace hemelb
       propertyExtractor = new hemelb::extraction::PropertyActor(*simulationState,
                                                                 simConfig->GetPropertyOutputs(),
                                                                 *propertyDataSource,
-                                                                timings, ioComms);
+                                                                timings,
+                                                                ioComms);
     }
 
     imagesPeriod = OutputPeriod(imagesPerSimulation);
@@ -547,8 +558,7 @@ namespace hemelb
      This is to be done. */
 
     bool renderForNetworkStream = false;
-    if (ioComms.OnIORank()
-        && !steeringCpt->readyForNextImage)
+    if (ioComms.OnIORank() && !steeringCpt->readyForNextImage)
     {
       renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
       steeringCpt->readyForNextImage = renderForNetworkStream;
@@ -585,10 +595,10 @@ namespace hemelb
     if ( (simulationState->GetTimeStep() % 500 == 0) && colloidController != nullptr)
       colloidController->OutputInformation(simulationState->GetTimeStep());
 
-  #ifndef NO_STREAKLINES
+#ifndef NO_STREAKLINES
     visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(),
                                               simulationState->GetTotalTimeSteps());
-  #endif
+#endif
 
     if (writtenImagesCompleted.count(simulationState->GetTimeStep()) > 0)
     {
@@ -645,9 +655,9 @@ namespace hemelb
     }
 
     // If using streaklines, the velocity will be needed.
-  #ifndef NO_STREAKLINES
+#ifndef NO_STREAKLINES
     propertyCache.velocityCache.SetRefreshFlag();
-  #endif
+#endif
   }
 
   /**
