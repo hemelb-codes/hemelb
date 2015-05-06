@@ -19,9 +19,9 @@ namespace hemelb
     {
       class FadeInOutIntegrationTests : public hemelb::unittests::helpers::FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE(FadeInOutIntegrationTests);
-            CPPUNIT_TEST(testIntegration);
-          CPPUNIT_TEST_SUITE_END();
+        CPPUNIT_TEST_SUITE(FadeInOutIntegrationTests);
+          CPPUNIT_TEST(testIntegration);CPPUNIT_TEST_SUITE_END()
+          ;
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
           typedef hemelb::redblood::CellController<Traits::Kernel> CellControl;
@@ -36,10 +36,15 @@ namespace hemelb
             CopyResourceToTempdir("red_blood_cell.txt");
 
             std::vector<std::string> intel;
-            intel.push_back("simulation"); intel.push_back("steps"); intel.push_back("value");
+            intel.push_back("simulation");
+            intel.push_back("steps");
+            intel.push_back("value");
             ModifyXMLInput("large_cylinder.xml", std::move(intel), 100);
             intel.clear();
-            intel.push_back("redbloodcells"); intel.push_back("insertcondition"); intel.push_back("iterations"); intel.push_back("value");
+            intel.push_back("redbloodcells");
+            intel.push_back("insertcondition");
+            intel.push_back("iterations");
+            intel.push_back("value");
             ModifyXMLInput("large_cylinder.xml", std::move(intel), 10);
 
             argv[0] = "hemelb";
@@ -60,15 +65,18 @@ namespace hemelb
             master.reset();
           }
 
-          void testIntegration() {
+          void testIntegration()
+          {
             // add callback to put cell positions in a vector
             std::vector<std::vector<LatticePosition>> positions;
-            std::function<void(const hemelb::redblood::CellContainer &)> output_callback = [&positions](const hemelb::redblood::CellContainer & cells) {
-              std::vector<LatticePosition> iteration;
-              for (auto cell: cells)
-                iteration.push_back(cell->GetBarycenter());
-              positions.push_back(iteration);
-            };
+            std::function<void(const hemelb::redblood::CellContainer &)> output_callback =
+                [&positions](const hemelb::redblood::CellContainer & cells)
+                {
+                  std::vector<LatticePosition> iteration;
+                  for (auto cell: cells)
+                  iteration.push_back(cell->GetBarycenter());
+                  positions.push_back(iteration);
+                };
             controller->AddCellChangeListener(output_callback);
 
             // run the simulation
@@ -82,9 +90,10 @@ namespace hemelb
           std::shared_ptr<MasterSim> master;
           std::shared_ptr<hemelb::configuration::CommandLine> options;
           int const argc = 7;
-          char const * argv [7];
+          char const * argv[7];
 
-      };  // class FadeInOutIntegrationTests
+      };
+      // class FadeInOutIntegrationTests
 
       CPPUNIT_TEST_SUITE_REGISTRATION(FadeInOutIntegrationTests);
 
