@@ -246,7 +246,8 @@ namespace hemelb
       return ioletList;
     }
 
-    void SimConfig::DoIOForRedBloodCells(const io::xml::Element & rbcNode) {
+    void SimConfig::DoIOForRedBloodCells(const io::xml::Element & rbcNode)
+    {
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "m", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "m", boxSize);
@@ -254,14 +255,14 @@ namespace hemelb
       const io::xml::Element cellNode = rbcNode.GetChildOrThrow("cell");
       const io::xml::Element moduliNode = cellNode.GetChildOrThrow("moduli");
       redblood::Cell::Moduli moduli;
-      GetDimensionalValue(moduliNode.GetChildOrThrow("bending"),  "mmHg", moduli.bending);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("surface"),  "mmHg", moduli.surface);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("volume"),   "mmHg", moduli.volume);
+      GetDimensionalValue(moduliNode.GetChildOrThrow("bending"), "mmHg", moduli.bending);
+      GetDimensionalValue(moduliNode.GetChildOrThrow("surface"), "mmHg", moduli.surface);
+      GetDimensionalValue(moduliNode.GetChildOrThrow("volume"), "mmHg", moduli.volume);
       GetDimensionalValue(moduliNode.GetChildOrThrow("dilation"), "mmHg", moduli.dilation);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("strain"),   "mmHg", moduli.strain);
+      GetDimensionalValue(moduliNode.GetChildOrThrow("strain"), "mmHg", moduli.strain);
       const io::xml::Element nodeNode = cellNode.GetChildOrThrow("interaction");
       redblood::Node2NodeForce nodeWall;
-      GetDimensionalValue(nodeNode.GetChildOrThrow("intensity"),      "m", nodeWall.intensity);
+      GetDimensionalValue(nodeNode.GetChildOrThrow("intensity"), "m", nodeWall.intensity);
       GetDimensionalValue(nodeNode.GetChildOrThrow("cutoffdistance"), "m", nodeWall.cutoff);
       nodeNode.GetChildOrThrow("exponent").GetAttributeOrThrow("value", nodeWall.exponent);
       std::string mesh_path = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
@@ -271,9 +272,11 @@ namespace hemelb
       const io::xml::Element insertNode = rbcNode.GetChildOrThrow("insertcondition");
       std::size_t iterations;
       insertNode.GetChildOrThrow("iterations").GetAttributeOrThrow("value", iterations);
-      std::function<bool()> condition = [&iterations]() {
+      std::function < bool() > condition = [&iterations]()
+      {
         static std::size_t i = 0;
-        if (++i == iterations) {
+        if (++i == iterations)
+        {
           i = 0;
           return true;
         }
@@ -284,7 +287,8 @@ namespace hemelb
     }
 
     void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
-                                         const io::xml::Element & ioletNode) {
+                                         const io::xml::Element & ioletNode)
+    {
       if (ioletNode == io::xml::Element::Missing())
         return;
 
@@ -300,7 +304,8 @@ namespace hemelb
       GetDimensionalValue(ioletNode.GetChildOrThrow("fadelength"), "m", fadelength);
 
       // Set the IOlet's flow extension
-      iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(normal, origin, length, radius, fadelength));
+      iolet->SetFlowExtension(std::make_shared < hemelb::redblood::FlowExtension
+          > (normal, origin, length, radius, fadelength));
     }
 
     lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)
@@ -583,8 +588,8 @@ namespace hemelb
       GetDimensionalValue(conditionEl.GetChildOrThrow("mean"), "mmHg", tempP);
       newIolet->SetPressureMean(unitConverter->ConvertPressureToLatticeUnits(tempP));
 
-      newIolet->SetPhase(GetDimensionalValueInLatticeUnits<Angle>(conditionEl.GetChildOrThrow("phase"),
-                                                                  "rad"));
+      newIolet->SetPhase(GetDimensionalValueInLatticeUnits < Angle
+          > (conditionEl.GetChildOrThrow("phase"), "rad"));
 
       LatticeTime period;
       GetDimensionalValueInLatticeUnits(conditionEl.GetChildOrThrow("period"), "s", period);
@@ -637,10 +642,10 @@ namespace hemelb
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
 
       const io::xml::Element maximumEl = conditionEl.GetChildOrThrow("maximum");
-      newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits<PhysicalSpeed>(maximumEl, "m/s"));
+      newIolet->SetMaxSpeed(GetDimensionalValueInLatticeUnits < PhysicalSpeed > (maximumEl, "m/s"));
 
       if (warmUpSteps != 0)
       {
@@ -659,18 +664,18 @@ namespace hemelb
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
 
       const io::xml::Element pgAmpEl = conditionEl.GetChildOrThrow("pressure_gradient_amplitude");
-      newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits<
-          LatticePressureGradient>(pgAmpEl, "mmHg/m"));
+      newIolet->SetPressureGradientAmplitude(GetDimensionalValueInLatticeUnits
+          < LatticePressureGradient > (pgAmpEl, "mmHg/m"));
 
       const io::xml::Element periodEl = conditionEl.GetChildOrThrow("period");
-      newIolet->SetPeriod(GetDimensionalValueInLatticeUnits<LatticeTime>(periodEl, "s"));
+      newIolet->SetPeriod(GetDimensionalValueInLatticeUnits < LatticeTime > (periodEl, "s"));
 
       const io::xml::Element womNumEl = conditionEl.GetChildOrThrow("womersley_number");
-      newIolet->SetWomersleyNumber(GetDimensionalValueInLatticeUnits<Dimensionless>(womNumEl,
-                                                                                    "dimensionless"));
+      newIolet->SetWomersleyNumber(GetDimensionalValueInLatticeUnits < Dimensionless
+          > (womNumEl, "dimensionless"));
 
       return newIolet;
     }
@@ -687,7 +692,7 @@ namespace hemelb
       newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
-      newIolet->SetRadius(GetDimensionalValueInLatticeUnits<LatticeDistance>(radiusEl, "m"));
+      newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));
 
       return newIolet;
     }
@@ -752,8 +757,8 @@ namespace hemelb
             << criterionEl.GetPath();
       }
       monitoringConfig.convergenceVariable = extraction::OutputField::Velocity;
-      monitoringConfig.convergenceReferenceValue =
-          GetDimensionalValueInLatticeUnits<LatticeSpeed>(criterionEl, "m/s");
+      monitoringConfig.convergenceReferenceValue = GetDimensionalValueInLatticeUnits < LatticeSpeed
+          > (criterionEl, "m/s");
     }
 
     const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const

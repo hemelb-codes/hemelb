@@ -33,11 +33,10 @@ namespace hemelb
          * shape from
          * @param scale the scale of the cell to insert
          */
-        RBCInserter(std::function<bool()> condition,
-                    const std::string & mesh_path,
-                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(),
-                    Dimensionless scale = 1.0);
+        RBCInserter(std::function<bool()> condition, const std::string & mesh_path,
+                    std::vector<lb::iolets::InOutLet *> inlets =
+                        std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
 
         /**
          * Creates an RBC Inserter.
@@ -48,9 +47,9 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, std::istream & mesh_stream,
-                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(),
-                    Dimensionless scale = 1.0);
+                    std::vector<lb::iolets::InOutLet *> inlets =
+                        std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
 
         /**
          * Creates an RBC Inserter.
@@ -61,9 +60,9 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, const MeshData & shape,
-                    std::vector<lb::iolets::InOutLet *> inlets = std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(),
-                    Dimensionless scale = 1.0);
+                    std::vector<lb::iolets::InOutLet *> inlets =
+                        std::vector<lb::iolets::InOutLet *>(),
+                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
 
         /**
          * Cell insertion callback called on each step of the simulation.  Cells
