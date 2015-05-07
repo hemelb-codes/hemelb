@@ -14,7 +14,7 @@
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
 #include "lb/SimulationState.h"
-#include "redblood/flowextension.h"
+#include "redblood/FlowExtension.h"
 
 namespace hemelb
 {
