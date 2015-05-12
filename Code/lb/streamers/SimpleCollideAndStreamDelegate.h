@@ -10,6 +10,8 @@
 #ifndef HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAMDELEGATE_H
 #define HEMELB_LB_STREAMERS_SIMPLECOLLIDEANDSTREAMDELEGATE_H
 
+#include "lb/streamers/BaseStreamerDelegate.h"
+
 namespace hemelb
 {
   namespace lb
