@@ -346,13 +346,13 @@ namespace hemelb
       }
     }
 
-    void Mesh::operator*=(util::Matrix3D const &scale)
+    void Mesh::operator*=(util::Matrix3D const &rotation)
     {
       auto const barycenter = GetBarycenter();
 
       for (auto &vertex : mesh->vertices)
       {
-        scale.timesVector(vertex - barycenter, vertex);
+        rotation.timesVector(vertex - barycenter, vertex);
         vertex += barycenter;
       }
     }

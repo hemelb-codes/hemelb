@@ -150,7 +150,7 @@ namespace hemelb
         //! Scale mesh around barycenter
         void operator*=(Dimensionless const &scale);
         //! Scale by matrix around barycenter
-        void operator*=(util::Matrix3D const &scale);
+        void operator*=(util::Matrix3D const &rotation);
         //! Translate mesh
         void operator+=(LatticePosition const &offset);
         //! Transform mesh
