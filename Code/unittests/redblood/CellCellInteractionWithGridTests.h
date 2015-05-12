@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"
 #include "unittests/redblood/Fixtures.h"
+#include "unittests/helpers/LatticeDataAccess.h"
 
 namespace hemelb
 {
