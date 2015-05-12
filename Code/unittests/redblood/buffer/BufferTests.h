@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "unittests/redblood/Fixtures.h"
+#include "unittests/helpers/Comparisons.h"
 #include "redblood/buffer/Buffer.h"
 
 namespace hemelb
@@ -117,7 +118,7 @@ namespace hemelb
               auto expected_pos
                 = positions[i] + cylinder.normal * buffer->GetOffset() + cylinder.origin;
               CPPUNIT_ASSERT(cell == cells[i]);
-              CPPUNIT_ASSERT(is_zero(cell->GetBarycenter() - expected_pos));
+              CPPUNIT_ASSERT(helpers::is_zero(cell->GetBarycenter() - expected_pos));
               CPPUNIT_ASSERT(buffer->GetJustDropped() == cell);
             }
 
