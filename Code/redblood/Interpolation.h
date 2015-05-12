@@ -78,22 +78,12 @@ namespace hemelb
         {
           return latDat.GetContiguousSiteId(current);
         }
-        // //! computes local index
-        // geometry::Site<geometry::LatticeData const>
-        //   Site(geometry::LatticeData const &latDat) const {
-        //     return latDat.GetSite(current);
-        // }
-        // //! computes local index
-        // geometry::Site<geometry::LatticeData>
-        //   Site(geometry::LatticeData const &latDat) const {
-        //     return latDat.GetSite(current);
-        // }
 
       protected:
         //! Minimum indices
-        LatticeVector const min;
+        LatticeVector min;
         //! Maximum indices
-        LatticeVector const max;
+        LatticeVector max;
         //! Current point
         LatticeVector current;
     };
