@@ -11,9 +11,13 @@
 #define HEMELB_UNITTESTS_REDBLOOD_CELLINTEGRATION_H
 
 #include <cppunit/TestFixture.h>
+#include "Traits.h"
+#include "SimulationMaster.h"
 #include "redblood/Cell.h"
+#include "redblood/CellController.h"
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/helpers/LatticeDataAccess.h"
+#include "unittests/helpers/FolderTestFixture.h"
 
 namespace hemelb
 {
@@ -21,7 +25,7 @@ namespace hemelb
   {
     namespace redblood
     {
-      class CellIntegrationTests : public FolderTestFixture
+      class CellIntegrationTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (CellIntegrationTests);
             CPPUNIT_TEST (testCellOutOfBounds);
