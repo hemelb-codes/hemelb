@@ -29,6 +29,7 @@ namespace hemelb
          * @return
          */
         distribn_t* operator [](const unsigned int row);
+        distribn_t const * operator [](const unsigned int row) const;
 
         /**
          * Multiplies all the entries of the matrix by a given value
@@ -64,12 +65,16 @@ namespace hemelb
          */
         Matrix3D operator*(distribn_t scalarValue) const;
 
+        Matrix3D operator*(Matrix3D const &a) const;
+        util::Vector3D<double> operator*(util::Vector3D<double>  const &a) const;
+
       private:
 
         //! Internal data representation
         distribn_t matrix[3][3];
 
     };
+    std::ostream& operator<<(std::ostream& stream, Matrix3D const &a);
   } /* namespace util */
 } /* namespace hemelb */
 #endif /* HEMELB_UTIL_MATRIX3D_H */

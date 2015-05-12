@@ -25,6 +25,10 @@ namespace hemelb
     {
       return matrix[row];
     }
+    distribn_t const * Matrix3D::operator [](const unsigned int row) const
+    {
+      return matrix[row];
+    }
 
     void Matrix3D::operator*=(distribn_t value)
     {
@@ -69,6 +73,37 @@ namespace hemelb
         }
       }
       return returnMatrix;
+    }
+
+    Matrix3D Matrix3D::operator*(Matrix3D const &a) const
+    {
+      Matrix3D result;
+      for(size_t i(0); i < 3; ++i)
+      {
+        for(size_t j(0); j < 3; ++j)
+        {
+          result.matrix[i][j] = 0;
+          for(size_t k(0); k < 3; ++k)
+          {
+            result.matrix[i][j] += matrix[i][k] * a.matrix[k][j];
+          }
+        }
+      }
+      return result;
+    }
+
+    util::Vector3D<double> Matrix3D::operator*(util::Vector3D<double> const &a) const
+    {
+      util::Vector3D<double> result;
+      timesVector(a, result);
+      return result;
+    }
+
+    std::ostream& operator<<(std::ostream& stream, Matrix3D const &a)
+    {
+      return stream << a[0][0] << " " << a[0][1] << " " << a[0][2] << "\n"
+             << a[1][0] << " " << a[1][1] << " " << a[1][2] << "\n"
+             << a[2][0] << " " << a[2][1] << " " << a[2][2];
     }
 
   } /* namespace util */
