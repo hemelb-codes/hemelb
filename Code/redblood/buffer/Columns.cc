@@ -60,32 +60,35 @@ namespace hemelb
           return B * A;
         }
 
-        LatticeDistance maxExtension(Mesh const &mesh, LatticePosition const &direction)
+        LatticeDistance maxExtension(
+            MeshData::Vertices const &vertices, LatticePosition const &direction)
         {
-          LatticePosition const barycenter = mesh.GetBarycenter();
+          auto const barycenter = hemelb::redblood::barycenter(vertices);
           LatticeDistance result(0);
           auto const normalised = direction.GetNormalised();
           auto maxdist = [&normalised, &result, &barycenter](LatticePosition const &b)
           {
             result = std::max(result, std::abs(normalised.Dot(b - barycenter)));
           };
-          std::for_each(mesh.GetVertices().begin(), mesh.GetVertices().end(), maxdist);
+          std::for_each(vertices.begin(), vertices.end(), maxdist);
           return 2e0 * result;
         }
 
         LatticePosition maxExtensions(
-            Mesh const &mesh, LatticePosition const &col, LatticePosition const& normal)
+            MeshData::Vertices const &vertices,
+            LatticePosition const &col,
+            LatticePosition const& normal)
         {
-          LatticeDistance const x = maxExtension(mesh, normal);
-          LatticeDistance const y = maxExtension(mesh, col.Cross(normal));
-          LatticeDistance const z = maxExtension(mesh, col);
+          LatticeDistance const x = maxExtension(vertices, normal);
+          LatticeDistance const y = maxExtension(vertices, col.Cross(normal));
+          LatticeDistance const z = maxExtension(vertices, col);
           return LatticePosition(x, y, z);
         }
       }
 
 #     ifndef HEMELB_DOING_UNITTESTS
       ColumnPositionIterator::ColumnPositionIterator(
-              std::shared_ptr<Cylinder> cylinder, Mesh const& mesh,
+              std::shared_ptr<Cylinder const> cylinder, MeshData::Vertices const& vertices,
               LatticePosition cellAxis, LatticePosition colAxis,
               LatticeDistance separation)
           : IndexIterator(LatticeVector(0, 0, 0), LatticeVector(0, 0, 0)), cylinder(cylinder)
@@ -106,7 +109,7 @@ namespace hemelb
         // Rotation is opposite to the one that will be applied to the mesh
         auto const antiRot = rotMat(colAxis, cellAxis);
         auto const extents
-          = maxExtensions(mesh, antiRot * colAxis, antiRot * cylinder->normal) + separation;
+          = maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal) + separation;
 
         max.x = std::numeric_limits<LatticeCoordinate>::max();
         max.y = static_cast<LatticeCoordinate>(std::ceil(cylinder->radius / extents.y));
@@ -151,6 +154,29 @@ namespace hemelb
 #         endif
         }
       }
+
+      ColumnCellDrop::ColumnCellDrop(
+          std::shared_ptr<Cylinder const> cylinder, CellContainer::value_type cell,
+          LatticePosition cellAxis, LatticePosition colAxis,
+          LatticeDistance wallSeparation)
+        : iterator(cylinder, cell->GetVertices(), cellAxis, colAxis, wallSeparation),
+          templateCell(cell->clone())
+      {
+        // Cell is rotated to correct orientation
+        *templateCell *= rotMat(cellAxis, colAxis);
+        // And centered at zero
+        *templateCell -= templateCell->GetBarycenter();
+      }
+
+      CellContainer::value_type ColumnCellDrop::operator()()
+      {
+        ++iterator;
+        std::shared_ptr<CellBase> result(std::move(templateCell->clone()));
+        *result += *iterator;
+        return result;
+      }
+
+
 #     endif
     } // namespace buffer
   }

@@ -30,14 +30,15 @@ namespace hemelb
         public:
           //! Renders columns of cells
           //! \param[in] cylinder: Cylinder in which to pack the columns
-          //! \param[in] cell: template cell
+          //! \param[in] vertices: vertices of the cell that will be dropped
+          //!   Used to figure out size of the cell.
           //! \param[in] cellAxis: In conjunctions with colAxis, defines a rotation of the template
           //!      mesh. In practice, it should be vector going from one dimple to the other.
           //! \param[in] colAxis: Axis of the column of cells.
           //! \param[in] separation: separation between the cells. Defaults to 10% of smallest
           //! distance.
           ColumnPositionIterator(
-              std::shared_ptr<Cylinder> cylinder, Mesh const& mesh,
+              std::shared_ptr<Cylinder const> cylinder, MeshData::Vertices const& vertices,
               LatticePosition cellAxis, LatticePosition colAxis,
               LatticeDistance wallSeparation);
           //! Destroys buffer
@@ -58,7 +59,7 @@ namespace hemelb
 
         protected:
           //! Cylinder within which columns are placed
-          std::shared_ptr<Cylinder> cylinder;
+          std::shared_ptr<Cylinder const> cylinder;
           //! Rotation matrix from template cell to cell as stacked in columns
           util::Matrix3D cellRotation;
           //! Grid spacings
@@ -67,6 +68,24 @@ namespace hemelb
           LatticePosition spacing;
 
           bool IsInside() const;
+      };
+
+      class ColumnCellDrop
+      {
+        public:
+          ColumnCellDrop(
+              std::shared_ptr<Cylinder const> cylinder, CellContainer::value_type cell,
+              LatticePosition cellAxis, LatticePosition colAxis,
+              LatticeDistance wallSeparation);
+
+          //! Returns next cell
+          CellContainer::value_type operator()();
+
+        protected:
+          //! Iterates over cell positions
+          ColumnPositionIterator iterator;
+          //! Reference to template cell.
+          std::unique_ptr<CellBase> templateCell;
       };
 
     }
