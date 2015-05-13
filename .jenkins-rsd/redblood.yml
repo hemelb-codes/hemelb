@@ -27,7 +27,6 @@
             name: compiler
             values:
                 - gnu
-                - intel
                 - clang
 
     builders:
