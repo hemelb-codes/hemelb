@@ -31,9 +31,22 @@ namespace hemelb
           CPPUNIT_TEST (testRotationMatrix45Degrees);
           CPPUNIT_TEST (testMaxExtensions);
           CPPUNIT_TEST (testIterator);
+          CPPUNIT_TEST (testCellDrop);
           CPPUNIT_TEST_SUITE_END();
 
         public:
+          ColumnsTests() : CppUnit::TestFixture(), colAxis(1, 0, 0), cellAxis(1, 1, 1), sep(1)
+          {
+          }
+
+          void setUp()
+          {
+            cylinder = std::make_shared<Cylinder>();
+            cylinder->normal = LatticePosition(0, 0, 1);
+            cylinder->origin = LatticePosition(5, 5, 0);
+            cylinder->radius = 10;
+          }
+
           void testIdentityRotationMatrix()
           {
             using namespace hemelb::redblood::buffer;
@@ -81,68 +94,43 @@ namespace hemelb
           void testMaxExtensions()
           {
             using namespace hemelb::redblood::buffer;
-            auto const mesh = tetrahedron();
+            auto const verts = tetrahedron().GetVertices();
             PhysicalDistance const s2 = std::sqrt(2e0);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(mesh, LatticePosition(1, 1, 0)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(mesh, LatticePosition(-1, -1, 0)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(mesh, LatticePosition(1, 0, 0)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(mesh, LatticePosition(0, 0, 1)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(mesh, LatticePosition(0, 0, 0.5)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(verts, LatticePosition(1, 1, 0)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(verts, LatticePosition(-1, -1, 0)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(1, 0, 0)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(0, 0, 1)), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(0, 0, 0.5)), 1e-8);
           }
 
 
           void testIterator()
           {
             using namespace hemelb::redblood::buffer;
-            auto mesh = tetrahedron();
-            mesh.GetVertices().front() += LatticePosition(0.25, 0.25, 0.25);
-            auto const cylinder = std::make_shared<Cylinder>();
-            cylinder->normal = LatticePosition(0, 0, 1);
-            cylinder->origin = LatticePosition(5, 5, 0);
-            cylinder->radius = 10;
+            // create deformed mesh
+            MeshData::Vertices verts = tetrahedron().GetVertices();
+            verts.front() += LatticePosition(0.25, 0.25, 0.25);
+            ColumnPositionIterator iterator(cylinder, verts, cellAxis, colAxis, sep);
 
-            LatticePosition const colAxis(1, 0, 0), cellAxis(1, 1, 1);
-            LatticeDistance const sep(1);
-            ColumnPositionIterator iterator(cylinder, mesh, cellAxis, colAxis, sep);
-
-            // Function to check whether position is in cylinder
-            auto is_in_cylinder = [cylinder, &mesh](LatticePosition const &a)
-            {
-              LatticePosition const barycenter = mesh.GetBarycenter();
-              LatticePosition const n0 = cylinder->normal.GetNormalised();
-              if(a.Dot(cylinder->normal) < -1e-8)
-              {
-                return false;
-              }
-              for(auto const &v: mesh.GetVertices())
-              {
-                LatticePosition const x = a + v - barycenter - cylinder->origin;
-                if(x.Cross(n0).GetMagnitude() >= cylinder->radius)
-                {
-                  return false;
-                }
-              }
-              return true;
-            };
             // Find first vector: should be colinear with column
             std::vector<LatticePosition> positions;
             positions.push_back(*iterator);
-            CPPUNIT_ASSERT(is_in_cylinder(positions[0]));
+            CPPUNIT_ASSERT(is_in_cylinder(positions[0], verts));
             ++iterator;
             positions.push_back(*iterator);
-            CPPUNIT_ASSERT(is_in_cylinder(*iterator));
+            CPPUNIT_ASSERT(is_in_cylinder(*iterator, verts));
             const auto a0 = positions[1] - positions[0];
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, a0.Cross(colAxis).GetMagnitude(), 1e-8);
             // going two back should be outside cylinder
             // Goin one back might not since checking size of mesh is only approximate
-            CPPUNIT_ASSERT(not is_in_cylinder(positions[0] - a0 * 2.0));
+            CPPUNIT_ASSERT(not is_in_cylinder(positions[0] - a0 * 2.0, verts));
 
             // Now go forward until we change column
             do
             {
               ++iterator;
               positions.push_back(*iterator);
-              CPPUNIT_ASSERT(is_in_cylinder(positions.back()));
+              CPPUNIT_ASSERT(is_in_cylinder(positions.back(), verts));
             } while((positions.back() - positions[0]).Cross(a0).GetMagnitude() < 1e-8);
 
             // a1 goes from last position in one column to first position in other
@@ -155,7 +143,7 @@ namespace hemelb
             {
               ++iterator;
               positions.push_back(*iterator);
-              CPPUNIT_ASSERT(is_in_cylinder(positions.back()));
+              CPPUNIT_ASSERT(is_in_cylinder(positions.back(), verts));
             } while((positions.back() - positions[0]).Dot(cylinder->normal) < 1e-8);
 
             // Check next positions are same as previous but translated along normal
@@ -168,9 +156,76 @@ namespace hemelb
               CPPUNIT_ASSERT_DOUBLES_EQUAL(positions[i].y, positions.back().y, 1e-8);
               ++iterator;
               positions.push_back(*iterator);
-              CPPUNIT_ASSERT(is_in_cylinder(positions.back()));
+              CPPUNIT_ASSERT(is_in_cylinder(positions.back(), verts));
             }
           }
+
+          void testCellDrop()
+          {
+            using namespace hemelb::redblood::buffer;
+            auto templateCell = std::make_shared<Cell>(tetrahedron());
+            templateCell->moduli.bending = 5.0;
+            templateCell->moduli.volume = 3.0;
+            auto const rotation = rotMat(cellAxis, colAxis);
+
+            auto check = [templateCell, this, &rotation](std::shared_ptr<CellBase const> acell)
+            {
+              auto const cell = std::static_pointer_cast<Cell const, CellBase const>(acell);
+              auto const b0 = templateCell->GetBarycenter();
+              auto const b1  = cell->GetBarycenter();
+              auto const& vertices0 = templateCell->GetVertices();
+              auto const& vertices1 = cell->GetVertices();
+              CPPUNIT_ASSERT_EQUAL(templateCell->GetNumberOfNodes(), cell->GetNumberOfNodes());
+              for(site_t i(0); i < cell->GetNumberOfNodes(); ++i)
+              {
+                // Cells are rotated with respect to original input by a given value
+                // They are translated by a value that changes at each iteration
+                // The translation is not checked here.
+                auto const expected = rotation * (vertices0[i] - b0);
+                auto const actual = vertices1[i] - b1;
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.x, actual.x, 1e-8);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.y, actual.y, 1e-8);
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.z, actual.z, 1e-8);
+                CPPUNIT_ASSERT(this->is_in_cylinder(b1, cell->GetVertices()));
+              }
+              CPPUNIT_ASSERT(templateCell->GetTemplateMesh().isSameData(cell->GetTemplateMesh()));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                  templateCell->moduli.bending, cell->moduli.bending, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                  templateCell->moduli.volume, cell->moduli.volume, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                  templateCell->moduli.surface, cell->moduli.surface, 1e-8);
+            };
+            ColumnCellDrop dropCell(cylinder, templateCell, cellAxis, colAxis, sep);
+            for(size_t i(0); i < 50; ++i)
+            {
+              check(dropCell());
+            }
+          }
+        private:
+          std::shared_ptr<Cylinder> cylinder;
+          LatticePosition const colAxis;
+          LatticePosition const cellAxis;
+          LatticeDistance const sep;
+
+          bool is_in_cylinder(LatticePosition const &a, MeshData::Vertices const &verts) const
+          {
+            LatticePosition const barycenter = hemelb::redblood::barycenter(verts);
+            LatticePosition const n0 = cylinder->normal.GetNormalised();
+            if(a.Dot(cylinder->normal) < -1e-8)
+            {
+              return false;
+            }
+            for(auto const &v: verts)
+            {
+              LatticePosition const x = a + v - barycenter - cylinder->origin;
+              if(x.Cross(n0).GetMagnitude() >= cylinder->radius)
+              {
+                return false;
+              }
+            }
+            return true;
+          };
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (ColumnsTests);
