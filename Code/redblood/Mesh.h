@@ -182,6 +182,12 @@ namespace hemelb
           return mesh->facets;
         }
 
+        //! True if both mesh share the same data
+        bool isSameData(Mesh const &other) const
+        {
+          return mesh == other.mesh and topology == other.topology;
+        }
+
       protected:
         //! Holds actual data about the mesh
         std::shared_ptr<MeshData> mesh;
