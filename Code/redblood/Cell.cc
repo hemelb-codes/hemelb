@@ -96,9 +96,9 @@ namespace hemelb
     {
       return data->templateMesh.GetTopology();
     }
-    size_t CellBase::GetNumberOfNodes() const
+    site_t CellBase::GetNumberOfNodes() const
     {
-      return data->vertices.size();
+      return static_cast<site_t>(data->vertices.size());
     }
     MeshData::Vertices::value_type CellBase::GetBarycenter() const
     {
@@ -242,5 +242,13 @@ namespace hemelb
         vertex += * (i_disp++);
       }
     }
+
+    std::unique_ptr<CellBase> Cell::cloneImpl() const
+    {
+      std::unique_ptr<Cell> result(new Cell(GetVertices(), GetTemplateMesh(), GetScale()));
+      result->moduli = moduli;
+      return std::move(result);
+    }
+
   }
 } // hemelb::redblood
