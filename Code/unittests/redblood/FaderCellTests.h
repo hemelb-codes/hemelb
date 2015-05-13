@@ -58,6 +58,11 @@ namespace hemelb
           {
             return {1, 2, 3};
           }
+        private:
+          std::unique_ptr<CellBase> cloneImpl() const override
+          {
+            return std::move(std::unique_ptr<FaderCellTests::DummyCell>(new DummyCell()));
+          }
       };
 
       void FaderCellTests::testFade()

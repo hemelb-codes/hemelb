@@ -28,6 +28,7 @@ namespace hemelb
       }
       return energy;
     }
+
     PhysicalEnergy FaderCell::operator()(std::vector<LatticeForceVector> &forces) const
     {
       auto const barycenter = wrappee->GetBarycenter();

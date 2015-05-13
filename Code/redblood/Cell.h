@@ -77,7 +77,6 @@ namespace hemelb
         {
         }
         //! Because it is good practice
-        //! Because it is good practice
         virtual ~CellBase()
         {
         }
@@ -94,7 +93,7 @@ namespace hemelb
         MeshData::Vertices &GetVertices();
         //! Topology of the (template) mesh
         std::shared_ptr<MeshTopology const> GetTopology() const;
-        size_t GetNumberOfNodes() const;
+        site_t GetNumberOfNodes() const;
 
         //! Facet bending energy
         virtual PhysicalEnergy operator()() const = 0;
@@ -123,7 +122,7 @@ namespace hemelb
 
         //! Scale mesh around barycenter
         void operator*=(Dimensionless const &);
-        //! Scale by matrix around barycenter
+        //! Linear transform of each vertex, centered around barycenter
         void operator*=(util::Matrix3D const &);
         //! Translate mesh
         void operator+=(LatticePosition const &offset);
@@ -142,7 +141,18 @@ namespace hemelb
         //! Scale to apply to the template mesh
         Dimensionless GetScale() const;
 
+        // cloneImpl is virtual and returns a pointer to abstract class
+        // clone will be overriden. It will call cloneImpl and cast it to derived type.
+        // The loop jumping is necessary since we are returning managed pointers.
+        //! Clones: shallow copy reference mesh, deep-copy everything else
+        std::unique_ptr<CellBase> clone() const
+        {
+          return cloneImpl();
+        }
+
       protected:
+        //! Clones: shallow copy reference mesh, deep-copy everything else
+        std::unique_ptr<CellBase> virtual cloneImpl() const = 0;
         //! allows separation of data and behaviors
         class CellData;
         //! Holds data
@@ -248,7 +258,16 @@ namespace hemelb
           return true;
         }
 
+        //! Clones: shallow copy reference mesh, deep-copy everything else
+        std::unique_ptr<Cell> clone() const
+        {
+          return std::unique_ptr<Cell>(static_cast<Cell*>(cloneImpl().release()));
+        }
+
       private:
+        //! Clones: shallow copy reference mesh, deep-copy everything else
+        std::unique_ptr<CellBase> cloneImpl() const override;
+
         // Computes facet bending energy over all facets
         PhysicalEnergy facetBending() const;
         // Computes facet bending energy over all facets

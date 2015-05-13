@@ -100,7 +100,17 @@ namespace hemelb
         {
           return iolets;
         }
+        //! Deep copy of vertices, scale, moduli, shallow copy of template mesh, flow extensions.
+        std::unique_ptr<FaderCell> clone() const
+        {
+          return std::unique_ptr<FaderCell>(static_cast<FaderCell*>(cloneImpl().release()));
+        }
+
       private:
+        std::unique_ptr<CellBase> cloneImpl() const override
+        {
+          return std::unique_ptr<CellBase>(new FaderCell(wrappee->clone(), iolets));
+        }
         //! Pointer to shared data
         std::shared_ptr<std::vector<FlowExtension>> iolets;
         //! Pointer to wrappee cell object
