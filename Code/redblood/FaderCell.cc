@@ -18,12 +18,12 @@ namespace hemelb
     {
       auto const barycenter = wrappee->GetBarycenter();
       auto const energy = wrappee->Energy();
-      for(auto const& extension: *iolets)
+      for (auto const& extension : *iolets)
       {
         auto const weight = linearWeight(extension, barycenter);
-        if(weight > 1e-12)
+        if (weight > 1e-12)
         {
-           return energy * weight;
+          return energy * weight;
         }
       }
       return energy;
@@ -33,12 +33,12 @@ namespace hemelb
     {
       auto const barycenter = wrappee->GetBarycenter();
       auto const energy = wrappee->Energy(forces);
-      for(auto const& extension: *iolets)
+      for (auto const& extension : *iolets)
       {
         auto const weight = linearWeight(extension, barycenter);
-        if(weight > 1e-12)
+        if (weight > 1e-12)
         {
-          for(auto& force: forces)
+          for (auto& force : forces)
           {
             force *= weight;
           }

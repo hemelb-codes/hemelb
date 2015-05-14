@@ -50,7 +50,10 @@ namespace hemelb
         //! Performs lattice to fluid interactions
         void Cell2FluidInteractions();
 
-        CellContainer::size_type size() { return cells.size(); }
+        CellContainer::size_type size()
+        {
+          return cells.size();
+        }
 
 #   ifdef HEMELB_DOING_UNITTESTS
         //! Updates divide and conquer
@@ -92,7 +95,7 @@ namespace hemelb
         //! Invokes the callback function to output cell positions
         void NotifyCellChangeListeners()
         {
-          for (CellChangeListener ccl: cellChangeListeners)
+          for (CellChangeListener ccl : cellChangeListeners)
             ccl(cells);
         }
 
@@ -123,8 +126,7 @@ namespace hemelb
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
         //! It should insert cells using the call back passed to it.
-        std::function<void(std::function<void(CellContainer::value_type)>)>
-          cellInsertionCallBack;
+        std::function<void(std::function<void(CellContainer::value_type)>)> cellInsertionCallBack;
         //! Observers to be notified when cell positions change
         std::vector<CellChangeListener> cellChangeListeners;
 

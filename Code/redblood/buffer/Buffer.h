@@ -30,13 +30,13 @@ namespace hemelb
           //!     should point from the region nearest to drop point to furthest from drop point. It
           //!     is co-linear with the axis of the cylinder.
           //! \param[in] cells: Current cells in the buffer
-          Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer())
-            : geometry(cyl), virtuals(cells), offset(0), interactionRadius(0)
+          Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer()) :
+              geometry(cyl), virtuals(cells), offset(0), interactionRadius(0)
           {
           }
           //! Constructs buffer from geometry only
-          Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer())
-            : geometry(new Cylinder(cyl)), virtuals(cells), offset(0)
+          Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer()) :
+              geometry(new Cylinder(cyl)), virtuals(cells), offset(0)
           {
           }
           //! Destroys buffer
@@ -56,7 +56,6 @@ namespace hemelb
 
           //! Updates offset between LB and offset
           void updateOffset();
-
 
         protected:
           //! Returns next cell to drop

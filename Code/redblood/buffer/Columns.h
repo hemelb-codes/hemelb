@@ -37,10 +37,9 @@ namespace hemelb
           //! \param[in] colAxis: Axis of the column of cells.
           //! \param[in] separation: separation between the cells. Defaults to 10% of smallest
           //! distance.
-          ColumnPositionIterator(
-              std::shared_ptr<Cylinder const> cylinder, MeshData::Vertices const& vertices,
-              LatticePosition cellAxis, LatticePosition colAxis,
-              LatticeDistance wallSeparation);
+          ColumnPositionIterator(std::shared_ptr<Cylinder const> cylinder,
+                                 MeshData::Vertices const& vertices, LatticePosition cellAxis,
+                                 LatticePosition colAxis, LatticeDistance wallSeparation);
           //! Destroys buffer
           virtual ~ColumnPositionIterator()
           {
@@ -53,8 +52,7 @@ namespace hemelb
           {
             return major * static_cast<LatticeDistance>(current.z)
                 + minor * static_cast<LatticeDistance>(current.y)
-                + depth * static_cast<LatticeDistance>(current.x)
-                + cylinder->origin;
+                + depth * static_cast<LatticeDistance>(current.x) + cylinder->origin;
           }
 
         protected:
@@ -73,10 +71,9 @@ namespace hemelb
       class ColumnCellDrop
       {
         public:
-          ColumnCellDrop(
-              std::shared_ptr<Cylinder const> cylinder, CellContainer::value_type cell,
-              LatticePosition cellAxis, LatticePosition colAxis,
-              LatticeDistance wallSeparation);
+          ColumnCellDrop(std::shared_ptr<Cylinder const> cylinder, CellContainer::value_type cell,
+                         LatticePosition cellAxis, LatticePosition colAxis,
+                         LatticeDistance wallSeparation);
 
           //! Returns next cell
           CellContainer::value_type operator()();

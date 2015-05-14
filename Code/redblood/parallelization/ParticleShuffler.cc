@@ -21,8 +21,8 @@ namespace hemelb
       namespace
       {
         // id of the proc that should own this cell
-        std::tuple<bool, proc_t> owner(
-            CellContainer::const_reference cell, geometry::LatticeData const &latticeData)
+        std::tuple<bool, proc_t> owner(CellContainer::const_reference cell,
+                                       geometry::LatticeData const &latticeData)
         {
           auto const barycenter = cell->GetBarycenter();
           auto const node = latticeData.GetProcIdFromGlobalCoords(barycenter);
@@ -55,7 +55,7 @@ namespace hemelb
           util::Packer::Sizer sizer;
           auto const N = cells.size();
           sizer << N;
-          for(auto const& element: cells)
+          for (auto const& element : cells)
           {
             sizer << element->GetScale() << element->GetVertices();
           }
@@ -66,7 +66,7 @@ namespace hemelb
           util::Packer::Sizer sizer;
           auto const cells = cellSet.find(node);
           assert(cells != cellSet.end());
-          return  cellSetPackSize(cells->second);
+          return cellSetPackSize(cells->second);
         }
       } // anonymous namespace
 
@@ -78,39 +78,38 @@ namespace hemelb
           nextCellSwap[node] = CellContainer();
           currentCellSwap[node] = CellContainer();
 #         ifndef NDEBUG
-            inCommCallOrder[node] = false;
-            outCommCallOrder[node] = false;
+          inCommCallOrder[node] = false;
+          outCommCallOrder[node] = false;
 #         endif
         }
 #       ifndef NDEBUG
-          callOrder = CallOrder::NONE;
+        callOrder = CallOrder::NONE;
 #       endif
       }
-
 
       void ParticleShuffler::IdentifyOutOfBounds()
       {
 #       ifndef NDEBUG
-          assert(callOrder == CallOrder::NONE);
-          callOrder = CallOrder::IDENTIFY_CELLS;
+        assert(callOrder == CallOrder::NONE);
+        callOrder = CallOrder::IDENTIFY_CELLS;
 #       endif
-        for(auto const &cell: GetOwnedCells())
+        for (auto const &cell : GetOwnedCells())
         {
           // Check ownership condition
           auto const ownership = GetCellOwner(cell);
-          if(std::get<0>(ownership))
+          if (std::get<0>(ownership))
             continue;
           // node neighberhood should be declared at start, and not change
           assert(nextCellSwap.count(std::get<1>(ownership)) == 1);
           // if not yet scheduled for moving (anywhere), then add to next shipment
-          auto const scheduled = std::find_if(
-              currentCellSwap.begin(), currentCellSwap.end(),
-              [&cell](decltype(currentCellSwap)::const_reference aswap)
-              {
-                return aswap.second.count(cell) == 1;
-              }
-          );
-          if(scheduled == currentCellSwap.end())
+          auto const scheduled =
+              std::find_if(currentCellSwap.begin(),
+                           currentCellSwap.end(),
+                           [&cell](decltype(currentCellSwap)::const_reference aswap)
+                           {
+                             return aswap.second.count(cell) == 1;
+                           });
+          if (scheduled == currentCellSwap.end())
             nextCellSwap[std::get<1>(ownership)].insert(cell);
         }
       }
@@ -118,11 +117,11 @@ namespace hemelb
       site_t ParticleShuffler::GetNextCellMessageSize(proc_t node) const
       {
 #       ifndef NDEBUG
-          assert(callOrder == CallOrder::IDENTIFY_CELLS);
-          auto const check = outCommCallOrder.find(node);
-          assert(check != outCommCallOrder.end());
-          assert(check->second == false);
-          check->second = true;
+        assert(callOrder == CallOrder::IDENTIFY_CELLS);
+        auto const check = outCommCallOrder.find(node);
+        assert(check != outCommCallOrder.end());
+        assert(check->second == false);
+        check->second = true;
 #       endif
         return cellSetPackSize(nextCellSwap, node);
       }
@@ -130,17 +129,17 @@ namespace hemelb
       util::Packer& ParticleShuffler::Pack(proc_t node, util::Packer& packer) const
       {
 #       ifndef NDEBUG
-          assert(callOrder == CallOrder::IDENTIFY_CELLS or callOrder == CallOrder::PACK);
-          callOrder = CallOrder::PACK;
-          auto const check = outCommCallOrder.find(node);
-          assert(check != outCommCallOrder.end());
-          assert(check->second == true);
-          check->second = false;
+        assert(callOrder == CallOrder::IDENTIFY_CELLS or callOrder == CallOrder::PACK);
+        callOrder = CallOrder::PACK;
+        auto const check = outCommCallOrder.find(node);
+        assert(check != outCommCallOrder.end());
+        assert(check->second == true);
+        check->second = false;
 #       endif
         auto const cells = currentCellSwap.find(node);
         assert(cells != currentCellSwap.end());
         packer << cells->second.size();
-        for(auto const &cell: cells->second)
+        for (auto const &cell : cells->second)
         {
           pack(packer, cell);
         }
@@ -150,10 +149,10 @@ namespace hemelb
       util::Packer& ParticleShuffler::Unpack(proc_t node, util::Packer& packer)
       {
 #       ifndef NDEBUG
-          auto const check = inCommCallOrder.find(node);
-          assert(check != inCommCallOrder.end());
-          assert(check->second == true);
-          check->second = false;
+        auto const check = inCommCallOrder.find(node);
+        assert(check != inCommCallOrder.end());
+        assert(check->second == true);
+        check->second = false;
 #       endif
         decltype(currentCellSwap.find(0)->second.size()) n;
         packer >> n;
@@ -169,32 +168,32 @@ namespace hemelb
       void ParticleShuffler::SetThisCellMessageSize(proc_t node, site_t messageLength)
       {
 #       ifndef NDEBUG
-          auto const check = inCommCallOrder.find(node);
-          assert(check != inCommCallOrder.end());
-          assert(check->second == false);
-          check->second = true;
+        auto const check = inCommCallOrder.find(node);
+        assert(check != inCommCallOrder.end());
+        assert(check->second == false);
+        check->second = true;
 #       endif
-          incommingCommSize[node] = messageLength;
+        incommingCommSize[node] = messageLength;
       }
 
       void ParticleShuffler::Next()
       {
 #       ifndef NDEBUG
-          assert(callOrder == CallOrder::PACK);
-          callOrder = CallOrder::NEXT;
+        assert(callOrder == CallOrder::PACK);
+        callOrder = CallOrder::NEXT;
 #       endif
-          // Remove cells that have been sent over
-          for(auto & cells: currentCellSwap)
+        // Remove cells that have been sent over
+        for (auto & cells : currentCellSwap)
+        {
+          for (auto const& cell : cells.second)
           {
-            for(auto const& cell: cells.second)
-            {
-              RemoveFromOwnedCells(cell);
-            }
-            cells.second.clear();
+            RemoveFromOwnedCells(cell);
           }
-          std::swap(nextCellSwap, currentCellSwap);
+          cells.second.clear();
+        }
+        std::swap(nextCellSwap, currentCellSwap);
       }
 #     endif
     }
   }
-}  // hemelb::redblood::parallel
+} // hemelb::redblood::parallel

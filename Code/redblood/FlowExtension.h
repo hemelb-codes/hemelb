@@ -39,15 +39,14 @@ namespace hemelb
         LatticeDistance length;
         //! Distance within which to fade in/out
         LatticeDistance fadeLength;
-        FlowExtension(LatticePosition const &n0,
-            LatticePosition const &gamma, LatticeDistance l, LatticeDistance r,
-            LatticeDistance fl)
-            : Cylinder({n0, gamma, r}), length(l), fadeLength(fl)
+        FlowExtension(LatticePosition const &n0, LatticePosition const &gamma, LatticeDistance l,
+                      LatticeDistance r, LatticeDistance fl) :
+            Cylinder( { n0, gamma, r }), length(l), fadeLength(fl)
         {
         }
-        FlowExtension()
-            : Cylinder({LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1}),
-              length(1), fadeLength(1)
+        FlowExtension() :
+            Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1 }), length(1),
+                fadeLength(1)
         {
         }
     };
