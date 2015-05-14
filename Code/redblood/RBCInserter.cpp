@@ -36,8 +36,7 @@ namespace hemelb
       {
         if (condition())
         {
-          std::shared_ptr < Cell > cell = std::make_shared < Cell
-              > (shape->vertices, Mesh(*shape), scale);
+          std::shared_ptr<Cell> cell = std::make_shared<Cell>(shape->vertices, Mesh(*shape), scale);
           cell->moduli = moduli;
           const std::shared_ptr<FlowExtension> flowExt = inlet->GetFlowExtension();
           *cell += inlet->GetPosition();

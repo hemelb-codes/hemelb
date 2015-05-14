@@ -18,7 +18,8 @@ namespace hemelb
   {
 
     //! Checks whether a cell is inside a flow extension
-    bool contains(const FlowExtension & flowExt, const LatticePosition& point) {
+    bool contains(const FlowExtension & flowExt, const LatticePosition& point)
+    {
       assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
       assert(flowExt.length > 1e-12);
       assert(flowExt.radius > 1e-12);
@@ -47,11 +48,11 @@ namespace hemelb
       assert(flowExt.length > 1e-12);
       assert(flowExt.radius > 1e-12);
 
-      if(not contains(flowExt, position))
+      if (not contains(flowExt, position))
         return 0e0;
 
       auto const z = flowExt.normal.Dot(position - flowExt.origin);
-      return std::max(0e0, 1e0 - z/flowExt.fadeLength);
+      return std::max(0e0, 1e0 - z / flowExt.fadeLength);
     }
   } // namespace hemelb::redblood
 } // namespace hemelb

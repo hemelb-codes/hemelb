@@ -149,7 +149,7 @@ namespace hemelb
           i_first = iterator(*this, next_iter);
         }
         else
-	{
+        {
           ++i_first;
         }
       }

@@ -23,9 +23,10 @@ namespace hemelb
     {
       //! Constant to name stencils without referring to type
       //! Useful to create factories
-      enum class types : unsigned int
-      {
-        FOUR_POINT,
+      enum class types
+        : unsigned int
+        {
+          FOUR_POINT,
         COSINE_APPROX,
         THREE_POINT,
         TWO_POINT

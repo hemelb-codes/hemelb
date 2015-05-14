@@ -21,17 +21,18 @@ namespace hemelb
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
     template<class KERNEL>
-      class CellController : public CellArmy<KERNEL>, public net::IteratedAction
+    class CellController : public CellArmy<KERNEL>,
+                           public net::IteratedAction
     {
       public:
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-            CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
-                     PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0)
-                : CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
-            {
-            }
+        CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
+                       PhysicalDistance boxsize = 10.0, PhysicalDistance halo = 2.0) :
+            CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
+        {
+        }
 #       else
-            using CellArmy<KERNEL>::CellArmy;
+        using CellArmy<KERNEL>::CellArmy;
 #       endif
 
         void RequestComms() override
@@ -48,9 +49,9 @@ namespace hemelb
         {
           using namespace log;
           Logger::Log<Info, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::Cell2FluidInteractions(); 
+          CellArmy<KERNEL>::Cell2FluidInteractions();
           Logger::Log<Info, Singleton>("Removed cells that have reached outlets");
-          CellArmy<KERNEL>::CellRemoval(); 
+          CellArmy<KERNEL>::CellRemoval();
           Logger::Log<Info, Singleton>("Notify cell listeners");
           CellArmy<KERNEL>::NotifyCellChangeListeners();
         }

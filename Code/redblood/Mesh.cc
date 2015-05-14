@@ -295,7 +295,9 @@ namespace hemelb
       size_t const Nmax = mesh.facets.size();
       FacetNeighbors::value_type intelcompiler;
       // intel compiler without parameter list initialization
-      intelcompiler[0] = Nmax; intelcompiler[1] = Nmax; intelcompiler[2] = Nmax; 
+      intelcompiler[0] = Nmax;
+      intelcompiler[1] = Nmax;
+      intelcompiler[2] = Nmax;
       std::fill(facetNeighbors.begin(), facetNeighbors.end(), intelcompiler);
       i_facet = mesh.facets.begin();
 
@@ -552,14 +554,14 @@ namespace hemelb
       PhysicalDistance const t = 0.5 * (1. + std::sqrt(5.0));
       mesh->vertices.clear();
       mesh->vertices.emplace_back(-1, t, 0);
-      mesh->vertices.emplace_back( 1, t, 0);
+      mesh->vertices.emplace_back(1, t, 0);
       mesh->vertices.emplace_back(-1, -t, 0);
-      mesh->vertices.emplace_back( 1, -t, 0);
-      mesh->vertices.emplace_back( 0, -1, t);
-      mesh->vertices.emplace_back( 0, 1, t);
-      mesh->vertices.emplace_back( 0, -1, -t);
-      mesh->vertices.emplace_back( 0, 1, -t);
-      mesh->vertices.emplace_back( t, 0, -1);
+      mesh->vertices.emplace_back(1, -t, 0);
+      mesh->vertices.emplace_back(0, -1, t);
+      mesh->vertices.emplace_back(0, 1, t);
+      mesh->vertices.emplace_back(0, -1, -t);
+      mesh->vertices.emplace_back(0, 1, -t);
+      mesh->vertices.emplace_back(t, 0, -1);
       mesh->vertices.emplace_back(t, 0, 1);
       mesh->vertices.emplace_back(-t, 0, -1);
       mesh->vertices.emplace_back(-t, 0, 1);

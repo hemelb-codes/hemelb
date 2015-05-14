@@ -57,7 +57,6 @@ namespace hemelb
           //! Prepares for next iteration
           void Next();
 
-
         protected:
           //! Figures out who owns this object
           //! \returns tuple (self owned, rank). The first item indicates whether the cell is still
@@ -82,18 +81,18 @@ namespace hemelb
 
         private:
 #         ifndef NDEBUG
-            //! True if incomming size has been set
-            std::map<proc_t, bool> inCommCallOrder;
-            //! True if outgoing size has been checked
-            mutable std::map<proc_t, bool> outCommCallOrder;
-            //! True if IdentifyOutOfBounds called in right order
-            enum class CallOrder
-            {
-              NONE,
-              IDENTIFY_CELLS,
-              PACK,
-              NEXT = NONE
-            } mutable callOrder;
+          //! True if incomming size has been set
+          std::map<proc_t, bool> inCommCallOrder;
+          //! True if outgoing size has been checked
+          mutable std::map<proc_t, bool> outCommCallOrder;
+          //! True if IdentifyOutOfBounds called in right order
+          enum class CallOrder
+          {
+            NONE,
+            IDENTIFY_CELLS,
+            PACK,
+            NEXT = NONE
+          }mutable callOrder;
 #         endif
       };
     }

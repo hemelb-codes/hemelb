@@ -35,7 +35,7 @@ namespace hemelb
 
       CellContainer::value_type Buffer::nextCell() const
       {
-        if(virtuals.size() == 0)
+        if (virtuals.size() == 0)
           throw Exception() << "No cell left to drop";
 
         std::vector<LatticeDistance> dists(virtuals.size(), 0);
@@ -49,7 +49,8 @@ namespace hemelb
         };
         std::transform(virtuals.begin(), virtuals.end(), dists.begin(), getdist);
         auto const n = std::min_element(dists.begin(), dists.end()) - dists.begin();
-        auto min_iter = virtuals.begin(); std::advance(min_iter, n);
+        auto min_iter = virtuals.begin();
+        std::advance(min_iter, n);
         return *min_iter;
       }
 
@@ -67,19 +68,19 @@ namespace hemelb
       void Buffer::updateOffset()
       {
         // if no cell, then reset offset to zero
-        if(virtuals.size() == 0)
+        if (virtuals.size() == 0)
         {
           offset = 0;
           return;
         }
 
         // Makes sure there is an interaction distance, otherwise compute it
-        if(interactionRadius <= 0e0)
+        if (interactionRadius <= 0e0)
           interactionRadius = 1.25 * maxCellRadius(*virtuals.begin());
 
         auto const normal = geometry->normal;
         auto const zCell = normal.Dot(nextCell()->GetBarycenter());
-        if(not justDropped)
+        if (not justDropped)
         {
           offset = -zCell;
           return;
@@ -90,12 +91,12 @@ namespace hemelb
         // - distance moved by dropped cell over last LB iteration
         // - subject to the condition that the next cell does not move past the drop point.
         // The former will be negative. We've already checked that it is.
-        if(zCell - interactionRadius < zDropped)
+        if (zCell - interactionRadius < zDropped)
         {
           auto const delta = lastZ - zDropped;
           lastZ = zDropped;
           // Only move if dropped cell moved forward
-          if(delta > 0)
+          if (delta > 0)
           {
             offset -= std::min(delta, zCell);
           }

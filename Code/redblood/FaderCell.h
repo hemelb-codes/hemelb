@@ -29,18 +29,16 @@ namespace hemelb
         //! Construct fader cell over other CellBase type object
         //! \param[in] wrappee object to which we are adding fade-in fade-out behaviour
         //! \param[in] flowExtensions iolet descriptions. A copy is made of this object.
-        FaderCell(std::shared_ptr<CellBase> cell,
-          std::vector<FlowExtension> const &flowExtensions = std::vector<FlowExtension>())
-          : CellBase(*cell, shallow_clone()),
-            iolets(std::make_shared<std::vector<FlowExtension>>(flowExtensions)),
-            wrappee(cell)
+        FaderCell(std::shared_ptr<CellBase> cell, std::vector<FlowExtension> const &flowExtensions =
+                      std::vector<FlowExtension>()) :
+            CellBase(*cell, shallow_clone()),
+                iolets(std::make_shared<std::vector<FlowExtension>>(flowExtensions)), wrappee(cell)
         {
         }
-        FaderCell(std::shared_ptr<CellBase> cell,
-          std::vector<FlowExtension> const &&flowExtensions)
-          : CellBase(*cell, shallow_clone()),
-            iolets(std::make_shared<std::vector<FlowExtension>>(std::move(flowExtensions))),
-            wrappee(cell)
+        FaderCell(std::shared_ptr<CellBase> cell, std::vector<FlowExtension> const &&flowExtensions) :
+            CellBase(*cell, shallow_clone()),
+                iolets(std::make_shared<std::vector<FlowExtension>>(std::move(flowExtensions))),
+                wrappee(cell)
         {
         }
         //! Construct fader cell over other CellBase type object
@@ -48,36 +46,36 @@ namespace hemelb
         //! \param[in] flowExtensions iolet descriptions. A reference(shared pointer) is kept to
         //! this object.
         FaderCell(std::shared_ptr<CellBase> cell,
-          std::shared_ptr<std::vector<FlowExtension>> flowExtensions)
-          : CellBase(*cell, shallow_clone()), iolets(flowExtensions), wrappee(cell)
+                  std::shared_ptr<std::vector<FlowExtension>> flowExtensions) :
+            CellBase(*cell, shallow_clone()), iolets(flowExtensions), wrappee(cell)
         {
         }
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-	    FaderCell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-	         Dimensionless scaleIn = 1e0)
-                : CellBase(std::move(verticesIn), origMesh, scaleIn)
-            {
-            }
-	    FaderCell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
-	             1e0)
-                : CellBase(verticesIn, origMesh, scaleIn)
-            {
-            }
-	    FaderCell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0)
-                : CellBase(mesh, origMesh, scaleIn)
-            {
-            }
-	    FaderCell(Mesh const &mesh)
-                : CellBase(mesh)
-            {
-            }
-	    FaderCell(std::shared_ptr<MeshData> const &mesh)
-                : CellBase(mesh)
-            {
-            }
+        FaderCell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+                  Dimensionless scaleIn = 1e0) :
+            CellBase(std::move(verticesIn), origMesh, scaleIn)
+        {
+        }
+        FaderCell(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+                  Dimensionless scaleIn = 1e0) :
+            CellBase(verticesIn, origMesh, scaleIn)
+        {
+        }
+        FaderCell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+            CellBase(mesh, origMesh, scaleIn)
+        {
+        }
+        FaderCell(Mesh const &mesh) :
+            CellBase(mesh)
+        {
+        }
+        FaderCell(std::shared_ptr<MeshData> const &mesh) :
+            CellBase(mesh)
+        {
+        }
 #       else
-          // inheriting constructors
-          using CellBase::CellBase;
+        // inheriting constructors
+        using CellBase::CellBase;
 #       endif
 
         // inheriting constructors
@@ -86,8 +84,8 @@ namespace hemelb
         //! Facet bending energy
         virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
         //! Node-Wall interaction
-        virtual LatticeForceVector WallInteractionForce(
-            LatticePosition const &vertex, LatticePosition const &wall) const override
+        virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
+                                                        LatticePosition const &wall) const override
         {
           return wrappee->WallInteractionForce(vertex, wall);
         }
