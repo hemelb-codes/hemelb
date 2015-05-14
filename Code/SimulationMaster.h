@@ -67,6 +67,9 @@ namespace hemelb
       {
         return *latticeData;
       }
+      std::shared_ptr<hemelb::net::IteratedAction> GetCellController() {
+        return cellController;
+      }
 #     endif
     protected:
 
