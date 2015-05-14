@@ -274,7 +274,7 @@ namespace hemelb
       const io::xml::Element insertNode = rbcNode.GetChildOrThrow("insertcondition");
       std::size_t iterations;
       insertNode.GetChildOrThrow("iterations").GetAttributeOrThrow("value", iterations);
-      std::function < bool() > condition = [&iterations]()
+      std::function < bool() > condition = [iterations]()
       {
         static std::size_t i = 0;
         if (++i == iterations)
