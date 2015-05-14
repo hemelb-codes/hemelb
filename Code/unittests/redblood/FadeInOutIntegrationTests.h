@@ -68,22 +68,18 @@ namespace hemelb
           void testIntegration()
           {
             // add callback to put cell positions in a vector
-            std::vector<std::vector<LatticePosition>> positions;
             std::function<void(const hemelb::redblood::CellContainer &)> output_callback =
-                [&positions](const hemelb::redblood::CellContainer & cells)
+                [](const hemelb::redblood::CellContainer & cells)
                 {
-                  std::vector<LatticePosition> iteration;
                   for (auto cell: cells)
-                  iteration.push_back(cell->GetBarycenter());
-                  positions.push_back(iteration);
+                    std::cout << "hemelb::redblood::Cell@" << std::addressof(cell) << ": " << cell->GetBarycenter() << std::endl;
                 };
+            std::shared_ptr<CellControl> controller =
+                std::static_pointer_cast<CellControl>(master->GetCellController());
             controller->AddCellChangeListener(output_callback);
 
             // run the simulation
             master->RunSimulation();
-
-            // check that we have the cell positions
-            CPPUNIT_ASSERT_EQUAL(100ul, positions.size());
           }
 
         private:
