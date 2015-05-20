@@ -24,12 +24,10 @@ namespace hemelb
 {
   namespace redblood
   {
-
     //! \brief Federates the cells together so we can apply ops simultaneously
     template<class KERNEL> class CellArmy
     {
       public:
-
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
@@ -73,7 +71,7 @@ namespace hemelb
 
         //! Sets up call for cell insertion
         //! Called everytime CallCellInsertion is called
-        void SetCellInsertion(std::function<void(std::function<void(CellContainer::value_type)>)> f)
+        void SetCellInsertion(CellInserter const & f)
         {
           cellInsertionCallBack = f;
         }
@@ -82,12 +80,17 @@ namespace hemelb
         void CallCellInsertion()
         {
           if (cellInsertionCallBack)
-            cellInsertionCallBack([this](CellContainer::value_type cell)
-            { this->AddCell(cell);});
+          {
+            auto callback = [this](CellContainer::value_type cell)
+            {
+              this->AddCell(cell);
+            };
+            cellInsertionCallBack(callback);
+          }
         }
 
         //! Adds a cell change listener to be notified when cell positions change
-        void AddCellChangeListener(CellChangeListener & ccl)
+        void AddCellChangeListener(CellChangeListener const & ccl)
         {
           cellChangeListeners.push_back(ccl);
         }
@@ -96,7 +99,9 @@ namespace hemelb
         void NotifyCellChangeListeners()
         {
           for (CellChangeListener ccl : cellChangeListeners)
+          {
             ccl(cells);
+          }
         }
 
         //! Sets outlets within which cells disapear
@@ -126,7 +131,7 @@ namespace hemelb
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
         //! It should insert cells using the call back passed to it.
-        std::function<void(std::function<void(CellContainer::value_type)>)> cellInsertionCallBack;
+        CellInserter cellInsertionCallBack;
         //! Observers to be notified when cell positions change
         std::vector<CellChangeListener> cellChangeListeners;
 

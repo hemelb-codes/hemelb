@@ -275,6 +275,10 @@ namespace hemelb
 
     //! Typical cell container type
     typedef std::set<std::shared_ptr<CellBase>> CellContainer;
+    //! Type of callback for inserting cells
+    //! Takes as input a function that given a cell, does the actual inserting
+    //! The cell inserter should call its argument for each cell it wants to insert
+    typedef std::function<void(std::function<void(CellContainer::value_type)>)> CellInserter;
   }
 } // namespace hemelb::redblood
 #endif
