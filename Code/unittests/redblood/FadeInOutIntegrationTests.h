@@ -66,7 +66,7 @@ namespace hemelb
                 [](const hemelb::redblood::CellContainer & cells)
                 {
                   for (auto cell: cells)
-                    std::cout << "hemelb::redblood::Cell@" << std::addressof(cell) << ": " << cell->GetBarycenter() << std::endl;
+                    std::cout << "hemelb::redblood::Cell@" << cell.get() << ": " << cell->GetBarycenter() << std::endl;
                 };
             std::shared_ptr<CellControl> controller =
                 std::static_pointer_cast<CellControl>(master->GetCellController());
