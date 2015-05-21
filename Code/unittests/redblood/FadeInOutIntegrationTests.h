@@ -74,6 +74,9 @@ namespace hemelb
 
             // run the simulation
             master->RunSimulation();
+
+            AssertPresent("results/report.txt");
+            AssertPresent("results/report.xml");
           }
 
         private:
