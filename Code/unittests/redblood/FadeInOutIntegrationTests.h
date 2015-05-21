@@ -31,7 +31,7 @@ namespace hemelb
           void setUp()
           {
             FolderTestFixture::setUp();
-            CopyResourceToTempdir("large_cylinder.xml");
+            CopyResourceToTempdir("large_cylinder_rbc.xml");
             CopyResourceToTempdir("large_cylinder.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
 
@@ -39,17 +39,11 @@ namespace hemelb
             intel.push_back("simulation");
             intel.push_back("steps");
             intel.push_back("value");
-            ModifyXMLInput("large_cylinder.xml", std::move(intel), 100);
-            intel.clear();
-            intel.push_back("redbloodcells");
-            intel.push_back("insertcondition");
-            intel.push_back("iterations");
-            intel.push_back("value");
-            ModifyXMLInput("large_cylinder.xml", std::move(intel), 10);
+            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 100);
 
             argv[0] = "hemelb";
             argv[1] = "-in";
-            argv[2] = "large_cylinder.xml";
+            argv[2] = "large_cylinder_rbc.xml";
             argv[3] = "-i";
             argv[4] = "1";
             argv[5] = "-ss";

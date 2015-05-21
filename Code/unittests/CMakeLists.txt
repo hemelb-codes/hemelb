@@ -52,4 +52,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/config_file_velocity_inlet.xml resources/velocity_inlet.txt
   resources/red_blood_cell.txt resources/red_blood_cube.txt
   resources/large_cylinder.gmy resources/large_cylinder.xml
+  resources/large_cylinder_rbc.xml
 )
