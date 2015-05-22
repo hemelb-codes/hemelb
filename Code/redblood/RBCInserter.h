@@ -74,7 +74,7 @@ namespace hemelb
          * @see hemelb::redblood::CellArmy::SetCellInsertion
          * @see hemelb::redblood::CellArmy::CallCellInsertion
          */
-        void operator()(std::function<void(CellContainer::value_type)> insertFn) const;
+        void operator()(CellInserter insertFn) const;
 
         void SetShape(const MeshData & shape);
         std::shared_ptr<const MeshData> GetShape() const;
