@@ -276,13 +276,9 @@ namespace hemelb
       insertNode.GetChildOrThrow("iterations").GetAttributeOrThrow("value", iterations);
       std::function < bool() > condition = [iterations]()
       {
-        static std::size_t i = 0;
-        if (++i == iterations)
-        {
-          i = 0;
-          return true;
-        }
-        return false;
+        static std::size_t iter = 0;
+        iter = (iter + 1) % iterations;
+        return iter == 0;
       };
 
       rbcinserter = redblood::RBCInserter(condition, mesh_path, inlets, moduli, scale);
