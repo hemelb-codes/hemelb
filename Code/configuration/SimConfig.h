@@ -183,7 +183,7 @@ namespace hemelb
          * Returns the object used to insert red blood cells into the simulation.
          * @return
          */
-        redblood::CellInserter GetInserter() const
+        std::function<void(redblood::CellInserter)> GetInserter() const
         {
           return rbcinserter;
         }
@@ -334,7 +334,7 @@ namespace hemelb
          * True if the file has a redbloodcells section.
          */
         bool hasRBCSection;
-        redblood::CellInserter rbcinserter;
+        std::function<void(redblood::CellInserter)> rbcinserter;
         PhysicalDistance boxSize, halo;
 
       protected:
