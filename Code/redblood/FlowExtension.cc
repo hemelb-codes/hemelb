@@ -18,7 +18,7 @@ namespace hemelb
   {
 
     //! Checks whether a cell is inside a flow extension
-    bool contains(const FlowExtension & flowExt, const LatticePosition& point)
+    bool contains(const Cylinder & flowExt, const LatticePosition& point)
     {
       assert(std::abs(flowExt.normal.GetMagnitude() - 1e0) < 1e-8);
       assert(flowExt.length > 1e-12);
