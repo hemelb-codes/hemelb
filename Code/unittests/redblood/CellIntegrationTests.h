@@ -101,8 +101,8 @@ namespace hemelb
 
             // check position of cell has changed
             auto const moved = (*cells.begin())->GetBarycenter();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.x - moved.x, 0e0, 1e-6);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.y - moved.y, 0e0, 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, barycenter.x - moved.x, 1e-6);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, barycenter.y - moved.y, 1e-6);
             CPPUNIT_ASSERT(std::abs(barycenter.z - moved.z) > 1e-3);
 
             // check there is force on one of the lattice site near a node
@@ -119,8 +119,8 @@ namespace hemelb
           void testIntegrationWithoutCells()
           {
             // setup cell position
-            cells.clear();
-            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), cells);
+            hemelb::redblood::CellContainer empty;
+            auto controller = std::make_shared<CellControll>(master->GetLatticeData(), empty);
 
             // run
             master->RegisterActor(*controller, 1);
