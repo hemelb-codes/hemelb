@@ -29,30 +29,35 @@ namespace hemelb
         LatticePosition origin;
         //! Radius of the cylinder
         LatticeDistance radius;
+        //! Length of the cylinder
+        LatticeDistance length;
     };
 
     //! Cylindrical extension at an in/outlet of the vascular system
     class FlowExtension : public Cylinder
     {
       public:
-        //! Length of the cylinder
-        LatticeDistance length;
         //! Distance within which to fade in/out
         LatticeDistance fadeLength;
         FlowExtension(LatticePosition const &n0, LatticePosition const &gamma, LatticeDistance l,
                       LatticeDistance r, LatticeDistance fl) :
-            Cylinder( { n0, gamma, r }), length(l), fadeLength(fl)
+            Cylinder( { n0, gamma, r, l }), fadeLength(fl)
         {
         }
         FlowExtension() :
-            Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1 }), length(1),
+            Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1, 0 }),
                 fadeLength(1)
         {
         }
     };
 
     //! Checks whether a cell is inside a flow extension
-    bool contains(const FlowExtension &, const LatticePosition &);
+    bool contains(const Cylinder &, const LatticePosition &);
+    //! Checks whether a cell is inside a flow extension
+    inline bool contains(std::shared_ptr<Cylinder const> cylinder, const LatticePosition &position)
+    {
+      return contains(*cylinder, position);
+    }
 
     //! Linear weight associated with a point in the cylinder
     Dimensionless linearWeight(FlowExtension const&, LatticePosition const&);
