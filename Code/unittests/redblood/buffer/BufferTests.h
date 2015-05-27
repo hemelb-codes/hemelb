@@ -25,12 +25,12 @@ namespace hemelb
       class OpenBuffer : public buffer::Buffer
       {
         public:
-          OpenBuffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer())
-            : buffer::Buffer(cyl, cells)
+          OpenBuffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer()) :
+              buffer::Buffer(cyl, cells)
           {
           }
-          OpenBuffer(Cylinder const & cyl, CellContainer const& cells = CellContainer())
-            : buffer::Buffer(cyl, cells)
+          OpenBuffer(Cylinder const & cyl, CellContainer const& cells = CellContainer()) :
+              buffer::Buffer(cyl, cells)
           {
           }
 
@@ -91,7 +91,8 @@ namespace hemelb
             justDropped.reset();
             virtuals.clear();
           }
-          void fillBuffer(size_t n) {
+          void fillBuffer(size_t n)
+          {
             buffer::Buffer::fillBuffer(n);
           }
       };
@@ -100,21 +101,20 @@ namespace hemelb
       class BufferTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE (BufferTests);
-            CPPUNIT_TEST (testDrop);
-            CPPUNIT_TEST (testOffsetUpdateNoCell);
-            CPPUNIT_TEST (testOffsetUpdateNoDropped);
-            CPPUNIT_TEST (testOffsetUpdateDroppedMovedPerpendicular);
-            CPPUNIT_TEST (testOffsetUpdateDroppedMovedBackward);
-            CPPUNIT_TEST (testOffsetUpdateDroppedMovedForward);
-            CPPUNIT_TEST (testOutsideInteractionRange);
-            CPPUNIT_TEST (testNearAndFar);
-            CPPUNIT_TEST (testIsDroppable);
-            CPPUNIT_TEST (testFillBuffer);
-            CPPUNIT_TEST (testFillBufferThrowIfNoFunc);
-            CPPUNIT_TEST (testNumberOfRequests);
-            CPPUNIT_TEST (testDropsCellsWhenPossible);
-            CPPUNIT_TEST (testNoDropsCellsWhenNotPossible);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testDrop);
+          CPPUNIT_TEST (testOffsetUpdateNoCell);
+          CPPUNIT_TEST (testOffsetUpdateNoDropped);
+          CPPUNIT_TEST (testOffsetUpdateDroppedMovedPerpendicular);
+          CPPUNIT_TEST (testOffsetUpdateDroppedMovedBackward);
+          CPPUNIT_TEST (testOffsetUpdateDroppedMovedForward);
+          CPPUNIT_TEST (testOutsideInteractionRange);
+          CPPUNIT_TEST (testNearAndFar);
+          CPPUNIT_TEST (testIsDroppable);
+          CPPUNIT_TEST (testFillBuffer);
+          CPPUNIT_TEST (testFillBufferThrowIfNoFunc);
+          CPPUNIT_TEST (testNumberOfRequests);
+          CPPUNIT_TEST (testDropsCellsWhenPossible);
+          CPPUNIT_TEST (testNoDropsCellsWhenNotPossible);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()
@@ -174,11 +174,11 @@ namespace hemelb
             CPPUNIT_ASSERT(not buffer->GetJustDropped());
 
             // Now make sure drop statements yield expected result
-            for(auto i = 0; i < cells.size(); ++i)
+            for (auto i = 0; i < cells.size(); ++i)
             {
               auto cell = buffer->drop();
-              auto expected_pos
-                = positions[i] + cylinder.normal * buffer->GetOffset() + cylinder.origin;
+              auto expected_pos = positions[i] + cylinder.normal * buffer->GetOffset()
+                  + cylinder.origin;
               CPPUNIT_ASSERT(cell == cells[i]);
               CPPUNIT_ASSERT(helpers::is_zero(cell->GetBarycenter() - expected_pos));
               CPPUNIT_ASSERT(buffer->GetJustDropped() == cell);
@@ -191,7 +191,7 @@ namespace hemelb
           void testOffsetUpdateNoCell()
           {
             // Remove all cells
-            for(size_t i=0; i < cells.size(); ++i)
+            for (size_t i = 0; i < cells.size(); ++i)
             {
               buffer->drop();
             }
@@ -259,7 +259,7 @@ namespace hemelb
             auto const delta = 0.1;
             *cell -= cylinder.normal * delta;
             buffer->updateOffset();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(startOffset-delta, buffer->GetOffset(), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(startOffset - delta, buffer->GetOffset(), 1e-8);
 
             *cell -= cylinder.normal * 2.0;
             buffer->updateOffset();
@@ -273,9 +273,9 @@ namespace hemelb
             buffer->SetInteraction(1e0);
 
             // Arrange cell positions first
-            *(cells[0]) += cylinder.normal *  0.0 - cells[0]->GetBarycenter();
-            *(cells[1]) += cylinder.normal *  5.0 - cells[1]->GetBarycenter();
-            *(cells[2]) += cylinder.normal * 10.0 - cells[2]->GetBarycenter();
+            * (cells[0]) += cylinder.normal * 0.0 - cells[0]->GetBarycenter();
+            * (cells[1]) += cylinder.normal * 5.0 - cells[1]->GetBarycenter();
+            * (cells[2]) += cylinder.normal * 10.0 - cells[2]->GetBarycenter();
 
             buffer->updateOffset();
             auto cell = buffer->drop();
@@ -336,8 +336,8 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(0, static_cast<int>(buffer->size()));
             buffer->fillBuffer(0);
             // We should have enough to fill cylinder.length + interaction of these critters
-            int const ncells = static_cast<int>(
-                (std::ceil(cylinder.length + buffer->GetInteraction())/0.5));
+            int const ncells = static_cast<int>( (std::ceil(cylinder.length
+                + buffer->GetInteraction()) / 0.5));
             CPPUNIT_ASSERT_EQUAL(ncells, static_cast<int>(buffer->size()));
             // We can still add more if wanted. However, once full, only adds as many as requested.
             buffer->fillBuffer(0);
@@ -362,8 +362,8 @@ namespace hemelb
             {
               transfered.push_back(a);
             };
-            int const ncells = static_cast<int>(
-                (std::ceil(cylinder.length + buffer->GetInteraction())/0.5));
+            int const ncells = static_cast<int>( (std::ceil(cylinder.length
+                + buffer->GetInteraction()) / 0.5));
 
             // There should be no drop if there are no requests
             buffer->clear();
@@ -376,7 +376,7 @@ namespace hemelb
             (*buffer)(addcell);
             // We expect n cells along given direction were transfered
             CPPUNIT_ASSERT_EQUAL(size_t(ncells - 1), transfered.size());
-            for(size_t i(0); i < transfered.size(); ++i)
+            for (size_t i(0); i < transfered.size(); ++i)
             {
               // those cells should be those created when filling the buffer
               CPPUNIT_ASSERT(transfered[i].get() == fillers[i].get());
@@ -393,23 +393,23 @@ namespace hemelb
             {
               transfered.push_back(a);
             };
-            int const ncells = static_cast<int>(
-                (std::ceil(cylinder.length + buffer->GetInteraction())/0.5));
+            int const ncells = static_cast<int>( (std::ceil(cylinder.length
+                + buffer->GetInteraction()) / 0.5));
 
             buffer->clear();
             buffer->requestNewCells(ncells);
             (*buffer)(addcell);
             // only dropped n - 1 because outside buffer
-            CPPUNIT_ASSERT_EQUAL(size_t(ncells-1), transfered.size());
+            CPPUNIT_ASSERT_EQUAL(size_t(ncells - 1), transfered.size());
             CPPUNIT_ASSERT_EQUAL(site_t(1), buffer->NumberOfRequests());
             CPPUNIT_ASSERT(static_cast<int>(buffer->size()) >= 1);
             // now move last cell to make space for another, but not enough
-            *(transfered.back()) -= cylinder.normal * 0.500 * buffer->GetInteraction();
+            * (transfered.back()) -= cylinder.normal * 0.500 * buffer->GetInteraction();
             (*buffer)(addcell);
-            CPPUNIT_ASSERT_EQUAL(size_t(ncells-1), transfered.size());
+            CPPUNIT_ASSERT_EQUAL(size_t(ncells - 1), transfered.size());
             CPPUNIT_ASSERT_EQUAL(site_t(1), buffer->NumberOfRequests());
             // now move last cell to make space for another
-            *(transfered.back()) -= cylinder.normal * 0.501 * buffer->GetInteraction();
+            * (transfered.back()) -= cylinder.normal * 0.501 * buffer->GetInteraction();
             buffer->requestNewCells(1);
             (*buffer)(addcell);
             CPPUNIT_ASSERT_EQUAL(size_t(ncells), transfered.size());
@@ -426,8 +426,7 @@ namespace hemelb
           Cylinder cylinder;
       };
 
-
-      CPPUNIT_TEST_SUITE_REGISTRATION(BufferTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (BufferTests);
     }
   }
 }

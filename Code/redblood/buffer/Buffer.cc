@@ -33,7 +33,7 @@ namespace hemelb
         }
 
         template<class T_FUNC>
-          CellContainer::value_type orderedCell(T_FUNC measure, CellContainer const &cells)
+        CellContainer::value_type orderedCell(T_FUNC measure, CellContainer const &cells)
         {
           if (cells.size() == 0)
             throw Exception() << "No cells in buffer";
@@ -90,9 +90,9 @@ namespace hemelb
 
       void Buffer::fillBuffer(site_t n)
       {
-        if(not getNewVirtualCell)
+        if (not getNewVirtualCell)
         {
-           throw Exception() << "Function to fill virtual buffer with cells is not set";
+          throw Exception() << "Function to fill virtual buffer with cells is not set";
         }
         // Function that inserts and returns new cell
         auto insertCell = [this]()
@@ -101,23 +101,23 @@ namespace hemelb
           return *(this->virtuals.insert(a).first);
         };
         // Make sure buffer is not empty
-        if(virtuals.size() == 0 and n <= 0)
+        if (virtuals.size() == 0 and n <= 0)
         {
           n = 1;
         }
         // Add the requested cells first
         CellContainer::value_type lastCell;
-        for(site_t i(0); i < n; ++i)
+        for (site_t i(0); i < n; ++i)
         {
           lastCell = insertCell();
         }
         // if no cells were added, then find the cell furthest from being dropped
-        if(not lastCell)
+        if (not lastCell)
         {
           lastCell = furthestCell();
         }
         // add cell until outside geometry, including interaction radius buffer.
-        while(isDroppablePosition(lastCell->GetBarycenter() - geometry->normal * interactionRadius))
+        while (isDroppablePosition(lastCell->GetBarycenter() - geometry->normal * interactionRadius))
         {
           lastCell = insertCell();
         };
@@ -126,16 +126,16 @@ namespace hemelb
       void Buffer::operator()(CellInserter insertFn)
       {
         // Add virtual cells, if necessary
-        if(virtuals.size() < NumberOfRequests())
+        if (virtuals.size() < NumberOfRequests())
         {
           fillBuffer(NumberOfRequests() - virtuals.size());
         }
         // Drop as many cells as possible
-        for(;NumberOfRequests() > 0; --numberOfRequests)
+        for (; NumberOfRequests() > 0; --numberOfRequests)
         {
           // First update offsets
           updateOffset();
-          if(not isDroppablePosition(nearestCell()))
+          if (not isDroppablePosition(nearestCell()))
           {
             break;
           }
