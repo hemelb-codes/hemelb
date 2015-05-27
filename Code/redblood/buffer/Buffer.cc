@@ -31,38 +31,121 @@ namespace hemelb
           LatticePosition const &max = *std::max_element(first, vertices.end(), dist);
           return 4e0 * (max - barycenter).GetMagnitudeSquared();
         }
+
+        template<class T_FUNC>
+          CellContainer::value_type orderedCell(T_FUNC measure, CellContainer const &cells)
+        {
+          if (cells.size() == 0)
+            throw Exception() << "No cells in buffer";
+
+          std::vector<LatticeDistance> dists(cells.size(), 0);
+          std::transform(cells.begin(), cells.end(), dists.begin(), measure);
+          auto const n = std::min_element(dists.begin(), dists.end()) - dists.begin();
+          auto min_iter = cells.begin();
+          std::advance(min_iter, n);
+          return *min_iter;
+        }
       }
 
-      CellContainer::value_type Buffer::nextCell() const
+      CellContainer::value_type Buffer::nearestCell() const
       {
-        if (virtuals.size() == 0)
-          throw Exception() << "No cell left to drop";
-
-        std::vector<LatticeDistance> dists(virtuals.size(), 0);
-        auto const &origin = geometry->origin;
-        auto const &normal = geometry->normal;
         // normal should point from nearest to drop point to furthest from drop point
+        // e.g. from origin to inside of the buffer
+        // e.g. opposite to vascular system
         // The drop point is *always* (0, 0, 0) in the coordinate system of the virtual buffer.
-        auto getdist = [&origin, &normal](CellContainer::value_type c)
+        auto const &normal = geometry->normal;
+        auto getdist = [&normal](CellContainer::value_type c)
         {
           return c->GetBarycenter().Dot(normal);
         };
-        std::transform(virtuals.begin(), virtuals.end(), dists.begin(), getdist);
-        auto const n = std::min_element(dists.begin(), dists.end()) - dists.begin();
-        auto min_iter = virtuals.begin();
-        std::advance(min_iter, n);
-        return *min_iter;
+        return orderedCell(getdist, virtuals);
+      }
+
+      CellContainer::value_type Buffer::furthestCell() const
+      {
+        auto const &normal = geometry->normal;
+        auto getdist = [&normal](CellContainer::value_type c)
+        {
+          return -c->GetBarycenter().Dot(normal);
+        };
+        return orderedCell(getdist, virtuals);
       }
 
       CellContainer::value_type Buffer::drop()
       {
-        auto next = nextCell();
-        justDropped = next;
-        virtuals.erase(next);
+        justDropped = nearestCell();
+        virtuals.erase(justDropped);
 
         lastZ = justDropped->GetBarycenter().Dot(geometry->normal);
         *justDropped += geometry->origin + geometry->normal * offset;
         return justDropped;
+      }
+
+      bool Buffer::isDroppablePosition(LatticePosition const &position) const
+      {
+        // position with respect to cylinder updated by offset
+        auto const z = (position + geometry->normal * offset).Dot(geometry->normal);
+        return z < geometry->length;
+      }
+
+      void Buffer::fillBuffer(site_t n)
+      {
+        if(not getNewVirtualCell)
+        {
+           throw Exception() << "Function to fill virtual buffer with cells is not set";
+        }
+        // Function that inserts and returns new cell
+        auto insertCell = [this]()
+        {
+          auto const a = this->getNewVirtualCell();
+          return *(this->virtuals.insert(a).first);
+        };
+        // Make sure buffer is not empty
+        if(virtuals.size() == 0 and n <= 0)
+        {
+          n = 1;
+        }
+        // Add the requested cells first
+        CellContainer::value_type lastCell;
+        for(site_t i(0); i < n; ++i)
+        {
+          lastCell = insertCell();
+        }
+        // if no cells were added, then find the cell furthest from being dropped
+        if(not lastCell)
+        {
+          lastCell = furthestCell();
+        }
+        // add cell until outside geometry, including interaction radius buffer.
+        while(isDroppablePosition(lastCell->GetBarycenter() - geometry->normal * interactionRadius))
+        {
+          lastCell = insertCell();
+        };
+      }
+
+      void Buffer::operator()(CellInserter insertFn)
+      {
+        // Add virtual cells, if necessary
+        if(virtuals.size() < NumberOfRequests())
+        {
+          fillBuffer(NumberOfRequests() - virtuals.size());
+        }
+        // Drop as many cells as possible
+        for(;NumberOfRequests() > 0; --numberOfRequests)
+        {
+          // First update offsets
+          updateOffset();
+          if(not isDroppablePosition(nearestCell()))
+          {
+            break;
+          }
+          // Add to wherever
+          insertFn(drop());
+        }
+        // Make sure buffer is still filled to prevent newly dropped cells from moving into space
+        // that should be occupied by virtual cells.
+        updateOffset();
+        fillBuffer(0);
       }
 
       void Buffer::updateOffset()
@@ -76,10 +159,12 @@ namespace hemelb
 
         // Makes sure there is an interaction distance, otherwise compute it
         if (interactionRadius <= 0e0)
+        {
           interactionRadius = 1.25 * maxCellRadius(*virtuals.begin());
+        }
 
         auto const normal = geometry->normal;
-        auto const zCell = normal.Dot(nextCell()->GetBarycenter());
+        auto const zCell = normal.Dot(nearestCell()->GetBarycenter());
         if (not justDropped)
         {
           offset = -zCell;

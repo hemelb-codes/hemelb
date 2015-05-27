@@ -31,12 +31,13 @@ namespace hemelb
           //!     is co-linear with the axis of the cylinder.
           //! \param[in] cells: Current cells in the buffer
           Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer()) :
-              geometry(cyl), virtuals(cells), offset(0), interactionRadius(0)
+              geometry(cyl), virtuals(cells), offset(0), interactionRadius(0), numberOfRequests(0)
           {
           }
           //! Constructs buffer from geometry only
           Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer()) :
-              geometry(new Cylinder(cyl)), virtuals(cells), offset(0)
+              geometry(new Cylinder(cyl)), virtuals(cells),
+              offset(0), interactionRadius(0), numberOfRequests(0)
           {
           }
           //! Destroys buffer
@@ -44,23 +45,36 @@ namespace hemelb
           {
           }
 
-          //! Inserts a cell. Does not check whether it is inside the geometry of the buffer, nor
-          //! whether it overlaps with other cells.
-          auto insert(CellContainer::value_type cell) -> decltype(CellContainer().insert(cell))
+          /**
+           * Cell insertion callback called on each step of the simulation.  Cells
+           * are inserted into the inlets while condition() evaluates to true.
+           * Multiple cells are potentially inserted on each iteration.
+           *
+           * @param insertFn the function to insert a new cell into the simulation
+           *
+           * @see hemelb::redblood::CellArmy::SetCellInsertion
+           * @see hemelb::redblood::CellArmy::CallCellInsertion
+           */
+          void operator()(CellInserter insertFn);
+
+          //! Request buffer to drop n new cells
+          void requestNewCells(site_t n = 1)
           {
-            return virtuals.insert(cell);
+            numberOfRequests += n;
+          }
+          //! Number of cells requested for drop off
+          site_t NumberOfRequests() const
+          {
+            return numberOfRequests;
+          }
+          void SetNewCellFunction(std::function<CellContainer::value_type()> const &func)
+          {
+            getNewVirtualCell = func;
           }
 
-          //! Drops the next nearest cell
-          CellContainer::value_type drop();
-
-          //! Updates offset between LB and offset
-          void updateOffset();
-
         protected:
-          //! Returns next cell to drop
-          CellContainer::value_type nextCell() const;
-
+          //! Minimum number of cells to have at the ready
+          const site_t minCells = 3;
           //! Geometry of the buffer
           std::shared_ptr<Cylinder> geometry;
           //! Container of virtual cells
@@ -73,6 +87,39 @@ namespace hemelb
           LatticeDistance lastZ;
           //! Cell interaction distance
           PhysicalDistance interactionRadius;
+          //! Number of requests cells for drop-off
+          site_t numberOfRequests;
+          //! when called, returns a new cell to add to the buffer
+          std::function<CellContainer::value_type()> getNewVirtualCell;
+
+          //! Inserts a cell. Does not check whether it is inside the geometry of the buffer, nor
+          //! whether it overlaps with other cells.
+          auto insert(CellContainer::value_type cell) -> decltype(CellContainer().insert(cell))
+          {
+            return virtuals.insert(cell);
+          }
+          //! Updates offset between LB and offset
+          void updateOffset();
+          //! Drops the next nearest cell
+          CellContainer::value_type drop();
+          //! True if next cell can be dropped
+          bool isDroppablePosition(CellContainer::value_type const &candidate) const
+          {
+            return isDroppablePosition(candidate->GetBarycenter());
+          }
+          //! True if position corresponds to that of a droppable cell
+          //! This function works in the buffer's cartesian coordinates. It will take care of adding
+          //! the offset.
+          bool isDroppablePosition(LatticePosition const &) const;
+          //! Fills buffer with new cells
+          //! A minimum of n cells are added. Then further cells are added until the cylinder is
+          //! filled. Includes a interaction radius buffer, so that if a cell is dropped, it will
+          //! have virtual neighbors that will keep it from backtracking.
+          void fillBuffer(site_t n);
+          //! Returns next cell to drop
+          CellContainer::value_type nearestCell() const;
+          //! Returns next cell to drop
+          CellContainer::value_type furthestCell() const;
       };
 
     }
