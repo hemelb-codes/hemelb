@@ -31,11 +31,11 @@ namespace hemelb
           CPPUNIT_TEST (testRotationMatrix45Degrees);
           CPPUNIT_TEST (testMaxExtensions);
           CPPUNIT_TEST (testIterator);
-          CPPUNIT_TEST (testCellDrop);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testCellDrop);CPPUNIT_TEST_SUITE_END();
 
         public:
-          ColumnsTests() : CppUnit::TestFixture(), colAxis(1, 0, 0), cellAxis(1, 1, 1), sep(1)
+          ColumnsTests() :
+              CppUnit::TestFixture(), colAxis(1, 0, 0), cellAxis(1, 1, 1), sep(1)
           {
           }
 
@@ -51,9 +51,12 @@ namespace hemelb
           {
             using namespace hemelb::redblood::buffer;
             auto const r = rotMat(LatticePosition(1, 0, 0), LatticePosition(1, 0, 0));
-            for(size_t i(0); i < 3; ++i)
-              for(size_t j(0); j < 3; ++j)
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(r[i][j], i == j ? 1e0: 0e0, 1e-8);
+            for (size_t i(0); i < 3; ++i)
+              for (size_t j(0); j < 3; ++j)
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(r[i][j], i == j ?
+                  1e0 :
+                  0e0,
+                                             1e-8);
           }
           void testRotationMatrix90Degrees()
           {
@@ -86,9 +89,9 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0, (r * LatticePosition(0, 0, 1)).y, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, (r * LatticePosition(0, 0, 1)).z, 1e-8);
             // a0.Cross(a0.Cross(b0)) maps to b0.Cross(a0.Cross(b0))
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(    0, (r * LatticePosition(1, 1, 0)).x, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0, (r * LatticePosition(1, 1, 0)).x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(sqrt2, (r * LatticePosition(1, 1, 0)).y, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(    0, (r * LatticePosition(1, 1, 0)).z, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0, (r * LatticePosition(1, 1, 0)).z, 1e-8);
           }
 
           void testMaxExtensions()
@@ -102,7 +105,6 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(0, 0, 1)), 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(0, 0, 0.5)), 1e-8);
           }
-
 
           void testIterator()
           {
@@ -131,7 +133,8 @@ namespace hemelb
               ++iterator;
               positions.push_back(*iterator);
               CPPUNIT_ASSERT(is_in_cylinder(positions.back(), verts));
-            } while((positions.back() - positions[0]).Cross(a0).GetMagnitude() < 1e-8);
+            }
+            while ( (positions.back() - positions[0]).Cross(a0).GetMagnitude() < 1e-8);
 
             // a1 goes from last position in one column to first position in other
             auto const a1 = positions.back() - positions[positions.size() - 2];
@@ -144,13 +147,14 @@ namespace hemelb
               ++iterator;
               positions.push_back(*iterator);
               CPPUNIT_ASSERT(is_in_cylinder(positions.back(), verts));
-            } while((positions.back() - positions[0]).Dot(cylinder->normal) < 1e-8);
+            }
+            while ( (positions.back() - positions[0]).Dot(cylinder->normal) < 1e-8);
 
             // Check next positions are same as previous but translated along normal
             // positions.back() == positions[i] + something * cylinder->normal.
             const auto N = positions.size();
             CPPUNIT_ASSERT(N > 1);
-            for(size_t i = 0; i < 2 * N; ++i)
+            for (size_t i = 0; i < 2 * N; ++i)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(positions[i].x, positions.back().x, 1e-8);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(positions[i].y, positions.back().y, 1e-8);
@@ -172,7 +176,7 @@ namespace hemelb
             {
               auto const cell = std::static_pointer_cast<Cell const, CellBase const>(acell);
               auto const b0 = templateCell->GetBarycenter();
-              auto const b1  = cell->GetBarycenter();
+              auto const b1 = cell->GetBarycenter();
               auto const& vertices0 = templateCell->GetVertices();
               auto const& vertices1 = cell->GetVertices();
               CPPUNIT_ASSERT_EQUAL(templateCell->GetNumberOfNodes(), cell->GetNumberOfNodes());
@@ -197,7 +201,7 @@ namespace hemelb
                   templateCell->moduli.surface, cell->moduli.surface, 1e-8);
             };
             ColumnCellDrop dropCell(cylinder, templateCell, cellAxis, colAxis, sep);
-            for(size_t i(0); i < 50; ++i)
+            for (size_t i(0); i < 50; ++i)
             {
               check(dropCell());
             }
@@ -212,20 +216,21 @@ namespace hemelb
           {
             LatticePosition const barycenter = hemelb::redblood::barycenter(verts);
             LatticePosition const n0 = cylinder->normal.GetNormalised();
-            if(a.Dot(cylinder->normal) < -1e-8)
+            if (a.Dot(cylinder->normal) < -1e-8)
             {
               return false;
             }
-            for(auto const &v: verts)
+            for (auto const &v : verts)
             {
               LatticePosition const x = a + v - barycenter - cylinder->origin;
-              if(x.Cross(n0).GetMagnitude() >= cylinder->radius)
+              if (x.Cross(n0).GetMagnitude() >= cylinder->radius)
               {
                 return false;
               }
             }
             return true;
-          };
+          }
+          ;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION (ColumnsTests);

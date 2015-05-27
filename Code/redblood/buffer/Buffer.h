@@ -36,8 +36,8 @@ namespace hemelb
           }
           //! Constructs buffer from geometry only
           Buffer(Cylinder const & cyl, CellContainer const& cells = CellContainer()) :
-              geometry(new Cylinder(cyl)), virtuals(cells),
-              offset(0), interactionRadius(0), numberOfRequests(0)
+              geometry(new Cylinder(cyl)), virtuals(cells), offset(0), interactionRadius(0),
+                  numberOfRequests(0)
           {
           }
           //! Destroys buffer
