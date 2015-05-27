@@ -28,6 +28,7 @@ namespace hemelb
 {
   namespace redblood
   {
+    // References a node of a mesh in the divide-and-conquer box
     class CellReference
     {
       public:

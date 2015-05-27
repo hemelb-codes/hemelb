@@ -6,6 +6,8 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 //
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #include "redblood/Cell.h"
 // Helper functions in anonymous namespace.
@@ -20,15 +22,27 @@ namespace hemelb
     {
       public:
         CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
-            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn)
+            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn),
+            tag(boost::uuids::random_generator()())
         {
           assert(scale > 1e-12);
         }
         CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
                      1e0) :
-            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn)
+            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn),
+            tag(boost::uuids::random_generator()())
         {
           assert(scale > 1e-12);
+        }
+        CellData(CellData const& c)
+          : vertices(c.vertices), templateMesh(c.templateMesh), scale(c.scale),
+            tag(boost::uuids::random_generator()())
+        {
+        }
+        CellData(CellData && c)
+          : vertices(std::move(c.vertices)), templateMesh(std::move(c.templateMesh)),
+            scale(c.scale), tag(std::move(c.tag))
+        {
         }
         //! Holds list of vertices for this cell
         MeshData::Vertices vertices;
@@ -36,6 +50,8 @@ namespace hemelb
         Mesh templateMesh;
         //! Scale factor for the template;
         Dimensionless scale;
+        //! Uuid tag
+        boost::uuids::uuid const tag;
     };
 
     CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
@@ -48,6 +64,7 @@ namespace hemelb
     {
     }
     CellBase::CellBase(CellBase const& cell) :
+
         data(new CellData(*cell.data))
     {
     }
@@ -248,6 +265,11 @@ namespace hemelb
       std::unique_ptr<Cell> result(new Cell(GetVertices(), GetTemplateMesh(), GetScale()));
       result->moduli = moduli;
       return std::move(result);
+    }
+
+    boost::uuids::uuid const & CellBase::GetTag() const
+    {
+      return data->tag;
     }
 
   }
