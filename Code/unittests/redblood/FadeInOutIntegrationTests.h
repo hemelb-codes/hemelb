@@ -39,7 +39,7 @@ namespace hemelb
             intel.push_back("simulation");
             intel.push_back("steps");
             intel.push_back("value");
-            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 100);
+            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 20);
 
             argv[0] = "hemelb";
             argv[1] = "-in";
