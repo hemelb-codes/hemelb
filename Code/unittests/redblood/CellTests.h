@@ -124,10 +124,12 @@ namespace hemelb
             Cell cell1(cell0);
             CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell1.GetTemplateMesh().GetData());
             CPPUNIT_ASSERT(&cell0.GetVertices() != &cell1.GetVertices());
+            CPPUNIT_ASSERT(cell0.GetTag() != cell1.GetTag());
 
             Cell cell2(cell0, CellBase::shallow_clone());
             CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell2.GetTemplateMesh().GetData());
             CPPUNIT_ASSERT(&cell0.GetVertices() == &cell2.GetVertices());
+            CPPUNIT_ASSERT(cell0.GetTag() == cell2.GetTag());
           }
 
         protected:

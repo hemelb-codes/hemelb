@@ -10,8 +10,11 @@
 #ifndef HEMELB_REDBLOOD_PARTICLE_H
 #define HEMELB_REDBLOOD_PARTICLE_H
 
+#include <boost/uuid/uuid.hpp>
+
 #include <set>
 #include <utility>
+
 #include "redblood/Mesh.h"
 #include "redblood/Node2Node.h"
 #include "units.h"
@@ -149,6 +152,9 @@ namespace hemelb
         {
           return cloneImpl();
         }
+
+        //! A unique identifier for the cell
+        boost::uuids::uuid const & GetTag() const;
 
       protected:
         //! Clones: shallow copy reference mesh, deep-copy everything else
