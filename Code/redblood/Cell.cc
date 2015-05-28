@@ -6,54 +6,20 @@
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
 //
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-
 #include "redblood/Cell.h"
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
 #include "redblood/Cell.impl.cc"
 
+// Contains definition of CellBase::CellData
+// Should not be included by anyone except here and VertexBag
+// In fact, there are no header guards on this file, just to make sure it is not included wrongly.
+#include "redblood/CellDataDefinition.impl.cc"
+
 namespace hemelb
 {
   namespace redblood
   {
-    class CellBase::CellData
-    {
-      public:
-        CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
-            vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn),
-            tag(boost::uuids::random_generator()())
-        {
-          assert(scale > 1e-12);
-        }
-        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
-                     1e0) :
-            vertices(verticesIn), templateMesh(origMesh), scale(scaleIn),
-            tag(boost::uuids::random_generator()())
-        {
-          assert(scale > 1e-12);
-        }
-        CellData(CellData const& c)
-          : vertices(c.vertices), templateMesh(c.templateMesh), scale(c.scale),
-            tag(boost::uuids::random_generator()())
-        {
-        }
-        CellData(CellData && c)
-          : vertices(std::move(c.vertices)), templateMesh(std::move(c.templateMesh)),
-            scale(c.scale), tag(std::move(c.tag))
-        {
-        }
-        //! Holds list of vertices for this cell
-        MeshData::Vertices vertices;
-        //! Unmodified original mesh
-        Mesh templateMesh;
-        //! Scale factor for the template;
-        Dimensionless scale;
-        //! Uuid tag
-        boost::uuids::uuid const tag;
-    };
-
     CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
         data(new CellData(std::move(verticesIn), origMesh, scaleIn))
     {
