@@ -163,6 +163,12 @@ namespace hemelb
         class CellData;
         //! Holds data
         std::shared_ptr<CellData> data;
+
+        //! Allows more control by derived classes
+        CellBase(std::shared_ptr<CellData> const &dataIn)
+          : data(dataIn)
+        {
+        }
     };
 
     //! Deformable cell for which energy and forces can be computed
