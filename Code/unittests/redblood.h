@@ -62,6 +62,7 @@ namespace hemelb
 #include "unittests/redblood/FadeInOutIntegrationTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"
 #include "unittests/redblood/FaderCellTests.h"
+#include "unittests/redblood/VertexBagTests.h"
 #include "unittests/redblood/buffer/BufferTests.h"
 #include "unittests/redblood/buffer/ColumnsTests.h"
 #undef HEMELB_DOING_UNITTESTS
