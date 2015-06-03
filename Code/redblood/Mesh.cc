@@ -110,7 +110,7 @@ namespace hemelb
 
     void write_mesh(std::string const &filename, MeshData const &data)
     {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell from %s",
+      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
       write_mesh(file, data);
@@ -118,7 +118,7 @@ namespace hemelb
 
     void write_vtkmesh(std::string const &filename, MeshData const &data)
     {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell from %s",
+      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
       write_vtkmesh(file, data);
@@ -153,16 +153,21 @@ namespace hemelb
 
     void write_vtkmesh(std::ostream &stream, MeshData const &data)
     {
+      write_vtkmesh(stream, data.vertices, data.facets);
+    }
+    void write_vtkmesh(std::ostream &stream,
+        MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    {
       // Write Header
       stream << "<?xml version=\"1.0\"?>\n"
           << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
-          << "  <PolyData>\n" << "    <Piece NumberOfPoints=\"" << data.vertices.size()
-          << "\" NumberOfPolys=\"" << data.facets.size() << "\">\n" << "      <Points>\n"
+          << "  <PolyData>\n" << "    <Piece NumberOfPoints=\"" << vertices.size()
+          << "\" NumberOfPolys=\"" << facets.size() << "\">\n" << "      <Points>\n"
           << "        <DataArray NumberOfComponents=\"3\" type=\"Float32\">\n";
 
       typedef MeshData::Vertices::const_iterator VertexIterator;
-      VertexIterator i_vertex = data.vertices.begin();
-      VertexIterator const i_vertex_end = data.vertices.end();
+      VertexIterator i_vertex = vertices.begin();
+      VertexIterator const i_vertex_end = vertices.end();
 
       for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
         stream << (*i_vertex)[0] << " " << (*i_vertex)[1] << " " << (*i_vertex)[2] << " ";
@@ -171,8 +176,8 @@ namespace hemelb
           << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
 
       typedef MeshData::Facets::const_iterator FacetIterator;
-      FacetIterator i_facet = data.facets.begin();
-      FacetIterator const i_facet_end = data.facets.end();
+      FacetIterator i_facet = facets.begin();
+      FacetIterator const i_facet_end = facets.end();
 
       for (; i_facet != i_facet_end; ++i_facet)
         stream << (*i_facet)[0] << " " << (*i_facet)[1] << " " << (*i_facet)[2] << " ";
@@ -180,7 +185,7 @@ namespace hemelb
       stream << "\n        </DataArray>\n"
           << "        <DataArray type=\"Int32\" Name=\"offsets\">\n";
 
-      for (unsigned i(0); i < data.facets.size(); ++i)
+      for (unsigned i(0); i < facets.size(); ++i)
       {
         stream << (i + 1) * 3 << " ";
       }

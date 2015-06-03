@@ -207,10 +207,13 @@ namespace hemelb
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
     void write_mesh(std::string const &filename, MeshData const &data);
-    //! Write mesh from file in VTK XML format
+    //! Write mesh to file in VTK XML format
     void write_vtkmesh(std::ostream &stream, MeshData const &data);
-    //! Write mesh from file in VTK XML format
+    //! Write mesh to file in VTK XML format
     void write_vtkmesh(std::string const &filename, MeshData const &data);
+    //! Write mesh to file in VTK XML format
+    void write_vtkmesh(std::ostream &stream,
+        MeshData::Vertices const &vertices, MeshData::Facets const &facets);
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet
