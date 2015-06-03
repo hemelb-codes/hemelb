@@ -1,4 +1,6 @@
 //
+//
+//write
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
 // This file is part of HemeLB and is CONFIDENTIAL. You may not work
@@ -289,6 +291,11 @@ namespace hemelb
     typedef std::set<std::shared_ptr<CellBase>> CellContainer;
     //! Function to insert cells somewhere
     typedef std::function<void(CellContainer::value_type)> CellInserter;
+
+    //! Write cell-mesh to file in VTK XML format
+    void write_vtkmesh(std::ostream &stream, std::shared_ptr<CellBase const> data);
+    //! Write cell-mesh to file in VTK XML format
+    void write_vtkmesh(std::string const &filename, std::shared_ptr<CellBase const> data);
   }
 } // namespace hemelb::redblood
 #endif
