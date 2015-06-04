@@ -10,6 +10,7 @@
 #ifndef HEMELB_REDBLOOD_FLOWEXTENSION_H
 #define HEMELB_REDBLOOD_FLOWEXTENSION_H
 
+#include <memory>
 #include "util/Vector3D.h"
 #include "units.h"
 
