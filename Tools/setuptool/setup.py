@@ -16,9 +16,7 @@ import numpy
 import vtk
 try:
     import wxversion
-    wxversion.select('2.8')
-except wxversion.VersionError:
-    wxversion.select('2.9')
+    wxversion.ensureMinimal('2.8')
 except ImportError:
     pass
 
