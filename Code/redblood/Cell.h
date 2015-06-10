@@ -25,8 +25,17 @@ namespace hemelb
 {
   namespace redblood
   {
+#   ifndef NDEBUG
+        //! \brief Function checks characteristics of implementation class CellBase::CellData
+        //! \data Nothing more than a bunch of static asserts. CellData is a private member, so we
+        //! need a friend somewhere to check its characteristics.
+        void check_cell_data_characteristics();
+#   endif
     class CellBase
     {
+#     ifndef NDEBUG
+        friend void check_cell_data_characteristics();
+#     endif
       public:
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
@@ -172,6 +181,18 @@ namespace hemelb
         {
         }
     };
+    static_assert(
+        (not std::is_default_constructible<CellBase>::value)
+        and (not std::is_nothrow_default_constructible<CellBase>::value)
+        and (not std::is_move_constructible<CellBase>::value)
+        and (not std::is_nothrow_move_constructible<CellBase>::value)
+        and (not std::is_copy_constructible<CellBase>::value)
+        and std::is_copy_assignable<CellBase>::value
+        and std::is_nothrow_copy_assignable<CellBase>::value
+        and (not std::is_standard_layout<CellBase>::value)
+        and (not std::is_pod<CellBase>::value),
+        "Explicit type characteristics"
+    );
 
     //! Deformable cell for which energy and forces can be computed
     class Cell : public CellBase
@@ -286,6 +307,28 @@ namespace hemelb
         // Computes facet bending energy over all facets
         PhysicalEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
     };
+    static_assert(
+        (not std::is_default_constructible<Cell>::value)
+        and (not std::is_nothrow_default_constructible<Cell>::value)
+        and std::is_move_constructible<Cell>::value
+        and (not std::is_nothrow_move_constructible<Cell>::value)
+        and std::is_copy_constructible<Cell>::value
+        and std::is_copy_assignable<Cell>::value
+        and std::is_nothrow_copy_assignable<Cell>::value
+        and (not std::is_standard_layout<Cell>::value)
+        and (not std::is_pod<Cell>::value)
+
+        and std::is_default_constructible<Cell::Moduli>::value
+        and (not std::is_nothrow_default_constructible<Cell::Moduli>::value)
+        and std::is_move_constructible<Cell::Moduli>::value
+        and std::is_nothrow_move_constructible<Cell::Moduli>::value
+        and std::is_copy_constructible<Cell::Moduli>::value
+        and std::is_copy_assignable<Cell::Moduli>::value
+        and std::is_nothrow_copy_assignable<Cell::Moduli>::value
+        and std::is_standard_layout<Cell::Moduli>::value
+        and (not std::is_pod<Cell::Moduli>::value),
+        "Explicit type characteristics"
+    );
 
     //! Typical cell container type
     typedef std::set<std::shared_ptr<CellBase>> CellContainer;
