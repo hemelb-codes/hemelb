@@ -40,6 +40,18 @@ namespace hemelb
         //! Facet container
         Facets facets;
     };
+    static_assert(std::is_standard_layout<MeshData>::value, "Needed for MPI data type");
+    static_assert(
+        std::is_default_constructible<MeshData>::value
+        and std::is_nothrow_default_constructible<MeshData>::value
+        and std::is_move_constructible<MeshData>::value
+        and std::is_nothrow_move_constructible<MeshData>::value
+        and std::is_copy_constructible<MeshData>::value
+        and std::is_copy_assignable<MeshData>::value
+        and (not std::is_nothrow_copy_assignable<MeshData>::value)
+        and (not std::is_pod<MeshData>::value),
+        "Explicit type characteristics"
+    );
 
     LatticePosition barycenter(MeshData const &mesh);
     LatticePosition barycenter(MeshData::Vertices const &vertices);
@@ -68,6 +80,18 @@ namespace hemelb
         {
         }
     };
+    static_assert(
+        std::is_default_constructible<MeshTopology>::value
+        and (not std::is_nothrow_default_constructible<MeshTopology>::value)
+        and std::is_move_constructible<MeshTopology>::value
+        and std::is_nothrow_move_constructible<MeshTopology>::value
+        and std::is_copy_constructible<MeshTopology>::value
+        and std::is_copy_assignable<MeshTopology>::value
+        and (not std::is_nothrow_copy_assignable<MeshTopology>::value)
+        and std::is_standard_layout<MeshTopology>::value
+        and (not std::is_pod<MeshTopology>::value),
+        "Explicit type characteristics"
+    );
 
     //! Triangular mesh
     class Mesh
@@ -194,6 +218,18 @@ namespace hemelb
         //! Holds topology information
         std::shared_ptr<MeshTopology> topology;
     };
+    static_assert(
+        (not std::is_default_constructible<Mesh>::value)
+        and (not std::is_nothrow_default_constructible<Mesh>::value)
+        and std::is_move_constructible<Mesh>::value
+        and (not std::is_nothrow_move_constructible<Mesh>::value)
+        and std::is_copy_constructible<Mesh>::value
+        and std::is_copy_assignable<Mesh>::value
+        and std::is_nothrow_copy_assignable<Mesh>::value
+        and std::is_standard_layout<Mesh>::value
+        and (not std::is_pod<Mesh>::value),
+        "Explicit type characteristics"
+    );
 
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
