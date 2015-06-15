@@ -37,9 +37,10 @@ namespace hemelb
         if (condition())
         {
           std::shared_ptr<Cell> cell = std::make_shared<Cell>(shape->vertices, Mesh(*shape), scale);
+          *cell *= scale;
           cell->moduli = moduli;
           const std::shared_ptr<FlowExtension> flowExt = inlet->GetFlowExtension();
-          *cell += inlet->GetPosition();
+          *cell += inlet->GetPosition() - cell->GetBarycenter();
           if (flowExt)
             *cell += flowExt->normal * flowExt->length;
           insertFn(cell);
