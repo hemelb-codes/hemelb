@@ -29,12 +29,12 @@ namespace hemelb
         //! \brief Function checks characteristics of implementation class CellBase::CellData
         //! \data Nothing more than a bunch of static asserts. CellData is a private member, so we
         //! need a friend somewhere to check its characteristics.
-        void check_cell_data_characteristics();
+        void checkCellDataCharacteristics();
 #   endif
     class CellBase
     {
 #     ifndef NDEBUG
-        friend void check_cell_data_characteristics();
+        friend void checkCellDataCharacteristics();
 #     endif
       public:
         //! \brief Initializes mesh from mesh data

@@ -69,22 +69,5 @@ namespace hemelb
           assert(scale > 1e-12);
         }
     };
-
-#   ifndef NDEBUG
-      void check_cell_data_characteristics() {
-        static_assert(
-            (not std::is_default_constructible<CellBase::CellData>::value)
-            and (not std::is_nothrow_default_constructible<CellBase::CellData>::value)
-            and std::is_move_constructible<CellBase::CellData>::value
-            and (not std::is_nothrow_move_constructible<CellBase::CellData>::value)
-            and std::is_copy_constructible<CellBase::CellData>::value
-            and (not std::is_copy_assignable<CellBase::CellData>::value)
-            and (not std::is_nothrow_copy_assignable<CellBase::CellData>::value)
-            and std::is_standard_layout<CellBase::CellData>::value
-            and (not std::is_pod<CellBase::CellData>::value),
-            "Explicit type characteristics"
-        );
-      }
-#   endif
   }
 }
