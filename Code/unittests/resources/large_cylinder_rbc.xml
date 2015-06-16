@@ -24,6 +24,10 @@
         <length units="m" value="0.1" />
         <radius units="m" value="0.01" />
         <fadelength units="m" value="0.05" />
+        <insertcell>
+          <every units="s" value="10"/>
+          <offset units="s" value="0"/>
+        </insertcell>
       </flowextension>
     </inlet>
   </inlets>
@@ -77,9 +81,6 @@
       <shape mesh_path="red_blood_cell.txt" />
       <scale units="m" value="1.0" />
     </cell>
-    <insertcondition>
-      <iterations value="10" />
-    </insertcondition>
   </redbloodcells>
   <initialconditions>
     <pressure>
