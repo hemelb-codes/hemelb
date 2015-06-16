@@ -46,7 +46,7 @@ namespace hemelb
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
         CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                 Dimensionless scaleIn = 1e0);
+                 PhysicalDistance scaleIn = 1e0);
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
@@ -55,7 +55,7 @@ namespace hemelb
         //! \param [in] scaleIn: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn =
                      1e0);
 
         //! \brief Initializes mesh from mesh data
@@ -66,7 +66,7 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0);
+        CellBase(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0);
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
@@ -151,13 +151,13 @@ namespace hemelb
         MeshData::Vertices::value_type GetBarycenter() const;
 
         //! Scale to apply to the template mesh
-        void SetScale(Dimensionless scaleIn);
+        void SetScale(PhysicalDistance scaleIn);
         //! Scale to apply to the template mesh
-        Dimensionless GetScale() const;
+        PhysicalDistance GetScale() const;
 
         // cloneImpl is virtual and returns a pointer to abstract class
         // clone will be overriden. It will call cloneImpl and cast it to derived type.
-        // The loop jumping is necessary since we are returning managed pointers.
+        // The hoop jumping is necessary since we are returning managed pointers.
         //! Clones: shallow copy reference mesh, deep-copy everything else
         std::unique_ptr<CellBase> clone() const
         {
@@ -241,16 +241,16 @@ namespace hemelb
         Node2NodeForce nodeWall;
 
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0) :
             CellBase(std::move(verticesIn), origMesh, scaleIn)
         {
         }
         Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-             Dimensionless scaleIn = 1e0) :
+             PhysicalDistance scaleIn = 1e0) :
             CellBase(verticesIn, origMesh, scaleIn)
         {
         }
-        Cell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+        Cell(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0) :
             CellBase(mesh, origMesh, scaleIn)
         {
         }
