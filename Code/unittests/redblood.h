@@ -65,5 +65,6 @@ namespace hemelb
 #include "unittests/redblood/VertexBagTests.h"
 #include "unittests/redblood/buffer/BufferTests.h"
 #include "unittests/redblood/buffer/ColumnsTests.h"
+#include "unittests/redblood/CellIOTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif
