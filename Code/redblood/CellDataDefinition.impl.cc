@@ -25,13 +25,13 @@ namespace hemelb
     class CellBase::CellData
     {
       public:
-        CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn = 1e0) :
+        CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0) :
             vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn),
             tag(boost::uuids::random_generator()())
         {
           assert(scale > 1e-12);
         }
-        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh, Dimensionless scaleIn =
+        CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn =
                      1e0) :
             vertices(verticesIn), templateMesh(origMesh), scale(scaleIn),
             tag(boost::uuids::random_generator()())
@@ -53,7 +53,7 @@ namespace hemelb
         //! Unmodified original mesh
         Mesh templateMesh;
         //! Scale factor for the template;
-        Dimensionless scale;
+        PhysicalDistance scale;
         //! Uuid tag
         boost::uuids::uuid const tag;
 
