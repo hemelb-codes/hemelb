@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <functional>
+#include "io/xml/XmlAbstractionLayer.h"
 #include "lb/iolets/InOutLet.h"
 #include "Mesh.h"
 #include "Cell.h"
@@ -29,40 +30,13 @@ namespace hemelb
          *
          * @param condition a cell will only be inserted on a LB step if this
          * condition evaluates to true
-         * @param mesh_path the path to the mesh text file to read the cell
-         * shape from
+         * @param cell to insert. Inserted as is. E.g. same position etc.
          * @param scale the scale of the cell to insert
          */
-        RBCInserter(std::function<bool()> condition, const std::string & mesh_path,
-                    std::vector<lb::iolets::InOutLet *> inlets =
-                        std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
-
-        /**
-         * Creates an RBC Inserter.
-         *
-         * @param condition a cell will only be inserted on a LB step if this
-         * condition evaluates to true
-         * @param mesh_stream an input stream to read the cell shape from
-         * @param scale the scale of the cell to insert
-         */
-        RBCInserter(std::function<bool()> condition, std::istream & mesh_stream,
-                    std::vector<lb::iolets::InOutLet *> inlets =
-                        std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
-
-        /**
-         * Creates an RBC Inserter.
-         *
-         * @param condition a cell will only be inserted on a LB step if this
-         * condition evaluates to true
-         * @param shape the shape of the cells to create
-         * @param scale the scale of the cell to insert
-         */
-        RBCInserter(std::function<bool()> condition, const MeshData & shape,
-                    std::vector<lb::iolets::InOutLet *> inlets =
-                        std::vector<lb::iolets::InOutLet *>(),
-                    Cell::Moduli moduli = Cell::Moduli(), Dimensionless scale = 1.0);
+        RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell)
+          : condition(condition), cell(std::move(cell))
+        {
+        }
 
         /**
          * Cell insertion callback called on each step of the simulation.  Cells
@@ -74,41 +48,25 @@ namespace hemelb
          * @see hemelb::redblood::CellArmy::SetCellInsertion
          * @see hemelb::redblood::CellArmy::CallCellInsertion
          */
-        void operator()(CellInserter insertFn) const;
-
-        void SetShape(const MeshData & shape);
-        std::shared_ptr<const MeshData> GetShape() const;
-
-        void AddInLet(lb::iolets::InOutLet *);
-        void RemoveInLet(lb::iolets::InOutLet *);
-
-        void SetScale(Dimensionless scale);
-        Dimensionless GetScale() const;
-
-        void SetModuli(Cell::Moduli & moduli);
-        const Cell::Moduli & GetModuli() const;
-
-        void SetCondition(std::function<bool()> condition);
-        std::function<bool()> GetCondition() const;
+        void operator()(CellInserter insertFn) const
+        {
+          if(condition())
+          {
+            insertFn(CellContainer::value_type(cell->clone().release()));
+          }
+        }
 
       private:
-
         //! When to insert cells
         std::function<bool()> condition;
-
         //! The shape of the cells to insert
-        std::shared_ptr<const MeshData> shape;
-
-        //! The iolets to insert cells into
-        std::vector<lb::iolets::InOutLet *> inlets;
-
-        //! The cell moduli
-        Cell::Moduli moduli;
-
-        //! The initial scale of the new cells
-        Dimensionless scale;
+        std::unique_ptr<CellBase const> cell;
     };
 
+
+    //! Reads and inserts cell from XML
+    std::shared_ptr<CellBase> read_cell(io::xml::Element const&, util::UnitConverter const&);
+    // RBCInserter inserterFactory(io::xml:Element const *cellDef,  
   }
 }
 
