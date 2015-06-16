@@ -159,6 +159,15 @@ namespace hemelb
             // F = ma so Force = mass * length / time / time and Newton = Kg * metre / second / second
             scale_factor = latticeMass * latticeDistance / (latticeTime * latticeTime);
           }
+          else if (units == "N/m")
+          {
+            scale_factor = latticeMass / (latticeTime * latticeTime);
+          }
+          else if (units == "Nm")
+          {
+            scale_factor = latticeMass * latticeDistance
+              * latticeDistance / (latticeTime * latticeTime);
+          }
           else if (units == "s")
           {
             scale_factor = latticeTime;
