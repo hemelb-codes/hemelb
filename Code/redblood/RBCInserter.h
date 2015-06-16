@@ -62,11 +62,6 @@ namespace hemelb
         //! The shape of the cells to insert
         std::unique_ptr<CellBase const> cell;
     };
-
-
-    //! Reads and inserts cell from XML
-    std::shared_ptr<CellBase> read_cell(io::xml::Element const&, util::UnitConverter const&);
-    // RBCInserter inserterFactory(io::xml:Element const *cellDef,  
   }
 }
 

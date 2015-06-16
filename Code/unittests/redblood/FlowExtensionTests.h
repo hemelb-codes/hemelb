@@ -12,6 +12,7 @@
 
 #include <cppunit/TestFixture.h>
 #include "redblood/FlowExtension.h"
+#include "redblood/io.h"
 #include "unittests/redblood/Fixtures.h"
 #include "util/Vector3D.h"
 #include "units.h"
@@ -27,6 +28,7 @@ namespace hemelb
         CPPUNIT_TEST (testAxis);
         CPPUNIT_TEST (testCircumference);
         CPPUNIT_TEST (testLinearWeight);
+        CPPUNIT_TEST (testReadFromXML);
         CPPUNIT_TEST_SUITE_END();
 
         typedef util::Vector3D<LatticeDistance> Point;
@@ -84,7 +86,42 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, linearWeight(flow, LatticePosition(0.5, 0.5, 1.0 + 1e-8)), 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, linearWeight(flow, LatticePosition(0.5, 0.5, 1.0 - 1e-8)), 1e-8);
           }
+
+          void testReadFromXML()
+          {
+            TiXmlDocument doc;
+            doc.Parse(
+               "<inlet>"
+               "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />"
+               "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />"
+               "  <flowextension>"
+               "    <length units=\"m\" value=\"0.1\" />"
+               "    <radius units=\"m\" value=\"0.01\" />"
+               "    <fadelength units=\"m\" value=\"0.05\" />"
+               "  </flowextension>"
+               "</inlet>"
+            );
+            util::UnitConverter converter(0.5, 0.6, 0.7);
+            auto flow = read_flow_extension(doc.FirstChildElement("inlet"), converter);
+            // Normal is opposite direction compared to XML inlet definition
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                -2e0/std::sqrt(2), LatticePosition(0, 1, 1).Dot(flow.normal), 1e-8);
+            auto const length = converter.ConvertToLatticeUnits("m", 0.1);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(length, flow.length, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                converter.ConvertToLatticeUnits("m", 0.01), flow.radius, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                converter.ConvertToLatticeUnits("m", 0.05), flow.fadeLength, 1e-8);
+
+            // position is at opposite end compared to XML inlet definition
+            auto const position
+              = converter.ConvertPositionToLatticeUnits(LatticePosition(0.1, 0.2, 0.3));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(position.x, flow.origin.x, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(position.y + length/std::sqrt(2e0), flow.origin.y, 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(position.z + length/std::sqrt(2e0), flow.origin.z, 1e-8);
+          }
       };
+
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FlowExtensionTests);
 

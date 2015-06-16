@@ -17,6 +17,8 @@
 #include "log/Logger.h"
 #include "util/fileutils.h"
 #include "redblood/flowextension.h"
+#include "redblood/io.h"
+#include "redblood/Cell.h"
 
 namespace hemelb
 {
@@ -281,7 +283,7 @@ namespace hemelb
         return iter == 0;
       };
 
-      rbcinserter = redblood::RBCInserter(condition, mesh_path, inlets, moduli, scale);
+      rbcinserter = redblood::read_rbcinserter(rbcNode, GetUnitConverter());
     }
 
     void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
