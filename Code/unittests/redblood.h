@@ -59,7 +59,7 @@ namespace hemelb
 #include "unittests/redblood/DivideConquerTests.h"
 #include "unittests/redblood/CellArmyTests.h"
 #include "unittests/redblood/CellIntegrationTests.h"
-// #include "unittests/redblood/FadeInOutIntegrationTests.h"
+#include "unittests/redblood/FadeInOutIntegrationTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"
 #include "unittests/redblood/FaderCellTests.h"
 #include "unittests/redblood/VertexBagTests.h"

@@ -208,10 +208,9 @@ namespace hemelb
       // fail if any node outside flow extension
       for(auto const &vertex: cell->GetVertices())
       {
-        std::cout << "vertex " << vertex << " F " << flowExtension.radius << " " <<flowExtension.length << "\n";
         if(not contains(flowExtension, vertex))
         {
-          throw Exception() << "Cell not contained within flow extension";
+          throw Exception() << "BAD INPUT: Cell not contained within flow extension";
         }
       }
 
