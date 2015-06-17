@@ -218,14 +218,13 @@ namespace hemelb
     if (simConfig->HasRBCSection())
     {
       hemelb::redblood::CellContainer cells;
-      hemelb::redblood::CellController < hemelb::Traits<>::Kernel > *controller =
-          new hemelb::redblood::CellController<hemelb::Traits<>::Kernel>(*latticeData,
-                                                                         cells,
-                                                                         simConfig->GetBoxSize(),
-                                                                         simConfig->GetHalo());
+      typedef hemelb::redblood::CellController<hemelb::Traits<>::Kernel> Controller;
+      auto const controller = std::make_shared<Controller>(*latticeData,
+                                                           cells,
+                                                           simConfig->GetBoxSize(),
+                                                           simConfig->GetHalo());
       controller->SetCellInsertion(simConfig->GetInserter());
-      cellController = std::shared_ptr < hemelb::redblood::CellController
-          < hemelb::Traits<>::Kernel >> (controller);
+      cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
     }
 
     // Initialise and begin the steering.
