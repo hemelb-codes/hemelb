@@ -103,12 +103,7 @@ namespace hemelb
 
       // The RBC section must be parsed *after* the inlets and outlets have been
       // defined
-      io::xml::Element rbc = topNode.GetChildOrNull("redbloodcells");
-      if (rbc != io::xml::Element::Missing())
-      {
-        DoIOForRedBloodCells(rbc);
-        hasRBCSection = true;
-      }
+      hasRBCSection = DoIOForRedBloodCells(topNode);
     }
 
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
@@ -242,70 +237,38 @@ namespace hemelb
           throw Exception() << "Invalid boundary condition type '" << conditionType << "' in "
               << conditionEl.GetPath();
         }
-        DoIOForFlowExtension(newIolet, currentIoletNode.GetChildOrNull("flowextension"));
+        DoIOForFlowExtension(newIolet, currentIoletNode);
         ioletList.push_back(newIolet);
       }
       return ioletList;
     }
 
-    void SimConfig::DoIOForRedBloodCells(const io::xml::Element & rbcNode)
+    bool SimConfig::DoIOForRedBloodCells(const io::xml::Element & topNode)
     {
+      auto const rbcNode = topNode.GetChildOrNull("redbloodcells");
+      if (rbcNode == rbcNode.Missing())
+      {
+        return false;
+      }
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "m", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "m", boxSize);
 
-      const io::xml::Element cellNode = rbcNode.GetChildOrThrow("cell");
-      const io::xml::Element moduliNode = cellNode.GetChildOrThrow("moduli");
-      redblood::Cell::Moduli moduli;
-      GetDimensionalValue(moduliNode.GetChildOrThrow("bending"), "mmHg", moduli.bending);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("surface"), "mmHg", moduli.surface);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("volume"), "mmHg", moduli.volume);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("dilation"), "mmHg", moduli.dilation);
-      GetDimensionalValue(moduliNode.GetChildOrThrow("strain"), "mmHg", moduli.strain);
-      const io::xml::Element nodeNode = cellNode.GetChildOrThrow("interaction");
-      redblood::Node2NodeForce nodeWall;
-      GetDimensionalValue(nodeNode.GetChildOrThrow("intensity"),
-                          "dimensionless",
-                          nodeWall.intensity);
-      GetDimensionalValue(nodeNode.GetChildOrThrow("cutoffdistance"), "m", nodeWall.cutoff);
-      nodeNode.GetChildOrThrow("exponent").GetAttributeOrThrow("value", nodeWall.exponent);
-      std::string mesh_path = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
-      LatticeDistance scale;
-      GetDimensionalValue(cellNode.GetChildOrThrow("scale"), "m", scale);
-
-      const io::xml::Element insertNode = rbcNode.GetChildOrThrow("insertcondition");
-      std::size_t iterations;
-      insertNode.GetChildOrThrow("iterations").GetAttributeOrThrow("value", iterations);
-      std::function < bool() > condition = [iterations]()
+      auto const inserter = redblood::read_rbcinserter(topNode, GetUnitConverter());
+      if(inserter)
       {
-        static std::size_t iter = 0;
-        iter = (iter + 1) % iterations;
-        return iter == 0;
-      };
-
-      rbcinserter = redblood::read_rbcinserter(rbcNode, GetUnitConverter());
+        rbcinserter = std::move(*inserter);
+      }
+      return true;
     }
 
     void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
                                          const io::xml::Element & ioletNode)
     {
-      if (ioletNode == io::xml::Element::Missing())
+      if (ioletNode.GetChildOrNull("flowextension") == io::xml::Element::Missing())
         return;
-
-      // Flow extension normal points opposite direction from iolet normal
-      const util::Vector3D<Dimensionless> normal = -iolet->GetNormal();
-      // Flow extension shares origin with iolet
-      const LatticePosition origin = iolet->GetPosition();
-
-      // Read length, radius and fadelength of flow extension from XML
-      LatticeDistance length, radius, fadelength;
-      GetDimensionalValue(ioletNode.GetChildOrThrow("length"), "m", length);
-      GetDimensionalValue(ioletNode.GetChildOrThrow("radius"), "m", radius);
-      GetDimensionalValue(ioletNode.GetChildOrThrow("fadelength"), "m", fadelength);
-
-      // Set the IOlet's flow extension
-      iolet->SetFlowExtension(std::make_shared < hemelb::redblood::FlowExtension
-          > (normal, origin, length, radius, fadelength));
+      auto const flowExtension = redblood::read_flow_extension(ioletNode, GetUnitConverter());
+      iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(flowExtension));
     }
 
     lb::iolets::InOutLet* SimConfig::DoIOForPressureInOutlet(const io::xml::Element& ioletEl)

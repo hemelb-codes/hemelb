@@ -240,7 +240,7 @@ namespace hemelb
         void DoIO(const io::xml::Element xmlNode);
         void DoIOForSimulation(const io::xml::Element simEl);
         void DoIOForGeometry(const io::xml::Element geometryEl);
-        void DoIOForRedBloodCells(const io::xml::Element & rbcNode);
+        bool DoIOForRedBloodCells(const io::xml::Element & rbcNode);
 
         std::vector<lb::iolets::InOutLet*> DoIOForInOutlets(const io::xml::Element xmlNode);
         void DoIOForFlowExtension(lb::iolets::InOutLet *, const io::xml::Element &);
