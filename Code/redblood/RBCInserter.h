@@ -24,7 +24,6 @@ namespace hemelb
     class RBCInserter
     {
       public:
-
         /**
          * Creates an RBC Inserter.
          *
@@ -36,6 +35,24 @@ namespace hemelb
         RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell)
           : condition(condition), cell(std::move(cell))
         {
+        }
+        RBCInserter(RBCInserter &&c)
+          : condition(std::move(c.condition)), cell(std::move(c.cell))
+        {
+        }
+        RBCInserter(RBCInserter const&c)
+          : condition(c.condition), cell(c.cell->clone())
+        {
+        }
+        void operator=(RBCInserter const &c)
+        {
+          condition = c.condition;
+          cell = c.cell->clone();
+        }
+        void operator=(RBCInserter &&c)
+        {
+          condition = std::move(c.condition);
+          cell = std::move(c.cell);
         }
 
         /**
