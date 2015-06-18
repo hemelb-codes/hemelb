@@ -93,11 +93,6 @@ namespace hemelb
           {
             // Creates an inserter and checks it exists
             auto doc = getDocument(1, 0.1, false);
-            auto const flowExtension = read_flow_extension(
-                doc.FirstChildElement("parent")
-                  ->FirstChildElement("inlets")->FirstChildElement("inlet"),
-                *converter
-            );
             auto const inserter = read_rbcinserter(doc.FirstChildElement("parent"), *converter);
             CPPUNIT_ASSERT(inserter);
 
