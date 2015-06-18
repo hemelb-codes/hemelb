@@ -27,9 +27,13 @@ namespace hemelb
         class DummyCell;
         CPPUNIT_TEST_SUITE(FaderCellTests);
           CPPUNIT_TEST(testFade);
+          CPPUNIT_TEST(testDivideAndConquer);
         CPPUNIT_TEST_SUITE_END();
         public:
+          // Cell does fade
           void testFade();
+          // Divide and conquer still finds neighboring node of a fader cell
+          void testDivideAndConquer();
       };
 
       class FaderCellTests::DummyCell : public CellBase
@@ -124,6 +128,36 @@ namespace hemelb
         CPPUNIT_ASSERT_DOUBLES_EQUAL(3e0, force.z, 1e-8);
       }
 
+      void FaderCellTests::testDivideAndConquer()
+      {
+        FlowExtension const inlet (util::Vector3D<Dimensionless>(-1, 0, 0), LatticePosition(3, 2, 2), 2.0, 2, 1.8);
+        FlowExtension const outlet(util::Vector3D<Dimensionless>( 1, 0, 0), LatticePosition(8, 2, 2), 2.0, 2, 1.8);
+
+        auto const cell = std::make_shared<Cell>(tetrahedron());
+        cell->nodeWall.cutoff = 0.6;
+        cell->nodeWall.intensity = 1e0;
+        cell->nodeWall.exponent = 2;
+        *cell *= 5e0;
+        auto const fader0 = std::make_shared<FaderCell>(
+            cell, std::vector<FlowExtension>{inlet, outlet});
+
+        // Check cloning while we are at it
+        std::shared_ptr<FaderCell> const fader1(fader0->clone().release());
+        CPPUNIT_ASSERT(fader0 != fader1);
+        CPPUNIT_ASSERT(&fader0->GetVertices() != &fader1->GetVertices());
+        CPPUNIT_ASSERT(fader0->GetTag() != fader1->GetTag());
+
+        // Now move second cell to have a close node to another
+        auto const trans = fader0->GetVertices().front() - fader0->GetVertices().back();
+        *fader1 += trans + trans.GetNormalised() * 0.5;
+
+        // Add them to a divide and conquer object
+        DivideConquerCells dnc({fader0, fader1}, 100e0, 1e0);
+
+        auto range = dnc.pair_begin(0.6);
+        CPPUNIT_ASSERT(range.is_valid());
+        CPPUNIT_ASSERT(not (++range));
+      }
 
 
 
