@@ -233,22 +233,22 @@ namespace hemelb
 
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> read_mesh(std::string const &filename);
+    std::shared_ptr<MeshData> readMesh(std::string const &filename);
     //! Read mesh from file
     //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> read_mesh(std::istream &stream);
+    std::shared_ptr<MeshData> readMesh(std::istream &stream);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
-    void write_mesh(std::ostream &stream, MeshData const &data);
+    void writeMesh(std::ostream &stream, MeshData const &data);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
-    void write_mesh(std::string const &filename, MeshData const &data);
+    void writeMesh(std::string const &filename, MeshData const &data);
     //! Write mesh to file in VTK XML format
-    void write_vtkmesh(std::ostream &stream, MeshData const &data);
+    void writeVTKMesh(std::ostream &stream, MeshData const &data);
     //! Write mesh to file in VTK XML format
-    void write_vtkmesh(std::string const &filename, MeshData const &data);
+    void writeVTKMesh(std::string const &filename, MeshData const &data);
     //! Write mesh to file in VTK XML format
-    void write_vtkmesh(std::ostream &stream,
+    void writeVTKMesh(std::ostream &stream,
         MeshData::Vertices const &vertices, MeshData::Facets const &facets);
 
     //! Tetrahedron of a depth

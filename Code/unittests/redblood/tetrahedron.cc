@@ -78,19 +78,19 @@ int main(int argc, char const *argv[])
 
   if (output != "" and not dovtk)
   {
-    hemelb::redblood::write_mesh(output, *result.GetData());
+    hemelb::redblood::writeMesh(output, *result.GetData());
   }
   else if (output == "" and not dovtk)
   {
-    hemelb::redblood::write_mesh(std::cout, *result.GetData());
+    hemelb::redblood::writeMesh(std::cout, *result.GetData());
   }
   else if (output != "")
   {
-    hemelb::redblood::write_vtkmesh(output, *result.GetData());
+    hemelb::redblood::writeVTKMesh(output, *result.GetData());
   }
   else
   {
-    hemelb::redblood::write_vtkmesh(std::cout, *result.GetData());
+    hemelb::redblood::writeVTKMesh(std::cout, *result.GetData());
   }
 
   return 0;

@@ -33,7 +33,7 @@ namespace hemelb
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cube.txt").Path();
-            mesh = read_mesh(filename);
+            mesh = readMesh(filename);
             // Checks the mesh input makes sense
             CPPUNIT_ASSERT(mesh->vertices.size() == 8);
             CPPUNIT_ASSERT(mesh->facets.size() == 12);
