@@ -19,7 +19,7 @@ namespace hemelb
   namespace redblood
   {
     // Currently, this is private... So declare here.
-    Cell::Moduli read_moduli(io::xml::Element const& node, util::UnitConverter const &converter);
+    Cell::Moduli readModuli(io::xml::Element const& node, util::UnitConverter const &converter);
   }
   namespace unittests
   {
@@ -73,7 +73,7 @@ namespace hemelb
                 doc.FirstChildElement("parent")->FirstChildElement("cell")
                     ->FirstChildElement("moduli"));
 
-            auto cellbase = read_cell(doc.FirstChildElement("parent"), *converter);
+            auto cellbase = readCell(doc.FirstChildElement("parent"), *converter);
             std::unique_ptr<Cell const> const cell(static_cast<Cell const*>(cellbase.release()));
             auto const data = read_mesh(resources::Resource("red_blood_cell.txt").Path());
             CPPUNIT_ASSERT_EQUAL(
@@ -95,7 +95,7 @@ namespace hemelb
 
           void testReadCellModuli()
           {
-            auto const moduli = read_moduli(
+            auto const moduli = readModuli(
                 doc.FirstChildElement("parent")->FirstChildElement("cell"), *converter);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1e0, moduli.volume, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(2e0, moduli.surface, 1e-12);
