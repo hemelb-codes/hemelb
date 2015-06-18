@@ -112,7 +112,7 @@ namespace hemelb
       const io::xml::Element & cellNode = node.GetChildOrThrow("cell");
       std::string const mesh_path
         = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
-      auto const mesh_data = read_mesh(mesh_path);
+      auto const mesh_data = readMesh(mesh_path);
       auto const scale = GetDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
       std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale));
       *cell *= scale;

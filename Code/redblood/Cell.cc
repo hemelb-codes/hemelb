@@ -239,17 +239,17 @@ namespace hemelb
       return data->tag;
     }
 
-    void write_vtkmesh(std::string const &filename, std::shared_ptr<CellBase const> cell)
+    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> cell)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      write_vtkmesh(file, cell);
+      writeVTKMesh(file, cell);
     }
 
-    void write_vtkmesh(std::ostream &stream, std::shared_ptr<CellBase const> cell)
+    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> cell)
     {
-      write_vtkmesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets());
+      writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets());
     }
 
 #   ifndef NDEBUG

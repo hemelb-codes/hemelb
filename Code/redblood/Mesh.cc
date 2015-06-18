@@ -22,7 +22,7 @@ namespace hemelb
 {
   namespace redblood
   {
-    std::shared_ptr<MeshData> read_mesh(std::string const &filename)
+    std::shared_ptr<MeshData> readMesh(std::string const &filename)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
                                                    filename.c_str());
@@ -34,10 +34,10 @@ namespace hemelb
         throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
 
       file.open(filename.c_str());
-      return read_mesh(file);
+      return readMesh(file);
     }
 
-    std::shared_ptr<MeshData> read_mesh(std::istream &stream)
+    std::shared_ptr<MeshData> readMesh(std::istream &stream)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
 
@@ -108,23 +108,23 @@ namespace hemelb
       return result;
     }
 
-    void write_mesh(std::string const &filename, MeshData const &data)
+    void writeMesh(std::string const &filename, MeshData const &data)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      write_mesh(file, data);
+      writeMesh(file, data);
     }
 
-    void write_vtkmesh(std::string const &filename, MeshData const &data)
+    void writeVTKMesh(std::string const &filename, MeshData const &data)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      write_vtkmesh(file, data);
+      writeVTKMesh(file, data);
     }
 
-    void write_mesh(std::ostream &stream, MeshData const &data)
+    void writeMesh(std::ostream &stream, MeshData const &data)
     {
       // Write Header
       stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n" << "$Nodes\n" << data.vertices.size()
@@ -151,11 +151,11 @@ namespace hemelb
       stream << "$EndElement\n";
     }
 
-    void write_vtkmesh(std::ostream &stream, MeshData const &data)
+    void writeVTKMesh(std::ostream &stream, MeshData const &data)
     {
-      write_vtkmesh(stream, data.vertices, data.facets);
+      writeVTKMesh(stream, data.vertices, data.facets);
     }
-    void write_vtkmesh(std::ostream &stream,
+    void writeVTKMesh(std::ostream &stream,
         MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       // Write Header

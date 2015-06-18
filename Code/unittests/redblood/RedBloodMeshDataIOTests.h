@@ -36,7 +36,7 @@ namespace hemelb
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cell.txt").Path();
-            mesh = read_mesh(filename);
+            mesh = readMesh(filename);
           }
 
           void tearDown()
@@ -66,9 +66,9 @@ namespace hemelb
           void testWriteMesh()
           {
             std::ostringstream output;
-            write_mesh(output, *mesh);
+            writeMesh(output, *mesh);
             std::istringstream input(output.str());
-            std::shared_ptr<MeshData> other = read_mesh(input);
+            std::shared_ptr<MeshData> other = readMesh(input);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
             CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
             CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));

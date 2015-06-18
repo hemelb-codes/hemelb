@@ -75,7 +75,7 @@ namespace hemelb
 
             auto cellbase = readCell(doc.FirstChildElement("parent"), *converter);
             std::unique_ptr<Cell const> const cell(static_cast<Cell const*>(cellbase.release()));
-            auto const data = read_mesh(resources::Resource("red_blood_cell.txt").Path());
+            auto const data = readMesh(resources::Resource("red_blood_cell.txt").Path());
             CPPUNIT_ASSERT_EQUAL(
                 static_cast<site_t>(data->vertices.size()), cell->GetNumberOfNodes());
             CPPUNIT_ASSERT_DOUBLES_EQUAL(
