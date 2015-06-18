@@ -79,7 +79,7 @@ namespace hemelb
           void testNoPeriodicInsertion()
           {
             auto doc = getDocument(1e0, 0.1e0, true);
-            auto const inserter = read_rbcinserter(doc.FirstChildElement("parent"), *converter);
+            auto const inserter = readSingleRBCInserter(doc.FirstChildElement("parent"), *converter);
             CPPUNIT_ASSERT(not inserter);
           }
 
@@ -87,13 +87,13 @@ namespace hemelb
           {
             auto doc = getDocument(1e0, 1e0, false);
             CPPUNIT_ASSERT_THROW(
-                read_rbcinserter(doc.FirstChildElement("parent"), *converter), hemelb::Exception);
+                readSingleRBCInserter(doc.FirstChildElement("parent"), *converter), hemelb::Exception);
           }
           void testPeriodicInsertion()
           {
             // Creates an inserter and checks it exists
             auto doc = getDocument(1, 0.1, false);
-            auto const inserter = read_rbcinserter(doc.FirstChildElement("parent"), *converter);
+            auto const inserter = readSingleRBCInserter(doc.FirstChildElement("parent"), *converter);
             CPPUNIT_ASSERT(inserter);
 
             // all calls up to offset result in node added cell

@@ -102,7 +102,7 @@ namespace hemelb
                "</inlet>"
             );
             util::UnitConverter converter(0.5, 0.6, 0.7);
-            auto flow = read_flow_extension(doc.FirstChildElement("inlet"), converter);
+            auto flow = readFlowExtension(doc.FirstChildElement("inlet"), converter);
             // Normal is opposite direction compared to XML inlet definition
             CPPUNIT_ASSERT_DOUBLES_EQUAL(
                 -2e0/std::sqrt(2), LatticePosition(0, 1, 1).Dot(flow.normal), 1e-8);

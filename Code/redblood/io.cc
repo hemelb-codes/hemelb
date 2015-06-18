@@ -1,4 +1,5 @@
-#include "redblood/cell.h"
+#include "redblood/Cell.h"
+#include "redblood/FaderCell.h"
 #include "redblood/RBCInserter.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/io.h"
@@ -67,7 +68,7 @@ namespace hemelb
     }
 
 
-    Cell::Moduli read_moduli(io::xml::Element const& node, util::UnitConverter const &converter)
+    Cell::Moduli readModuli(io::xml::Element const& node, util::UnitConverter const &converter)
     {
       redblood::Cell::Moduli moduli;
       auto const moduliNode = node.GetChildOrNull("moduli");
@@ -79,7 +80,7 @@ namespace hemelb
       return moduli;
     }
 
-    Node2NodeForce read_node2node_force(
+    Node2NodeForce readNode2NodeForce(
         io::xml::Element const& parent, util::UnitConverter const & converter)
     {
       Node2NodeForce result(
@@ -100,9 +101,10 @@ namespace hemelb
       return result;
     }
 
-    std::unique_ptr<CellBase> read_cell(
+    std::unique_ptr<CellBase> readCell(
         io::xml::Element const& node, util::UnitConverter const& converter)
     {
+      // auto const node = topNode.GetChildOrThrow("redbloodcells");
       if(node  == node.Missing())
       {
         throw Exception() << "Expected non-empty XML node";
@@ -112,14 +114,35 @@ namespace hemelb
         = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       auto const mesh_data = read_mesh(mesh_path);
       auto const scale = GetDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
-      std::unique_ptr<Cell> result(new Cell(mesh_data->vertices, Mesh(mesh_data), scale));
-      *result *= scale;
-      result->moduli = read_moduli(cellNode, converter);
-      result->nodeWall = read_node2node_force(cellNode, converter);
-      return std::unique_ptr<CellBase>(static_cast<CellBase*>(result.release()));
+      std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale));
+      *cell *= scale;
+      cell->moduli = readModuli(cellNode, converter);
+      cell->nodeWall = readNode2NodeForce(cellNode, converter);
+
+      std::unique_ptr<CellBase> cellbase(static_cast<CellBase*>(cell.release()));
+      return cellbase;
+      // // Check if there are iolets with flow extensions
+      // auto const flowExtensions = readFlowExtensions(topNode.GetChildOrNull("inlets"), converter);
+      //
+      // return flowExtensions ? FaderCell(std::move(cellbase), flowExtensions).clone(): cellbase;
     }
 
-    FlowExtension read_flow_extension(
+    std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
+        io::xml::Element const& inletsNode, util::UnitConverter const& converter)
+    {
+      std::vector<FlowExtension> result;
+      auto inletNode = inletsNode.GetChildOrNull("inlet");
+      for(; inletNode != inletNode.Missing(); inletNode = inletNode.NextSiblingOrNull("inlet"))
+      {
+      }
+      if(result.size() == 0)
+      {
+        return nullptr;
+      }
+      return std::unique_ptr<decltype(result)>(new decltype(result)(std::move(result)));
+    }
+
+    FlowExtension readFlowExtension(
         io::xml::Element const& node, util::UnitConverter const& converter)
     {
       if(node  == node.Missing())
@@ -148,7 +171,8 @@ namespace hemelb
     }
 
 
-    io::xml::Element find_rbcinserter_inlet(io::xml::Element const &inlet)
+    //! Finds first inlet with Cell insertion
+    io::xml::Element findFirstInletWithCellInsertion(io::xml::Element const &inlet)
     {
       io::xml::Element sibling(inlet);
       for(; sibling.Missing() != sibling; sibling = sibling.NextSiblingOrNull("inlet"))
@@ -164,18 +188,30 @@ namespace hemelb
       return sibling.Missing();
     }
 
-    std::unique_ptr<RBCInserter> read_rbcinserter(
+    // std::function<void(CellInserter)> readRBCInserter(
+    //     io::xml::Element const& node, util::UnitConverter const& converter)
+    // {
+    //   // Check if we have any cell insertion action going on at all
+    //   auto const inlets = node.GetChildOrThrow("inlets");
+    //   auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
+    //   if(inlet.Missing() == inlet)
+    //   {
+    //     return nullptr;
+    //   }
+    // }
+
+    std::unique_ptr<RBCInserter> readSingleRBCInserter(
         io::xml::Element const& node, util::UnitConverter const& converter)
     {
       // First look for  input with a flow extension and iteration
       auto const inlets = node.GetChildOrThrow("inlets");
-      auto inlet = find_rbcinserter_inlet(inlets.GetChildOrThrow("inlet"));
+      auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
       if(inlet.Missing() == inlet)
       {
         return nullptr;
       }
       // Check there is only one valid inlet for inserting cells
-      if(find_rbcinserter_inlet(inlet.NextSiblingOrNull("inlet")) != inlet.Missing())
+      if(findFirstInletWithCellInsertion(inlet.NextSiblingOrNull("inlet")) != inlet.Missing())
       {
         throw Exception() << "Can't handle multiple inlets dropping cells";
       }
@@ -183,8 +219,8 @@ namespace hemelb
       auto const insNode = inlet.GetChildOrThrow("insertcell");
       auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
       auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
-      auto const flowExtension = read_flow_extension(inlet, converter);
-      auto cellbase = read_cell(node.GetChildOrThrow("redbloodcells"), converter);
+      auto const flowExtension = readFlowExtension(inlet, converter);
+      auto cellbase = readCell(node.GetChildOrThrow("redbloodcells"), converter);
       std::unique_ptr<Cell> cell(static_cast<Cell*>(cellbase.release()));
 
       // Figure out size of cell alongst cylinder axis

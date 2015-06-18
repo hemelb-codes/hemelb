@@ -254,7 +254,7 @@ namespace hemelb
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "m", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "m", boxSize);
 
-      auto const inserter = redblood::read_rbcinserter(topNode, GetUnitConverter());
+      auto const inserter = redblood::readSingleRBCInserter(topNode, GetUnitConverter());
       if(inserter)
       {
         rbcinserter = std::move(*inserter);
@@ -267,7 +267,7 @@ namespace hemelb
     {
       if (ioletNode.GetChildOrNull("flowextension") == io::xml::Element::Missing())
         return;
-      auto const flowExtension = redblood::read_flow_extension(ioletNode, GetUnitConverter());
+      auto const flowExtension = redblood::readFlowExtension(ioletNode, GetUnitConverter());
       iolet->SetFlowExtension(std::make_shared<hemelb::redblood::FlowExtension>(flowExtension));
     }
 
