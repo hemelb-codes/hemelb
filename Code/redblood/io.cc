@@ -88,6 +88,65 @@ namespace hemelb
           }
         }
       }
+
+      std::function<void(CellInserter const&)> readSingleRBCInserter(
+          io::xml::Element const& node, util::UnitConverter const& converter,
+          TemplateCellContainer const &templateCells)
+      {
+        // Now gets data for cell insertion
+        auto const insNode = node.GetChildOrThrow("insertcell");
+        auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
+        auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
+        auto const templateName = insNode.GetAttributeOrThrow("template");
+        if(templateCells.count(templateName) == 0)
+        {
+          throw Exception() << "Template cell name does not match a known template cell";
+        }
+        auto cell = templateCells.find(templateName)->second->clone();
+        auto const flowExtension = readFlowExtension(node, converter);
+
+        // Figure out size of cell alongst cylinder axis
+        auto const barycenter = cell->GetBarycenter();
+        auto minExtent = [barycenter, &flowExtension](LatticePosition const pos)
+        {
+          return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
+        };
+        auto const minZ = *std::min_element(
+            cell->GetVertices().begin(), cell->GetVertices().end(),
+            [&minExtent](LatticePosition const &a, LatticePosition const& b)
+            {
+              return minExtent(a) < minExtent(b);
+            }
+        );
+        // Place cell as close as possible to 0 of fade length
+        *cell += flowExtension.origin
+          + flowExtension.normal * (flowExtension.fadeLength - minExtent(minZ))
+          - barycenter;
+
+        // fail if any node outside flow extension
+        for(auto const &vertex: cell->GetVertices())
+        {
+          if(not contains(flowExtension, vertex))
+          {
+            throw Exception() << "BAD INPUT: Cell not contained within flow extension";
+          }
+        }
+
+        // Drops first cell when time reaches offset, and then every deltaTime thereafter.
+        auto condition = [deltaTime, offset]()
+        {
+          static PhysicalTime time
+            = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
+          time += 1e0;
+          if(time >= deltaTime)
+          {
+            time -= deltaTime;
+            return true;
+          }
+          return false;
+        };
+        return RBCInserter(condition, std::move(cell));
+      }
     }
 
 
@@ -251,82 +310,36 @@ namespace hemelb
       return sibling.Missing();
     }
 
-    // std::function<void(CellInserter)> readRBCInserter(
-    //     io::xml::Element const& node, util::UnitConverter const& converter)
-    // {
-    //   // Check if we have any cell insertion action going on at all
-    //   auto const inlets = node.GetChildOrThrow("inlets");
-    //   auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
-    //   if(inlet.Missing() == inlet)
-    //   {
-    //     return nullptr;
-    //   }
-    // }
-
-    std::unique_ptr<RBCInserter> readSingleRBCInserter(
-        io::xml::Element const& node, util::UnitConverter const& converter)
+    std::function<void(CellInserter const&)> readRBCInserters(
+        io::xml::Element const& node, util::UnitConverter const& converter,
+        TemplateCellContainer const& templateCells)
     {
-      // First look for  input with a flow extension and iteration
+      // Check if we have any cell insertion action going on at all
       auto const inlets = node.GetChildOrThrow("inlets");
       auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
-      if(inlet.Missing() == inlet)
+      std::vector<std::function<void(CellInserter const&)>> results;
+      while(inlet != inlet.Missing())
       {
-        return nullptr;
+        results.emplace_back(std::move(readSingleRBCInserter(inlet, converter, templateCells)));
+        inlet = findFirstInletWithCellInsertion(inlet.NextSiblingOrNull("inlet"));
       }
-      // Check there is only one valid inlet for inserting cells
-      if(findFirstInletWithCellInsertion(inlet.NextSiblingOrNull("inlet")) != inlet.Missing())
-      {
-        throw Exception() << "Can't handle multiple inlets dropping cells";
-      }
-      // Now gets data for cell insertion
-      auto const insNode = inlet.GetChildOrThrow("insertcell");
-      auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
-      auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
-      auto const flowExtension = readFlowExtension(inlet, converter);
-      auto cellbase = readCell(node.GetChildOrThrow("redbloodcells"), converter);
-      std::unique_ptr<Cell> cell(static_cast<Cell*>(cellbase.release()));
 
-      // Figure out size of cell alongst cylinder axis
-      auto const barycenter = cell->GetBarycenter();
-      auto minExtent = [barycenter, &flowExtension](LatticePosition const pos)
+      // do all insertion functions in one go
+      if(results.size() > 1)
       {
-        return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
-      };
-      auto const minZ = *std::min_element(
-          cell->GetVertices().begin(), cell->GetVertices().end(),
-          [&minExtent](LatticePosition const &a, LatticePosition const& b)
+        // go to shared pointer to avoid copies
+        std::shared_ptr<decltype(results)> functions(new decltype(results)(std::move(results)));
+        // return a lambda that loops over functions
+        return [functions](CellInserter const& inserter)
+        {
+          for(auto const & func: *functions)
           {
-            return minExtent(a) < minExtent(b);
+            func(inserter);
           }
-      );
-      // Place cell as close as possible to 0 of fade length
-      *cell += flowExtension.origin
-        + flowExtension.normal * (flowExtension.fadeLength - minExtent(minZ))
-        - barycenter;
-
-      // fail if any node outside flow extension
-      for(auto const &vertex: cell->GetVertices())
-      {
-        if(not contains(flowExtension, vertex))
-        {
-          throw Exception() << "BAD INPUT: Cell not contained within flow extension";
-        }
+        };
       }
-
-      // Drops first cell when time reaches offset, and then every deltaTime thereafter.
-      auto condition = [deltaTime, offset]()
-      {
-        static PhysicalTime time
-          = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
-        time += 1e0;
-        if(time >= deltaTime)
-        {
-          time -= deltaTime;
-          return true;
-        }
-        return false;
-      };
-      return std::unique_ptr<RBCInserter>(new RBCInserter(condition, std::move(cell)));
+      // return null if no insertion, and just the function if only one
+      return results.size() == 0 ? nullptr: results.front();
     }
   }
 }

@@ -55,7 +55,7 @@ namespace hemelb
            * @see hemelb::redblood::CellArmy::SetCellInsertion
            * @see hemelb::redblood::CellArmy::CallCellInsertion
            */
-          void operator()(CellInserter insertFn);
+          void operator()(CellInserter const& insertFn);
 
           //! Request buffer to drop n new cells
           void requestNewCells(site_t n = 1)

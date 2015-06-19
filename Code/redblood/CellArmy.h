@@ -71,7 +71,7 @@ namespace hemelb
 
         //! Sets up call for cell insertion
         //! Called everytime CallCellInsertion is called
-        void SetCellInsertion(std::function<void(CellInserter)> const & f)
+        void SetCellInsertion(std::function<void(CellInserter const&)> const & f)
         {
           cellInsertionCallBack = f;
         }
@@ -131,7 +131,7 @@ namespace hemelb
         std::vector<LatticePosition> work;
         //! This function is called every lb turn
         //! It should insert cells using the call back passed to it.
-        std::function<void(CellInserter)> cellInsertionCallBack;
+        std::function<void(CellInserter const&)> cellInsertionCallBack;
         //! Observers to be notified when cell positions change
         std::vector<CellChangeListener> cellChangeListeners;
 

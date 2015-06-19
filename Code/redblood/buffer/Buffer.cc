@@ -123,7 +123,7 @@ namespace hemelb
         };
       }
 
-      void Buffer::operator()(CellInserter insertFn)
+      void Buffer::operator()(CellInserter const& insertFn)
       {
         // Add virtual cells, if necessary
         if (virtuals.size() < NumberOfRequests())

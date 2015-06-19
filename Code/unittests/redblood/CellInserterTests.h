@@ -39,11 +39,11 @@ namespace hemelb
             converter.reset(new util::UnitConverter(0.5, 0.6, 0e0));
             every = 10;
             offset = 5;
+            cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));
           }
 
 
-          TiXmlDocument getDocument(
-              PhysicalDistance radius = 1e0, PhysicalDistance scale = 1e0, bool noInserter=false)
+          TiXmlDocument getDocument(PhysicalDistance radius = 1e0, bool noInserter=false)
           {
             std::ostringstream sstr;
             sstr <<
@@ -58,19 +58,12 @@ namespace hemelb
                "  </flowextension>";
             if(not noInserter)
             {
-              sstr << "  <insertcell>"
+              sstr << "  <insertcell template=\"joe\">"
                 "    <every units=\"s\" value=\"" << every << "\"/>"
                 "    <offset units=\"s\" value=\"" << offset << "\"/>"
                 "  </insertcell>";
             }
             sstr << "</inlet></inlets>"
-               "<redbloodcells>"
-               "  <cell>"
-               "    <shape mesh_path=\"" << resources::Resource("red_blood_cell.txt").Path()
-                  << "\" />"
-               "    <scale units=\"m\" value=\"" << scale << "\" />"
-               "  </cell>"
-               "</redbloodcells>"
                "</parent>";
             TiXmlDocument doc;
             doc.Parse(sstr.str().c_str());
@@ -78,22 +71,28 @@ namespace hemelb
           }
           void testNoPeriodicInsertion()
           {
-            auto doc = getDocument(1e0, 0.1e0, true);
-            auto const inserter = readSingleRBCInserter(doc.FirstChildElement("parent"), *converter);
+            auto doc = getDocument(1e0, true);
+            *cells["joe"] *= 0.1e0;
+            auto const inserter = readRBCInserters(
+                doc.FirstChildElement("parent"), *converter, cells);
             CPPUNIT_ASSERT(not inserter);
           }
 
           void testCellOutsideFlowExtension()
           {
-            auto doc = getDocument(1e0, 1e0, false);
+            auto doc = getDocument(1e0, false);
             CPPUNIT_ASSERT_THROW(
-                readSingleRBCInserter(doc.FirstChildElement("parent"), *converter), hemelb::Exception);
+                readRBCInserters(doc.FirstChildElement("parent"), *converter, cells),
+                hemelb::Exception
+            );
           }
           void testPeriodicInsertion()
           {
             // Creates an inserter and checks it exists
-            auto doc = getDocument(1, 0.1, false);
-            auto const inserter = readSingleRBCInserter(doc.FirstChildElement("parent"), *converter);
+            auto doc = getDocument(1, false);
+            *cells["joe"] *= 0.1e0;
+            auto const inserter =
+              readRBCInserters(doc.FirstChildElement("parent"), *converter, cells);
             CPPUNIT_ASSERT(inserter);
 
             // all calls up to offset result in node added cell
@@ -107,12 +106,12 @@ namespace hemelb
             auto const dt = converter->ConvertTimeToPhysicalUnits(1e0);
             for(int i(0); i < int(std::floor(offset / dt)); ++i)
             {
-              (*inserter)(addCell);
+              inserter(addCell);
               CPPUNIT_ASSERT(not was_called);
             }
 
             // Now first call should result in adding a cell
-            (*inserter)(addCell);
+            inserter(addCell);
             CPPUNIT_ASSERT(was_called);
             was_called = false;
 
@@ -122,11 +121,11 @@ namespace hemelb
             {
               for(int i(0); i < int(std::floor(every / dt)) - 1; ++i)
               {
-                (*inserter)(addCell);
+                inserter(addCell);
                 CPPUNIT_ASSERT(not was_called);
               }
               // And should call it!
-              (*inserter)(addCell);
+              inserter(addCell);
               CPPUNIT_ASSERT(was_called);
               was_called = false;
             }
@@ -134,6 +133,7 @@ namespace hemelb
         private:
           std::unique_ptr<util::UnitConverter> converter;
           PhysicalTime every, offset;
+          TemplateCellContainer cells;
       };
 
 
