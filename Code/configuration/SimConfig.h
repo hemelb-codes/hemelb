@@ -18,6 +18,7 @@
 #include "extraction/GeometrySelectors.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "redblood/Cell.h"
+#include "redblood/Mesh.h"
 #include "redblood/RBCInserter.h"
 
 namespace hemelb
@@ -336,6 +337,7 @@ namespace hemelb
         bool hasRBCSection;
         std::function<void(redblood::CellInserter)> rbcinserter;
         PhysicalDistance boxSize, halo;
+        std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

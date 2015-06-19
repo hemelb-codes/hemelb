@@ -92,13 +92,15 @@ namespace hemelb
     VertexBag::VertexBag(std::shared_ptr<CellBase const> parent)
           : CellBase(
               std::shared_ptr<CellBase::CellData>(
-                new CellData(parent->GetTemplateMesh(), parent->GetTag())))
+                new CellData(parent->GetTemplateMesh(),
+                             parent->GetTag(), parent->GetTemplateName())))
     {
     }
     VertexBag::VertexBag(std::shared_ptr<CellBase const> parent, LatticePosition vertex)
           : CellBase(
               std::shared_ptr<CellBase::CellData>(
-                new CellData(parent->GetTemplateMesh(), parent->GetTag())))
+                new CellData(parent->GetTemplateMesh(),
+                             parent->GetTag(), parent->GetTemplateName())))
     {
       addVertex(vertex);
     }

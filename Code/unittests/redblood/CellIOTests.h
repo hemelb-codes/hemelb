@@ -30,6 +30,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellIOTests);
             CPPUNIT_TEST (testReadCellWithDefaults);
             CPPUNIT_TEST (testReadCellModuli);
+            CPPUNIT_TEST (testReadMeshTemplates);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -105,6 +106,66 @@ namespace hemelb
                 converter->ConvertToLatticeUnits("N/m", 1e0), moduli.dilation, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(
                 converter->ConvertToLatticeUnits("N/m", 5e-6), moduli.strain, 1e-12);
+          }
+
+          void testReadMeshTemplates()
+          {
+            auto const path = resources::Resource("red_blood_cell.txt").Path();
+            std::ostringstream sstr;
+            sstr << "<parent>"
+              "  <inlets>"
+              "   <inlet>"
+              "     <normal units=\"dimensionless\" value=\"(0.0,0.0,1.0)\" />"
+              "     <position units=\"m\" value=\"(0.0,0.0,-0.024)\" />"
+              "     <flowextension>"
+              "       <length units=\"m\" value=\"0.1\" />"
+              "       <radius units=\"m\" value=\"0.01\" />"
+              "       <fadelength units=\"m\" value=\"0.05\" />"
+              "     </flowextension>"
+              "   </inlet>"
+              "  </inlets>"
+              "  <outlets>"
+              "    <outlet>"
+              "      <normal units=\"dimensionless\" value=\"(0.0,0.0,-1.0)\" />"
+              "      <position units=\"m\" value=\"(0.0,0.0,0.024)\" />"
+              "      <flowextension>"
+              "        <length units=\"m\" value=\"0.1\" />"
+              "        <radius units=\"m\" value=\"0.01\" />"
+              "        <fadelength units=\"m\" value=\"0.05\" />"
+              "      </flowextension>"
+              "    </outlet>"
+              "  </outlets>"
+              "  <redbloodcells>"
+              "    <cells>"
+              "      <cell>"
+              "        <shape mesh_path=\"" << path << "\"/>"
+              "        <scale units=\"m\" value=\"0.6\"/>"
+              "      </cell>"
+              "     <cell name=\"joe\">"
+              "       <shape mesh_path=\"" << path << "\"/>"
+              "       <scale units=\"m\" value=\"0.5\"/>"
+              "     </cell>"
+              "   </cells>"
+              "  </redbloodcells>"
+              "</parent>";
+            TiXmlDocument document;
+            document.Parse(sstr.str().c_str());
+            auto const cells = readTemplateCells(document.FirstChildElement("parent"), *converter);
+            CPPUNIT_ASSERT_EQUAL(size_t(2), cells->size());
+            CPPUNIT_ASSERT_EQUAL(size_t(1), cells->count("default"));
+            CPPUNIT_ASSERT_EQUAL(size_t(1), cells->count("joe"));
+            auto const default_ = std::static_pointer_cast<FaderCell>((*cells)["default"]);
+            auto const joe = std::static_pointer_cast<FaderCell>((*cells)["joe"]);
+            CPPUNIT_ASSERT(default_->GetTemplateName() == "default");
+            CPPUNIT_ASSERT(joe->GetTemplateName() == "joe");
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                converter->ConvertToLatticeUnits("m", 0.6), default_->GetScale(), 1e-8);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                converter->ConvertToLatticeUnits("m", 0.5), joe->GetScale(), 1e-8);
+            CPPUNIT_ASSERT(static_cast<bool>(default_->GetIOlets()));
+            CPPUNIT_ASSERT(static_cast<bool>(joe->GetIOlets()));
+            CPPUNIT_ASSERT(default_->GetIOlets() ==joe->GetIOlets());
+            CPPUNIT_ASSERT_EQUAL(size_t(2), joe->GetIOlets()->size());
           }
         private:
           TiXmlDocument doc;
