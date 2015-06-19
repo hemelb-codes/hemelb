@@ -25,12 +25,12 @@ namespace hemelb
   {
     namespace redblood
     {
-      class CellInserterTests : public FlowExtensionFixture {
-        CPPUNIT_TEST_SUITE (CellInserterTests);
-        CPPUNIT_TEST (testNoPeriodicInsertion);
-        CPPUNIT_TEST (testCellOutsideFlowExtension);
-        CPPUNIT_TEST (testPeriodicInsertion);
-        CPPUNIT_TEST_SUITE_END();
+      class CellInserterTests : public FlowExtensionFixture
+      {
+          CPPUNIT_TEST_SUITE (CellInserterTests);
+          CPPUNIT_TEST (testNoPeriodicInsertion);
+          CPPUNIT_TEST (testCellOutsideFlowExtension);
+          CPPUNIT_TEST (testPeriodicInsertion);CPPUNIT_TEST_SUITE_END();
 
         public:
 
@@ -42,29 +42,27 @@ namespace hemelb
             cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));
           }
 
-
-          TiXmlDocument getDocument(PhysicalDistance radius = 1e0, bool noInserter=false)
+          TiXmlDocument getDocument(PhysicalDistance radius = 1e0, bool noInserter = false)
           {
             std::ostringstream sstr;
-            sstr <<
-               "<parent>"
-               "<inlets><inlet>"
-               "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />"
-               "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />"
-               "  <flowextension>"
-               "    <length units=\"m\" value=\"0.5\" />"
-               "    <radius units=\"m\" value=\"" << radius << "\" />"
-               "    <fadelength units=\"m\" value=\"0.4\" />"
-               "  </flowextension>";
-            if(not noInserter)
+            sstr << "<parent>"
+                "<inlets><inlet>"
+                "  <normal units=\"dimensionless\" value=\"(0.0,1.0,1.0)\" />"
+                "  <position units=\"m\" value=\"(0.1,0.2,0.3)\" />"
+                "  <flowextension>"
+                "    <length units=\"m\" value=\"0.5\" />"
+                "    <radius units=\"m\" value=\"" << radius << "\" />"
+                "    <fadelength units=\"m\" value=\"0.4\" />"
+                "  </flowextension>";
+            if (not noInserter)
             {
               sstr << "  <insertcell template=\"joe\">"
-                "    <every units=\"s\" value=\"" << every << "\"/>"
-                "    <offset units=\"s\" value=\"" << offset << "\"/>"
-                "  </insertcell>";
+                  "    <every units=\"s\" value=\"" << every << "\"/>"
+                  "    <offset units=\"s\" value=\"" << offset << "\"/>"
+                  "  </insertcell>";
             }
             sstr << "</inlet></inlets>"
-               "</parent>";
+                "</parent>";
             TiXmlDocument doc;
             doc.Parse(sstr.str().c_str());
             return doc;
@@ -73,26 +71,28 @@ namespace hemelb
           {
             auto doc = getDocument(1e0, true);
             *cells["joe"] *= 0.1e0;
-            auto const inserter = readRBCInserters(
-                doc.FirstChildElement("parent"), *converter, cells);
+            auto const inserter = readRBCInserters(doc.FirstChildElement("parent"),
+                                                   *converter,
+                                                   cells);
             CPPUNIT_ASSERT(not inserter);
           }
 
           void testCellOutsideFlowExtension()
           {
             auto doc = getDocument(1e0, false);
-            CPPUNIT_ASSERT_THROW(
-                readRBCInserters(doc.FirstChildElement("parent"), *converter, cells),
-                hemelb::Exception
-            );
+            CPPUNIT_ASSERT_THROW(readRBCInserters(doc.FirstChildElement("parent"),
+                                                  *converter,
+                                                  cells),
+                                 hemelb::Exception);
           }
           void testPeriodicInsertion()
           {
             // Creates an inserter and checks it exists
             auto doc = getDocument(1, false);
             *cells["joe"] *= 0.1e0;
-            auto const inserter =
-              readRBCInserters(doc.FirstChildElement("parent"), *converter, cells);
+            auto const inserter = readRBCInserters(doc.FirstChildElement("parent"),
+                                                   *converter,
+                                                   cells);
             CPPUNIT_ASSERT(inserter);
 
             // all calls up to offset result in node added cell
@@ -101,10 +101,10 @@ namespace hemelb
             {
               // This function is called by inserter with a new cell
               // It is meant to actually do the job of adding cells to the simulation
-              was_called = true;
-            };
+                was_called = true;
+              };
             auto const dt = converter->ConvertTimeToPhysicalUnits(1e0);
-            for(int i(0); i < int(std::floor(offset / dt)); ++i)
+            for (int i(0); i < int(std::floor(offset / dt)); ++i)
             {
               inserter(addCell);
               CPPUNIT_ASSERT(not was_called);
@@ -117,9 +117,9 @@ namespace hemelb
 
             // Now should not output a cell until "every" time has gone by
             // Do it thrice for good measure
-            for(int k = 0; k < 3; ++k)
+            for (int k = 0; k < 3; ++k)
             {
-              for(int i(0); i < int(std::floor(every / dt)) - 1; ++i)
+              for (int i(0); i < int(std::floor(every / dt)) - 1; ++i)
               {
                 inserter(addCell);
                 CPPUNIT_ASSERT(not was_called);
@@ -135,7 +135,6 @@ namespace hemelb
           PhysicalTime every, offset;
           TemplateCellContainer cells;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellInserterTests);
     } // namespace: redblood

@@ -131,7 +131,6 @@ namespace hemelb
           MeshData original;
       };
 
-
       CPPUNIT_TEST_SUITE_REGISTRATION (GradientTests);
     }
   }

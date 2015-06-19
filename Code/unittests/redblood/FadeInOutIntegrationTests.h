@@ -19,8 +19,8 @@ namespace hemelb
     {
       class FadeInOutIntegrationTests : public hemelb::unittests::helpers::FolderTestFixture
       {
-        CPPUNIT_TEST_SUITE(FadeInOutIntegrationTests);
-          CPPUNIT_TEST(testIntegration);CPPUNIT_TEST_SUITE_END()
+          CPPUNIT_TEST_SUITE (FadeInOutIntegrationTests);
+          CPPUNIT_TEST (testIntegration);CPPUNIT_TEST_SUITE_END()
           ;
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
@@ -67,7 +67,7 @@ namespace hemelb
               for (auto cell: cells)
               {
                 std::cout << "hemelb::redblood::Cell@" << cell.get()
-                  << ": " << cell->GetBarycenter() << std::endl;
+                << ": " << cell->GetBarycenter() << std::endl;
               }
             };
             CPPUNIT_ASSERT(master);
@@ -91,7 +91,7 @@ namespace hemelb
       };
       // class FadeInOutIntegrationTests
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(FadeInOutIntegrationTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION (FadeInOutIntegrationTests);
 
     } // namespace redblood
   } // namespace unittests

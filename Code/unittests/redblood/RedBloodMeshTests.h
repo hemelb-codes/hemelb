@@ -27,11 +27,10 @@ namespace hemelb
       class RedBloodMeshTests : public BasisFixture
       {
           CPPUNIT_TEST_SUITE (RedBloodMeshTests);
-            CPPUNIT_TEST (testVolume);
-            CPPUNIT_TEST (testBarycenter);
-            CPPUNIT_TEST (testScaling);
-            CPPUNIT_TEST (testTranslation);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testVolume);
+          CPPUNIT_TEST (testBarycenter);
+          CPPUNIT_TEST (testScaling);
+          CPPUNIT_TEST (testTranslation);CPPUNIT_TEST_SUITE_END();
 
         public:
           void setUp()

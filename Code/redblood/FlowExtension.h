@@ -46,8 +46,7 @@ namespace hemelb
         {
         }
         FlowExtension() :
-            Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1, 0 }),
-                fadeLength(1)
+            Cylinder( { LatticePosition(1, 0, 0), LatticePosition(0, 0, 0), 1, 0 }), fadeLength(1)
         {
         }
     };

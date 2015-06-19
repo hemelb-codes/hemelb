@@ -22,11 +22,12 @@ namespace hemelb
     std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
         io::xml::Element const& inletsNode, util::UnitConverter const& converter);
     //! Reads template meshes from XML
-    std::unique_ptr<TemplateCellContainer> readTemplateCells(
-        io::xml::Element const&, util::UnitConverter const&);
+    std::unique_ptr<TemplateCellContainer> readTemplateCells(io::xml::Element const&,
+                                                             util::UnitConverter const&);
     //! Reads all RBC inserters from XML
-    std::function<void(CellInserter const&)> readRBCInserters(
-        io::xml::Element const&, util::UnitConverter const&, TemplateCellContainer const&);
+    std::function<void(CellInserter const&)> readRBCInserters(io::xml::Element const&,
+                                                              util::UnitConverter const&,
+                                                              TemplateCellContainer const&);
   }
 }
 

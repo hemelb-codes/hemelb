@@ -28,8 +28,7 @@ namespace hemelb
           CPPUNIT_TEST (testProcsAffectedBySingleProc);
           CPPUNIT_TEST (testProcsAffectedByMultiProcs);
           CPPUNIT_TEST (testSplittingCellSingleProc);
-          CPPUNIT_TEST (testSplittingCellMultiProcs);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testSplittingCellMultiProcs);CPPUNIT_TEST_SUITE_END();
 
         public:
           void testConstruction()
@@ -65,7 +64,7 @@ namespace hemelb
             LatticePosition const Y(0, 0, 10);
             auto const four_quadrants = procsAffectedByPosition(VertexBagTests::proc_at_pos, Y);
             CPPUNIT_ASSERT_EQUAL(size_t(4), four_quadrants.size());
-            for(proc_t i(0); i < proc_t(4); ++i)
+            for (proc_t i(0); i < proc_t(4); ++i)
             {
               CPPUNIT_ASSERT_EQUAL(size_t(1), four_quadrants.count(i));
             }
@@ -73,7 +72,7 @@ namespace hemelb
             LatticePosition const Z(0, 0, 0);
             auto const all_quadrants = procsAffectedByPosition(VertexBagTests::proc_at_pos, Z);
             CPPUNIT_ASSERT_EQUAL(size_t(8), all_quadrants.size());
-            for(proc_t i(0); i < proc_t(8); ++i)
+            for (proc_t i(0); i < proc_t(8); ++i)
             {
               CPPUNIT_ASSERT_EQUAL(size_t(1), all_quadrants.count(i));
             }
@@ -90,7 +89,7 @@ namespace hemelb
             auto const &expected = cell->GetVertices();
             auto const &actual = splits[0]->GetVertices();
             CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
-            for(size_t i(0); i < expected.size(); ++i)
+            for (size_t i(0); i < expected.size(); ++i)
             {
               CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i].x, actual[i].x, 1e-8);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(expected[i].y, actual[i].y, 1e-8);
@@ -108,19 +107,21 @@ namespace hemelb
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.count(0));
             CPPUNIT_ASSERT_EQUAL(size_t(1), splits.count(2));
             // Four points are in common since their y coordinates is zero
-            CPPUNIT_ASSERT_EQUAL(
-                cell->GetVertices().size() + 4,
-                splits[0]->GetVertices().size() + splits[2]->GetVertices().size());
+            CPPUNIT_ASSERT_EQUAL(cell->GetVertices().size() + 4,
+                                 splits[0]->GetVertices().size() + splits[2]->GetVertices().size());
           }
 
           static proc_t proc_at_pos(LatticePosition const &position)
           {
-            return (position.x > 0 ? 0: 1)
-              + (position.y > 0 ? 0: 1) * 2
-              + (position.z > 0 ? 0: 1) * 4;
+            return (position.x > 0 ?
+              0 :
+              1) + (position.y > 0 ?
+              0 :
+              1) * 2 + (position.z > 0 ?
+              0 :
+              1) * 4;
           }
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (VertexBagTests);
     }

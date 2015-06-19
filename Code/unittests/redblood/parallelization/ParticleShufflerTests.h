@@ -27,8 +27,10 @@ namespace hemelb
       class Shuffler : public ParticleShuffler
       {
         public:
-          Shuffler(proc_t arank)
-            : ParticleShuffler({arank == 0 ? 1: 0}), rank(arank)
+          Shuffler(proc_t arank) :
+              ParticleShuffler( { arank == 0 ?
+                1 :
+                0 }), rank(arank)
           {
           }
 
@@ -36,7 +38,9 @@ namespace hemelb
           std::tuple<bool, proc_t> GetCellOwner(CellContainer::const_reference cell) const override
           {
             auto const in0 = cell->GetBarycenter().GetMagnitude() < 5.0;
-            return std::make_tuple(not ((rank == 0) xor in0), in0 ? 0: 1);
+            return std::make_tuple(not ( (rank == 0) xor in0), in0 ?
+              0 :
+              1);
           }
           //! Const reference to cells owned by this proc
           CellContainer const& GetOwnedCells() const override
@@ -81,11 +85,11 @@ namespace hemelb
           CPPUNIT_TEST (testNoMovement);
           CPPUNIT_TEST (testShuffleOneCell);
           CPPUNIT_TEST (testShuffleTwoCellsAndBack);
-          CPPUNIT_TEST (testSloshing);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testSloshing);CPPUNIT_TEST_SUITE_END();
 
         public:
-          ParticleShufflerTests() : shuffler0(0), shuffler1(1)
+          ParticleShufflerTests() :
+              shuffler0(0), shuffler1(1)
           {
           }
 
@@ -108,21 +112,21 @@ namespace hemelb
             messageFor1.clear();
           }
 
-
           void testNoMovement();
           void testShuffleOneCell();
           void testShuffleTwoCellsAndBack();
           void testSloshing();
 
         private:
-          enum class Stepper : unsigned
-          {
-            IDENTIFY,
+          enum class Stepper
+            : unsigned
+            {
+              IDENTIFY,
             NEXTCELLMESSAGE,
             SETCELLMESSAGE,
             PACK, // should be send in one phase
             UNPACK, // should be receive in same phase
-            NEXT,  // moves to next phase/LB step
+            NEXT, // moves to next phase/LB step
             END = NEXT,
             NONE,
             START = IDENTIFY
@@ -141,42 +145,42 @@ namespace hemelb
           util::Packer messageFor1;
       };
 
-      void ParticleShufflerTests :: stepper(Stepper const & start, Stepper const & last)
+      void ParticleShufflerTests::stepper(Stepper const & start, Stepper const & last)
       {
         auto doThisStep = [&start, &last](Stepper const &step)
         {
           return last == Stepper::NONE ? start == step: (start <= step and last >= step);
         };
-        if(doThisStep(Stepper::IDENTIFY))
+        if (doThisStep(Stepper::IDENTIFY))
         {
           shuffler0.IdentifyOutOfBounds();
           shuffler1.IdentifyOutOfBounds();
         }
-        if(doThisStep(Stepper::NEXTCELLMESSAGE))
+        if (doThisStep(Stepper::NEXTCELLMESSAGE))
         {
           nextMessageSizeFor1 = shuffler0.GetNextCellMessageSize(1);
           nextMessageSizeFor0 = shuffler1.GetNextCellMessageSize(0);
         }
-        if(doThisStep(Stepper::SETCELLMESSAGE))
+        if (doThisStep(Stepper::SETCELLMESSAGE))
         {
           shuffler0.SetThisCellMessageSize(1, messageSizeFor0);
           shuffler1.SetThisCellMessageSize(0, messageSizeFor1);
         }
-        if(doThisStep(Stepper::PACK))
+        if (doThisStep(Stepper::PACK))
         {
           shuffler0.Pack(1, messageFor1);
           shuffler1.Pack(0, messageFor0);
           CPPUNIT_ASSERT_EQUAL(messageSizeFor0, messageFor0.messageSize());
           CPPUNIT_ASSERT_EQUAL(messageSizeFor1, messageFor1.messageSize());
         }
-        if(doThisStep(Stepper::UNPACK))
+        if (doThisStep(Stepper::UNPACK))
         {
           messageFor0.reset_read(); // because debugging
           messageFor1.reset_read(); // because debugging
           shuffler0.Unpack(1, messageFor0);
           shuffler1.Unpack(0, messageFor1);
         }
-        if(doThisStep(Stepper::NEXT))
+        if (doThisStep(Stepper::NEXT))
         {
           shuffler0.Next();
           shuffler1.Next();
@@ -187,7 +191,7 @@ namespace hemelb
         }
       }
 
-      void ParticleShufflerTests :: checkNoMovement()
+      void ParticleShufflerTests::checkNoMovement()
       {
         auto const cellSize0 = shuffler0.cells.size();
         auto const cellSize1 = shuffler1.cells.size();
@@ -207,14 +211,14 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1);
       }
 
-      void ParticleShufflerTests :: testNoMovement()
+      void ParticleShufflerTests::testNoMovement()
       {
         // Runs through the cycle twice, ensuring that the process is repeatable
         checkNoMovement();
         checkNoMovement();
       }
 
-      void ParticleShufflerTests:: testShuffleOneCell()
+      void ParticleShufflerTests::testShuffleOneCell()
       {
         auto const cellSize0 = shuffler0.cells.size();
         auto const cellSize1 = shuffler1.cells.size();
@@ -223,7 +227,7 @@ namespace hemelb
 
         // Moves one particle
         **shuffler0.cells.begin() += LatticePosition(50, 50, 50);
-        size_t const messageSize = cellSetPackSize({*shuffler0.cells.begin()});
+        size_t const messageSize = cellSetPackSize( { *shuffler0.cells.begin() });
         size_t const emptyMessageSize = util::packerMessageSize(shuffler0.cells.size());
         stepper(Stepper::IDENTIFY);
         stepper(Stepper::NEXTCELLMESSAGE);
@@ -258,7 +262,7 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(shuffler1.cells.size(), cellSize1 + 1);
       }
 
-      void ParticleShufflerTests:: testShuffleTwoCellsAndBack()
+      void ParticleShufflerTests::testShuffleTwoCellsAndBack()
       {
         auto const cellSize0 = shuffler0.cells.size();
         auto const cellSize1 = shuffler1.cells.size();
@@ -293,7 +297,7 @@ namespace hemelb
         checkNoMovement();
       }
 
-      void ParticleShufflerTests:: testSloshing()
+      void ParticleShufflerTests::testSloshing()
       {
         auto const cellSize0 = shuffler0.cells.size();
         auto const cellSize1 = shuffler1.cells.size();
