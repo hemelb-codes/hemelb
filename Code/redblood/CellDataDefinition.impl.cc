@@ -25,29 +25,29 @@ namespace hemelb
     class CellBase::CellData
     {
       public:
-        CellData(
-            MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-            PhysicalDistance scaleIn = 1e0, std::string templateName="default") :
+        CellData(MeshData::Vertices &&verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn =
+                     1e0,
+                 std::string templateName = "default") :
             vertices(std::move(verticesIn)), templateMesh(origMesh), scale(scaleIn),
-            tag(boost::uuids::random_generator()()), templateName(templateName)
+                tag(boost::uuids::random_generator()()), templateName(templateName)
         {
           assert(scale > 1e-12);
         }
         CellData(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                 PhysicalDistance scaleIn = 1e0, std::string const &templateName="default") :
+                 PhysicalDistance scaleIn = 1e0, std::string const &templateName = "default") :
             vertices(verticesIn), templateMesh(origMesh), scale(scaleIn),
-            tag(boost::uuids::random_generator()()), templateName(templateName)
+                tag(boost::uuids::random_generator()()), templateName(templateName)
         {
           assert(scale > 1e-12);
         }
-        CellData(CellData const& c)
-          : vertices(c.vertices), templateMesh(c.templateMesh), scale(c.scale),
-            tag(boost::uuids::random_generator()()), templateName(c.templateName)
+        CellData(CellData const& c) :
+            vertices(c.vertices), templateMesh(c.templateMesh), scale(c.scale),
+                tag(boost::uuids::random_generator()()), templateName(c.templateName)
         {
         }
-        CellData(CellData && c)
-          : vertices(std::move(c.vertices)), templateMesh(std::move(c.templateMesh)),
-            scale(c.scale), tag(std::move(c.tag)), templateName(std::move(c.templateName))
+        CellData(CellData && c) :
+            vertices(std::move(c.vertices)), templateMesh(std::move(c.templateMesh)),
+                scale(c.scale), tag(std::move(c.tag)), templateName(std::move(c.templateName))
         {
         }
         //! Holds list of vertices for this cell
@@ -70,8 +70,8 @@ namespace hemelb
         // Should only be used by people in the know.
         // It breaks the unicity of the cell.
         CellData(Mesh const &origMesh, boost::uuids::uuid const &uuid,
-                 std::string const &templateName)
-          : templateMesh(origMesh), scale(1e0), tag(uuid), templateName(templateName)
+                 std::string const &templateName) :
+            templateMesh(origMesh), scale(1e0), tag(uuid), templateName(templateName)
         {
           assert(scale > 1e-12);
         }

@@ -32,16 +32,16 @@ namespace hemelb
          * @param cell to insert. Inserted as is. E.g. same position etc.
          * @param scale the scale of the cell to insert
          */
-        RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell)
-          : condition(condition), cell(std::move(cell))
+        RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell) :
+            condition(condition), cell(std::move(cell))
         {
         }
-        RBCInserter(RBCInserter &&c)
-          : condition(std::move(c.condition)), cell(std::move(c.cell))
+        RBCInserter(RBCInserter &&c) :
+            condition(std::move(c.condition)), cell(std::move(c.cell))
         {
         }
-        RBCInserter(RBCInserter const&c)
-          : condition(c.condition), cell(c.cell->clone())
+        RBCInserter(RBCInserter const&c) :
+            condition(c.condition), cell(c.cell->clone())
         {
         }
         void operator=(RBCInserter const &c)
@@ -67,7 +67,7 @@ namespace hemelb
          */
         void operator()(CellInserter insertFn) const
         {
-          if(condition())
+          if (condition())
           {
             insertFn(CellContainer::value_type(cell->clone().release()));
           }

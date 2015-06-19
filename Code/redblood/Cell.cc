@@ -21,8 +21,8 @@ namespace hemelb
 {
   namespace redblood
   {
-    CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                       Dimensionless scaleIn, std::string const & templateName) :
+    CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn,
+                       std::string const & templateName) :
         data(new CellData(std::move(verticesIn), origMesh, scaleIn, templateName))
     {
     }
@@ -35,8 +35,8 @@ namespace hemelb
         data(new CellData(*cell.data))
     {
     }
-    CellBase::CellBase(Mesh const &mesh, Mesh const &origMesh,
-                       Dimensionless scaleIn, std::string const & templateName) :
+    CellBase::CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn,
+                       std::string const & templateName) :
         data(new CellData(mesh.GetVertices(), origMesh, scaleIn, templateName))
     {
     }
@@ -234,9 +234,10 @@ namespace hemelb
 
     std::unique_ptr<CellBase> Cell::cloneImpl() const
     {
-      std::unique_ptr<Cell> result(
-          new Cell(GetVertices(), GetTemplateMesh(), GetScale(), GetTemplateName())
-      );
+      std::unique_ptr<Cell> result(new Cell(GetVertices(),
+                                            GetTemplateMesh(),
+                                            GetScale(),
+                                            GetTemplateName()));
       result->moduli = moduli;
       return std::move(result);
     }
@@ -260,20 +261,21 @@ namespace hemelb
     }
 
 #   ifndef NDEBUG
-      void checkCellDataCharacteristics() {
-        static_assert(
-            (not std::is_default_constructible<CellBase::CellData>::value)
-            and (not std::is_nothrow_default_constructible<CellBase::CellData>::value)
-            and std::is_move_constructible<CellBase::CellData>::value
-            and (not std::is_nothrow_move_constructible<CellBase::CellData>::value)
-            and std::is_copy_constructible<CellBase::CellData>::value
-            and (not std::is_copy_assignable<CellBase::CellData>::value)
-            and (not std::is_nothrow_copy_assignable<CellBase::CellData>::value)
-            and std::is_standard_layout<CellBase::CellData>::value
-            and (not std::is_pod<CellBase::CellData>::value),
-            "Explicit type characteristics"
-        );
-      }
+    void checkCellDataCharacteristics()
+    {
+      static_assert(
+          (not std::is_default_constructible<CellBase::CellData>::value)
+          and (not std::is_nothrow_default_constructible<CellBase::CellData>::value)
+          and std::is_move_constructible<CellBase::CellData>::value
+          and (not std::is_nothrow_move_constructible<CellBase::CellData>::value)
+          and std::is_copy_constructible<CellBase::CellData>::value
+          and (not std::is_copy_assignable<CellBase::CellData>::value)
+          and (not std::is_nothrow_copy_assignable<CellBase::CellData>::value)
+          and std::is_standard_layout<CellBase::CellData>::value
+          and (not std::is_pod<CellBase::CellData>::value),
+          "Explicit type characteristics"
+      );
+    }
 #   endif
   }
 } // hemelb::redblood

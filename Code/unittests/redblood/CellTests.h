@@ -74,7 +74,9 @@ namespace hemelb
             std::vector<LatticeForceVector> forces(original.vertices.size(), 0);
 
             std::vector<Dimensionless> scales;
-            scales.push_back(1.0); scales.push_back(0.8); scales.push_back(1.2);
+            scales.push_back(1.0);
+            scales.push_back(0.8);
+            scales.push_back(1.2);
             for (auto const scale : scales)
             {
               auto other = templateMesh.clone();

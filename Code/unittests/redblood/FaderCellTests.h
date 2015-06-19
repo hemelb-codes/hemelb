@@ -24,11 +24,10 @@ namespace hemelb
     {
       class FaderCellTests : public CppUnit::TestFixture
       {
-        class DummyCell;
-        CPPUNIT_TEST_SUITE(FaderCellTests);
-          CPPUNIT_TEST(testFade);
-          CPPUNIT_TEST(testDivideAndConquer);
-        CPPUNIT_TEST_SUITE_END();
+          class DummyCell;
+          CPPUNIT_TEST_SUITE (FaderCellTests);
+          CPPUNIT_TEST (testFade);
+          CPPUNIT_TEST (testDivideAndConquer);CPPUNIT_TEST_SUITE_END();
         public:
           // Cell does fade
           void testFade();
@@ -39,7 +38,8 @@ namespace hemelb
       class FaderCellTests::DummyCell : public CellBase
       {
         public:
-          DummyCell() : CellBase(icoSphere())
+          DummyCell() :
+              CellBase(icoSphere())
           {
           }
 
@@ -50,17 +50,18 @@ namespace hemelb
           PhysicalEnergy operator()(std::vector<LatticeForceVector> & forces) const override
           {
             int i(1);
-            for(auto& force: forces)
+            for (auto& force : forces)
             {
               force = LatticeForceVector(0, i, 8);
               ++i;
             }
             return 1e0;
           }
-          LatticeForceVector WallInteractionForce(
-              LatticePosition const& vertex, LatticePosition const &wall) const override
+          LatticeForceVector WallInteractionForce(LatticePosition const& vertex,
+                                                  LatticePosition const &wall) const override
           {
-            return {1, 2, 3};
+            return
+            { 1, 2, 3};
           }
         private:
           std::unique_ptr<CellBase> cloneImpl() const override
@@ -72,10 +73,20 @@ namespace hemelb
       void FaderCellTests::testFade()
       {
         // normals of inlet and outlet face in different direction
-        FlowExtension const inlet (util::Vector3D<Dimensionless>(-1, 0, 0), LatticePosition(3, 2, 2), 2.0, 2, 1.8);
-        FlowExtension const outlet(util::Vector3D<Dimensionless>( 1, 0, 0), LatticePosition(8, 2, 2), 2.0, 2, 1.8);
+        FlowExtension const inlet(util::Vector3D<Dimensionless>(-1, 0, 0),
+                                  LatticePosition(3, 2, 2),
+                                  2.0,
+                                  2,
+                                  1.8);
+        FlowExtension const outlet(util::Vector3D<Dimensionless>(1, 0, 0),
+                                   LatticePosition(8, 2, 2),
+                                   2.0,
+                                   2,
+                                   1.8);
         auto dummyCell = std::make_shared<FaderCellTests::DummyCell>();
-        std::vector<FlowExtension> extensions; extensions.push_back(inlet); extensions.push_back(outlet);
+        std::vector<FlowExtension> extensions;
+        extensions.push_back(inlet);
+        extensions.push_back(outlet);
         auto const fadingCell = std::make_shared<FaderCell>(dummyCell, extensions);
 
         const LatticePosition zero(0, 0, 0);
@@ -130,16 +141,24 @@ namespace hemelb
 
       void FaderCellTests::testDivideAndConquer()
       {
-        FlowExtension const inlet (util::Vector3D<Dimensionless>(-1, 0, 0), LatticePosition(3, 2, 2), 2.0, 2, 1.8);
-        FlowExtension const outlet(util::Vector3D<Dimensionless>( 1, 0, 0), LatticePosition(8, 2, 2), 2.0, 2, 1.8);
+        FlowExtension const inlet(util::Vector3D<Dimensionless>(-1, 0, 0),
+                                  LatticePosition(3, 2, 2),
+                                  2.0,
+                                  2,
+                                  1.8);
+        FlowExtension const outlet(util::Vector3D<Dimensionless>(1, 0, 0),
+                                   LatticePosition(8, 2, 2),
+                                   2.0,
+                                   2,
+                                   1.8);
 
         auto const cell = std::make_shared<Cell>(tetrahedron());
         cell->nodeWall.cutoff = 0.6;
         cell->nodeWall.intensity = 1e0;
         cell->nodeWall.exponent = 2;
         *cell *= 5e0;
-        auto const fader0 = std::make_shared<FaderCell>(
-            cell, std::vector<FlowExtension>{inlet, outlet});
+        auto const fader0 =
+            std::make_shared<FaderCell>(cell, std::vector<FlowExtension> { inlet, outlet });
 
         // Check cloning while we are at it
         std::shared_ptr<FaderCell> const fader1(fader0->clone().release());
@@ -152,14 +171,12 @@ namespace hemelb
         *fader1 += trans + trans.GetNormalised() * 0.5;
 
         // Add them to a divide and conquer object
-        DivideConquerCells dnc({fader0, fader1}, 100e0, 1e0);
+        DivideConquerCells dnc( { fader0, fader1 }, 100e0, 1e0);
 
         auto range = dnc.pair_begin(0.6);
         CPPUNIT_ASSERT(range.is_valid());
         CPPUNIT_ASSERT(not (++range));
       }
-
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FaderCellTests);
     }

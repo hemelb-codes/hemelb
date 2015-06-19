@@ -28,16 +28,15 @@ namespace hemelb
       }
       //! Defaults to some value if parent, or its child elemname are not present
       template<typename T>
-      T GetDimensionalValue(
-          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-          T default_)
+      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+                            const std::string& units, T default_)
       {
-        if(parent == parent.Missing())
+        if (parent == parent.Missing())
         {
           return default_;
         }
         auto const element = parent.GetChildOrNull(elemname);
-        if(element == element.Missing())
+        if (element == element.Missing())
         {
           return default_;
         }
@@ -45,44 +44,46 @@ namespace hemelb
       }
       //! Gets value and convert to LB units. Default value should be in physical units.
       template<typename T>
-      T GetDimensionalValue(
-          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-          util::UnitConverter const &converter, T default_)
+      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+                            const std::string& units, util::UnitConverter const &converter,
+                            T default_)
       {
         T const value = GetDimensionalValue<T>(parent, elemname, units, default_);
-        return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
+        return units == "LB" ?
+          value :
+          converter.ConvertToLatticeUnits(units, value);
       }
       //! Gets value and convert to LB units
       template<typename T>
-      T GetDimensionalValue(
-          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-          util::UnitConverter const &converter)
+      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+                            const std::string& units, util::UnitConverter const &converter)
       {
         T const value = GetDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
-        return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
+        return units == "LB" ?
+          value :
+          converter.ConvertToLatticeUnits(units, value);
       }
       //! Gets position and convert to LB units
-      LatticePosition GetPosition(
-          const io::xml::Element& parent, const std::string &elemname,
-          util::UnitConverter const &converter)
+      LatticePosition GetPosition(const io::xml::Element& parent, const std::string &elemname,
+                                  util::UnitConverter const &converter)
       {
         auto value = GetDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
         return converter.ConvertPositionToLatticeUnits(value);
       }
 
-      void readFlowExtensions(
-          io::xml::Element const& ioletsNode, util::UnitConverter const& converter,
-          std::vector<FlowExtension> &results)
+      void readFlowExtensions(io::xml::Element const& ioletsNode,
+                              util::UnitConverter const& converter,
+                              std::vector<FlowExtension> &results)
       {
-        if(ioletsNode == ioletsNode.Missing())
+        if (ioletsNode == ioletsNode.Missing())
         {
           return;
         }
         auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
         auto ioletNode = ioletsNode.GetChildOrNull(name);
-        for(; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
+        for (; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
         {
-          if(ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
+          if (ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
           {
             results.emplace_back(readFlowExtension(ioletNode, converter));
           }
@@ -98,7 +99,7 @@ namespace hemelb
         auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
         auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
         auto const templateName = insNode.GetAttributeOrThrow("template");
-        if(templateCells.count(templateName) == 0)
+        if (templateCells.count(templateName) == 0)
         {
           throw Exception() << "Template cell name does not match a known template cell";
         }
@@ -111,22 +112,21 @@ namespace hemelb
         {
           return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
         };
-        auto const minZ = *std::min_element(
-            cell->GetVertices().begin(), cell->GetVertices().end(),
-            [&minExtent](LatticePosition const &a, LatticePosition const& b)
-            {
-              return minExtent(a) < minExtent(b);
-            }
-        );
+        auto const minZ =
+            *std::min_element(cell->GetVertices().begin(),
+                              cell->GetVertices().end(),
+                              [&minExtent](LatticePosition const &a, LatticePosition const& b)
+                              {
+                                return minExtent(a) < minExtent(b);
+                              });
         // Place cell as close as possible to 0 of fade length
         *cell += flowExtension.origin
-          + flowExtension.normal * (flowExtension.fadeLength - minExtent(minZ))
-          - barycenter;
+            + flowExtension.normal * (flowExtension.fadeLength - minExtent(minZ)) - barycenter;
 
         // fail if any node outside flow extension
-        for(auto const &vertex: cell->GetVertices())
+        for (auto const &vertex : cell->GetVertices())
         {
-          if(not contains(flowExtension, vertex))
+          if (not contains(flowExtension, vertex))
           {
             throw Exception() << "BAD INPUT: Cell not contained within flow extension";
           }
@@ -136,7 +136,7 @@ namespace hemelb
         auto condition = [deltaTime, offset]()
         {
           static PhysicalTime time
-            = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
+          = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
           time += 1e0;
           if(time >= deltaTime)
           {
@@ -148,8 +148,6 @@ namespace hemelb
         return RBCInserter(condition, std::move(cell));
       }
     }
-
-
 
     Cell::Moduli readModuli(io::xml::Element const& node, util::UnitConverter const &converter)
     {
@@ -163,12 +161,13 @@ namespace hemelb
       return moduli;
     }
 
-    Node2NodeForce readNode2NodeForce(
-        io::xml::Element const& parent, util::UnitConverter const & converter)
+    Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
+                                      util::UnitConverter const & converter)
     {
-      Node2NodeForce result(
-          1e0/converter.ConvertToLatticeUnits("N", 1e0), converter.GetVoxelSize(), 2);
-      if(parent == parent.Missing())
+      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("N", 1e0),
+                            converter.GetVoxelSize(),
+                            2);
+      if (parent == parent.Missing())
       {
         return result;
       }
@@ -176,8 +175,9 @@ namespace hemelb
       result.intensity = GetDimensionalValue(node, "intensity", "N", converter, result.intensity);
       result.cutoff = GetDimensionalValue(node, "cutoffdistance", "m", converter, result.cutoff);
       auto const exponentNode = node != node.Missing() ?
-        node.GetChildOrNull("exponent"): node.Missing();
-      if(exponentNode != node.Missing())
+        node.GetChildOrNull("exponent") :
+        node.Missing();
+      if (exponentNode != node.Missing())
       {
         exponentNode.GetAttributeOrThrow("value", result.exponent);
       }
@@ -185,49 +185,55 @@ namespace hemelb
     }
 
     //! Reads multiple templates from XML and stores in container
-    std::unique_ptr<TemplateCellContainer> readTemplateCells(
-        io::xml::Element const& topNode, util::UnitConverter const& converter)
+    std::unique_ptr<TemplateCellContainer> readTemplateCells(io::xml::Element const& topNode,
+                                                             util::UnitConverter const& converter)
     {
       std::unique_ptr<TemplateCellContainer> result(new TemplateCellContainer);
       // read flow extensions, if they exist
-      std::shared_ptr<std::vector<FlowExtension>> flowExtensions(
-          readFlowExtensions(topNode, converter).release()
-      );
+      std::shared_ptr<std::vector<FlowExtension>> flowExtensions(readFlowExtensions(topNode,
+                                                                                    converter).release());
       // Then read template cells
       auto const cellsNode = topNode.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells");
       auto cellNode = cellsNode.GetChildOrThrow("cell");
-      for(; cellNode != cellNode.Missing(); cellNode = cellNode.NextSiblingOrNull("cell"))
+      for (; cellNode != cellNode.Missing(); cellNode = cellNode.NextSiblingOrNull("cell"))
       {
         auto const name = cellNode.GetAttributeOrNull("name");
-        auto const key = name != nullptr ? *name: "default";
-        if(result->count(key) != 0)
+        auto const key = name != nullptr ?
+          *name :
+          "default";
+        if (result->count(key) != 0)
         {
           throw Exception() << "Multiple template mesh with same name";
         }
         auto cell = readCell(cellNode, converter);
-        if(flowExtensions)
+        if (flowExtensions)
         {
           auto fader = FaderCell(std::move(cell), flowExtensions).clone();
           cell = std::move(fader);
         }
         result->emplace(key, std::shared_ptr<CellBase>(cell.release()));
       }
-      return result->size() > 0 ? std::move(result): nullptr;
+      return result->size() > 0 ?
+        std::move(result) :
+        nullptr;
     }
 
-    std::unique_ptr<CellBase> readCell(
-        io::xml::Element const& node, util::UnitConverter const& converter)
+    std::unique_ptr<CellBase> readCell(io::xml::Element const& node,
+                                       util::UnitConverter const& converter)
     {
       // auto const node = topNode.GetChildOrThrow("redbloodcells");
-      if(node  == node.Missing())
+      if (node == node.Missing())
       {
         throw Exception() << "Expected non-empty XML node";
       }
-      const auto cellNode = node.GetName() == "cell" ? node: node.GetChildOrThrow("cell");
+      const auto cellNode = node.GetName() == "cell" ?
+        node :
+        node.GetChildOrThrow("cell");
       auto const name = cellNode.GetAttributeOrNull("name") == nullptr ?
-        "default": cellNode.GetAttributeOrThrow("name");
-      std::string const mesh_path
-        = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
+        "default" :
+        cellNode.GetAttributeOrThrow("name");
+      std::string const mesh_path =
+          cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       auto const mesh_data = readMesh(mesh_path);
       auto const scale = GetDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
       std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
@@ -242,32 +248,32 @@ namespace hemelb
     std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
         io::xml::Element const& topNode, util::UnitConverter const& converter)
     {
-      if(topNode == topNode.Missing())
+      if (topNode == topNode.Missing())
       {
         return nullptr;
       }
       std::vector<FlowExtension> result;
       auto inletsNode = topNode.GetChildOrNull("inlets");
-      if(inletsNode != inletsNode.Missing())
+      if (inletsNode != inletsNode.Missing())
       {
         readFlowExtensions(inletsNode, converter, result);
       }
       auto outletsNode = topNode.GetChildOrNull("outlets");
-      if(outletsNode != outletsNode.Missing())
+      if (outletsNode != outletsNode.Missing())
       {
         readFlowExtensions(outletsNode, converter, result);
       }
-      if(result.size() == 0)
+      if (result.size() == 0)
       {
         return nullptr;
       }
       return std::unique_ptr<decltype(result)>(new decltype(result)(std::move(result)));
     }
 
-    FlowExtension readFlowExtension(
-        io::xml::Element const& node, util::UnitConverter const& converter)
+    FlowExtension readFlowExtension(io::xml::Element const& node,
+                                    util::UnitConverter const& converter)
     {
-      if(node  == node.Missing())
+      if (node == node.Missing())
       {
         throw Exception() << "Expected non-empty XML node";
       }
@@ -277,32 +283,35 @@ namespace hemelb
 
       result.length = GetDimensionalValue<PhysicalDistance>(flowXML, "length", "m", converter);
       result.radius = GetDimensionalValue<PhysicalDistance>(flowXML, "radius", "m", converter);
-      result.fadeLength = GetDimensionalValue<PhysicalDistance>(
-          flowXML, "fadelength", "m", converter,
-          converter.ConvertDistanceToPhysicalUnits(result.length));
+      result.fadeLength =
+          GetDimensionalValue<PhysicalDistance>(flowXML,
+                                                "fadelength",
+                                                "m",
+                                                converter,
+                                                converter.ConvertDistanceToPhysicalUnits(result.length));
 
       // Infer normal and position from inlet
       // However, normals point in *opposite* direction, and, as a result, origin are at opposite
       // end of the cylinder
-      result.normal = -GetDimensionalValue<LatticePosition>(
-          node, "normal", "dimensionless", converter);
+      result.normal = -GetDimensionalValue<LatticePosition>(node,
+                                                            "normal",
+                                                            "dimensionless",
+                                                            converter);
       result.normal.Normalise();
       result.origin = GetPosition(node, "position", converter) - result.normal * result.length;
 
       return result;
     }
 
-
     //! Finds first inlet with Cell insertion
     io::xml::Element findFirstInletWithCellInsertion(io::xml::Element const &inlet)
     {
       io::xml::Element sibling(inlet);
-      for(; sibling.Missing() != sibling; sibling = sibling.NextSiblingOrNull("inlet"))
+      for (; sibling.Missing() != sibling; sibling = sibling.NextSiblingOrNull("inlet"))
       {
-        auto hasRequisiteXMLTags =
-            sibling.GetChildOrNull("flowextension") != sibling.Missing()
+        auto hasRequisiteXMLTags = sibling.GetChildOrNull("flowextension") != sibling.Missing()
             and sibling.GetChildOrNull("insertcell") != sibling.Missing();
-        if(hasRequisiteXMLTags)
+        if (hasRequisiteXMLTags)
         {
           return sibling;
         }
@@ -318,14 +327,14 @@ namespace hemelb
       auto const inlets = node.GetChildOrThrow("inlets");
       auto inlet = findFirstInletWithCellInsertion(inlets.GetChildOrThrow("inlet"));
       std::vector<std::function<void(CellInserter const&)>> results;
-      while(inlet != inlet.Missing())
+      while (inlet != inlet.Missing())
       {
         results.emplace_back(std::move(readSingleRBCInserter(inlet, converter, templateCells)));
         inlet = findFirstInletWithCellInsertion(inlet.NextSiblingOrNull("inlet"));
       }
 
       // do all insertion functions in one go
-      if(results.size() > 1)
+      if (results.size() > 1)
       {
         // go to shared pointer to avoid copies
         std::shared_ptr<decltype(results)> functions(new decltype(results)(std::move(results)));
@@ -339,7 +348,9 @@ namespace hemelb
         };
       }
       // return null if no insertion, and just the function if only one
-      return results.size() == 0 ? nullptr: results.front();
+      return results.size() == 0 ?
+        nullptr :
+        results.front();
     }
   }
 }

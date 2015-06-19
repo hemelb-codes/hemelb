@@ -155,8 +155,8 @@ namespace hemelb
     {
       writeVTKMesh(stream, data.vertices, data.facets);
     }
-    void writeVTKMesh(std::ostream &stream,
-        MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    void writeVTKMesh(std::ostream &stream, MeshData::Vertices const &vertices,
+                      MeshData::Facets const &facets)
     {
       // Write Header
       stream << "<?xml version=\"1.0\"?>\n"

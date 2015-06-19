@@ -75,10 +75,9 @@ namespace hemelb
     //!             current processor. By default, a value so large, that if it refers to an actual
     //!             region, you've got other problems.
     std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
-        std::shared_ptr<CellBase const> cell,
-        geometry::LatticeData const &latticeData,
-        proc_t selfRegion = std::numeric_limits<proc_t>::max(),
-        redblood::stencil::types stencil = redblood::stencil::types::FOUR_POINT);
+        std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
+        proc_t selfRegion = std::numeric_limits<proc_t>::max(), redblood::stencil::types stencil =
+            redblood::stencil::types::FOUR_POINT);
   }
 } // namespace hemelb::redblood
 #endif

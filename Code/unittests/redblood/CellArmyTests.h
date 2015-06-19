@@ -26,16 +26,16 @@ namespace hemelb
         public:
           mutable size_t nbcalls = 0;
 #         ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-	      FakeCell(Mesh const &mesh)
-                  : Cell(mesh)
-              {
-              }
-	      FakeCell(std::shared_ptr<MeshData> const &mesh)
-                  : Cell(mesh)
-              {
-              }
+          FakeCell(Mesh const &mesh) :
+              Cell(mesh)
+          {
+          }
+          FakeCell(std::shared_ptr<MeshData> const &mesh) :
+              Cell(mesh)
+          {
+          }
 #         else
-              using hemelb::redblood::Cell::Cell;
+          using hemelb::redblood::Cell::Cell;
 #         endif 
           //! Facet bending energy
           virtual PhysicalEnergy operator()() const override
@@ -48,8 +48,8 @@ namespace hemelb
             ++nbcalls;
             return 0;
           }
-          virtual LatticeForceVector WallInteractionForce(
-              LatticePosition const &vertex, LatticePosition const &wall) const
+          virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
+                                                          LatticePosition const &wall) const
           {
             return 0;
           }
@@ -99,8 +99,8 @@ namespace hemelb
         // Fixture all pairs far from one another
         auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
         assert(cells.size() == 2);
-        assert(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 0);
-        assert(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 0);
+        assert(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 0);
+        assert(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls == 0);
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
@@ -110,8 +110,9 @@ namespace hemelb
         army.cell2Cell.intensity = 1.0;
         army.Cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 1);
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 1);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
+            == 1);
 
         for (size_t i(0); i < latDat->GetLocalFluidSiteCount(); ++i)
         {
@@ -125,8 +126,9 @@ namespace hemelb
         army.updateDNC();
         army.Cell2FluidInteractions();
 
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*cells.begin()))->nbcalls == 2);
-        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>((*std::next(cells.begin())))->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 2);
+        CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
+            == 2);
         CPPUNIT_ASSERT(not helpers::is_zero(latDat->GetSite(15, 15, 15).GetForce()));
       }
 
@@ -158,8 +160,8 @@ namespace hemelb
         // DNC is.
         auto cells = TwoPancakeSamosas<FakeCell>(cutoff);
         auto const orig = TwoPancakeSamosas<FakeCell>(cutoff);
-        auto const normal
-          = Facet((*cells.begin())->GetVertices(), (*cells.begin())->GetFacets()[0]).normal();
+        auto const normal = Facet( (*cells.begin())->GetVertices(),
+                                  (*cells.begin())->GetFacets()[0]).normal();
 
         LatticePosition gradient;
         Dimensionless non_neg_pop;
@@ -173,9 +175,8 @@ namespace hemelb
 
         for (size_t i(0); i < cells.size(); ++i)
         {
-          auto const disp
-            = (*std::next(cells.begin(), i))->GetVertices().front()
-            - (*std::next(orig.begin(), i))->GetVertices().front();
+          auto const disp = (*std::next(cells.begin(), i))->GetVertices().front()
+              - (*std::next(orig.begin(), i))->GetVertices().front();
           auto i_nodeA = (*std::next(cells.begin(), i))->GetVertices().begin();
           auto i_nodeB = (*std::next(orig.begin(), i))->GetVertices().begin();
           auto const i_end = (*std::next(cells.begin(), i))->GetVertices().end();
@@ -192,11 +193,13 @@ namespace hemelb
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         MeshData::Vertices::value_type barycentre;
         typename CellArmy<Kernel>::CellChangeListener callback =
-            [&barycentre](const CellContainer & container) {
+            [&barycentre](const CellContainer & container)
+            {
               barycentre = (*(container.begin()))->GetBarycenter();
-        };
+            };
 
-        CellContainer intel; intel.insert(cell);
+        CellContainer intel;
+        intel.insert(cell);
         redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
         army.AddCellChangeListener(callback);
 
@@ -207,13 +210,17 @@ namespace hemelb
       void CellArmyTests::testCellRemoval()
       {
         FlowExtension const outlet(util::Vector3D<Dimensionless>(1, 0, 0),
-             LatticePosition(8, 2, 2), 4.0, 4, 1.8);
+                                   LatticePosition(8, 2, 2),
+                                   4.0,
+                                   4,
+                                   1.8);
         auto cell = std::make_shared<FakeCell>(pancakeSamosa());
 
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellContainer intel; intel.insert(cell);
+        CellContainer intel;
+        intel.insert(cell);
         redblood::CellArmy<Kernel> army(*latDat, intel, cutoff, halo);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 

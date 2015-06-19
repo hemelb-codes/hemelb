@@ -41,11 +41,9 @@ namespace hemelb
                 wrappee(cell)
         {
         }
-        FaderCell(
-            std::unique_ptr<CellBase> cell,
-            std::shared_ptr<std::vector<FlowExtension>> flowExtensions) :
-            CellBase(*cell, shallow_clone()), iolets(flowExtensions),
-            wrappee(cell.release())
+        FaderCell(std::unique_ptr<CellBase> cell,
+                  std::shared_ptr<std::vector<FlowExtension>> flowExtensions) :
+            CellBase(*cell, shallow_clone()), iolets(flowExtensions), wrappee(cell.release())
         {
         }
         //! Construct fader cell over other CellBase type object
@@ -59,17 +57,17 @@ namespace hemelb
         }
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         FaderCell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                  Dimensionless scaleIn = 1e0, std::string const &templateName="default") :
+                  Dimensionless scaleIn = 1e0, std::string const &templateName = "default") :
             CellBase(std::move(verticesIn), origMesh, scaleIn, templateName)
         {
         }
         FaderCell(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                  Dimensionless scaleIn = 1e0, std::string const &templateName="default") :
+                  Dimensionless scaleIn = 1e0, std::string const &templateName = "default") :
             CellBase(verticesIn, origMesh, scaleIn, templateName)
         {
         }
-        FaderCell(Mesh const &mesh, Mesh const &origMesh,
-                  Dimensionless scaleIn = 1e0, std::string const &templateName="default") :
+        FaderCell(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn = 1e0,
+                  std::string const &templateName = "default") :
             CellBase(mesh, origMesh, scaleIn, templateName)
         {
         }
