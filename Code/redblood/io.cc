@@ -9,64 +9,87 @@ namespace hemelb
 {
   namespace redblood
   {
-    //! Throws if input does not have units
-    template<typename T>
-    T GetDimensionalValue(const io::xml::Element& elem, const std::string& units)
+    namespace
     {
-      T value;
-      const std::string& got = elem.GetAttributeOrThrow("units");
-      if (got != units)
+      //! Throws if input does not have units
+      template<typename T>
+      T GetDimensionalValue(const io::xml::Element& elem, const std::string& units)
       {
-        throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
-            << units << "', got '" << got << "'";
+        T value;
+        const std::string& got = elem.GetAttributeOrThrow("units");
+        if (got != units)
+        {
+          throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
+              << units << "', got '" << got << "'";
+        }
+
+        elem.GetAttributeOrThrow("value", value);
+        return value;
+      }
+      //! Defaults to some value if parent, or its child elemname are not present
+      template<typename T>
+      T GetDimensionalValue(
+          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
+          T default_)
+      {
+        if(parent == parent.Missing())
+        {
+          return default_;
+        }
+        auto const element = parent.GetChildOrNull(elemname);
+        if(element == element.Missing())
+        {
+          return default_;
+        }
+        return GetDimensionalValue<T>(element, units);
+      }
+      //! Gets value and convert to LB units. Default value should be in physical units.
+      template<typename T>
+      T GetDimensionalValue(
+          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
+          util::UnitConverter const &converter, T default_)
+      {
+        T const value = GetDimensionalValue<T>(parent, elemname, units, default_);
+        return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
+      }
+      //! Gets value and convert to LB units
+      template<typename T>
+      T GetDimensionalValue(
+          const io::xml::Element& parent, const std::string &elemname, const std::string& units,
+          util::UnitConverter const &converter)
+      {
+        T const value = GetDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
+        return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
+      }
+      //! Gets position and convert to LB units
+      LatticePosition GetPosition(
+          const io::xml::Element& parent, const std::string &elemname,
+          util::UnitConverter const &converter)
+      {
+        auto value = GetDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
+        return converter.ConvertPositionToLatticeUnits(value);
       }
 
-      elem.GetAttributeOrThrow("value", value);
-      return value;
-    }
-    //! Defaults to some value if parent, or its child elemname are not present
-    template<typename T>
-    T GetDimensionalValue(
-        const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-        T default_)
-    {
-      if(parent == parent.Missing())
+      void readFlowExtensions(
+          io::xml::Element const& ioletsNode, util::UnitConverter const& converter,
+          std::vector<FlowExtension> &results)
       {
-        return default_;
+        if(ioletsNode == ioletsNode.Missing())
+        {
+          return;
+        }
+        auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+        auto ioletNode = ioletsNode.GetChildOrNull(name);
+        for(; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
+        {
+          if(ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
+          {
+            results.emplace_back(readFlowExtension(ioletNode, converter));
+          }
+        }
       }
-      auto const element = parent.GetChildOrNull(elemname);
-      if(element == element.Missing())
-      {
-        return default_;
-      }
-      return GetDimensionalValue<T>(element, units);
     }
-    //! Gets value and convert to LB units. Default value should be in physical units.
-    template<typename T>
-    T GetDimensionalValue(
-        const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-        util::UnitConverter const &converter, T default_)
-    {
-      T const value = GetDimensionalValue<T>(parent, elemname, units, default_);
-      return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
-    }
-    //! Gets value and convert to LB units
-    template<typename T>
-    T GetDimensionalValue(
-        const io::xml::Element& parent, const std::string &elemname, const std::string& units,
-        util::UnitConverter const &converter)
-    {
-      T const value = GetDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
-      return units == "LB" ? value: converter.ConvertToLatticeUnits(units, value);
-    }
-    //! Gets position and convert to LB units
-    LatticePosition GetPosition(
-        const io::xml::Element& parent, const std::string &elemname,
-        util::UnitConverter const &converter)
-    {
-      auto value = GetDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
-      return converter.ConvertPositionToLatticeUnits(value);
-    }
+
 
 
     Cell::Moduli readModuli(io::xml::Element const& node, util::UnitConverter const &converter)
@@ -155,29 +178,6 @@ namespace hemelb
 
       std::unique_ptr<CellBase> cellbase(static_cast<CellBase*>(cell.release()));
       return cellbase;
-      // // Check if there are iolets with flow extensions
-      // auto const flowExtensions = readFlowExtensions(topNode.GetChildOrNull("inlets"), converter);
-      //
-      // return flowExtensions ? FaderCell(std::move(cellbase), flowExtensions).clone(): cellbase;
-    }
-
-    void readFlowExtensions(
-        io::xml::Element const& ioletsNode, util::UnitConverter const& converter,
-        std::vector<FlowExtension> &results)
-    {
-      if(ioletsNode == ioletsNode.Missing())
-      {
-        return;
-      }
-      auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
-      auto ioletNode = ioletsNode.GetChildOrNull(name);
-      for(; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
-      {
-        if(ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
-        {
-          results.emplace_back(readFlowExtension(ioletNode, converter));
-        }
-      }
     }
 
     std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
