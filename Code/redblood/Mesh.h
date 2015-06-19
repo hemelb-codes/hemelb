@@ -16,6 +16,7 @@
 #include <set>
 #include <string>
 #include <type_traits>
+#include <map>
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 #include "units.h"

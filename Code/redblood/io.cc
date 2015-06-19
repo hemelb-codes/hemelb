@@ -1,3 +1,4 @@
+#include <utility>
 #include "redblood/Cell.h"
 #include "redblood/FaderCell.h"
 #include "redblood/RBCInserter.h"
@@ -101,6 +102,37 @@ namespace hemelb
       return result;
     }
 
+    //! Reads multiple templates from XML and stores in container
+    std::unique_ptr<TemplateCellContainer> readTemplateCells(
+        io::xml::Element const& topNode, util::UnitConverter const& converter)
+    {
+      std::unique_ptr<TemplateCellContainer> result(new TemplateCellContainer);
+      // read flow extensions, if they exist
+      std::shared_ptr<std::vector<FlowExtension>> flowExtensions(
+          readFlowExtensions(topNode, converter).release()
+      );
+      // Then read template cells
+      auto const cellsNode = topNode.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells");
+      auto cellNode = cellsNode.GetChildOrThrow("cell");
+      for(; cellNode != cellNode.Missing(); cellNode = cellNode.NextSiblingOrNull("cell"))
+      {
+        auto const name = cellNode.GetAttributeOrNull("name");
+        auto const key = name != nullptr ? *name: "default";
+        if(result->count(key) != 0)
+        {
+          throw Exception() << "Multiple template mesh with same name";
+        }
+        auto cell = readCell(cellNode, converter);
+        if(flowExtensions)
+        {
+          auto fader = FaderCell(std::move(cell), flowExtensions).clone();
+          cell = std::move(fader);
+        }
+        result->emplace(key, std::shared_ptr<CellBase>(cell.release()));
+      }
+      return result->size() > 0 ? std::move(result): nullptr;
+    }
+
     std::unique_ptr<CellBase> readCell(
         io::xml::Element const& node, util::UnitConverter const& converter)
     {
@@ -109,12 +141,14 @@ namespace hemelb
       {
         throw Exception() << "Expected non-empty XML node";
       }
-      const io::xml::Element & cellNode = node.GetChildOrThrow("cell");
+      const auto cellNode = node.GetName() == "cell" ? node: node.GetChildOrThrow("cell");
+      auto const name = cellNode.GetAttributeOrNull("name") == nullptr ?
+        "default": cellNode.GetAttributeOrThrow("name");
       std::string const mesh_path
         = cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       auto const mesh_data = readMesh(mesh_path);
       auto const scale = GetDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
-      std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale));
+      std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
       *cell *= scale;
       cell->moduli = readModuli(cellNode, converter);
       cell->nodeWall = readNode2NodeForce(cellNode, converter);
@@ -127,13 +161,42 @@ namespace hemelb
       // return flowExtensions ? FaderCell(std::move(cellbase), flowExtensions).clone(): cellbase;
     }
 
-    std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
-        io::xml::Element const& inletsNode, util::UnitConverter const& converter)
+    void readFlowExtensions(
+        io::xml::Element const& ioletsNode, util::UnitConverter const& converter,
+        std::vector<FlowExtension> &results)
     {
-      std::vector<FlowExtension> result;
-      auto inletNode = inletsNode.GetChildOrNull("inlet");
-      for(; inletNode != inletNode.Missing(); inletNode = inletNode.NextSiblingOrNull("inlet"))
+      if(ioletsNode == ioletsNode.Missing())
       {
+        return;
+      }
+      auto const name = ioletsNode.GetName().substr(0, ioletsNode.GetName().size() - 1);
+      auto ioletNode = ioletsNode.GetChildOrNull(name);
+      for(; ioletNode != ioletNode.Missing(); ioletNode = ioletNode.NextSiblingOrNull(name))
+      {
+        if(ioletNode.GetChildOrNull("flowextension") != ioletNode.Missing())
+        {
+          results.emplace_back(readFlowExtension(ioletNode, converter));
+        }
+      }
+    }
+
+    std::unique_ptr<std::vector<FlowExtension>> readFlowExtensions(
+        io::xml::Element const& topNode, util::UnitConverter const& converter)
+    {
+      if(topNode == topNode.Missing())
+      {
+        return nullptr;
+      }
+      std::vector<FlowExtension> result;
+      auto inletsNode = topNode.GetChildOrNull("inlets");
+      if(inletsNode != inletsNode.Missing())
+      {
+        readFlowExtensions(inletsNode, converter, result);
+      }
+      auto outletsNode = topNode.GetChildOrNull("outlets");
+      if(outletsNode != outletsNode.Missing())
+      {
+        readFlowExtensions(outletsNode, converter, result);
       }
       if(result.size() == 0)
       {

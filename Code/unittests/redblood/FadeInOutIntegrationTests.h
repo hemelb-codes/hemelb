@@ -55,8 +55,8 @@ namespace hemelb
 
           void tearDown()
           {
-            master->Finalise();
-            master.reset();
+            // master->Finalise();
+            // master.reset();
           }
 
           void testIntegration()
@@ -70,8 +70,9 @@ namespace hemelb
                   << ": " << cell->GetBarycenter() << std::endl;
               }
             };
-            std::shared_ptr<CellControl> controller =
-                std::static_pointer_cast<CellControl>(master->GetCellController());
+            CPPUNIT_ASSERT(master);
+            auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
+            CPPUNIT_ASSERT(controller);
             controller->AddCellChangeListener(output_callback);
 
             // run the simulation

@@ -21,22 +21,23 @@ namespace hemelb
 {
   namespace redblood
   {
-    CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh, Dimensionless scaleIn) :
-        data(new CellData(std::move(verticesIn), origMesh, scaleIn))
+    CellBase::CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+                       Dimensionless scaleIn, std::string const & templateName) :
+        data(new CellData(std::move(verticesIn), origMesh, scaleIn, templateName))
     {
     }
     CellBase::CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                       Dimensionless scaleIn) :
-        data(new CellData(verticesIn, origMesh, scaleIn))
+                       Dimensionless scaleIn, std::string const & templateName) :
+        data(new CellData(verticesIn, origMesh, scaleIn, templateName))
     {
     }
     CellBase::CellBase(CellBase const& cell) :
-
         data(new CellData(*cell.data))
     {
     }
-    CellBase::CellBase(Mesh const &mesh, Mesh const &origMesh, Dimensionless scaleIn) :
-        data(new CellData(mesh.GetVertices(), origMesh, scaleIn))
+    CellBase::CellBase(Mesh const &mesh, Mesh const &origMesh,
+                       Dimensionless scaleIn, std::string const & templateName) :
+        data(new CellData(mesh.GetVertices(), origMesh, scaleIn, templateName))
     {
     }
     CellBase::CellBase(Mesh const &mesh) :
@@ -59,6 +60,10 @@ namespace hemelb
     Mesh const &CellBase::GetTemplateMesh() const
     {
       return data->templateMesh;
+    }
+    std::string const & CellBase::GetTemplateName() const
+    {
+      return data->templateName;
     }
     //! Facets for the mesh
     MeshData::Facets const &CellBase::GetFacets() const
@@ -229,7 +234,9 @@ namespace hemelb
 
     std::unique_ptr<CellBase> Cell::cloneImpl() const
     {
-      std::unique_ptr<Cell> result(new Cell(GetVertices(), GetTemplateMesh(), GetScale()));
+      std::unique_ptr<Cell> result(
+          new Cell(GetVertices(), GetTemplateMesh(), GetScale(), GetTemplateName())
+      );
       result->moduli = moduli;
       return std::move(result);
     }

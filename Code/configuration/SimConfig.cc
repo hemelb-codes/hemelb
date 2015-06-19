@@ -254,6 +254,7 @@ namespace hemelb
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "m", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "m", boxSize);
 
+      rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       auto const inserter = redblood::readSingleRBCInserter(topNode, GetUnitConverter());
       if(inserter)
       {

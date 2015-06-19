@@ -42,21 +42,21 @@ namespace hemelb
         //!    values are *not* modified by the scale.
         //! \param [in] origMesh: Original mesh. A shallow copy is made of this
         //!    object.
-        //! \param [in] scaleIn: scales template by a given amount
+        //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
         CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                 PhysicalDistance scaleIn = 1e0);
+                 PhysicalDistance scale = 1e0, std::string const &templateName="default");
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
         //! \param [in] origMesh: Original mesh. A shallow copy is made of this
         //!    object.
-        //! \param [in] scaleIn: scales template by a given amount
+        //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn =
-                     1e0);
+        CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
+                 PhysicalDistance scale=1e0, std::string const &templateName="default");
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: deformable vertices that define the cell are copied
@@ -66,7 +66,8 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0);
+        CellBase(Mesh const &mesh, Mesh const &origMesh,
+                 PhysicalDistance scale = 1e0, std::string const &templateName="default");
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: Modifyiable mesh and template. Deep copies are made of
@@ -99,6 +100,8 @@ namespace hemelb
 
         //! Unmodified mesh
         Mesh const &GetTemplateMesh() const;
+        //! Unmodified mesh
+        std::string const &GetTemplateName() const;
         //! Facets for the mesh
         MeshData::Facets const &GetFacets() const;
         //! Vertices of the cell
@@ -151,7 +154,7 @@ namespace hemelb
         MeshData::Vertices::value_type GetBarycenter() const;
 
         //! Scale to apply to the template mesh
-        void SetScale(PhysicalDistance scaleIn);
+        void SetScale(PhysicalDistance scale);
         //! Scale to apply to the template mesh
         PhysicalDistance GetScale() const;
 
@@ -241,17 +244,19 @@ namespace hemelb
         Node2NodeForce nodeWall;
 
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0) :
-            CellBase(std::move(verticesIn), origMesh, scaleIn)
+        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
+             PhysicalDistance scale = 1e0, std::string const & templateName = "default") :
+            CellBase(std::move(verticesIn), origMesh, scale, templateName)
         {
         }
         Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-             PhysicalDistance scaleIn = 1e0) :
-            CellBase(verticesIn, origMesh, scaleIn)
+             PhysicalDistance scale = 1e0, std::string const & templateName = "default") :
+            CellBase(verticesIn, origMesh, scale, templateName)
         {
         }
-        Cell(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scaleIn = 1e0) :
-            CellBase(mesh, origMesh, scaleIn)
+        Cell(Mesh const &mesh, Mesh const &origMesh,
+             PhysicalDistance scale = 1e0, std::string const & templateName = "default") :
+            CellBase(mesh, origMesh, scale, templateName)
         {
         }
         Cell(Mesh const &mesh) :
@@ -332,6 +337,9 @@ namespace hemelb
 
     //! Typical cell container type
     typedef std::set<std::shared_ptr<CellBase>> CellContainer;
+    //! \brief Container of template meshes
+    //! \details An instance of this object is used to reference meshes across the simulation
+    typedef std::map<std::string, std::shared_ptr<CellBase>> TemplateCellContainer;
     //! Function to insert cells somewhere
     typedef std::function<void(CellContainer::value_type)> CellInserter;
 
