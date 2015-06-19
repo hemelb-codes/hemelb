@@ -12,7 +12,6 @@ namespace hemelb
 {
   namespace redblood
   {
-    class CellBase;
     class RBCInserter;
     class FlowExtension;
     //! Reads cell from XML
@@ -25,11 +24,9 @@ namespace hemelb
     //! Reads template meshes from XML
     std::unique_ptr<TemplateCellContainer> readTemplateCells(
         io::xml::Element const&, util::UnitConverter const&);
-    //! Reads an RBCInserter from XML
-    std::unique_ptr<RBCInserter> readSingleRBCInserter(
-        io::xml::Element const&, util::UnitConverter const&);
-    // std::function<void(CellInserter)> readRBCInserter(
-    //     io::xml::Element const&, util::UnitConverter const&);
+    //! Reads all RBC inserters from XML
+    std::function<void(CellInserter const&)> readRBCInserters(
+        io::xml::Element const&, util::UnitConverter const&, TemplateCellContainer const&);
   }
 }
 

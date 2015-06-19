@@ -24,7 +24,7 @@
         <length units="m" value="0.1" />
         <radius units="m" value="0.01" />
         <fadelength units="m" value="0.05" />
-        <insertcell>
+        <insertcell template="default">
           <every units="s" value="10"/>
           <offset units="s" value="0"/>
         </insertcell>
