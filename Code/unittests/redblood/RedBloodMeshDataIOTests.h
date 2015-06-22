@@ -15,6 +15,7 @@
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
 #include "resources/Resource.h"
+#include "util/UnitConverter.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
@@ -66,7 +67,7 @@ namespace hemelb
           void testWriteMesh()
           {
             std::ostringstream output;
-            writeMesh(output, *mesh);
+            writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
             std::istringstream input(output.str());
             std::shared_ptr<MeshData> other = readMesh(input);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());

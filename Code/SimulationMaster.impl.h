@@ -694,4 +694,10 @@ namespace hemelb
                                                                           simulationState->GetTimeStep());
     }
   }
+
+  template<class TRAITS> 
+  const hemelb::util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
+  {
+      return &unitConverter;
+  }
 }
