@@ -55,8 +55,8 @@ namespace hemelb
 
           void tearDown()
           {
-            // master->Finalise();
-            // master.reset();
+            master->Finalise();
+            master.reset();
           }
 
           void testIntegration()
