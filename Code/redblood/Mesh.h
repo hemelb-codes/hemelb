@@ -60,6 +60,8 @@ namespace hemelb
     PhysicalVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     PhysicalArea area(MeshData const &mesh);
     PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
+    //! Orients facet inward, or inward
+    void orientFacets(MeshData &mesh, bool outward=true);
 
     //! Holds raw topology data
     class MeshTopology
@@ -263,6 +265,9 @@ namespace hemelb
     Mesh refine(Mesh mesh, unsigned int depth = 0);
     //! Creates an ico sphere (regular triangular mesh over a sphere)
     Mesh icoSphere(unsigned int depth = 0);
+
+    //! Orients facet outward, or inward
+    void orientFacets(Mesh &mesh, bool outward=true);
   }
 }
 #endif

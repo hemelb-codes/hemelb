@@ -105,6 +105,7 @@ namespace hemelb
                                                    num_vertices,
                                                    num_facets);
 
+      orientFacets(*result);
       return result;
     }
 
@@ -597,6 +598,7 @@ namespace hemelb
       mesh->facets.push_back(intel_compiler(6, 2, 10));
       mesh->facets.push_back(intel_compiler(8, 6, 7));
       mesh->facets.push_back(intel_compiler(9, 8, 1));
+      orientFacets(*mesh);
       // Then refines it
       for (unsigned int i(0); i < depth; ++i)
       {
@@ -608,6 +610,41 @@ namespace hemelb
         vertex.Normalise();
       }
       return mesh;
+    }
+
+    void orientFacets(Mesh &mesh, bool outward)
+    {
+      orientFacets(*mesh.GetData());
+    }
+    void orientFacets(MeshData &mesh, bool outward)
+    {
+      // create a new mesh at slighly smaller scale
+      MeshData smaller(mesh);
+      auto const scale = 0.99;
+      for(auto &vertex: smaller.vertices)
+      {
+        vertex *= scale;
+      }
+      auto const recenter = barycenter(mesh) - barycenter(smaller);
+      for(auto &vertex: smaller.vertices)
+      {
+        vertex += recenter;
+      }
+
+      // Loop over each facet, checks orientation and modify as appropriate
+      for(auto &facet: mesh.facets)
+      {
+        auto const &v0 = mesh.vertices[facet[0]];
+        auto const &v1 = mesh.vertices[facet[1]];
+        auto const &v2 = mesh.vertices[facet[2]];
+        auto const direction = v0 + v1 + v2
+          - smaller.vertices[facet[0]] - smaller.vertices[facet[1]] - smaller.vertices[facet[2]];
+
+        if(((v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        {
+          std::swap(facet[0], facet[2]);
+        }
+      }
     }
   }
 } // hemelb::redblood
