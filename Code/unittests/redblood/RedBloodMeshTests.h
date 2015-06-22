@@ -30,6 +30,7 @@ namespace hemelb
           CPPUNIT_TEST (testOrientation);
           CPPUNIT_TEST (testStandardTestMeshOrientation);
           CPPUNIT_TEST (testVolume);
+          CPPUNIT_TEST (testResourceVolume);
           CPPUNIT_TEST (testBarycenter);
           CPPUNIT_TEST (testScaling);
           CPPUNIT_TEST (testTranslation);CPPUNIT_TEST_SUITE_END();
@@ -143,6 +144,11 @@ namespace hemelb
             LatticePosition const second = * (++original.GetVertices().begin()) + offset;
             CPPUNIT_ASSERT(helpers::is_zero(first - *trans.GetVertices().begin()));
             CPPUNIT_ASSERT(helpers::is_zero(second - * (++trans.GetVertices().begin())));
+          }
+
+          void testResourceVolume()
+          {
+            CPPUNIT_ASSERT(volume(*readMesh(Resource("red_blood_cell.txt").Path())) > 0e0);
           }
       };
 
