@@ -179,6 +179,7 @@ namespace hemelb
           PhysicalDistance scale;
       };
 
+
       CPPUNIT_TEST_SUITE_REGISTRATION (CellIOTests);
     }
   }
