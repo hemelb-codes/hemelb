@@ -345,9 +345,10 @@ namespace hemelb
     typedef std::function<void(CellContainer::value_type)> CellInserter;
 
     //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> data);
+    void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
     //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> data);
+    void writeVTKMesh(
+        std::string const &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
   }
 } // namespace hemelb::redblood
 #endif
