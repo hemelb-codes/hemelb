@@ -23,6 +23,7 @@ macro(add_test_executable target includename)
   target_link_libraries(${target}
     ${heme_libraries}
     ${MPI_LIBRARIES}
+    ${HDF5_LIBRARIES}
     ${PARMETIS_LIBRARIES}
     ${TINYXML_LIBRARIES}
     ${CPPUNIT_LIBRARY}
