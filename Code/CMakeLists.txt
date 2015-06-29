@@ -276,6 +276,15 @@ int main(int argc, char* argv[]) {
   MPI_Finalize();
 }" HAVE_CONSTCORRECTMPI)
 
+#------HDF5------------------
+# Require HDF5 1.8+ configured with --with-mpi
+find_package(HDF5 1.8 REQUIRED)
+if (NOT HDF5_IS_PARALLEL)
+    message(SEND_ERROR "HDF5 library with MPI support not found.")
+endif()
+include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
+add_definitions(${HDF5_DEFINITIONS})
+link_directories(${HDF5_LIBRARY_DIRS})
 
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
@@ -373,6 +382,7 @@ add_subdirectory(resources)
 target_link_libraries(${HEMELB_EXECUTABLE} 
 	${heme_libraries}
 	${MPI_LIBRARIES}
+	${HDF5_LIBRARIES}
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
 	${Boost_LIBRARIES}
@@ -419,6 +429,7 @@ if (HEMELB_BUILD_MULTISCALE)
 	target_link_libraries(multiscale_hemelb
 		${heme_libraries}
 		${MPI_LIBRARIES}
+        ${HDF5_LIBRARIES}
 		${PARMETIS_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${Boost_LIBRARIES}
@@ -445,6 +456,7 @@ if(HEMELB_BUILD_TESTS_ALL OR HEMELB_BUILD_TESTS_FUNCTIONAL)
 	target_link_libraries(functionaltests_hemelb 
 		${heme_libraries}
 		${MPI_LIBRARIES}
+        ${HDF5_LIBRARIES}
 		${PARMETIS_LIBRARIES}
 		${TINYXML_LIBRARIES}
 		${CPPUNIT_LIBRARY}
