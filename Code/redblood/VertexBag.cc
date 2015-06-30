@@ -22,6 +22,8 @@ namespace hemelb
   {
     namespace
     {
+      // avoids a warning
+#     ifndef HEMELB_DOING_UNITTESTS
       proc_t get_proc(geometry::LatticeData const &latDat, LatticePosition const &pos)
       {
         proc_t procid;
@@ -30,6 +32,7 @@ namespace hemelb
           procid :
           std::numeric_limits<proc_t>::max();
       }
+#     endif
       //! Set of procs affected by this position
       //! \param[in] latDat will tell us which site belongs to which proc
       //! \param[in] iterator a  stencil iterator going over affected lattice points
