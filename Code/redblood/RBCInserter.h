@@ -33,15 +33,16 @@ namespace hemelb
          * @param scale the scale of the cell to insert
          */
         RBCInserter(std::function<bool()> condition, std::unique_ptr<CellBase const> cell) :
-            condition(condition), cell(std::move(cell))
+            condition(condition), cell(std::move(cell)), barycenter(this->cell->GetBarycenter())
         {
         }
         RBCInserter(RBCInserter &&c) :
-            condition(std::move(c.condition)), cell(std::move(c.cell))
+            condition(std::move(c.condition)), cell(std::move(c.cell)),
+            barycenter(std::move(c.barycenter))
         {
         }
         RBCInserter(RBCInserter const&c) :
-            condition(c.condition), cell(c.cell->clone())
+            condition(c.condition), cell(c.cell->clone()), barycenter(c.barycenter)
         {
         }
         void operator=(RBCInserter const &c)
@@ -69,6 +70,8 @@ namespace hemelb
         {
           if (condition())
           {
+            log::Logger::Log<log::Debug, log::OnePerCore>(
+                "Dropping one cell at (%f, %f, %f)", barycenter.x, barycenter.y, barycenter.z);
             insertFn(CellContainer::value_type(cell->clone().release()));
           }
         }
@@ -78,6 +81,8 @@ namespace hemelb
         std::function<bool()> condition;
         //! The shape of the cells to insert
         std::unique_ptr<CellBase const> cell;
+        //! barycenter -- for logging
+        LatticePosition barycenter;
     };
   }
 }
