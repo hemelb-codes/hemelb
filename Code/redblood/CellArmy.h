@@ -117,6 +117,11 @@ namespace hemelb
         //! Adds input cell to simulation
         void AddCell(CellContainer::value_type cell)
         {
+          auto const barycenter = cell->GetBarycenter();
+          log::Logger::Log<log::Debug, log::OnePerCore>(
+              "Adding cell at (%f, %f, %f)",
+              barycenter.x, barycenter.y, barycenter.z
+          );
           dnc.insert(cell);
           cells.insert(cell);
         }
@@ -191,6 +196,10 @@ namespace hemelb
         ++i_first;
         if (std::find_if(outlets.begin(), outlets.end(), checkCell) != outlets.end())
         {
+          log::Logger::Log<log::Debug, log::OnePerCore>(
+              "Removing cell at (%f, %f, %f)",
+              barycenter.x, barycenter.y, barycenter.z
+          );
           dnc.remove(*i_current);
           cells.erase(i_current);
         }
