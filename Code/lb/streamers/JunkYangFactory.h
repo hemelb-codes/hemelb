@@ -420,9 +420,8 @@ namespace hemelb
             {
               luPermutationMatrices[iter->first] =
                   new ublas::permutation_matrix<std::size_t>(incomingVelocities[iter->first].size());
-              int ret = lu_factorize(iter->second, *luPermutationMatrices[iter->first]);
               // If this assertion trips, lMatrices[siteLocalIndex] is singular.
-              assert(ret == 0);
+              assert(lu_factorize(iter->second, *luPermutationMatrices[iter->first]) == 0);
             }
           }
 
