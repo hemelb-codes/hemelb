@@ -69,6 +69,8 @@ namespace hemelb
         }
       }
 
+      // avoids a warning
+#     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
                            PhysicalDistance haloLength)
       {
@@ -80,6 +82,7 @@ namespace hemelb
           initializeCells(dnc, (*i_first)->GetVertices(), i_first, haloLength);
         }
       }
+#     endif
 
       // Compare distance between vertices
       template<class T_FUNCTION>
@@ -107,6 +110,8 @@ namespace hemelb
         return false;
       }
 
+      // avoids a warning
+#     ifndef HEMELB_DOING_UNITTESTS
       void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
                        stencil::types stencil, LatticeForceVector const &force)
       {
@@ -122,6 +127,7 @@ namespace hemelb
           }
         }
       }
+#     endif
     } // anonymous namespace
 #ifndef HEMELB_DOING_UNITTESTS
     //! Constructor
