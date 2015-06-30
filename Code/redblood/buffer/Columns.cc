@@ -88,6 +88,8 @@ namespace hemelb
           return 2e0 * result;
         }
 
+      // avoids a warning
+#     ifndef HEMELB_DOING_UNITTESTS
         LatticePosition maxExtensions(MeshData::Vertices const &vertices,
                                       LatticePosition const &col, LatticePosition const& normal)
         {
@@ -96,6 +98,7 @@ namespace hemelb
           LatticeDistance const z = maxExtension(vertices, col);
           return LatticePosition(x, y, z);
         }
+#     endif
       }
 
 #     ifndef HEMELB_DOING_UNITTESTS
