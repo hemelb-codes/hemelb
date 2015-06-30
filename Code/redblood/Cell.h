@@ -152,6 +152,10 @@ namespace hemelb
         void operator+=(std::vector<LatticePosition> const &displacements);
 
         MeshData::Vertices::value_type GetBarycenter() const;
+        PhysicalVolume GetVolume() const
+        {
+          return volume(GetVertices(), GetTemplateMesh().GetFacets());
+        }
 
         //! Scale to apply to the template mesh
         void SetScale(PhysicalDistance scale);
