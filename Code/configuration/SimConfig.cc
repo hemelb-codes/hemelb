@@ -256,6 +256,7 @@ namespace hemelb
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
+      rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
       return true;
     }
 
