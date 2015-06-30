@@ -34,12 +34,6 @@ class Vector(Observable):
     def __str__(self):
         return '({0.x},{0.y},{0.z})'.format(self)
     
-    def __getstate__(self):
-        picdic = {}
-        for attr in ('x', 'y', 'z'):
-            picdic[attr] = getattr(self, attr)
-            continue
-        return picdic
     pass
 
 
