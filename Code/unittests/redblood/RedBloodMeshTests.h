@@ -14,7 +14,6 @@
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
-#include "resources/Resource.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
@@ -71,7 +70,7 @@ namespace hemelb
 
           void testStandardTestMeshOrientation()
           {
-            checkMeshOrientation(*readMesh(Resource("red_blood_cell.txt").Path()));
+            checkMeshOrientation(*readMesh(resources::Resource("red_blood_cell.txt").Path()));
             checkMeshOrientation(*tetrahedron(2).GetData());
             checkMeshOrientation(*icoSphere(5).GetData());
           }
@@ -148,7 +147,8 @@ namespace hemelb
 
           void testResourceVolume()
           {
-            CPPUNIT_ASSERT(volume(*readMesh(Resource("red_blood_cell.txt").Path())) > 0e0);
+            auto const path = resources::Resource("red_blood_cell.txt").Path();
+            CPPUNIT_ASSERT(volume(*readMesh(path)) > 0e0);
           }
       };
 
