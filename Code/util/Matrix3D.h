@@ -75,6 +75,17 @@ namespace hemelb
 
     };
     std::ostream& operator<<(std::ostream& stream, Matrix3D const &a);
+
+    //! Rotation matrix for a to b
+    //! Rotation matrix maps one basis onto another:
+    //!    - a0 (normalised a) maps to b0 (normalised b)
+    //!    - a0.Cross(b0) maps to a0.Cross(b0)
+    //!    - a0.Cross(a0, Cross(b0)) maps to b0.Cross(a0.Cross(b0))
+    util::Matrix3D rotationMatrix(LatticePosition const& a, LatticePosition const& b);
+
+    //! Rotation matrix around axis by theta
+    util::Matrix3D rotationMatrix(LatticePosition const& a, Dimensionless const& b);
+
   } /* namespace util */
 } /* namespace hemelb */
 #endif /* HEMELB_UTIL_MATRIX3D_H */
