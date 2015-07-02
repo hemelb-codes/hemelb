@@ -14,6 +14,7 @@
 
 #include "unittests/redblood/Fixtures.h"
 #include "redblood/FaderCell.h"
+#include "redblood/CellCell.h"
 #include "redblood/FlowExtension.h"
 
 namespace hemelb
@@ -177,6 +178,7 @@ namespace hemelb
         CPPUNIT_ASSERT(range.is_valid());
         CPPUNIT_ASSERT(not (++range));
       }
+
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FaderCellTests);
     }
