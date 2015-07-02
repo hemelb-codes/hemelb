@@ -146,14 +146,19 @@ namespace hemelb
         }
 
         // Drops first cell when time reaches offset, and then every deltaTime thereafter.
-        auto condition = [deltaTime, offset]()
+        // Note: c++14 will allow more complex captures. Until then, we will need to create
+        // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
+        // variables should live as long as the lambda. But longuer than a single call.
+        auto time = std::make_shared<PhysicalTime>
+        (
+          deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset
+        );
+        auto condition = [time, deltaTime, offset]()
         {
-          static PhysicalTime time
-          = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
-          time += 1e0;
-          if(time >= deltaTime)
+          *time += 1e0;
+          if(*time >= deltaTime)
           {
-            time -= deltaTime;
+            *time -= deltaTime;
             return true;
           }
           return false;
