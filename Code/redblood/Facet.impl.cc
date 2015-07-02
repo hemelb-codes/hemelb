@@ -241,10 +241,12 @@ namespace hemelb
 
         return std::acos(cosine);
       }
+#     ifdef HEMELB_DOING_UNITTESTS
       Angle angle(Facet const &a, Facet const &b)
       {
         return angle(a.unitNormal(), b.unitNormal());
       }
+#     endif
 
       // Angle with orientation
       // Computes angle between two vectors, including orientation.
