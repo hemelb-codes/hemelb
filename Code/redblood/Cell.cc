@@ -150,19 +150,21 @@ namespace hemelb
       }
 
       PhysicalEnergy result(0);
-      typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
-      FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-      FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
-
-      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      site_t current_facet(0);
+      for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
-        for (size_t i(0); i < 3; ++i)
-          if ( (*i_facet)[i] > current)
+        for (auto neighbor: neighbors)
+        {
+          if (neighbor > current_facet)
+          {
             result += hemelb::redblood::facetBending(data->vertices,
                                                      *data->templateMesh.GetData(),
-                                                     current,
-                                                     (*i_facet)[i],
+                                                     current_facet,
+                                                     neighbor,
                                                      moduli.bending);
+          }
+        }
+        ++current_facet;
       }
 
       return result;
@@ -177,19 +179,22 @@ namespace hemelb
 
       PhysicalEnergy result(0);
       typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
-      FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-      FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
-
-      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      site_t current_facet(0);
+      for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
-        for (size_t i(0); i < 3; ++i)
-          if ( (*i_facet)[i] > current)
+        for (auto neighbor: neighbors)
+        {
+          if (neighbor > current_facet)
+          {
             result += hemelb::redblood::facetBending(data->vertices,
                                                      *data->templateMesh.GetData(),
-                                                     current,
-                                                     (*i_facet)[i],
+                                                     current_facet,
+                                                     neighbor,
                                                      moduli.bending,
                                                      forces);
+          }
+        }
+        ++current_facet;
       }
 
       return result;
