@@ -166,6 +166,7 @@ namespace hemelb
     template<class KERNEL>
     void CellArmy<KERNEL>::Cell2FluidInteractions()
     {
+      latticeData.ResetForces();
       std::vector<LatticeForceVector> &forces = work;
 
       CellContainer::const_iterator i_first = cells.begin();
