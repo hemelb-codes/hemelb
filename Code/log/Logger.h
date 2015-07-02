@@ -96,11 +96,20 @@ namespace hemelb
   )
 #define HEMELB_CAPTURE4(V0, V1, V2, V3)                                 \
   hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(\
-    #V0 " := %s " #V1 " := %s " #V2 " := %s",                           \
+    #V0 " := %s " #V1 " := %s " #V2 " := %s" #V3 ": = %s "              \
     (std::ostringstream() << V0).str().c_str(),                         \
     (std::ostringstream() << V1).str().c_str(),                         \
     (std::ostringstream() << V2).str().c_str(),                         \
     (std::ostringstream() << V3).str().c_str()                          \
+  )
+#define HEMELB_CAPTURE5(V0, V1, V2, V3, V4)                                \
+  hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>(   \
+    #V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 " := %s " #V4 " := %s ", \
+    (std::ostringstream() << V0).str().c_str(),                            \
+    (std::ostringstream() << V1).str().c_str(),                            \
+    (std::ostringstream() << V2).str().c_str(),                            \
+    (std::ostringstream() << V3).str().c_str(),                            \
+    (std::ostringstream() << V4).str().c_str()                             \
   )
 
 #endif /* HEMELB_LOG_LOGGER_H */
