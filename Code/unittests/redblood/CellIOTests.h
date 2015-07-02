@@ -13,6 +13,8 @@
 #include <cppunit/TestFixture.h>
 #include "unittests/helpers/FolderTestFixture.h"
 #include "redblood/RBCInserter.h"
+#include "redblood/io.h"
+#include "redblood/FaderCell.h"
 
 namespace hemelb
 {
