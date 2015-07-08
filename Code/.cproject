@@ -28,8 +28,8 @@
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.515845438" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1112400632" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.2002640655" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/Users/jamespjh/devel/ccs/hemelb/dependencies/include"/>
-									<listOptionValue builtIn="false" value="/Users/jamespjh/devel/ccs/hemelb/dependencies/include/ctemplate"/>
+									<listOptionValue builtIn="false" value="../../dependencies/include"/>
+									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1684662925" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HEMELB_LATTICE=D3Q15"/>
@@ -39,6 +39,10 @@
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.70459761" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.2001070575" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
+								<option id="gnu.c.compiler.option.include.paths.1195516363" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="../../dependencies/include"/>
+									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1768676556" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1864898265" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
@@ -49,6 +53,10 @@
 								</inputType>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.1633029778" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
+								<option id="gnu.both.asm.option.include.paths.984721835" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="../../dependencies/include"/>
+									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.275101920" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
