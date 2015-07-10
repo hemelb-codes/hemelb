@@ -33,7 +33,7 @@ namespace hemelb
       {
         if (lastUpdate[index] != simulationState.GetTimeStep())
         {
-          log::Logger::Log<log::Warning, log::OnePerCore>("The cache was out of date at index %i",
+          log::Logger::Log<log::Trace, log::OnePerCore>("The cache was out of date at index %i",
                                                           index);
         }
       }
