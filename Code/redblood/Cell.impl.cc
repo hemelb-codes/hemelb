@@ -27,7 +27,7 @@ namespace hemelb
       {
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
-        return intensity * (theta - theta0) * (theta - theta0);
+        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
       }
 
       // Facet bending energy and force between neighboring facets
@@ -45,18 +45,19 @@ namespace hemelb
         PhysicalDistance const inverseAreaB = 1e0 / normalB.GetMagnitude();
 
         // Orthogonalize normal vectors and normalize to inverse area of other facet
-        LatticePosition const unitA(normalA.GetNormalised());
-        LatticePosition const unitB(normalB.GetNormalised());
-        LatticePosition const vecA( (unitB - unitA * unitA.Dot(unitB)).GetNormalised()
-            * inverseAreaA);
-        LatticePosition const vecB( (unitA - unitB * unitA.Dot(unitB)).GetNormalised()
-            * inverseAreaB);
+        LatticePosition const commonEdge = facetA(commons.first, commons.second);
+        LatticePosition const projA = -commonEdge.Cross(facetA.normal()).GetNormalised();
+        LatticePosition const projB = commonEdge.Cross(facetB.normal()).GetNormalised();
+        LatticePosition const vecB
+          = projB * ((facetA.normal().Dot(projB) > 0 ? 1: -1) * inverseAreaB);
+        LatticePosition const vecA
+          = projA * ((facetB.normal().Dot(projA) > 0 ? 1: -1) * inverseAreaA);
 
         // NOTE: the two lines below could make use of stuff computed previously
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
 
-        const PhysicalForce strength = -2.0 * intensity * (theta - theta0);
+        const PhysicalForce strength = -intensity * (theta - theta0);
         // forces on nodes that are in common
         facetA.GetForce(commons.first) += (facetA(singles.first, commons.second).Cross(vecA)
             + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)) * strength;
@@ -69,7 +70,7 @@ namespace hemelb
         facetB.GetForce(singles.second) += (facetA(commons.first, commons.second).Cross(vecB))
             * strength;
 
-        return intensity * (theta - theta0) * (theta - theta0);
+        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
       }
 
       PhysicalEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
