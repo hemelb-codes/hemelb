@@ -644,7 +644,10 @@ def load_profile():
     with_profile(env.profile)
     from HemeLbSetupTool.Model.Profile import Profile
     p = Profile()
-    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pro'))
+    try:
+        p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pro'))
+    except IOError:
+        p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pr2'))
     return p
 
 def modify_profile(p):
