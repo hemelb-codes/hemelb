@@ -50,6 +50,7 @@ namespace hemelb
           indices[1] = 3;
           indices[2] = 2;
           mesh.facets.push_back(indices);
+          redblood::orientFacets(mesh);
         }
 
       protected:
