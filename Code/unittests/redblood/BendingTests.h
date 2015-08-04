@@ -10,6 +10,7 @@
 #ifndef HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
 #define HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
 
+#include <iomanip>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "redblood/Cell.h"
@@ -26,9 +27,13 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (BendingTests);
           CPPUNIT_TEST(testNoBendingNoNothing);
           CPPUNIT_TEST(testEnergy);
-          CPPUNIT_TEST(testTwisting);
-          CPPUNIT_TEST(testLargeAngles);
-          CPPUNIT_TEST(testCommonEdge);
+          CPPUNIT_TEST(testNumericalForces);
+          CPPUNIT_TEST(testConvexities);
+          CPPUNIT_TEST(testSwapFacets);
+          CPPUNIT_TEST(testRotateNodeInFacet);
+          CPPUNIT_TEST(testInflate);
+          CPPUNIT_TEST(testMoveNodes);
+          CPPUNIT_TEST(testStuff);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -62,67 +67,132 @@ namespace hemelb
             }
           }
 
-          void testTwisting()
-          {
-            for(auto const theta: {0e0, 1e-2, 2e-2, 3e-2})
-            {
-              for(auto const phi: {1e-2, 2e-2, 3e-2})
-              {
-                std::fill(forces.begin(), forces.end(), 0e0);
-                vertices.back() = bending(twisting(mesh.vertices.back(), phi), theta);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta*theta * moduli, energy(), 1e-10);
-                CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * theta*theta * moduli, energy(), 1e-10);
-              }
-            }
-          }
-
-          void testLargeAngles()
+          void testStuff()
           {
             // modify template geometry to be almost planar
             auto const theta = 1e-2;
             mesh.vertices.back() = bending(LatticePosition(1, 1, 0), theta);
-
-            // check we still get zero if vertices == template
-            vertices.back() = mesh.vertices.back();
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, energyAndForces(), 1e-10);
-            for(auto const force: forces)
-            {
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(force.x, 0e0, 1e-10);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(force.y, 0e0, 1e-10);
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(force.z, 0e0, 1e-10);
-            }
-
             // Now go to flat geometry, check energy and forces
             vertices.back() = LatticePosition(1, 1, 0);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5*moduli*theta*theta, energyAndForces(), 1e-10);
-            CPPUNIT_ASSERT(forces[0].z < -1e-4);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[0].z, forces[3].z, 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(
-                forces[0].z, forces[0].Dot(LatticePosition(0, 0, 1)), 1e-8);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(
-                forces[3].z, forces[3].Dot(LatticePosition(0, 0, 1)), 1e-8);
-
-            // Then go to other concavity and check result
-            vertices.back() = bending(LatticePosition(1, 1, 0), -theta);
-            std::fill(forces.begin(), forces.end(), 0e0);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(2.0*moduli*theta*theta, energyAndForces(), 1e-10);
-            CPPUNIT_ASSERT(forces[0].z < -1e-4);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(
-                forces[0].z, forces[0].Dot(LatticePosition(0, 0, 1)), 1e-8);
-            CPPUNIT_ASSERT(forces[3].z < -1e-4);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(forces[0].GetMagnitude(), forces[3].GetMagnitude(), 1e-8);
+            for(auto const &force: forces)
+            {
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.x, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.y, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, force.z, 1e-8);
+            }
           }
 
-          // Checks direction of restoration force on common edge
-          void testCommonEdge()
+          void testNumericalForces()
           {
-            auto const dir1 = (LatticePosition(0, 0, 0.5) - vertices[1]).GetNormalised();
-            auto const dir2 = (LatticePosition(0, 0, 0.5) - vertices[2]).GetNormalised();
-            vertices[1] += dir1 * 0.01;
-            vertices[2] += dir2 * 0.01;
-            energyAndForces();
-            CPPUNIT_ASSERT(forces[1].Dot(dir1) < 0e0);
-            CPPUNIT_ASSERT(forces[2].Dot(dir2) < 0e0);
+            numericalForces();
+          }
+          void testInflate()
+          {
+            for(auto &vertex: vertices)
+            {
+              vertex = vertex * 1.5;
+            }
+            testNumericalForces();
+          }
+
+          void testConvexities()
+          {
+
+            auto with_angles = [this](double theta0, double theta)
+            {
+              mesh.vertices.back() = bending(LatticePosition(1, 1, 0), theta0);
+              vertices.back() = bending(LatticePosition(1, 1, 0), theta);
+              numericalForces();
+            };
+            // Explores all sorts of configurations with different concavities, etc
+            auto const epsilon = 1e4 * std::numeric_limits<double>::min();
+            for(auto const theta0: {2e-1, -2e-1})
+            {
+              for(auto const theta: {1e-1, -1e-1, 3e-1, -3e-1})
+              {
+                if(std::abs(theta0 - theta) > 1e-8)
+                {
+                  with_angles(theta0, theta);
+                }
+              }
+            }
+          }
+
+          void testSwapFacets()
+          {
+            std::swap(mesh.facets[0], mesh.facets[1]);
+            testNumericalForces();
+          }
+
+          void testRotateNodeInFacet()
+          {
+            std::swap(mesh.facets[0][0], mesh.facets[0][1]);
+            std::swap(mesh.facets[0][0], mesh.facets[0][2]);
+            testNumericalForces();
+
+            std::swap(mesh.facets[1][0], mesh.facets[1][1]);
+            std::swap(mesh.facets[1][0], mesh.facets[1][2]);
+            testNumericalForces();
+          }
+
+          void testMoveNodes()
+          {
+            for(auto &vertex: vertices)
+            {
+              for(int j(0); j < 6; ++j)
+              {
+                auto const epsilon = 1e-1;
+                LatticePosition const direction(
+                    j == 0 ? 1: (j == 1 ? -1: 0),
+                    j == 2 ? 1: (j == 3 ? -1: 0),
+                    j == 4 ? 1: (j == 5 ? -1: 0)
+                );
+                auto const old = vertex;
+                vertex += direction * epsilon;
+                numericalForces();
+                vertex = old;
+              }
+            }
+          }
+
+          void numericalForces(LatticePosition const &direction, int node)
+          {
+            auto const theta0 = orientedAngle(Facet(mesh, 0), Facet(mesh, 1));
+            auto const theta = orientedAngle(
+                Facet(vertices, mesh.facets, 0), Facet(vertices, mesh.facets, 1));
+            auto const epsilon = 1e-4;
+            std::fill(forces.begin(), forces.end(), 0e0);
+            auto const oldPos = vertices[node];
+
+            auto const e0 = energyAndForces();
+            if(std::abs(theta - theta0) < 1e-8)
+            {
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, forces[node].Dot(direction), 1e-8);
+              return;
+            }
+
+            vertices[node] += direction * epsilon;
+            auto const e1 = energy();
+            auto const tol= std::max(std::abs((e1 - e0)/epsilon) * 1e-2, 1e-5);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-(e1 - e0)/epsilon, forces[node].Dot(direction), tol);
+            vertices[node] = oldPos;
+          };
+
+          void numericalForces()
+          {
+            for(int j(0); j < 1; ++j)
+            {
+              LatticePosition const direction(
+                  j == 0 ? 1: (j == 1 ? -1: (j >= 6 ? random() - 0.5: 0)),
+                  j == 2 ? 1: (j == 3 ? -1: (j >= 6 ? random() - 0.5: 0)),
+                  j == 4 ? 1: (j == 5 ? -1: (j >= 6 ? random() - 0.5: 0))
+              );
+              numericalForces(direction.GetNormalised(), 0);
+              numericalForces(direction.GetNormalised(), 1);
+              numericalForces(direction.GetNormalised(), 2);
+              numericalForces(direction.GetNormalised(), 3);
+            }
           }
 
           PhysicalEnergy energy() const
