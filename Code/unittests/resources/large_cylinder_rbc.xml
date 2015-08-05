@@ -48,6 +48,12 @@
       </flowextension>
     </outlet>
   </outlets>
+  <properties> 
+   <propertyoutput period="1000" file="whole_domain_vel.xtr"> 
+     <geometry type="whole" /> 
+     <field type="velocity"/> 
+   </propertyoutput> 
+  </properties>    
   <visualisation>
     <centre units="m" value="(0.0,0.0,0.0)" />
     <orientation>
