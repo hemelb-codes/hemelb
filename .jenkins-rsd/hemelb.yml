@@ -1,0 +1,74 @@
+# default build across compilers and machines
+- job:
+    name: development-heme
+    description: |
+        Compiles, runs units tests, and runs regressions for several types of
+        builds.
+
+        Since steering does not have unittests and since it prevents running
+        multiple instances of heme on the same node (because port is hard
+        coded), steering build is not unittested.
+    disabled: false
+    block-upstream: true
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "intel").implies(os == "Legion")
+            && (compiler == "clang").implies(os == "OSX")
+            && (compiler == "gnu").implies(os == "Legion")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - clang
+                - intel
+                - gnu
+
+    builders:
+        - heme-remove-build
+        - heme-flags
+        # build dependencies
+        - heme-dependencies
+        # build with/without streak-lines, with/whithout sse3
+        - heme-Code:
+            buildname: streak_and_steering
+            sse3: OFF
+            streaks: ON
+            steering: basic
+        - heme-Code:
+            buildname: sse3
+            sse3: ON
+            streaks: OFF
+            steering: none
+        - heme-Code:
+            buildname: nosse3
+            sse3: OFF
+            streaks: OFF
+            steering: none
+
+        - heme-test:
+            buildname: "sse3"
+        - heme-test:
+            buildname: "nosse3"
+
+        - heme-regression-setup
+        - heme-regression-run:
+            buildname: "sse3"
+        - heme-regression-run:
+            buildname: "nosse3"
+
+    publishers:
+        - xunit:
+            test-time-margin: 120000
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
