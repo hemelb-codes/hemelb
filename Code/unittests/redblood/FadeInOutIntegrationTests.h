@@ -2,8 +2,10 @@
 #define HEMELB_UNITTESTS_REDBLOOD_FADEINOUTINTEGRATION_H
 
 #include <cppunit/extensions/HelperMacros.h>
+#include <boost/uuid/uuid_io.hpp>
 #include <memory>
 
+#include "SimulationMaster.h"
 #include "lb/BuildSystemInterface.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
@@ -39,7 +41,7 @@ namespace hemelb
             intel.push_back("simulation");
             intel.push_back("steps");
             intel.push_back("value");
-            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 20);
+            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 1000);
 
             argv[0] = "hemelb";
             argv[1] = "-in";
@@ -53,33 +55,109 @@ namespace hemelb
             master = std::make_shared<MasterSim>(*options, Comms());
           }
 
-          void tearDown()
-          {
-            master->Finalise();
-            master.reset();
-          }
-
           void testIntegration()
           {
-            // add callback to put cell positions in a vector
-            auto output_callback = [](const hemelb::redblood::CellContainer & cells)
+            auto const & converter = master->GetUnitConverter();
+            auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)*1e12;
+            auto checkVolume = [volumeFactor]( const hemelb::redblood::CellContainer & cells)
             {
-              for (auto cell: cells)
+              static PhysicalVolume expected = -1e0;
+              if(cells.empty())
               {
-                std::cout << "hemelb::redblood::Cell@" << cell.get()
-                << ": " << cell->GetBarycenter() << std::endl;
+                return;
+              }
+              CPPUNIT_ASSERT_EQUAL(int(1), int(cells.size()));
+              auto cell = *cells.begin();
+              auto const volume = cell->GetVolume() * volumeFactor;
+              if(expected < 0e0)
+              {
+                expected = volume;
+              }
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, volume, 1e-8);
+            };
+            auto checkPosition = []( const hemelb::redblood::CellContainer & cells)
+            {
+              if(cells.empty())
+              {
+                return;
+              }
+              CPPUNIT_ASSERT_EQUAL(int(1), int(cells.size()));
+              auto cell = *cells.begin();
+              static LatticePosition first, current, tenth;
+              static int iter = 0;
+              if(iter == 0)
+              {
+                first = cell->GetBarycenter();
+                current = first;
+                tenth = first;
+              }
+              auto const position = cell->GetBarycenter();
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(first.x, position.x, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(first.y, position.y, 1e-8);
+              CPPUNIT_ASSERT(current.z <= position.z);
+              current = position;
+              ++iter;
+              if(iter % 10 == 0)
+              {
+                CPPUNIT_ASSERT(tenth.z < position.z);
+                tenth = position;
               }
             };
+            auto printData = []( const hemelb::redblood::CellContainer & cells)
+            {
+              static int iter = -1;
+              ++iter;
+              if(cells.empty())
+              {
+                return;
+              }
+              auto cell = *cells.begin();
+              auto const tag = cell->GetTag();
+              auto const b = cell->GetBarycenter();
+              auto const v = cell->GetVolume();
+              auto const e = (*cell)();
+              HEMELB_CAPTURE5(iter, tag, b, v, e);
+            };
+            auto printCells = [&converter](const hemelb::redblood::CellContainer &cells)
+            {
+              static int iter = 0;
+              if(cells.empty())
+              {
+                return;
+              }
+              auto cell = *cells.begin();
+              if(iter% 1000 == 0)
+              {
+                std::ostringstream sstr;
+                sstr << "/tmp/cell-" << cell->GetTag() << "." << iter<< ".vtk";
+                writeVTKMesh(sstr.str(), cell, converter);
+              }
+              ++iter;
+            };
+
+            int iter = 0;
+            auto iterate = [&iter](const hemelb::redblood::CellContainer&)
+            {
+              ++iter;
+            };
+
+
             CPPUNIT_ASSERT(master);
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             CPPUNIT_ASSERT(controller);
-            controller->AddCellChangeListener(output_callback);
+            controller->AddCellChangeListener(checkVolume);
+            controller->AddCellChangeListener(checkPosition);
+            controller->AddCellChangeListener(iterate);
+            // controller->AddCellChangeListener(printData);
+            // controller->AddCellChangeListener(printCells);
 
             // run the simulation
             master->RunSimulation();
+            master->Finalise();
 
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");
+            CPPUNIT_ASSERT(iter > 0);
           }
 
         private:
@@ -89,10 +167,10 @@ namespace hemelb
           char const * argv[7];
 
       };
-      // class FadeInOutIntegrationTests
+
+
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FadeInOutIntegrationTests);
-
     } // namespace redblood
   } // namespace unittests
 } // namespace hemelb
