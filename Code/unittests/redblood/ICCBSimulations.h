@@ -40,7 +40,7 @@ namespace hemelb
             intel.push_back("simulation");
             intel.push_back("steps");
             intel.push_back("value");
-            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 1000);
+            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 300000);
 
             argv[0] = "hemelb";
             argv[1] = "-in";
@@ -65,7 +65,6 @@ namespace hemelb
             unsigned timestep = 0;
             auto output_callback = [this, &timestep](const hemelb::redblood::CellContainer & cells)
             {
-              std::cout << "!! num cells: " << cells.size() << std::endl;
               for (auto cell: cells)
               {
                 std::stringstream filename;
@@ -93,6 +92,8 @@ namespace hemelb
           char const * argv[7];
 
       };
+      // Extra lines needed by CPPUNIT_TEST_SUITE_REGISTRATION
+      // Extra lines needed by CPPUNIT_TEST_SUITE_REGISTRATION
       // Don't register the unit test so it's not run by default as part of CI.
       // Uncomment the line below in order to run the test with:
       //   ./unittests_hemelb hemelb::unittests::redblood::ICCBSimulations::testSimpleTube
