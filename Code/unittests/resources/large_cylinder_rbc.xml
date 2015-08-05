@@ -74,11 +74,11 @@
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="Nm" value="0e-10" />
-          <surface units="LB" value="0e0" />
+          <bending units="Nm" value="2e-19" />
+          <surface units="LB" value="1e0" />
           <volume units="LB" value="1e0" />
-          <dilation units="N/m" value="0e-1" />
-          <strain units="N/m" value="0e-6" />
+          <dilation units="N/m" value="5e-1" />
+          <strain units="N/m" value="5e-6" />
         </moduli>
         <interaction>
           <intensity units="N" value="0e-6" />
