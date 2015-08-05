@@ -106,7 +106,6 @@ namespace hemelb
               numericalForces();
             };
             // Explores all sorts of configurations with different concavities, etc
-            auto const epsilon = 1e4 * std::numeric_limits<double>::min();
             for(auto const theta0: {2e-1, -2e-1})
             {
               for(auto const theta: {1e-1, -1e-1, 3e-1, -3e-1})
