@@ -1,0 +1,26 @@
+# only runs cpp check. No need to do it on different machines, so separate job
+- job:
+    name: cppcheck-heme
+    disabled: false
+    node: OSX
+
+    builders:
+        - shell: |
+            cd $WORKSPACE
+            [[ -e build ]] || mkdir build
+            filename=$WORKSPACE/build/cppcheck-result.xml
+            cppcheck --enable=all --xml Code/*.cc Code/*.h $(ls -d Code/*/) 2> $filename
+
+        - shell: |
+            cd $WORKSPACE
+            ./Scripts/check_once_guards.py Code
+
+    publishers:
+        - cppcheck:
+            pattern: "build/cppcheck-result.xml"
+            graph:
+                xysize: [500, 200]
+            display:
+                sum: false
+                error: true
+

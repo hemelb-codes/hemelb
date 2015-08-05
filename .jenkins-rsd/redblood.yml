@@ -1,0 +1,77 @@
+# default build across compilers and machines
+- job:
+    name: redblood-heme
+    description: |
+        Compiles dependencies and heme for the red_blood_cells branch.
+        This is a c++11 build, so we compile dependencies independently from
+        other jobs.
+    disabled: false
+    block-upstream: true
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "gnu").implies(os == "OSX")
+            && (compiler == "intel").implies(os == "Legion")
+            && (compiler == "clang").implies(os == "OSX")
+        sequential: false
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - OSX
+                - Legion
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - gnu
+                - clang
+
+    builders:
+        # env vars are not passed to external projects
+        # so can't tell intel to build with c++11 on legion if compiling heme
+        # proper via external project. so build explicitely.
+        - heme-remove-build
+        - heme-flagscpp11
+        - heme-ctemplate:
+            build_type: "RelWithDebInfo"
+            build_dir: "dependencies"
+        - heme-dependencies
+
+        - heme-Code:
+            buildname: sse3
+            sse3: ON
+            streaks: OFF
+            steering: none
+        - heme-Code:
+            buildname: nosse3
+            sse3: OFF
+            streaks: OFF
+            steering: none
+
+        - heme-test:
+            buildname: "sse3"
+        - heme-test:
+            buildname: "nosse3"
+
+        - heme-regression-setup
+        - heme-regression-run:
+            buildname: "sse3"
+        - heme-regression-run:
+            buildname: "nosse3"
+
+    scm:
+        - hg:
+            url: ssh://hg@entropy.chem.ucl.ac.uk/hemelb
+            revision-type: branch
+            revision: red_blood_cells
+            wipe-workspace: true
+
+    publishers:
+        - xunit:
+            test-time-margin: 120000
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
