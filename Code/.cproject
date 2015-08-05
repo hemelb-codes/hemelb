@@ -39,7 +39,7 @@
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.70459761" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.2001070575" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
-								<option id="gnu.c.compiler.option.include.paths.1195516363" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.1195516363" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../dependencies/include"/>
 									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
 								</option>
@@ -53,7 +53,7 @@
 								</inputType>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.1633029778" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
-								<option id="gnu.both.asm.option.include.paths.984721835" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.984721835" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../dependencies/include"/>
 									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
 								</option>
