@@ -19,6 +19,7 @@
 #include <map>
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
+#include "util/UnitConverter.h"
 #include "units.h"
 
 namespace hemelb
@@ -242,17 +243,17 @@ namespace hemelb
     std::shared_ptr<MeshData> readMesh(std::istream &stream);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
-    void writeMesh(std::ostream &stream, MeshData const &data);
+    void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);
     //! Write mesh from file
     //! Format is from T. Krueger's thesis
-    void writeMesh(std::string const &filename, MeshData const &data);
+    void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const &);
     //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &stream, MeshData const &data);
+    void writeVTKMesh(std::ostream &, MeshData const &, util::UnitConverter const &);
     //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &filename, MeshData const &data);
+    void writeVTKMesh(std::string const &, MeshData const &, util::UnitConverter const&);
     //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &stream, MeshData::Vertices const &vertices,
-                      MeshData::Facets const &facets);
+    void writeVTKMesh(std::ostream &, MeshData::Vertices const &,
+                      MeshData::Facets const &, util::UnitConverter const&);
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet

@@ -380,6 +380,13 @@ namespace hemelb
         neighbouring::NeighbouringLatticeData const &GetNeighbouringData() const;
 
         int GetLocalRank() const;
+
+        //! Reset forces to some constant value
+        //! Could be zero. Or could be something like a constant term for gravity.
+        void ResetForces(LatticeForceVector const &force = LatticeForceVector(0, 0, 0))
+        {
+          std::fill(forceAtSite.begin(), forceAtSite.end(), force);
+        }
       protected:
         /**
          * The protected default constructor does nothing. It exists to allow derivation from this

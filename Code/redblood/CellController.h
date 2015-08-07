@@ -38,19 +38,19 @@ namespace hemelb
         void RequestComms() override
         {
           using namespace log;
-          Logger::Log<Info, Singleton>("Cell insertion");
+          Logger::Log<Debug, Singleton>("Cell insertion");
           CellArmy<KERNEL>::CallCellInsertion();
-          Logger::Log<Info, Singleton>("Fluid interaction with cells");
+          Logger::Log<Debug, Singleton>("Fluid interaction with cells");
           CellArmy<KERNEL>::Fluid2CellInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
-          Logger::Log<Info, Singleton>("Cell interaction with fluid");
+          Logger::Log<Debug, Singleton>("Cell interaction with fluid");
           CellArmy<KERNEL>::Cell2FluidInteractions();
-          Logger::Log<Info, Singleton>("Removed cells that have reached outlets");
+          Logger::Log<Debug, Singleton>("Checking whether cells have reached outlets");
           CellArmy<KERNEL>::CellRemoval();
-          Logger::Log<Info, Singleton>("Notify cell listeners");
+          Logger::Log<Debug, Singleton>("Notify cell listeners");
           CellArmy<KERNEL>::NotifyCellChangeListeners();
         }
     };

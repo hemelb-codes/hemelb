@@ -50,6 +50,7 @@ namespace hemelb
           indices[1] = 3;
           indices[2] = 2;
           mesh.facets.push_back(indices);
+          redblood::orientFacets(mesh);
         }
 
       protected:
@@ -71,7 +72,7 @@ namespace hemelb
           PhysicalEnergy const deltaE(energy(newmesh) - firstE);
 
           double const tolerance(std::max(std::abs( (deltaE / epsilon) * 1e-4), 1e-8));
-          CPPUNIT_ASSERT(helpers::is_zero(forces[node].Dot(dir) + (deltaE / epsilon), tolerance));
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(-(deltaE / epsilon), forces[node].Dot(dir), tolerance);
         }
 
         template<class ENERGY, class GRADIENT>

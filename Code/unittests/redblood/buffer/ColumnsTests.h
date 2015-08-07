@@ -50,7 +50,7 @@ namespace hemelb
           void testIdentityRotationMatrix()
           {
             using namespace hemelb::redblood::buffer;
-            auto const r = rotMat(LatticePosition(1, 0, 0), LatticePosition(1, 0, 0));
+            auto const r = rotationMatrix(LatticePosition(1, 0, 0), LatticePosition(1, 0, 0));
             for (size_t i(0); i < 3; ++i)
               for (size_t j(0); j < 3; ++j)
                 CPPUNIT_ASSERT_DOUBLES_EQUAL(r[i][j], i == j ?
@@ -61,7 +61,7 @@ namespace hemelb
           void testRotationMatrix90Degrees()
           {
             using namespace hemelb::redblood::buffer;
-            auto const r = rotMat(LatticePosition(1, 0, 0), LatticePosition(0, 1, 0));
+            auto const r = rotationMatrix(LatticePosition(1, 0, 0), LatticePosition(0, 1, 0));
             // a0 maps to b0
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0, (r * LatticePosition(1, 0, 0)).x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, (r * LatticePosition(1, 0, 0)).y, 1e-8);
@@ -78,7 +78,7 @@ namespace hemelb
           void testRotationMatrix45Degrees()
           {
             using namespace hemelb::redblood::buffer;
-            auto const r = rotMat(LatticePosition(1, 0, 0), LatticePosition(1, 1, 0));
+            auto const r = rotationMatrix(LatticePosition(1, 0, 0), LatticePosition(1, 1, 0));
             PhysicalDistance const sqrt2 = std::sqrt(2e0);
             // a0 maps to b0
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, (r * LatticePosition(sqrt2, 0, 0)).x, 1e-8);
@@ -170,7 +170,7 @@ namespace hemelb
             auto templateCell = std::make_shared<Cell>(tetrahedron());
             templateCell->moduli.bending = 5.0;
             templateCell->moduli.volume = 3.0;
-            auto const rotation = rotMat(cellAxis, colAxis);
+            auto const rotation = rotationMatrix(cellAxis, colAxis);
 
             auto check = [templateCell, this, &rotation](std::shared_ptr<CellBase const> acell)
             {

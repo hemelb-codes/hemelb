@@ -28,6 +28,9 @@ namespace hemelb
     std::function<void(CellInserter const&)> readRBCInserters(io::xml::Element const&,
                                                               util::UnitConverter const&,
                                                               TemplateCellContainer const&);
+    //! Reads cells outlets from XML
+    std::shared_ptr<std::vector<FlowExtension>> readRBCOutlets(io::xml::Element const&,
+                                                               util::UnitConverter const&);
   }
 }
 

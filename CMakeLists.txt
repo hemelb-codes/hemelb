@@ -28,7 +28,8 @@ option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 set(HEMELB_LATTICE "D3Q15"
   CACHE STRING "Select the lattice type to use (D3Q15,D3Q19,D3Q27)")
 set(HEMELB_KERNEL "LBGK"
-  CACHE STRING "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL)")
+  CACHE STRING
+  "Select the kernel to use (LBGK,EntropicAnsumali,EntropicChik,MRT,NNCY,NNC,NNTPL,GuoForcingLBGK)")
 set(HEMELB_WALL_BOUNDARY "SIMPLEBOUNCEBACK"
   CACHE STRING "Select the boundary conditions to be used at the walls (FINTERPOLATION,GZS,SIMPLEBOUNCEBACK,JUNKYANG)")
 set(HEMELB_STEERING_HOST "CCS" CACHE STRING "Use a default host suffix for steering? (CCS, NGS2Leeds, NGS2Manchester, LONI, NCSA or blank)")

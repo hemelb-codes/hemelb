@@ -15,6 +15,7 @@
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
 #include "resources/Resource.h"
+#include "util/UnitConverter.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
@@ -46,27 +47,27 @@ namespace hemelb
           void testReadMesh()
           {
             CPPUNIT_ASSERT(mesh);
-            CPPUNIT_ASSERT(mesh->vertices.size() == 812);
-            CPPUNIT_ASSERT(mesh->facets.size() == 1620);
+            CPPUNIT_ASSERT(mesh->vertices.size() == 12);
+            CPPUNIT_ASSERT(mesh->facets.size() == 20);
 
             typedef util::Vector3D<double> Vector3d;
-            Vector3d vfirst(0.850650808352040, 0.525731112119134, 0.0);
-            Vector3d vlast(0.298722767882436, -0.095229509306174, -0.186475800096805);
+            Vector3d vfirst(0.850650808352040, 0.525731112119134, 0.000000000000000);
+            Vector3d vlast(0, -0.767597772408033, -0.319039022201661);
             CPPUNIT_ASSERT(compare(mesh->vertices.front() - vfirst));
             CPPUNIT_ASSERT(compare(mesh->vertices.back() - vlast));
 
             CPPUNIT_ASSERT(any(mesh->facets.front(), 0));
-            CPPUNIT_ASSERT(any(mesh->facets.front(), 12));
-            CPPUNIT_ASSERT(any(mesh->facets.front(), 20));
-            CPPUNIT_ASSERT(any(mesh->facets.back(), 100));
-            CPPUNIT_ASSERT(any(mesh->facets.back(), 811));
-            CPPUNIT_ASSERT(any(mesh->facets.back(), 244));
+            CPPUNIT_ASSERT(any(mesh->facets.front(), 8));
+            CPPUNIT_ASSERT(any(mesh->facets.front(), 4));
+            CPPUNIT_ASSERT(any(mesh->facets.back(), 11));
+            CPPUNIT_ASSERT(any(mesh->facets.back(), 7));
+            CPPUNIT_ASSERT(any(mesh->facets.back(), 5));
           }
 
           void testWriteMesh()
           {
             std::ostringstream output;
-            writeMesh(output, *mesh);
+            writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
             std::istringstream input(output.str());
             std::shared_ptr<MeshData> other = readMesh(input);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());

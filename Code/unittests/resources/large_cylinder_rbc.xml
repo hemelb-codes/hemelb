@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="0.225" />
-    <steps units="lattice" value="50000" />
+    <step_length units="s" value="1.e-8" />
+    <steps units="lattice" value="500" />
     <stresstype value="1" />
-    <voxel_size units="m" value="0.003" />
-    <origin units="m" value="(-0.0315,-0.0315,-0.0255)" />
+    <voxel_size units="m" value="1.4e-06" />
+    <origin units="m" value="(-1.05e-05,-1.05e-05,-2.45e-05)" />
   </simulation>
   <geometry>
     <datafile path="large_cylinder.gmy" />
@@ -13,41 +13,47 @@
   <inlets>
     <inlet>
       <condition type="pressure" subtype="cosine">
-        <amplitude value="0" units="mmHg" />
-        <mean value="1e-5" units="mmHg" />
+        <amplitude value="0.0" units="mmHg" />
+        <mean value="0.1" units="mmHg" />
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,1.0)" />
-      <position units="m" value="(0.0,0.0,-0.024)" />
+      <position units="m" value="(0.0,0.0,-2.4e-05)" />
       <flowextension>
-        <length units="m" value="0.1" />
-        <radius units="m" value="0.01" />
-        <fadelength units="m" value="0.05" />
-        <insertcell template="default">
-          <every units="s" value="10"/>
-          <offset units="s" value="0"/>
-        </insertcell>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="7e-06" />
       </flowextension>
+      <insertcell template="default">
+        <every units="s" value="2e-3"/>
+        <offset units="s" value="40e-8"/>
+      </insertcell>
     </inlet>
   </inlets>
   <outlets>
     <outlet>
       <condition type="pressure" subtype="cosine">
-        <amplitude value="0" units="mmHg" />
-        <mean value="0" units="mmHg" />
+        <amplitude value="0." units="mmHg" />
+        <mean value="0.0" units="mmHg" />
         <phase value="0" units="rad" />
         <period value="1" units="s" />
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
-      <position units="m" value="(0.0,0.0,0.024)" />
+      <position units="m" value="(0.0,0.0,2.4e-05)" />
       <flowextension>
-        <length units="m" value="0.1" />
-        <radius units="m" value="0.01" />
-        <fadelength units="m" value="0.05" />
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="8e-06" />
       </flowextension>
     </outlet>
   </outlets>
+  <properties> 
+   <propertyoutput period="1000" file="whole_domain_vel.xtr"> 
+     <geometry type="whole" /> 
+     <field type="velocity"/> 
+   </propertyoutput> 
+  </properties>    
   <visualisation>
     <centre units="m" value="(0.0,0.0,0.0)" />
     <orientation>
@@ -62,25 +68,25 @@
   </visualisation>
   <redbloodcells>
     <controller>
-      <halo units="m" value="0.01" />
-      <boxsize units="m" value="0.2" />
+      <halo units="m" value="2e-6" />
+      <boxsize units="m" value="100e-6" />
     </controller>
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="Nm" value="2e-10" />
+          <bending units="Nm" value="2e-19" />
           <surface units="LB" value="1e0" />
           <volume units="LB" value="1e0" />
           <dilation units="N/m" value="5e-1" />
           <strain units="N/m" value="5e-6" />
         </moduli>
         <interaction>
-          <intensity units="N" value="0.0" />
-          <cutoffdistance units="m" value="1.0" />
+          <intensity units="N" value="0e-6" />
+          <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
         <shape mesh_path="red_blood_cell.txt" />
-        <scale units="m" value="1e-4" />
+        <scale units="m" value="6e-06" />
       </cell>
     </cells>
   </redbloodcells>

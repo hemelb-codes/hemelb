@@ -55,6 +55,7 @@ namespace hemelb
       {
         return simulationState;
       }
+      hemelb::util::UnitConverter const & GetUnitConverter() const;
       void Finalise();
 #     ifdef HEMELB_DOING_UNITTESTS
       //! Makes it easy to add cell controller without messy input files

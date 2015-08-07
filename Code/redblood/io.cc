@@ -73,7 +73,8 @@ namespace hemelb
 
       void readFlowExtensions(io::xml::Element const& ioletsNode,
                               util::UnitConverter const& converter,
-                              std::vector<FlowExtension> &results)
+                              std::vector<FlowExtension> &results,
+                              bool mustHaveFlowExtension = false)
       {
         if (ioletsNode == ioletsNode.Missing())
         {
@@ -87,6 +88,10 @@ namespace hemelb
           {
             results.emplace_back(readFlowExtension(ioletNode, converter));
           }
+          else if(mustHaveFlowExtension)
+          {
+            throw Exception() << "Could not find flow extension in iolet";
+          }
         }
       }
 
@@ -98,6 +103,8 @@ namespace hemelb
         auto const insNode = node.GetChildOrThrow("insertcell");
         auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
         auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
+        HEMELB_CAPTURE(deltaTime);
+        HEMELB_CAPTURE(offset);
         auto const templateName = insNode.GetAttributeOrThrow("template");
         if (templateCells.count(templateName) == 0)
         {
@@ -108,39 +115,50 @@ namespace hemelb
 
         // Figure out size of cell alongst cylinder axis
         auto const barycenter = cell->GetBarycenter();
-        auto minExtent = [barycenter, &flowExtension](LatticePosition const pos)
+        auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
         {
+
           return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
         };
-        auto const minZ =
-            *std::min_element(cell->GetVertices().begin(),
+        auto const maxZ =
+            *std::max_element(cell->GetVertices().begin(),
                               cell->GetVertices().end(),
-                              [&minExtent](LatticePosition const &a, LatticePosition const& b)
+                              [&maxExtent](LatticePosition const &a, LatticePosition const& b)
                               {
-                                return minExtent(a) < minExtent(b);
+                                return maxExtent(a) < maxExtent(b);
                               });
         // Place cell as close as possible to 0 of fade length
         *cell += flowExtension.origin
-            + flowExtension.normal * (flowExtension.fadeLength - minExtent(minZ)) - barycenter;
+            + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter;
 
         // fail if any node outside flow extension
         for (auto const &vertex : cell->GetVertices())
         {
           if (not contains(flowExtension, vertex))
           {
+            HEMELB_CAPTURE(flowExtension.normal);
+            HEMELB_CAPTURE(flowExtension.origin);
+            HEMELB_CAPTURE(flowExtension.radius);
+            HEMELB_CAPTURE(flowExtension.length);
+            HEMELB_CAPTURE(vertex);
             throw Exception() << "BAD INPUT: Cell not contained within flow extension";
           }
         }
 
         // Drops first cell when time reaches offset, and then every deltaTime thereafter.
-        auto condition = [deltaTime, offset]()
+        // Note: c++14 will allow more complex captures. Until then, we will need to create
+        // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
+        // variables should live as long as the lambda. But longuer than a single call.
+        auto time = std::make_shared<PhysicalTime>
+        (
+          deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset
+        );
+        auto condition = [time, deltaTime, offset]()
         {
-          static PhysicalTime time
-          = deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset;
-          time += 1e0;
-          if(time >= deltaTime)
+          *time += 1e0;
+          if(*time >= deltaTime)
           {
-            time -= deltaTime;
+            *time -= deltaTime;
             return true;
           }
           return false;
@@ -164,16 +182,14 @@ namespace hemelb
     Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
                                       util::UnitConverter const & converter)
     {
-      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("N", 1e0),
-                            converter.GetVoxelSize(),
-                            2);
+      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("N", 1e0), 1, 2);
       if (parent == parent.Missing())
       {
         return result;
       }
       auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetDimensionalValue(node, "intensity", "N", converter, result.intensity);
-      result.cutoff = GetDimensionalValue(node, "cutoffdistance", "m", converter, result.cutoff);
+      result.cutoff = GetDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
         node.Missing();
@@ -351,6 +367,29 @@ namespace hemelb
       return results.size() == 0 ?
         nullptr :
         results.front();
+    }
+
+    std::shared_ptr<std::vector<FlowExtension>> readRBCOutlets(io::xml::Element const& topNode,
+                                                               util::UnitConverter const& converter)
+    {
+      // First read outlets from XML
+      auto const result = std::make_shared<std::vector<FlowExtension>>();
+      auto outletsNode = topNode.GetChildOrThrow("outlets");
+      readFlowExtensions(outletsNode, converter, *result, true);
+      // Then transforms them to cell outlets: should start somewhere near the end of fadelength
+      for(auto &flowExt: *result)
+      {
+        // Minimum length should probably be sufficiently larger than cells.
+        auto length = std::min
+        (
+            flowExt.length,
+            std::max(flowExt.length - 0.9*flowExt.fadeLength, 2.)
+        );
+        flowExt.origin += flowExt.normal * (flowExt.length - length);
+        flowExt.length = length;
+        flowExt.fadeLength = length;
+      }
+      return result;
     }
   }
 }

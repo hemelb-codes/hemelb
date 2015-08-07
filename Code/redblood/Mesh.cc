@@ -109,23 +109,24 @@ namespace hemelb
       return result;
     }
 
-    void writeMesh(std::string const &filename, MeshData const &data)
+    void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const& c)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      writeMesh(file, data);
+      writeMesh(file, data, c);
     }
 
-    void writeVTKMesh(std::string const &filename, MeshData const &data)
+    void writeVTKMesh(
+        std::string const &filename, MeshData const &data, util::UnitConverter const& converter)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      writeVTKMesh(file, data);
+      writeVTKMesh(file, data, converter);
     }
 
-    void writeMesh(std::ostream &stream, MeshData const &data)
+    void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const& converter)
     {
       // Write Header
       stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n" << "$Nodes\n" << data.vertices.size()
@@ -136,8 +137,10 @@ namespace hemelb
       VertexIterator const i_vertex_end = data.vertices.end();
 
       for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-        stream << i << " " << (*i_vertex)[0] << " " << (*i_vertex)[1] << " " << (*i_vertex)[2]
-            << "\n";
+      {
+        auto const vertex = converter.ConvertPositionToPhysicalUnits(*i_vertex);
+        stream << i << " " << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
+      }
 
       stream << "$EndNode\n" << "$Elements\n" << data.facets.size() << "\n";
 
@@ -152,12 +155,12 @@ namespace hemelb
       stream << "$EndElement\n";
     }
 
-    void writeVTKMesh(std::ostream &stream, MeshData const &data)
+    void writeVTKMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &conv)
     {
-      writeVTKMesh(stream, data.vertices, data.facets);
+      writeVTKMesh(stream, data.vertices, data.facets, conv);
     }
     void writeVTKMesh(std::ostream &stream, MeshData::Vertices const &vertices,
-                      MeshData::Facets const &facets)
+                      MeshData::Facets const &facets, util::UnitConverter const & converter)
     {
       // Write Header
       stream << "<?xml version=\"1.0\"?>\n"
@@ -170,8 +173,10 @@ namespace hemelb
       VertexIterator i_vertex = vertices.begin();
       VertexIterator const i_vertex_end = vertices.end();
 
-      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-        stream << (*i_vertex)[0] << " " << (*i_vertex)[1] << " " << (*i_vertex)[2] << " ";
+      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i) {
+        auto const vertex = converter.ConvertPositionToPhysicalUnits(*i_vertex);
+        stream << vertex[0] << " " << vertex[1] << " " << vertex[2] << " ";
+      }
 
       stream << "\n        </DataArray>\n" << "      </Points>\n" << "      <Polys>\n"
           << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";

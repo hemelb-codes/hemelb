@@ -101,10 +101,11 @@ namespace hemelb
             {
               // This function is called by inserter with a new cell
               // It is meant to actually do the job of adding cells to the simulation
-                was_called = true;
-              };
+              was_called = true;
+            };
             auto const dt = converter->ConvertTimeToPhysicalUnits(1e0);
-            for (int i(0); i < int(std::floor(offset / dt)); ++i)
+            auto const N = static_cast<int>(std::floor(offset / dt));
+            for (int i(0); i < N; ++i)
             {
               inserter(addCell);
               CPPUNIT_ASSERT(not was_called);

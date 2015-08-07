@@ -19,61 +19,6 @@ namespace hemelb
     {
       namespace
       {
-        //! Rotation matrix for a to b
-        //! Rotation matrix maps one basis onto another:
-        //!    - a0 (normalised a) maps to b0 (normalised b)
-        //!    - a0.Cross(b0) maps to a0.Cross(b0)
-        //!    - a0.Cross(a0, Cross(b0)) maps to b0.Cross(a0.Cross(b0))
-        util::Matrix3D rotMat(LatticePosition const& a, LatticePosition const& b)
-        {
-          util::Matrix3D result;
-          LatticePosition const a0 = a.GetNormalised();
-          LatticePosition const b0 = b.GetNormalised();
-          // Special case where a0 == b0: Rotation is identity
-          // Also works for a = 0 and b = 0... But that's just bad input
-          if (a0.Cross(b0).GetMagnitude() < 1e-8)
-          {
-            for (size_t i(0); i < 3; ++i)
-            {
-              for (size_t j(0); j < 3; ++j)
-              {
-                result[i][j] = i == j ?
-                  1 :
-                  0;
-              }
-            }
-            return result;
-          }
-
-          LatticePosition const u = (a0.Cross(b0)).GetNormalised();
-          LatticePosition const a1 = a0.Cross(u).GetNormalised();
-          LatticePosition const b1 = b0.Cross(u).GetNormalised();
-
-          // HemeLB doesn't need linear algebra, so it doesn't have it - cos that would be
-          // complicated - which in turn implies it doesn't need it. Instead, do lets use a square
-          // wheel.
-          util::Matrix3D A, B;
-          A[0][0] = a0[0];
-          A[0][1] = a0[1];
-          A[0][2] = a0[2];
-          A[1][0] = u[0];
-          A[1][1] = u[1];
-          A[1][2] = u[2];
-          A[2][0] = a1[0];
-          A[2][1] = a1[1];
-          A[2][2] = a1[2];
-          B[0][0] = b0[0];
-          B[0][1] = u[0];
-          B[0][2] = b1[0];
-          B[1][0] = b0[1];
-          B[1][1] = u[1];
-          B[1][2] = b1[1];
-          B[2][0] = b0[2];
-          B[2][1] = u[2];
-          B[2][2] = b1[2];
-          return B * A;
-        }
-
         LatticeDistance maxExtension(MeshData::Vertices const &vertices,
                                      LatticePosition const &direction)
         {
@@ -88,6 +33,8 @@ namespace hemelb
           return 2e0 * result;
         }
 
+      // avoids a warning
+#     ifndef HEMELB_DOING_UNITTESTS
         LatticePosition maxExtensions(MeshData::Vertices const &vertices,
                                       LatticePosition const &col, LatticePosition const& normal)
         {
@@ -96,6 +43,7 @@ namespace hemelb
           LatticeDistance const z = maxExtension(vertices, col);
           return LatticePosition(x, y, z);
         }
+#     endif
       }
 
 #     ifndef HEMELB_DOING_UNITTESTS
@@ -120,7 +68,7 @@ namespace hemelb
         }
 
         // Rotation is opposite to the one that will be applied to the mesh
-        auto const antiRot = rotMat(colAxis, cellAxis);
+        auto const antiRot = rotationMatrix(colAxis, cellAxis);
         auto const extents = maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
             + separation;
 
@@ -178,7 +126,7 @@ namespace hemelb
               templateCell(cell->clone())
       {
         // Cell is rotated to correct orientation
-        *templateCell *= rotMat(cellAxis, colAxis);
+        *templateCell *= rotationMatrix(cellAxis, colAxis);
         // And centered at zero
         *templateCell -= templateCell->GetBarycenter();
       }

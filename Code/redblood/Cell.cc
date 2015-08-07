@@ -150,19 +150,21 @@ namespace hemelb
       }
 
       PhysicalEnergy result(0);
-      typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
-      FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-      FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
-
-      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      site_t current_facet(0);
+      for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
-        for (size_t i(0); i < 3; ++i)
-          if ( (*i_facet)[i] > current)
+        for (auto neighbor: neighbors)
+        {
+          if (neighbor > current_facet)
+          {
             result += hemelb::redblood::facetBending(data->vertices,
                                                      *data->templateMesh.GetData(),
-                                                     current,
-                                                     (*i_facet)[i],
+                                                     current_facet,
+                                                     neighbor,
                                                      moduli.bending);
+          }
+        }
+        ++current_facet;
       }
 
       return result;
@@ -177,19 +179,22 @@ namespace hemelb
 
       PhysicalEnergy result(0);
       typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
-      FacetIterator i_facet = GetTopology()->facetNeighbors.begin();
-      FacetIterator const i_facetEnd = GetTopology()->facetNeighbors.end();
-
-      for (size_t current(0); i_facet != i_facetEnd; ++i_facet, ++current)
+      site_t current_facet(0);
+      for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
-        for (size_t i(0); i < 3; ++i)
-          if ( (*i_facet)[i] > current)
+        for (auto neighbor: neighbors)
+        {
+          if (neighbor > current_facet)
+          {
             result += hemelb::redblood::facetBending(data->vertices,
                                                      *data->templateMesh.GetData(),
-                                                     current,
-                                                     (*i_facet)[i],
+                                                     current_facet,
+                                                     neighbor,
                                                      moduli.bending,
                                                      forces);
+          }
+        }
+        ++current_facet;
       }
 
       return result;
@@ -247,17 +252,21 @@ namespace hemelb
       return data->tag;
     }
 
-    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> cell)
+    void writeVTKMesh(
+        std::string const &filename, std::shared_ptr<CellBase const> cell,
+        util::UnitConverter const &converter)
     {
       log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
                                                    filename.c_str());
       std::ofstream file(filename.c_str());
-      writeVTKMesh(file, cell);
+      writeVTKMesh(file, cell, converter);
     }
 
-    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> cell)
+    void writeVTKMesh(
+        std::ostream &stream, std::shared_ptr<CellBase const> cell,
+        util::UnitConverter const &converter)
     {
-      writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets());
+      writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets(), converter);
     }
 
 #   ifndef NDEBUG
