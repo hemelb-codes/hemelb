@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="0.225" />
+    <step_length units="s" value="4.4e-07" />
     <steps units="lattice" value="50000" />
     <stresstype value="1" />
-    <voxel_size units="m" value="0.003" />
-    <origin units="m" value="(-0.0315,-0.0315,-0.0255)" />
+    <voxel_size units="m" value="1.4e-06" />
+    <origin units="m" value="(-1.05e-05,-1.05e-05,-2.45248049736e-05)" />
   </simulation>
   <geometry>
     <datafile path="large_cylinder.gmy" />
@@ -19,7 +19,7 @@
         <period value="1" units="s" />
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,1.0)" />
-      <position units="m" value="(0.0,0.0,-0.024)" />
+      <position units="m" value="(0.0,0.0,-2.4e-5)" />
     </inlet>
   </inlets>
   <outlets>
@@ -31,7 +31,7 @@
         <period value="1" units="s" />
       </condition>
       <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
-      <position units="m" value="(0.0,0.0,0.024)" />
+      <position units="m" value="(0.0,0.0,2.4e-5)" />
     </outlet>
   </outlets>
   <visualisation>

@@ -49,6 +49,7 @@ namespace hemelb
 #include "unittests/redblood/EnergyTests.h"
 #include "unittests/redblood/GradientTests.h"
 #include "unittests/redblood/GradientKernTests.h"
+#include "unittests/redblood/BendingTests.h"
 #include "unittests/redblood/CellTests.h"
 #include "unittests/redblood/StencilTests.h"
 #include "unittests/redblood/InterpolationTests.h"
@@ -67,5 +68,6 @@ namespace hemelb
 #include "unittests/redblood/buffer/ColumnsTests.h"
 #include "unittests/redblood/CellIOTests.h"
 #include "unittests/redblood/CellInserterTests.h"
+#include "unittests/redblood/ICCBSimulations.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif

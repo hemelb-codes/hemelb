@@ -157,6 +157,20 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(position.x, flow.origin.x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(position.y + length / std::sqrt(2e0), flow.origin.y, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(position.z + length / std::sqrt(2e0), flow.origin.z, 1e-8);
+
+            // Check flow extension is positioned correctly
+            auto isInFlow = [&flow, &converter](double x, double y, double z)
+            {
+              LatticePosition const pos(x, y, z);
+              LatticePosition const conv = converter.ConvertPositionToLatticeUnits(pos);
+              return contains(flow, conv);
+            };
+            auto const l= 0.1/std::sqrt(2);
+            CPPUNIT_ASSERT(isInFlow(0.1, 0.25, 0.35));
+            CPPUNIT_ASSERT(isInFlow(0.1, 0.2 + 0.001, 0.3 + 0.001));
+            CPPUNIT_ASSERT(isInFlow(0.1, 0.2 + l - 0.001, 0.3 + l - 0.001));
+            CPPUNIT_ASSERT(not isInFlow(0.1, 0.2 + l + 0.001, 0.3 + l + 0.001));
+            CPPUNIT_ASSERT(not isInFlow(0.1, 0.2 - 0.001, 0.3 - 0.001));
           }
       };
 

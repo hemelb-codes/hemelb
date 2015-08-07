@@ -27,7 +27,8 @@ namespace hemelb
       {
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
-        return intensity * (theta - theta0) * (theta - theta0);
+        // forces on nodes that are in common
+        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
       }
 
       // Facet bending energy and force between neighboring facets
@@ -38,38 +39,51 @@ namespace hemelb
         IndexPair const commons = commonNodes(facetA, facetB);
         IndexPair const singles = singleNodes(facetA, facetB);
 
-        LatticePosition const normalA = facetA.normal();
-        LatticePosition const normalB = facetB.normal();
+        LatticePosition const normali = facetA.unitNormal();
+        LatticePosition const normalj = facetB.unitNormal();
 
-        PhysicalDistance const inverseAreaA = 1e0 / normalA.GetMagnitude();
-        PhysicalDistance const inverseAreaB = 1e0 / normalB.GetMagnitude();
+        // Figures out orientation of the common nodes, whether we have x3 - x1 or x1 - x3.
+        const bool orientation =
+          facetA(commons.first, commons.second)
+            .Cross(facetA(singles.first, commons.second))
+            .Dot(normali) < 0e0;
 
-        // Orthogonalize normal vectors and normalize to inverse area of other facet
-        LatticePosition const unitA(normalA.GetNormalised());
-        LatticePosition const unitB(normalB.GetNormalised());
-        LatticePosition const vecA( (unitB - unitA * unitA.Dot(unitB)).GetNormalised()
-            * inverseAreaA);
-        LatticePosition const vecB( (unitA - unitB * unitA.Dot(unitB)).GetNormalised()
-            * inverseAreaB);
+        auto n_ij = normali - normalj * normali.Dot(normalj);
+        auto n_ji = normalj - normali * normalj.Dot(normali);
+        auto const area_ij = n_ij.GetMagnitude();
+        auto const area_ji = n_ji.GetMagnitude();
+        if(area_ij > 1e-12)
+        {
+          n_ij = n_ij / area_ij;
+        }
+        if(area_ji > 1e-12)
+        {
+          n_ji = n_ji / area_ji;
+        }
 
-        // NOTE: the two lines below could make use of stuff computed previously
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
+        const PhysicalForce strength = 5e-1 * intensity * (theta - theta0)
+          * (theta < 0e0 ? 1e0: -1e0);
+        n_ij = n_ij * (strength/facetB.area());
+        n_ji = n_ji * (strength/facetA.area());
 
-        const PhysicalForce strength = -2.0 * intensity * (theta - theta0);
-        // forces on nodes that are in common
-        facetA.GetForce(commons.first) += (facetA(singles.first, commons.second).Cross(vecA)
-            + (facetA(commons.second) - facetB(singles.second)).Cross(vecB)) * strength;
-        facetA.GetForce(commons.second) +=
-            ( (facetB(singles.second) - facetA(commons.first)).Cross(vecB)
-                + (facetA(commons.first, singles.first)).Cross(vecA)) * strength;
-        // forces on nodes that are *not* in common
-        facetA.GetForce(singles.first) += (facetA(commons.second, commons.first).Cross(vecA))
-            * strength;
-        facetB.GetForce(singles.second) += (facetA(commons.first, commons.second).Cross(vecB))
-            * strength;
+        auto const & n1 = facetA(orientation ? commons.first: commons.second);
+        auto const & n2 = facetA(singles.first);
+        auto const & n3 = facetA(orientation ? commons.second: commons.first);
+        auto const & n4 = facetB(singles.second);
 
-        return intensity * (theta - theta0) * (theta - theta0);
+        auto & f1 = facetA.GetForce(orientation ? commons.first: commons.second);
+        auto & f2 = facetA.GetForce(singles.first);
+        auto & f3 = facetA.GetForce(orientation ? commons.second: commons.first);
+        auto & f4 = facetB.GetForce(singles.second);
+
+        f1 += (n2 - n3).Cross(n_ji) + (n3 - n4).Cross(n_ij);
+        f2 += (n3 - n1).Cross(n_ji);
+        f3 += (n1 - n2).Cross(n_ji) + (n4 - n1).Cross(n_ij);
+        f4 += (n1 - n3).Cross(n_ij);
+
+        return 0.5 * intensity * (theta - theta0) * (theta - theta0);
       }
 
       PhysicalEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,

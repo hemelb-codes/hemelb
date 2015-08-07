@@ -103,18 +103,18 @@ namespace hemelb
           void testOrientedAngle()
           {
             Angle const actual0 = orientedAngle(*main, *neighbor);
-            CPPUNIT_ASSERT(helpers::is_zero(actual0 + std::acos(-1.0 / std::sqrt(3.))));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(std::acos(-1.0 / std::sqrt(3.)), actual0, 1e-8);
 
             // simpler angle
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
             Angle const actual1 = orientedAngle(*main, *neighbor);
-            CPPUNIT_ASSERT(helpers::is_zero(actual1 + 3.0 * PI / 4.0));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0 * PI / 4.0, actual1, 1e-8);
 
             // change orientation <==> negative angle
             mesh.facets.front()[1] = 2;
             mesh.facets.front()[2] = 1;
             Angle const actual2 = orientedAngle(Facet(mesh, 0), Facet(mesh, 3));
-            CPPUNIT_ASSERT(helpers::is_zero(actual2 + PI / 4.0));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(-PI/4.0, actual2, 1e-8);
             mesh.facets.front()[1] = 1;
             mesh.facets.front()[2] = 2;
 

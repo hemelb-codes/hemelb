@@ -224,6 +224,7 @@ namespace hemelb
                                                            simConfig->GetBoxSize(),
                                                            simConfig->GetHalo());
       controller->SetCellInsertion(simConfig->GetInserter());
+      controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
     }
 
@@ -523,6 +524,8 @@ namespace hemelb
   template<class TRAITS>
   void SimulationMaster<TRAITS>::DoTimeStep()
   {
+    log::Logger::Log<log::Debug, log::OnePerCore>(
+        "Current LB time: %f", simulationState->GetTime());
     bool writeImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
       true :
       false;
@@ -693,5 +696,11 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i, steady flow simulation converged.",
                                                                           simulationState->GetTimeStep());
     }
+  }
+
+  template<class TRAITS> 
+  const hemelb::util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
+  {
+      return *unitConverter;
   }
 }

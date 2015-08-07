@@ -2,7 +2,6 @@
 #define HEMELB_REDBLOOD_FACET_H
 
 #include <cmath>
-#include <iomanip>
 #include "constants.h"
 #include "redblood/Mesh.h"
 
@@ -230,41 +229,35 @@ namespace hemelb
       {
         Angle const cosine(a.Dot(b));
 
-        if (cosine >= (1e0 - 1e-6))
+        if (cosine >= 1e0)
         {
           return 0e0;
         }
-        else if (cosine <= - (1e0 - 1e-6))
+        else if (cosine <= -1e0)
         {
           return PI;
         }
 
         return std::acos(cosine);
       }
+#     ifdef HEMELB_DOING_UNITTESTS
       Angle angle(Facet const &a, Facet const &b)
       {
         return angle(a.unitNormal(), b.unitNormal());
       }
+#     endif
 
-      // Angle with orientation
-      // Computes angle between two vectors, including orientation.
-      // The orientation should be a vector with an out-of-plane component (eg
-      // parallel to the cross product of the two normals)
-      Angle orientedAngle(LatticePosition const &a, LatticePosition const &b,
-                          LatticePosition const &orient)
-      {
-        Angle const result(angle(a, b));
-        return a.Cross(b).Dot(orient) <= 0e0 ?
-          result :
-          -result;
-      }
-      Angle orientedAngle(Facet const &a, Facet const &b, LatticePosition const &orient)
-      {
-        return orientedAngle(a.unitNormal(), b.unitNormal(), orient);
-      }
       Angle orientedAngle(Facet const &a, Facet const &b)
       {
-        return orientedAngle(a, b, commonEdge(a, b));
+        auto const unitA = a.unitNormal();
+        Angle const result(angle(unitA, b.unitNormal()));
+        auto const singles = singleNodes(a, b);
+        // Checks concavity with:
+        // p = (anode + bnode) * 0.5 => if concave, then is inside the cell
+        // (p - anode).Dot(normal to a) < 0  <==> given side of plane defined by facet a
+        // where anode (bnode) is the node of a (b) not in common with b (a)
+        auto const inside = (b(singles.second) - a(singles.first)) * 0.5;
+        return inside.Dot(unitA) < 0e0 ? result: -result;
       }
 
       // Returns Dxx, Dyy, Dxy packed in vector

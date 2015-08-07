@@ -43,7 +43,7 @@ namespace hemelb
 
     // Function to create the directory of given path, which user group
     // and anyone can read write and execute.
-    void MakeDirAllRXW(std::string &dirPath);
+    void MakeDirAllRXW(std::string const &dirPath);
 
     // Get the full path of inPath relative to basePath
     // which can be either a directory or a file (in this case, use

@@ -46,7 +46,7 @@ namespace hemelb
             // No difference between original and current mesh
             // Hence energy is zero
             PhysicalEnergy const actual0(facetBending(mesh.vertices, original, 0, 3, 1e0));
-            CPPUNIT_ASSERT(helpers::is_zero(actual0));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, actual0, 1e-8);
 
             // Now modify mesh and check "energy" is square of angle difference
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
@@ -54,7 +54,7 @@ namespace hemelb
             mesh.vertices.back()[2] = 1e0;
 
             PhysicalEnergy const expected(std::pow( (PI / 4e0 - std::acos(1. / std::sqrt(3.))), 2));
-            CPPUNIT_ASSERT(helpers::is_zero(actual1 - expected));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * expected, actual1, 1e-8);
           }
 
           void testVolume()

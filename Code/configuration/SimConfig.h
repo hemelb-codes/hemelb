@@ -83,6 +83,10 @@ namespace hemelb
         {
           return outlets;
         }
+        std::shared_ptr<std::vector<redblood::FlowExtension>> GetRBCOutlets() const
+        {
+          return rbcOutlets;
+        }
         lb::StressTypes GetStressType() const
         {
           return stressType;
@@ -338,6 +342,7 @@ namespace hemelb
         std::function<void(redblood::CellInserter const&)> rbcinserter;
         PhysicalDistance boxSize, halo;
         std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
+        std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be
