@@ -62,6 +62,18 @@ namespace hemelb
       }
     }
 
+    Matrix3D Matrix3D::transpose() const
+    {
+      Matrix3D result;
+      for(size_t i(0); i < 3; ++i)
+      {
+        result.matrix[0][i] = matrix[i][0];
+        result.matrix[1][i] = matrix[i][1];
+        result.matrix[2][i] = matrix[i][2];
+      }
+      return result;
+    }
+
     Matrix3D Matrix3D::operator*(distribn_t scalarValue) const
     {
       Matrix3D returnMatrix;
