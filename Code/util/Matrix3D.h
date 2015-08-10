@@ -68,6 +68,8 @@ namespace hemelb
         Matrix3D operator*(Matrix3D const &a) const;
         util::Vector3D<double> operator*(util::Vector3D<double>  const &a) const;
 
+        Matrix3D transpose() const;
+
       private:
 
         //! Internal data representation
