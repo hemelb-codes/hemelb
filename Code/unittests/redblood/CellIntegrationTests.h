@@ -105,9 +105,6 @@ namespace hemelb
             auto const moved = (*cells.begin())->GetBarycenter();
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, barycenter.x - moved.x, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, barycenter.y - moved.y, 1e-12);
-            HEMELB_CAPTURE(barycenter);
-            HEMELB_CAPTURE(moved);
-            HEMELB_CAPTURE(barycenter - moved);
             CPPUNIT_ASSERT(std::abs(barycenter.z - moved.z) > 1e-8);
 
             // check there is force on one of the lattice site near a node
