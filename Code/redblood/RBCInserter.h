@@ -9,6 +9,7 @@
 #include "Mesh.h"
 #include "Cell.h"
 #include "units.h"
+#include "util/Matrix3D.h"
 
 namespace hemelb
 {
@@ -72,8 +73,13 @@ namespace hemelb
           {
             log::Logger::Log<log::Debug, log::OnePerCore>(
                 "Dropping one cell at (%f, %f, %f)", barycenter.x, barycenter.y, barycenter.z);
-            insertFn(CellContainer::value_type(cell->clone().release()));
+            insertFn(drop());
           }
+        }
+
+        virtual CellContainer::value_type drop() const
+        {
+          return CellContainer::value_type(cell->clone().release());
         }
 
       private:
@@ -83,6 +89,31 @@ namespace hemelb
         std::unique_ptr<CellBase const> cell;
         //! barycenter -- for logging
         LatticePosition barycenter;
+    };
+
+    //! Red blood cell inserter that adds random rotation and translation to each cell
+    class RBCInserterWithPerturbation : RBCInserter {
+      public:
+        RBCInserterWithPerturbation(
+            std::function<bool()> condition, std::unique_ptr<CellBase const> cell,
+            util::Matrix3D const &initialRotation, Angle dtheta, Angle dphi,
+            LatticePosition const& dx, LatticePosition const& dy)
+          : RBCInserter(condition, std::move(cell)), initialRotation(initialRotation),
+            dtheta(dtheta), dphi(dphi), dx(dx), dy(dy)
+        {
+        }
+
+        //! Rotates and translates the template cell according to random dist
+        CellContainer::value_type drop() const override;
+
+        using RBCInserter::operator();
+      private:
+        //! Rotation to flow axis + offset
+        util::Matrix3D initialRotation;
+        //! Range of values over which to pick extra rotation.
+        Angle dtheta, dphi;
+        //! Two vectors alongst which to move cell
+        LatticePosition dx, dy;
     };
   }
 }

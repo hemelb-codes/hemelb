@@ -101,10 +101,7 @@ namespace hemelb
       {
         // Now gets data for cell insertion
         auto const insNode = node.GetChildOrThrow("insertcell");
-        auto const deltaTime = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
         auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
-        HEMELB_CAPTURE(deltaTime);
-        HEMELB_CAPTURE(offset);
         auto const templateName = insNode.GetAttributeOrThrow("template");
         if (templateCells.count(templateName) == 0)
         {
@@ -113,11 +110,20 @@ namespace hemelb
         auto cell = templateCells.find(templateName)->second->clone();
         auto const flowExtension = readFlowExtension(node, converter);
 
+        // Rotate cell to align z axis with given position, and then z axis with flow
+        // If phi == 0, then cell symmetry axis is aligned with the flow
+        using std::cos; using std::sin;
+        auto const theta = GetDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+        auto const phi = GetDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+        LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
+        auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
+        auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
+        *cell *= rotation;
+
         // Figure out size of cell alongst cylinder axis
         auto const barycenter = cell->GetBarycenter();
         auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
         {
-
           return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
         };
         auto const maxZ =
@@ -149,21 +155,38 @@ namespace hemelb
         // Note: c++14 will allow more complex captures. Until then, we will need to create
         // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
         // variables should live as long as the lambda. But longuer than a single call.
+        auto const timeStep = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
+        auto const dt = GetDimensionalValue<PhysicalTime>(insNode, "delta_t", "s", converter, 0e0);
         auto time = std::make_shared<PhysicalTime>
         (
-          deltaTime - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset
+          timeStep - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset
         );
-        auto condition = [time, deltaTime, offset]()
+        auto condition = [time, timeStep, dt, offset]()
         {
           *time += 1e0;
-          if(*time >= deltaTime)
+          if(*time >= timeStep)
           {
-            *time -= deltaTime;
+            *time -= timeStep + dt * (double(rand() % 10000) / 10000.e0);
             return true;
           }
           return false;
         };
-        return RBCInserter(condition, std::move(cell));
+        auto const dtheta
+          = GetDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
+        auto const dphi
+          = GetDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
+        auto const dx
+          = GetDimensionalValue<PhysicalDistance>(insNode, "delta_x", "m", converter, 0e0);
+        auto const dy
+          = GetDimensionalValue<PhysicalDistance>(insNode, "delta_y", "m", converter, 0e0);
+        return RBCInserterWithPerturbation
+        (
+            condition, std::move(cell),
+            rotation,
+            dtheta, dphi,
+            rotateToFlow * LatticePosition(dx, 0, 0),
+            rotateToFlow * LatticePosition(0, dy, 0)
+        );
       }
     }
 

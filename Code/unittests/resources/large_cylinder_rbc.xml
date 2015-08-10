@@ -28,6 +28,11 @@
       <insertcell template="default">
         <every units="s" value="2e-3"/>
         <offset units="s" value="40e-8"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0e0"/>
+        <delta_phi units="rad" value="0e0"/>
       </insertcell>
     </inlet>
   </inlets>
