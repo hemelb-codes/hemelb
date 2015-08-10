@@ -30,7 +30,9 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellInserterTests);
           CPPUNIT_TEST (testNoPeriodicInsertion);
           CPPUNIT_TEST (testCellOutsideFlowExtension);
-          CPPUNIT_TEST (testPeriodicInsertion);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testPeriodicInsertion);
+          CPPUNIT_TEST (testTranslation);
+          CPPUNIT_TEST_SUITE_END();
 
         public:
 
@@ -131,11 +133,35 @@ namespace hemelb
               was_called = false;
             }
           }
+
+          void testTranslation()
+          {
+            auto const identity = rotationMatrix(LatticePosition(0, 0, 1), LatticePosition(0, 0, 1));
+            RBCInserterWithPerturbation inserter
+            (
+              []() { return true; }, cells["joe"]->clone(),
+              identity, 0e0, 0e0,
+              LatticePosition(2, 0, 0), LatticePosition(0, 4, 0)
+            );
+
+            auto const barycenter = cells["joe"]->GetBarycenter();
+            for(size_t i(0); i < 500; ++i)
+            {
+              auto const cell = inserter.drop();
+              auto const n = cell->GetBarycenter();
+              HEMELB_CAPTURE3(n, barycenter, n - barycenter);
+              CPPUNIT_ASSERT(std::abs(n.x - barycenter.x) <= 2e0);
+              CPPUNIT_ASSERT(std::abs(n.y - barycenter.y) <= 4e0);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.z, n.z, 1e-8);
+            }
+          }
+
         private:
           std::unique_ptr<util::UnitConverter> converter;
           PhysicalTime every, offset;
           TemplateCellContainer cells;
       };
+
 
       CPPUNIT_TEST_SUITE_REGISTRATION (CellInserterTests);
     } // namespace: redblood
