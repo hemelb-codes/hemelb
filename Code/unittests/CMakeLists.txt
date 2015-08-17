@@ -55,5 +55,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/large_cylinder.gmy resources/large_cylinder.xml
   resources/large_cylinder_rbc.xml resources/iccb_capillary_network.xml
   resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy
-  resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_777778_1000_3.gmy
+  resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy
 )
