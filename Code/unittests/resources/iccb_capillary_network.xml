@@ -1,0 +1,155 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <step_length units="s" value="1.260288e-08" />
+    <steps units="lattice" value="3900" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="3.88889e-07" />
+    <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" />
+  </simulation>
+  
+  <geometry>
+    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" />
+  </geometry>
+  
+  <inlets>
+    <inlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.6" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.0676185870138,0.997184447299,0.0)" />
+      <position units="m" value="(0.000148903942594,1.72330174871e-05,0.0)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="7e-06" />
+      </flowextension>
+      <insertcell template="default">
+        <every units="s" value="1e-4"/>
+        <offset units="s" value="40e-8"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0e0"/>
+        <delta_phi units="rad" value="0e0"/>
+      </insertcell>      
+    </inlet>
+  </inlets>
+  
+  <outlets>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.948276136137,-0.317446640608,0.0)" />
+      <position units="m" value="(1.41604021878e-05,0.000115758478581,0.0)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="8e-06" />
+      </flowextension>      
+    </outlet>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.820693962628,-0.571368024749,0.0)" />
+      <position units="m" value="(4.55450800422e-05,0.000207129017315,0.0)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="8e-06" />
+      </flowextension>      
+    </outlet>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(-0.549252152188,-0.835656671916,4.71844785466e-16)" />
+      <position units="m" value="(0.000124954094823,0.000207275883169,3.435015748e-08)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="10e-6" />
+        <fadelength units="m" value="8e-06" />
+      </flowextension>
+    </outlet>
+  </outlets>
+
+  <properties>
+    <propertyoutput period="3900" file="wholegeometry_vel_pres_stress.dat">
+      <geometry type="whole"/>
+      <field type="velocity"/>
+      <field type="pressure"/>
+      <field type="shearrate"/>
+      <field type="tangentialprojectiontraction"/>
+    </propertyoutput>
+    <propertyoutput period="3900" file="surface_stress.dat">
+      <geometry type="surface"/>
+      <field type="pressure"/>
+      <field type="tangentialprojectiontraction"/>
+    </propertyoutput>
+  </properties>
+
+  <monitoring>
+    <steady_flow_convergence tolerance="1e-4" terminate="false">
+      <criterion type="velocity" value="0.001" units="m/s"/>
+    </steady_flow_convergence>
+    <incompressibility/>
+  </monitoring>
+
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>
+  
+  <redbloodcells>
+    <controller>
+      <halo units="m" value="2e-6" />
+      <boxsize units="m" value="100e-6" /> <!-- It should be a 3 lattice site box centred on the search point -->
+    </controller>
+    <cells>
+      <cell name="default">
+        <moduli>
+          <bending units="Nm" value="2e-19" />
+          <surface units="LB" value="1e0" />
+          <volume units="LB" value="1e0" />
+          <dilation units="N/m" value="5e-1" />
+          <strain units="N/m" value="5e-6" />
+        </moduli>
+        <interaction>
+          <intensity units="N" value="0e-6" />
+          <cutoffdistance units="LB" value="1.0" />
+          <exponent value="2"/>
+        </interaction>
+        <shape mesh_path="red_blood_cell.txt" />
+        <scale units="m" value="6e-06" />
+      </cell>
+    </cells>
+  </redbloodcells>
+    
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+</hemelbsettings>
