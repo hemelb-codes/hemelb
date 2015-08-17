@@ -9,7 +9,8 @@
   </simulation>
   
   <geometry>
-    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" />
+    <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> -->
+    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_777778_1000_3.gmy" />
   </geometry>
   
   <inlets>

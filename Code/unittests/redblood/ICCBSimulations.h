@@ -34,6 +34,7 @@ namespace hemelb
             FolderTestFixture::setUp();
             CopyResourceToTempdir("iccb_capillary_network.xml");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy");
+            CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_777778_1000_3.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
 
             argv[0] = "hemelb";
@@ -89,7 +90,6 @@ namespace hemelb
           char const * argv[7];
 
       };
-      // Extra lines needed by CPPUNIT_TEST_SUITE_REGISTRATION
       // Extra lines needed by CPPUNIT_TEST_SUITE_REGISTRATION
       // Don't register the unit test so it's not run by default as part of CI.
       // Uncomment the line below in order to run the test with:
