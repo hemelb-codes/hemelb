@@ -34,7 +34,7 @@ namespace hemelb
             FolderTestFixture::setUp();
             CopyResourceToTempdir("iccb_capillary_network.xml");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy");
-            CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_777778_1000_3.gmy");
+            CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
 
             argv[0] = "hemelb";
@@ -60,7 +60,7 @@ namespace hemelb
             unsigned timestep = 0;
             auto output_callback = [this, &timestep](const hemelb::redblood::CellContainer & cells)
             {
-              if ((timestep % 1000) == 0)
+              if ((timestep % 3000) == 0)
               {
                 for (auto cell: cells)
                 {

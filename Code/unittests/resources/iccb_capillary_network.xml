@@ -1,17 +1,19 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="1.260288e-08" />
-    <steps units="lattice" value="4000" />
+    <steps units="lattice" value="40000" />
     <stresstype value="1" />
-    <voxel_size units="m" value="3.88889e-07" />
-    <!-- <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" /> --> <!-- min 10 sites -->
-    <origin units="m" value="(1.24281644303e-05,9.39430166141e-06,-1.12766943408e-05)" /> <!-- min 5 sites -->
+    <!-- <step_length units="s" value="1.260288e-08" /> --> <!-- min 10 sites -->
+    <!-- <voxel_size units="m" value="3.88889e-07" /> -->
+    <!-- <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" /> -->
+    <step_length units="s" value="6.380208e-08" /> <!-- min 5 sites -->    
+    <voxel_size units="m" value="8.75e-07" />
+    <origin units="m" value="(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)" />
   </simulation>
   
   <geometry>
     <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> --> <!-- min 10 sites -->
-    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_777778_1000_3.gmy" /> <!-- min 5 sites -->
+    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy" /> <!-- min 5 sites -->
   </geometry>
   
   <inlets>
@@ -30,7 +32,7 @@
         <fadelength units="m" value="7e-06" />
       </flowextension>
       <insertcell template="default">
-        <every units="s" value="1e-4"/>
+        <every units="s" value="2e-3"/>
         <offset units="s" value="40e-8"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
@@ -139,7 +141,7 @@
           <strain units="N/m" value="5e-6" />
         </moduli>
         <interaction>
-          <intensity units="N" value="0e-6" />
+          <intensity units="N" value="2e-19" />
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
