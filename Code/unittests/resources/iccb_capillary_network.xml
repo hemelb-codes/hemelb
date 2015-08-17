@@ -3,17 +3,22 @@
   <simulation>
     <steps units="lattice" value="40000" />
     <stresstype value="1" />
-    <!-- <step_length units="s" value="1.260288e-08" /> --> <!-- min 10 sites -->
-    <!-- <voxel_size units="m" value="3.88889e-07" /> -->
-    <!-- <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" /> -->
-    <step_length units="s" value="6.380208e-08" /> <!-- min 5 sites -->    
-    <voxel_size units="m" value="8.75e-07" />
-    <origin units="m" value="(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)" />
+    
+    <!-- min 10 sites -->
+    <step_length units="s" value="1.260288e-08" /> 
+    <voxel_size units="m" value="3.88889e-07" />
+    <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" />
+    
+    <!-- min 5 sites -->
+    <!-- <step_length units="s" value="6.380208e-08" /> -->
+    <!-- <voxel_size units="m" value="8.75e-07" /> -->
+    <!-- <origin units="m" value="(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)" /> -->
+    
   </simulation>
   
   <geometry>
-    <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> --> <!-- min 10 sites -->
-    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy" /> <!-- min 5 sites -->
+    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> <!-- min 10 sites -->
+    <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy" /> --> <!-- min 5 sites -->
   </geometry>
   
   <inlets>
@@ -28,7 +33,7 @@
       <position units="m" value="(0.000148903942594,1.72330174871e-05,0.0)" />
       <flowextension>
         <length units="m" value="10e-6" />
-        <radius units="m" value="8e-6" />
+        <radius units="m" value="9e-6" />
         <fadelength units="m" value="7e-06" />
       </flowextension>
       <insertcell template="default">
@@ -55,7 +60,7 @@
       <position units="m" value="(1.41604021878e-05,0.000115758478581,0.0)" />
       <flowextension>
         <length units="m" value="10e-6" />
-        <radius units="m" value="8e-6" />
+        <radius units="m" value="9e-6" />
         <fadelength units="m" value="8e-06" />
       </flowextension>      
     </outlet>
@@ -70,7 +75,7 @@
       <position units="m" value="(4.55450800422e-05,0.000207129017315,0.0)" />
       <flowextension>
         <length units="m" value="10e-6" />
-        <radius units="m" value="8e-6" />
+        <radius units="m" value="9e-6" />
         <fadelength units="m" value="8e-06" />
       </flowextension>      
     </outlet>
@@ -85,7 +90,7 @@
       <position units="m" value="(0.000124954094823,0.000207275883169,3.435015748e-08)" />
       <flowextension>
         <length units="m" value="10e-6" />
-        <radius units="m" value="8e-6" />
+        <radius units="m" value="9e-6" />
         <fadelength units="m" value="8e-06" />
       </flowextension>
     </outlet>
@@ -145,8 +150,8 @@
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
-        <shape mesh_path="red_blood_cell.txt" />
-        <scale units="m" value="6e-06" />
+        <shape mesh_path="rbc_ico_1280.msh" />
+        <scale units="m" value="4.1e-06" /> <!-- The radius of the template cell is 1, therefore the radius of the RBC will be equal to scale (RBC diameter typically 6.2-8.2um) -->
       </cell>
     </cells>
   </redbloodcells>
