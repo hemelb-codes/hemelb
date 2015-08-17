@@ -146,7 +146,7 @@ namespace hemelb
               this->fillers.push_back(result);
               return result;
             };
-            buffer->SetNewCellFunction(filler);
+            buffer->SetCellDistributionFunction(filler);
             buffer->SetInteraction(0.6);
             buffer->SetOffset(0);
           }

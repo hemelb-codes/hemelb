@@ -24,12 +24,14 @@ namespace hemelb
       class Buffer
       {
         public:
+          //! Signature of a function returning a new cell at each call
+          typedef std::function<CellContainer::value_type()> CellDistributionFunction;
           //! Constructs buffer from geometry and cells
           //! \param[in] cyl: Geometric description of the buffer
           //!     The origin of the cylinder is the drop point in the coordinates of LB. The normal
           //!     should point from the region nearest to drop point to furthest from drop point. It
           //!     is co-linear with the axis of the cylinder.
-          //! \param[in] cells: Current cells in the buffer
+          //! \param[in] cells: Virtuals cells at input.
           Buffer(std::shared_ptr<Cylinder> cyl, CellContainer const& cells = CellContainer()) :
               geometry(cyl), virtuals(cells), offset(0), interactionRadius(0), numberOfRequests(0)
           {
@@ -67,7 +69,7 @@ namespace hemelb
           {
             return numberOfRequests;
           }
-          void SetNewCellFunction(std::function<CellContainer::value_type()> const &func)
+          void SetCellDistributionFunction(CellDistributionFunction const &func)
           {
             getNewVirtualCell = func;
           }
@@ -90,7 +92,7 @@ namespace hemelb
           //! Number of requests cells for drop-off
           site_t numberOfRequests;
           //! when called, returns a new cell to add to the buffer
-          std::function<CellContainer::value_type()> getNewVirtualCell;
+          CellDistributionFunction getNewVirtualCell;
 
           //! Inserts a cell. Does not check whether it is inside the geometry of the buffer, nor
           //! whether it overlaps with other cells.
