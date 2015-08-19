@@ -197,7 +197,7 @@ namespace hemelb
          * Gets the box size for the RBC CellController.
          * @return
          */
-        PhysicalDistance GetBoxSize() const
+        LatticeDistance GetBoxSize() const
         {
           return boxSize;
         }
@@ -206,7 +206,7 @@ namespace hemelb
          * Gets the halo for the RBC CellController.
          * @return
          */
-        PhysicalDistance GetHalo() const
+        LatticeDistance GetHalo() const
         {
           return halo;
         }
@@ -340,7 +340,7 @@ namespace hemelb
          */
         bool hasRBCSection;
         std::function<void(redblood::CellInserter const&)> rbcinserter;
-        PhysicalDistance boxSize, halo;
+        LatticeDistance boxSize, halo;
         std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
         std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
 
