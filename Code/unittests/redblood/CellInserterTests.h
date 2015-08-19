@@ -149,7 +149,6 @@ namespace hemelb
             {
               auto const cell = inserter.drop();
               auto const n = cell->GetBarycenter();
-              HEMELB_CAPTURE3(n, barycenter, n - barycenter);
               CPPUNIT_ASSERT(std::abs(n.x - barycenter.x) <= 2e0);
               CPPUNIT_ASSERT(std::abs(n.y - barycenter.y) <= 4e0);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(barycenter.z, n.z, 1e-8);
