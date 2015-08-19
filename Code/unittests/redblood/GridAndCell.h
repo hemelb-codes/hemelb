@@ -141,7 +141,7 @@ namespace hemelb
 #define HEMELB_LINEAR_VELOCITY_PROFILE(GRADIENT)                             \
   LatticePosition gradient;                                                  \
   Dimensionless non_neg_pop;                                                 \
-  std::function<Dimensionless(PhysicalVelocity const &)> linear, linear_inv; \
+  std::function<Dimensionless(LatticeVelocity const &)> linear, linear_inv;  \
   std::tie(non_neg_pop, gradient, linear, linear_inv) =                      \
     helpers::makeLinearProfile(CubeSize(), latDat, GRADIENT);
 
@@ -149,7 +149,7 @@ namespace hemelb
       {
         helpers::ZeroOutFOld(latDat);
 
-        HEMELB_LINEAR_VELOCITY_PROFILE(PhysicalVelocity(2., 4., 6.));
+        HEMELB_LINEAR_VELOCITY_PROFILE(LatticeVelocity(2., 4., 6.));
         // Test assumes static pop at index == 0 as assumed by macro
         CPPUNIT_ASSERT_DOUBLES_EQUAL(D3Q15::CX[0], 0e0, 1e-8);
         CPPUNIT_ASSERT_DOUBLES_EQUAL(D3Q15::CY[0], 0e0, 1e-8);
@@ -222,14 +222,14 @@ namespace hemelb
         typedef std::vector<LatticePosition>::const_iterator const_iterator;
         LatticeDistance const x0 = gradient.Dot(mesh.GetVertices()[0]), x1 =
             gradient.Dot(mesh.GetVertices()[1]);
-        PhysicalVelocity const v0 = displacements[0], v1 = displacements[1];
+        LatticeVelocity const v0 = displacements[0], v1 = displacements[1];
         MeshData::Vertices::const_iterator i_vertex(mesh.GetVertices().begin() + 2);
         const_iterator i_disp = displacements.begin() + 2;
         const_iterator const i_end = displacements.end();
 
         for (; i_disp != i_end; ++i_disp, ++i_vertex)
         {
-          PhysicalVelocity const expected( (v0 - v1) * ( (i_vertex->Dot(gradient) - x1) / (x0 - x1))
+          LatticeVelocity const expected( (v0 - v1) * ( (i_vertex->Dot(gradient) - x1) / (x0 - x1))
               + v1);
           CPPUNIT_ASSERT(helpers::is_zero(*i_disp - expected));
         }
@@ -398,13 +398,13 @@ namespace hemelb
         helpers::SetWallDistance(latDat, 0.3);
 
         // Each test case comes with cutoff distance and mesh position
-        PhysicalDistance const cutoffs[] = { 0.25, 0.35, 0.35, std::sqrt(0.2 * 0.2 + 2) + 0.1, -1, // Stops loop!!!
+        LatticeDistance const cutoffs[] = { 0.25, 0.35, 0.35, std::sqrt(0.2 * 0.2 + 2) + 0.1, -1, // Stops loop!!!
             };
-        LatticePosition const positions[] = { wetwall.cast<PhysicalDistance>(), wetwall.cast<
-            PhysicalDistance>(),
-                                              wetwall.cast<PhysicalDistance>()
+        LatticePosition const positions[] = { wetwall.cast<LatticeDistance>(), wetwall.cast<
+            LatticeDistance>(),
+                                              wetwall.cast<LatticeDistance>()
                                                   - LatticePosition(0, 0.2, 0),
-                                              wetwall.cast<PhysicalDistance>()
+                                              wetwall.cast<LatticeDistance>()
                                                   - LatticePosition(0, 0.2, 0) };
         bool const expected[] = { true,
                                   true,

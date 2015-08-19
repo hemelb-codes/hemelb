@@ -40,12 +40,12 @@ namespace hemelb
           CellBase::GetVertices().push_back(pos);
         }
 
-        virtual PhysicalEnergy operator()() const override
+        virtual LatticeEnergy operator()() const override
         {
           throw Exception() << "This object is a fake.";
         }
 
-        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override
+        virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const override
         {
           throw Exception() << "This object is a fake.";
         }

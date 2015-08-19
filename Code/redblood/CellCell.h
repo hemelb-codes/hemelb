@@ -121,8 +121,8 @@ namespace hemelb
         class pair_range;
 
         //! Constructor
-        DivideConquerCells(CellContainer const &cells, PhysicalDistance boxsize,
-                           PhysicalDistance halosize);
+        DivideConquerCells(CellContainer const &cells, LatticeDistance boxsize,
+                           LatticeDistance halosize);
 
         //! Gets all nodes in a box
         const_range operator()(LatticeVector const &pos) const;
@@ -195,15 +195,15 @@ namespace hemelb
         }
 
         //! Loops over pair of vertices closer than input distance
-        pair_range pair_begin(PhysicalDistance maxdist) const;
+        pair_range pair_begin(LatticeDistance maxdist) const;
 
         //! Distance from border below which an object is in the halo
-        PhysicalDistance GetHaloLength() const
+        LatticeDistance GetHaloLength() const
         {
           return haloLength;
         }
         //! Size of each box
-        PhysicalDistance GetBoxSize() const
+        LatticeDistance GetBoxSize() const
         {
           return base_type::GetBoxSize();
         }
@@ -226,7 +226,7 @@ namespace hemelb
 
       protected:
         //! Distance from border below which an object is in the halo
-        PhysicalDistance const haloLength;
+        LatticeDistance const haloLength;
         //! Container of cells
         CellContainer cells;
     };
@@ -241,7 +241,7 @@ namespace hemelb
 
         //! Constructs a pair range iterator
         pair_range(DivideConquerCells const &owner, iterator const &begin, iterator const &end,
-                   PhysicalDistance maxdist);
+                   LatticeDistance maxdist);
 
         //! Whether current iteration is valid
         bool is_valid() const
@@ -276,7 +276,7 @@ namespace hemelb
 
       protected:
         //! Maximum distance for which to report pair
-        PhysicalDistance maxdist;
+        LatticeDistance maxdist;
         //! Current box we are working on
         CellReference::Borders box;
         //! Iterator for main item

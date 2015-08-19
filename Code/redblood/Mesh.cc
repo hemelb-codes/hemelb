@@ -210,11 +210,11 @@ namespace hemelb
     {
       return barycenter(mesh.vertices);
     }
-    PhysicalVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    LatticeVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
-      PhysicalVolume result(0);
+      LatticeVolume result(0);
 
       for (; i_facet != i_facet_end; ++i_facet)
       {
@@ -225,18 +225,18 @@ namespace hemelb
       }
 
       // Minus sign comes from outward facing facet orientation
-      return -result / PhysicalVolume(6);
+      return -result / LatticeVolume(6);
     }
-    PhysicalVolume volume(MeshData const &mesh)
+    LatticeVolume volume(MeshData const &mesh)
     {
       return volume(mesh.vertices, mesh.facets);
     }
 
-    PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
+    LatticeVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets)
     {
       MeshData::Facets::const_iterator i_facet = facets.begin();
       MeshData::Facets::const_iterator const i_facet_end(facets.end());
-      PhysicalVolume result(0);
+      LatticeVolume result(0);
 
       for (; i_facet != i_facet_end; ++i_facet)
       {
@@ -248,7 +248,7 @@ namespace hemelb
 
       return result * 0.5;
     }
-    PhysicalArea area(MeshData const &mesh)
+    LatticeArea area(MeshData const &mesh)
     {
       return area(mesh.vertices, mesh.facets);
     }
@@ -562,7 +562,7 @@ namespace hemelb
       // First creates the simplest icosphere
       // Dumbly copied from
       // http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
-      PhysicalDistance const t = 0.5 * (1. + std::sqrt(5.0));
+      LatticeDistance const t = 0.5 * (1. + std::sqrt(5.0));
       mesh->vertices.clear();
       mesh->vertices.emplace_back(-1, t, 0);
       mesh->vertices.emplace_back(1, t, 0);

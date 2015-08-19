@@ -65,11 +65,11 @@ namespace hemelb
                             LatticePosition const &dir, size_t node, double epsilon = 1e-8)
         {
           std::vector<LatticeForceVector> forces(4, LatticeForceVector(0, 0, 0));
-          PhysicalEnergy const firstE(gradient(mesh, forces));
+          LatticeEnergy const firstE(gradient(mesh, forces));
 
           redblood::MeshData newmesh(mesh);
           newmesh.vertices[node] += dir * epsilon;
-          PhysicalEnergy const deltaE(energy(newmesh) - firstE);
+          LatticeEnergy const deltaE(energy(newmesh) - firstE);
 
           double const tolerance(std::max(std::abs( (deltaE / epsilon) * 1e-4), 1e-8));
           CPPUNIT_ASSERT_DOUBLES_EQUAL(-(deltaE / epsilon), forces[node].Dot(dir), tolerance);
@@ -143,7 +143,7 @@ namespace hemelb
     };
 
     template<class CELLTYPE = redblood::Cell>
-    redblood::CellContainer TwoPancakeSamosas(PhysicalDistance cutoff)
+    redblood::CellContainer TwoPancakeSamosas(LatticeDistance cutoff)
     {
       redblood::CellContainer cells;
       redblood::Mesh pancake = redblood::pancakeSamosa();

@@ -57,10 +57,10 @@ namespace hemelb
 
     LatticePosition barycenter(MeshData const &mesh);
     LatticePosition barycenter(MeshData::Vertices const &vertices);
-    PhysicalVolume volume(MeshData const &mesh);
-    PhysicalVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
-    PhysicalArea area(MeshData const &mesh);
-    PhysicalVolume area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
+    LatticeVolume volume(MeshData const &mesh);
+    LatticeVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
+    LatticeArea area(MeshData const &mesh);
+    LatticeArea area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     //! Orients facet inward, or inward
     void orientFacets(MeshData &mesh, bool outward=true);
 
@@ -139,12 +139,12 @@ namespace hemelb
           return barycenter(*mesh);
         }
         //! Computes volume of the mesh
-        PhysicalVolume GetVolume() const
+        LatticeVolume GetVolume() const
         {
           return volume(*mesh);
         }
         //! Computes area of the mesh
-        PhysicalArea GetArea() const
+        LatticeArea GetArea() const
         {
           return area(*mesh);
         }

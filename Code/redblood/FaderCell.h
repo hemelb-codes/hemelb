@@ -86,9 +86,9 @@ namespace hemelb
 
         // inheriting constructors
         //! Facet bending energy
-        virtual PhysicalEnergy operator()() const override;
+        virtual LatticeEnergy operator()() const override;
         //! Facet bending energy
-        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
+        virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const override;
         //! Node-Wall interaction
         virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
                                                         LatticePosition const &wall) const override

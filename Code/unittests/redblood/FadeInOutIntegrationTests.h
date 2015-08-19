@@ -61,7 +61,7 @@ namespace hemelb
             auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)*1e12;
             auto checkVolume = [volumeFactor]( const hemelb::redblood::CellContainer & cells)
             {
-              static PhysicalVolume expected = -1e0;
+              static LatticeVolume expected = -1e0;
               if(cells.empty())
               {
                 return;

@@ -52,7 +52,7 @@ namespace hemelb
           // Returns edges
           LatticePosition edge(size_t i) const;
           // Returns edge length
-          PhysicalDistance length(size_t i) const;
+          LatticeDistance length(size_t i) const;
           // Returns angle cosine
           Dimensionless cosine() const;
           // Returns angle sine
@@ -64,7 +64,7 @@ namespace hemelb
           // Unit vector normal to facet
           LatticePosition unitNormal() const;
           // Area of the facet
-          PhysicalArea area() const;
+          LatticeArea area() const;
       };
 
       // Facet that also includes forces
@@ -127,7 +127,7 @@ namespace hemelb
             return LatticePosition(0, 0, 0);
         };
       }
-      PhysicalDistance Facet::length(size_t i) const
+      LatticeDistance Facet::length(size_t i) const
       {
         return edge(i).GetMagnitude();
       }
@@ -151,7 +151,7 @@ namespace hemelb
       {
         return normal().Normalise();
       }
-      PhysicalArea Facet::area() const
+      LatticeArea Facet::area() const
       {
         return normal().GetMagnitude() * 0.5;
       }
@@ -264,7 +264,7 @@ namespace hemelb
       LatticePosition displacements(Facet const &deformed, Facet const &ref,
                                     Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalDistance const dlength0 = deformed.length(0), rlength0 = ref.length(0)
+        LatticeDistance const dlength0 = deformed.length(0), rlength0 = ref.length(0)
             * origMesh_scale, dlength1 = deformed.length(1), rlength1 = ref.length(1)
             * origMesh_scale;
         Dimensionless const dsine = deformed.sine(), rsine = ref.sine();

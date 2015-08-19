@@ -37,7 +37,7 @@ namespace hemelb
         public:
           void setUp()
           {
-            converter.reset(new util::UnitConverter(0.5, 0.6, PhysicalPosition(1, 2, 3)));
+            converter.reset(new util::UnitConverter(0.5, 0.6, LatticePosition(1, 2, 3)));
             // It seems TiXML might take care of deallocation
             auto const parent = new TiXmlElement("parent");
             doc.LinkEndChild(parent);
@@ -178,7 +178,7 @@ namespace hemelb
         private:
           TiXmlDocument doc;
           std::unique_ptr<util::UnitConverter> converter;
-          PhysicalDistance scale;
+          LatticeDistance scale;
       };
 
 

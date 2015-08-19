@@ -44,11 +44,11 @@ namespace hemelb
           {
           }
 
-          PhysicalEnergy operator()() const override
+          LatticeEnergy operator()() const override
           {
             return 1.0;
           }
-          PhysicalEnergy operator()(std::vector<LatticeForceVector> & forces) const override
+          LatticeEnergy operator()(std::vector<LatticeForceVector> & forces) const override
           {
             int i(1);
             for (auto& force : forces)

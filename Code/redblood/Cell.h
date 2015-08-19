@@ -46,7 +46,7 @@ namespace hemelb
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
         CellBase(MeshData::Vertices &&verticesIn, Mesh const &origMesh,
-                 PhysicalDistance scale = 1e0, std::string const &templateName = "default");
+                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
         //! \brief Initializes mesh from mesh data
         //! \param [in] verticesIn: deformable vertices that define the cell. These
         //!    values are *not* modified by the scale.
@@ -56,7 +56,7 @@ namespace hemelb
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
         CellBase(MeshData::Vertices const &verticesIn, Mesh const &origMesh,
-                 PhysicalDistance scale = 1e0, std::string const &templateName = "default");
+                 LatticeDistance scale = 1e0, std::string const &templateName = "default");
 
         //! \brief Initializes mesh from mesh data
         //! \param [in] mesh: deformable vertices that define the cell are copied
@@ -66,7 +66,7 @@ namespace hemelb
         //! \param [in] scale: scales template by a given amount
         //!    The scale is added during internal operations. The template will still
         //!    refer to the same data in memory.
-        CellBase(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scale = 1e0,
+        CellBase(Mesh const &mesh, Mesh const &origMesh, LatticeDistance scale = 1e0,
                  std::string const &templateName = "default");
 
         //! \brief Initializes mesh from mesh data
@@ -113,16 +113,16 @@ namespace hemelb
         site_t GetNumberOfNodes() const;
 
         //! Facet bending energy
-        virtual PhysicalEnergy operator()() const = 0;
+        virtual LatticeEnergy operator()() const = 0;
         //! Facet bending energy - pretty printing for shared ptr
-        PhysicalEnergy Energy() const
+        LatticeEnergy Energy() const
         {
           return operator()();
         }
         //! Facet bending energy
-        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
+        virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const = 0;
         //! Facet bending energy - pretty printing for shared ptr
-        PhysicalEnergy Energy(std::vector<LatticeForceVector> &in) const
+        LatticeEnergy Energy(std::vector<LatticeForceVector> &in) const
         {
           return operator()(in);
         }
@@ -152,15 +152,15 @@ namespace hemelb
         void operator+=(std::vector<LatticePosition> const &displacements);
 
         MeshData::Vertices::value_type GetBarycenter() const;
-        PhysicalVolume GetVolume() const
+        LatticeVolume GetVolume() const
         {
           return volume(GetVertices(), GetTemplateMesh().GetFacets());
         }
 
         //! Scale to apply to the template mesh
-        void SetScale(PhysicalDistance scale);
+        void SetScale(LatticeDistance scale);
         //! Scale to apply to the template mesh
-        PhysicalDistance GetScale() const;
+        LatticeDistance GetScale() const;
 
         // cloneImpl is virtual and returns a pointer to abstract class
         // clone will be overriden. It will call cloneImpl and cast it to derived type.
@@ -210,22 +210,22 @@ namespace hemelb
         {
           public:
             //! Bending energy parameter
-            PhysicalPressure bending;
+            LatticeModulus bending;
             //! Surface energy parameter
-            PhysicalPressure surface;
+            LatticeModulus surface;
             //! Volume energy parameter
-            PhysicalPressure volume;
+            LatticeModulus volume;
             //! Skalak dilation modulus
-            PhysicalPressure dilation;
+            LatticeModulus dilation;
             //! Skalak strain modulus
-            PhysicalPressure strain;
+            LatticeModulus strain;
 
-            Moduli(PhysicalPressure b = 0, PhysicalPressure s = 0, PhysicalPressure v = 0,
-                   PhysicalPressure d = 0, PhysicalPressure st = 0) :
+            Moduli(LatticeModulus b = 0, LatticeModulus s = 0, LatticeModulus v = 0,
+                   LatticeModulus d = 0, LatticeModulus st = 0) :
                 bending(b), surface(s), volume(v), dilation(d), strain(s)
             {
             }
-            Moduli(std::initializer_list<PhysicalPressure> const &l)
+            Moduli(std::initializer_list<LatticeModulus> const &l)
             {
               bending = l.size() > 0 ?
                 *l.begin() :
@@ -248,18 +248,18 @@ namespace hemelb
         Node2NodeForce nodeWall;
 
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
-        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, PhysicalDistance scale = 1e0,
+        Cell(MeshData::Vertices &&verticesIn, Mesh const &origMesh, LatticeDistance scale = 1e0,
              std::string const & templateName = "default") :
             CellBase(std::move(verticesIn), origMesh, scale, templateName)
         {
         }
-        Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, PhysicalDistance scale =
+        Cell(MeshData::Vertices const &verticesIn, Mesh const &origMesh, LatticeDistance scale =
                  1e0,
              std::string const & templateName = "default") :
             CellBase(verticesIn, origMesh, scale, templateName)
         {
         }
-        Cell(Mesh const &mesh, Mesh const &origMesh, PhysicalDistance scale = 1e0,
+        Cell(Mesh const &mesh, Mesh const &origMesh, LatticeDistance scale = 1e0,
              std::string const & templateName = "default") :
             CellBase(mesh, origMesh, scale, templateName)
         {
@@ -288,9 +288,9 @@ namespace hemelb
         }
 
         //! Facet bending energy
-        virtual PhysicalEnergy operator()() const override;
+        virtual LatticeEnergy operator()() const override;
         //! Facet bending energy
-        virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &in) const override;
+        virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &in) const override;
         //! Node-Wall interaction
         virtual LatticeForceVector WallInteractionForce(LatticePosition const &vertex,
                                                         LatticePosition const &wall) const override
@@ -313,9 +313,9 @@ namespace hemelb
         std::unique_ptr<CellBase> cloneImpl() const override;
 
         // Computes facet bending energy over all facets
-        PhysicalEnergy facetBending() const;
+        LatticeEnergy facetBending() const;
         // Computes facet bending energy over all facets
-        PhysicalEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
+        LatticeEnergy facetBending(std::vector<LatticeForceVector> &forces) const;
     };
     static_assert(
         (not std::is_default_constructible<Cell>::value)

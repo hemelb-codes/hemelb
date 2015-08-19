@@ -40,12 +40,12 @@ namespace hemelb
                 particle.moduli.strain = 1.047524;
                 particle.moduli.dilation = 0.945524;
               }
-              PhysicalEnergy operator()(MeshData const &mesh) const
+              LatticeEnergy operator()(MeshData const &mesh) const
               {
                 particle.GetVertices() = mesh.vertices;
                 return particle();
               }
-              PhysicalEnergy operator()(MeshData const &mesh,
+              LatticeEnergy operator()(MeshData const &mesh,
                                         std::vector<LatticeForceVector> &forces) const
               {
                 particle.GetVertices() = mesh.vertices;

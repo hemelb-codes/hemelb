@@ -26,8 +26,8 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (CellCellInteractionWithGridTests);
           CPPUNIT_TEST (testInteraction);CPPUNIT_TEST_SUITE_END();
 
-          PhysicalDistance const cutoff = 5.0;
-          PhysicalDistance const halo = 2.0;
+          LatticeDistance const cutoff = 5.0;
+          LatticeDistance const halo = 2.0;
 
         public:
           void testInteraction();

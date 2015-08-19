@@ -79,7 +79,7 @@ namespace hemelb
           {
             using namespace hemelb::redblood::buffer;
             auto const r = rotationMatrix(LatticePosition(1, 0, 0), LatticePosition(1, 1, 0));
-            PhysicalDistance const sqrt2 = std::sqrt(2e0);
+            LatticeDistance const sqrt2 = std::sqrt(2e0);
             // a0 maps to b0
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, (r * LatticePosition(sqrt2, 0, 0)).x, 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, (r * LatticePosition(sqrt2, 0, 0)).y, 1e-8);
@@ -98,7 +98,7 @@ namespace hemelb
           {
             using namespace hemelb::redblood::buffer;
             auto const verts = tetrahedron().GetVertices();
-            PhysicalDistance const s2 = std::sqrt(2e0);
+            LatticeDistance const s2 = std::sqrt(2e0);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(verts, LatticePosition(1, 1, 0)), 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(s2, maxExtension(verts, LatticePosition(-1, -1, 0)), 1e-8);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1, maxExtension(verts, LatticePosition(1, 0, 0)), 1e-8);

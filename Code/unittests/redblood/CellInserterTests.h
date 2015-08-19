@@ -44,7 +44,7 @@ namespace hemelb
             cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));
           }
 
-          TiXmlDocument getDocument(PhysicalDistance radius = 1e0, bool noInserter = false)
+          TiXmlDocument getDocument(LatticeDistance radius = 1e0, bool noInserter = false)
           {
             std::ostringstream sstr;
             sstr << "<parent>"
@@ -157,7 +157,7 @@ namespace hemelb
 
         private:
           std::unique_ptr<util::UnitConverter> converter;
-          PhysicalTime every, offset;
+          LatticeTime every, offset;
           TemplateCellContainer cells;
       };
 

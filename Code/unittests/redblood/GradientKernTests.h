@@ -35,7 +35,7 @@ namespace hemelb
     double const epsilon(1e-5);                                             \
     MeshData newmesh(mesh);                                                 \
     newmesh.vertices[node] += normal * epsilon;                             \
-    PhysicalEnergy const deltaE(FUNCTION_CALL);                             \
+    LatticeEnergy const deltaE(FUNCTION_CALL);                              \
     CPPUNIT_ASSERT(helpers::is_zero(deltaE / epsilon));                     \
     for (size_t i(0); i < forces.size(); ++i)                               \
       CPPUNIT_ASSERT(helpers::is_zero(forces[i]));                          \

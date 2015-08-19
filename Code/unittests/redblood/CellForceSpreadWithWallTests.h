@@ -104,13 +104,13 @@ namespace hemelb
         helpers::SetWallDistance(latDat, 0.3);
 
         // Each test case comes with cutoff distance and mesh position
-        PhysicalDistance const cutoffs[] = { 0.25, 0.35, 0.35, std::sqrt(0.2 * 0.2 + 2) + 0.1, -1, // Stops loop!!!
+        LatticeDistance const cutoffs[] = { 0.25, 0.35, 0.35, std::sqrt(0.2 * 0.2 + 2) + 0.1, -1, // Stops loop!!!
             };
-        LatticePosition const positions[] = { wetwall.cast<PhysicalDistance>(), wetwall.cast<
-            PhysicalDistance>(),
-                                              wetwall.cast<PhysicalDistance>()
+        LatticePosition const positions[] = { wetwall.cast<LatticeDistance>(), wetwall.cast<
+            LatticeDistance>(),
+                                              wetwall.cast<LatticeDistance>()
                                                   - LatticePosition(0, 0.2, 0),
-                                              wetwall.cast<PhysicalDistance>()
+                                              wetwall.cast<LatticeDistance>()
                                                   - LatticePosition(0, 0.2, 0) };
         bool const expected[] = { true,
                                   true,

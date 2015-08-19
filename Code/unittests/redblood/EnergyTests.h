@@ -45,15 +45,15 @@ namespace hemelb
           {
             // No difference between original and current mesh
             // Hence energy is zero
-            PhysicalEnergy const actual0(facetBending(mesh.vertices, original, 0, 3, 1e0));
+            LatticeEnergy const actual0(facetBending(mesh.vertices, original, 0, 3, 1e0));
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, actual0, 1e-8);
 
             // Now modify mesh and check "energy" is square of angle difference
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-            PhysicalEnergy const actual1(facetBending(mesh.vertices, original, 0, 3, 1e0));
+            LatticeEnergy const actual1(facetBending(mesh.vertices, original, 0, 3, 1e0));
             mesh.vertices.back()[2] = 1e0;
 
-            PhysicalEnergy const expected(std::pow( (PI / 4e0 - std::acos(1. / std::sqrt(3.))), 2));
+            LatticeEnergy const expected(std::pow( (PI / 4e0 - std::acos(1. / std::sqrt(3.))), 2));
             CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * expected, actual1, 1e-8);
           }
 
@@ -61,16 +61,16 @@ namespace hemelb
           {
             // No difference between original and current mesh
             // Hence energy is zero
-            PhysicalEnergy const actual0(volumeEnergy(mesh.vertices, original, 1e0));
+            LatticeEnergy const actual0(volumeEnergy(mesh.vertices, original, 1e0));
             CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
             // Now modify mesh and check "energy" is square of volume diff
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-            PhysicalEnergy const actual1(volumeEnergy(mesh.vertices,
+            LatticeEnergy const actual1(volumeEnergy(mesh.vertices,
                                                       original,
                                                       2.0 * volume(original)));
 
-            PhysicalEnergy const deltaV(volume(mesh) - volume(original));
+            LatticeEnergy const deltaV(volume(mesh) - volume(original));
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaV * deltaV));
             mesh.vertices.back()[2] = 1e0;
           }
@@ -79,16 +79,16 @@ namespace hemelb
           {
             // No difference between original and current mesh
             // Hence energy is zero
-            PhysicalEnergy const actual0(surfaceEnergy(mesh.vertices, original, 1e0));
+            LatticeEnergy const actual0(surfaceEnergy(mesh.vertices, original, 1e0));
             CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
             // Now modify mesh and check "energy" is square of volume diff
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-            PhysicalEnergy const actual1(surfaceEnergy(mesh.vertices,
+            LatticeEnergy const actual1(surfaceEnergy(mesh.vertices,
                                                        original,
                                                        2.0 * area(original)));
 
-            PhysicalEnergy const deltaS(area(mesh) - area(original));
+            LatticeEnergy const deltaS(area(mesh) - area(original));
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - deltaS * deltaS));
             mesh.vertices.back()[2] = 1e0;
           }
@@ -97,14 +97,14 @@ namespace hemelb
           {
             // No difference between original and current mesh
             // Hence energy is zero
-            PhysicalEnergy const actual0(strainEnergy(mesh.vertices, original, 1e0, 2e0));
+            LatticeEnergy const actual0(strainEnergy(mesh.vertices, original, 1e0, 2e0));
             CPPUNIT_ASSERT(helpers::is_zero(actual0));
 
             // Now modify mesh and check "energy" is square of volume diff
             mesh.vertices.back()[2] = 1e0 / std::sqrt(2.0);
-            PhysicalEnergy const actual1(strainEnergy(mesh.vertices, original, 1e0, 2e0));
+            LatticeEnergy const actual1(strainEnergy(mesh.vertices, original, 1e0, 2e0));
 
-            PhysicalEnergy const regression(0.0865562612162);
+            LatticeEnergy const regression(0.0865562612162);
             CPPUNIT_ASSERT(helpers::is_zero(actual1 - regression));
             mesh.vertices.back()[2] = 1e0;
           }
