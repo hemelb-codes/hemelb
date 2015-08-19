@@ -525,7 +525,7 @@ namespace hemelb
   void SimulationMaster<TRAITS>::DoTimeStep()
   {
     log::Logger::Log<log::Debug, log::OnePerCore>(
-        "Current LB time: %f", simulationState->GetTime());
+        "Current LB time: %e", simulationState->GetTime());
     bool writeImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
       true :
       false;
