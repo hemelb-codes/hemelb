@@ -82,7 +82,7 @@ namespace details
 
           for (size_t i(1); i < LATTICE::NUMVECTORS; ++i)
           {
-            PhysicalDistance const distance = site.GetWallDistance < LATTICE > (i);
+            LatticeDistance const distance = site.GetWallDistance < LATTICE > (i);
 
             if (not site.HasWall(i))
             {

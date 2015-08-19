@@ -38,12 +38,12 @@ namespace hemelb
           using hemelb::redblood::Cell::Cell;
 #         endif 
           //! Facet bending energy
-          virtual PhysicalEnergy operator()() const override
+          virtual LatticeEnergy operator()() const override
           {
             return 0;
           }
           //! Facet bending energy
-          virtual PhysicalEnergy operator()(std::vector<LatticeForceVector> &) const override
+          virtual LatticeEnergy operator()(std::vector<LatticeForceVector> &) const override
           {
             ++nbcalls;
             return 0;
@@ -65,8 +65,8 @@ namespace hemelb
           CPPUNIT_TEST (testCellOutput);
           CPPUNIT_TEST (testFluid2Cell);CPPUNIT_TEST_SUITE_END();
 
-          PhysicalDistance const cutoff = 5.0;
-          PhysicalDistance const halo = 2.0;
+          LatticeDistance const cutoff = 5.0;
+          LatticeDistance const halo = 2.0;
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
 
@@ -165,7 +165,7 @@ namespace hemelb
 
         LatticePosition gradient;
         Dimensionless non_neg_pop;
-        std::function<Dimensionless(PhysicalVelocity const &)> linear, linear_inv;
+        std::function<Dimensionless(LatticeVelocity const &)> linear, linear_inv;
         std::tie(non_neg_pop, gradient, linear, linear_inv) = helpers::makeLinearProfile(CubeSize(),
                                                                                          latDat,
                                                                                          normal);

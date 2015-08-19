@@ -21,9 +21,9 @@ namespace hemelb
     //! \param[in] intensity: K_int, strength of the interaction
     //! \param[in] cutoffDistance: Maximum interaction distance, squared
     //! \param[in] exponent
-    inline PhysicalForce node2NodeForce(PhysicalDistance const distance,
-                                        PhysicalForce const intensity,
-                                        PhysicalDistance const cutoffDistance = 1.0,
+    inline LatticeForce node2NodeForce(LatticeDistance const distance,
+                                        LatticeModulus const intensity,
+                                        LatticeDistance const cutoffDistance = 1.0,
                                         size_t exponent = 2)
     {
       if (distance >= cutoffDistance)
@@ -31,25 +31,25 @@ namespace hemelb
         return 0e0;
       }
 
-      PhysicalDistance const deltaX = 1;
+      LatticeDistance const deltaX = 1;
       return -intensity
           * (std::pow(deltaX / distance, exponent) - std::pow(deltaX / cutoffDistance, exponent));
     }
 
     // Repulsive force between two nodes
     inline LatticeForceVector node2NodeForce(LatticePosition distance,
-                                             PhysicalForce const intensity,
-                                             PhysicalDistance const cutoffDistance = 1.0,
+                                             LatticeModulus const intensity,
+                                             LatticeDistance const cutoffDistance = 1.0,
                                              size_t exponent = 2)
     {
-      PhysicalDistance const d = distance.GetMagnitude();
+      LatticeDistance const d = distance.GetMagnitude();
       return distance * (node2NodeForce(d, intensity, cutoffDistance, exponent) / d);
     }
 
     // Repulsive force felt by A from interaction with B
     inline LatticeForceVector node2NodeForce(LatticePosition A, LatticePosition B,
-                                             PhysicalForce const intensity,
-                                             PhysicalDistance const cutoffDistance = 1.0,
+                                             LatticeModulus const intensity,
+                                             LatticeDistance const cutoffDistance = 1.0,
                                              size_t exponent = 2)
     {
       return node2NodeForce(B - A, intensity, cutoffDistance, exponent);
@@ -60,19 +60,19 @@ namespace hemelb
     {
       public:
         //! Strength of the interaction
-        PhysicalForce intensity;
+        LatticeModulus intensity;
         //! Maximum distance of the interaction
-        PhysicalDistance cutoff;
+        LatticeDistance cutoff;
         //! Power exponent
         size_t exponent;
 
-        Node2NodeForce(PhysicalForce intensity = 0.0, PhysicalDistance cutoff = 1.0,
+        Node2NodeForce(LatticeModulus intensity = 0.0, LatticeDistance cutoff = 1.0,
                        size_t exponent = 2) :
             intensity(intensity), cutoff(cutoff), exponent(exponent)
         {
         }
 
-        PhysicalForce operator()(PhysicalDistance const &distance) const
+        LatticeForce operator()(LatticeDistance const &distance) const
         {
           return node2NodeForce(distance, intensity, cutoff, exponent);
         }

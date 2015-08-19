@@ -35,11 +35,11 @@ namespace hemelb
     CLASS(MeshData const &original) : EnergyFunctional(original)                                   \
     {                                                                                              \
     }                                                                                              \
-    PhysicalEnergy operator()(MeshData const &mesh) const                                          \
+    LatticeEnergy operator()(MeshData const &mesh) const                                           \
     {                                                                                              \
       return FUNCTION(mesh.vertices, original, 1.0);                                               \
     }                                                                                              \
-    PhysicalEnergy operator()(MeshData const &mesh, std::vector<LatticeForceVector> &forces) const \
+    LatticeEnergy operator()(MeshData const &mesh, std::vector<LatticeForceVector> &forces) const  \
     {                                                                                              \
       return FUNCTION(mesh.vertices, original, 1.0, forces);                                       \
     }                                                                                              \
@@ -54,7 +54,7 @@ namespace hemelb
               EnergyFunctional(original)
           {
           }
-          PhysicalEnergy operator()(MeshData const &mesh) const
+          LatticeEnergy operator()(MeshData const &mesh) const
           {
             return facetBending(mesh.vertices, original, 0, 1, 1.0)
                 + facetBending(mesh.vertices, original, 0, 2, 1.0)
@@ -63,7 +63,7 @@ namespace hemelb
                 + facetBending(mesh.vertices, original, 1, 3, 1.0)
                 + facetBending(mesh.vertices, original, 2, 3, 1.0);
           }
-          PhysicalEnergy operator()(MeshData const &mesh,
+          LatticeEnergy operator()(MeshData const &mesh,
                                     std::vector<LatticeForceVector> &forces) const
           {
             return facetBending(mesh.vertices, original, 0, 1, 1.0, forces)
@@ -81,11 +81,11 @@ namespace hemelb
               EnergyFunctional(original)
           {
           }
-          PhysicalEnergy operator()(MeshData const &mesh) const
+          LatticeEnergy operator()(MeshData const &mesh) const
           {
             return strainEnergy(mesh.vertices, original, 1.0, 2.0);
           }
-          PhysicalEnergy operator()(MeshData const &mesh,
+          LatticeEnergy operator()(MeshData const &mesh,
                                     std::vector<LatticeForceVector> &forces) const
           {
             return strainEnergy(mesh.vertices, original, 1.0, 2.0, forces);

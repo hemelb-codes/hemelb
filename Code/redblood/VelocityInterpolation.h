@@ -33,9 +33,9 @@ namespace hemelb
     //! \param[in] stencil: stencil to use for interpolation
     //! \tparam KERNEL: Needed to compute velocity
     template<class KERNEL>
-    PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
-                                         PhysicalPosition const &center,
-                                         stencil::types stencil = stencil::types::FOUR_POINT);
+    LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
+                                        LatticePosition const &center,
+                                        stencil::types stencil = stencil::types::FOUR_POINT);
 
     namespace details
     {
@@ -114,8 +114,8 @@ namespace hemelb
     }
 
     template<class KERNEL>
-    PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
-                                         PhysicalPosition const &center, stencil::types stencil)
+    LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
+                                        LatticePosition const &center, stencil::types stencil)
     {
       auto iterator = interpolationIterator(center, stencil);
       // Computes velocity for a given site index

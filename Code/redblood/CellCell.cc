@@ -21,7 +21,7 @@ namespace hemelb
     {
       template<class T>
       int figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
-                         LatticePosition const &vertex, PhysicalDistance const &haloLength)
+                         LatticePosition const &vertex, LatticeDistance const &haloLength)
       {
         if (haloLength + haloLength > dnc.GetBoxSize())
         {
@@ -46,7 +46,7 @@ namespace hemelb
       template<class T>
       CellReference initCellRef(DivideConquer<T> &dnc, CellContainer::const_iterator cellid,
                                 site_t nodeid, LatticeVector const &key,
-                                LatticePosition const &vertex, PhysicalDistance const &haloLength)
+                                LatticePosition const &vertex, LatticeDistance const &haloLength)
       {
         int const isNearBorder = figureNearness(dnc, key, vertex, haloLength);
         CellReference result = { cellid, nodeid, isNearBorder };
@@ -54,7 +54,7 @@ namespace hemelb
       }
 
       void initializeCells(DivideConquer<CellReference> &dnc, MeshData::Vertices const &vertices,
-                           CellContainer::const_iterator cellid, PhysicalDistance haloLength)
+                           CellContainer::const_iterator cellid, LatticeDistance haloLength)
       {
         typedef DivideConquer<CellReference> DnC;
         typedef DnC::key_type key_type;
@@ -72,7 +72,7 @@ namespace hemelb
       // avoids a warning
 #     ifndef HEMELB_DOING_UNITTESTS
       void initializeCells(DivideConquer<CellReference> &dnc, CellContainer const &cells,
-                           PhysicalDistance haloLength)
+                           LatticeDistance haloLength)
       {
         CellContainer::const_iterator i_first = cells.begin();
         CellContainer::const_iterator const i_end = cells.end();
@@ -88,7 +88,7 @@ namespace hemelb
       template<class T_FUNCTION>
       bool nextDistance(T_FUNCTION const &strictlyLarger, DivideConquerCells::const_iterator &first,
                         DivideConquerCells::const_iterator const &end,
-                        DivideConquerCells::const_iterator const &main, PhysicalDistance dist)
+                        DivideConquerCells::const_iterator const &main, LatticeDistance dist)
       {
         auto const mainCell = main.GetCell();
         typedef DivideConquerCells::const_iterator cit;
@@ -131,8 +131,8 @@ namespace hemelb
     } // anonymous namespace
 #ifndef HEMELB_DOING_UNITTESTS
     //! Constructor
-    DivideConquerCells::DivideConquerCells(CellContainer const &cells, PhysicalDistance boxsize,
-                                           PhysicalDistance halosize) :
+    DivideConquerCells::DivideConquerCells(CellContainer const &cells, LatticeDistance boxsize,
+                                           LatticeDistance halosize) :
         DivideConquer<CellReference>(boxsize), haloLength(halosize), cells(cells)
     {
       initializeCells(*static_cast<base_type *>(this), GetCells(), haloLength);
@@ -257,7 +257,7 @@ namespace hemelb
 
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
-                                               PhysicalDistance maxdist) :
+                                               LatticeDistance maxdist) :
         maxdist(maxdist), box(CellReference::NONE), currents(begin, end), ends(end, end),
             owner(owner)
     {
@@ -289,7 +289,7 @@ namespace hemelb
       }
     }
 
-    DivideConquerCells::pair_range DivideConquerCells::pair_begin(PhysicalDistance maxdist) const
+    DivideConquerCells::pair_range DivideConquerCells::pair_begin(LatticeDistance maxdist) const
     {
       return pair_range(*this, begin(), end(), maxdist);
     }

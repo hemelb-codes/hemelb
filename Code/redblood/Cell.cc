@@ -106,7 +106,7 @@ namespace hemelb
       return data->scale;
     }
 
-    PhysicalEnergy Cell::operator()() const
+    LatticeEnergy Cell::operator()() const
     {
       return facetBending() // facet bending unaffected by template scale
       + volumeEnergy(data->vertices, *data->templateMesh.GetData(), moduli.volume, data->scale)
@@ -120,7 +120,7 @@ namespace hemelb
                          moduli.strain,
                          data->scale);
     }
-    PhysicalEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
+    LatticeEnergy Cell::operator()(std::vector<LatticeForceVector> &forces) const
     {
       assert(forces.size() == data->vertices.size());
       return facetBending(forces)
@@ -142,14 +142,14 @@ namespace hemelb
                          data->scale);
     }
 
-    PhysicalEnergy Cell::facetBending() const
+    LatticeEnergy Cell::facetBending() const
     {
       if (std::abs(moduli.bending) < 1e-8)
       {
         return 0e0;
       }
 
-      PhysicalEnergy result(0);
+      LatticeEnergy result(0);
       site_t current_facet(0);
       for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
@@ -170,14 +170,14 @@ namespace hemelb
       return result;
     }
 
-    PhysicalEnergy Cell::facetBending(std::vector<LatticeForceVector> &forces) const
+    LatticeEnergy Cell::facetBending(std::vector<LatticeForceVector> &forces) const
     {
       if (std::abs(moduli.bending) < 1e-8)
       {
         return 0e0;
       }
 
-      PhysicalEnergy result(0);
+      LatticeEnergy result(0);
       typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
       site_t current_facet(0);
       for (auto const & neighbors: GetTopology()->facetNeighbors)

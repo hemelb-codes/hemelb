@@ -45,7 +45,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testDowngradeKey()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
         DnC dnc(cutoff);
 
         size_t const N = 5;
@@ -68,7 +68,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testNoDowngradeKey()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
         DnC dnc(cutoff);
 
         LatticeVector const key(10, 5, 2);
@@ -77,7 +77,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testAddToBox()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
         DnC dnc(cutoff);
 
         typedef DnC::iterator iterator;
@@ -95,7 +95,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testAddToBoxAsKey()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
         DnC dnc(cutoff);
 
         typedef DnC::iterator iterator;
@@ -108,7 +108,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testBoxRange()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
         DnC dnc(cutoff);
         dnc.insert(LatticePosition(-3.5, 0.1, 5.1), 2);
         dnc.insert(LatticePosition(-3.6, 0.2, 6.1), 4);
@@ -141,7 +141,7 @@ namespace hemelb
 
       void DivideAndConquerTests::testBoxRangeAsKey()
       {
-        PhysicalDistance const cutoff = 5e0;
+        LatticeDistance const cutoff = 5e0;
 
         DnC dnc(cutoff);
         LatticePosition const position(5.2, -3.3, 0.1);

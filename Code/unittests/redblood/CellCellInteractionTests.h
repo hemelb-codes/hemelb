@@ -38,8 +38,8 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
           CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
 
-          PhysicalDistance const cutoff = 5.0;
-          PhysicalDistance const halo = 2.0;
+          LatticeDistance const cutoff = 5.0;
+          LatticeDistance const halo = 2.0;
 
         public:
           void testBoxHaloTooBig();
@@ -98,8 +98,8 @@ namespace hemelb
 
         // Adds nodes, last in halo
         LatticePosition const center = LatticePosition(1, 1, 1) * (0.5 * cutoff);
-        PhysicalDistance const offhalo = (cutoff * 0.5 - 1.1 * halo) / cutoff;
-        PhysicalDistance const inhalo = (cutoff * 0.5 - 0.9 * halo) / cutoff;
+        LatticeDistance const offhalo = (cutoff * 0.5 - 1.1 * halo) / cutoff;
+        LatticeDistance const inhalo = (cutoff * 0.5 - 0.9 * halo) / cutoff;
         MeshData::Vertices vertices;
         vertices.push_back(center);
         vertices.push_back(center + LatticePosition(offhalo, 0, 0) * cutoff);

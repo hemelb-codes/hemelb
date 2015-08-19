@@ -88,7 +88,7 @@ namespace hemelb
           //! Last dropped cell's position
           LatticeDistance lastZ;
           //! Cell interaction distance
-          PhysicalDistance interactionRadius;
+          LatticeDistance interactionRadius;
           //! Number of requests cells for drop-off
           site_t numberOfRequests;
           //! when called, returns a new cell to add to the buffer

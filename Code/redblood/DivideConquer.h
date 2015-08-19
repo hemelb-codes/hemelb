@@ -78,7 +78,7 @@ namespace hemelb
         typedef std::pair<const_iterator, const_iterator> const_range;
 
         //! Constructor sets size of cutoff
-        DivideConquer(PhysicalDistance boxsize) :
+        DivideConquer(LatticeDistance boxsize) :
             base_type(), boxsize(boxsize)
         {
         }
@@ -114,7 +114,7 @@ namespace hemelb
         }
 
         //! Length of each box
-        PhysicalDistance GetBoxSize() const
+        LatticeDistance GetBoxSize() const
         {
           return boxsize;
         }
@@ -133,7 +133,7 @@ namespace hemelb
         }
 
       protected:
-        PhysicalDistance const boxsize;
+        LatticeDistance const boxsize;
     };
   }
 } // hemelb::redblood

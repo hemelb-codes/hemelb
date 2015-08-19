@@ -92,9 +92,9 @@ namespace hemelb
       bool ColumnPositionIterator::IsInside() const
       {
         // avoids missing defs for operator^
-        PhysicalDistance const a = major.GetMagnitudeSquared()
+        LatticeDistance const a = major.GetMagnitudeSquared()
             / std::pow(cylinder->radius - spacing.z, 2e0);
-        PhysicalDistance const b = minor.GetMagnitudeSquared()
+        LatticeDistance const b = minor.GetMagnitudeSquared()
             / std::pow(cylinder->radius - spacing.y, 2e0);
         return (current.z * current.z) * a + (current.y * current.y) * b < 1e0;
       }

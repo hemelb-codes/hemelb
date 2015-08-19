@@ -194,11 +194,11 @@ namespace hemelb
             }
           }
 
-          PhysicalEnergy energy() const
+          LatticeEnergy energy() const
           {
             return facetBending(vertices, mesh, 0, 1, moduli);
           }
-          PhysicalEnergy energyAndForces()
+          LatticeEnergy energyAndForces()
           {
             return facetBending(vertices, mesh, 0, 1, moduli, forces);
           }

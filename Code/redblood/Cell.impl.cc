@@ -22,8 +22,8 @@ namespace hemelb
     namespace
     {
       // Facet bending energy between two facets
-      PhysicalEnergy facetBending(Facet const &facetA, Facet const &facetB, Facet const &facetA_eq,
-                                  Facet const &facetB_eq, PhysicalForce intensity)
+      LatticeEnergy facetBending(Facet const &facetA, Facet const &facetB, Facet const &facetA_eq,
+                                  Facet const &facetB_eq, LatticeModulus intensity)
       {
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
@@ -32,9 +32,9 @@ namespace hemelb
       }
 
       // Facet bending energy and force between neighboring facets
-      PhysicalEnergy facetBending(ForceFacet const &facetA, ForceFacet const &facetB,
+      LatticeEnergy facetBending(ForceFacet const &facetA, ForceFacet const &facetB,
                                   Facet const &facetA_eq, Facet const &facetB_eq,
-                                  PhysicalForce intensity)
+                                  LatticeModulus intensity)
       {
         IndexPair const commons = commonNodes(facetA, facetB);
         IndexPair const singles = singleNodes(facetA, facetB);
@@ -63,7 +63,7 @@ namespace hemelb
 
         Angle const theta = orientedAngle(facetA, facetB);
         Angle const theta0 = orientedAngle(facetA_eq, facetB_eq);
-        const PhysicalForce strength = 5e-1 * intensity * (theta - theta0)
+        const LatticeModulus strength = 5e-1 * intensity * (theta - theta0)
           * (theta < 0e0 ? 1e0: -1e0);
         n_ij = n_ij * (strength/facetB.area());
         n_ji = n_ji * (strength/facetA.area());
@@ -86,8 +86,8 @@ namespace hemelb
         return 0.5 * intensity * (theta - theta0) * (theta - theta0);
       }
 
-      PhysicalEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  size_t facetIndex, size_t neighborIndex, PhysicalForce intensity,
+      LatticeEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
+                                  size_t facetIndex, size_t neighborIndex, LatticeModulus intensity,
                                   std::vector<LatticeForceVector> &forces)
       {
         return facetBending(ForceFacet(vertices, orig.facets[facetIndex], forces),
@@ -96,8 +96,8 @@ namespace hemelb
                             Facet(orig, neighborIndex),
                             intensity);
       }
-      PhysicalEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  size_t facetIndex, size_t neighborIndex, PhysicalForce intensity)
+      LatticeEnergy facetBending(MeshData::Vertices const &vertices, MeshData const &orig,
+                                  size_t facetIndex, size_t neighborIndex, LatticeModulus intensity)
       {
         return facetBending(Facet(vertices, orig.facets[facetIndex]),
                             Facet(vertices, orig.facets[neighborIndex]),
@@ -106,21 +106,21 @@ namespace hemelb
                             intensity);
       }
 
-      PhysicalEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  PhysicalForce intensity, Dimensionless origMesh_scale = 1e0)
+      LatticeEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
+                                  LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
       {
         if (intensity <= 1e-12)
         {
           return 0e0;
         }
 
-        PhysicalVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
-        PhysicalVolume const deltaV = volume(vertices, orig.facets) - vol0;
+        LatticeVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
+        LatticeVolume const deltaV = volume(vertices, orig.facets) - vol0;
         return intensity * 0.5 * deltaV * deltaV / vol0;
       }
 
-      PhysicalEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                  PhysicalForce intensity, std::vector<LatticeForceVector> &forces,
+      LatticeEnergy volumeEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
+                                  LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
                                   Dimensionless origMesh_scale = 1e0)
       {
         if (intensity <= 1e-12)
@@ -129,8 +129,8 @@ namespace hemelb
         }
 
         assert(orig.vertices.size() == vertices.size());
-        PhysicalVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
-        PhysicalVolume const deltaV = volume(vertices, orig.facets) - vol0;
+        LatticeVolume const vol0 = volume(orig) * origMesh_scale * origMesh_scale * origMesh_scale;
+        LatticeVolume const deltaV = volume(vertices, orig.facets) - vol0;
         double const strength(intensity / 6.0 * deltaV / vol0);
 
         for (auto const &facet : orig.facets)
@@ -149,22 +149,22 @@ namespace hemelb
         return 0.5 * intensity * deltaV * deltaV / vol0;
       }
 
-      PhysicalEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                   PhysicalForce intensity, Dimensionless origMesh_scale = 1e0)
+      LatticeEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
+                                   LatticeModulus intensity, Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
-        PhysicalArea const deltaS = area(vertices, orig.facets) - surf0;
+        LatticeArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
+        LatticeArea const deltaS = area(vertices, orig.facets) - surf0;
         return intensity * 0.5 * deltaS * deltaS / surf0;
       }
 
-      PhysicalEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
-                                   PhysicalForce intensity, std::vector<LatticeForceVector> &forces,
+      LatticeEnergy surfaceEnergy(MeshData::Vertices const &vertices, MeshData const &orig,
+                                   LatticeModulus intensity, std::vector<LatticeForceVector> &forces,
                                    Dimensionless origMesh_scale = 1e0)
       {
         assert(orig.vertices.size() == vertices.size());
 
-        PhysicalArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
-        PhysicalArea const deltaS = area(vertices, orig.facets) - surf0;
+        LatticeArea const surf0 = area(orig) * origMesh_scale * origMesh_scale;
+        LatticeArea const deltaS = area(vertices, orig.facets) - surf0;
         double const strength = intensity * 0.5 * deltaS / surf0;
 
         for (size_t facetIndex(0); facetIndex < orig.facets.size(); ++facetIndex)
@@ -180,15 +180,15 @@ namespace hemelb
         return intensity * 0.5 * deltaS * deltaS / surf0;
       }
 
-      PhysicalEnergy strainEnergyDensity(
-          std::pair<Dimensionless, Dimensionless> const &strainParams, PhysicalForce shearModulus,
-          PhysicalForce dilationModulus)
+      LatticeEnergy strainEnergyDensity(
+          std::pair<Dimensionless, Dimensionless> const &strainParams, LatticeModulus shearModulus,
+          LatticeModulus dilationModulus)
       {
         Dimensionless const I1 = strainParams.first, I2 = strainParams.second;
         return shearModulus / 12. * (I1 * I1 + 2. * I1 - 2. * I2) + dilationModulus / 12. * I2 * I2;
       }
-      PhysicalEnergy strainEnergy(Facet const &deformed, Facet const &undeformed,
-                                  PhysicalForce shearModulus, PhysicalForce dilationModulus,
+      LatticeEnergy strainEnergy(Facet const &deformed, Facet const &undeformed,
+                                  LatticeModulus shearModulus, LatticeModulus dilationModulus,
                                   Dimensionless origMesh_scale = 1e0)
       {
         return strainEnergyDensity(strainInvariants(deformed, undeformed, origMesh_scale),
@@ -196,8 +196,8 @@ namespace hemelb
                                    dilationModulus) * undeformed.area();
       }
 
-      PhysicalEnergy strainEnergy(ForceFacet const &deformed, Facet const &undeformed,
-                                  PhysicalForce shearModulus, PhysicalForce dilationModulus,
+      LatticeEnergy strainEnergy(ForceFacet const &deformed, Facet const &undeformed,
+                                  LatticeModulus shearModulus, LatticeModulus dilationModulus,
                                   Dimensionless origMesh_scale = 1e0)
       {
         // Shape function parameters
@@ -213,7 +213,7 @@ namespace hemelb
         Dimensionless const w = strainEnergyDensity(strainInvs, shearModulus, dilationModulus);
 
         // Skalak Parameters
-        PhysicalForce const dw_dI1 = shearModulus / 6 * (I1 + 1), dw_dI2 = -shearModulus / 6.
+        LatticeModulus const dw_dI1 = shearModulus / 6 * (I1 + 1), dw_dI2 = -shearModulus / 6.
             + dilationModulus / 6. * I2;
 
         size_t const xx = 0, yy = 1, xy = 2;
@@ -228,7 +228,7 @@ namespace hemelb
             * disps[xy], dGyy_du0y = 2. * b0 * disps[yy], dGyy_du1x = 2. * b1 * disps[xy],
             dGyy_du1y = 2. * b1 * disps[yy];
 
-        PhysicalForce const force0x = (dw_dI1 * dI1_dGyy * dGyy_du0x
+        LatticeModulus const force0x = (dw_dI1 * dI1_dGyy * dGyy_du0x
             + dw_dI2 * (dI2_dGyy * dGyy_du0x + dI2_dGxy * dGxy_du0x)), force0y = (dw_dI1 * dI1_dGyy
             * dGyy_du0y + dw_dI2 * dI2_dGyy * dGyy_du0y), force1x = (dw_dI1
             * (dI1_dGxx * dGxx_du1x + dI1_dGyy * dGyy_du1x)
@@ -249,11 +249,11 @@ namespace hemelb
         return w * undeformed.area() * origMesh_scale * origMesh_scale;
       }
 
-      PhysicalEnergy strainEnergy(MeshData::Vertices const &vertices, MeshData const &origin,
-                                  PhysicalForce shearModulus, PhysicalForce dilationModulus,
-                                  Dimensionless origMesh_scale = 1e0)
+      LatticeEnergy strainEnergy(MeshData::Vertices const &vertices, MeshData const &origin,
+                                 LatticeModulus shearModulus, LatticeModulus dilationModulus,
+                                 Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalEnergy result(0);
+        LatticeEnergy result(0);
 
         for (size_t i(0); i < origin.facets.size(); ++i)
           result += strainEnergy(Facet(vertices, origin.facets[i]),
@@ -264,12 +264,12 @@ namespace hemelb
 
         return result;
       }
-      PhysicalEnergy strainEnergy(MeshData::Vertices const &vertices, MeshData const &origin,
-                                  PhysicalForce shearModulus, PhysicalForce dilationModulus,
-                                  std::vector<LatticeForceVector> &forces,
-                                  Dimensionless origMesh_scale = 1e0)
+      LatticeEnergy strainEnergy(MeshData::Vertices const &vertices, MeshData const &origin,
+                                 LatticeModulus shearModulus, LatticeModulus dilationModulus,
+                                 std::vector<LatticeForceVector> &forces,
+                                 Dimensionless origMesh_scale = 1e0)
       {
-        PhysicalEnergy result(0);
+        LatticeEnergy result(0);
 
         for (size_t i(0); i < origin.facets.size(); ++i)
           result += strainEnergy(ForceFacet(vertices, origin.facets[i], forces),

@@ -27,7 +27,7 @@ namespace hemelb
         public:
           void testNode2NodeForce()
           {
-            PhysicalDistance const cutoff = 2e0;
+            LatticeDistance const cutoff = 2e0;
             CPPUNIT_ASSERT_DOUBLES_EQUAL(node2NodeForce(cutoff, 1e0, cutoff, 1), 0e0, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(node2NodeForce(1.1 * cutoff, 1e0, cutoff, 1), 0e0, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(node2NodeForce(0.9 * cutoff, 1e0, cutoff, 1),

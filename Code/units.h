@@ -58,8 +58,8 @@ namespace hemelb
   typedef double PhysicalLength_deprecated;
 
   typedef double PhysicalDistance; // continuous distance in physical units
-  typedef double PhysicalVolume; // continuous volume in physical units
-  typedef double PhysicalArea; // continuous area in physical units
+  typedef double LatticeVolume; // continuous volume in physical units
+  typedef double LatticeArea; // continuous area in physical units
   typedef double LatticeDistance; // continuous distance in lattice units
   typedef int64_t LatticeCoordinate; // discrete distance in lattice units
 
@@ -70,7 +70,9 @@ namespace hemelb
 
   typedef double PhysicalEnergy; // type for energy
   typedef double PhysicalForce; // continuous scalar force in physical units
+  typedef double LatticeEnergy; // continuous scalar energy in lattice units
   typedef double LatticeForce; // continuous scalar force in lattice units
+  typedef double LatticeModulus; // placeholder for any moduli, though actual dimension may differ
   typedef util::Vector3D<LatticeForce> LatticeForceVector; // continuous force in lattice units
 
   // TODO: xxxVelocity is a Vector3D<xxxSpeed> not a scalar - should be fixed as part of ticket #437

@@ -13,7 +13,7 @@ namespace hemelb
     {
       //! Throws if input does not have units
       template<typename T>
-      T GetDimensionalValue(const io::xml::Element& elem, const std::string& units)
+      T GetNonDimensionalValue(const io::xml::Element& elem, const std::string& units)
       {
         T value;
         const std::string& got = elem.GetAttributeOrThrow("units");
@@ -28,7 +28,7 @@ namespace hemelb
       }
       //! Defaults to some value if parent, or its child elemname are not present
       template<typename T>
-      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+      T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, T default_)
       {
         if (parent == parent.Missing())
@@ -40,25 +40,25 @@ namespace hemelb
         {
           return default_;
         }
-        return GetDimensionalValue<T>(element, units);
+        return GetNonDimensionalValue<T>(element, units);
       }
       //! Gets value and convert to LB units. Default value should be in physical units.
       template<typename T>
-      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+      T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, util::UnitConverter const &converter,
                             T default_)
       {
-        T const value = GetDimensionalValue<T>(parent, elemname, units, default_);
+        T const value = GetNonDimensionalValue<T>(parent, elemname, units, default_);
         return units == "LB" ?
           value :
           converter.ConvertToLatticeUnits(units, value);
       }
       //! Gets value and convert to LB units
       template<typename T>
-      T GetDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+      T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, util::UnitConverter const &converter)
       {
-        T const value = GetDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
+        T const value = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
         return units == "LB" ?
           value :
           converter.ConvertToLatticeUnits(units, value);
@@ -67,7 +67,7 @@ namespace hemelb
       LatticePosition GetPosition(const io::xml::Element& parent, const std::string &elemname,
                                   util::UnitConverter const &converter)
       {
-        auto value = GetDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
+        auto value = GetNonDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
         return converter.ConvertPositionToLatticeUnits(value);
       }
 
@@ -101,7 +101,7 @@ namespace hemelb
       {
         // Now gets data for cell insertion
         auto const insNode = node.GetChildOrThrow("insertcell");
-        auto const offset = GetDimensionalValue<PhysicalTime>(insNode, "offset", "s", converter, 0);
+        auto const offset = GetNonDimensionalValue<LatticeTime>(insNode, "offset", "s", converter, 0);
         auto const templateName = insNode.GetAttributeOrThrow("template");
         if (templateCells.count(templateName) == 0)
         {
@@ -113,8 +113,8 @@ namespace hemelb
         // Rotate cell to align z axis with given position, and then z axis with flow
         // If phi == 0, then cell symmetry axis is aligned with the flow
         using std::cos; using std::sin;
-        auto const theta = GetDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-        auto const phi = GetDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+        auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+        auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
         LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
         auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
         auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
@@ -155,11 +155,11 @@ namespace hemelb
         // Note: c++14 will allow more complex captures. Until then, we will need to create
         // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
         // variables should live as long as the lambda. But longuer than a single call.
-        auto const timeStep = GetDimensionalValue<PhysicalTime>(insNode, "every", "s", converter);
-        auto const dt = GetDimensionalValue<PhysicalTime>(insNode, "delta_t", "s", converter, 0e0);
-        auto time = std::make_shared<PhysicalTime>
+        auto const timeStep = GetNonDimensionalValue<LatticeTime>(insNode, "every", "s", converter);
+        auto const dt = GetNonDimensionalValue<LatticeTime>(insNode, "delta_t", "s", converter, 0e0);
+        auto time = std::make_shared<LatticeTime>
         (
-          timeStep - 1e0 + std::numeric_limits<PhysicalTime>::epsilon() - offset
+          timeStep - 1e0 + std::numeric_limits<LatticeTime>::epsilon() - offset
         );
         auto condition = [time, timeStep, dt, offset]()
         {
@@ -172,13 +172,13 @@ namespace hemelb
           return false;
         };
         auto const dtheta
-          = GetDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
+          = GetNonDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
         auto const dphi
-          = GetDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
+          = GetNonDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
         auto const dx
-          = GetDimensionalValue<PhysicalDistance>(insNode, "delta_x", "m", converter, 0e0);
+          = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_x", "m", converter, 0e0);
         auto const dy
-          = GetDimensionalValue<PhysicalDistance>(insNode, "delta_y", "m", converter, 0e0);
+          = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_y", "m", converter, 0e0);
         return RBCInserterWithPerturbation
         (
             condition, std::move(cell),
@@ -194,11 +194,11 @@ namespace hemelb
     {
       redblood::Cell::Moduli moduli;
       auto const moduliNode = node.GetChildOrNull("moduli");
-      moduli.bending = GetDimensionalValue(moduliNode, "bending", "Nm", converter, 2e-19);
-      moduli.surface = GetDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
-      moduli.volume = GetDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
-      moduli.dilation = GetDimensionalValue(moduliNode, "dilation", "N/m", converter, 5e-1);
-      moduli.strain = GetDimensionalValue(moduliNode, "strain", "N/m", converter, 5e-6);
+      moduli.bending = GetNonDimensionalValue(moduliNode, "bending", "Nm", converter, 2e-19);
+      moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
+      moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
+      moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "N/m", converter, 5e-1);
+      moduli.strain = GetNonDimensionalValue(moduliNode, "strain", "N/m", converter, 5e-6);
       return moduli;
     }
 
@@ -211,8 +211,8 @@ namespace hemelb
         return result;
       }
       auto const node = parent.GetChildOrNull("interaction");
-      result.intensity = GetDimensionalValue(node, "intensity", "N", converter, result.intensity);
-      result.cutoff = GetDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
+      result.intensity = GetNonDimensionalValue(node, "intensity", "N", converter, result.intensity);
+      result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
         node.Missing();
@@ -274,7 +274,7 @@ namespace hemelb
       std::string const mesh_path =
           cellNode.GetChildOrThrow("shape").GetAttributeOrThrow("mesh_path");
       auto const mesh_data = readMesh(mesh_path);
-      auto const scale = GetDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
+      auto const scale = GetNonDimensionalValue<LatticeDistance>(cellNode, "scale", "m", converter);
       std::unique_ptr<Cell> cell(new Cell(mesh_data->vertices, Mesh(mesh_data), scale, name));
       *cell *= scale;
       cell->moduli = readModuli(cellNode, converter);
@@ -320,10 +320,10 @@ namespace hemelb
       auto const flowXML = node.GetChildOrThrow("flowextension");
       FlowExtension result;
 
-      result.length = GetDimensionalValue<PhysicalDistance>(flowXML, "length", "m", converter);
-      result.radius = GetDimensionalValue<PhysicalDistance>(flowXML, "radius", "m", converter);
+      result.length = GetNonDimensionalValue<LatticeDistance>(flowXML, "length", "m", converter);
+      result.radius = GetNonDimensionalValue<LatticeDistance>(flowXML, "radius", "m", converter);
       result.fadeLength =
-          GetDimensionalValue<PhysicalDistance>(flowXML,
+          GetNonDimensionalValue<LatticeDistance>(flowXML,
                                                 "fadelength",
                                                 "m",
                                                 converter,
@@ -332,7 +332,7 @@ namespace hemelb
       // Infer normal and position from inlet
       // However, normals point in *opposite* direction, and, as a result, origin are at opposite
       // end of the cylinder
-      result.normal = -GetDimensionalValue<LatticePosition>(node,
+      result.normal = -GetNonDimensionalValue<LatticePosition>(node,
                                                             "normal",
                                                             "dimensionless",
                                                             converter);

@@ -153,9 +153,9 @@ namespace hemelb
     }
 
     template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc, InterpolationIterator interpolator)
+    LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, InterpolationIterator interpolator)
     {
-      PhysicalVelocity result(0, 0, 0);
+      LatticeVelocity result(0, 0, 0);
 
       for (; interpolator; ++interpolator)
       {
@@ -165,13 +165,13 @@ namespace hemelb
       return result;
     }
     template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc, LatticePosition const &pos,
+    LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, LatticePosition const &pos,
                                  stencil::types stencil)
     {
       return interpolate(gridfunc, interpolationIterator(pos, stencil));
     }
     template<class GRID_FUNCTION>
-    PhysicalVelocity interpolate(GRID_FUNCTION const &gridfunc, Dimensionless const &x,
+    LatticeVelocity interpolate(GRID_FUNCTION const &gridfunc, Dimensionless const &x,
                                  Dimensionless const &y, Dimensionless const &z,
                                  stencil::types stencil)
     {
