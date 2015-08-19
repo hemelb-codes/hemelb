@@ -19,7 +19,6 @@
 #include "lb/kernels/GuoForcingLBGK.h"
 
 #include <vector>
-#include <cassert>
 #include <boost/shared_array.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/mpl/bool.hpp>
@@ -34,8 +33,8 @@ namespace hemelb
     //! \param[in] stencil: stencil to use for interpolation
     //! \tparam KERNEL: Needed to compute velocity
     template<class KERNEL>
-    PhysicalVelocity interpolateVelocity(PhysicalPosition const &center,
-                                         geometry::LatticeData const &latDat,
+    PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
+                                         PhysicalPosition const &center,
                                          stencil::types stencil = stencil::types::FOUR_POINT);
 
     namespace details
@@ -116,8 +115,7 @@ namespace hemelb
 
     template<class KERNEL>
     PhysicalVelocity interpolateVelocity(geometry::LatticeData const &latDat,
-                                         PhysicalPosition const &center, stencil::types stencil =
-                                             stencil::types::FOUR_POINT)
+                                         PhysicalPosition const &center, stencil::types stencil)
     {
       auto iterator = interpolationIterator(center, stencil);
       // Computes velocity for a given site index
