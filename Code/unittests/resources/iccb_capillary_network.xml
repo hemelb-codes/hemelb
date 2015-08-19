@@ -5,20 +5,20 @@
     <stresstype value="1" />
     
     <!-- min 10 sites -->
-    <step_length units="s" value="1.260288e-08" /> 
-    <voxel_size units="m" value="3.88889e-07" />
-    <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" />
+    <!-- <step_length units="s" value="1.260288e-08" /> --> <!-- delta_t for tau=0.8 --> 
+    <!-- <voxel_size units="m" value="3.88889e-07" /> -->
+    <!-- <origin units="m" value="(1.26226089303e-05,9.58874616141e-06,-1.12766943408e-05)" /> -->
     
     <!-- min 5 sites -->
-    <!-- <step_length units="s" value="6.380208e-08" /> -->
-    <!-- <voxel_size units="m" value="8.75e-07" /> -->
-    <!-- <origin units="m" value="(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)" /> -->
+    <step_length units="s" value="1.488715e-07" /> <!-- delta_t for tau=1.2 and delta_x=8.75e-07m -->
+    <voxel_size units="m" value="8.75e-07" />
+    <origin units="m" value="(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)" />
     
   </simulation>
   
   <geometry>
-    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> <!-- min 10 sites -->
-    <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy" /> --> <!-- min 5 sites -->
+    <!-- <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy" /> --> <!-- min 10 sites -->
+    <datafile path="P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy" /> <!-- min 5 sites -->
   </geometry>
   
   <inlets>
@@ -37,7 +37,7 @@
         <fadelength units="m" value="7e-06" />
       </flowextension>
       <insertcell template="default">
-        <every units="s" value="2e-3"/>
+        <every units="s" value="1e-3"/>
         <offset units="s" value="40e-8"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
@@ -133,8 +133,8 @@
   
   <redbloodcells>
     <controller>
-      <halo units="m" value="2e-6" />
-      <boxsize units="m" value="100e-6" /> <!-- It should be a 3 lattice site box centred on the search point -->
+      <halo units="LB" value="3" />
+      <boxsize units="LB" value="1e6" />
     </controller>
     <cells>
       <cell name="default">
