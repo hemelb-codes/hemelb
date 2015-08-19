@@ -211,7 +211,7 @@ namespace hemelb
         return result;
       }
       auto const node = parent.GetChildOrNull("interaction");
-      result.intensity = GetNonDimensionalValue(node, "intensity", "N", converter, result.intensity);
+      result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
