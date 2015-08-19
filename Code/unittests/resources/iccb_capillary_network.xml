@@ -146,7 +146,7 @@
           <strain units="N/m" value="5e-6" />
         </moduli>
         <interaction>
-          <intensity units="N" value="2e-19" />
+          <intensity units="Nm" value="2e-19" />
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
