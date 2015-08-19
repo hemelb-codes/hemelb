@@ -251,8 +251,8 @@ namespace hemelb
         return false;
       }
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "m", halo);
-      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "m", boxSize);
+      GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "LB", halo);
+      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);

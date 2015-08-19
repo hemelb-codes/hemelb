@@ -73,8 +73,8 @@
   </visualisation>
   <redbloodcells>
     <controller>
-      <halo units="m" value="2e-6" />
-      <boxsize units="m" value="100e-6" />
+      <halo units="LB" value="3" />
+      <boxsize units="LB" value="1e6" />
     </controller>
     <cells>
       <cell name="default">
