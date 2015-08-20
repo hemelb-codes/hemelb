@@ -12,5 +12,6 @@
 
 #include "unittests/io/PathManagerTests.h"
 #include "unittests/io/xml.h"
+#include "unittests/io/h5md/TimeDataTests.h"
 
 #endif //ONCE
