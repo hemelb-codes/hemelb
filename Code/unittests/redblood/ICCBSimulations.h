@@ -35,6 +35,7 @@ namespace hemelb
             CopyResourceToTempdir("iccb_capillary_network.xml");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy");
+            CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_1_75_1000_3.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
             CopyResourceToTempdir("rbc_ico_1280.msh");
 
