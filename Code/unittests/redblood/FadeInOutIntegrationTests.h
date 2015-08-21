@@ -47,7 +47,7 @@ namespace hemelb
             argv[1] = "-in";
             argv[2] = "large_cylinder_rbc.xml";
             argv[3] = "-i";
-            argv[4] = "1";
+            argv[4] = "0";
             argv[5] = "-ss";
             argv[6] = "1111";
             options = std::make_shared<hemelb::configuration::CommandLine>(argc, argv);
@@ -73,7 +73,7 @@ namespace hemelb
               {
                 expected = volume;
               }
-              CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, volume, 1e-8);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, volume, 1e-7);
             };
             auto checkPosition = []( const hemelb::redblood::CellContainer & cells)
             {
@@ -129,7 +129,7 @@ namespace hemelb
               if(iter% 1000 == 0)
               {
                 std::ostringstream sstr;
-                sstr << "/tmp/cell-" << cell->GetTag() << "." << iter<< ".vtk";
+                sstr << "/tmp/cell-" << cell->GetTag() << "_" << iter<< ".vtp";
                 writeVTKMesh(sstr.str(), cell, converter);
               }
               ++iter;
