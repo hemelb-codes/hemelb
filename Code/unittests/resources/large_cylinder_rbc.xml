@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <hemelbsettings version="3">
   <simulation>
-    <step_length units="s" value="1.e-8" />
+    <step_length units="s" value="2.e-7" />
     <steps units="lattice" value="500" />
     <stresstype value="1" />
     <voxel_size units="m" value="1.4e-06" />
@@ -54,9 +54,10 @@
     </outlet>
   </outlets>
   <properties> 
-   <propertyoutput period="1000" file="whole_domain_vel.xtr"> 
+   <propertyoutput period="1000" file="whole_domain_vel_press.xtr"> 
      <geometry type="whole" /> 
      <field type="velocity"/> 
+     <field type="pressure"/> 
    </propertyoutput> 
   </properties>    
   <visualisation>
