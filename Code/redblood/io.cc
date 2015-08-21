@@ -33,11 +33,15 @@ namespace hemelb
       {
         if (parent == parent.Missing())
         {
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
+                                                                                 elemname.c_str());
           return default_;
         }
         auto const element = parent.GetChildOrNull(elemname);
         if (element == element.Missing())
         {
+          hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
+                                                                                 elemname.c_str());
           return default_;
         }
         return GetNonDimensionalValue<T>(element, units);
