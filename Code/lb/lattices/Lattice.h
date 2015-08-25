@@ -284,6 +284,81 @@ namespace hemelb
           }
 #endif
 
+#ifdef HEMELB_USE_SSE3
+
+          /**
+           * Calculate Force using SSE3 intrinsics.
+           * @param tau
+           * @param force_x
+           * @param force_y
+           * @param force_z
+           * @param forceDist
+           */
+          inline static void CalculateForceDistribution(const distribn_t &tau,
+                                                        const distribn_t &velocity_x,
+                                                        const distribn_t &velocity_y,
+                                                        const distribn_t &velocity_z,
+                                                        const LatticeForce &force_x,
+                                                        const LatticeForce &force_y,
+                                                        const LatticeForce &force_z,
+                                                        distribn_t forceDist[])
+          {
+
+            const __m128d vx = _mm_set1_pd(velocity_x);
+            const __m128d vy = _mm_set1_pd(velocity_y);
+            const __m128d vz = _mm_set1_pd(velocity_z);
+
+            const __m128d fx = _mm_set1_pd(force_x);
+            const __m128d fy = _mm_set1_pd(force_y);
+            const __m128d fz = _mm_set1_pd(force_z);
+
+            const distribn_t prefactor = 1.0 - (1.0 / (2.0 * tau));
+            const distribn_t vScalarProductF = velocity_x * force_x +
+                velocity_y * force_y + velocity_z * force_z;
+
+            const __m128d pf = _mm_set1_pd(prefactor);
+            const __m128d velocity_spf = _mm_set1_pd(vScalarProductF);
+
+            const __m128d r3 = _mm_set1_pd(1. / 3.);
+            const __m128d r9 = _mm_set1_pd(1. / 9.);
+
+            const Direction numSSEvectors = (DmQn::NUMVECTORS >> 1) << 1;
+            Direction i = 0;
+            for (i = 0; i < numSSEvectors; i+=2)
+            {
+              const __m128d cx = _mm_load_pd(&DmQn::CXD[i]);
+              const __m128d cy = _mm_load_pd(&DmQn::CYD[i]);
+              const __m128d cz = _mm_load_pd(&DmQn::CZD[i]);
+              const __m128d w  = _mm_load_pd(&DmQn::EQMWEIGHTS[i]);
+
+              const __m128d velocity_spd = _mm_add_pd(
+                  _mm_add_pd(_mm_mul_pd(vx, cx), _mm_mul_pd(vy, cy)),
+                  _mm_mul_pd(vz, cz));
+              const __m128d force_spd = _mm_add_pd(
+                  _mm_add_pd(_mm_mul_pd(fx, cx), _mm_mul_pd(fy, cy)),
+                  _mm_mul_pd(fz, cz));
+
+              const __m128d fd = _mm_mul_pd(_mm_mul_pd(pf, w),
+                  _mm_add_pd(_mm_mul_pd(r3, _mm_sub_pd(force_spd, velocity_spf)),
+                  _mm_mul_pd(r9, _mm_mul_pd(force_spd, velocity_spd))));
+
+              _mm_storeu_pd(&forceDist[i], fd);
+            }
+
+            for (;i < DmQn::NUMVECTORS; ++i)
+            {
+              const distribn_t vScalarProductDirection = velocity_x * DmQn::CX[i]
+                  + velocity_y * DmQn::CY[i] + velocity_z * DmQn::CZ[i];
+              const distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i]
+                  + force_z * DmQn::CZ[i];
+              forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i]
+                  * ( (1. / 3.) * (FScalarProductDirection - vScalarProductF)
+                      + (1. / 9.) * (FScalarProductDirection * vScalarProductDirection));
+            }
+
+          }
+#else
+
           /**
            * Calculate Force
            * @param tau
@@ -317,6 +392,7 @@ namespace hemelb
                       + (1. / 9.) * (FScalarProductDirection * vScalarProductDirection));
             }
           }
+#endif
 
           // Calculate density, momentum and the equilibrium distribution
           // functions according to the D3Q15 model.  The calculated momentum_x, momentum_y
