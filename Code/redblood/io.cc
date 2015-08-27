@@ -209,7 +209,7 @@ namespace hemelb
     Node2NodeForce readNode2NodeForce(io::xml::Element const& parent,
                                       util::UnitConverter const & converter)
     {
-      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("N", 1e0), 1, 2);
+      Node2NodeForce result(1e0 / converter.ConvertToLatticeUnits("Nm", 1e0), 1, 2);
       if (parent == parent.Missing())
       {
         return result;
