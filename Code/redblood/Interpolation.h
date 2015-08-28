@@ -100,7 +100,6 @@ namespace hemelb
         //! Returns weight for current point
         Dimensionless weight() const
         {
-          assert(xWeight && yWeight && zWeight);
           assert(current[0] >= min[0]);
           assert(current[0] <= max[0]);
           assert(current[1] >= min[1]);
@@ -113,7 +112,6 @@ namespace hemelb
         //! Weights for each direction
         util::Vector3D<Dimensionless> weights() const
         {
-          assert(xWeight && yWeight && zWeight);
           assert(current[0] >= min[0]);
           assert(current[0] <= max[0]);
           assert(current[1] >= min[1]);
@@ -127,11 +125,11 @@ namespace hemelb
 
       protected:
         //! Weight alongst x direction;
-        boost::shared_array<Dimensionless> xWeight;
+        std::vector<Dimensionless> xWeight;
         //! Weight alongst y direction;
-        boost::shared_array<Dimensionless> yWeight;
+        std::vector<Dimensionless> yWeight;
         //! Weight alongst z direction;
-        boost::shared_array<Dimensionless> zWeight;
+        std::vector<Dimensionless> zWeight;
 
         static LatticeVector minimumPosition(LatticePosition const &node, size_t range);
         static LatticeVector maximumPosition(LatticePosition const &node, size_t range);
@@ -141,8 +139,7 @@ namespace hemelb
     InterpolationIterator::InterpolationIterator(LatticePosition const &node,
                                                  STENCIL const &stencil) :
         IndexIterator(minimumPosition(node, STENCIL::range), maximumPosition(node, STENCIL::range)),
-            xWeight(new Dimensionless[STENCIL::range]), yWeight(new Dimensionless[STENCIL::range]),
-            zWeight(new Dimensionless[STENCIL::range])
+            xWeight(STENCIL::range), yWeight(STENCIL::range), zWeight(STENCIL::range)
     {
       for (LatticeVector::value_type i(0); i < LatticeVector::value_type(STENCIL::range); ++i)
       {

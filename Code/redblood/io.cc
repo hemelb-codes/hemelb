@@ -33,14 +33,14 @@ namespace hemelb
       {
         if (parent == parent.Missing())
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
                                                                                  elemname.c_str());
           return default_;
         }
         auto const element = parent.GetChildOrNull(elemname);
         if (element == element.Missing())
         {
-          hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
+          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
                                                                                  elemname.c_str());
           return default_;
         }
