@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <functional>
+#include <list>
 #include "io/xml/XmlAbstractionLayer.h"
 #include "lb/iolets/InOutLet.h"
 #include "Mesh.h"
@@ -92,7 +93,7 @@ namespace hemelb
     };
 
     //! Red blood cell inserter that adds random rotation and translation to each cell
-    class RBCInserterWithPerturbation : RBCInserter {
+    class RBCInserterWithPerturbation : public RBCInserter {
       public:
         RBCInserterWithPerturbation(
             std::function<bool()> condition, std::unique_ptr<CellBase const> cell,
@@ -114,6 +115,41 @@ namespace hemelb
         Angle dtheta, dphi;
         //! Two vectors alongst which to move cell
         LatticePosition dx, dy;
+    };
+
+    //! Composite RBCInserter that inserts multiple cells at each LB step
+    class CompositeRBCInserter
+    {
+      public:
+
+        void AddInserter(const std::shared_ptr<RBCInserter> & inserter)
+        {
+          inserters.push_back(inserter);
+        }
+
+        void RemoveInserter(const std::shared_ptr<RBCInserter> & inserter)
+        {
+          auto pos = std::find(std::begin(inserters), std::end(inserters), inserter);
+          if (pos != std::end(inserters))
+          {
+            inserters.erase(pos);
+          }
+        }
+
+        std::size_t Size() const noexcept
+        {
+          return inserters.size();
+        }
+
+        void operator()(CellInserter insertFn) const
+        {
+          for (const std::shared_ptr<RBCInserter> & inserter: inserters)
+          {
+            (*inserter)(insertFn);
+          }
+        }
+      private:
+        std::list<std::shared_ptr<RBCInserter>> inserters;
     };
   }
 }
