@@ -49,7 +49,7 @@
       <flowextension>
         <length units="m" value="10e-6" />
         <radius units="m" value="10e-6" />
-        <fadelength units="m" value="8e-06" />
+        <fadelength units="m" value="3e-06" />
       </flowextension>
     </outlet>
   </outlets>

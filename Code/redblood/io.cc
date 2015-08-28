@@ -406,12 +406,7 @@ namespace hemelb
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
       for(auto &flowExt: *result)
       {
-        // Minimum length should probably be sufficiently larger than cells.
-        auto length = std::min
-        (
-            flowExt.length,
-            std::max(flowExt.length - 0.9*flowExt.fadeLength, 2.)
-        );
+        auto length = flowExt.length - flowExt.fadeLength;
         flowExt.origin += flowExt.normal * (flowExt.length - length);
         flowExt.length = length;
         flowExt.fadeLength = length;
