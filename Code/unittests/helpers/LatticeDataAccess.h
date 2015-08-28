@@ -68,6 +68,11 @@ namespace hemelb
           }
           template<class LATTICE>
           distribn_t const * GetFNew(LatticeVector const &_pos) const;
+          distribn_t const * GetFNew(site_t index) const
+          {
+            return latDat->GetFNew(index);
+          }
+
 
           void SetMinWallDistance(PhysicalDistance _mindist);
           void SetWallDistance(PhysicalDistance _mindist);
@@ -186,6 +191,10 @@ namespace hemelb
       distribn_t const * GetFNew(geometry::LatticeData *_latDat, LatticeVector const &_pos)
       {
         return LatticeDataAccess(_latDat).GetFNew<LATTICE>(_pos);
+      }
+      distribn_t const * GetFNew(geometry::LatticeData *_latDat, site_t const &index)
+      {
+        return LatticeDataAccess(_latDat).GetFNew(index);
       }
 
       void SetMinWallDistance(geometry::LatticeData * const _latDat, PhysicalDistance _mindist)
