@@ -104,93 +104,104 @@ namespace hemelb
           TemplateCellContainer const &templateCells)
       {
         // Now gets data for cell insertion
-        auto const insNode = node.GetChildOrThrow("insertcell");
-        auto const offset = GetNonDimensionalValue<LatticeTime>(insNode, "offset", "s", converter, 0);
-        auto const templateName = insNode.GetAttributeOrThrow("template");
-        if (templateCells.count(templateName) == 0)
-        {
-          throw Exception() << "Template cell name does not match a known template cell";
-        }
-        auto cell = templateCells.find(templateName)->second->clone();
-        auto const flowExtension = readFlowExtension(node, converter);
 
-        // Rotate cell to align z axis with given position, and then z axis with flow
-        // If phi == 0, then cell symmetry axis is aligned with the flow
-        using std::cos; using std::sin;
-        auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-        auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-        LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
-        auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
-        auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
-        *cell *= rotation;
-
-        // Figure out size of cell alongst cylinder axis
-        auto const barycenter = cell->GetBarycenter();
-        auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
+        // There are potentially multiple cell inserters each with their own
+        // insertion criteria
+        CompositeRBCInserter composite;
+        for (auto insNode = node.GetChildOrThrow("insertcell");
+            insNode != insNode.Missing();
+            insNode = insNode.NextSiblingOrNull("insertcell"))
         {
-          return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
-        };
-        auto const maxZ =
-            *std::max_element(cell->GetVertices().begin(),
-                              cell->GetVertices().end(),
-                              [&maxExtent](LatticePosition const &a, LatticePosition const& b)
-                              {
-                                return maxExtent(a) < maxExtent(b);
-                              });
-        // Place cell as close as possible to 0 of fade length
-        *cell += flowExtension.origin
-            + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter;
 
-        // fail if any node outside flow extension
-        for (auto const &vertex : cell->GetVertices())
-        {
-          if (not contains(flowExtension, vertex))
+          auto const offset = GetNonDimensionalValue<LatticeTime>(insNode, "offset", "s", converter, 0);
+          auto const templateName = insNode.GetAttributeOrThrow("template");
+          if (templateCells.count(templateName) == 0)
           {
-            HEMELB_CAPTURE(flowExtension.normal);
-            HEMELB_CAPTURE(flowExtension.origin);
-            HEMELB_CAPTURE(flowExtension.radius);
-            HEMELB_CAPTURE(flowExtension.length);
-            HEMELB_CAPTURE(vertex);
-            throw Exception() << "BAD INPUT: Cell not contained within flow extension";
+            throw Exception() << "Template cell name does not match a known template cell";
           }
+          auto cell = templateCells.find(templateName)->second->clone();
+          auto const flowExtension = readFlowExtension(node, converter);
+
+          // Rotate cell to align z axis with given position, and then z axis with flow
+          // If phi == 0, then cell symmetry axis is aligned with the flow
+          using std::cos; using std::sin;
+          auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+          auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
+          LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
+          auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
+          auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
+          *cell *= rotation;
+
+          // Figure out size of cell alongst cylinder axis
+          auto const barycenter = cell->GetBarycenter();
+          auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
+          {
+            return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
+          };
+          auto const maxZ =
+              *std::max_element(cell->GetVertices().begin(),
+                                cell->GetVertices().end(),
+                                [&maxExtent](LatticePosition const &a, LatticePosition const& b)
+                                {
+                                  return maxExtent(a) < maxExtent(b);
+                                });
+          // Place cell as close as possible to 0 of fade length
+          *cell += flowExtension.origin
+              + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter;
+
+          // fail if any node outside flow extension
+          for (auto const &vertex : cell->GetVertices())
+          {
+            if (not contains(flowExtension, vertex))
+            {
+              HEMELB_CAPTURE(flowExtension.normal);
+              HEMELB_CAPTURE(flowExtension.origin);
+              HEMELB_CAPTURE(flowExtension.radius);
+              HEMELB_CAPTURE(flowExtension.length);
+              HEMELB_CAPTURE(vertex);
+              throw Exception() << "BAD INPUT: Cell not contained within flow extension";
+            }
+          }
+
+          // Drops first cell when time reaches offset, and then every deltaTime thereafter.
+          // Note: c++14 will allow more complex captures. Until then, we will need to create
+          // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
+          // variables should live as long as the lambda. But longuer than a single call.
+          auto const timeStep = GetNonDimensionalValue<LatticeTime>(insNode, "every", "s", converter);
+          auto const dt = GetNonDimensionalValue<LatticeTime>(insNode, "delta_t", "s", converter, 0e0);
+          auto time = std::make_shared<LatticeTime>
+          (
+            timeStep - 1e0 + std::numeric_limits<LatticeTime>::epsilon() - offset
+          );
+          auto condition = [time, timeStep, dt, offset]()
+          {
+            *time += 1e0;
+            if(*time >= timeStep)
+            {
+              *time -= timeStep + dt * (double(rand() % 10000) / 10000.e0);
+              return true;
+            }
+            return false;
+          };
+          auto const dtheta
+            = GetNonDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
+          auto const dphi
+            = GetNonDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
+          auto const dx
+            = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_x", "m", converter, 0e0);
+          auto const dy
+            = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_y", "m", converter, 0e0);
+
+          composite.AddInserter(std::static_pointer_cast<RBCInserter>(
+              std::make_shared<RBCInserterWithPerturbation>(
+                  condition, std::move(cell),
+                  rotation,
+                  dtheta, dphi,
+                  rotateToFlow * LatticePosition(dx, 0, 0),
+                  rotateToFlow * LatticePosition(0, dy, 0))));
         }
 
-        // Drops first cell when time reaches offset, and then every deltaTime thereafter.
-        // Note: c++14 will allow more complex captures. Until then, we will need to create
-        // semi-local lambda variables on the stack as shared pointers. Where semi-local means the
-        // variables should live as long as the lambda. But longuer than a single call.
-        auto const timeStep = GetNonDimensionalValue<LatticeTime>(insNode, "every", "s", converter);
-        auto const dt = GetNonDimensionalValue<LatticeTime>(insNode, "delta_t", "s", converter, 0e0);
-        auto time = std::make_shared<LatticeTime>
-        (
-          timeStep - 1e0 + std::numeric_limits<LatticeTime>::epsilon() - offset
-        );
-        auto condition = [time, timeStep, dt, offset]()
-        {
-          *time += 1e0;
-          if(*time >= timeStep)
-          {
-            *time -= timeStep + dt * (double(rand() % 10000) / 10000.e0);
-            return true;
-          }
-          return false;
-        };
-        auto const dtheta
-          = GetNonDimensionalValue<Angle>(insNode, "delta_theta", "rad", converter, 0e0);
-        auto const dphi
-          = GetNonDimensionalValue<Angle>(insNode, "delta_phi", "rad", converter, 0e0);
-        auto const dx
-          = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_x", "m", converter, 0e0);
-        auto const dy
-          = GetNonDimensionalValue<LatticeDistance>(insNode, "delta_y", "m", converter, 0e0);
-        return RBCInserterWithPerturbation
-        (
-            condition, std::move(cell),
-            rotation,
-            dtheta, dphi,
-            rotateToFlow * LatticePosition(dx, 0, 0),
-            rotateToFlow * LatticePosition(0, dy, 0)
-        );
+        return composite;
       }
     }
 

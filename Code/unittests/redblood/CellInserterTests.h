@@ -44,7 +44,7 @@ namespace hemelb
             cells.emplace("joe", std::make_shared<Cell>(tetrahedron()));
           }
 
-          TiXmlDocument getDocument(LatticeDistance radius = 1e0, bool noInserter = false)
+          TiXmlDocument getDocument(LatticeDistance radius = 1e0, int numInserters = 0)
           {
             std::ostringstream sstr;
             sstr << "<parent>"
@@ -56,7 +56,7 @@ namespace hemelb
                 "    <radius units=\"m\" value=\"" << radius << "\" />"
                 "    <fadelength units=\"m\" value=\"0.4\" />"
                 "  </flowextension>";
-            if (not noInserter)
+            for (int i = 0; i < numInserters; ++i)
             {
               sstr << "  <insertcell template=\"joe\">"
                   "    <every units=\"s\" value=\"" << every << "\"/>"
@@ -71,7 +71,7 @@ namespace hemelb
           }
           void testNoPeriodicInsertion()
           {
-            auto doc = getDocument(1e0, true);
+            auto doc = getDocument(1e0, 0);
             *cells["joe"] *= 0.1e0;
             auto const inserter = readRBCInserters(doc.FirstChildElement("parent"),
                                                    *converter,
@@ -81,7 +81,7 @@ namespace hemelb
 
           void testCellOutsideFlowExtension()
           {
-            auto doc = getDocument(1e0, false);
+            auto doc = getDocument(1e0, 1);
             CPPUNIT_ASSERT_THROW(readRBCInserters(doc.FirstChildElement("parent"),
                                                   *converter,
                                                   cells),
@@ -90,7 +90,7 @@ namespace hemelb
           void testPeriodicInsertion()
           {
             // Creates an inserter and checks it exists
-            auto doc = getDocument(1, false);
+            auto doc = getDocument(1, 2);
             *cells["joe"] *= 0.1e0;
             auto const inserter = readRBCInserters(doc.FirstChildElement("parent"),
                                                    *converter,
@@ -98,25 +98,25 @@ namespace hemelb
             CPPUNIT_ASSERT(inserter);
 
             // all calls up to offset result in node added cell
-            bool was_called = false;
-            auto addCell = [&was_called](CellContainer::value_type)
+            int num_calls = 0;
+            auto addCell = [&num_calls](CellContainer::value_type)
             {
               // This function is called by inserter with a new cell
               // It is meant to actually do the job of adding cells to the simulation
-              was_called = true;
+              ++num_calls;
             };
             auto const dt = converter->ConvertTimeToPhysicalUnits(1e0);
             auto const N = static_cast<int>(std::floor(offset / dt));
             for (int i(0); i < N; ++i)
             {
               inserter(addCell);
-              CPPUNIT_ASSERT(not was_called);
+              CPPUNIT_ASSERT_EQUAL(0, num_calls);
             }
 
             // Now first call should result in adding a cell
             inserter(addCell);
-            CPPUNIT_ASSERT(was_called);
-            was_called = false;
+            CPPUNIT_ASSERT_EQUAL(2, num_calls);
+            num_calls = 0;
 
             // Now should not output a cell until "every" time has gone by
             // Do it thrice for good measure
@@ -125,12 +125,12 @@ namespace hemelb
               for (int i(0); i < int(std::floor(every / dt)) - 1; ++i)
               {
                 inserter(addCell);
-                CPPUNIT_ASSERT(not was_called);
+                CPPUNIT_ASSERT_EQUAL(0, num_calls);
               }
               // And should call it!
               inserter(addCell);
-              CPPUNIT_ASSERT(was_called);
-              was_called = false;
+              CPPUNIT_ASSERT_EQUAL(2, num_calls);
+              num_calls = 0;
             }
           }
 
