@@ -26,7 +26,7 @@
         <fadelength units="m" value="7e-06" />
       </flowextension>
       <insertcell template="default">
-        <every units="s" value="2e-3"/>
+        <every units="s" value="2e-0"/>
         <offset units="s" value="40e-8"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
