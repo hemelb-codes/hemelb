@@ -103,38 +103,6 @@ namespace hemelb
                 tenth = position;
               }
             };
-            auto printData = []( const hemelb::redblood::CellContainer & cells)
-            {
-              static int iter = -1;
-              ++iter;
-              if(cells.empty())
-              {
-                return;
-              }
-              auto cell = *cells.begin();
-              auto const tag = cell->GetTag();
-              auto const b = cell->GetBarycenter();
-              auto const v = cell->GetVolume();
-              auto const e = (*cell)();
-              HEMELB_CAPTURE5(iter, tag, b, v, e);
-            };
-            auto printCells = [&converter](const hemelb::redblood::CellContainer &cells)
-            {
-              static int iter = 0;
-              if(cells.empty())
-              {
-                return;
-              }
-              auto cell = *cells.begin();
-              if(iter% 1000 == 0)
-              {
-                std::ostringstream sstr;
-                sstr << "/tmp/cell-" << cell->GetTag() << "_" << iter<< ".vtp";
-                writeVTKMesh(sstr.str(), cell, converter);
-              }
-              ++iter;
-            };
-
             int iter = 0;
             auto iterate = [&iter](const hemelb::redblood::CellContainer&)
             {
@@ -148,8 +116,45 @@ namespace hemelb
             controller->AddCellChangeListener(checkVolume);
             controller->AddCellChangeListener(checkPosition);
             controller->AddCellChangeListener(iterate);
-            // controller->AddCellChangeListener(printData);
-            // controller->AddCellChangeListener(printCells);
+
+            // keep those lambdas inline to avoid unused function warning when commented out.
+            // controller->AddCellChangeListener(
+            //     []( const hemelb::redblood::CellContainer & cells)
+            //     {
+            //       static int iter = -1;
+            //       ++iter;
+            //       if(cells.empty())
+            //       {
+            //         return;
+            //       }
+            //       auto cell = *cells.begin();
+            //       auto const tag = cell->GetTag();
+            //       auto const b = cell->GetBarycenter();
+            //       auto const v = cell->GetVolume();
+            //       auto const e = (*cell)();
+            //       HEMELB_CAPTURE5(iter, tag, b, v, e);
+            //     }
+            // );
+
+            // controller->AddCellChangeListener(
+            //     [&converter](const hemelb::redblood::CellContainer &cells)
+            //     {
+            //       static int iter = 0;
+            //       if(cells.empty())
+            //       {
+            //         return;
+            //       }
+            //       auto cell = *cells.begin();
+            //       if(iter% 1000 == 0)
+            //       {
+            //         std::ostringstream sstr;
+            //         sstr << "/tmp/cell-" << cell->GetTag() << "_" << iter<< ".vtp";
+            //         writeVTKMesh(sstr.str(), cell, converter);
+            //       }
+            //       ++iter;
+            //     }
+            // );
+
 
             // run the simulation
             master->RunSimulation();
