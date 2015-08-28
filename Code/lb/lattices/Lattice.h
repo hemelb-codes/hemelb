@@ -304,6 +304,8 @@ namespace hemelb
                                                         distribn_t forceDist[])
           {
 
+            auto const invCs2 = 1e0 / Cs2;
+            auto const invCs4 = invCs2 * invCs2;
             const __m128d vx = _mm_set1_pd(velocity_x);
             const __m128d vy = _mm_set1_pd(velocity_y);
             const __m128d vz = _mm_set1_pd(velocity_z);
@@ -319,8 +321,8 @@ namespace hemelb
             const __m128d pf = _mm_set1_pd(prefactor);
             const __m128d velocity_spf = _mm_set1_pd(vScalarProductF);
 
-            const __m128d r3 = _mm_set1_pd(1. / 3.);
-            const __m128d r9 = _mm_set1_pd(1. / 9.);
+            const __m128d r3 = _mm_set1_pd(invCs2);
+            const __m128d r9 = _mm_set1_pd(invCs4);
 
             const Direction numSSEvectors = (DmQn::NUMVECTORS >> 1) << 1;
             Direction i = 0;
@@ -352,8 +354,8 @@ namespace hemelb
               const distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i]
                   + force_z * DmQn::CZ[i];
               forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i]
-                  * ( (1. / 3.) * (FScalarProductDirection - vScalarProductF)
-                      + (1. / 9.) * (FScalarProductDirection * vScalarProductDirection));
+                  * ( invCs2 * (FScalarProductDirection - vScalarProductF)
+                      + invCs4 * (FScalarProductDirection * vScalarProductDirection));
             }
 
           }
@@ -376,7 +378,8 @@ namespace hemelb
                                                         const LatticeForce &force_z,
                                                         distribn_t forceDist[])
           {
-
+            auto const invCs2 = 1e0 / Cs2;
+            auto const invCs4 = invCs2 * invCs2;
             distribn_t prefactor = (1.0 - (1.0 / (2.0 * tau)));
             distribn_t vScalarProductF = velocity_x * force_x + velocity_y * force_y
                 + velocity_z * force_z;
@@ -388,8 +391,8 @@ namespace hemelb
               distribn_t FScalarProductDirection = force_x * DmQn::CX[i] + force_y * DmQn::CY[i]
                   + force_z * DmQn::CZ[i];
               forceDist[i] = prefactor * DmQn::EQMWEIGHTS[i]
-                  * ( (1. / 3.) * (FScalarProductDirection - vScalarProductF)
-                      + (1. / 9.) * (FScalarProductDirection * vScalarProductDirection));
+                  * ( invCs2 * (FScalarProductDirection - vScalarProductF)
+                      + invCs4 * (FScalarProductDirection * vScalarProductDirection));
             }
           }
 #endif
