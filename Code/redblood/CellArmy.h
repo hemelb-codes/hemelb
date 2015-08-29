@@ -159,6 +159,7 @@ namespace hemelb
     template<class KERNEL>
     void CellArmy<KERNEL>::Fluid2CellInteractions()
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
       std::vector<LatticePosition> & positions = work;
       LatticePosition const origin(0, 0, 0);
 
@@ -178,6 +179,7 @@ namespace hemelb
     template<class KERNEL>
     void CellArmy<KERNEL>::Cell2FluidInteractions()
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
       std::vector<LatticeForceVector> &forces = work;
 

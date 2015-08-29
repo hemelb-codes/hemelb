@@ -227,6 +227,7 @@ namespace hemelb
        */
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreSend - StreamAndCollide");
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
 
@@ -266,6 +267,7 @@ namespace hemelb
        */
       site_t offset = 0;
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PreReceive - StreamAndCollide");
       StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
       offset += mLatDat->GetMidDomainCollisionCount(0);
 
@@ -302,6 +304,7 @@ namespace hemelb
 
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("LBM - PostReceive - StreamAndCollide");
       //TODO yup, this is horrible. If you read this, please improve the following code.
       PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
       offset += mLatDat->GetDomainEdgeCollisionCount(0);
@@ -349,6 +352,7 @@ namespace hemelb
       timings[hemelb::reporting::Timers::lb].Start();
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
+      log::Logger::Log<log::Debug, log::OnePerCore>("LBM - EndIteration - Swap populations");
       // Swap f_old and f_new ready for the next timestep.
       mLatDat->SwapOldAndNew();
 
