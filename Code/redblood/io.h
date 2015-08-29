@@ -7,6 +7,7 @@
 #include "redblood/Cell.h"
 #include "io/xml/XmlAbstractionLayer.h"
 #include "util/UnitConverter.h"
+#include "redblood/stencil.h"
 
 namespace hemelb
 {
@@ -31,6 +32,9 @@ namespace hemelb
     //! Reads cells outlets from XML
     std::shared_ptr<std::vector<FlowExtension>> readRBCOutlets(io::xml::Element const&,
                                                                util::UnitConverter const&);
+
+    //! Reads stencil attribute
+    stencil::types readStencil(io::xml::Element const&);
   }
 }
 

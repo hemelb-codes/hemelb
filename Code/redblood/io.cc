@@ -1,4 +1,6 @@
 #include <utility>
+#include "io/xml/XmlAbstractionLayer.h"
+#include "redblood/stencil.h"
 #include "redblood/Cell.h"
 #include "redblood/FaderCell.h"
 #include "redblood/RBCInserter.h"
@@ -423,6 +425,23 @@ namespace hemelb
         flowExt.fadeLength = length;
       }
       return result;
+    }
+
+    stencil::types readStencil(io::xml::Element const& controllerNode)
+    {
+      if(auto const * stencil = controllerNode.GetAttributeOrNull("stencil"))
+      {
+        if(*stencil == "four_point" or *stencil == "four" or *stencil == "four point")
+          return stencil::types::FOUR_POINT;
+        if(*stencil == "two_point" or *stencil == "two" or *stencil == "two point")
+          return stencil::types::TWO_POINT;
+        if(*stencil == "three_point" or *stencil == "three" or *stencil == "three point")
+          return stencil::types::THREE_POINT;
+        if(*stencil == "cosine" or *stencil == "cosine approximation" or *stencil == "cos"
+            or *stencil == "cosine approx")
+          return stencil::types::COSINE_APPROX;
+      }
+      return stencil::types::TWO_POINT;
     }
   }
 }
