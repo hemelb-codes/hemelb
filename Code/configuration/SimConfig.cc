@@ -1,11 +1,11 @@
-// 
+//
 // Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
 // with, install, use, duplicate, modify, redistribute or share this
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
-// 
+//
 
 #include <string>
 #include <iostream>
@@ -253,6 +253,7 @@ namespace hemelb
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "LB", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
+      stencil = redblood::readStencil(controllerNode);
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);

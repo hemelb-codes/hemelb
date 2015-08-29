@@ -27,7 +27,8 @@ namespace hemelb
       public:
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
-                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
+                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
+                       stencil::types stencil=stencil::types::FOUR_POINT) :
             CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
         {
         }

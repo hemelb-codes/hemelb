@@ -1,7 +1,7 @@
 //
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
 // with, install, use, duplicate, modify, redistribute or share this
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
@@ -33,11 +33,10 @@ namespace hemelb
 
         //! Interaction terms between cells
         Node2NodeForce cell2Cell;
-        //! Stencil
-        stencil::types stencil = stencil::types::FOUR_POINT;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
+                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
+                 stencil::types stencil=stencil::types::FOUR_POINT) :
             latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
         {
         }
@@ -113,6 +112,17 @@ namespace hemelb
         //! Remove cells if they have reached outlets
         void CellRemoval();
 
+        //! Gets the current stencil
+        stencil::types GetStencil() const
+        {
+          return stencil;
+        }
+        //! Sets the current stencil
+        void SetStencil(stencil::types sten) const
+        {
+          stencil = sten;
+        }
+
       protected:
         //! Adds input cell to simulation
         void AddCell(CellContainer::value_type cell)
@@ -125,6 +135,8 @@ namespace hemelb
           dnc.insert(cell);
           cells.insert(cell);
         }
+        //! Stencil
+        stencil::types stencil;
 
         //! All lattice information and then some
         geometry::LatticeData &latticeData;

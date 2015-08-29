@@ -37,11 +37,10 @@ namespace hemelb
             CopyResourceToTempdir("large_cylinder.gmy");
             CopyResourceToTempdir("red_blood_cell.txt");
 
-            std::vector<std::string> intel;
-            intel.push_back("simulation");
-            intel.push_back("steps");
-            intel.push_back("value");
-            ModifyXMLInput("large_cylinder_rbc.xml", std::move(intel), 1000);
+            ModifyXMLInput(
+                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 3000);
+            ModifyXMLInput(
+                "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "four");
 
             argv[0] = "hemelb";
             argv[1] = "-in";
@@ -172,7 +171,6 @@ namespace hemelb
           char const * argv[7];
 
       };
-
 
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FadeInOutIntegrationTests);

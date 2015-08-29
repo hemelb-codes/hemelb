@@ -1,11 +1,11 @@
-// 
+//
 // Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
 // with, install, use, duplicate, modify, redistribute or share this
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
-// 
+//
 
 #include "SimulationMaster.h"
 #include "configuration/SimConfig.h"
@@ -222,7 +222,8 @@ namespace hemelb
       auto const controller = std::make_shared<Controller>(*latticeData,
                                                            cells,
                                                            simConfig->GetBoxSize(),
-                                                           simConfig->GetHalo());
+                                                           simConfig->GetHalo(),
+                                                           simConfig->GetStencil());
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);
@@ -698,7 +699,7 @@ namespace hemelb
     }
   }
 
-  template<class TRAITS> 
+  template<class TRAITS>
   const hemelb::util::UnitConverter& SimulationMaster<TRAITS>::GetUnitConverter() const
   {
       return *unitConverter;
