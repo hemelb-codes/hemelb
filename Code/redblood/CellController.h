@@ -1,7 +1,7 @@
 //
 // Copyright (C) University College London, 2007-2012, all rights reserved.
 //
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
 // with, install, use, duplicate, modify, redistribute or share this
 // file, or any part thereof, other than as allowed by any agreement
 // specifically made by you with University College London.
@@ -41,14 +41,14 @@ namespace hemelb
           using namespace log;
           Logger::Log<Debug, Singleton>("Cell insertion");
           CellArmy<KERNEL>::CallCellInsertion();
-          Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::Fluid2CellInteractions();
+          Logger::Log<Debug, Singleton>("Cell interaction with fluid");
+          CellArmy<KERNEL>::Cell2FluidInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
-          Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::Cell2FluidInteractions();
+          Logger::Log<Debug, Singleton>("Fluid interaction with cells");
+          CellArmy<KERNEL>::Fluid2CellInteractions();
           Logger::Log<Debug, Singleton>("Checking whether cells have reached outlets");
           CellArmy<KERNEL>::CellRemoval();
           Logger::Log<Debug, Singleton>("Notify cell listeners");

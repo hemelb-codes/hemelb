@@ -40,8 +40,7 @@ namespace hemelb
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 3000);
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "four");
-
+                "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
             argv[0] = "hemelb";
             argv[1] = "-in";
             argv[2] = "large_cylinder_rbc.xml";
