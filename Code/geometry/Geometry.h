@@ -149,7 +149,7 @@ namespace hemelb
         {
           site_t SiteId = 0;
           // Calculate the site's id over the whole geometry,
-          for (site_t neighSite = 0; neighSite < GetSitesPerBlock(); ++neighSite)
+          for (site_t neighSite = 0; neighSite < GetSitesPerBlock(); neighSite++)
           {
             if (neighSite == neighbourSiteId)
             {
@@ -157,11 +157,11 @@ namespace hemelb
             }
             else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != BIG_NUMBER2)
             {
-              ++SiteId;
+              SiteId++;
             }
           }
 
-          return ++SiteId;
+          return SiteId;
         }
 
       private:
