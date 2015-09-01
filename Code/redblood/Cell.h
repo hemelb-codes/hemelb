@@ -174,6 +174,9 @@ namespace hemelb
         //! A unique identifier for the cell
         boost::uuids::uuid const & GetTag() const;
 
+        //! Computes average edge length of cell
+        double GetAverageEdgeLength() const;
+
       protected:
         //! Clones: shallow copy reference mesh, deep-copy everything else
         std::unique_ptr<CellBase> virtual cloneImpl() const = 0;

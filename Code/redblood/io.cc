@@ -317,6 +317,10 @@ namespace hemelb
           throw Exception() << "Multiple template mesh with same name";
         }
         auto cell = readCell(cellNode, converter);
+        if(!validateCellEdgeLengths(*cell))
+        {
+          throw Exception() << "Average edge length in cell mesh not in [0.7, 1.3]";
+        }
         if (flowExtensions)
         {
           auto fader = FaderCell(std::move(cell), flowExtensions).clone();
@@ -327,6 +331,16 @@ namespace hemelb
       return result->size() > 0 ?
         std::move(result) :
         nullptr;
+    }
+
+    bool validateCellEdgeLengths(const CellBase& cell)
+    {
+      auto edgeLength = cell.GetAverageEdgeLength();
+
+      // Acceptable average edge length to voxel size ratio is [0.7, 1.3].
+      // Note that cell vertices location is given in lattice units, therefore
+      // no need to normalise again.
+      return (edgeLength >= 0.7 && edgeLength <= 1.3);
     }
 
     std::unique_ptr<CellBase> readCell(io::xml::Element const& node,
