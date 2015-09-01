@@ -133,6 +133,10 @@ namespace hemelb
           auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
           auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
           *cell *= rotation;
+          auto const x = GetNonDimensionalValue<LatticeDistance>(insNode, "x", "m", converter, 0e0);
+          auto const y = GetNonDimensionalValue<LatticeDistance>(insNode, "y", "m", converter, 0e0);
+          auto const u = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
+          *cell += rotateToFlow * LatticePosition(x, y, u);
 
           // Figure out size of cell alongst cylinder axis
           auto const barycenter = cell->GetBarycenter();

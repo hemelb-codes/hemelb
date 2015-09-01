@@ -95,7 +95,7 @@ namespace hemelb
           0;
       }
 
-#define HEMELB_STENCIL_MACRO(NAME, STENCIL)                  \
+#define HEMELB_STENCIL_MACRO(NAME, STENCIL, RANGE)           \
   struct NAME                                                \
   {                                                          \
     static Dimensionless stencil(Dimensionless x)            \
@@ -114,13 +114,16 @@ namespace hemelb
     {                                                        \
       return NAME::stencil(x);                               \
     }                                                        \
-    static const size_t range;                               \
+    constexpr size_t GetRange() const                        \
+    {                                                        \
+      return RANGE;                                          \
+    }                                                        \
   };                                                         \
   static_assert(std::is_pod<NAME>::value, "Can be a struct")
-      HEMELB_STENCIL_MACRO(FourPoint, fourPoint);
-      HEMELB_STENCIL_MACRO(CosineApprox, cosineApprox);
-      HEMELB_STENCIL_MACRO(ThreePoint, threePoint);
-      HEMELB_STENCIL_MACRO(TwoPoint, twoPoint);
+      HEMELB_STENCIL_MACRO(FourPoint, fourPoint, 4);
+      HEMELB_STENCIL_MACRO(CosineApprox, cosineApprox, 4);
+      HEMELB_STENCIL_MACRO(ThreePoint, threePoint, 3);
+      HEMELB_STENCIL_MACRO(TwoPoint, twoPoint, 2);
 #undef HEMELB_STENCIL_MACRO
     }
   }
