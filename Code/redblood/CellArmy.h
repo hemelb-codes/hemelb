@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include <iomanip>
 
 #include "redblood/Cell.h"
 #include "redblood/CellCell.h"
@@ -37,7 +38,7 @@ namespace hemelb
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
                  LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
                  stencil::types stencil=stencil::types::FOUR_POINT) :
-            latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
+            latticeData(_latDat), cells(cells), stencil(stencil), dnc(cells, boxsize, halo)
         {
         }
 
@@ -187,7 +188,7 @@ namespace hemelb
       CellContainer::const_iterator const i_end = cells.end();
       for (; i_first != i_end; ++i_first)
       {
-        forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, stencil);
+        forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, this->stencil);
       }
 
       addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);

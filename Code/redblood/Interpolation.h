@@ -138,10 +138,13 @@ namespace hemelb
     template<class STENCIL>
     InterpolationIterator::InterpolationIterator(LatticePosition const &node,
                                                  STENCIL const &stencil) :
-        IndexIterator(minimumPosition(node, STENCIL::range), maximumPosition(node, STENCIL::range)),
-            xWeight(STENCIL::range), yWeight(STENCIL::range), zWeight(STENCIL::range)
+        IndexIterator(
+            minimumPosition(node, stencil.GetRange()),
+            maximumPosition(node, stencil.GetRange())
+        ), xWeight(stencil.GetRange(), 0), yWeight(stencil.GetRange(), 0),
+        zWeight(stencil.GetRange(), 0)
     {
-      for (LatticeVector::value_type i(0); i < LatticeVector::value_type(STENCIL::range); ++i)
+      for (LatticeVector::value_type i(0); i < LatticeVector::value_type(stencil.GetRange()); ++i)
       {
         xWeight[i] = stencil(node[0] - Dimensionless(min[0] + i));
         yWeight[i] = stencil(node[1] - Dimensionless(min[1] + i));
