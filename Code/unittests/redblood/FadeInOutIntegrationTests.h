@@ -7,6 +7,7 @@
 
 #include "SimulationMaster.h"
 #include "lb/BuildSystemInterface.h"
+#include "lb/lattices/D3Q19.h"
 #include "Traits.h"
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
@@ -25,7 +26,7 @@ namespace hemelb
           CPPUNIT_TEST (testIntegration);CPPUNIT_TEST_SUITE_END()
           ;
 
-          typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
+          typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
           typedef hemelb::redblood::CellController<Traits::Kernel> CellControl;
           typedef SimulationMaster<Traits> MasterSim;
 
