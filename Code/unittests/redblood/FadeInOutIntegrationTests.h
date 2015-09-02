@@ -38,9 +38,13 @@ namespace hemelb
             CopyResourceToTempdir("red_blood_cell.txt");
 
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 3000);
+                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 6600);
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
+            ModifyXMLInput(
+                "large_cylinder_rbc.xml",
+                {"outlets", "outlet", "flowextension", "length", "value"},
+                40e-6);
             argv[0] = "hemelb";
             argv[1] = "-in";
             argv[2] = "large_cylinder_rbc.xml";
@@ -57,7 +61,12 @@ namespace hemelb
           {
             auto const & converter = master->GetUnitConverter();
             auto const volumeFactor = std::pow(converter.ConvertToLatticeUnits("m", 1e0), -3)*1e12;
-            auto checkVolume = [volumeFactor]( const hemelb::redblood::CellContainer & cells)
+            bool didDropCell = false;
+            auto checkDidDropCell = [&didDropCell](const hemelb::redblood::CellContainer & cells)
+            {
+              didDropCell |= not cells.empty();
+            };
+            auto checkVolume = [volumeFactor](const hemelb::redblood::CellContainer & cells)
             {
               static LatticeVolume expected = -1e0;
               if(cells.empty())
@@ -114,6 +123,7 @@ namespace hemelb
             controller->AddCellChangeListener(checkVolume);
             controller->AddCellChangeListener(checkPosition);
             controller->AddCellChangeListener(iterate);
+            controller->AddCellChangeListener(checkDidDropCell);
 
             // keep those lambdas inline to avoid unused function warning when commented out.
             // controller->AddCellChangeListener(
@@ -161,6 +171,8 @@ namespace hemelb
             AssertPresent("results/report.txt");
             AssertPresent("results/report.xml");
             CPPUNIT_ASSERT(iter > 0);
+            CPPUNIT_ASSERT(didDropCell);
+            CPPUNIT_ASSERT_EQUAL(0ul, controller->GetCells().size());
           }
 
         private:
@@ -170,6 +182,7 @@ namespace hemelb
           char const * argv[7];
 
       };
+
 
 
       CPPUNIT_TEST_SUITE_REGISTRATION (FadeInOutIntegrationTests);
