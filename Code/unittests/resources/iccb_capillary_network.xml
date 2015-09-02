@@ -132,7 +132,7 @@
   <redbloodcells>
     <controller stencil="two">
       <halo units="LB" value="1.05" />
-      <boxsize units="LB" value="10e-6" />
+      <boxsize units="LB" value="3" />
     </controller>
     <cells>
       <cell name="default">
