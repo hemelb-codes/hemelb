@@ -46,8 +46,18 @@ namespace hemelb
 
           virtual LatticeVelocity GetVelocity(const LatticePosition& x, const LatticeTimeStep t) const = 0;
 
+          //virtual LatticeVelocity GetVelocity2(const util::Vector3D<site_t> globalCoordinates,
+          //                                                          const LatticeTimeStep t) const = 0;
+
         protected:
           LatticeDistance radius;
+
+          /*
+           * Map containing velocity weights of each of the iolet sites.
+           * Key is the 3D global coordinate. Value is the velocityweight, as
+           * read from file in InOutLetFileVelocity::Initialise().
+           */
+          std::map<util::Vector3D<site_t>, LatticeSpeed> ioletSiteVelocityWeights;
       };
     }
   }

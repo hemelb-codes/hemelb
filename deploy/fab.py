@@ -30,6 +30,8 @@ import re
 import numpy as np
 import yaml
 import tempfile
+from os.path import expanduser
+
 
 @task
 def clone():
@@ -135,11 +137,11 @@ def stat():
     return run(template("$stat -u $username"))
 
 @task
-def monitor():
+def monitor(delay=30):
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
-        time.sleep(30)
+        time.sleep(float(delay))
         
         
 def check_complete():
@@ -825,4 +827,40 @@ def steer(job, orbit=False, view=False, retry=False, framerate=None):
     else:
         get_running_location()
         run(template(command_template))
+
+
+@task
+def ensemble(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python Ensemble.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
+
+
+
+@task
+def run_pyNS(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python pyNS-profiles.py "+config)
+
+
+
+@task
+def generate_LB(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python LB-configs.py "+config)
+
+
+@task
+def submit_jobs(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python hemelb-jobs.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
 

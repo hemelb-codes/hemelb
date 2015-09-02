@@ -59,6 +59,7 @@ namespace hemelb
             halfWay.z += 0.5 * LatticeType::CZ[ii];
 
             LatticeVelocity wallMom(iolet->GetVelocity(halfWay, bValues->GetTimeStep()));
+            //TODO: Add site.GetGlobalSiteCoords() as a first argument?
 
             if (CollisionType::CKernel::LatticeType::IsLatticeCompressible())
             {
