@@ -118,7 +118,7 @@ namespace hemelb
       };
 
 
-    CPPUNIT_TEST_SUITE_REGISTRATION(MulticellBenchmarkTests);
+    //CPPUNIT_TEST_SUITE_REGISTRATION(MulticellBenchmarkTests);
     }// namespace redblood
   } // namespace unittests
 } // namespace hemelb
