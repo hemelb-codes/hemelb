@@ -110,6 +110,7 @@ namespace hemelb
       void rotateTranslateCellToFlow(std::unique_ptr<CellBase> & cell,
                                      const Angle theta, const Angle phi,
                                      const FlowExtension & flowExtension,
+                                     LatticePosition const & translation,
                                      util::Matrix3D & rotateToFlow,
                                      util::Matrix3D & rotation)
       {
@@ -120,6 +121,7 @@ namespace hemelb
         rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
         rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
         *cell *= rotation;
+        *cell += rotateToFlow * translation;
 
         // Figure out size of cell alongst cylinder axis
         auto const barycenter = cell->GetBarycenter();
@@ -180,45 +182,13 @@ namespace hemelb
           // If phi == 0, then cell symmetry axis is aligned with the flow
           auto const theta = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
           auto const phi = GetNonDimensionalValue<Angle>(insNode, "theta", "rad", converter, 0e0);
-          LatticePosition const z(cos(theta)*sin(phi), sin(theta)*sin(phi), cos(phi));
-          auto const rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
-          auto const rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
-          *cell *= rotation;
           auto const x = GetNonDimensionalValue<LatticeDistance>(insNode, "x", "m", converter, 0e0);
           auto const y = GetNonDimensionalValue<LatticeDistance>(insNode, "y", "m", converter, 0e0);
-          auto const u = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
-          *cell += rotateToFlow * LatticePosition(x, y, u);
+          auto const z = GetNonDimensionalValue<LatticeDistance>(insNode, "z", "m", converter, 0e0);
 
-          // Figure out size of cell alongst cylinder axis
-          auto const barycenter = cell->GetBarycenter();
-          auto maxExtent = [barycenter, &flowExtension](LatticePosition const pos)
-          {
-            return std::max((pos - barycenter).Dot(flowExtension.normal), 0e0);
-          };
-          auto const maxZ =
-              *std::max_element(cell->GetVertices().begin(),
-                                cell->GetVertices().end(),
-                                [&maxExtent](LatticePosition const &a, LatticePosition const& b)
-                                {
-                                  return maxExtent(a) < maxExtent(b);
-                                });
-          // Place cell as close as possible to 0 of fade length
-          *cell += flowExtension.origin
-              + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter;
-
-          // fail if any node outside flow extension
-          for (auto const &vertex : cell->GetVertices())
-          {
-            if (not contains(flowExtension, vertex))
-            {
-              HEMELB_CAPTURE(flowExtension.normal);
-              HEMELB_CAPTURE(flowExtension.origin);
-              HEMELB_CAPTURE(flowExtension.radius);
-              HEMELB_CAPTURE(flowExtension.length);
-              HEMELB_CAPTURE(vertex);
-              throw Exception() << "BAD INPUT: Cell not contained within flow extension";
-            }
-          }
+          util::Matrix3D rotateToFlow, rotation;
+          rotateTranslateCellToFlow(
+              cell, theta, phi, flowExtension, LatticePosition(x, y, z), rotateToFlow, rotation);
 
           // Drops first cell when time reaches offset, and then every deltaTime thereafter.
           // Note: c++14 will allow more complex captures. Until then, we will need to create
