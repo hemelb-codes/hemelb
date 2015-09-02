@@ -7,6 +7,7 @@
 // specifically made by you with University College London.
 //
 #include <fstream>
+#include <numeric>
 #include "redblood/Cell.h"
 // Helper functions in anonymous namespace.
 // These are located in separate file so we can easily unit-test them.
@@ -250,6 +251,20 @@ namespace hemelb
     boost::uuids::uuid const & CellBase::GetTag() const
     {
       return data->tag;
+    }
+
+    double CellBase::GetAverageEdgeLength() const
+    {
+      std::vector<double> edgeLengths;
+
+      for (auto &facet : data->templateMesh.GetFacets())
+      {
+        edgeLengths.push_back((data->vertices[facet[0]] - data->vertices[facet[1]]).GetMagnitude());
+        edgeLengths.push_back((data->vertices[facet[1]] - data->vertices[facet[2]]).GetMagnitude());
+        edgeLengths.push_back((data->vertices[facet[2]] - data->vertices[facet[0]]).GetMagnitude());
+      }
+
+      return std::accumulate(edgeLengths.begin(), edgeLengths.end(), 0.0) / edgeLengths.size();
     }
 
     void writeVTKMesh(
