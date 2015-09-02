@@ -38,7 +38,7 @@ namespace hemelb
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
                  LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
                  stencil::types stencil=stencil::types::FOUR_POINT) :
-            latticeData(_latDat), cells(cells), stencil(stencil), dnc(cells, boxsize, halo)
+            stencil(stencil), latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
         {
         }
 
