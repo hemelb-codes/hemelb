@@ -60,7 +60,7 @@ namespace hemelb
               moduli->LinkEndChild(elem);
             };
             add_stuff("surface", "LB", 2e0);
-            add_stuff("dilation", "N/m", 1e0);
+            add_stuff("dilation", "LB", 0.58);
             add_stuff("bending", "Nm", 2e-18);
             cell->LinkEndChild(moduli);
 
@@ -86,9 +86,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("Nm", 2e-19),
                                          cell->moduli.bending,
                                          1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("N/m", 5e-1),
-                                         cell->moduli.dilation,
-                                         1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.75, cell->moduli.dilation, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("N/m", 5e-6),
                                          cell->moduli.strain,
                                          1e-12);
@@ -106,9 +104,7 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("Nm", 2e-18),
                                          moduli.bending,
                                          1e-12);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("N/m", 1e0),
-                                         moduli.dilation,
-                                         1e-12);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(0.58, moduli.dilation, 1e-12);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(converter->ConvertToLatticeUnits("N/m", 5e-6),
                                          moduli.strain,
                                          1e-12);

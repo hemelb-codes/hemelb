@@ -269,7 +269,12 @@ namespace hemelb
       moduli.bending = GetNonDimensionalValue(moduliNode, "bending", "Nm", converter, 2e-19);
       moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
       moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
-      moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "N/m", converter, 5e-1);
+      moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
+      if(not (1e0 >= moduli.dilation >= 0.5))
+      {
+        log::Logger::Log<log::Critical, log::Singleton>(
+            "Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
+      }
       moduli.strain = GetNonDimensionalValue(moduliNode, "strain", "N/m", converter, 5e-6);
       return moduli;
     }
