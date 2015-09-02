@@ -1,0 +1,1701 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Vascular Network Model: graph description-->
+<NetworkGraph id="1" version="3.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="vascular_network_v3.2.xsd">
+    <case>
+        <patient_id>00000</patient_id>
+        <visit>other</visit>
+    </case>
+<nodes>
+    <node type="inflow" id="1" name="heart"/>
+    <node id="2"/>
+    <node id="3"/>
+    <node id="4"/>
+    <node id="5"/>
+    <node type="downstream network" id="6" name="wk_intercostals">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_intercostals] = (($mean_pressure[])/(0.07*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="7"/>
+    <node id="8"/>
+    <node type="downstream network" id="9" name="wk_celiac">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_celiac] = (($mean_pressure[])/(0.13*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="10"/>
+    <node type="downstream network" id="11" name="wk_right_renal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_renal] = (($mean_pressure[])/(0.11*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="12"/>
+    <node type="downstream network" id="13" name="wk_left_renal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_renal] = (($mean_pressure[])/(0.11*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="14"/>
+    <node type="downstream network" id="15" name="wk_sup_mesenteric">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_sup_mesenteric] = (($mean_pressure[])/(0.1715*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="16"/>
+    <node type="downstream network" id="17" name="wk_inf_mesenteric">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_inf_mesenteric] = (($mean_pressure[])/(0.0085*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="18"/>
+    <node id="19"/>
+    <node type="downstream network" id="20" name="wk_right_ext_iliac">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_ext_iliac] = (($mean_pressure[])/(0.07*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="21" name="wk_right_int_iliac">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_int_iliac] = (($mean_pressure[])/(0.03*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="22"/>
+    <node type="downstream network" id="23" name="wk_left_ext_iliac">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_ext_iliac] = (($mean_pressure[])/(0.07*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="24" name="wk_left_int_iliac">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_int_iliac] = (($mean_pressure[])/(0.03*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="25"/>
+    <node id="26"/>
+    <node type="downstream network" id="27" name="wk_right_radial_distal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_radial_distal] = (($mean_pressure[])/(0.0074*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="28"/>
+    <node type="downstream network" id="29" name="wk_right_interosseous">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_interosseous] = (($mean_pressure[])/(0.0019*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="30" name="wk_right_ulnar_distal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_ulnar_distal] = (($mean_pressure[])/(0.0157*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="31"/>
+    <node id="32"/>
+    <node id="33"/>
+    <node type="downstream network" id="34" name="wk_left_radial_distal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_radial_distal] = (($mean_pressure[])/(0.0074*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="35"/>
+    <node type="downstream network" id="36" name="wk_left_interosseous">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_interosseous] = (($mean_pressure[])/(0.0019*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="37" name="wk_left_ulnar_distal">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_ulnar_distal] = (($mean_pressure[])/(0.0157*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="38"/>
+    <node type="downstream network" id="39" name="wk_right_ext_carotid">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_ext_carotid] = (($mean_pressure[])/(0.00675*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="40"/>
+    <node id="41"/>
+    <node type="downstream network" id="42" name="wk_left_ext_carotid">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_ext_carotid] = (($mean_pressure[])/(0.00675*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="43"/>
+    <node id="44"/>
+    <node id="45"/>
+    <node id="46"/>
+    <node id="47"/>
+    <node type="downstream network" id="48" name="wk_right_pca_p2">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_pca_p2] = (($mean_pressure[])/(0.0137*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="49" name="wk_left_pca_p2">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_pca_p2] = (($mean_pressure[])/(0.0137*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="50"/>
+    <node type="downstream network" id="51" name="wk_right_mca">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_mca] = (($mean_pressure[])/(0.0345*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="52"/>
+    <node type="downstream network" id="53" name="wk_left_mca">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_mca] = (($mean_pressure[])/(0.0345*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node id="54"/>
+    <node id="55"/>
+    <node type="downstream network" id="56" name="wk_right_aca_a2">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_right_aca_a2] = (($mean_pressure[])/(0.0205*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+    <node type="downstream network" id="57" name="wk_left_aca_a2">
+        <properties>
+            <windkessel>
+                <expression>$WindkesselRel[wk_left_aca_a2] = (($mean_pressure[])/(0.0205*$cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+            </windkessel>
+        </properties>
+    </node>
+</nodes>
+    <superedges>
+        <superedge id="1" name="body">
+            <superedges>
+                <superedge id="2" name="ascending_aorta">
+                    <edgesIds>
+                        <edgeIds edge_id="1"/>
+                        <edgeIds edge_id="2"/>
+                        <edgeIds edge_id="3"/>
+                        <edgeIds edge_id="4"/>
+                        <edgeIds edge_id="5"/>
+                    </edgesIds>
+                </superedge>
+                <superedge id="3" name="descending_aorta">
+                    <edgesIds>
+                        <edgeIds edge_id="6"/>
+                        <edgeIds edge_id="7"/>
+                        <edgeIds edge_id="8"/>
+                        <edgeIds edge_id="9"/>
+                        <edgeIds edge_id="10"/>
+                        <edgeIds edge_id="11"/>
+                        <edgeIds edge_id="12"/>
+                        <edgeIds edge_id="13"/>
+                        <edgeIds edge_id="14"/>
+                        <edgeIds edge_id="15"/>
+                        <edgeIds edge_id="16"/>
+                        <edgeIds edge_id="17"/>
+                    </edgesIds>
+                </superedge>
+                <superedge id="4" name="iliac_arteries">
+                    <edgesIds>
+                        <edgeIds edge_id="18"/>
+                        <edgeIds edge_id="19"/>
+                        <edgeIds edge_id="20"/>
+                        <edgeIds edge_id="21"/>
+                        <edgeIds edge_id="22"/>
+                        <edgeIds edge_id="23"/>
+                    </edgesIds>
+                </superedge>
+            </superedges>
+        </superedge>
+        <superedge id="6" name="arms">
+            <superedges>
+                <superedge id="7" name="right_arm">
+                    <edgesIds>
+                        <edgeIds edge_id="24"/>
+                        <edgeIds edge_id="25"/>
+                        <edgeIds edge_id="26"/>
+                        <edgeIds edge_id="27"/>
+                        <edgeIds edge_id="28"/>
+                        <edgeIds edge_id="29"/>
+                    </edgesIds>
+                </superedge>
+                <superedge id="8" name="left_arm">
+                    <edgesIds>
+                        <edgeIds edge_id="30"/>
+                        <edgeIds edge_id="31"/>
+                        <edgeIds edge_id="32"/>
+                        <edgeIds edge_id="33"/>
+                        <edgeIds edge_id="34"/>
+                        <edgeIds edge_id="35"/>
+                        <edgeIds edge_id="36"/>
+                    </edgesIds>
+                </superedge>
+            </superedges>
+        </superedge>
+        <superedge id="9" name="head">
+            <superedges>
+                <superedge id="10" name="carotid_artery">
+                    <edgesIds>
+                        <edgeIds edge_id="50"/>
+                        <edgeIds edge_id="51"/>
+                        <edgeIds edge_id="52"/>
+                        <edgeIds edge_id="54"/>
+                        <edgeIds edge_id="58"/>
+                    </edgesIds>
+                </superedge>
+                <superedge id="11" name="vertebrals_and_basilar_artery">
+                    <edgesIds>
+                        <edgeIds edge_id="43"/>
+                        <edgeIds edge_id="44"/>
+                        <edgeIds edge_id="45"/>
+                    </edgesIds>
+                </superedge>
+                <superedge id="12" name="cerebral_arteries">
+                    <edgesIds>
+                        <edgeIds edge_id="37"/>
+                        <edgeIds edge_id="38"/>
+                        <edgeIds edge_id="39"/>
+                        <edgeIds edge_id="40"/>
+                        <edgeIds edge_id="41"/>
+                        <edgeIds edge_id="42"/>
+                        <edgeIds edge_id="46"/>
+                        <edgeIds edge_id="47"/>
+                        <edgeIds edge_id="48"/>
+                        <edgeIds edge_id="49"/>
+                        <edgeIds edge_id="53"/>
+                        <edgeIds edge_id="55"/>
+                        <edgeIds edge_id="56"/>
+                        <edgeIds edge_id="57"/>
+                        <edgeIds edge_id="59"/>
+                        <edgeIds edge_id="60"/>
+                    </edgesIds>
+                </superedge>
+            </superedges>
+        </superedge>
+    </superedges>
+<edges>
+    <edge node2_id="2" node1_id="1" side="arterial" id="1" name="aorta_asc">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>14.7e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>14.4e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>16.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="3" node1_id="2" side="arterial" id="2" name="aortich_arch_A">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>11.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>11.2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>12.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="4" node1_id="3" side="arterial" id="3" name="aortich_arch_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>10.7e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>10.7e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>11.5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="5" node1_id="4" side="arterial" id="4" name="thoracic_aorta_A">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>9.99e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>9.99e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>11.0e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="7" node1_id="5" side="arterial" id="5" name="thoracic_aorta_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>10.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>6.75e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>6.45e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>11.0e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="6" node1_id="5" side="arterial" id="6" name="intercostals">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.0e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.5e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="8" node1_id="7" side="arterial" id="7" name="abdominal_aorta_A">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>6.1e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>6.1e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="9" node1_id="8" side="arterial" id="8" name="celiac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.9e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>3.9e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="10" node1_id="8" side="arterial" id="9" name="abdominal_aorta_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>6e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>6e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="11" node1_id="10" side="arterial" id="10" name="right_renal">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.6e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.6e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="12" node1_id="10" side="arterial" id="11" name="abdominal_aorta_C">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>5.9e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>5.9e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="13" node1_id="12" side="arterial" id="12" name="left_renal">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.6e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.6e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="14" node1_id="12" side="arterial" id="13" name="abdominal_aorta_D1">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>5.8e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>5.64e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>7.5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="15" node1_id="14" side="arterial" id="14" name="sup_mesenteric">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>4.35e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>4.35e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="16" node1_id="14" side="arterial" id="15" name="abdominal_aorta_D2">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>5.64e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>5.48e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>7.5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="17" node1_id="16" side="arterial" id="16" name="inf_mesenteric">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.6e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.6e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="18" node1_id="16" side="arterial" id="17" name="abdominal_aorta_E">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>5.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>5.2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="19" node1_id="18" side="arterial" id="18" name="right_common_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.68e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>3.5e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="20" node1_id="19" side="arterial" id="19" name="right_ext_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>14.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.7e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="21" node1_id="19" side="arterial" id="20" name="right_int_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="22" node1_id="18" side="arterial" id="21" name="left_common_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5.8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.68e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>3.5e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="23" node1_id="22" side="arterial" id="22" name="left_ext_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>14.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.7e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="24" node1_id="22" side="arterial" id="23" name="left_int_iliac">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="25" node1_id="4" side="arterial" id="24" name="right_subclavian">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>4.23e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>4.23e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="26" node1_id="25" side="arterial" id="25" name="right_brachial">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>42.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>4.03e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.36e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="27" node1_id="26" side="arterial" id="26" name="right_radial">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>23.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.74e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.42e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="28" node1_id="26" side="arterial" id="27" name="right_ulnar_A">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>6.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.15e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.15e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="29" node1_id="28" side="arterial" id="28" name="right_interosseous">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>7.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>0.91e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.91e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="30" node1_id="28" side="arterial" id="29" name="right_ulnar_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.03e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.83e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="31" node1_id="2" side="arterial" id="30" name="brachiocephalic">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>6.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>6.2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="32" node1_id="31" side="arterial" id="31" name="left_subclavian">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>3.4e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>4.23e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>4.23e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="33" node1_id="32" side="arterial" id="32" name="left_brachial">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>42.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>4.03e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.36e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="34" node1_id="33" side="arterial" id="33" name="left_radial">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>23.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.74e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.42e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="35" node1_id="33" side="arterial" id="34" name="left_ulnar_A">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>6.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.15e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.15e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="36" node1_id="35" side="arterial" id="35" name="left_interosseous">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>7.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>0.91e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.91e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="37" node1_id="35" side="arterial" id="36" name="left_ulnar_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.1e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2.03e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.83e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="38" node1_id="3" side="arterial" id="37" name="right_common_carotid">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.7e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.5e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="39" node1_id="38" side="arterial" id="38" name="right_ext_carotid">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.77e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.83e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="40" node1_id="38" side="arterial" id="39" name="right_int_carotid_A_ICA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="41" node1_id="31" side="arterial" id="40" name="left_common_carotid">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>20.8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>3.7e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2.5e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>6.3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>4e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="42" node1_id="41" side="arterial" id="41" name="left_ext_carotid">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.77e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.83e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="43" node1_id="41" side="arterial" id="42" name="left_int_carotid_A_ICA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>17.7e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="44" node1_id="25" side="arterial" id="43" name="right_vertebral_VA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>14.8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.36e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.36e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="44" node1_id="32" side="arterial" id="44" name="left_vertebral_VA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>14.8e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.36e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.36e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>8e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="45" node1_id="44" side="arterial" id="45" name="basilar_BA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>2.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.62e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.62e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>4e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="46" node1_id="45" side="arterial" id="46" name="right_post_cerebral_artery_P1">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>0.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.07e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.07e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="47" node1_id="45" side="arterial" id="47" name="left_post_cerebral_artery_P1">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>0.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.07e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.07e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.7e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="48" node1_id="46" side="arterial" id="48" name="right_post_cerebral_artery_P2_PCA_P2">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>8.6e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.05e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.05e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.06e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="49" node1_id="47" side="arterial" id="49" name="left_post_cerebral_artery_P2_PCA_P2">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>8.6e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.05e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.05e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.06e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="40" node1_id="46" side="arterial" id="50" name="right_post_comm_artery_PCoA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>0.73e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.73e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>1.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="43" node1_id="47" side="arterial" id="51" name="left_post_comm_artery_PCoA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>0.73e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.73e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>1.8e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="50" node1_id="40" side="arterial" id="52" name="right_int_carotid_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>0.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="51" node1_id="50" side="arterial" id="53" name="right_middle_cerebral_artery_MCA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>11.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.43e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.43e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="52" node1_id="43" side="arterial" id="54" name="left_int_carotid_B">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>0.5e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>5e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="53" node1_id="52" side="arterial" id="55" name="left_middle_cerebral_artery_MCA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>11.9e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.43e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.43e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3.6e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="54" node1_id="50" side="arterial" id="56" name="right_ant_cerebral_artery_A1">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.17e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.17e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="55" node1_id="52" side="arterial" id="57" name="left_ant_cerebral_artery_A1">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>1.2e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.17e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.17e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>2.9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="55" node1_id="54" side="arterial" id="58" name="ant_comm_artery_ACoA">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>0.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>0.74e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>0.74e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>1.9e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="56" node1_id="54" side="arterial" id="59" name="right_ant_cerebral_artery_A2_ACA_A2">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>10.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+    <edge node2_id="57" node1_id="55" side="arterial" id="60" name="left_ant_cerebral_artery_A2_ACA_A2">
+        <geometry>
+            <length accuracy="10%" unit="m" source="US">
+                <scalar>10.3e-2</scalar>
+            </length>
+        </geometry>
+        <properties>
+            <radius_array accuracy="10%" unit="m" source="US">
+                <value s="0.0">
+                    <scalar>1.2e-3</scalar>
+                </value>
+                <value s="1.0">
+                    <scalar>1.2e-3</scalar>
+                </value>
+            </radius_array>
+            <wall_thickness>
+                <scalar>3e-4</scalar>
+            </wall_thickness>
+            <young_modulus accuracy="10%" unit="Pa" source="US">
+                <scalar>16e5</scalar>
+            </young_modulus>
+        </properties>
+    </edge>
+</edges>
+</NetworkGraph>

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Vascular Network Model: graph description-->
+<NetworkGraph id="1" version="3.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:noNamespaceSchemaLocation="vascular_network_v2.3.xsd">  
+ <case>
+   <patient_id>10001</patient_id>
+   <visit>V0 (pre-OP)</visit>
+ </case>  
+ <nodes>
+   <node id="1" type="inflow" name="heart"/>
+   <node id="2"/>
+   <node id="3"/>
+   <node id="4"/>
+   <node id="5"/>
+   <node id="6"/>
+   <node id="7"/>
+   <node id="8" type="downstream network" name="end_network">
+     <properties>
+       <windkessel>
+         <expression>$WindkesselRel[end_network] = (($mean_pressure[])/($cardiac_output[]))*(133.3223684211*6.0e7)</expression>
+       </windkessel>
+     </properties>
+   </node>
+ </nodes>
+ <superedges>  
+   <superedge id="1" name="simple_network">
+     <edgesIds>
+       <edgeIds edge_id="1"/>
+       <edgeIds edge_id="2"/>
+       <edgeIds edge_id="3"/>
+       <edgeIds edge_id="4"/>
+       <edgeIds edge_id="5"/>
+       <edgeIds edge_id="6"/>
+       <edgeIds edge_id="7"/>
+       <edgeIds edge_id="8"/>
+     </edgesIds>
+   </superedge>
+ </superedges>
+ <edges>
+   <edge id="1" node1_id="1" node2_id="2" side="arterial" name="first_segment">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>8e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.5e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.25e-2</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.5e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.25e-3</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="2" node1_id="2" node2_id="3" side="arterial" name="lower_branch_left">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.25e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.0e-2</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.25e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.0e-3</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="3" node1_id="3" node2_id="4" side="arterial" name="lower_branch_middle">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>12e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.0e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>9.5e-3</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.0e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>9.5e-4</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="4" node1_id="4" node2_id="5" side="arterial" name="lower_branch_right">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>9.5e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>9.0e-3</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>9.5e-4</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>5.0e-4</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="5" node1_id="2" node2_id="6" side="arterial" name="upper_branch_left">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.25e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.15e-2</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.25e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.15e-3</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="6" node1_id="6" node2_id="7" side="arterial" name="upper_branch_middle">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>12e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.15e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.05e-2</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.15e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>1.05e-3</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="7" node1_id="7" node2_id="5" side="arterial" name="upper_branch_right">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.05e-2</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>9.0e-3</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>1.05e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>9.0e-4</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+   <edge id="8" node1_id="5" node2_id="8" side="arterial" name="last_segment">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>8e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>9.0e-3</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>7.5e-3</scalar>
+         </value>
+       </radius_array>
+       <wall_thickness_array unit="m" accuracy="10%" source="US">
+         <value s = "0.0">
+           <scalar>9.0e-4</scalar>
+         </value>
+         <value s = "1.0">
+           <scalar>7.5e-4</scalar>
+         </value>
+       </wall_thickness_array>
+       <compliance>
+         <scalar>6e-9</scalar>
+       </compliance>
+     </properties>
+   </edge>
+ </edges>
+</NetworkGraph>

@@ -21,6 +21,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_USE_VELOCITY_WEIGHTS_FILE "Use Velocity weights file" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -46,7 +47,7 @@ set(HEMELB_INLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
 set(HEMELB_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSUREIOLET"
   CACHE STRING "Select the boundary conditions to be used at the outlets (NASHZEROTHORDERPRESSUREIOLET,LADDIOLET)")
 set(HEMELB_COMPUTE_ARCHITECTURE "AMDBULLDOZER"
-  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL)")
+  CACHE STRING "Select the architecture of the machine being used (INTELSANDYBRIDGE,AMDBULLDOZER,NEUTRAL,ISBFILEVELOCITYINLET)")
 set(HEMELB_WALL_INLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
   CACHE STRING "Select the boundary conditions to be used at corners between walls and inlets (NASHZEROTHORDERPRESSURESBB,NASHZEROTHORDERPRESSUREBFL,LADDIOLETSBB,LADDIOLETBFL)")
 set(HEMELB_WALL_OUTLET_BOUNDARY "NASHZEROTHORDERPRESSURESBB"
@@ -109,6 +110,9 @@ if (HEMELB_USE_SSE3)
         set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
 endif()
 
+if (HEMELB_USE_VELOCITY_WEIGHTS_FILE)
+    add_definitions(-DHEMELB_USE_VELOCITY_WEIGHTS_FILE)
+endif()
 
 # Check for a serious compiler bug in GCC
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=50618

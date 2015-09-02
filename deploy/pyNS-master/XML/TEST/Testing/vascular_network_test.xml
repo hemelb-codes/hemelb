@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Vascular Network Model: graph description-->
+<NetworkGraph id="1" version="3.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:noNamespaceSchemaLocation="vascular_network_v2.3.xsd">  
+ <case>
+   <patient_id>10001</patient_id>
+   <visit>V0 (pre-OP)</visit>
+ </case>  
+ <nodes>
+   <node id="1" type="inflow" name="heart"/>
+   <node id="2"/>
+   <node id="3"/>
+   <node id="4"/>
+   <node id="5"/>
+   <node id="6" type="outflow" name="venous"/>
+ </nodes>
+ <superedges>  
+   <superedge id="1" name="testing_network">
+     <edgesIds>
+       <edgeIds edge_id="1"/>
+       <edgeIds edge_id="2"/>
+       <edgeIds edge_id="3"/>
+       <edgeIds edge_id="4"/>
+       <edgeIds edge_id="5"/>
+       </edgesIds>
+   </superedge>
+ </superedges>
+ <edges>
+   <edge id="1" node1_id="1" node2_id="2" side="arterial" name="first">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius unit="m" accuracy="10%" source="US">
+         <scalar>4e-3</scalar>
+       </radius>
+       <wall_thickness unit="m" accuracy="10%" source="US">
+         <scalar>4e-4</scalar>
+       </wall_thickness>
+       <young_modulus unit="Pa" accuracy="10%" source="US">
+         <scalar>2.67e6</scalar>
+       </young_modulus>
+     </properties>
+   </edge>
+   <edge id="2" node1_id="2" node2_id="3" side="arterial" name="res1" type="Resistance">
+     <geometry>
+	  <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <resistance unit="Pa">
+         <expression>$Resistance[res1] = 0.1**($PressureGradient[res1])</expression>
+       </resistance>
+     </properties>
+   </edge>
+   <edge id="3" node1_id="3" node2_id="4" side="venous" name="second">
+     <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius unit="m" accuracy="10%" source="US">
+         <scalar>4e-3</scalar>
+       </radius>
+       <wall_thickness unit="m" accuracy="10%" source="US">
+         <scalar>4e-4</scalar>
+       </wall_thickness>
+       <young_modulus unit="Pa" accuracy="10%" source="US">
+         <scalar>2.67e6</scalar>
+       </young_modulus>
+     </properties>
+   </edge>
+   <edge id="4" node1_id="4" node2_id="5" side="arterial" name="res2" type="Resistance">
+     <geometry>
+	  <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <resistance unit="Pa">
+         <scalar>1e10</scalar>
+       </resistance>
+     </properties>
+   </edge>
+   <edge id="5" node1_id="5" node2_id="6" side="venous" name="third">
+    <geometry>
+	     <length unit="m" accuracy="10%" source="US">
+	       <scalar>5e-2</scalar>
+	     </length>
+     </geometry>
+     <properties>
+       <radius unit="m" accuracy="10%" source="US">
+         <scalar>4e-3</scalar>
+       </radius>
+       <wall_thickness unit="m" accuracy="10%" source="US">
+         <scalar>4e-4</scalar>
+       </wall_thickness>
+       <young_modulus unit="Pa" accuracy="10%" source="US">
+         <scalar>2.67e6</scalar>
+       </young_modulus>
+     </properties>
+   </edge>
+ </edges>
+</NetworkGraph>

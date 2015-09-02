@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <step_length units="s" value="9.09091E-5" />
+    <steps units="lattice" value="22000" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="5.42376711965e-05" />
+    <origin units="m" value="(0.0204678981325,-0.212398639925,-0.158414327244)" />
+  </simulation>
+  <geometry>
+    <datafile path="smooth_5_small.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <condition type="velocity" subtype="file">
+        <path value="./Flow_left_middle_cerebral_artery_MCA_1.txt" />
+        <radius value="0.002" units="m"/>
+      </condition>
+      <normal value="(-0.937234640121,-0.273454904556,0.216364473104)" units="dimensionless" />
+      <position value="(0.0316743340147,-0.203329543852,-0.153397479886)" units="m" />
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1.0" />
+      </condition>
+      <normal units="dimensionless" value="(-0.0171629209071,0.500410079956,0.865618348122)" />
+      <position units="m" value="(0.0297272531896,-0.206451204148,-0.158154788075)" />
+    </outlet>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1.0" />
+      </condition>
+      <normal units="dimensionless" value="(-0.327225238085,0.725229263306,0.605777382851)" />
+      <position units="m" value="(0.0240178826473,-0.212193040568,-0.155076817532)" />
+    </outlet>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1.0" />
+      </condition>
+      <normal units="dimensionless" value="(0.813885331154,0.136188462377,0.564839243889)" />
+      <position units="m" value="(0.0209665283701,-0.209583851987,-0.155942108006)" />
+    </outlet>
+  </outlets>
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+  <properties>
+     <propertyoutput file="plane00.xtr" period="1000">
+      <geometry type="plane">
+        <point units="m" value="(0.025609,-0.2069585,-0.154018)" />
+        <normal units="dimensionless" value="(-0.7239,-0.6756,0.1392)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+     <propertyoutput file="planeo1.xtr" period="300">
+      <geometry type="plane">
+        <point units="m" value="(0.024007,-0.213278,-0.156391)" />
+        <normal units="dimensionless" value="(-0.151241,-0.767419,0.623053)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+     <propertyoutput file="planeo2.xtr" period="300">
+      <geometry type="plane">
+        <point units="m" value="(0.0239628,-0.212722,-0.155885)" />
+        <normal units="dimensionless" value="(-0.151241,-0.767419,0.623053)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+     <propertyoutput file="planeo3.xtr" period="300">
+      <geometry type="plane">
+        <point units="m" value="(0.0238865,-0.211823,-0.155068)" />
+        <normal units="dimensionless" value="(-0.151241,-0.767419,0.623053)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+     <propertyoutput file="planeo4.xtr" period="300">
+      <geometry type="plane">
+        <point units="m" value="(0.0237854,-0.21151,-0.15481)" />
+        <normal units="dimensionless" value="(-0.151241,-0.767419,0.623053)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+     <propertyoutput file="planeo5.xtr" period="300">
+      <geometry type="plane">
+        <point units="m" value="(0.0237414,-0.21116,-0.154498)" />
+        <normal units="dimensionless" value="(-0.151241,-0.767419,0.623053)" />
+        <radius units="m" value="0.00150393596455" />
+      </geometry>
+      <field type="velocity" />
+      <field type="pressure" />
+    </propertyoutput>
+    <propertyoutput file="flow_snapshot.dat" period="300">
+      <geometry type="whole" />
+      <field type="pressure" />
+      <field type="velocity" name="d_velocity" />
+    </propertyoutput>
+  </properties>
+  <monitoring>
+    <steady_flow_convergence_check tolerance="1e-6" terminate="false"/>
+    <incompressibility_check/>
+  </monitoring>
+</hemelbsettings>

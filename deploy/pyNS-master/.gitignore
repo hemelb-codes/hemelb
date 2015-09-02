@@ -1,0 +1,10 @@
+*.pyc
+Images/*
+Output/*
+build/*
+*.json
+Results/Saved/*
+*.csv
+*.project
+*.pydevproject
+*.profile

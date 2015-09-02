@@ -30,11 +30,11 @@ namespace hemelb
         /**
          * Default constructor initialises internal variables
          */
-        Geometry(const util::Vector3D<site_t>& dimensionsInBlocks,
-                 site_t blockSize) :
-            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize), blockCount(dimensionsInBlocks.x
-                * dimensionsInBlocks.y * dimensionsInBlocks.z), sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize,
-                                                                                                                     3)), Blocks(blockCount)
+        Geometry(const util::Vector3D<site_t>& dimensionsInBlocks, site_t blockSize) :
+            dimensionsInBlocks(dimensionsInBlocks), blockSize(blockSize),
+                blockCount(dimensionsInBlocks.x * dimensionsInBlocks.y * dimensionsInBlocks.z),
+                sitesPerBlock(util::NumericalFunctions::IntegerPower(blockSize, 3)),
+                Blocks(blockCount)
         {
 
         }
@@ -91,8 +91,9 @@ namespace hemelb
          */
         bool AreBlockCoordinatesValid(const util::Vector3D<site_t>& blockCoords) const
         {
-          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0 && blockCoords.x < dimensionsInBlocks.x
-              && blockCoords.y < dimensionsInBlocks.y && blockCoords.z < dimensionsInBlocks.z;
+          return blockCoords.x >= 0 && blockCoords.y >= 0 && blockCoords.z >= 0
+              && blockCoords.x < dimensionsInBlocks.x && blockCoords.y < dimensionsInBlocks.y
+              && blockCoords.z < dimensionsInBlocks.z;
         }
 
         /**
@@ -100,8 +101,8 @@ namespace hemelb
          */
         bool AreLocalSiteCoordinatesValid(const util::Vector3D<site_t>& siteCoords) const
         {
-          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0 &&
-                 siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
+          return siteCoords.x >= 0 && siteCoords.y >= 0 && siteCoords.z >= 0
+              && siteCoords.x < blockSize && siteCoords.y < blockSize && siteCoords.z < blockSize;
         }
 
         /**
@@ -120,6 +121,47 @@ namespace hemelb
         site_t GetBlockSize() const
         {
           return blockSize;
+        }
+
+        /* Find a site index, taking into account ALL lattice sites. */
+        site_t FindSiteIndexInBlock(site_t fluidSiteBlock, site_t fluidSitesToPass) const
+        {
+          site_t siteIndex = 0;
+          while (true)
+          {
+            // We keep going through the sites on the block until we've passed as many fluid
+            // sites as we need to.
+            if (Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
+            {
+              fluidSitesToPass--;
+            }
+            if (fluidSitesToPass < 0)
+            {
+              break;
+            }
+            siteIndex++;
+          }
+          return siteIndex;
+        }
+
+        /* Find a site index, taking into account ONLY fluid sites. */
+        site_t FindFluidSiteIndexInBlock(site_t fluidSiteBlock, site_t neighbourSiteId) const
+        {
+          site_t SiteId = 0;
+          // Calculate the site's id over the whole geometry,
+          for (site_t neighSite = 0; neighSite < GetSitesPerBlock(); neighSite++)
+          {
+            if (neighSite == neighbourSiteId)
+            {
+              break;
+            }
+            else if (Blocks[fluidSiteBlock].Sites[neighSite].targetProcessor != BIG_NUMBER2)
+            {
+              SiteId++;
+            }
+          }
+
+          return SiteId;
         }
 
       private:
