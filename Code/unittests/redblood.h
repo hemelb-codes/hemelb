@@ -69,5 +69,6 @@ namespace hemelb
 #include "unittests/redblood/CellIOTests.h"
 #include "unittests/redblood/CellInserterTests.h"
 #include "unittests/redblood/ICCBSimulations.h"
+#include "unittests/redblood/MulticellBenchmarkTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif

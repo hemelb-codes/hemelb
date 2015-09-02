@@ -33,6 +33,8 @@
         <phi units="rad" value="0e0"/>
         <delta_theta units="rad" value="0e0"/>
         <delta_phi units="rad" value="0e0"/>
+        <delta_x units="m" value="0e0"/>
+        <delta_y units="m" value="0e0"/>
       </insertcell>
     </inlet>
   </inlets>
