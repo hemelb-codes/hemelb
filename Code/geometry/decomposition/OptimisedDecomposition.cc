@@ -474,7 +474,7 @@ namespace hemelb
             std::pair<std::map<site_t, site_t>::iterator, std::map<site_t, site_t>::iterator> rangeMatch =
                 blockIdLookupByLastSiteIndex.equal_range(localFluidSiteId);
 
-            idx_t fluidSiteBlock = rangeMatch.first->second;
+            site_t fluidSiteBlock = rangeMatch.first->second;
 
             // Check the block id is correct
             if (ShouldValidate())
@@ -506,23 +506,10 @@ namespace hemelb
 
             // ... and find its site id within that block. Start by working out how many fluid sites
             // we have to pass before we arrive at the fluid site we're after...
-            idx_t fluidSitesToPass = localFluidSiteId - firstSiteIndexPerBlock[fluidSiteBlock];
-            idx_t siteIndex = 0;
+            site_t fluidSitesToPass = localFluidSiteId - firstSiteIndexPerBlock[fluidSiteBlock];
+            site_t siteIndex = 0;
 
-            while (true)
-            {
-              // ... then keep going through the sites on the block until we've passed as many fluid
-              // sites as we need to.
-              if (geometry.Blocks[fluidSiteBlock].Sites[siteIndex].targetProcessor != BIG_NUMBER2)
-              {
-                fluidSitesToPass--;
-              }
-              if (fluidSitesToPass < 0)
-              {
-                break;
-              }
-              siteIndex++;
-            }
+            siteIndex = geometry.FindSiteIndexInBlock(fluidSiteBlock, fluidSitesToPass);
 
             // The above code could go wrong, so in debug logging mode, we do some extra tests.
             if (ShouldValidate())
