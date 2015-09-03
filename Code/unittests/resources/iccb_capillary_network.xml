@@ -151,14 +151,14 @@
   </outlets>
 
   <properties>
-    <propertyoutput period="4000" file="wholegeometry_vel_pres_stress.dat">
+    <propertyoutput period="40000" file="wholegeometry_vel_pres_stress.dat">
       <geometry type="whole"/>
       <field type="velocity"/>
       <field type="pressure"/>
       <field type="shearrate"/>
       <field type="tangentialprojectiontraction"/>
     </propertyoutput>
-    <propertyoutput period="4000" file="surface_stress.dat">
+    <propertyoutput period="40000" file="surface_stress.dat">
       <geometry type="surface"/>
       <field type="pressure"/>
       <field type="tangentialprojectiontraction"/>
