@@ -26,6 +26,35 @@ namespace hemelb
   {
     namespace helpers
     {
+      //! \brief Modify XML document
+      //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
+      //! these hoops to test it.
+      //! \param[in] document: Document to modify
+      //! \param[in] elements: hierarchy of elements + attribute (last item)
+      //!   Should not include "hemelbsettings"
+      //! \param[in] value: Value to set the attribute to
+      template<class T>
+      void ModifyXMLInput(TiXmlDocument &document, std::vector<std::string>&& elements,
+                          T const &_value)
+      {
+        std::string const attribute = elements.back();
+        elements.pop_back();
+        auto child = document.FirstChildElement("hemelbsettings");
+        for (std::string const &name : elements)
+        {
+          auto next_child = child->FirstChildElement(name);
+          if(next_child  == nullptr)
+          {
+            next_child = new TiXmlElement(name);
+            child->LinkEndChild(next_child);
+          }
+          child = next_child;
+        }
+        std::ostringstream attr_value;
+        attr_value << _value;
+        child->SetAttribute(attribute, attr_value.str().c_str());
+      }
+
       class FolderTestFixture : public HasCommsTestFixture
       {
 
@@ -82,19 +111,9 @@ namespace hemelb
                               T const &_value)
           {
             std::string const filename = tempPath + "/" + resource;
-            std::string const attribute = elements.back();
-            elements.pop_back();
             TiXmlDocument document(filename.c_str());
             document.LoadFile();
-            auto child = document.FirstChildElement("hemelbsettings");
-            for (std::string const &name : elements)
-            {
-              child = child->FirstChildElement(name);
-            }
-            std::ostringstream attr_value;
-            attr_value << _value;
-            child->SetAttribute(attribute, attr_value.str().c_str());
-
+            helpers::ModifyXMLInput(document, std::move(elements), _value);
             std::ofstream output(filename);
             output << document;
           }
