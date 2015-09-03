@@ -43,7 +43,7 @@
       </flowextension>
       
       <insertcell template="default">
-        <every units="s" value="5.6e-3"/>
+        <every units="s" value="8e-3"/>
         <offset units="s" value="40e-8"/>
         <x units="m" value="-3e-6"/>
         <y units="m" value="3e-6"/>
@@ -54,7 +54,7 @@
         <delta_phi units="rad" value="0.0"/>
       </insertcell>      
       <insertcell template="default">
-        <every units="s" value="5.6e-3"/>
+        <every units="s" value="8e-3"/>
         <offset units="s" value="40e-8"/>
         <x units="m" value="3e-6"/>
         <y units="m" value="-3e-6"/>
@@ -66,8 +66,8 @@
       </insertcell>
       
       <insertcell template="default">
-        <every units="s" value="2.8e-3"/>
-        <offset units="s" value="1.4e-3"/>
+        <every units="s" value="4e-3"/>
+        <offset units="s" value="2e-3"/>
         <x units="m" value="0e-6"/>
         <y units="m" value="0e-6"/>
         <delta_t units="s" value="0e0"/>
@@ -78,8 +78,8 @@
       </insertcell>
             
       <insertcell template="default">
-        <every units="s" value="5.6e-3"/>
-        <offset units="s" value="2.8e-3"/>
+        <every units="s" value="8e-3"/>
+        <offset units="s" value="4e-3"/>
         <x units="m" value="3e-6"/>
         <y units="m" value="3e-6"/>
         <delta_t units="s" value="0e0"/>
@@ -89,8 +89,8 @@
         <delta_phi units="rad" value="0.0"/>
       </insertcell>      
       <insertcell template="default">
-        <every units="s" value="5.6e-3"/>
-        <offset units="s" value="2.8e-3"/>
+        <every units="s" value="8e-3"/>
+        <offset units="s" value="4e-3"/>
         <x units="m" value="-3e-6"/>
         <y units="m" value="-3e-6"/>
         <delta_t units="s" value="0e0"/>
