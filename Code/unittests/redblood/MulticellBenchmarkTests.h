@@ -13,6 +13,10 @@
 #include "redblood/CellController.h"
 #include "unittests/helpers/FolderTestFixture.h"
 
+#ifdef HEMELB_CALLGRIND
+#include <valgrind/callgrind.h>
+#endif
+
 namespace hemelb
 {
   namespace unittests
@@ -96,10 +100,36 @@ namespace hemelb
                   timestep++;
                 };
 
+#ifdef HEMELB_CALLGRIND
+            bool instrumented = false;
+            unsigned int start_timestep;
+            auto callgrind_callback =
+                [&timestep, &instrumented, &start_timestep](const hemelb::redblood::CellContainer & cells)
+                {
+                  if (cells.size() >= 5 && !instrumented)
+                  {
+                    instrumented = true;
+                    start_timestep = timestep;
+                    std::cerr << "Starting callgrind instrumentation at timestep " << timestep << std::endl;
+                    CALLGRIND_ZERO_STATS;
+                    CALLGRIND_START_INSTRUMENTATION;
+                  }
+                  if (instrumented && timestep - start_timestep == 1000)
+                  {
+                    CALLGRIND_STOP_INSTRUMENTATION;
+                    std::cerr << "Stopped callgrind instrumentation at timestep " << timestep << std::endl;
+                    CALLGRIND_DUMP_STATS;
+                  }
+                };
+#endif
+
             CPPUNIT_ASSERT(master);
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             CPPUNIT_ASSERT(controller);
             controller->AddCellChangeListener(output_callback);
+#ifdef HEMELB_CALLGRIND
+            controller->AddCellChangeListener(callgrind_callback);
+#endif
 
             // run the simulation
             master->RunSimulation();
@@ -117,8 +147,9 @@ namespace hemelb
 
       };
 
-
-    //CPPUNIT_TEST_SUITE_REGISTRATION(MulticellBenchmarkTests);
+#ifdef HEMELB_CALLGRIND
+    CPPUNIT_TEST_SUITE_REGISTRATION(MulticellBenchmarkTests);
+#endif
     }// namespace redblood
   } // namespace unittests
 } // namespace hemelb
