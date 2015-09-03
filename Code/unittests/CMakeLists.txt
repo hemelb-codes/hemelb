@@ -57,5 +57,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy
   resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy
   resources/P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_1_75_1000_3.gmy
-  resources/rbc_ico_1280.msh
+  resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
 )

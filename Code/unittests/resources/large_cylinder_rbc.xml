@@ -33,6 +33,8 @@
         <phi units="rad" value="0e0"/>
         <delta_theta units="rad" value="0e0"/>
         <delta_phi units="rad" value="0e0"/>
+        <delta_x units="m" value="0e0"/>
+        <delta_y units="m" value="0e0"/>
       </insertcell>
     </inlet>
   </inlets>
@@ -74,8 +76,8 @@
   </visualisation>
   <redbloodcells>
     <controller>
-      <halo units="LB" value="3" />
-      <boxsize units="LB" value="1e6" />
+      <halo units="LB" value="1.05" />
+      <boxsize units="LB" value="3" />
     </controller>
     <cells>
       <cell name="default">
