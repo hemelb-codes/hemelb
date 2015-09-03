@@ -121,7 +121,6 @@ namespace hemelb
         rotateToFlow = rotationMatrix(LatticePosition(0, 0, 1), flowExtension.normal);
         rotation = rotateToFlow * rotationMatrix(LatticePosition(0, 0, 1), z);
         *cell *= rotation;
-        *cell += rotateToFlow * translation;
 
         // Figure out size of cell alongst cylinder axis
         auto const barycenter = cell->GetBarycenter();
@@ -138,7 +137,8 @@ namespace hemelb
                               });
         // Place cell as close as possible to 0 of fade length
         *cell += flowExtension.origin
-            + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter;
+            + flowExtension.normal * (flowExtension.fadeLength - maxExtent(maxZ)) - barycenter
+            + rotateToFlow * translation;
 
         // fail if any node outside flow extension
         for (auto const &vertex : cell->GetVertices())
