@@ -21,6 +21,7 @@ option(HEMELB_WAIT_ON_CONNECT "Wait for steering client" OFF)
 option(HEMELB_BUILD_MULTISCALE "Build HemeLB Multiscale functionality" OFF)
 option(HEMELB_IMAGES_TO_NULL "Write images to null" OFF)
 option(HEMELB_USE_SSE3 "Use SSE3 intrinsics" OFF)
+option(HEMELB_CALLGRIND "Compile unit tests that use callgrind" OFF)
 
 set(HEMELB_EXECUTABLE "hemelb"
   CACHE STRING "File name of executable to produce")
@@ -120,6 +121,10 @@ if (HEMELB_USE_SSE3)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse3")
 	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -msse3")
         set( CMAKE_CXX_FLAGS_RELEASE "${HEMELB_OPTIMISATION} -msse3")
+endif()
+
+if (HEMELB_CALLGRIND)
+    add_definitions(-DHEMELB_CALLGRIND)
 endif()
 
 
