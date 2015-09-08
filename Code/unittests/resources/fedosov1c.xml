@@ -1,0 +1,114 @@
+<?xml version="1.0" ?>
+<hemelbsettings version="3">
+  <simulation>
+    <step_length units="s" value="9.25375434888e-08" />
+    <steps units="lattice" value="50000" />
+    <stresstype value="1" />
+    <voxel_size units="m" value="8.16253828854e-07" />
+    <origin units="m" value="(-6.53003063083e-06,-6.53003063083e-06,-3.55070415551e-05)" />
+  </simulation>
+  <geometry>
+    <datafile path="fedosov1c.gmy" />
+  </geometry>
+  <inlets>
+    <inlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="1.4" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,1.0)" />
+      <position units="m" value="(0.0,0.0,-3.55e-05)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="6e-6" />
+        <fadelength units="m" value="7e-06" />
+      </flowextension>
+      <insertcell template="default">
+        <every units="s" value="2e-0"/>
+        <offset units="s" value="40e-8"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0e0"/>
+        <delta_phi units="rad" value="0e0"/>
+        <delta_x units="m" value="0e0"/>
+        <delta_y units="m" value="0e0"/>
+      </insertcell>      
+    </inlet>
+  </inlets>
+  <outlets>
+    <outlet>
+      <condition subtype="cosine" type="pressure">
+        <amplitude units="mmHg" value="0.0" />
+        <mean units="mmHg" value="0.0" />
+        <phase units="rad" value="0.0" />
+        <period units="s" value="1" />
+      </condition>
+      <normal units="dimensionless" value="(0.0,0.0,-1.0)" />
+      <position units="m" value="(0.0,0.0,3.55e-05)" />
+      <flowextension>
+        <length units="m" value="10e-6" />
+        <radius units="m" value="6e-6" />
+        <fadelength units="m" value="7e-06" />
+      </flowextension>
+    </outlet>
+  </outlets>
+
+  <properties> 
+   <propertyoutput period="1000" file="whole_domain_vel_press.xtr"> 
+     <geometry type="whole" /> 
+     <field type="velocity"/> 
+     <field type="pressure"/> 
+   </propertyoutput> 
+  </properties>    
+
+  <initialconditions>
+    <pressure>
+      <uniform units="mmHg" value="0.0" />
+    </pressure>
+  </initialconditions>
+  
+  <redbloodcells>
+    <controller stencil="three">
+      <halo units="LB" value="1.05" />
+      <boxsize units="LB" value="3" />
+    </controller>
+    <cells>
+      <cell name="default">
+        <moduli>
+          <surface units="LB" value="1" />
+          <volume units="LB" value="1" />
+          <dilation units="LB" value="0.5" />
+          <strain units="LB" value="0.0006" />
+          <bending units="LB" value="0.0000375" />
+        </moduli>
+        <interaction>
+          <intensity units="LB" value="0.05" />
+          <cutoffdistance units="LB" value="1.0" />
+          <exponent value="2"/>
+        </interaction>
+        <shape mesh_path="rbc_ico_1280.msh" />
+        <scale units="m" value="4.1e-06" />
+      </cell>
+    </cells>
+  </redbloodcells>
+
+  <monitoring>
+    <incompressibility/>
+  </monitoring>  
+  
+  <visualisation>
+    <centre units="m" value="(0.0,0.0,0.0)" />
+    <orientation>
+      <longitude units="deg" value="45.0" />
+      <latitude units="deg" value="45.0" />
+    </orientation>
+    <display brightness="0.03" zoom="1.0" />
+    <range>
+      <maxvelocity units="m/s" value="0.1" />
+      <maxstress units="Pa" value="0.1" />
+    </range>
+  </visualisation>  
+</hemelbsettings>
