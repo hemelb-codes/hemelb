@@ -16,37 +16,37 @@ namespace hemelb
 
       //! Throws if input does not have units
       template<typename T>
-      T GetNonDimensionalValue(const io::xml::Element& elem, const std::string& units)
+      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& elem, const std::string& units)
       {
         T value;
         const std::string& got = elem.GetAttributeOrThrow("units");
-        if (got != units)
+        if (got != units && got != "LB")
         {
           throw Exception() << "Invalid units for element " << elem.GetPath() << ". Expected '"
               << units << "', got '" << got << "'";
         }
 
         elem.GetAttributeOrThrow("value", value);
-        return value;
+        return std::pair<T, std::string>(value, got);
       }
 
       //! Defaults to some value if parent, or its child elemname are not present
       template<typename T>
-      T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
-                            const std::string& units, T default_)
+      std::pair<T, std::string> GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
+                                                      const std::string& units, T default_)
       {
         if (parent == parent.Missing())
         {
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
                                                                                  elemname.c_str());
-          return default_;
+          return std::pair<T, std::string>(default_, units);
         }
         auto const element = parent.GetChildOrNull(elemname);
         if (element == element.Missing())
         {
           hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::Singleton>("Using internal default value for RBC parameter: %s\n",
                                                                                  elemname.c_str());
-          return default_;
+          return std::pair<T, std::string>(default_, units);
         }
         return GetNonDimensionalValue<T>(element, units);
       }
@@ -57,10 +57,10 @@ namespace hemelb
                             const std::string& units, util::UnitConverter const &converter,
                             T default_)
       {
-        T const value = GetNonDimensionalValue<T>(parent, elemname, units, default_);
-        return units == "LB" ?
-          value :
-          converter.ConvertToLatticeUnits(units, value);
+        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent, elemname, units, default_);
+        return value_unit.second == "LB" ?
+          value_unit.first :
+          converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
       }
 
       //! Gets value and convert to LB units
@@ -68,18 +68,20 @@ namespace hemelb
       T GetNonDimensionalValue(const io::xml::Element& parent, const std::string &elemname,
                             const std::string& units, util::UnitConverter const &converter)
       {
-        T const value = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
-        return units == "LB" ?
-          value :
-          converter.ConvertToLatticeUnits(units, value);
+        std::pair<T, std::string> const value_unit = GetNonDimensionalValue<T>(parent.GetChildOrThrow(elemname), units);
+        return value_unit.second == "LB" ?
+          value_unit.first :
+          converter.ConvertToLatticeUnits(value_unit.second, value_unit.first);
       }
 
       //! Gets position and convert to LB units
       LatticePosition GetPosition(const io::xml::Element& parent, const std::string &elemname,
                                   util::UnitConverter const &converter)
       {
-        auto value = GetNonDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
-        return converter.ConvertPositionToLatticeUnits(value);
+        std::pair<LatticePosition, std::string> const value_unit = GetNonDimensionalValue<LatticePosition>(parent.GetChildOrThrow(elemname), "m");
+        return value_unit.second == "LB" ?
+          value_unit.first :
+          converter.ConvertPositionToLatticeUnits(value_unit.first);
       }
 
       void readFlowExtensions(io::xml::Element const& ioletsNode,
