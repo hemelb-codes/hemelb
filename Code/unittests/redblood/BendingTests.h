@@ -180,7 +180,7 @@ namespace hemelb
 
           void numericalForces()
           {
-            for(int j(0); j < 1; ++j)
+            for(int j(0); j < 6; ++j)
             {
               LatticePosition const direction(
                   j == 0 ? 1: (j == 1 ? -1: (j >= 6 ? random() - 0.5: 0)),
