@@ -1,0 +1,114 @@
+//
+// Copyright (C) University College London, 2007-2012, all rights reserved.
+//
+// This file is part of HemeLB and is CONFIDENTIAL. You may not work
+// with, install, use, duplicate, modify, redistribute or share this
+// file, or any part thereof, other than as allowed by any agreement
+// specifically made by you with University College London.
+//
+
+#ifndef HEMELB_UNITTESTS_REDBLOOD_SAD_CELL_TESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_SAD_CELL_TESTS_H
+
+#include <cppunit/TestFixture.h>
+#include "redblood/Cell.h"
+#include "redblood/Mesh.h"
+#include "resources/Resource.h"
+#include "unittests/redblood/Fixtures.h"
+
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace redblood
+    {
+      class SadCellTests : public CppUnit::TestFixture
+      {
+          CPPUNIT_TEST_SUITE (SadCellTests);
+          CPPUNIT_TEST(test_bending);
+          CPPUNIT_TEST(test_surface);
+          CPPUNIT_TEST(test_volume);
+          CPPUNIT_TEST(test_dilation);
+          CPPUNIT_TEST(test_strain);
+          CPPUNIT_TEST_SUITE_END();
+
+        public:
+          void setUp()
+          {
+            auto const normal = readMesh(resources::Resource("rbc_ico_1280.msh").Path().c_str());
+            cell = std::make_shared<redblood::Cell>(
+                readMesh(resources::Resource("sad.msh").Path().c_str())->vertices, normal
+            );
+            // sad mesh is in physical units, not in the cell units of rbc_ico_1280.msh
+            *cell *= 1e0/4.1e-6;
+          }
+
+#         define HEMELB_MACRO(name)   \
+          void test_ ## name()        \
+          {                           \
+            cell->moduli.name = 1e0;  \
+            checkNumericalForces();   \
+            cell->moduli.name = 0e0;  \
+          }
+
+            HEMELB_MACRO(bending);
+            HEMELB_MACRO(surface);
+            HEMELB_MACRO(volume);
+            HEMELB_MACRO(dilation);
+            HEMELB_MACRO(strain);
+#         undef HEMELB_MACRO
+
+          void checkNumericalForces()
+          {
+            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), 0e0);
+            (*cell)(forces);
+            for(size_t i(0); i < cell->GetVertices().size(); ++i)
+            {
+              for(int j(0); j < 4; ++j)
+              {
+                auto const epsilon = 1e-3;
+                LatticePosition const direction = LatticePosition(
+                    j == 0 ? 1: (j >= 3 ? random(): 0),
+                    j == 1 ? 1: (j >= 3 ? random(): 0),
+                    j == 2 ? 1: (j >= 3 ? random(): 0)
+                ).GetNormalised();
+
+                double const expected = derivative(direction, i, epsilon);
+                double const actual = -forces[i].Dot(direction);
+                double const tolerance = std::abs(actual) < 1e-7 ? 1e-7: 1e-4 * std::abs(actual);
+
+                CPPUNIT_ASSERT_DOUBLES_EQUAL(expected, actual, tolerance);
+              }
+            }
+          }
+
+          double derivative(LatticePosition const &dir, size_t i, double epsilon)
+          {
+            double result = 0e0;
+            auto const orig = cell->GetVertices()[i];
+            auto &vertex = cell->GetVertices()[i];
+            std::vector<double> const coeffs{-1./280., 4./105., -1./5., 4./5.};
+            for(size_t j(0); j < coeffs.size(); ++j)
+            {
+               vertex = orig + dir * double(coeffs.size() - j) * epsilon;
+               result += coeffs[j] * (*cell)();
+               vertex = orig - dir * double(coeffs.size() - j) * epsilon;
+               result -= coeffs[j] * (*cell)();
+            }
+            vertex = orig;
+            return result / epsilon;
+          }
+
+        protected:
+          std::shared_ptr<redblood::Cell> cell;
+      };
+
+
+      CPPUNIT_TEST_SUITE_REGISTRATION (SadCellTests);
+    }
+  }
+}
+
+#endif  // ONCE
+
+
