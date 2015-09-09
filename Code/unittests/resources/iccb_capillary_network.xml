@@ -41,60 +41,105 @@
       </flowextension>
       
       <insertcell template="default">
-        <every units="s" value="0.5e-3"/>
+        <every units="s" value="0.9e-3"/>
         <offset units="s" value="40e-8"/>
-        <x units="m" value="-5e-6"/>
+        <x units="m" value="-5.75e-6"/>
         <y units="m" value="0"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
       </insertcell>      
       <insertcell template="default">
-        <every units="s" value="0.5e-3"/>
+        <every units="s" value="0.9e-3"/>
         <offset units="s" value="40e-8"/>
-        <x units="m" value="5e-6"/>
+        <x units="m" value="5.75e-6"/>
         <y units="m" value="0"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
       </insertcell>
       <insertcell template="default">
-        <every units="s" value="0.5e-3"/>
+        <every units="s" value="0.9e-3"/>
         <offset units="s" value="40e-8"/>
         <x units="m" value="0"/>
-        <y units="m" value="-5e-6"/>
+        <y units="m" value="-5.75e-6"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
       </insertcell>      
       <insertcell template="default">
-        <every units="s" value="0.5e-3"/>
+        <every units="s" value="0.9e-3"/>
         <offset units="s" value="40e-8"/>
         <x units="m" value="0"/>
-        <y units="m" value="5e-6"/>
+        <y units="m" value="5.75e-6"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
       </insertcell>
-      
+
       <insertcell template="default">
-        <every units="s" value="0.5e-3"/>
-        <offset units="s" value="0.25e-3"/>
-        <x units="m" value="0e-6"/>
-        <y units="m" value="0e-6"/>
+        <every units="s" value="0.35e-3"/>
+        <offset units="s" value="40e-8"/>
+        <x units="m" value="0"/>
+        <y units="m" value="0"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
+      </insertcell>      
+
+      <insertcell template="default">
+        <every units="s" value="0.9e-3"/>
+        <offset units="s" value="0.45e-3"/>
+        <x units="m" value="4.066e-6"/>
+        <y units="m" value="4.066e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
+      </insertcell>      
+      <insertcell template="default">
+        <every units="s" value="0.9e-3"/>
+        <offset units="s" value="0.45e-3"/>
+        <x units="m" value="4.066e-6"/>
+        <y units="m" value="-4.066e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
+      </insertcell>
+      <insertcell template="default">
+        <every units="s" value="0.9e-3"/>
+        <offset units="s" value="0.45e-3"/>
+        <x units="m" value="-4.066e-6"/>
+        <y units="m" value="4.066e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
+      </insertcell>      
+      <insertcell template="default">
+        <every units="s" value="0.9e-3"/>
+        <offset units="s" value="0.45e-3"/>
+        <x units="m" value="-4.066e-6"/>
+        <y units="m" value="-4.066e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="3.1416"/>
+        <delta_phi units="rad" value="3.1416"/>
       </insertcell>
     </inlet>
   </inlets>
@@ -132,7 +177,7 @@
     </outlet>
     <outlet>
       <condition subtype="cosine" type="pressure">
-        <amplitude units="mmHg" value="1.0" />
+        <amplitude units="mmHg" value="0.0" />
         <mean units="mmHg" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
@@ -140,7 +185,7 @@
       <normal units="dimensionless" value="(-0.549252152188,-0.835656671916,4.71844785466e-16)" />
       <position units="m" value="(0.000124954094823,0.000207275883169,3.435015748e-08)" />
       <flowextension>
-        <length units="m" value="10e-6" />
+        <length units="m" value="18e-6" />
         <radius units="m" value="9e-6" />
         <fadelength units="m" value="8e-06" />
       </flowextension>
@@ -183,19 +228,19 @@
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="LB" value="1.6260e-05" />
+          <bending units="LB" value="1.135e-05" />
           <surface units="LB" value="1e0" />
           <volume units="LB" value="1e0" />
           <dilation units="LB" value="0.5" />
-          <strain units="LB" value="0.0005182" />
+          <strain units="LB" value="0.0004597" />
         </moduli>
         <interaction>
-          <intensity units="LB" value="1.6260e-05" />
+          <intensity units="LB" value="1.135e-05" />
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
         <shape mesh_path="rbc_ico_1280.msh" />
-        <scale units="m" value="3.1e-06" /> <!-- The radius of the template cell is 1, therefore the radius of the RBC will be equal to scale (RBC diameter typically 6.2-8.2um) -->
+        <scale units="m" value="2.75e-06" /> <!-- The radius of the template cell is 1, therefore the radius of the RBC will be equal to scale (RBC diameter typically 6.2-8.2um) -->
       </cell>
     </cells>
   </redbloodcells>
