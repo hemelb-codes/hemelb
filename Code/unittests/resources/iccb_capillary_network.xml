@@ -30,7 +30,7 @@
     <inlet>
       <condition subtype="parabolic" type="velocity">      
         <radius units="m" value="9.5e-6" />
-        <maximum units="m/s" value="6e-3" />
+        <maximum units="m/s" value="20e-3" />
       </condition>
       <normal units="dimensionless" value="(0.0676185870138,0.997184447299,0.0)" />
       <position units="m" value="(0.000148903942594,1.72330174871e-05,0.0)" />
@@ -41,9 +41,9 @@
       </flowextension>
       
       <insertcell template="default">
-        <every units="s" value="4e-3"/>
+        <every units="s" value="0.5e-3"/>
         <offset units="s" value="40e-8"/>
-        <x units="m" value="-4.5e-6"/>
+        <x units="m" value="-5e-6"/>
         <y units="m" value="0"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
@@ -52,10 +52,32 @@
         <delta_phi units="rad" value="0.0"/>
       </insertcell>      
       <insertcell template="default">
-        <every units="s" value="4e-3"/>
+        <every units="s" value="0.5e-3"/>
         <offset units="s" value="40e-8"/>
-        <x units="m" value="4.5e-6"/>
+        <x units="m" value="5e-6"/>
         <y units="m" value="0"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0.0"/>
+        <delta_phi units="rad" value="0.0"/>
+      </insertcell>
+      <insertcell template="default">
+        <every units="s" value="0.5e-3"/>
+        <offset units="s" value="40e-8"/>
+        <x units="m" value="0"/>
+        <y units="m" value="-5e-6"/>
+        <delta_t units="s" value="0e0"/>
+        <theta units="rad" value="0e0"/>
+        <phi units="rad" value="0e0"/>
+        <delta_theta units="rad" value="0.0"/>
+        <delta_phi units="rad" value="0.0"/>
+      </insertcell>      
+      <insertcell template="default">
+        <every units="s" value="0.5e-3"/>
+        <offset units="s" value="40e-8"/>
+        <x units="m" value="0"/>
+        <y units="m" value="5e-6"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
@@ -64,33 +86,10 @@
       </insertcell>
       
       <insertcell template="default">
-        <every units="s" value="2e-3"/>
-        <offset units="s" value="1e-3"/>
+        <every units="s" value="0.5e-3"/>
+        <offset units="s" value="0.25e-3"/>
         <x units="m" value="0e-6"/>
         <y units="m" value="0e-6"/>
-        <delta_t units="s" value="0e0"/>
-        <theta units="rad" value="0e0"/>
-        <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
-      </insertcell>
-            
-      <insertcell template="default">
-        <every units="s" value="4e-3"/>
-        <offset units="s" value="2e-3"/>
-        <x units="m" value="0"/>
-        <y units="m" value="4.5e-6"/>
-        <delta_t units="s" value="0e0"/>
-        <theta units="rad" value="0e0"/>
-        <phi units="rad" value="0e0"/>
-        <delta_theta units="rad" value="0.0"/>
-        <delta_phi units="rad" value="0.0"/>
-      </insertcell>      
-      <insertcell template="default">
-        <every units="s" value="4e-3"/>
-        <offset units="s" value="2e-3"/>
-        <x units="m" value="0"/>
-        <y units="m" value="-4.5e-6"/>
         <delta_t units="s" value="0e0"/>
         <theta units="rad" value="0e0"/>
         <phi units="rad" value="0e0"/>
@@ -133,7 +132,7 @@
     </outlet>
     <outlet>
       <condition subtype="cosine" type="pressure">
-        <amplitude units="mmHg" value="0.0" />
+        <amplitude units="mmHg" value="1.0" />
         <mean units="mmHg" value="0.0" />
         <phase units="rad" value="0.0" />
         <period units="s" value="1" />
@@ -184,18 +183,18 @@
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="LB" value="1.129e-05" />
+          <bending units="LB" value="1.6260e-05" />
           <surface units="LB" value="1e0" />
           <volume units="LB" value="1e0" />
           <dilation units="LB" value="0.5" />
-          <strain units="LB" value="0.0002056" />
+          <strain units="LB" value="0.0005182" />
         </moduli>
         <interaction>
-          <intensity units="LB" value="1.129e-05" />
+          <intensity units="LB" value="1.6260e-05" />
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
-        <shape mesh_path="rbc_ico_720.msh" />
+        <shape mesh_path="rbc_ico_1280.msh" />
         <scale units="m" value="3.1e-06" /> <!-- The radius of the template cell is 1, therefore the radius of the RBC will be equal to scale (RBC diameter typically 6.2-8.2um) -->
       </cell>
     </cells>
