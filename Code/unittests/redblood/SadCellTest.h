@@ -30,6 +30,11 @@ namespace hemelb
           CPPUNIT_TEST(test_volume);
           CPPUNIT_TEST(test_dilation);
           CPPUNIT_TEST(test_strain);
+          CPPUNIT_TEST(test_bendingForceDirection);
+          CPPUNIT_TEST(test_surfaceForceDirection);
+          CPPUNIT_TEST(test_volumeForceDirection);
+          CPPUNIT_TEST(test_dilationForceDirection);
+          CPPUNIT_TEST(test_strainForceDirection);
           CPPUNIT_TEST_SUITE_END();
 
         public:
@@ -49,6 +54,12 @@ namespace hemelb
             cell->moduli.name = 1e0;  \
             checkNumericalForces();   \
             cell->moduli.name = 0e0;  \
+          }                           \
+          void test_ ## name ## ForceDirection() \
+          {                                      \
+            cell->moduli.name = 1e0;             \
+            checkForceDirection();               \
+            cell->moduli.name = 0e0;             \
           }
 
             HEMELB_MACRO(bending);
@@ -57,6 +68,16 @@ namespace hemelb
             HEMELB_MACRO(dilation);
             HEMELB_MACRO(strain);
 #         undef HEMELB_MACRO
+
+          void checkForceDirection()
+          {
+            std::vector<LatticeForceVector> forces(cell->GetVertices().size(), 0e0);
+            auto const e0 = (*cell)(forces);
+            cell->GetVertices()[0] += forces[0] * 1e-6;
+            auto const e1 = (*cell)();
+            CPPUNIT_ASSERT(e0 > e1);
+          }
+
 
           void checkNumericalForces()
           {
