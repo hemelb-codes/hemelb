@@ -36,7 +36,7 @@ namespace hemelb
             CopyResourceToTempdir("iccb_capillary_network.xml");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_388889_1000_3.gmy");
             CopyResourceToTempdir("P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy");
-            CopyResourceToTempdir("rbc_ico_720.msh");
+            CopyResourceToTempdir("rbc_ico_1280.msh");
 
             argv[0] = "hemelb";
             argv[1] = "-in";
@@ -64,8 +64,6 @@ namespace hemelb
                 "iccb_capillary_network.xml", {"simulation", "origin", "value"}, "(1.2574028194e-05,9.44294101e-06,-1.13739131093e-05)");
             ModifyXMLInput(
                 "iccb_capillary_network.xml", {"geometry", "datafile", "path"}, "P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy");
-            ModifyXMLInput(
-                "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "scale", "value"}, 4.1e-06);
 
             // The MasterSim object has to be created after the XML file has been modified for those changes to be taken into account
             master = std::make_shared<MasterSim>(*options, Comms());
