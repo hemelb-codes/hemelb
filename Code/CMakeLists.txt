@@ -61,7 +61,7 @@ set(HEMELB_GATHERS_IMPLEMENTATION Separated
 set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
 	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
-set(HEMELB_STENCIL "TwoPoint"
+set(HEMELB_STENCIL "FourPoint"
     CACHE STRING "HemeLB stencil type")
 set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
 	

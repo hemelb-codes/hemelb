@@ -132,7 +132,7 @@ namespace hemelb
           mesh += positions[i] - mesh.GetVertices()[0];
           mesh.nodeWall.cutoff = cutoffs[i];
 
-          forcesOnGrid < D3Q15, stencil::FourPoint > (std::shared_ptr<CellBase>(&mesh, [](CellBase*)
+          forcesOnGrid < D3Q15, stencil::HEMELB_STENCIL > (std::shared_ptr<CellBase>(&mesh, [](CellBase*)
           {}), *latDat);
 
           bool const atWall = helpers::is_zero(latDat->GetSite(wetwall).GetForce());

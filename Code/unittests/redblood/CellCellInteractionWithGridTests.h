@@ -53,7 +53,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
 
         // Finds pairs, computes interaction, spread forces to lattice
-        addCell2CellInteractions<stencil::FourPoint>(
+        addCell2CellInteractions<stencil::HEMELB_STENCIL>(
             DivideConquerCells(cells, cutoff, halo),
             Node2NodeForce(1.0, halo),
            *latDat);
