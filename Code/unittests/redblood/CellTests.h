@@ -24,6 +24,7 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellTests);
           CPPUNIT_TEST (testCellCopyShallowness);
+          CPPUNIT_TEST (testCellClone);
           CPPUNIT_TEST (testCellEnergy);
           CPPUNIT_TEST (testNullTemplateScaling);
           CPPUNIT_TEST (testTemplateScaling);
@@ -134,6 +135,15 @@ namespace hemelb
             CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell2.GetTemplateMesh().GetData());
             CPPUNIT_ASSERT(&cell0.GetVertices() == &cell2.GetVertices());
             CPPUNIT_ASSERT(cell0.GetTag() == cell2.GetTag());
+          }
+
+          void testCellClone()
+          {
+            Cell cell0(original);
+            auto cell1 = cell0.clone();
+            CPPUNIT_ASSERT(cell0.GetTemplateMesh().GetData() == cell1->GetTemplateMesh().GetData());
+            CPPUNIT_ASSERT(&cell0.GetVertices() != &cell1->GetVertices());
+            CPPUNIT_ASSERT(cell0.GetTag() != cell1->GetTag());
           }
 
           void testGetAverageEdgeLength()
