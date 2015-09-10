@@ -36,16 +36,17 @@ namespace hemelb
         Node2NodeForce cell2Cell;
 
         CellArmy(geometry::LatticeData &_latDat, CellContainer const &cells,
-                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
-                 stencil::types stencil=stencil::types::FOUR_POINT) :
-            stencil(stencil), latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
+                 LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
+            latticeData(_latDat), cells(cells), dnc(cells, boxsize, halo)
         {
         }
 
         //! Performs fluid to lattice interactions
+        template <class Stencil>
         void Fluid2CellInteractions();
 
         //! Performs lattice to fluid interactions
+        template <class Stencil>
         void Cell2FluidInteractions();
 
         CellContainer::size_type size()
@@ -113,17 +114,6 @@ namespace hemelb
         //! Remove cells if they have reached outlets
         void CellRemoval();
 
-        //! Gets the current stencil
-        stencil::types GetStencil() const
-        {
-          return stencil;
-        }
-        //! Sets the current stencil
-        void SetStencil(stencil::types sten) const
-        {
-          stencil = sten;
-        }
-
       protected:
         //! Adds input cell to simulation
         void AddCell(CellContainer::value_type cell)
@@ -136,8 +126,6 @@ namespace hemelb
           dnc.insert(cell);
           cells.insert(cell);
         }
-        //! Stencil
-        stencil::types stencil;
 
         //! All lattice information and then some
         geometry::LatticeData &latticeData;
@@ -157,7 +145,7 @@ namespace hemelb
         std::vector<FlowExtension> outlets;
     };
 
-    template<class KERNEL>
+    template<class KERNEL> template <class Stencil>
     void CellArmy<KERNEL>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
@@ -170,14 +158,14 @@ namespace hemelb
       {
         positions.resize( (*i_first)->GetVertices().size());
         std::fill(positions.begin(), positions.end(), origin);
-        velocitiesOnMesh<KERNEL>(*i_first, latticeData, stencil, positions);
+        velocitiesOnMesh<KERNEL, Stencil>(*i_first, latticeData, positions);
         (*i_first)->operator+=(positions);
       }
       // Positions have changed: update Divide and Conquer stuff
       dnc.update();
     }
 
-    template<class KERNEL>
+    template<class KERNEL> template <class Stencil>
     void CellArmy<KERNEL>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
@@ -188,10 +176,10 @@ namespace hemelb
       CellContainer::const_iterator const i_end = cells.end();
       for (; i_first != i_end; ++i_first)
       {
-        forcesOnGrid<typename KERNEL::LatticeType>(*i_first, forces, latticeData, this->stencil);
+        forcesOnGrid<typename KERNEL::LatticeType, Stencil>(*i_first, forces, latticeData);
       }
 
-      addCell2CellInteractions(dnc, cell2Cell, stencil, latticeData);
+      addCell2CellInteractions<Stencil>(dnc, cell2Cell, latticeData);
     }
 
     template<class KERNEL>

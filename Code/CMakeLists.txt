@@ -61,6 +61,9 @@ set(HEMELB_GATHERS_IMPLEMENTATION Separated
 set(HEMELB_ALLTOALL_IMPLEMENTATION Separated
 	CACHE STRING "Alltoall comms implementation, choose 'Separated', or 'ViaPointPoint'" )
 option(HEMELB_SEPARATE_CONCERNS "Communicate for each concern separately" OFF)
+set(HEMELB_STENCIL "TwoPoint"
+    CACHE STRING "HemeLB stencil type")
+set_property(CACHE HEMELB_STENCIL PROPERTY STRINGS TwoPoint ThreePoint FourPoint CosineApprox)
 	
 # Add warnings flags to development build types
 if (HEMELB_USE_ALL_WARNINGS_GNU)
@@ -95,6 +98,7 @@ add_definitions(-DHEMELB_WALL_INLET_BOUNDARY=${HEMELB_WALL_INLET_BOUNDARY})
 add_definitions(-DHEMELB_WALL_OUTLET_BOUNDARY=${HEMELB_WALL_OUTLET_BOUNDARY})
 add_definitions(-DHEMELB_COMPUTE_ARCHITECTURE=${HEMELB_COMPUTE_ARCHITECTURE})
 add_definitions(-DHEMELB_LOG_LEVEL=${HEMELB_LOG_LEVEL})
+add_definitions(-DHEMELB_STENCIL=${HEMELB_STENCIL})
 
 if(HEMELB_VALIDATE_GEOMETRY)
   add_definitions(-DHEMELB_VALIDATE_GEOMETRY)

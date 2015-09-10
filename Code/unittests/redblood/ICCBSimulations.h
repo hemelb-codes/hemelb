@@ -26,7 +26,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE_END();
 
           typedef Traits<>::ChangeKernel<lb::GuoForcingLBGK>::Type Traits;
-          typedef hemelb::redblood::CellController<Traits::Kernel> CellControl;
+          typedef hemelb::redblood::CellController<Traits::Kernel, stencil::HEMELB_STENCIL> CellControl;
           typedef SimulationMaster<Traits> MasterSim;
 
         public:

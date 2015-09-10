@@ -61,9 +61,9 @@ namespace hemelb
       {
         mesh += position - mesh.GetBarycenter();
         helpers::ZeroOutForces(latDat);
-        details::spreadForce2Grid(std::shared_ptr<CellBase>(&mesh, [](CellBase*)
-        {}),
-                                  details::SpreadForces(forces, *latDat), stencil::types::FOUR_POINT);
+        details::spreadForce2Grid<details::SpreadForces, stencil::FourPoint>
+        (std::shared_ptr<CellBase>(&mesh, [](CellBase*){}),
+           details::SpreadForces(forces, *latDat));
         return latDat->GetSite(center).GetForce();
       }
 
