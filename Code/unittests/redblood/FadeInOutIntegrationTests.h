@@ -27,7 +27,7 @@ namespace hemelb
           ;
 
           typedef Traits<>::Reinstantiate<lb::lattices::D3Q19, lb::GuoForcingLBGK>::Type Traits;
-          typedef hemelb::redblood::CellController<Traits::Kernel> CellControl;
+          typedef hemelb::redblood::CellController<Traits::Kernel, stencil::HEMELB_STENCIL> CellControl;
           typedef SimulationMaster<Traits> MasterSim;
 
         public:
@@ -39,7 +39,7 @@ namespace hemelb
             CopyResourceToTempdir("red_blood_cell.txt");
 
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 6600);
+                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 7100);
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
             ModifyXMLInput(

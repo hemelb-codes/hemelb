@@ -53,10 +53,10 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
 
         // Finds pairs, computes interaction, spread forces to lattice
-        addCell2CellInteractions(DivideConquerCells(cells, cutoff, halo),
-                                 Node2NodeForce(1.0, halo),
-                                 stencil::types::FOUR_POINT,
-                                 *latDat);
+        addCell2CellInteractions<stencil::HEMELB_STENCIL>(
+            DivideConquerCells(cells, cutoff, halo),
+            Node2NodeForce(1.0, halo),
+           *latDat);
 
         // By symmetry, there are no forces on the lattice points equidistant from
         // the nodes

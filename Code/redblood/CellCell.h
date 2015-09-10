@@ -23,11 +23,30 @@
 #include "redblood/Cell.h"
 #include "redblood/Node2Node.h"
 #include "redblood/stencil.h"
+#include "redblood/Interpolation.h"
 
 namespace hemelb
 {
   namespace redblood
   {
+    namespace {
+      template <class Stencil>
+      void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
+                       LatticeForceVector const &force)
+      {
+        proc_t procid;
+        site_t siteid;
+        InterpolationIterator<Stencil> spreader = interpolationIterator<Stencil>(node);
+
+        for (; spreader; ++spreader)
+        {
+          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
+          {
+            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
+          }
+        }
+      }
+    }
     // References a node of a mesh in the divide-and-conquer box
     class CellReference
     {
@@ -295,8 +314,20 @@ namespace hemelb
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
+    template <class Stencil>
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
-                                  stencil::types stencil, geometry::LatticeData &latticeData);
+                                  geometry::LatticeData &latticeData)
+    {
+      DivideConquerCells::pair_range range(dnc.pair_begin(functional.cutoff));
+
+      for (; range.is_valid(); ++range)
+      {
+        LatticeForceVector const force(functional(*range->first, *range->second));
+        // spread to the grid from from one node and from the other
+        spreadForce<Stencil>(*range->first, latticeData, force);
+        spreadForce<Stencil>(*range->second, latticeData, -force);
+      }
+    }
   }
 } // hemelb::redblood
 

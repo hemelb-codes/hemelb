@@ -91,7 +91,7 @@ namespace hemelb
         redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
         army.cell2Cell.cutoff = 0.5;
         army.cell2Cell.intensity = 1.0;
-        army.Cell2FluidInteractions();
+        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
       }
 
       void CellArmyTests::testCell2Fluid()
@@ -108,7 +108,7 @@ namespace hemelb
         redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
         army.cell2Cell.cutoff = 0.5;
         army.cell2Cell.intensity = 1.0;
-        army.Cell2FluidInteractions();
+        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
 
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 1);
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
@@ -124,7 +124,7 @@ namespace hemelb
         (*cells.begin())->GetVertices().front() = n0;
         (*std::next(cells.begin()))->GetVertices().front() = n1;
         army.updateDNC();
-        army.Cell2FluidInteractions();
+        army.Cell2FluidInteractions<stencil::HEMELB_STENCIL>();
 
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*cells.begin()))->nbcalls == 2);
         CPPUNIT_ASSERT(std::dynamic_pointer_cast<FakeCell>( (*std::next(cells.begin())))->nbcalls
@@ -171,7 +171,7 @@ namespace hemelb
                                                                                          normal);
 
         redblood::CellArmy<Kernel> army(*latDat, cells, cutoff, halo);
-        army.Fluid2CellInteractions();
+        army.Fluid2CellInteractions<stencil::HEMELB_STENCIL>();
 
         for (size_t i(0); i < cells.size(); ++i)
         {

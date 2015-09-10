@@ -20,16 +20,15 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL>
+    template<class KERNEL, class Stencil>
     class CellController : public CellArmy<KERNEL>,
                            public net::IteratedAction
     {
       public:
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
-                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0,
-                       stencil::types stencil=stencil::types::FOUR_POINT) :
-            CellArmy<KERNEL>(_latDat, cells, boxsize, halo, stencil)
+                       LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
+            CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
         {
         }
 #       else
@@ -42,9 +41,9 @@ namespace hemelb
           Logger::Log<Debug, Singleton>("Cell insertion");
           CellArmy<KERNEL>::CallCellInsertion();
           Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::Fluid2CellInteractions();
+          CellArmy<KERNEL>::template Fluid2CellInteractions<Stencil>();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::Cell2FluidInteractions();
+          CellArmy<KERNEL>::template Cell2FluidInteractions<Stencil>();
         }
         void EndIteration() override
         {
