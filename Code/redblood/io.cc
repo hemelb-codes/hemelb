@@ -281,9 +281,18 @@ namespace hemelb
       std::shared_ptr<std::vector<FlowExtension>> flowExtensions(readFlowExtensions(topNode,
                                                                                     converter).release());
       // Then read template cells
-      auto const cellsNode = topNode.GetChildOrThrow("redbloodcells").GetChildOrThrow("cells");
-      auto cellNode = cellsNode.GetChildOrThrow("cell");
-      for (; cellNode != cellNode.Missing(); cellNode = cellNode.NextSiblingOrNull("cell"))
+      auto const redbloodcellsNode = topNode.GetChildOrNull("redbloodcells");
+      if(not redbloodcellsNode)
+      {
+        return result;
+      }
+      auto const cellsNode = redbloodcellsNode.GetChildOrNull("cells");
+      if(not cellsNode)
+      {
+        return result;
+      }
+      auto cellNode = cellsNode.GetChildOrNull("cell");
+      for (; cellNode; cellNode = cellNode.NextSiblingOrNull("cell"))
       {
         auto const name = cellNode.GetAttributeOrNull("name");
         auto const key = name != nullptr ?
@@ -462,7 +471,7 @@ namespace hemelb
       // First read outlets from XML
       auto const result = std::make_shared<std::vector<FlowExtension>>();
       auto outletsNode = topNode.GetChildOrThrow("outlets");
-      readFlowExtensions(outletsNode, converter, *result, true);
+      readFlowExtensions(outletsNode, converter, *result);
       // Then transforms them to cell outlets: should start somewhere near the end of fadelength
       for(auto &flowExt: *result)
       {
