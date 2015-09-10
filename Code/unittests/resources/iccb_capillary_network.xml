@@ -221,7 +221,7 @@
   </visualisation>
   
   <redbloodcells>
-    <controller stencil="two">
+    <controller>
       <halo units="LB" value="1.05" />
       <boxsize units="LB" value="3" />
     </controller>

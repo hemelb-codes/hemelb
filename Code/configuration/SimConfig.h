@@ -212,12 +212,6 @@ namespace hemelb
           return halo;
         }
 
-        //! Returns stencil types for RBC's IBM
-        redblood::stencil::types GetStencil() const
-        {
-          return stencil;
-        }
-
       protected:
         /**
          * Create the unit converter - virtual so that mocks can override it.
@@ -350,7 +344,6 @@ namespace hemelb
         LatticeDistance boxSize, halo;
         std::shared_ptr<redblood::TemplateCellContainer> rbcMeshes;
         std::shared_ptr<std::vector<redblood::FlowExtension>> rbcOutlets;
-        hemelb::redblood::stencil::types stencil;
 
       protected:
         // These have to contain pointers because there are multiple derived types that might be

@@ -71,7 +71,7 @@
   </initialconditions>
   
   <redbloodcells>
-    <controller stencil="three">
+    <controller>
       <halo units="LB" value="1.05" />
       <boxsize units="LB" value="3" />
     </controller>
