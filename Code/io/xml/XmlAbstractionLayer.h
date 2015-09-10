@@ -214,6 +214,11 @@ namespace hemelb
            */
           std::string GetPath() const;
 
+          operator bool() const
+          {
+            return el != nullptr;
+          }
+
         private:
           TiXmlElement* el;
 
