@@ -218,12 +218,12 @@ namespace hemelb
     if (simConfig->HasRBCSection())
     {
       hemelb::redblood::CellContainer cells;
-      typedef hemelb::redblood::CellController<typename Traits::Kernel> Controller;
+      typedef hemelb::redblood::CellController<typename Traits::Kernel,
+          hemelb::redblood::stencil::HEMELB_STENCIL> Controller;
       auto const controller = std::make_shared<Controller>(*latticeData,
                                                            cells,
                                                            simConfig->GetBoxSize(),
-                                                           simConfig->GetHalo(),
-                                                           simConfig->GetStencil());
+                                                           simConfig->GetHalo());
       controller->SetCellInsertion(simConfig->GetInserter());
       controller->SetOutlets(*simConfig->GetRBCOutlets());
       cellController = std::static_pointer_cast<hemelb::net::IteratedAction>(controller);

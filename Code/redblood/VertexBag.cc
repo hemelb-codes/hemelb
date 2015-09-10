@@ -36,8 +36,8 @@ namespace hemelb
       //! Set of procs affected by this position
       //! \param[in] latDat will tell us which site belongs to which proc
       //! \param[in] iterator a  stencil iterator going over affected lattice points
-      template<class T_FUNC> std::set<proc_t> procsAffectedByPosition(
-          T_FUNC get_proc, InterpolationIterator &&iterator, proc_t avoid)
+      template<class Stencil, class T_FUNC> std::set<proc_t> procsAffectedByPosition(
+          T_FUNC get_proc, InterpolationIterator<Stencil> &&iterator, proc_t avoid)
       {
         std::set<proc_t> result;
         for (; iterator.IsValid(); ++iterator)
@@ -54,23 +54,22 @@ namespace hemelb
       //! \param[in] latDat will tell us which site belongs to which proc
       //! \param[in] position for which to figure out affected processes
       //! \param[in] stencil giving interaction range
-      template<class T_FUNC> std::set<proc_t> procsAffectedByPosition(
+      template<class Stencil, class T_FUNC> std::set<proc_t> procsAffectedByPosition(
           T_FUNC get_proc, LatticePosition const &position,
-          proc_t avoid = std::numeric_limits<proc_t>::max(), redblood::stencil::types stencil =
-              redblood::stencil::types::FOUR_POINT)
+          proc_t avoid = std::numeric_limits<proc_t>::max())
       {
-        return procsAffectedByPosition(get_proc, interpolationIterator(position, stencil), avoid);
+        return procsAffectedByPosition(get_proc, interpolationIterator<Stencil>(position), avoid);
       }
 
-      template<class T_FUNC> std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
+      template<class Stencil, class T_FUNC>
+      std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
           T_FUNC get_proc, std::shared_ptr<CellBase const> cell,
-          proc_t avoid = std::numeric_limits<proc_t>::max(), redblood::stencil::types stencil =
-              redblood::stencil::types::FOUR_POINT)
+          proc_t avoid = std::numeric_limits<proc_t>::max())
       {
         std::map<size_t, std::shared_ptr<VertexBag>> result;
         for (auto const &vertex : cell->GetVertices())
         {
-          auto const regions = procsAffectedByPosition(get_proc, vertex, avoid, stencil);
+          auto const regions = procsAffectedByPosition<Stencil>(get_proc, vertex, avoid);
           for (auto const region : regions)
           {
             auto const i_bag = result.find(region);
@@ -104,15 +103,16 @@ namespace hemelb
       addVertex(vertex);
     }
 
+    template <class Stencil>
     std::map<size_t, std::shared_ptr<VertexBag>> splitVertices(
         std::shared_ptr<CellBase const> cell, geometry::LatticeData const &latticeData,
-        proc_t selfRegion, redblood::stencil::types stencil)
+        proc_t selfRegion)
     {
       auto proc_getter = [&latticeData](LatticePosition const &position)
       {
         return get_proc(latticeData, position);
       };
-      return splitVertices(proc_getter, cell, selfRegion, stencil);
+      return splitVertices<Stencil>(proc_getter, cell, selfRegion);
     }
 #   endif
   }

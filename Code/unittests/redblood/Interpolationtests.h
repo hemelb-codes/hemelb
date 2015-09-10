@@ -101,8 +101,7 @@ namespace hemelb
           void testOffLattice()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            stencil::FourPoint stencil;
-            InterpolationIterator iterator(pos, stencil);
+            InterpolationIterator<stencil::FourPoint> iterator(pos);
 
             LatticeVector vectors[] = { LatticeVector(55, 51, 14),
                                         LatticeVector(55, 51, 15),
@@ -121,7 +120,7 @@ namespace hemelb
                 ;
 
               CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
-              CPPUNIT_ASSERT(helpers::is_zero(stencil(pos - vectors[i]) - iterator.weight()));
+              CPPUNIT_ASSERT(helpers::is_zero(stencil::FourPoint::stencil(pos - vectors[i]) - iterator.weight()));
               CPPUNIT_ASSERT(iterator.IsValid());
             }
 
@@ -132,8 +131,7 @@ namespace hemelb
           void testOffLatticeZeroOutsideStencil()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            stencil::FourPoint stencil;
-            InterpolationIterator iterator(pos, stencil);
+            InterpolationIterator<stencil::FourPoint> iterator(pos);
             // Checks that outside iteration box, weights are zero
             LatticeVector zero_vecs[] = { LatticeVector(57, 53, 13),
                                           LatticeVector(57, 53, 18),
@@ -145,15 +143,15 @@ namespace hemelb
             for (size_t i(0); i < 6; ++i)
             {
               LatticeVector const dx(1, 0, 0), dy(0, 1, 0), dz(0, 0, 1);
-              CPPUNIT_ASSERT(helpers::is_zero(stencil(pos - zero_vecs[i])));
+              CPPUNIT_ASSERT(helpers::is_zero(stencil::FourPoint::stencil(pos - zero_vecs[i])));
               // checks we are one step outside the iteration box only.
               // this is really a test on the zero_vecs data, eg a test of the test.
-              size_t const one_non_zero = size_t(not helpers::is_zero(stencil(pos + dx
-                  - zero_vecs[i]))) + size_t(not helpers::is_zero(stencil(pos - dx - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil(pos + dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil(pos - dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil(pos + dz - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil(pos - dz - zero_vecs[i])));
+              size_t const one_non_zero = size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos + dx
+                  - zero_vecs[i]))) + size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos - dx - zero_vecs[i])))
+                  + size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos + dy - zero_vecs[i])))
+                  + size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos - dy - zero_vecs[i])))
+                  + size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos + dz - zero_vecs[i])))
+                  + size_t(not helpers::is_zero(stencil::FourPoint::stencil(pos - dz - zero_vecs[i])));
               CPPUNIT_ASSERT(one_non_zero == 1);
             }
           }
@@ -162,11 +160,9 @@ namespace hemelb
           void check(Dimensionless x, Dimensionless y, Dimensionless z, Dimensionless tolerance =
                          1e-8)
           {
-            using hemelb::redblood::stencil::types;
-
             FUNCTION func;
             LatticePosition expected(func(x, y, z));
-            LatticePosition actual(interpolate(func, x, y, z, types::FOUR_POINT));
+            LatticePosition actual(interpolate<FUNCTION, stencil::HEMELB_STENCIL>(func, x, y, z));
             CPPUNIT_ASSERT(helpers::is_zero(actual - expected, tolerance));
           }
 
