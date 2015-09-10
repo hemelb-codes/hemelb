@@ -39,7 +39,7 @@ namespace hemelb
             CopyResourceToTempdir("red_blood_cell.txt");
 
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 6600);
+                "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 7100);
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
             ModifyXMLInput(
