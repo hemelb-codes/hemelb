@@ -253,7 +253,6 @@ namespace hemelb
       const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
       GetDimensionalValue(controllerNode.GetChildOrThrow("halo"), "LB", halo);
       GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
-      stencil = redblood::readStencil(controllerNode);
 
       rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
       rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);

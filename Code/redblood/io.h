@@ -33,9 +33,6 @@ namespace hemelb
     std::shared_ptr<std::vector<FlowExtension>> readRBCOutlets(io::xml::Element const&,
                                                                util::UnitConverter const&);
 
-    //! Reads stencil attribute
-    stencil::types readStencil(io::xml::Element const&);
-
     //! Checks cell average edge length against a range of stable values
     bool validateCellEdgeLengths(const CellBase&);
   }
