@@ -44,7 +44,7 @@ namespace hemelb
             cell = std::make_shared<redblood::Cell>(
                 readMesh(resources::Resource("sad.msh").Path().c_str())->vertices, normal
             );
-            // sad mesh is in physical units, not in the cell units of rbc_ico_1280.msh
+            // sad mesh is in physical units, move to something with fewer decimals.
             *cell *= 1e0/4.1e-6;
           }
 
@@ -73,7 +73,10 @@ namespace hemelb
           {
             std::vector<LatticeForceVector> forces(cell->GetVertices().size(), 0e0);
             auto const e0 = (*cell)(forces);
-            cell->GetVertices()[0] += forces[0] * 1e-6;
+            for(size_t i(0); i < forces.size(); ++i)
+            {
+              cell->GetVertices()[i] += forces[i] * 1e-6;
+            }
             auto const e1 = (*cell)();
             CPPUNIT_ASSERT(e0 > e1);
           }
@@ -123,7 +126,6 @@ namespace hemelb
         protected:
           std::shared_ptr<redblood::Cell> cell;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION (SadCellTests);
     }
