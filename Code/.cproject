@@ -44,7 +44,7 @@
 									<listOptionValue builtIn="false" value="../../dependencies/include"/>
 									<listOptionValue builtIn="false" value="../../dependencies/include/ctemplate"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.935959055" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.867528242" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="HEMELB_STENCIL=FourPoint"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1768676556" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
