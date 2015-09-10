@@ -55,6 +55,29 @@ namespace hemelb
         child->SetAttribute(attribute, attr_value.str().c_str());
       }
 
+      //! \brief Modify XML document by deleting an element if it exists
+      //! \details HemeLB parameters cannot be modified programmatically, so we have to jump
+      //! these hoops to test it.
+      //! \param[in] document: Document to modify
+      //! \param[in] elements: hierarchy of elements, last item will be removed.
+      //!   Should not include "hemelbsettings"
+      //! \param[in] value: Value to set the attribute to
+      inline void DeleteXMLInput(TiXmlDocument &document, std::vector<std::string>&& elements)
+      {
+        std::string const attribute = elements.back();
+        auto element = document.FirstChildElement("hemelbsettings");
+        for (std::string const &name : elements)
+        {
+          auto next_child = element->FirstChildElement(name);
+          if(next_child  == nullptr)
+          {
+            return;
+          }
+          element = next_child;
+        }
+        element->Parent()->RemoveChild(element);
+      }
+
       class FolderTestFixture : public HasCommsTestFixture
       {
 
@@ -114,6 +137,16 @@ namespace hemelb
             TiXmlDocument document(filename.c_str());
             document.LoadFile();
             helpers::ModifyXMLInput(document, std::move(elements), _value);
+            std::ofstream output(filename);
+            output << document;
+          }
+
+          void DeleteXMLInput(std::string const &resource, std::vector<std::string>&& elements)
+          {
+            std::string const filename = tempPath + "/" + resource;
+            TiXmlDocument document(filename.c_str());
+            document.LoadFile();
+            helpers::DeleteXMLInput(document, std::move(elements));
             std::ofstream output(filename);
             output << document;
           }
