@@ -34,8 +34,7 @@ namespace hemelb
     //! \tparam KERNEL: Needed to compute velocity
     template<class KERNEL>
     LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
-                                        LatticePosition const &center,
-                                        stencil::types stencil = stencil::types::FOUR_POINT);
+                                        LatticePosition const &center);
 
     namespace details
     {
@@ -113,11 +112,11 @@ namespace hemelb
       }
     }
 
-    template<class KERNEL>
+    template<class KERNEL, class Stencil>
     LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
-                                        LatticePosition const &center, stencil::types stencil)
+                                        LatticePosition const &center)
     {
-      auto iterator = interpolationIterator(center, stencil);
+      auto iterator = interpolationIterator<Stencil>(center);
       // Computes velocity for a given site index
       // Branches to one or another function depending on whether forces are available (since
       // velocity depends on forces)

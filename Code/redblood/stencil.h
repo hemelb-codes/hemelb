@@ -106,15 +106,7 @@ namespace hemelb
     {                                                        \
       return STENCIL(x.x) * STENCIL(x.y) * STENCIL(x.z);     \
     }                                                        \
-    Dimensionless operator()(Dimensionless x) const          \
-    {                                                        \
-      return NAME::stencil(x);                               \
-    }                                                        \
-    Dimensionless operator()(LatticePosition const &x)       \
-    {                                                        \
-      return NAME::stencil(x);                               \
-    }                                                        \
-    constexpr size_t GetRange() const                        \
+    static constexpr size_t GetRange()                       \
     {                                                        \
       return RANGE;                                          \
     }                                                        \

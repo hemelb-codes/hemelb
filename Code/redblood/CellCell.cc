@@ -109,25 +109,6 @@ namespace hemelb
         }
         return false;
       }
-
-      // avoids a warning
-#     ifndef HEMELB_DOING_UNITTESTS
-      void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
-                       stencil::types stencil, LatticeForceVector const &force)
-      {
-        proc_t procid;
-        site_t siteid;
-        InterpolationIterator spreader = interpolationIterator(node, stencil);
-
-        for (; spreader; ++spreader)
-        {
-          if (latticeData.GetContiguousSiteId(*spreader, procid, siteid))
-          {
-            latticeData.GetSite(siteid).AddToForce(force * spreader.weight());
-          }
-        }
-      }
-#     endif
     } // anonymous namespace
 #ifndef HEMELB_DOING_UNITTESTS
     //! Constructor
@@ -292,21 +273,6 @@ namespace hemelb
     DivideConquerCells::pair_range DivideConquerCells::pair_begin(LatticeDistance maxdist) const
     {
       return pair_range(*this, begin(), end(), maxdist);
-    }
-
-    //! Computes cell <-> cell interactions and spread to grid
-    void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
-                                  stencil::types stencil, geometry::LatticeData &latticeData)
-    {
-      DivideConquerCells::pair_range range(dnc.pair_begin(functional.cutoff));
-
-      for (; range.is_valid(); ++range)
-      {
-        LatticeForceVector const force(functional(*range->first, *range->second));
-        // spread to the grid from from one node and from the other
-        spreadForce(*range->first, latticeData, stencil, force);
-        spreadForce(*range->second, latticeData, stencil, -force);
-      }
     }
 
     bool DivideConquerCells::insert(CellContainer::value_type cell)

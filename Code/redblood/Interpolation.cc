@@ -42,45 +42,5 @@ namespace hemelb
       current[1] = min[1];
       ++current[0];
     }
-
-    namespace
-    {
-      int minimumPosImpl(Dimensionless x, size_t range)
-      {
-        return static_cast<int>(std::floor(x - 0.5 * Dimensionless(range)) + 1);
-      }
-      int maximumPosImpl(Dimensionless x, size_t range)
-      {
-        return static_cast<int>(std::floor(x + 0.5 * Dimensionless(range)));
-      }
-    }
-
-    LatticeVector InterpolationIterator::minimumPosition(LatticePosition const &node, size_t range)
-    {
-      return LatticeVector(minimumPosImpl(node.x, range),
-                           minimumPosImpl(node.y, range),
-                           minimumPosImpl(node.z, range));
-    }
-    LatticeVector InterpolationIterator::maximumPosition(LatticePosition const &node, size_t range)
-    {
-      return LatticeVector(maximumPosImpl(node.x, range),
-                           maximumPosImpl(node.y, range),
-                           maximumPosImpl(node.z, range));
-    }
-
-    InterpolationIterator interpolationIterator(LatticePosition const &where,
-                                                stencil::types stencil)
-    {
-#     define HEMELB_STENCIL_CASE(STENCIL, NAME)                 \
-        if(stencil == stencil::types::STENCIL)                  \
-        {                                                       \
-          return interpolationIterator<stencil::NAME>(where);   \
-        }
-      HEMELB_STENCIL_CASE(FOUR_POINT, FourPoint);
-      HEMELB_STENCIL_CASE(COSINE_APPROX, CosineApprox);
-      HEMELB_STENCIL_CASE(THREE_POINT, ThreePoint);
-      return interpolationIterator<stencil::TwoPoint>(where);
-#     undef HEMELB_STENCIL_CASE
-    }
   }
 }

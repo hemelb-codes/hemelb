@@ -131,10 +131,10 @@ namespace hemelb
 
         // Perform interpolation
         std::vector<LatticePosition> displacements;
-        velocitiesOnMesh < Kernel > (
+        velocitiesOnMesh < Kernel, stencil::HEMELB_STENCIL > (
         // shared pointer with a fake deleter
             std::shared_ptr<CellBase>(&mesh, [](CellBase*)
-            {}), *latDat, stencil::types::FOUR_POINT, displacements);
+            {}), *latDat, displacements);
 
         // Compute expected velocities
         typedef std::vector<LatticePosition>::const_iterator const_iterator;
@@ -158,8 +158,8 @@ namespace hemelb
 
         // Perform interpolation
         std::vector<LatticePosition> displacements;
-        velocitiesOnMesh < Kernel > (std::shared_ptr<CellBase>(&mesh, [](CellBase*)
-        {}), *latDat, stencil::types::FOUR_POINT, displacements);
+        velocitiesOnMesh < Kernel, stencil::HEMELB_STENCIL > (std::shared_ptr<CellBase>(&mesh, [](CellBase*)
+        {}), *latDat, displacements);
 
         // Computes what the interpolation should be
         typedef std::vector<LatticePosition>::const_iterator const_iterator;
