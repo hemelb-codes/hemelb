@@ -70,6 +70,7 @@ namespace hemelb
 #include "unittests/redblood/CellInserterTests.h"
 #include "unittests/redblood/ICCBSimulations.h"
 #include "unittests/redblood/SadCellTest.h"
+#include "unittests/redblood/SadCellIntegrationTests.h"
 #include "unittests/redblood/MulticellBenchmarkTests.h"
 #include "unittests/redblood/FedosovValidationTests.h"
 #undef HEMELB_DOING_UNITTESTS
