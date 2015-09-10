@@ -124,7 +124,6 @@ namespace hemelb
           stencil = sten;
         }
 
-      protected:
         //! Adds input cell to simulation
         void AddCell(CellContainer::value_type cell)
         {
@@ -136,6 +135,8 @@ namespace hemelb
           dnc.insert(cell);
           cells.insert(cell);
         }
+
+      protected:
         //! Stencil
         stencil::types stencil;
 
