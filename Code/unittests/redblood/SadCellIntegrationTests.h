@@ -41,12 +41,10 @@ namespace hemelb
             ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"simulation", "steps", "value"}, 10000);
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"redbloodcells", "controller", "stencil"}, "two");
-            ModifyXMLInput(
                 "large_cylinder_rbc.xml", {"redbloodcells", "cells", "cell", "shape", "mesh_path"},
                 "rbc_ico_1280.msh");
             ModifyXMLInput(
-                "large_cylinder_rbc.xml", {"inlet", "condition", "mean", "value"}, 0);
+                "large_cylinder_rbc.xml", {"inlets", "inlet", "condition", "mean", "value"}, 0);
             DeleteXMLInput("large_cylinder_rbc.xml", {"redbloodcells", "cells"});
             DeleteXMLInput("large_cylinder_rbc.xml", {"inlets", "inlet", "flowextension"});
             DeleteXMLInput("large_cylinder_rbc.xml", {"outlets", "outlet", "flowextension"});
@@ -87,11 +85,11 @@ namespace hemelb
               - cell->GetBarycenter();
             writeVTKMesh("/tmp/ideal.vtp", cell, converter);
             writeVTKMesh("/tmp/deformed.vtp", sadcell, converter);
-            sadcell->moduli.bending = converter.ConvertToLatticeUnits("Nm", 2e-19);
+            sadcell->moduli.bending = 0.0000375;
             sadcell->moduli.surface = 1e0;
             sadcell->moduli.volume = 1e0;
-            sadcell->moduli.dilation = 0.75;
-            sadcell->moduli.strain = converter.ConvertToLatticeUnits("N/m", 5e-6);
+            sadcell->moduli.dilation = 0.5;
+            sadcell->moduli.strain = 0.0006;
 
             std::cout << "VOLUMES: " << sadcell->GetVolume() << "  " << cell->GetVolume() << "\n";
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
@@ -104,6 +102,22 @@ namespace hemelb
                    energies.push_back((**cells.begin())());
                 }
             );
+
+            controller->AddCellChangeListener([&converter](const hemelb::redblood::CellContainer &cells)
+            {
+              static int iter = 0;
+              for (auto cell : cells)
+              {
+                if(iter % 1000 == 0)
+                {
+                  std::stringstream filename;
+                  filename << cell->GetTag() << "_t_" << iter << ".vtp";
+                  writeVTKMesh(filename.str(), cell, converter);
+                }
+              }
+              ++iter;
+            });
+
             // run the simulation
             master->RunSimulation();
             for(auto const energy: energies)
