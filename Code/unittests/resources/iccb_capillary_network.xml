@@ -205,6 +205,14 @@
       <field type="pressure"/>
       <field type="tangentialprojectiontraction"/>
     </propertyoutput>
+    <propertyoutput period="1000" file="plane_vel_stress.dat">
+      <geometry type="plane">
+        <point units="m" value="(0.,0.,0.)" />
+        <normal units="dimensionless" value="(0,0,1)" />
+      </geometry>
+      <field type="velocity"/>
+      <field type="tangentialprojectiontraction"/>
+    </propertyoutput>
   </properties>
 
   <visualisation>
@@ -228,14 +236,14 @@
     <cells>
       <cell name="default">
         <moduli>
-          <bending units="LB" value="1.135e-05" />
+          <bending units="LB" value="2.554e-05" />
           <surface units="LB" value="1e0" />
           <volume units="LB" value="1e0" />
           <dilation units="LB" value="0.5" />
-          <strain units="LB" value="0.0004597" />
+          <strain units="LB" value="0.0002043" />
         </moduli>
         <interaction>
-          <intensity units="LB" value="1.135e-05" />
+          <intensity units="LB" value="2.554e-05" />
           <cutoffdistance units="LB" value="1.0" />
           <exponent value="2"/>
         </interaction>
