@@ -65,6 +65,13 @@ namespace hemelb
             ModifyXMLInput(
                 "iccb_capillary_network.xml", {"geometry", "datafile", "path"}, "P6_190514_x63x0.6_0_RED_BW_corrected_tubed_smoothed_0_875_1000_3.gmy");
 
+            ModifyXMLInput(
+                "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "moduli", "bending", "value"}, 1.135e-05);
+            ModifyXMLInput(
+                "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "moduli", "strain", "value"}, 0.0004597);
+            ModifyXMLInput(
+                "iccb_capillary_network.xml", {"redbloodcells", "cells", "cell", "interaction", "intensity", "value"}, 1.135e-05);
+
             // The MasterSim object has to be created after the XML file has been modified for those changes to be taken into account
             master = std::make_shared<MasterSim>(*options, Comms());
             CPPUNIT_ASSERT(master);
@@ -130,6 +137,7 @@ namespace hemelb
           int const argc = 7;
           char const * argv[7];
       };
+
 
       // Don't register the unit test so it's not run by default as part of CI.
       // Uncomment the line below in order to run the test with: ./unittests_hemelb hemelb::unittests::redblood::ICCBSimulations::testSimpleTube
