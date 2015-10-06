@@ -272,8 +272,7 @@ int main(int argc, char* argv[]) {
 
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIR})
-MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
+include_directories(${PARMETIS_INCLUDE_DIRS})
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
