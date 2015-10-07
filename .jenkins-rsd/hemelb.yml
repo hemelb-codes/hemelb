@@ -112,7 +112,7 @@
         - '{name}-heme'
 
 - project:
-    name: 'development'
+    name: 'master'
     steering: 'none'
     streaks: 'OFF'
     sse3: 'ON'
