@@ -2,6 +2,7 @@
     name: setup-jenkins-jobs-heme
     disabled: false
     node: master
+    project-type: freestyle
 
     builders:
         - shell: |
@@ -10,7 +11,7 @@
             # if [[ -d .jenkins-rsd ]]; then
             #     python -m virtualenv --system-site-packages env
             #     . env/bin/activate
-            #     # this an rsd plugin for jenkins job builder. It will also install
+            #     # this an rsd plugin for jenkins job builder. It will also install
             #     # the latter.
             #     pip install --uprade git+https://www.github.com/UCL/JenJobs.git
             #
