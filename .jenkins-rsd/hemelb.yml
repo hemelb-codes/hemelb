@@ -2,38 +2,86 @@
 - job-template:
     name: '{name}-heme'
     description: |
-        Compiles, runs units tests, and runs regressions for several types of
-        builds.
-
-        Since steering does not have unittests and since it prevents running
-        multiple instances of heme on the same node (because port is hard
-        coded), steering build is not unittested.
+        Compiles, runs units tests, and runs regressions for several types of builds.
     disabled: false
     block-upstream: true
     builders:
-        - heme-remove-build
-        - heme-flags
-        # build dependencies
-        - heme-dependencies
-        # build with/without streak-lines, with/whithout sse3
-        - heme-Code:
-            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
-            sse3: '{sse3}'
-            streaks: '{streaks}'
-            steering: '{steering}'
+        - shell: |
+            #!/bin/bash -xel
+            case $os in
+                "LegionRHEL7")
+                    module use ~ccsprsd/modulefiles
+                    module load jenkins/heme/$compiler
+                    export MAKEFLAGS=-j4
+                ;;
+                "Mavericks")
+                    case $compiler in
+                        "gnu")
+                            export CXX=g++-4.9
+                            export CC=gcc-4.9
+                        ;;
+                        "clang")
+                            export CC=/usr/bin/cc
+                            export CXX=/usr/bin/c++
+                        ;;
+                    esac
+                    export MAKEFLAGS=-j2
+                ;;
+            esac
+            with_boost=$([[ "$os" == "LegionRHEL7" ]] && echo "ON" || echo "OFF")
 
-        - heme-test:
-            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
+            # configure and build dependencies
+            dep_build_dir=$WORKSPACE/dependencies/build
+            mkdir -p $dep_build_dir/fake_install && cd $dep_build_dir
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                  -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
+                  -DHEMELB_USE_BOOST=$with_boost \
+                  $WORKSPACE/dependencies
+            make
 
-        - heme-regression-setup
-        - heme-regression-run:
-            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
+            # configure and build code
+            build_dir=$WORKSPACE/build
+            mkdir -p $build_dir && cd $build_dir
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo                  \
+                  -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
+                  -DHEMELB_USE_BOOST=$with_boost                     \
+                  -DHEMELB_USE_STREAKLINES='{streaks}'               \
+                  -DHEMELB_USE_SSE3='{sse3}'                         \
+                  -DHEMELB_STEERING_LIB='{steering}'                 \
+                  $WORKSPACE/Code
+            make
+
+            # run cpp tests
+            mkdir -p $build_dir/tests && cd $build_dir
+            mpirun -n 1 ./unittests_hemelb -o $build_dir/tests/cpp.xml || true
+
+            # setup regressions
+            reg_dir=$WORKSPACE/regression/hemelb-inputs
+            entropy=hg@entropy.chem.ucl.ac.uk
+            mkdir -p $(dirname $reg_dir)
+            [[ -e $reg_dir ]] || hg clone ssh://$entropy/hemelb-input $reg_dir
+            cd $reg_dir && hg update
+
+            # run regression
+            mpi="mpiexec -np $([[ "$os" == "LegionRHEL7" ]] && echo "1" || echo "2")"
+
+            result_dir=$reg_dir/results
+            hemelb=$build_dir/hemelb
+
+            cd $reg_dir/diffTest/
+            $mpi $hemelb -in config.xml -out $result_dir -i 0
+            ./ImageComparison CleanImages $result_dir/Images
+            ./NumericalComparison CleanExtracted $result_dir/Extracted
 
     triggers:
         - '{trigger}'
 
     publishers:
         - cpp_unit_tests
+        - slackers
+
+    parameters:
+        - '{param}'
 
 - project:
     name: 'steering_and_streaks'
@@ -43,6 +91,7 @@
     trigger: 'nightly_and_hook'
     branch: origin/master
     refspec: +refs/heads/*:refs/remotes/origin/*
+    param: dummy
     jobs:
         - '{name}-heme'
 
@@ -54,6 +103,7 @@
     trigger: 'nightly_and_hook'
     branch: origin/master
     refspec: +refs/heads/*:refs/remotes/origin/*
+    param: dummy
     jobs:
         - '{name}-heme'
 
@@ -64,6 +114,7 @@
     sse3: 'ON'
     trigger: 'pull_request_trigger'
     branch: $sha1
-    refspec: +refs/heads/*:refs/remotes/origin/*
+    refspec: +refs/pull/*:refs/remotes/origin/pr/*
+    param: sha1
     jobs:
-        - '{name}-heme'
+        - '{name}-heme':

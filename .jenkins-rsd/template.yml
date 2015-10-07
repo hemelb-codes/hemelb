@@ -44,16 +44,6 @@
             default: false
             description: "A dummy parameter"
 
-- builder:
-      name: wipe-and-create-build-dir
-      builders:
-          - shell: |
-              cd {workspace_dir}
-              if [ -d build ]; then
-                rm -rf build
-              fi
-              mkdir build
-
 - publisher:
     name: 'cpp_unit_tests'
     publishers:
@@ -62,3 +52,12 @@
             types:
                 - cppunit:
                     pattern: "build/tests/*.xml"
+
+- publisher:
+    name: 'slackers'
+    publishers:
+        - slack:
+            team-domain: ucl-ccs
+            token: !include ucl-ccs-slack-token
+            build-server-url: http://development.rc.ucl.ac.uk/jenkins/
+            room: '#hemelb'
