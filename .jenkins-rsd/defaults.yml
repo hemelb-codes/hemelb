@@ -2,16 +2,67 @@
     name: global
     # where to get the code from
     scm:
-        - hg:
-            url: ssh://hg@entropy.chem.ucl.ac.uk/hemelb
-            revision-type: branch
-            revision: default
+        - git:
+            url: git@github.com:UCL-CCS/hemelb-dev.git
+            browser: githubweb
+            branches:
+                - '{branch}'
+            browser-url: https://github.com/UCL-CCS/hemelb-dev
+            submodule:
+                recursive: true
             wipe-workspace: true
-
-    # when to trigger a build
-    triggers:
-        - pollscm: "H/15 * * * *"
+            refspec: '{refspec}'
 
     properties:
         - trac:
             url: http://pauli.chem.ucl.ac.uk/trac/hemelb/
+
+    properties:
+        - slack:
+            notify-start: false
+            notify-success: false
+            notify-aborted: true
+            notify-notbuilt: true
+            notify-unstable: true
+            notify-failure: true
+            notify-backtonormal: true
+            notify-repeatedfailure: true
+            include-test-summary: false
+            show-commit-list: true
+            room: '#hemelb'
+            token: !include ucl-ccs-slack-token
+            team-domain: ucl-ccs
+        - github:
+            url: https://github.com/UCL-CCS/hemelb-dev
+
+    publishers:
+        - slack:
+            team-domain: ucl-ccs
+            token: !include ucl-ccs-slack-token
+            build-server-url: http://development.rc.ucl.ac.uk/jenkins/
+            room: '#hemelb'
+
+    project-type: matrix
+    concurrent: true
+    execution-strategy:
+        combination-filter: >
+            (compiler == "intel").implies(os == "LegionRHEL7")
+            && (compiler == "clang").implies(os == "Mavericks")
+            && (compiler == "gnu").implies(os == "LegionRHEL7")
+        sequential: false
+
+    axes:
+        - axis:
+            type: slave
+            name: os
+            values:
+                - Mavericks
+                - LegionRHEL7
+        - axis:
+            type: user-defined
+            name: compiler
+            values:
+                - clang
+                - intel
+                - gnu
+
