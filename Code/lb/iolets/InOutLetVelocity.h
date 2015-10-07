@@ -51,13 +51,6 @@ namespace hemelb
 
         protected:
           LatticeDistance radius;
-
-          /*
-           * Map containing velocity weights of each of the iolet sites.
-           * Key is the 3D global coordinate. Value is the velocityweight, as
-           * read from file in InOutLetFileVelocity::Initialise().
-           */
-          std::map<util::Vector3D<site_t>, LatticeSpeed> ioletSiteVelocityWeights;
       };
     }
   }
