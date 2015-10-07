@@ -578,6 +578,10 @@ namespace hemelb
         {
           return Vector3D(0);
         }
+
+        bool operator<(Vector3D<T> const&x) const {
+          return x < x.x and y < x.y and z < x.z;
+        }
     };
 
     /**
