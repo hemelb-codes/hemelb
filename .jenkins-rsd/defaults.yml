@@ -14,14 +14,10 @@
             refspec: '{refspec}'
 
     properties:
-        - trac:
-            url: http://pauli.chem.ucl.ac.uk/trac/hemelb/
-
-    properties:
         - slack:
             notify-start: false
             notify-success: false
-            notify-aborted: true
+            notify-aborted: false
             notify-notbuilt: true
             notify-unstable: true
             notify-failure: true
@@ -32,6 +28,7 @@
             room: '#hemelb'
             token: !include ucl-ccs-slack-token
             team-domain: ucl-ccs
+
         - github:
             url: https://github.com/UCL-CCS/hemelb-dev
 
@@ -65,4 +62,3 @@
                 - clang
                 - intel
                 - gnu
-
