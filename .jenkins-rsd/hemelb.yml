@@ -1,6 +1,6 @@
 # default build across compilers and machines
-- job:
-    name: development-heme
+- job-template:
+    name: '{name}-heme'
     description: |
         Compiles, runs units tests, and runs regressions for several types of
         builds.
@@ -10,29 +10,6 @@
         coded), steering build is not unittested.
     disabled: false
     block-upstream: true
-    project-type: matrix
-    concurrent: true
-    execution-strategy:
-        combination-filter: >
-            (compiler == "intel").implies(os == "Legion")
-            && (compiler == "clang").implies(os == "OSX")
-            && (compiler == "gnu").implies(os == "Legion")
-        sequential: false
-    axes:
-        - axis:
-            type: slave
-            name: os
-            values:
-                - OSX
-                - Legion
-        - axis:
-            type: user-defined
-            name: compiler
-            values:
-                - clang
-                - intel
-                - gnu
-
     builders:
         - heme-remove-build
         - heme-flags
@@ -40,35 +17,53 @@
         - heme-dependencies
         # build with/without streak-lines, with/whithout sse3
         - heme-Code:
-            buildname: streak_and_steering
-            sse3: OFF
-            streaks: ON
-            steering: basic
-        - heme-Code:
-            buildname: sse3
-            sse3: ON
-            streaks: OFF
-            steering: none
-        - heme-Code:
-            buildname: nosse3
-            sse3: OFF
-            streaks: OFF
-            steering: none
+            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
+            sse3: '{sse3}'
+            streaks: '{streaks}'
+            steering: '{steering}'
 
         - heme-test:
-            buildname: "sse3"
-        - heme-test:
-            buildname: "nosse3"
+            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
 
         - heme-regression-setup
         - heme-regression-run:
-            buildname: "sse3"
-        - heme-regression-run:
-            buildname: "nosse3"
+            buildname: 'streaks:{streaks}_steering:{steering}_sse3:{sse3}'
+
+    triggers:
+        - '{trigger}'
 
     publishers:
-        - xunit:
-            test-time-margin: 120000
-            types:
-                - cppunit:
-                    pattern: "build/tests/*.xml"
+        - cpp_unit_tests
+
+- project:
+    name: 'steering_and_streaks'
+    steering: 'basic'
+    streaks: 'ON'
+    sse3: 'OFF'
+    trigger: 'nightly_and_hook'
+    branch: origin/master
+    refspec: +refs/heads/*:refs/remotes/origin/*
+    jobs:
+        - '{name}-heme'
+
+- project:
+    name: 'development'
+    steering: 'none'
+    streaks: 'OFF'
+    sse3: 'ON'
+    trigger: 'nightly_and_hook'
+    branch: origin/master
+    refspec: +refs/heads/*:refs/remotes/origin/*
+    jobs:
+        - '{name}-heme'
+
+- project:
+    name: 'pull-request'
+    steering: 'none'
+    streaks: 'OFF'
+    sse3: 'ON'
+    trigger: 'pull_request_trigger'
+    branch: $sha1
+    refspec: +refs/heads/*:refs/remotes/origin/*
+    jobs:
+        - '{name}-heme'
