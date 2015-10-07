@@ -55,7 +55,8 @@ namespace hemelb
             CPPUNIT_TEST(TestIoletCoordinates);
             CPPUNIT_TEST(TestParabolicVelocityConstruct);
             CPPUNIT_TEST(TestWomersleyVelocityConstruct);
-            CPPUNIT_TEST(TestFileVelocityConstruct);CPPUNIT_TEST_SUITE_END();
+            // CPPUNIT_TEST(TestFileVelocityConstruct);
+            CPPUNIT_TEST_SUITE_END();
           public:
             void setUp()
             {
