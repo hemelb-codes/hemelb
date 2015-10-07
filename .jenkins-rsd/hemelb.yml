@@ -42,7 +42,7 @@
             # configure and build code
             build_dir=$WORKSPACE/build
             mkdir -p $build_dir && cd $build_dir
-            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo                  \
+            cmake -DCMAKE_BUILD_TYPE=Debug                           \
                   -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
                   -DHEMELB_USE_BOOST=$with_boost                     \
                   -DHEMELB_USE_STREAKLINES='{streaks}'               \
@@ -63,15 +63,16 @@
             cd $reg_dir && hg update
 
             # run regression
-            mpi="mpiexec -np $([[ "$os" == "LegionRHEL7" ]] && echo "1" || echo "2")"
+            nodes=$([[ "$os" == "LegionRHEL7" ]] && echo "1" || echo "2")
 
             result_dir=$reg_dir/results
             hemelb=$build_dir/hemelb
 
             cd $reg_dir/diffTest/
-            $mpi $hemelb -in config.xml -out $result_dir -i 0
-            ./ImageComparison CleanImages $result_dir/Images
-            ./NumericalComparison CleanExtracted $result_dir/Extracted
+            mpirun -n $nodes $hemelb -in config.xml -out $result_dir -i 0
+            export PYTHONPATH="$WORKSPACE/Tools:$PYTHONPATH"
+            python ./ImageComparison CleanImages $result_dir/Images
+            python ./NumericalComparison CleanExtracted $result_dir/Extracted
 
     triggers:
         - '{trigger}'
