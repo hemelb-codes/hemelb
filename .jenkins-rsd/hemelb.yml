@@ -8,10 +8,10 @@
     builders:
         - shell: |
             #!/bin/bash -xel
+            # Setup environment
             case $os in
                 "LegionRHEL7")
                     module use ~ccsprsd/modulefiles
-                    module load jenkins/heme/$compiler
                     export MAKEFLAGS=-j4
                 ;;
                 "Mavericks")
@@ -30,7 +30,15 @@
             esac
             with_boost=$([[ "$os" == "LegionRHEL7" ]] && echo "ON" || echo "OFF")
 
-            # configure and build dependencies
+            # cpp check first -- on legion, this must be loaded without tinyxml
+            cd $WORKSPACE
+            [[ "$os" == "LegionRHEL7" ]] && module load cppcheck
+            filename=$WORKSPACE/cppcheck-result.xml
+            cppcheck --enable=all --xml Code/*.cc Code/*.h $(ls -d Code/*/) 2> $filename
+            [[ "$os" == "LegionRHEL7" ]] && module unload cppcheck
+
+            # # configure and build dependencies
+            [[ "$os" == "LegionRHEL7" ]] && module load jenkins/heme/$compiler
             dep_build_dir=$WORKSPACE/dependencies/build
             mkdir -p $dep_build_dir/fake_install && cd $dep_build_dir
             cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -80,6 +88,13 @@
     publishers:
         - cpp_unit_tests
         - slackers
+        - cppcheck:
+            pattern: "cppcheck-result.xml"
+            graph:
+                xysize: [500, 200]
+            display:
+                sum: false
+                error: true
 
     parameters:
         - '{param}'
