@@ -50,7 +50,7 @@ def clone():
             run(template("hg clone $hg/$repository"))
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
 
@@ -97,7 +97,7 @@ def update():
                 run("hg update")
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
 
 @task
 def prepare_paths():
