@@ -11,19 +11,6 @@
         - github-pull-request:
             org-list:
                 - UCL-CCS
-            admin-list:
-                - jenshnielsen
-                - jamespjh
-                - mdavezac
-                - garymacindoe
-                - raquel-ucl
-                - sinanshi
-                - djgroen
-                - ghswa
-                - mobernabeu
-                - rupertnash
-                - schmie
-                - timmkrueger
             cron: "H/10 * * * *"
             github-hooks: true
 
