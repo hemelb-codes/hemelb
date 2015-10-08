@@ -82,7 +82,7 @@ namespace hemelb
             forces[2] = &forcesIn[indices[2]];
           }
           ForceFacet(MeshData const &mesh, size_t index, std::vector<LatticeForceVector> &forcesIn) :
-              Facet(mesh.vertices, indices)
+              Facet(mesh, index)
           {
             forces[0] = &forcesIn[indices[0]];
             forces[1] = &forcesIn[indices[1]];
