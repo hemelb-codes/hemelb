@@ -60,4 +60,5 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
   resources/fedosov1c.xml resources/fedosov1c.gmy
   resources/sad.msh
+  resources/velocity_inlet.txt.weights.txt
 )
