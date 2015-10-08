@@ -179,7 +179,6 @@ namespace hemelb
       }
 
       LatticeEnergy result(0);
-      typedef MeshTopology::FacetNeighbors::const_iterator FacetIterator;
       site_t current_facet(0);
       for (auto const & neighbors: GetTopology()->facetNeighbors)
       {
