@@ -404,7 +404,7 @@ class BlockChecker(object):
             else:
                 # neigh is fluid
                 if linkType != Site.NO_INTERSECTION:
-                    addSiteError('Site has intersection (type {0}) on link to fluid'.format(linkType))
+                    addSiteError('Site has intersection (type {0}) on link to fluid neighbour {1}'.format(linkType, neigh))
                     pass
                 pass
 

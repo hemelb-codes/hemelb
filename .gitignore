@@ -4,7 +4,7 @@ syntax: glob
 *.d
 *~
 .metadata/*
-build/*
+build*/
 Code/build/*
 Code/build_clang/*
 install/*
@@ -54,3 +54,4 @@ i
 .astyle
 .clang-format
 Tools/GenerateStl
+*-slack-token

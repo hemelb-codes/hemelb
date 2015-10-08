@@ -83,6 +83,13 @@ namespace hemelb
         typedef kernels::MRT<kernels::momentBasis::DHumieresD3Q19MRTBasis> Type;
     };
 
+    template<class Lattice>
+    class TRT
+    {
+      public:
+        typedef kernels::TRT<Lattice> Type;
+    };
+
     /**
      * Non-Newtonian kernel with Carreau-Yasuda rheology model.
      */

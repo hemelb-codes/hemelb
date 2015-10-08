@@ -194,8 +194,8 @@ class Observable(object):
         return
     
     def AddObserver(self, keyPath, callback, options=NotifyOptions()):
-        """Make 'callback' an observer of changes to the attribute
-        'attr'. The callback must be a callable taking one argument,
+        """Make 'callback' an observer of changes to the key path
+        'keyPath'. The callback must be a callable taking one argument,
         which will be an Observer.Change object.
         """
         assert isinstance(keyPath, str)
@@ -244,6 +244,7 @@ class Observable(object):
         """
         for timeObservers in (self.__preObservers, self.__postObservers):
             try:
+                # TODO: Shouldn't we deal with complex keys here? 
                 attrObs = timeObservers[attr]
                 attrObs.remove(observer)
             except KeyError:
@@ -280,24 +281,46 @@ class Observable(object):
         Do this by returning an empty tuple of arguments.
         """
         return ()
-    
+            
     def __getstate__(self):
-        picdic = {}
+        """Pickling interface"""
+        dic = {}
         for attr in self._Args:
-            val = getattr(self, attr)
-            if isinstance(val, ObservableList):
-                picdic[attr] = [io for io in val]
-            else:
-                picdic[attr] = val
-                pass
+            # Pickling, so want the actual object. The Pickler will 
+            # deal with serialising the thing.
+            dic[attr] = getattr(self, attr)
             continue
-        return picdic
+        return dic
     
     def __setstate__(self, state):
+        """Unpickling interface"""
         self.__dict__.update(state)
         return
     
-    def CloneFrom(self, other):
+
+    def Yamlify(self):
+        """Return the object in a state that is ready to be turned into YAML,
+        i.e. lists and dicts of built in types only.
+        """
+        dic = {}
+        for attr in self._Args:
+            dic[attr] = self._YamlifyPart(getattr(self, attr))
+            continue
+        return dic
+    
+    def _YamlifyPart(self, part):
+        try:
+            # If it's complex, we should have provided this method
+            return part.Yamlify()
+        except AttributeError:
+            # Wasn't provided, let's hope it was simple!
+            # WX deals in unicode not strings so encode these.
+            if isinstance(part, unicode):
+                return part.encode()
+            return part
+        
+    def _Update(self, source, method, getter, checker, type_finder):
+        # First, prepare a correctly ordered list of the attributes to copy.
         try:
             attrList = copy(self._CloneOrder)
         except AttributeError:
@@ -310,29 +333,35 @@ class Observable(object):
                 pass
             continue
         
+        # Now copy them over
         for attr in attrList:
             val = getattr(self, attr)
-            if isinstance(val, ObservableList):
-                # first clear our list
-                ourList = val
-                while len(ourList):
-                    ourList.pop()
-                    continue
-                # Copy in the new ones
-                for obj in getattr(other, attr):
-                    newObj = type(obj)()
-                    newObj.CloneFrom(obj)
-                    ourList.append(newObj)
-                    continue
-                
-            elif isinstance(val, Observable):
-                val.CloneFrom(getattr(other, attr))
+            if isinstance(val, Observable):
+                getattr(val, method)(getter(source, attr))
             else:
-                if(hasattr(other,attr)):
+                if checker(source, attr):
                     setattr(self, attr,
-                            getattr(other, attr))
+                            getter(source, attr))
                 pass
             continue
+        return
+    
+    def _FindType(self, attr, source):
+        return type(self._Args[attr])
+    
+    def LoadFrom(self, dic):
+        """Update the instance based on the data stored in a dictionary.
+        """
+        self._Update(dic, 'LoadFrom',
+                           lambda d, k: d[k], lambda d, k: k in d,
+                           self._FindType)
+        return
+        
+    def CloneFrom(self, other):
+        """Update the instance based on another instance of the same class.
+        """
+        self._Update(other, 'CloneFrom', getattr, hasattr,
+                     lambda attr, other: type(other))
         return
 
     pass
@@ -460,11 +489,64 @@ class ObservableList(Observable, collections.MutableSequence):
         return self.__contents.__str__()
     def __repr__(self):
         return self.__contents.__repr__()
+    
+    def __getstate__(self):
+        return self.__contents
+    
+    def Yamlify(self):
+        return [self._YamlifyPart(elem) for elem in self]
+    
+    def _Update(self, source, method, getter, checker, type_finder):
+        # first clear our list
+        while len(self):
+            self.pop()
+            continue
+        # Copy in the new ones
+        for obj in source:
+            cls = type_finder('', obj)
+            if issubclass(cls, Observable):
+                newObj = cls()
+                getattr(newObj, method)(obj)
+            else:
+                newObj = cls(obj)
+                pass
+            self.append(newObj)
+            continue
+        return
     pass
 
-if __name__ == "__main__":
-    import pdb
+class ObservableListOf(ObservableList):
+    """An Observable list whose elements must be of the appropriate type.
     
+    Don't instaniate this class, subclass it and define the class attribute
+    "ElementType".
+    
+    """
+    @classmethod
+    def CheckType(cls, elem):
+        assert isinstance(elem, cls.ElementType), "Element of wrong type."
+        return
+        
+    def __init__(self, iterable=None):
+        if iterable is not None:
+            # We have to take a copy, since the iterable could be e.g. a generator.
+            itercopy = []
+            for elem in iterable:
+                self.CheckType(elem)
+                itercopy.append(elem)
+            iterable = itercopy
+            
+        return ObservableList.__init__(self, iterable)
+    
+    def __setitem__(self, index, obj):
+        self.CheckType(obj)
+        return ObservableList.__setitem__(self, index, obj)
+    
+    def insert(self, index, obj):
+        self.CheckType(obj)
+        return ObservableList.insert(self, index, obj)
+    
+if __name__ == "__main__":
     class Observed(Observable):
         def __init__(self, x, pressure):
             self.x = x

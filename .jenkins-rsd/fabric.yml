@@ -1,0 +1,28 @@
+- job:
+    name: fabric-heme
+    description: |
+        Fabric unit-tests.
+    disabled: true
+    project-type: freestyle
+    node: LegionRHEL7
+
+    builders:
+        - shell: |
+            #!/bin/bash -xel
+            module use ~ccsprsd/modulefiles
+            module load jenkins/heme/intel
+            module load python2
+
+            cd $WORKSPACE
+            python -m virtualenv pyenv
+            . pyenv/bin/activate
+
+            pip install --upgrade pytest
+            pip install --upgrade fabric
+
+            cd $WORKSPACE/deploy
+            python -m pytest --junitxml=$WORKSPACE/TestResult.xml
+
+    publishers:
+        - junit:
+            results: TestResult.xml
