@@ -1,0 +1,50 @@
+# Triggers
+- trigger:
+    name: nightly_and_hook
+    triggers:
+        - github
+        - timed: "@midnight"
+
+- trigger:
+    name: pull_request_trigger
+    triggers:
+        - github-pull-request:
+            org-list:
+                - UCL-CCS
+            cron: "H/10 * * * *"
+            github-hooks: true
+
+# Parameters
+- parameter:
+    name: sha1
+    parameters:
+        - string:
+            name: sha1
+            description: "sha1 of the commit you which to build if building manually."
+
+# A dummy parameter because we cannot have none
+- parameter:
+    name: dummy
+    parameters:
+        - bool:
+            name: dummy
+            default: false
+            description: "A dummy parameter"
+
+- publisher:
+    name: 'cpp_unit_tests'
+    publishers:
+        - xunit:
+            test-time-margin: 120000
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
+
+- publisher:
+    name: 'slackers'
+    publishers:
+        - slack:
+            team-domain: ucl-ccs
+            token: !include ucl-ccs-slack-token
+            build-server-url: http://development.rc.ucl.ac.uk/jenkins/
+            room: '#hemelb'

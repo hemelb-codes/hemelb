@@ -1,0 +1,145 @@
+<!--Vascular Network Model: graph layout description-->
+<NetworkGraphLayout id="1" version ="69"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="vascular_network_v3.2.xsd">
+    <case>
+        <patient_id>00000</patient_id>
+    	<visit>V0 (pre-OP)</visit>
+    </case>
+<nodes_layout>
+<node_layout id="1" x="740" y="300">
+</node_layout>
+<node_layout id="2" x="740" y="240">
+</node_layout>
+<node_layout id="3" x="800" y="200">
+</node_layout>
+<node_layout id="4" x="800" y="120">
+</node_layout>
+<node_layout id="5" x="860" y="240">
+</node_layout>
+<node_layout id="6" x="860" y="380">
+</node_layout>
+<node_layout id="7" x="640" y="180">
+</node_layout>
+<node_layout id="8" x="660" y="160">
+</node_layout>
+<node_layout id="9" x="600" y="200">
+</node_layout>
+<node_layout id="10" x="600" y="280">
+</node_layout>
+<node_layout id="11" x="600" y="360">
+</node_layout>
+<node_layout id="12" x="600" y="420">
+</node_layout>
+<node_layout id="13" x="626" y="468">
+</node_layout>
+<node_layout id="14" x="612" y="495">
+</node_layout>
+<node_layout id="15" x="642" y="497">
+</node_layout>
+<node_layout id="16" x="567" y="471">
+</node_layout>
+<node_layout id="17" x="548" y="501">
+</node_layout>
+<node_layout id="18" x="900" y="220">
+</node_layout>
+<node_layout id="19" x="680" y="200">
+</node_layout>
+<node_layout id="20" x="680" y="120">
+</node_layout>
+<node_layout id="21" x="540" y="300">
+</node_layout>
+<node_layout id="22" x="540" y="180">
+</node_layout>
+<node_layout id="23" x="643" y="520">
+</node_layout>
+<node_layout id="24" x="560" y="520">
+</node_layout>
+<node_layout id="25" x="577" y="520">
+</node_layout>
+<node_layout id="26" x="594" y="520">
+</node_layout>
+<node_layout id="27" x="610" y="520">
+</node_layout>
+<node_layout id="28" x="627" y="520">
+</node_layout>
+<node_layout id="29" x="560" y="540">
+</node_layout>
+<node_layout id="30" x="577" y="540">
+</node_layout>
+<node_layout id="31" x="593" y="540">
+</node_layout>
+<node_layout id="32" x="610" y="541">
+</node_layout>
+<node_layout id="33" x="628" y="541">
+</node_layout>
+</nodes_layout>
+<edges_layout>
+<edge_layout id="1" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="2" s="0.469231" d="11.094">
+</edge_layout>
+<edge_layout id="3" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="4" s="0.496154" d="9.4299">
+</edge_layout>
+<edge_layout id="5" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="6" s="0.54" d="-5.81378">
+</edge_layout>
+<edge_layout id="7" s="0.525" d="0.707107">
+</edge_layout>
+<edge_layout id="8" s="0.44" d="-5.36656">
+</edge_layout>
+<edge_layout id="9" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="10" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="11" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="12" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="13" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="14" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="15" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="16" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="17" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="18" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="19" s="0.607692" d="-0.83205">
+</edge_layout>
+<edge_layout id="20" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="21" s="0.525" d="16.2635">
+</edge_layout>
+<edge_layout id="22" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="23" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="24" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="25" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="26" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="27" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="28" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="29" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="30" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="31" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="32" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="33" s="0.5" d="0">
+</edge_layout>
+</edges_layout>
+</NetworkGraphLayout>

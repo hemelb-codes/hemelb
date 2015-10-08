@@ -649,8 +649,10 @@ namespace hemelb
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      const io::xml::Element pathEl = conditionEl.GetChildOrThrow("path");
-      newIolet->SetFilePath(pathEl.GetAttributeOrThrow("value"));
+      std::string velocityFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
+
+      velocityFilePath = util::NormalizePathRelativeToPath(velocityFilePath, xmlFilePath);
+      newIolet->SetFilePath(velocityFilePath);
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
       newIolet->SetRadius(GetDimensionalValueInLatticeUnits < LatticeDistance > (radiusEl, "m"));

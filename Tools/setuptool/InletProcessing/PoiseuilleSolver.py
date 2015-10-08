@@ -7,11 +7,14 @@
 # specifically made by you with University College London.
 # 
 
-import numpy as np
+#import numpy as np
 from scipy.sparse import lil_matrix
 from vtk.util import numpy_support as convert
 from vtk import vtkProgrammableFilter
 import fipy
+import fipy.tools.numerix as np
+import numpy as np2
+import sys
 
 
 class PoiseuilleSolver(vtkProgrammableFilter):
@@ -27,17 +30,21 @@ class PoiseuilleSolver(vtkProgrammableFilter):
         self.mesh = FiPyTriangleMesher(input).GetMesh()
         
         self.speed = fipy.CellVariable(name="speed", mesh=self.mesh, value=0.)
-        self.BCs = (fipy.FixedValue(faces=self.mesh.getExteriorFaces(), value=0),)
+        self.speed.constrain(0., where=self.mesh.exteriorFaces)
+#        self.BCs = (fipy.FixedValue(faces=self.mesh.exteriorFaces, value=0),)
         
         self.equation = fipy.DiffusionTerm() + 1. == 0.
-        self.equation.solve(var=self.speed, boundaryConditions=self.BCs)
+
+        self.equation.solve(var=self.speed) #, boundaryConditions=self.BCs)
         # FiPy API doesn't seem to have an integrate method
-        volumeFlux = self.speed.getCellVolumeAverage() * \
-            self.speed.mesh.getCellVolumes().sum()
+        #volumeFlux = self.speed.getCellVolumeAverage() * self.speed.mesh.getCellVolumes().sum()
         # Scale such that the flux will be unity 
-        self.speed /= volumeFlux
-        
-        
+        #self.speed /= volumeFlux
+        self.speed /= self.speed.mesh.getCellVolumes().sum()
+       
+        #print self.speed
+        #print self.speed.getCellVolumeAverage(), self.speed.mesh.getCellVolumes().sum()
+ 
         output = self.GetPolyDataOutput()
         output.ShallowCopy(input)
         speed = convert.numpy_to_vtk(self.speed.getValue())
@@ -70,7 +77,7 @@ class FiPyTriangleMesher(object):
         
         # FiPy requires a list of the FACES (in 2D the lines) making up each 
         # cell. Make the array the maximum possible size for now.
-        self.faces = np.zeros((2, 3*nTris), dtype=np.int)
+        self.faces = np.zeros((2, 3*nTris), dtype=np2.int)
         
         # Since these have to be unique, construct a sparse lookup matrix 
         # (a dictionary is very sloooooow)
@@ -79,12 +86,12 @@ class FiPyTriangleMesher(object):
         # zero, we're going to use 1-indexing for these so +1 when 
         # writing and -1 when reading.
         ############################################################
-        self.faceCache = lil_matrix((nTris,nTris), dtype=np.int)
+        self.faceCache = lil_matrix((nTris,nTris), dtype=np2.int)
         # Track the number of faces added.
         self.nFaces = 0
         
         # A cell is defined by the IDs of its faces
-        self.cells = np.zeros((3, nTris), dtype=np.int)
+        self.cells = np.zeros((3, nTris), dtype=np2.int)
         # Track the number added
         self.nCells = 0
         
@@ -103,7 +110,12 @@ class FiPyTriangleMesher(object):
     def GetMesh(self):
         """Create and get the FiPy mesh.
         """
-        return fipy.meshes.numMesh.mesh2D.Mesh2D(self.vertices, self.faces, self.cells)
+        np.set_printoptions(threshold=np.nan)
+#        print self.vertices
+#        print self.faces
+#        print self.cells 
+        return fipy.meshes.mesh2D.Mesh2D(self.vertices, self.faces, self.cells)
+#return fipy.meshes.numMesh.mesh2D.Mesh2D(self.vertices, self.faces, self.cells)
     
     def _InsertUniqueFace(self, a, b):
         """Get the Face ID of the face linking vertices with IDs a and b,

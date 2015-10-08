@@ -1,0 +1,247 @@
+<!--Vascular Network Model: graph layout description-->
+<NetworkGraphLayout id="1" version ="69"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="vascular_network_v3.2.xsd">
+    <case>
+        <patient_id>00000</patient_id>
+        <visit>other</visit>
+    </case>
+<nodes_layout>
+<node_layout id="1" x="440" y="320">
+</node_layout>
+<node_layout id="2" x="440" y="240">
+</node_layout>
+<node_layout id="3" x="480" y="220">
+</node_layout>
+<node_layout id="4" x="540" y="240">
+</node_layout>
+<node_layout id="5" x="580" y="300">
+</node_layout>
+<node_layout id="6" x="640" y="320">
+</node_layout>
+<node_layout id="7" x="560" y="360">
+</node_layout>
+<node_layout id="8" x="520" y="420">
+</node_layout>
+<node_layout id="9" x="600" y="440">
+</node_layout>
+<node_layout id="10" x="500" y="520">
+</node_layout>
+<node_layout id="11" x="560" y="540">
+</node_layout>
+<node_layout id="12" x="500" y="540">
+</node_layout>
+<node_layout id="13" x="440" y="560">
+</node_layout>
+<node_layout id="14" x="500" y="600">
+</node_layout>
+<node_layout id="15" x="440" y="640">
+</node_layout>
+<node_layout id="16" x="500" y="640">
+</node_layout>
+<node_layout id="17" x="540" y="660">
+</node_layout>
+<node_layout id="18" x="500" y="660">
+</node_layout>
+<node_layout id="19" x="540" y="680">
+</node_layout>
+<node_layout id="20" x="600" y="780">
+</node_layout>
+<node_layout id="21" x="520" y="740">
+</node_layout>
+<node_layout id="22" x="460" y="680">
+</node_layout>
+<node_layout id="23" x="400" y="780">
+</node_layout>
+<node_layout id="24" x="460" y="740">
+</node_layout>
+<node_layout id="25" x="580" y="220">
+</node_layout>
+<node_layout id="26" x="760" y="500">
+</node_layout>
+<node_layout id="27" x="800" y="780">
+</node_layout>
+<node_layout id="28" x="740" y="640">
+</node_layout>
+<node_layout id="29" x="760" y="760">
+</node_layout>
+<node_layout id="30" x="720" y="780">
+</node_layout>
+<node_layout id="31" x="400" y="220">
+</node_layout>
+<node_layout id="32" x="300" y="220">
+</node_layout>
+<node_layout id="33" x="140" y="500">
+</node_layout>
+<node_layout id="34" x="120" y="780">
+</node_layout>
+<node_layout id="35" x="180" y="640">
+</node_layout>
+<node_layout id="36" x="200" y="780">
+</node_layout>
+<node_layout id="37" x="160" y="760">
+</node_layout>
+<node_layout id="38" x="540" y="160">
+</node_layout>
+<node_layout id="39" x="580" y="100">
+</node_layout>
+<node_layout id="40" x="540" y="60">
+</node_layout>
+<node_layout id="41" x="340" y="160">
+</node_layout>
+<node_layout id="42" x="300" y="100">
+</node_layout>
+<node_layout id="43" x="340" y="60">
+</node_layout>
+<node_layout id="44" x="440" y="140">
+</node_layout>
+<node_layout id="45" x="440" y="120">
+</node_layout>
+<node_layout id="46" x="500" y="100">
+</node_layout>
+<node_layout id="47" x="380" y="100">
+</node_layout>
+<node_layout id="48" x="520" y="140">
+</node_layout>
+<node_layout id="49" x="360" y="140">
+</node_layout>
+<node_layout id="50" x="520" y="20">
+</node_layout>
+<node_layout id="51" x="580" y="0">
+</node_layout>
+<node_layout id="52" x="360" y="20">
+</node_layout>
+<node_layout id="53" x="300" y="0">
+</node_layout>
+<node_layout id="54" x="460" y="0">
+</node_layout>
+<node_layout id="55" x="420" y="0">
+</node_layout>
+<node_layout id="56" x="480" y="-40">
+</node_layout>
+<node_layout id="57" x="400" y="-40">
+</node_layout>
+</nodes_layout>
+<edges_layout>
+<edge_layout id="1" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="2" s="0.495476" d="6.3954">
+</edge_layout>
+<edge_layout id="3" s="0.521235" d="5.32785">
+</edge_layout>
+<edge_layout id="4" s="0.590349" d="6.48473">
+</edge_layout>
+<edge_layout id="5" s="0.372838" d="3.95892">
+</edge_layout>
+<edge_layout id="6" s="0.711986" d="7.62974">
+</edge_layout>
+<edge_layout id="7" s="0.435358" d="-3.157">
+</edge_layout>
+<edge_layout id="8" s="0.661986" d="8.62974">
+</edge_layout>
+<edge_layout id="9" s="0.113255" d="-4.87057">
+</edge_layout>
+<edge_layout id="10" s="0.476235" d="7.54144">
+</edge_layout>
+<edge_layout id="11" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="12" s="0.522467" d="-5.35383">
+</edge_layout>
+<edge_layout id="13" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="14" s="0.357168" d="-8.31256">
+</edge_layout>
+<edge_layout id="15" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="16" s="0.548973" d="7.62974">
+</edge_layout>
+<edge_layout id="17" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="18" s="0.772881" d="4.56981">
+</edge_layout>
+<edge_layout id="19" s="0.306953" d="12.2937">
+</edge_layout>
+<edge_layout id="20" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="21" s="0.544524" d="-2.81769">
+</edge_layout>
+<edge_layout id="22" s="0.220551" d="-9.10565">
+</edge_layout>
+<edge_layout id="23" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="24" s="0.525476" d="4.60655">
+</edge_layout>
+<edge_layout id="25" s="0.367089" d="86.2121">
+</edge_layout>
+<edge_layout id="26" s="0.502674" d="9.33078">
+</edge_layout>
+<edge_layout id="27" s="0.598633" d="-3.09957">
+</edge_layout>
+<edge_layout id="28" s="0.476994" d="10.5308">
+</edge_layout>
+<edge_layout id="29" s="0.328633" d="-4.51379">
+</edge_layout>
+<edge_layout id="30" s="0.717119" d="-3.67538">
+</edge_layout>
+<edge_layout id="31" s="0.540411" d="-4.62974">
+</edge_layout>
+<edge_layout id="32" s="0.309906" d="-67.3269">
+</edge_layout>
+<edge_layout id="33" s="0.483052" d="-12.4116">
+</edge_layout>
+<edge_layout id="34" s="0.646796" d="5.17047">
+</edge_layout>
+<edge_layout id="35" s="0.370349" d="2.68999">
+</edge_layout>
+<edge_layout id="36" s="0.230085" d="-13.6248">
+</edge_layout>
+<edge_layout id="37" s="0.254905" d="-12.2536">
+</edge_layout>
+<edge_layout id="38" s="0.341092" d="-19.359">
+</edge_layout>
+<edge_layout id="39" s="0.527162" d="-3.95892">
+</edge_layout>
+<edge_layout id="40" s="0.55559" d="12.3117">
+</edge_layout>
+<edge_layout id="41" s="0.211503" d="20.7742">
+</edge_layout>
+<edge_layout id="42" s="0.510496" d="2.04108">
+</edge_layout>
+<edge_layout id="43" s="0.54139" d="-17.6432">
+</edge_layout>
+<edge_layout id="44" s="0.650262" d="12.7502">
+</edge_layout>
+<edge_layout id="45" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="46" s="0.197533" d="15.4731">
+</edge_layout>
+<edge_layout id="47" s="0.148765" d="-15.4471">
+</edge_layout>
+<edge_layout id="48" s="0.356994" d="15.4501">
+</edge_layout>
+<edge_layout id="49" s="0.347816" d="-14.6292">
+</edge_layout>
+<edge_layout id="50" s="0.332358" d="-9.42516">
+</edge_layout>
+<edge_layout id="51" s="0.270885" d="8.77614">
+</edge_layout>
+<edge_layout id="52" s="0.453006" d="14.5132">
+</edge_layout>
+<edge_layout id="53" s="0.672532" d="10.7297">
+</edge_layout>
+<edge_layout id="54" s="0.472184" d="-11.7564">
+</edge_layout>
+<edge_layout id="55" s="0.518765" d="-9.75504">
+</edge_layout>
+<edge_layout id="56" s="0.643765" d="7.63749">
+</edge_layout>
+<edge_layout id="57" s="0.477533" d="-7.29528">
+</edge_layout>
+<edge_layout id="58" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="59" s="0.5" d="0">
+</edge_layout>
+<edge_layout id="60" s="0.5" d="0">
+</edge_layout>
+</edges_layout>
+</NetworkGraphLayout>

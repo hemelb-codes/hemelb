@@ -30,6 +30,8 @@ import re
 import numpy as np
 import yaml
 import tempfile
+from os.path import expanduser
+
 
 @task
 def clone():
@@ -48,7 +50,7 @@ def clone():
             run(template("hg clone $hg/$repository"))
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
     if env.no_ssh or env.needs_tarballs:
         execute(send_distributions)
 
@@ -95,7 +97,7 @@ def update():
                 run("hg update")
         with cd(env.repository_path):
             with prefix(env.build_prefix):
-                run("hg id -q -i > revision_info.txt")
+                run("git rev-parse HEAD > revision_info.txt")
 
 @task
 def prepare_paths():
@@ -135,11 +137,11 @@ def stat():
     return run(template("$stat -u $username"))
 
 @task
-def monitor():
+def monitor(delay=30):
     """Report on the queue status, ctrl-C to interrupt"""
     while True:
         execute(stat)
-        time.sleep(30)
+        time.sleep(float(delay))
         
         
 def check_complete():
@@ -644,7 +646,10 @@ def load_profile():
     with_profile(env.profile)
     from HemeLbSetupTool.Model.Profile import Profile
     p = Profile()
-    p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pro'))
+    try:
+        p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pro'))
+    except IOError:
+        p.LoadFromFile(os.path.expanduser(os.path.join(env.job_profile_path_local, env.profile) + '.pr2'))
     return p
 
 def modify_profile(p):
@@ -822,4 +827,40 @@ def steer(job, orbit=False, view=False, retry=False, framerate=None):
     else:
         get_running_location()
         run(template(command_template))
+
+
+@task
+def ensemble(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python Ensemble.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
+
+
+
+@task
+def run_pyNS(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python pyNS-profiles.py "+config)
+
+
+
+@task
+def generate_LB(config):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python LB-configs.py "+config)
+
+
+@task
+def submit_jobs(config,cores,wall_time):
+    current_directory=os.path.dirname(os.path.realpath(__file__))
+    pyNS_dir=current_directory+"/pyNS-master"
+    os.chdir(pyNS_dir)
+    os.system("python hemelb-jobs.py "+env.machine_name+ " "+cores+" "+config+" "+wall_time)
+
 

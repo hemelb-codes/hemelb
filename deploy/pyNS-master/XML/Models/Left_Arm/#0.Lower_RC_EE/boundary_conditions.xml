@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Vascular Network Model: boundary conditions description-->
+<BoundaryConditionsGraph id="1" version="2.0"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+ xsi:noNamespaceSchemaLocation="boundary_conditions_v2.0.xsd">
+  <boundary_conditions>
+    <boundary_condition id="1" type="transmural pressures">
+      <parameters>
+        <pressure unit="Pa">
+           <scalar>0.0</scalar>
+        </pressure>
+      </parameters>  
+      <entities>
+        <entity id="aorta"/>
+        <entity id="innominate"/>
+        <entity id="carotid"/>
+        <entity id="subclavian"/>
+        <entity id="vertebral"/>
+        <entity id="axillarian"/>
+        <entity id="brachial"/>
+        <entity id="radial"/>
+        <entity id="ulnar"/>
+        <entity id="interosseous"/>
+        <entity id="palmar_arch"/>
+        <entity id="fingers"/>
+        <entity id="cephalic_vein"/>
+        <entity id="cubiti_vein"/>
+        <entity id="basilic_vein"/>
+        <entity id="subclavian_vein"/>
+        <entity id="end_segment"/>
+      </entities>
+    </boundary_condition>
+    <boundary_condition id="2" type="outflow pressure" name="venous">
+      <parameters>
+        <pressure unit="Pa">
+           <scalar>0.0</scalar>
+        </pressure>
+      </parameters>  
+      <entities>
+        <entity id="subclavian_vein"/>
+      </entities>
+    </boundary_condition>
+    <boundary_condition id="3" type="inflow" name="heart">
+      <parameters>
+        <A0>
+          <scalar>9.4770816e-5</scalar>
+        </A0>
+        <fourier_coeffs n="2" m="10">
+          <matrix_nxm>
+          6.1485305e+01 -1.2775553e+02 -4.8233671e+01 -9.3718052e+01 -6.9296550e+01 -7.7674753e+00 -1.7668595e+01 1.5214214e+01 -1.7582760e+01 4.8404099e+00 -6.5620490e+00 1.2307691e+01 -1.9786359e+00 4.8468029e+00 -2.2902527e+00 3.3653012e+00 -1.2768902e+00 3.0761554e+00 -5.5060383e-01 1.2390679e+00
+          </matrix_nxm>  
+        </fourier_coeffs>
+      </parameters>  
+      <entities>
+        <entity id="aorta" node_id="1"/>
+      </entities>   
+    </boundary_condition>
+  </boundary_conditions>
+  <specificdatasets>
+    <patient_data id="1">
+      <dos unit="dd/mm/yyyy"></dos>
+      <dob unit="dd/mm/yyyy"></dob>
+      <age unit="years">
+        <expression>$age[]=(((datetime.strptime("$dos[]","%d/%m/%Y"))-(datetime.strptime("$dob[]","%d/%m/%Y"))).days)/365</expression>
+      </age>
+      <gender></gender>
+      <arm>left</arm>
+      <ftype>Radio-Cephalic EndToEnd</ftype>
+      <height unit="cm"></height>
+      <weight unit="kg"></weight>
+      <bsa unit="m2">
+        <expression>$bsa[]=0.007184*($weight[]**0.425)*($height[]**0.725)</expression>
+      </bsa>
+      <sysp unit="mmHg"></sysp>
+      <diap unit="mmHg"></diap>
+      <mean_pressure unit="mmHg">
+        <expression>$mean_pressure[]=$diap[]+(($sysp[]-$diap[])/3.0)</expression>
+      </mean_pressure>
+      <cardiac_output unit="mL/min">
+        <expression>$cardiac_output[]=((4.874-0.023*$age[])*$bsa[])*1e3</expression>
+      </cardiac_output>
+      <period unit="s"></period>
+      <brachial_flow unit="mL/min"></brachial_flow>
+      <radial_flow unit="mL/min"></radial_flow>
+      <ulnar_flow unit="mL/min"></ulnar_flow>
+      <ht unit="%"></ht>
+      <cp unit="g/dL"></cp>
+      <dynamic_viscosity unit="Pa*s">
+        <expression>$dynamic_viscosity[]=((1-(0.5*($ht[]/100)*e**(1.3435-2.803*($ht[]/100)+2.71*($ht[]/100)**2-0.6479*($ht[]/100)**3)))**-2)*(0.204+0.177*$cp[])*1e-3</expression>
+      </dynamic_viscosity>
+      <hyp></hyp>
+      <diab></diab>
+    </patient_data>
+    <simulation_parameters id="2">
+      <blood_density unit="kg/m3">1.05e3</blood_density>
+      <aorta_ratio>0.14</aorta_ratio>
+      <carotid_ratio>0.18</carotid_ratio>
+      <vertebral_ratio>0.19</vertebral_ratio>
+      <upper_arm_ratio>0.16</upper_arm_ratio>
+      <upper_arm_2_ratio>0.18</upper_arm_2_ratio>
+      <lower_arm_ratio>0.2</lower_arm_ratio>
+      <vein_ratio>0.2</vein_ratio>
+      <poisson_ratio>0.5</poisson_ratio>
+      <timestep unit="s">0.005</timestep>
+      <cycles>10</cycles>
+    </simulation_parameters>
+  </specificdatasets>
+</BoundaryConditionsGraph>

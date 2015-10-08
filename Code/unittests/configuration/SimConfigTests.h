@@ -12,6 +12,8 @@
 #include "configuration/SimConfig.h"
 #include "resources/Resource.h"
 #include "unittests/helpers/FolderTestFixture.h"
+#include "unittests/helpers/LaddFail.h"
+
 namespace hemelb
 {
   namespace unittests
@@ -39,6 +41,7 @@ namespace hemelb
 
           void Test_0_2_0_Read()
           {
+            LADD_FAIL();
             // smoke test the configuration as having loaded OK
             SimConfig* config = SimConfig::New(Resource("config0_2_0.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
@@ -59,6 +62,7 @@ namespace hemelb
 
           void Test_0_2_1_Read()
           {
+            LADD_FAIL();
             // smoke test the configuration as having loaded OK
             SimConfig* config = SimConfig::New(Resource("config.xml").Path());
             CPPUNIT_ASSERT_EQUAL(3000lu, config->GetTotalTimeSteps());
@@ -80,6 +84,7 @@ namespace hemelb
 
           void TestXMLFileContent()
           {
+            LADD_FAIL();
             FolderTestFixture::setUp();
             //Round trip the config twice.
             CopyResourceToTempdir("config.xml");

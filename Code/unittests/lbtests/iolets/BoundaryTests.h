@@ -15,6 +15,7 @@
 #include "unittests/helpers/FourCubeBasedTestFixture.h"
 #include "resources/Resource.h"
 #include "lb/iolets/BoundaryValues.h"
+#include "unittests/helpers/LaddFail.h"
 
 namespace hemelb
 {
@@ -83,6 +84,7 @@ namespace hemelb
 
             void TestUpdateFile()
             {
+              LADD_FAIL();
               FolderTestFixture::setUp();
               CopyResourceToTempdir("iolet.txt");
               MoveToTempdir();

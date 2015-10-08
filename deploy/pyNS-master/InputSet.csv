@@ -1,0 +1,7 @@
+Mean Pressure(mmHg), Cardiac Output(mL/min), Dynamic Viscosity(Pa*s), Heart Rate (BPM)
+80,4.8e3,4.5e-3,68
+87,6.2e3,4.5e-3,79
+94,7.6e3,4.5e-3,90
+100,9e3,4.5e-3,101
+112,10.7e3,4.5e-3,113
+116,11.9e3,4.5e-3,120

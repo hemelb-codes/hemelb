@@ -4,6 +4,7 @@ if(HEMELB_STEERING_HOST)
 endif()
 
 if(HEMELB_STEERING_LIB MATCHES [Bb]asic)
+	find_package (Threads)
 	set(steerers 
 		basic/ClientConnection.cc
 		basic/HttpPost.cc
@@ -40,3 +41,5 @@ add_library(hemelb_steering
 	#common/Tags.cc
 	${steerers}
 )
+
+target_link_libraries(hemelb_steering ${CMAKE_THREAD_LIBS_INIT})
