@@ -25,11 +25,11 @@ namespace hemelb
 
     namespace
     {
-      int minimumPosImpl(Dimensionless x, size_t range)
+      inline int minimumPosImpl(Dimensionless x, size_t range)
       {
         return static_cast<int>(std::floor(x - 0.5 * Dimensionless(range)) + 1);
       }
-      int maximumPosImpl(Dimensionless x, size_t range)
+      inline int maximumPosImpl(Dimensionless x, size_t range)
       {
         return static_cast<int>(std::floor(x + 0.5 * Dimensionless(range)));
       }
