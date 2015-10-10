@@ -13,7 +13,7 @@ from ..Bindings.Mappers import SimpleObservingMapper
 from ..Bindings.VtkObject import HasVtkObjectKeys
 
 from ..Model.PlacedIolet import PlacedInlet, PlacedOutlet
-from ..Model.Iolets import Inlet, Outlet
+from ..Model.Iolets import BaseInlet, BaseOutlet
 
 from .IoletController import IoletController
 
@@ -93,9 +93,9 @@ class PlacedIoletListController(ListController):
         return
 
     def IoletToPlacedIolet(self, iolet):
-        if isinstance(iolet, Inlet):
+        if isinstance(iolet, BaseInlet):
             pi = PlacedInlet()
-        elif isinstance(iolet, Outlet):
+        elif isinstance(iolet, BaseOutlet):
             pi = PlacedOutlet()
         else:
             raise ValueError("Must be an Inlet or Outlet")

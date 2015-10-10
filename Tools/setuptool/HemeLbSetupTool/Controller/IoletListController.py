@@ -9,7 +9,7 @@
 
 from HemeLbSetupTool.Bindings.ListController import ListController, HasListKeys
 from HemeLbSetupTool.Controller.IoletController import IoletController
-from HemeLbSetupTool.Model.Iolets import Inlet, Outlet
+from HemeLbSetupTool.Model.Iolets import PressureInlet, PressureOutlet
 import pdb
 class IoletListController(ListController):
     def __init__(self, delegate):
@@ -20,12 +20,12 @@ class IoletListController(ListController):
     
     def AddInlet(self):
         self.nInlets += 1
-        self.append(Inlet(Name='Inlet%d' % (self.nInlets)))
+        self.append(PressureInlet(Name='Inlet%d' % (self.nInlets)))
         return
     
     def AddOutlet(self):
         self.nOutlets += 1
-        self.append(Outlet(Name='Outlet%d' % (self.nOutlets)))
+        self.append(PressureOutlet(Name='Outlet%d' % (self.nOutlets)))
         return
 
     def RemoveIolet(self):

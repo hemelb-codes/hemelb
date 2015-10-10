@@ -141,11 +141,47 @@ class SinusoidalPressureIolet(Iolet):
     
     pass
 
-class Inlet(SinusoidalPressureIolet):
+class PoiseuilleVelocityIolet(Iolet):
+    """Do not instantiate
+    """
+    _Args = Iolet._Args.copy()
+    _Args['PeakVelocity'] = 0.
+
+    def __init__(self, **kwargs):
+        Iolet.__init__(self, **kwargs)
+
+        self.AddDependency('VelocityEquation', 'PeakVelocity')
+
+    @property
+    def PressureEquation(self):
+        try:
+            ans = u'v(r) = %.2f (1 - r^2/Radius^2)' % self.PeakVelocity
+            return ans
+        except:
+            return ''
+
+class BaseInlet(object):
+    pass
+class BaseOutlet(object):
     pass
 
-class Outlet(SinusoidalPressureIolet):
+class PressureInlet(SinusoidalPressureIolet, BaseInlet):
     pass
+class PressureOutlet(SinusoidalPressureIolet, BaseOutlet):
+    pass
+
+class VelocityInlet(PoiseuilleVelocityIolet, BaseInlet):
+    pass
+class VelocityOutlet(PoiseuilleVelocityIolet, BaseOutlet):
+    pass
+
+# Legacy classes required to be able to unpickled .pro files (v1) and load yaml
+# .pr2 files (v2). DON'T USE OTHERWISE.
+class Inlet(SinusoidalPressureIolet, BaseInlet):
+    pass
+class Outlet(SinusoidalPressureIolet, BaseInlet):
+    pass
+
 
 class ObservableListOfIolets(ObservableListOf):
     ElementType = Iolet
