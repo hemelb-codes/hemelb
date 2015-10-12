@@ -30,7 +30,10 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (InterpolationTests);
           CPPUNIT_TEST (testIndexIterator);
-          CPPUNIT_TEST (testOffLattice);
+          CPPUNIT_TEST (testOffLattice<stencil::FourPoint>);
+          CPPUNIT_TEST (testOffLattice<stencil::CosineApprox>);
+          CPPUNIT_TEST (testOffLattice<stencil::ThreePoint>);
+          CPPUNIT_TEST (testOffLattice<stencil::TwoPoint>);
           CPPUNIT_TEST (testOffLatticeZeroOutsideStencil);
           CPPUNIT_TEST (testInterpolateLinearFunction);
           CPPUNIT_TEST (testInterpolateQuadraticFunction);CPPUNIT_TEST_SUITE_END();
@@ -98,30 +101,59 @@ namespace hemelb
             CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
-          void testOffLattice()
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::FourPoint const &)
+          {
+            return
+            {
+              {LatticeVector(55, 51, 14), 0}, {LatticeVector(55, 51, 15), 1},
+              {LatticeVector(55, 51, 16), 1}, {LatticeVector(55, 51, 17), 1},
+              {LatticeVector(55, 52, 14), 1}, {LatticeVector(56, 51, 14), 12},
+              {LatticeVector(58, 54, 17), 47}
+            };
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(
+              stencil::CosineApprox const &)
+          {
+            return offLatticeData(stencil::FourPoint());
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::ThreePoint const &)
+          {
+            return
+            {
+              {LatticeVector(56, 52, 14), 0}, {LatticeVector(56, 52, 15), 1},
+              {LatticeVector(56, 52, 16), 1}, {LatticeVector(56, 53, 14), 1},
+              {LatticeVector(57, 52, 14), 6}, {LatticeVector(58, 54, 16), 17}
+            };
+          }
+          std::vector<std::pair<LatticeVector, size_t>> offLatticeData(stencil::TwoPoint const &)
+          {
+            return
+            {
+              {LatticeVector(56, 52, 15), 0}, {LatticeVector(56, 52, 16), 1},
+              {LatticeVector(56, 53, 15), 1}, {LatticeVector(57, 52, 15), 2}, 
+              {LatticeVector(57, 53, 16), 3}
+            };
+          }
+          template<class STENCIL> void testOffLattice()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            InterpolationIterator<stencil::HEMELB_STENCIL> iterator(pos);
+            InterpolationIterator<STENCIL> iterator(pos);
 
-            LatticeVector vectors[] = { LatticeVector(55, 51, 14),
-                                        LatticeVector(55, 51, 15),
-                                        LatticeVector(55, 51, 16),
-                                        LatticeVector(55, 51, 17),
-                                        LatticeVector(55, 52, 14),
-                                        LatticeVector(56, 51, 14),
-                                        LatticeVector(58, 54, 17), };
-            size_t incs[] = { 0, 1, 1, 1, 1, 12, 47, 666 // break
-                };
+            // Expected point and number of times to increment iterator
+            auto const expected = offLatticeData(STENCIL());
 
             // Checks iteration goes through correct sequence
-            for (size_t i(0); incs[i] < 666; ++i)
+            for(auto const &item: expected)
             {
-              for (size_t j(0); j < incs[i]; ++j, ++iterator)
+              for (size_t j(0); j < item.second; ++j, ++iterator)
                 ;
 
-              CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
-              CPPUNIT_ASSERT(helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - vectors[i]) - iterator.weight()));
               CPPUNIT_ASSERT(iterator.IsValid());
+              CPPUNIT_ASSERT_EQUAL(item.first.x, iterator->x);
+              CPPUNIT_ASSERT_EQUAL(item.first.y, iterator->y);
+              CPPUNIT_ASSERT_EQUAL(item.first.z, iterator->z);
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(
+                  iterator.weight(), STENCIL::stencil(pos - item.first), 1e-8);
             }
 
             ++iterator;
