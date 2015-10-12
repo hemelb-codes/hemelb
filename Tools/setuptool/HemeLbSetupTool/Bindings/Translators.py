@@ -112,5 +112,16 @@ class FloatTranslator(Translator):
         
     pass
 
-
+class IoletTypeTranslator(Translator):
+    """Translates from a string in the iolet choice dropdown to its index
+    """
+    def __init__(self, ioletChoices, inner=None):
+        Translator.__init__(self, inner)
+        self.stringLookup = ioletChoices
+        self.indexLookup = dict((string, index) for (index, string) in enumerate(ioletChoices))
         
+    def TranslateStage(self, value):
+        return self.indexLookup[value]
+
+    def UntranslateStage(self, value):
+        return self.stringLookup[value]

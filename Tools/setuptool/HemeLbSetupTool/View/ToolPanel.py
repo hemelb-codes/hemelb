@@ -18,7 +18,7 @@ from ..Bindings.WxMappers import WxWidgetMapper, \
      WxWidgetEnabledMapper, NonObservingWxWidgetMapper, \
      WxListCtrlMapper, WxListCtrlSelectionMapper
 from ..Bindings.Translators import NoneToValueTranslator, \
-     FloatTranslator, QuickTranslator, Translator
+     FloatTranslator, QuickTranslator, Translator, IoletTypeTranslator
 from ..Bindings.Bindings import WxActionBinding
 
 from ..Model.Profile import Profile
@@ -291,9 +291,19 @@ class IoletsPanel(wx.Panel):
         controller.BindAction('Iolets.AddInlet',
                               WxActionBinding(self.addInletButton, wx.EVT_BUTTON))
 
+        self.addInletTypeChoice = wx.Choice(self, choices=Profile._IoletChoices)
+        controller.BindValue('Iolets.InletTypeToAdd',
+                             WxWidgetMapper(self.addInletTypeChoice, 'Selection', wx.EVT_CHOICE,
+                             translator=IoletTypeTranslator(Profile._IoletChoices)))
+
         self.addOutletButton = wx.Button(self, label='Add Outlet')
         controller.BindAction('Iolets.AddOutlet',
                               WxActionBinding(self.addOutletButton, wx.EVT_BUTTON))
+
+        self.addOutletTypeChoice = wx.Choice(self, choices=Profile._IoletChoices)
+        controller.BindValue('Iolets.OutletTypeToAdd',
+                             WxWidgetMapper(self.addOutletTypeChoice, 'Selection', wx.EVT_CHOICE,
+                             translator=IoletTypeTranslator(Profile._IoletChoices)))
         
         self.removeIoletButton = wx.Button(self, label='Remove')
         controller.BindValue('Iolets.SelectedIndex',
@@ -309,8 +319,8 @@ class IoletsPanel(wx.Panel):
                    (H((V((self.ioletsListCtrl, 1, wx.EXPAND)), 1, wx.EXPAND),
                       (V(StretchSpacer(), (self.detail, 0, wx.EXPAND)), 2, wx.EXPAND)
                      ), 1, wx.EXPAND),
-                   (H(self.addInletButton,
-                     self.addOutletButton,
+                   (V((H(self.addInletButton, self.addInletTypeChoice), 0, wx.EXPAND),
+                     (H(self.addOutletButton, self.addOutletTypeChoice), 0, wx.EXPAND),
                      self.removeIoletButton
                      ), 0, wx.EXPAND),
                    RectSpacer(0, 1)

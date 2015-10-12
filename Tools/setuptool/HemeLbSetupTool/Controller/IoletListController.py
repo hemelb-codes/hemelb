@@ -9,23 +9,38 @@
 
 from HemeLbSetupTool.Bindings.ListController import ListController, HasListKeys
 from HemeLbSetupTool.Controller.IoletController import IoletController
-from HemeLbSetupTool.Model.Iolets import PressureInlet, PressureOutlet
+from HemeLbSetupTool.Model.Iolets import PressureInlet, PressureOutlet, \
+    VelocityInlet, VelocityOutlet
 import pdb
 class IoletListController(ListController):
     def __init__(self, delegate):
         ListController.__init__(self, delegate, SelectionControllerClass=IoletController.New)
         self.nInlets = 0
         self.nOutlets = 0
+        self.InletTypeToAdd = 'Pressure'
+        self.OutletTypeToAdd = 'Pressure'
         return
     
     def AddInlet(self):
         self.nInlets += 1
-        self.append(PressureInlet(Name='Inlet%d' % (self.nInlets)))
+        if self.InletTypeToAdd == 'Pressure':
+            InletClass = PressureInlet;
+        elif self.InletTypeToAdd == 'Velocity':
+            InletClass = VelocityInlet;
+        else:
+            raise Exception('Unknown inlet type!')
+        self.append(InletClass(Name='Inlet%d' % (self.nInlets)))
         return
     
     def AddOutlet(self):
         self.nOutlets += 1
-        self.append(PressureOutlet(Name='Outlet%d' % (self.nOutlets)))
+        if self.OutletTypeToAdd == 'Pressure':
+            OutletClass = PressureOutlet;
+        elif self.OutletTypeToAdd == 'Velocity':
+            OutletClass = VelocityOutlet;
+        else:
+            raise Exception('Unknown outlet type!')
+        self.append(OutletClass(Name='Outlet%d' % (self.nOutlets)))
         return
 
     def RemoveIolet(self):

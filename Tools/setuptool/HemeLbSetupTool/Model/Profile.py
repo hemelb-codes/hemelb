@@ -53,6 +53,7 @@ class Profile(Observable):
              'OutputGeometryFile': None,
              'OutputXmlFile': None}
     _UnitChoices = [metre, millimetre, micrometre]
+    _IoletChoices = ['Pressure', 'Velocity']
     
     def __init__(self, **kwargs):
         """Required arguments may be set here through keyword arguments.
