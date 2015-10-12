@@ -256,7 +256,6 @@ namespace hemelb
           typedef lb::kernels::LBGK<D3Q15> LBGK;
           typedef lb::kernels::GuoForcingLBGK<D3Q15> GuoForcingLBGK;
           CPPUNIT_TEST_SUITE (VelocityInterpolationTests);
-          // CPPUNIT_TEST(testLatticeDataFunctor);
           CPPUNIT_TEST (testVelocityDataFromLatticeWithForces);
           CPPUNIT_TEST (testVelocityDataFromLatticeWithoutForces);CPPUNIT_TEST_SUITE_END();
 
