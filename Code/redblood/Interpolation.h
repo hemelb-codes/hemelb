@@ -69,6 +69,11 @@ namespace hemelb
         {
           return current;
         }
+        //! Returns current position
+        LatticeVector const *operator->() const
+        {
+          return &current;
+        }
 
         //! Increments to next position on lattice
         void operator++();
