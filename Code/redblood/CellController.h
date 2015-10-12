@@ -20,7 +20,7 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL, class Stencil>
+    template<class KERNEL, class STENCIL>
     class CellController : public CellArmy<KERNEL>,
                            public net::IteratedAction
     {
@@ -41,9 +41,9 @@ namespace hemelb
           Logger::Log<Debug, Singleton>("Cell insertion");
           CellArmy<KERNEL>::CallCellInsertion();
           Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::template Fluid2CellInteractions<Stencil>();
+          CellArmy<KERNEL>::template Fluid2CellInteractions<STENCIL>();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::template Cell2FluidInteractions<Stencil>();
+          CellArmy<KERNEL>::template Cell2FluidInteractions<STENCIL>();
         }
         void EndIteration() override
         {

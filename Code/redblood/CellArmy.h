@@ -42,12 +42,10 @@ namespace hemelb
         }
 
         //! Performs fluid to lattice interactions
-        template <class Stencil>
-        void Fluid2CellInteractions();
+        template <class STENCIL> void Fluid2CellInteractions();
 
         //! Performs lattice to fluid interactions
-        template <class Stencil>
-        void Cell2FluidInteractions();
+        template <class STENCIL> void Cell2FluidInteractions();
 
         CellContainer::size_type size()
         {
@@ -145,7 +143,7 @@ namespace hemelb
         std::vector<FlowExtension> outlets;
     };
 
-    template<class KERNEL> template <class Stencil>
+    template<class KERNEL> template <class STENCIL>
     void CellArmy<KERNEL>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
@@ -158,14 +156,14 @@ namespace hemelb
       {
         positions.resize( (*i_first)->GetVertices().size());
         std::fill(positions.begin(), positions.end(), origin);
-        velocitiesOnMesh<KERNEL, Stencil>(*i_first, latticeData, positions);
+        velocitiesOnMesh<KERNEL, STENCIL>(*i_first, latticeData, positions);
         (*i_first)->operator+=(positions);
       }
       // Positions have changed: update Divide and Conquer stuff
       dnc.update();
     }
 
-    template<class KERNEL> template <class Stencil>
+    template<class KERNEL> template <class STENCIL>
     void CellArmy<KERNEL>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
@@ -176,10 +174,10 @@ namespace hemelb
       CellContainer::const_iterator const i_end = cells.end();
       for (; i_first != i_end; ++i_first)
       {
-        forcesOnGrid<typename KERNEL::LatticeType, Stencil>(*i_first, forces, latticeData);
+        forcesOnGrid<typename KERNEL::LatticeType, STENCIL>(*i_first, forces, latticeData);
       }
 
-      addCell2CellInteractions<Stencil>(dnc, cell2Cell, latticeData);
+      addCell2CellInteractions<STENCIL>(dnc, cell2Cell, latticeData);
     }
 
     template<class KERNEL>
