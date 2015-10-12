@@ -25,9 +25,22 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE (CellForceSpreadTests);
           CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::CosineApprox>);
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::ThreePoint>);
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::TwoPoint>);
           CPPUNIT_TEST (testIsSymmetric<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsSymmetric<stencil::CosineApprox>);
+          CPPUNIT_TEST (testIsSymmetric<stencil::ThreePoint>);
+          CPPUNIT_TEST (testIsSymmetric<stencil::TwoPoint>);
           CPPUNIT_TEST (testIsIncreasing<stencil::FourPoint>);
-          CPPUNIT_TEST (testIsLinear<stencil::FourPoint>);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testIsIncreasing<stencil::CosineApprox>);
+          CPPUNIT_TEST (testIsIncreasing<stencil::ThreePoint>);
+          CPPUNIT_TEST (testIsIncreasing<stencil::TwoPoint>);
+          CPPUNIT_TEST (testIsLinear<stencil::FourPoint>);
+          // CPPUNIT_TEST (testIsLinear<stencil::CosineApprox>);
+          CPPUNIT_TEST (testIsLinear<stencil::ThreePoint>);
+          CPPUNIT_TEST (testIsLinear<stencil::TwoPoint>);
+          CPPUNIT_TEST_SUITE_END();
 
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::LBGK<D3Q15> Kernel;
@@ -94,16 +107,20 @@ namespace hemelb
       template<class STENCIL> void CellForceSpreadTests::testIsZeroFarFromMembrane()
       {
         // Very far away from pancake samosa
+        auto const border = Dimensionless(STENCIL::GetRange()) / 2e0;
         LatticeForceVector const faraway
-          = force_at_center<STENCIL>(center + LatticePosition(0, 0, 3));
-        CPPUNIT_ASSERT(helpers::is_zero(faraway));
+          = force_at_center<STENCIL>(center + LatticePosition(0, 0, border + 1e0));
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, faraway.z, 1e-8);
 
-        LatticeForceVector const justToFar
-          = force_at_center<STENCIL>(center + LatticePosition(0, 0, 2));
-        CPPUNIT_ASSERT(helpers::is_zero(justToFar));
+        auto const justTooFar = force_at_center<STENCIL>(center + LatticePosition(0, 0, border));
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, justTooFar.x, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, justTooFar.y, 1e-8);
+        CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, justTooFar.z, 1e-8);
 
-        LatticeForceVector const justInside = force_at_center<STENCIL>(center
-            + LatticePosition(0, 0, 2.0 - 1e-4));
+        auto const justInside
+          = force_at_center<STENCIL>(center + LatticePosition(0, 0, border - 1e-4));
         CPPUNIT_ASSERT(not helpers::is_zero(justInside));
         CPPUNIT_ASSERT(justInside[0] > 1e-8 and justInside[0] < 1e-4);
       }
@@ -114,7 +131,9 @@ namespace hemelb
 
         for (size_t i(0); i < N; ++i)
         {
-          LatticePosition const displacement(0, 0, 2e0 - Dimensionless(i * 2) / Dimensionless(N));
+          auto const range = Dimensionless(STENCIL::GetRange() * 0.5);
+          auto const disp = range * (1e0 - Dimensionless(i) / Dimensionless(N));
+          LatticePosition const displacement(0, 0, disp);
           LatticeForceVector const left = force_at_center<STENCIL>(center + displacement);
           LatticeForceVector const right = force_at_center<STENCIL>(center + displacement);
           CPPUNIT_ASSERT(helpers::is_zero(left - right));
@@ -128,9 +147,9 @@ namespace hemelb
 
         for (size_t i(0); i < N; ++i)
         {
-          LatticePosition const displacement(0,
-                                             0,
-                                             2e0 - Dimensionless(i * 2 + 1) / Dimensionless(N));
+          auto const range = Dimensionless(STENCIL::GetRange() * 0.5);
+          auto const d = range * (1e0 - Dimensionless(i + 1) / Dimensionless(N));
+          LatticePosition const displacement(0, 0, d);
           LatticeForceVector const current = force_at_center<STENCIL>(center + displacement);
           CPPUNIT_ASSERT(current[0] > last[0]);
           CPPUNIT_ASSERT(current[1] > last[1]);
@@ -147,21 +166,21 @@ namespace hemelb
         // x0, x1 should be further than 2 from the edges
         // Only linear if samosa appears as infinite plane
         // with sufficiently dense vertices
-        LatticePosition const x0(center[0], center[1] - 0.5, center[2] - 0.1), x1(center[0],
-                                                                                  center[1] + 0.5,
-                                                                                  center[2] - 0.1);
+        LatticePosition const x0(center[0], center[1] - 0.5, center[2] - 0.1);
+        LatticePosition const x1(center[0], center[1] + 0.5, center[2] - 0.1);
         LatticeForceVector const v0(force_at_center<STENCIL>(x0)), v1(force_at_center<STENCIL>(x1));
 
-        LatticeForceVector const a( (v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
-        Dimensionless const tolerance(std::max(std::max(std::abs( (v0 - v1)[0]),
-                                                        std::abs( (v0 - v1)[1])),
-                                               std::abs( (v0 - v1)[2])) * 1e-3);
+        LatticeForceVector const a((v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
 
+        auto const reltol = std::vector<double>{1e-3, 1e-4, 1e-5}.at(STENCIL::GetRange() - 2);
         for (size_t i(0); i < N; ++i)
         {
           LatticePosition const x = (x1 - x0) * (Dimensionless(i + 1) / Dimensionless(N + 2)) + x0;
           LatticeForceVector const expected(a * (direction.Dot(x) - direction.Dot(x0)) + v0);
-          CPPUNIT_ASSERT(helpers::is_zero(expected - force_at_center<STENCIL>(x), tolerance));
+          auto const actual = force_at_center<STENCIL>(x);
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.x, actual.x, std::max(expected.x * reltol, 1e-8));
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.y, actual.y, std::max(expected.y * reltol, 1e-8));
+          CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.z, actual.z, std::max(expected.z * reltol, 1e-8));
         }
       }
 
