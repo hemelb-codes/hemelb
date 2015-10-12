@@ -24,10 +24,10 @@ namespace hemelb
       class CellForceSpreadTests : public SquareDuctTetrahedronFixture
       {
           CPPUNIT_TEST_SUITE (CellForceSpreadTests);
-          CPPUNIT_TEST (testIsZeroFarFromMembrane);
-          CPPUNIT_TEST (testIsSymmetric);
-          CPPUNIT_TEST (testIsIncreasing);
-          CPPUNIT_TEST (testIsLinear);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testIsZeroFarFromMembrane<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsSymmetric<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsIncreasing<stencil::FourPoint>);
+          CPPUNIT_TEST (testIsLinear<stencil::FourPoint>);CPPUNIT_TEST_SUITE_END();
 
           typedef lb::lattices::D3Q15 D3Q15;
           typedef lb::kernels::LBGK<D3Q15> Kernel;
@@ -38,11 +38,12 @@ namespace hemelb
 
           // Moves fixture so barycenter is at given position and computes spread
           // force at origin
-          LatticeForceVector force_at_center(LatticePosition const &position);
-          void testIsZeroFarFromMembrane();
-          void testIsSymmetric();
-          void testIsIncreasing();
-          void testIsLinear();
+          template<class STENCIL>
+            LatticeForceVector force_at_center(LatticePosition const &position);
+          template<class STENCIL> void testIsZeroFarFromMembrane();
+          template<class STENCIL> void testIsSymmetric();
+          template<class STENCIL> void testIsIncreasing();
+          template<class STENCIL> void testIsLinear();
 
         protected:
           std::vector<LatticeForceVector> forces;
@@ -57,11 +58,12 @@ namespace hemelb
           }
       };
 
+      template<class STENCIL>
       LatticeForceVector CellForceSpreadTests::force_at_center(LatticePosition const &position)
       {
         mesh += position - mesh.GetBarycenter();
         helpers::ZeroOutForces(latDat);
-        details::spreadForce2Grid<details::SpreadForces, stencil::HEMELB_STENCIL>
+        details::spreadForce2Grid<details::SpreadForces, STENCIL>
         (std::shared_ptr<CellBase>(&mesh, [](CellBase*){}),
            details::SpreadForces(forces, *latDat));
         return latDat->GetSite(center).GetForce();
@@ -89,35 +91,37 @@ namespace hemelb
         }
       }
 
-      void CellForceSpreadTests::testIsZeroFarFromMembrane()
+      template<class STENCIL> void CellForceSpreadTests::testIsZeroFarFromMembrane()
       {
         // Very far away from pancake samosa
-        LatticeForceVector const faraway = force_at_center(center + LatticePosition(0, 0, 3));
+        LatticeForceVector const faraway
+          = force_at_center<STENCIL>(center + LatticePosition(0, 0, 3));
         CPPUNIT_ASSERT(helpers::is_zero(faraway));
 
-        LatticeForceVector const justToFar = force_at_center(center + LatticePosition(0, 0, 2));
+        LatticeForceVector const justToFar
+          = force_at_center<STENCIL>(center + LatticePosition(0, 0, 2));
         CPPUNIT_ASSERT(helpers::is_zero(justToFar));
 
-        LatticeForceVector const justInside = force_at_center(center
+        LatticeForceVector const justInside = force_at_center<STENCIL>(center
             + LatticePosition(0, 0, 2.0 - 1e-4));
         CPPUNIT_ASSERT(not helpers::is_zero(justInside));
         CPPUNIT_ASSERT(justInside[0] > 1e-8 and justInside[0] < 1e-4);
       }
 
-      void CellForceSpreadTests::testIsSymmetric()
+      template<class STENCIL> void CellForceSpreadTests::testIsSymmetric()
       {
         size_t const N(10);
 
         for (size_t i(0); i < N; ++i)
         {
           LatticePosition const displacement(0, 0, 2e0 - Dimensionless(i * 2) / Dimensionless(N));
-          LatticeForceVector const left = force_at_center(center + displacement);
-          LatticeForceVector const right = force_at_center(center + displacement);
+          LatticeForceVector const left = force_at_center<STENCIL>(center + displacement);
+          LatticeForceVector const right = force_at_center<STENCIL>(center + displacement);
           CPPUNIT_ASSERT(helpers::is_zero(left - right));
         }
       }
 
-      void CellForceSpreadTests::testIsIncreasing()
+      template<class STENCIL> void CellForceSpreadTests::testIsIncreasing()
       {
         size_t const N(10);
         LatticeForceVector last(0, 0, 0);
@@ -127,7 +131,7 @@ namespace hemelb
           LatticePosition const displacement(0,
                                              0,
                                              2e0 - Dimensionless(i * 2 + 1) / Dimensionless(N));
-          LatticeForceVector const current = force_at_center(center + displacement);
+          LatticeForceVector const current = force_at_center<STENCIL>(center + displacement);
           CPPUNIT_ASSERT(current[0] > last[0]);
           CPPUNIT_ASSERT(current[1] > last[1]);
           CPPUNIT_ASSERT(current[2] > last[2]);
@@ -135,7 +139,7 @@ namespace hemelb
         }
       }
 
-      void CellForceSpreadTests::testIsLinear()
+      template<class STENCIL> void CellForceSpreadTests::testIsLinear()
       {
         size_t const N(5);
         mesh = Cell(refine(MeshData { mesh.GetVertices(), mesh.GetFacets() }, 4));
@@ -146,7 +150,7 @@ namespace hemelb
         LatticePosition const x0(center[0], center[1] - 0.5, center[2] - 0.1), x1(center[0],
                                                                                   center[1] + 0.5,
                                                                                   center[2] - 0.1);
-        LatticeForceVector const v0(force_at_center(x0)), v1(force_at_center(x1));
+        LatticeForceVector const v0(force_at_center<STENCIL>(x0)), v1(force_at_center<STENCIL>(x1));
 
         LatticeForceVector const a( (v1 - v0) / (direction.Dot(x1) - direction.Dot(x0)));
         Dimensionless const tolerance(std::max(std::max(std::abs( (v0 - v1)[0]),
@@ -157,7 +161,7 @@ namespace hemelb
         {
           LatticePosition const x = (x1 - x0) * (Dimensionless(i + 1) / Dimensionless(N + 2)) + x0;
           LatticeForceVector const expected(a * (direction.Dot(x) - direction.Dot(x0)) + v0);
-          CPPUNIT_ASSERT(helpers::is_zero(expected - force_at_center(x), tolerance));
+          CPPUNIT_ASSERT(helpers::is_zero(expected - force_at_center<STENCIL>(x), tolerance));
         }
       }
 
