@@ -38,8 +38,15 @@ namespace hemelb
           CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::CosineApprox>);
           CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::ThreePoint>);
           CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::TwoPoint>);
-          CPPUNIT_TEST (testInterpolateLinearFunction);
-          CPPUNIT_TEST (testInterpolateQuadraticFunction);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::FourPoint>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::CosineApprox>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::ThreePoint>);
+          CPPUNIT_TEST (testInterpolateLinearFunction<stencil::TwoPoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::FourPoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::CosineApprox>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::ThreePoint>);
+          CPPUNIT_TEST (testInterpolateQuadraticFunction<stencil::TwoPoint>);
+          CPPUNIT_TEST_SUITE_END();
 
           struct PlanarFunction
           {
@@ -207,35 +214,39 @@ namespace hemelb
             }
           }
 
-          template<class FUNCTION>
-          void check(Dimensionless x, Dimensionless y, Dimensionless z, Dimensionless tolerance =
-                         1e-8)
+          template<class FUNCTION, class STENCIL>
+          void check(
+              Dimensionless x, Dimensionless y, Dimensionless z,
+              Dimensionless tolerance = 1e-8)
           {
             FUNCTION func;
             LatticePosition expected(func(x, y, z));
-            LatticePosition actual(interpolate<FUNCTION, stencil::HEMELB_STENCIL>(func, x, y, z));
-            CPPUNIT_ASSERT(helpers::is_zero(actual - expected, tolerance));
+            LatticePosition actual(interpolate<FUNCTION, STENCIL>(func, x, y, z));
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.x, actual.x, tolerance);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.y, actual.y, tolerance);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(expected.z, actual.z, tolerance);
           }
 
           // Test interpolation when the point is on the grid
-          void testInterpolateLinearFunction()
+          template<class STENCIL> void testInterpolateLinearFunction()
           {
-            check<PlanarFunction>(0, 0, 0);
-            check<PlanarFunction>(0.1, 0.5, 0.6);
-            check<PlanarFunction>(-5.1, 0.5, 8.7);
-            check<PlanarFunction>(-5, 0, -1);
+            auto const tolerance = std::is_same<STENCIL, stencil::CosineApprox>::value ? 5e-2: 1e-8;
+            check<PlanarFunction, STENCIL>(0, 0, 0, tolerance);
+            check<PlanarFunction, STENCIL>(0.1, 0.5, 0.6, tolerance);
+            check<PlanarFunction, STENCIL>(-5.1, 0.5, 8.7, tolerance);
+            check<PlanarFunction, STENCIL>(-5, 0, -1, tolerance);
           }
 
-          void testInterpolateQuadraticFunction()
+          template<class STENCIL> void testInterpolateQuadraticFunction()
           {
             QuadraticFunction quad;
             // Error depends on variation on scale larger than stencil
             Dimensionless const tolerance( (quad(0, 0, 0) - quad(12, 12, 12)).GetMagnitude()
                 * 1e-2);
-            check<QuadraticFunction>(0, 0, 0, tolerance);
-            check<QuadraticFunction>(0.1, 0.5, 0.6, tolerance);
-            check<QuadraticFunction>(-5.1, 0.5, 8.7, tolerance);
-            check<QuadraticFunction>(-5, 0, -1, tolerance);
+            check<QuadraticFunction, STENCIL>(0, 0, 0, tolerance);
+            check<QuadraticFunction, STENCIL>(0.1, 0.5, 0.6, tolerance);
+            check<QuadraticFunction, STENCIL>(-5.1, 0.5, 8.7, tolerance);
+            check<QuadraticFunction, STENCIL>(-5, 0, -1, tolerance);
           }
       };
 
