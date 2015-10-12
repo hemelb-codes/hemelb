@@ -34,7 +34,10 @@ namespace hemelb
           CPPUNIT_TEST (testOffLattice<stencil::CosineApprox>);
           CPPUNIT_TEST (testOffLattice<stencil::ThreePoint>);
           CPPUNIT_TEST (testOffLattice<stencil::TwoPoint>);
-          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::FourPoint>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::CosineApprox>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::ThreePoint>);
+          CPPUNIT_TEST (testOffLatticeZeroOutsideStencil<stencil::TwoPoint>);
           CPPUNIT_TEST (testInterpolateLinearFunction);
           CPPUNIT_TEST (testInterpolateQuadraticFunction);CPPUNIT_TEST_SUITE_END();
 
@@ -160,31 +163,47 @@ namespace hemelb
             CPPUNIT_ASSERT(not iterator.IsValid());
           }
 
-          void testOffLatticeZeroOutsideStencil()
+          std::vector<LatticeVector> outsidePoints(stencil::FourPoint const&) const {
+            return {
+              LatticeVector(57, 53, 13), LatticeVector(57, 53, 18), LatticeVector(57, 50, 17),
+              LatticeVector(57, 55, 17), LatticeVector(54, 53, 17), LatticeVector(59, 53, 17)
+            };
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::CosineApprox const&) const {
+            return outsidePoints(stencil::FourPoint());
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::ThreePoint const&) const {
+            return {
+              LatticeVector(56, 52, 13), LatticeVector(56, 52, 17), LatticeVector(56, 51, 16),
+              LatticeVector(56, 55, 16), LatticeVector(55, 52, 16), LatticeVector(59, 52, 16)
+            };
+          }
+          std::vector<LatticeVector> outsidePoints(stencil::TwoPoint const&) const {
+            return {
+              LatticeVector(56, 52, 14), LatticeVector(56, 52, 17), LatticeVector(56, 51, 15),
+              LatticeVector(56, 54, 16), LatticeVector(55, 52, 16), LatticeVector(58, 52, 16)
+            };
+          }
+          template<class STENCIL> void testOffLatticeZeroOutsideStencil()
           {
             LatticePosition const pos(56.51, 52.9, 15.2);
-            InterpolationIterator<stencil::HEMELB_STENCIL> iterator(pos);
-            // Checks that outside iteration box, weights are zero
-            LatticeVector zero_vecs[] = { LatticeVector(57, 53, 13),
-                                          LatticeVector(57, 53, 18),
-                                          LatticeVector(57, 50, 17),
-                                          LatticeVector(57, 55, 17),
-                                          LatticeVector(54, 53, 17),
-                                          LatticeVector(59, 53, 17) };
+            InterpolationIterator<STENCIL> iterator(pos);
 
-            for (size_t i(0); i < 6; ++i)
+            // Checks that outside iteration box, weights are zero
+            for (auto const& vec: outsidePoints(STENCIL()))
             {
               LatticeVector const dx(1, 0, 0), dy(0, 1, 0), dz(0, 0, 1);
-              CPPUNIT_ASSERT(helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - zero_vecs[i])));
+              CPPUNIT_ASSERT_DOUBLES_EQUAL(0e0, STENCIL::stencil(pos - vec), 1e-8);
               // checks we are one step outside the iteration box only.
               // this is really a test on the zero_vecs data, eg a test of the test.
-              size_t const one_non_zero = size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dx
-                  - zero_vecs[i]))) + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dx - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dy - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos + dz - zero_vecs[i])))
-                  + size_t(not helpers::is_zero(stencil::HEMELB_STENCIL::stencil(pos - dz - zero_vecs[i])));
-              CPPUNIT_ASSERT(one_non_zero == 1);
+              size_t const one_non_zero = 0
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dx - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dx - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dy - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dy - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos + dz - vec)))
+                  + size_t(not helpers::is_zero(STENCIL::stencil(pos - dz - vec)));
+              CPPUNIT_ASSERT_EQUAL(size_t(1), one_non_zero);
             }
           }
 
