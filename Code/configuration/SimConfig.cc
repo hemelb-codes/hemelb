@@ -16,7 +16,7 @@
 #include "configuration/SimConfig.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
-#include "redblood/flowextension.h"
+#include "redblood/FlowExtension.h"
 #include "redblood/io.h"
 #include "redblood/Cell.h"
 
