@@ -26,7 +26,7 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL> class CellArmy
+    template<class KERNEL, class STENCIL> class CellArmy
     {
       public:
         //! Type of callback for listening to changes to cells
@@ -42,10 +42,10 @@ namespace hemelb
         }
 
         //! Performs fluid to lattice interactions
-        template <class STENCIL> void Fluid2CellInteractions();
+        void Fluid2CellInteractions();
 
         //! Performs lattice to fluid interactions
-        template <class STENCIL> void Cell2FluidInteractions();
+        void Cell2FluidInteractions();
 
         CellContainer::size_type size()
         {
@@ -143,8 +143,8 @@ namespace hemelb
         std::vector<FlowExtension> outlets;
     };
 
-    template<class KERNEL> template <class STENCIL>
-    void CellArmy<KERNEL>::Fluid2CellInteractions()
+    template<class KERNEL, class STENCIL>
+    void CellArmy<KERNEL, STENCIL>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
       std::vector<LatticePosition> & positions = work;
@@ -163,8 +163,8 @@ namespace hemelb
       dnc.update();
     }
 
-    template<class KERNEL> template <class STENCIL>
-    void CellArmy<KERNEL>::Cell2FluidInteractions()
+    template<class KERNEL, class STENCIL>
+    void CellArmy<KERNEL, STENCIL>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
@@ -180,8 +180,8 @@ namespace hemelb
       addCell2CellInteractions<STENCIL>(dnc, cell2Cell, latticeData);
     }
 
-    template<class KERNEL>
-    void CellArmy<KERNEL>::CellRemoval()
+    template<class KERNEL, class STENCIL>
+    void CellArmy<KERNEL, STENCIL>::CellRemoval()
     {
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();

@@ -21,37 +21,37 @@ namespace hemelb
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
     template<class KERNEL, class STENCIL>
-    class CellController : public CellArmy<KERNEL>,
+    class CellController : public CellArmy<KERNEL, STENCIL>,
                            public net::IteratedAction
     {
       public:
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
                        LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
-            CellArmy<KERNEL>(_latDat, cells, boxsize, halo)
+            CellArmy<KERNEL, STENCIL>(_latDat, cells, boxsize, halo)
         {
         }
 #       else
-        using CellArmy<KERNEL>::CellArmy;
+        using CellArmy<KERNEL, STENCIL>::CellArmy;
 #       endif
 
         void RequestComms() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Cell insertion");
-          CellArmy<KERNEL>::CallCellInsertion();
+          CellArmy<KERNEL, STENCIL>::CallCellInsertion();
           Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL>::template Fluid2CellInteractions<STENCIL>();
+          CellArmy<KERNEL, STENCIL>::Fluid2CellInteractions();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL>::template Cell2FluidInteractions<STENCIL>();
+          CellArmy<KERNEL, STENCIL>::Cell2FluidInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Checking whether cells have reached outlets");
-          CellArmy<KERNEL>::CellRemoval();
+          CellArmy<KERNEL, STENCIL>::CellRemoval();
           Logger::Log<Debug, Singleton>("Notify cell listeners");
-          CellArmy<KERNEL>::NotifyCellChangeListeners();
+          CellArmy<KERNEL, STENCIL>::NotifyCellChangeListeners();
         }
     };
   }
