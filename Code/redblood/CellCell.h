@@ -30,13 +30,13 @@ namespace hemelb
   namespace redblood
   {
     namespace {
-      template <class Stencil>
+      template <class STENCIL>
       void spreadForce(LatticePosition const &node, geometry::LatticeData &latticeData,
                        LatticeForceVector const &force)
       {
         proc_t procid;
         site_t siteid;
-        InterpolationIterator<Stencil> spreader = interpolationIterator<Stencil>(node);
+        InterpolationIterator<STENCIL> spreader = interpolationIterator<STENCIL>(node);
 
         for (; spreader; ++spreader)
         {
@@ -314,7 +314,7 @@ namespace hemelb
     //! functional, computes the short-range that can occur between cells that are
     //! too close to one another. The interaction forces are computed and spread to
     //! the lattice.
-    template <class Stencil>
+    template <class STENCIL>
     void addCell2CellInteractions(DivideConquerCells const &dnc, Node2NodeForce const &functional,
                                   geometry::LatticeData &latticeData)
     {
@@ -324,8 +324,8 @@ namespace hemelb
       {
         LatticeForceVector const force(functional(*range->first, *range->second));
         // spread to the grid from from one node and from the other
-        spreadForce<Stencil>(*range->first, latticeData, force);
-        spreadForce<Stencil>(*range->second, latticeData, -force);
+        spreadForce<STENCIL>(*range->first, latticeData, force);
+        spreadForce<STENCIL>(*range->second, latticeData, -force);
       }
     }
   }

@@ -112,11 +112,11 @@ namespace hemelb
       }
     }
 
-    template<class KERNEL, class Stencil>
+    template<class KERNEL, class STENCIL>
     LatticeVelocity interpolateVelocity(geometry::LatticeData const &latDat,
                                         LatticePosition const &center)
     {
-      auto iterator = interpolationIterator<Stencil>(center);
+      auto iterator = interpolationIterator<STENCIL>(center);
       // Computes velocity for a given site index
       // Branches to one or another function depending on whether forces are available (since
       // velocity depends on forces)
