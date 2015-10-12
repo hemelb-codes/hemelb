@@ -153,7 +153,7 @@ class PoiseuilleVelocityIolet(Iolet):
         self.AddDependency('VelocityEquation', 'PeakVelocity')
 
     @property
-    def PressureEquation(self):
+    def VelocityEquation(self):
         try:
             ans = u'v(r) = %.2f (1 - r^2/Radius^2)' % self.PeakVelocity
             return ans

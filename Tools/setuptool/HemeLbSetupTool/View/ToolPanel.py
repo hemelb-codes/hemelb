@@ -167,107 +167,155 @@ def MakeAndBindLengthUnitLabel(panel, controller, name):
 
 class IoletsDetailPanel(wx.Panel):
     
+    class PressureSpecificPanel(wx.Panel):
+        def __init__(self, parentPanel, controller):
+            wx.Panel.__init__(self, parent=parentPanel)
+
+            pressureLabel = wx.StaticText(self, label='Pressure (mmHg)')
+            self.pressureVector = VectorCtrl(self)
+            controller.BindValue(
+                'Iolets.Selection.Pressure',
+                VectorCtrlMapper(self.pressureVector, 'Value', wx.EVT_TEXT)
+                )
+
+            self.pressureExpressionLabel = wx.StaticText(self, label='p =')
+            controller.BindValue(
+                'Iolets.Selection.PressureEquation',
+                WxWidgetMapper(self.pressureExpressionLabel,
+                               'Label', wx.EVT_TEXT,
+                               translator=NoneToValueTranslator('p = ')))
+
+            specificConfigLayout =  V(
+                (V(pressureLabel,
+                   (self.pressureVector, 1, wx.EXPAND),
+                   self.pressureExpressionLabel
+                   ),
+                 0, wx.EXPAND),
+                RectSpacer(0, 2)
+                )
+
+            self.SetSizer(specificConfigLayout.create())
+
+    class VelocitySpecificPanel(wx.Panel):
+        def __init__(self, parentPanel, controller):
+            wx.Panel.__init__(self, parent=parentPanel)
+
+            velocityLabel = wx.StaticText(self, label='Peak velocity (m/s)')
+            self.peakVelocity = wx.TextCtrl(self)
+            controller.BindValue('Iolets.Selection.PeakVelocity',
+                                 WxWidgetMapper(self.peakVelocity, 'Value',
+                                                wx.EVT_TEXT,
+                                                translator=FloatTranslator()))
+
+            self.velocityExpressionLabel = wx.StaticText(self, label='v(r) =')
+            controller.BindValue(
+                'Iolets.Selection.VelocityEquation',
+                 WxWidgetMapper(self.velocityExpressionLabel,
+                                'Label', wx.EVT_TEXT,
+                                 translator=NoneToValueTranslator('v(r) = ')))
+
+            specificConfigLayout =  V(
+                (V(velocityLabel,
+                   (self.peakVelocity, 1, wx.EXPAND),
+                   self.velocityExpressionLabel
+                   ),
+                 0, wx.EXPAND),
+                RectSpacer(0, 2)
+                )
+
+            self.SetSizer(specificConfigLayout.create())
+
+    class CommonConfigPanel(wx.Panel):
+        def __init__(self, parentPanel, controller):
+            wx.Panel.__init__(self, parent=parentPanel)
+            
+            nameLabel = wx.StaticText(self, label='Name')
+            self.nameField = wx.TextCtrl(self)
+
+            controller.BindValue(
+                'Iolets.Selection.Name',
+                WxWidgetMapper(self.nameField, 'Value', wx.EVT_TEXT,
+                               translator=NoneToValueTranslator(''))
+                )
+            
+            self.centreLabel = MakeAndBindLengthUnitLabel(self, controller, 'Centre')
+            
+            self.centreVector = VectorCtrl(self)
+            # TODO: make these text fields (Centre, Normal, Radius)
+            # editable. At the moment I can't get the binding to VTK
+            # working properly.
+    #        self.centreVector.SetEditable(False)
+            controller.BindValue(
+                'Iolets.Selection.Centre',
+                VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
+                )
+            
+            self.radiusLabel = MakeAndBindLengthUnitLabel(self, controller, 'Radius')
+            self.radiusField = wx.TextCtrl(self)
+    #        self.radiusField.SetEditable(False)
+            
+            controller.BindValue(
+                'Iolets.Selection.Radius',
+                WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
+                               translator=FloatTranslator())
+                )
+
+            self.placeButton = wx.Button(self, label='Place')
+            controller.BindValue('Pipeline.IoletPlaceButtonEnabled',
+                                 WxWidgetEnabledMapper(self.placeButton))
+            controller.BindValue('Pipeline.IoletPlaceButtonLabel',
+                                 NonObservingWxWidgetMapper(self.placeButton, 'Label'))
+
+            controller.BindAction('Pipeline.IoletPlaceClicked',
+                                  WxActionBinding(self.placeButton, wx.EVT_BUTTON))
+
+            normalLabel = wx.StaticText(self, label='Inward Normal')
+            self.normalVector = VectorCtrl(self)
+    #        self.normalVector.SetEditable(False)
+            controller.BindValue(
+                'Iolets.Selection.Normal',
+                VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
+                )
+
+            commonConfigLayout = V(
+                (V(nameLabel,
+                   (self.nameField, 1, wx.EXPAND)),
+                 0, wx.EXPAND),
+
+                (self.placeButton, 0, wx.CENTRE),
+
+                (V(self.radiusLabel,
+                  (self.radiusField, 1, wx.EXPAND)),
+                 0, wx.EXPAND),
+
+                (V(self.centreLabel,
+                   (self.centreVector, 1, wx.EXPAND)),
+                 0, wx.EXPAND),
+
+                (V(normalLabel,
+                   (self.normalVector, 1, wx.EXPAND)),
+                 0, wx.EXPAND),
+                )
+
+            self.SetSizer(commonConfigLayout.create())
+
     def __init__(self, controller, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
-        
-        nameLabel = wx.StaticText(self, label='Name')
-        self.nameField = wx.TextCtrl(self)
 
-        controller.BindValue(
-            'Iolets.Selection.Name',
-            WxWidgetMapper(self.nameField, 'Value', wx.EVT_TEXT,
-                           translator=NoneToValueTranslator(''))
-            )
-        
-        self.centreLabel = MakeAndBindLengthUnitLabel(self, controller, 'Centre')
-        
-        self.centreVector = VectorCtrl(self)
-        # TODO: make these text fields (Centre, Normal, Radius) 
-        # editable. At the moment I can't get the binding to VTK
-        # working properly.
-#        self.centreVector.SetEditable(False)
-        controller.BindValue(
-            'Iolets.Selection.Centre',
-            VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
-            )
-        
-        self.radiusLabel = MakeAndBindLengthUnitLabel(self, controller, 'Radius')
-        self.radiusField = wx.TextCtrl(self)
-#        self.radiusField.SetEditable(False)
-        
-        controller.BindValue(
-            'Iolets.Selection.Radius',
-            WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
-                           translator=FloatTranslator())
-            )
-        
-        self.placeButton = wx.Button(self, label='Place')
-        controller.BindValue('Pipeline.IoletPlaceButtonEnabled',
-                             WxWidgetEnabledMapper(self.placeButton))
-        controller.BindValue('Pipeline.IoletPlaceButtonLabel',
-                             NonObservingWxWidgetMapper(self.placeButton, 'Label'))
-        
-        controller.BindAction('Pipeline.IoletPlaceClicked',
-                              WxActionBinding(self.placeButton, wx.EVT_BUTTON))
-        
-        normalLabel = wx.StaticText(self, label='Inward Normal')
-        self.normalVector = VectorCtrl(self)
-#        self.normalVector.SetEditable(False)
-        controller.BindValue(
-            'Iolets.Selection.Normal',
-            VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
-            )
-        
-        pressureLabel = wx.StaticText(self, label='Pressure / mmHg')
-        self.pressureVector = VectorCtrl(self)
-        controller.BindValue(
-            'Iolets.Selection.Pressure',
-            VectorCtrlMapper(self.pressureVector, 'Value', wx.EVT_TEXT)
-            )
-        
+        commonConfigPanel = self.CommonConfigPanel(self, controller)
+        pressurePanel = self.PressureSpecificPanel(self, controller)
+        #velocityPanel = self.VelocitySpecificPanel(self, controller)
 
-        self.pressureExpressionLabel = wx.StaticText(self, label='p =')
-        controller.BindValue('Iolets.Selection.PressureEquation',
-                                  WxWidgetMapper(self.pressureExpressionLabel,
-                                                 'Label', wx.EVT_TEXT,
-                                                 translator=NoneToValueTranslator('p = ')))
-        layout = V(
-            (V(nameLabel,
-               (self.nameField, 1, wx.EXPAND)),
-             0, wx.EXPAND),
-            
-            (self.placeButton, 0, wx.CENTRE),
-            
-            (V(self.radiusLabel,
-              (self.radiusField, 1, wx.EXPAND)),
-             0, wx.EXPAND),
-            
-            (V(self.centreLabel,
-               (self.centreVector, 1, wx.EXPAND)),
-             0, wx.EXPAND),
-            
-            (V(normalLabel,
-               (self.normalVector, 1, wx.EXPAND)),
-             0, wx.EXPAND),
-            
-            (V(pressureLabel,
-               (self.pressureVector, 1, wx.EXPAND),
-               self.pressureExpressionLabel
-               ),
-             0, wx.EXPAND),
-            RectSpacer(0, 2)
-            )
+        layout = V((commonConfigPanel, 1, wx.EXPAND),
+                   (pressurePanel, 1, wx.EXPAND))
+
         self.SetSizer(layout.create())
         
         controller.BindValue(
             'Iolets.SelectedIndex',
             WxWidgetEnabledMapper(self, translator=selectionToTrueTranslator)
             )
-        
-        return
-    
-    pass
 
 class IoletsPanel(wx.Panel):
     def __init__(self, controller, *args, **kwargs):
