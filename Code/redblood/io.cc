@@ -262,6 +262,13 @@ namespace hemelb
       auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
+      if(2e0 * result.cutoff > Dimensionless(stencil::HEMELB_STENCIL::GetRange()))
+      {
+          log::Logger::Log<log::Warning, log::Singleton>(
+              "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
+              "See issue #586."
+           );
+      }
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
         node.Missing();
