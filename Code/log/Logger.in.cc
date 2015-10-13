@@ -23,7 +23,7 @@ namespace hemelb
 {
   namespace log
   {
-    const LogLevel Logger::currentLogLevel = HEMELB_LOG_LEVEL;
+    const LogLevel Logger::currentLogLevel = @HEMELB_LOG_LEVEL@;
     // Use negative value to indicate uninitialised.
     int Logger::thisRank = -1;
     double Logger::startTime = -1.0;
