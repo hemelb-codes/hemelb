@@ -6,6 +6,7 @@
 #include "redblood/RBCInserter.h"
 #include "redblood/FlowExtension.h"
 #include "redblood/io.h"
+#include "Traits.h"
 
 namespace hemelb
 {
@@ -262,7 +263,7 @@ namespace hemelb
       auto const node = parent.GetChildOrNull("interaction");
       result.intensity = GetNonDimensionalValue(node, "intensity", "Nm", converter, result.intensity);
       result.cutoff = GetNonDimensionalValue(node, "cutoffdistance", "LB", converter, result.cutoff);
-      if(2e0 * result.cutoff > Dimensionless(stencil::HEMELB_STENCIL::GetRange()))
+      if(2e0 * result.cutoff > Dimensionless(Traits<>::Stencil::GetRange()))
       {
           log::Logger::Log<log::Warning, log::Singleton>(
               "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
