@@ -20,38 +20,39 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL, class STENCIL>
-    class CellController : public CellArmy<KERNEL, STENCIL>,
-                           public net::IteratedAction
+    //! \tparam TRAITS holds type of kernel and stencil
+    template<class TRAITS>
+    class CellController : public CellArmy<TRAITS>, public net::IteratedAction
     {
       public:
+        typedef TRAITS Traits;
 #       ifndef CPP11_HAS_CONSTRUCTOR_INHERITANCE
         CellController(geometry::LatticeData &_latDat, CellContainer const &cells,
                        LatticeDistance boxsize = 10.0, LatticeDistance halo = 2.0) :
-            CellArmy<KERNEL, STENCIL>(_latDat, cells, boxsize, halo)
+            CellArmy<TRAITS>(_latDat, cells, boxsize, halo)
         {
         }
 #       else
-        using CellArmy<KERNEL, STENCIL>::CellArmy;
+        using CellArmy<TRAITS>::CellArmy;
 #       endif
 
         void RequestComms() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Cell insertion");
-          CellArmy<KERNEL, STENCIL>::CallCellInsertion();
+          CellArmy<TRAITS>::CallCellInsertion();
           Logger::Log<Debug, Singleton>("Fluid interaction with cells");
-          CellArmy<KERNEL, STENCIL>::Fluid2CellInteractions();
+          CellArmy<TRAITS>::Fluid2CellInteractions();
           Logger::Log<Debug, Singleton>("Cell interaction with fluid");
-          CellArmy<KERNEL, STENCIL>::Cell2FluidInteractions();
+          CellArmy<TRAITS>::Cell2FluidInteractions();
         }
         void EndIteration() override
         {
           using namespace log;
           Logger::Log<Debug, Singleton>("Checking whether cells have reached outlets");
-          CellArmy<KERNEL, STENCIL>::CellRemoval();
+          CellArmy<TRAITS>::CellRemoval();
           Logger::Log<Debug, Singleton>("Notify cell listeners");
-          CellArmy<KERNEL, STENCIL>::NotifyCellChangeListeners();
+          CellArmy<TRAITS>::NotifyCellChangeListeners();
         }
     };
   }
