@@ -33,6 +33,7 @@ namespace hemelb
     static const std::string gathers_impl="@HEMELB_GATHERS_IMPLEMENTATION@";
     static const std::string alltoall_impl="@HEMELB_ALLTOALL_IMPLEMENTATION@";
     static const std::string separate_concerns="@HEMELB_SEPARATE_CONCERNS@";
+    static const std::string stencil="@HEMELB_STENCIL@";
   
     
     class BuildInfo : public Reportable {
@@ -57,6 +58,7 @@ namespace hemelb
         build->SetValue("ALLTOALL_IMPLEMENTATION",alltoall_impl);
         build->SetValue("GATHERS_IMPLEMENTATION",gathers_impl);
         build->SetValue("POINTPOINT_IMPLEMENTATION",point_point_impl);
+        build->SetValue("STENCIL", stencil);
       }
     };
   }
