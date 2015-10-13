@@ -76,6 +76,17 @@ namespace hemelb
     {
       typedef typename Reinstantiate<LATTICE, NEW_KERNEL>::Type Type;
     };
+    //! Changes only stencil type
+    //! This is a convenience function to limit the amount of explicit resintantiation
+    template<class NEW_STENCIL> struct ChangeStencil
+    {
+      typedef typename Reinstantiate<
+        LATTICE, KERNEL,
+        COLLISION, STREAMER,
+        WALL_BOUNDARY, INLET_BOUNDARY, OUTLET_BOUNDARY, WALL_INLET_BOUNDARY, WALL_OUTLET_BOUNDARY,
+        NEW_STENCIL
+      >::Type Type;
+    };
   };
 }
 #endif /* HEMELB_TRAITS */
