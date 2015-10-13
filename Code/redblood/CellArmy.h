@@ -26,9 +26,12 @@ namespace hemelb
   namespace redblood
   {
     //! \brief Federates the cells together so we can apply ops simultaneously
-    template<class KERNEL, class STENCIL> class CellArmy
+    //! \tparam TRAITS holds type of kernel and stencil
+    template<class TRAITS> class CellArmy
     {
       public:
+        typedef typename TRAITS::Kernel Kernel;
+        typedef typename TRAITS::Stencil Stencil;
         //! Type of callback for listening to changes to cells
         typedef std::function<void(const CellContainer &)> CellChangeListener;
 
@@ -143,8 +146,8 @@ namespace hemelb
         std::vector<FlowExtension> outlets;
     };
 
-    template<class KERNEL, class STENCIL>
-    void CellArmy<KERNEL, STENCIL>::Fluid2CellInteractions()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::Fluid2CellInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Fluid -> cell interations");
       std::vector<LatticePosition> & positions = work;
@@ -156,15 +159,15 @@ namespace hemelb
       {
         positions.resize( (*i_first)->GetVertices().size());
         std::fill(positions.begin(), positions.end(), origin);
-        velocitiesOnMesh<KERNEL, STENCIL>(*i_first, latticeData, positions);
+        velocitiesOnMesh<Kernel, Stencil>(*i_first, latticeData, positions);
         (*i_first)->operator+=(positions);
       }
       // Positions have changed: update Divide and Conquer stuff
       dnc.update();
     }
 
-    template<class KERNEL, class STENCIL>
-    void CellArmy<KERNEL, STENCIL>::Cell2FluidInteractions()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::Cell2FluidInteractions()
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Cell -> fluid interations");
       latticeData.ResetForces();
@@ -174,14 +177,14 @@ namespace hemelb
       CellContainer::const_iterator const i_end = cells.end();
       for (; i_first != i_end; ++i_first)
       {
-        forcesOnGrid<typename KERNEL::LatticeType, STENCIL>(*i_first, forces, latticeData);
+        forcesOnGrid<typename Kernel::LatticeType, Stencil>(*i_first, forces, latticeData);
       }
 
-      addCell2CellInteractions<STENCIL>(dnc, cell2Cell, latticeData);
+      addCell2CellInteractions<Stencil>(dnc, cell2Cell, latticeData);
     }
 
-    template<class KERNEL, class STENCIL>
-    void CellArmy<KERNEL, STENCIL>::CellRemoval()
+    template<class TRAITS>
+    void CellArmy<TRAITS>::CellRemoval()
     {
       auto i_first = cells.cbegin();
       auto const i_end = cells.cend();

@@ -68,9 +68,9 @@ namespace hemelb
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
           typedef lb::lattices::D3Q15 D3Q15;
-          typedef lb::kernels::GuoForcingLBGK<lb::lattices::D3Q15> Kernel;
-          typedef redblood::stencil::FourPoint Stencil;
-          typedef CellArmy<Kernel, Stencil> CellArmy;
+          typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type
+            ::ChangeStencil<stencil::FourPoint>::Type Traits;
+          typedef CellArmy<Traits> CellArmy;
 
         public:
           void testCell2Fluid();
