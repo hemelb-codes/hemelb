@@ -14,6 +14,7 @@
 #include <cstdlib>
 
 #include "configuration/SimConfig.h"
+#include "reporting/BuildInfo.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
 #include "redblood/FlowExtension.h"
@@ -189,12 +190,10 @@ namespace hemelb
       const std::string& ioletTypeName = ioletEl.GetName();
       std::string hemeIoletBC;
 
-#define QUOTE_RAW(x) #x
-#define QUOTE_CONTENTS(x) QUOTE_RAW(x)
       if (ioletTypeName == "inlet")
-        hemeIoletBC = QUOTE_CONTENTS(HEMELB_INLET_BOUNDARY);
+        hemeIoletBC = reporting::inlet_boundary_condition;
       else if (ioletTypeName == "outlet")
-        hemeIoletBC = QUOTE_CONTENTS(HEMELB_OUTLET_BOUNDARY);
+        hemeIoletBC = reporting::outlet_boundary_condition;
       else
         throw Exception() << "Unexpected element name '" << ioletTypeName
             << "'. Expected 'inlet' or 'outlet'";
