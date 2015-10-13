@@ -18,16 +18,16 @@ namespace hemelb
 {
   template
   <
-    typename LATTICE = lb::lattices::HEMELB_LATTICE,
-    template<class> class KERNEL = lb::HEMELB_KERNEL,
+    typename LATTICE = lb::lattices::@HEMELB_LATTICE@,
+    template<class> class KERNEL = lb::@HEMELB_KERNEL@,
     template<class> class COLLISION = lb::collisions::Normal,
     template<class> class STREAMER = lb::streamers::SimpleCollideAndStream,
-    template<class> class WALL_BOUNDARY = lb::HEMELB_WALL_BOUNDARY,
-    template<class> class INLET_BOUNDARY = lb::HEMELB_INLET_BOUNDARY,
-    template<class> class OUTLET_BOUNDARY = lb::HEMELB_OUTLET_BOUNDARY,
-    template<class> class WALL_INLET_BOUNDARY = lb::HEMELB_WALL_INLET_BOUNDARY,
-    template<class> class WALL_OUTLET_BOUNDARY = lb::HEMELB_WALL_OUTLET_BOUNDARY,
-    typename STENCIL = redblood::stencil::HEMELB_STENCIL
+    template<class> class WALL_BOUNDARY = lb::@HEMELB_WALL_BOUNDARY@,
+    template<class> class INLET_BOUNDARY = lb::@HEMELB_INLET_BOUNDARY@,
+    template<class> class OUTLET_BOUNDARY = lb::@HEMELB_OUTLET_BOUNDARY@,
+    template<class> class WALL_INLET_BOUNDARY = lb::@HEMELB_WALL_INLET_BOUNDARY@,
+    template<class> class WALL_OUTLET_BOUNDARY = lb::@HEMELB_WALL_OUTLET_BOUNDARY@,
+    typename STENCIL = redblood::stencil::@HEMELB_STENCIL@
   > struct Traits
   {
     typedef LATTICE Lattice;
