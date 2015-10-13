@@ -10,9 +10,13 @@
 #ifndef HEMELB_UNITTESTS_HELPERS_LADDFAIL_H
 #define HEMELB_UNITTESTS_HELPERS_LADDFAIL_H
 
+#include "reporting/BuildInfo.h"
 #define HEMELB_UNITTESTS_HELPERS_LADDFAIL_Q(str) #str
 #define HEMELB_UNITTESTS_HELPERS_LADDFAIL_QQ(str) HEMELB_UNITTESTS_HELPERS_LADDFAIL_Q(str)
 
-#define LADD_FAIL() if (std::strcmp(HEMELB_UNITTESTS_HELPERS_LADDFAIL_QQ(HEMELB_INLET_BOUNDARY), "LADDIOLET") == 0 || std::strcmp(HEMELB_UNITTESTS_HELPERS_LADDFAIL_QQ(HEMELB_OUTLET_BOUNDARY), "LADDIOLET") == 0) CPPUNIT_ASSERT_MESSAGE("This test has been marked as fatal when HemeLB is built with LADDIOLET. See ticket #605.", 1 == 0)
+#define LADD_FAIL()                                                     \
+  if(::hemelb::reporting::inlet_boundary_condition == "LADDIOLET"       \
+      || ::hemelb::reporting::outlet_boundary_condition == "LADDIOLET") \
+      CPPUNIT_ASSERT_MESSAGE("This test has been marked as fatal when HemeLB is built with LADDIOLET. See ticket #406.", 1 == 0)
 
 #endif /* HEMELB_UNITTESTS_HELPERS_LADDFAIL_H */
