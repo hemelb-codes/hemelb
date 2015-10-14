@@ -59,8 +59,6 @@ namespace hemelb
 #include "unittests/redblood/Node2NodeTests.h"
 #include "unittests/redblood/DivideConquerTests.h"
 #include "unittests/redblood/CellArmyTests.h"
-#include "unittests/redblood/CellIntegrationTests.h"
-#include "unittests/redblood/FadeInOutIntegrationTests.h"
 #include "unittests/redblood/FlowExtensionTests.h"
 #include "unittests/redblood/FaderCellTests.h"
 #include "unittests/redblood/VertexBagTests.h"
@@ -68,10 +66,5 @@ namespace hemelb
 #include "unittests/redblood/buffer/ColumnsTests.h"
 #include "unittests/redblood/CellIOTests.h"
 #include "unittests/redblood/CellInserterTests.h"
-#include "unittests/redblood/ICCBSimulations.h"
-#include "unittests/redblood/SadCellTest.h"
-#include "unittests/redblood/SadCellIntegrationTests.h"
-#include "unittests/redblood/MulticellBenchmarkTests.h"
-#include "unittests/redblood/FedosovValidationTests.h"
 #undef HEMELB_DOING_UNITTESTS
 #endif
