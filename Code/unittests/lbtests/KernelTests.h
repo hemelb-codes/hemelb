@@ -40,7 +40,7 @@ namespace hemelb
           CPPUNIT_TEST (TestAnsumaliEntropicCalculationsAndCollision);
           CPPUNIT_TEST (TestChikatamarlaEntropicCalculationsAndCollision);
           CPPUNIT_TEST (TestLBGKCalculationsAndCollision);
-          // CPPUNIT_TEST (TestLBGKNNCalculationsAndCollision);
+          CPPUNIT_TEST (TestLBGKNNCalculationsAndCollision);
           CPPUNIT_TEST (TestMRTConstantRelaxationTimeEqualsLBGK);
           CPPUNIT_TEST (TestD3Q19MRTConstantRelaxationTimeEqualsLBGK);CPPUNIT_TEST_SUITE_END();
         public:
