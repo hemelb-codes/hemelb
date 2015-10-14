@@ -111,7 +111,7 @@ namespace hemelb
           std::vector<distribn_t> powerLawViscosities;
 
       };
-      CPPUNIT_TEST_SUITE_REGISTRATION (RheologyModelTests);
+      // CPPUNIT_TEST_SUITE_REGISTRATION (RheologyModelTests);
     }
   }
 }
