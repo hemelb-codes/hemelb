@@ -70,7 +70,6 @@ namespace hemelb
           typedef lb::lattices::D3Q15 D3Q15;
           typedef hemelb::Traits<>::Reinstantiate<D3Q15, lb::GuoForcingLBGK>::Type
             ::ChangeStencil<stencil::FourPoint>::Type Traits;
-          typedef CellArmy<Traits> CellArmy;
 
         public:
           void testCell2Fluid();
@@ -90,7 +89,7 @@ namespace hemelb
       void CellArmyTests::testCell2FluidWithoutCells()
       {
         CellContainer cells;
-        CellArmy army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
         army.cell2Cell.cutoff = 0.5;
         army.cell2Cell.intensity = 1.0;
         army.Cell2FluidInteractions();
@@ -107,7 +106,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellArmy army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
         army.cell2Cell.cutoff = 0.5;
         army.cell2Cell.intensity = 1.0;
         army.Cell2FluidInteractions();
@@ -141,7 +140,7 @@ namespace hemelb
         helpers::ZeroOutFOld(latDat);
         helpers::ZeroOutForces(latDat);
 
-        CellArmy army(*latDat, CellContainer(), cutoff, halo);
+        CellArmy<Traits> army(*latDat, CellContainer(), cutoff, halo);
         int called = 0;
         auto callback = [cell, &called](std::function<void(CellContainer::value_type)> inserter)
         {
@@ -172,7 +171,7 @@ namespace hemelb
                                                                                          latDat,
                                                                                          normal);
 
-        CellArmy army(*latDat, cells, cutoff, halo);
+        CellArmy<Traits> army(*latDat, cells, cutoff, halo);
         army.Fluid2CellInteractions();
 
         for (size_t i(0); i < cells.size(); ++i)
@@ -194,14 +193,14 @@ namespace hemelb
       {
         auto cell = std::make_shared<FakeCell>(tetrahedron());
         MeshData::Vertices::value_type barycentre;
-        CellArmy::CellChangeListener callback = [&barycentre](const CellContainer & container)
+        CellArmy<Traits>::CellChangeListener callback = [&barycentre](const CellContainer & container)
         {
           barycentre = (*(container.begin()))->GetBarycenter();
         };
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
         army.AddCellChangeListener(callback);
 
         army.NotifyCellChangeListeners();
@@ -222,7 +221,7 @@ namespace hemelb
 
         CellContainer intel;
         intel.insert(cell);
-        CellArmy army(*latDat, intel, cutoff, halo);
+        CellArmy<Traits> army(*latDat, intel, cutoff, halo);
         army.SetOutlets(std::vector<FlowExtension>(1, outlet));
 
         // Check status before attempting to remove cell that should *not* be removed
