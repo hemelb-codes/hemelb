@@ -62,7 +62,7 @@
             # run cpp tests
             mkdir -p $build_dir/tests && cd $build_dir
             for testname in $WORKSPACE/build/unittests_*; do
-              filename = $(basename $testname)
+              filename=$(basename $testname)
               mpirun -n 1 $testname -o $build_dir/tests/$filename.xml || true
             done
 
