@@ -6,7 +6,10 @@
     disabled: false
     block-upstream: true
     builders:
-        - config_build_test
+        - config_build_test:
+            steering: '{steering}'
+            streaks: '{streaks}'
+            sse3: '{sse3}'
     triggers:
         - '{trigger}'
     publishers:
