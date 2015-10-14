@@ -21,13 +21,14 @@ macro(add_test_executable target includename)
   )
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
   INSTALL(TARGETS ${target} RUNTIME DESTINATION bin)
-  set(testdir "${PROJECT_BINARY_DIR}/test_results/")
+  set(testdir "${PROJECT_BINARY_DIR}/tests/")
   file(MAKE_DIRECTORY "${testdir}")
   add_test(NAME ${target} COMMAND ${target} -o ${testdir}/${target}.xml)
 endmacro()
 
 add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
+add_test_executable(unittests_redblood_integrations redblood_integrations.h)
 
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
