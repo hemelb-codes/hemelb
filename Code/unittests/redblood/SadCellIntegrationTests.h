@@ -74,9 +74,6 @@ namespace hemelb
             *cell *= scale;
             sadcell->SetScale(scale);
             *sadcell *= 1e0/converter.GetVoxelSize();
-            std::cout << sadcell->GetVertices()[0] << "\n"
-                      << sadcell->GetVertices()[1] << "\n"
-                      << sadcell->GetVertices()[2] << "\n";
             *sadcell +=
               converter.ConvertPositionToLatticeUnits(PhysicalPosition(0, 0, 0))
               - sadcell->GetBarycenter();
@@ -91,7 +88,6 @@ namespace hemelb
             sadcell->moduli.dilation = 0.5;
             sadcell->moduli.strain = 0.0006;
 
-            std::cout << "VOLUMES: " << sadcell->GetVolume() << "  " << cell->GetVolume() << "\n";
             auto controller = std::static_pointer_cast<CellControl>(master->GetCellController());
             controller->AddCell(sadcell);
             std::vector<PhysicalEnergy> energies;
@@ -120,10 +116,6 @@ namespace hemelb
 
             // run the simulation
             master->RunSimulation();
-            for(auto const energy: energies)
-            {
-              std::cout << std::scientific << " energy: " << energy << std::endl;
-            }
             writeVTKMesh("/tmp/reformed.vtp", sadcell, converter);
 
             *sadcell +=
