@@ -243,7 +243,7 @@ namespace hemelb
       moduli.surface = GetNonDimensionalValue(moduliNode, "surface", "LB", converter, 1e0);
       moduli.volume = GetNonDimensionalValue(moduliNode, "volume", "LB", converter, 1e0);
       moduli.dilation = GetNonDimensionalValue(moduliNode, "dilation", "LB", converter, 0.75);
-      if(not (1e0 >= moduli.dilation >= 0.5))
+      if(1e0 < moduli.dilation or moduli.dilation < 0.5)
       {
         log::Logger::Log<log::Critical, log::Singleton>(
             "Dilation moduli is outside the recommended range 1e0 >= m >= 0.5");
