@@ -98,13 +98,13 @@ namespace hemelb
 #define HEMELB_CAPTURE2(V0, V1) hemelb::log::capture(#V0 " := %s " #V1 " := %s", V0, V1)
 //! Simple debug macro to print stuff to the log
 #define HEMELB_CAPTURE3(V0, V1, V2)     \
-  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s", V0, V1, V1)
+  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s", V0, V1, V2)
 //! Simple debug macro to print stuff to the log
 #define HEMELB_CAPTURE4(V0, V1, V2, V3) \
-  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s" #V3 ": = %s", V0, V1, V1, V3)
+  hemelb::log::capture(#V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 ": = %s", V0, V1, V2, V3)
 //! Simple debug macro to print stuff to the log
 #define HEMELB_CAPTURE5(V0, V1, V2, V3, V4) \
   hemelb::log::capture(                     \
-    #V0 " := %s " #V1 " := %s " #V2 " := %s" #V3 ": = %s" #V4 ": = %s", V0, V1, V1, V3, V4)
+    #V0 " := %s " #V1 " := %s " #V2 " := %s " #V3 ": = %s " #V4 ": = %s", V0, V1, V2, V3, V4)
 
 #endif /* HEMELB_LOG_LOGGER_H */
