@@ -13,6 +13,7 @@
 #include <cppunit/TestFixture.h>
 #include "unittests/redblood/Fixtures.h"
 #include "redblood/CellArmy.h"
+#include "Traits.h"
 
 namespace hemelb
 {

@@ -27,6 +27,7 @@ macro(add_test_executable target includename)
 endmacro()
 
 add_test_executable(unittests_hemelb hemelb_unittests.h)
+add_test_executable(unittests_redblood redblood.h)
 
 
 add_to_resources(resources/four_cube.gmy resources/four_cube.xml
