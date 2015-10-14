@@ -61,7 +61,10 @@
 
             # run cpp tests
             mkdir -p $build_dir/tests && cd $build_dir
-            mpirun -n 1 ./unittests_hemelb -o $build_dir/tests/cpp.xml || true
+            for testname in $WORKSPACE/build/unittests_*; do
+              filename = $(basename $testname)
+              mpirun -n 1 $testname -o $build_dir/tests/${filename}.xml || true
+            done
 
             # setup regressions
             reg_dir=$WORKSPACE/regression/hemelb-inputs
