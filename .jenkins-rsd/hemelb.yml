@@ -1,0 +1,44 @@
+# default build across compilers and machines
+- job-template:
+    name: '{name}-heme'
+    description: |
+        Compiles, runs units tests, and runs regressions for several types of builds.
+    disabled: false
+    block-upstream: true
+    builders:
+        - config_build_test:
+            steering: '{steering}'
+            streaks: '{streaks}'
+            sse3: '{sse3}'
+    triggers:
+        - '{trigger}'
+    publishers:
+        - cpp_unit_tests
+        - slackers
+        - cppcheck-heme
+    parameters:
+        - '{param}'
+
+- project:
+    name: 'master'
+    steering: 'none'
+    streaks: 'OFF'
+    sse3: 'ON'
+    trigger: 'nightly_and_hook'
+    branch: origin/master
+    refspec: +refs/heads/*:refs/remotes/origin/*
+    param: dummy
+    jobs:
+        - '{name}-heme'
+
+- project:
+    name: 'pull-request'
+    steering: 'none'
+    streaks: 'OFF'
+    sse3: 'ON'
+    trigger: 'pull_request_trigger'
+    branch: $sha1
+    refspec: +refs/pull/*:refs/remotes/origin/pr/*
+    param: sha1
+    jobs:
+        - '{name}-heme':

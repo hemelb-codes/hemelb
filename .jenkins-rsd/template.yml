@@ -1,0 +1,143 @@
+# Triggers
+- trigger:
+    name: nightly_and_hook
+    triggers:
+        - github
+        - timed: "@midnight"
+
+- trigger:
+    name: pull_request_trigger
+    triggers:
+        - github-pull-request:
+            org-list:
+                - UCL-CCS
+            cron: "H/10 * * * *"
+            github-hooks: true
+
+# Parameters
+- parameter:
+    name: sha1
+    parameters:
+        - string:
+            name: sha1
+            description: "sha1 of the commit you which to build if building manually."
+
+# A dummy parameter because we cannot have none
+- parameter:
+    name: dummy
+    parameters:
+        - bool:
+            name: dummy
+            default: false
+            description: "A dummy parameter"
+
+- publisher:
+    name: 'cpp_unit_tests'
+    publishers:
+        - xunit:
+            test-time-margin: 120000
+            types:
+                - cppunit:
+                    pattern: "build/tests/*.xml"
+
+- publisher:
+    name: 'slackers'
+    publishers:
+        - slack:
+            team-domain: ucl-ccs
+            token: !include ucl-ccs-slack-token
+            build-server-url: http://development.rc.ucl.ac.uk/jenkins/
+            room: '#hemelb'
+
+- publisher:
+    name: 'cppcheck-heme'
+    publishers:
+        - cppcheck:
+            pattern: "cppcheck-result.xml"
+            graph:
+                xysize: [500, 200]
+            display:
+                sum: false
+                error: true
+
+- builder:
+    name: "config_build_test"
+    builders:
+        - shell: |
+            #!/bin/bash -xel
+            # Setup environment
+            case $os in
+                "LegionRHEL7")
+                    module use ~ccsprsd/modulefiles
+                    export MAKEFLAGS=-j4
+                ;;
+                "Mavericks")
+                    case $compiler in
+                        "gnu")
+                            export CXX=g++-4.9
+                            export CC=gcc-4.9
+                        ;;
+                        "clang")
+                            export CC=/usr/bin/cc
+                            export CXX=/usr/bin/c++
+                        ;;
+                    esac
+                    export MAKEFLAGS=-j2
+                ;;
+            esac
+            with_boost=$([[ "$os" == "LegionRHEL7" ]] && echo "ON" || echo "OFF")
+
+            # cpp check first -- on legion, this must be loaded without tinyxml
+            cd $WORKSPACE
+            [[ "$os" == "LegionRHEL7" ]] && module load cppcheck
+            filename=$WORKSPACE/cppcheck-result.xml
+            cppcheck --enable=all --xml Code/*.cc Code/*.h $(ls -d Code/*/) 2> $filename
+            [[ "$os" == "LegionRHEL7" ]] && module unload cppcheck
+
+            # # configure and build dependencies
+            [[ "$os" == "LegionRHEL7" ]] && module load jenkins/heme/$compiler
+            dep_build_dir=$WORKSPACE/dependencies/build
+            mkdir -p $dep_build_dir/fake_install && cd $dep_build_dir
+            cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                  -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
+                  -DHEMELB_USE_BOOST=$with_boost \
+                  $WORKSPACE/dependencies
+            make
+
+            # configure and build code
+            build_dir=$WORKSPACE/build
+            mkdir -p $build_dir && cd $build_dir
+            cmake -DCMAKE_BUILD_TYPE=Debug                           \
+                  -DCMAKE_INSTALL_PREFIX=$dep_build_dir/fake_install \
+                  -DHEMELB_USE_BOOST=$with_boost                     \
+                  -DHEMELB_USE_STREAKLINES='{streaks}'               \
+                  -DHEMELB_USE_SSE3='{sse3}'                         \
+                  -DHEMELB_STEERING_LIB='{steering}'                 \
+                  $WORKSPACE/Code
+            make
+
+            # run cpp tests
+            mkdir -p $build_dir/tests && cd $build_dir
+            for testname in $WORKSPACE/build/unittests_*; do
+              filename=$(basename $testname)
+              mpirun -n 1 $testname -o $build_dir/tests/$filename.xml || true
+            done
+
+            # setup regressions
+            reg_dir=$WORKSPACE/regression/hemelb-inputs
+            entropy=hg@entropy.chem.ucl.ac.uk
+            mkdir -p $(dirname $reg_dir)
+            [[ -e $reg_dir ]] || hg clone ssh://$entropy/hemelb-input $reg_dir
+            cd $reg_dir && hg update
+
+            # run regression
+            nodes=$([[ "$os" == "LegionRHEL7" ]] && echo "1" || echo "2")
+
+            result_dir=$reg_dir/results
+            hemelb=$build_dir/hemelb
+
+            cd $reg_dir/diffTest/
+            mpirun -n $nodes $hemelb -in config.xml -out $result_dir -i 0
+            export PYTHONPATH="$WORKSPACE/Tools:$PYTHONPATH"
+            python ./ImageComparison CleanImages $result_dir/Images
+            python ./NumericalComparison CleanExtracted $result_dir/Extracted
