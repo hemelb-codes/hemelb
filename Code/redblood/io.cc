@@ -269,6 +269,7 @@ namespace hemelb
               "Input inconsistency: cell-cell and cell-wall interactions larger then stencil size\n"
               "See issue #586."
            );
+          throw Exception() << "Cell-cell interaction longuer that stencil size permits";
       }
       auto const exponentNode = node != node.Missing() ?
         node.GetChildOrNull("exponent") :
