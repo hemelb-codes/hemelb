@@ -117,14 +117,14 @@ class HEMELB_ITERATOR
     }
 
     //! Gets integer coding for whether node is close to boundary
-    int GetNearBorder() const
+    size_t GetNearBorder() const
     {
-      return GetCellReference().isNearBorder;
+      return GetCellReference().nearBorder;
     }
     //! True if close to given boundary
     bool IsNearBorder(Borders border) const
     {
-      return GetNearBorder() bitand int(border);
+      return GetNearBorder() bitand size_t(border);
     }
     //! True if close to any boundary
     bool IsNearBorder() const

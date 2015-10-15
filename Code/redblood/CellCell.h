@@ -30,7 +30,7 @@ namespace hemelb
   namespace redblood
   {
     //! Names for each border
-    enum class Borders : unsigned int
+    enum class Borders : size_t
     {
       NONE = 0,
       TOP = 1,
@@ -53,8 +53,8 @@ namespace hemelb
         CellContainer::const_iterator cellIterator;
         //! Index of node in mesh
         site_t nodeIndex;
-        //! Whether the node is near the border of the cube;
-        int isNearBorder;
+        //! Id of the nearest borders
+        size_t nearBorder;
     };
 
     //! Organizes nodes in cells in boxes
