@@ -13,10 +13,11 @@ a specific job, called setup-jenkins-jobs-heme that can be built to (re-)generat
 in the folder.  *Alternatively*, the jobs can be updated from a Heme repository as follows:
 
 
-    # install/upgrade JenkJobs and jenkins-job-builder
-    > pip install jenkins-job-builder==1.2.0 # at least on Mac, 1.3.0 doesn't work
-    > pip install --upgrade git+https:///www.github.com/UCL/JenkJobs.git
-    > pip install --upgrade jenkins-jobs-slack
+    # install python-jenkinsm, jenkins-job-builder and two plugins for the latter
+    > pip install python-jenkins==0.4.8 # newer version seem to bug out on Mac
+    > pip install jenkins-job-builder
+    > pip install git+https://github.com/UCL/jenkjobs.git
+    > pip install jenkins-jobs-slack
     # add ucl-ccs-slack-token from slack integration
     # found here, originally: https://ucl-ccs.slack.com/services/B0BT7QA10
     > echo "token from slack integration" > /path/to/heme/source/ucl-ccs-slack-token
@@ -35,6 +36,9 @@ jenkins server. It goes something like this:
 The token can be obtained from jenkins under people/you/configure/show api token. Or email
 rc-softdev@ucl.ac.uk for help. The jenkins token (to access jenkins) and the slack token (for
 jenkins to ping slack) are different API tojens. Both are necessary.
+
+- to add dedicated tests for long-lived branches, edit hemelb.yml and copy/paste a new project
+- to modify the build, look at the builder in template.yml.
 
 Some caveats:
 
