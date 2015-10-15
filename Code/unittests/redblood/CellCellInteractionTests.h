@@ -36,6 +36,7 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorSameMesh);
           CPPUNIT_TEST (testPairIteratorSinglePair);
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
+          CPPUNIT_TEST (testPairIteratorDiagonalBoxes);
           CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
@@ -54,6 +55,7 @@ namespace hemelb
           void testPairIteratorSameMesh();
           void testPairIteratorSinglePair();
           void testPairIteratorOnePairPerBox();
+          void testPairIteratorDiagonalBoxes();
           void testPairIteratorBoxHalo();
       };
 
@@ -79,7 +81,7 @@ namespace hemelb
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
           LatticePosition const disp = direction<LatticePosition::value_type>(d) * 0.6;
-          int const nearness = figureNearness(dnc, key, center + disp, 2.0);
+          size_t const nearness = figureNearness(dnc, key, center + disp, 2.0);
           CPPUNIT_ASSERT(nearness == d);
         }
 
@@ -87,8 +89,8 @@ namespace hemelb
             direction<LatticePosition::value_type>(Borders::TOP) * 0.6
             + direction<LatticePosition::value_type>(Borders::NORTH) * 0.6
             + direction<LatticePosition::value_type>(Borders::EAST) * 0.6;
-        int const actual = figureNearness(dnc, key, center + mult, 2.0);
-        int const expected = int(Borders::TOP) bitor int(Borders::NORTH) bitor int(Borders::EAST);
+        size_t const actual = figureNearness(dnc, key, center + mult, 2.0);
+        size_t const expected = size_t(Borders::TOP) bitor size_t(Borders::NORTH) bitor size_t(Borders::EAST);
         CPPUNIT_ASSERT(actual == expected);
       }
 
@@ -135,24 +137,24 @@ namespace hemelb
         CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
         CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1);
-        CPPUNIT_ASSERT(omega.first->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(omega.first->second.nearBorder == 0);
         DivideConquer<CellReference>::const_iterator other = omega.first;
         ++other;
         CPPUNIT_ASSERT(helpers::is_zero(other->first));
         CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
         CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);
-        CPPUNIT_ASSERT(other->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(other->second.nearBorder == 0);
 
         CPPUNIT_ASSERT(alpha.first->first == LatticeVector(2, 3, -2));
         CPPUNIT_ASSERT(alpha.first->second.nodeIndex == 2);
         CPPUNIT_ASSERT(alpha.first->second.cellIterator == cells.begin());
-        CPPUNIT_ASSERT(alpha.first->second.isNearBorder == 0);
+        CPPUNIT_ASSERT(alpha.first->second.nearBorder == 0);
 
         CPPUNIT_ASSERT(haloed.first->first == LatticeVector(1, 0, 0));
         CPPUNIT_ASSERT(haloed.first->second.nodeIndex == 3);
         CPPUNIT_ASSERT(haloed.first->second.cellIterator == cells.begin());
-        CPPUNIT_ASSERT(haloed.first->second.isNearBorder == int(Borders::NORTH));
+        CPPUNIT_ASSERT(haloed.first->second.nearBorder == size_t(Borders::NORTH));
       }
 
       void checkCell(DivideConquerCells const &dnc, LatticeVector const &key,
@@ -272,7 +274,7 @@ namespace hemelb
         CPPUNIT_ASSERT(dnc(newbox).first.IsNearBorder(Borders::TOP));
         CPPUNIT_ASSERT(not dnc(newbox).first.IsNearBorder(Borders::BOTTOM));
         CPPUNIT_ASSERT_EQUAL(dnc(newbox).first.GetNearBorder(),
-            (int(Borders::TOP) bitor int(Borders::EAST)));
+            (size_t(Borders::TOP) bitor size_t(Borders::EAST)));
       }
 
       void CellCellInteractionTests::testPairIteratorNoPairs()
@@ -344,6 +346,34 @@ namespace hemelb
         // Checks that fixture is what I think it is
         LatticeVector const N0(1, 4, 4);
         LatticeVector const N1(2, 4, 4);
+        CPPUNIT_ASSERT(std::distance(dnc(N0).first, dnc(N0).second) == 1);
+        CPPUNIT_ASSERT(std::distance(dnc(N1).first, dnc(N1).second) == 1);
+
+        DivideConquerCells::pair_range range(dnc, dnc.begin(), dnc.end(), 0.5);
+        CPPUNIT_ASSERT(range.is_valid());
+
+        CPPUNIT_ASSERT(helpers::is_zero(*range->first - n0));
+        CPPUNIT_ASSERT(helpers::is_zero(*range->second - n1));
+        CPPUNIT_ASSERT(not ++range);
+        CPPUNIT_ASSERT(not range.is_valid());
+      }
+
+      void CellCellInteractionTests::testPairIteratorDiagonalBoxes()
+      {
+        // There three pairs and they are each in different boxe, but each contained
+        // within one box
+        auto cells = TwoPancakeSamosas<>(cutoff);
+
+        // Only one pair, and each in diagonally separate box
+        LatticePosition const n0(2 * cutoff - 0.1, 4 * cutoff - 0.1, 8 * cutoff - 0.1);
+        LatticePosition const n1(2 * cutoff + 0.1, 4 * cutoff + 0.1, 8 * cutoff + 0.1);
+        (*cells.begin())->GetVertices().front() = n0;
+        (*std::next(cells.begin()))->GetVertices().front() = n1;
+
+        DivideConquerCells dnc(cells, cutoff, halo);
+        // Checks that fixture is what I think it is
+        LatticeVector const N0(1, 3, 7);
+        LatticeVector const N1(2, 4, 8);
         CPPUNIT_ASSERT(std::distance(dnc(N0).first, dnc(N0).second) == 1);
         CPPUNIT_ASSERT(std::distance(dnc(N1).first, dnc(N1).second) == 1);
 

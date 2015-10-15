@@ -20,7 +20,7 @@ namespace hemelb
     namespace
     {
       template<class T>
-      int figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
+      size_t figureNearness(DivideConquer<T> &dnc, LatticeVector const &key,
                          LatticePosition const &vertex, LatticeDistance const &haloLength)
       {
         if (haloLength + haloLength > dnc.GetBoxSize())
@@ -28,7 +28,7 @@ namespace hemelb
           return 0;
         }
 
-        int result = 0;
+        size_t result = 0;
 
         for (size_t d(1); d < (1 << 6); d <<= 1)
         {
@@ -125,7 +125,7 @@ namespace hemelb
       for (; i_first != i_end;)
       {
         key_type const key = base_type::DowngradeKey(*i_first);
-        i_first.GetCellReference().isNearBorder = figureNearness(*this, key, *i_first, haloLength);
+        i_first.GetCellReference().nearBorder = figureNearness(*this, key, *i_first, haloLength);
 
         if (not (key == i_first.GetKey()))
         {
@@ -203,7 +203,7 @@ namespace hemelb
       {
         if (box != Borders::NONE)
         {
-          box = Borders(int(box) << 1);
+          box = Borders(size_t(box) << 1);
         }
         else
         {
@@ -217,7 +217,7 @@ namespace hemelb
             return true;
           }
 
-          box = Borders(int(box) << 1);
+          box = Borders(size_t(box) << 1);
         }
       }
 
