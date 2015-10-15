@@ -35,26 +35,41 @@ namespace hemelb
     template<class T> util::Vector3D<T> direction(size_t border);
 
     //! \brief Iterates only over nearest borders
-    //! \details 
-    class LoopThroughBorders
+    class BorderBoxIterator
     {
       public:
-        LoopThroughBorders(size_t const nearness)
-          : current(static_cast<size_t>(Borders::NONE)), nearness(nearness)
+        //! Type returned by dereference
+        typedef LatticeVector value_type;
+        typedef value_type const& const_reference;
+        typedef value_type const* const_pointer;
+
+        //! \brief Iterates over all boxes for which a bit is set
+        //! \see Borders
+        BorderBoxIterator(size_t const nearness);
+        //! Current direction to look at
+        const_reference operator*() const
         {
+          return current;
         }
         //! Current direction to look at
-        LatticePosition operator*() const;
+        const_pointer operator->() const
+        {
+          return &current;
+        }
         //! Whether this iterator is valid
-        operator bool() const;
+        operator bool() const
+        {
+          return isValid;
+        }
         //! Go to next position
-        void operator++(int);
+        void operator++();
 
       protected:
         //! Current direction;
-        size_t current;
-        //! Which directions to investigate
-        size_t nearness;
+        value_type current;
+        //! Whether the object is valid
+        bool isValid;
+        bool isTop, isBottom, isNorth, isSouth, isWest, isEast;
     };
 
     template<class T> util::Vector3D<T> direction(Borders border)
