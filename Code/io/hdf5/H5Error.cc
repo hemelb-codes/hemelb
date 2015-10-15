@@ -73,6 +73,18 @@ namespace hemelb
         }
       }
 
+      void H5TypeDeleter(hid_t * id) {
+        herr_t error = H5Tclose(*id);
+        delete id;
+        if (error < 0)
+        {
+          // Log but don't throw
+          hemelb::log::Logger::Log<hemelb::log::Error, hemelb::log::Singleton>(
+              "HemeLB Error in %s (%s:%d): Failed to close HDF5 data type "
+              "(error %d)", __func__, __FILE__, __LINE__, error);
+        }
+      }
+
       void H5AttributeDeleter(hid_t * id) {
         herr_t error = H5Aclose(*id);
         delete id;

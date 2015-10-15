@@ -61,6 +61,7 @@ namespace hemelb
       void H5GroupDeleter(hid_t *);
       void H5DataSetDeleter(hid_t *);
       void H5DataSpaceDeleter(hid_t *);
+      void H5TypeDeleter(hid_t *);
       void H5AttributeDeleter(hid_t *);
       void H5PropertyListDeleter(hid_t *);
     }
