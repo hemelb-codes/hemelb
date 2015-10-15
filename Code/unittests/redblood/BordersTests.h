@@ -36,12 +36,12 @@ namespace hemelb
           {
             return (x + 1) + (y + 1) * 3 + (z + 1) * 9;
           }
-          std::vector<bool> visitme(BorderBoxIterator iterator)
+          std::vector<size_t> visitme(BorderBoxIterator iterator)
           {
-            std::vector<bool> result(21, false);
+            std::vector<size_t> result(3*3*3, 0);
             for(; iterator; ++iterator)
             {
-              result[index(iterator->x, iterator->y, iterator->z)] = true;
+              ++result[index(iterator->x, iterator->y, iterator->z)];
             }
             return result;
           }
@@ -60,26 +60,25 @@ namespace hemelb
             auto visited = visitme(BorderBoxIterator(border));
             for(auto const &id: indices)
             {
-              CPPUNIT_ASSERT(visited[index(id.x, id.y, id.z)]);
-              visited[index(id.x, id.y, id.z)] = false;
+              CPPUNIT_ASSERT_EQUAL(size_t(1), visited[index(id.x, id.y, id.z)]);
+              visited[index(id.x, id.y, id.z)] = 0;
             }
             for(auto const v: visited)
             {
-              CPPUNIT_ASSERT(not v);
+              CPPUNIT_ASSERT_EQUAL(size_t(0), v);
             }
           }
           void testIterate()
           {
+            testIterate((size_t)Borders::CENTER, {{0, 0, 0}});
             testIterate((size_t)Borders::BOTTOM, {{-1, 0, 0}});
             testIterate((size_t)Borders::TOP, {{1, 0, 0}});
             testIterate((size_t)Borders::SOUTH, {{0, -1, 0}});
             testIterate((size_t)Borders::NORTH, {{0, 1, 0}});
             testIterate((size_t)Borders::WEST, {{0, 0, -1}});
             testIterate((size_t)Borders::EAST, {{0, 0, 1}});
-            testIterate(
-                (size_t)Borders::BOTTOM + (size_t)Borders::TOP,
-                {{-1, 0, 0}, {1, 0, 0}}
-            );
+            testIterate((size_t)Borders::BOTTOM + (size_t)Borders::TOP, {{-1, 0, 0}, {1, 0, 0}});
+            testIterate((size_t)Borders::BOTTOM + (size_t)Borders::CENTER, {{-1, 0, 0}, {0, 0, 0}});
             testIterate(
                 (size_t)Borders::BOTTOM + (size_t)Borders::NORTH,
                 {{-1, 0, 0}, {0, 1, 0}, {-1, 1, 0}}

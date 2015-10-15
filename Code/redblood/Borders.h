@@ -27,7 +27,8 @@ namespace hemelb
       SOUTH = 8,
       WEST = 16,
       EAST = 32,
-      LAST = 64
+      LAST = 64,
+      CENTER = 128
     };
     //! Converts border enum to actual lattice direction
     template<class T> util::Vector3D<T> direction(Borders border);
@@ -69,7 +70,11 @@ namespace hemelb
         value_type current;
         //! Whether the object is valid
         bool isValid;
-        bool isTop, isBottom, isNorth, isSouth, isWest, isEast;
+        //! Which box to do
+        bool doCenter, doTop, doBottom, doNorth, doSouth, doWest, doEast;
+
+        //! Returns true if this is a box we want to visit
+        bool wannaSee(value_type const &current) const;
     };
 
     template<class T> util::Vector3D<T> direction(Borders border)
