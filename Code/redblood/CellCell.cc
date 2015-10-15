@@ -161,12 +161,12 @@ namespace hemelb
 
     bool DivideConquerCells::pair_range::doBox()
     {
-      LatticeVector const key(box == Borders::NONE ?
+      LatticeVector const key(box == static_cast<size_t>(Borders::NONE) ?
         currents.first.GetKey() :
         currents.first.GetKey() + direction<LatticeVector::value_type>(box));
       DivideConquerCells::const_range const boxits = owner(key);
 
-      if (box == Borders::NONE)
+      if (box == static_cast<size_t>(Borders::NONE))
       {
         currents.second = currents.first;
         ++currents.second;
@@ -201,23 +201,23 @@ namespace hemelb
       // If reaches here, then should check which box we are currently doing
       if (currents.first.GetNearBorder())
       {
-        if (box != Borders::NONE)
+        if (box != static_cast<size_t>(Borders::NONE))
         {
-          box = Borders(size_t(box) << 1);
+          box <<= 1;
         }
         else
         {
-          box = Borders(1);
+          box = 1;
         }
 
-        while (box < Borders::LAST)
+        while (box < static_cast<size_t>(Borders::LAST))
         {
           if (doBox())
           {
             return true;
           }
 
-          box = Borders(size_t(box) << 1);
+          box <<= 1;
         }
       }
 
@@ -228,7 +228,7 @@ namespace hemelb
         return false;
       }
 
-      box = Borders::NONE;
+      box = static_cast<size_t>(Borders::NONE);
       return doBox() ?
         true :
         operator++();
@@ -237,8 +237,8 @@ namespace hemelb
     DivideConquerCells::pair_range::pair_range(DivideConquerCells const &owner,
                                                iterator const &begin, iterator const &end,
                                                LatticeDistance maxdist) :
-        maxdist(maxdist), box(Borders::NONE), currents(begin, end), ends(end, end),
-            owner(owner)
+        maxdist(maxdist), box(static_cast<size_t>(Borders::NONE)),
+        currents(begin, end), ends(end, end), owner(owner)
     {
       // No throw garantee. Makes iterator invalid instead.
       try

@@ -24,27 +24,12 @@
 #include "redblood/Node2Node.h"
 #include "redblood/stencil.h"
 #include "redblood/Interpolation.h"
+#include "redblood/Borders.h"
 
 namespace hemelb
 {
   namespace redblood
   {
-    //! Names for each border
-    enum class Borders : size_t
-    {
-      NONE = 0,
-      TOP = 1,
-      BOTTOM = 2,
-      NORTH = 4,
-      SOUTH = 8,
-      WEST = 16,
-      EAST = 32,
-      LAST = 64
-    };
-    //! Converts border enum to actual lattice direction
-    template<class T> util::Vector3D<T> direction(Borders border);
-    //! Converts border enum to actual lattice direction
-    template<class T> util::Vector3D<T> direction(size_t border);
     // References a node of a mesh in the divide-and-conquer box
     class CellReference
     {
@@ -239,7 +224,7 @@ namespace hemelb
         //! Maximum distance for which to report pair
         LatticeDistance maxdist;
         //! Current box we are working on
-        Borders box;
+        size_t box;
         //! Iterator for main item
         value_type currents;
         //! range for iteration over second item
@@ -290,27 +275,6 @@ namespace hemelb
       }
     }
 
-    template<class T> util::Vector3D<T> direction(Borders border)
-    {
-      switch (border)
-      {
-        case Borders::TOP:    return util::Vector3D<T>(1, 0, 0);
-        case Borders::BOTTOM: return util::Vector3D<T>(-1, 0, 0);
-        case Borders::NORTH:  return util::Vector3D<T>(0, 1, 0);
-        case Borders::SOUTH:  return util::Vector3D<T>(0, -1, 0);
-        case Borders::WEST:   return util::Vector3D<T>(0, 0, -1);
-        case Borders::EAST:   return util::Vector3D<T>(0, 0, 1);
-        default:     return util::Vector3D<T>(0, 0, 0);
-      };
-      return LatticeVector(0, 0, 0);
-    }
-    template<class T> util::Vector3D<T> direction(size_t border)
-    {
-      Borders const b(static_cast<Borders>(border));
-      assert(b == Borders::TOP or Borders(b) == Borders::BOTTOM or b == Borders::NORTH or
-          b == Borders::SOUTH or b == Borders::EAST or b == Borders::WEST);
-      return direction<T>(b);
-    }
   }
 } // hemelb::redblood
 
